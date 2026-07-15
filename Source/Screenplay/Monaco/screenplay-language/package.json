@@ -1,0 +1,33 @@
+{
+    "name": "@cratis/screenplay-language",
+    "version": "0.0.0",
+    "description": "Monaco language service for the Cratis Screenplay DSL — syntax highlighting, IntelliSense, hover and diagnostics for .play files",
+    "license": "MIT",
+    "type": "module",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "files": [
+        "dist",
+        "**/*.ts"
+    ],
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "compile": "tsc --noEmit -p tsconfig.json",
+        "lint": "yarn g:lint",
+        "lint:ci": "yarn g:lint:ci"
+    },
+    "peerDependencies": {
+        "monaco-editor": ">=0.44.0"
+    },
+    "devDependencies": {
+        "monaco-editor": "^0.52.2",
+        "typescript": "6.0.3"
+    }
+}
