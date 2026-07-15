@@ -1,0 +1,308 @@
+# Grammar
+
+The full EBNF grammar of the Screenplay DSL. `INDENT`/`DEDENT` are synthesized by the lexer from changes in indentation (offside rule), as in Python. The PDL and CDL bodies are embedded sub-grammars — see [Sub-language Pluggability](sub-languages.md).
+
+```ebnf
+(* ============================================================ *)
+(* Screenplay DSL — Full EBNF                                    *)
+(* ============================================================ *)
+
+Document       = { Import }, { ConceptDecl }, { PolicyDecl }, { Module } ;
+
+(* -------------------------------------------------------------- *)
+(* Imports                                                         *)
+(* -------------------------------------------------------------- *)
+
+Import         = "import", QualifiedName, NL ;
+QualifiedName  = Ident, { ".", Ident } ;
+
+(* -------------------------------------------------------------- *)
+(* Concepts                                                        *)
+(* -------------------------------------------------------------- *)
+
+ConceptDecl    = "concept", Ident, ":", PrimitiveType, { Attribute }, NL
+               | "concept", Ident, ":", "Enum", NL,
+                   INDENT, { Ident, NL }, DEDENT ;
+
+PrimitiveType  = "Uuid" | "String" | "Int" | "Decimal" | "Bool"
+               | "Date" | "DateTime" ;
+
+Attribute      = "@pii" | "@sensitive" ;
+
+(* -------------------------------------------------------------- *)
+(* Policies                                                        *)
+(* -------------------------------------------------------------- *)
+
+PolicyDecl     = "policy", Ident, NL,
+                 INDENT, PolicyBody, DEDENT ;
+
+PolicyBody     = PolicyExpr
+               | InlineBlock ;
+
+PolicyExpr     = "require", PolicyCondition, { ( "or" | "and" ), PolicyCondition } ;
+
+PolicyCondition = "authenticated"
+               | "role", StringLiteral
+               | "claim", StringLiteral, "matches", ( "subject" | StringLiteral )
+               | "(", PolicyCondition, { ( "or" | "and" ), PolicyCondition }, ")" ;
+
+(* -------------------------------------------------------------- *)
+(* Module                                                          *)
+(* -------------------------------------------------------------- *)
+
+Module         = "module", Ident, NL,
+                 INDENT,
+                   { LayoutDecl },
+                   { Feature },
+                 DEDENT ;
+
+(* -------------------------------------------------------------- *)
+(* Layouts                                                         *)
+(* -------------------------------------------------------------- *)
+
+LayoutDecl     = "layout", Ident, NL,
+                 INDENT,
+                   "template", NL,
+                   INDENT, { Ident, NL }, DEDENT,
+                 DEDENT ;
+
+(* -------------------------------------------------------------- *)
+(* Features                                                        *)
+(* -------------------------------------------------------------- *)
+
+Feature        = "feature", Ident, NL,
+                 INDENT,
+                   { Feature },
+                   { SliceDecl },
+                 DEDENT ;
+
+(* -------------------------------------------------------------- *)
+(* Slices                                                          *)
+(* -------------------------------------------------------------- *)
+
+SliceDecl      = "slice", SliceType, Ident, NL,
+                 INDENT, { SliceBody }, DEDENT ;
+
+SliceType      = "StateChange" | "StateView" | "Automation" | "Translate" ;
+
+SliceBody      = EventDecl
+               | CommandDecl
+               | QueryDecl
+               | ProjectionDecl
+               | CaptureDecl
+               | ReactorDecl
+               | ScreenDecl
+               | ConstraintDecl ;
+
+(* -------------------------------------------------------------- *)
+(* Events                                                          *)
+(* -------------------------------------------------------------- *)
+
+EventDecl      = "event", Ident, NL,
+                 INDENT, { PropertyLine }, DEDENT ;
+
+PropertyLine   = Ident, TypeRef, NL ;
+
+TypeRef        = Ident, [ "[]" ], [ "?" ] ;
+
+(* -------------------------------------------------------------- *)
+(* Commands                                                        *)
+(* -------------------------------------------------------------- *)
+
+CommandDecl    = "command", Ident, NL,
+                 INDENT,
+                   { PropertyLine },
+                   [ AuthorizeDecl ],
+                   { ValidateDecl },
+                   { ProducesDecl },
+                 DEDENT ;
+
+AuthorizeDecl  = "authorize", PolicyRef, { ( NL, PolicyRef ) | ( "or", PolicyRef ) }, NL ;
+
+PolicyRef      = Ident ;
+
+ValidateDecl   = "validate", NL,
+                   INDENT, { ValidationRule }, DEDENT
+               | "validate", "csharp", NL, InlineBlock ;
+
+ValidationRule = Ident, RuleOp, [ "message", StringLiteral ], NL ;
+
+RuleOp         = "not empty"
+               | "max", Number
+               | "min", Number
+               | ">", Value
+               | ">=", Value
+               | "<", Value
+               | "<=", Value
+               | "==", Value
+               | "length", "==", Number
+               | "matches", ( "email" | StringLiteral )
+               | "all", ">", Value
+               | "all", ">=", Value ;
+
+Value          = Number | StringLiteral | "today" | "true" | "false" ;
+
+(* -------------------------------------------------------------- *)
+(* Produces                                                        *)
+(* -------------------------------------------------------------- *)
+
+ProducesDecl   = "produces", Ident, NL,
+                   [ INDENT, { PropertyMapping }, DEDENT ]
+               | "produces", "when", Condition, NL,
+                   INDENT, Ident, NL,
+                   [ INDENT, { PropertyMapping }, DEDENT ],
+                   DEDENT
+               | "produces", "csharp", NL, InlineBlock ;
+
+Condition      = ConditionExpr, { ( "and" | "or" ), ConditionExpr } ;
+
+ConditionExpr  = Ident, CompOp, Value
+               | Ident, CompOp, Ident
+               | "(" Condition ")" ;
+
+CompOp         = "==" | "!=" | ">" | ">=" | "<" | "<=" ;
+
+PropertyMapping = Ident, "=", MappingSource, NL ;
+
+MappingSource  = Ident                         (* command property   *)
+               | "$context.occurred"
+               | "$context.identity.id"
+               | "$env.", Ident
+               | StringLiteral
+               | Number
+               | "true" | "false"
+               | Expression ;
+
+Expression     = (* arithmetic / method-call expression — freeform *) ;
+
+(* -------------------------------------------------------------- *)
+(* Queries                                                         *)
+(* -------------------------------------------------------------- *)
+
+QueryDecl      = "query", Ident, "=>", TypeRef, NL,
+                 [ INDENT,
+                     [ ByClause ],
+                     { FilterClause },
+                     [ AuthorizeDecl ],
+                   DEDENT ] ;
+
+ByClause       = "by", Ident, TypeRef, NL ;
+FilterClause   = "filter", Ident, TypeRef, NL ;
+
+(* -------------------------------------------------------------- *)
+(* Projections — PDL sub-language                                  *)
+(* -------------------------------------------------------------- *)
+
+ProjectionDecl = "projection", Ident, "=>", Ident, NL,
+                 INDENT, PDLBody, DEDENT ;
+
+PDLBody        = (* Projection Declaration Language grammar —
+                    see https://cratis.io/chronicle/projections/
+                    projection-declaration-language/grammar/ *) ;
+
+(* -------------------------------------------------------------- *)
+(* Captures — CDL sub-language                                     *)
+(* -------------------------------------------------------------- *)
+
+CaptureDecl    = "capture", Ident, NL,
+                 INDENT, CDLBody, DEDENT ;
+
+CDLBody        = (* Change Data Capture Language grammar *) ;
+
+(* -------------------------------------------------------------- *)
+(* Sub-language extension point                                    *)
+(* -------------------------------------------------------------- *)
+
+(* Any registered keyword not listed above may appear as a
+   SliceBody construct. The parser delegates to the registered
+   sub-parser for the indented body.                               *)
+
+ExtensionConstruct = Ident, Ident, NL,
+                     [ INDENT, { AnyLine }, DEDENT ] ;
+
+(* -------------------------------------------------------------- *)
+(* Constraints                                                     *)
+(* -------------------------------------------------------------- *)
+
+ConstraintDecl = "constraint", Ident, NL,
+                 INDENT, ConstraintBody, DEDENT ;
+
+ConstraintBody = "unique", Ident, "on", Ident, NL   (* unique property  *)
+               | "unique", "event", Ident, NL         (* unique event     *)
+               | FileDirective ;                       (* custom C#        *)
+
+(* -------------------------------------------------------------- *)
+(* Reactors                                                        *)
+(* -------------------------------------------------------------- *)
+
+ReactorDecl    = "reactor", Ident, NL,
+                 INDENT,
+                   "on", Ident, NL,
+                   ( FileDirective | InlineBlock ),
+                 DEDENT ;
+
+(* -------------------------------------------------------------- *)
+(* Screens                                                         *)
+(* -------------------------------------------------------------- *)
+
+ScreenDecl     = "screen", Ident, NL,
+                 INDENT, ScreenBody, DEDENT ;
+
+ScreenBody     = FileDirective                          (* full external file  *)
+               | { ScreenDirective } ;                  (* declarative levels  *)
+
+ScreenDirective = DataDecl
+               | ActionDecl
+               | SectionDecl
+               | LayoutRef
+               | InlineBlock ;
+
+DataDecl       = "data", TypeRef, "via", "query", Ident,
+                 [ "by", Ident ], NL ;
+
+ActionDecl     = "action", Ident, NL,
+                 [ INDENT, { ActionOption }, DEDENT ] ;
+
+ActionOption   = NavigateDecl
+               | "label", StringLiteral, NL ;
+
+NavigateDecl   = "navigate", "to", Ident, [ "by", Ident ], NL ;
+
+LayoutRef      = "layout", Ident, NL,
+                 INDENT, { SlotDecl }, DEDENT ;
+
+SlotDecl       = Ident, NL,
+                 [ INDENT, { ScreenDirective }, DEDENT ] ;
+
+SectionDecl    = "section", Ident, NL,
+                 INDENT, { ScreenDirective | WidgetDecl }, DEDENT
+               | "title", StringLiteral, NL ;
+
+WidgetDecl     = ( "table" | "summary" ) , ( TypeRef | Ident ), NL,
+                 [ INDENT, { WidgetOption }, DEDENT ] ;
+
+WidgetOption   = "column", Ident, [ "label", StringLiteral ], NL
+               | "field",  Ident, "label", StringLiteral, NL
+               | "on", "row-click", NavigateDecl ;
+
+(* -------------------------------------------------------------- *)
+(* Shared                                                          *)
+(* -------------------------------------------------------------- *)
+
+FileDirective  = "file", FilePath, NL ;
+FilePath       = (* relative path string *) ;
+
+InlineBlock    = LanguageTag, NL, "```", NL, { AnyLine }, "```", NL ;
+LanguageTag    = "csharp" | "typescript" | "react" | "html" ;
+
+StringLiteral  = '"', { ? any char except '"' ? }, '"' ;
+Number         = [ "-" ], { "0".."9" }, [ ".", { "0".."9" } ] ;
+Ident          = Letter, { Letter | Digit | "_" } ;
+Letter         = "A".."Z" | "a".."z" ;
+Digit          = "0".."9" ;
+
+NL             = ? newline ? ;
+INDENT         = ? increase in indentation level ? ;
+DEDENT         = ? decrease in indentation level ? ;
+AnyLine        = ? any text until newline ? ;
+```
