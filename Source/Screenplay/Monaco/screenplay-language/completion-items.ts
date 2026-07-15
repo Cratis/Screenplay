@@ -47,12 +47,16 @@ export const commandItems: CompletionEntry[] = [
     { label: 'validate csharp', insertText: `validate ${fenced('csharp')}`, documentation: 'Imperative validation in C#, yielding ValidationError.' },
     { label: 'produces', insertText: 'produces ${1:EventType}\n    ${2:property} = ${3:source}', documentation: 'Declares the event the command emits, with property mappings.' },
     { label: 'produces when', insertText: 'produces when ${1:condition}\n    ${2:EventType}\n        ${3:property} = ${4:source}', documentation: 'Conditionally emits an event when the condition holds.' },
-    { label: 'produces csharp', insertText: `produces ${fenced('csharp')}`, documentation: 'Fully imperative event production in C#.' },
+    { label: 'handler', insertText: 'handler\n    ', documentation: 'Fully imperative command implementation — file reference or inline C#, instead of produces.' },
 ];
 
 export const producesItems: CompletionEntry[] = [
     { label: 'when', insertText: 'when ${1:condition}', documentation: 'Guards the produced event with a condition.' },
-    { label: 'csharp', insertText: fenced('csharp'), documentation: 'Drops into C# for imperative event production.' },
+];
+
+export const handlerItems: CompletionEntry[] = [
+    { label: 'file', insertText: 'file ${1:Path}', documentation: 'Delegates the command implementation to an external C# file.' },
+    { label: 'csharp', insertText: fenced('csharp'), documentation: 'Inline C# returning the events to append.' },
 ];
 
 export const queryItems: CompletionEntry[] = [

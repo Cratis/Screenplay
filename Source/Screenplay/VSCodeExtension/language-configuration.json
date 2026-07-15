@@ -20,7 +20,7 @@
         "offSide": true
     },
     "indentationRules": {
-        "increaseIndentPattern": "^\\s*(module|feature|slice|policy|event|command|screen|projection|capture|reactor|constraint|layout|template|validate|produces|section)\\b.*$",
+        "increaseIndentPattern": "^\\s*(module|feature|slice|policy|event|command|screen|projection|capture|reactor|constraint|layout|template|validate|produces|handler|section)\\b.*$",
         "decreaseIndentPattern": "(?!)"
     }
 }

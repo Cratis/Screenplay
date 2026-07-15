@@ -114,7 +114,7 @@ CommandDecl    = "command", Ident, NL,
                    { PropertyLine },
                    [ AuthorizeDecl ],
                    { ValidateDecl },
-                   { ProducesDecl },
+                   ( { ProducesDecl } | HandlerDecl ),
                  DEDENT ;
 
 AuthorizeDecl  = "authorize", PolicyRef, { ( NL, PolicyRef ) | ( "or", PolicyRef ) }, NL ;
@@ -151,8 +151,7 @@ ProducesDecl   = "produces", Ident, NL,
                | "produces", "when", Condition, NL,
                    INDENT, Ident, NL,
                    [ INDENT, { PropertyMapping }, DEDENT ],
-                   DEDENT
-               | "produces", "csharp", NL, InlineBlock ;
+                   DEDENT ;
 
 Condition      = ConditionExpr, { ( "and" | "or" ), ConditionExpr } ;
 
@@ -174,6 +173,13 @@ MappingSource  = Ident                         (* command property   *)
                | Expression ;
 
 Expression     = (* arithmetic / method-call expression — freeform *) ;
+
+(* -------------------------------------------------------------- *)
+(* Handler                                                         *)
+(* -------------------------------------------------------------- *)
+
+HandlerDecl    = "handler", NL,
+                 INDENT, ( FileDirective | InlineBlock ), DEDENT ;
 
 (* -------------------------------------------------------------- *)
 (* Queries                                                         *)

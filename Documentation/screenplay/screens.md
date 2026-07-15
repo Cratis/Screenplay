@@ -120,4 +120,4 @@ screen RegisterInvoiceScreen
 | `react` | React/TSX components |
 | `typescript` | Plain TypeScript |
 | `html` | Static HTML |
-| `csharp` | Server-side logic (validation, reactor bodies, produces blocks) |
+| `csharp` | Server-side logic (validation, reactor bodies, command handlers) |

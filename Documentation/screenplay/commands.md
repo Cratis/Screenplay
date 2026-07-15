@@ -20,7 +20,14 @@ command <Name>
     <C# yielding ValidationError>
     ```]
 
-  [produces ...]
+  [produces ...]                  ← declarative — repeatable
+
+  [handler                        ← imperative fallback — instead of produces
+    file <Path>
+    | csharp
+        ```
+        <C# returning the events to append>
+        ```]
 ```
 
 ## Validation rules
@@ -82,7 +89,7 @@ Policies are declared at the top of the file — see [Policies](policies.md).
 
 ## The `produces` block
 
-Declares what events a command emits. Supports single, multiple, conditional, and fully imperative forms.
+Declares what events a command emits. Supports single, multiple, and conditional forms. For a fully imperative implementation, use a [handler](#the-handler-block) instead.
 
 ### Single event with property mapping
 
@@ -144,18 +151,32 @@ produces when $env.WELCOME_EMAILS_ENABLED == "true"
 
 Multiple `produces when` blocks form mutually exclusive or overlapping branches — each condition is evaluated independently.
 
-### Full imperative fallback
+## The `handler` block
+
+Declares a fully imperative implementation of the command, in C#, as either an inline block or a reference to an external file. Use it when the declarative `produces` forms cannot express the logic — batch processing, imperative branching, or anything that needs more than property mappings and conditions.
+
+Delegating to a file:
+
+```screenplay
+handler
+  file Commands/ProcessInvoiceBatchHandler.cs
+```
+
+Inline C#:
 
 ````screenplay
-produces csharp
-  ```
-  var events = new List<object>();
-  events.Add(new InvoiceBatchProcessingStarted(
-      BatchId: BatchId,
-      StartedAt: DateTimeOffset.UtcNow
-  ));
-  foreach (var invoiceId in InvoiceIds)
-      events.Add(new InvoiceSent(invoiceId, DateTimeOffset.UtcNow, context.Identity.Id, null));
-  return events;
-  ```
+handler
+  csharp
+    ```
+    var events = new List<object>();
+    events.Add(new InvoiceBatchProcessingStarted(
+        BatchId: BatchId,
+        StartedAt: DateTimeOffset.UtcNow
+    ));
+    foreach (var invoiceId in InvoiceIds)
+        events.Add(new InvoiceSent(invoiceId, DateTimeOffset.UtcNow, context.Identity.Id, null));
+    return events;
+    ```
 ````
+
+A command uses either `produces` blocks or a `handler` — not both. Keep handler logic small; anything substantial belongs in a `file` reference where it can be tested on its own.
