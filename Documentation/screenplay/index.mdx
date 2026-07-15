@@ -1,0 +1,68 @@
+---
+title: Screenplay
+description: The modeling language for the Cratis platform — describe a whole bounded context (events, commands, queries, projections, screens, automations, rules) in one declarative .play file, and run it live.
+---
+
+import { CardGrid } from '@astrojs/starlight/components';
+import SimpleCard from '@components/SimpleCard.astro';
+import TopicHero from '@components/TopicHero.astro';
+
+<TopicHero icon="open-book" eyebrow="Screenplay" title="Model the whole thing in one file">
+You already model a feature end to end on the whiteboard — the events, the command that produces them, the read model, the screen. Then you write it three more times: the C# backend, the generated proxies, the React UI — and from that moment the model and the app drift apart. Screenplay removes the re-typing: describe a **complete bounded context in one declarative `.play` file**, and let **Stage** run it live. [Get started →](/screenplay/getting-started/) · [Why Screenplay →](/screenplay/why-screenplay/)
+</TopicHero>
+
+## Start here
+
+<CardGrid>
+  <SimpleCard title="Why Screenplay" icon="approve-check" link="/screenplay/why-screenplay/">
+    The friction it removes — one model instead of four hand-synced layers — and the cases where a hand-written slice is still the better fit.
+  </SimpleCard>
+  <SimpleCard title="Get started" icon="rocket" link="/screenplay/getting-started/">
+    Write your first `.play` file and watch the editor light up with highlighting, completions, and live diagnostics — in minutes.
+  </SimpleCard>
+  <SimpleCard title="Language overview" icon="open-book" link="/screenplay/overview/">
+    The design principles, the top-level structure of a `.play` file, and a map of every construct.
+  </SimpleCard>
+  <SimpleCard title="Glossary" icon="list-format" link="/screenplay/glossary/">
+    Module, feature, slice, construct, sub-language, Stage, Studio — the vocabulary, defined once.
+  </SimpleCard>
+</CardGrid>
+
+## The whole production in one file
+
+<CardGrid>
+  <SimpleCard title="Modules, features, and slices" icon="puzzle" link="/screenplay/slices/">
+    A `.play` file is a set of typed slices aligned with Event Modeling — the atomic units of behavior.
+  </SimpleCard>
+  <SimpleCard title="Concepts" icon="seti:folder" link="/screenplay/concepts/">
+    Strongly-typed value types that declare their compliance attributes once, so every usage inherits them.
+  </SimpleCard>
+  <SimpleCard title="Commands and events" icon="right-arrow" link="/screenplay/commands/">
+    Declare the intent, the validation, the authorization, and the facts it produces — all together.
+  </SimpleCard>
+  <SimpleCard title="Projections and queries" icon="seti:db" link="/screenplay/projections/">
+    Turn events into read models with the embedded Projection Declaration Language, then expose them as queries.
+  </SimpleCard>
+  <SimpleCard title="Screens" icon="laptop" link="/screenplay/screens/">
+    Declare the UI at three levels — from pure intent that Studio generates to layout with inline React.
+  </SimpleCard>
+  <SimpleCard title="Reactors and captures" icon="rocket" link="/screenplay/reactors/">
+    React to events with automations, and turn external data into events with change data capture.
+  </SimpleCard>
+</CardGrid>
+
+## Go deeper
+
+<CardGrid>
+  <SimpleCard title="Sub-language pluggability" icon="puzzle" link="/screenplay/sub-languages/">
+    PDL and CDL are embedded sub-grammars registered exactly the way your own sub-language would be.
+  </SimpleCard>
+  <SimpleCard title="The grammar" icon="open-book" link="/screenplay/grammar/">
+    The full EBNF grammar — the precise, exhaustive definition of the language.
+  </SimpleCard>
+  <SimpleCard title="Frequently asked questions" icon="approve-check" link="/screenplay/faq/">
+    Indentation vs. braces, the escape hatch to C#/React, how Screenplay relates to Arc and Chronicle.
+  </SimpleCard>
+</CardGrid>
+
+Screenplay is the script; the rest of the Cratis platform is the cast that performs it. A `.play` file targets the same [Arc](/arc/) commands and queries and [Chronicle](/chronicle/) events and projections you would otherwise write by hand — so nothing about the runtime is hidden, and you can drop to code for any construct whenever you need to. See [Why developers choose Cratis](/why-cratis/) for how the pieces fit together.

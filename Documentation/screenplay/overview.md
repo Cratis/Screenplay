@@ -1,4 +1,7 @@
-# Screenplay Language
+---
+title: Language overview
+description: The design principles of the Screenplay language, the top-level structure of a .play file, and a map of every construct.
+---
 
 Screenplay is the modeling language for the Cratis platform. It lets developers describe a complete bounded context — events, commands, queries, projections, screens, automations, authorization, validation, constraints, and concepts — in a single declarative file. Stage interprets a Screenplay and runs it as a live application; Studio uses the same contract to visualize and generate.
 
@@ -61,6 +64,6 @@ Line comments start with `//` and run to the end of the line.
 
 ## Tooling
 
-The [`@cratis/screenplay-language`](../../Source/Screenplay/Monaco/screenplay-language) NPM package provides a Monaco language service for `.play` files — syntax highlighting (including embedded C#/TypeScript/React/HTML blocks and the PDL/CDL sub-languages), IntelliSense completions, hover documentation, and diagnostics. The [`screenplay-editor`](../../Source/Screenplay/Monaco/screenplay-editor) app hosts the editor standalone.
+The [`@cratis/screenplay-language`](https://github.com/Cratis/Screenplay/tree/main/Source/Screenplay/Monaco/screenplay-language) NPM package provides a Monaco language service for `.play` files — syntax highlighting (including embedded C#/TypeScript/React/HTML blocks and the PDL/CDL sub-languages), IntelliSense completions, hover documentation, and diagnostics. The [`screenplay-editor`](https://github.com/Cratis/Screenplay/tree/main/Source/Screenplay/Monaco/screenplay-editor) app hosts the editor standalone.
 
-The [Screenplay VS Code extension](../../Source/Screenplay/VSCodeExtension) brings the same language support to VS Code — a TextMate grammar with embedded-language and PDL/CDL highlighting, plus IntelliSense, hover, and diagnostics driven by the same shared language logic. `.play` files carry the Cratis icon.
+The [Screenplay VS Code extension](https://github.com/Cratis/Screenplay/tree/main/Source/Screenplay/VSCodeExtension) brings the same language support to VS Code — a TextMate grammar with embedded-language and PDL/CDL highlighting, plus IntelliSense, hover, and diagnostics driven by the same shared language logic. `.play` files carry the Cratis icon.
