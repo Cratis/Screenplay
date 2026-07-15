@@ -40,6 +40,7 @@ export const clauseKeywords = [
     'authorize',
     'validate',
     'produces',
+    'handler',
     'when',
     'message',
     'not',
@@ -104,7 +105,7 @@ export const languageConfiguration: languages.LanguageConfiguration = {
     },
     indentationRules: {
         increaseIndentPattern:
-            /^\s*(module|feature|slice|policy|event|command|screen|projection|capture|reactor|constraint|layout|template|validate|produces|section)\b.*$/,
+            /^\s*(module|feature|slice|policy|event|command|screen|projection|capture|reactor|constraint|layout|template|validate|produces|handler|section)\b.*$/,
         // Dedents are always explicit in an offside language — never auto-dedent.
         decreaseIndentPattern: /(?!)/,
     },

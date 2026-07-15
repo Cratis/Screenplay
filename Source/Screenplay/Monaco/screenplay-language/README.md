@@ -27,7 +27,7 @@ monaco.editor.create(element, {
 - **Highlighting** — all construct and clause keywords, slice types, concept attributes (`@pii`, `@sensitive`), context variables (`$context.*`, `$env.*`, `$eventContext.*`, `$.\*`), strings, numbers, and comments.
 - **Embedded code blocks** — `csharp`, `typescript`, `react`, and `html` blocks between triple backticks are highlighted with Monaco's own language grammars.
 - **Sub-languages** — the PDL (`projection`) and CDL (`capture`) bodies are tokenized by their own registered rules using Monarch's state stack.
-- **Completions** — context-aware by enclosing construct (top level, module, feature, slice, command, produces, screen, constraint, …), plus in-scope symbol names: policies after `authorize`, events after `on` and `produces`, concepts and primitives in type positions.
+- **Completions** — context-aware by enclosing construct (top level, module, feature, slice, command, produces, handler, screen, constraint, …), plus in-scope symbol names: policies after `authorize`, events after `on` and `produces`, concepts and primitives in type positions.
 - **Hover** — keyword documentation, concept definitions (primitive + attributes), policy require expressions, and event property lists.
 - **Diagnostics** — unknown slice types, unknown primitive types, references to undeclared policies and events, tab indentation, and unclosed code fences.
 

@@ -49,7 +49,7 @@ Line comments start with `//` and run to the end of the line.
 | Named authorization rules | [Policies](policies.md) |
 | Modules, features, and the four slice types | [Modules, Features and Slices](slices.md) |
 | Event type declarations | [Events](events.md) |
-| Commands, validation, and the `produces` block | [Commands](commands.md) |
+| Commands, validation, the `produces` block, and handlers | [Commands](commands.md) |
 | Read-side entry points | [Queries](queries.md) |
 | PDL-embedded projections | [Projections](projections.md) |
 | CDL-embedded change data capture | [Captures](captures.md) |

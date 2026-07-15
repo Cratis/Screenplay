@@ -33,6 +33,8 @@ export function completionEntriesFor(chain: string[]): CompletionEntry[] {
             return items.commandItems;
         case 'produces':
             return items.producesItems;
+        case 'handler':
+            return items.handlerItems;
         case 'query':
             return items.queryItems;
         case 'constraint':

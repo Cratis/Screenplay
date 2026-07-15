@@ -265,19 +265,20 @@ module Invoicing
           invoiceIds not empty  message "Batch must contain at least one invoice"
           action not empty      message "Action is required"
 
-        produces csharp
-          ```
-          var events = new List<object>();
-          events.Add(new InvoiceBatchProcessingStarted(BatchId, InvoiceIds.Count, DateTimeOffset.UtcNow));
-          foreach (var id in InvoiceIds)
-              events.Add(Action switch {
-                  "send"   => new InvoiceSent(id, DateTimeOffset.UtcNow, context.Identity.Id, null),
-                  "cancel" => new InvoiceCancelled(id, "Batch", DateTimeOffset.UtcNow, context.Identity.Id),
-                  _        => throw new InvalidOperationException($"Unknown action: {Action}")
-              });
-          events.Add(new InvoiceBatchProcessingCompleted(BatchId, InvoiceIds.Count, DateTimeOffset.UtcNow));
-          return events;
-          ```
+        handler
+          csharp
+            ```
+            var events = new List<object>();
+            events.Add(new InvoiceBatchProcessingStarted(BatchId, InvoiceIds.Count, DateTimeOffset.UtcNow));
+            foreach (var id in InvoiceIds)
+                events.Add(Action switch {
+                    "send"   => new InvoiceSent(id, DateTimeOffset.UtcNow, context.Identity.Id, null),
+                    "cancel" => new InvoiceCancelled(id, "Batch", DateTimeOffset.UtcNow, context.Identity.Id),
+                    _        => throw new InvalidOperationException($"Unknown action: {Action}")
+                });
+            events.Add(new InvoiceBatchProcessingCompleted(BatchId, InvoiceIds.Count, DateTimeOffset.UtcNow));
+            return events;
+            ```
 
       event InvoiceBatchProcessingStarted
         batchId   Uuid
