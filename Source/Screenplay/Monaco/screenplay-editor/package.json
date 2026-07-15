@@ -1,0 +1,28 @@
+{
+    "name": "screenplay-editor",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc --noEmit -p tsconfig.json && vite build",
+        "compile": "tsc --noEmit -p tsconfig.json",
+        "preview": "vite preview",
+        "lint": "yarn g:lint",
+        "lint:ci": "yarn g:lint:ci"
+    },
+    "dependencies": {
+        "@cratis/screenplay-language": "workspace:*",
+        "@monaco-editor/react": "^4.7.0",
+        "monaco-editor": "^0.52.2",
+        "react": "19.2.7",
+        "react-dom": "19.2.7"
+    },
+    "devDependencies": {
+        "@types/react": "19.2.17",
+        "@types/react-dom": "19.2.3",
+        "@vitejs/plugin-react": "6.0.3",
+        "typescript": "6.0.3",
+        "vite": "8.1.4"
+    }
+}
