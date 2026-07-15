@@ -2,7 +2,8 @@
     "private": true,
     "name": "screenplay-workspace",
     "workspaces": [
-        "Source/Screenplay/Monaco/screenplay-language"
+        "Source/Screenplay/Monaco/screenplay-language",
+        "Source/Screenplay/Monaco/screenplay-editor"
     ],
     "engines": {
         "node": ">=20.0.0"
@@ -12,6 +13,7 @@
         "lint": "yarn workspaces foreach -At run lint",
         "lint:ci": "yarn workspaces foreach -At run lint:ci",
         "compile": "yarn workspaces foreach -At run compile",
+        "dev": "yarn workspace screenplay-editor dev",
         "g:lint": "cd $INIT_CWD && eslint --cache --quiet --fix",
         "g:lint:ci": "cd $INIT_CWD && eslint --cache --quiet"
     },

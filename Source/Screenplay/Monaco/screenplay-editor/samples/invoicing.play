@@ -1,0 +1,493 @@
+// ============================================================
+// Invoicing — complete .play file
+// ============================================================
+
+import Customers.CustomerRegistered
+
+concept InvoiceId        : Uuid
+concept CustomerId       : Uuid
+concept InvoiceNumber    : String
+concept CurrencyCode     : String
+concept Money            : Decimal
+concept Quantity         : Int
+concept EmailAddress     : String   @pii
+concept PersonName       : String   @pii
+
+concept InvoiceStatus : Enum
+  draft
+  sent
+  paid
+  overdue
+  cancelled
+
+concept PaymentTerms : Enum
+  net30
+  net60
+  immediate
+
+policy IsAuthenticated
+  require authenticated
+
+policy IsAccountant
+  require role "Accountant"
+
+policy CanManageInvoice
+  require role "InvoiceManager"
+    or role "Accountant"
+
+policy IsAdultCustomer
+  csharp
+    ```
+    var dob = context.User.FindFirst("dateOfBirth")?.Value;
+    if (dob is null) return PolicyResult.Fail("Date of birth claim missing");
+    return DateTime.Parse(dob) <= DateTime.UtcNow.AddYears(-18)
+        ? PolicyResult.Success()
+        : PolicyResult.Fail("Customer must be 18 or older");
+    ```
+
+module Invoicing
+
+  layout MasterDetail
+    template
+      sidebar
+      main
+
+  layout DashboardLayout
+    template
+      header
+      left
+      right
+      footer
+
+  feature InvoiceManagement
+
+    slice StateChange RegisterInvoice
+
+      command RegisterInvoice
+        invoiceId     InvoiceId
+        customerId    CustomerId
+        invoiceNumber InvoiceNumber
+        lines         InvoiceLine[]
+        currency      CurrencyCode
+        paymentTerms  PaymentTerms
+        dueDate       Date
+        isProForma    Bool
+
+        authorize CanManageInvoice
+                  IsAdultCustomer
+
+        validate
+          invoiceNumber not empty                  message "Invoice number is required"
+          invoiceNumber matches "^INV-[0-9]{6}$"  message "Invoice number must match INV-000000"
+          lines not empty                          message "An invoice must have at least one line"
+          lines.quantity all > 0                   message "All line quantities must be positive"
+          currency length == 3                     message "Currency must be a 3-letter ISO code"
+          dueDate > today                          message "Due date must be in the future"
+
+        validate csharp
+          ```
+          var total = Lines.Sum(l => l.Quantity * l.UnitPrice);
+          if (total > 1_000_000 && PaymentTerms == PaymentTerms.Immediate)
+              yield ValidationError("Invoices over 1,000,000 cannot require immediate payment");
+          ```
+
+        produces InvoiceRegistered
+          invoiceId     = invoiceId
+          customerId    = customerId
+          invoiceNumber = invoiceNumber
+          lines         = lines
+          currency      = currency
+          paymentTerms  = paymentTerms
+          dueDate       = dueDate
+          registeredAt  = $context.occurred
+          registeredBy  = $context.identity.id
+          source        = $env.SERVICE_NAME
+          status        = "draft"
+
+        produces when isProForma == true
+          ProFormaInvoiceIssued
+            invoiceId  = invoiceId
+            issuedAt   = $context.occurred
+
+        produces when currency != "NOK"
+          ForeignCurrencyInvoiceRegistered
+            invoiceId = invoiceId
+            currency  = currency
+
+        produces when paymentTerms == "immediate"
+          ImmediatePaymentInvoiceRegistered
+            invoiceId = invoiceId
+            dueDate   = dueDate
+
+        produces when paymentTerms == "net30" or paymentTerms == "net60"
+          DeferredPaymentInvoiceRegistered
+            invoiceId    = invoiceId
+            paymentTerms = paymentTerms
+            dueDate      = dueDate
+
+      event InvoiceRegistered
+        invoiceId     InvoiceId
+        customerId    CustomerId
+        invoiceNumber InvoiceNumber
+        lines         InvoiceLine[]
+        currency      CurrencyCode
+        paymentTerms  PaymentTerms
+        dueDate       Date
+        registeredAt  DateTime
+        registeredBy  String
+        source        String
+        status        InvoiceStatus
+
+      event ProFormaInvoiceIssued
+        invoiceId InvoiceId
+        issuedAt  DateTime
+
+      event ForeignCurrencyInvoiceRegistered
+        invoiceId InvoiceId
+        currency  CurrencyCode
+
+      event ImmediatePaymentInvoiceRegistered
+        invoiceId InvoiceId
+        dueDate   Date
+
+      event DeferredPaymentInvoiceRegistered
+        invoiceId    InvoiceId
+        paymentTerms PaymentTerms
+        dueDate      Date
+
+      constraint UniqueInvoiceNumber
+        unique invoiceNumber on InvoiceRegistered
+
+      constraint OneRegistrationPerInvoice
+        unique event InvoiceRegistered
+
+    slice StateChange CancelInvoice
+
+      command CancelInvoice
+        invoiceId InvoiceId
+        reason    String
+        refund    Bool
+
+        authorize CanManageInvoice
+
+        validate
+          reason not empty  message "A cancellation reason is required"
+          reason max 500    message "Reason must be 500 characters or fewer"
+
+        produces InvoiceCancelled
+          invoiceId   = invoiceId
+          reason      = reason
+          cancelledAt = $context.occurred
+          cancelledBy = $context.identity.id
+
+        produces when refund == true
+          InvoiceRefundRequested
+            invoiceId   = invoiceId
+            requestedAt = $context.occurred
+
+      event InvoiceCancelled
+        invoiceId   InvoiceId
+        reason      String
+        cancelledAt DateTime
+        cancelledBy String
+
+      event InvoiceRefundRequested
+        invoiceId   InvoiceId
+        requestedAt DateTime
+
+    slice StateChange ChangeInvoiceStatus
+
+      command ChangeInvoiceStatus
+        invoiceId InvoiceId
+        status    InvoiceStatus
+        note      String?
+
+        authorize IsAccountant
+
+        validate
+          status not empty  message "Status is required"
+
+        produces when status == "sent"
+          InvoiceSent
+            invoiceId = invoiceId
+            sentAt    = $context.occurred
+            note      = note
+
+        produces when status == "paid"
+          InvoicePaid
+            invoiceId = invoiceId
+            paidAt    = $context.occurred
+            note      = note
+
+        produces when status == "overdue"
+          InvoiceMarkedOverdue
+            invoiceId = invoiceId
+            overdueAt = $context.occurred
+
+        produces when status != "sent" and status != "paid" and status != "overdue"
+          InvoiceStatusChanged
+            invoiceId = invoiceId
+            status    = status
+            changedAt = $context.occurred
+
+      event InvoiceSent
+        invoiceId InvoiceId
+        sentAt    DateTime
+        note      String?
+
+      event InvoicePaid
+        invoiceId InvoiceId
+        paidAt    DateTime
+        note      String?
+
+      event InvoiceMarkedOverdue
+        invoiceId InvoiceId
+        overdueAt DateTime
+
+      event InvoiceStatusChanged
+        invoiceId InvoiceId
+        status    InvoiceStatus
+        changedAt DateTime
+
+      constraint InvoiceStatusTransition
+        file Constraints/InvoiceStatusTransitionConstraint.cs
+
+    slice StateChange ProcessInvoiceBatch
+
+      command ProcessInvoiceBatch
+        batchId    Uuid
+        invoiceIds InvoiceId[]
+        action     String
+
+        authorize IsAccountant
+
+        validate
+          invoiceIds not empty  message "Batch must contain at least one invoice"
+          action not empty      message "Action is required"
+
+        produces csharp
+          ```
+          var events = new List<object>();
+          events.Add(new InvoiceBatchProcessingStarted(BatchId, InvoiceIds.Count, DateTimeOffset.UtcNow));
+          foreach (var id in InvoiceIds)
+              events.Add(Action switch {
+                  "send"   => new InvoiceSent(id, DateTimeOffset.UtcNow, context.Identity.Id, null),
+                  "cancel" => new InvoiceCancelled(id, "Batch", DateTimeOffset.UtcNow, context.Identity.Id),
+                  _        => throw new InvalidOperationException($"Unknown action: {Action}")
+              });
+          events.Add(new InvoiceBatchProcessingCompleted(BatchId, InvoiceIds.Count, DateTimeOffset.UtcNow));
+          return events;
+          ```
+
+      event InvoiceBatchProcessingStarted
+        batchId   Uuid
+        count     Int
+        startedAt DateTime
+
+      event InvoiceBatchProcessingCompleted
+        batchId        Uuid
+        processedCount Int
+        completedAt    DateTime
+
+    slice Translate LegacyInvoiceSync
+
+      capture LegacyInvoiceCapture
+        source api
+          api LegacyInvoicingApi
+          route /invoices
+          poll 5m
+        key id
+        map
+          status = status translate
+            "utkast"     => draft
+            "sendt"      => sent
+            "betalt"     => paid
+            "kansellert" => cancelled
+        append InvoiceStatusChanged
+          when status
+            invoiceId = $.id
+            status    = $.status
+            changedAt = $context.occurred
+        children lineItems identified by lineNumber
+          append InvoiceLineItemAdded
+            when added
+              invoiceId  = $.id
+              lineNumber = $.lineNumber
+              quantity   = $.quantity
+              unitPrice  = $.unitPrice
+          append InvoiceLineItemRemoved
+            when removed
+              invoiceId  = $.id
+              lineNumber = $.lineNumber
+
+    slice StateView InvoiceList
+
+      query ListInvoices => InvoiceListReadModel[]
+        filter status     InvoiceStatus?
+        filter customerId CustomerId?
+        authorize IsAuthenticated
+
+      projection InvoiceList => InvoiceListReadModel
+        from InvoiceRegistered key invoiceId
+          customerId    = customerId
+          invoiceNumber = invoiceNumber
+          currency      = currency
+          status        = "draft"
+          lineCount     = 0
+          dueDate       = dueDate
+        from InvoiceSent
+          status = "sent"
+        from InvoicePaid
+          status = "paid"
+        from InvoiceMarkedOverdue
+          status = "overdue"
+        from InvoiceStatusChanged
+          status = status
+        remove with InvoiceCancelled
+
+      screen InvoiceList
+        data InvoiceListReadModel[] via query ListInvoices
+        action RegisterInvoice
+          navigate to RegisterInvoiceScreen
+        action CancelInvoice
+
+    slice StateView InvoiceDetails
+
+      query GetInvoice => InvoiceDetailsReadModel
+        by invoiceId InvoiceId
+        authorize IsAuthenticated
+
+      projection InvoiceDetails => InvoiceDetailsReadModel
+        key invoiceId
+        from InvoiceRegistered key invoiceId
+          customerId    = customerId
+          invoiceNumber = invoiceNumber
+          currency      = currency
+          paymentTerms  = paymentTerms
+          status        = "draft"
+          dueDate       = dueDate
+          registeredAt  = $eventContext.occurred
+        from InvoiceSent
+          status = "sent"
+          sentAt = sentAt
+        from InvoicePaid
+          status = "paid"
+          paidAt = paidAt
+        from InvoiceMarkedOverdue
+          status    = "overdue"
+          overdueAt = overdueAt
+        join customer on customerId
+          with CustomerRegistered
+            customerName = name
+        children lineItems identified by lineNumber
+          from InvoiceLineItemAdded key lineNumber
+            parent invoiceId
+            quantity  = quantity
+            unitPrice = unitPrice
+          remove with InvoiceLineItemRemoved key lineNumber
+            parent invoiceId
+
+      screen InvoiceDetails
+        layout MasterDetail
+          sidebar
+            data InvoiceDetailsReadModel via query GetInvoice by invoiceId
+            section summary
+              action CancelInvoice
+              action ChangeInvoiceStatus
+          main
+            section lineItems
+              table lineItems
+                column lineNumber  label "#"
+                column quantity    label "Qty"
+                column unitPrice   label "Unit Price"
+                on row-click navigate to InvoiceLineDetail by lineNumber
+
+    slice StateView InvoiceDashboard
+
+      query GetInvoiceSummary  => InvoiceSummaryReadModel
+        authorize IsAccountant
+
+      query GetOverdueInvoices => OverdueInvoicesReadModel[]
+        authorize IsAccountant
+
+      projection InvoiceSummary => InvoiceSummaryReadModel
+        from InvoiceRegistered
+          key "global"
+          increment totalCount
+          increment draftCount
+        from InvoiceSent
+          decrement draftCount
+          increment sentCount
+        from InvoicePaid
+          decrement sentCount
+          increment paidCount
+        from InvoiceMarkedOverdue
+          increment overdueCount
+        from InvoiceCancelled
+          decrement totalCount
+
+      screen InvoiceDashboard
+        layout DashboardLayout
+          header
+            section title
+              data InvoiceSummaryReadModel via query GetInvoiceSummary
+              react
+                ```
+                export default ({ data }: Props) => (
+                  <header className="dashboard-header">
+                    <h1>Invoice Dashboard</h1>
+                    <span className="badge">{data.totalCount} invoices</span>
+                    {data.overdueCount > 0 && (
+                      <span className="badge badge--warning">{data.overdueCount} overdue</span>
+                    )}
+                  </header>
+                );
+                ```
+          left
+            section overdue
+              data OverdueInvoicesReadModel[] via query GetOverdueInvoices
+              table OverdueInvoicesReadModel
+                column invoiceNumber label "Invoice #"
+                column dueDate       label "Due Date"
+                on row-click navigate to InvoiceDetails by invoiceId
+          right
+            section summary
+              data InvoiceSummaryReadModel via query GetInvoiceSummary
+              react
+                ```
+                import { PieChart, Pie, Cell, Tooltip } from 'recharts';
+                const COLORS = ['#94a3b8', '#60a5fa', '#34d399', '#f87171'];
+                export default ({ data }: Props) => (
+                  <PieChart width={300} height={300}>
+                    <Pie data={[
+                      { name: 'Draft', value: data.draftCount },
+                      { name: 'Sent',  value: data.sentCount },
+                      { name: 'Paid',  value: data.paidCount },
+                    ]} dataKey="value">
+                      {COLORS.map((c, i) => <Cell key={i} fill={c} />)}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                );
+                ```
+          footer
+            section actions
+              action RegisterInvoice
+                label "New Invoice"
+                navigate to RegisterInvoiceScreen
+
+    slice Automation NotifyCustomerOnInvoiceRegistered
+
+      reactor NotifyCustomer
+        on InvoiceRegistered
+          file Reactors/NotifyCustomerReactor.cs
+
+    slice Automation DetectOverdueInvoices
+
+      reactor OverdueInvoiceDetector
+        on InvoiceRegistered
+          csharp
+            ```
+            if (DueDate < DateTimeOffset.UtcNow)
+                return [new MarkInvoiceOverdue(InvoiceId, DateTimeOffset.UtcNow)];
+            ```
