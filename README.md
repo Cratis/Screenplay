@@ -92,7 +92,7 @@ Pick the slice type by what the slice *does*:
 
 | Slice type | The scene it plays | Constructs |
 | --- | --- | --- |
-| `StateChange` | something changes the system | `command` → `event`, with `validate`, `authorize`, `constraint` |
+| `StateChange` | something changes the system | `command` → `event` via `produces` or an imperative `handler`, with `validate`, `authorize`, `constraint` |
 | `StateView` | something reads the system | `query` + `projection` + `screen` |
 | `Automation` | something reacts to what happened | `reactor` |
 | `Translate` | something turns outside data into events | `capture` |
@@ -101,7 +101,8 @@ Three ideas keep the script both readable and complete:
 
 - **Declarative first, with an escape hatch.** Every construct has a clean declarative form — but any of them
   can drop into inline **C#**, **TypeScript**, **React**, or **HTML** (or a `file` reference) when a scene
-  needs custom staging. Common cases stay terse; the hard 10% is never out of reach.
+  needs custom staging. A command, for instance, swaps its declarative `produces` for an imperative `handler`.
+  Common cases stay terse; the hard 10% is never out of reach.
 - **Concepts carry compliance.** Value types declare their attributes once — `@pii`, `@sensitive` — and every
   usage inherits them, so GDPR and sensitivity travel with the data instead of being re-litigated per field.
 - **Pluggable sub-languages.** Projections are written in the **Projection Declaration Language (PDL)** and
