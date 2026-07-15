@@ -3,7 +3,8 @@
     "name": "screenplay-workspace",
     "workspaces": [
         "Source/Screenplay/Monaco/screenplay-language",
-        "Source/Screenplay/Monaco/screenplay-editor"
+        "Source/Screenplay/Monaco/screenplay-editor",
+        "Source/Screenplay/VSCodeExtension"
     ],
     "engines": {
         "node": ">=20.0.0"

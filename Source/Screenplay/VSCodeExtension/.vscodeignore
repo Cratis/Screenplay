@@ -1,0 +1,18 @@
+# Only the bundled output in `out/`, the grammar, the language configuration,
+# and the resources ship — everything else is build/dev tooling.
+node_modules/**
+**/*.ts
+tsconfig.json
+esbuild.mjs
+.eslintcache
+.gitignore
+
+# Source maps would leak local paths and add size for no runtime gain.
+**/*.map
+
+# OS metadata.
+**/.DS_Store
+
+# Packaging artifacts.
+**/*.vsix
+.vscodeignore
