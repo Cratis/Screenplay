@@ -1,0 +1,29 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "lib": [
+            "ES2022"
+        ],
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "types": [
+            "node",
+            "vscode"
+        ],
+        "noEmit": true,
+        "strict": true,
+        "esModuleInterop": true,
+        "isolatedModules": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noFallthroughCasesInSwitch": true,
+        "skipLibCheck": true
+    },
+    "include": [
+        "**/*.ts"
+    ],
+    "exclude": [
+        "out",
+        "node_modules"
+    ]
+}

@@ -1,0 +1,73 @@
+{
+    "name": "screenplay",
+    "displayName": "Screenplay Language",
+    "description": "Language support for the Cratis Screenplay DSL (.play) — syntax highlighting, IntelliSense, hover documentation, and diagnostics",
+    "version": "0.1.0",
+    "publisher": "cratis",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Cratis/Screenplay.git"
+    },
+    "icon": "resources/logo.png",
+    "license": "MIT",
+    "engines": {
+        "vscode": "^1.85.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "activationEvents": [],
+    "main": "./out/extension.js",
+    "contributes": {
+        "languages": [
+            {
+                "id": "screenplay",
+                "aliases": [
+                    "Screenplay",
+                    "screenplay"
+                ],
+                "extensions": [
+                    ".play"
+                ],
+                "configuration": "./language-configuration.json",
+                "icon": {
+                    "light": "./resources/logo.png",
+                    "dark": "./resources/logo.png"
+                }
+            }
+        ],
+        "grammars": [
+            {
+                "language": "screenplay",
+                "scopeName": "source.screenplay",
+                "path": "./syntaxes/screenplay.tmLanguage.json",
+                "embeddedLanguages": {
+                    "meta.embedded.block.csharp": "csharp",
+                    "meta.embedded.block.typescript": "typescript",
+                    "meta.embedded.block.typescriptreact": "typescriptreact",
+                    "meta.embedded.block.html": "html"
+                }
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "node esbuild.mjs --production",
+        "build": "node esbuild.mjs && tsc --noEmit",
+        "compile": "node esbuild.mjs",
+        "watch": "node esbuild.mjs --watch",
+        "typecheck": "tsc --noEmit",
+        "package": "vsce package --no-dependencies",
+        "lint": "yarn g:lint",
+        "lint:ci": "yarn g:lint:ci"
+    },
+    "dependencies": {
+        "@cratis/screenplay-language": "workspace:*"
+    },
+    "devDependencies": {
+        "@types/node": "26.1.1",
+        "@types/vscode": "^1.85.0",
+        "@vscode/vsce": "^3.9.2",
+        "esbuild": "^0.28.1",
+        "typescript": "6.0.3"
+    }
+}

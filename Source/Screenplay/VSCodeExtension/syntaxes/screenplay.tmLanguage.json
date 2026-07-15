@@ -1,0 +1,213 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "Screenplay",
+    "scopeName": "source.screenplay",
+    "fileTypes": [
+        "play"
+    ],
+    "patterns": [
+        { "include": "#comment" },
+        { "include": "#code-block-csharp" },
+        { "include": "#code-block-react" },
+        { "include": "#code-block-typescript" },
+        { "include": "#code-block-html" },
+        { "include": "#projection-block" },
+        { "include": "#capture-block" },
+        { "include": "#keywords" },
+        { "include": "#common" }
+    ],
+    "repository": {
+        "comment": {
+            "match": "//.*",
+            "name": "comment.line.double-slash.screenplay"
+        },
+        "keywords": {
+            "patterns": [
+                {
+                    "match": "^\\s*(import|concept|policy|module|layout|feature|slice|event|command|query|reactor|screen|constraint)\\b",
+                    "captures": {
+                        "1": { "name": "keyword.control.screenplay" }
+                    }
+                },
+                {
+                    "match": "\\brow-click\\b",
+                    "name": "keyword.other.screenplay"
+                },
+                {
+                    "match": "\\b(authorize|validate|produces|require|when|template|data|action|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|file|message|matches|all|max|min|length|today|not|empty|and|or|authenticated|role|claim|subject|event|query|layout|translate|key)\\b",
+                    "name": "keyword.other.screenplay"
+                }
+            ]
+        },
+        "common": {
+            "patterns": [
+                { "include": "#comment" },
+                {
+                    "match": "@\\w+",
+                    "name": "entity.other.attribute-name.screenplay"
+                },
+                {
+                    "match": "\\$(?:context|eventContext)(?:\\.\\w+)*|\\$env\\.\\w+|\\$\\.[\\w.]*",
+                    "name": "variable.language.screenplay"
+                },
+                {
+                    "match": "\"[^\"]*\"",
+                    "name": "string.quoted.double.screenplay"
+                },
+                {
+                    "match": "\"[^\"]*$",
+                    "name": "invalid.illegal.unterminated-string.screenplay"
+                },
+                {
+                    "match": "\\b\\d+(?:ms|s|m|h|d)\\b",
+                    "name": "constant.numeric.duration.screenplay"
+                },
+                {
+                    "match": "-?\\b\\d+(?:\\.\\d+)?\\b",
+                    "name": "constant.numeric.screenplay"
+                },
+                {
+                    "match": "\\b(StateChange|StateView|Automation|Translate)\\b",
+                    "name": "support.class.slice-type.screenplay"
+                },
+                {
+                    "match": "\\b(Uuid|String|Int|Decimal|Bool|Date|DateTime|Enum)\\b",
+                    "name": "support.type.primitive.screenplay"
+                },
+                {
+                    "match": "=>|==|!=|>=|<=|[><=:?]",
+                    "name": "keyword.operator.screenplay"
+                },
+                {
+                    "match": "\\b[A-Z]\\w*\\b",
+                    "name": "entity.name.type.screenplay"
+                },
+                {
+                    "match": "\\b[a-z_]\\w*\\b",
+                    "name": "variable.other.screenplay"
+                }
+            ]
+        },
+        "code-block-csharp": {
+            "begin": "^([ ]*)((?:validate|produces)[ ]+)?(csharp)[ ]*$",
+            "beginCaptures": {
+                "2": { "name": "keyword.other.screenplay" },
+                "3": { "name": "entity.name.tag.code-language.screenplay" }
+            },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [
+                {
+                    "begin": "^[ ]*(```)[ ]*$",
+                    "beginCaptures": {
+                        "1": { "name": "punctuation.definition.fence.screenplay" }
+                    },
+                    "end": "^[ ]*(```)[ ]*$",
+                    "endCaptures": {
+                        "1": { "name": "punctuation.definition.fence.screenplay" }
+                    },
+                    "contentName": "meta.embedded.block.csharp",
+                    "patterns": [
+                        { "include": "source.cs" }
+                    ]
+                }
+            ]
+        },
+        "code-block-typescript": {
+            "begin": "^([ ]*)(typescript)[ ]*$",
+            "beginCaptures": {
+                "2": { "name": "entity.name.tag.code-language.screenplay" }
+            },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [
+                {
+                    "begin": "^[ ]*(```)[ ]*$",
+                    "beginCaptures": {
+                        "1": { "name": "punctuation.definition.fence.screenplay" }
+                    },
+                    "end": "^[ ]*(```)[ ]*$",
+                    "endCaptures": {
+                        "1": { "name": "punctuation.definition.fence.screenplay" }
+                    },
+                    "contentName": "meta.embedded.block.typescript",
+                    "patterns": [
+                        { "include": "source.ts" }
+                    ]
+                }
+            ]
+        },
+        "code-block-react": {
+            "begin": "^([ ]*)(react)[ ]*$",
+            "beginCaptures": {
+                "2": { "name": "entity.name.tag.code-language.screenplay" }
+            },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [
+                {
+                    "begin": "^[ ]*(```)[ ]*$",
+                    "beginCaptures": {
+                        "1": { "name": "punctuation.definition.fence.screenplay" }
+                    },
+                    "end": "^[ ]*(```)[ ]*$",
+                    "endCaptures": {
+                        "1": { "name": "punctuation.definition.fence.screenplay" }
+                    },
+                    "contentName": "meta.embedded.block.typescriptreact",
+                    "patterns": [
+                        { "include": "source.tsx" }
+                    ]
+                }
+            ]
+        },
+        "code-block-html": {
+            "begin": "^([ ]*)(html)[ ]*$",
+            "beginCaptures": {
+                "2": { "name": "entity.name.tag.code-language.screenplay" }
+            },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [
+                {
+                    "begin": "^[ ]*(```)[ ]*$",
+                    "beginCaptures": {
+                        "1": { "name": "punctuation.definition.fence.screenplay" }
+                    },
+                    "end": "^[ ]*(```)[ ]*$",
+                    "endCaptures": {
+                        "1": { "name": "punctuation.definition.fence.screenplay" }
+                    },
+                    "contentName": "meta.embedded.block.html",
+                    "patterns": [
+                        { "include": "text.html.basic" }
+                    ]
+                }
+            ]
+        },
+        "projection-block": {
+            "begin": "^([ ]*)(projection)\\b",
+            "beginCaptures": {
+                "2": { "name": "keyword.control.screenplay" }
+            },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [
+                {
+                    "match": "\\b(from|every|join|children|identified|by|key|parent|with|remove|on|set|increment|decrement|add|subtract|count)\\b",
+                    "name": "keyword.other.pdl.screenplay"
+                },
+                { "include": "#common" }
+            ]
+        },
+        "capture-block": {
+            "begin": "^([ ]*)(capture)\\b",
+            "beginCaptures": {
+                "2": { "name": "keyword.control.screenplay" }
+            },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [
+                {
+                    "match": "\\b(source|api|route|poll|key|map|translate|append|when|children|identified|by|added|removed|changed)\\b",
+                    "name": "keyword.other.cdl.screenplay"
+                },
+                { "include": "#common" }
+            ]
+        }
+    }
+}
