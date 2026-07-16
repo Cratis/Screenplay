@@ -2,7 +2,7 @@
 
 # 🎬 Screenplay
 
-**The modeling language for the Cratis platform — one declarative `.play` file describes a whole bounded context, and the cast performs it live.**
+**The modeling language for the Cratis platform — one declarative `.play` file describes a whole system, and the cast performs it live.**
 
 [![Discord](https://img.shields.io/discord/1182595891576717413?label=Discord&logo=discord&logoColor=white)](https://discord.gg/kt4AMpV8WV)
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/cratis.screenplay?label=VS%20Code%20Marketplace&logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=cratis.screenplay)
@@ -15,7 +15,7 @@
 
 A screenplay is the one document a production works from — it names the cast, sets every scene, and writes
 every line, so the director, the actors, and the crew all put on the *same* show. That's the whole idea. A
-Screenplay `.play` file is the script for a bounded context: its concepts, events, commands, queries,
+Screenplay `.play` file is the script for an entire system: its concepts, events, commands, queries,
 projections, screens, automations, and the rules that govern them — top to bottom, in one place.
 
 Hand that script to **Stage** and it puts on the performance — a live, running application. Hand it to
@@ -27,7 +27,7 @@ lost between the model on the whiteboard and the app in production.
 Four reasons, and they all line up:
 
 - **It's the script for the whole show.** A screenplay holds an entire production in one document — cast,
-  scenes, stage directions, dialogue. A `.play` file holds an entire bounded context the same way: nothing
+  scenes, stage directions, dialogue. A `.play` file holds an entire system the same way: nothing
   about the behavior hides in another layer or another file.
 - **It's written to be performed, not just read.** A screenplay isn't the finished film — it's the thing you
   perform. **Stage** reads it and runs the application; **Studio** reads it and draws it. The script is
@@ -87,7 +87,7 @@ events *project* into a read model and how that read model *appears* on screen.
 
 ## 📖 The whole production in one file
 
-A `.play` describes a bounded context as a set of typed **slices**, aligned with Event Modeling's vocabulary.
+A `.play` describes an entire system as a set of typed **slices**, aligned with Event Modeling's vocabulary.
 Pick the slice type by what the slice *does*:
 
 | Slice type | The scene it plays | Constructs |
@@ -120,7 +120,7 @@ script a joy to author — and downstream, Stage and Studio each read the very s
 
 ```mermaid
 flowchart LR
-    Author["✍️ you<br/>write the script"] -->|".play"| Play[["📄 Screenplay<br/>one bounded context"]]
+    Author["✍️ you<br/>write the script"] -->|".play"| Play[["📄 Screenplay<br/>one whole system"]]
     Tools["🧰 language service<br/>VS Code · editor · Monaco"] -.->|"highlight · IntelliSense<br/>hover · diagnostics"| Play
     Play -->|"interpreted by"| Stage["🎬 Stage"]
     Play -->|"read by"| Studio["🎨 Studio"]
