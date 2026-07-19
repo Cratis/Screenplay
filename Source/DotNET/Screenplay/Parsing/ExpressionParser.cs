@@ -132,6 +132,7 @@ internal static partial class ExpressionParser
         "false" => new(false, location),
         "null" => new(null, location),
         _ when text.Length >= 2 && text.StartsWith('"') && text.EndsWith('"') => new(text[1..^1], location),
+        _ when text.Length >= 2 && text.StartsWith('\'') && text.EndsWith('\'') => new(text[1..^1], location),
         _ when NumberRegex().IsMatch(text) => new(double.Parse(text, CultureInfo.InvariantCulture), location),
         _ => null
     };
