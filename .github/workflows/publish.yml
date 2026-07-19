@@ -98,13 +98,19 @@ jobs:
         working-directory: ./Source/Screenplay/VSCodeExtension
         run: yarn vscode:prepublish
 
+      - name: Set extension version
+        working-directory: ./Source/Screenplay/VSCodeExtension
+        # vsce's own version bump shells out to npm version, which cannot handle the
+        # workspace:* dependency protocol - write the version directly instead.
+        run: npm pkg set version=${{ needs.release.outputs.version }}
+
       - name: Publish to VSCode Marketplace
         working-directory: ./Source/Screenplay/VSCodeExtension
         env:
           # npm resolves the workspace's peer dependencies strictly when npx installs vsce;
           # eslint-plugin-react does not yet accept eslint 10, so relax to yarn's behavior.
           npm_config_legacy_peer_deps: "true"
-        run: npx @vscode/vsce publish ${{ needs.release.outputs.version }} --no-dependencies --pat ${{ secrets.VSCE_PAT }}
+        run: npx @vscode/vsce publish --no-dependencies --pat ${{ secrets.VSCE_PAT }}
 
   publish-dotnet-packages:
     if: needs.release.outputs.publish == 'true'
