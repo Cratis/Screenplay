@@ -60,9 +60,9 @@ internal static partial class ExpressionParser
         if (text.StartsWith("$causedBy.", StringComparison.Ordinal))
         {
             var property = text["$causedBy.".Length..];
-            if (property is not ("subject" or "name" or "username"))
+            if (property is not ("subject" or "name" or "userName"))
             {
-                context.Error($"Unknown $causedBy property '{property}' - expected subject, name or username", location);
+                context.Error($"Unknown $causedBy property '{property}' - expected subject, name or userName", location);
             }
 
             return new CausedByExpressionSyntax(property, location);

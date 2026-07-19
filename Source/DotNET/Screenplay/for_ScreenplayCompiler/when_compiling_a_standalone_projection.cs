@@ -20,6 +20,7 @@ public class when_compiling_a_standalone_projection : given.a_compiler
           from OrderPlaced key orderId
             orderNumber = orderNumber
             placedBy = $causedBy.name
+            placedByUser = $causedBy.userName
             reference = `order-${orderNumber}`
             total = total
             status = "Pending"
@@ -60,6 +61,7 @@ public class when_compiling_a_standalone_projection : given.a_compiler
     [Fact] void should_parse_the_event_context_expression() => _result.Value!.Blocks.OfType<EverySyntax>().Single().Mappings.OfType<SetMappingSyntax>().Single().Source.ShouldBeOfExactType<EventContextExpressionSyntax>();
     [Fact] void should_parse_the_inline_key() => FirstFrom.Events.Single().Key.ShouldBeOfExactType<PathExpressionSyntax>();
     [Fact] void should_parse_the_caused_by_expression() => ((CausedByExpressionSyntax)Mapping(FirstFrom, "placedBy").Source).Property.ShouldEqual("name");
+    [Fact] void should_parse_the_camel_cased_caused_by_property() => ((CausedByExpressionSyntax)Mapping(FirstFrom, "placedByUser").Source).Property.ShouldEqual("userName");
     [Fact] void should_parse_the_template_expression() => Mapping(FirstFrom, "reference").Source.ShouldBeOfExactType<TemplateExpressionSyntax>();
     [Fact] void should_parse_the_string_literal() => ((LiteralExpressionSyntax)Mapping(FirstFrom, "status").Source).Value.ShouldEqual("Pending");
     [Fact] void should_parse_the_join() => _result.Value!.Blocks.OfType<JoinSyntax>().Single().Events.Single().Event.ShouldEqual("CustomerCreated");
