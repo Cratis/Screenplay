@@ -2,7 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Syntax;
 
@@ -45,6 +47,7 @@ public enum SliceType
 /// <param name="Reactors">The <see cref="ReactorSyntax">reactors</see> declared in the slice.</param>
 /// <param name="Screens">The <see cref="ScreenSyntax">screens</see> declared in the slice.</param>
 /// <param name="Constraints">The <see cref="ConstraintSyntax">constraints</see> declared in the slice.</param>
+/// <param name="Specifications">The <see cref="SpecificationSyntax">specifications</see> declared in the slice.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record SliceSyntax(
     SliceType Type,
@@ -57,4 +60,5 @@ public record SliceSyntax(
     IEnumerable<ReactorSyntax> Reactors,
     IEnumerable<ScreenSyntax> Screens,
     IEnumerable<ConstraintSyntax> Constraints,
+    IEnumerable<SpecificationSyntax> Specifications,
     SourceLocation Location) : SyntaxNode(Location);

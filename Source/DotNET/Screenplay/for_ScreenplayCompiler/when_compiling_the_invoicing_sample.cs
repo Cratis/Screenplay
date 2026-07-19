@@ -2,7 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.for_ScreenplayCompiler;
 
@@ -36,7 +38,19 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_parse_the_authorize_policies() => RegisterCommand.Authorize!.Policies.Select(_ => _.Name).ShouldContainOnly("CanManageInvoice", "IsAdultCustomer");
     [Fact] void should_parse_the_batch_handler() => Slice("ProcessInvoiceBatch").Commands.Single().Handler!.Code.ShouldNotBeNull();
     [Fact] void should_parse_the_capture() => Slice("LegacyInvoiceSync").Captures.Single().Children.Single().Appends.Count().ShouldEqual(2);
-    [Fact] void should_parse_capture_translations() => Slice("LegacyInvoiceSync").Captures.Single().Map.Single().Translations.Count().ShouldEqual(4);
+    [Fact] void should_parse_capture_translations() => Slice("LegacyInvoiceSync").Captures.Single().Map.OfType<CaptureMapEntrySyntax>().Single().Translations.Count().ShouldEqual(4);
+    [Fact] void should_parse_the_capture_split() => Capture.Map.OfType<CaptureSplitSyntax>().Single().Targets.ShouldContainOnly("firstName", "lastName");
+    [Fact] void should_parse_the_capture_value_transition_when() => ValueTransitionWhen.Kind.ShouldEqual(CaptureWhenKind.ValueTransition);
+    [Fact] void should_parse_the_capture_value_transition_from() => ValueTransitionWhen.FromValue.ShouldEqual("sent");
+    [Fact] void should_parse_the_capture_value_transition_to() => ValueTransitionWhen.ToValue.ShouldEqual("paid");
+    [Fact] void should_parse_the_capture_children_map() => Capture.Children.Single().Map.OfType<CaptureMapEntrySyntax>().Single().Property.ShouldEqual("productName");
+    [Fact] void should_parse_the_capture_nested_block() => Capture.Nested.Single().Property.ShouldEqual("billingContact");
+    [Fact] void should_parse_the_capture_nested_map() => Capture.Nested.Single().Map.OfType<CaptureMapEntrySyntax>().Single().Property.ShouldEqual("contactName");
+    [Fact] void should_parse_the_capture_nested_append() => Capture.Nested.Single().Appends.Single().Event.ShouldEqual("BillingContactUpdated");
+
+    CaptureSyntax Capture => Slice("LegacyInvoiceSync").Captures.Single();
+
+    CaptureWhenSyntax ValueTransitionWhen => Capture.Appends.Single(_ => _.Event == "InvoicePaidFromSent").When!;
     [Fact] void should_parse_the_list_projection() => Slice("InvoiceList").Projection!.Blocks.OfType<RemoveWithSyntax>().Single().Event.ShouldEqual("InvoiceCancelled");
     [Fact] void should_parse_the_details_projection_join() => Slice("InvoiceDetails").Projection!.Blocks.OfType<JoinSyntax>().Single().On.ShouldEqual("customerId");
     [Fact] void should_parse_the_details_projection_children() => Slice("InvoiceDetails").Projection!.Blocks.OfType<ChildrenSyntax>().Single().Property.ShouldEqual("lineItems");
@@ -45,8 +59,18 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_parse_the_reactors() => Slice("NotifyCustomerOnInvoiceRegistered").Reactors.Single().Triggers.Single().File!.Path.ShouldEqual("Reactors/NotifyCustomerReactor.cs");
     [Fact] void should_parse_the_inline_reactor_code() => Slice("DetectOverdueInvoices").Reactors.Single().Triggers.Single().Code.ShouldNotBeNull();
     [Fact] void should_parse_the_constraints() => Slice("RegisterInvoice").Constraints.Count().ShouldEqual(2);
+    [Fact] void should_parse_the_specifications() => Slice("RegisterInvoice").Specifications.Count().ShouldEqual(2);
+    [Fact] void should_parse_the_given_of_the_first_specification() => FirstSpecification.Given.Single().EventType.ShouldEqual("CustomerRegistered");
+    [Fact] void should_parse_the_when_of_the_first_specification() => FirstSpecification.When!.CommandType.ShouldEqual("RegisterInvoice");
+    [Fact] void should_parse_the_then_of_the_first_specification() => FirstSpecification.ThenEvents.Single().EventType.ShouldEqual("InvoiceRegistered");
+    [Fact] void should_parse_the_then_error_of_the_second_specification() => SecondSpecification.ThenErrors.Single().Name.ShouldEqual("An invoice must have at least one line");
+    [Fact] void should_parse_no_given_on_the_second_specification() => SecondSpecification.Given.ShouldBeEmpty();
 
     CommandSyntax RegisterCommand => Slice("RegisterInvoice").Commands.Single();
+
+    SpecificationSyntax FirstSpecification => Slice("RegisterInvoice").Specifications.First();
+
+    SpecificationSyntax SecondSpecification => Slice("RegisterInvoice").Specifications.Last();
 
     SliceSyntax Slice(string name) => _feature.Slices.Single(_ => _.Name == name);
 }

@@ -4,7 +4,9 @@
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay;
 
@@ -48,5 +50,41 @@ public class ScreenplayCompiler : IScreenplayCompiler
         return result.Success
             ? new(visitor.Visit(result.Value!), result.Diagnostics)
             : CompilationResult<TProjection>.Failed(result.Diagnostics);
+    }
+
+    /// <inheritdoc/>
+    public CompilationResult<SpecificationSyntax> CompileSpecification(string source)
+    {
+        var lines = SourceLineSplitter.Split(source, hashComments: true);
+        var context = new ParserContext(new(lines));
+        var specifications = SpecificationParser.ParseDocument(context);
+        return new(specifications.Count > 0 ? specifications[0] : null, context.Diagnostics);
+    }
+
+    /// <inheritdoc/>
+    public CompilationResult<TSpecification> CompileSpecification<TSpecification>(string source, ISpecificationSyntaxVisitor<TSpecification> visitor)
+    {
+        var result = CompileSpecification(source);
+        return result.Success
+            ? new(visitor.Visit(result.Value!), result.Diagnostics)
+            : CompilationResult<TSpecification>.Failed(result.Diagnostics);
+    }
+
+    /// <inheritdoc/>
+    public CompilationResult<CaptureSyntax> CompileCapture(string source)
+    {
+        var lines = SourceLineSplitter.Split(source, hashComments: true);
+        var context = new ParserContext(new(lines));
+        var captures = CaptureParser.ParseDocument(context);
+        return new(captures.Count > 0 ? captures[0] : null, context.Diagnostics);
+    }
+
+    /// <inheritdoc/>
+    public CompilationResult<TCapture> CompileCapture<TCapture>(string source, ICaptureSyntaxVisitor<TCapture> visitor)
+    {
+        var result = CompileCapture(source);
+        return result.Success
+            ? new(visitor.Visit(result.Value!), result.Diagnostics)
+            : CompilationResult<TCapture>.Failed(result.Diagnostics);
     }
 }
