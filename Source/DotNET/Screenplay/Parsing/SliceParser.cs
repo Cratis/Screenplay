@@ -3,7 +3,9 @@
 
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -46,6 +48,7 @@ internal static partial class SliceParser
         var reactors = new List<ReactorSyntax>();
         var screens = new List<ScreenSyntax>();
         var constraints = new List<ConstraintSyntax>();
+        var specifications = new List<SpecificationSyntax>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -83,6 +86,9 @@ internal static partial class SliceParser
                 case "constraint":
                     constraints.Add(ConstraintParser.Parse(context, line));
                     break;
+                case "specification":
+                    specifications.Add(SpecificationParser.Parse(context, line));
+                    break;
                 default:
                     context.Warning($"Unknown construct '{LineText.FirstWord(line.Content)}' in slice '{name}'", line.Location);
                     context.SkipBlock(line.Indent);
@@ -90,7 +96,7 @@ internal static partial class SliceParser
             }
         }
 
-        return new(type, name, events, commands, queries, projection, captures, reactors, screens, constraints, header.Location);
+        return new(type, name, events, commands, queries, projection, captures, reactors, screens, constraints, specifications, header.Location);
     }
 
     [GeneratedRegex(@"^slice\s+([A-Za-z]\w*)\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
