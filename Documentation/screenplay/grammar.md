@@ -90,6 +90,7 @@ SliceBody      = EventDecl
                | QueryDecl
                | ProjectionDecl
                | CaptureDecl
+               | SpecificationDecl
                | ReactorDecl
                | ScreenDecl
                | ConstraintDecl ;
@@ -213,7 +214,27 @@ PDLBody        = (* Projection Declaration Language grammar —
 CaptureDecl    = "capture", Ident, NL,
                  INDENT, CDLBody, DEDENT ;
 
-CDLBody        = (* Change Data Capture Language grammar *) ;
+CDLBody        = (* Change Data Capture Language grammar - covers source/key/map
+                    (including split), append/when (added, removed, template,
+                    property, value-transition, or/and-chains), children and
+                    nested - see Documentation/screenplay/captures/grammar.md *) ;
+
+(* -------------------------------------------------------------- *)
+(* Specifications — Given/When/Then sub-language                   *)
+(* -------------------------------------------------------------- *)
+
+SpecificationDecl = "specification", Ident, NL,
+                 INDENT, { SpecificationGiven | SpecificationWhen | SpecificationThen }, DEDENT ;
+
+SpecificationGiven = "given", Ident, NL,
+                 [ INDENT, { PropertyMapping }, DEDENT ] ;
+
+SpecificationWhen = "when", Ident, NL,
+                 [ INDENT, { PropertyMapping }, DEDENT ] ;
+
+SpecificationThen = "then", Ident, NL,
+                 [ INDENT, { PropertyMapping }, DEDENT ]
+               | "then", "error", StringLiteral, NL ;
 
 (* -------------------------------------------------------------- *)
 (* Sub-language extension point                                    *)

@@ -22,6 +22,10 @@
   href: projections/toc.yml
 - name: Captures
   href: captures.md
+- name: Capture grammar (EBNF)
+  href: captures/grammar.md
+- name: Specifications
+  href: specifications.md
 - name: Constraints
   href: constraints.md
 - name: Reactors
