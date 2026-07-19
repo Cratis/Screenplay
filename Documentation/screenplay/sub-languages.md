@@ -2,7 +2,7 @@
 
 The Screenplay parser is designed as a **registry of named sub-language parsers**. When the parser encounters a construct keyword (`projection`, `capture`, or any registered extension), it delegates to the registered sub-parser for that construct's indented body.
 
-The [Projection Declaration Language](projections.md) (PDL) and the [Change Data Capture Language](captures.md) (CDL) are the two built-in sub-languages, registered exactly the way an extension would be — they are the reference implementations of the pluggability model.
+The [Projection Declaration Language](projections/index.md) (PDL) and the [Change Data Capture Language](captures.md) (CDL) are the two built-in sub-languages, registered exactly the way an extension would be — they are the reference implementations of the pluggability model.
 
 ## Plugging in a new sub-language
 

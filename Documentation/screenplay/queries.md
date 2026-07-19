@@ -39,5 +39,5 @@ query ListInvoices => InvoiceListReadModel[]
 ## Guidance
 
 - Name queries as descriptive reads: `GetInvoice`, `ListInvoices`, `GetOverdueInvoices`.
-- The return type is a read model built by a [projection](projections.md) in the same or another `StateView` slice.
+- The return type is a read model built by a [projection](projections/index.md) in the same or another `StateView` slice.
 - [Screens](screens.md) bind to queries with `data <ReadModel> via query <QueryName>`.

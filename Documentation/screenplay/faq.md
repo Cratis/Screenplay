@@ -25,7 +25,7 @@ A `.play` file describes the same artifacts you would otherwise write by hand on
 
 ## What are PDL and CDL?
 
-They are the two built-in sub-languages. **PDL**, the Projection Declaration Language, is the grammar inside a `projection` body. **CDL**, the Change Data Capture Language, is the grammar inside a `capture` body. The Screenplay parser delegates each construct's body to its registered sub-parser, so these are embedded grammars with their own highlighting and completions — not special-cased syntax. See [Projections](projections.md) and [Captures](captures.md).
+They are the two built-in sub-languages. **PDL**, the Projection Declaration Language, is the grammar inside a `projection` body. **CDL**, the Change Data Capture Language, is the grammar inside a `capture` body. The Screenplay parser delegates each construct's body to its registered sub-parser, so these are embedded grammars with their own highlighting and completions — not special-cased syntax. See [Projections](projections/index.md) and [Captures](captures.md).
 
 ## Can I add my own sub-language?
 

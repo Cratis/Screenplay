@@ -139,9 +139,29 @@ files pleasant:
 | Piece | What it is | Where |
 | --- | --- | --- |
 | **Language & grammar** | The language reference for every construct and the full EBNF grammar | [`Documentation/screenplay`](Documentation/screenplay/index.md) |
+| **`Cratis.Screenplay`** | The .NET compiler — parsing, the shared syntax tree, visitor contracts, diagnostics, and `**/*.play` file discovery | [`Source/DotNET/Screenplay`](Source/DotNET/Screenplay) |
+| **`Cratis.Screenplay.Tool`** | The `screenplay` CLI (a dotnet tool) — verifies every `.play` file in a directory tree | [`Source/DotNET/Tool`](Source/DotNET/Tool) |
 | **`@cratis/screenplay-language`** | Monaco language service — highlighting (incl. embedded C#/TS/React/HTML and PDL/CDL), IntelliSense, hover, diagnostics | [`Source/Screenplay/Monaco/screenplay-language`](Source/Screenplay/Monaco/screenplay-language) |
 | **`screenplay-editor`** | A standalone editor host for writing `.play` files right in the browser | [`Source/Screenplay/Monaco/screenplay-editor`](Source/Screenplay/Monaco/screenplay-editor) |
 | **`screenplay` (VS Code extension)** | The same language support in VS Code — `.play` files even get the Cratis icon | [`Source/Screenplay/VSCodeExtension`](Source/Screenplay/VSCodeExtension) |
+
+## 🛠️ Compile and verify `.play` files
+
+The compiler ships on NuGet. Install the CLI as a global dotnet tool and run it from the root of any
+project — it finds every file matching `**/*.play`, compiles them, and prints any problems compiler-style
+with the offending line and a caret:
+
+```shell
+dotnet tool install -g Cratis.Screenplay.Tool
+screenplay            # or: screenplay path/to/screenplays
+```
+
+Embedding the compiler in your own tooling is one package away — see
+[Compiler and CLI](Documentation/screenplay/tool.md):
+
+```shell
+dotnet add package Cratis.Screenplay
+```
 
 ## 🚀 Quick start
 
@@ -169,6 +189,9 @@ and launches an Extension Development Host with full `.play` support, ready to t
 yarn build     # every workspace builds clean
 yarn lint      # zero lint errors
 yarn compile   # zero TypeScript errors
+
+dotnet build Screenplay.slnx --configuration Release   # zero errors, zero warnings
+dotnet test Screenplay.slnx                            # all specs pass
 ```
 
 ---

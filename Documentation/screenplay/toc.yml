@@ -19,7 +19,7 @@
 - name: Queries
   href: queries.md
 - name: Projections
-  href: projections.md
+  href: projections/toc.yml
 - name: Captures
   href: captures.md
 - name: Constraints
@@ -32,6 +32,8 @@
   href: sub-languages.md
 - name: Grammar
   href: grammar.md
+- name: Compiler and CLI
+  href: tool.md
 - name: Glossary
   href: glossary.md
 - name: Frequently asked questions
