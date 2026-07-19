@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <AssemblyName>Cratis.Screenplay.Tool</AssemblyName>
+        <RootNamespace>Cratis.Screenplay.Tool</RootNamespace>
+        <PackageId>Cratis.Screenplay.Tool</PackageId>
+        <TargetFramework>net10.0</TargetFramework>
+        <TargetFrameworks></TargetFrameworks>
+        <RuntimeIdentifiers></RuntimeIdentifiers>
+        <IsPackable>true</IsPackable>
+        <PackAsTool>true</PackAsTool>
+        <ToolCommandName>screenplay</ToolCommandName>
+        <Description>Command-line tool for compiling and verifying Cratis Screenplay (.play) files</Description>
+        <NoWarn>$(NoWarn);CS7022</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Screenplay/Screenplay.csproj" />
+    </ItemGroup>
+</Project>
