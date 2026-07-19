@@ -478,7 +478,7 @@ internal static partial class ProjectionParser
 
     static IEnumerable<string> SplitTopLevel(string text, char separator) => LineText.SplitTopLevel(text, separator);
 
-    [GeneratedRegex(@"^projection\s+(@?\w+)\s*(?:=>\s*([\w.]+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^projection\s+(@?[\w.]+)\s*(?:=>\s*([\w.]+))?$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
 
     [GeneratedRegex(@"^(@?[\w.]+)(?:\s+key\s+(.+))?$", RegexOptions.None, 1000)]
