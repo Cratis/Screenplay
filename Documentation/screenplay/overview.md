@@ -54,7 +54,7 @@ Line comments start with `//` and run to the end of the line.
 | Event type declarations | [Events](events.md) |
 | Commands, validation, the `produces` block, and handlers | [Commands](commands.md) |
 | Read-side entry points | [Queries](queries.md) |
-| PDL-embedded projections | [Projections](projections.md) |
+| PDL-embedded projections | [Projections](projections/index.md) |
 | CDL-embedded change data capture | [Captures](captures.md) |
 | Server-side rules enforced before commit | [Constraints](constraints.md) |
 | Event reaction rules | [Reactors](reactors.md) |

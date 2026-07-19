@@ -99,7 +99,7 @@ A command that records facts is only half a feature. Add a second slice — a `S
         data OnLoanReadModel[] via query BooksOnLoan
 ```
 
-The `projection` uses the embedded [Projection Declaration Language](projections.md) to fold events into a read model; the `query` exposes it; the `screen` renders it. No update code, no proxy to regenerate by hand — the whole read path is declared in six lines.
+The `projection` uses the embedded [Projection Declaration Language](projections/index.md) to fold events into a read model; the `query` exposes it; the `screen` renders it. No update code, no proxy to regenerate by hand — the whole read path is declared in six lines.
 
 ## What you've built
 
