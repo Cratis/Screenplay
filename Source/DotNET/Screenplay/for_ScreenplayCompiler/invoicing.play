@@ -161,6 +161,26 @@ module Invoicing
       constraint OneRegistrationPerInvoice
         unique event InvoiceRegistered
 
+      specification RegisteringADraftInvoice
+        given CustomerRegistered
+          customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          name       = "Acme Corp"
+        when RegisterInvoice
+          invoiceId     = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          customerId    = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          invoiceNumber = "INV-000123"
+          currency      = "USD"
+        then InvoiceRegistered
+          invoiceId     = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          customerId    = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          invoiceNumber = "INV-000123"
+          currency      = "USD"
+
+      specification RejectingAnInvoiceWithNoLines
+        when RegisterInvoice
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+        then error "An invoice must have at least one line"
+
     slice StateChange CancelInvoice
 
       command CancelInvoice
@@ -304,12 +324,21 @@ module Invoicing
             "sendt"      => sent
             "betalt"     => paid
             "kansellert" => cancelled
+          split contactName by ","
+            firstName
+            lastName
         append InvoiceStatusChanged
           when status
             invoiceId = $.id
             status    = $.status
             changedAt = $context.occurred
+        append InvoicePaidFromSent
+          when status from "sent" to "paid"
+            invoiceId = $.id
+            paidAt    = $context.occurred
         children lineItems identified by lineNumber
+          map
+            productName = name
           append InvoiceLineItemAdded
             when added
               invoiceId  = $.id
@@ -320,6 +349,13 @@ module Invoicing
             when removed
               invoiceId  = $.id
               lineNumber = $.lineNumber
+        nested billingContact
+          map
+            contactName = name
+          append BillingContactUpdated
+            when email
+              invoiceId = $.id
+              email     = $.email
 
     slice StateView InvoiceList
 
