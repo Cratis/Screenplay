@@ -1,0 +1,6 @@
+<Solution>
+    <Folder Name="/Source/">
+        <Project Path="Source/DotNET/Screenplay/Screenplay.csproj" />
+        <Project Path="Source/DotNET/Tool/Tool.csproj" />
+    </Folder>
+</Solution>
