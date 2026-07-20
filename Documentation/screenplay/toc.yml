@@ -38,6 +38,8 @@
   href: grammar.md
 - name: Compiler and CLI
   href: tool.md
+- name: Printing and generating
+  href: printing.md
 - name: Glossary
   href: glossary.md
 - name: Frequently asked questions

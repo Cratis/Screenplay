@@ -69,3 +69,5 @@ using Cratis.Screenplay.Files;
 
 var compilations = new PlayFileCompiler().CompileIn(rootDirectory);
 ```
+
+To go the other way - turn a syntax tree back into `.play` text, or generate Screenplay from a model - see [Printing and generating](printing.md).
