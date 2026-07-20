@@ -1,0 +1,46 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using Cratis.Screenplay.Syntax;
+
+namespace Cratis.Screenplay.for_ScreenplayPrinter;
+
+public class when_printing_the_invoicing_sample : given.a_printer
+{
+    CompilationResult<ApplicationSyntax> _original;
+    string _printed;
+    CompilationResult<ApplicationSyntax> _reparsed;
+    string _printedAgain;
+
+    void Because()
+    {
+        _original = _compiler.Compile(for_ScreenplayCompiler.given.Samples.Invoicing);
+        _printed = _printer.Print(_original.Value!);
+        _reparsed = _compiler.Compile(_printed);
+        _printedAgain = _printer.Print(_reparsed.Value!);
+    }
+
+    [Fact] void should_reparse_successfully() => _reparsed.Success.ShouldBeTrue();
+    [Fact] void should_reparse_without_diagnostics() => _reparsed.Diagnostics.ShouldBeEmpty();
+    [Fact] void should_print_the_same_text_on_a_second_pass() => _printedAgain.ShouldEqual(_printed);
+    [Fact] void should_preserve_the_imports() => _reparsed.Value!.Imports.Count().ShouldEqual(_original.Value!.Imports.Count());
+    [Fact] void should_preserve_the_concepts() => _reparsed.Value!.Concepts.Count().ShouldEqual(_original.Value!.Concepts.Count());
+    [Fact] void should_preserve_the_enum_values() => Concept(_reparsed, "InvoiceStatus").Values.Count().ShouldEqual(Concept(_original, "InvoiceStatus").Values.Count());
+    [Fact] void should_preserve_the_pii_attribute() => Concept(_reparsed, "EmailAddress").Attributes.ShouldContain("pii");
+    [Fact] void should_preserve_the_policies() => _reparsed.Value!.Policies.Count().ShouldEqual(_original.Value!.Policies.Count());
+    [Fact] void should_preserve_the_slices() => Slices(_reparsed).Count().ShouldEqual(Slices(_original).Count());
+    [Fact] void should_preserve_the_conditional_produces() => Command(_reparsed, "RegisterInvoice").Produces.Count(_ => _.When is not null).ShouldEqual(Command(_original, "RegisterInvoice").Produces.Count(_ => _.When is not null));
+    [Fact] void should_preserve_the_validation_rules() => Rules(_reparsed).Count().ShouldEqual(Rules(_original).Count());
+
+    static ConceptSyntax Concept(CompilationResult<ApplicationSyntax> result, string name) =>
+        result.Value!.Concepts.Single(_ => _.Name == name);
+
+    static IEnumerable<SliceSyntax> Slices(CompilationResult<ApplicationSyntax> result) =>
+        result.Value!.Modules.Single().Features.Single().Slices;
+
+    static CommandSyntax Command(CompilationResult<ApplicationSyntax> result, string slice) =>
+        Slices(result).Single(_ => _.Name == slice).Commands.Single();
+
+    static IEnumerable<ValidationRuleSyntax> Rules(CompilationResult<ApplicationSyntax> result) =>
+        Command(result, "RegisterInvoice").Validations.OfType<DeclarativeValidateSyntax>().Single().Rules;
+}
