@@ -75,7 +75,7 @@ internal sealed class ScreenplayWriter
     /// Represents an indentation scope that restores the previous depth when disposed.
     /// </summary>
     /// <param name="writer">The <see cref="ScreenplayWriter"/> the scope belongs to.</param>
-    public readonly struct Scope(ScreenplayWriter writer) : IDisposable
+    internal readonly struct Scope(ScreenplayWriter writer) : IDisposable
     {
         /// <inheritdoc/>
         public void Dispose() => writer._depth--;
