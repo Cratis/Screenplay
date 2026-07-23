@@ -677,6 +677,17 @@ module Invoicing
       screen InvoiceLineReport
         file Screens/InvoiceLineReport.tsx
 
+    slice StateView CancelledInvoices
+      description "Archive of cancelled invoices - every property auto-maps from the event"
+
+      query ListCancelledInvoices => CancelledInvoiceReadModel[]
+        authorize IsAccountant
+
+      // No explicit mappings needed - AutoMap is on by default and copies
+      // every matching property from InvoiceCancelled onto the read model.
+      projection CancelledInvoices => CancelledInvoiceReadModel
+        from InvoiceCancelled
+
     slice StateView InvoiceDashboard
 
       query GetInvoiceSummary  => InvoiceSummaryReadModel
