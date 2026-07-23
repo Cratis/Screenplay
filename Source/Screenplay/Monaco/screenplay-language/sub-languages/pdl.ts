@@ -8,7 +8,7 @@ import { SubLanguageDefinition } from '../sub-language-registry';
 export const pdl: SubLanguageDefinition = {
     tokens: [
         [
-            /\b(?:from|every|join|children|identified|by|key|parent|with|remove|on|set|increment|decrement|add|subtract|count)\b/,
+            /\b(?:from|every|all|nested|join|children|identified|by|key|parent|with|remove|via|clear|on|sequence|automap|no|exclude|literal|set|increment|decrement|add|subtract|count)\b/,
             'keyword',
         ],
     ],

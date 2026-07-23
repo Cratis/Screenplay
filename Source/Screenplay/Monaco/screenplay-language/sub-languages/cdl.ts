@@ -7,7 +7,7 @@ import { SubLanguageDefinition } from '../sub-language-registry';
 export const cdl: SubLanguageDefinition = {
     tokens: [
         [
-            /\b(?:source|api|route|poll|key|map|translate|append|when|children|identified|by|added|removed|changed)\b/,
+            /\b(?:source|api|route|poll|key|map|translate|split|append|tag|when|children|nested|identified|by|from|to|and|or|added|removed|changed)\b/,
             'keyword',
         ],
     ],
