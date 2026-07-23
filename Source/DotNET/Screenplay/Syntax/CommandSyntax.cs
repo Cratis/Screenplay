@@ -117,6 +117,7 @@ public enum ComparisonOperator
 /// <param name="Produces">The <see cref="ProducesSyntax">produces declarations</see> for the command.</param>
 /// <param name="Handler">The optional <see cref="HandlerSyntax"/> when the command uses an imperative handler instead of <c>produces</c>.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <param name="Concurrency">The optional <see cref="ConcurrencySyntax"/> scoping the concurrency check for the command's appends.</param>
 public record CommandSyntax(
     string Name,
     IEnumerable<PropertySyntax> Properties,
@@ -124,7 +125,8 @@ public record CommandSyntax(
     IEnumerable<ValidateSyntax> Validations,
     IEnumerable<ProducesSyntax> Produces,
     HandlerSyntax? Handler,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location,
+    ConcurrencySyntax? Concurrency = null) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents an <c>authorize</c> declaration referencing one or more policies.
@@ -174,7 +176,14 @@ public record ValidationRuleSyntax(
     ValidationRuleKind Rule,
     ExpressionSyntax? Value,
     string? Message,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// The well known <see cref="Property"/> subject of rules declared on a concept, where the concept's
+    /// own value is implied and no property appears in the source text.
+    /// </summary>
+    public const string ConceptValue = "value";
+}
 
 /// <summary>
 /// Represents a <c>produces</c> declaration - an event the command emits, optionally under a condition.
@@ -183,11 +192,13 @@ public record ValidationRuleSyntax(
 /// <param name="When">The optional <see cref="ConditionSyntax"/> guarding the production.</param>
 /// <param name="Mappings">The <see cref="PropertyMappingSyntax">property mappings</see> for the produced event.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <param name="Tags">The <see cref="TagSyntax">tags</see> applied to the produced event.</param>
 public record ProducesSyntax(
     string Event,
     ConditionSyntax? When,
     IEnumerable<PropertyMappingSyntax> Mappings,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location,
+    IEnumerable<TagSyntax>? Tags = null) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents a mapping of a target property to a source expression, such as <c>status = "draft"</c>.

@@ -65,8 +65,10 @@ internal static partial class SpecificationParser
         }
 
         var given = new List<SpecificationEventSyntax>();
+        var givenReadModels = new List<SpecificationReadModelSyntax>();
         SpecificationCommandSyntax? when = null;
         var thenEvents = new List<SpecificationEventSyntax>();
+        var thenReadModels = new List<SpecificationReadModelSyntax>();
         var thenErrors = new List<SpecificationErrorSyntax>();
 
         while (context.TryPeekChild(header.Indent, out var line))
@@ -75,7 +77,14 @@ internal static partial class SpecificationParser
             switch (LineText.FirstWord(line.Content))
             {
                 case "given":
-                    if (ParseEventReference(context, line, GivenRegex(), "given") is { } givenEvent)
+                    if (ReadModelPrefixRegex().IsMatch(line.Content))
+                    {
+                        if (ParseReadModel(context, line, GivenReadModelRegex(), "given") is { } givenReadModel)
+                        {
+                            givenReadModels.Add(givenReadModel);
+                        }
+                    }
+                    else if (ParseEventReference(context, line, GivenRegex(), "given") is { } givenEvent)
                     {
                         given.Add(givenEvent);
                     }
@@ -92,7 +101,7 @@ internal static partial class SpecificationParser
                     when = ParseWhen(context, line);
                     break;
                 case "then":
-                    ParseThen(context, line, thenEvents, thenErrors);
+                    ParseThen(context, line, thenEvents, thenReadModels, thenErrors);
                     break;
                 default:
                     context.Error($"Unexpected '{LineText.FirstWord(line.Content)}' in specification body", line.Location);
@@ -101,7 +110,7 @@ internal static partial class SpecificationParser
             }
         }
 
-        return new(name, given, when, thenEvents, thenErrors, header.Location);
+        return new(name, given, when, thenEvents, thenErrors, header.Location, givenReadModels, thenReadModels);
     }
 
     static SpecificationCommandSyntax? ParseWhen(ParserContext context, SourceLine line)
@@ -117,7 +126,12 @@ internal static partial class SpecificationParser
         return new(match.Groups[1].Value, ParseValues(context, line), line.Location);
     }
 
-    static void ParseThen(ParserContext context, SourceLine line, List<SpecificationEventSyntax> thenEvents, List<SpecificationErrorSyntax> thenErrors)
+    static void ParseThen(
+        ParserContext context,
+        SourceLine line,
+        List<SpecificationEventSyntax> thenEvents,
+        List<SpecificationReadModelSyntax> thenReadModels,
+        List<SpecificationErrorSyntax> thenErrors)
     {
         var errorMatch = ThenErrorRegex().Match(line.Content);
         if (errorMatch.Success)
@@ -126,10 +140,33 @@ internal static partial class SpecificationParser
             return;
         }
 
+        if (ReadModelPrefixRegex().IsMatch(line.Content))
+        {
+            if (ParseReadModel(context, line, ThenReadModelRegex(), "then") is { } thenReadModel)
+            {
+                thenReadModels.Add(thenReadModel);
+            }
+
+            return;
+        }
+
         if (ParseEventReference(context, line, ThenEventRegex(), "then") is { } thenEvent)
         {
             thenEvents.Add(thenEvent);
         }
+    }
+
+    static SpecificationReadModelSyntax? ParseReadModel(ParserContext context, SourceLine line, Regex regex, string keyword)
+    {
+        var match = regex.Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error($"Invalid '{keyword} readmodel' declaration '{line.Content}' - expected '{keyword} readmodel <ReadModelType>'", line.Location);
+            context.SkipBlock(line.Indent);
+            return null;
+        }
+
+        return new(match.Groups[1].Value, ParseValues(context, line), line.Location);
     }
 
     static SpecificationEventSyntax? ParseEventReference(ParserContext context, SourceLine line, Regex regex, string keyword)
@@ -175,6 +212,15 @@ internal static partial class SpecificationParser
 
     [GeneratedRegex(@"^then\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex ThenEventRegex();
+
+    [GeneratedRegex(@"^(?:given|then)\s+readmodel\b", RegexOptions.None, 1000)]
+    private static partial Regex ReadModelPrefixRegex();
+
+    [GeneratedRegex(@"^given\s+readmodel\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex GivenReadModelRegex();
+
+    [GeneratedRegex(@"^then\s+readmodel\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex ThenReadModelRegex();
 
     [GeneratedRegex("^then\\s+error\\s+\"([^\"]*)\"$", RegexOptions.None, 1000)]
     private static partial Regex ThenErrorRegex();

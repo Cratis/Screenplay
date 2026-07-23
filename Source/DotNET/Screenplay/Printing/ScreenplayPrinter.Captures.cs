@@ -110,6 +110,8 @@ public partial class ScreenplayPrinter
         writer.Line($"append {append.Event}");
         using (writer.Indent())
         {
+            WriteTags(writer, append.Tags);
+
             if (append.When is null)
             {
                 WriteMappings(writer, append.Mappings);

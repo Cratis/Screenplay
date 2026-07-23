@@ -15,13 +15,17 @@ namespace Cratis.Screenplay.Syntax.Specifications;
 /// <param name="ThenEvents">The <see cref="SpecificationEventSyntax">events</see> expected to be produced.</param>
 /// <param name="ThenErrors">The <see cref="SpecificationErrorSyntax">rejections</see> expected to occur.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <param name="GivenReadModels">The <see cref="SpecificationReadModelSyntax">read model states</see> establishing prior state.</param>
+/// <param name="ThenReadModels">The <see cref="SpecificationReadModelSyntax">read model states</see> expected after the command.</param>
 public record SpecificationSyntax(
     string Name,
     IEnumerable<SpecificationEventSyntax> Given,
     SpecificationCommandSyntax? When,
     IEnumerable<SpecificationEventSyntax> ThenEvents,
     IEnumerable<SpecificationErrorSyntax> ThenErrors,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location,
+    IEnumerable<SpecificationReadModelSyntax>? GivenReadModels = null,
+    IEnumerable<SpecificationReadModelSyntax>? ThenReadModels = null) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents a reference to an event within a specification - used for both <c>given</c> and
@@ -44,6 +48,18 @@ public record SpecificationEventSyntax(
 public record SpecificationCommandSyntax(
     string CommandType,
     IEnumerable<PropertyMappingSyntax> Values,
+    SourceLocation Location) : SyntaxNode(Location);
+
+/// <summary>
+/// Represents a reference to a read model state within a specification - used for both
+/// <c>given readmodel</c> and <c>then readmodel</c> declarations.
+/// </summary>
+/// <param name="Name">The name of the referenced read model type.</param>
+/// <param name="Properties">The <see cref="PropertyMappingSyntax">property values</see> of the read model.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record SpecificationReadModelSyntax(
+    string Name,
+    IEnumerable<PropertyMappingSyntax> Properties,
     SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>

@@ -49,6 +49,7 @@ public enum SliceType
 /// <param name="Constraints">The <see cref="ConstraintSyntax">constraints</see> declared in the slice.</param>
 /// <param name="Specifications">The <see cref="SpecificationSyntax">specifications</see> declared in the slice.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <param name="Description">The optional description of the slice.</param>
 public record SliceSyntax(
     SliceType Type,
     string Name,
@@ -61,4 +62,5 @@ public record SliceSyntax(
     IEnumerable<ScreenSyntax> Screens,
     IEnumerable<ConstraintSyntax> Constraints,
     IEnumerable<SpecificationSyntax> Specifications,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location,
+    string? Description = null) : SyntaxNode(Location);

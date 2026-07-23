@@ -6,10 +6,20 @@
   href: why-screenplay.md
 - name: Language overview
   href: overview.md
+- name: Domain
+  href: domain.md
 - name: Concepts
   href: concepts.md
 - name: Policies
   href: policies.md
+- name: Personas
+  href: personas.md
+- name: Authentication
+  href: authentication.md
+- name: Secrets
+  href: secrets.md
+- name: Internationalization
+  href: internationalization.md
 - name: Modules, features and slices
   href: slices.md
 - name: Events
@@ -26,6 +36,8 @@
   href: captures/grammar.md
 - name: Specifications
   href: specifications.md
+- name: Event seeding
+  href: seeding.md
 - name: Constraints
   href: constraints.md
 - name: Reactors

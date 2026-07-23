@@ -6,8 +6,9 @@ using Cratis.Screenplay.Syntax;
 namespace Cratis.Screenplay.Parsing;
 
 /// <summary>
-/// Validates cross references in a parsed document - policies referenced by <c>authorize</c> and
-/// events referenced by reactors, <c>produces</c> and constraints.
+/// Validates cross references in a parsed document - policies referenced by <c>authorize</c> and personas,
+/// events referenced by reactors, <c>produces</c>, constraints and <c>seed</c> blocks - and that
+/// <c>concurrency</c> and <c>seed</c> blocks are not empty and <c>authentication</c> provider names are unique.
 /// </summary>
 internal static class ScreenplayValidator
 {
@@ -28,6 +29,36 @@ internal static class ScreenplayValidator
             .ToHashSet();
         var knownPolicies = application.Policies.Select(policy => policy.Name).ToHashSet();
 
+        foreach (var persona in application.Personas ?? [])
+        {
+            foreach (var policy in persona.Policies.Where(policy => !knownPolicies.Contains(policy)))
+            {
+                context.Warning($"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
+            }
+        }
+
+        foreach (var duplicate in (application.Authentication?.Providers ?? [])
+            .GroupBy(provider => provider.Name)
+            .Where(group => group.Count() > 1)
+            .SelectMany(group => group.Skip(1)))
+        {
+            context.Error($"Duplicate provider '{duplicate.Name}' - provider names must be unique", duplicate.Location);
+        }
+
+        foreach (var seed in application.Seeds ?? [])
+        {
+            if (!seed.Groups.Any())
+            {
+                context.Error("Empty 'seed' block - declare at least one 'for' group", seed.Location);
+            }
+
+            foreach (var @event in seed.Groups.SelectMany(group => group.Events)
+                .Where(@event => !knownEvents.Contains(@event.Event)))
+            {
+                context.Warning($"Unknown event '{@event.Event}' - declare it with 'event {@event.Event}'", @event.Location);
+            }
+        }
+
         foreach (var slice in slices)
         {
             ValidateSlice(slice, knownEvents, knownPolicies, context);
@@ -39,6 +70,14 @@ internal static class ScreenplayValidator
 
     static void ValidateSlice(SliceSyntax slice, HashSet<string> knownEvents, HashSet<string> knownPolicies, ParserContext context)
     {
+        foreach (var concurrency in slice.Commands.Select(command => command.Concurrency)
+            .OfType<ConcurrencySyntax>()
+            .Where(concurrency => concurrency is { EventSource: false, EventSourceType: null, EventStreamType: null, EventStreamId: null } &&
+                !concurrency.EventTypes.Any()))
+        {
+            context.Error("Empty 'concurrency' block - declare at least one of eventSource, sourceType, streamType, streamId or events", concurrency.Location);
+        }
+
         foreach (var authorize in slice.Commands.Select(command => command.Authorize)
             .Concat(slice.Queries.Select(query => query.Authorize))
             .OfType<AuthorizeSyntax>())

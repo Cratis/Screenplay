@@ -28,6 +28,13 @@ command <Name>
         ```
         <C# returning the events to append>
         ```]
+
+  [concurrency                    ← optional concurrency scope
+    [eventSource]
+    [sourceType <Name>]
+    [streamType <Name>]
+    [streamId <Name>]
+    [events <EventType>[, <EventType>]*]]
 ```
 
 ## Validation rules
@@ -101,6 +108,16 @@ produces InvoiceRegistered
   source        = $env.SERVICE_NAME      // environment variable
   status        = "draft"                // string constant
   lineCount     = 0                      // numeric constant
+```
+
+### Tags
+
+`tag` lines before the mappings attach [tags](events.md#tags) to the event appended by this specific production:
+
+```screenplay
+produces InvoiceRegistered
+  tag audit
+  invoiceId = invoiceId
 ```
 
 ### Mapping sources
@@ -180,3 +197,28 @@ handler
 ````
 
 A command uses either `produces` blocks or a `handler` — not both. Keep handler logic small; anything substantial belongs in a `file` reference where it can be tested on its own.
+
+## Concurrency
+
+An optional `concurrency` block declares the concurrency scope enforced when the command's events are appended — mirroring Chronicle's `ConcurrencyScope`. When two commands race, the append fails for the loser instead of silently letting both win.
+
+```screenplay
+command RegisterInvoice
+  ...
+  concurrency
+    eventSource
+    sourceType Account
+    streamType Onboarding
+    streamId Monthly
+    events InvoiceRegistered, InvoiceCancelled
+```
+
+| Dimension | Meaning |
+| --- | --- |
+| `eventSource` | Scope the check to the command's event source id |
+| `sourceType <Name>` | Scope the check to an event source type |
+| `streamType <Name>` | Scope the check to an event stream type |
+| `streamId <Name>` | Scope the check to an event stream id |
+| `events <EventType>[, ...]` | Scope the check to the listed event types |
+
+All dimensions are optional and each appears at most once, but the block must declare at least one — an empty `concurrency` block is a compile error. A command without a `concurrency` block appends with no concurrency check.

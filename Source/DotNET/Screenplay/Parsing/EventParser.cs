@@ -26,10 +26,18 @@ internal static partial class EventParser
         }
 
         var properties = new List<PropertySyntax>();
+        var tags = new List<TagSyntax>();
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
-            if (PropertyLineParser.TryParse(line) is { } property)
+            if (LineText.FirstWord(line.Content) == "tag")
+            {
+                if (TagParser.Parse(context, line) is { } tag)
+                {
+                    tags.Add(tag);
+                }
+            }
+            else if (PropertyLineParser.TryParse(line) is { } property)
             {
                 properties.Add(property);
             }
@@ -39,7 +47,7 @@ internal static partial class EventParser
             }
         }
 
-        return new(name.Groups[1].Value, properties, header.Location);
+        return new(name.Groups[1].Value, properties, header.Location, tags);
     }
 
     [GeneratedRegex(@"^event\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]

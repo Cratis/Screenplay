@@ -6,6 +6,7 @@ Events are immutable, past-tense facts — the record of something that happened
 
 ```screenplay
 event <Name>
+  [tag <value>]*
   <property> <Type>
   ...
 ```
@@ -29,6 +30,20 @@ event InvoiceRegistered
 | --- | --- | --- |
 | Collection | `<Type>[]` | `lines InvoiceLine[]` |
 | Optional | `<Type>?` | `note String?` |
+
+## Tags
+
+`tag` lines attach tags to every append of the event — Chronicle stores them alongside the event so consumers can filter and group on them. A tag value is a bare identifier or string literal for static tags, or a `$context.` expression for tags resolved from context at append time.
+
+```screenplay
+event InvoiceRegistered
+  tag invoicing
+  tag "billing"
+  tag $context.identity.id
+  invoiceId InvoiceId
+```
+
+Tags can also be declared per production site — on a [`produces` block](commands.md#the-produces-block) and on a capture [`append` block](captures.md) — where they apply to that specific append rather than every occurrence of the event type.
 
 ## Guidance
 

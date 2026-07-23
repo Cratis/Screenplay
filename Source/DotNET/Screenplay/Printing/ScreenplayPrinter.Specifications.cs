@@ -21,6 +21,11 @@ public partial class ScreenplayPrinter
                 WriteSpecificationEvent(writer, "given", given);
             }
 
+            foreach (var given in specification.GivenReadModels ?? [])
+            {
+                WriteSpecificationReadModel(writer, "given", given);
+            }
+
             if (specification.When is not null)
             {
                 writer.Line($"when {specification.When.CommandType}");
@@ -33,6 +38,11 @@ public partial class ScreenplayPrinter
             foreach (var then in specification.ThenEvents)
             {
                 WriteSpecificationEvent(writer, "then", then);
+            }
+
+            foreach (var then in specification.ThenReadModels ?? [])
+            {
+                WriteSpecificationReadModel(writer, "then", then);
             }
 
             foreach (var error in specification.ThenErrors)
@@ -48,6 +58,15 @@ public partial class ScreenplayPrinter
         using (writer.Indent())
         {
             WriteSpecificationValues(writer, @event.Values);
+        }
+    }
+
+    void WriteSpecificationReadModel(ScreenplayWriter writer, string keyword, SpecificationReadModelSyntax readModel)
+    {
+        writer.Line($"{keyword} readmodel {readModel.Name}");
+        using (writer.Indent())
+        {
+            WriteSpecificationValues(writer, readModel.Properties);
         }
     }
 

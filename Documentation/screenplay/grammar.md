@@ -7,7 +7,13 @@ The full EBNF grammar of the Screenplay DSL. `INDENT`/`DEDENT` are synthesized b
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = { Import }, { ConceptDecl }, { PolicyDecl }, { Module } ;
+Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { PolicyDecl }, { PersonaDecl }, [ AuthenticationDecl ], { Module }, { SeedDecl } ;
+
+(* -------------------------------------------------------------- *)
+(* Domain                                                          *)
+(* -------------------------------------------------------------- *)
+
+DomainDecl     = "domain", QualifiedName, NL ;
 
 (* -------------------------------------------------------------- *)
 (* Imports                                                         *)
@@ -20,9 +26,16 @@ QualifiedName  = Ident, { ".", Ident } ;
 (* Concepts                                                        *)
 (* -------------------------------------------------------------- *)
 
-ConceptDecl    = "concept", Ident, ":", PrimitiveType, { Attribute }, NL
+ConceptDecl    = "concept", Ident, ":", PrimitiveType, { Attribute }, NL,
+                   [ INDENT, { ConceptValidate }, DEDENT ]
                | "concept", Ident, ":", "Enum", NL,
-                   INDENT, { Ident, NL }, DEDENT ;
+                   INDENT, { Ident, NL }, { ConceptValidate }, DEDENT ;
+
+ConceptValidate = "validate", NL,
+                   INDENT, { ConceptRule }, DEDENT
+               | "validate", "csharp", NL, InlineBlock ;
+
+ConceptRule    = RuleOp, [ "message", LocalizableString ], NL ;
 
 PrimitiveType  = "Uuid" | "String" | "Int" | "Decimal" | "Bool"
                | "Date" | "DateTime" ;
@@ -47,11 +60,34 @@ PolicyCondition = "authenticated"
                | "(", PolicyCondition, { ( "or" | "and" ), PolicyCondition }, ")" ;
 
 (* -------------------------------------------------------------- *)
+(* Personas                                                        *)
+(* -------------------------------------------------------------- *)
+
+PersonaDecl    = "persona", Ident, NL,
+                 INDENT,
+                   [ DescriptionDecl ],
+                   { "policy", Ident, NL },
+                 DEDENT ;
+
+(* -------------------------------------------------------------- *)
+(* Authentication                                                  *)
+(* -------------------------------------------------------------- *)
+
+AuthenticationDecl = "authentication", NL,
+                 INDENT, { ProviderDecl }, DEDENT ;
+
+ProviderDecl   = "provider", Ident, NL,
+                 [ INDENT, { ProviderSetting }, DEDENT ] ;
+
+ProviderSetting = Ident, MappingSource, NL ;
+
+(* -------------------------------------------------------------- *)
 (* Module                                                          *)
 (* -------------------------------------------------------------- *)
 
 Module         = "module", Ident, NL,
                  INDENT,
+                   [ DescriptionDecl ],
                    { LayoutDecl },
                    { Feature },
                  DEDENT ;
@@ -72,6 +108,7 @@ LayoutDecl     = "layout", Ident, NL,
 
 Feature        = "feature", Ident, NL,
                  INDENT,
+                   [ DescriptionDecl ],
                    { Feature },
                    { SliceDecl },
                  DEDENT ;
@@ -81,7 +118,7 @@ Feature        = "feature", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 SliceDecl      = "slice", SliceType, Ident, NL,
-                 INDENT, { SliceBody }, DEDENT ;
+                 INDENT, [ DescriptionDecl ], { SliceBody }, DEDENT ;
 
 SliceType      = "StateChange" | "StateView" | "Automation" | "Translate" ;
 
@@ -100,7 +137,16 @@ SliceBody      = EventDecl
 (* -------------------------------------------------------------- *)
 
 EventDecl      = "event", Ident, NL,
-                 INDENT, { PropertyLine }, DEDENT ;
+                 INDENT, { TagDecl }, { PropertyLine }, DEDENT ;
+
+TagDecl        = "tag", TagValue, NL ;
+
+TagValue       = Ident
+               | StringLiteral
+               | "$context.", Path
+               | "$env.", Ident ;
+
+Path           = Ident, { ".", Ident } ;
 
 PropertyLine   = Ident, TypeRef, NL ;
 
@@ -116,7 +162,17 @@ CommandDecl    = "command", Ident, NL,
                    [ AuthorizeDecl ],
                    { ValidateDecl },
                    ( { ProducesDecl } | HandlerDecl ),
+                   [ ConcurrencyDecl ],
                  DEDENT ;
+
+ConcurrencyDecl = "concurrency", NL,
+                 INDENT, { ConcurrencyDim }, DEDENT ;
+
+ConcurrencyDim = "eventSource", NL
+               | "sourceType", Ident, NL
+               | "streamType", Ident, NL
+               | "streamId", Ident, NL
+               | "events", Ident, { ",", Ident }, NL ;
 
 AuthorizeDecl  = "authorize", PolicyRef, { ( NL, PolicyRef ) | ( "or", PolicyRef ) }, NL ;
 
@@ -126,7 +182,7 @@ ValidateDecl   = "validate", NL,
                    INDENT, { ValidationRule }, DEDENT
                | "validate", "csharp", NL, InlineBlock ;
 
-ValidationRule = Ident, RuleOp, [ "message", StringLiteral ], NL ;
+ValidationRule = Ident, RuleOp, [ "message", LocalizableString ], NL ;
 
 RuleOp         = "not empty"
                | "max", Number
@@ -148,10 +204,10 @@ Value          = Number | StringLiteral | "today" | "true" | "false" ;
 (* -------------------------------------------------------------- *)
 
 ProducesDecl   = "produces", Ident, NL,
-                   [ INDENT, { PropertyMapping }, DEDENT ]
+                   [ INDENT, { TagDecl }, { PropertyMapping }, DEDENT ]
                | "produces", "when", Condition, NL,
                    INDENT, Ident, NL,
-                   [ INDENT, { PropertyMapping }, DEDENT ],
+                   [ INDENT, { TagDecl }, { PropertyMapping }, DEDENT ],
                    DEDENT ;
 
 Condition      = ConditionExpr, { ( "and" | "or" ), ConditionExpr } ;
@@ -168,6 +224,8 @@ MappingSource  = Ident                         (* command property   *)
                | "$context.occurred"
                | "$context.identity.id"
                | "$env.", Ident
+               | "$secrets.", Path
+               | "$strings.", Path
                | StringLiteral
                | Number
                | "true" | "false"
@@ -226,15 +284,28 @@ CDLBody        = (* Change Data Capture Language grammar - covers source/key/map
 SpecificationDecl = "specification", Ident, NL,
                  INDENT, { SpecificationGiven | SpecificationWhen | SpecificationThen }, DEDENT ;
 
-SpecificationGiven = "given", Ident, NL,
+SpecificationGiven = "given", [ "readmodel" ], Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ] ;
 
 SpecificationWhen = "when", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ] ;
 
-SpecificationThen = "then", Ident, NL,
+SpecificationThen = "then", [ "readmodel" ], Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
                | "then", "error", StringLiteral, NL ;
+
+(* -------------------------------------------------------------- *)
+(* Event seeding                                                   *)
+(* -------------------------------------------------------------- *)
+
+SeedDecl       = "seed", NL,
+                 INDENT, { SeedGroup }, DEDENT ;
+
+SeedGroup      = "for", StringLiteral, NL,
+                 INDENT, { SeedEvent }, DEDENT ;
+
+SeedEvent      = Ident, NL,
+                 [ INDENT, { PropertyMapping }, DEDENT ] ;
 
 (* -------------------------------------------------------------- *)
 (* Sub-language extension point                                    *)
@@ -291,7 +362,7 @@ ActionDecl     = "action", Ident, NL,
                  [ INDENT, { ActionOption }, DEDENT ] ;
 
 ActionOption   = NavigateDecl
-               | "label", StringLiteral, NL ;
+               | "label", LocalizableString, NL ;
 
 NavigateDecl   = "navigate", "to", Ident, [ "by", Ident ], NL ;
 
@@ -303,18 +374,23 @@ SlotDecl       = Ident, NL,
 
 SectionDecl    = "section", Ident, NL,
                  INDENT, { ScreenDirective | WidgetDecl }, DEDENT
-               | "title", StringLiteral, NL ;
+               | "title", LocalizableString, NL ;
 
 WidgetDecl     = ( "table" | "summary" ) , ( TypeRef | Ident ), NL,
                  [ INDENT, { WidgetOption }, DEDENT ] ;
 
-WidgetOption   = "column", Ident, [ "label", StringLiteral ], NL
-               | "field",  Ident, "label", StringLiteral, NL
+WidgetOption   = "column", Ident, [ "label", LocalizableString ], NL
+               | "field",  Ident, "label", LocalizableString, NL
                | "on", "row-click", NavigateDecl ;
 
 (* -------------------------------------------------------------- *)
 (* Shared                                                          *)
 (* -------------------------------------------------------------- *)
+
+DescriptionDecl = "description", StringLiteral, NL ;
+
+LocalizableString = StringLiteral
+               | "$strings.", Path ;
 
 FileDirective  = "file", FilePath, NL ;
 FilePath       = (* relative path string *) ;

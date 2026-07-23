@@ -47,7 +47,7 @@ public partial class ScreenplayPrinter
                 WriteScreenSection(writer, section);
                 break;
             case ScreenTitleSyntax title:
-                writer.Line($"title \"{title.Text}\"");
+                writer.Line($"title {ScreenplaySyntaxText.LocalizableString(title.Text)}");
                 break;
             case ScreenTableSyntax table:
                 WriteScreenTable(writer, table);
@@ -85,7 +85,7 @@ public partial class ScreenplayPrinter
         {
             if (action.Label is not null)
             {
-                writer.Line($"label \"{action.Label}\"");
+                writer.Line($"label {ScreenplaySyntaxText.LocalizableString(action.Label)}");
             }
 
             if (action.Navigate is not null)
@@ -135,7 +135,7 @@ public partial class ScreenplayPrinter
             {
                 writer.Line(column.Label is null
                     ? $"column {column.Property}"
-                    : $"column {column.Property} label \"{column.Label}\"");
+                    : $"column {column.Property} label {ScreenplaySyntaxText.LocalizableString(column.Label)}");
             }
 
             if (table.RowClick is not null)
@@ -152,7 +152,7 @@ public partial class ScreenplayPrinter
         {
             foreach (var field in summary.Fields)
             {
-                writer.Line($"field {field.Property} label \"{field.Label}\"");
+                writer.Line($"field {field.Property} label {ScreenplaySyntaxText.LocalizableString(field.Label)}");
             }
         }
     }
