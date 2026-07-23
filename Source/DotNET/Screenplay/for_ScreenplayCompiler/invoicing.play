@@ -1,5 +1,11 @@
 // ============================================================
 // Invoicing — complete .play file
+//
+// A full-feature showcase of the Screenplay language: strongly
+// typed concepts, authorization policies and personas, identity
+// providers, vertical slices (state change, view, automation and
+// translation), projections, captures, screens, specifications
+// and seed data — all built around a single invoicing domain.
 // ============================================================
 
 domain Sales
@@ -13,11 +19,17 @@ concept CurrencyCode     : String
 concept Money            : Decimal
 concept Quantity         : Int
 concept PersonName       : String   @pii
+concept BankAccount      : String   @pii @sensitive
 
 concept EmailAddress : String @pii
   validate
     not empty          message "Email is required"
     matches "^.+@.+$"  message "Must be a valid email address"
+
+concept DiscountPercentage : Decimal
+  validate
+    >= 0    message "A discount cannot be negative"
+    <= 100  message "A discount cannot exceed 100 percent"
 
 concept InvoiceStatus : Enum
   draft
@@ -40,6 +52,15 @@ policy IsAccountant
 policy CanManageInvoice
   require role "InvoiceManager"
     or role "Accountant"
+
+policy IsFinanceDepartment
+  require claim "department" matches "Finance"
+
+policy OwnsInvoice
+  require claim "customerId" matches subject
+
+policy CanWriteOff
+  require ( role "InvoiceManager" or role "Accountant" ) and authenticated
 
 policy IsAdultCustomer
   csharp
@@ -112,9 +133,10 @@ module Invoicing
 
         validate
           invoiceNumber not empty                  message "Invoice number is required"
-          invoiceNumber matches "^INV-[0-9]{6}$"  message "Invoice number must match INV-000000"
+          invoiceNumber matches "^INV-[0-9]{6}$"   message "Invoice number must match INV-000000"
           lines not empty                          message "An invoice must have at least one line"
           lines.quantity all > 0                   message "All line quantities must be positive"
+          lines.unitPrice all >= 0                 message "Line prices cannot be negative"
           currency length == 3                     message "Currency must be a 3-letter ISO code"
           dueDate > today                          message "Due date must be in the future"
 
@@ -229,14 +251,16 @@ module Invoicing
     slice StateChange CancelInvoice
 
       command CancelInvoice
-        invoiceId InvoiceId
-        reason    String
-        refund    Bool
+        invoiceId     InvoiceId
+        reason        String
+        refund        Bool
+        refundAccount BankAccount
 
         authorize CanManageInvoice
 
         validate
           reason not empty  message $strings.invoices.validation.reasonRequired
+          reason min 3      message "A reason must be at least 3 characters"
           reason max 500    message "Reason must be 500 characters or fewer"
 
         produces InvoiceCancelled
@@ -247,8 +271,9 @@ module Invoicing
 
         produces when refund == true
           InvoiceRefundRequested
-            invoiceId   = invoiceId
-            requestedAt = $context.occurred
+            invoiceId     = invoiceId
+            requestedAt   = $context.occurred
+            refundAccount = refundAccount
 
       event InvoiceCancelled
         invoiceId   InvoiceId
@@ -257,8 +282,9 @@ module Invoicing
         cancelledBy String
 
       event InvoiceRefundRequested
-        invoiceId   InvoiceId
-        requestedAt DateTime
+        invoiceId     InvoiceId
+        requestedAt   DateTime
+        refundAccount BankAccount
 
     slice StateChange ChangeInvoiceStatus
 
@@ -367,6 +393,101 @@ module Invoicing
         processedCount Int
         completedAt    DateTime
 
+    slice StateChange ArchiveOldInvoices
+
+      command ArchiveOldInvoices
+        olderThan Date
+
+        authorize IsAccountant
+
+        validate
+          olderThan < today  message "Can only archive invoices dated before today"
+
+        handler
+          file Handlers/ArchiveOldInvoicesHandler.cs
+
+    feature Adjustments
+      description "Discounts and write-offs applied to issued invoices"
+
+      slice StateChange ApplyDiscount
+
+        command ApplyDiscount
+          invoiceId      InvoiceId
+          percentage     DiscountPercentage
+          reason         String
+          requiresReview Bool
+
+          authorize IsAccountant or IsFinanceDepartment
+
+          validate
+            percentage >= 0    message "A discount cannot be negative"
+            percentage <= 100  message "A discount cannot exceed 100 percent"
+            reason min 5       message "Give a reason of at least 5 characters"
+
+          produces DiscountApplied
+            invoiceId  = invoiceId
+            percentage = percentage
+            appliedAt  = $context.occurred
+
+          produces when ( percentage >= 50 ) or requiresReview == true
+            DiscountReviewRequested
+              invoiceId = invoiceId
+
+          produces when percentage < 10
+            DiscountAutoApproved
+              invoiceId = invoiceId
+
+        event DiscountApplied
+          invoiceId  InvoiceId
+          percentage DiscountPercentage
+          appliedAt  DateTime
+
+        event DiscountReviewRequested
+          invoiceId InvoiceId
+
+        event DiscountAutoApproved
+          invoiceId InvoiceId
+
+      slice StateChange WriteOffInvoice
+
+        command WriteOffInvoice
+          invoiceId    InvoiceId
+          amount       Money
+          reason       String
+          confirmation String
+
+          authorize CanWriteOff
+
+          validate
+            amount min 1                message "Write-off amount must be at least 1"
+            amount < 1000000            message "Write-offs of 1,000,000 or more need board approval"
+            reason not empty            message "A reason is required"
+            confirmation == "WRITEOFF"  message "Type WRITEOFF to confirm"
+
+          produces InvoiceWrittenOff
+            invoiceId    = invoiceId
+            amount       = amount
+            writtenOffAt = $context.occurred
+
+          produces when amount > 10000
+            LargeWriteOffFlagged
+              invoiceId = invoiceId
+
+          produces when amount <= 100
+            SmallWriteOffRecorded
+              invoiceId = invoiceId
+
+        event InvoiceWrittenOff
+          invoiceId    InvoiceId
+          amount       Money
+          writtenOffAt DateTime
+
+        event LargeWriteOffFlagged
+          invoiceId InvoiceId
+
+        event SmallWriteOffRecorded
+          invoiceId InvoiceId
+
     slice Translate LegacyInvoiceSync
 
       capture LegacyInvoiceCapture
@@ -384,6 +505,7 @@ module Invoicing
           split contactName by ","
             firstName
             lastName
+          summary = `${status} invoice`
         append InvoiceStatusChanged
           tag legacy
           when status
@@ -394,6 +516,15 @@ module Invoicing
           when status from "sent" to "paid"
             invoiceId = $.id
             paidAt    = $context.occurred
+        append InvoiceNeedsAttention
+          when status or contactName
+            invoiceId = $.id
+        append InvoiceFullyApproved
+          when approvedByFinance and approvedByManager
+            invoiceId = $.id
+        append InvoiceFlagged
+          when `status == "sent" && overdue == true`
+            invoiceId = $.id
         children lineItems identified by lineNumber
           map
             productName = name
@@ -423,17 +554,20 @@ module Invoicing
         authorize IsAuthenticated
 
       projection InvoiceList => InvoiceListReadModel
+        sequence invoices
+        all
+          lastActivityAt = $eventContext.occurred
         from InvoiceRegistered key invoiceId
+          id            = $eventSourceId
           customerId    = customerId
           invoiceNumber = invoiceNumber
           currency      = currency
           status        = "draft"
           lineCount     = 0
           dueDate       = dueDate
-        from InvoiceSent
-          status = "sent"
-        from InvoicePaid
-          status = "paid"
+          channel       = literal "portal"
+        from InvoiceSent, InvoicePaid
+          touched = true
         from InvoiceMarkedOverdue
           status = "overdue"
         from InvoiceStatusChanged
@@ -441,29 +575,41 @@ module Invoicing
         remove with InvoiceCancelled
 
       screen InvoiceList
+        title "Invoices"
         data InvoiceListReadModel[] via query ListInvoices
         action RegisterInvoice
           navigate to RegisterInvoiceScreen
         action CancelInvoice
+        typescript
+          ```
+          export const statusLabel = (status: string) => status.toUpperCase();
+          ```
 
     slice StateView InvoiceDetails
 
       query GetInvoice => InvoiceDetailsReadModel
         by invoiceId InvoiceId
-        authorize IsAuthenticated
+        authorize OwnsInvoice or IsAuthenticated
 
       projection InvoiceDetails => InvoiceDetailsReadModel
         key invoiceId
+        every
+          lastUpdatedAt = $eventContext.occurred
+          exclude children
         from InvoiceRegistered key invoiceId
-          customerId    = customerId
-          invoiceNumber = invoiceNumber
-          currency      = currency
-          paymentTerms  = paymentTerms
-          status        = "draft"
-          dueDate       = dueDate
-          registeredAt  = $eventContext.occurred
+          customerId           = customerId
+          invoiceNumber        = invoiceNumber
+          currency             = currency
+          paymentTerms         = paymentTerms
+          status               = "draft"
+          dueDate              = dueDate
+          registeredAt         = $eventContext.occurred
+          registeredBy         = $causedBy.name
+          registeredByUser     = $causedBy.userName
+          registeredForSubject = $causedBy.subject
+          displayLabel         = `${invoiceNumber} (${currency})`
         from InvoiceSent
-          status = "sent"
+          set status to "sent"
           sentAt = sentAt
         from InvoicePaid
           status = "paid"
@@ -473,20 +619,31 @@ module Invoicing
           overdueAt = overdueAt
         join customer on customerId
           with CustomerRegistered
+            no automap
             customerName = name
         children lineItems identified by lineNumber
           from InvoiceLineItemAdded key lineNumber
             parent invoiceId
             quantity  = quantity
             unitPrice = unitPrice
+            add subtotal by unitPrice
+            count itemCount
           remove with InvoiceLineItemRemoved key lineNumber
             parent invoiceId
+        nested shipping
+          from InvoiceShipped
+            carrier = carrier
+          clear with InvoiceShippingCleared
+        remove via join on CustomerAccountClosed
 
       screen InvoiceDetails
         layout MasterDetail
           sidebar
             data InvoiceDetailsReadModel via query GetInvoice by invoiceId
-            section summary
+            summary InvoiceDetailsReadModel
+              field invoiceNumber label "Invoice #"
+              field status        label "Status"
+            section actions
               action CancelInvoice
               action ChangeInvoiceStatus
           main
@@ -496,6 +653,28 @@ module Invoicing
                 column quantity    label "Qty"
                 column unitPrice   label "Unit Price"
                 on row-click navigate to InvoiceLineDetail by lineNumber
+            section help
+              html
+                ```
+                <p class="hint">Line items become read-only once an invoice is paid.</p>
+                ```
+
+    slice StateView InvoiceLineReport
+
+      query ListLineItems => InvoiceLineReportReadModel[]
+        authorize IsAccountant
+
+      projection InvoiceLineReport => InvoiceLineReportReadModel
+        automap
+        from InvoiceLineItemAdded
+          key InvoiceLineKey
+            invoiceId  = invoiceId
+            lineNumber = lineNumber
+          quantity  = quantity
+          unitPrice = unitPrice
+
+      screen InvoiceLineReport
+        file Screens/InvoiceLineReport.tsx
 
     slice StateView InvoiceDashboard
 
@@ -510,14 +689,18 @@ module Invoicing
           key "global"
           increment totalCount
           increment draftCount
+          count touches
         from InvoiceSent
           decrement draftCount
           increment sentCount
         from InvoicePaid
           decrement sentCount
           increment paidCount
+          add paidTotal by amount
         from InvoiceMarkedOverdue
           increment overdueCount
+        from InvoiceWrittenOff
+          subtract paidTotal by amount
         from InvoiceCancelled
           decrement totalCount
 
@@ -581,6 +764,12 @@ module Invoicing
 
       reactor OverdueInvoiceDetector
         on InvoiceRegistered
+          csharp
+            ```
+            if (DueDate < DateTimeOffset.UtcNow)
+                return [new MarkInvoiceOverdue(InvoiceId, DateTimeOffset.UtcNow)];
+            ```
+        on InvoiceSent
           csharp
             ```
             if (DueDate < DateTimeOffset.UtcNow)
