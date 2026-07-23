@@ -31,6 +31,7 @@ export const constructKeywords = [
     'reactor',
     'screen',
     'constraint',
+    'specification',
     'seed',
 ];
 
@@ -47,6 +48,9 @@ export const clauseKeywords = [
     'produces',
     'handler',
     'when',
+    'given',
+    'then',
+    'error',
     'message',
     'not',
     'empty',
