@@ -28,6 +28,14 @@ internal static class ScreenplayValidator
             .ToHashSet();
         var knownPolicies = application.Policies.Select(policy => policy.Name).ToHashSet();
 
+        foreach (var persona in application.Personas ?? [])
+        {
+            foreach (var policy in persona.Policies.Where(policy => !knownPolicies.Contains(policy)))
+            {
+                context.Warning($"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
+            }
+        }
+
         foreach (var slice in slices)
         {
             ValidateSlice(slice, knownEvents, knownPolicies, context);

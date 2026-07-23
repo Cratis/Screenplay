@@ -28,6 +28,9 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_capture_pii_attributes() => _result.Value!.Concepts.Single(_ => _.Name == "EmailAddress").Attributes.ShouldContain("pii");
     [Fact] void should_have_all_policies() => _result.Value!.Policies.Count().ShouldEqual(4);
     [Fact] void should_parse_the_code_based_policy() => _result.Value!.Policies.Single(_ => _.Name == "IsAdultCustomer").Code.ShouldNotBeNull();
+    [Fact] void should_have_both_personas() => _result.Value!.Personas!.Count().ShouldEqual(2);
+    [Fact] void should_have_the_accountant_persona_description() => _result.Value!.Personas!.First().Description.ShouldEqual("Keeps the books and approves invoices");
+    [Fact] void should_have_the_accountant_persona_policies() => _result.Value!.Personas!.First().Policies.ShouldContainOnly("IsAccountant", "CanManageInvoice");
     [Fact] void should_have_the_invoicing_module() => _result.Value!.Modules.Single().Name.ShouldEqual("Invoicing");
     [Fact] void should_have_the_module_description() => _result.Value!.Modules.Single().Description.ShouldEqual("Everything related to invoicing customers");
     [Fact] void should_have_the_feature_description() => _feature.Description.ShouldEqual("Registering and managing the lifecycle of invoices");

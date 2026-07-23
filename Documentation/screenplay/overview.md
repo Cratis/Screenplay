@@ -24,6 +24,7 @@ Screenplay files use the `.play` extension.
 <imports>
 <concepts>
 <policies>
+<personas>
 <module>
   <layouts>
   <feature>+
@@ -52,6 +53,7 @@ Line comments start with `//` and run to the end of the line.
 | The domain a file belongs to | [Domain](domain.md) |
 | Formalized value types with compliance attributes | [Concepts](concepts.md) |
 | Named authorization rules | [Policies](policies.md) |
+| Roles interacting with the application | [Personas](personas.md) |
 | Modules, features, and the four slice types | [Modules, Features and Slices](slices.md) |
 | Event type declarations | [Events](events.md) |
 | Commands, validation, the `produces` block, and handlers | [Commands](commands.md) |

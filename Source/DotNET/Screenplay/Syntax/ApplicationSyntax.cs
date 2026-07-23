@@ -14,13 +14,15 @@ namespace Cratis.Screenplay.Syntax;
 /// <param name="Modules">The <see cref="ModuleSyntax">modules</see> declared in the document.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 /// <param name="Domain">The optional <see cref="DomainSyntax"/> the document belongs to.</param>
+/// <param name="Personas">The <see cref="PersonaSyntax">personas</see> declared in the document.</param>
 public record ApplicationSyntax(
     IEnumerable<ImportSyntax> Imports,
     IEnumerable<ConceptSyntax> Concepts,
     IEnumerable<PolicySyntax> Policies,
     IEnumerable<ModuleSyntax> Modules,
     SourceLocation Location,
-    DomainSyntax? Domain = null) : SyntaxNode(Location);
+    DomainSyntax? Domain = null,
+    IEnumerable<PersonaSyntax>? Personas = null) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents an <c>import</c> of a construct from another module.

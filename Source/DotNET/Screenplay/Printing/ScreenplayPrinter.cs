@@ -93,6 +93,12 @@ public sealed partial class ScreenplayPrinter :
             WritePolicy(writer, policy);
         }
 
+        foreach (var persona in application.Personas ?? [])
+        {
+            writer.Blank();
+            WritePersona(writer, persona);
+        }
+
         foreach (var module in application.Modules)
         {
             writer.Blank();
@@ -131,6 +137,20 @@ public sealed partial class ScreenplayPrinter :
             if (policy.Code is not null)
             {
                 WriteCodeBlock(writer, policy.Code);
+            }
+        }
+    }
+
+    void WritePersona(ScreenplayWriter writer, PersonaSyntax persona)
+    {
+        writer.Line($"persona {persona.Name}");
+        using (writer.Indent())
+        {
+            WriteDescription(writer, persona.Description);
+
+            foreach (var policy in persona.Policies)
+            {
+                writer.Line($"policy {policy}");
             }
         }
     }

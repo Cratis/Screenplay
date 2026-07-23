@@ -12,6 +12,8 @@
   href: concepts.md
 - name: Policies
   href: policies.md
+- name: Personas
+  href: personas.md
 - name: Modules, features and slices
   href: slices.md
 - name: Events

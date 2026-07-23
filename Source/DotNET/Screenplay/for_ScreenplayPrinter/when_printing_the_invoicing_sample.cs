@@ -29,6 +29,8 @@ public class when_printing_the_invoicing_sample : given.a_printer
     [Fact] void should_preserve_the_enum_values() => Concept(_reparsed, "InvoiceStatus").Values.Count().ShouldEqual(Concept(_original, "InvoiceStatus").Values.Count());
     [Fact] void should_preserve_the_pii_attribute() => Concept(_reparsed, "EmailAddress").Attributes.ShouldContain("pii");
     [Fact] void should_preserve_the_policies() => _reparsed.Value!.Policies.Count().ShouldEqual(_original.Value!.Policies.Count());
+    [Fact] void should_preserve_the_personas() => _reparsed.Value!.Personas!.Count().ShouldEqual(_original.Value!.Personas!.Count());
+    [Fact] void should_preserve_the_persona_policies() => _reparsed.Value!.Personas!.First().Policies.Count().ShouldEqual(_original.Value!.Personas!.First().Policies.Count());
     [Fact] void should_preserve_the_slices() => Slices(_reparsed).Count().ShouldEqual(Slices(_original).Count());
     [Fact] void should_preserve_the_module_description() => _reparsed.Value!.Modules.Single().Description.ShouldEqual(_original.Value!.Modules.Single().Description);
     [Fact] void should_preserve_the_feature_description() => _reparsed.Value!.Modules.Single().Features.Single().Description.ShouldEqual(_original.Value!.Modules.Single().Features.Single().Description);
