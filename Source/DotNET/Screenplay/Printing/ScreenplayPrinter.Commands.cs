@@ -15,6 +15,7 @@ public partial class ScreenplayPrinter
         writer.Line($"command {command.Name}");
         using (writer.Indent())
         {
+            WriteDescription(writer, command.Description);
             WriteProperties(writer, command.Properties);
 
             if (command.Authorize is not null)

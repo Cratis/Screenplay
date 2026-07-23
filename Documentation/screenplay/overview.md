@@ -56,6 +56,7 @@ Line comments start with `//` and run to the end of the line.
 | Named authorization rules | [Policies](policies.md) |
 | Roles interacting with the application | [Personas](personas.md) |
 | Modules, features, and the four slice types | [Modules, Features and Slices](slices.md) |
+| Single-line and fenced multi-line descriptions | [Descriptions](slices.md#descriptions) |
 | Event type declarations | [Events](events.md) |
 | Commands, validation, the `produces` block, and handlers | [Commands](commands.md) |
 | Read-side entry points | [Queries](queries.md) |

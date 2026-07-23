@@ -158,6 +158,7 @@ TypeRef        = Ident, [ "[]" ], [ "?" ] ;
 
 CommandDecl    = "command", Ident, NL,
                  INDENT,
+                   [ DescriptionDecl ],
                    { PropertyLine },
                    [ AuthorizeDecl ],
                    { ValidateDecl },
@@ -387,7 +388,9 @@ WidgetOption   = "column", Ident, [ "label", LocalizableString ], NL
 (* Shared                                                          *)
 (* -------------------------------------------------------------- *)
 
-DescriptionDecl = "description", StringLiteral, NL ;
+DescriptionDecl = "description", ( StringLiteral | FencedText ), NL ;
+
+FencedText     = NL, "```", NL, { AnyLine }, "```" ;
 
 LocalizableString = StringLiteral
                | "$strings.", Path ;

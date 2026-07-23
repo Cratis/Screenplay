@@ -37,7 +37,7 @@ slice <SliceType> <Name>
 
 ## Descriptions
 
-Modules, features, and slices take an optional `description` as their first body line — a human-readable summary consumers such as Prologue surface when presenting the model. At most one per declaration.
+Modules, features, slices, [personas](personas.md), and [commands](commands.md) take an optional `description` as their first body line — a human-readable summary consumers such as Prologue surface when presenting the model. At most one per declaration.
 
 ```screenplay
 module Invoicing
@@ -49,6 +49,17 @@ module Invoicing
     slice StateChange RegisterInvoice
       description "Registers a new invoice"
 ```
+
+When one line is not enough, use a fenced block — the same ``` convention as inline code blocks. The fenced text is kept verbatim:
+
+````screenplay
+module Invoicing
+  description
+    ```
+    Everything related to invoicing customers.
+    Registration, lifecycle and payment tracking of invoices.
+    ```
+````
 
 ### Slice types
 
