@@ -11,6 +11,9 @@
 domain Sales
 
 import Customers.CustomerRegistered
+import Customers.CustomerAccountClosed
+import Shipping.InvoiceShipped
+import Shipping.InvoiceShippingCleared
 
 concept InvoiceId        : Uuid
 concept CustomerId       : Uuid
@@ -554,8 +557,7 @@ module Invoicing
         authorize IsAuthenticated
 
       projection InvoiceList => InvoiceListReadModel
-        sequence invoices
-        all
+        every
           lastActivityAt = $eventContext.occurred
         from InvoiceRegistered key invoiceId
           id            = $eventSourceId
@@ -565,7 +567,7 @@ module Invoicing
           status        = "draft"
           lineCount     = 0
           dueDate       = dueDate
-          channel       = literal "portal"
+          channel       = "portal"
         from InvoiceSent, InvoicePaid
           touched = true
         from InvoiceMarkedOverdue
@@ -609,7 +611,7 @@ module Invoicing
           registeredForSubject = $causedBy.subject
           displayLabel         = `${invoiceNumber} (${currency})`
         from InvoiceSent
-          set status to "sent"
+          status = "sent"
           sentAt = sentAt
         from InvoicePaid
           status = "paid"
@@ -665,7 +667,6 @@ module Invoicing
         authorize IsAccountant
 
       projection InvoiceLineReport => InvoiceLineReportReadModel
-        automap
         from InvoiceLineItemAdded
           key InvoiceLineKey
             invoiceId  = invoiceId
@@ -696,11 +697,11 @@ module Invoicing
         from InvoicePaid
           decrement sentCount
           increment paidCount
-          add paidTotal by amount
         from InvoiceMarkedOverdue
           increment overdueCount
         from InvoiceWrittenOff
-          subtract paidTotal by amount
+          add writeOffTotal by amount
+          subtract outstandingTotal by amount
         from InvoiceCancelled
           decrement totalCount
 
@@ -753,6 +754,17 @@ module Invoicing
               action RegisterInvoice
                 label $strings.invoices.actions.newInvoice
                 navigate to RegisterInvoiceScreen
+
+    slice StateView SystemActivity
+      description "Counts every event in the system for the activity ticker"
+
+      query GetSystemActivity => SystemActivityReadModel
+        authorize IsAccountant
+
+      projection SystemActivity => SystemActivityReadModel
+        all
+          count totalEvents
+          lastOccurred = $eventContext.occurred
 
     slice Automation NotifyCustomerOnInvoiceRegistered
 

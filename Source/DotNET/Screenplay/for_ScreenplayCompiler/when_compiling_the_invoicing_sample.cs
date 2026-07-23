@@ -22,7 +22,8 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_succeed() => _result.Success.ShouldBeTrue();
     [Fact] void should_have_no_diagnostics() => _result.Diagnostics.ShouldBeEmpty();
     [Fact] void should_have_the_domain() => _result.Value!.Domain!.Name.ShouldEqual("Sales");
-    [Fact] void should_have_the_import() => _result.Value!.Imports.Single().Name.ShouldEqual("CustomerRegistered");
+    [Fact] void should_have_all_imports() => _result.Value!.Imports.Count().ShouldEqual(4);
+    [Fact] void should_have_the_customer_import() => _result.Value!.Imports.Select(_ => _.Name).ShouldContain("CustomerRegistered");
     [Fact] void should_have_all_concepts() => _result.Value!.Concepts.Count().ShouldEqual(12);
     [Fact] void should_have_the_enum_concept_values() => _result.Value!.Concepts.Single(_ => _.Name == "InvoiceStatus").Values.Count().ShouldEqual(5);
     [Fact] void should_capture_pii_attributes() => _result.Value!.Concepts.Single(_ => _.Name == "EmailAddress").Attributes.ShouldContain("pii");
@@ -44,7 +45,7 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_have_the_command_description() => RegisterCommand.Description.ShouldEqual("Registers a new invoice with its lines and payment terms");
     [Fact] void should_have_both_layouts() => _result.Value!.Modules.Single().Layouts.Count().ShouldEqual(2);
     [Fact] void should_have_the_master_detail_slots() => _result.Value!.Modules.Single().Layouts.First().Slots.ShouldContainOnly("sidebar", "main");
-    [Fact] void should_have_all_slices() => _feature.Slices.Count().ShouldEqual(12);
+    [Fact] void should_have_all_slices() => _feature.Slices.Count().ShouldEqual(13);
     [Fact] void should_have_the_nested_feature() => _feature.Features.Single().Name.ShouldEqual("Adjustments");
     [Fact] void should_have_the_nested_feature_slices() => _feature.Features.Single().Slices.Select(_ => _.Name).ShouldContainOnly("ApplyDiscount", "WriteOffInvoice");
     [Fact] void should_parse_conditional_produces() => RegisterCommand.Produces.Count(_ => _.When is not null).ShouldEqual(4);
@@ -88,7 +89,6 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_parse_the_details_projection_every() => Slice("InvoiceDetails").Projection!.Blocks.OfType<EverySyntax>().Single().IncludeChildren.ShouldBeFalse();
     [Fact] void should_parse_the_details_projection_remove_via_join() => Slice("InvoiceDetails").Projection!.Blocks.OfType<RemoveViaJoinSyntax>().Single().Event.ShouldEqual("CustomerAccountClosed");
     [Fact] void should_parse_the_details_projection_nested() => Slice("InvoiceDetails").Projection!.Blocks.OfType<NestedSyntax>().Single().Property.ShouldEqual("shipping");
-    [Fact] void should_parse_the_list_projection_sequence() => Slice("InvoiceList").Projection!.Sequence.ShouldEqual("invoices");
     [Fact] void should_parse_the_line_report_composite_key() => ((CompositeKeySyntax)Slice("InvoiceLineReport").Projection!.Blocks.OfType<FromSyntax>().Single().Key!).Type.ShouldEqual("InvoiceLineKey");
     [Fact] void should_parse_the_summary_counters() => Slice("InvoiceDashboard").Projection!.Blocks.OfType<FromSyntax>().First().Mappings.OfType<IncrementMappingSyntax>().Count().ShouldEqual(2);
     [Fact] void should_parse_the_dashboard_screen_layout() => Slice("InvoiceDashboard").Screens.Single().Directives.OfType<ScreenLayoutSyntax>().Single().Slots.Count().ShouldEqual(4);

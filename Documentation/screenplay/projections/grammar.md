@@ -35,6 +35,7 @@ Projection      = "projection", Ident, [ "=>", TypeRef ], NL,
                   DEDENT ] ;
 
 ProjDirective   = "no", "automap", NL
+                | "sequence", Ident, NL
                 | KeyDecl
                 | CompositeKeyDecl ;
 
@@ -78,6 +79,7 @@ JoinBlock       = "join", Ident, "on", Ident, NL,
 
 WithEventBlock  = "with", TypeRef, NL,
                   [ INDENT,
+                      [ "automap" | "no", "automap", NL ],
                       { MappingLine },
                     DEDENT ] ;
 
@@ -275,11 +277,12 @@ JoinBlock = "join", Ident, "on", Ident, NL,
 
 WithEventBlock = "with", TypeRef, NL,
                  [ INDENT,
+                     [ "automap" | "no", "automap", NL ],
                      { MappingLine },
                    DEDENT ] ;
 ```
 
-**Note:** AutoMap for join blocks is controlled at the projection or children level, not within individual with blocks.
+**Note:** Each `with` block may toggle AutoMap for its own mappings with `automap` or `no automap`.
 
 ### Children Block
 
@@ -461,8 +464,10 @@ projection Order => OrderReadModel
     ShippedAt = $eventContext.occurred
 
   join Customer on CustomerId
-    events CustomerCreated, CustomerUpdated
-    CustomerName = name
+    with CustomerCreated
+      CustomerName = name
+    with CustomerUpdated
+      CustomerName = name
 
   children items identified by lineNumber
     every
@@ -484,7 +489,7 @@ This projection uses:
 - Projection declaration
 - Every block with exclude children at the projection level
 - Multiple from blocks with keys
-- Join block with multiple events
+- Join block with multiple with blocks
 - Children block with:
   - Child every block for common mappings across all child events
   - Nested from and remove blocks
