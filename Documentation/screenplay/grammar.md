@@ -52,6 +52,7 @@ PolicyCondition = "authenticated"
 
 Module         = "module", Ident, NL,
                  INDENT,
+                   [ DescriptionDecl ],
                    { LayoutDecl },
                    { Feature },
                  DEDENT ;
@@ -72,6 +73,7 @@ LayoutDecl     = "layout", Ident, NL,
 
 Feature        = "feature", Ident, NL,
                  INDENT,
+                   [ DescriptionDecl ],
                    { Feature },
                    { SliceDecl },
                  DEDENT ;
@@ -81,7 +83,7 @@ Feature        = "feature", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 SliceDecl      = "slice", SliceType, Ident, NL,
-                 INDENT, { SliceBody }, DEDENT ;
+                 INDENT, [ DescriptionDecl ], { SliceBody }, DEDENT ;
 
 SliceType      = "StateChange" | "StateView" | "Automation" | "Translate" ;
 
@@ -315,6 +317,8 @@ WidgetOption   = "column", Ident, [ "label", StringLiteral ], NL
 (* -------------------------------------------------------------- *)
 (* Shared                                                          *)
 (* -------------------------------------------------------------- *)
+
+DescriptionDecl = "description", StringLiteral, NL ;
 
 FileDirective  = "file", FilePath, NL ;
 FilePath       = (* relative path string *) ;

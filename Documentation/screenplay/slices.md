@@ -6,6 +6,7 @@ The module is the top-level namespace and maps to a bounded context. One module 
 
 ```screenplay
 module <Name>
+  [description "<text>"]
 
   [<layouts>]
   [<features>]
@@ -19,6 +20,7 @@ Features are vertical slice groupings. They nest arbitrarily deep for sub-featur
 
 ```screenplay
 feature <Name>
+  [description "<text>"]
   [feature <Name>]*   ← sub-features
   [slice <type> <Name>]+
 ```
@@ -29,7 +31,23 @@ The slice is the atomic unit of behavior, aligned with Event Modeling. A slice h
 
 ```screenplay
 slice <SliceType> <Name>
+  [description "<text>"]
   <constructs>
+```
+
+## Descriptions
+
+Modules, features, and slices take an optional `description` as their first body line — a human-readable summary consumers such as Prologue surface when presenting the model. At most one per declaration.
+
+```screenplay
+module Invoicing
+  description "Everything related to invoicing customers"
+
+  feature InvoiceManagement
+    description "Registering and managing the lifecycle of invoices"
+
+    slice StateChange RegisterInvoice
+      description "Registers a new invoice"
 ```
 
 ### Slice types

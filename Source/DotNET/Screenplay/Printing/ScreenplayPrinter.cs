@@ -134,6 +134,8 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"module {module.Name}");
         using (writer.Indent())
         {
+            WriteDescription(writer, module.Description);
+
             foreach (var layout in module.Layouts)
             {
                 writer.Blank();
@@ -169,6 +171,8 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"feature {feature.Name}");
         using (writer.Indent())
         {
+            WriteDescription(writer, feature.Description);
+
             foreach (var nested in feature.Features)
             {
                 writer.Blank();
@@ -188,6 +192,8 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"slice {slice.Type} {slice.Name}");
         using (writer.Indent())
         {
+            WriteDescription(writer, slice.Description);
+
             foreach (var command in slice.Commands)
             {
                 writer.Blank();
@@ -241,6 +247,14 @@ public sealed partial class ScreenplayPrinter :
                 writer.Blank();
                 WriteSpecification(writer, specification);
             }
+        }
+    }
+
+    void WriteDescription(ScreenplayWriter writer, string? description)
+    {
+        if (description is not null)
+        {
+            writer.Line($"description \"{description}\"");
         }
     }
 }
