@@ -16,6 +16,7 @@ namespace Cratis.Screenplay.Syntax;
 /// <param name="Domain">The optional <see cref="DomainSyntax"/> the document belongs to.</param>
 /// <param name="Personas">The <see cref="PersonaSyntax">personas</see> declared in the document.</param>
 /// <param name="Seeds">The <see cref="SeedSyntax">seed blocks</see> declared in the document.</param>
+/// <param name="Authentication">The optional <see cref="AuthenticationSyntax"/> declaring the identity providers of the application.</param>
 public record ApplicationSyntax(
     IEnumerable<ImportSyntax> Imports,
     IEnumerable<ConceptSyntax> Concepts,
@@ -24,7 +25,8 @@ public record ApplicationSyntax(
     SourceLocation Location,
     DomainSyntax? Domain = null,
     IEnumerable<PersonaSyntax>? Personas = null,
-    IEnumerable<SeedSyntax>? Seeds = null) : SyntaxNode(Location);
+    IEnumerable<SeedSyntax>? Seeds = null,
+    AuthenticationSyntax? Authentication = null) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents an <c>import</c> of a construct from another module.

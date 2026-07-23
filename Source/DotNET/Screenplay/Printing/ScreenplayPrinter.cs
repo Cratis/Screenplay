@@ -99,6 +99,12 @@ public sealed partial class ScreenplayPrinter :
             WritePersona(writer, persona);
         }
 
+        if (application.Authentication is not null)
+        {
+            writer.Blank();
+            WriteAuthentication(writer, application.Authentication);
+        }
+
         foreach (var module in application.Modules)
         {
             writer.Blank();
@@ -109,6 +115,25 @@ public sealed partial class ScreenplayPrinter :
         {
             writer.Blank();
             WriteSeed(writer, seed);
+        }
+    }
+
+    void WriteAuthentication(ScreenplayWriter writer, AuthenticationSyntax authentication)
+    {
+        writer.Line("authentication");
+        using (writer.Indent())
+        {
+            foreach (var provider in authentication.Providers)
+            {
+                writer.Line($"provider {provider.Name}");
+                using (writer.Indent())
+                {
+                    foreach (var setting in provider.Settings)
+                    {
+                        writer.Line($"{setting.Name} {ScreenplaySyntaxText.Expression(setting.Value)}");
+                    }
+                }
+            }
         }
     }
 
