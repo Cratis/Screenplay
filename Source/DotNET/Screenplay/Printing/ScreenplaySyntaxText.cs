@@ -86,6 +86,18 @@ internal static partial class ScreenplaySyntaxText
     }
 
     /// <summary>
+    /// Renders a declarative validation rule without its property subject - the form used on concepts,
+    /// where the concept's own value is implied.
+    /// </summary>
+    /// <param name="rule">The <see cref="ValidationRuleSyntax"/> to render.</param>
+    /// <returns>The rendered rule text including any message.</returns>
+    public static string ImpliedSubjectValidationRule(ValidationRuleSyntax rule)
+    {
+        var head = ValidationRuleBody(rule);
+        return rule.Message is null ? head : $"{head} message \"{rule.Message}\"";
+    }
+
+    /// <summary>
     /// Renders the value of a <see cref="TagSyntax"/> to its surface form - bare for identifier-like
     /// static tags, the regular expression form otherwise.
     /// </summary>

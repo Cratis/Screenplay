@@ -110,16 +110,25 @@ public sealed partial class ScreenplayPrinter :
     {
         var attributes = concept.Attributes.Select(attribute => $" @{attribute}");
         writer.Line($"concept {concept.Name} : {concept.Type}{string.Concat(attributes)}");
-        if (!concept.IsEnum)
+        var validations = concept.Validations?.ToList() ?? [];
+        if (!concept.IsEnum && validations.Count == 0)
         {
             return;
         }
 
         using (writer.Indent())
         {
-            foreach (var value in concept.Values)
+            if (concept.IsEnum)
             {
-                writer.Line(value);
+                foreach (var value in concept.Values)
+                {
+                    writer.Line(value);
+                }
+            }
+
+            foreach (var validation in validations)
+            {
+                WriteValidate(writer, validation, impliedSubject: true);
             }
         }
     }

@@ -179,7 +179,7 @@ public partial class ScreenplayPrinter
         }
     }
 
-    void WriteValidate(ScreenplayWriter writer, ValidateSyntax validate)
+    void WriteValidate(ScreenplayWriter writer, ValidateSyntax validate, bool impliedSubject = false)
     {
         switch (validate)
         {
@@ -189,7 +189,7 @@ public partial class ScreenplayPrinter
                 {
                     foreach (var rule in declarative.Rules)
                     {
-                        writer.Line(ScreenplaySyntaxText.ValidationRule(rule));
+                        writer.Line(impliedSubject ? ScreenplaySyntaxText.ImpliedSubjectValidationRule(rule) : ScreenplaySyntaxText.ValidationRule(rule));
                     }
                 }
 

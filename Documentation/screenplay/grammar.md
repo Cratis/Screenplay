@@ -26,9 +26,16 @@ QualifiedName  = Ident, { ".", Ident } ;
 (* Concepts                                                        *)
 (* -------------------------------------------------------------- *)
 
-ConceptDecl    = "concept", Ident, ":", PrimitiveType, { Attribute }, NL
+ConceptDecl    = "concept", Ident, ":", PrimitiveType, { Attribute }, NL,
+                   [ INDENT, { ConceptValidate }, DEDENT ]
                | "concept", Ident, ":", "Enum", NL,
-                   INDENT, { Ident, NL }, DEDENT ;
+                   INDENT, { Ident, NL }, { ConceptValidate }, DEDENT ;
+
+ConceptValidate = "validate", NL,
+                   INDENT, { ConceptRule }, DEDENT
+               | "validate", "csharp", NL, InlineBlock ;
+
+ConceptRule    = RuleOp, [ "message", StringLiteral ], NL ;
 
 PrimitiveType  = "Uuid" | "String" | "Int" | "Decimal" | "Bool"
                | "Date" | "DateTime" ;

@@ -128,28 +128,39 @@ internal static partial class ScreenplayParser
             .Select(_ => _.TrimStart('@'))
             .ToList();
 
-        var values = new List<string>();
-        if (type == "Enum")
-        {
-            while (context.TryPeekChild(line.Indent, out var value))
-            {
-                context.Reader.TakeSignificant();
-                if (EnumValueRegex().IsMatch(value.Content))
-                {
-                    values.Add(value.Content);
-                }
-                else
-                {
-                    context.Error($"Invalid enum value '{value.Content}' - expected an identifier", value.Location);
-                }
-            }
-        }
-        else if (!ConceptSyntax.PrimitiveTypes.Contains(type))
+        if (type != "Enum" && !ConceptSyntax.PrimitiveTypes.Contains(type))
         {
             context.Error($"Unknown primitive type '{type}' - expected {string.Join(", ", ConceptSyntax.PrimitiveTypes)} or Enum", line.Location);
         }
 
-        return new(name, type, attributes, values, line.Location);
+        var values = new List<string>();
+        var validations = new List<ValidateSyntax>();
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            if (LineText.FirstWord(child.Content) == "validate")
+            {
+                if (ValidateParser.Parse(context, child, impliedSubject: true) is { } validate)
+                {
+                    validations.Add(validate);
+                }
+            }
+            else if (type == "Enum" && EnumValueRegex().IsMatch(child.Content))
+            {
+                values.Add(child.Content);
+            }
+            else if (type == "Enum")
+            {
+                context.Error($"Invalid enum value '{child.Content}' - expected an identifier", child.Location);
+            }
+            else
+            {
+                context.Error($"Unexpected '{child.Content}' in concept body - expected validate", child.Location);
+                context.SkipBlock(child.Indent);
+            }
+        }
+
+        return new(name, type, attributes, values, line.Location, validations);
     }
 
     static PersonaSyntax ParsePersona(ParserContext context, SourceLine line)

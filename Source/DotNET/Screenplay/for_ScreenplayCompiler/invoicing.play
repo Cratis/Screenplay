@@ -12,8 +12,12 @@ concept InvoiceNumber    : String
 concept CurrencyCode     : String
 concept Money            : Decimal
 concept Quantity         : Int
-concept EmailAddress     : String   @pii
 concept PersonName       : String   @pii
+
+concept EmailAddress : String @pii
+  validate
+    not empty          message "Email is required"
+    matches "^.+@.+$"  message "Must be a valid email address"
 
 concept InvoiceStatus : Enum
   draft

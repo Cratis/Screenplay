@@ -6,9 +6,11 @@ Concepts are formalized value types that wrap a primitive. They give every domai
 
 ```screenplay
 concept <Name> : <PrimitiveType> [<attributes>]
+  [validate ...]*
 
 concept <Name> : Enum
   <value>+
+  [validate ...]*
 ```
 
 ## Primitive types
@@ -48,6 +50,33 @@ concept PaymentTerms : Enum
   net60
   immediate
 ```
+
+## Validation
+
+A concept can declare validation rules in an optional indented body — business rules that travel with the value everywhere it appears. The rules use the same shapes as command validation (see [Commands](commands.md)): declarative `validate` blocks and imperative `validate csharp` blocks. The one difference is that the rules omit the property subject — the concept's own value is implied.
+
+````screenplay
+concept EmailAddress : String @pii
+  validate
+    not empty          message "Email is required"
+    matches "^.+@.+$"  message "Must be a valid email address"
+  validate csharp
+    ```
+    if (Value.EndsWith("@example.com")) yield ValidationError("Example addresses are not allowed");
+    ```
+````
+
+Enum concepts can combine their values with validate blocks — the values remain bare identifiers and the blocks are recognized by the `validate` keyword:
+
+```screenplay
+concept InvoiceStatus : Enum
+  draft
+  sent
+  validate
+    not empty  message "Status is required"
+```
+
+In the compiled syntax tree the implied subject is represented by the well-known property name `value` — the `ValidationRuleSyntax.ConceptValue` constant — so consumers can treat concept rules and command rules uniformly.
 
 ## Attribute inheritance
 

@@ -42,6 +42,8 @@ public class when_printing_the_invoicing_sample : given.a_printer
     [Fact] void should_preserve_the_concurrency_stream_id() => Concurrency(_reparsed).EventStreamId.ShouldEqual(Concurrency(_original).EventStreamId);
     [Fact] void should_preserve_the_concurrency_events() => Concurrency(_reparsed).EventTypes.Count().ShouldEqual(Concurrency(_original).EventTypes.Count());
     [Fact] void should_preserve_the_validation_rules() => Rules(_reparsed).Count().ShouldEqual(Rules(_original).Count());
+    [Fact] void should_preserve_the_concept_validation_rules() => ConceptRules(_reparsed).Count().ShouldEqual(ConceptRules(_original).Count());
+    [Fact] void should_preserve_the_concept_value_subject() => ConceptRules(_reparsed).All(_ => _.Property == ValidationRuleSyntax.ConceptValue).ShouldBeTrue();
     [Fact] void should_preserve_the_event_tags() => RegisteredEvent(_reparsed).Tags!.Count().ShouldEqual(RegisteredEvent(_original).Tags!.Count());
     [Fact] void should_preserve_the_produces_tags() => Command(_reparsed, "RegisterInvoice").Produces.First().Tags!.Count().ShouldEqual(Command(_original, "RegisterInvoice").Produces.First().Tags!.Count());
     [Fact] void should_preserve_the_capture_append_tags() => AppendTags(_reparsed).Count().ShouldEqual(AppendTags(_original).Count());
@@ -67,4 +69,7 @@ public class when_printing_the_invoicing_sample : given.a_printer
 
     static IEnumerable<ValidationRuleSyntax> Rules(CompilationResult<ApplicationSyntax> result) =>
         Command(result, "RegisterInvoice").Validations.OfType<DeclarativeValidateSyntax>().Single().Rules;
+
+    static IEnumerable<ValidationRuleSyntax> ConceptRules(CompilationResult<ApplicationSyntax> result) =>
+        Concept(result, "EmailAddress").Validations!.OfType<DeclarativeValidateSyntax>().Single().Rules;
 }

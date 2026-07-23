@@ -176,7 +176,14 @@ public record ValidationRuleSyntax(
     ValidationRuleKind Rule,
     ExpressionSyntax? Value,
     string? Message,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// The well known <see cref="Property"/> subject of rules declared on a concept, where the concept's
+    /// own value is implied and no property appears in the source text.
+    /// </summary>
+    public const string ConceptValue = "value";
+}
 
 /// <summary>
 /// Represents a <c>produces</c> declaration - an event the command emits, optionally under a condition.
