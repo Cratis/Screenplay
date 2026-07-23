@@ -270,13 +270,13 @@ CDLBody        = (* Change Data Capture Language grammar - covers source/key/map
 SpecificationDecl = "specification", Ident, NL,
                  INDENT, { SpecificationGiven | SpecificationWhen | SpecificationThen }, DEDENT ;
 
-SpecificationGiven = "given", Ident, NL,
+SpecificationGiven = "given", [ "readmodel" ], Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ] ;
 
 SpecificationWhen = "when", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ] ;
 
-SpecificationThen = "then", Ident, NL,
+SpecificationThen = "then", [ "readmodel" ], Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
                | "then", "error", StringLiteral, NL ;
 

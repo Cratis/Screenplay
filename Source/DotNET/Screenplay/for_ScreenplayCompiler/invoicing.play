@@ -301,6 +301,18 @@ module Invoicing
       constraint InvoiceStatusTransition
         file Constraints/InvoiceStatusTransitionConstraint.cs
 
+      specification SendingADraftInvoice
+        given readmodel InvoiceListReadModel
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          status    = "draft"
+        when ChangeInvoiceStatus
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          status    = "sent"
+        then InvoiceSent
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+        then readmodel InvoiceListReadModel
+          status = "sent"
+
     slice StateChange ProcessInvoiceBatch
 
       command ProcessInvoiceBatch
