@@ -8,7 +8,7 @@ namespace Cratis.Screenplay.Parsing;
 /// <summary>
 /// Validates cross references in a parsed document - policies referenced by <c>authorize</c> and personas,
 /// events referenced by reactors, <c>produces</c>, constraints and <c>seed</c> blocks - and that
-/// <c>concurrency</c> and <c>seed</c> blocks are not empty.
+/// <c>concurrency</c> and <c>seed</c> blocks are not empty and <c>authentication</c> provider names are unique.
 /// </summary>
 internal static class ScreenplayValidator
 {
@@ -35,6 +35,14 @@ internal static class ScreenplayValidator
             {
                 context.Warning($"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
             }
+        }
+
+        foreach (var duplicate in (application.Authentication?.Providers ?? [])
+            .GroupBy(provider => provider.Name)
+            .Where(group => group.Count() > 1)
+            .SelectMany(group => group.Skip(1)))
+        {
+            context.Error($"Duplicate provider '{duplicate.Name}' - provider names must be unique", duplicate.Location);
         }
 
         foreach (var seed in application.Seeds ?? [])

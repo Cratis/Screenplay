@@ -23,6 +23,7 @@ internal static partial class ScreenplayParser
         WarnOnTabIndentation(context, lines);
 
         DomainSyntax? domain = null;
+        AuthenticationSyntax? authentication = null;
         var imports = new List<ImportSyntax>();
         var concepts = new List<ConceptSyntax>();
         var policies = new List<PolicySyntax>();
@@ -36,7 +37,7 @@ internal static partial class ScreenplayParser
             switch (LineText.FirstWord(line.Content))
             {
                 case "domain":
-                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || policies.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0);
+                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || policies.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null);
                     break;
                 case "import":
                     if (ImportRegex().Match(line.Content) is { Success: true } import)
@@ -58,6 +59,9 @@ internal static partial class ScreenplayParser
                 case "persona":
                     personas.Add(ParsePersona(context, line));
                     break;
+                case "authentication":
+                    authentication = AuthenticationParser.Parse(context, line, authentication);
+                    break;
                 case "module":
                     modules.Add(ParseModule(context, line));
                     break;
@@ -65,13 +69,13 @@ internal static partial class ScreenplayParser
                     seeds.Add(SeedParser.Parse(context, line));
                     break;
                 default:
-                    context.Error($"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, policy, persona, module or seed", line.Location);
+                    context.Error($"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, policy, persona, authentication, module or seed", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
         }
 
-        return new(imports, concepts, policies, modules, SourceLocation.Start, domain, personas, seeds);
+        return new(imports, concepts, policies, modules, SourceLocation.Start, domain, personas, seeds, authentication);
     }
 
     static DomainSyntax? ParseDomain(ParserContext context, SourceLine line, DomainSyntax? existing, bool hasOtherConstructs)

@@ -60,6 +60,17 @@ persona InvoiceManager
   description "Registers invoices and manages their lifecycle"
   policy CanManageInvoice
 
+authentication
+  provider AzureAd
+    type oidc
+    authority "https://login.microsoftonline.com/common/v2.0"
+    clientId $secrets.azureAdClientId
+    clientSecret $secrets.azureAdClientSecret
+  provider GitHub
+    type oauth
+    clientId $secrets.githubClientId
+    clientSecret $secrets.githubClientSecret
+
 module Invoicing
   description "Everything related to invoicing customers"
 
