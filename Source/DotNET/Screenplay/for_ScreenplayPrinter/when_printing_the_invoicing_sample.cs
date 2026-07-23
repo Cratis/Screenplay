@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.for_ScreenplayPrinter;
 
@@ -47,6 +48,9 @@ public class when_printing_the_invoicing_sample : given.a_printer
     [Fact] void should_preserve_the_event_tags() => RegisteredEvent(_reparsed).Tags!.Count().ShouldEqual(RegisteredEvent(_original).Tags!.Count());
     [Fact] void should_preserve_the_produces_tags() => Command(_reparsed, "RegisterInvoice").Produces.First().Tags!.Count().ShouldEqual(Command(_original, "RegisterInvoice").Produces.First().Tags!.Count());
     [Fact] void should_preserve_the_capture_append_tags() => AppendTags(_reparsed).Count().ShouldEqual(AppendTags(_original).Count());
+    [Fact] void should_preserve_the_given_readmodels() => StatusSpecification(_reparsed).GivenReadModels!.Count().ShouldEqual(StatusSpecification(_original).GivenReadModels!.Count());
+    [Fact] void should_preserve_the_then_readmodels() => StatusSpecification(_reparsed).ThenReadModels!.Count().ShouldEqual(StatusSpecification(_original).ThenReadModels!.Count());
+    [Fact] void should_preserve_the_readmodel_properties() => StatusSpecification(_reparsed).GivenReadModels!.Single().Properties.Count().ShouldEqual(StatusSpecification(_original).GivenReadModels!.Single().Properties.Count());
     [Fact] void should_preserve_the_seed_groups() => Seed(_reparsed).Groups.Count().ShouldEqual(Seed(_original).Groups.Count());
     [Fact] void should_preserve_the_seeded_events() => Seed(_reparsed).Groups.First().Events.Count().ShouldEqual(Seed(_original).Groups.First().Events.Count());
     [Fact] void should_preserve_the_seeded_event_properties() => Seed(_reparsed).Groups.First().Events.First().Properties.Count().ShouldEqual(Seed(_original).Groups.First().Events.First().Properties.Count());
@@ -68,6 +72,9 @@ public class when_printing_the_invoicing_sample : given.a_printer
 
     static SeedSyntax Seed(CompilationResult<ApplicationSyntax> result) =>
         result.Value!.Seeds!.Single();
+
+    static SpecificationSyntax StatusSpecification(CompilationResult<ApplicationSyntax> result) =>
+        Slices(result).Single(_ => _.Name == "ChangeInvoiceStatus").Specifications.Single();
 
     static IEnumerable<TagSyntax> AppendTags(CompilationResult<ApplicationSyntax> result) =>
         Slices(result).Single(_ => _.Name == "LegacyInvoiceSync").Captures.Single()
