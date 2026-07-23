@@ -24,7 +24,7 @@
         "keywords": {
             "patterns": [
                 {
-                    "match": "^\\s*(import|concept|policy|module|layout|feature|slice|event|command|query|reactor|screen|constraint)\\b",
+                    "match": "^\\s*(domain|import|concept|policy|persona|module|layout|feature|slice|event|command|query|reactor|screen|constraint)\\b",
                     "captures": {
                         "1": { "name": "keyword.control.screenplay" }
                     }
@@ -34,7 +34,7 @@
                     "name": "keyword.other.screenplay"
                 },
                 {
-                    "match": "\\b(authorize|validate|produces|handler|require|when|template|data|action|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|file|message|matches|all|max|min|length|today|not|empty|and|or|authenticated|role|claim|subject|event|query|layout|translate|key)\\b",
+                    "match": "\\b(authorize|validate|produces|handler|require|when|template|data|action|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|file|message|matches|all|max|min|length|today|not|empty|and|or|authenticated|role|claim|subject|event|query|layout|translate|key|description|concurrency|eventSource|sourceType|streamType|streamId|tag)\\b",
                     "name": "keyword.other.screenplay"
                 }
             ]
