@@ -7,7 +7,13 @@ The full EBNF grammar of the Screenplay DSL. `INDENT`/`DEDENT` are synthesized b
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = { Import }, { ConceptDecl }, { PolicyDecl }, { Module } ;
+Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { PolicyDecl }, { Module } ;
+
+(* -------------------------------------------------------------- *)
+(* Domain                                                          *)
+(* -------------------------------------------------------------- *)
+
+DomainDecl     = "domain", QualifiedName, NL ;
 
 (* -------------------------------------------------------------- *)
 (* Imports                                                         *)

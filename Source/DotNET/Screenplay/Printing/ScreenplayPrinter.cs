@@ -70,6 +70,12 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteApplication(ScreenplayWriter writer, ApplicationSyntax application)
     {
+        if (application.Domain is not null)
+        {
+            writer.Line($"domain {application.Domain.Name}");
+            writer.Blank();
+        }
+
         foreach (var import in application.Imports)
         {
             writer.Line($"import {import.QualifiedName}");

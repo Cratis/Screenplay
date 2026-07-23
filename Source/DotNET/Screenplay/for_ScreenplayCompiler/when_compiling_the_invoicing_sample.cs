@@ -21,6 +21,7 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
 
     [Fact] void should_succeed() => _result.Success.ShouldBeTrue();
     [Fact] void should_have_no_diagnostics() => _result.Diagnostics.ShouldBeEmpty();
+    [Fact] void should_have_the_domain() => _result.Value!.Domain!.Name.ShouldEqual("Sales");
     [Fact] void should_have_the_import() => _result.Value!.Imports.Single().Name.ShouldEqual("CustomerRegistered");
     [Fact] void should_have_all_concepts() => _result.Value!.Concepts.Count().ShouldEqual(10);
     [Fact] void should_have_the_enum_concept_values() => _result.Value!.Concepts.Single(_ => _.Name == "InvoiceStatus").Values.Count().ShouldEqual(5);

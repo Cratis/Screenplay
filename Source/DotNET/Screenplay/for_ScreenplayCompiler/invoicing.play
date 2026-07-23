@@ -2,6 +2,8 @@
 // Invoicing — complete .play file
 // ============================================================
 
+domain Sales
+
 import Customers.CustomerRegistered
 
 concept InvoiceId        : Uuid

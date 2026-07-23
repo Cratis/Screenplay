@@ -22,6 +22,7 @@ internal static partial class ScreenplayParser
     {
         WarnOnTabIndentation(context, lines);
 
+        DomainSyntax? domain = null;
         var imports = new List<ImportSyntax>();
         var concepts = new List<ConceptSyntax>();
         var policies = new List<PolicySyntax>();
@@ -32,6 +33,9 @@ internal static partial class ScreenplayParser
             context.Reader.TakeSignificant();
             switch (LineText.FirstWord(line.Content))
             {
+                case "domain":
+                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || policies.Count > 0 || modules.Count > 0);
+                    break;
                 case "import":
                     if (ImportRegex().Match(line.Content) is { Success: true } import)
                     {
@@ -53,13 +57,36 @@ internal static partial class ScreenplayParser
                     modules.Add(ParseModule(context, line));
                     break;
                 default:
-                    context.Error($"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected import, concept, policy or module", line.Location);
+                    context.Error($"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, policy or module", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
         }
 
-        return new(imports, concepts, policies, modules, SourceLocation.Start);
+        return new(imports, concepts, policies, modules, SourceLocation.Start, domain);
+    }
+
+    static DomainSyntax? ParseDomain(ParserContext context, SourceLine line, DomainSyntax? existing, bool hasOtherConstructs)
+    {
+        var match = DomainRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error($"Invalid domain declaration '{line.Content}' - expected 'domain <Qualified.Name>'", line.Location);
+            return existing;
+        }
+
+        if (existing is not null)
+        {
+            context.Error("The document already declares a domain - a document can have at most one", line.Location);
+            return existing;
+        }
+
+        if (hasOtherConstructs)
+        {
+            context.Error("'domain' must be declared before any other construct", line.Location);
+        }
+
+        return new(match.Groups[1].Value, line.Location);
     }
 
     static void WarnOnTabIndentation(ParserContext context, IReadOnlyList<SourceLine> lines)
@@ -227,6 +254,9 @@ internal static partial class ScreenplayParser
 
         return new(name, features, slices, line.Location, description);
     }
+
+    [GeneratedRegex(@"^domain\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]
+    private static partial Regex DomainRegex();
 
     [GeneratedRegex(@"^import\s+([\w.]+)$", RegexOptions.None, 1000)]
     private static partial Regex ImportRegex();

@@ -20,6 +20,7 @@ Screenplay files use the `.play` extension.
 ## Top-level structure
 
 ```text
+<domain>
 <imports>
 <concepts>
 <policies>
@@ -48,6 +49,7 @@ Line comments start with `//` and run to the end of the line.
 
 | Topic | Page |
 | --- | --- |
+| The domain a file belongs to | [Domain](domain.md) |
 | Formalized value types with compliance attributes | [Concepts](concepts.md) |
 | Named authorization rules | [Policies](policies.md) |
 | Modules, features, and the four slice types | [Modules, Features and Slices](slices.md) |
