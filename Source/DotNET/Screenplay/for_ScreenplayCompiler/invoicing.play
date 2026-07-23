@@ -47,6 +47,15 @@ policy IsAdultCustomer
         : PolicyResult.Fail("Customer must be 18 or older");
     ```
 
+persona Accountant
+  description "Keeps the books and approves invoices"
+  policy IsAccountant
+  policy CanManageInvoice
+
+persona InvoiceManager
+  description "Registers invoices and manages their lifecycle"
+  policy CanManageInvoice
+
 module Invoicing
   description "Everything related to invoicing customers"
 

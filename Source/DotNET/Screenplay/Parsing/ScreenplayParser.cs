@@ -26,6 +26,7 @@ internal static partial class ScreenplayParser
         var imports = new List<ImportSyntax>();
         var concepts = new List<ConceptSyntax>();
         var policies = new List<PolicySyntax>();
+        var personas = new List<PersonaSyntax>();
         var modules = new List<ModuleSyntax>();
 
         while (context.Reader.PeekSignificant() is { } line)
@@ -34,7 +35,7 @@ internal static partial class ScreenplayParser
             switch (LineText.FirstWord(line.Content))
             {
                 case "domain":
-                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || policies.Count > 0 || modules.Count > 0);
+                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || policies.Count > 0 || personas.Count > 0 || modules.Count > 0);
                     break;
                 case "import":
                     if (ImportRegex().Match(line.Content) is { Success: true } import)
@@ -53,17 +54,20 @@ internal static partial class ScreenplayParser
                 case "policy":
                     policies.Add(PolicyParser.Parse(context, line));
                     break;
+                case "persona":
+                    personas.Add(ParsePersona(context, line));
+                    break;
                 case "module":
                     modules.Add(ParseModule(context, line));
                     break;
                 default:
-                    context.Error($"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, policy or module", line.Location);
+                    context.Error($"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, policy, persona or module", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
         }
 
-        return new(imports, concepts, policies, modules, SourceLocation.Start, domain);
+        return new(imports, concepts, policies, modules, SourceLocation.Start, domain, personas);
     }
 
     static DomainSyntax? ParseDomain(ParserContext context, SourceLine line, DomainSyntax? existing, bool hasOtherConstructs)
@@ -146,6 +150,47 @@ internal static partial class ScreenplayParser
         }
 
         return new(name, type, attributes, values, line.Location);
+    }
+
+    static PersonaSyntax ParsePersona(ParserContext context, SourceLine line)
+    {
+        var match = PersonaRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error($"Invalid persona declaration '{line.Content}' - expected 'persona <Name>'", line.Location);
+        }
+
+        var name = match.Groups[1].Value;
+        string? description = null;
+        var policies = new List<string>();
+
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            switch (LineText.FirstWord(child.Content))
+            {
+                case "description":
+                    description = DescriptionParser.Parse(context, child, description, $"Persona '{name}'");
+                    break;
+                case "policy":
+                    if (PersonaPolicyRegex().Match(child.Content) is { Success: true } policy)
+                    {
+                        policies.Add(policy.Groups[1].Value);
+                    }
+                    else
+                    {
+                        context.Error($"Invalid policy reference '{child.Content}' - expected 'policy <Name>'", child.Location);
+                    }
+
+                    break;
+                default:
+                    context.Error($"Unexpected '{LineText.FirstWord(child.Content)}' in persona body - expected description or policy", child.Location);
+                    context.SkipBlock(child.Indent);
+                    break;
+            }
+        }
+
+        return new(name, description, policies, line.Location);
     }
 
     static ModuleSyntax ParseModule(ParserContext context, SourceLine line)
@@ -266,6 +311,12 @@ internal static partial class ScreenplayParser
 
     [GeneratedRegex(@"^[a-z_]\w*$", RegexOptions.None, 1000)]
     private static partial Regex EnumValueRegex();
+
+    [GeneratedRegex(@"^persona\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex PersonaRegex();
+
+    [GeneratedRegex(@"^policy\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex PersonaPolicyRegex();
 
     [GeneratedRegex(@"^module\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex ModuleRegex();
