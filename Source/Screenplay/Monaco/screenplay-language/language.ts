@@ -30,6 +30,7 @@ export const constructKeywords = [
     'reactor',
     'screen',
     'constraint',
+    'seed',
 ];
 
 export const clauseKeywords = [
@@ -81,6 +82,8 @@ export const clauseKeywords = [
     'streamType',
     'streamId',
     'tag',
+    'for',
+    'readmodel',
 ];
 
 export const codeBlockTags = ['csharp', 'typescript', 'react', 'html'];
@@ -114,7 +117,7 @@ export const languageConfiguration: languages.LanguageConfiguration = {
     },
     indentationRules: {
         increaseIndentPattern:
-            /^\s*(module|feature|slice|policy|persona|event|command|screen|projection|capture|reactor|constraint|layout|template|validate|produces|handler|section|concurrency)\b.*$/,
+            /^\s*(module|feature|slice|policy|persona|event|command|screen|projection|capture|reactor|constraint|layout|template|validate|produces|handler|section|concurrency|seed|for)\b.*$/,
         // Dedents are always explicit in an offside language — never auto-dedent.
         decreaseIndentPattern: /(?!)/,
     },
