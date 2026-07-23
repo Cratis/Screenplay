@@ -28,6 +28,7 @@ internal static partial class ScreenplayParser
         var policies = new List<PolicySyntax>();
         var personas = new List<PersonaSyntax>();
         var modules = new List<ModuleSyntax>();
+        var seeds = new List<SeedSyntax>();
 
         while (context.Reader.PeekSignificant() is { } line)
         {
@@ -35,7 +36,7 @@ internal static partial class ScreenplayParser
             switch (LineText.FirstWord(line.Content))
             {
                 case "domain":
-                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || policies.Count > 0 || personas.Count > 0 || modules.Count > 0);
+                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || policies.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0);
                     break;
                 case "import":
                     if (ImportRegex().Match(line.Content) is { Success: true } import)
@@ -60,14 +61,17 @@ internal static partial class ScreenplayParser
                 case "module":
                     modules.Add(ParseModule(context, line));
                     break;
+                case "seed":
+                    seeds.Add(SeedParser.Parse(context, line));
+                    break;
                 default:
-                    context.Error($"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, policy, persona or module", line.Location);
+                    context.Error($"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, policy, persona, module or seed", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
         }
 
-        return new(imports, concepts, policies, modules, SourceLocation.Start, domain, personas);
+        return new(imports, concepts, policies, modules, SourceLocation.Start, domain, personas, seeds);
     }
 
     static DomainSyntax? ParseDomain(ParserContext context, SourceLine line, DomainSyntax? existing, bool hasOtherConstructs)

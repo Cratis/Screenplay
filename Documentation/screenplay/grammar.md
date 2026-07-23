@@ -7,7 +7,7 @@ The full EBNF grammar of the Screenplay DSL. `INDENT`/`DEDENT` are synthesized b
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { PolicyDecl }, { PersonaDecl }, { Module } ;
+Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { PolicyDecl }, { PersonaDecl }, { Module }, { SeedDecl } ;
 
 (* -------------------------------------------------------------- *)
 (* Domain                                                          *)
@@ -279,6 +279,19 @@ SpecificationWhen = "when", Ident, NL,
 SpecificationThen = "then", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
                | "then", "error", StringLiteral, NL ;
+
+(* -------------------------------------------------------------- *)
+(* Event seeding                                                   *)
+(* -------------------------------------------------------------- *)
+
+SeedDecl       = "seed", NL,
+                 INDENT, { SeedGroup }, DEDENT ;
+
+SeedGroup      = "for", StringLiteral, NL,
+                 INDENT, { SeedEvent }, DEDENT ;
+
+SeedEvent      = Ident, NL,
+                 [ INDENT, { PropertyMapping }, DEDENT ] ;
 
 (* -------------------------------------------------------------- *)
 (* Sub-language extension point                                    *)

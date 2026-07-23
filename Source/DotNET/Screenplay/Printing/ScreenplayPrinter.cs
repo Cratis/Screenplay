@@ -104,6 +104,35 @@ public sealed partial class ScreenplayPrinter :
             writer.Blank();
             WriteModule(writer, module);
         }
+
+        foreach (var seed in application.Seeds ?? [])
+        {
+            writer.Blank();
+            WriteSeed(writer, seed);
+        }
+    }
+
+    void WriteSeed(ScreenplayWriter writer, SeedSyntax seed)
+    {
+        writer.Line("seed");
+        using (writer.Indent())
+        {
+            foreach (var group in seed.Groups)
+            {
+                writer.Line($"for \"{group.EventSourceId}\"");
+                using (writer.Indent())
+                {
+                    foreach (var @event in group.Events)
+                    {
+                        writer.Line(@event.Event);
+                        using (writer.Indent())
+                        {
+                            WriteMappings(writer, @event.Properties);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     void WriteConcept(ScreenplayWriter writer, ConceptSyntax concept)
