@@ -6,7 +6,8 @@ using System.Text.RegularExpressions;
 namespace Cratis.Screenplay.Parsing;
 
 /// <summary>
-/// Parses <c>description</c> lines - the optional human readable description of a declaration.
+/// Parses <c>description</c> declarations - the optional human readable description of a declaration,
+/// as a single quoted line or a fenced multi-line block.
 /// </summary>
 internal static partial class DescriptionParser
 {
@@ -20,6 +21,11 @@ internal static partial class DescriptionParser
     /// <returns>The parsed description, or <paramref name="existing"/> when the line is invalid or a duplicate.</returns>
     public static string? Parse(ParserContext context, SourceLine line, string? existing, string owner)
     {
+        if (line.Content == "description")
+        {
+            return ParseFenced(context, line, existing, owner);
+        }
+
         var match = DescriptionRegex().Match(line.Content);
         if (!match.Success)
         {
@@ -27,13 +33,35 @@ internal static partial class DescriptionParser
             return existing;
         }
 
+        return Keep(context, line, existing, owner, match.Groups[1].Value);
+    }
+
+    static string? ParseFenced(ParserContext context, SourceLine line, string? existing, string owner)
+    {
+        var text = CodeBlockParser.ParseFencedText(context, "description", line);
+        if (text is null)
+        {
+            return existing;
+        }
+
+        if (text.Trim().Length == 0)
+        {
+            context.Error($"{owner} declares an empty description - the fenced block must contain text", line.Location);
+            return existing;
+        }
+
+        return Keep(context, line, existing, owner, text);
+    }
+
+    static string? Keep(ParserContext context, SourceLine line, string? existing, string owner, string description)
+    {
         if (existing is not null)
         {
             context.Error($"{owner} already declares a description - at most one is allowed", line.Location);
             return existing;
         }
 
-        return match.Groups[1].Value;
+        return description;
     }
 
     [GeneratedRegex(@"^description\s+""([^""]*)""$", RegexOptions.None, 1000)]

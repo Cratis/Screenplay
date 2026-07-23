@@ -31,12 +31,16 @@ internal static partial class CommandParser
         var produces = new List<ProducesSyntax>();
         HandlerSyntax? handler = null;
         ConcurrencySyntax? concurrency = null;
+        string? description = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
             switch (LineText.FirstWord(line.Content))
             {
+                case "description":
+                    description = DescriptionParser.Parse(context, line, description, $"Command '{name.Groups[1].Value}'");
+                    break;
                 case "authorize":
                     authorize = AuthorizeParser.Parse(context, line);
                     break;
@@ -80,7 +84,7 @@ internal static partial class CommandParser
             context.Error($"Command '{name.Groups[1].Value}' cannot declare both 'produces' and 'handler'", header.Location);
         }
 
-        return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency);
+        return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency, description);
     }
 
     static ConcurrencySyntax? ParseConcurrency(ParserContext context, SourceLine line, ConcurrencySyntax? existing, string commandName)

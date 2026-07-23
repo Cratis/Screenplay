@@ -118,6 +118,7 @@ public enum ComparisonOperator
 /// <param name="Handler">The optional <see cref="HandlerSyntax"/> when the command uses an imperative handler instead of <c>produces</c>.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 /// <param name="Concurrency">The optional <see cref="ConcurrencySyntax"/> scoping the concurrency check for the command's appends.</param>
+/// <param name="Description">The optional human readable description of the command.</param>
 public record CommandSyntax(
     string Name,
     IEnumerable<PropertySyntax> Properties,
@@ -126,7 +127,8 @@ public record CommandSyntax(
     IEnumerable<ProducesSyntax> Produces,
     HandlerSyntax? Handler,
     SourceLocation Location,
-    ConcurrencySyntax? Concurrency = null) : SyntaxNode(Location);
+    ConcurrencySyntax? Concurrency = null,
+    string? Description = null) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents an <c>authorize</c> declaration referencing one or more policies.
