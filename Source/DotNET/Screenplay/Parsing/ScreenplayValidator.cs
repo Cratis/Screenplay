@@ -6,8 +6,9 @@ using Cratis.Screenplay.Syntax;
 namespace Cratis.Screenplay.Parsing;
 
 /// <summary>
-/// Validates cross references in a parsed document - policies referenced by <c>authorize</c> and
-/// events referenced by reactors, <c>produces</c> and constraints.
+/// Validates cross references in a parsed document - policies referenced by <c>authorize</c> and personas,
+/// events referenced by reactors, <c>produces</c> and constraints - and that <c>concurrency</c> blocks
+/// declare at least one dimension.
 /// </summary>
 internal static class ScreenplayValidator
 {
@@ -47,6 +48,14 @@ internal static class ScreenplayValidator
 
     static void ValidateSlice(SliceSyntax slice, HashSet<string> knownEvents, HashSet<string> knownPolicies, ParserContext context)
     {
+        foreach (var concurrency in slice.Commands.Select(command => command.Concurrency)
+            .OfType<ConcurrencySyntax>()
+            .Where(concurrency => concurrency is { EventSource: false, EventSourceType: null, EventStreamType: null, EventStreamId: null } &&
+                !concurrency.EventTypes.Any()))
+        {
+            context.Error("Empty 'concurrency' block - declare at least one of eventSource, sourceType, streamType, streamId or events", concurrency.Location);
+        }
+
         foreach (var authorize in slice.Commands.Select(command => command.Authorize)
             .Concat(slice.Queries.Select(query => query.Authorize))
             .OfType<AuthorizeSyntax>())

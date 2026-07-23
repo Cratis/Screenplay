@@ -134,7 +134,17 @@ CommandDecl    = "command", Ident, NL,
                    [ AuthorizeDecl ],
                    { ValidateDecl },
                    ( { ProducesDecl } | HandlerDecl ),
+                   [ ConcurrencyDecl ],
                  DEDENT ;
+
+ConcurrencyDecl = "concurrency", NL,
+                 INDENT, { ConcurrencyDim }, DEDENT ;
+
+ConcurrencyDim = "eventSource", NL
+               | "sourceType", Ident, NL
+               | "streamType", Ident, NL
+               | "streamId", Ident, NL
+               | "events", Ident, { ",", Ident }, NL ;
 
 AuthorizeDecl  = "authorize", PolicyRef, { ( NL, PolicyRef ) | ( "or", PolicyRef ) }, NL ;
 
