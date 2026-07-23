@@ -212,6 +212,7 @@ MappingSource  = Ident                         (* command property   *)
                | "$context.occurred"
                | "$context.identity.id"
                | "$env.", Ident
+               | "$secrets.", Path
                | StringLiteral
                | Number
                | "true" | "false"
