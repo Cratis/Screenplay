@@ -129,6 +129,8 @@ internal static partial class ScreenplayParser
             context.Error($"Invalid module declaration '{line.Content}' - expected 'module <Name>'", line.Location);
         }
 
+        var name = match.Groups[1].Value;
+        string? description = null;
         var layouts = new List<LayoutSyntax>();
         var features = new List<FeatureSyntax>();
 
@@ -137,6 +139,9 @@ internal static partial class ScreenplayParser
             context.Reader.TakeSignificant();
             switch (LineText.FirstWord(child.Content))
             {
+                case "description":
+                    description = DescriptionParser.Parse(context, child, description, $"Module '{name}'");
+                    break;
                 case "layout":
                     layouts.Add(ParseLayout(context, child));
                     break;
@@ -144,13 +149,13 @@ internal static partial class ScreenplayParser
                     features.Add(ParseFeature(context, child));
                     break;
                 default:
-                    context.Error($"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected layout or feature", child.Location);
+                    context.Error($"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected description, layout or feature", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
         }
 
-        return new(match.Groups[1].Value, layouts, features, line.Location);
+        return new(name, layouts, features, line.Location, description);
     }
 
     static LayoutSyntax ParseLayout(ParserContext context, SourceLine line)
@@ -194,6 +199,8 @@ internal static partial class ScreenplayParser
             context.Error($"Invalid feature declaration '{line.Content}' - expected 'feature <Name>'", line.Location);
         }
 
+        var name = match.Groups[1].Value;
+        string? description = null;
         var features = new List<FeatureSyntax>();
         var slices = new List<SliceSyntax>();
 
@@ -202,6 +209,9 @@ internal static partial class ScreenplayParser
             context.Reader.TakeSignificant();
             switch (LineText.FirstWord(child.Content))
             {
+                case "description":
+                    description = DescriptionParser.Parse(context, child, description, $"Feature '{name}'");
+                    break;
                 case "feature":
                     features.Add(ParseFeature(context, child));
                     break;
@@ -209,13 +219,13 @@ internal static partial class ScreenplayParser
                     slices.Add(SliceParser.Parse(context, child));
                     break;
                 default:
-                    context.Error($"Unexpected '{LineText.FirstWord(child.Content)}' in feature body - expected feature or slice", child.Location);
+                    context.Error($"Unexpected '{LineText.FirstWord(child.Content)}' in feature body - expected description, feature or slice", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
         }
 
-        return new(match.Groups[1].Value, features, slices, line.Location);
+        return new(name, features, slices, line.Location, description);
     }
 
     [GeneratedRegex(@"^import\s+([\w.]+)$", RegexOptions.None, 1000)]

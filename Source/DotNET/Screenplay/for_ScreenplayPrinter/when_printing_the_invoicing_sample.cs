@@ -29,6 +29,9 @@ public class when_printing_the_invoicing_sample : given.a_printer
     [Fact] void should_preserve_the_pii_attribute() => Concept(_reparsed, "EmailAddress").Attributes.ShouldContain("pii");
     [Fact] void should_preserve_the_policies() => _reparsed.Value!.Policies.Count().ShouldEqual(_original.Value!.Policies.Count());
     [Fact] void should_preserve_the_slices() => Slices(_reparsed).Count().ShouldEqual(Slices(_original).Count());
+    [Fact] void should_preserve_the_module_description() => _reparsed.Value!.Modules.Single().Description.ShouldEqual(_original.Value!.Modules.Single().Description);
+    [Fact] void should_preserve_the_feature_description() => _reparsed.Value!.Modules.Single().Features.Single().Description.ShouldEqual(_original.Value!.Modules.Single().Features.Single().Description);
+    [Fact] void should_preserve_the_slice_description() => Slices(_reparsed).Single(_ => _.Name == "RegisterInvoice").Description.ShouldEqual(Slices(_original).Single(_ => _.Name == "RegisterInvoice").Description);
     [Fact] void should_preserve_the_conditional_produces() => Command(_reparsed, "RegisterInvoice").Produces.Count(_ => _.When is not null).ShouldEqual(Command(_original, "RegisterInvoice").Produces.Count(_ => _.When is not null));
     [Fact] void should_preserve_the_validation_rules() => Rules(_reparsed).Count().ShouldEqual(Rules(_original).Count());
 

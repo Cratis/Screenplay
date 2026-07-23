@@ -46,6 +46,7 @@ policy IsAdultCustomer
     ```
 
 module Invoicing
+  description "Everything related to invoicing customers"
 
   layout MasterDetail
     template
@@ -60,8 +61,10 @@ module Invoicing
       footer
 
   feature InvoiceManagement
+    description "Registering and managing the lifecycle of invoices"
 
     slice StateChange RegisterInvoice
+      description "Registers a new invoice"
 
       command RegisterInvoice
         invoiceId     InvoiceId

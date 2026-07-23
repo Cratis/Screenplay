@@ -28,6 +28,9 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_have_all_policies() => _result.Value!.Policies.Count().ShouldEqual(4);
     [Fact] void should_parse_the_code_based_policy() => _result.Value!.Policies.Single(_ => _.Name == "IsAdultCustomer").Code.ShouldNotBeNull();
     [Fact] void should_have_the_invoicing_module() => _result.Value!.Modules.Single().Name.ShouldEqual("Invoicing");
+    [Fact] void should_have_the_module_description() => _result.Value!.Modules.Single().Description.ShouldEqual("Everything related to invoicing customers");
+    [Fact] void should_have_the_feature_description() => _feature.Description.ShouldEqual("Registering and managing the lifecycle of invoices");
+    [Fact] void should_have_the_slice_description() => Slice("RegisterInvoice").Description.ShouldEqual("Registers a new invoice");
     [Fact] void should_have_both_layouts() => _result.Value!.Modules.Single().Layouts.Count().ShouldEqual(2);
     [Fact] void should_have_the_master_detail_slots() => _result.Value!.Modules.Single().Layouts.First().Slots.ShouldContainOnly("sidebar", "main");
     [Fact] void should_have_all_slices() => _feature.Slices.Count().ShouldEqual(10);
