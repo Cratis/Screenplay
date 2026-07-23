@@ -30,6 +30,7 @@ internal static partial class CommandParser
         var validations = new List<ValidateSyntax>();
         var produces = new List<ProducesSyntax>();
         HandlerSyntax? handler = null;
+        ConcurrencySyntax? concurrency = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -39,8 +40,11 @@ internal static partial class CommandParser
                 case "authorize":
                     authorize = AuthorizeParser.Parse(context, line);
                     break;
+                case "concurrency":
+                    concurrency = ParseConcurrency(context, line, concurrency, name.Groups[1].Value);
+                    break;
                 case "validate":
-                    if (ParseValidate(context, line) is { } validate)
+                    if (ValidateParser.Parse(context, line) is { } validate)
                     {
                         validations.Add(validate);
                     }
@@ -76,35 +80,111 @@ internal static partial class CommandParser
             context.Error($"Command '{name.Groups[1].Value}' cannot declare both 'produces' and 'handler'", header.Location);
         }
 
-        return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location);
+        return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency);
     }
 
-    static ValidateSyntax? ParseValidate(ParserContext context, SourceLine line)
+    static ConcurrencySyntax? ParseConcurrency(ParserContext context, SourceLine line, ConcurrencySyntax? existing, string commandName)
     {
-        if (line.Content == "validate")
+        if (line.Content != "concurrency")
         {
-            var rules = new List<ValidationRuleSyntax>();
-            while (context.TryPeekChild(line.Indent, out var child))
+            context.Error($"Invalid concurrency declaration '{line.Content}' - expected 'concurrency'", line.Location);
+            context.SkipBlock(line.Indent);
+            return existing;
+        }
+
+        if (existing is not null)
+        {
+            context.Error($"Command '{commandName}' already declares a concurrency block - a command can have at most one", line.Location);
+            context.SkipBlock(line.Indent);
+            return existing;
+        }
+
+        var eventSource = false;
+        string? eventSourceType = null;
+        string? eventStreamType = null;
+        string? eventStreamId = null;
+        List<string>? eventTypes = null;
+
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            switch (LineText.FirstWord(child.Content))
             {
-                context.Reader.TakeSignificant();
-                if (ValidationRuleParser.Parse(context, child) is { } rule)
-                {
-                    rules.Add(rule);
-                }
+                case "eventSource":
+                    eventSource = ParseEventSourceDimension(context, child, eventSource);
+                    break;
+                case "sourceType":
+                    eventSourceType = ParseNamedDimension(context, child, "sourceType", eventSourceType);
+                    break;
+                case "streamType":
+                    eventStreamType = ParseNamedDimension(context, child, "streamType", eventStreamType);
+                    break;
+                case "streamId":
+                    eventStreamId = ParseNamedDimension(context, child, "streamId", eventStreamId);
+                    break;
+                case "events":
+                    eventTypes = ParseEventsDimension(context, child, eventTypes);
+                    break;
+                default:
+                    context.Error($"Unexpected '{child.Content}' in concurrency block - expected eventSource, sourceType, streamType, streamId or events", child.Location);
+                    context.SkipBlock(child.Indent);
+                    break;
             }
-
-            return new DeclarativeValidateSyntax(rules, line.Location);
         }
 
-        if (line.Content == "validate csharp")
+        return new(eventSource, eventSourceType, eventStreamType, eventStreamId, eventTypes ?? [], line.Location);
+    }
+
+    static bool ParseEventSourceDimension(ParserContext context, SourceLine line, bool existing)
+    {
+        if (line.Content != "eventSource")
         {
-            var code = CodeBlockParser.Parse(context, "csharp", line);
-            return code is null ? null : new CodeValidateSyntax(code, line.Location);
+            context.Error($"Invalid eventSource dimension '{line.Content}' - expected 'eventSource'", line.Location);
+            return existing;
         }
 
-        context.Error($"Invalid validate declaration '{line.Content}' - expected 'validate' or 'validate csharp'", line.Location);
-        context.SkipBlock(line.Indent);
-        return null;
+        if (existing)
+        {
+            context.Error("Duplicate 'eventSource' in concurrency block - each dimension can appear at most once", line.Location);
+        }
+
+        return true;
+    }
+
+    static string? ParseNamedDimension(ParserContext context, SourceLine line, string dimension, string? existing)
+    {
+        var match = ConcurrencyDimensionRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error($"Invalid {dimension} dimension '{line.Content}' - expected '{dimension} <Name>'", line.Location);
+            return existing;
+        }
+
+        if (existing is not null)
+        {
+            context.Error($"Duplicate '{dimension}' in concurrency block - each dimension can appear at most once", line.Location);
+            return existing;
+        }
+
+        return match.Groups[2].Value;
+    }
+
+    static List<string>? ParseEventsDimension(ParserContext context, SourceLine line, List<string>? existing)
+    {
+        if (existing is not null)
+        {
+            context.Error("Duplicate 'events' in concurrency block - each dimension can appear at most once", line.Location);
+            return existing;
+        }
+
+        var names = line.Content["events".Length..].Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (names.Length == 0 || Array.Exists(names, name => !EventNameRegex().IsMatch(name)))
+        {
+            context.Error($"Invalid events dimension '{line.Content}' - expected 'events <EventType>[, <EventType>]*'", line.Location);
+            return existing;
+        }
+
+        return [.. names];
     }
 
     static ProducesSyntax? ParseProduces(ParserContext context, SourceLine line)
@@ -121,9 +201,9 @@ internal static partial class CommandParser
             }
 
             context.Reader.TakeSignificant();
-            var mappings = ParseMappings(context, eventLine);
+            var (mappings, tags) = ParseMappingsAndTags(context, eventLine);
             context.SkipBlock(line.Indent);
-            return new(eventLine.Content, condition, mappings, line.Location);
+            return new(eventLine.Content, condition, mappings, line.Location, tags);
         }
 
         var unconditional = ProducesRegex().Match(line.Content);
@@ -134,15 +214,27 @@ internal static partial class CommandParser
             return null;
         }
 
-        return new(unconditional.Groups[1].Value, null, ParseMappings(context, line), line.Location);
+        var (unconditionalMappings, unconditionalTags) = ParseMappingsAndTags(context, line);
+        return new(unconditional.Groups[1].Value, null, unconditionalMappings, line.Location, unconditionalTags);
     }
 
-    static List<PropertyMappingSyntax> ParseMappings(ParserContext context, SourceLine parent)
+    static (List<PropertyMappingSyntax> Mappings, List<TagSyntax> Tags) ParseMappingsAndTags(ParserContext context, SourceLine parent)
     {
         var mappings = new List<PropertyMappingSyntax>();
+        var tags = new List<TagSyntax>();
         while (context.TryPeekChild(parent.Indent, out var child))
         {
             context.Reader.TakeSignificant();
+            if (LineText.FirstWord(child.Content) == "tag")
+            {
+                if (TagParser.Parse(context, child) is { } tag)
+                {
+                    tags.Add(tag);
+                }
+
+                continue;
+            }
+
             var match = MappingRegex().Match(child.Content);
             if (!match.Success)
             {
@@ -153,7 +245,7 @@ internal static partial class CommandParser
             mappings.Add(new(match.Groups[1].Value, ExpressionParser.ParseMappingSource(match.Groups[2].Value, child.Location), child.Location));
         }
 
-        return mappings;
+        return (mappings, tags);
     }
 
     static HandlerSyntax? ParseHandler(ParserContext context, SourceLine line)
@@ -192,6 +284,9 @@ internal static partial class CommandParser
 
     [GeneratedRegex(@"^([A-Z]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex EventNameRegex();
+
+    [GeneratedRegex(@"^(sourceType|streamType|streamId)\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex ConcurrencyDimensionRegex();
 
     [GeneratedRegex(@"^([\w.]+)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
     private static partial Regex MappingRegex();

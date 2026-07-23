@@ -12,5 +12,7 @@
 
     <ItemGroup Condition="'$(Configuration)'=='Debug'">
         <EmbeddedResource Include="**/*.play" />
+        <!-- WithCulture=false keeps <base>.<locale>.strings samples in the main assembly instead of a satellite. -->
+        <EmbeddedResource Include="**/*.strings" WithCulture="false" />
     </ItemGroup>
 </Project>

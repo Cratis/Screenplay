@@ -22,16 +22,23 @@ internal static partial class ScreenplayParser
     {
         WarnOnTabIndentation(context, lines);
 
+        DomainSyntax? domain = null;
+        AuthenticationSyntax? authentication = null;
         var imports = new List<ImportSyntax>();
         var concepts = new List<ConceptSyntax>();
         var policies = new List<PolicySyntax>();
+        var personas = new List<PersonaSyntax>();
         var modules = new List<ModuleSyntax>();
+        var seeds = new List<SeedSyntax>();
 
         while (context.Reader.PeekSignificant() is { } line)
         {
             context.Reader.TakeSignificant();
             switch (LineText.FirstWord(line.Content))
             {
+                case "domain":
+                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || policies.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null);
+                    break;
                 case "import":
                     if (ImportRegex().Match(line.Content) is { Success: true } import)
                     {
@@ -49,17 +56,49 @@ internal static partial class ScreenplayParser
                 case "policy":
                     policies.Add(PolicyParser.Parse(context, line));
                     break;
+                case "persona":
+                    personas.Add(ParsePersona(context, line));
+                    break;
+                case "authentication":
+                    authentication = AuthenticationParser.Parse(context, line, authentication);
+                    break;
                 case "module":
                     modules.Add(ParseModule(context, line));
                     break;
+                case "seed":
+                    seeds.Add(SeedParser.Parse(context, line));
+                    break;
                 default:
-                    context.Error($"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected import, concept, policy or module", line.Location);
+                    context.Error($"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, policy, persona, authentication, module or seed", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
         }
 
-        return new(imports, concepts, policies, modules, SourceLocation.Start);
+        return new(imports, concepts, policies, modules, SourceLocation.Start, domain, personas, seeds, authentication);
+    }
+
+    static DomainSyntax? ParseDomain(ParserContext context, SourceLine line, DomainSyntax? existing, bool hasOtherConstructs)
+    {
+        var match = DomainRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error($"Invalid domain declaration '{line.Content}' - expected 'domain <Qualified.Name>'", line.Location);
+            return existing;
+        }
+
+        if (existing is not null)
+        {
+            context.Error("The document already declares a domain - a document can have at most one", line.Location);
+            return existing;
+        }
+
+        if (hasOtherConstructs)
+        {
+            context.Error("'domain' must be declared before any other construct", line.Location);
+        }
+
+        return new(match.Groups[1].Value, line.Location);
     }
 
     static void WarnOnTabIndentation(ParserContext context, IReadOnlyList<SourceLine> lines)
@@ -97,28 +136,80 @@ internal static partial class ScreenplayParser
             .Select(_ => _.TrimStart('@'))
             .ToList();
 
-        var values = new List<string>();
-        if (type == "Enum")
-        {
-            while (context.TryPeekChild(line.Indent, out var value))
-            {
-                context.Reader.TakeSignificant();
-                if (EnumValueRegex().IsMatch(value.Content))
-                {
-                    values.Add(value.Content);
-                }
-                else
-                {
-                    context.Error($"Invalid enum value '{value.Content}' - expected an identifier", value.Location);
-                }
-            }
-        }
-        else if (!ConceptSyntax.PrimitiveTypes.Contains(type))
+        if (type != "Enum" && !ConceptSyntax.PrimitiveTypes.Contains(type))
         {
             context.Error($"Unknown primitive type '{type}' - expected {string.Join(", ", ConceptSyntax.PrimitiveTypes)} or Enum", line.Location);
         }
 
-        return new(name, type, attributes, values, line.Location);
+        var values = new List<string>();
+        var validations = new List<ValidateSyntax>();
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            if (LineText.FirstWord(child.Content) == "validate")
+            {
+                if (ValidateParser.Parse(context, child, impliedSubject: true) is { } validate)
+                {
+                    validations.Add(validate);
+                }
+            }
+            else if (type == "Enum" && EnumValueRegex().IsMatch(child.Content))
+            {
+                values.Add(child.Content);
+            }
+            else if (type == "Enum")
+            {
+                context.Error($"Invalid enum value '{child.Content}' - expected an identifier", child.Location);
+            }
+            else
+            {
+                context.Error($"Unexpected '{child.Content}' in concept body - expected validate", child.Location);
+                context.SkipBlock(child.Indent);
+            }
+        }
+
+        return new(name, type, attributes, values, line.Location, validations);
+    }
+
+    static PersonaSyntax ParsePersona(ParserContext context, SourceLine line)
+    {
+        var match = PersonaRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error($"Invalid persona declaration '{line.Content}' - expected 'persona <Name>'", line.Location);
+        }
+
+        var name = match.Groups[1].Value;
+        string? description = null;
+        var policies = new List<string>();
+
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            switch (LineText.FirstWord(child.Content))
+            {
+                case "description":
+                    description = DescriptionParser.Parse(context, child, description, $"Persona '{name}'");
+                    break;
+                case "policy":
+                    if (PersonaPolicyRegex().Match(child.Content) is { Success: true } policy)
+                    {
+                        policies.Add(policy.Groups[1].Value);
+                    }
+                    else
+                    {
+                        context.Error($"Invalid policy reference '{child.Content}' - expected 'policy <Name>'", child.Location);
+                    }
+
+                    break;
+                default:
+                    context.Error($"Unexpected '{LineText.FirstWord(child.Content)}' in persona body - expected description or policy", child.Location);
+                    context.SkipBlock(child.Indent);
+                    break;
+            }
+        }
+
+        return new(name, description, policies, line.Location);
     }
 
     static ModuleSyntax ParseModule(ParserContext context, SourceLine line)
@@ -129,6 +220,8 @@ internal static partial class ScreenplayParser
             context.Error($"Invalid module declaration '{line.Content}' - expected 'module <Name>'", line.Location);
         }
 
+        var name = match.Groups[1].Value;
+        string? description = null;
         var layouts = new List<LayoutSyntax>();
         var features = new List<FeatureSyntax>();
 
@@ -137,6 +230,9 @@ internal static partial class ScreenplayParser
             context.Reader.TakeSignificant();
             switch (LineText.FirstWord(child.Content))
             {
+                case "description":
+                    description = DescriptionParser.Parse(context, child, description, $"Module '{name}'");
+                    break;
                 case "layout":
                     layouts.Add(ParseLayout(context, child));
                     break;
@@ -144,13 +240,13 @@ internal static partial class ScreenplayParser
                     features.Add(ParseFeature(context, child));
                     break;
                 default:
-                    context.Error($"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected layout or feature", child.Location);
+                    context.Error($"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected description, layout or feature", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
         }
 
-        return new(match.Groups[1].Value, layouts, features, line.Location);
+        return new(name, layouts, features, line.Location, description);
     }
 
     static LayoutSyntax ParseLayout(ParserContext context, SourceLine line)
@@ -194,6 +290,8 @@ internal static partial class ScreenplayParser
             context.Error($"Invalid feature declaration '{line.Content}' - expected 'feature <Name>'", line.Location);
         }
 
+        var name = match.Groups[1].Value;
+        string? description = null;
         var features = new List<FeatureSyntax>();
         var slices = new List<SliceSyntax>();
 
@@ -202,6 +300,9 @@ internal static partial class ScreenplayParser
             context.Reader.TakeSignificant();
             switch (LineText.FirstWord(child.Content))
             {
+                case "description":
+                    description = DescriptionParser.Parse(context, child, description, $"Feature '{name}'");
+                    break;
                 case "feature":
                     features.Add(ParseFeature(context, child));
                     break;
@@ -209,14 +310,17 @@ internal static partial class ScreenplayParser
                     slices.Add(SliceParser.Parse(context, child));
                     break;
                 default:
-                    context.Error($"Unexpected '{LineText.FirstWord(child.Content)}' in feature body - expected feature or slice", child.Location);
+                    context.Error($"Unexpected '{LineText.FirstWord(child.Content)}' in feature body - expected description, feature or slice", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
         }
 
-        return new(match.Groups[1].Value, features, slices, line.Location);
+        return new(name, features, slices, line.Location, description);
     }
+
+    [GeneratedRegex(@"^domain\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]
+    private static partial Regex DomainRegex();
 
     [GeneratedRegex(@"^import\s+([\w.]+)$", RegexOptions.None, 1000)]
     private static partial Regex ImportRegex();
@@ -226,6 +330,12 @@ internal static partial class ScreenplayParser
 
     [GeneratedRegex(@"^[a-z_]\w*$", RegexOptions.None, 1000)]
     private static partial Regex EnumValueRegex();
+
+    [GeneratedRegex(@"^persona\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex PersonaRegex();
+
+    [GeneratedRegex(@"^policy\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex PersonaPolicyRegex();
 
     [GeneratedRegex(@"^module\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex ModuleRegex();

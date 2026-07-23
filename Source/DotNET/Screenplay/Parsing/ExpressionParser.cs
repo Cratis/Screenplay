@@ -102,6 +102,16 @@ internal static partial class ExpressionParser
             return new EnvironmentExpressionSyntax(text["$env.".Length..], location);
         }
 
+        if (text.StartsWith("$secrets.", StringComparison.Ordinal))
+        {
+            return new SecretExpressionSyntax(text["$secrets.".Length..], location);
+        }
+
+        if (text.StartsWith("$strings.", StringComparison.Ordinal))
+        {
+            return new StringsExpressionSyntax(text["$strings.".Length..], location);
+        }
+
         if (text.StartsWith("$.", StringComparison.Ordinal))
         {
             return new SourceItemExpressionSyntax(text["$.".Length..], location);

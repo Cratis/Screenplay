@@ -13,12 +13,15 @@ namespace Cratis.Screenplay.Syntax;
 /// <param name="Attributes">The attributes applied to the concept, without the <c>@</c> prefix, such as <c>pii</c> and <c>sensitive</c>.</param>
 /// <param name="Values">The values of the concept when it is an enumeration, empty otherwise.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <param name="Validations">The <see cref="ValidateSyntax">validation blocks</see> for the concept. Rules use
+/// <see cref="ValidationRuleSyntax.ConceptValue"/> as their implied property subject.</param>
 public record ConceptSyntax(
     string Name,
     string Type,
     IEnumerable<string> Attributes,
     IEnumerable<string> Values,
-    SourceLocation Location) : SyntaxNode(Location)
+    SourceLocation Location,
+    IEnumerable<ValidateSyntax>? Validations = null) : SyntaxNode(Location)
 {
     /// <summary>
     /// Gets the well known primitive type names a concept can be based on.

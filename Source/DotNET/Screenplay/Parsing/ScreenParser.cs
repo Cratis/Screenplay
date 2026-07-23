@@ -109,7 +109,7 @@ internal static partial class ScreenParser
             var labelMatch = LabelRegex().Match(child.Content);
             if (labelMatch.Success)
             {
-                label = labelMatch.Groups[1].Value;
+                label = OperandText(labelMatch, 1);
             }
             else if (LineText.FirstWord(child.Content) == "navigate")
             {
@@ -193,7 +193,7 @@ internal static partial class ScreenParser
             return new(string.Empty, line.Location);
         }
 
-        return new(match.Groups[1].Value, line.Location);
+        return new(OperandText(match, 1), line.Location);
     }
 
     static ScreenTableSyntax ParseTable(ParserContext context, SourceLine line)
@@ -208,7 +208,7 @@ internal static partial class ScreenParser
             var column = ColumnRegex().Match(child.Content);
             if (column.Success)
             {
-                columns.Add(new(column.Groups[1].Value, column.Groups[2].Success ? column.Groups[2].Value : null, child.Location));
+                columns.Add(new(column.Groups[1].Value, column.Groups[2].Success || column.Groups[3].Success ? OperandText(column, 2) : null, child.Location));
                 continue;
             }
 
@@ -240,11 +240,14 @@ internal static partial class ScreenParser
                 continue;
             }
 
-            fields.Add(new(field.Groups[1].Value, field.Groups[2].Value, child.Location));
+            fields.Add(new(field.Groups[1].Value, OperandText(field, 2), child.Location));
         }
 
         return new(target, fields, line.Location);
     }
+
+    static string OperandText(Match match, int quotedGroup) =>
+        match.Groups[quotedGroup].Success ? match.Groups[quotedGroup].Value : match.Groups[quotedGroup + 1].Value;
 
     [GeneratedRegex(@"^screen\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
@@ -255,7 +258,7 @@ internal static partial class ScreenParser
     [GeneratedRegex(@"^action\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex ActionRegex();
 
-    [GeneratedRegex("^label\\s+\"([^\"]*)\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^label\\s+(?:\"([^\"]*)\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
     private static partial Regex LabelRegex();
 
     [GeneratedRegex(@"^navigate\s+to\s+(\w+)(?:\s+by\s+(\w+))?$", RegexOptions.None, 1000)]
@@ -264,15 +267,15 @@ internal static partial class ScreenParser
     [GeneratedRegex(@"^[a-z_]\w*$", RegexOptions.None, 1000)]
     private static partial Regex SlotRegex();
 
-    [GeneratedRegex("^title\\s+\"([^\"]*)\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^title\\s+(?:\"([^\"]*)\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
     private static partial Regex TitleRegex();
 
-    [GeneratedRegex("^column\\s+([\\w.]+)(?:\\s+label\\s+\"([^\"]*)\")?$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^column\\s+([\\w.]+)(?:\\s+label\\s+(?:\"([^\"]*)\"|(\\$strings\\.\\w+(?:\\.\\w+)*)))?$", RegexOptions.None, 1000)]
     private static partial Regex ColumnRegex();
 
     [GeneratedRegex(@"^on\s+row-click\s+(navigate\s+to\s+.+)$", RegexOptions.None, 1000)]
     private static partial Regex RowClickRegex();
 
-    [GeneratedRegex("^field\\s+([\\w.]+)\\s+label\\s+\"([^\"]*)\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^field\\s+([\\w.]+)\\s+label\\s+(?:\"([^\"]*)\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
     private static partial Regex FieldRegex();
 }

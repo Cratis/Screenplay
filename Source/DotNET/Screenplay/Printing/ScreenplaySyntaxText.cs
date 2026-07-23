@@ -31,6 +31,8 @@ internal static partial class ScreenplaySyntaxText
         PathExpressionSyntax path => path.Path,
         ContextExpressionSyntax context => $"$context.{context.Path}",
         EnvironmentExpressionSyntax environment => $"$env.{environment.Name}",
+        SecretExpressionSyntax secret => $"$secrets.{secret.Name}",
+        StringsExpressionSyntax strings => $"$strings.{strings.Key}",
         SourceItemExpressionSyntax sourceItem => $"$.{sourceItem.Path}",
         EventSourceIdExpressionSyntax => "$eventSourceId",
         EventContextExpressionSyntax eventContext => $"$eventContext.{eventContext.Path}",
@@ -82,8 +84,40 @@ internal static partial class ScreenplaySyntaxText
     public static string ValidationRule(ValidationRuleSyntax rule)
     {
         var head = $"{rule.Property} {ValidationRuleBody(rule)}";
-        return rule.Message is null ? head : $"{head} message \"{rule.Message}\"";
+        return rule.Message is null ? head : $"{head} message {LocalizableString(rule.Message)}";
     }
+
+    /// <summary>
+    /// Renders a declarative validation rule without its property subject - the form used on concepts,
+    /// where the concept's own value is implied.
+    /// </summary>
+    /// <param name="rule">The <see cref="ValidationRuleSyntax"/> to render.</param>
+    /// <returns>The rendered rule text including any message.</returns>
+    public static string ImpliedSubjectValidationRule(ValidationRuleSyntax rule)
+    {
+        var head = ValidationRuleBody(rule);
+        return rule.Message is null ? head : $"{head} message {LocalizableString(rule.Message)}";
+    }
+
+    /// <summary>
+    /// Renders a string operand that may reference a localized string - values starting with
+    /// <c>$strings.</c> are emitted unquoted, everything else as a quoted string literal.
+    /// </summary>
+    /// <param name="value">The value to render.</param>
+    /// <returns>The rendered operand text.</returns>
+    public static string LocalizableString(string value) =>
+        value.StartsWith("$strings.", StringComparison.Ordinal) ? value : $"\"{value}\"";
+
+    /// <summary>
+    /// Renders the value of a <see cref="TagSyntax"/> to its surface form - bare for identifier-like
+    /// static tags, the regular expression form otherwise.
+    /// </summary>
+    /// <param name="tag">The <see cref="TagSyntax"/> to render.</param>
+    /// <returns>The rendered tag value text.</returns>
+    public static string Tag(TagSyntax tag) =>
+        tag.Value is LiteralExpressionSyntax { Value: string text } && IdentifierRegex().IsMatch(text) && text is not ("true" or "false" or "null")
+            ? text
+            : Expression(tag.Value);
 
     /// <summary>
     /// Renders the <c>when</c> trigger of a capture <c>append</c> to its surface form.
@@ -185,4 +219,7 @@ internal static partial class ScreenplaySyntaxText
 
     [GeneratedRegex(@"^[\w.]+$", RegexOptions.None, 1000)]
     private static partial Regex BareWordRegex();
+
+    [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.None, 1000)]
+    private static partial Regex IdentifierRegex();
 }

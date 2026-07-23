@@ -70,6 +70,12 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteApplication(ScreenplayWriter writer, ApplicationSyntax application)
     {
+        if (application.Domain is not null)
+        {
+            writer.Line($"domain {application.Domain.Name}");
+            writer.Blank();
+        }
+
         foreach (var import in application.Imports)
         {
             writer.Line($"import {import.QualifiedName}");
@@ -87,10 +93,70 @@ public sealed partial class ScreenplayPrinter :
             WritePolicy(writer, policy);
         }
 
+        foreach (var persona in application.Personas ?? [])
+        {
+            writer.Blank();
+            WritePersona(writer, persona);
+        }
+
+        if (application.Authentication is not null)
+        {
+            writer.Blank();
+            WriteAuthentication(writer, application.Authentication);
+        }
+
         foreach (var module in application.Modules)
         {
             writer.Blank();
             WriteModule(writer, module);
+        }
+
+        foreach (var seed in application.Seeds ?? [])
+        {
+            writer.Blank();
+            WriteSeed(writer, seed);
+        }
+    }
+
+    void WriteAuthentication(ScreenplayWriter writer, AuthenticationSyntax authentication)
+    {
+        writer.Line("authentication");
+        using (writer.Indent())
+        {
+            foreach (var provider in authentication.Providers)
+            {
+                writer.Line($"provider {provider.Name}");
+                using (writer.Indent())
+                {
+                    foreach (var setting in provider.Settings)
+                    {
+                        writer.Line($"{setting.Name} {ScreenplaySyntaxText.Expression(setting.Value)}");
+                    }
+                }
+            }
+        }
+    }
+
+    void WriteSeed(ScreenplayWriter writer, SeedSyntax seed)
+    {
+        writer.Line("seed");
+        using (writer.Indent())
+        {
+            foreach (var group in seed.Groups)
+            {
+                writer.Line($"for \"{group.EventSourceId}\"");
+                using (writer.Indent())
+                {
+                    foreach (var @event in group.Events)
+                    {
+                        writer.Line(@event.Event);
+                        using (writer.Indent())
+                        {
+                            WriteMappings(writer, @event.Properties);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -98,16 +164,25 @@ public sealed partial class ScreenplayPrinter :
     {
         var attributes = concept.Attributes.Select(attribute => $" @{attribute}");
         writer.Line($"concept {concept.Name} : {concept.Type}{string.Concat(attributes)}");
-        if (!concept.IsEnum)
+        var validations = concept.Validations?.ToList() ?? [];
+        if (!concept.IsEnum && validations.Count == 0)
         {
             return;
         }
 
         using (writer.Indent())
         {
-            foreach (var value in concept.Values)
+            if (concept.IsEnum)
             {
-                writer.Line(value);
+                foreach (var value in concept.Values)
+                {
+                    writer.Line(value);
+                }
+            }
+
+            foreach (var validation in validations)
+            {
+                WriteValidate(writer, validation, impliedSubject: true);
             }
         }
     }
@@ -129,11 +204,27 @@ public sealed partial class ScreenplayPrinter :
         }
     }
 
+    void WritePersona(ScreenplayWriter writer, PersonaSyntax persona)
+    {
+        writer.Line($"persona {persona.Name}");
+        using (writer.Indent())
+        {
+            WriteDescription(writer, persona.Description);
+
+            foreach (var policy in persona.Policies)
+            {
+                writer.Line($"policy {policy}");
+            }
+        }
+    }
+
     void WriteModule(ScreenplayWriter writer, ModuleSyntax module)
     {
         writer.Line($"module {module.Name}");
         using (writer.Indent())
         {
+            WriteDescription(writer, module.Description);
+
             foreach (var layout in module.Layouts)
             {
                 writer.Blank();
@@ -169,6 +260,8 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"feature {feature.Name}");
         using (writer.Indent())
         {
+            WriteDescription(writer, feature.Description);
+
             foreach (var nested in feature.Features)
             {
                 writer.Blank();
@@ -188,6 +281,8 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"slice {slice.Type} {slice.Name}");
         using (writer.Indent())
         {
+            WriteDescription(writer, slice.Description);
+
             foreach (var command in slice.Commands)
             {
                 writer.Blank();
@@ -241,6 +336,14 @@ public sealed partial class ScreenplayPrinter :
                 writer.Blank();
                 WriteSpecification(writer, specification);
             }
+        }
+    }
+
+    void WriteDescription(ScreenplayWriter writer, string? description)
+    {
+        if (description is not null)
+        {
+            writer.Line($"description \"{description}\"");
         }
     }
 }

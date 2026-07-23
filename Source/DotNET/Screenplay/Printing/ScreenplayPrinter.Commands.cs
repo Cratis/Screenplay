@@ -36,6 +36,44 @@ public partial class ScreenplayPrinter
             {
                 WriteHandler(writer, command.Handler);
             }
+
+            if (command.Concurrency is not null)
+            {
+                WriteConcurrency(writer, command.Concurrency);
+            }
+        }
+    }
+
+    void WriteConcurrency(ScreenplayWriter writer, ConcurrencySyntax concurrency)
+    {
+        writer.Line("concurrency");
+        using (writer.Indent())
+        {
+            if (concurrency.EventSource)
+            {
+                writer.Line("eventSource");
+            }
+
+            if (concurrency.EventSourceType is not null)
+            {
+                writer.Line($"sourceType {concurrency.EventSourceType}");
+            }
+
+            if (concurrency.EventStreamType is not null)
+            {
+                writer.Line($"streamType {concurrency.EventStreamType}");
+            }
+
+            if (concurrency.EventStreamId is not null)
+            {
+                writer.Line($"streamId {concurrency.EventStreamId}");
+            }
+
+            var events = concurrency.EventTypes.ToList();
+            if (events.Count > 0)
+            {
+                writer.Line($"events {string.Join(", ", events)}");
+            }
         }
     }
 
@@ -44,6 +82,7 @@ public partial class ScreenplayPrinter
         writer.Line($"event {@event.Name}");
         using (writer.Indent())
         {
+            WriteTags(writer, @event.Tags);
             WriteProperties(writer, @event.Properties);
         }
     }
@@ -140,7 +179,7 @@ public partial class ScreenplayPrinter
         }
     }
 
-    void WriteValidate(ScreenplayWriter writer, ValidateSyntax validate)
+    void WriteValidate(ScreenplayWriter writer, ValidateSyntax validate, bool impliedSubject = false)
     {
         switch (validate)
         {
@@ -150,7 +189,7 @@ public partial class ScreenplayPrinter
                 {
                     foreach (var rule in declarative.Rules)
                     {
-                        writer.Line(ScreenplaySyntaxText.ValidationRule(rule));
+                        writer.Line(impliedSubject ? ScreenplaySyntaxText.ImpliedSubjectValidationRule(rule) : ScreenplaySyntaxText.ValidationRule(rule));
                     }
                 }
 
@@ -173,6 +212,7 @@ public partial class ScreenplayPrinter
             writer.Line($"produces {produces.Event}");
             using (writer.Indent())
             {
+                WriteTags(writer, produces.Tags);
                 WriteMappings(writer, produces.Mappings);
             }
 
@@ -185,6 +225,7 @@ public partial class ScreenplayPrinter
             writer.Line(produces.Event);
             using (writer.Indent())
             {
+                WriteTags(writer, produces.Tags);
                 WriteMappings(writer, produces.Mappings);
             }
         }
@@ -212,6 +253,14 @@ public partial class ScreenplayPrinter
         foreach (var mapping in mappings)
         {
             writer.Line($"{mapping.Property} = {ScreenplaySyntaxText.Expression(mapping.Source)}");
+        }
+    }
+
+    void WriteTags(ScreenplayWriter writer, IEnumerable<TagSyntax>? tags)
+    {
+        foreach (var tag in tags ?? [])
+        {
+            writer.Line($"tag {ScreenplaySyntaxText.Tag(tag)}");
         }
     }
 }

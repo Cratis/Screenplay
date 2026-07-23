@@ -12,11 +12,13 @@ namespace Cratis.Screenplay.Syntax;
 /// <param name="Layouts">The <see cref="LayoutSyntax">layouts</see> declared in the module.</param>
 /// <param name="Features">The <see cref="FeatureSyntax">features</see> declared in the module.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <param name="Description">The optional description of the module.</param>
 public record ModuleSyntax(
     string Name,
     IEnumerable<LayoutSyntax> Layouts,
     IEnumerable<FeatureSyntax> Features,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location,
+    string? Description = null) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents a <c>layout</c> declaration - a reusable screen template with named slots.
@@ -33,8 +35,10 @@ public record LayoutSyntax(string Name, IEnumerable<string> Slots, SourceLocatio
 /// <param name="Features">The nested <see cref="FeatureSyntax">sub features</see>.</param>
 /// <param name="Slices">The <see cref="SliceSyntax">slices</see> declared in the feature.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <param name="Description">The optional description of the feature.</param>
 public record FeatureSyntax(
     string Name,
     IEnumerable<FeatureSyntax> Features,
     IEnumerable<SliceSyntax> Slices,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location,
+    string? Description = null) : SyntaxNode(Location);

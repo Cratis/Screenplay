@@ -76,7 +76,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
         common: [
             [/\/\/.*$/, 'comment'],
             [/\$(?:context|eventContext)(?:\.\w+)*/, 'variable.predefined'],
-            [/\$env\.\w+/, 'variable.predefined'],
+            [/\$(?:env|secrets|strings)\.[\w.]+/, 'variable.predefined'],
             [/\$\.[\w.]*/, 'variable.predefined'],
             [/"[^"]*"/, 'string'],
             [/"[^"]*$/, 'string.invalid'],

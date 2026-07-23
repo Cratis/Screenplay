@@ -2,6 +2,8 @@
 // Invoicing — complete .play file
 // ============================================================
 
+domain Sales
+
 import Customers.CustomerRegistered
 
 concept InvoiceId        : Uuid
@@ -10,8 +12,12 @@ concept InvoiceNumber    : String
 concept CurrencyCode     : String
 concept Money            : Decimal
 concept Quantity         : Int
-concept EmailAddress     : String   @pii
 concept PersonName       : String   @pii
+
+concept EmailAddress : String @pii
+  validate
+    not empty          message "Email is required"
+    matches "^.+@.+$"  message "Must be a valid email address"
 
 concept InvoiceStatus : Enum
   draft
@@ -45,7 +51,28 @@ policy IsAdultCustomer
         : PolicyResult.Fail("Customer must be 18 or older");
     ```
 
+persona Accountant
+  description "Keeps the books and approves invoices"
+  policy IsAccountant
+  policy CanManageInvoice
+
+persona InvoiceManager
+  description "Registers invoices and manages their lifecycle"
+  policy CanManageInvoice
+
+authentication
+  provider AzureAd
+    type oidc
+    authority "https://login.microsoftonline.com/common/v2.0"
+    clientId $secrets.azureAdClientId
+    clientSecret $secrets.azureAdClientSecret
+  provider GitHub
+    type oauth
+    clientId $secrets.githubClientId
+    clientSecret $secrets.githubClientSecret
+
 module Invoicing
+  description "Everything related to invoicing customers"
 
   layout MasterDetail
     template
@@ -60,8 +87,10 @@ module Invoicing
       footer
 
   feature InvoiceManagement
+    description "Registering and managing the lifecycle of invoices"
 
     slice StateChange RegisterInvoice
+      description "Registers a new invoice"
 
       command RegisterInvoice
         invoiceId     InvoiceId
@@ -92,6 +121,7 @@ module Invoicing
           ```
 
         produces InvoiceRegistered
+          tag audit
           invoiceId     = invoiceId
           customerId    = customerId
           invoiceNumber = invoiceNumber
@@ -125,7 +155,17 @@ module Invoicing
             paymentTerms = paymentTerms
             dueDate      = dueDate
 
+        concurrency
+          eventSource
+          sourceType Invoice
+          streamType Invoicing
+          streamId Primary
+          events InvoiceRegistered, InvoiceCancelled
+
       event InvoiceRegistered
+        tag invoicing
+        tag "billing"
+        tag $context.identity.id
         invoiceId     InvoiceId
         customerId    CustomerId
         invoiceNumber InvoiceNumber
@@ -191,7 +231,7 @@ module Invoicing
         authorize CanManageInvoice
 
         validate
-          reason not empty  message "A cancellation reason is required"
+          reason not empty  message $strings.invoices.validation.reasonRequired
           reason max 500    message "Reason must be 500 characters or fewer"
 
         produces InvoiceCancelled
@@ -272,6 +312,18 @@ module Invoicing
       constraint InvoiceStatusTransition
         file Constraints/InvoiceStatusTransitionConstraint.cs
 
+      specification SendingADraftInvoice
+        given readmodel InvoiceListReadModel
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          status    = "draft"
+        when ChangeInvoiceStatus
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          status    = "sent"
+        then InvoiceSent
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+        then readmodel InvoiceListReadModel
+          status = "sent"
+
     slice StateChange ProcessInvoiceBatch
 
       command ProcessInvoiceBatch
@@ -328,6 +380,7 @@ module Invoicing
             firstName
             lastName
         append InvoiceStatusChanged
+          tag legacy
           when status
             invoiceId = $.id
             status    = $.status
@@ -510,7 +563,7 @@ module Invoicing
           footer
             section actions
               action RegisterInvoice
-                label "New Invoice"
+                label $strings.invoices.actions.newInvoice
                 navigate to RegisterInvoiceScreen
 
     slice Automation NotifyCustomerOnInvoiceRegistered
@@ -528,3 +581,15 @@ module Invoicing
             if (DueDate < DateTimeOffset.UtcNow)
                 return [new MarkInvoiceOverdue(InvoiceId, DateTimeOffset.UtcNow)];
             ```
+
+seed
+  for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+    CustomerRegistered
+      customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+      name       = "Acme Corp"
+    InvoiceRegistered
+      invoiceNumber = "INV-000042"
+      status        = "draft"
+  for "9c858901-8a57-4791-81fe-4c455b099bc9"
+    CustomerRegistered
+      name = "Globex"

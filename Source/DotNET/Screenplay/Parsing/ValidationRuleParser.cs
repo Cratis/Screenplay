@@ -19,16 +19,7 @@ internal static partial class ValidationRuleParser
     /// <returns>The parsed <see cref="ValidationRuleSyntax"/>, or <c>null</c> when the rule is malformed.</returns>
     public static ValidationRuleSyntax? Parse(ParserContext context, SourceLine line)
     {
-        var content = line.Content;
-        string? message = null;
-
-        var messageMatch = MessageRegex().Match(content);
-        if (messageMatch.Success)
-        {
-            message = messageMatch.Groups[1].Value;
-            content = content[..messageMatch.Index].TrimEnd();
-        }
-
+        var (content, message) = SplitMessage(line.Content);
         var match = RuleRegex().Match(content);
         if (!match.Success)
         {
@@ -45,6 +36,37 @@ internal static partial class ValidationRuleParser
         }
 
         return new(property, kind.Value, value, message, line.Location);
+    }
+
+    /// <summary>
+    /// Parses a validation rule line without a property subject - the form used on concepts, where the
+    /// concept's own value is implied and represented as <see cref="ValidationRuleSyntax.ConceptValue"/>.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <param name="line">The <see cref="SourceLine"/> holding the rule.</param>
+    /// <returns>The parsed <see cref="ValidationRuleSyntax"/>, or <c>null</c> when the rule is malformed.</returns>
+    public static ValidationRuleSyntax? ParseImpliedSubject(ParserContext context, SourceLine line)
+    {
+        var (content, message) = SplitMessage(line.Content);
+        var (kind, value) = ParseRule(context, content, line);
+        if (kind is null)
+        {
+            return null;
+        }
+
+        return new(ValidationRuleSyntax.ConceptValue, kind.Value, value, message, line.Location);
+    }
+
+    static (string Content, string? Message) SplitMessage(string content)
+    {
+        var match = MessageRegex().Match(content);
+        if (!match.Success)
+        {
+            return (content, null);
+        }
+
+        var message = match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Value;
+        return (content[..match.Index].TrimEnd(), message);
     }
 
     static (ValidationRuleKind? Kind, ExpressionSyntax? Value) ParseRule(ParserContext context, string rule, SourceLine line)
@@ -87,7 +109,7 @@ internal static partial class ValidationRuleParser
         return (kind, value);
     }
 
-    [GeneratedRegex("\\bmessage\\s+\"([^\"]*)\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("\\bmessage\\s+(?:\"([^\"]*)\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
     private static partial Regex MessageRegex();
 
     [GeneratedRegex(@"^([\w.]+)\s+(.+)$", RegexOptions.None, 1000)]
