@@ -2,9 +2,12 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 export const keywordDocs: Record<string, string> = {
+    domain: 'The domain the file belongs to — optional, at most one per file, before everything else.',
     import: 'Imports a type from another module; it becomes available by its short name.',
     concept: 'A formalized value type wrapping a primitive. Attributes such as `@pii` travel with every usage.',
     policy: 'A named authorization rule referenced by commands and queries. Multiple policies AND together.',
+    persona: 'A named role interacting with the application, with an optional description and its associated policies.',
+    description: 'A human-readable description of a module, feature, slice, or persona.',
     module: 'The top-level namespace — maps to a bounded context.',
     layout: 'A reusable screen template with named slots.',
     template: 'Declares the named slots of a layout.',
@@ -39,6 +42,12 @@ export const keywordDocs: Record<string, string> = {
     title: 'The display title of a screen or section.',
     label: 'The display label of an action, column, or field.',
     unique: 'A uniqueness constraint — `unique <property> on <EventType>` or `unique event <EventType>`.',
+    concurrency: 'The concurrency scope enforced when the command appends events — dimensions: `eventSource`, `sourceType`, `streamType`, `streamId`, `events`.',
+    eventSource: 'Concurrency dimension — scope the check to the event source id of the command.',
+    sourceType: 'Concurrency dimension — scope the check to an event source type.',
+    streamType: 'Concurrency dimension — scope the check to an event stream type.',
+    streamId: 'Concurrency dimension — scope the check to an event stream id.',
+    tag: 'Attaches a tag to appended events — a static identifier or string, or a `$context.` expression resolved at append time.',
     file: 'Delegates the implementation to an external file; the Screenplay contract stays visible.',
     by: 'Introduces the identifying parameter.',
     via: 'Connects screen data to the query that supplies it.',

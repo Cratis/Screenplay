@@ -2,6 +2,8 @@
 // Invoicing — complete .play file
 // ============================================================
 
+domain Sales
+
 import Customers.CustomerRegistered
 
 concept InvoiceId        : Uuid
@@ -45,7 +47,17 @@ policy IsAdultCustomer
         : PolicyResult.Fail("Customer must be 18 or older");
     ```
 
+persona Accountant
+  description "Keeps the books and approves invoices"
+  policy IsAccountant
+  policy CanManageInvoice
+
+persona InvoiceManager
+  description "Registers invoices and manages their lifecycle"
+  policy CanManageInvoice
+
 module Invoicing
+  description "Everything related to invoicing customers"
 
   layout MasterDetail
     template
@@ -60,8 +72,10 @@ module Invoicing
       footer
 
   feature InvoiceManagement
+    description "Registering and managing the lifecycle of invoices"
 
     slice StateChange RegisterInvoice
+      description "Registers a new invoice"
 
       command RegisterInvoice
         invoiceId     InvoiceId
@@ -92,6 +106,7 @@ module Invoicing
           ```
 
         produces InvoiceRegistered
+          tag audit
           invoiceId     = invoiceId
           customerId    = customerId
           invoiceNumber = invoiceNumber
@@ -125,7 +140,17 @@ module Invoicing
             paymentTerms = paymentTerms
             dueDate      = dueDate
 
+        concurrency
+          eventSource
+          sourceType Invoice
+          streamType Invoicing
+          streamId Primary
+          events InvoiceRegistered, InvoiceCancelled
+
       event InvoiceRegistered
+        tag invoicing
+        tag "billing"
+        tag $context.identity.id
         invoiceId     InvoiceId
         customerId    CustomerId
         invoiceNumber InvoiceNumber
@@ -305,6 +330,7 @@ module Invoicing
             "betalt"     => paid
             "kansellert" => cancelled
         append InvoiceStatusChanged
+          tag legacy
           when status
             invoiceId = $.id
             status    = $.status
