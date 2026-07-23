@@ -9,7 +9,7 @@ export const keywordDocs: Record<string, string> = {
     persona: 'A named role interacting with the application, with an optional description and its associated policies.',
     authentication: 'Declares the identity providers of the application — at most one block per file.',
     provider: 'A named identity provider within `authentication`, with free-form `name value` settings.',
-    description: 'A human-readable description of a module, feature, slice, or persona.',
+    description: 'A human-readable description of a module, feature, slice, persona, or command — the first body line, as a quoted single line or a fenced ``` block for multiple lines.',
     module: 'The top-level namespace — maps to a bounded context.',
     layout: 'A reusable screen template with named slots.',
     template: 'Declares the named slots of a layout.',

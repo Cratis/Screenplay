@@ -341,9 +341,21 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteDescription(ScreenplayWriter writer, string? description)
     {
-        if (description is not null)
+        if (description is null)
+        {
+            return;
+        }
+
+        if (!description.Contains('\n'))
         {
             writer.Line($"description \"{description}\"");
+            return;
+        }
+
+        writer.Line("description");
+        using (writer.Indent())
+        {
+            WriteFencedText(writer, description);
         }
     }
 }

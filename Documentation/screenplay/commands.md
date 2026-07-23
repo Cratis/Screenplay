@@ -6,6 +6,8 @@ Commands are input definitions — imperative intents. A command declares its pr
 
 ```screenplay
 command <Name>
+  [description "<text>"]
+
   <property> <Type>[?]
   ...
 
@@ -36,6 +38,28 @@ command <Name>
     [streamId <Name>]
     [events <EventType>[, <EventType>]*]]
 ```
+
+## Description
+
+An optional `description` is the first body line of a command — a human-readable summary consumers such as Prologue surface when presenting the model. At most one per command. Use the quoted form for a single line:
+
+```screenplay
+command RegisterInvoice
+  description "Registers a new invoice with its lines and payment terms"
+```
+
+When one line is not enough, use a fenced block — the same ``` convention as inline code blocks. The fenced text is kept verbatim:
+
+````screenplay
+command RegisterInvoice
+  description
+    ```
+    Registers a new invoice with its lines and payment terms.
+    The invoice starts out as a draft.
+    ```
+````
+
+Descriptions work the same on modules, features, slices, and personas — see [Descriptions](slices.md#descriptions).
 
 ## Validation rules
 

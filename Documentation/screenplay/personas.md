@@ -27,7 +27,7 @@ persona InvoiceManager
 
 - Personas are top-level declarations, alongside policies and modules.
 - Each `policy` line references a policy declared in the same file — an unknown policy is reported as a warning.
-- The description, when present, is the first body line and appears at most once.
+- The description, when present, is the first body line and appears at most once — a quoted single line or a fenced multi-line block (see [Descriptions](slices.md#descriptions)).
 
 ## Guidance
 

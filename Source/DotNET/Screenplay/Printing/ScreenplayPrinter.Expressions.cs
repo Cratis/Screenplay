@@ -19,10 +19,12 @@ public partial class ScreenplayPrinter
         }
     }
 
-    void WriteFencedCode(ScreenplayWriter writer, CodeBlockSyntax code)
+    void WriteFencedCode(ScreenplayWriter writer, CodeBlockSyntax code) => WriteFencedText(writer, code.Code);
+
+    void WriteFencedText(ScreenplayWriter writer, string text)
     {
         writer.Line("```");
-        foreach (var line in code.Code.Split('\n'))
+        foreach (var line in text.Split('\n'))
         {
             writer.Line(line);
         }

@@ -24,10 +24,23 @@ internal static class CodeBlockParser
     /// <returns>The parsed <see cref="CodeBlockSyntax"/>, or <c>null</c> when the fence is malformed.</returns>
     public static CodeBlockSyntax? Parse(ParserContext context, string language, SourceLine tagLine)
     {
+        var code = ParseFencedText(context, language, tagLine);
+        return code is null ? null : new CodeBlockSyntax(language, code, tagLine.Location);
+    }
+
+    /// <summary>
+    /// Parses the fenced text following an already consumed tag line, dedented to the opening fence.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
+    /// <param name="opener">The keyword that opened the block, used in diagnostics.</param>
+    /// <param name="tagLine">The consumed <see cref="SourceLine"/> holding the opening keyword.</param>
+    /// <returns>The fenced lines joined with newlines, or <c>null</c> when the opening fence is missing.</returns>
+    public static string? ParseFencedText(ParserContext context, string opener, SourceLine tagLine)
+    {
         var open = context.Reader.PeekSignificant();
         if (open is null || open.Content != "```" || open.Indent <= tagLine.Indent)
         {
-            context.Error($"Expected an opening ``` fence after '{language}'", tagLine.Location);
+            context.Error($"Expected an opening ``` fence after '{opener}'", tagLine.Location);
             return null;
         }
 
@@ -51,7 +64,7 @@ internal static class CodeBlockParser
             code.Add(Dedent(line.Raw, open.Indent));
         }
 
-        return new(language, string.Join('\n', code), tagLine.Location);
+        return string.Join('\n', code);
     }
 
     static string Dedent(string raw, int indent)
