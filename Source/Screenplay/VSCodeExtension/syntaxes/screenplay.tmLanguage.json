@@ -11,6 +11,7 @@
         { "include": "#code-block-react" },
         { "include": "#code-block-typescript" },
         { "include": "#code-block-html" },
+        { "include": "#description-block" },
         { "include": "#projection-block" },
         { "include": "#capture-block" },
         { "include": "#keywords" },
@@ -178,6 +179,26 @@
                     "patterns": [
                         { "include": "text.html.basic" }
                     ]
+                }
+            ]
+        },
+        "description-block": {
+            "begin": "^([ ]*)(description)[ ]*$",
+            "beginCaptures": {
+                "2": { "name": "keyword.other.screenplay" }
+            },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [
+                {
+                    "begin": "^[ ]*(```)[ ]*$",
+                    "beginCaptures": {
+                        "1": { "name": "punctuation.definition.fence.screenplay" }
+                    },
+                    "end": "^[ ]*(```)[ ]*$",
+                    "endCaptures": {
+                        "1": { "name": "punctuation.definition.fence.screenplay" }
+                    },
+                    "contentName": "string.unquoted.description.screenplay"
                 }
             ]
         },
