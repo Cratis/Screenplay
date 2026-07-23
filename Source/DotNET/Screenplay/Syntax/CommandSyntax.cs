@@ -185,11 +185,13 @@ public record ValidationRuleSyntax(
 /// <param name="When">The optional <see cref="ConditionSyntax"/> guarding the production.</param>
 /// <param name="Mappings">The <see cref="PropertyMappingSyntax">property mappings</see> for the produced event.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <param name="Tags">The <see cref="TagSyntax">tags</see> applied to the produced event.</param>
 public record ProducesSyntax(
     string Event,
     ConditionSyntax? When,
     IEnumerable<PropertyMappingSyntax> Mappings,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location,
+    IEnumerable<TagSyntax>? Tags = null) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents a mapping of a target property to a source expression, such as <c>status = "draft"</c>.

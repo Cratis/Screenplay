@@ -240,6 +240,7 @@ internal static partial class CaptureParser
 
         CaptureWhenSyntax? when = null;
         var mappings = new List<PropertyMappingSyntax>();
+        var tags = new List<TagSyntax>();
 
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -247,7 +248,14 @@ internal static partial class CaptureParser
             if (LineText.FirstWord(child.Content) == "when")
             {
                 when = ParseWhen(context, child);
-                ParseMappings(context, child, mappings);
+                ParseMappings(context, child, mappings, tags);
+            }
+            else if (LineText.FirstWord(child.Content) == "tag")
+            {
+                if (TagParser.Parse(context, child) is { } tag)
+                {
+                    tags.Add(tag);
+                }
             }
             else if (!TryParseMapping(context, child, mappings))
             {
@@ -255,7 +263,7 @@ internal static partial class CaptureParser
             }
         }
 
-        return new(match.Groups[1].Value, when, mappings, line.Location);
+        return new(match.Groups[1].Value, when, mappings, line.Location, tags);
     }
 
     static CaptureWhenSyntax? ParseWhen(ParserContext context, SourceLine line)
@@ -353,12 +361,19 @@ internal static partial class CaptureParser
     static string Unquote(string token) =>
         token.Length >= 2 && token.StartsWith('"') && token.EndsWith('"') ? token[1..^1] : token;
 
-    static void ParseMappings(ParserContext context, SourceLine parent, List<PropertyMappingSyntax> mappings)
+    static void ParseMappings(ParserContext context, SourceLine parent, List<PropertyMappingSyntax> mappings, List<TagSyntax> tags)
     {
         while (context.TryPeekChild(parent.Indent, out var child))
         {
             context.Reader.TakeSignificant();
-            if (!TryParseMapping(context, child, mappings))
+            if (LineText.FirstWord(child.Content) == "tag")
+            {
+                if (TagParser.Parse(context, child) is { } tag)
+                {
+                    tags.Add(tag);
+                }
+            }
+            else if (!TryParseMapping(context, child, mappings))
             {
                 context.Error($"Invalid property mapping '{child.Content}' - expected '<property> = <source>'", child.Location);
             }

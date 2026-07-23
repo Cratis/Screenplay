@@ -69,6 +69,7 @@ capture LegacyInvoiceCapture
 | `translate` | Maps source values to Screenplay values (`"utkast" => draft`). |
 | `split <source> by "<separator>"` | Splits one source value into several target properties. |
 | `append <EventType>` | Appends an event when the source changes, guarded by a `when` trigger. |
+| `tag <value>` | Attaches a [tag](events.md#tags) to the appended event — a static identifier or string, or a `$context.` expression. |
 | `when <property>` | Appends when the named property changes. |
 | `when <property> or <property>` / `when <property> and <property>` | Appends when any (`or`) or all (`and`) of the named properties change. |
 | `when <property> from <value> to <value>` | Appends when the named property transitions between two specific values. |

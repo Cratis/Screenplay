@@ -40,6 +40,10 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_have_all_slices() => _feature.Slices.Count().ShouldEqual(10);
     [Fact] void should_parse_conditional_produces() => RegisterCommand.Produces.Count(_ => _.When is not null).ShouldEqual(4);
     [Fact] void should_parse_unconditional_produces_mappings() => RegisterCommand.Produces.First().Mappings.Count().ShouldEqual(11);
+    [Fact] void should_parse_the_produces_tag() => ((LiteralExpressionSyntax)RegisterCommand.Produces.First().Tags!.Single().Value).Value.ShouldEqual("audit");
+    [Fact] void should_parse_the_event_tags() => RegisteredEvent.Tags!.Count().ShouldEqual(3);
+    [Fact] void should_parse_the_static_event_tags() => RegisteredEvent.Tags!.Take(2).Select(_ => ((LiteralExpressionSyntax)_.Value).Value).ShouldContainOnly("invoicing", "billing");
+    [Fact] void should_parse_the_dynamic_event_tag() => ((ContextExpressionSyntax)RegisteredEvent.Tags!.Last().Value).Path.ShouldEqual("identity.id");
     [Fact] void should_parse_the_validation_rules() => RegisterCommand.Validations.OfType<DeclarativeValidateSyntax>().Single().Rules.Count().ShouldEqual(6);
     [Fact] void should_parse_the_code_validation() => RegisterCommand.Validations.OfType<CodeValidateSyntax>().Count().ShouldEqual(1);
     [Fact] void should_parse_the_authorize_policies() => RegisterCommand.Authorize!.Policies.Select(_ => _.Name).ShouldContainOnly("CanManageInvoice", "IsAdultCustomer");
@@ -50,6 +54,7 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_parse_the_concurrency_events() => RegisterCommand.Concurrency!.EventTypes.ShouldContainOnly("InvoiceRegistered", "InvoiceCancelled");
     [Fact] void should_parse_the_batch_handler() => Slice("ProcessInvoiceBatch").Commands.Single().Handler!.Code.ShouldNotBeNull();
     [Fact] void should_parse_the_capture() => Slice("LegacyInvoiceSync").Captures.Single().Children.Single().Appends.Count().ShouldEqual(2);
+    [Fact] void should_parse_the_capture_append_tag() => ((LiteralExpressionSyntax)Capture.Appends.First(_ => _.Event == "InvoiceStatusChanged").Tags!.Single().Value).Value.ShouldEqual("legacy");
     [Fact] void should_parse_capture_translations() => Slice("LegacyInvoiceSync").Captures.Single().Map.OfType<CaptureMapEntrySyntax>().Single().Translations.Count().ShouldEqual(4);
     [Fact] void should_parse_the_capture_split() => Capture.Map.OfType<CaptureSplitSyntax>().Single().Targets.ShouldContainOnly("firstName", "lastName");
     [Fact] void should_parse_the_capture_value_transition_when() => ValueTransitionWhen.Kind.ShouldEqual(CaptureWhenKind.ValueTransition);
@@ -79,6 +84,8 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_parse_no_given_on_the_second_specification() => SecondSpecification.Given.ShouldBeEmpty();
 
     CommandSyntax RegisterCommand => Slice("RegisterInvoice").Commands.Single();
+
+    EventSyntax RegisteredEvent => Slice("RegisterInvoice").Events.Single(_ => _.Name == "InvoiceRegistered");
 
     SpecificationSyntax FirstSpecification => Slice("RegisterInvoice").Specifications.First();
 
