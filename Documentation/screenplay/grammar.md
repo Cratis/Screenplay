@@ -118,7 +118,16 @@ SliceBody      = EventDecl
 (* -------------------------------------------------------------- *)
 
 EventDecl      = "event", Ident, NL,
-                 INDENT, { PropertyLine }, DEDENT ;
+                 INDENT, { TagDecl }, { PropertyLine }, DEDENT ;
+
+TagDecl        = "tag", TagValue, NL ;
+
+TagValue       = Ident
+               | StringLiteral
+               | "$context.", Path
+               | "$env.", Ident ;
+
+Path           = Ident, { ".", Ident } ;
 
 PropertyLine   = Ident, TypeRef, NL ;
 
@@ -176,10 +185,10 @@ Value          = Number | StringLiteral | "today" | "true" | "false" ;
 (* -------------------------------------------------------------- *)
 
 ProducesDecl   = "produces", Ident, NL,
-                   [ INDENT, { PropertyMapping }, DEDENT ]
+                   [ INDENT, { TagDecl }, { PropertyMapping }, DEDENT ]
                | "produces", "when", Condition, NL,
                    INDENT, Ident, NL,
-                   [ INDENT, { PropertyMapping }, DEDENT ],
+                   [ INDENT, { TagDecl }, { PropertyMapping }, DEDENT ],
                    DEDENT ;
 
 Condition      = ConditionExpr, { ( "and" | "or" ), ConditionExpr } ;

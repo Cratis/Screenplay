@@ -82,6 +82,7 @@ public partial class ScreenplayPrinter
         writer.Line($"event {@event.Name}");
         using (writer.Indent())
         {
+            WriteTags(writer, @event.Tags);
             WriteProperties(writer, @event.Properties);
         }
     }
@@ -211,6 +212,7 @@ public partial class ScreenplayPrinter
             writer.Line($"produces {produces.Event}");
             using (writer.Indent())
             {
+                WriteTags(writer, produces.Tags);
                 WriteMappings(writer, produces.Mappings);
             }
 
@@ -223,6 +225,7 @@ public partial class ScreenplayPrinter
             writer.Line(produces.Event);
             using (writer.Indent())
             {
+                WriteTags(writer, produces.Tags);
                 WriteMappings(writer, produces.Mappings);
             }
         }
@@ -250,6 +253,14 @@ public partial class ScreenplayPrinter
         foreach (var mapping in mappings)
         {
             writer.Line($"{mapping.Property} = {ScreenplaySyntaxText.Expression(mapping.Source)}");
+        }
+    }
+
+    void WriteTags(ScreenplayWriter writer, IEnumerable<TagSyntax>? tags)
+    {
+        foreach (var tag in tags ?? [])
+        {
+            writer.Line($"tag {ScreenplaySyntaxText.Tag(tag)}");
         }
     }
 }

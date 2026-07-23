@@ -86,6 +86,17 @@ internal static partial class ScreenplaySyntaxText
     }
 
     /// <summary>
+    /// Renders the value of a <see cref="TagSyntax"/> to its surface form - bare for identifier-like
+    /// static tags, the regular expression form otherwise.
+    /// </summary>
+    /// <param name="tag">The <see cref="TagSyntax"/> to render.</param>
+    /// <returns>The rendered tag value text.</returns>
+    public static string Tag(TagSyntax tag) =>
+        tag.Value is LiteralExpressionSyntax { Value: string text } && IdentifierRegex().IsMatch(text) && text is not ("true" or "false" or "null")
+            ? text
+            : Expression(tag.Value);
+
+    /// <summary>
     /// Renders the <c>when</c> trigger of a capture <c>append</c> to its surface form.
     /// </summary>
     /// <param name="when">The <see cref="CaptureWhenSyntax"/> to render.</param>
@@ -185,4 +196,7 @@ internal static partial class ScreenplaySyntaxText
 
     [GeneratedRegex(@"^[\w.]+$", RegexOptions.None, 1000)]
     private static partial Regex BareWordRegex();
+
+    [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.None, 1000)]
+    private static partial Regex IdentifierRegex();
 }

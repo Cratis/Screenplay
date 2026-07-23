@@ -110,6 +110,16 @@ produces InvoiceRegistered
   lineCount     = 0                      // numeric constant
 ```
 
+### Tags
+
+`tag` lines before the mappings attach [tags](events.md#tags) to the event appended by this specific production:
+
+```screenplay
+produces InvoiceRegistered
+  tag audit
+  invoiceId = invoiceId
+```
+
 ### Mapping sources
 
 | Source | Syntax | Description |

@@ -229,9 +229,9 @@ internal static partial class CommandParser
             }
 
             context.Reader.TakeSignificant();
-            var mappings = ParseMappings(context, eventLine);
+            var (mappings, tags) = ParseMappingsAndTags(context, eventLine);
             context.SkipBlock(line.Indent);
-            return new(eventLine.Content, condition, mappings, line.Location);
+            return new(eventLine.Content, condition, mappings, line.Location, tags);
         }
 
         var unconditional = ProducesRegex().Match(line.Content);
@@ -242,15 +242,27 @@ internal static partial class CommandParser
             return null;
         }
 
-        return new(unconditional.Groups[1].Value, null, ParseMappings(context, line), line.Location);
+        var (unconditionalMappings, unconditionalTags) = ParseMappingsAndTags(context, line);
+        return new(unconditional.Groups[1].Value, null, unconditionalMappings, line.Location, unconditionalTags);
     }
 
-    static List<PropertyMappingSyntax> ParseMappings(ParserContext context, SourceLine parent)
+    static (List<PropertyMappingSyntax> Mappings, List<TagSyntax> Tags) ParseMappingsAndTags(ParserContext context, SourceLine parent)
     {
         var mappings = new List<PropertyMappingSyntax>();
+        var tags = new List<TagSyntax>();
         while (context.TryPeekChild(parent.Indent, out var child))
         {
             context.Reader.TakeSignificant();
+            if (LineText.FirstWord(child.Content) == "tag")
+            {
+                if (TagParser.Parse(context, child) is { } tag)
+                {
+                    tags.Add(tag);
+                }
+
+                continue;
+            }
+
             var match = MappingRegex().Match(child.Content);
             if (!match.Success)
             {
@@ -261,7 +273,7 @@ internal static partial class CommandParser
             mappings.Add(new(match.Groups[1].Value, ExpressionParser.ParseMappingSource(match.Groups[2].Value, child.Location), child.Location));
         }
 
-        return mappings;
+        return (mappings, tags);
     }
 
     static HandlerSyntax? ParseHandler(ParserContext context, SourceLine line)

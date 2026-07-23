@@ -106,6 +106,7 @@ module Invoicing
           ```
 
         produces InvoiceRegistered
+          tag audit
           invoiceId     = invoiceId
           customerId    = customerId
           invoiceNumber = invoiceNumber
@@ -147,6 +148,9 @@ module Invoicing
           events InvoiceRegistered, InvoiceCancelled
 
       event InvoiceRegistered
+        tag invoicing
+        tag "billing"
+        tag $context.identity.id
         invoiceId     InvoiceId
         customerId    CustomerId
         invoiceNumber InvoiceNumber
@@ -349,6 +353,7 @@ module Invoicing
             firstName
             lastName
         append InvoiceStatusChanged
+          tag legacy
           when status
             invoiceId = $.id
             status    = $.status

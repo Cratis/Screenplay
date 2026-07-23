@@ -65,11 +65,13 @@ public enum CaptureWhenKind
 /// <param name="When">The <see cref="CaptureWhenSyntax"/> describing when to append.</param>
 /// <param name="Mappings">The <see cref="PropertyMappingSyntax">property mappings</see> for the appended event.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <param name="Tags">The <see cref="TagSyntax">tags</see> applied to the appended event.</param>
 public record CaptureAppendSyntax(
     string Event,
     CaptureWhenSyntax? When,
     IEnumerable<PropertyMappingSyntax> Mappings,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location,
+    IEnumerable<TagSyntax>? Tags = null) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents the <c>when</c> trigger of an append.

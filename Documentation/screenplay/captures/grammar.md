@@ -74,9 +74,12 @@ SplitOperation  = "split", Expr, "by", StringLiteral, NL,
 
 AppendBlock     = "append", Ident, NL,
                   INDENT,
+                    { TagDecl },
                     ( WhenClause, INDENT, { PropertyMapping }, DEDENT
                     | { PropertyMapping } ),
                   DEDENT ;
+
+TagDecl         = "tag", ( Ident | StringLiteral | MappingSource ), NL ;
 
 WhenClause      = "when", WhenExpr, NL ;
 
@@ -273,14 +276,19 @@ Declares the event to append and the trigger condition:
 ```ebnf
 AppendBlock = "append", Ident, NL,
               INDENT,
+                { TagDecl },
                 ( WhenClause, INDENT, { PropertyMapping }, DEDENT
                 | { PropertyMapping } ),
               DEDENT ;
+
+TagDecl = "tag", ( Ident | StringLiteral | MappingSource ), NL ;
 
 PropertyMapping = Path, "=", MappingSource, NL ;
 ```
 
 **Note:** when an `append` declares a `when` clause, its property mappings are indented one level deeper than `when` (the mappings belong to the trigger). An `append` may omit `when` entirely, in which case its property mappings sit directly under `append`.
+
+`tag` lines apply [tags](../events.md#tags) to the appended event — static identifiers or string literals, or a `$context.` expression for tags resolved from context.
 
 #### When Clause
 
