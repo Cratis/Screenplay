@@ -14,6 +14,12 @@
   href: policies.md
 - name: Personas
   href: personas.md
+- name: Authentication
+  href: authentication.md
+- name: Secrets
+  href: secrets.md
+- name: Internationalization
+  href: internationalization.md
 - name: Modules, features and slices
   href: slices.md
 - name: Events

@@ -40,6 +40,17 @@ public record ContextExpressionSyntax(string Path, SourceLocation Location) : Ex
 public record EnvironmentExpressionSyntax(string Name, SourceLocation Location) : ExpressionSyntax(Location);
 
 /// <summary>
+/// Represents a <c>$secrets</c> expression referencing an encrypted secret by name, such as <c>$secrets.azureAdClientId</c>.
+/// </summary>
+/// <remarks>
+/// The compiler never resolves secrets - the reference stays symbolic in the syntax tree and consumers
+/// resolve it at runtime. The name allows dotted segments, consistent with the other expression paths.
+/// </remarks>
+/// <param name="Name">The name of the referenced secret.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record SecretExpressionSyntax(string Name, SourceLocation Location) : ExpressionSyntax(Location);
+
+/// <summary>
 /// Represents a freeform expression captured verbatim, such as an arithmetic or method-call expression.
 /// </summary>
 /// <param name="Text">The verbatim expression text.</param>
