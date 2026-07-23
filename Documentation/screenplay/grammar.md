@@ -35,7 +35,7 @@ ConceptValidate = "validate", NL,
                    INDENT, { ConceptRule }, DEDENT
                | "validate", "csharp", NL, InlineBlock ;
 
-ConceptRule    = RuleOp, [ "message", StringLiteral ], NL ;
+ConceptRule    = RuleOp, [ "message", LocalizableString ], NL ;
 
 PrimitiveType  = "Uuid" | "String" | "Int" | "Decimal" | "Bool"
                | "Date" | "DateTime" ;
@@ -182,7 +182,7 @@ ValidateDecl   = "validate", NL,
                    INDENT, { ValidationRule }, DEDENT
                | "validate", "csharp", NL, InlineBlock ;
 
-ValidationRule = Ident, RuleOp, [ "message", StringLiteral ], NL ;
+ValidationRule = Ident, RuleOp, [ "message", LocalizableString ], NL ;
 
 RuleOp         = "not empty"
                | "max", Number
@@ -225,6 +225,7 @@ MappingSource  = Ident                         (* command property   *)
                | "$context.identity.id"
                | "$env.", Ident
                | "$secrets.", Path
+               | "$strings.", Path
                | StringLiteral
                | Number
                | "true" | "false"
@@ -361,7 +362,7 @@ ActionDecl     = "action", Ident, NL,
                  [ INDENT, { ActionOption }, DEDENT ] ;
 
 ActionOption   = NavigateDecl
-               | "label", StringLiteral, NL ;
+               | "label", LocalizableString, NL ;
 
 NavigateDecl   = "navigate", "to", Ident, [ "by", Ident ], NL ;
 
@@ -373,13 +374,13 @@ SlotDecl       = Ident, NL,
 
 SectionDecl    = "section", Ident, NL,
                  INDENT, { ScreenDirective | WidgetDecl }, DEDENT
-               | "title", StringLiteral, NL ;
+               | "title", LocalizableString, NL ;
 
 WidgetDecl     = ( "table" | "summary" ) , ( TypeRef | Ident ), NL,
                  [ INDENT, { WidgetOption }, DEDENT ] ;
 
-WidgetOption   = "column", Ident, [ "label", StringLiteral ], NL
-               | "field",  Ident, "label", StringLiteral, NL
+WidgetOption   = "column", Ident, [ "label", LocalizableString ], NL
+               | "field",  Ident, "label", LocalizableString, NL
                | "on", "row-click", NavigateDecl ;
 
 (* -------------------------------------------------------------- *)
@@ -387,6 +388,9 @@ WidgetOption   = "column", Ident, [ "label", StringLiteral ], NL
 (* -------------------------------------------------------------- *)
 
 DescriptionDecl = "description", StringLiteral, NL ;
+
+LocalizableString = StringLiteral
+               | "$strings.", Path ;
 
 FileDirective  = "file", FilePath, NL ;
 FilePath       = (* relative path string *) ;

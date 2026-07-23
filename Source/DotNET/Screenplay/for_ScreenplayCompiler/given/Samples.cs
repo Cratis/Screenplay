@@ -16,4 +16,14 @@ public static class Samples
             return reader.ReadToEnd();
         }
     }
+
+    public static string InvoicingStrings
+    {
+        get
+        {
+            using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Cratis.Screenplay.for_ScreenplayCompiler.invoicing.en.strings")!;
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+    }
 }

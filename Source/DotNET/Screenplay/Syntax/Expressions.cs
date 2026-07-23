@@ -51,6 +51,15 @@ public record EnvironmentExpressionSyntax(string Name, SourceLocation Location) 
 public record SecretExpressionSyntax(string Name, SourceLocation Location) : ExpressionSyntax(Location);
 
 /// <summary>
+/// Represents a <c>$strings</c> expression referencing a localized string by its dotted key, such as
+/// <c>$strings.invoices.title</c>. The key resolves at runtime against the <c>.strings</c> file of the
+/// active locale.
+/// </summary>
+/// <param name="Key">The dotted key of the referenced string.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record StringsExpressionSyntax(string Key, SourceLocation Location) : ExpressionSyntax(Location);
+
+/// <summary>
 /// Represents a freeform expression captured verbatim, such as an arithmetic or method-call expression.
 /// </summary>
 /// <param name="Text">The verbatim expression text.</param>

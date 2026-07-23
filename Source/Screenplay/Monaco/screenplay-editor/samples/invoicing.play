@@ -211,7 +211,7 @@ module Invoicing
         authorize CanManageInvoice
 
         validate
-          reason not empty  message "A cancellation reason is required"
+          reason not empty  message $strings.invoices.validation.reasonRequired
           reason max 500    message "Reason must be 500 characters or fewer"
 
         produces InvoiceCancelled
@@ -527,7 +527,7 @@ module Invoicing
           footer
             section actions
               action RegisterInvoice
-                label "New Invoice"
+                label $strings.invoices.actions.newInvoice
                 navigate to RegisterInvoiceScreen
 
     slice Automation NotifyCustomerOnInvoiceRegistered

@@ -32,6 +32,7 @@ internal static partial class ScreenplaySyntaxText
         ContextExpressionSyntax context => $"$context.{context.Path}",
         EnvironmentExpressionSyntax environment => $"$env.{environment.Name}",
         SecretExpressionSyntax secret => $"$secrets.{secret.Name}",
+        StringsExpressionSyntax strings => $"$strings.{strings.Key}",
         SourceItemExpressionSyntax sourceItem => $"$.{sourceItem.Path}",
         EventSourceIdExpressionSyntax => "$eventSourceId",
         EventContextExpressionSyntax eventContext => $"$eventContext.{eventContext.Path}",
@@ -83,7 +84,7 @@ internal static partial class ScreenplaySyntaxText
     public static string ValidationRule(ValidationRuleSyntax rule)
     {
         var head = $"{rule.Property} {ValidationRuleBody(rule)}";
-        return rule.Message is null ? head : $"{head} message \"{rule.Message}\"";
+        return rule.Message is null ? head : $"{head} message {LocalizableString(rule.Message)}";
     }
 
     /// <summary>
@@ -95,8 +96,17 @@ internal static partial class ScreenplaySyntaxText
     public static string ImpliedSubjectValidationRule(ValidationRuleSyntax rule)
     {
         var head = ValidationRuleBody(rule);
-        return rule.Message is null ? head : $"{head} message \"{rule.Message}\"";
+        return rule.Message is null ? head : $"{head} message {LocalizableString(rule.Message)}";
     }
+
+    /// <summary>
+    /// Renders a string operand that may reference a localized string - values starting with
+    /// <c>$strings.</c> are emitted unquoted, everything else as a quoted string literal.
+    /// </summary>
+    /// <param name="value">The value to render.</param>
+    /// <returns>The rendered operand text.</returns>
+    public static string LocalizableString(string value) =>
+        value.StartsWith("$strings.", StringComparison.Ordinal) ? value : $"\"{value}\"";
 
     /// <summary>
     /// Renders the value of a <see cref="TagSyntax"/> to its surface form - bare for identifier-like

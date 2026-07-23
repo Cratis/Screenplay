@@ -1,0 +1,4 @@
+// English strings for the invoicing sample
+invoices.validation.reasonRequired = "A cancellation reason is required"
+invoices.actions.newInvoice        = "New Invoice"
+invoices.registered                = "Invoice {number} registered"
