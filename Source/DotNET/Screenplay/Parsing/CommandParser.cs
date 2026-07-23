@@ -44,7 +44,7 @@ internal static partial class CommandParser
                     concurrency = ParseConcurrency(context, line, concurrency, name.Groups[1].Value);
                     break;
                 case "validate":
-                    if (ParseValidate(context, line) is { } validate)
+                    if (ValidateParser.Parse(context, line) is { } validate)
                     {
                         validations.Add(validate);
                     }
@@ -185,34 +185,6 @@ internal static partial class CommandParser
         }
 
         return [.. names];
-    }
-
-    static ValidateSyntax? ParseValidate(ParserContext context, SourceLine line)
-    {
-        if (line.Content == "validate")
-        {
-            var rules = new List<ValidationRuleSyntax>();
-            while (context.TryPeekChild(line.Indent, out var child))
-            {
-                context.Reader.TakeSignificant();
-                if (ValidationRuleParser.Parse(context, child) is { } rule)
-                {
-                    rules.Add(rule);
-                }
-            }
-
-            return new DeclarativeValidateSyntax(rules, line.Location);
-        }
-
-        if (line.Content == "validate csharp")
-        {
-            var code = CodeBlockParser.Parse(context, "csharp", line);
-            return code is null ? null : new CodeValidateSyntax(code, line.Location);
-        }
-
-        context.Error($"Invalid validate declaration '{line.Content}' - expected 'validate' or 'validate csharp'", line.Location);
-        context.SkipBlock(line.Indent);
-        return null;
     }
 
     static ProducesSyntax? ParseProduces(ParserContext context, SourceLine line)

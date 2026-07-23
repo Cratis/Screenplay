@@ -26,6 +26,8 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_have_all_concepts() => _result.Value!.Concepts.Count().ShouldEqual(10);
     [Fact] void should_have_the_enum_concept_values() => _result.Value!.Concepts.Single(_ => _.Name == "InvoiceStatus").Values.Count().ShouldEqual(5);
     [Fact] void should_capture_pii_attributes() => _result.Value!.Concepts.Single(_ => _.Name == "EmailAddress").Attributes.ShouldContain("pii");
+    [Fact] void should_parse_the_concept_validation_rules() => EmailConceptRules.Count().ShouldEqual(2);
+    [Fact] void should_imply_the_concept_value_subject() => EmailConceptRules.All(_ => _.Property == ValidationRuleSyntax.ConceptValue).ShouldBeTrue();
     [Fact] void should_have_all_policies() => _result.Value!.Policies.Count().ShouldEqual(4);
     [Fact] void should_parse_the_code_based_policy() => _result.Value!.Policies.Single(_ => _.Name == "IsAdultCustomer").Code.ShouldNotBeNull();
     [Fact] void should_have_both_personas() => _result.Value!.Personas!.Count().ShouldEqual(2);
@@ -82,6 +84,9 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_parse_the_then_of_the_first_specification() => FirstSpecification.ThenEvents.Single().EventType.ShouldEqual("InvoiceRegistered");
     [Fact] void should_parse_the_then_error_of_the_second_specification() => SecondSpecification.ThenErrors.Single().Name.ShouldEqual("An invoice must have at least one line");
     [Fact] void should_parse_no_given_on_the_second_specification() => SecondSpecification.Given.ShouldBeEmpty();
+
+    IEnumerable<ValidationRuleSyntax> EmailConceptRules => _result.Value!.Concepts.Single(_ => _.Name == "EmailAddress")
+        .Validations!.OfType<DeclarativeValidateSyntax>().Single().Rules;
 
     CommandSyntax RegisterCommand => Slice("RegisterInvoice").Commands.Single();
 
