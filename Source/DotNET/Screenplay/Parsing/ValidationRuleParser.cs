@@ -60,9 +60,13 @@ internal static partial class ValidationRuleParser
     static (string Content, string? Message) SplitMessage(string content)
     {
         var match = MessageRegex().Match(content);
-        return match.Success
-            ? (content[..match.Index].TrimEnd(), match.Groups[1].Value)
-            : (content, null);
+        if (!match.Success)
+        {
+            return (content, null);
+        }
+
+        var message = match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Value;
+        return (content[..match.Index].TrimEnd(), message);
     }
 
     static (ValidationRuleKind? Kind, ExpressionSyntax? Value) ParseRule(ParserContext context, string rule, SourceLine line)
@@ -105,7 +109,7 @@ internal static partial class ValidationRuleParser
         return (kind, value);
     }
 
-    [GeneratedRegex("\\bmessage\\s+\"([^\"]*)\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("\\bmessage\\s+(?:\"([^\"]*)\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
     private static partial Regex MessageRegex();
 
     [GeneratedRegex(@"^([\w.]+)\s+(.+)$", RegexOptions.None, 1000)]
