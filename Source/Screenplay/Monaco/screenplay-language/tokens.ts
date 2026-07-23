@@ -49,6 +49,8 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
                     { token: 'keyword', next: `@${subLanguageState(subLanguage.keyword)}` },
                 ],
             ),
+            // A bare description keyword at end of line opens a fenced plain-text block.
+            [/\bdescription\b(?=\s*$)/, { token: 'keyword', next: '@descriptionBlockPending' }],
             [/\brow-click\b/, 'keyword'],
             [/@\w+/, 'annotation'],
             [
@@ -102,6 +104,18 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/^\s*```\s*$/, { token: 'string.quote', next: '@pop', nextEmbedded: '@pop' }],
             [/[^`]+/, ''],
             [/`/, ''],
+        ],
+
+        // After a bare description, the only thing allowed before the opening fence is whitespace.
+        descriptionBlockPending: [
+            [/^\s*```\s*$/, { token: 'string.quote', switchTo: '@descriptionBlock' }],
+            [/^\s*[^\s`].*$/, { token: '@rematch', next: '@pop' }],
+            [/\s+/, 'white'],
+        ],
+
+        descriptionBlock: [
+            [/^\s*```\s*$/, { token: 'string.quote', next: '@pop' }],
+            [/.+/, 'string'],
         ],
     };
 
