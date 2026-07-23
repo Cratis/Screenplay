@@ -35,31 +35,31 @@ projection User => UserReadModel
 
 All properties must be mapped explicitly.
 
-### Event-Level Disable
+### Every- and All-Level Disable
 
-Disable AutoMap for a specific event:
+Disable AutoMap inside an `every` or `all` block:
 
 ```pdl
 projection User => UserReadModel
-  from UserRegistered
+  every
     no automap
-    Name = name
-    Email = email
-
-  from UserUpdated
-    # AutoMap still enabled here
-    UpdatedAt = $eventContext.occurred
+    LastUpdated = $eventContext.occurred
 ```
+
+AutoMap cannot be toggled inside an individual `from` block — it is controlled at the projection, children, or nested level.
 
 ### Join-Level Disable
 
-Disable AutoMap within join blocks:
+Disable AutoMap within a join's `with` blocks:
 
 ```pdl
 join Group on GroupId
-  events GroupCreated, GroupRenamed
-  no automap
-  Name = name
+  with GroupCreated
+    no automap
+    Name = name
+  with GroupRenamed
+    no automap
+    Name = name
 ```
 
 ### Children-Level Disable
@@ -67,7 +67,7 @@ join Group on GroupId
 Disable AutoMap for children collections:
 
 ```pdl
-children members id userId
+children members identified by userId
   no automap
 
   from UserAddedToGroup
@@ -107,11 +107,13 @@ With default AutoMap, `Name`, `Email`, and `Age` are automatically copied. `IsAc
 ## Scope and Precedence
 
 1. **Projection-level** `no automap` disables AutoMap for all events
-2. **Event-level** `no automap` applies only to that specific event
+2. **Every/All-level** `no automap` applies within that `every` or `all` block
 3. **Explicit mappings** always override AutoMap values when both exist
-4. **Join-level** `no automap` applies to joined events
+4. **Join-level** `no automap` applies within the individual `with` block
 5. **Children-level** `no automap` applies to child events
 6. **Default is Enabled** - AutoMap works unless explicitly disabled
+
+AutoMap cannot be toggled inside an individual `from` block.
 
 ## Examples
 
@@ -145,11 +147,12 @@ projection User => UserReadModel
     # AutoMap enabled (default)
     IsActive = true
 
-  from UserProfileUpdated
-    no automap
-    # Must map everything explicitly
-    Name = fullName
-    Email = emailAddress
+  join Profile on ProfileId
+    with UserProfileUpdated
+      no automap
+      # Must map everything explicitly
+      Name = fullName
+      Email = emailAddress
 ```
 
 ### Projection-Level Disable with Event-Level Override
@@ -176,9 +179,12 @@ projection Order => OrderReadModel
     # AutoMap enabled
 
   join Customer on CustomerId
-    events CustomerCreated, CustomerUpdated
-    no automap
-    CustomerName = name
+    with CustomerCreated
+      no automap
+      CustomerName = name
+    with CustomerUpdated
+      no automap
+      CustomerName = name
 ```
 
 ### Children with Selective Disable
@@ -188,7 +194,7 @@ projection Group => GroupReadModel
   from GroupCreated
     # AutoMap enabled
 
-  children members id userId
+  children members identified by userId
     no automap
 
     from UserAddedToGroup
