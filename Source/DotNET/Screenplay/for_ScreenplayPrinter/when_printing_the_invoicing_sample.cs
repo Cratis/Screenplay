@@ -23,6 +23,7 @@ public class when_printing_the_invoicing_sample : given.a_printer
     [Fact] void should_reparse_successfully() => _reparsed.Success.ShouldBeTrue();
     [Fact] void should_reparse_without_diagnostics() => _reparsed.Diagnostics.ShouldBeEmpty();
     [Fact] void should_print_the_same_text_on_a_second_pass() => _printedAgain.ShouldEqual(_printed);
+    [Fact] void should_preserve_the_domain() => _reparsed.Value!.Domain!.Name.ShouldEqual(_original.Value!.Domain!.Name);
     [Fact] void should_preserve_the_imports() => _reparsed.Value!.Imports.Count().ShouldEqual(_original.Value!.Imports.Count());
     [Fact] void should_preserve_the_concepts() => _reparsed.Value!.Concepts.Count().ShouldEqual(_original.Value!.Concepts.Count());
     [Fact] void should_preserve_the_enum_values() => Concept(_reparsed, "InvoiceStatus").Values.Count().ShouldEqual(Concept(_original, "InvoiceStatus").Values.Count());
