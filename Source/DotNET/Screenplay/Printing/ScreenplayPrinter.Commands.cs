@@ -36,6 +36,44 @@ public partial class ScreenplayPrinter
             {
                 WriteHandler(writer, command.Handler);
             }
+
+            if (command.Concurrency is not null)
+            {
+                WriteConcurrency(writer, command.Concurrency);
+            }
+        }
+    }
+
+    void WriteConcurrency(ScreenplayWriter writer, ConcurrencySyntax concurrency)
+    {
+        writer.Line("concurrency");
+        using (writer.Indent())
+        {
+            if (concurrency.EventSource)
+            {
+                writer.Line("eventSource");
+            }
+
+            if (concurrency.EventSourceType is not null)
+            {
+                writer.Line($"sourceType {concurrency.EventSourceType}");
+            }
+
+            if (concurrency.EventStreamType is not null)
+            {
+                writer.Line($"streamType {concurrency.EventStreamType}");
+            }
+
+            if (concurrency.EventStreamId is not null)
+            {
+                writer.Line($"streamId {concurrency.EventStreamId}");
+            }
+
+            var events = concurrency.EventTypes.ToList();
+            if (events.Count > 0)
+            {
+                writer.Line($"events {string.Join(", ", events)}");
+            }
         }
     }
 

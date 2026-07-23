@@ -139,6 +139,13 @@ module Invoicing
             paymentTerms = paymentTerms
             dueDate      = dueDate
 
+        concurrency
+          eventSource
+          sourceType Invoice
+          streamType Invoicing
+          streamId Primary
+          events InvoiceRegistered, InvoiceCancelled
+
       event InvoiceRegistered
         invoiceId     InvoiceId
         customerId    CustomerId

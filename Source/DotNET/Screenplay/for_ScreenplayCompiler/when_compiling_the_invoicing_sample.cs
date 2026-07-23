@@ -43,6 +43,11 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_parse_the_validation_rules() => RegisterCommand.Validations.OfType<DeclarativeValidateSyntax>().Single().Rules.Count().ShouldEqual(6);
     [Fact] void should_parse_the_code_validation() => RegisterCommand.Validations.OfType<CodeValidateSyntax>().Count().ShouldEqual(1);
     [Fact] void should_parse_the_authorize_policies() => RegisterCommand.Authorize!.Policies.Select(_ => _.Name).ShouldContainOnly("CanManageInvoice", "IsAdultCustomer");
+    [Fact] void should_parse_the_concurrency_event_source() => RegisterCommand.Concurrency!.EventSource.ShouldBeTrue();
+    [Fact] void should_parse_the_concurrency_source_type() => RegisterCommand.Concurrency!.EventSourceType.ShouldEqual("Invoice");
+    [Fact] void should_parse_the_concurrency_stream_type() => RegisterCommand.Concurrency!.EventStreamType.ShouldEqual("Invoicing");
+    [Fact] void should_parse_the_concurrency_stream_id() => RegisterCommand.Concurrency!.EventStreamId.ShouldEqual("Primary");
+    [Fact] void should_parse_the_concurrency_events() => RegisterCommand.Concurrency!.EventTypes.ShouldContainOnly("InvoiceRegistered", "InvoiceCancelled");
     [Fact] void should_parse_the_batch_handler() => Slice("ProcessInvoiceBatch").Commands.Single().Handler!.Code.ShouldNotBeNull();
     [Fact] void should_parse_the_capture() => Slice("LegacyInvoiceSync").Captures.Single().Children.Single().Appends.Count().ShouldEqual(2);
     [Fact] void should_parse_capture_translations() => Slice("LegacyInvoiceSync").Captures.Single().Map.OfType<CaptureMapEntrySyntax>().Single().Translations.Count().ShouldEqual(4);

@@ -30,6 +30,7 @@ internal static partial class CommandParser
         var validations = new List<ValidateSyntax>();
         var produces = new List<ProducesSyntax>();
         HandlerSyntax? handler = null;
+        ConcurrencySyntax? concurrency = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -38,6 +39,9 @@ internal static partial class CommandParser
             {
                 case "authorize":
                     authorize = AuthorizeParser.Parse(context, line);
+                    break;
+                case "concurrency":
+                    concurrency = ParseConcurrency(context, line, concurrency, name.Groups[1].Value);
                     break;
                 case "validate":
                     if (ParseValidate(context, line) is { } validate)
@@ -76,7 +80,111 @@ internal static partial class CommandParser
             context.Error($"Command '{name.Groups[1].Value}' cannot declare both 'produces' and 'handler'", header.Location);
         }
 
-        return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location);
+        return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency);
+    }
+
+    static ConcurrencySyntax? ParseConcurrency(ParserContext context, SourceLine line, ConcurrencySyntax? existing, string commandName)
+    {
+        if (line.Content != "concurrency")
+        {
+            context.Error($"Invalid concurrency declaration '{line.Content}' - expected 'concurrency'", line.Location);
+            context.SkipBlock(line.Indent);
+            return existing;
+        }
+
+        if (existing is not null)
+        {
+            context.Error($"Command '{commandName}' already declares a concurrency block - a command can have at most one", line.Location);
+            context.SkipBlock(line.Indent);
+            return existing;
+        }
+
+        var eventSource = false;
+        string? eventSourceType = null;
+        string? eventStreamType = null;
+        string? eventStreamId = null;
+        List<string>? eventTypes = null;
+
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            switch (LineText.FirstWord(child.Content))
+            {
+                case "eventSource":
+                    eventSource = ParseEventSourceDimension(context, child, eventSource);
+                    break;
+                case "sourceType":
+                    eventSourceType = ParseNamedDimension(context, child, "sourceType", eventSourceType);
+                    break;
+                case "streamType":
+                    eventStreamType = ParseNamedDimension(context, child, "streamType", eventStreamType);
+                    break;
+                case "streamId":
+                    eventStreamId = ParseNamedDimension(context, child, "streamId", eventStreamId);
+                    break;
+                case "events":
+                    eventTypes = ParseEventsDimension(context, child, eventTypes);
+                    break;
+                default:
+                    context.Error($"Unexpected '{child.Content}' in concurrency block - expected eventSource, sourceType, streamType, streamId or events", child.Location);
+                    context.SkipBlock(child.Indent);
+                    break;
+            }
+        }
+
+        return new(eventSource, eventSourceType, eventStreamType, eventStreamId, eventTypes ?? [], line.Location);
+    }
+
+    static bool ParseEventSourceDimension(ParserContext context, SourceLine line, bool existing)
+    {
+        if (line.Content != "eventSource")
+        {
+            context.Error($"Invalid eventSource dimension '{line.Content}' - expected 'eventSource'", line.Location);
+            return existing;
+        }
+
+        if (existing)
+        {
+            context.Error("Duplicate 'eventSource' in concurrency block - each dimension can appear at most once", line.Location);
+        }
+
+        return true;
+    }
+
+    static string? ParseNamedDimension(ParserContext context, SourceLine line, string dimension, string? existing)
+    {
+        var match = ConcurrencyDimensionRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error($"Invalid {dimension} dimension '{line.Content}' - expected '{dimension} <Name>'", line.Location);
+            return existing;
+        }
+
+        if (existing is not null)
+        {
+            context.Error($"Duplicate '{dimension}' in concurrency block - each dimension can appear at most once", line.Location);
+            return existing;
+        }
+
+        return match.Groups[2].Value;
+    }
+
+    static List<string>? ParseEventsDimension(ParserContext context, SourceLine line, List<string>? existing)
+    {
+        if (existing is not null)
+        {
+            context.Error("Duplicate 'events' in concurrency block - each dimension can appear at most once", line.Location);
+            return existing;
+        }
+
+        var names = line.Content["events".Length..].Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (names.Length == 0 || Array.Exists(names, name => !EventNameRegex().IsMatch(name)))
+        {
+            context.Error($"Invalid events dimension '{line.Content}' - expected 'events <EventType>[, <EventType>]*'", line.Location);
+            return existing;
+        }
+
+        return [.. names];
     }
 
     static ValidateSyntax? ParseValidate(ParserContext context, SourceLine line)
@@ -192,6 +300,9 @@ internal static partial class CommandParser
 
     [GeneratedRegex(@"^([A-Z]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex EventNameRegex();
+
+    [GeneratedRegex(@"^(sourceType|streamType|streamId)\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex ConcurrencyDimensionRegex();
 
     [GeneratedRegex(@"^([\w.]+)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
     private static partial Regex MappingRegex();
