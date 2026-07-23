@@ -31,6 +31,7 @@ Screenplay files use the `.play` extension.
     <feature>*          ← sub-features, arbitrarily deep
     <slice>+
       <construct>+      ← events, commands, queries, projections, captures, reactors, screens, constraints
+<seeds>
 ```
 
 ## Imports
@@ -60,6 +61,7 @@ Line comments start with `//` and run to the end of the line.
 | Read-side entry points | [Queries](queries.md) |
 | PDL-embedded projections | [Projections](projections/index.md) |
 | CDL-embedded change data capture | [Captures](captures.md) |
+| Events seeded per event source id | [Event seeding](seeding.md) |
 | Server-side rules enforced before commit | [Constraints](constraints.md) |
 | Event reaction rules | [Reactors](reactors.md) |
 | UI declarations at three abstraction levels | [Screens](screens.md) |

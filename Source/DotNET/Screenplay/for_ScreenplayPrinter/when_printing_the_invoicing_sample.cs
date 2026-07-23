@@ -47,6 +47,9 @@ public class when_printing_the_invoicing_sample : given.a_printer
     [Fact] void should_preserve_the_event_tags() => RegisteredEvent(_reparsed).Tags!.Count().ShouldEqual(RegisteredEvent(_original).Tags!.Count());
     [Fact] void should_preserve_the_produces_tags() => Command(_reparsed, "RegisterInvoice").Produces.First().Tags!.Count().ShouldEqual(Command(_original, "RegisterInvoice").Produces.First().Tags!.Count());
     [Fact] void should_preserve_the_capture_append_tags() => AppendTags(_reparsed).Count().ShouldEqual(AppendTags(_original).Count());
+    [Fact] void should_preserve_the_seed_groups() => Seed(_reparsed).Groups.Count().ShouldEqual(Seed(_original).Groups.Count());
+    [Fact] void should_preserve_the_seeded_events() => Seed(_reparsed).Groups.First().Events.Count().ShouldEqual(Seed(_original).Groups.First().Events.Count());
+    [Fact] void should_preserve_the_seeded_event_properties() => Seed(_reparsed).Groups.First().Events.First().Properties.Count().ShouldEqual(Seed(_original).Groups.First().Events.First().Properties.Count());
 
     static ConceptSyntax Concept(CompilationResult<ApplicationSyntax> result, string name) =>
         result.Value!.Concepts.Single(_ => _.Name == name);
@@ -62,6 +65,9 @@ public class when_printing_the_invoicing_sample : given.a_printer
 
     static EventSyntax RegisteredEvent(CompilationResult<ApplicationSyntax> result) =>
         Slices(result).Single(_ => _.Name == "RegisterInvoice").Events.Single(_ => _.Name == "InvoiceRegistered");
+
+    static SeedSyntax Seed(CompilationResult<ApplicationSyntax> result) =>
+        result.Value!.Seeds!.Single();
 
     static IEnumerable<TagSyntax> AppendTags(CompilationResult<ApplicationSyntax> result) =>
         Slices(result).Single(_ => _.Name == "LegacyInvoiceSync").Captures.Single()

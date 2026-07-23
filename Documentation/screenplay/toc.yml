@@ -30,6 +30,8 @@
   href: captures/grammar.md
 - name: Specifications
   href: specifications.md
+- name: Event seeding
+  href: seeding.md
 - name: Constraints
   href: constraints.md
 - name: Reactors

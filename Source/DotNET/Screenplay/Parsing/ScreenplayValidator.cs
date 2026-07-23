@@ -7,8 +7,8 @@ namespace Cratis.Screenplay.Parsing;
 
 /// <summary>
 /// Validates cross references in a parsed document - policies referenced by <c>authorize</c> and personas,
-/// events referenced by reactors, <c>produces</c> and constraints - and that <c>concurrency</c> blocks
-/// declare at least one dimension.
+/// events referenced by reactors, <c>produces</c>, constraints and <c>seed</c> blocks - and that
+/// <c>concurrency</c> and <c>seed</c> blocks are not empty.
 /// </summary>
 internal static class ScreenplayValidator
 {
@@ -34,6 +34,20 @@ internal static class ScreenplayValidator
             foreach (var policy in persona.Policies.Where(policy => !knownPolicies.Contains(policy)))
             {
                 context.Warning($"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
+            }
+        }
+
+        foreach (var seed in application.Seeds ?? [])
+        {
+            if (!seed.Groups.Any())
+            {
+                context.Error("Empty 'seed' block - declare at least one 'for' group", seed.Location);
+            }
+
+            foreach (var @event in seed.Groups.SelectMany(group => group.Events)
+                .Where(@event => !knownEvents.Contains(@event.Event)))
+            {
+                context.Warning($"Unknown event '{@event.Event}' - declare it with 'event {@event.Event}'", @event.Location);
             }
         }
 
