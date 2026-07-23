@@ -24,7 +24,7 @@
         "keywords": {
             "patterns": [
                 {
-                    "match": "^\\s*(domain|import|concept|policy|persona|module|layout|feature|slice|event|command|query|reactor|screen|constraint|seed)\\b",
+                    "match": "^\\s*(domain|import|concept|policy|persona|authentication|module|layout|feature|slice|event|command|query|reactor|screen|constraint|seed)\\b",
                     "captures": {
                         "1": { "name": "keyword.control.screenplay" }
                     }
@@ -34,7 +34,7 @@
                     "name": "keyword.other.screenplay"
                 },
                 {
-                    "match": "\\b(authorize|validate|produces|handler|require|when|template|data|action|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|file|message|matches|all|max|min|length|today|not|empty|and|or|authenticated|role|claim|subject|event|query|layout|translate|key|description|concurrency|eventSource|sourceType|streamType|streamId|tag|for|readmodel)\\b",
+                    "match": "\\b(authorize|validate|produces|handler|require|when|template|data|action|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|file|message|matches|all|max|min|length|today|not|empty|and|or|authenticated|role|claim|subject|event|query|layout|translate|key|description|concurrency|eventSource|sourceType|streamType|streamId|tag|for|readmodel|provider)\\b",
                     "name": "keyword.other.screenplay"
                 }
             ]
@@ -47,7 +47,7 @@
                     "name": "entity.other.attribute-name.screenplay"
                 },
                 {
-                    "match": "\\$(?:context|eventContext)(?:\\.\\w+)*|\\$env\\.\\w+|\\$\\.[\\w.]*",
+                    "match": "\\$(?:context|eventContext)(?:\\.\\w+)*|\\$(?:env|secrets|strings)\\.[\\w.]+|\\$\\.[\\w.]*",
                     "name": "variable.language.screenplay"
                 },
                 {

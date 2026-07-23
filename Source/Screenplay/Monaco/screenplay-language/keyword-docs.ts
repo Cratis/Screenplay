@@ -7,6 +7,8 @@ export const keywordDocs: Record<string, string> = {
     concept: 'A formalized value type wrapping a primitive. Attributes such as `@pii` travel with every usage.',
     policy: 'A named authorization rule referenced by commands and queries. Multiple policies AND together.',
     persona: 'A named role interacting with the application, with an optional description and its associated policies.',
+    authentication: 'Declares the identity providers of the application — at most one block per file.',
+    provider: 'A named identity provider within `authentication`, with free-form `name value` settings.',
     description: 'A human-readable description of a module, feature, slice, or persona.',
     module: 'The top-level namespace — maps to a bounded context.',
     layout: 'A reusable screen template with named slots.',
@@ -94,5 +96,7 @@ export const contextVariableDocs: Record<string, string> = {
     '$context.occurred': 'The timestamp of the event.',
     '$context.identity.id': 'The subject of the caller from the auth token.',
     '$env': 'An environment variable, e.g. `$env.SERVICE_NAME`.',
+    '$secrets': 'An encrypted secret resolved at runtime, e.g. `$secrets.azureAdClientId` — stays symbolic in the compiled tree.',
+    '$strings': 'A localized string resolved from the `.strings` file of the active locale, e.g. `$strings.invoices.title`.',
     '$eventContext.occurred': 'The timestamp of the event being projected.',
 };
