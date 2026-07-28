@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -33,7 +34,7 @@ internal static partial class DescriptionParser
             return existing;
         }
 
-        return Keep(context, line, existing, owner, match.Groups[1].Value);
+        return Keep(context, line, existing, owner, StringLiteral.Unescape(match.Groups[1].Value));
     }
 
     static string? ParseFenced(ParserContext context, SourceLine line, string? existing, string owner)
@@ -64,6 +65,6 @@ internal static partial class DescriptionParser
         return description;
     }
 
-    [GeneratedRegex(@"^description\s+""([^""]*)""$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^description\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.None, 1000)]
     private static partial Regex DescriptionRegex();
 }

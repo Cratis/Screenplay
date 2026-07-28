@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Syntax.Captures;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Printing;
 
@@ -86,13 +87,13 @@ public partial class ScreenplayPrinter
                 {
                     foreach (var translation in translations)
                     {
-                        writer.Line($"\"{translation.From}\" => {translation.To}");
+                        writer.Line($"{StringLiteral.Quote(translation.From)} => {translation.To}");
                     }
                 }
 
                 break;
             case CaptureSplitSyntax split:
-                writer.Line($"split {ScreenplaySyntaxText.Expression(split.Source)} by \"{split.Separator}\"");
+                writer.Line($"split {ScreenplaySyntaxText.Expression(split.Source)} by {StringLiteral.Quote(split.Separator)}");
                 using (writer.Indent())
                 {
                     foreach (var target in split.Targets)

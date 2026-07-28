@@ -52,11 +52,11 @@
                     "name": "variable.language.screenplay"
                 },
                 {
-                    "match": "\"[^\"]*\"",
+                    "match": "\"(?:[^\"\\\\]|\\\\.)*\"",
                     "name": "string.quoted.double.screenplay"
                 },
                 {
-                    "match": "\"[^\"]*$",
+                    "match": "\"(?:[^\"\\\\]|\\\\.)*$",
                     "name": "invalid.illegal.unterminated-string.screenplay"
                 },
                 {

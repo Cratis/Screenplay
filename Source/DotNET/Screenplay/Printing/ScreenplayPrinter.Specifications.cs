@@ -3,6 +3,7 @@
 
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Printing;
 
@@ -47,7 +48,7 @@ public partial class ScreenplayPrinter
 
             foreach (var error in specification.ThenErrors)
             {
-                writer.Line($"then error \"{error.Name}\"");
+                writer.Line($"then error {StringLiteral.Quote(error.Name)}");
             }
         }
     }
