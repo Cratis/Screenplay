@@ -401,7 +401,9 @@ FilePath       = (* relative path string *) ;
 InlineBlock    = LanguageTag, NL, "```", NL, { AnyLine }, "```", NL ;
 LanguageTag    = "csharp" | "typescript" | "react" | "html" ;
 
-StringLiteral  = '"', { ? any char except '"' ? }, '"' ;
+StringLiteral  = '"', { StringChar }, '"' ;
+StringChar     = ? any char except '"', '\' and newline ? | Escape ;
+Escape         = "\", ( '"' | "\" | "n" | "r" | "t" ) ;
 Number         = [ "-" ], { "0".."9" }, [ ".", { "0".."9" } ] ;
 Ident          = Letter, { Letter | Digit | "_" } ;
 Letter         = "A".."Z" | "a".."z" ;
@@ -412,3 +414,19 @@ INDENT         = ? increase in indentation level ? ;
 DEDENT         = ? decrease in indentation level ? ;
 AnyLine        = ? any text until newline ? ;
 ```
+
+## String escapes
+
+A string literal carries `"` and `\` through the backslash escapes above, so a value survives the trip out to text and back:
+
+```play
+description "He said \"hello\" loudly"
+```
+
+Only `\"`, `\\`, `\n`, `\r` and `\t` are recognized. Any other backslash sequence is kept verbatim - `\d` stays `\d` - which is what lets a regular expression operand read naturally:
+
+```play
+invoiceNumber matches "^INV-\d{6}$"
+```
+
+The printer escapes on the way out, so a value holding a quote prints as `\"` and compiles back to the same value. That is what makes [printing](printing.md) the inverse of compiling.

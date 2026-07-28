@@ -5,6 +5,7 @@ using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Specifications;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Printing;
 
@@ -144,7 +145,7 @@ public sealed partial class ScreenplayPrinter :
         {
             foreach (var group in seed.Groups)
             {
-                writer.Line($"for \"{group.EventSourceId}\"");
+                writer.Line($"for {StringLiteral.Quote(group.EventSourceId)}");
                 using (writer.Indent())
                 {
                     foreach (var @event in group.Events)
@@ -348,7 +349,7 @@ public sealed partial class ScreenplayPrinter :
 
         if (!description.Contains('\n'))
         {
-            writer.Line($"description \"{description}\"");
+            writer.Line($"description {StringLiteral.Quote(description)}");
             return;
         }
 

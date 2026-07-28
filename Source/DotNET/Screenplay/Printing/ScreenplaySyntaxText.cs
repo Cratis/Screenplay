@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Printing;
 
@@ -70,7 +71,7 @@ internal static partial class ScreenplaySyntaxText
     public static string PolicyCondition(PolicyConditionSyntax condition) => condition switch
     {
         AuthenticatedConditionSyntax => "authenticated",
-        RoleConditionSyntax role => $"role \"{role.Role}\"",
+        RoleConditionSyntax role => $"role {StringLiteral.Quote(role.Role)}",
         ClaimConditionSyntax claim => ClaimCondition(claim),
         LogicalPolicyConditionSyntax logical => $"{PolicyCondition(logical.Left)} {Logical(logical.Operator)} {PolicyCondition(logical.Right)}",
         _ => string.Empty
@@ -106,7 +107,7 @@ internal static partial class ScreenplaySyntaxText
     /// <param name="value">The value to render.</param>
     /// <returns>The rendered operand text.</returns>
     public static string LocalizableString(string value) =>
-        value.StartsWith("$strings.", StringComparison.Ordinal) ? value : $"\"{value}\"";
+        value.StartsWith("$strings.", StringComparison.Ordinal) ? value : StringLiteral.Quote(value);
 
     /// <summary>
     /// Renders the value of a <see cref="TagSyntax"/> to its surface form - bare for identifier-like
@@ -133,7 +134,7 @@ internal static partial class ScreenplaySyntaxText
             CaptureWhenKind.Removed => "removed",
             CaptureWhenKind.PropertyChanged => properties[0],
             CaptureWhenKind.Changed => properties.Count > 0 ? properties[0] : string.Empty,
-            CaptureWhenKind.ValueTransition => $"{properties[0]} from \"{when.FromValue}\" to \"{when.ToValue}\"",
+            CaptureWhenKind.ValueTransition => $"{properties[0]} from {StringLiteral.Quote(when.FromValue ?? string.Empty)} to {StringLiteral.Quote(when.ToValue ?? string.Empty)}",
             CaptureWhenKind.LogicalOr => string.Join(" or ", properties),
             CaptureWhenKind.LogicalAnd => string.Join(" and ", properties),
             CaptureWhenKind.Expression => when.Expression ?? string.Empty,
@@ -145,8 +146,9 @@ internal static partial class ScreenplaySyntaxText
     {
         null => "null",
         bool boolean => boolean ? "true" : "false",
-        string text => $"\"{text}\"",
+        string text => StringLiteral.Quote(text),
         double number => Number(number),
+        IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
         _ => value.ToString() ?? string.Empty
     };
 
@@ -188,12 +190,12 @@ internal static partial class ScreenplaySyntaxText
     {
         if (claim.MatchesSubject)
         {
-            return $"claim \"{claim.Claim}\" matches subject";
+            return $"claim {StringLiteral.Quote(claim.Claim)} matches subject";
         }
 
         var target = claim.Matches ?? string.Empty;
-        var value = BareWordRegex().IsMatch(target) ? target : $"\"{target}\"";
-        return $"claim \"{claim.Claim}\" matches {value}";
+        var value = BareWordRegex().IsMatch(target) ? target : StringLiteral.Quote(target);
+        return $"claim {StringLiteral.Quote(claim.Claim)} matches {value}";
     }
 
     static string ValidationRuleBody(ValidationRuleSyntax rule)
