@@ -46,6 +46,11 @@ var reprinted = printer.Print(compiler.Compile(printed).Value!);
 
 Because the two directions agree, you can read a `.play` file, adjust the syntax tree - rename a slice, add an event, change a mapping - and print it back out without disturbing the rest of the document.
 
+Two details make the guarantee hold for values you did not type yourself:
+
+- **Strings are escaped.** A description, message, label or tag holding a `"` or a `\` prints with the backslash escapes described in [the grammar](grammar.md#string-escapes), and compiling that text gives the original value back. You never have to strip quotes out of a value before handing it to the printer.
+- **Numbers are culture-invariant.** Every numeric literal - `decimal`, `float`, `int`, `long` or `double` - prints with a `.` decimal separator regardless of `CurrentCulture`, so output produced on a machine set to `nb-NO` compiles anywhere.
+
 ## Generating from a model
 
 You do not have to start from text. Build the syntax nodes directly and print them to generate Screenplay from your own representation:
