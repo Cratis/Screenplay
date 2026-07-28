@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -136,7 +137,7 @@ internal static partial class SpecificationParser
         var errorMatch = ThenErrorRegex().Match(line.Content);
         if (errorMatch.Success)
         {
-            thenErrors.Add(new(errorMatch.Groups[1].Value, line.Location));
+            thenErrors.Add(new(StringLiteral.Unescape(errorMatch.Groups[1].Value), line.Location));
             return;
         }
 
@@ -222,7 +223,7 @@ internal static partial class SpecificationParser
     [GeneratedRegex(@"^then\s+readmodel\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex ThenReadModelRegex();
 
-    [GeneratedRegex("^then\\s+error\\s+\"([^\"]*)\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^then\\s+error\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
     private static partial Regex ThenErrorRegex();
 
     [GeneratedRegex(@"^([\w.]+)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]

@@ -3,6 +3,7 @@
 
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -65,7 +66,7 @@ internal static partial class ValidationRuleParser
             return (content, null);
         }
 
-        var message = match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Value;
+        var message = match.Groups[1].Success ? StringLiteral.Unescape(match.Groups[1].Value) : match.Groups[2].Value;
         return (content[..match.Index].TrimEnd(), message);
     }
 
@@ -109,7 +110,7 @@ internal static partial class ValidationRuleParser
         return (kind, value);
     }
 
-    [GeneratedRegex("\\bmessage\\s+(?:\"([^\"]*)\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("\\bmessage\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
     private static partial Regex MessageRegex();
 
     [GeneratedRegex(@"^([\w.]+)\s+(.+)$", RegexOptions.None, 1000)]

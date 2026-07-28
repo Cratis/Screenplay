@@ -4,6 +4,7 @@
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -166,7 +167,7 @@ internal static partial class PolicyParser
 
     static bool IsString(string token) => token.Length >= 2 && token.StartsWith('"') && token.EndsWith('"');
 
-    static string Unquote(string token) => token[1..^1];
+    static string Unquote(string token) => StringLiteral.Unescape(token[1..^1]);
 
     static List<string> Tokenize(string text) =>
         [.. TokenRegex().Matches(text).Select(_ => _.Value)];
@@ -174,6 +175,6 @@ internal static partial class PolicyParser
     [GeneratedRegex(@"^policy\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex("\"[^\"]*\"|\\(|\\)|[\\w.]+", RegexOptions.None, 1000)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|\\(|\\)|[\\w.]+", RegexOptions.None, 1000)]
     private static partial Regex TokenRegex();
 }
