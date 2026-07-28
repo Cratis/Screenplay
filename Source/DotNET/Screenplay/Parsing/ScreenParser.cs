@@ -3,6 +3,7 @@
 
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -247,7 +248,7 @@ internal static partial class ScreenParser
     }
 
     static string OperandText(Match match, int quotedGroup) =>
-        match.Groups[quotedGroup].Success ? match.Groups[quotedGroup].Value : match.Groups[quotedGroup + 1].Value;
+        match.Groups[quotedGroup].Success ? StringLiteral.Unescape(match.Groups[quotedGroup].Value) : match.Groups[quotedGroup + 1].Value;
 
     [GeneratedRegex(@"^screen\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
@@ -258,7 +259,7 @@ internal static partial class ScreenParser
     [GeneratedRegex(@"^action\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex ActionRegex();
 
-    [GeneratedRegex("^label\\s+(?:\"([^\"]*)\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
     private static partial Regex LabelRegex();
 
     [GeneratedRegex(@"^navigate\s+to\s+(\w+)(?:\s+by\s+(\w+))?$", RegexOptions.None, 1000)]
@@ -267,15 +268,15 @@ internal static partial class ScreenParser
     [GeneratedRegex(@"^[a-z_]\w*$", RegexOptions.None, 1000)]
     private static partial Regex SlotRegex();
 
-    [GeneratedRegex("^title\\s+(?:\"([^\"]*)\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^title\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
     private static partial Regex TitleRegex();
 
-    [GeneratedRegex("^column\\s+([\\w.]+)(?:\\s+label\\s+(?:\"([^\"]*)\"|(\\$strings\\.\\w+(?:\\.\\w+)*)))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^column\\s+([\\w.]+)(?:\\s+label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)))?$", RegexOptions.None, 1000)]
     private static partial Regex ColumnRegex();
 
     [GeneratedRegex(@"^on\s+row-click\s+(navigate\s+to\s+.+)$", RegexOptions.None, 1000)]
     private static partial Regex RowClickRegex();
 
-    [GeneratedRegex("^field\\s+([\\w.]+)\\s+label\\s+(?:\"([^\"]*)\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^field\\s+([\\w.]+)\\s+label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
     private static partial Regex FieldRegex();
 }

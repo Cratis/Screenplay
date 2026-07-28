@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -141,8 +142,8 @@ internal static partial class ExpressionParser
         "true" => new(true, location),
         "false" => new(false, location),
         "null" => new(null, location),
-        _ when text.Length >= 2 && text.StartsWith('"') && text.EndsWith('"') => new(text[1..^1], location),
-        _ when text.Length >= 2 && text.StartsWith('\'') && text.EndsWith('\'') => new(text[1..^1], location),
+        _ when text.Length >= 2 && text.StartsWith('"') && text.EndsWith('"') => new(StringLiteral.Unescape(text[1..^1]), location),
+        _ when text.Length >= 2 && text.StartsWith('\'') && text.EndsWith('\'') => new(StringLiteral.Unescape(text[1..^1]), location),
         _ when NumberRegex().IsMatch(text) => new(double.Parse(text, CultureInfo.InvariantCulture), location),
         _ => null
     };
