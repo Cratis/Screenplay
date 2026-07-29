@@ -55,7 +55,8 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_parse_the_event_tags() => RegisteredEvent.Tags!.Count().ShouldEqual(3);
     [Fact] void should_parse_the_static_event_tags() => RegisteredEvent.Tags!.Take(2).Select(_ => ((LiteralExpressionSyntax)_.Value).Value).ShouldContainOnly("invoicing", "billing");
     [Fact] void should_parse_the_dynamic_event_tag() => ((ContextExpressionSyntax)RegisteredEvent.Tags!.Last().Value).Path.ShouldEqual("identity.id");
-    [Fact] void should_parse_the_validation_rules() => RegisterCommand.Validations.OfType<DeclarativeValidateSyntax>().Single().Rules.Count().ShouldEqual(7);
+    [Fact] void should_parse_the_named_predicate_rule() => RegisterCommand.Validations.OfType<DeclarativeValidateSyntax>().Single().Rules.Count(_ => _.Rule == ValidationRuleKind.Rule).ShouldEqual(1);
+    [Fact] void should_parse_the_validation_rules() => RegisterCommand.Validations.OfType<DeclarativeValidateSyntax>().Single().Rules.Count().ShouldEqual(8);
     [Fact] void should_parse_the_code_validation() => RegisterCommand.Validations.OfType<CodeValidateSyntax>().Count().ShouldEqual(1);
     [Fact] void should_parse_the_authorize_policies() => RegisterCommand.Authorize!.Policies.Select(_ => _.Name).ShouldContainOnly("CanManageInvoice", "IsAdultCustomer");
     [Fact] void should_parse_the_concurrency_event_source() => RegisterCommand.Concurrency!.EventSource.ShouldBeTrue();
