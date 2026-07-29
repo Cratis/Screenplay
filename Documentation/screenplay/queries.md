@@ -6,6 +6,7 @@ Queries are read-side entry points. A query maps to a return type — a read mod
 
 ```screenplay
 query <Name> => <ReturnType>[[]?]
+  [observable]
   [by <paramName> <Type>]
   [filter <paramName> <Type>?]
   [authorize <PolicyName> [or <PolicyName>]*]
@@ -13,9 +14,22 @@ query <Name> => <ReturnType>[[]?]
 
 | Clause | Meaning |
 | --- | --- |
-| `by` | The identifying parameter — the query returns the instance it identifies. |
+| `observable` | The query is live — a subscription that pushes updates rather than a one-shot read. |
+| `by` | The identifying parameter — the query returns the instance it identifies. A query declares at most one. |
 | `filter` | An optional parameter narrowing the result set. Filter types are typically optional (`?`). |
 | `authorize` | The [policies](policies.md) that must pass. |
+
+## Live or one-shot
+
+Whether a query pushes updates changes what the reader has to build: a live query holds a subscription and re-renders as events land, a one-shot query answers once. Say which it is:
+
+```screenplay
+query ListInvoices => InvoiceListReadModel[]
+  observable
+  filter status InvoiceStatus?
+```
+
+An unmarked query is one-shot, so every document written before this marker existed keeps its meaning.
 
 ## Examples
 

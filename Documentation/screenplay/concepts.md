@@ -5,7 +5,7 @@ Concepts are formalized value types that wrap a primitive. They give every domai
 ## Syntax
 
 ```screenplay
-concept <Name> : <PrimitiveType> [<attributes>]
+concept <Name> : <PrimitiveType> [@<attribute>[("<reason>")]]*
   [validate ...]*
 
 concept <Name> : Enum
@@ -24,11 +24,23 @@ concept <Name> : Enum
 | `@pii` | The value is personally identifiable information. Chronicle manages it and can erase it for GDPR compliance. |
 | `@sensitive` | The value is sensitive and handled under Chronicle's sensitivity rules. |
 
+Any `@word` is accepted, so a consumer can introduce an attribute the compiler does not know about without a grammar change.
+
+### Carry the reason, not just the flag
+
+A compliance reader wants to know *why* a value is personal data - the purpose, the lawful basis, whose subject it lives under. Give the attribute a quoted argument and the document carries that reasoning instead of losing it:
+
+```screenplay
+concept BankAccountNumber : String @pii("Partner payout bank account - financial data. Remits self-billing payments; lawful basis: contract performance / legal obligation.")
+```
+
+The argument is optional on every attribute - a bare `@pii` stays exactly as valid as it has always been.
+
 ## Examples
 
 ```screenplay
 concept InvoiceId        : Uuid
-concept EmailAddress     : String   @pii
+concept EmailAddress     : String   @pii("Contact address for invoice delivery. Lawful basis: contract performance.")
 concept NationalIdNumber : String   @pii @sensitive
 concept DateOfBirth      : Date     @pii
 ```
