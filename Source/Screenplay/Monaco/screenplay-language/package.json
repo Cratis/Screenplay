@@ -3,6 +3,10 @@
     "version": "0.0.0",
     "description": "Monaco language service for the Cratis Screenplay DSL — syntax highlighting, IntelliSense, hover and diagnostics for .play files",
     "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Cratis/Screenplay.git"
+    },
     "type": "module",
     "main": "./dist/index.js",
     "module": "./dist/index.js",
