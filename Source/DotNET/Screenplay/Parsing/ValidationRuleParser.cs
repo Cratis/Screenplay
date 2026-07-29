@@ -84,6 +84,11 @@ internal static partial class ValidationRuleParser
             return (null, null);
         }
 
+        if (operand.Groups[1].Value == "rule")
+        {
+            return ParseNamedRule(context, operand.Groups[2].Value.Trim(), line);
+        }
+
         var value = ExpressionParser.ParseMappingSource(context, operand.Groups[2].Value, line.Location);
         ValidationRuleKind? kind = operand.Groups[1].Value switch
         {
@@ -110,12 +115,38 @@ internal static partial class ValidationRuleParser
         return (kind, value);
     }
 
+    /// <summary>
+    /// Parses a <c>rule &lt;Name&gt;</c> - a named predicate whose logic the document does not express.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <param name="name">The predicate name.</param>
+    /// <param name="line">The <see cref="SourceLine"/> the rule came from.</param>
+    /// <returns>The rule kind and the name, or <c>null</c> when the name is not an identifier.</returns>
+    /// <remarks>
+    /// The name is a reference into the implementation, not a declared entity - nothing resolves it. It is
+    /// there so a reader can tell that a constraint exists and what it is called, rather than seeing a
+    /// property that appears to carry no further rules.
+    /// </remarks>
+    static (ValidationRuleKind? Kind, ExpressionSyntax? Value) ParseNamedRule(ParserContext context, string name, SourceLine line)
+    {
+        if (!NameRegex().IsMatch(name))
+        {
+            context.Error($"Invalid rule name '{name}' in '{line.Content}' - expected 'rule <Name>' with an identifier", line.Location);
+            return (null, null);
+        }
+
+        return (ValidationRuleKind.Rule, new PathExpressionSyntax(name, line.Location));
+    }
+
     [GeneratedRegex("\\bmessage\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
     private static partial Regex MessageRegex();
 
     [GeneratedRegex(@"^([\w.]+)\s+(.+)$", RegexOptions.None, 1000)]
     private static partial Regex RuleRegex();
 
-    [GeneratedRegex(@"^(not empty|length ==|all >=|all >|matches|max|min|>=|<=|==|>|<)\s*(.*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(not empty|length ==|all >=|all >|matches|max|min|rule|>=|<=|==|>|<)\s*(.*)$", RegexOptions.None, 1000)]
     private static partial Regex OperandRegex();
+
+    [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.None, 1000)]
+    private static partial Regex NameRegex();
 }

@@ -170,6 +170,7 @@ module Invoicing
           lines.unitPrice all >= 0                 message "Line prices cannot be negative"
           currency length == 3                     message "Currency must be a 3-letter ISO code"
           dueDate > today                          message "Due date must be in the future"
+          invoiceNumber rule BeUnusedInvoiceNumber message "Invoice number is already in use"
 
         validate csharp
           ```
