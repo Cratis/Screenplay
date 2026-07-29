@@ -20,10 +20,18 @@ public class PlayFileCompiler(IPlayFiles playFiles, IScreenplayCompiler compiler
 
     /// <inheritdoc/>
     public IEnumerable<PlayFileCompilation> CompileIn(string root) =>
-        [.. playFiles.FindIn(root)
-            .Select(file =>
-            {
-                var source = playFiles.ReadContent(file);
-                return new PlayFileCompilation(file, source, compiler.Compile(source));
-            })];
+        [.. playFiles.FindIn(root).Select(Compile)];
+
+    /// <inheritdoc/>
+    public PlayFileCompilation CompileFile(string path)
+    {
+        var full = System.IO.Path.GetFullPath(path);
+        return Compile(new(full, System.IO.Path.GetFileName(full)));
+    }
+
+    PlayFileCompilation Compile(PlayFile file)
+    {
+        var source = playFiles.ReadContent(file);
+        return new(file, source, compiler.Compile(source));
+    }
 }

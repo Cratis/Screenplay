@@ -26,6 +26,12 @@ You can also point it at a specific directory:
 screenplay path/to/screenplays
 ```
 
+Or at a single file, which is what you want when a generator just produced one and you only care about that one:
+
+```bash
+screenplay path/to/invoicing.play
+```
+
 Each problem is reported with its file, line and column, the offending source line and a caret pointing at the exact location:
 
 ```text
@@ -36,7 +42,20 @@ nested/broken.play(3,5): error: Unknown slice type 'Wat' - expected StateChange,
 2 file(s) compiled - 1 error(s), 0 warning(s)
 ```
 
-The exit code is `0` when everything compiles without errors and `1` otherwise, so the command slots straight into CI pipelines. Colors are enabled automatically on interactive terminals; disable them with `--no-color` or by setting the `NO_COLOR` environment variable.
+The exit code is `0` when everything compiles without errors and `1` otherwise, so the command slots straight into CI pipelines.
+
+Warnings do not fail the run by default. When a pipeline demands a spotless document - a generated one, say - add `--warnaserror` and a single warning is enough to exit `1`:
+
+```bash
+screenplay path/to/invoicing.play --warnaserror
+```
+
+| Option | Effect |
+|---|---|
+| `--warnaserror` | Warnings fail the run - exit code `1` even with zero errors |
+| `--no-color` | Never colorize output |
+
+Colors are enabled automatically on interactive terminals; disable them with `--no-color` or by setting the `NO_COLOR` environment variable.
 
 ## Use the compiler as a library
 
@@ -68,6 +87,12 @@ Discovering and compiling every `.play` file beneath a directory - what the CLI 
 using Cratis.Screenplay.Files;
 
 var compilations = new PlayFileCompiler().CompileIn(rootDirectory);
+```
+
+A single file is a single call too:
+
+```csharp
+var compilation = new PlayFileCompiler().CompileFile(path);
 ```
 
 To go the other way - turn a syntax tree back into `.play` text, or generate Screenplay from a model - see [Printing and generating](printing.md).
