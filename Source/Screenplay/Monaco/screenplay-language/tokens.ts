@@ -32,6 +32,23 @@ function subLanguageExitRule(subLanguages: SubLanguage[]): MonarchTokenRules[num
     ];
 }
 
+// Shared across the composite `.play` tokenizer and every standalone sub-language tokenizer
+// (comments, `$`-prefixed context variables, strings, numbers, operators, delimiters, whitespace).
+export const commonTokenRules: MonarchTokenRules = [
+    [/\/\/.*$/, 'comment'],
+    [/\$(?:context|eventContext|eventSourceId|causedBy)(?:\.\w+)*/, 'variable.predefined'],
+    [/\$(?:env|secrets|strings)\.[\w.]+/, 'variable.predefined'],
+    [/\$\.[\w.]*/, 'variable.predefined'],
+    [/"[^"]*"/, 'string'],
+    [/"[^"]*$/, 'string.invalid'],
+    [/\d+(?:ms|s|m|h|d)\b/, 'number'],
+    [/-?\d+\.\d+/, 'number.float'],
+    [/-?\d+/, 'number'],
+    [/=>|==|!=|>=|<=|[><=:?]/, 'operator'],
+    [/[[\](),.]/, 'delimiter'],
+    [/\s+/, 'white'],
+];
+
 export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMonarchLanguage {
     const tokenizer: Record<string, MonarchTokenRules> = {
         root: [
@@ -75,20 +92,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             { include: '@common' },
         ],
 
-        common: [
-            [/\/\/.*$/, 'comment'],
-            [/\$(?:context|eventContext|eventSourceId|causedBy)(?:\.\w+)*/, 'variable.predefined'],
-            [/\$(?:env|secrets|strings)\.[\w.]+/, 'variable.predefined'],
-            [/\$\.[\w.]*/, 'variable.predefined'],
-            [/"[^"]*"/, 'string'],
-            [/"[^"]*$/, 'string.invalid'],
-            [/\d+(?:ms|s|m|h|d)\b/, 'number'],
-            [/-?\d+\.\d+/, 'number.float'],
-            [/-?\d+/, 'number'],
-            [/=>|==|!=|>=|<=|[><=:?]/, 'operator'],
-            [/[[\](),.]/, 'delimiter'],
-            [/\s+/, 'white'],
-        ],
+        common: commonTokenRules,
 
         // After a code tag, the only thing allowed before the opening fence is whitespace.
         codeBlockPending: [
