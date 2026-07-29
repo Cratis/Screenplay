@@ -29,7 +29,7 @@ internal static partial class ValidationRuleParser
             return null;
         }
 
-        var property = match.Groups[1].Value;
+        var property = LineText.Unescape(match.Groups[1].Value);
         var rule = match.Groups[2].Value;
         var (kind, value) = ParseRule(context, rule, line);
         if (kind is null)
@@ -164,7 +164,7 @@ internal static partial class ValidationRuleParser
     [GeneratedRegex("\\bmessage\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
     private static partial Regex MessageRegex();
 
-    [GeneratedRegex(@"^([\w.]+)\s+(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(@?[\w.]+)\s+(.+)$", RegexOptions.None, 1000)]
     private static partial Regex RuleRegex();
 
     [GeneratedRegex(@"^(not empty|length ==|all >=|all >|matches|max|min|>=|<=|==|>|<)\s*(.*)$", RegexOptions.None, 1000)]

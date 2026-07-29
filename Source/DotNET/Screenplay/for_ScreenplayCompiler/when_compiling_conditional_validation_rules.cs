@@ -17,12 +17,14 @@ public class when_compiling_conditional_validation_rules : given.a_compiler
                 endDate     Date
                 isExtension Bool
                 reason      String
+                @today      Date
 
                 validate
                   endDate >= startDate
                   startDate < today
                   reason not empty when isExtension == true and startDate < today message "A reason is required"
                   reason matches "^when .+$"
+                  @today not empty
         """;
 
     CompilationResult<ApplicationSyntax> _result;
@@ -45,6 +47,7 @@ public class when_compiling_conditional_validation_rules : given.a_compiler
     [Fact] void should_keep_the_message() => Rule(2).Message.ShouldEqual("A reason is required");
     [Fact] void should_not_read_when_inside_a_quoted_operand() => Rule(3).When.ShouldBeNull();
     [Fact] void should_keep_the_quoted_operand() => ((LiteralExpressionSyntax)Rule(3).Value!).Value.ShouldEqual("^when .+$");
+    [Fact] void should_accept_the_escape_on_a_rule_subject() => Rule(4).Property.ShouldEqual("today");
 
     ValidationRuleSyntax Rule(int index) => _rules.ElementAt(index);
 }
