@@ -209,7 +209,8 @@ RuleOp         = "not empty"
                | "length", "==", Number
                | "matches", ( "email" | StringLiteral )
                | "all", ">", Value
-               | "all", ">=", Value ;
+               | "all", ">=", Value
+               | "rule", Ident ;
 
 Value          = Number | StringLiteral | "today" | "true" | "false" ;
 

@@ -96,6 +96,7 @@ Declarative validation covers the common cases without code:
 | `matches <regex>` | `email matches email` |
 | `matches "<pattern>"` | `invoiceNumber matches "^INV-[0-9]{6}$"` |
 | `all > <value>` (on collection) | `lines.quantity all > 0` |
+| `rule <Name>` | `orgNumber rule BeAValidOrganizationNumber` |
 
 Every rule carries a `message` shown when it fails:
 
@@ -105,6 +106,21 @@ validate
   invoiceNumber matches "^INV-[0-9]{6}$"  message "Invoice number must match INV-000000"
   dueDate > today                          message "Due date must be in the future"
 ```
+
+### Rules whose logic is not expressible
+
+Not every rule is a comparison. A predicate — "is this a valid organization number", "is this still available" — has logic that lives in code, and the declarative shapes above cannot express it.
+
+Leaving it out is the worst option, because it makes the document lie: a property with two declarative rules and three predicates reads as a property with two rules, and a reader cannot tell "nothing further constrains this" from "the rest could not be written down". Name the rule instead:
+
+```screenplay
+validate
+  orgNumber not empty                       message "Organization number is required"
+  orgNumber rule BeAValidOrganizationNumber message "Must be a valid organization number"
+  orgNumber rule BeUnique
+```
+
+The name is a reference into the implementation, not a declared construct — nothing resolves it, and the compiler does not check that anything called `BeAValidOrganizationNumber` exists. It is there so the document is honest about how constrained a value is, and so a reader has something more useful than "a rule was omitted".
 
 Cross-field or complex rules drop into C#:
 
