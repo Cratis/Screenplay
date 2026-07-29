@@ -40,7 +40,7 @@ ConceptRule    = RuleOp, [ "message", LocalizableString ], NL ;
 PrimitiveType  = "Uuid" | "String" | "Int" | "Decimal" | "Bool"
                | "Date" | "DateTime" ;
 
-Attribute      = "@pii" | "@sensitive" ;
+Attribute      = "@", Ident, [ "(", StringLiteral, ")" ] ;
 
 (* -------------------------------------------------------------- *)
 (* Policies                                                        *)
@@ -183,7 +183,7 @@ ValidateDecl   = "validate", NL,
                    INDENT, { ValidationRule }, DEDENT
                | "validate", "csharp", NL, InlineBlock ;
 
-ValidationRule = Ident, RuleOp, [ "message", LocalizableString ], NL ;
+ValidationRule = Ident, RuleOp, [ "when", Condition ], [ "message", LocalizableString ], NL ;
 
 RuleOp         = "not empty"
                | "max", Number
@@ -198,7 +198,9 @@ RuleOp         = "not empty"
                | "all", ">", Value
                | "all", ">=", Value ;
 
-Value          = Number | StringLiteral | "today" | "true" | "false" ;
+Value          = Number | StringLiteral | "today" | "true" | "false" | PropertyPath ;
+
+PropertyPath   = [ "@" ], Ident, { ".", Ident } ;
 
 (* -------------------------------------------------------------- *)
 (* Produces                                                        *)
@@ -247,6 +249,7 @@ HandlerDecl    = "handler", NL,
 
 QueryDecl      = "query", Ident, "=>", TypeRef, NL,
                  [ INDENT,
+                     [ "observable", NL ],
                      [ ByClause ],
                      { FilterClause },
                      [ AuthorizeDecl ],
@@ -335,10 +338,14 @@ ConstraintBody = "unique", Ident, "on", Ident, NL   (* unique property  *)
 (* -------------------------------------------------------------- *)
 
 ReactorDecl    = "reactor", Ident, NL,
-                 INDENT,
-                   "on", Ident, NL,
-                   ( FileDirective | InlineBlock ),
-                 DEDENT ;
+                 INDENT, { ReactorTrigger }, DEDENT ;
+
+ReactorTrigger = "on", Ident, NL,
+                 [ INDENT,
+                     { "produces", Ident, NL },
+                     { "executes", Ident, NL },
+                     [ FileDirective | InlineBlock ],
+                   DEDENT ] ;
 
 (* -------------------------------------------------------------- *)
 (* Screens                                                         *)

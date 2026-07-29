@@ -87,6 +87,29 @@ validate
   dueDate > today                          message "Due date must be in the future"
 ```
 
+### Comparing against another property
+
+An operand does not have to be a constant. A bare path resolves against the **sibling properties of the artifact being validated** - the command's own properties for a command rule - so the rule that matters most in a date range says exactly what it means:
+
+```screenplay
+validate
+  endDate >= startDate  message "The end date cannot be before the start date"
+```
+
+`today` is a keyword, not a path: it evaluates to the current date when the rule runs. A property genuinely called `today` is written `@today`, using the same [keyword escape](grammar.md#keyword-escape) as everywhere else.
+
+### Rules that only apply sometimes
+
+A rule that holds only under a condition takes a `when` clause, using the same condition grammar as `produces when`:
+
+```screenplay
+validate
+  newEndDate > endDate when isExtension == true  message "An extension has to move the end date out"
+  reason not empty when status == "cancelled"     message "Cancelling requires a reason"
+```
+
+The condition comes after the rule and before the `message`, and it may combine comparisons with `and` and `or`. An unconditional rule is the same as it always was.
+
 Cross-field or complex rules drop into C#:
 
 ````screenplay

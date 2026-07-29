@@ -83,6 +83,26 @@ module Invoicing
 | `reactor` | `Automation` | [Reactors](reactors.md) |
 | `capture` | `Translate` | [Captures](captures.md) |
 
+Every construct is repeatable - a slice declares as many events, commands, queries, projections, screens, reactors and captures as the behavior needs.
+
+### More than one projection
+
+A slice often needs a second read model that nobody outside the slice ever queries: the state its own command reads to make a decision, or the companion model that guards access to the first one. Each `projection` names the read model it builds, so there is nothing ambiguous about declaring several:
+
+```screenplay
+slice StateView CustomerPortalReport
+  query Report => PortalReport
+    ...
+
+  projection PortalReport => PortalReport
+    ...
+
+  projection RevokedCustomerPortalToken => RevokedCustomerPortalToken
+    ...
+```
+
+Keeping the decision model beside the view model is how the slice stays the unit that changes together - splitting it into an artificial second slice describes an application that does not exist.
+
 ## Example
 
 ```screenplay
