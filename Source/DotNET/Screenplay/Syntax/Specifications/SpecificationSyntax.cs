@@ -63,8 +63,13 @@ public record SpecificationReadModelSyntax(
     SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
-/// Represents an expected rejection declared with <c>then error "&lt;message&gt;"</c>.
+/// Represents an expected rejection declared with <c>then error</c>, optionally naming the reason.
 /// </summary>
-/// <param name="Name">The expected rejection message.</param>
+/// <param name="Name">The expected rejection message, or <c>null</c> when the specification does not name one.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record SpecificationErrorSyntax(string Name, SourceLocation Location) : SyntaxNode(Location);
+/// <remarks>
+/// A <c>null</c> name is not an empty message - it says the specification asserts a rejection without
+/// naming why, which is the shape most rejection scenarios have. The reason lives in the specification's
+/// own name.
+/// </remarks>
+public record SpecificationErrorSyntax(string? Name, SourceLocation Location) : SyntaxNode(Location);

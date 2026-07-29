@@ -137,7 +137,9 @@ internal static partial class SpecificationParser
         var errorMatch = ThenErrorRegex().Match(line.Content);
         if (errorMatch.Success)
         {
-            thenErrors.Add(new(StringLiteral.Unescape(errorMatch.Groups[1].Value), line.Location));
+            thenErrors.Add(new(
+                errorMatch.Groups[1].Success ? StringLiteral.Unescape(errorMatch.Groups[1].Value) : null,
+                line.Location));
             return;
         }
 
@@ -223,7 +225,7 @@ internal static partial class SpecificationParser
     [GeneratedRegex(@"^then\s+readmodel\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex ThenReadModelRegex();
 
-    [GeneratedRegex("^then\\s+error\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^then\\s+error(?:\\s+\"(" + StringLiteral.BodyPattern + ")\")?$", RegexOptions.None, 1000)]
     private static partial Regex ThenErrorRegex();
 
     [GeneratedRegex(@"^([\w.]+)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
