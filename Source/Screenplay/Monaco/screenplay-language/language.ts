@@ -59,6 +59,7 @@ export const clauseKeywords = [
     'message',
     'not',
     'empty',
+    'rule',
     'matches',
     'all',
     'max',

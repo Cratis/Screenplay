@@ -33,6 +33,7 @@ export const keywordDocs: Record<string, string> = {
     produces: 'Declares the events a command emits — single, multiple, or conditional.',
     handler: 'A fully imperative command implementation — a `file <Path>` reference or an inline `csharp` block, instead of `produces`.',
     when: 'Guards a produced event or a capture append with a condition.',
+    rule: 'Names a predicate whose logic lives in code — states that a constraint exists without expressing what it computes. Nothing resolves the name.',
     require: 'A policy condition: `authenticated`, `role "..."`, or `claim "..." matches ...`.',
     authenticated: 'Requires an authenticated caller.',
     role: 'Requires the caller to have the given role.',

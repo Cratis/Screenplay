@@ -127,6 +127,7 @@ export const validateItems: CompletionEntry[] = [
     { label: 'max', insertText: '${1:property} max ${2:500} message "${3:message}"', documentation: 'Maximum length or value.' },
     { label: 'min', insertText: '${1:property} min ${2:1} message "${3:message}"', documentation: 'Minimum length or value.' },
     { label: 'matches', insertText: '${1:property} matches "${2:pattern}" message "${3:message}"', documentation: 'The property must match a regular expression.' },
+    { label: 'rule', insertText: '${1:property} rule ${2:PredicateName} message "${3:message}"', documentation: 'Names a predicate whose logic lives in code — states that a constraint exists without expressing it.' },
     { label: 'length ==', insertText: '${1:property} length == ${2:3} message "${3:message}"', documentation: 'The property must have an exact length.' },
     { label: 'all >', insertText: '${1:collection}.${2:property} all > ${3:0} message "${4:message}"', documentation: 'Every element of a collection must satisfy the comparison.' },
 ];
