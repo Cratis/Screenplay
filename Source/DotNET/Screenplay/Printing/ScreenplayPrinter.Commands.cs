@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Printing;
 
@@ -16,7 +17,7 @@ public partial class ScreenplayPrinter
         using (writer.Indent())
         {
             WriteDescription(writer, command.Description);
-            WriteProperties(writer, command.Properties);
+            WriteProperties(writer, command.Properties, ReservedWords.CommandBody);
 
             if (command.Authorize is not null)
             {
@@ -84,7 +85,7 @@ public partial class ScreenplayPrinter
         using (writer.Indent())
         {
             WriteTags(writer, @event.Tags);
-            WriteProperties(writer, @event.Properties);
+            WriteProperties(writer, @event.Properties, ReservedWords.EventBody);
         }
     }
 
@@ -154,11 +155,11 @@ public partial class ScreenplayPrinter
         }
     }
 
-    void WriteProperties(ScreenplayWriter writer, IEnumerable<PropertySyntax> properties)
+    void WriteProperties(ScreenplayWriter writer, IEnumerable<PropertySyntax> properties, IReadOnlySet<string> reserved)
     {
         foreach (var property in properties)
         {
-            writer.Line($"{property.Name} {ScreenplaySyntaxText.TypeRef(property.Type)}");
+            writer.Line($"{ReservedWords.Escape(property.Name, reserved)} {ScreenplaySyntaxText.TypeRef(property.Type)}");
         }
     }
 
@@ -214,7 +215,7 @@ public partial class ScreenplayPrinter
             using (writer.Indent())
             {
                 WriteTags(writer, produces.Tags);
-                WriteMappings(writer, produces.Mappings);
+                WriteMappings(writer, produces.Mappings, ReservedWords.MappingBlock);
             }
 
             return;
@@ -227,7 +228,7 @@ public partial class ScreenplayPrinter
             using (writer.Indent())
             {
                 WriteTags(writer, produces.Tags);
-                WriteMappings(writer, produces.Mappings);
+                WriteMappings(writer, produces.Mappings, ReservedWords.MappingBlock);
             }
         }
     }
@@ -249,11 +250,11 @@ public partial class ScreenplayPrinter
         }
     }
 
-    void WriteMappings(ScreenplayWriter writer, IEnumerable<PropertyMappingSyntax> mappings)
+    void WriteMappings(ScreenplayWriter writer, IEnumerable<PropertyMappingSyntax> mappings, IReadOnlySet<string> reserved)
     {
         foreach (var mapping in mappings)
         {
-            writer.Line($"{mapping.Property} = {ScreenplaySyntaxText.Expression(mapping.Source)}");
+            writer.Line($"{ReservedWords.Escape(mapping.Property, reserved)} = {ScreenplaySyntaxText.Expression(mapping.Source)}");
         }
     }
 
