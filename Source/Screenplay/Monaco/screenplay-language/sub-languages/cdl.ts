@@ -3,11 +3,14 @@
 
 import { SubLanguageDefinition } from '../sub-language-registry';
 
-// Change Data Capture Language (CDL) — embedded inside `capture` blocks.
+// Change Data Capture Language (CDL) — embedded inside `capture` blocks. This is the
+// lightweight definition mixed into the composite `.play` tokenizer; the full standalone
+// CDL language (its own tokenizer, context-aware completions, hover, and validation) lives
+// in `./capture` and is what `@cratis/screenplay-language/capture` exposes to consumers.
 export const cdl: SubLanguageDefinition = {
     tokens: [
         [
-            /\b(?:source|api|route|poll|key|map|translate|split|append|tag|when|children|nested|identified|by|from|to|and|or|added|removed|changed)\b/,
+            /\b(?:source|api|route|poll|path|topic|key|map|translate|split|append|tag|when|children|nested|identified|by|from|to|and|or|added|removed)\b/,
             'keyword',
         ],
     ],
@@ -55,9 +58,11 @@ export const cdl: SubLanguageDefinition = {
     ],
     hovers: {
         source: 'CDL — declares where the captured data comes from.',
-        api: 'CDL — the API used as the capture source.',
-        route: 'CDL — the route on the source API to poll.',
-        poll: 'CDL — the polling interval, e.g. 5m.',
+        api: 'CDL — as a source type, polls an HTTP API; as a source property (`api <ServiceName>`), references a named External Service for the base URL and authentication.',
+        route: 'CDL — optional path appended to an API source\'s External Service base URL.',
+        poll: 'CDL — the polling interval for an API source, e.g. 5m.',
+        path: 'CDL — the inbound path a webhook source listens on.',
+        topic: 'CDL — the topic a message source subscribes to.',
         key: 'CDL — declares which source property identifies an instance.',
         map: 'CDL — maps and translates source values before events are appended.',
         translate: 'CDL — translates source values into Screenplay values.',

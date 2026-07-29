@@ -7,10 +7,21 @@
     "main": "./dist/index.js",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
+    "publishConfig": {
+        "access": "public"
+    },
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js"
+        },
+        "./capture": {
+            "types": "./dist/sub-languages/capture/index.d.ts",
+            "import": "./dist/sub-languages/capture/index.js"
+        },
+        "./projection": {
+            "types": "./dist/sub-languages/projection/index.d.ts",
+            "import": "./dist/sub-languages/projection/index.js"
         }
     },
     "files": [
@@ -27,7 +38,7 @@
         "monaco-editor": ">=0.44.0"
     },
     "devDependencies": {
-        "monaco-editor": "^0.52.2",
+        "monaco-editor": "^0.55.1",
         "typescript": "6.0.3"
     }
 }
