@@ -16,7 +16,7 @@ specification <Name>
     <property> = <value>
   then readmodel <ReadModelType>
     <property> = <value>
-  then error "<message>"
+  then error ["<message>"]
 ```
 
 - `given <EventType>` — zero or more. Establishes prior state by replaying events onto the slice's event source before the command runs.
@@ -24,7 +24,7 @@ specification <Name>
 - `when <CommandType>` — zero or one. The command being exercised. A specification can declare at most one `when`; declaring a second is a compile error.
 - `then <EventType>` — zero or more. An event expected to be produced by the command.
 - `then readmodel <ReadModelType>` — zero or more. The read model state expected after the command has run and its events have been projected.
-- `then error "<message>"` — zero or more. An expected rejection, matching how other Screenplay constructs already use quoted-string literals for messages (see [Commands](commands.md)).
+- `then error ["<message>"]` — zero or more. An expected rejection. The message is optional: a bare `then error` says the scenario is rejected without naming why, which is how most rejection scenarios read - the reason lives in the specification's own name. Quote a message when the scenario asserts a *specific* one, matching how other Screenplay constructs use quoted-string literals for messages (see [Commands](commands.md)).
 
 Property values (`<property> = <value>`) accept the same expressions as `produces` and `capture` mappings — string, number and boolean literals, and `$context.*`/`$env.*` expressions.
 
@@ -87,7 +87,8 @@ Both forms combine freely with `given`/`then` events in the same specification �
 | `when <CommandType>` | The command under test, with its property values. |
 | `then <EventType>` | An event expected to be produced by the command. |
 | `then readmodel <ReadModelType>` | The read model state expected after the command. |
-| `then error "<message>"` | An expected rejection message. |
+| `then error` | An expected rejection, for a reason the specification does not name. |
+| `then error "<message>"` | An expected rejection with a specific message. |
 | `<property> = <value>` | A property value, using the same expression grammar as `produces`/`capture` mappings. |
 
 ## Compiling specifications

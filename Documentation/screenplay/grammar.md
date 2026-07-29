@@ -293,7 +293,7 @@ SpecificationWhen = "when", Ident, NL,
 
 SpecificationThen = "then", [ "readmodel" ], Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
-               | "then", "error", StringLiteral, NL ;
+               | "then", "error", [ StringLiteral ], NL ;
 
 (* -------------------------------------------------------------- *)
 (* Event seeding                                                   *)
