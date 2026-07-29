@@ -60,6 +60,7 @@ export const handlerItems: CompletionEntry[] = [
 ];
 
 export const queryItems: CompletionEntry[] = [
+    { label: 'observable', insertText: 'observable', documentation: 'The query is live — a subscription that pushes updates rather than a one-shot read.' },
     { label: 'by', insertText: 'by ${1:param} ${2:Type}', documentation: 'Declares the identifying parameter of the query.' },
     { label: 'filter', insertText: 'filter ${1:param} ${2:Type}?', documentation: 'Declares an optional filter parameter.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'References the policies that must pass for the query to execute.' },
@@ -76,6 +77,8 @@ export const reactorItems: CompletionEntry[] = [
 ];
 
 export const reactorOnItems: CompletionEntry[] = [
+    { label: 'produces', insertText: 'produces ${1:EventType}', documentation: 'Declares an event the reaction appends as a side effect.' },
+    { label: 'executes', insertText: 'executes ${1:Command}', documentation: 'Declares a command the reaction puts through the command pipeline.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Delegates the reaction to an external C# file.' },
     { label: 'csharp', insertText: fenced('csharp'), documentation: 'Inline C# returning event side effects.' },
 ];
