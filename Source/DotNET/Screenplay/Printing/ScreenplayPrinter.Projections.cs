@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Syntax.Projections;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Printing;
 
@@ -53,7 +54,7 @@ public partial class ScreenplayPrinter
                 using (writer.Indent())
                 {
                     WriteAutoMap(writer, all.AutoMap);
-                    WriteMappings(writer, all.Mappings);
+                    WriteMappings(writer, all.Mappings, ReservedWords.None);
                 }
 
                 break;
@@ -117,7 +118,7 @@ public partial class ScreenplayPrinter
                 writer.Line($"parent {ScreenplaySyntaxText.Expression(from.ParentKey)}");
             }
 
-            WriteMappings(writer, from.Mappings);
+            WriteMappings(writer, from.Mappings, ReservedWords.ProjectionFromBlock);
         }
     }
 
@@ -132,7 +133,7 @@ public partial class ScreenplayPrinter
                 writer.Line("exclude children");
             }
 
-            WriteMappings(writer, every.Mappings);
+            WriteMappings(writer, every.Mappings, ReservedWords.None);
         }
     }
 
@@ -147,7 +148,7 @@ public partial class ScreenplayPrinter
                 using (writer.Indent())
                 {
                     WriteAutoMap(writer, joined.AutoMap);
-                    WriteMappings(writer, joined.Mappings);
+                    WriteMappings(writer, joined.Mappings, ReservedWords.None);
                 }
             }
         }
@@ -204,13 +205,13 @@ public partial class ScreenplayPrinter
         }
     }
 
-    void WriteMappings(ScreenplayWriter writer, IEnumerable<MappingSyntax> mappings)
+    void WriteMappings(ScreenplayWriter writer, IEnumerable<MappingSyntax> mappings, IReadOnlySet<string> reserved)
     {
         foreach (var mapping in mappings)
         {
             writer.Line(mapping switch
             {
-                SetMappingSyntax set => $"{set.Property} = {ScreenplaySyntaxText.Expression(set.Source)}",
+                SetMappingSyntax set => $"{ReservedWords.Escape(set.Property, reserved)} = {ScreenplaySyntaxText.Expression(set.Source)}",
                 IncrementMappingSyntax increment => $"increment {increment.Property}",
                 DecrementMappingSyntax decrement => $"decrement {decrement.Property}",
                 CountMappingSyntax count => $"count {count.Property}",
