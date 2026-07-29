@@ -14,13 +14,19 @@ namespace Cratis.Screenplay.Syntax;
 /// <param name="Filters">The narrowing <see cref="QueryParameterSyntax">parameters</see> declared with <c>filter</c>.</param>
 /// <param name="Authorize">The optional <see cref="AuthorizeSyntax"/> for the query.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <param name="IsObservable">Whether the query is observable - a live subscription rather than a one-shot read.</param>
+/// <remarks>
+/// A query is one-shot unless it declares <c>observable</c>, so a document written before the marker existed
+/// keeps its meaning.
+/// </remarks>
 public record QuerySyntax(
     string Name,
     TypeRefSyntax ReturnType,
     QueryParameterSyntax? By,
     IEnumerable<QueryParameterSyntax> Filters,
     AuthorizeSyntax? Authorize,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location,
+    bool IsObservable = false) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents a parameter of a query.

@@ -31,6 +31,7 @@ internal static partial class QueryParser
         QueryParameterSyntax? by = null;
         var filters = new List<QueryParameterSyntax>();
         AuthorizeSyntax? authorize = null;
+        var isObservable = false;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -38,7 +39,16 @@ internal static partial class QueryParser
             switch (LineText.FirstWord(line.Content))
             {
                 case "by":
+                    if (by is not null)
+                    {
+                        context.Error($"Query '{match.Groups[1].Value}' already declares a 'by' parameter - a query can have at most one", line.Location);
+                        break;
+                    }
+
                     by = ParseParameter(context, line, "by");
+                    break;
+                case "observable":
+                    isObservable = ParseObservable(context, line, isObservable, match.Groups[1].Value);
                     break;
                 case "filter":
                     if (ParseParameter(context, line, "filter") is { } filter)
@@ -57,7 +67,24 @@ internal static partial class QueryParser
             }
         }
 
-        return new(match.Groups[1].Value, returnType, by, filters, authorize, header.Location);
+        return new(match.Groups[1].Value, returnType, by, filters, authorize, header.Location, isObservable);
+    }
+
+    static bool ParseObservable(ParserContext context, SourceLine line, bool existing, string queryName)
+    {
+        if (line.Content != "observable")
+        {
+            context.Error($"Invalid observable declaration '{line.Content}' - expected 'observable'", line.Location);
+            context.SkipBlock(line.Indent);
+            return existing;
+        }
+
+        if (existing)
+        {
+            context.Error($"Query '{queryName}' already declares 'observable' - declare it at most once", line.Location);
+        }
+
+        return true;
     }
 
     static QueryParameterSyntax? ParseParameter(ParserContext context, SourceLine line, string keyword)

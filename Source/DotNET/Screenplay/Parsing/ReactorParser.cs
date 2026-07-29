@@ -37,8 +37,8 @@ internal static partial class ReactorParser
                 continue;
             }
 
-            var (file, code) = ParseBody(context, line);
-            triggers.Add(new(trigger.Groups[1].Value, file, code, line.Location));
+            var body = ParseBody(context, line);
+            triggers.Add(new(trigger.Groups[1].Value, body.File, body.Code, line.Location, body.Produces, body.Executes));
         }
 
         if (triggers.Count == 0)
@@ -49,35 +49,77 @@ internal static partial class ReactorParser
         return new(name.Groups[1].Value, triggers, header.Location);
     }
 
-    static (FileReferenceSyntax? File, CodeBlockSyntax? Code) ParseBody(ParserContext context, SourceLine trigger)
+    /// <summary>
+    /// Parses the body of an <c>on</c> trigger.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
+    /// <param name="trigger">The <see cref="SourceLine"/> holding the trigger.</param>
+    /// <returns>The realization the trigger declares, if any.</returns>
+    /// <remarks>
+    /// A trigger with no body is valid - <c>on InvitationAccepted</c> states the intent that this reactor
+    /// observes the event, which a document written before any code exists needs to be able to say. The
+    /// <c>file</c> reference and the inline block are realization metadata, not the source of meaning.
+    /// </remarks>
+    static TriggerBody ParseBody(ParserContext context, SourceLine trigger)
     {
-        FileReferenceSyntax? file = null;
-        CodeBlockSyntax? code = null;
+        var body = new TriggerBody();
 
         while (context.TryPeekChild(trigger.Indent, out var line))
         {
             context.Reader.TakeSignificant();
-            if (LineText.FirstWord(line.Content) == "file")
+            switch (LineText.FirstWord(line.Content))
             {
-                file = new(line.Content["file".Length..].Trim(), line.Location);
-            }
-            else if (CodeBlockParser.Languages.Contains(line.Content))
-            {
-                code = CodeBlockParser.Parse(context, line.Content, line);
-            }
-            else
-            {
-                context.Error($"Unexpected '{line.Content}' in reactor trigger - expected 'file <path>' or an inline code block", line.Location);
-                context.SkipBlock(line.Indent);
+                case "file":
+                    body.File = new(line.Content["file".Length..].Trim(), line.Location);
+                    break;
+                case "produces":
+                    AddProduces(context, body, line);
+                    break;
+                case "executes":
+                    AddExecutes(context, body, line);
+                    break;
+                default:
+                    if (CodeBlockParser.Languages.Contains(line.Content))
+                    {
+                        body.Code = CodeBlockParser.Parse(context, line.Content, line);
+                        break;
+                    }
+
+                    context.Error(
+                        $"Unexpected '{line.Content}' in reactor trigger - expected 'produces <EventType>', 'executes <Command>', 'file <path>' or an inline code block",
+                        line.Location);
+                    context.SkipBlock(line.Indent);
+                    break;
             }
         }
 
-        if (file is null && code is null)
+        return body;
+    }
+
+    static void AddProduces(ParserContext context, TriggerBody body, SourceLine line)
+    {
+        var match = ProducesRegex().Match(line.Content);
+        if (!match.Success)
         {
-            context.Error("Reactor trigger must have a 'file' directive or an inline code block", trigger.Location);
+            context.Error($"Invalid produces declaration '{line.Content}' - expected 'produces <EventType>'", line.Location);
+            context.SkipBlock(line.Indent);
+            return;
         }
 
-        return (file, code);
+        body.Produces.Add(new(match.Groups[1].Value, line.Location));
+    }
+
+    static void AddExecutes(ParserContext context, TriggerBody body, SourceLine line)
+    {
+        var match = ExecutesRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error($"Invalid executes declaration '{line.Content}' - expected 'executes <Command>'", line.Location);
+            context.SkipBlock(line.Indent);
+            return;
+        }
+
+        body.Executes.Add(new(match.Groups[1].Value, line.Location));
     }
 
     [GeneratedRegex(@"^reactor\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
@@ -85,4 +127,21 @@ internal static partial class ReactorParser
 
     [GeneratedRegex(@"^on\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex OnRegex();
+
+    [GeneratedRegex(@"^produces\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex ProducesRegex();
+
+    [GeneratedRegex(@"^executes\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex ExecutesRegex();
+
+    sealed class TriggerBody
+    {
+        public FileReferenceSyntax? File { get; set; }
+
+        public CodeBlockSyntax? Code { get; set; }
+
+        public List<ReactorProducesSyntax> Produces { get; } = [];
+
+        public List<ReactorExecutesSyntax> Executes { get; } = [];
+    }
 }

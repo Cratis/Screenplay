@@ -35,6 +35,7 @@ internal static partial class ScreenplaySyntaxText
         SecretExpressionSyntax secret => $"$secrets.{secret.Name}",
         StringsExpressionSyntax strings => $"$strings.{strings.Key}",
         SourceItemExpressionSyntax sourceItem => $"$.{sourceItem.Path}",
+        TodayExpressionSyntax => "today",
         EventSourceIdExpressionSyntax => "$eventSourceId",
         EventContextExpressionSyntax eventContext => $"$eventContext.{eventContext.Path}",
         CausedByExpressionSyntax causedBy => causedBy.Property is null ? "$causedBy" : $"$causedBy.{causedBy.Property}",
@@ -82,11 +83,8 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="rule">The <see cref="ValidationRuleSyntax"/> to render.</param>
     /// <returns>The rendered rule text including any message.</returns>
-    public static string ValidationRule(ValidationRuleSyntax rule)
-    {
-        var head = $"{rule.Property} {ValidationRuleBody(rule)}";
-        return rule.Message is null ? head : $"{head} message {LocalizableString(rule.Message)}";
-    }
+    public static string ValidationRule(ValidationRuleSyntax rule) =>
+        WithConditionAndMessage($"{rule.Property} {ValidationRuleBody(rule)}", rule);
 
     /// <summary>
     /// Renders a declarative validation rule without its property subject - the form used on concepts,
@@ -94,11 +92,8 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="rule">The <see cref="ValidationRuleSyntax"/> to render.</param>
     /// <returns>The rendered rule text including any message.</returns>
-    public static string ImpliedSubjectValidationRule(ValidationRuleSyntax rule)
-    {
-        var head = ValidationRuleBody(rule);
-        return rule.Message is null ? head : $"{head} message {LocalizableString(rule.Message)}";
-    }
+    public static string ImpliedSubjectValidationRule(ValidationRuleSyntax rule) =>
+        WithConditionAndMessage(ValidationRuleBody(rule), rule);
 
     /// <summary>
     /// Renders a string operand that may reference a localized string - values starting with
@@ -198,9 +193,19 @@ internal static partial class ScreenplaySyntaxText
         return $"claim {StringLiteral.Quote(claim.Claim)} matches {value}";
     }
 
+    static string WithConditionAndMessage(string head, ValidationRuleSyntax rule)
+    {
+        if (rule.When is not null)
+        {
+            head = $"{head} when {Condition(rule.When)}";
+        }
+
+        return rule.Message is null ? head : $"{head} message {LocalizableString(rule.Message)}";
+    }
+
     static string ValidationRuleBody(ValidationRuleSyntax rule)
     {
-        var value = rule.Value is null ? string.Empty : Expression(rule.Value);
+        var value = rule.Value is null ? string.Empty : RuleOperand(rule.Value);
         return rule.Rule switch
         {
             ValidationRuleKind.NotEmpty => "not empty",
@@ -218,6 +223,11 @@ internal static partial class ScreenplaySyntaxText
             _ => value
         };
     }
+
+    static string RuleOperand(ExpressionSyntax value) =>
+        value is PathExpressionSyntax path && string.Equals(path.Path, "today", StringComparison.Ordinal)
+            ? "@today"
+            : Expression(value);
 
     [GeneratedRegex(@"^[\w.]+$", RegexOptions.None, 1000)]
     private static partial Regex BareWordRegex();

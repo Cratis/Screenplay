@@ -4,6 +4,7 @@
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -131,9 +132,11 @@ internal static partial class ScreenplayParser
 
         var name = match.Groups[1].Value;
         var type = match.Groups[2].Value;
-        var attributes = match.Groups[3].Value
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-            .Select(_ => _.TrimStart('@'))
+        var attributes = AttributeRegex().Matches(match.Groups[3].Value)
+            .Select(attribute => new ConceptAttributeSyntax(
+                attribute.Groups[1].Value,
+                attribute.Groups[2].Success ? StringLiteral.Unescape(attribute.Groups[2].Value) : null,
+                line.Location))
             .ToList();
 
         if (type != "Enum" && !ConceptSyntax.PrimitiveTypes.Contains(type))
@@ -332,8 +335,11 @@ internal static partial class ScreenplayParser
     [GeneratedRegex(@"^import\s+([\w.]+)$", RegexOptions.None, 1000)]
     private static partial Regex ImportRegex();
 
-    [GeneratedRegex(@"^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@\w+(?:\(""" + StringLiteral.BodyPattern + @"""\))?)*)$", RegexOptions.None, 1000)]
     private static partial Regex ConceptRegex();
+
+    [GeneratedRegex(@"@(\w+)(?:\(""(" + StringLiteral.BodyPattern + @")""\))?", RegexOptions.None, 1000)]
+    private static partial Regex AttributeRegex();
 
     [GeneratedRegex(@"^@?[a-z_]\w*$", RegexOptions.None, 1000)]
     private static partial Regex EnumValueRegex();

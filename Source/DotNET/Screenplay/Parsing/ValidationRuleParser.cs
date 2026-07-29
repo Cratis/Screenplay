@@ -21,7 +21,8 @@ internal static partial class ValidationRuleParser
     public static ValidationRuleSyntax? Parse(ParserContext context, SourceLine line)
     {
         var (content, message) = SplitMessage(line.Content);
-        var match = RuleRegex().Match(content);
+        var (ruleText, when) = SplitWhen(context, content, line);
+        var match = RuleRegex().Match(ruleText);
         if (!match.Success)
         {
             context.Error($"Invalid validation rule '{line.Content}'", line.Location);
@@ -36,7 +37,7 @@ internal static partial class ValidationRuleParser
             return null;
         }
 
-        return new(property, kind.Value, value, message, line.Location);
+        return new(property, kind.Value, value, message, line.Location, when);
     }
 
     /// <summary>
@@ -49,13 +50,14 @@ internal static partial class ValidationRuleParser
     public static ValidationRuleSyntax? ParseImpliedSubject(ParserContext context, SourceLine line)
     {
         var (content, message) = SplitMessage(line.Content);
-        var (kind, value) = ParseRule(context, content, line);
+        var (ruleText, when) = SplitWhen(context, content, line);
+        var (kind, value) = ParseRule(context, ruleText, line);
         if (kind is null)
         {
             return null;
         }
 
-        return new(ValidationRuleSyntax.ConceptValue, kind.Value, value, message, line.Location);
+        return new(ValidationRuleSyntax.ConceptValue, kind.Value, value, message, line.Location, when);
     }
 
     static (string Content, string? Message) SplitMessage(string content)
@@ -68,6 +70,41 @@ internal static partial class ValidationRuleParser
 
         var message = match.Groups[1].Success ? StringLiteral.Unescape(match.Groups[1].Value) : match.Groups[2].Value;
         return (content[..match.Index].TrimEnd(), message);
+    }
+
+    /// <summary>
+    /// Splits a rule line into the rule itself and the condition under which it applies.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <param name="content">The rule text, with any message already removed.</param>
+    /// <param name="line">The <see cref="SourceLine"/> the rule came from.</param>
+    /// <returns>The rule text and the parsed condition, or <c>null</c> when the rule is unconditional.</returns>
+    /// <remarks>
+    /// The split is done on whitespace separated words rather than a regular expression so a <c>when</c>
+    /// inside a quoted operand - <c>matches "^when$"</c> - is not mistaken for the keyword.
+    /// </remarks>
+    static (string Content, ConditionSyntax? When) SplitWhen(ParserContext context, string content, SourceLine line)
+    {
+        var words = LineText.SplitTopLevel(content, ' ').ToList();
+        var offset = 0;
+        for (var index = 0; index < words.Count; index++)
+        {
+            if (index > 0 && words[index] == "when")
+            {
+                var condition = content[(offset + "when".Length)..].Trim();
+                if (condition.Length == 0)
+                {
+                    context.Error($"Expected a condition after 'when' in validation rule '{line.Content}'", line.Location);
+                    return (content[..offset].TrimEnd(), null);
+                }
+
+                return (content[..offset].TrimEnd(), ConditionParser.Parse(context, condition, line.Location));
+            }
+
+            offset += words[index].Length + 1;
+        }
+
+        return (content, null);
     }
 
     static (ValidationRuleKind? Kind, ExpressionSyntax? Value) ParseRule(ParserContext context, string rule, SourceLine line)
@@ -84,7 +121,7 @@ internal static partial class ValidationRuleParser
             return (null, null);
         }
 
-        var value = ExpressionParser.ParseMappingSource(operand.Groups[2].Value, line.Location);
+        var value = ParseOperand(operand.Groups[2].Value, line);
         ValidationRuleKind? kind = operand.Groups[1].Value switch
         {
             "max" => ValidationRuleKind.Max,
@@ -109,6 +146,20 @@ internal static partial class ValidationRuleParser
 
         return (kind, value);
     }
+
+    /// <summary>
+    /// Parses a rule operand - a literal, the <c>today</c> keyword, or a path resolving against a sibling
+    /// property of the validated artifact.
+    /// </summary>
+    /// <param name="text">The operand text.</param>
+    /// <param name="line">The <see cref="SourceLine"/> the operand came from.</param>
+    /// <returns>The parsed <see cref="ExpressionSyntax"/>.</returns>
+    static ExpressionSyntax ParseOperand(string text, SourceLine line) => text.Trim() switch
+    {
+        "today" => new TodayExpressionSyntax(line.Location),
+        "@today" => new PathExpressionSyntax("today", line.Location),
+        _ => ExpressionParser.ParseMappingSource(text, line.Location)
+    };
 
     [GeneratedRegex("\\bmessage\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
     private static partial Regex MessageRegex();

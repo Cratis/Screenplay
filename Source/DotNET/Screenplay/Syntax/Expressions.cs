@@ -72,3 +72,13 @@ public record RawExpressionSyntax(string Text, SourceLocation Location) : Expres
 /// <param name="Path">The dotted path following <c>$.</c>.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record SourceItemExpressionSyntax(string Path, SourceLocation Location) : ExpressionSyntax(Location);
+
+/// <summary>
+/// Represents the <c>today</c> keyword - the current date, evaluated when the rule runs.
+/// </summary>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <remarks>
+/// A distinct node so a consumer can tell the keyword from a property that happens to be called
+/// <c>today</c>; the property is written <c>@today</c>.
+/// </remarks>
+public record TodayExpressionSyntax(SourceLocation Location) : ExpressionSyntax(Location);

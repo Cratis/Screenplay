@@ -24,7 +24,7 @@ concept Quantity         : Int
 concept PersonName       : String   @pii
 concept BankAccount      : String   @pii @sensitive
 
-concept EmailAddress : String @pii
+concept EmailAddress : String @pii("Contact address for invoice delivery. Lawful basis: contract performance.")
   validate
     not empty          message "Email is required"
     matches "^.+@.+$"  message "Must be a valid email address"
@@ -142,6 +142,7 @@ module Invoicing
           lines.unitPrice all >= 0                 message "Line prices cannot be negative"
           currency length == 3                     message "Currency must be a 3-letter ISO code"
           dueDate > today                          message "Due date must be in the future"
+          paymentTerms == "immediate" when isProForma == true  message "Pro forma invoices are payable immediately"
 
         validate csharp
           ```
@@ -552,6 +553,7 @@ module Invoicing
     slice StateView InvoiceList
 
       query ListInvoices => InvoiceListReadModel[]
+        observable
         filter status     InvoiceStatus?
         filter customerId CustomerId?
         authorize IsAuthenticated
@@ -781,12 +783,17 @@ module Invoicing
 
       reactor NotifyCustomer
         on InvoiceRegistered
+          produces CustomerNotified
           file Reactors/NotifyCustomerReactor.cs
+
+      event CustomerNotified
+        invoiceId InvoiceId
 
     slice Automation DetectOverdueInvoices
 
       reactor OverdueInvoiceDetector
         on InvoiceRegistered
+          executes ChangeInvoiceStatus
           csharp
             ```
             if (DueDate < DateTimeOffset.UtcNow)
