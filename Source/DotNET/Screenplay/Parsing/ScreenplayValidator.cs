@@ -28,6 +28,9 @@ internal static class ScreenplayValidator
             .Concat(application.Imports.Select(import => import.Name))
             .ToHashSet();
         var knownPolicies = application.Policies.Select(policy => policy.Name).ToHashSet();
+        var knownCommands = slices.SelectMany(slice => slice.Commands.Select(command => command.Name))
+            .Concat(application.Imports.Select(import => import.Name))
+            .ToHashSet();
 
         foreach (var persona in application.Personas ?? [])
         {
@@ -61,14 +64,14 @@ internal static class ScreenplayValidator
 
         foreach (var slice in slices)
         {
-            ValidateSlice(slice, knownEvents, knownPolicies, context);
+            ValidateSlice(slice, knownEvents, knownPolicies, knownCommands, context);
         }
     }
 
     static IEnumerable<FeatureSyntax> AllFeatures(FeatureSyntax feature) =>
         new[] { feature }.Concat(feature.Features.SelectMany(AllFeatures));
 
-    static void ValidateSlice(SliceSyntax slice, HashSet<string> knownEvents, HashSet<string> knownPolicies, ParserContext context)
+    static void ValidateSlice(SliceSyntax slice, HashSet<string> knownEvents, HashSet<string> knownPolicies, HashSet<string> knownCommands, ParserContext context)
     {
         foreach (var concurrency in slice.Commands.Select(command => command.Concurrency)
             .OfType<ConcurrencySyntax>()
@@ -94,10 +97,22 @@ internal static class ScreenplayValidator
             context.Warning($"Unknown event '{produces.Event}' - declare it with 'event {produces.Event}'", produces.Location);
         }
 
-        foreach (var trigger in slice.Reactors.SelectMany(reactor => reactor.Triggers)
-            .Where(trigger => !knownEvents.Contains(trigger.Event)))
+        var triggers = slice.Reactors.SelectMany(reactor => reactor.Triggers).ToList();
+        foreach (var trigger in triggers.Where(trigger => !knownEvents.Contains(trigger.Event)))
         {
             context.Warning($"Unknown event '{trigger.Event}' - declare it with 'event {trigger.Event}'", trigger.Location);
+        }
+
+        foreach (var produces in triggers.SelectMany(trigger => trigger.Produces ?? [])
+            .Where(produces => !knownEvents.Contains(produces.Event)))
+        {
+            context.Warning($"Unknown event '{produces.Event}' - declare it with 'event {produces.Event}'", produces.Location);
+        }
+
+        foreach (var executes in triggers.SelectMany(trigger => trigger.Executes ?? [])
+            .Where(executes => !knownCommands.Contains(executes.Command)))
+        {
+            context.Warning($"Unknown command '{executes.Command}' - declare it with 'command {executes.Command}'", executes.Location);
         }
 
         foreach (var constraint in slice.Constraints)

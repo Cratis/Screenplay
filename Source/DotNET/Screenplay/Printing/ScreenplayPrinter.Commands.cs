@@ -94,6 +94,11 @@ public partial class ScreenplayPrinter
         writer.Line($"query {query.Name} => {ScreenplaySyntaxText.TypeRef(query.ReturnType)}");
         using (writer.Indent())
         {
+            if (query.IsObservable)
+            {
+                writer.Line("observable");
+            }
+
             if (query.By is not null)
             {
                 writer.Line($"by {query.By.Name} {ScreenplaySyntaxText.TypeRef(query.By.Type)}");
@@ -141,6 +146,16 @@ public partial class ScreenplayPrinter
                 writer.Line($"on {trigger.Event}");
                 using (writer.Indent())
                 {
+                    foreach (var produces in trigger.Produces ?? [])
+                    {
+                        writer.Line($"produces {produces.Event}");
+                    }
+
+                    foreach (var executes in trigger.Executes ?? [])
+                    {
+                        writer.Line($"executes {executes.Command}");
+                    }
+
                     if (trigger.File is not null)
                     {
                         writer.Line($"file {trigger.File.Path}");

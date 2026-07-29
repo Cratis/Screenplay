@@ -163,7 +163,8 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteConcept(ScreenplayWriter writer, ConceptSyntax concept)
     {
-        var attributes = concept.Attributes.Select(attribute => $" @{attribute}");
+        var attributes = concept.Attributes.Select(attribute =>
+            attribute.Value is null ? $" @{attribute.Name}" : $" @{attribute.Name}({StringLiteral.Quote(attribute.Value)})");
         writer.Line($"concept {concept.Name} : {concept.Type}{string.Concat(attributes)}");
         var validations = concept.Validations?.ToList() ?? [];
         if (!concept.IsEnum && validations.Count == 0)
@@ -308,10 +309,10 @@ public sealed partial class ScreenplayPrinter :
                 WriteQuery(writer, query);
             }
 
-            if (slice.Projection is not null)
+            foreach (var projection in slice.Projections)
             {
                 writer.Blank();
-                WriteProjection(writer, slice.Projection);
+                WriteProjection(writer, projection);
             }
 
             foreach (var capture in slice.Captures)

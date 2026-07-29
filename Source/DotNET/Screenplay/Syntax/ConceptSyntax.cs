@@ -10,7 +10,7 @@ namespace Cratis.Screenplay.Syntax;
 /// </summary>
 /// <param name="Name">The name of the concept.</param>
 /// <param name="Type">The primitive type of the concept, or <c>Enum</c> for enumeration concepts.</param>
-/// <param name="Attributes">The attributes applied to the concept, without the <c>@</c> prefix, such as <c>pii</c> and <c>sensitive</c>.</param>
+/// <param name="Attributes">The <see cref="ConceptAttributeSyntax">attributes</see> applied to the concept, such as <c>@pii</c> and <c>@sensitive</c>.</param>
 /// <param name="Values">The values of the concept when it is an enumeration, empty otherwise.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 /// <param name="Validations">The <see cref="ValidateSyntax">validation blocks</see> for the concept. Rules use
@@ -18,7 +18,7 @@ namespace Cratis.Screenplay.Syntax;
 public record ConceptSyntax(
     string Name,
     string Type,
-    IEnumerable<string> Attributes,
+    IEnumerable<ConceptAttributeSyntax> Attributes,
     IEnumerable<string> Values,
     SourceLocation Location,
     IEnumerable<ValidateSyntax>? Validations = null) : SyntaxNode(Location)
@@ -33,3 +33,15 @@ public record ConceptSyntax(
     /// </summary>
     public bool IsEnum => Type == "Enum";
 }
+
+/// <summary>
+/// Represents an attribute applied to a concept, with the reason it carries when one is declared.
+/// </summary>
+/// <param name="Name">The name of the attribute, without the <c>@</c> prefix - <c>pii</c>, <c>sensitive</c> and so on.</param>
+/// <param name="Value">The optional argument - for <c>@pii</c> the reason the value is personal data.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <remarks>
+/// Any <c>@word</c> is accepted, with or without an argument. The compiler does not enumerate the known
+/// attributes, so a consumer can introduce its own without a grammar change.
+/// </remarks>
+public record ConceptAttributeSyntax(string Name, string? Value, SourceLocation Location) : SyntaxNode(Location);
