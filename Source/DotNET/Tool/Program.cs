@@ -4,10 +4,19 @@
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
 
-var root = args.FirstOrDefault(arg => !arg.StartsWith('-')) ?? Directory.GetCurrentDirectory();
-if (!Directory.Exists(root))
+const string PlayExtension = ".play";
+
+var target = args.FirstOrDefault(arg => !arg.StartsWith('-')) ?? Directory.GetCurrentDirectory();
+var isFile = File.Exists(target);
+if (!isFile && !Directory.Exists(target))
 {
-    Console.Error.WriteLine($"Directory '{root}' does not exist");
+    Console.Error.WriteLine($"'{target}' does not exist");
+    return 1;
+}
+
+if (isFile && !target.EndsWith(PlayExtension, StringComparison.OrdinalIgnoreCase))
+{
+    Console.Error.WriteLine($"'{target}' is not a {PlayExtension} file");
     return 1;
 }
 
@@ -15,10 +24,16 @@ var useColors = !Console.IsOutputRedirected &&
                 Environment.GetEnvironmentVariable("NO_COLOR") is null &&
                 !args.Contains("--no-color");
 
-var compilations = new PlayFileCompiler().CompileIn(root).ToArray();
+var warnAsError = args.Contains("--warnaserror");
+
+var playFileCompiler = new PlayFileCompiler();
+var compilations = isFile
+    ? [playFileCompiler.CompileFile(target)]
+    : playFileCompiler.CompileIn(target).ToArray();
+
 if (compilations.Length == 0)
 {
-    Console.WriteLine($"No .play files found beneath {root}");
+    Console.WriteLine($"No {PlayExtension} files found beneath {target}");
     return 0;
 }
 
@@ -49,11 +64,12 @@ if (errors + warnings > 0)
     Console.WriteLine();
 }
 
+var failed = errors > 0 || (warnAsError && warnings > 0);
 var summary = $"{compilations.Length} file(s) compiled - {errors} error(s), {warnings} warning(s)";
 if (useColors)
 {
     var color = "\e[32m";
-    if (errors > 0)
+    if (failed)
     {
         color = "\e[31m";
     }
@@ -69,4 +85,4 @@ else
     Console.WriteLine(summary);
 }
 
-return errors > 0 ? 1 : 0;
+return failed ? 1 : 0;
