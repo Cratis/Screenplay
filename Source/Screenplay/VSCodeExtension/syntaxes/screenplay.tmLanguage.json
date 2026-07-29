@@ -44,6 +44,11 @@
             "patterns": [
                 { "include": "#comment" },
                 {
+                    "comment": "A leading @ escapes a name that collides with a directive keyword.",
+                    "match": "^\\s*@[a-z_]\\w*",
+                    "name": "variable.other.screenplay"
+                },
+                {
                     "match": "@\\w+",
                     "name": "entity.other.attribute-name.screenplay"
                 },

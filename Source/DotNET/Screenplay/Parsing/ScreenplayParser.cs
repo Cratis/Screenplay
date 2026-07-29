@@ -148,6 +148,13 @@ internal static partial class ScreenplayParser
             context.Reader.TakeSignificant();
             if (LineText.FirstWord(child.Content) == "validate")
             {
+                if (type == "Enum" && child.Content == "validate" && !context.TryPeekChild(child.Indent, out _))
+                {
+                    context.Warning(
+                        $"'validate' in enumeration concept '{name}' declares an empty validate block, not a value named 'validate' - write '@validate' for the value",
+                        child.Location);
+                }
+
                 if (ValidateParser.Parse(context, child, impliedSubject: true) is { } validate)
                 {
                     validations.Add(validate);
@@ -155,7 +162,7 @@ internal static partial class ScreenplayParser
             }
             else if (type == "Enum" && EnumValueRegex().IsMatch(child.Content))
             {
-                values.Add(child.Content);
+                values.Add(LineText.Unescape(child.Content));
             }
             else if (type == "Enum")
             {
@@ -262,7 +269,7 @@ internal static partial class ScreenplayParser
                 while (context.TryPeekChild(child.Indent, out var slot))
                 {
                     context.Reader.TakeSignificant();
-                    if (EnumValueRegex().IsMatch(slot.Content))
+                    if (SlotNameRegex().IsMatch(slot.Content))
                     {
                         slots.Add(slot.Content);
                     }
@@ -328,8 +335,11 @@ internal static partial class ScreenplayParser
     [GeneratedRegex(@"^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@\w+)*)$", RegexOptions.None, 1000)]
     private static partial Regex ConceptRegex();
 
-    [GeneratedRegex(@"^[a-z_]\w*$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^@?[a-z_]\w*$", RegexOptions.None, 1000)]
     private static partial Regex EnumValueRegex();
+
+    [GeneratedRegex(@"^[a-z_]\w*$", RegexOptions.None, 1000)]
+    private static partial Regex SlotNameRegex();
 
     [GeneratedRegex(@"^persona\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex PersonaRegex();
