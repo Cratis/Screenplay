@@ -153,7 +153,7 @@ public sealed partial class ScreenplayPrinter :
                         writer.Line(@event.Event);
                         using (writer.Indent())
                         {
-                            WriteMappings(writer, @event.Properties);
+                            WriteMappings(writer, @event.Properties, ReservedWords.None);
                         }
                     }
                 }
@@ -177,7 +177,7 @@ public sealed partial class ScreenplayPrinter :
             {
                 foreach (var value in concept.Values)
                 {
-                    writer.Line(value);
+                    writer.Line(ReservedWords.Escape(value, ReservedWords.ConceptBody));
                 }
             }
 

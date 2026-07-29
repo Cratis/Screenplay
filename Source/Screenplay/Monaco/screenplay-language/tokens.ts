@@ -69,6 +69,8 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             // A bare description keyword at end of line opens a fenced plain-text block.
             [/\bdescription\b(?=\s*$)/, { token: 'keyword', next: '@descriptionBlockPending' }],
             [/\brow-click\b/, 'keyword'],
+            // A leading @ escapes a name that collides with a directive keyword - it is a name, not an attribute.
+            [/^\s*@[a-z_]\w*/, 'identifier'],
             [/@\w+/, 'annotation'],
             [
                 /[A-Z]\w*/,

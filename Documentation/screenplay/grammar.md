@@ -29,7 +29,7 @@ QualifiedName  = Ident, { ".", Ident } ;
 ConceptDecl    = "concept", Ident, ":", PrimitiveType, { Attribute }, NL,
                    [ INDENT, { ConceptValidate }, DEDENT ]
                | "concept", Ident, ":", "Enum", NL,
-                   INDENT, { Ident, NL }, { ConceptValidate }, DEDENT ;
+                   INDENT, { [ "@" ], Ident, NL }, { ConceptValidate }, DEDENT ;
 
 ConceptValidate = "validate", NL,
                    INDENT, { ConceptRule }, DEDENT
@@ -148,7 +148,7 @@ TagValue       = Ident
 
 Path           = Ident, { ".", Ident } ;
 
-PropertyLine   = Ident, TypeRef, NL ;
+PropertyLine   = [ "@" ], Ident, TypeRef, NL ;
 
 TypeRef        = Ident, [ "[]" ], [ "?" ] ;
 
@@ -219,7 +219,7 @@ ConditionExpr  = Ident, CompOp, Value
 
 CompOp         = "==" | "!=" | ">" | ">=" | "<" | "<=" ;
 
-PropertyMapping = Ident, "=", MappingSource, NL ;
+PropertyMapping = [ "@" ], Ident, "=", MappingSource, NL ;
 
 MappingSource  = Ident                         (* command property   *)
                | "$context.occurred"
@@ -414,6 +414,44 @@ INDENT         = ? increase in indentation level ? ;
 DEDENT         = ? decrease in indentation level ? ;
 AnyLine        = ? any text until newline ? ;
 ```
+
+## Keyword escape
+
+Screenplay is line based: a block decides what a line is from its first word. That makes a handful of words reserved inside each block, and `description` or `tag` is an ordinary name for a domain field.
+
+Most of the time shape settles it. The directives that take no operand cannot be confused with a property, so a line with property shape is a property:
+
+```play
+command RegisterInvoice
+  description String     // a property called description
+  description "Registers a new invoice"   // the directive
+```
+
+The same holds for `validate`, `handler` and `concurrency`.
+
+Where shape cannot settle it - `authorize CanManageInvoice` and `tag Audit` are legitimate directives *and* legitimate property lines - prefix the name with `@`:
+
+```play
+command RegisterInvoice
+  @authorize AuthorizationCode   // a property called authorize
+  authorize  CanManageInvoice    // the directive
+
+event InvoiceRegistered
+  @tag TagType                   // a property called tag
+  tag  audit                     // a static tag
+```
+
+The escape works wherever a name of your choosing meets a reserved first word - property lines, property mappings, enumeration values, and projection `from` mappings (`@key`, `@parent`). The `@` is not part of the name, and the printer puts it back when it is needed.
+
+| Block | Reserved first words |
+|---|---|
+| `command` body | `authorize`, `produces` (`description`, `validate`, `handler` and `concurrency` resolve by shape) |
+| `event` body | `tag` |
+| mapping block | `tag` |
+| projection `from` block | `key`, `parent` |
+| enumeration `concept` body | `validate` |
+
+An unescaped `tag Audit` or a bare `validate` enumeration value keeps the meaning it has always had - the directive - and the compiler warns that the line does not declare what it looks like.
 
 ## String escapes
 

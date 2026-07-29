@@ -115,14 +115,14 @@ public partial class ScreenplayPrinter
 
             if (append.When is null)
             {
-                WriteMappings(writer, append.Mappings);
+                WriteMappings(writer, append.Mappings, ReservedWords.MappingBlock);
                 return;
             }
 
             writer.Line($"when {ScreenplaySyntaxText.CaptureWhen(append.When)}");
             using (writer.Indent())
             {
-                WriteMappings(writer, append.Mappings);
+                WriteMappings(writer, append.Mappings, ReservedWords.MappingBlock);
             }
         }
     }

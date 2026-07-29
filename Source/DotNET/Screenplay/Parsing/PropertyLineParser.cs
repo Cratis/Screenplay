@@ -10,6 +10,10 @@ namespace Cratis.Screenplay.Parsing;
 /// <summary>
 /// Parses property lines - a lowercase name followed by a type reference, such as <c>lines InvoiceLine[]</c>.
 /// </summary>
+/// <remarks>
+/// The name accepts the <c>@</c> escape, so a property can be named after a directive keyword the enclosing
+/// block reserves - <c>@tag TagType</c> declares a property called <c>tag</c>.
+/// </remarks>
 internal static partial class PropertyLineParser
 {
     /// <summary>
@@ -25,7 +29,7 @@ internal static partial class PropertyLineParser
             return null;
         }
 
-        return new(match.Groups[1].Value, ParseTypeRef(match.Groups[2].Value, line.Location), line.Location);
+        return new(LineText.Unescape(match.Groups[1].Value), ParseTypeRef(match.Groups[2].Value, line.Location), line.Location);
     }
 
     /// <summary>
@@ -51,6 +55,6 @@ internal static partial class PropertyLineParser
         return new(text, isCollection, isOptional, location);
     }
 
-    [GeneratedRegex(@"^([a-z_]\w*)\s+([\w.]+(?:\[\])?\??)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?\??)$", RegexOptions.None, 1000)]
     private static partial Regex PropertyRegex();
 }

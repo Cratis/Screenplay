@@ -389,7 +389,7 @@ internal static partial class CaptureParser
             return false;
         }
 
-        mappings.Add(new(match.Groups[1].Value, ExpressionParser.ParseMappingSource(match.Groups[2].Value, line.Location), line.Location));
+        mappings.Add(new(LineText.Unescape(match.Groups[1].Value), ExpressionParser.ParseMappingSource(match.Groups[2].Value, line.Location), line.Location));
         return true;
     }
 
@@ -471,7 +471,7 @@ internal static partial class CaptureParser
     [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|[\\w.]+", RegexOptions.None, 1000)]
     private static partial Regex WhenTokenRegex();
 
-    [GeneratedRegex(@"^([\w.]+)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(@?[\w.]+)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
     private static partial Regex MappingRegex();
 
     [GeneratedRegex(@"^children\s+([a-z_]\w*)\s+identified\s+by\s+([\w.]+)$", RegexOptions.None, 1000)]
