@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -175,7 +176,7 @@ internal static partial class CaptureParser
                     continue;
                 }
 
-                translations.Add(new(translationMatch.Groups[1].Value, translationMatch.Groups[2].Value, translation.Location));
+                translations.Add(new(StringLiteral.Unescape(translationMatch.Groups[1].Value), translationMatch.Groups[2].Value, translation.Location));
             }
         }
 
@@ -225,7 +226,7 @@ internal static partial class CaptureParser
             targets.Add(child.Content);
         }
 
-        return new(source, match.Groups[2].Value, targets, line.Location);
+        return new(source, StringLiteral.Unescape(match.Groups[2].Value), targets, line.Location);
     }
 
     static CaptureAppendSyntax? ParseAppend(ParserContext context, SourceLine line)
@@ -359,7 +360,7 @@ internal static partial class CaptureParser
     }
 
     static string Unquote(string token) =>
-        token.Length >= 2 && token.StartsWith('"') && token.EndsWith('"') ? token[1..^1] : token;
+        token.Length >= 2 && token.StartsWith('"') && token.EndsWith('"') ? StringLiteral.Unescape(token[1..^1]) : token;
 
     static void ParseMappings(ParserContext context, SourceLine parent, List<PropertyMappingSyntax> mappings, List<TagSyntax> tags)
     {
@@ -455,10 +456,10 @@ internal static partial class CaptureParser
     [GeneratedRegex(@"^([a-z_]\w*)\s*=\s*(.+)$", RegexOptions.None, 1000)]
     private static partial Regex MapEntryRegex();
 
-    [GeneratedRegex("^\"([^\"]*)\"\\s*=>\\s*(\\w+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^\"(" + StringLiteral.BodyPattern + ")\"\\s*=>\\s*(\\w+)$", RegexOptions.None, 1000)]
     private static partial Regex TranslationRegex();
 
-    [GeneratedRegex("^split\\s+(\\S+)\\s+by\\s+\"([^\"]*)\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^split\\s+(\\S+)\\s+by\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
     private static partial Regex SplitRegex();
 
     [GeneratedRegex(@"^[\w.]+$", RegexOptions.None, 1000)]
@@ -467,7 +468,7 @@ internal static partial class CaptureParser
     [GeneratedRegex(@"^append\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex AppendRegex();
 
-    [GeneratedRegex("\"[^\"]*\"|[\\w.]+", RegexOptions.None, 1000)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|[\\w.]+", RegexOptions.None, 1000)]
     private static partial Regex WhenTokenRegex();
 
     [GeneratedRegex(@"^([\w.]+)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]

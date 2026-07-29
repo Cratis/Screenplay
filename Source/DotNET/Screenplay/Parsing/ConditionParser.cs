@@ -4,6 +4,7 @@
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -124,6 +125,6 @@ internal static partial class ConditionParser
     static List<string> Tokenize(string text) =>
         [.. TokenRegex().Matches(text).Select(_ => _.Value)];
 
-    [GeneratedRegex("\"[^\"]*\"|==|!=|>=|<=|>|<|\\(|\\)|[\\w.$-]+", RegexOptions.None, 1000)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|[\\w.$-]+", RegexOptions.None, 1000)]
     private static partial Regex TokenRegex();
 }

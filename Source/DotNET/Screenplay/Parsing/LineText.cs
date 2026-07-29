@@ -42,7 +42,11 @@ internal static class LineText
         for (var i = 0; i < text.Length; i++)
         {
             var current = text[i];
-            if (current == '"' && !inTemplate)
+            if (current == '\\' && inString && i + 1 < text.Length)
+            {
+                i++;
+            }
+            else if (current == '"' && !inTemplate)
             {
                 inString = !inString;
             }

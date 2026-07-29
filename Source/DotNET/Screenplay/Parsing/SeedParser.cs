@@ -3,6 +3,7 @@
 
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -38,7 +39,7 @@ internal static partial class SeedParser
                 continue;
             }
 
-            groups.Add(new(match.Groups[1].Value, ParseEvents(context, line), line.Location));
+            groups.Add(new(StringLiteral.Unescape(match.Groups[1].Value), ParseEvents(context, line), line.Location));
         }
 
         return new(groups, header.Location);
@@ -82,7 +83,7 @@ internal static partial class SeedParser
         return properties;
     }
 
-    [GeneratedRegex("^for\\s+\"([^\"]*)\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^for\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
     private static partial Regex ForRegex();
 
     [GeneratedRegex(@"^[A-Z]\w*$", RegexOptions.None, 1000)]
