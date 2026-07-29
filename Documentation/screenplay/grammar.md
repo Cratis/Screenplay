@@ -421,7 +421,7 @@ Screenplay is line based: a block decides what a line is from its first word. Th
 
 Most of the time shape settles it. The directives that take no operand cannot be confused with a property, so a line with property shape is a property:
 
-```play
+```screenplay
 command RegisterInvoice
   description String     // a property called description
   description "Registers a new invoice"   // the directive
@@ -431,7 +431,7 @@ The same holds for `validate`, `handler` and `concurrency`.
 
 Where shape cannot settle it - `authorize CanManageInvoice` and `tag Audit` are legitimate directives *and* legitimate property lines - prefix the name with `@`:
 
-```play
+```screenplay
 command RegisterInvoice
   @authorize AuthorizationCode   // a property called authorize
   authorize  CanManageInvoice    // the directive
@@ -457,13 +457,13 @@ An unescaped `tag Audit` or a bare `validate` enumeration value keeps the meanin
 
 A string literal carries `"` and `\` through the backslash escapes above, so a value survives the trip out to text and back:
 
-```play
+```screenplay
 description "He said \"hello\" loudly"
 ```
 
 Only `\"`, `\\`, `\n`, `\r` and `\t` are recognized. Any other backslash sequence is kept verbatim - `\d` stays `\d` - which is what lets a regular expression operand read naturally:
 
-```play
+```screenplay
 invoiceNumber matches "^INV-\d{6}$"
 ```
 
