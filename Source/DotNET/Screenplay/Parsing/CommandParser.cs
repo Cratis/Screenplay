@@ -38,6 +38,16 @@ internal static partial class CommandParser
             context.Reader.TakeSignificant();
             switch (LineText.FirstWord(line.Content))
             {
+                // The bare directives below cannot take a type reference, so a line that has property shape
+                // is a property no matter which keyword it starts with - 'description String' declares a
+                // property called description. Only the directives that do take an identifier operand
+                // ('authorize', 'produces') stay ambiguous, and those use the '@' escape.
+                case "description" or "handler" or "concurrency" when PropertyLineParser.TryParse(line) is { } named:
+                    properties.Add(named);
+                    break;
+                case "validate" when line.Content != "validate csharp" && PropertyLineParser.TryParse(line) is { } validated:
+                    properties.Add(validated);
+                    break;
                 case "description":
                     description = DescriptionParser.Parse(context, line, description, $"Command '{name.Groups[1].Value}'");
                     break;
@@ -246,7 +256,7 @@ internal static partial class CommandParser
                 continue;
             }
 
-            mappings.Add(new(match.Groups[1].Value, ExpressionParser.ParseMappingSource(match.Groups[2].Value, child.Location), child.Location));
+            mappings.Add(new(LineText.Unescape(match.Groups[1].Value), ExpressionParser.ParseMappingSource(match.Groups[2].Value, child.Location), child.Location));
         }
 
         return (mappings, tags);
@@ -292,6 +302,6 @@ internal static partial class CommandParser
     [GeneratedRegex(@"^(sourceType|streamType|streamId)\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex ConcurrencyDimensionRegex();
 
-    [GeneratedRegex(@"^([\w.]+)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(@?[\w.]+)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
     private static partial Regex MappingRegex();
 }
