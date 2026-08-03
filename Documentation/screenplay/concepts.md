@@ -2,13 +2,17 @@
 
 Concepts are formalized value types that wrap a primitive. They give every domain value a precise, strongly-typed name — you never pass a raw `Uuid` or `String` around — and they are where compliance is declared. Attributes control compliance behavior: Chronicle applies `@pii` and `@sensitive` rules automatically wherever the concept is used.
 
+A concept names one primitive value. For a shape made of several — the child records events carry — see [Types](types.md).
+
 ## Syntax
 
 ```screenplay
 concept <Name> : <PrimitiveType> [<attributes>]
+  [<attribute> reason "<text>"]*
   [validate ...]*
 
 concept <Name> : Enum
+  [<attribute> reason "<text>"]*
   <value>+
   [validate ...]*
 ```
@@ -32,6 +36,20 @@ concept EmailAddress     : String   @pii
 concept NationalIdNumber : String   @pii @sensitive
 concept DateOfBirth      : Date     @pii
 ```
+
+## Why a value is personal data
+
+The marker says a value *is* personal data. It does not say **why** — the purpose it is kept for, the lawful basis, whose subject it lives under, whether it is erasable. That is exactly what a compliance reader opens a Screenplay to find, and Screenplay's stated goal is that concepts carry compliance, not just the flag.
+
+An indented `<attribute> reason "<text>"` line records it:
+
+```screenplay
+concept BankAccount : String @pii @sensitive
+  pii reason "Partner payout bank account - financial data. Remits self-billing payments; lawful basis: contract performance / legal obligation. Personal only for sole-proprietor partners."
+  sensitive reason "Fraud-sensitive - a leaked account number enables direct financial harm, so it never leaves the payout path."
+```
+
+Each attribute the concept declares may carry at most one reason, and a reason may only be given for an attribute the concept actually declares — `sensitive reason "…"` on a concept that is only `@pii` is a compile error. A reason is optional throughout: a bare `@pii` stays valid and prints on one line.
 
 ## Enum concepts
 
@@ -81,3 +99,5 @@ In the compiled syntax tree the implied subject is represented by the well-known
 ## Attribute inheritance
 
 When a concept is used as a property type on a command or event, its attributes are inherited — you never annotate at the property level. Declaring `EmailAddress` as `@pii` once means every event property, command property, and read model field typed as `EmailAddress` is treated as PII automatically.
+
+This holds through composite [types](types.md) too: a `@pii` concept inside a `type` is personal data wherever that type is used.
