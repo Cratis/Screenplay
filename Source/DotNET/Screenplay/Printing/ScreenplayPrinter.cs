@@ -88,6 +88,12 @@ public sealed partial class ScreenplayPrinter :
             WriteConcept(writer, concept);
         }
 
+        foreach (var type in application.Types ?? [])
+        {
+            writer.Blank();
+            WriteType(writer, type);
+        }
+
         foreach (var policy in application.Policies)
         {
             writer.Blank();
@@ -163,16 +169,22 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteConcept(ScreenplayWriter writer, ConceptSyntax concept)
     {
-        var attributes = concept.Attributes.Select(attribute => $" @{attribute}");
-        writer.Line($"concept {concept.Name} : {concept.Type}{string.Concat(attributes)}");
+        var attributes = concept.Attributes.ToList();
+        writer.Line($"concept {concept.Name} : {concept.Type}{string.Concat(attributes.Select(attribute => $" @{attribute.Name}"))}");
         var validations = concept.Validations?.ToList() ?? [];
-        if (!concept.IsEnum && validations.Count == 0)
+        var reasoned = attributes.Where(attribute => attribute.Reason is not null).ToList();
+        if (!concept.IsEnum && validations.Count == 0 && reasoned.Count == 0)
         {
             return;
         }
 
         using (writer.Indent())
         {
+            foreach (var attribute in reasoned)
+            {
+                writer.Line($"{attribute.Name} reason {StringLiteral.Quote(attribute.Reason!)}");
+            }
+
             if (concept.IsEnum)
             {
                 foreach (var value in concept.Values)
@@ -185,6 +197,16 @@ public sealed partial class ScreenplayPrinter :
             {
                 WriteValidate(writer, validation, impliedSubject: true);
             }
+        }
+    }
+
+    void WriteType(ScreenplayWriter writer, TypeSyntax type)
+    {
+        writer.Line($"type {type.Name}");
+        using (writer.Indent())
+        {
+            WriteDescription(writer, type.Description);
+            WriteProperties(writer, type.Properties, ReservedWords.None);
         }
     }
 

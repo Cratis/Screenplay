@@ -52,6 +52,17 @@ internal static partial class ScreenplaySyntaxText
         $"{type.Name}{(type.IsCollection ? "[]" : string.Empty)}{(type.IsOptional ? "?" : string.Empty)}";
 
     /// <summary>
+    /// Renders a <see cref="QueryParameterSyntax"/> - its name, type and optional <c>from</c> source.
+    /// </summary>
+    /// <param name="parameter">The <see cref="QueryParameterSyntax"/> to render.</param>
+    /// <returns>The rendered parameter text, without the leading <c>by</c> or <c>filter</c> keyword.</returns>
+    public static string QueryParameter(QueryParameterSyntax parameter)
+    {
+        var declaration = $"{parameter.Name} {TypeRef(parameter.Type)}";
+        return parameter.Source is null ? declaration : $"{declaration} from {Expression(parameter.Source)}";
+    }
+
+    /// <summary>
     /// Renders a <c>produces when</c> <see cref="ConditionSyntax"/> to its surface form.
     /// </summary>
     /// <param name="condition">The <see cref="ConditionSyntax"/> to render.</param>

@@ -94,19 +94,43 @@ public partial class ScreenplayPrinter
         writer.Line($"query {query.Name} => {ScreenplaySyntaxText.TypeRef(query.ReturnType)}");
         using (writer.Indent())
         {
+            WriteDescription(writer, query.Description);
+
             if (query.By is not null)
             {
-                writer.Line($"by {query.By.Name} {ScreenplaySyntaxText.TypeRef(query.By.Type)}");
+                writer.Line($"by {ScreenplaySyntaxText.QueryParameter(query.By)}");
             }
 
             foreach (var filter in query.Filters)
             {
-                writer.Line($"filter {filter.Name} {ScreenplaySyntaxText.TypeRef(filter.Type)}");
+                writer.Line($"filter {ScreenplaySyntaxText.QueryParameter(filter)}");
             }
 
             if (query.Authorize is not null)
             {
                 WriteAuthorize(writer, query.Authorize);
+            }
+
+            if (query.Performer is not null)
+            {
+                WritePerformer(writer, query.Performer);
+            }
+        }
+    }
+
+    void WritePerformer(ScreenplayWriter writer, PerformerSyntax performer)
+    {
+        writer.Line("performer");
+        using (writer.Indent())
+        {
+            if (performer.File is not null)
+            {
+                writer.Line($"file {performer.File.Path}");
+            }
+
+            if (performer.Code is not null)
+            {
+                WriteCodeBlock(writer, performer.Code);
             }
         }
     }
@@ -136,11 +160,23 @@ public partial class ScreenplayPrinter
         writer.Line($"reactor {reactor.Name}");
         using (writer.Indent())
         {
+            WriteDescription(writer, reactor.Description);
+
             foreach (var trigger in reactor.Triggers)
             {
                 writer.Line($"on {trigger.Event}");
+
+                // A trigger with nothing but its event is complete on its own, so it prints as a single
+                // line rather than an empty indented block.
+                if (trigger is { Description: null, File: null, Code: null })
+                {
+                    continue;
+                }
+
                 using (writer.Indent())
                 {
+                    WriteDescription(writer, trigger.Description);
+
                     if (trigger.File is not null)
                     {
                         writer.Line($"file {trigger.File.Path}");
@@ -159,7 +195,8 @@ public partial class ScreenplayPrinter
     {
         foreach (var property in properties)
         {
-            writer.Line($"{ReservedWords.Escape(property.Name, reserved)} {ScreenplaySyntaxText.TypeRef(property.Type)}");
+            var modifier = property.IsIdentifier ? $" {PropertySyntax.IdentifierModifier}" : string.Empty;
+            writer.Line($"{ReservedWords.Escape(property.Name, reserved)} {ScreenplaySyntaxText.TypeRef(property.Type)}{modifier}");
         }
     }
 

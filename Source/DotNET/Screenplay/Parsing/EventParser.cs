@@ -40,6 +40,12 @@ internal static partial class EventParser
             }
             else if (PropertyLineParser.TryParse(line) is { } property)
             {
+                if (property.IsIdentifier)
+                {
+                    context.Error($"Property '{property.Name}' of event '{name.Groups[1].Value}' cannot be marked identifier - an event never carries its event source id", line.Location);
+                    property = property with { IsIdentifier = false };
+                }
+
                 properties.Add(property);
             }
             else
