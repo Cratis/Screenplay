@@ -15,7 +15,8 @@ Screenplay files use the `.play` extension.
 - **Declarative first, imperative escape hatch** — every construct has a declarative form; any construct can drop into C#, TypeScript, React, or HTML via inline code blocks or `file` references.
 - **Slices are the atom** — everything lives inside a typed slice aligned with Event Modeling's vocabulary.
 - **Sub-language pluggability** — the Projection Declaration Language (PDL) and Change Data Capture Language (CDL) are embedded sub-grammars. Additional sub-languages can be registered and parsed inside named constructs.
-- **Concepts carry compliance** — value types declare PII and sensitivity attributes once; all usages inherit them.
+- **Concepts carry compliance** — value types declare PII and sensitivity attributes once, with the reason they are personal data; all usages inherit them.
+- **`file` is never required** — a document must be expressible, and meaningful, before any code exists. Code pointers are realization metadata a slice gains once it is built.
 
 ## Top-level structure
 
@@ -23,6 +24,7 @@ Screenplay files use the `.play` extension.
 <domain>
 <imports>
 <concepts>
+<types>
 <policies>
 <personas>
 <module>
@@ -53,13 +55,15 @@ Line comments start with `//` and run to the end of the line.
 | --- | --- |
 | The domain a file belongs to | [Domain](domain.md) |
 | Formalized value types with compliance attributes | [Concepts](concepts.md) |
+| Composite value types - the shapes events carry | [Types](types.md) |
 | Named authorization rules | [Policies](policies.md) |
 | Roles interacting with the application | [Personas](personas.md) |
 | Modules, features, and the four slice types | [Modules, Features and Slices](slices.md) |
 | Single-line and fenced multi-line descriptions | [Descriptions](slices.md#descriptions) |
 | Event type declarations | [Events](events.md) |
 | Commands, validation, the `produces` block, and handlers | [Commands](commands.md) |
-| Read-side entry points | [Queries](queries.md) |
+| Read-side entry points, parameters and performers | [Queries](queries.md) |
+| What a handler and a performer are given | [Command and query context](context.md) |
 | PDL-embedded projections | [Projections](projections/index.md) |
 | CDL-embedded change data capture | [Captures](captures.md) |
 | Events seeded per event source id | [Event seeding](seeding.md) |

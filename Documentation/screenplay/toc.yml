@@ -10,6 +10,8 @@
   href: domain.md
 - name: Concepts
   href: concepts.md
+- name: Types
+  href: types.md
 - name: Policies
   href: policies.md
 - name: Personas
@@ -28,6 +30,8 @@
   href: commands.md
 - name: Queries
   href: queries.md
+- name: Command and query context
+  href: context.md
 - name: Projections
   href: projections/toc.yml
 - name: Captures

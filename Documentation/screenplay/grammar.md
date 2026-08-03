@@ -7,7 +7,7 @@ The full EBNF grammar of the Screenplay DSL. `INDENT`/`DEDENT` are synthesized b
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { PolicyDecl }, { PersonaDecl }, [ AuthenticationDecl ], { Module }, { SeedDecl } ;
+Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { TypeDecl }, { PolicyDecl }, { PersonaDecl }, [ AuthenticationDecl ], { Module }, { SeedDecl } ;
 
 (* -------------------------------------------------------------- *)
 (* Domain                                                          *)
@@ -27,9 +27,11 @@ QualifiedName  = Ident, { ".", Ident } ;
 (* -------------------------------------------------------------- *)
 
 ConceptDecl    = "concept", Ident, ":", PrimitiveType, { Attribute }, NL,
-                   [ INDENT, { ConceptValidate }, DEDENT ]
-               | "concept", Ident, ":", "Enum", NL,
-                   INDENT, { [ "@" ], Ident, NL }, { ConceptValidate }, DEDENT ;
+                   [ INDENT, { AttributeReason }, { ConceptValidate }, DEDENT ]
+               | "concept", Ident, ":", "Enum", { Attribute }, NL,
+                   INDENT, { AttributeReason }, { [ "@" ], Ident, NL }, { ConceptValidate }, DEDENT ;
+
+AttributeReason = AttributeName, "reason", StringLiteral, NL ;
 
 ConceptValidate = "validate", NL,
                    INDENT, { ConceptRule }, DEDENT
@@ -40,7 +42,15 @@ ConceptRule    = RuleOp, [ "message", LocalizableString ], NL ;
 PrimitiveType  = "Uuid" | "String" | "Int" | "Decimal" | "Bool"
                | "Date" | "DateTime" ;
 
-Attribute      = "@pii" | "@sensitive" ;
+Attribute      = "@", AttributeName ;
+AttributeName  = "pii" | "sensitive" ;
+
+(* -------------------------------------------------------------- *)
+(* Composite value types                                           *)
+(* -------------------------------------------------------------- *)
+
+TypeDecl       = "type", Ident, NL,
+                 INDENT, [ DescriptionDecl ], PropertyLine, { PropertyLine }, DEDENT ;
 
 (* -------------------------------------------------------------- *)
 (* Policies                                                        *)
@@ -148,7 +158,10 @@ TagValue       = Ident
 
 Path           = Ident, { ".", Ident } ;
 
-PropertyLine   = [ "@" ], Ident, TypeRef, NL ;
+PropertyLine   = [ "@" ], Ident, TypeRef, [ "identifier" ], NL ;
+
+(* "identifier" is only accepted on a command property, and on at most one of
+   them - it marks the property a runtime resolves the event source id from.  *)
 
 TypeRef        = Ident, [ "[]" ], [ "?" ] ;
 
@@ -222,8 +235,7 @@ CompOp         = "==" | "!=" | ">" | ">=" | "<" | "<=" ;
 PropertyMapping = [ "@" ], Ident, "=", MappingSource, NL ;
 
 MappingSource  = Ident                         (* command property   *)
-               | "$context.occurred"
-               | "$context.identity.id"
+               | ContextPath
                | "$env.", Ident
                | "$secrets.", Path
                | "$strings.", Path
@@ -231,6 +243,14 @@ MappingSource  = Ident                         (* command property   *)
                | Number
                | "true" | "false"
                | Expression ;
+
+(* The context paths mirror the members of CommandContext / QueryContext -
+   see Documentation/screenplay/context.md.                                  *)
+
+ContextPath    = "$context.", ContextRoot, { ".", Ident } ;
+
+ContextRoot    = "command" | "arguments" | "tenant" | "causedBy"
+               | "causation" | "occurred" | "identity" ;
 
 Expression     = (* arithmetic / method-call expression — freeform *) ;
 
@@ -247,13 +267,22 @@ HandlerDecl    = "handler", NL,
 
 QueryDecl      = "query", Ident, "=>", TypeRef, NL,
                  [ INDENT,
+                     [ DescriptionDecl ],
                      [ ByClause ],
                      { FilterClause },
                      [ AuthorizeDecl ],
+                     [ PerformerDecl ],
                    DEDENT ] ;
 
-ByClause       = "by", Ident, TypeRef, NL ;
-FilterClause   = "filter", Ident, TypeRef, NL ;
+ByClause       = "by", Ident, TypeRef, [ FromClause ], NL ;
+FilterClause   = "filter", Ident, TypeRef, [ FromClause ], NL ;
+
+(* "from" fills a parameter from the query context instead of the caller.     *)
+
+FromClause     = "from", MappingSource ;
+
+PerformerDecl  = "performer", NL,
+                 INDENT, ( FileDirective | InlineBlock ), DEDENT ;
 
 (* -------------------------------------------------------------- *)
 (* Projections — PDL sub-language                                  *)
@@ -293,7 +322,10 @@ SpecificationWhen = "when", Ident, NL,
 
 SpecificationThen = "then", [ "readmodel" ], Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
-               | "then", "error", StringLiteral, NL ;
+               | "then", "error", [ StringLiteral ], NL ;
+
+(* A bare "then error" states a rejection whose reason the specification does
+   not name; the quoted form names it. Both may appear in one specification.  *)
 
 (* -------------------------------------------------------------- *)
 (* Event seeding                                                   *)
@@ -336,9 +368,19 @@ ConstraintBody = "unique", Ident, "on", Ident, NL   (* unique property  *)
 
 ReactorDecl    = "reactor", Ident, NL,
                  INDENT,
-                   "on", Ident, NL,
-                   ( FileDirective | InlineBlock ),
+                   [ DescriptionDecl ],
+                   ReactorTrigger, { ReactorTrigger },
                  DEDENT ;
+
+(* A trigger with no body is a complete statement of intent - the reactor
+   observes the event. The file reference and the inline block are optional
+   realization metadata.                                                      *)
+
+ReactorTrigger = "on", Ident, NL,
+                 [ INDENT,
+                     [ DescriptionDecl ],
+                     [ FileDirective | InlineBlock ],
+                   DEDENT ] ;
 
 (* -------------------------------------------------------------- *)
 (* Screens                                                         *)
@@ -399,7 +441,7 @@ FileDirective  = "file", FilePath, NL ;
 FilePath       = (* relative path string *) ;
 
 InlineBlock    = LanguageTag, NL, "```", NL, { AnyLine }, "```", NL ;
-LanguageTag    = "csharp" | "typescript" | "react" | "html" ;
+LanguageTag    = "csharp" | "typescript" | "react" | "html" | "sql" ;
 
 StringLiteral  = '"', { StringChar }, '"' ;
 StringChar     = ? any char except '"', '\' and newline ? | Escape ;
@@ -414,6 +456,35 @@ INDENT         = ? increase in indentation level ? ;
 DEDENT         = ? decrease in indentation level ? ;
 AnyLine        = ? any text until newline ? ;
 ```
+
+## Declarative first — `file` is never required
+
+Screenplay's workflow is *author the document first, then Stage performs it*. That only holds if the language can describe everything **before any code exists**, so the language guarantees one thing:
+
+> **A document must be expressible — and meaningful — with zero `file` references.**
+
+`file <path>` is **realization metadata**: a pointer attached once a slice has been implemented. It is an alternative to a declarative body, never the only way to give a construct meaning. Hand-authored documents precede code and *gain* `file` lines as slices get built; generated documents arrive with them already attached. Same language, two directions.
+
+| Construct | Declarative story | Realization escape hatch |
+| --- | --- | --- |
+| `concept` / `type` | primitive or properties, attributes, `validate` | `validate csharp` |
+| `command` | `produces` with mappings and conditions | `handler` |
+| `query` | `=>` return type, `by`/`filter`, `description` | `performer` |
+| `policy` | `require` conditions | inline `csharp` |
+| `reactor` | `description` on the reactor and on each `on` trigger | `file` / inline block |
+| `screen` | title, sections, tables, `data`, `action`, `navigate`, layout | `file` |
+| `constraint` | `unique …` forms | `file` |
+| `projection` / `capture` | fully declarative (PDL / CDL) | — |
+
+So this is a complete, valid statement of intent for a reactor nobody has written yet:
+
+```screenplay
+reactor AcceptedInvitationProvisioner
+  description "Provisions the account when an invitation to join is accepted"
+  on InvitationAccepted
+```
+
+Any construct added to the language follows the same rule: declarative meaning first, code pointer optional.
 
 ## Keyword escape
 

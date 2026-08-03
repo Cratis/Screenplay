@@ -13,7 +13,7 @@ A Screenplay is a script for a production, so its file is a `.play`. The name is
 
 ## Do I still write C#, TypeScript, or React?
 
-Only where you want to. Every construct has a declarative form that covers the common case, and any construct can drop into an inline `csharp`, `typescript`, `react`, or `html` block — or point at an external `file` — when a rule needs custom logic. The declarative form handles the routine 90%; the escape hatch is there for the rest, so you are never forced out of the model to express something hard.
+Only where you want to. Every construct has a declarative form that covers the common case, and any construct can drop into an inline `csharp`, `typescript`, `react`, `html`, or `sql` block — or point at an external `file` — when a rule needs custom logic. The declarative form handles the routine 90%; the escape hatch is there for the rest, so you are never forced out of the model to express something hard.
 
 ## What are Stage and Studio?
 

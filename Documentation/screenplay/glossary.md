@@ -23,11 +23,14 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 
 ## Constructs
 
-- **Concept** — a formalized value type that wraps a primitive (`concept InvoiceId : Uuid`) and carries compliance attributes; every usage inherits them.
+- **Concept** — a formalized value type that wraps a primitive (`concept InvoiceId : Uuid`) and carries compliance attributes, optionally with the reason each one applies; every usage inherits them.
+- **Type** — a composite value type: a named shape built from several properties (`type InvoiceLine`), referenced by events, commands and other types.
+- **Identifier** — the `identifier` modifier on a command property, marking the value a runtime resolves the event source id from. At most one per command.
 - **Policy** — a named authorization rule (role-based, claim-based, or custom) that commands and queries reference by name via `authorize`.
 - **Command** — an imperative intent with properties, `authorize`, `validate`, and a `produces` block declaring the events it appends.
 - **Event** — a past-tense fact declaration: a named type and its properties.
-- **Query** — a read-side entry point mapping identifying and filter parameters to a read-model return type (`=> ReadModel[]`).
+- **Query** — a read-side entry point mapping identifying and filter parameters to a read-model return type (`=> ReadModel[]`), optionally with a `performer` that performs it.
+- **Performer** — the code that performs a query — an external `file` or an inline `csharp`/`sql` block. The query's counterpart to a command's `handler`.
 - **Projection** — a declaration, written in PDL, that builds a read model by folding events (`from EventType key ...`).
 - **Capture** — a declaration, written in CDL, that turns polled or pushed external data into events.
 - **Constraint** — a server-side invariant (such as uniqueness) enforced in the Chronicle kernel before an event is committed.
@@ -40,8 +43,10 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Sub-language** — a named grammar embedded inside a construct's body, parsed by a registered sub-parser. PDL and CDL are the built-ins; more can be registered.
 - **PDL (Projection Declaration Language)** — the embedded sub-language for `projection` bodies.
 - **CDL (Change Data Capture Language)** — the embedded sub-language for `capture` bodies.
-- **Embedded code block** — an inline `csharp`, `typescript`, `react`, or `html` block (between triple backticks) or a `file` reference — the escape hatch any construct can drop into.
-- **Context variables** — values the runtime supplies inside expressions: `$context` (event context), `$env` (environment), `$eventContext`, and `$.` (the current capture item).
+- **Embedded code block** — an inline `csharp`, `typescript`, `react`, `html`, or `sql` block (between triple backticks) or a `file` reference — the escape hatch any construct can drop into.
+- **Realization metadata** — a `file` reference or inline code block attached to a construct once it is implemented. Always optional: a document must be meaningful with none of it.
+- **Context variables** — values the runtime supplies inside expressions: `$context` (the command or query context), `$env` (environment), `$eventContext`, and `$.` (the current capture item).
+- **Command context / query context** — what a handler or performer is given: the command or arguments, the tenant, the calling identity, the causation, and when it was received. Reachable declaratively through `$context.`.
 
 ## Tools and runtime
 
