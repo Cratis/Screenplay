@@ -389,7 +389,7 @@ internal static partial class CaptureParser
             return false;
         }
 
-        mappings.Add(new(LineText.Unescape(match.Groups[1].Value), ExpressionParser.ParseMappingSource(match.Groups[2].Value, line.Location), line.Location));
+        mappings.Add(new(LineText.Unescape(match.Groups[1].Value), ExpressionParser.ParseMappingSource(context, match.Groups[2].Value, line.Location), line.Location));
         return true;
     }
 

@@ -10,6 +10,8 @@ public class and_an_event_declares_a_tag_property : given.a_compiler
 {
     const string Source =
         """
+        concept TagType : String
+
         module Invoicing
           feature InvoiceManagement
             slice StateChange RegisterInvoice
@@ -31,7 +33,7 @@ public class and_an_event_declares_a_tag_property : given.a_compiler
 
     [Fact] void should_succeed() => _result.Success.ShouldBeTrue();
     [Fact] void should_warn_that_the_tag_line_is_not_a_property() => _result.Diagnostics.Single().Severity.ShouldEqual(DiagnosticSeverity.Warning);
-    [Fact] void should_point_at_the_ambiguous_line() => _result.Diagnostics.Single().Location.Line.ShouldEqual(6);
+    [Fact] void should_point_at_the_ambiguous_line() => _result.Diagnostics.Single().Location.Line.ShouldEqual(8);
     [Fact] void should_keep_both_tags() => _event.Tags!.Count().ShouldEqual(2);
     [Fact] void should_declare_the_escaped_property() => _event.Properties.Single(_ => _.Name == "tag").Type.Name.ShouldEqual("TagType");
     [Fact] void should_declare_the_other_property() => _event.Properties.Single(_ => _.Name == "invoiceId").Type.Name.ShouldEqual("Uuid");

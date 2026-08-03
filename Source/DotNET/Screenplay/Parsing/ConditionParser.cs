@@ -107,7 +107,7 @@ internal static partial class ConditionParser
             return null;
         }
 
-        var right = ExpressionParser.ParseMappingSource(tokens[position++], location);
+        var right = ExpressionParser.ParseMappingSource(context, tokens[position++], location);
         return new ComparisonConditionSyntax(left, comparison, right, location);
     }
 
