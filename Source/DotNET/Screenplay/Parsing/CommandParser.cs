@@ -43,10 +43,10 @@ internal static partial class CommandParser
                 // property called description. Only the directives that do take an identifier operand
                 // ('authorize', 'produces') stay ambiguous, and those use the '@' escape.
                 case "description" or "handler" or "concurrency" when PropertyLineParser.TryParse(line) is { } named:
-                    properties.Add(named);
+                    AddProperty(context, properties, named, name.Groups[1].Value);
                     break;
                 case "validate" when line.Content != "validate csharp" && PropertyLineParser.TryParse(line) is { } validated:
-                    properties.Add(validated);
+                    AddProperty(context, properties, validated, name.Groups[1].Value);
                     break;
                 case "description":
                     description = DescriptionParser.Parse(context, line, description, $"Command '{name.Groups[1].Value}'");
@@ -77,7 +77,7 @@ internal static partial class CommandParser
                 default:
                     if (PropertyLineParser.TryParse(line) is { } property)
                     {
-                        properties.Add(property);
+                        AddProperty(context, properties, property, name.Groups[1].Value);
                     }
                     else
                     {
@@ -95,6 +95,28 @@ internal static partial class CommandParser
         }
 
         return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency, description);
+    }
+
+    /// <summary>
+    /// Adds a property to the command, keeping at most one of them marked as the identifier.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <param name="properties">The properties parsed so far.</param>
+    /// <param name="property">The <see cref="PropertySyntax"/> to add.</param>
+    /// <param name="commandName">The name of the command, used in diagnostics.</param>
+    /// <remarks>
+    /// The identifier is what a runtime resolves the event source id from, so a second one would leave it
+    /// with no way to choose. The first declaration wins and the rest are reported.
+    /// </remarks>
+    static void AddProperty(ParserContext context, List<PropertySyntax> properties, PropertySyntax property, string commandName)
+    {
+        if (property.IsIdentifier && properties.Find(existing => existing.IsIdentifier) is { } identifier)
+        {
+            context.Error($"Command '{commandName}' already marks '{identifier.Name}' as identifier - only one property can be the identifier", property.Location);
+            property = property with { IsIdentifier = false };
+        }
+
+        properties.Add(property);
     }
 
     static ConcurrencySyntax? ParseConcurrency(ParserContext context, SourceLine line, ConcurrencySyntax? existing, string commandName)
@@ -256,7 +278,7 @@ internal static partial class CommandParser
                 continue;
             }
 
-            mappings.Add(new(LineText.Unescape(match.Groups[1].Value), ExpressionParser.ParseMappingSource(match.Groups[2].Value, child.Location), child.Location));
+            mappings.Add(new(LineText.Unescape(match.Groups[1].Value), ExpressionParser.ParseMappingSource(context, match.Groups[2].Value, child.Location), child.Location));
         }
 
         return (mappings, tags);

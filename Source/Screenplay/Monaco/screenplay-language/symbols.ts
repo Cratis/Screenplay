@@ -6,13 +6,22 @@ import { fenceMap, indentOf } from './document-context';
 export interface PropertySymbol {
     name: string;
     type: string;
+    isIdentifier: boolean;
+    line: number;
 }
 
 export interface ConceptSymbol {
     name: string;
     primitive: string;
     attributes: string[];
+    attributeReasons: Record<string, string>;
     enumValues: string[];
+    line: number;
+}
+
+export interface TypeSymbol {
+    name: string;
+    properties: PropertySymbol[];
     line: number;
 }
 
@@ -28,6 +37,10 @@ export interface EventSymbol {
     line: number;
 }
 
+export interface CommandSymbol extends NamedSymbol {
+    properties: PropertySymbol[];
+}
+
 export interface NamedSymbol {
     name: string;
     line: number;
@@ -35,6 +48,7 @@ export interface NamedSymbol {
 
 export interface QuerySymbol extends NamedSymbol {
     returnType: string;
+    parameters: PropertySymbol[];
 }
 
 export interface ImportSymbol {
@@ -46,15 +60,31 @@ export interface ImportSymbol {
 export interface DocumentSymbols {
     imports: ImportSymbol[];
     concepts: ConceptSymbol[];
+    types: TypeSymbol[];
     policies: PolicySymbol[];
     events: EventSymbol[];
-    commands: NamedSymbol[];
+    commands: CommandSymbol[];
     queries: QuerySymbol[];
     screens: NamedSymbol[];
 }
 
 const conceptPattern = /^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@\w+)*)\s*$/;
-const propertyPattern = /^\s*([a-z_]\w*)\s+([\w.]+(?:\[\])?\??)\s*$/;
+const propertyPattern = /^\s*(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?\??)(\s+identifier)?\s*$/;
+const attributeReasonPattern = /^([a-z_]\w*)\s+reason\s+"((?:[^"\\]|\\.)*)"\s*$/;
+const queryParameterPattern =
+    /^\s*(?:by|filter)\s+([a-z_]\w*)\s+([\w.]+(?:\[\])?\??)(?:\s+from\s+.+)?\s*$/;
+
+function propertiesIn(lines: string[], body: number[]): PropertySymbol[] {
+    return body
+        .map((index) => ({ index, match: lines[index].match(propertyPattern) }))
+        .filter((entry): entry is { index: number; match: RegExpMatchArray } => entry.match !== null)
+        .map(({ index, match }) => ({
+            name: match[1].replace(/^@/, ''),
+            type: match[2],
+            isIdentifier: match[3] !== undefined,
+            line: index,
+        }));
+}
 
 function collectBody(lines: string[], fences: boolean[], start: number, indent: number): number[] {
     const body: number[] = [];
@@ -75,6 +105,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
     const symbols: DocumentSymbols = {
         imports: [],
         concepts: [],
+        types: [],
         policies: [],
         events: [],
         commands: [],
@@ -99,15 +130,34 @@ export function scanDocument(lines: string[]): DocumentSymbols {
 
         const conceptMatch = trimmed.match(conceptPattern);
         if (conceptMatch) {
+            const body = collectBody(lines, fences, index, indent).map((i) => lines[i].trim());
+            const attributeReasons: Record<string, string> = {};
+            for (const line of body) {
+                const reason = line.match(attributeReasonPattern);
+                if (reason && attributeReasons[reason[1]] === undefined) {
+                    attributeReasons[reason[1]] = reason[2];
+                }
+            }
             const enumValues =
                 conceptMatch[2] === 'Enum'
-                    ? collectBody(lines, fences, index, indent).map((i) => lines[i].trim())
+                    ? body.filter((line) => !attributeReasonPattern.test(line))
                     : [];
             symbols.concepts.push({
                 name: conceptMatch[1],
                 primitive: conceptMatch[2],
                 attributes: conceptMatch[3].trim().split(/\s+/).filter(Boolean),
+                attributeReasons,
                 enumValues,
+                line: index,
+            });
+            continue;
+        }
+
+        const typeMatch = trimmed.match(/^type\s+(\w+)\s*$/);
+        if (typeMatch) {
+            symbols.types.push({
+                name: typeMatch[1],
+                properties: propertiesIn(lines, collectBody(lines, fences, index, indent)),
                 line: index,
             });
             continue;
@@ -124,23 +174,46 @@ export function scanDocument(lines: string[]): DocumentSymbols {
 
         const eventMatch = trimmed.match(/^event\s+(\w+)\s*$/);
         if (eventMatch) {
-            const properties = collectBody(lines, fences, index, indent)
-                .map((i) => lines[i].match(propertyPattern))
-                .filter((match): match is RegExpMatchArray => match !== null)
-                .map((match) => ({ name: match[1], type: match[2] }));
-            symbols.events.push({ name: eventMatch[1], properties, line: index });
+            symbols.events.push({
+                name: eventMatch[1],
+                properties: propertiesIn(lines, collectBody(lines, fences, index, indent)),
+                line: index,
+            });
             continue;
         }
 
         const commandMatch = trimmed.match(/^command\s+(\w+)\s*$/);
         if (commandMatch) {
-            symbols.commands.push({ name: commandMatch[1], line: index });
+            symbols.commands.push({
+                name: commandMatch[1],
+                properties: propertiesIn(lines, collectBody(lines, fences, index, indent)),
+                line: index,
+            });
             continue;
         }
 
         const queryMatch = trimmed.match(/^query\s+(\w+)\s*=>\s*([\w[\]]+)\s*$/);
         if (queryMatch) {
-            symbols.queries.push({ name: queryMatch[1], returnType: queryMatch[2], line: index });
+            // The return type names a read model, which no construct declares — only the
+            // 'by' and 'filter' parameters resolve against the document's own types.
+            const parameters = collectBody(lines, fences, index, indent)
+                .map((i) => ({ index: i, match: lines[i].match(queryParameterPattern) }))
+                .filter(
+                    (entry): entry is { index: number; match: RegExpMatchArray } =>
+                        entry.match !== null,
+                )
+                .map(({ index: line, match }) => ({
+                    name: match[1],
+                    type: match[2],
+                    isIdentifier: false,
+                    line,
+                }));
+            symbols.queries.push({
+                name: queryMatch[1],
+                returnType: queryMatch[2],
+                parameters,
+                line: index,
+            });
             continue;
         }
 
@@ -156,6 +229,17 @@ export function scanDocument(lines: string[]): DocumentSymbols {
 export function knownEventNames(symbols: DocumentSymbols): string[] {
     return [
         ...symbols.events.map((event) => event.name),
+        ...symbols.imports.map((imported) => imported.shortName),
+    ];
+}
+
+// Everything a property type reference can resolve to — the primitives, the declared
+// concepts and types, and the short names of the imports.
+export function knownTypeNames(symbols: DocumentSymbols, primitives: readonly string[]): string[] {
+    return [
+        ...primitives,
+        ...symbols.concepts.map((concept) => concept.name),
+        ...symbols.types.map((type) => type.name),
         ...symbols.imports.map((imported) => imported.shortName),
     ];
 }

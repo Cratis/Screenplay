@@ -84,7 +84,7 @@ internal static partial class ValidationRuleParser
             return (null, null);
         }
 
-        var value = ExpressionParser.ParseMappingSource(operand.Groups[2].Value, line.Location);
+        var value = ExpressionParser.ParseMappingSource(context, operand.Groups[2].Value, line.Location);
         ValidationRuleKind? kind = operand.Groups[1].Value switch
         {
             "max" => ValidationRuleKind.Max,

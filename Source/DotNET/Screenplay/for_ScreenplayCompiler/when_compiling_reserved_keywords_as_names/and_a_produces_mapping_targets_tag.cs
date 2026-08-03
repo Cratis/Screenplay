@@ -9,6 +9,8 @@ public class and_a_produces_mapping_targets_tag : given.a_compiler
 {
     const string Source =
         """
+        concept TagType : String
+
         module Invoicing
           feature InvoiceManagement
             slice StateChange RegisterInvoice

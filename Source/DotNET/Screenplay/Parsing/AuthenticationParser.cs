@@ -65,7 +65,7 @@ internal static partial class AuthenticationParser
                 continue;
             }
 
-            settings.Add(new(match.Groups[1].Value, ExpressionParser.ParseMappingSource(match.Groups[2].Value, child.Location), child.Location));
+            settings.Add(new(match.Groups[1].Value, ExpressionParser.ParseMappingSource(context, match.Groups[2].Value, child.Location), child.Location));
         }
 
         return settings;

@@ -56,10 +56,12 @@ export function register(monaco: Monaco): void {
 }
 
 export {
+    causedByProperties,
     clauseKeywords,
     codeBlockTags,
     conceptAttributes,
     constructKeywords,
+    contextRoots,
     languageId,
     primitiveTypes,
     sliceTypes,
@@ -77,8 +79,9 @@ export { cdl } from './sub-languages/cdl';
 export { screenplayDarkThemeName } from './themes/screenplay-dark';
 export { screenplayLightThemeName } from './themes/screenplay-light';
 export { enclosingChain, fenceMap, firstWord, indentOf } from './document-context';
-export { knownEventNames, scanDocument } from './symbols';
+export { knownEventNames, knownTypeNames, scanDocument } from './symbols';
 export type {
+    CommandSymbol,
     ConceptSymbol,
     DocumentSymbols,
     EventSymbol,
@@ -87,6 +90,7 @@ export type {
     PolicySymbol,
     PropertySymbol,
     QuerySymbol,
+    TypeSymbol,
 } from './symbols';
 export { attributeDocs, contextVariableDocs, keywordDocs } from './keyword-docs';
 export { contextVariableItems, producesItems } from './completion-items';

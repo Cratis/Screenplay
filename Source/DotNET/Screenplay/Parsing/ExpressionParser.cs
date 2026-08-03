@@ -86,16 +86,19 @@ internal static partial class ExpressionParser
     /// <summary>
     /// Parses a mapping source expression as used by <c>produces</c> and <c>capture</c> mappings.
     /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
     /// <param name="text">The expression text.</param>
     /// <param name="location">The <see cref="SourceLocation"/> of the expression.</param>
     /// <returns>The parsed <see cref="ExpressionSyntax"/>.</returns>
-    public static ExpressionSyntax ParseMappingSource(string text, SourceLocation location)
+    public static ExpressionSyntax ParseMappingSource(ParserContext context, string text, SourceLocation location)
     {
         text = text.Trim();
 
         if (text.StartsWith("$context.", StringComparison.Ordinal))
         {
-            return new ContextExpressionSyntax(text["$context.".Length..], location);
+            var expression = new ContextExpressionSyntax(text["$context.".Length..], location);
+            WarnOnUnknownContextPath(context, expression);
+            return expression;
         }
 
         if (text.StartsWith("$env.", StringComparison.Ordinal))
@@ -147,6 +150,35 @@ internal static partial class ExpressionParser
         _ when NumberRegex().IsMatch(text) => new(double.Parse(text, CultureInfo.InvariantCulture), location),
         _ => null
     };
+
+    /// <summary>
+    /// Warns when a <c>$context.</c> path does not name something the command or query context carries.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to report the diagnostic to.</param>
+    /// <param name="expression">The <see cref="ContextExpressionSyntax"/> to check.</param>
+    /// <remarks>
+    /// The path is the declarative half of the same context a handler or performer compiles against, so a
+    /// path outside it can never resolve at runtime. It stays a warning rather than an error - a runtime is
+    /// free to expose more than the language names.
+    /// </remarks>
+    static void WarnOnUnknownContextPath(ParserContext context, ContextExpressionSyntax expression)
+    {
+        if (!ContextExpressionSyntax.KnownRoots.Contains(expression.Root))
+        {
+            context.Warning(
+                $"Unknown $context path '{expression.Path}' - expected one of {string.Join(", ", ContextExpressionSyntax.KnownRoots)}",
+                expression.Location);
+            return;
+        }
+
+        var segments = expression.Path.Split('.');
+        if (expression.Root == "causedBy" && segments.Length > 1 && !ContextExpressionSyntax.KnownCausedByProperties.Contains(segments[1]))
+        {
+            context.Warning(
+                $"Unknown $context.causedBy property '{segments[1]}' - expected {string.Join(", ", ContextExpressionSyntax.KnownCausedByProperties)}",
+                expression.Location);
+        }
+    }
 
     static TemplateExpressionSyntax ParseTemplate(ParserContext context, string text, SourceLocation location)
     {

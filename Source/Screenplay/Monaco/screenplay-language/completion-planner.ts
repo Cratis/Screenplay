@@ -29,6 +29,10 @@ export function completionEntriesFor(chain: string[]): CompletionEntry[] {
             return items.featureItems;
         case 'slice':
             return items.sliceItems;
+        case 'concept':
+            return items.conceptItems;
+        case 'type':
+            return items.typeItems;
         case 'command':
             return items.commandItems;
         case 'produces':
@@ -37,12 +41,16 @@ export function completionEntriesFor(chain: string[]): CompletionEntry[] {
             return items.handlerItems;
         case 'query':
             return items.queryItems;
+        case 'performer':
+            return items.performerItems;
         case 'constraint':
             return items.constraintItems;
         case 'reactor':
             return items.reactorItems;
         case 'on':
             return items.reactorOnItems;
+        case 'specification':
+            return items.specificationItems;
         case 'policy':
             return items.policyItems;
         case 'validate':
@@ -101,9 +109,12 @@ export function planCompletions(
         return { kind: 'queries' };
     }
     if (
-        (chain[0] === 'event' || chain[0] === 'command') &&
+        (chain[0] === 'event' || chain[0] === 'command' || chain[0] === 'type') &&
         /^\s+[a-z_]\w*\s+[\w[\]?]*$/.test(textBefore)
     ) {
+        return { kind: 'types' };
+    }
+    if (chain[0] === 'query' && /^\s+(?:by|filter)\s+[a-z_]\w*\s+[\w[\]?]*$/.test(textBefore)) {
         return { kind: 'types' };
     }
 

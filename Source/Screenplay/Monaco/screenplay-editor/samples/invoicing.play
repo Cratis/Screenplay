@@ -2,10 +2,11 @@
 // Invoicing — complete .play file
 //
 // A full-feature showcase of the Screenplay language: strongly
-// typed concepts, authorization policies and personas, identity
-// providers, vertical slices (state change, view, automation and
-// translation), projections, captures, screens, specifications
-// and seed data — all built around a single invoicing domain.
+// typed concepts and composite types, authorization policies and
+// personas, identity providers, vertical slices (state change,
+// view, automation and translation), projections, captures,
+// screens, specifications and seed data — all built around a
+// single invoicing domain.
 // ============================================================
 
 domain Sales
@@ -17,14 +18,22 @@ import Shipping.InvoiceShippingCleared
 
 concept InvoiceId        : Uuid
 concept CustomerId       : Uuid
+concept TenantId         : Uuid
 concept InvoiceNumber    : String
 concept CurrencyCode     : String
+concept ProductName      : String
 concept Money            : Decimal
 concept Quantity         : Int
-concept PersonName       : String   @pii
-concept BankAccount      : String   @pii @sensitive
+
+concept PersonName : String @pii
+  pii reason "The name of the person to contact about an invoice. Needed to reach them about billing; lawful basis: contract performance. Lives under the customer's subject and is erasable with their key."
+
+concept BankAccount : String @pii @sensitive
+  pii reason "Refund payout account. Remits money back to the customer; lawful basis: contract performance / legal obligation. Personal only for sole-proprietor customers."
+  sensitive reason "Fraud-sensitive — a leaked account number enables direct financial harm, so it is never rendered in full and never leaves the payout path."
 
 concept EmailAddress : String @pii
+  pii reason "Billing contact address. Delivers invoices and payment reminders; lawful basis: contract performance. Under the customer's subject, erasable with their key."
   validate
     not empty          message "Email is required"
     matches "^.+@.+$"  message "Must be a valid email address"
@@ -45,6 +54,22 @@ concept PaymentTerms : Enum
   net30
   net60
   immediate
+
+// Composite value types — the shapes events and commands carry beyond a single
+// primitive. Declared here, they give `lines InvoiceLine[]` something to resolve
+// against, and give the concepts that only ever appear inside them a home.
+type InvoiceLine
+  description "A single billed line of an invoice"
+  lineNumber  Int
+  productName ProductName
+  quantity    Quantity
+  unitPrice   Money
+  discount    DiscountPercentage?
+
+type BillingContact
+  description "Who to reach about an invoice - the personal data lives here, not on the invoice itself"
+  name  PersonName
+  email EmailAddress
 
 policy IsAuthenticated
   require authenticated
@@ -122,14 +147,17 @@ module Invoicing
 
       command RegisterInvoice
         description "Registers a new invoice with its lines and payment terms"
-        invoiceId     InvoiceId
-        customerId    CustomerId
-        invoiceNumber InvoiceNumber
-        lines         InvoiceLine[]
-        currency      CurrencyCode
-        paymentTerms  PaymentTerms
-        dueDate       Date
-        isProForma    Bool
+        // 'identifier' marks the property a runtime resolves the event source id
+        // from. At most one per command; without it a new Uuid is generated.
+        invoiceId      InvoiceId identifier
+        customerId     CustomerId
+        invoiceNumber  InvoiceNumber
+        lines          InvoiceLine[]
+        billingContact BillingContact
+        currency       CurrencyCode
+        paymentTerms   PaymentTerms
+        dueDate        Date
+        isProForma     Bool
 
         authorize CanManageInvoice
                   IsAdultCustomer
@@ -150,19 +178,24 @@ module Invoicing
               yield ValidationError("Invoices over 1,000,000 cannot require immediate payment");
           ```
 
+        // Everything the command context carries is reachable from a mapping —
+        // the same values an inline handler compiles against on CommandContext.
         produces InvoiceRegistered
           tag audit
-          invoiceId     = invoiceId
-          customerId    = customerId
-          invoiceNumber = invoiceNumber
-          lines         = lines
-          currency      = currency
-          paymentTerms  = paymentTerms
-          dueDate       = dueDate
-          registeredAt  = $context.occurred
-          registeredBy  = $context.identity.id
-          source        = $env.SERVICE_NAME
-          status        = "draft"
+          invoiceId      = invoiceId
+          customerId     = customerId
+          invoiceNumber  = invoiceNumber
+          lines          = lines
+          billingContact = billingContact
+          currency       = currency
+          paymentTerms   = paymentTerms
+          dueDate        = dueDate
+          registeredAt   = $context.occurred
+          registeredBy   = $context.identity.id
+          registeredFor  = $context.tenant
+          registeredByOn = $context.causedBy.subject
+          source         = $env.SERVICE_NAME
+          status         = "draft"
 
         produces when isProForma == true
           ProFormaInvoiceIssued
@@ -196,17 +229,20 @@ module Invoicing
         tag invoicing
         tag "billing"
         tag $context.identity.id
-        invoiceId     InvoiceId
-        customerId    CustomerId
-        invoiceNumber InvoiceNumber
-        lines         InvoiceLine[]
-        currency      CurrencyCode
-        paymentTerms  PaymentTerms
-        dueDate       Date
-        registeredAt  DateTime
-        registeredBy  String
-        source        String
-        status        InvoiceStatus
+        invoiceId      InvoiceId
+        customerId     CustomerId
+        invoiceNumber  InvoiceNumber
+        lines          InvoiceLine[]
+        billingContact BillingContact
+        currency       CurrencyCode
+        paymentTerms   PaymentTerms
+        dueDate        Date
+        registeredAt   DateTime
+        registeredBy   String
+        registeredFor  TenantId
+        registeredByOn String
+        source         String
+        status         InvoiceStatus
 
       event ProFormaInvoiceIssued
         invoiceId InvoiceId
@@ -251,10 +287,20 @@ module Invoicing
           invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
         then error "An invoice must have at least one line"
 
+      // A bare 'then error' says the command is rejected without naming a reason —
+      // the reason this specification carries in its name, not in an assertion.
+      specification RejectingAnInvoiceWhoseNumberIsAlreadyTaken
+        given InvoiceRegistered
+          invoiceNumber = "INV-000123"
+        when RegisterInvoice
+          invoiceId     = "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
+          invoiceNumber = "INV-000123"
+        then error
+
     slice StateChange CancelInvoice
 
       command CancelInvoice
-        invoiceId     InvoiceId
+        invoiceId     InvoiceId identifier
         reason        String
         refund        Bool
         refundAccount BankAccount
@@ -271,6 +317,7 @@ module Invoicing
           reason      = reason
           cancelledAt = $context.occurred
           cancelledBy = $context.identity.id
+          cancelledVia = $context.causation.type
 
         produces when refund == true
           InvoiceRefundRequested
@@ -279,10 +326,11 @@ module Invoicing
             refundAccount = refundAccount
 
       event InvoiceCancelled
-        invoiceId   InvoiceId
-        reason      String
-        cancelledAt DateTime
-        cancelledBy String
+        invoiceId    InvoiceId
+        reason       String
+        cancelledAt  DateTime
+        cancelledBy  String
+        cancelledVia String
 
       event InvoiceRefundRequested
         invoiceId     InvoiceId
@@ -292,7 +340,7 @@ module Invoicing
     slice StateChange ChangeInvoiceStatus
 
       command ChangeInvoiceStatus
-        invoiceId InvoiceId
+        invoiceId InvoiceId identifier
         status    InvoiceStatus
         note      String?
 
@@ -361,7 +409,7 @@ module Invoicing
     slice StateChange ProcessInvoiceBatch
 
       command ProcessInvoiceBatch
-        batchId    Uuid
+        batchId    Uuid identifier
         invoiceIds InvoiceId[]
         action     String
 
@@ -454,7 +502,7 @@ module Invoicing
       slice StateChange WriteOffInvoice
 
         command WriteOffInvoice
-          invoiceId    InvoiceId
+          invoiceId    InvoiceId identifier
           amount       Money
           reason       String
           confirmation String
@@ -551,9 +599,14 @@ module Invoicing
 
     slice StateView InvoiceList
 
+      // A query says what it is for, where each parameter comes from, and — when it
+      // needs one — how it is performed. 'from' fills a parameter from the query
+      // context instead of the caller, so the UI never supplies the tenant.
       query ListInvoices => InvoiceListReadModel[]
+        description "Every invoice the caller may see, narrowed by status and customer"
         filter status     InvoiceStatus?
         filter customerId CustomerId?
+        filter tenantId   TenantId from $context.tenant
         authorize IsAuthenticated
 
       projection InvoiceList => InvoiceListReadModel
@@ -590,6 +643,7 @@ module Invoicing
     slice StateView InvoiceDetails
 
       query GetInvoice => InvoiceDetailsReadModel
+        description "One invoice with its lines, customer and shipping status"
         by invoiceId InvoiceId
         authorize OwnsInvoice or IsAuthenticated
 
@@ -663,8 +717,20 @@ module Invoicing
 
     slice StateView InvoiceLineReport
 
+      // The performer is the query's escape hatch, mirroring a command's handler —
+      // an inline block in a top level language, or a 'file' reference.
       query ListLineItems => InvoiceLineReportReadModel[]
+        description "Every invoice line, priced, for the accounting line report"
+        filter tenantId TenantId from $context.tenant
         authorize IsAccountant
+        performer
+          sql
+            ```
+            select   InvoiceId, LineNumber, Quantity, UnitPrice
+            from     InvoiceLineReport
+            where    TenantId = @tenantId
+            order by InvoiceId, LineNumber
+            ```
 
       projection InvoiceLineReport => InvoiceLineReportReadModel
         from InvoiceLineItemAdded
@@ -681,6 +747,7 @@ module Invoicing
       description "Archive of cancelled invoices - every property auto-maps from the event"
 
       query ListCancelledInvoices => CancelledInvoiceReadModel[]
+        description "Cancelled invoices, kept for audit"
         authorize IsAccountant
 
       // No explicit mappings needed - AutoMap is on by default and copies
@@ -691,10 +758,22 @@ module Invoicing
     slice StateView InvoiceDashboard
 
       query GetInvoiceSummary  => InvoiceSummaryReadModel
+        description "The counters behind the dashboard header"
         authorize IsAccountant
+        performer
+          file Queries/InvoiceSummaryPerformer.cs
 
       query GetOverdueInvoices => OverdueInvoicesReadModel[]
+        description "Invoices past their due date, oldest first"
         authorize IsAccountant
+        performer
+          csharp
+            ```
+            return readModels
+                .Where(invoice => invoice.Status == InvoiceStatus.Overdue)
+                .Where(invoice => invoice.TenantId == context.Tenant)
+                .OrderBy(invoice => invoice.DueDate);
+            ```
 
       projection InvoiceSummary => InvoiceSummaryReadModel
         from InvoiceRegistered
@@ -780,6 +859,7 @@ module Invoicing
     slice Automation NotifyCustomerOnInvoiceRegistered
 
       reactor NotifyCustomer
+        description "Emails the billing contact once an invoice is registered"
         on InvoiceRegistered
           file Reactors/NotifyCustomerReactor.cs
 
@@ -798,6 +878,18 @@ module Invoicing
             if (DueDate < DateTimeOffset.UtcNow)
                 return [new MarkInvoiceOverdue(InvoiceId, DateTimeOffset.UtcNow)];
             ```
+
+    slice Automation ReconcilePayments
+      description "Described before any of it is implemented - no 'file' anywhere"
+
+      // A trigger states intent on its own. The 'file' reference and the inline
+      // block are realization metadata a slice gains once it is built, never
+      // something an author must invent to make the document parse.
+      reactor PaymentReconciler
+        description "Matches settled payments against outstanding invoices and closes them out"
+        on InvoicePaid
+        on InvoiceMarkedOverdue
+          description "Re-checks whether a late payment has since arrived"
 
 seed
   for "3fa85f64-5717-4562-b3fc-2c963f66afa6"

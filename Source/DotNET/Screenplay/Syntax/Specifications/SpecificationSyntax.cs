@@ -63,8 +63,16 @@ public record SpecificationReadModelSyntax(
     SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
-/// Represents an expected rejection declared with <c>then error "&lt;message&gt;"</c>.
+/// Represents an expected rejection declared with <c>then error "&lt;message&gt;"</c>, or with a bare
+/// <c>then error</c> when the specification does not name a reason.
 /// </summary>
-/// <param name="Name">The expected rejection message.</param>
+/// <param name="Name">The expected rejection message, or <c>null</c> when the specification states only that
+/// the operation is rejected.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record SpecificationErrorSyntax(string Name, SourceLocation Location) : SyntaxNode(Location);
+/// <remarks>
+/// The two forms say different things and both are worth carrying: <c>then error "..."</c> says
+/// "rejected for this reason", a bare <c>then error</c> says "rejected, for a reason this specification
+/// does not name". Most recovered specifications are the second kind, and an empty string would read as a
+/// reason left blank rather than one never stated.
+/// </remarks>
+public record SpecificationErrorSyntax(string? Name, SourceLocation Location) : SyntaxNode(Location);

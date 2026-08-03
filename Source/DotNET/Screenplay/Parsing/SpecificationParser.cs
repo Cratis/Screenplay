@@ -134,10 +134,25 @@ internal static partial class SpecificationParser
         List<SpecificationReadModelSyntax> thenReadModels,
         List<SpecificationErrorSyntax> thenErrors)
     {
+        // A bare 'then error' states the operation is rejected without naming a reason - the reason a
+        // recovered specification usually carries in its name rather than in an assertion.
+        if (line.Content == "then error")
+        {
+            thenErrors.Add(new(null, line.Location));
+            return;
+        }
+
         var errorMatch = ThenErrorRegex().Match(line.Content);
         if (errorMatch.Success)
         {
             thenErrors.Add(new(StringLiteral.Unescape(errorMatch.Groups[1].Value), line.Location));
+            return;
+        }
+
+        if (LineText.FirstWord(line.Content["then".Length..].Trim()) == "error")
+        {
+            context.Error($"Invalid 'then error' declaration '{line.Content}' - expected 'then error' or 'then error \"<reason>\"'", line.Location);
+            context.SkipBlock(line.Indent);
             return;
         }
 
@@ -196,7 +211,7 @@ internal static partial class SpecificationParser
                 continue;
             }
 
-            values.Add(new(match.Groups[1].Value, ExpressionParser.ParseMappingSource(match.Groups[2].Value, child.Location), child.Location));
+            values.Add(new(match.Groups[1].Value, ExpressionParser.ParseMappingSource(context, match.Groups[2].Value, child.Location), child.Location));
         }
 
         return values;

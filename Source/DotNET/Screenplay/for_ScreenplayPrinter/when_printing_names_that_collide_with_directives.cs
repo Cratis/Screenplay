@@ -9,6 +9,10 @@ public class when_printing_names_that_collide_with_directives : given.a_printer
 {
     const string Source =
         """
+        concept AuthorizationCode : String
+        concept ProductionLine    : String
+        concept TagType           : String
+
         concept InvoiceStatus : Enum
           draft
           @validate
@@ -47,7 +51,7 @@ public class when_printing_names_that_collide_with_directives : given.a_printer
     [Fact] void should_preserve_the_command_properties() => Command(_roundtrip.Reparsed).Properties.Count().ShouldEqual(4);
     [Fact] void should_preserve_the_authorize_property() => Command(_roundtrip.Reparsed).Properties.Any(_ => _.Name == "authorize").ShouldBeTrue();
     [Fact] void should_preserve_the_event_tag_property() => Event(_roundtrip.Reparsed).Properties.Any(_ => _.Name == "tag").ShouldBeTrue();
-    [Fact] void should_preserve_the_enum_value() => _roundtrip.Reparsed.Value!.Concepts.Single().Values.ShouldContain("validate");
+    [Fact] void should_preserve_the_enum_value() => _roundtrip.Reparsed.Value!.Concepts.Single(_ => _.Name == "InvoiceStatus").Values.ShouldContain("validate");
 
     static CommandSyntax Command(CompilationResult<ApplicationSyntax> result) =>
         result.Value!.Modules.Single().Features.Single().Slices.Single().Commands.Single();
