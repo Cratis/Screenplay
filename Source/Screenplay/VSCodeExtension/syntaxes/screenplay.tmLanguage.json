@@ -11,6 +11,7 @@
         { "include": "#code-block-react" },
         { "include": "#code-block-typescript" },
         { "include": "#code-block-html" },
+        { "include": "#code-block-sql" },
         { "include": "#description-block" },
         { "include": "#projection-block" },
         { "include": "#capture-block" },
@@ -25,7 +26,7 @@
         "keywords": {
             "patterns": [
                 {
-                    "match": "^\\s*(domain|import|concept|policy|persona|authentication|module|layout|feature|slice|event|command|query|reactor|screen|constraint|seed)\\b",
+                    "match": "^\\s*(domain|import|concept|type|policy|persona|authentication|module|layout|feature|slice|event|command|query|reactor|screen|constraint|specification|seed)\\b",
                     "captures": {
                         "1": { "name": "keyword.control.screenplay" }
                     }
@@ -35,7 +36,7 @@
                     "name": "keyword.other.screenplay"
                 },
                 {
-                    "match": "\\b(authorize|validate|produces|handler|require|when|template|data|action|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|file|message|matches|all|max|min|length|today|not|empty|and|or|authenticated|role|claim|subject|event|query|layout|translate|key|description|concurrency|eventSource|sourceType|streamType|streamId|tag|for|readmodel|provider)\\b",
+                    "match": "\\b(authorize|validate|produces|handler|performer|identifier|reason|from|require|when|given|then|error|template|data|action|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|file|message|matches|all|max|min|length|today|not|empty|and|or|authenticated|role|claim|subject|event|query|layout|translate|key|description|concurrency|eventSource|sourceType|streamType|streamId|tag|for|readmodel|provider)\\b",
                     "name": "keyword.other.screenplay"
                 }
             ]
@@ -53,7 +54,7 @@
                     "name": "entity.other.attribute-name.screenplay"
                 },
                 {
-                    "match": "\\$(?:context|eventContext)(?:\\.\\w+)*|\\$(?:env|secrets|strings)\\.[\\w.]+|\\$\\.[\\w.]*",
+                    "match": "\\$(?:context|eventContext|eventSourceId|causedBy)(?:\\.\\w+)*|\\$(?:env|secrets|strings)\\.[\\w.]+|\\$\\.[\\w.]*",
                     "name": "variable.language.screenplay"
                 },
                 {
@@ -160,6 +161,29 @@
                     "contentName": "meta.embedded.block.typescriptreact",
                     "patterns": [
                         { "include": "source.tsx" }
+                    ]
+                }
+            ]
+        },
+        "code-block-sql": {
+            "begin": "^([ ]*)(sql)[ ]*$",
+            "beginCaptures": {
+                "2": { "name": "entity.name.tag.code-language.screenplay" }
+            },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [
+                {
+                    "begin": "^[ ]*(```)[ ]*$",
+                    "beginCaptures": {
+                        "1": { "name": "punctuation.definition.fence.screenplay" }
+                    },
+                    "end": "^[ ]*(```)[ ]*$",
+                    "endCaptures": {
+                        "1": { "name": "punctuation.definition.fence.screenplay" }
+                    },
+                    "contentName": "meta.embedded.block.sql",
+                    "patterns": [
+                        { "include": "source.sql" }
                     ]
                 }
             ]

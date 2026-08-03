@@ -18,6 +18,7 @@ export const constructKeywords = [
     'domain',
     'import',
     'concept',
+    'type',
     'policy',
     'persona',
     'authentication',
@@ -47,6 +48,10 @@ export const clauseKeywords = [
     'validate',
     'produces',
     'handler',
+    'performer',
+    'identifier',
+    'reason',
+    'from',
     'when',
     'given',
     'then',
@@ -92,7 +97,20 @@ export const clauseKeywords = [
     'provider',
 ];
 
-export const codeBlockTags = ['csharp', 'typescript', 'react', 'html'];
+export const codeBlockTags = ['csharp', 'typescript', 'react', 'html', 'sql'];
+
+// The roots a `$context.` path can start with — the members of CommandContext and QueryContext.
+export const contextRoots = [
+    'command',
+    'arguments',
+    'tenant',
+    'causedBy',
+    'causation',
+    'occurred',
+    'identity',
+];
+
+export const causedByProperties = ['subject', 'name', 'userName'];
 
 export const sliceTypes = ['StateChange', 'StateView', 'Automation', 'Translate'];
 
@@ -123,7 +141,7 @@ export const languageConfiguration: languages.LanguageConfiguration = {
     },
     indentationRules: {
         increaseIndentPattern:
-            /^\s*(module|feature|slice|policy|persona|authentication|provider|event|command|screen|projection|capture|reactor|constraint|layout|template|validate|produces|handler|section|concurrency|seed|for)\b.*$/,
+            /^\s*(module|feature|slice|policy|persona|authentication|provider|event|command|query|type|screen|projection|capture|reactor|constraint|layout|template|validate|produces|handler|performer|section|concurrency|seed|for)\b.*$/,
         // Dedents are always explicit in an offside language — never auto-dedent.
         decreaseIndentPattern: /(?!)/,
     },

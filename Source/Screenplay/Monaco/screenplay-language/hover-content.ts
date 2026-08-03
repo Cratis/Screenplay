@@ -44,7 +44,18 @@ export function hoverContent(
         const values = concept.enumValues.length
             ? `\n\nValues: ${concept.enumValues.join(', ')}`
             : '';
-        return `\`\`\`screenplay\nconcept ${concept.name} : ${concept.primitive}${attributes}\n\`\`\`${values}`;
+        const reasons = Object.entries(concept.attributeReasons)
+            .map(([attribute, reason]) => `\n\n**@${attribute}** — ${reason}`)
+            .join('');
+        return `\`\`\`screenplay\nconcept ${concept.name} : ${concept.primitive}${attributes}\n\`\`\`${reasons}${values}`;
+    }
+
+    const type = symbols.types.find((candidate) => candidate.name === word);
+    if (type) {
+        const properties = type.properties
+            .map((property) => `${property.name} ${property.type}`)
+            .join('\n');
+        return `\`\`\`screenplay\ntype ${type.name}\n${properties}\n\`\`\``;
     }
 
     const policy = symbols.policies.find((candidate) => candidate.name === word);
@@ -59,6 +70,17 @@ export function hoverContent(
             .map((property) => `${property.name} ${property.type}`)
             .join('\n');
         return `\`\`\`screenplay\nevent ${event.name}\n${properties}\n\`\`\``;
+    }
+
+    const command = symbols.commands.find((candidate) => candidate.name === word);
+    if (command && command.properties.length > 0) {
+        const properties = command.properties
+            .map(
+                (property) =>
+                    `${property.name} ${property.type}${property.isIdentifier ? ' identifier' : ''}`,
+            )
+            .join('\n');
+        return `\`\`\`screenplay\ncommand ${command.name}\n${properties}\n\`\`\``;
     }
 
     // Sub-language keywords take precedence inside their construct.

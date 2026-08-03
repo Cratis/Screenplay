@@ -88,6 +88,13 @@ const provider: vscode.CompletionItemProvider = {
                             `concept : ${concept.primitive}${concept.attributes.length ? ' ' + concept.attributes.join(' ') : ''}`,
                         ),
                     ),
+                    ...symbols.types.map((type) =>
+                        symbolItem(
+                            type.name,
+                            vscode.CompletionItemKind.Struct,
+                            `type (${type.properties.length} properties)`,
+                        ),
+                    ),
                     ...primitiveTypes.map((primitive) =>
                         symbolItem(primitive, vscode.CompletionItemKind.Struct, 'primitive'),
                     ),

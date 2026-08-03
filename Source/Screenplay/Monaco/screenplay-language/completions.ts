@@ -99,6 +99,13 @@ export function createCompletionProvider(monaco: Monaco): languages.CompletionIt
                                     `concept : ${concept.primitive}${concept.attributes.length ? ' ' + concept.attributes.join(' ') : ''}`,
                                 ),
                             ),
+                            ...symbols.types.map((type) =>
+                                symbolItem(
+                                    type.name,
+                                    kinds.Struct,
+                                    `type (${type.properties.length} properties)`,
+                                ),
+                            ),
                             ...primitiveTypes.map((primitive) =>
                                 symbolItem(primitive, kinds.Struct, 'primitive'),
                             ),
