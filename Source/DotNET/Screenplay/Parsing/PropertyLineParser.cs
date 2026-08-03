@@ -8,7 +8,8 @@ using Cratis.Screenplay.Syntax;
 namespace Cratis.Screenplay.Parsing;
 
 /// <summary>
-/// Parses property lines - a lowercase name followed by a type reference, such as <c>lines InvoiceLine[]</c>.
+/// Parses property lines - a lowercase name followed by a type reference, such as <c>lines InvoiceLine[]</c>,
+/// with the optional <c>identifier</c> modifier.
 /// </summary>
 /// <remarks>
 /// The name accepts the <c>@</c> escape, so a property can be named after a directive keyword the enclosing
@@ -29,7 +30,11 @@ internal static partial class PropertyLineParser
             return null;
         }
 
-        return new(LineText.Unescape(match.Groups[1].Value), ParseTypeRef(match.Groups[2].Value, line.Location), line.Location);
+        return new(
+            LineText.Unescape(match.Groups[1].Value),
+            ParseTypeRef(match.Groups[2].Value, line.Location),
+            line.Location,
+            match.Groups[3].Success);
     }
 
     /// <summary>
@@ -55,6 +60,6 @@ internal static partial class PropertyLineParser
         return new(text, isCollection, isOptional, location);
     }
 
-    [GeneratedRegex(@"^(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?\??)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?\??)(?:\s+(identifier))?$", RegexOptions.None, 1000)]
     private static partial Regex PropertyRegex();
 }

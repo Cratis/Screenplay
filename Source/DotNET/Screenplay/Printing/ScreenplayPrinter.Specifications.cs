@@ -48,7 +48,7 @@ public partial class ScreenplayPrinter
 
             foreach (var error in specification.ThenErrors)
             {
-                writer.Line($"then error {StringLiteral.Quote(error.Name)}");
+                writer.Line(error.Name is null ? "then error" : $"then error {StringLiteral.Quote(error.Name)}");
             }
         }
     }

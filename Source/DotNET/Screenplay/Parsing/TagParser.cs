@@ -31,7 +31,7 @@ internal static partial class TagParser
             return new(new LiteralExpressionSyntax(value, line.Location), line.Location);
         }
 
-        var expression = ExpressionParser.ParseMappingSource(value, line.Location);
+        var expression = ExpressionParser.ParseMappingSource(context, value, line.Location);
         if (expression is RawExpressionSyntax)
         {
             context.Error($"Invalid tag value '{value}' - expected an identifier, a string literal or a context expression", line.Location);

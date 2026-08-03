@@ -13,8 +13,21 @@ export const topLevelItems: CompletionEntry[] = [
     { label: 'import', insertText: 'import ${1:Module}.${2:Type}', documentation: 'Imports a type from another module by its qualified name.' },
     { label: 'concept', insertText: 'concept ${1:Name} : ${2|Uuid,String,Int,Decimal,Bool,Date,DateTime|}', documentation: 'Declares a formalized value type wrapping a primitive.' },
     { label: 'concept (enum)', insertText: 'concept ${1:Name} : Enum\n    ${2:value}', documentation: 'Declares an enumeration concept with a fixed set of values.' },
+    { label: 'concept (@pii with reason)', insertText: 'concept ${1:Name} : ${2|String,Uuid,Int,Decimal,Bool,Date,DateTime|} @pii\n    pii reason "${3:why this is personal data, its purpose and lawful basis}"', documentation: 'Declares a personal-data concept together with the reason it is personal data.' },
+    { label: 'type', insertText: 'type ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares a composite value type — a named shape built from several properties.' },
     { label: 'policy', insertText: 'policy ${1:Name}\n    require ${2:authenticated}', documentation: 'Declares a named authorization rule for commands and queries.' },
     { label: 'module', insertText: 'module ${1:Name}\n    ', documentation: 'Declares the top-level namespace — maps to a bounded context.' },
+];
+
+export const conceptItems: CompletionEntry[] = [
+    { label: 'pii reason', insertText: 'pii reason "${1:why this is personal data, its purpose and lawful basis}"', documentation: 'Records why the `@pii` marker applies — purpose, lawful basis, whose subject it lives under.' },
+    { label: 'sensitive reason', insertText: 'sensitive reason "${1:why this value is sensitive}"', documentation: 'Records why the `@sensitive` marker applies.' },
+    { label: 'validate', insertText: 'validate\n    ${1:not empty} message "${2:message}"', documentation: 'Validation rules that travel with the value everywhere it appears.' },
+];
+
+export const typeItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:what this shape represents}"', documentation: 'A human-readable description of the type.' },
+    { label: 'property', insertText: '${1:property} ${2:Type}', documentation: 'A property of the type — a name and a type reference.' },
 ];
 
 export const moduleItems: CompletionEntry[] = [
@@ -42,6 +55,7 @@ export const sliceItems: CompletionEntry[] = [
 ];
 
 export const commandItems: CompletionEntry[] = [
+    { label: 'identifier property', insertText: '${1:property} ${2:Type} identifier', documentation: 'Marks the property a runtime resolves the event source id from. At most one per command.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'References the policies that must pass for the command to execute.' },
     { label: 'validate', insertText: 'validate\n    ${1:property} not empty message "${2:message}"', documentation: 'Declarative validation rules with messages.' },
     { label: 'validate csharp', insertText: `validate ${fenced('csharp')}`, documentation: 'Imperative validation in C#, yielding ValidationError.' },
@@ -60,9 +74,18 @@ export const handlerItems: CompletionEntry[] = [
 ];
 
 export const queryItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:what this query is trying to accomplish}"', documentation: 'What the query is for, in prose — what a generator or reviewer works from.' },
     { label: 'by', insertText: 'by ${1:param} ${2:Type}', documentation: 'Declares the identifying parameter of the query.' },
-    { label: 'filter', insertText: 'filter ${1:param} ${2:Type}?', documentation: 'Declares an optional filter parameter.' },
+    { label: 'filter', insertText: 'filter ${1:param} ${2:Type}?', documentation: 'Declares an optional filter parameter supplied by the caller.' },
+    { label: 'filter from context', insertText: 'filter ${1:param} ${2:Type} from $context.${3|tenant,causedBy.subject,occurred|}', documentation: 'Declares a parameter filled from the query context instead of the caller.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'References the policies that must pass for the query to execute.' },
+    { label: 'performer', insertText: 'performer\n    ', documentation: 'The code that performs the query — a file reference or an inline csharp/sql block.' },
+];
+
+export const performerItems: CompletionEntry[] = [
+    { label: 'file', insertText: 'file ${1:Path}', documentation: 'Delegates the query implementation to an external file.' },
+    { label: 'csharp', insertText: fenced('csharp'), documentation: 'Inline C# returning the query result, with the QueryContext in scope as context.' },
+    { label: 'sql', insertText: fenced('sql'), documentation: 'Inline SQL returning the query result.' },
 ];
 
 export const constraintItems: CompletionEntry[] = [
@@ -72,12 +95,24 @@ export const constraintItems: CompletionEntry[] = [
 ];
 
 export const reactorItems: CompletionEntry[] = [
-    { label: 'on', insertText: 'on ${1:EventType}', documentation: 'Declares the event the reactor reacts to.' },
+    { label: 'description', insertText: 'description "${1:what this reactor does}"', documentation: 'What the reactor does — a complete statement of intent before any code exists.' },
+    { label: 'on', insertText: 'on ${1:EventType}', documentation: 'Declares the event the reactor reacts to. A trigger needs no body.' },
 ];
 
 export const reactorOnItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:what this reaction does}"', documentation: 'What this particular reaction does — enough on its own, with no file to point at.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Delegates the reaction to an external C# file.' },
     { label: 'csharp', insertText: fenced('csharp'), documentation: 'Inline C# returning event side effects.' },
+];
+
+export const specificationItems: CompletionEntry[] = [
+    { label: 'given', insertText: 'given ${1:EventType}\n    ${2:property} = ${3:value}', documentation: 'Establishes prior state by replaying an event before the command runs.' },
+    { label: 'given readmodel', insertText: 'given readmodel ${1:ReadModelType}\n    ${2:property} = ${3:value}', documentation: 'Establishes prior read model state directly.' },
+    { label: 'when', insertText: 'when ${1:CommandType}\n    ${2:property} = ${3:value}', documentation: 'The command being exercised.' },
+    { label: 'then', insertText: 'then ${1:EventType}\n    ${2:property} = ${3:value}', documentation: 'An event expected to be produced by the command.' },
+    { label: 'then readmodel', insertText: 'then readmodel ${1:ReadModelType}\n    ${2:property} = ${3:value}', documentation: 'The read model state expected after the command.' },
+    { label: 'then error', insertText: 'then error', documentation: 'A rejection, for a reason this specification does not name.' },
+    { label: 'then error "..."', insertText: 'then error "${1:reason}"', documentation: 'A rejection, for the named reason.' },
 ];
 
 export const policyItems: CompletionEntry[] = [
@@ -121,7 +156,14 @@ export const tableItems: CompletionEntry[] = [
 ];
 
 export const contextVariableItems: CompletionEntry[] = [
-    { label: '$context.occurred', insertText: '$context.occurred', documentation: 'Timestamp of the event.' },
+    { label: '$context.occurred', insertText: '$context.occurred', documentation: 'When the command or query was received.' },
+    { label: '$context.tenant', insertText: '$context.tenant', documentation: 'The tenant the command or query is executing for.' },
+    { label: '$context.command.', insertText: '$context.command.${1:property}', documentation: 'A property of the command being handled.' },
+    { label: '$context.arguments.', insertText: '$context.arguments.${1:name}', documentation: 'An argument of the query being performed.' },
+    { label: '$context.causedBy.subject', insertText: '$context.causedBy.subject', documentation: 'Subject of the identity that caused the command or query.' },
+    { label: '$context.causedBy.name', insertText: '$context.causedBy.name', documentation: 'Display name of the identity that caused the command or query.' },
+    { label: '$context.causedBy.userName', insertText: '$context.causedBy.userName', documentation: 'User name of the identity that caused the command or query.' },
+    { label: '$context.causation.type', insertText: '$context.causation.type', documentation: 'What caused this — a command, a reactor, a schedule.' },
     { label: '$context.identity.id', insertText: '$context.identity.id', documentation: 'Subject of the caller from the auth token.' },
     { label: '$env.', insertText: '$env.${1:VAR_NAME}', documentation: 'An environment variable.' },
     { label: '$eventContext.occurred', insertText: '$eventContext.occurred', documentation: 'Timestamp of the event being projected (PDL).' },

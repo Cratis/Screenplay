@@ -4,6 +4,7 @@
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -26,6 +27,7 @@ internal static partial class ScreenplayParser
         AuthenticationSyntax? authentication = null;
         var imports = new List<ImportSyntax>();
         var concepts = new List<ConceptSyntax>();
+        var types = new List<TypeSyntax>();
         var policies = new List<PolicySyntax>();
         var personas = new List<PersonaSyntax>();
         var modules = new List<ModuleSyntax>();
@@ -37,7 +39,7 @@ internal static partial class ScreenplayParser
             switch (LineText.FirstWord(line.Content))
             {
                 case "domain":
-                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || policies.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null);
+                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null);
                     break;
                 case "import":
                     if (ImportRegex().Match(line.Content) is { Success: true } import)
@@ -52,6 +54,9 @@ internal static partial class ScreenplayParser
                     break;
                 case "concept":
                     concepts.Add(ParseConcept(context, line));
+                    break;
+                case "type":
+                    types.Add(TypeParser.Parse(context, line));
                     break;
                 case "policy":
                     policies.Add(PolicyParser.Parse(context, line));
@@ -69,13 +74,13 @@ internal static partial class ScreenplayParser
                     seeds.Add(SeedParser.Parse(context, line));
                     break;
                 default:
-                    context.Error($"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, policy, persona, authentication, module or seed", line.Location);
+                    context.Error($"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, type, policy, persona, authentication, module or seed", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
         }
 
-        return new(imports, concepts, policies, modules, SourceLocation.Start, domain, personas, seeds, authentication);
+        return new(imports, concepts, policies, modules, SourceLocation.Start, domain, personas, seeds, authentication, types);
     }
 
     static DomainSyntax? ParseDomain(ParserContext context, SourceLine line, DomainSyntax? existing, bool hasOtherConstructs)
@@ -133,7 +138,7 @@ internal static partial class ScreenplayParser
         var type = match.Groups[2].Value;
         var attributes = match.Groups[3].Value
             .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-            .Select(_ => _.TrimStart('@'))
+            .Select(attribute => new ConceptAttributeSyntax(attribute.TrimStart('@'), line.Location))
             .ToList();
 
         if (type != "Enum" && !ConceptSyntax.PrimitiveTypes.Contains(type))
@@ -160,6 +165,10 @@ internal static partial class ScreenplayParser
                     validations.Add(validate);
                 }
             }
+            else if (AttributeReasonRegex().Match(child.Content) is { Success: true } reason)
+            {
+                ApplyAttributeReason(context, child, name, attributes, reason);
+            }
             else if (type == "Enum" && EnumValueRegex().IsMatch(child.Content))
             {
                 values.Add(LineText.Unescape(child.Content));
@@ -170,12 +179,36 @@ internal static partial class ScreenplayParser
             }
             else
             {
-                context.Error($"Unexpected '{child.Content}' in concept body - expected validate", child.Location);
+                context.Error($"Unexpected '{child.Content}' in concept body - expected validate or '<attribute> reason \"<text>\"'", child.Location);
                 context.SkipBlock(child.Indent);
             }
         }
 
         return new(name, type, attributes, values, line.Location, validations);
+    }
+
+    static void ApplyAttributeReason(
+        ParserContext context,
+        SourceLine line,
+        string concept,
+        List<ConceptAttributeSyntax> attributes,
+        Match reason)
+    {
+        var attribute = reason.Groups[1].Value;
+        var index = attributes.FindIndex(candidate => candidate.Name == attribute);
+        if (index < 0)
+        {
+            context.Error($"Concept '{concept}' declares a reason for '{attribute}' without the attribute - write 'concept {concept} : <Type> @{attribute}'", line.Location);
+            return;
+        }
+
+        if (attributes[index].Reason is not null)
+        {
+            context.Error($"Concept '{concept}' already declares a reason for '{attribute}' - at most one is allowed", line.Location);
+            return;
+        }
+
+        attributes[index] = attributes[index] with { Reason = StringLiteral.Unescape(reason.Groups[2].Value) };
     }
 
     static PersonaSyntax ParsePersona(ParserContext context, SourceLine line)
@@ -337,6 +370,9 @@ internal static partial class ScreenplayParser
 
     [GeneratedRegex(@"^@?[a-z_]\w*$", RegexOptions.None, 1000)]
     private static partial Regex EnumValueRegex();
+
+    [GeneratedRegex(@"^([a-z_]\w*)\s+reason\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.None, 1000)]
+    private static partial Regex AttributeReasonRegex();
 
     [GeneratedRegex(@"^[a-z_]\w*$", RegexOptions.None, 1000)]
     private static partial Regex SlotNameRegex();

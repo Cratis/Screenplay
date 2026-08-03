@@ -8,7 +8,7 @@ Commands are input definitions — imperative intents. A command declares its pr
 command <Name>
   [description "<text>"]
 
-  <property> <Type>[?]
+  <property> <Type>[?] [identifier]
   ...
 
   [authorize <PolicyName> [<PolicyName>]*]
@@ -60,6 +60,25 @@ command RegisterInvoice
 ````
 
 Descriptions work the same on modules, features, slices, and personas — see [Descriptions](slices.md#descriptions).
+
+## The identifier
+
+Every command that changes state changes the state of *something*. `identifier` marks which property names it:
+
+```screenplay
+command RegisterInvoice
+  invoiceId     InvoiceId identifier
+  invoiceNumber InvoiceNumber
+```
+
+A runtime such as Stage honors that property as the event source id for everything the command appends. Leave it out and the runtime generates a fresh `Uuid` instead — which is right for a command that creates something whose identity the caller does not supply:
+
+```screenplay
+command ArchiveOldInvoices
+  olderThan Date
+```
+
+**At most one property per command** may be the identifier; a second one is a compile error, because there is no sensible way to choose between them. The modifier belongs to commands only — an event never carries its own event source id (it is implicit in the event context), so `identifier` on an event property is an error too.
 
 ## Validation rules
 
@@ -149,12 +168,17 @@ produces InvoiceRegistered
 | Source | Syntax | Description |
 | --- | --- | --- |
 | Command property | `= <propertyName>` | Direct copy from command |
-| Event context | `= $context.occurred` | Timestamp of the event |
+| Command context | `= $context.occurred` | Timestamp of the command |
+| Tenant | `= $context.tenant` | The tenant the command executes for |
+| Calling identity | `= $context.causedBy.subject` | Subject of the identity that caused the command |
+| Causation | `= $context.causation.type` | What caused the command — a command, reactor, schedule |
 | Caller identity | `= $context.identity.id` | Subject from auth token |
 | Environment | `= $env.<VAR_NAME>` | Environment variable |
 | String constant | `= "value"` | Literal string |
 | Numeric constant | `= 0` | Literal number |
 | Expression | `= lines.sum(l => l.quantity * l.unitPrice)` | Computed value |
+
+Every `$context.` path names a member of the `CommandContext` an inline handler compiles against — see [Command and query context](context.md).
 
 ### Multiple unconditional events
 
@@ -221,6 +245,8 @@ handler
 ````
 
 A command uses either `produces` blocks or a `handler` — not both. Keep handler logic small; anything substantial belongs in a `file` reference where it can be tested on its own.
+
+Inside either form, `context` is the [`CommandContext`](context.md) — the command itself, the tenant, the calling identity, the causation, and when the command was received. An inline block and a `file` reference compile against exactly the same type.
 
 ## Concurrency
 

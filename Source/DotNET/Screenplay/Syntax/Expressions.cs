@@ -26,11 +26,33 @@ public record LiteralExpressionSyntax(object? Value, SourceLocation Location) : 
 public record PathExpressionSyntax(string Path, SourceLocation Location) : ExpressionSyntax(Location);
 
 /// <summary>
-/// Represents a <c>$context</c> expression, such as <c>$context.occurred</c> or <c>$context.identity.id</c>.
+/// Represents a <c>$context</c> expression, such as <c>$context.occurred</c> or <c>$context.causedBy.subject</c>.
 /// </summary>
 /// <param name="Path">The dotted path following <c>$context.</c>.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record ContextExpressionSyntax(string Path, SourceLocation Location) : ExpressionSyntax(Location);
+/// <remarks>
+/// The paths mirror the members of <see cref="Contexts.CommandContext"/> and
+/// <see cref="Contexts.QueryContext"/> - the same values a handler or performer sees in code are reachable
+/// declaratively from a mapping.
+/// </remarks>
+public record ContextExpressionSyntax(string Path, SourceLocation Location) : ExpressionSyntax(Location)
+{
+    /// <summary>
+    /// Gets the roots a <c>$context.</c> path can start with.
+    /// </summary>
+    public static readonly IEnumerable<string> KnownRoots =
+        ["command", "arguments", "tenant", "causedBy", "causation", "occurred", "identity"];
+
+    /// <summary>
+    /// Gets the roots of <see cref="CausedByExpressionSyntax"/> and <c>$context.causedBy</c> paths.
+    /// </summary>
+    public static readonly IEnumerable<string> KnownCausedByProperties = ["subject", "name", "userName"];
+
+    /// <summary>
+    /// Gets the first segment of the <see cref="Path"/>.
+    /// </summary>
+    public string Root => Path.Split('.')[0];
+}
 
 /// <summary>
 /// Represents an <c>$env</c> expression referencing an environment variable, such as <c>$env.SERVICE_NAME</c>.

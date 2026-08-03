@@ -24,13 +24,13 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_have_the_domain() => _result.Value!.Domain!.Name.ShouldEqual("Sales");
     [Fact] void should_have_all_imports() => _result.Value!.Imports.Count().ShouldEqual(4);
     [Fact] void should_have_the_customer_import() => _result.Value!.Imports.Select(_ => _.Name).ShouldContain("CustomerRegistered");
-    [Fact] void should_have_all_concepts() => _result.Value!.Concepts.Count().ShouldEqual(12);
+    [Fact] void should_have_all_concepts() => _result.Value!.Concepts.Count().ShouldEqual(14);
     [Fact] void should_have_the_enum_concept_values() => _result.Value!.Concepts.Single(_ => _.Name == "InvoiceStatus").Values.Count().ShouldEqual(5);
-    [Fact] void should_capture_pii_attributes() => _result.Value!.Concepts.Single(_ => _.Name == "EmailAddress").Attributes.ShouldContain("pii");
+    [Fact] void should_capture_pii_attributes() => _result.Value!.Concepts.Single(_ => _.Name == "EmailAddress").AttributeNames.ShouldContain("pii");
     [Fact] void should_parse_the_concept_validation_rules() => EmailConceptRules.Count().ShouldEqual(2);
     [Fact] void should_imply_the_concept_value_subject() => EmailConceptRules.All(_ => _.Property == ValidationRuleSyntax.ConceptValue).ShouldBeTrue();
     [Fact] void should_have_all_policies() => _result.Value!.Policies.Count().ShouldEqual(7);
-    [Fact] void should_have_the_sensitive_concept_attributes() => _result.Value!.Concepts.Single(_ => _.Name == "BankAccount").Attributes.ShouldContainOnly("pii", "sensitive");
+    [Fact] void should_have_the_sensitive_concept_attributes() => _result.Value!.Concepts.Single(_ => _.Name == "BankAccount").AttributeNames.ShouldContainOnly("pii", "sensitive");
     [Fact] void should_parse_the_code_based_policy() => _result.Value!.Policies.Single(_ => _.Name == "IsAdultCustomer").Code.ShouldNotBeNull();
     [Fact] void should_have_both_personas() => _result.Value!.Personas!.Count().ShouldEqual(2);
     [Fact] void should_have_the_seed_block() => _result.Value!.Seeds!.Single().Groups.Count().ShouldEqual(2);
@@ -45,12 +45,12 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_have_the_command_description() => RegisterCommand.Description.ShouldEqual("Registers a new invoice with its lines and payment terms");
     [Fact] void should_have_both_layouts() => _result.Value!.Modules.Single().Layouts.Count().ShouldEqual(2);
     [Fact] void should_have_the_master_detail_slots() => _result.Value!.Modules.Single().Layouts.First().Slots.ShouldContainOnly("sidebar", "main");
-    [Fact] void should_have_all_slices() => _feature.Slices.Count().ShouldEqual(14);
+    [Fact] void should_have_all_slices() => _feature.Slices.Count().ShouldEqual(15);
     [Fact] void should_have_the_fully_auto_mapped_projection() => Slice("CancelledInvoices").Projection!.Blocks.OfType<FromSyntax>().Single().Mappings.ShouldBeEmpty();
     [Fact] void should_have_the_nested_feature() => _feature.Features.Single().Name.ShouldEqual("Adjustments");
     [Fact] void should_have_the_nested_feature_slices() => _feature.Features.Single().Slices.Select(_ => _.Name).ShouldContainOnly("ApplyDiscount", "WriteOffInvoice");
     [Fact] void should_parse_conditional_produces() => RegisterCommand.Produces.Count(_ => _.When is not null).ShouldEqual(4);
-    [Fact] void should_parse_unconditional_produces_mappings() => RegisterCommand.Produces.First().Mappings.Count().ShouldEqual(11);
+    [Fact] void should_parse_unconditional_produces_mappings() => RegisterCommand.Produces.First().Mappings.Count().ShouldEqual(14);
     [Fact] void should_parse_the_produces_tag() => ((LiteralExpressionSyntax)RegisterCommand.Produces.First().Tags!.Single().Value).Value.ShouldEqual("audit");
     [Fact] void should_parse_the_event_tags() => RegisteredEvent.Tags!.Count().ShouldEqual(3);
     [Fact] void should_parse_the_static_event_tags() => RegisteredEvent.Tags!.Take(2).Select(_ => ((LiteralExpressionSyntax)_.Value).Value).ShouldContainOnly("invoicing", "billing");
@@ -97,7 +97,7 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_parse_the_inline_reactor_code() => Slice("DetectOverdueInvoices").Reactors.Single().Triggers.First().Code.ShouldNotBeNull();
     [Fact] void should_parse_the_multiple_reactor_triggers() => Slice("DetectOverdueInvoices").Reactors.Single().Triggers.Select(_ => _.Event).ShouldContainOnly("InvoiceRegistered", "InvoiceSent");
     [Fact] void should_parse_the_constraints() => Slice("RegisterInvoice").Constraints.Count().ShouldEqual(2);
-    [Fact] void should_parse_the_specifications() => Slice("RegisterInvoice").Specifications.Count().ShouldEqual(2);
+    [Fact] void should_parse_the_specifications() => Slice("RegisterInvoice").Specifications.Count().ShouldEqual(3);
     [Fact] void should_parse_the_given_of_the_first_specification() => FirstSpecification.Given.Single().EventType.ShouldEqual("CustomerRegistered");
     [Fact] void should_parse_the_when_of_the_first_specification() => FirstSpecification.When!.CommandType.ShouldEqual("RegisterInvoice");
     [Fact] void should_parse_the_then_of_the_first_specification() => FirstSpecification.ThenEvents.Single().EventType.ShouldEqual("InvoiceRegistered");
@@ -107,6 +107,43 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_parse_the_given_readmodel_properties() => StatusSpecification.GivenReadModels!.Single().Properties.Count().ShouldEqual(2);
     [Fact] void should_parse_the_then_readmodel_of_the_status_specification() => StatusSpecification.ThenReadModels!.Single().Name.ShouldEqual("InvoiceListReadModel");
     [Fact] void should_parse_the_then_readmodel_properties() => StatusSpecification.ThenReadModels!.Single().Properties.Single().Property.ShouldEqual("status");
+    [Fact] void should_parse_the_unnamed_rejection() => ThirdSpecification.ThenErrors.Single().Name.ShouldBeNull();
+    [Fact] void should_parse_both_composite_types() => _result.Value!.Types!.Select(_ => _.Name).ShouldContainOnly("InvoiceLine", "BillingContact");
+    [Fact] void should_parse_the_composite_type_description() => InvoiceLineType.Description.ShouldEqual("A single billed line of an invoice");
+    [Fact] void should_parse_the_composite_type_properties() => InvoiceLineType.Properties.Select(_ => _.Name).ShouldContainOnly("lineNumber", "productName", "quantity", "unitPrice", "discount");
+    [Fact] void should_parse_the_optional_composite_type_property() => InvoiceLineType.Properties.Single(_ => _.Name == "discount").Type.IsOptional.ShouldBeTrue();
+    [Fact] void should_parse_the_pii_reason() => Concept("PersonName").Attributes.Single().Reason!.Contains("lawful basis: contract performance", StringComparison.Ordinal).ShouldBeTrue();
+    [Fact] void should_parse_a_reason_per_attribute() => Concept("BankAccount").Attributes.All(_ => _.Reason is not null).ShouldBeTrue();
+    [Fact] void should_keep_the_attribute_without_a_reason_bare() => Concept("InvoiceId").Attributes.ShouldBeEmpty();
+    [Fact] void should_mark_the_command_identifier() => RegisterCommand.Properties.Single(_ => _.IsIdentifier).Name.ShouldEqual("invoiceId");
+    [Fact] void should_leave_other_command_properties_unmarked() => RegisterCommand.Properties.Count(_ => _.IsIdentifier).ShouldEqual(1);
+    [Fact] void should_parse_the_query_description() => ListInvoicesQuery.Description.ShouldEqual("Every invoice the caller may see, narrowed by status and customer");
+    [Fact] void should_parse_the_context_sourced_query_parameter() => ((ContextExpressionSyntax)ListInvoicesQuery.Filters.Single(_ => _.Name == "tenantId").Source!).Path.ShouldEqual("tenant");
+    [Fact] void should_leave_caller_supplied_query_parameters_without_a_source() => ListInvoicesQuery.Filters.Single(_ => _.Name == "status").Source.ShouldBeNull();
+    [Fact] void should_parse_the_sql_performer() => LineItemsQuery.Performer!.Code!.Language.ShouldEqual("sql");
+    [Fact] void should_parse_the_file_performer() => Query("InvoiceDashboard", "GetInvoiceSummary").Performer!.File!.Path.ShouldEqual("Queries/InvoiceSummaryPerformer.cs");
+    [Fact] void should_parse_the_csharp_performer() => Query("InvoiceDashboard", "GetOverdueInvoices").Performer!.Code!.Language.ShouldEqual("csharp");
+    [Fact] void should_parse_the_reactor_description() => Reconciler.Description.ShouldEqual("Matches settled payments against outstanding invoices and closes them out");
+    [Fact] void should_parse_a_trigger_with_no_body() => (Reconciler.Triggers.First() is { File: null, Code: null, Description: null }).ShouldBeTrue();
+    [Fact] void should_parse_a_trigger_described_without_code() => Reconciler.Triggers.Last().Description.ShouldEqual("Re-checks whether a late payment has since arrived");
+    [Fact] void should_parse_the_tenant_context_mapping() => ContextMapping("registeredFor").Path.ShouldEqual("tenant");
+    [Fact] void should_parse_the_caused_by_context_mapping() => ContextMapping("registeredByOn").Path.ShouldEqual("causedBy.subject");
+    [Fact] void should_parse_the_causation_context_mapping() => ((ContextExpressionSyntax)Slice("CancelInvoice").Commands.Single().Produces.First().Mappings.Single(_ => _.Property == "cancelledVia").Source).Path.ShouldEqual("causation.type");
+
+    ConceptSyntax Concept(string name) => _result.Value!.Concepts.Single(_ => _.Name == name);
+
+    TypeSyntax InvoiceLineType => _result.Value!.Types!.Single(_ => _.Name == "InvoiceLine");
+
+    QuerySyntax ListInvoicesQuery => Query("InvoiceList", "ListInvoices");
+
+    QuerySyntax LineItemsQuery => Query("InvoiceLineReport", "ListLineItems");
+
+    ReactorSyntax Reconciler => Slice("ReconcilePayments").Reactors.Single();
+
+    ContextExpressionSyntax ContextMapping(string property) =>
+        (ContextExpressionSyntax)RegisterCommand.Produces.First().Mappings.Single(_ => _.Property == property).Source;
+
+    QuerySyntax Query(string slice, string name) => Slice(slice).Queries.Single(_ => _.Name == name);
 
     IEnumerable<ValidationRuleSyntax> EmailConceptRules => _result.Value!.Concepts.Single(_ => _.Name == "EmailAddress")
         .Validations!.OfType<DeclarativeValidateSyntax>().Single().Rules;
@@ -117,7 +154,9 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
 
     SpecificationSyntax FirstSpecification => Slice("RegisterInvoice").Specifications.First();
 
-    SpecificationSyntax SecondSpecification => Slice("RegisterInvoice").Specifications.Last();
+    SpecificationSyntax SecondSpecification => Slice("RegisterInvoice").Specifications.ElementAt(1);
+
+    SpecificationSyntax ThirdSpecification => Slice("RegisterInvoice").Specifications.Last();
 
     SpecificationSyntax StatusSpecification => Slice("ChangeInvoiceStatus").Specifications.Single();
 

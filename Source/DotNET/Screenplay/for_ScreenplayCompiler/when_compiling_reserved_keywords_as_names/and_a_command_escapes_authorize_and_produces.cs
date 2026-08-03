@@ -9,6 +9,9 @@ public class and_a_command_escapes_authorize_and_produces : given.a_compiler
 {
     const string Source =
         """
+        concept AuthorizationCode : String
+        concept ProductionLine    : String
+
         module Invoicing
           feature InvoiceManagement
             slice StateChange RegisterInvoice

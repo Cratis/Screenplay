@@ -9,6 +9,11 @@ namespace Cratis.Screenplay.Parsing;
 /// <summary>
 /// Parses <c>reactor</c> declarations with their event triggers.
 /// </summary>
+/// <remarks>
+/// A trigger states intent on its own - <c>on &lt;EventType&gt;</c> with no body says the reactor observes
+/// that event. A <c>file</c> reference or an inline code block is realization metadata a slice gains once
+/// it is implemented, never something the author must invent to make the document parse.
+/// </remarks>
 internal static partial class ReactorParser
 {
     /// <summary>
@@ -26,9 +31,17 @@ internal static partial class ReactorParser
         }
 
         var triggers = new List<ReactorTriggerSyntax>();
+        string? description = null;
+
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
+            if (LineText.FirstWord(line.Content) == "description")
+            {
+                description = DescriptionParser.Parse(context, line, description, $"Reactor '{name.Groups[1].Value}'");
+                continue;
+            }
+
             var trigger = OnRegex().Match(line.Content);
             if (!trigger.Success)
             {
@@ -37,8 +50,7 @@ internal static partial class ReactorParser
                 continue;
             }
 
-            var (file, code) = ParseBody(context, line);
-            triggers.Add(new(trigger.Groups[1].Value, file, code, line.Location));
+            triggers.Add(ParseTrigger(context, line, trigger.Groups[1].Value));
         }
 
         if (triggers.Count == 0)
@@ -46,38 +58,38 @@ internal static partial class ReactorParser
             context.Error($"Reactor '{name.Groups[1].Value}' must declare at least one 'on <EventType>' trigger", header.Location);
         }
 
-        return new(name.Groups[1].Value, triggers, header.Location);
+        return new(name.Groups[1].Value, triggers, header.Location, description);
     }
 
-    static (FileReferenceSyntax? File, CodeBlockSyntax? Code) ParseBody(ParserContext context, SourceLine trigger)
+    static ReactorTriggerSyntax ParseTrigger(ParserContext context, SourceLine line, string @event)
     {
         FileReferenceSyntax? file = null;
         CodeBlockSyntax? code = null;
+        string? description = null;
 
-        while (context.TryPeekChild(trigger.Indent, out var line))
+        while (context.TryPeekChild(line.Indent, out var body))
         {
             context.Reader.TakeSignificant();
-            if (LineText.FirstWord(line.Content) == "file")
+            if (LineText.FirstWord(body.Content) == "description")
             {
-                file = new(line.Content["file".Length..].Trim(), line.Location);
+                description = DescriptionParser.Parse(context, body, description, $"Trigger 'on {@event}'");
             }
-            else if (CodeBlockParser.Languages.Contains(line.Content))
+            else if (LineText.FirstWord(body.Content) == "file")
             {
-                code = CodeBlockParser.Parse(context, line.Content, line);
+                file = new(body.Content["file".Length..].Trim(), body.Location);
+            }
+            else if (CodeBlockParser.Languages.Contains(body.Content))
+            {
+                code = CodeBlockParser.Parse(context, body.Content, body);
             }
             else
             {
-                context.Error($"Unexpected '{line.Content}' in reactor trigger - expected 'file <path>' or an inline code block", line.Location);
-                context.SkipBlock(line.Indent);
+                context.Error($"Unexpected '{body.Content}' in reactor trigger - expected description, 'file <path>' or an inline code block", body.Location);
+                context.SkipBlock(body.Indent);
             }
         }
 
-        if (file is null && code is null)
-        {
-            context.Error("Reactor trigger must have a 'file' directive or an inline code block", trigger.Location);
-        }
-
-        return (file, code);
+        return new(@event, file, code, line.Location, description);
     }
 
     [GeneratedRegex(@"^reactor\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
