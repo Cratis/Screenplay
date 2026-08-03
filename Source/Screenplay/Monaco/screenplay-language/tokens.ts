@@ -17,6 +17,7 @@ const embeddedLanguages: Record<string, string> = {
     typescript: 'typescript',
     react: 'typescript',
     html: 'html',
+    sql: 'sql',
 };
 
 function subLanguageState(keyword: string): string {
