@@ -37,6 +37,11 @@ concept EmailAddress : String @pii
   validate
     not empty          message "Email is required"
     matches "^.+@.+$"  message "Must be a valid email address"
+    rule BeFromAnAllowedDomain message "Email domain is not allowed"
+      csharp
+        ```
+        return !Value.EndsWith("@example.com", StringComparison.OrdinalIgnoreCase);
+        ```
 
 concept DiscountPercentage : Decimal
   validate
@@ -171,6 +176,7 @@ module Invoicing
           currency length == 3                     message "Currency must be a 3-letter ISO code"
           dueDate > today                          message "Due date must be in the future"
           invoiceNumber rule BeUnusedInvoiceNumber message "Invoice number is already in use"
+            file Validations/BeUnusedInvoiceNumber.cs
 
         validate csharp
           ```
