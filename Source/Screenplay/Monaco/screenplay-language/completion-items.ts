@@ -115,6 +115,11 @@ export const specificationItems: CompletionEntry[] = [
     { label: 'then error "..."', insertText: 'then error "${1:reason}"', documentation: 'A rejection, for the named reason.' },
 ];
 
+export const ruleItems: CompletionEntry[] = [
+    { label: 'file', insertText: 'file ${1:Path}', documentation: 'Gives the named predicate its implementation in an external C# file.' },
+    { label: 'csharp', insertText: fenced('csharp'), documentation: 'Gives the named predicate its implementation as inline C# returning a bool.' },
+];
+
 export const policyItems: CompletionEntry[] = [
     { label: 'require authenticated', insertText: 'require authenticated', documentation: 'Requires an authenticated caller.' },
     { label: 'require role', insertText: 'require role "${1:role}"', documentation: 'Requires the caller to have a role.' },
@@ -127,7 +132,7 @@ export const validateItems: CompletionEntry[] = [
     { label: 'max', insertText: '${1:property} max ${2:500} message "${3:message}"', documentation: 'Maximum length or value.' },
     { label: 'min', insertText: '${1:property} min ${2:1} message "${3:message}"', documentation: 'Minimum length or value.' },
     { label: 'matches', insertText: '${1:property} matches "${2:pattern}" message "${3:message}"', documentation: 'The property must match a regular expression.' },
-    { label: 'rule', insertText: '${1:property} rule ${2:PredicateName} message "${3:message}"', documentation: 'Names a predicate whose logic lives in code — states that a constraint exists without expressing it.' },
+    { label: 'rule', insertText: '${1:property} rule ${2:PredicateName} message "${3:message}"', documentation: 'Names a predicate — optionally followed by an indented `file` reference or inline `csharp` block giving it a body; bare, it just states that a constraint exists.' },
     { label: 'length ==', insertText: '${1:property} length == ${2:3} message "${3:message}"', documentation: 'The property must have an exact length.' },
     { label: 'all >', insertText: '${1:collection}.${2:property} all > ${3:0} message "${4:message}"', documentation: 'Every element of a collection must satisfy the comparison.' },
 ];

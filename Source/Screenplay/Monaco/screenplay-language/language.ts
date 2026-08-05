@@ -142,7 +142,7 @@ export const languageConfiguration: languages.LanguageConfiguration = {
     },
     indentationRules: {
         increaseIndentPattern:
-            /^\s*(module|feature|slice|policy|persona|authentication|provider|event|command|query|type|screen|projection|capture|reactor|constraint|layout|template|validate|produces|handler|performer|section|concurrency|seed|for)\b.*$/,
+            /^\s*(module|feature|slice|policy|persona|authentication|provider|event|command|query|type|screen|projection|capture|reactor|constraint|layout|template|validate|produces|handler|performer|rule|section|concurrency|seed|for)\b.*$/,
         // Dedents are always explicit in an offside language — never auto-dedent.
         decreaseIndentPattern: /(?!)/,
     },
