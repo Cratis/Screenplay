@@ -37,7 +37,8 @@ ConceptValidate = "validate", NL,
                    INDENT, { ConceptRule }, DEDENT
                | "validate", "csharp", NL, InlineBlock ;
 
-ConceptRule    = RuleOp, [ "message", LocalizableString ], NL ;
+ConceptRule    = RuleOp, [ "message", LocalizableString ], NL,
+                   [ INDENT, RuleImplementation, DEDENT ] ;
 
 PrimitiveType  = "Uuid" | "String" | "Int" | "Decimal" | "Bool"
                | "Date" | "DateTime" ;
@@ -196,7 +197,8 @@ ValidateDecl   = "validate", NL,
                    INDENT, { ValidationRule }, DEDENT
                | "validate", "csharp", NL, InlineBlock ;
 
-ValidationRule = Ident, RuleOp, [ "message", LocalizableString ], NL ;
+ValidationRule = Ident, RuleOp, [ "message", LocalizableString ], NL,
+                   [ INDENT, RuleImplementation, DEDENT ] ;
 
 RuleOp         = "not empty"
                | "max", Number
@@ -211,6 +213,11 @@ RuleOp         = "not empty"
                | "all", ">", Value
                | "all", ">=", Value
                | "rule", Ident ;
+
+(* RuleImplementation is only meaningful after "rule", Ident - the other RuleOp
+   forms are already fully declarative and take no implementation body. *)
+RuleImplementation = FileDirective
+                    | InlineBlock ;
 
 Value          = Number | StringLiteral | "today" | "true" | "false" ;
 

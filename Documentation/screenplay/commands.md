@@ -122,6 +122,27 @@ validate
 
 The name is a reference into the implementation, not a declared construct — nothing resolves it, and the compiler does not check that anything called `BeAValidOrganizationNumber` exists. It is there so the document is honest about how constrained a value is, and so a reader has something more useful than "a rule was omitted".
 
+### Giving a named rule a body
+
+A bare `rule <Name>` states that a constraint exists without saying what it computes — sometimes that is genuinely all a document can say, because the logic lives somewhere the compiler cannot see. When the logic *can* live in the document, give the rule a body the same way every other construct that needs exact details does: a `file` reference or an inline code block, indented under the rule:
+
+```screenplay
+validate
+  orgNumber rule BeAValidOrganizationNumber message "Must be a valid organization number"
+    file Validations/BeAValidOrganizationNumber.cs
+```
+
+````screenplay
+validate
+  orgNumber rule BeAValidOrganizationNumber message "Must be a valid organization number"
+    csharp
+      ```
+      return OrgNumber.Length == 9 && OrgNumber.All(char.IsDigit);
+      ```
+````
+
+Both forms are optional and mutually exclusive with each other — a rule with neither stays the bare, undetermined-location form from above. The `file`/`csharp` shapes and their compiled representation (`FileReferenceSyntax` / `CodeBlockSyntax`) are exactly the ones used by [`handler`](#the-handler-block) and [reactors](reactors.md), so a reader who knows one already knows the other. The same body is available on a concept's own `rule <Name>` (see [Concepts](concepts.md#validation)) — the implementation travels with the value everywhere it appears.
+
 Cross-field or complex rules drop into C#:
 
 ````screenplay
