@@ -36,7 +36,8 @@ internal static partial class ValidationRuleParser
             return null;
         }
 
-        return new(property, kind.Value, value, message, line.Location);
+        var (file, code) = kind == ValidationRuleKind.Rule ? ParseImplementation(context, line) : (null, null);
+        return new(property, kind.Value, value, message, line.Location, file, code);
     }
 
     /// <summary>
@@ -55,7 +56,8 @@ internal static partial class ValidationRuleParser
             return null;
         }
 
-        return new(ValidationRuleSyntax.ConceptValue, kind.Value, value, message, line.Location);
+        var (file, code) = kind == ValidationRuleKind.Rule ? ParseImplementation(context, line) : (null, null);
+        return new(ValidationRuleSyntax.ConceptValue, kind.Value, value, message, line.Location, file, code);
     }
 
     static (string Content, string? Message) SplitMessage(string content)
@@ -136,6 +138,37 @@ internal static partial class ValidationRuleParser
         }
 
         return (ValidationRuleKind.Rule, new PathExpressionSyntax(name, line.Location));
+    }
+
+    /// <summary>
+    /// Parses the optional nested implementation of a <c>rule &lt;Name&gt;</c> - a <c>file</c> reference or an
+    /// inline code block giving the named predicate a body the document carries, instead of leaving its logic
+    /// entirely outside the document.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <param name="ruleLine">The consumed <see cref="SourceLine"/> holding the rule.</param>
+    /// <returns>The <see cref="FileReferenceSyntax"/> or <see cref="CodeBlockSyntax"/> found, or both <c>null</c> when the rule stays a bare name.</returns>
+    static (FileReferenceSyntax? File, CodeBlockSyntax? Code) ParseImplementation(ParserContext context, SourceLine ruleLine)
+    {
+        if (!context.TryPeekChild(ruleLine.Indent, out var body))
+        {
+            return (null, null);
+        }
+
+        context.Reader.TakeSignificant();
+        if (LineText.FirstWord(body.Content) == "file")
+        {
+            return (new(body.Content["file".Length..].Trim(), body.Location), null);
+        }
+
+        if (CodeBlockParser.Languages.Contains(body.Content))
+        {
+            return (null, CodeBlockParser.Parse(context, body.Content, body));
+        }
+
+        context.Error($"Unexpected '{body.Content}' in rule implementation - expected 'file <path>' or an inline code block", body.Location);
+        context.SkipBlock(body.Indent);
+        return (null, null);
     }
 
     [GeneratedRegex("\\bmessage\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
