@@ -49,3 +49,25 @@ export function enclosingChain(
     }
     return chain;
 }
+
+// Returns the full trimmed text of the nearest enclosing block opener above a
+// position — the same line enclosingChain's first entry is derived from, but kept
+// whole rather than reduced to its first word. Used where the construct is not
+// identified by a fixed leading keyword, such as a validation rule line, whose
+// first word is the property it applies to rather than "rule".
+export function nearestEnclosingLine(
+    lines: string[],
+    fences: boolean[],
+    lineIndex: number,
+    indent: number,
+): string | undefined {
+    for (let index = lineIndex - 1; index >= 0 && indent > 0; index--) {
+        if (fences[index]) continue;
+        const line = lines[index];
+        if (line.trim().length === 0) continue;
+        if (indentOf(line) < indent) {
+            return line.trim();
+        }
+    }
+    return undefined;
+}

@@ -226,6 +226,7 @@ internal static partial class ScreenplaySyntaxText
             ValidationRuleKind.Matches => $"matches {value}",
             ValidationRuleKind.AllGreaterThan => $"all > {value}",
             ValidationRuleKind.AllGreaterThanOrEqual => $"all >= {value}",
+            ValidationRuleKind.Rule => $"rule {value}",
             _ => value
         };
     }
