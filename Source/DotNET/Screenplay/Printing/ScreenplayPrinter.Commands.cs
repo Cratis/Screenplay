@@ -229,6 +229,7 @@ public partial class ScreenplayPrinter
                     foreach (var rule in declarative.Rules)
                     {
                         writer.Line(impliedSubject ? ScreenplaySyntaxText.ImpliedSubjectValidationRule(rule) : ScreenplaySyntaxText.ValidationRule(rule));
+                        WriteRuleImplementation(writer, rule);
                     }
                 }
 
@@ -241,6 +242,27 @@ public partial class ScreenplayPrinter
                 }
 
                 break;
+        }
+    }
+
+    void WriteRuleImplementation(ScreenplayWriter writer, ValidationRuleSyntax rule)
+    {
+        if (rule.File is null && rule.Code is null)
+        {
+            return;
+        }
+
+        using (writer.Indent())
+        {
+            if (rule.File is not null)
+            {
+                writer.Line($"file {rule.File.Path}");
+            }
+
+            if (rule.Code is not null)
+            {
+                WriteCodeBlock(writer, rule.Code);
+            }
         }
     }
 
