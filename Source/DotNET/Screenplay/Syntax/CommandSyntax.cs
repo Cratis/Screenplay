@@ -68,7 +68,12 @@ public enum ValidationRuleKind
     /// <summary>
     /// Every element of a collection must be greater than or equal to the operand.
     /// </summary>
-    AllGreaterThanOrEqual = 11
+    AllGreaterThanOrEqual = 11,
+
+    /// <summary>
+    /// The value must satisfy a named predicate whose logic lives outside the document.
+    /// </summary>
+    Rule = 12
 }
 
 /// <summary>
@@ -173,12 +178,16 @@ public record CodeValidateSyntax(CodeBlockSyntax Code, SourceLocation Location) 
 /// <param name="Value">The operand of the rule when it takes one, such as the limit of <c>max</c> or the value compared against.</param>
 /// <param name="Message">The optional message shown when the rule fails.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <param name="File">The <see cref="FileReferenceSyntax"/> when a <see cref="ValidationRuleKind.Rule"/> predicate's implementation lives in an external file.</param>
+/// <param name="Code">The <see cref="CodeBlockSyntax"/> when a <see cref="ValidationRuleKind.Rule"/> predicate's implementation is declared inline.</param>
 public record ValidationRuleSyntax(
     string Property,
     ValidationRuleKind Rule,
     ExpressionSyntax? Value,
     string? Message,
-    SourceLocation Location) : SyntaxNode(Location)
+    SourceLocation Location,
+    FileReferenceSyntax? File = null,
+    CodeBlockSyntax? Code = null) : SyntaxNode(Location)
 {
     /// <summary>
     /// The well known <see cref="Property"/> subject of rules declared on a concept, where the concept's

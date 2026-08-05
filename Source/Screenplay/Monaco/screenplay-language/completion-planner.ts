@@ -1,10 +1,17 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { enclosingChain, fenceMap, indentOf } from './document-context';
+import { enclosingChain, fenceMap, indentOf, nearestEnclosingLine } from './document-context';
 import { getSubLanguage } from './sub-language-registry';
 import * as items from './completion-items';
 import { CompletionEntry } from './completion-items';
+
+// Matches a validation rule line ending in "rule <Name>" (optionally followed by a
+// message clause) - both the command form ("<property> rule <Name>") and the
+// concept implied-subject form ("rule <Name>"). Its first word is the property
+// name, not "rule", so it can't be recognized through the chain[0] keyword switch
+// the way "on <EventType>" or "handler" are - hence the dedicated regex check.
+const RULE_LINE_PATTERN = /(?:^|\s)rule\s+[A-Za-z_]\w*(?:\s+message\s+.*)?$/;
 
 export type CompletionPlan =
     | { kind: 'none' }
@@ -116,6 +123,11 @@ export function planCompletions(
     }
     if (chain[0] === 'query' && /^\s+(?:by|filter)\s+[a-z_]\w*\s+[\w[\]?]*$/.test(textBefore)) {
         return { kind: 'types' };
+    }
+
+    const enclosingLine = nearestEnclosingLine(lines, fences, lineIndex, effectiveIndent);
+    if (enclosingLine && RULE_LINE_PATTERN.test(enclosingLine)) {
+        return { kind: 'entries', entries: items.ruleItems };
     }
 
     return { kind: 'entries', entries: completionEntriesFor(chain) };

@@ -96,6 +96,7 @@ Declarative validation covers the common cases without code:
 | `matches <regex>` | `email matches email` |
 | `matches "<pattern>"` | `invoiceNumber matches "^INV-[0-9]{6}$"` |
 | `all > <value>` (on collection) | `lines.quantity all > 0` |
+| `rule <Name>` | `orgNumber rule BeAValidOrganizationNumber` |
 
 Every rule carries a `message` shown when it fails:
 
@@ -105,6 +106,42 @@ validate
   invoiceNumber matches "^INV-[0-9]{6}$"  message "Invoice number must match INV-000000"
   dueDate > today                          message "Due date must be in the future"
 ```
+
+### Rules whose logic is not expressible
+
+Not every rule is a comparison. A predicate — "is this a valid organization number", "is this still available" — has logic that lives in code, and the declarative shapes above cannot express it.
+
+Leaving it out is the worst option, because it makes the document lie: a property with two declarative rules and three predicates reads as a property with two rules, and a reader cannot tell "nothing further constrains this" from "the rest could not be written down". Name the rule instead:
+
+```screenplay
+validate
+  orgNumber not empty                       message "Organization number is required"
+  orgNumber rule BeAValidOrganizationNumber message "Must be a valid organization number"
+  orgNumber rule BeUnique
+```
+
+The name is a reference into the implementation, not a declared construct — nothing resolves it, and the compiler does not check that anything called `BeAValidOrganizationNumber` exists. It is there so the document is honest about how constrained a value is, and so a reader has something more useful than "a rule was omitted".
+
+### Giving a named rule a body
+
+A bare `rule <Name>` states that a constraint exists without saying what it computes — sometimes that is genuinely all a document can say, because the logic lives somewhere the compiler cannot see. When the logic *can* live in the document, give the rule a body the same way every other construct that needs exact details does: a `file` reference or an inline code block, indented under the rule:
+
+```screenplay
+validate
+  orgNumber rule BeAValidOrganizationNumber message "Must be a valid organization number"
+    file Validations/BeAValidOrganizationNumber.cs
+```
+
+````screenplay
+validate
+  orgNumber rule BeAValidOrganizationNumber message "Must be a valid organization number"
+    csharp
+      ```
+      return OrgNumber.Length == 9 && OrgNumber.All(char.IsDigit);
+      ```
+````
+
+Both forms are optional and mutually exclusive with each other — a rule with neither stays the bare, undetermined-location form from above. The `file`/`csharp` shapes and their compiled representation (`FileReferenceSyntax` / `CodeBlockSyntax`) are exactly the ones used by [`handler`](#the-handler-block) and [reactors](reactors.md), so a reader who knows one already knows the other. The same body is available on a concept's own `rule <Name>` (see [Concepts](concepts.md#validation)) — the implementation travels with the value everywhere it appears.
 
 Cross-field or complex rules drop into C#:
 

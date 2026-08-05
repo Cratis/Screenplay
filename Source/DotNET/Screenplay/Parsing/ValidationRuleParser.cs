@@ -36,7 +36,8 @@ internal static partial class ValidationRuleParser
             return null;
         }
 
-        return new(property, kind.Value, value, message, line.Location);
+        var (file, code) = kind == ValidationRuleKind.Rule ? ParseImplementation(context, line) : (null, null);
+        return new(property, kind.Value, value, message, line.Location, file, code);
     }
 
     /// <summary>
@@ -55,7 +56,8 @@ internal static partial class ValidationRuleParser
             return null;
         }
 
-        return new(ValidationRuleSyntax.ConceptValue, kind.Value, value, message, line.Location);
+        var (file, code) = kind == ValidationRuleKind.Rule ? ParseImplementation(context, line) : (null, null);
+        return new(ValidationRuleSyntax.ConceptValue, kind.Value, value, message, line.Location, file, code);
     }
 
     static (string Content, string? Message) SplitMessage(string content)
@@ -84,6 +86,11 @@ internal static partial class ValidationRuleParser
             return (null, null);
         }
 
+        if (operand.Groups[1].Value == "rule")
+        {
+            return ParseNamedRule(context, operand.Groups[2].Value.Trim(), line);
+        }
+
         var value = ExpressionParser.ParseMappingSource(context, operand.Groups[2].Value, line.Location);
         ValidationRuleKind? kind = operand.Groups[1].Value switch
         {
@@ -110,12 +117,69 @@ internal static partial class ValidationRuleParser
         return (kind, value);
     }
 
+    /// <summary>
+    /// Parses a <c>rule &lt;Name&gt;</c> - a named predicate whose logic the document does not express.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <param name="name">The predicate name.</param>
+    /// <param name="line">The <see cref="SourceLine"/> the rule came from.</param>
+    /// <returns>The rule kind and the name, or <c>null</c> when the name is not an identifier.</returns>
+    /// <remarks>
+    /// The name is a reference into the implementation, not a declared entity - nothing resolves it. It is
+    /// there so a reader can tell that a constraint exists and what it is called, rather than seeing a
+    /// property that appears to carry no further rules.
+    /// </remarks>
+    static (ValidationRuleKind? Kind, ExpressionSyntax? Value) ParseNamedRule(ParserContext context, string name, SourceLine line)
+    {
+        if (!NameRegex().IsMatch(name))
+        {
+            context.Error($"Invalid rule name '{name}' in '{line.Content}' - expected 'rule <Name>' with an identifier", line.Location);
+            return (null, null);
+        }
+
+        return (ValidationRuleKind.Rule, new PathExpressionSyntax(name, line.Location));
+    }
+
+    /// <summary>
+    /// Parses the optional nested implementation of a <c>rule &lt;Name&gt;</c> - a <c>file</c> reference or an
+    /// inline code block giving the named predicate a body the document carries, instead of leaving its logic
+    /// entirely outside the document.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <param name="ruleLine">The consumed <see cref="SourceLine"/> holding the rule.</param>
+    /// <returns>The <see cref="FileReferenceSyntax"/> or <see cref="CodeBlockSyntax"/> found, or both <c>null</c> when the rule stays a bare name.</returns>
+    static (FileReferenceSyntax? File, CodeBlockSyntax? Code) ParseImplementation(ParserContext context, SourceLine ruleLine)
+    {
+        if (!context.TryPeekChild(ruleLine.Indent, out var body))
+        {
+            return (null, null);
+        }
+
+        context.Reader.TakeSignificant();
+        if (LineText.FirstWord(body.Content) == "file")
+        {
+            return (new(body.Content["file".Length..].Trim(), body.Location), null);
+        }
+
+        if (CodeBlockParser.Languages.Contains(body.Content))
+        {
+            return (null, CodeBlockParser.Parse(context, body.Content, body));
+        }
+
+        context.Error($"Unexpected '{body.Content}' in rule implementation - expected 'file <path>' or an inline code block", body.Location);
+        context.SkipBlock(body.Indent);
+        return (null, null);
+    }
+
     [GeneratedRegex("\\bmessage\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
     private static partial Regex MessageRegex();
 
     [GeneratedRegex(@"^([\w.]+)\s+(.+)$", RegexOptions.None, 1000)]
     private static partial Regex RuleRegex();
 
-    [GeneratedRegex(@"^(not empty|length ==|all >=|all >|matches|max|min|>=|<=|==|>|<)\s*(.*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(not empty|length ==|all >=|all >|matches|max|min|rule|>=|<=|==|>|<)\s*(.*)$", RegexOptions.None, 1000)]
     private static partial Regex OperandRegex();
+
+    [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.None, 1000)]
+    private static partial Regex NameRegex();
 }
