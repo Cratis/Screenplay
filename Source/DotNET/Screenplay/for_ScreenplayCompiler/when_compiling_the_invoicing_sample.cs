@@ -27,8 +27,9 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_have_all_concepts() => _result.Value!.Concepts.Count().ShouldEqual(14);
     [Fact] void should_have_the_enum_concept_values() => _result.Value!.Concepts.Single(_ => _.Name == "InvoiceStatus").Values.Count().ShouldEqual(5);
     [Fact] void should_capture_pii_attributes() => _result.Value!.Concepts.Single(_ => _.Name == "EmailAddress").AttributeNames.ShouldContain("pii");
-    [Fact] void should_parse_the_concept_validation_rules() => EmailConceptRules.Count().ShouldEqual(2);
+    [Fact] void should_parse_the_concept_validation_rules() => EmailConceptRules.Count().ShouldEqual(3);
     [Fact] void should_imply_the_concept_value_subject() => EmailConceptRules.All(_ => _.Property == ValidationRuleSyntax.ConceptValue).ShouldBeTrue();
+    [Fact] void should_parse_the_concept_rule_inline_code() => EmailConceptRules.Single(_ => _.Rule == ValidationRuleKind.Rule).Code!.Code.ShouldContain("EndsWith");
     [Fact] void should_have_all_policies() => _result.Value!.Policies.Count().ShouldEqual(7);
     [Fact] void should_have_the_sensitive_concept_attributes() => _result.Value!.Concepts.Single(_ => _.Name == "BankAccount").AttributeNames.ShouldContainOnly("pii", "sensitive");
     [Fact] void should_parse_the_code_based_policy() => _result.Value!.Policies.Single(_ => _.Name == "IsAdultCustomer").Code.ShouldNotBeNull();
@@ -57,6 +58,8 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_parse_the_dynamic_event_tag() => ((ContextExpressionSyntax)RegisteredEvent.Tags!.Last().Value).Path.ShouldEqual("identity.id");
     [Fact] void should_parse_the_named_predicate_rule() => RegisterCommand.Validations.OfType<DeclarativeValidateSyntax>().Single().Rules.Count(_ => _.Rule == ValidationRuleKind.Rule).ShouldEqual(1);
     [Fact] void should_parse_the_validation_rules() => RegisterCommand.Validations.OfType<DeclarativeValidateSyntax>().Single().Rules.Count().ShouldEqual(8);
+    [Fact] void should_parse_the_rule_file_reference() => RegisterCommand.Validations.OfType<DeclarativeValidateSyntax>().Single().Rules
+        .Single(_ => _.Rule == ValidationRuleKind.Rule).File!.Path.ShouldEqual("Validations/BeUnusedInvoiceNumber.cs");
     [Fact] void should_parse_the_code_validation() => RegisterCommand.Validations.OfType<CodeValidateSyntax>().Count().ShouldEqual(1);
     [Fact] void should_parse_the_authorize_policies() => RegisterCommand.Authorize!.Policies.Select(_ => _.Name).ShouldContainOnly("CanManageInvoice", "IsAdultCustomer");
     [Fact] void should_parse_the_concurrency_event_source() => RegisterCommand.Concurrency!.EventSource.ShouldBeTrue();
