@@ -50,6 +50,7 @@ Two details make the guarantee hold for values you did not type yourself:
 
 - **Strings are escaped.** A description, message, label or tag holding a `"` or a `\` prints with the backslash escapes described in [the grammar](grammar.md#string-escapes), and compiling that text gives the original value back. You never have to strip quotes out of a value before handing it to the printer.
 - **Numbers are culture-invariant.** Every numeric literal - `decimal`, `float`, `int`, `long` or `double` - prints with a `.` decimal separator regardless of `CurrentCulture`, so output produced on a machine set to `nb-NO` compiles anywhere.
+- **Grouping is written out.** A [policy condition](policies.md) combines strictly left to right, so the printer adds the parentheses a grouped condition needs to compile back to the same condition. You build the tree you mean and the text follows - there is no flag to remember to set.
 
 ## Generating from a model
 
