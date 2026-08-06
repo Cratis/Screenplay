@@ -40,7 +40,8 @@ concept EmailAddress : String @pii
     rule BeFromAnAllowedDomain message "Email domain is not allowed"
       csharp
         ```
-        return !Value.EndsWith("@example.com", StringComparison.OrdinalIgnoreCase);
+        string email = context.Value;
+        return !email.EndsWith("@example.com", StringComparison.OrdinalIgnoreCase);
         ```
 
 concept DiscountPercentage : Decimal
@@ -98,11 +99,8 @@ policy CanWriteOff
 policy IsAdultCustomer
   csharp
     ```
-    var dob = context.User.FindFirst("dateOfBirth")?.Value;
-    if (dob is null) return PolicyResult.Fail("Date of birth claim missing");
-    return DateTime.Parse(dob) <= DateTime.UtcNow.AddYears(-18)
-        ? PolicyResult.Success()
-        : PolicyResult.Fail("Customer must be 18 or older");
+    var dateOfBirth = context.Identity.ClaimValue("dateOfBirth");
+    return dateOfBirth is not null && DateTime.Parse(dateOfBirth) <= DateTime.UtcNow.AddYears(-18);
     ```
 
 persona Accountant
@@ -180,9 +178,10 @@ module Invoicing
 
         validate csharp
           ```
-          var total = Lines.Sum(l => l.Quantity * l.UnitPrice);
-          if (total > 1_000_000 && PaymentTerms == PaymentTerms.Immediate)
-              yield ValidationError("Invoices over 1,000,000 cannot require immediate payment");
+          if (context.Artifact.paymentTerms == "immediate" && context.Artifact.total > 1_000_000)
+          {
+              yield return "Invoices over 1,000,000 cannot require immediate payment";
+          }
           ```
 
         // Everything the command context carries is reachable from a mapping —
