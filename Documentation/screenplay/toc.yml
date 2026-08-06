@@ -58,6 +58,10 @@
   href: diagnostics.md
 - name: Printing and generating
   href: printing.md
+- name: Visitors and traversal
+  href: visitors.md
+- name: Syntax tree compatibility
+  href: ast-compatibility.md
 - name: Folders
   href: folders.md
 - name: Glossary

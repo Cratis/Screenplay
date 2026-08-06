@@ -63,7 +63,7 @@ foreach (var diagnostic in compilation.Result.Diagnostics)
 
 ### Drive a visitor over the folder
 
-Consumers do not usually want the syntax tree - they want their own representation of it, which is what [the visitors](sub-languages.md) are for. Both the folder and the single file have a visitor overload, so a consumer takes one path regardless of how the application arrived:
+Consumers do not usually want the syntax tree - they want their own representation of it, which is what [the visitors and the walker](visitors.md) are for. Both the folder and the single file have a visitor overload, so a consumer takes one path regardless of how the application arrived:
 
 ```csharp
 var compiler = new PlayFileCompiler();
