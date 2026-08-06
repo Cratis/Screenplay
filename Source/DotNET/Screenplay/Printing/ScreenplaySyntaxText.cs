@@ -258,6 +258,7 @@ internal static partial class ScreenplaySyntaxText
             ValidationRuleKind.LessThan => $"< {value}",
             ValidationRuleKind.LessThanOrEqual => $"<= {value}",
             ValidationRuleKind.Equal => $"== {value}",
+            ValidationRuleKind.NotEqual => $"!= {value}",
             ValidationRuleKind.Length => $"length == {value}",
             ValidationRuleKind.Matches => $"matches {value}",
             ValidationRuleKind.AllGreaterThan => $"all > {value}",

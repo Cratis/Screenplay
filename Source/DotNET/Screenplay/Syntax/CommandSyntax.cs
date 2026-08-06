@@ -73,7 +73,12 @@ public enum ValidationRuleKind
     /// <summary>
     /// The value must satisfy a named predicate whose logic lives outside the document.
     /// </summary>
-    Rule = 12
+    Rule = 12,
+
+    /// <summary>
+    /// The value must not equal the operand.
+    /// </summary>
+    NotEqual = 13
 }
 
 /// <summary>
