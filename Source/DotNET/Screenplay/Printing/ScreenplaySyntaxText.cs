@@ -204,9 +204,8 @@ internal static partial class ScreenplaySyntaxText
             return $"claim {StringLiteral.Quote(claim.Claim)} matches subject";
         }
 
-        var target = claim.Matches ?? string.Empty;
-        var value = BareWordRegex().IsMatch(target) ? target : StringLiteral.Quote(target);
-        return $"claim {StringLiteral.Quote(claim.Claim)} matches {value}";
+        var target = claim.Matches is null ? Literal(string.Empty) : Expression(claim.Matches);
+        return $"claim {StringLiteral.Quote(claim.Claim)} matches {target}";
     }
 
     static string ValidationRuleBody(ValidationRuleSyntax rule)
@@ -230,9 +229,6 @@ internal static partial class ScreenplaySyntaxText
             _ => value
         };
     }
-
-    [GeneratedRegex(@"^[\w.]+$", RegexOptions.None, 1000)]
-    private static partial Regex BareWordRegex();
 
     [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.None, 1000)]
     private static partial Regex IdentifierRegex();

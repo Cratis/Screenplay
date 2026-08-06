@@ -58,9 +58,15 @@ public record RoleConditionSyntax(string Role, SourceLocation Location) : Policy
 /// </summary>
 /// <param name="Claim">The name of the claim.</param>
 /// <param name="MatchesSubject">Whether the claim is matched against the subject.</param>
-/// <param name="Matches">The value expression the claim is matched against when not matching the subject.</param>
+/// <param name="Matches">The <see cref="ExpressionSyntax"/> the claim is matched against when not matching the subject.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record ClaimConditionSyntax(string Claim, bool MatchesSubject, string? Matches, SourceLocation Location) : PolicyConditionSyntax(Location);
+/// <remarks>
+/// The target is an expression rather than text so a literal value stays distinguishable from something
+/// to resolve - a <see cref="LiteralExpressionSyntax"/> is the value itself and prints quoted, while a
+/// <see cref="PathExpressionSyntax"/> or one of the <c>$</c> rooted expressions names where the value comes
+/// from and prints unquoted.
+/// </remarks>
+public record ClaimConditionSyntax(string Claim, bool MatchesSubject, ExpressionSyntax? Matches, SourceLocation Location) : PolicyConditionSyntax(Location);
 
 /// <summary>
 /// Represents two policy conditions combined with <c>and</c> or <c>or</c>.
