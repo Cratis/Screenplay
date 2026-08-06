@@ -10,7 +10,8 @@ namespace Cratis.Screenplay.Parsing;
 /// Holds the state shared by the parsers - the line reader and the collected diagnostics.
 /// </summary>
 /// <param name="reader">The <see cref="LineReader"/> providing the source lines.</param>
-internal sealed class ParserContext(LineReader reader)
+/// <param name="path">The path of the file being parsed, or <c>null</c> when the source text has no file identity.</param>
+internal sealed class ParserContext(LineReader reader, string? path = null)
 {
     readonly List<Diagnostic> _diagnostics = [];
 
@@ -20,9 +21,21 @@ internal sealed class ParserContext(LineReader reader)
     public LineReader Reader => reader;
 
     /// <summary>
+    /// Gets the <see cref="SourceLocation"/> of the start of the document being parsed.
+    /// </summary>
+    public SourceLocation Start { get; } = SourceLocation.Start.In(path);
+
+    /// <summary>
     /// Gets the <see cref="Diagnostic">diagnostics</see> collected so far.
     /// </summary>
     public IReadOnlyList<Diagnostic> Diagnostics => _diagnostics;
+
+    /// <summary>
+    /// Creates a context for work that produces diagnostics without reading source lines, such as merging
+    /// and validating the documents of a folder.
+    /// </summary>
+    /// <returns>A <see cref="ParserContext"/> with no lines to read.</returns>
+    public static ParserContext ForDiagnostics() => new(new([]));
 
     /// <summary>
     /// Reports an error diagnostic.

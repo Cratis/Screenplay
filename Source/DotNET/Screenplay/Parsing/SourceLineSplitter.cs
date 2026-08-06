@@ -13,8 +13,9 @@ internal static class SourceLineSplitter
     /// </summary>
     /// <param name="source">The source text to split.</param>
     /// <param name="hashComments">Whether <c>#</c> starts a comment, in addition to <c>//</c>.</param>
+    /// <param name="path">The path of the file the source text came from, stamped onto every line.</param>
     /// <returns>The <see cref="SourceLine">lines</see> of the source text.</returns>
-    public static IReadOnlyList<SourceLine> Split(string source, bool hashComments = false)
+    public static IReadOnlyList<SourceLine> Split(string source, bool hashComments = false, string? path = null)
     {
         var result = new List<SourceLine>();
         var number = 0;
@@ -25,7 +26,7 @@ internal static class SourceLineSplitter
             var line = raw.TrimEnd('\r');
             var indent = line.Length - line.TrimStart().Length;
             var content = StripComments(line[indent..], hashComments).TrimEnd();
-            result.Add(new(number, line, indent, content));
+            result.Add(new(number, line, indent, content, path));
         }
 
         return result;
