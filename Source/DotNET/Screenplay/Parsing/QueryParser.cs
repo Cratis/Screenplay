@@ -22,13 +22,14 @@ internal static partial class QueryParser
         var match = HeaderRegex().Match(header.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid query declaration '{header.Content}' - expected 'query <Name> => <ReadModel>'", header.Location);
+            context.Error($"Invalid query declaration '{header.Content}' - expected 'query <Name> => [observable] <ReadModel>'", header.Location);
             context.SkipBlock(header.Indent);
             return new(LineText.FirstWord(header.Content), new(string.Empty, false, false, header.Location), null, [], null, header.Location);
         }
 
         var name = match.Groups[1].Value;
-        var returnType = PropertyLineParser.ParseTypeRef(match.Groups[2].Value, header.Location);
+        var isObservable = match.Groups[2].Success;
+        var returnType = PropertyLineParser.ParseTypeRef(match.Groups[3].Value, header.Location);
         QueryParameterSyntax? by = null;
         var filters = new List<QueryParameterSyntax>();
         AuthorizeSyntax? authorize = null;
@@ -66,7 +67,7 @@ internal static partial class QueryParser
             }
         }
 
-        return new(name, returnType, by, filters, authorize, header.Location, description, performer);
+        return new(name, returnType, by, filters, authorize, header.Location, description, performer, isObservable);
     }
 
     static QueryParameterSyntax? ParseParameter(ParserContext context, SourceLine line, string keyword)
@@ -124,7 +125,7 @@ internal static partial class QueryParser
         return null;
     }
 
-    [GeneratedRegex(@"^query\s+([A-Za-z_]\w*)\s*=>\s*([\w.]+(?:\[\])?\??)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^query\s+([A-Za-z_]\w*)\s*=>\s*(observable\s+)?([\w.]+(?:\[\])?\??)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
 
     [GeneratedRegex(@"^([a-z_]\w*)\s+([\w.]+(?:\[\])?\??)(?:\s+from\s+(.+))?$", RegexOptions.None, 1000)]
