@@ -83,6 +83,8 @@ module Invoicing
 | `reactor` | `Automation` | [Reactors](reactors.md) |
 | `capture` | `Translate` | [Captures](captures.md) |
 
+Every one of these may appear as many times as the behavior needs — several events, several commands, [several projections](projections/index.md#several-projections-in-one-slice). Only `description` is limited to one. A slice is one behavior, not one artifact of each kind.
+
 ## Example
 
 ```screenplay
