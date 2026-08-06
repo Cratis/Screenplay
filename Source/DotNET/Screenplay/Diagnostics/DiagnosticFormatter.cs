@@ -38,11 +38,11 @@ public class DiagnosticFormatter : IDiagnosticFormatter
         var builder = new StringBuilder();
         if (useColors)
         {
-            builder.Append($"{Bold}{file}({diagnostic.Location.Line},{diagnostic.Location.Column}){Reset}: {severityColor}{severity}{Reset}: {diagnostic.Message}");
+            builder.Append($"{Bold}{file}({diagnostic.Location.Line},{diagnostic.Location.Column}){Reset}: {severityColor}{severity} {diagnostic.Code}{Reset}: {diagnostic.Message}");
         }
         else
         {
-            builder.Append($"{file}({diagnostic.Location.Line},{diagnostic.Location.Column}): {severity}: {diagnostic.Message}");
+            builder.Append($"{file}({diagnostic.Location.Line},{diagnostic.Location.Column}): {severity} {diagnostic.Code}: {diagnostic.Message}");
         }
 
         var lines = source.Split('\n');

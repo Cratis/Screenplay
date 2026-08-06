@@ -36,7 +36,7 @@ internal static partial class ExpressionParser
             var literal = ParseLiteral(text["literal ".Length..].Trim(), location);
             if (literal is null)
             {
-                context.Error($"Expected a literal value after 'literal', got '{text["literal ".Length..].Trim()}'", location);
+                context.Error(DiagnosticCodes.ExpectedLiteralValue, $"Expected a literal value after 'literal', got '{text["literal ".Length..].Trim()}'", location);
                 return new RawExpressionSyntax(text, location);
             }
 
@@ -63,7 +63,7 @@ internal static partial class ExpressionParser
             var property = text["$causedBy.".Length..];
             if (property is not ("subject" or "name" or "userName"))
             {
-                context.Error($"Unknown $causedBy property '{property}' - expected subject, name or userName", location);
+                context.Error(DiagnosticCodes.UnknownCausedByProperty, $"Unknown $causedBy property '{property}' - expected subject, name or userName", location);
             }
 
             return new CausedByExpressionSyntax(property, location);
@@ -79,7 +79,7 @@ internal static partial class ExpressionParser
             return new PathExpressionSyntax(text.Replace("@", string.Empty, StringComparison.Ordinal), location);
         }
 
-        context.Error($"Invalid expression '{text}'", location);
+        context.Error(DiagnosticCodes.InvalidExpression, $"Invalid expression '{text}'", location);
         return new RawExpressionSyntax(text, location);
     }
 
@@ -166,6 +166,7 @@ internal static partial class ExpressionParser
         if (!ContextExpressionSyntax.KnownRoots.Contains(expression.Root))
         {
             context.Warning(
+                DiagnosticCodes.UnknownContextPath,
                 $"Unknown $context path '{expression.Path}' - expected one of {string.Join(", ", ContextExpressionSyntax.KnownRoots)}",
                 expression.Location);
             return;
@@ -180,6 +181,7 @@ internal static partial class ExpressionParser
         if (expression.Root == "causedBy" && !ContextExpressionSyntax.KnownCausedByProperties.Contains(segments[1]))
         {
             context.Warning(
+                DiagnosticCodes.UnknownContextCausedByProperty,
                 $"Unknown $context.causedBy property '{segments[1]}' - expected {string.Join(", ", ContextExpressionSyntax.KnownCausedByProperties)}",
                 expression.Location);
         }
@@ -189,6 +191,7 @@ internal static partial class ExpressionParser
         if (expression.Root == "identity" && !ContextExpressionSyntax.KnownIdentityProperties.Contains(segments[1]))
         {
             context.Warning(
+                DiagnosticCodes.UnknownContextIdentityProperty,
                 $"Unknown $context.identity property '{segments[1]}' - expected {string.Join(", ", ContextExpressionSyntax.KnownIdentityProperties)}",
                 expression.Location);
         }
@@ -199,7 +202,7 @@ internal static partial class ExpressionParser
         var parts = new List<TemplatePartSyntax>();
         if (!text.EndsWith('`') || text.Length < 2)
         {
-            context.Error("Unterminated template expression - expected a closing backtick", location);
+            context.Error(DiagnosticCodes.UnterminatedTemplateExpression, "Unterminated template expression - expected a closing backtick", location);
             return new(parts, location);
         }
 
@@ -217,7 +220,7 @@ internal static partial class ExpressionParser
                 var end = inner.IndexOf('}', i);
                 if (end == -1)
                 {
-                    context.Error("Unterminated ${...} interpolation in template expression", location);
+                    context.Error(DiagnosticCodes.UnterminatedInterpolation, "Unterminated ${...} interpolation in template expression", location);
                     return new(parts, location);
                 }
 

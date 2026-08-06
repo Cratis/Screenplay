@@ -27,7 +27,7 @@ internal static partial class ConditionParser
         var condition = ParseOr(context, tokens, ref position, location);
         if (condition is not null && position < tokens.Count)
         {
-            context.Error($"Unexpected '{tokens[position]}' in condition", location);
+            context.Error(DiagnosticCodes.UnexpectedTokenInCondition, $"Unexpected '{tokens[position]}' in condition", location);
         }
 
         return condition;
@@ -73,7 +73,7 @@ internal static partial class ConditionParser
     {
         if (position >= tokens.Count)
         {
-            context.Error("Expected a condition", location);
+            context.Error(DiagnosticCodes.ExpectedCondition, "Expected a condition", location);
             return null;
         }
 
@@ -87,7 +87,7 @@ internal static partial class ConditionParser
             }
             else
             {
-                context.Error("Expected ')' in condition", location);
+                context.Error(DiagnosticCodes.UnclosedConditionGroup, "Expected ')' in condition", location);
             }
 
             return condition;
@@ -96,14 +96,14 @@ internal static partial class ConditionParser
         var left = tokens[position++];
         if (position >= tokens.Count || ParseOperator(tokens[position]) is not { } comparison)
         {
-            context.Error($"Expected a comparison operator after '{left}'", location);
+            context.Error(DiagnosticCodes.ExpectedComparisonOperator, $"Expected a comparison operator after '{left}'", location);
             return null;
         }
 
         position++;
         if (position >= tokens.Count)
         {
-            context.Error("Expected a value to compare against", location);
+            context.Error(DiagnosticCodes.ExpectedComparisonValue, "Expected a value to compare against", location);
             return null;
         }
 

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
@@ -22,7 +23,7 @@ internal static partial class TagParser
         var value = line.Content["tag".Length..].Trim();
         if (value.Length == 0)
         {
-            context.Error("Expected a value after 'tag' - an identifier, a string literal or a context expression", line.Location);
+            context.Error(DiagnosticCodes.TagWithoutValue, "Expected a value after 'tag' - an identifier, a string literal or a context expression", line.Location);
             return null;
         }
 
@@ -34,7 +35,7 @@ internal static partial class TagParser
         var expression = ExpressionParser.ParseMappingSource(context, value, line.Location);
         if (expression is RawExpressionSyntax)
         {
-            context.Error($"Invalid tag value '{value}' - expected an identifier, a string literal or a context expression", line.Location);
+            context.Error(DiagnosticCodes.InvalidTagValue, $"Invalid tag value '{value}' - expected an identifier, a string literal or a context expression", line.Location);
             return null;
         }
 

@@ -40,16 +40,18 @@ internal sealed class ParserContext(LineReader reader, string? path = null)
     /// <summary>
     /// Reports an error diagnostic.
     /// </summary>
+    /// <param name="code">The <see cref="DiagnosticCodes">code</see> identifying the kind of diagnostic.</param>
     /// <param name="message">The message of the diagnostic.</param>
     /// <param name="location">The <see cref="SourceLocation"/> of the diagnostic.</param>
-    public void Error(string message, SourceLocation location) => _diagnostics.Add(Diagnostic.Error(message, location));
+    public void Error(string code, string message, SourceLocation location) => _diagnostics.Add(Diagnostic.Error(code, message, location));
 
     /// <summary>
     /// Reports a warning diagnostic.
     /// </summary>
+    /// <param name="code">The <see cref="DiagnosticCodes">code</see> identifying the kind of diagnostic.</param>
     /// <param name="message">The message of the diagnostic.</param>
     /// <param name="location">The <see cref="SourceLocation"/> of the diagnostic.</param>
-    public void Warning(string message, SourceLocation location) => _diagnostics.Add(Diagnostic.Warning(message, location));
+    public void Warning(string code, string message, SourceLocation location) => _diagnostics.Add(Diagnostic.Warning(code, message, location));
 
     /// <summary>
     /// Adds a diagnostic that was produced outside the parsers.
