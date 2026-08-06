@@ -63,7 +63,7 @@ Line comments start with `//` and run to the end of the line.
 | Event type declarations | [Events](events.md) |
 | Commands, validation, the `produces` block, and handlers | [Commands](commands.md) |
 | Read-side entry points, parameters and performers | [Queries](queries.md) |
-| What a handler and a performer are given | [Command and query context](context.md) |
+| What a handler, a performer, a rule and a policy are given | [Contexts](context.md) |
 | PDL-embedded projections | [Projections](projections/index.md) |
 | CDL-embedded change data capture | [Captures](captures.md) |
 | Events seeded per event source id | [Event seeding](seeding.md) |
