@@ -297,7 +297,7 @@ HandlerDecl    = "handler", NL,
 (* Queries                                                         *)
 (* -------------------------------------------------------------- *)
 
-QueryDecl      = "query", Ident, "=>", TypeRef, NL,
+QueryDecl      = "query", Ident, "=>", [ "observable" ], TypeRef, NL,
                  [ INDENT,
                      [ DescriptionDecl ],
                      [ ByClause ],
@@ -305,6 +305,9 @@ QueryDecl      = "query", Ident, "=>", TypeRef, NL,
                      [ AuthorizeDecl ],
                      [ PerformerDecl ],
                    DEDENT ] ;
+
+(* "observable" qualifies the return type as a live read - the query keeps
+   pushing as the read model changes. Without it the query answers once.      *)
 
 ByClause       = "by", Ident, TypeRef, [ FromClause ], NL ;
 FilterClause   = "filter", Ident, TypeRef, [ FromClause ], NL ;
@@ -501,7 +504,7 @@ Screenplay's workflow is *author the document first, then Stage performs it*. Th
 | --- | --- | --- |
 | `concept` / `type` | primitive or properties, attributes, `validate` | `validate csharp` |
 | `command` | `produces` with mappings and conditions | `handler` |
-| `query` | `=>` return type, `by`/`filter`, `description` | `performer` |
+| `query` | `=>` return type with optional `observable`, `by`/`filter`, `description` | `performer` |
 | `policy` | `require` conditions | inline `csharp` |
 | `reactor` | `description` on the reactor and on each `on` trigger | `file` / inline block |
 | `screen` | title, sections, tables, `data`, `action`, `navigate`, layout | `file` |

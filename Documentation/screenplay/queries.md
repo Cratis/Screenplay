@@ -1,11 +1,11 @@
 # Queries
 
-Queries are read-side entry points. A query maps to a return type — a read model, or a collection of read models with `[]` — and says what it is for, where each of its parameters comes from, and, when it needs to, how it is performed.
+Queries are read-side entry points. A query maps to a return type — a read model, or a collection of read models with `[]` — and says what it is for, whether it answers once or keeps answering, where each of its parameters comes from, and, when it needs to, how it is performed.
 
 ## Syntax
 
 ```screenplay
-query <Name> => <ReturnType>[[]?]
+query <Name> => [observable] <ReturnType>[[]?]
   [description "<text>"]
   [by <paramName> <Type> [from <source>]]
   [filter <paramName> <Type>? [from <source>]]
@@ -24,6 +24,7 @@ query <Name> => <ReturnType>[[]?]
 
 | Clause | Meaning |
 | --- | --- |
+| `observable` | The query is a live read — it keeps pushing as the read model changes, instead of answering once. |
 | `description` | What the query is trying to accomplish, in prose. |
 | `by` | The identifying parameter — the query returns the instance it identifies. |
 | `filter` | An optional parameter narrowing the result set. Filter types are typically optional (`?`). |
@@ -42,6 +43,28 @@ query GetOverdueInvoices => OverdueInvoicesReadModel[]
 ```
 
 That sentence is what a reader — human or LLM — has to work from when generating or reviewing an implementation, so write the intent, not a restatement of the name.
+
+## Observable queries
+
+Some reads answer once — a report a user asked for, a lookup a screen does when it opens. Others are meant to stay current: a worklist that gains a row the moment an invoice goes overdue, a status a second user changes while the first is looking at it. Those are two different promises to the caller, and without saying which one a query makes, a document leaves the reader — and the implementation — to guess.
+
+`observable` qualifies the return type and settles it:
+
+```screenplay
+query LiveOverdueInvoices => observable OverdueInvoicesReadModel[]
+  description "Invoices past their due date, kept current on the collections board"
+  authorize IsAccountant
+```
+
+Read it as the query yields *an observable list of overdue invoices*. Without the marker, the query is one-shot — the default, and what most reads are:
+
+```screenplay
+query GetInvoice => InvoiceDetailsReadModel
+  description "One invoice with its lines, customer and shipping status"
+  by invoiceId InvoiceId
+```
+
+The marker qualifies only *how* the result arrives, so everything else about the query is unchanged: `observable` composes with `[]` and `?` (`observable InvoiceDetailsReadModel?`), with `by` and `filter` parameters, with `authorize`, and with a `performer`. A [screen](screens.md) binds to a live query exactly the way it binds to a one-shot one — `data <ReadModel> via query <QueryName>` — and gets the updates for free.
 
 ## Parameters
 
@@ -130,6 +153,7 @@ A query is complete without a performer. The `performer` is realization metadata
 ## Guidance
 
 - Name queries as descriptive reads: `GetInvoice`, `ListInvoices`, `GetOverdueInvoices`.
+- Mark a read `observable` when the caller is meant to see changes without asking again; leave it off for a one-shot read.
 - The return type is a read model built by a [projection](projections/index.md) in the same or another `StateView` slice.
 - Anything the caller must not be able to choose — the tenant, the caller's own subject — belongs on a `from` parameter, not on a `filter` the UI supplies.
 - [Screens](screens.md) bind to queries with `data <ReadModel> via query <QueryName>`.
