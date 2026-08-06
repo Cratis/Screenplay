@@ -67,8 +67,19 @@ PolicyExpr     = "require", PolicyCondition, { ( "or" | "and" ), PolicyCondition
 
 PolicyCondition = "authenticated"
                | "role", StringLiteral
-               | "claim", StringLiteral, "matches", ( "subject" | StringLiteral )
+               | "claim", StringLiteral, "matches", ClaimTarget
                | "(", PolicyCondition, { ( "or" | "and" ), PolicyCondition }, ")" ;
+
+ClaimTarget    = "subject"
+               | MappingSource ;
+
+(* A quoted ClaimTarget is the literal value the claim must equal; every other
+   MappingSource form - a path, "$context.", "$env.", "$secrets." - names where
+   the value to compare against is read from.                                 *)
+
+(* "or" and "and" carry no precedence over each other in a policy condition -
+   conditions combine strictly left to right, so "a or b and c" means
+   "(a or b) and c". Parentheses are the only way to group differently.    *)
 
 (* -------------------------------------------------------------- *)
 (* Personas                                                        *)
