@@ -34,15 +34,17 @@ Or point it at a single file, which is what you want when a generator just produ
 screenplay path/to/invoicing.play
 ```
 
-Each problem is reported with its file, line and column, the offending source line and a caret pointing at the exact location:
+Each problem is reported with its file, line and column, its severity and stable code, the offending source line and a caret pointing at the exact location:
 
 ```text
-nested/broken.play(3,5): error: Unknown slice type 'Wat' - expected StateChange, StateView, Automation or Translate
+nested/broken.play(3,5): error PLAY0028: Unknown slice type 'Wat' - expected StateChange, StateView, Automation or Translate
     3 |     slice Wat DoIt
       |     ^
 
 2 file(s) compiled - 1 error(s), 0 warning(s)
 ```
+
+The code is the part that never changes - match on it rather than on the message, which gets reworded. Every code is listed in [Diagnostics](diagnostics.md).
 
 The exit code is `0` when everything compiles without errors and `1` otherwise, so the command slots straight into CI pipelines.
 
