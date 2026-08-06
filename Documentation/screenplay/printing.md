@@ -68,7 +68,7 @@ var registered = new EventSyntax(
 
 var slice = new SliceSyntax(
     SliceType.StateChange, "RegisterAccount",
-    [registered], [], [], null, [], [], [], [], [],
+    [registered], [], [], [], [], [], [], [], [],
     SourceLocation.Start);
 
 var module = new ModuleSyntax(
