@@ -15,7 +15,11 @@ public class when_compiling_a_concept_with_validation : given.a_compiler
             matches "^.+@.+$"  message "Must be a valid email address"
           validate csharp
             ```
-            if (Value.EndsWith("@example.com")) yield ValidationError("Example addresses are not allowed");
+            string email = context.Value;
+            if (email.EndsWith("@example.com", StringComparison.OrdinalIgnoreCase))
+            {
+                yield return "Example addresses are not allowed";
+            }
             ```
 
         concept InvoiceStatus : Enum
