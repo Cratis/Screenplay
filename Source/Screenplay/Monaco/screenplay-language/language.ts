@@ -113,6 +113,10 @@ export const contextRoots = [
 
 export const causedByProperties = ['subject', 'name', 'userName'];
 
+// The properties a `$context.identity.` path can name — the members of Identity. Everything after
+// `claims.` is the name of a claim rather than a member, so it is never checked.
+export const identityProperties = ['id', 'name', 'userName', 'isAuthenticated', 'roles', 'claims'];
+
 export const sliceTypes = ['StateChange', 'StateView', 'Automation', 'Translate'];
 
 export const primitiveTypes = ['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime'];

@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { causedByProperties, contextRoots, primitiveTypes, sliceTypes } from './language';
+import { causedByProperties, contextRoots, identityProperties, primitiveTypes, sliceTypes } from './language';
 import { fenceMap, indentOf } from './document-context';
 import {
     DocumentSymbols,
@@ -215,6 +215,14 @@ export function validateLines(lines: string[]): ValidationIssue[] {
             ) {
                 issues.push(
                     tokenIssue('warning', index, line, path, `Unknown $context.causedBy property '${segments[1]}' — expected ${causedByProperties.join(', ')}.`),
+                );
+            } else if (
+                segments[0] === 'identity' &&
+                segments.length > 1 &&
+                !identityProperties.includes(segments[1])
+            ) {
+                issues.push(
+                    tokenIssue('warning', index, line, path, `Unknown $context.identity property '${segments[1]}' — expected ${identityProperties.join(', ')}.`),
                 );
             }
         }
