@@ -90,6 +90,7 @@ The printer renders the whole application as one document, which is what you wan
 ## See also
 
 - [Compiler and CLI](tool.md) - the reverse direction, text to tree.
+- [Visitors and traversal](visitors.md) - walking a tree instead of rendering it.
 - [Folders](folders.md) - the same tree written as module, feature and slice folders.
 - [Grammar](grammar.md) - the shape the printer produces.
 - [Sub-language Pluggability](sub-languages.md) - how the language is layered.

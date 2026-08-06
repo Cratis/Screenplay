@@ -139,7 +139,7 @@ files pleasant:
 | Piece | What it is | Where |
 | --- | --- | --- |
 | **Language & grammar** | The language reference for every construct and the full EBNF grammar | [`Documentation/screenplay`](Documentation/screenplay/index.md) |
-| **`Cratis.Screenplay`** | The .NET compiler — parsing, the shared syntax tree, visitor contracts, diagnostics, and `**/*.play` file discovery | [`Source/DotNET/Screenplay`](Source/DotNET/Screenplay) |
+| **`Cratis.Screenplay`** | The .NET compiler — parsing, the shared syntax tree, [visitors and tree traversal](Documentation/screenplay/visitors.md), diagnostics, and `**/*.play` file discovery | [`Source/DotNET/Screenplay`](Source/DotNET/Screenplay) |
 | **`Cratis.Screenplay.Tool`** | The `screenplay` CLI (a dotnet tool) — verifies every `.play` file in a directory tree | [`Source/DotNET/Tool`](Source/DotNET/Tool) |
 | **`@cratis/screenplay-language`** | Monaco language service — highlighting (incl. embedded C#/TS/React/HTML and PDL/CDL), IntelliSense, hover, diagnostics | [`Source/Screenplay/Monaco/screenplay-language`](Source/Screenplay/Monaco/screenplay-language) |
 | **`screenplay-editor`** | A standalone editor host for writing `.play` files right in the browser | [`Source/Screenplay/Monaco/screenplay-editor`](Source/Screenplay/Monaco/screenplay-editor) |

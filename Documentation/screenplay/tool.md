@@ -83,7 +83,7 @@ if (result.Success)
 }
 ```
 
-To turn the syntax tree into your own representation, implement one or more of the visitor interfaces (`IApplicationSyntaxVisitor<T>`, `ISliceSyntaxVisitor<T>`, `IProjectionSyntaxVisitor<T>`, ...) and pass the root visitor to `Compile` - the compiler drives it once parsing succeeds. See [Sub-language Pluggability](sub-languages.md) for how the language itself is layered.
+To turn the syntax tree into your own representation, derive from `ScreenplaySyntaxWalker` and override the node kinds you care about - the base class walks everything else, so a construct you never asked about cannot break you. The root visitor interfaces (`IApplicationSyntaxVisitor<T>`, `IProjectionSyntaxVisitor<T>`, ...) are the alternative when your consumer is one transformation of the whole document; pass one to `Compile` and the compiler drives it once parsing succeeds. See [Visitors and traversal](visitors.md) for both, and [Sub-language Pluggability](sub-languages.md) for how the language itself is layered.
 
 Compiling every `.play` file beneath a directory as one application - what the CLI does for a directory - is a single call:
 
