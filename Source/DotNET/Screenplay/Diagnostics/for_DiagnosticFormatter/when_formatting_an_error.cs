@@ -15,7 +15,7 @@ public class when_formatting_an_error : Specification
     void Establish()
     {
         _formatter = new();
-        _diagnostic = Diagnostic.Error("Unknown slice type 'Wrong'", new(3, 5));
+        _diagnostic = Diagnostic.Error(DiagnosticCodes.UnknownSliceType, "Unknown slice type 'Wrong'", new(3, 5));
     }
 
     void Because()
@@ -24,7 +24,7 @@ public class when_formatting_an_error : Specification
         _colored = _formatter.Format("invoicing.play", _diagnostic, Source, useColors: true);
     }
 
-    [Fact] void should_format_the_header_with_location() => _plain.ShouldContain("invoicing.play(3,5): error: Unknown slice type 'Wrong'");
+    [Fact] void should_format_the_header_with_location() => _plain.ShouldContain("invoicing.play(3,5): error PLAY0028: Unknown slice type 'Wrong'");
     [Fact] void should_include_the_offending_line() => _plain.ShouldContain("    3 |     slice Wrong Register");
     [Fact] void should_point_the_caret_at_the_column() => _plain.ShouldContain("      |     ^");
     [Fact] void should_use_ansi_colors_when_asked() => _colored.ShouldContain("\e[31m");

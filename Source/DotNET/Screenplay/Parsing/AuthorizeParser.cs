@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
@@ -30,7 +31,7 @@ internal static partial class AuthorizeParser
 
         if (policies.Count == 0)
         {
-            context.Error("Expected at least one policy after 'authorize'", line.Location);
+            context.Error(DiagnosticCodes.AuthorizeWithoutPolicy, "Expected at least one policy after 'authorize'", line.Location);
         }
 
         return new(policies, line.Location);
@@ -49,7 +50,7 @@ internal static partial class AuthorizeParser
 
             if (!NameRegex().IsMatch(word))
             {
-                context.Error($"Invalid policy reference '{word}' - policy names are PascalCase identifiers", line.Location);
+                context.Error(DiagnosticCodes.InvalidPolicyReference, $"Invalid policy reference '{word}' - policy names are PascalCase identifiers", line.Location);
                 continue;
             }
 

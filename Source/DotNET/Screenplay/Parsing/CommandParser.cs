@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
@@ -22,7 +23,7 @@ internal static partial class CommandParser
         var name = HeaderRegex().Match(header.Content);
         if (!name.Success)
         {
-            context.Error($"Invalid command declaration '{header.Content}' - expected 'command <Name>'", header.Location);
+            context.Error(DiagnosticCodes.InvalidCommandDeclaration, $"Invalid command declaration '{header.Content}' - expected 'command <Name>'", header.Location);
         }
 
         var properties = new List<PropertySyntax>();
@@ -81,7 +82,7 @@ internal static partial class CommandParser
                     }
                     else
                     {
-                        context.Error($"Unexpected '{line.Content}' in command body", line.Location);
+                        context.Error(DiagnosticCodes.UnknownCommandDirective, $"Unexpected '{line.Content}' in command body", line.Location);
                         context.SkipBlock(line.Indent);
                     }
 
@@ -91,7 +92,7 @@ internal static partial class CommandParser
 
         if (handler is not null && produces.Count > 0)
         {
-            context.Error($"Command '{name.Groups[1].Value}' cannot declare both 'produces' and 'handler'", header.Location);
+            context.Error(DiagnosticCodes.CommandWithProducesAndHandler, $"Command '{name.Groups[1].Value}' cannot declare both 'produces' and 'handler'", header.Location);
         }
 
         return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency, description);
@@ -112,7 +113,7 @@ internal static partial class CommandParser
     {
         if (property.IsIdentifier && properties.Find(existing => existing.IsIdentifier) is { } identifier)
         {
-            context.Error($"Command '{commandName}' already marks '{identifier.Name}' as identifier - only one property can be the identifier", property.Location);
+            context.Error(DiagnosticCodes.DuplicateCommandIdentifier, $"Command '{commandName}' already marks '{identifier.Name}' as identifier - only one property can be the identifier", property.Location);
             property = property with { IsIdentifier = false };
         }
 
@@ -123,14 +124,14 @@ internal static partial class CommandParser
     {
         if (line.Content != "concurrency")
         {
-            context.Error($"Invalid concurrency declaration '{line.Content}' - expected 'concurrency'", line.Location);
+            context.Error(DiagnosticCodes.InvalidConcurrencyDeclaration, $"Invalid concurrency declaration '{line.Content}' - expected 'concurrency'", line.Location);
             context.SkipBlock(line.Indent);
             return existing;
         }
 
         if (existing is not null)
         {
-            context.Error($"Command '{commandName}' already declares a concurrency block - a command can have at most one", line.Location);
+            context.Error(DiagnosticCodes.DuplicateConcurrencyBlock, $"Command '{commandName}' already declares a concurrency block - a command can have at most one", line.Location);
             context.SkipBlock(line.Indent);
             return existing;
         }
@@ -162,7 +163,7 @@ internal static partial class CommandParser
                     eventTypes = ParseEventsDimension(context, child, eventTypes);
                     break;
                 default:
-                    context.Error($"Unexpected '{child.Content}' in concurrency block - expected eventSource, sourceType, streamType, streamId or events", child.Location);
+                    context.Error(DiagnosticCodes.UnknownConcurrencyDimension, $"Unexpected '{child.Content}' in concurrency block - expected eventSource, sourceType, streamType, streamId or events", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
@@ -175,13 +176,13 @@ internal static partial class CommandParser
     {
         if (line.Content != "eventSource")
         {
-            context.Error($"Invalid eventSource dimension '{line.Content}' - expected 'eventSource'", line.Location);
+            context.Error(DiagnosticCodes.InvalidConcurrencyDimension, $"Invalid eventSource dimension '{line.Content}' - expected 'eventSource'", line.Location);
             return existing;
         }
 
         if (existing)
         {
-            context.Error("Duplicate 'eventSource' in concurrency block - each dimension can appear at most once", line.Location);
+            context.Error(DiagnosticCodes.DuplicateConcurrencyDimension, "Duplicate 'eventSource' in concurrency block - each dimension can appear at most once", line.Location);
         }
 
         return true;
@@ -192,13 +193,13 @@ internal static partial class CommandParser
         var match = ConcurrencyDimensionRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid {dimension} dimension '{line.Content}' - expected '{dimension} <Name>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidConcurrencyDimension, $"Invalid {dimension} dimension '{line.Content}' - expected '{dimension} <Name>'", line.Location);
             return existing;
         }
 
         if (existing is not null)
         {
-            context.Error($"Duplicate '{dimension}' in concurrency block - each dimension can appear at most once", line.Location);
+            context.Error(DiagnosticCodes.DuplicateConcurrencyDimension, $"Duplicate '{dimension}' in concurrency block - each dimension can appear at most once", line.Location);
             return existing;
         }
 
@@ -209,14 +210,14 @@ internal static partial class CommandParser
     {
         if (existing is not null)
         {
-            context.Error("Duplicate 'events' in concurrency block - each dimension can appear at most once", line.Location);
+            context.Error(DiagnosticCodes.DuplicateConcurrencyDimension, "Duplicate 'events' in concurrency block - each dimension can appear at most once", line.Location);
             return existing;
         }
 
         var names = line.Content["events".Length..].Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
         if (names.Length == 0 || Array.Exists(names, name => !EventNameRegex().IsMatch(name)))
         {
-            context.Error($"Invalid events dimension '{line.Content}' - expected 'events <EventType>[, <EventType>]*'", line.Location);
+            context.Error(DiagnosticCodes.InvalidConcurrencyDimension, $"Invalid events dimension '{line.Content}' - expected 'events <EventType>[, <EventType>]*'", line.Location);
             return existing;
         }
 
@@ -231,7 +232,7 @@ internal static partial class CommandParser
             var condition = ConditionParser.Parse(context, conditional.Groups[1].Value, line.Location);
             if (!context.TryPeekChild(line.Indent, out var eventLine) || !EventNameRegex().IsMatch(eventLine.Content))
             {
-                context.Error("Expected an event name on the line after 'produces when'", line.Location);
+                context.Error(DiagnosticCodes.ProducesWhenWithoutEvent, "Expected an event name on the line after 'produces when'", line.Location);
                 context.SkipBlock(line.Indent);
                 return null;
             }
@@ -245,7 +246,7 @@ internal static partial class CommandParser
         var unconditional = ProducesRegex().Match(line.Content);
         if (!unconditional.Success)
         {
-            context.Error($"Invalid produces declaration '{line.Content}' - expected 'produces <EventType>' or 'produces when <condition>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidProducesDeclaration, $"Invalid produces declaration '{line.Content}' - expected 'produces <EventType>' or 'produces when <condition>'", line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }
@@ -274,7 +275,7 @@ internal static partial class CommandParser
             var match = MappingRegex().Match(child.Content);
             if (!match.Success)
             {
-                context.Error($"Invalid property mapping '{child.Content}' - expected '<property> = <source>'", child.Location);
+                context.Error(DiagnosticCodes.InvalidPropertyMapping, $"Invalid property mapping '{child.Content}' - expected '<property> = <source>'", child.Location);
                 continue;
             }
 
@@ -288,7 +289,7 @@ internal static partial class CommandParser
     {
         if (!context.TryPeekChild(line.Indent, out var body))
         {
-            context.Error("Expected a 'file' directive or an inline code block in the handler", line.Location);
+            context.Error(DiagnosticCodes.HandlerWithoutImplementation, "Expected a 'file' directive or an inline code block in the handler", line.Location);
             return null;
         }
 
@@ -304,7 +305,7 @@ internal static partial class CommandParser
             return code is null ? null : new HandlerSyntax(null, code, line.Location);
         }
 
-        context.Error($"Unexpected '{body.Content}' in handler - expected 'file <path>' or an inline code block", body.Location);
+        context.Error(DiagnosticCodes.UnknownHandlerDirective, $"Unexpected '{body.Content}' in handler - expected 'file <path>' or an inline code block", body.Location);
         context.SkipBlock(line.Indent);
         return null;
     }

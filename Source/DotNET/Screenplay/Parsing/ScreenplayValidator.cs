@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
@@ -41,7 +42,7 @@ internal static class ScreenplayValidator
         {
             foreach (var policy in persona.Policies.Where(policy => !knownPolicies.Contains(policy)))
             {
-                context.Warning($"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
+                context.Warning(DiagnosticCodes.UnknownPolicy, $"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
             }
         }
 
@@ -50,20 +51,20 @@ internal static class ScreenplayValidator
             .Where(group => group.Count() > 1)
             .SelectMany(group => group.Skip(1)))
         {
-            context.Error($"Duplicate provider '{duplicate.Name}' - provider names must be unique", duplicate.Location);
+            context.Error(DiagnosticCodes.DuplicateProvider, $"Duplicate provider '{duplicate.Name}' - provider names must be unique", duplicate.Location);
         }
 
         foreach (var seed in application.Seeds ?? [])
         {
             if (!seed.Groups.Any())
             {
-                context.Error("Empty 'seed' block - declare at least one 'for' group", seed.Location);
+                context.Error(DiagnosticCodes.EmptySeed, "Empty 'seed' block - declare at least one 'for' group", seed.Location);
             }
 
             foreach (var @event in seed.Groups.SelectMany(group => group.Events)
                 .Where(@event => !knownEvents.Contains(@event.Event)))
             {
-                context.Warning($"Unknown event '{@event.Event}' - declare it with 'event {@event.Event}'", @event.Location);
+                context.Warning(DiagnosticCodes.UnknownEvent, $"Unknown event '{@event.Event}' - declare it with 'event {@event.Event}'", @event.Location);
             }
         }
 
@@ -87,7 +88,7 @@ internal static class ScreenplayValidator
         {
             var location = types.Find(type => type.Name == duplicate)?.Location ??
                            application.Concepts.First(concept => concept.Name == duplicate).Location;
-            context.Error($"Duplicate declaration of '{duplicate}' - concept and type names must be unique", location);
+            context.Error(DiagnosticCodes.DuplicateDeclaration, $"Duplicate declaration of '{duplicate}' - concept and type names must be unique", location);
         }
 
         foreach (var type in types)
@@ -117,6 +118,7 @@ internal static class ScreenplayValidator
         foreach (var property in properties.Where(property => !knownTypes.Contains(property.Type.Name)))
         {
             context.Warning(
+                DiagnosticCodes.UnknownType,
                 $"Unknown type '{property.Type.Name}' on '{property.Name}' of {owner} - declare it with 'concept {property.Type.Name} : <Primitive>' or 'type {property.Type.Name}'",
                 property.Location);
         }
@@ -153,7 +155,7 @@ internal static class ScreenplayValidator
             .Where(concurrency => concurrency is { EventSource: false, EventSourceType: null, EventStreamType: null, EventStreamId: null } &&
                 !concurrency.EventTypes.Any()))
         {
-            context.Error("Empty 'concurrency' block - declare at least one of eventSource, sourceType, streamType, streamId or events", concurrency.Location);
+            context.Error(DiagnosticCodes.EmptyConcurrency, "Empty 'concurrency' block - declare at least one of eventSource, sourceType, streamType, streamId or events", concurrency.Location);
         }
 
         foreach (var authorize in slice.Commands.Select(command => command.Authorize)
@@ -162,20 +164,20 @@ internal static class ScreenplayValidator
         {
             foreach (var policy in authorize.Policies.Where(policy => !knownPolicies.Contains(policy.Name)))
             {
-                context.Warning($"Unknown policy '{policy.Name}' - declare it with 'policy {policy.Name}'", policy.Location);
+                context.Warning(DiagnosticCodes.UnknownPolicy, $"Unknown policy '{policy.Name}' - declare it with 'policy {policy.Name}'", policy.Location);
             }
         }
 
         foreach (var produces in slice.Commands.SelectMany(command => command.Produces)
             .Where(produces => !knownEvents.Contains(produces.Event)))
         {
-            context.Warning($"Unknown event '{produces.Event}' - declare it with 'event {produces.Event}'", produces.Location);
+            context.Warning(DiagnosticCodes.UnknownEvent, $"Unknown event '{produces.Event}' - declare it with 'event {produces.Event}'", produces.Location);
         }
 
         foreach (var trigger in slice.Reactors.SelectMany(reactor => reactor.Triggers)
             .Where(trigger => !knownEvents.Contains(trigger.Event)))
         {
-            context.Warning($"Unknown event '{trigger.Event}' - declare it with 'event {trigger.Event}'", trigger.Location);
+            context.Warning(DiagnosticCodes.UnknownEvent, $"Unknown event '{trigger.Event}' - declare it with 'event {trigger.Event}'", trigger.Location);
         }
 
         foreach (var constraint in slice.Constraints)
@@ -189,7 +191,7 @@ internal static class ScreenplayValidator
 
             if (@event?.Length > 0 && !knownEvents.Contains(@event))
             {
-                context.Warning($"Unknown event '{@event}' - declare it with 'event {@event}'", constraint.Location);
+                context.Warning(DiagnosticCodes.UnknownEvent, $"Unknown event '{@event}' - declare it with 'event {@event}'", constraint.Location);
             }
         }
     }

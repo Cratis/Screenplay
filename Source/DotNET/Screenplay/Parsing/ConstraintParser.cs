@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
@@ -35,7 +36,7 @@ internal static partial class ConstraintParser
 
             if (constraint is not null)
             {
-                context.Error($"Constraint '{name}' already has a body", line.Location);
+                context.Error(DiagnosticCodes.DuplicateConstraintBody, $"Constraint '{name}' already has a body", line.Location);
                 continue;
             }
 
@@ -44,7 +45,7 @@ internal static partial class ConstraintParser
 
         if (constraint is null)
         {
-            context.Error($"Constraint '{name}' must declare 'unique ... on ...', 'unique event ...' or 'file ...'", header.Location);
+            context.Error(DiagnosticCodes.ConstraintWithoutRule, $"Constraint '{name}' must declare 'unique ... on ...', 'unique event ...' or 'file ...'", header.Location);
             constraint = new UniqueEventConstraintSyntax(name, string.Empty, header.Location);
         }
 
@@ -70,13 +71,13 @@ internal static partial class ConstraintParser
             return new FileConstraintSyntax(name, new(line.Content["file".Length..].Trim(), line.Location), line.Location);
         }
 
-        context.Error($"Invalid constraint body '{line.Content}'", line.Location);
+        context.Error(DiagnosticCodes.InvalidConstraintBody, $"Invalid constraint body '{line.Content}'", line.Location);
         return null;
     }
 
     static string ReportInvalidHeader(ParserContext context, SourceLine header)
     {
-        context.Error($"Invalid constraint declaration '{header.Content}' - expected 'constraint <Name>'", header.Location);
+        context.Error(DiagnosticCodes.InvalidConstraintDeclaration, $"Invalid constraint declaration '{header.Content}' - expected 'constraint <Name>'", header.Location);
         return LineText.FirstWord(header.Content);
     }
 

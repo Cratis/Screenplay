@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
@@ -40,7 +41,7 @@ internal static class CodeBlockParser
         var open = context.Reader.PeekSignificant();
         if (open is null || open.Content != "```" || open.Indent <= tagLine.Indent)
         {
-            context.Error($"Expected an opening ``` fence after '{opener}'", tagLine.Location);
+            context.Error(DiagnosticCodes.ExpectedCodeFence, $"Expected an opening ``` fence after '{opener}'", tagLine.Location);
             return null;
         }
 
@@ -52,7 +53,7 @@ internal static class CodeBlockParser
             var line = context.Reader.TakeRaw();
             if (line is null)
             {
-                context.Error("Unclosed inline code block - expected a closing ``` line", open.Location);
+                context.Error(DiagnosticCodes.UnclosedCodeBlock, "Unclosed inline code block - expected a closing ``` line", open.Location);
                 break;
             }
 

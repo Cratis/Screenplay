@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
@@ -22,7 +23,7 @@ internal static partial class QueryParser
         var match = HeaderRegex().Match(header.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid query declaration '{header.Content}' - expected 'query <Name> => [observable] <ReadModel>'", header.Location);
+            context.Error(DiagnosticCodes.InvalidQueryDeclaration, $"Invalid query declaration '{header.Content}' - expected 'query <Name> => [observable] <ReadModel>'", header.Location);
             context.SkipBlock(header.Indent);
             return new(LineText.FirstWord(header.Content), new(string.Empty, false, false, header.Location), null, [], null, header.Location);
         }
@@ -61,7 +62,7 @@ internal static partial class QueryParser
                     performer = ParsePerformer(context, line, performer, name);
                     break;
                 default:
-                    context.Error($"Unexpected '{line.Content}' in query body - expected description, by, filter, authorize or performer", line.Location);
+                    context.Error(DiagnosticCodes.UnknownQueryDirective, $"Unexpected '{line.Content}' in query body - expected description, by, filter, authorize or performer", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
@@ -75,7 +76,7 @@ internal static partial class QueryParser
         var match = ParameterRegex().Match(line.Content[keyword.Length..].Trim());
         if (!match.Success)
         {
-            context.Error($"Invalid '{keyword}' parameter '{line.Content}' - expected '{keyword} <name> <Type> [from <source>]'", line.Location);
+            context.Error(DiagnosticCodes.InvalidQueryParameter, $"Invalid '{keyword}' parameter '{line.Content}' - expected '{keyword} <name> <Type> [from <source>]'", line.Location);
             return null;
         }
 
@@ -90,21 +91,21 @@ internal static partial class QueryParser
     {
         if (line.Content != "performer")
         {
-            context.Error($"Invalid performer declaration '{line.Content}' - expected 'performer'", line.Location);
+            context.Error(DiagnosticCodes.InvalidPerformerDeclaration, $"Invalid performer declaration '{line.Content}' - expected 'performer'", line.Location);
             context.SkipBlock(line.Indent);
             return existing;
         }
 
         if (existing is not null)
         {
-            context.Error($"Query '{queryName}' already declares a performer - a query can have at most one", line.Location);
+            context.Error(DiagnosticCodes.DuplicatePerformer, $"Query '{queryName}' already declares a performer - a query can have at most one", line.Location);
             context.SkipBlock(line.Indent);
             return existing;
         }
 
         if (!context.TryPeekChild(line.Indent, out var body))
         {
-            context.Error("Expected a 'file' directive or an inline code block in the performer", line.Location);
+            context.Error(DiagnosticCodes.PerformerWithoutImplementation, "Expected a 'file' directive or an inline code block in the performer", line.Location);
             return null;
         }
 
@@ -120,7 +121,7 @@ internal static partial class QueryParser
             return code is null ? null : new PerformerSyntax(null, code, line.Location);
         }
 
-        context.Error($"Unexpected '{body.Content}' in performer - expected 'file <path>' or an inline code block", body.Location);
+        context.Error(DiagnosticCodes.UnknownPerformerDirective, $"Unexpected '{body.Content}' in performer - expected 'file <path>' or an inline code block", body.Location);
         context.SkipBlock(line.Indent);
         return null;
     }

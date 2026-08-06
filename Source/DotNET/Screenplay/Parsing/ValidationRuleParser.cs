@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Text;
 
@@ -24,7 +25,7 @@ internal static partial class ValidationRuleParser
         var match = RuleRegex().Match(content);
         if (!match.Success)
         {
-            context.Error($"Invalid validation rule '{line.Content}'", line.Location);
+            context.Error(DiagnosticCodes.InvalidValidationRule, $"Invalid validation rule '{line.Content}'", line.Location);
             return null;
         }
 
@@ -82,7 +83,7 @@ internal static partial class ValidationRuleParser
         var operand = OperandRegex().Match(rule);
         if (!operand.Success)
         {
-            context.Error($"Invalid validation rule '{line.Content}'", line.Location);
+            context.Error(DiagnosticCodes.InvalidValidationRule, $"Invalid validation rule '{line.Content}'", line.Location);
             return (null, null);
         }
 
@@ -111,7 +112,7 @@ internal static partial class ValidationRuleParser
 
         if (kind is null)
         {
-            context.Error($"Unknown validation rule '{operand.Groups[1].Value}'", line.Location);
+            context.Error(DiagnosticCodes.UnknownValidationRule, $"Unknown validation rule '{operand.Groups[1].Value}'", line.Location);
             return (null, null);
         }
 
@@ -134,7 +135,7 @@ internal static partial class ValidationRuleParser
     {
         if (!NameRegex().IsMatch(name))
         {
-            context.Error($"Invalid rule name '{name}' in '{line.Content}' - expected 'rule <Name>' with an identifier", line.Location);
+            context.Error(DiagnosticCodes.InvalidRuleName, $"Invalid rule name '{name}' in '{line.Content}' - expected 'rule <Name>' with an identifier", line.Location);
             return (null, null);
         }
 
@@ -167,7 +168,7 @@ internal static partial class ValidationRuleParser
             return (null, CodeBlockParser.Parse(context, body.Content, body));
         }
 
-        context.Error($"Unexpected '{body.Content}' in rule implementation - expected 'file <path>' or an inline code block", body.Location);
+        context.Error(DiagnosticCodes.UnknownRuleImplementationDirective, $"Unexpected '{body.Content}' in rule implementation - expected 'file <path>' or an inline code block", body.Location);
         context.SkipBlock(body.Indent);
         return (null, null);
     }

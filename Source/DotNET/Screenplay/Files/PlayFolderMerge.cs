@@ -84,6 +84,7 @@ internal static partial class PlayFolderMerge
         foreach (var extra in declared.Skip(1))
         {
             context.Error(
+                DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles,
                 $"The folder already declares a {keyword} in '{Describe(location(declared[0]).Path)}' - a folder compiles to one application, which can have at most one",
                 location(extra));
         }
@@ -121,6 +122,7 @@ internal static partial class PlayFolderMerge
             if (claimed.TryGetValue(name(declaration), out var first) && !string.Equals(first.Path, current.Path, StringComparison.Ordinal))
             {
                 context.Error(
+                    DiagnosticCodes.RepeatedDeclarationAcrossFiles,
                     $"Duplicate {keyword} '{name(declaration)}'{(within is null ? string.Empty : $" in {within}")} - already declared in '{Describe(first.Path)}'",
                     current);
                 continue;

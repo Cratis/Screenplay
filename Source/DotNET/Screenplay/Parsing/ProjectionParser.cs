@@ -30,7 +30,7 @@ internal static partial class ProjectionParser
             }
             else
             {
-                context.Error($"Expected 'projection', got '{FirstWord(line.Content)}'", line.Location);
+                context.Error(DiagnosticCodes.ExpectedProjection, $"Expected 'projection', got '{FirstWord(line.Content)}'", line.Location);
                 context.Reader.TakeSignificant();
                 context.SkipBlock(line.Indent);
             }
@@ -38,7 +38,7 @@ internal static partial class ProjectionParser
 
         if (projections.Count == 0 && context.Diagnostics.Count == 0)
         {
-            context.Error("Document must contain at least one projection", SourceLocation.Start);
+            context.Error(DiagnosticCodes.ProjectionDocumentWithoutProjection, "Document must contain at least one projection", SourceLocation.Start);
         }
 
         return projections;
@@ -55,7 +55,7 @@ internal static partial class ProjectionParser
         var match = HeaderRegex().Match(header.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid projection declaration '{header.Content}' - expected 'projection <Name> [=> <ReadModel>]'", header.Location);
+            context.Error(DiagnosticCodes.InvalidProjectionDeclaration, $"Invalid projection declaration '{header.Content}' - expected 'projection <Name> [=> <ReadModel>]'", header.Location);
             context.SkipBlock(header.Indent);
             return new(FirstWord(header.Content), null, null, AutoMapMode.Inherit, null, [], header.Location);
         }
@@ -84,7 +84,7 @@ internal static partial class ProjectionParser
                 case "key":
                     if (key is not null)
                     {
-                        context.Error("Duplicate key directive - a projection can only declare one key", line.Location);
+                        context.Error(DiagnosticCodes.DuplicateProjectionKey, "Duplicate key directive - a projection can only declare one key", line.Location);
                     }
 
                     key = ParseKey(context, line);
@@ -101,7 +101,7 @@ internal static partial class ProjectionParser
 
         if (blocks.Count == 0)
         {
-            context.Error($"Projection '{name}' must contain at least one directive", header.Location);
+            context.Error(DiagnosticCodes.EmptyProjection, $"Projection '{name}' must contain at least one directive", header.Location);
         }
 
         return new(name, readModel, sequence, autoMap, key, blocks, header.Location);
@@ -128,12 +128,12 @@ internal static partial class ProjectionParser
             case "clear":
                 if (!nestedScope)
                 {
-                    context.Error("'clear with' is only valid inside a nested block", line.Location);
+                    context.Error(DiagnosticCodes.ClearWithOutsideNestedBlock, "'clear with' is only valid inside a nested block", line.Location);
                 }
 
                 return ParseClearWith(context, line);
             default:
-                context.Error($"Unexpected '{FirstWord(line.Content)}' in projection body", line.Location);
+                context.Error(DiagnosticCodes.UnknownProjectionDirective, $"Unexpected '{FirstWord(line.Content)}' in projection body", line.Location);
                 context.SkipBlock(line.Indent);
                 return null;
         }
@@ -147,14 +147,14 @@ internal static partial class ProjectionParser
             var text = spec.Trim();
             if (text.Length == 0)
             {
-                context.Error("Expected an event type after 'from'", line.Location);
+                context.Error(DiagnosticCodes.FromWithoutEvent, "Expected an event type after 'from'", line.Location);
                 continue;
             }
 
             var specMatch = EventSpecRegex().Match(text);
             if (!specMatch.Success)
             {
-                context.Error($"Invalid event reference '{text}'", line.Location);
+                context.Error(DiagnosticCodes.InvalidEventReference, $"Invalid event reference '{text}'", line.Location);
                 continue;
             }
 
@@ -175,7 +175,7 @@ internal static partial class ProjectionParser
             {
                 if (key is not null)
                 {
-                    context.Error("Duplicate key directive - a from block can only declare one key", child.Location);
+                    context.Error(DiagnosticCodes.DuplicateFromKey, "Duplicate key directive - a from block can only declare one key", child.Location);
                 }
 
                 key = ParseKey(context, child);
@@ -223,7 +223,7 @@ internal static partial class ProjectionParser
         var match = JoinRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid join declaration '{line.Content}' - expected 'join <property> on <key>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidJoinDeclaration, $"Invalid join declaration '{line.Content}' - expected 'join <property> on <key>'", line.Location);
             context.SkipBlock(line.Indent);
             return new(string.Empty, string.Empty, [], line.Location);
         }
@@ -235,7 +235,7 @@ internal static partial class ProjectionParser
             var withMatch = WithRegex().Match(child.Content);
             if (!withMatch.Success)
             {
-                context.Error($"Expected 'with <EventType>' in join block, got '{child.Content}'", child.Location);
+                context.Error(DiagnosticCodes.JoinWithoutEvent, $"Expected 'with <EventType>' in join block, got '{child.Content}'", child.Location);
                 context.SkipBlock(child.Indent);
                 continue;
             }
@@ -253,7 +253,7 @@ internal static partial class ProjectionParser
         var match = ChildrenRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid children declaration '{line.Content}' - expected 'children <collection> identified by <key>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidChildrenDeclaration, $"Invalid children declaration '{line.Content}' - expected 'children <collection> identified by <key>'", line.Location);
             context.SkipBlock(line.Indent);
             return new(string.Empty, new RawExpressionSyntax(string.Empty, line.Location), AutoMapMode.Inherit, [], line.Location);
         }
@@ -269,7 +269,7 @@ internal static partial class ProjectionParser
         var match = NestedRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid nested declaration '{line.Content}' - expected 'nested <property>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidNestedDeclaration, $"Invalid nested declaration '{line.Content}' - expected 'nested <property>'", line.Location);
             context.SkipBlock(line.Indent);
             return new(string.Empty, AutoMapMode.Inherit, [], line.Location);
         }
@@ -279,7 +279,7 @@ internal static partial class ProjectionParser
         var blocks = ParseChildBlocks(context, line, ref autoMap, nestedScope: true);
         if (!blocks.OfType<FromSyntax>().Any())
         {
-            context.Error($"Nested block '{name}' must contain at least one 'from' directive", line.Location);
+            context.Error(DiagnosticCodes.NestedBlockWithoutFrom, $"Nested block '{name}' must contain at least one 'from' directive", line.Location);
         }
 
         return new(name, autoMap, blocks, line.Location);
@@ -322,7 +322,7 @@ internal static partial class ProjectionParser
         var match = RemoveWithRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid remove declaration '{line.Content}' - expected 'remove with <EventType>' or 'remove via join on <EventType>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidRemoveDeclaration, $"Invalid remove declaration '{line.Content}' - expected 'remove with <EventType>' or 'remove via join on <EventType>'", line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }
@@ -341,7 +341,7 @@ internal static partial class ProjectionParser
             }
             else
             {
-                context.Error($"Unexpected '{child.Content}' in remove block - only 'parent' is allowed", child.Location);
+                context.Error(DiagnosticCodes.UnknownRemoveDirective, $"Unexpected '{child.Content}' in remove block - only 'parent' is allowed", child.Location);
             }
         }
 
@@ -353,7 +353,7 @@ internal static partial class ProjectionParser
         var match = ClearWithRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid clear declaration '{line.Content}' - expected 'clear with <EventType>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidClearDeclaration, $"Invalid clear declaration '{line.Content}' - expected 'clear with <EventType>'", line.Location);
             return new(string.Empty, line.Location);
         }
 
@@ -378,14 +378,14 @@ internal static partial class ProjectionParser
                 var partMatch = AssignmentRegex().Match(child.Content);
                 if (!partMatch.Success)
                 {
-                    context.Error($"Invalid composite key part '{child.Content}' - expected '<property> = <expression>'", child.Location);
+                    context.Error(DiagnosticCodes.InvalidCompositeKeyPart, $"Invalid composite key part '{child.Content}' - expected '<property> = <expression>'", child.Location);
                     continue;
                 }
 
                 var expression = ExpressionParser.ParseProjectionExpression(context, partMatch.Groups[2].Value, child.Location);
                 if (expression is TemplateExpressionSyntax)
                 {
-                    context.Error("Template expressions are not allowed in composite keys", child.Location);
+                    context.Error(DiagnosticCodes.TemplateInCompositeKey, "Template expressions are not allowed in composite keys", child.Location);
                 }
 
                 parts.Add(new(Unescape(partMatch.Groups[1].Value), expression, child.Location));
@@ -398,7 +398,7 @@ internal static partial class ProjectionParser
 
             if (parts.Count == 0)
             {
-                context.Error("Composite keys must contain at least one part", line.Location);
+                context.Error(DiagnosticCodes.EmptyCompositeKey, "Composite keys must contain at least one part", line.Location);
             }
 
             return new CompositeKeySyntax(type, parts, line.Location);
@@ -468,7 +468,7 @@ internal static partial class ProjectionParser
             return new SetMappingSyntax(Unescape(assignment.Groups[1].Value), source, line.Location);
         }
 
-        context.Error($"Invalid mapping '{line.Content}'", line.Location);
+        context.Error(DiagnosticCodes.InvalidProjectionMapping, $"Invalid mapping '{line.Content}'", line.Location);
         return null;
     }
 

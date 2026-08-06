@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
@@ -28,14 +29,14 @@ internal static partial class SliceParser
 
         if (!match.Success)
         {
-            context.Error($"Invalid slice declaration '{header.Content}' - expected 'slice <Type> <Name>'", header.Location);
+            context.Error(DiagnosticCodes.InvalidSliceDeclaration, $"Invalid slice declaration '{header.Content}' - expected 'slice <Type> <Name>'", header.Location);
         }
         else
         {
             name = match.Groups[2].Value;
             if (!Enum.TryParse(match.Groups[1].Value, out type))
             {
-                context.Error($"Unknown slice type '{match.Groups[1].Value}' - expected StateChange, StateView, Automation or Translate", header.Location);
+                context.Error(DiagnosticCodes.UnknownSliceType, $"Unknown slice type '{match.Groups[1].Value}' - expected StateChange, StateView, Automation or Translate", header.Location);
                 type = SliceType.StateChange;
             }
         }
@@ -87,7 +88,7 @@ internal static partial class SliceParser
                     specifications.Add(SpecificationParser.Parse(context, line));
                     break;
                 default:
-                    context.Warning($"Unknown construct '{LineText.FirstWord(line.Content)}' in slice '{name}'", line.Location);
+                    context.Warning(DiagnosticCodes.UnknownSliceDirective, $"Unknown construct '{LineText.FirstWord(line.Content)}' in slice '{name}'", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }

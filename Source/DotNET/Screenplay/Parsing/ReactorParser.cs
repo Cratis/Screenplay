@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
@@ -27,7 +28,7 @@ internal static partial class ReactorParser
         var name = HeaderRegex().Match(header.Content);
         if (!name.Success)
         {
-            context.Error($"Invalid reactor declaration '{header.Content}' - expected 'reactor <Name>'", header.Location);
+            context.Error(DiagnosticCodes.InvalidReactorDeclaration, $"Invalid reactor declaration '{header.Content}' - expected 'reactor <Name>'", header.Location);
         }
 
         var triggers = new List<ReactorTriggerSyntax>();
@@ -45,7 +46,7 @@ internal static partial class ReactorParser
             var trigger = OnRegex().Match(line.Content);
             if (!trigger.Success)
             {
-                context.Error($"Expected 'on <EventType>' in reactor body, got '{line.Content}'", line.Location);
+                context.Error(DiagnosticCodes.InvalidReactorTrigger, $"Expected 'on <EventType>' in reactor body, got '{line.Content}'", line.Location);
                 context.SkipBlock(line.Indent);
                 continue;
             }
@@ -55,7 +56,7 @@ internal static partial class ReactorParser
 
         if (triggers.Count == 0)
         {
-            context.Error($"Reactor '{name.Groups[1].Value}' must declare at least one 'on <EventType>' trigger", header.Location);
+            context.Error(DiagnosticCodes.ReactorWithoutTrigger, $"Reactor '{name.Groups[1].Value}' must declare at least one 'on <EventType>' trigger", header.Location);
         }
 
         return new(name.Groups[1].Value, triggers, header.Location, description);
@@ -84,7 +85,7 @@ internal static partial class ReactorParser
             }
             else
             {
-                context.Error($"Unexpected '{body.Content}' in reactor trigger - expected description, 'file <path>' or an inline code block", body.Location);
+                context.Error(DiagnosticCodes.UnknownReactorTriggerDirective, $"Unexpected '{body.Content}' in reactor trigger - expected description, 'file <path>' or an inline code block", body.Location);
                 context.SkipBlock(body.Indent);
             }
         }

@@ -96,6 +96,7 @@ internal static partial class PlayFolderMerge
             .Where(part => !string.Equals(part.Description, described[0].Description, StringComparison.Ordinal)))
         {
             context.Warning(
+                DiagnosticCodes.ConflictingDescriptionAcrossFiles,
                 $"The {owner} is already described in '{Describe(described[0].Location.Path)}' - keeping that description",
                 disagreeing.Location);
         }

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
@@ -22,7 +23,7 @@ internal static partial class EventParser
         var name = HeaderRegex().Match(header.Content);
         if (!name.Success)
         {
-            context.Error($"Invalid event declaration '{header.Content}' - expected 'event <Name>'", header.Location);
+            context.Error(DiagnosticCodes.InvalidEventDeclaration, $"Invalid event declaration '{header.Content}' - expected 'event <Name>'", header.Location);
         }
 
         var properties = new List<PropertySyntax>();
@@ -42,7 +43,7 @@ internal static partial class EventParser
             {
                 if (property.IsIdentifier)
                 {
-                    context.Error($"Property '{property.Name}' of event '{name.Groups[1].Value}' cannot be marked identifier - an event never carries its event source id", line.Location);
+                    context.Error(DiagnosticCodes.IdentifierOnEventProperty, $"Property '{property.Name}' of event '{name.Groups[1].Value}' cannot be marked identifier - an event never carries its event source id", line.Location);
                     property = property with { IsIdentifier = false };
                 }
 
@@ -50,7 +51,7 @@ internal static partial class EventParser
             }
             else
             {
-                context.Error($"Invalid property '{line.Content}' - expected '<name> <Type>'", line.Location);
+                context.Error(DiagnosticCodes.InvalidPropertyDeclaration, $"Invalid property '{line.Content}' - expected '<name> <Type>'", line.Location);
             }
         }
 
@@ -76,6 +77,7 @@ internal static partial class EventParser
         }
 
         context.Warning(
+            DiagnosticCodes.TagPropertyReadAsTag,
             $"'{line.Content}' declares a static tag with the value '{value}', not a property named 'tag' - write 'tag \"{value}\"' for the tag, or '@{line.Content}' for the property",
             line.Location);
     }
