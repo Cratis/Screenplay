@@ -54,6 +54,8 @@
   href: grammar.md
 - name: Compiler and CLI
   href: tool.md
+- name: Diagnostics
+  href: diagnostics.md
 - name: Printing and generating
   href: printing.md
 - name: Folders
