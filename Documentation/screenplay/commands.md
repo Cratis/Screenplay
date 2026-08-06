@@ -92,10 +92,14 @@ Declarative validation covers the common cases without code:
 | `> <value>` | `quantity > 0` |
 | `>= <value>` | `discountPct >= 0` |
 | `< <value>` | `dateOfBirth < today` |
+| `<= <value>` | `discountPct <= 100` |
+| `== <value>` | `currency == "NOK"` |
+| `!= <value>` | `status != "draft"` |
 | `length == <n>` | `currency length == 3` |
 | `matches <regex>` | `email matches email` |
 | `matches "<pattern>"` | `invoiceNumber matches "^INV-[0-9]{6}$"` |
 | `all > <value>` (on collection) | `lines.quantity all > 0` |
+| `all >= <value>` (on collection) | `lines.unitPrice all >= 0` |
 | `rule <Name>` | `orgNumber rule BeAValidOrganizationNumber` |
 
 Every rule carries a `message` shown when it fails:

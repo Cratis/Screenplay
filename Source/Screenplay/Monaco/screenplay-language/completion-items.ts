@@ -134,6 +134,8 @@ export const validateItems: CompletionEntry[] = [
     { label: 'min', insertText: '${1:property} min ${2:1} message "${3:message}"', documentation: 'Minimum length or value.' },
     { label: 'matches', insertText: '${1:property} matches "${2:pattern}" message "${3:message}"', documentation: 'The property must match a regular expression.' },
     { label: 'rule', insertText: '${1:property} rule ${2:PredicateName} message "${3:message}"', documentation: 'Names a predicate — optionally followed by an indented `file` reference or inline `csharp` block giving it a body; bare, it just states that a constraint exists.' },
+    { label: '==', insertText: '${1:property} == ${2:value} message "${3:message}"', documentation: 'The property must equal the value.' },
+    { label: '!=', insertText: '${1:property} != ${2:value} message "${3:message}"', documentation: 'The property must not equal the value.' },
     { label: 'length ==', insertText: '${1:property} length == ${2:3} message "${3:message}"', documentation: 'The property must have an exact length.' },
     { label: 'all >', insertText: '${1:collection}.${2:property} all > ${3:0} message "${4:message}"', documentation: 'Every element of a collection must satisfy the comparison.' },
 ];

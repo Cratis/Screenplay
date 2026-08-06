@@ -223,6 +223,7 @@ RuleOp         = "not empty"
                | "<", Value
                | "<=", Value
                | "==", Value
+               | "!=", Value
                | "length", "==", Number
                | "matches", ( "email" | StringLiteral )
                | "all", ">", Value
