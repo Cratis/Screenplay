@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Syntax;
+
 namespace Cratis.Screenplay.Files;
 
 /// <summary>
@@ -23,11 +25,39 @@ public class PlayFileCompiler(IPlayFiles playFiles, IScreenplayCompiler compiler
         [.. playFiles.FindIn(root).Select(Compile)];
 
     /// <inheritdoc/>
-    public PlayFileCompilation CompileFile(string path)
+    public PlayFileCompilation CompileFile(string path) => Compile(Locate(path));
+
+    /// <inheritdoc/>
+    public ApplicationCompilation<ApplicationSyntax> CompileFolder(string root) =>
+        AsOneApplication([.. playFiles.FindIn(root).Select(Read)]);
+
+    /// <inheritdoc/>
+    public ApplicationCompilation<TApplication> CompileFolder<TApplication>(string root, IApplicationSyntaxVisitor<TApplication> visitor) =>
+        Visit(CompileFolder(root), visitor);
+
+    /// <inheritdoc/>
+    public ApplicationCompilation<TApplication> CompileFile<TApplication>(string path, IApplicationSyntaxVisitor<TApplication> visitor) =>
+        Visit(AsOneApplication([Read(Locate(path))]), visitor);
+
+    static ApplicationCompilation<TApplication> Visit<TApplication>(
+        ApplicationCompilation<ApplicationSyntax> compilation,
+        IApplicationSyntaxVisitor<TApplication> visitor) =>
+        new(
+            compilation.Sources,
+            compilation.Result.Success
+                ? new(visitor.Visit(compilation.Result.Value!), compilation.Result.Diagnostics)
+                : CompilationResult<TApplication>.Failed(compilation.Result.Diagnostics));
+
+    static PlayFile Locate(string path)
     {
         var full = System.IO.Path.GetFullPath(path);
-        return Compile(new(full, System.IO.Path.GetFileName(full)));
+        return new(full, System.IO.Path.GetFileName(full));
     }
+
+    ApplicationCompilation<ApplicationSyntax> AsOneApplication(IReadOnlyList<PlayFileSource> sources) =>
+        new(sources, PlayFolderMerge.Merge([.. sources.Select(source => compiler.Parse(source.Source, source.File.RelativePath))]));
+
+    PlayFileSource Read(PlayFile file) => new(file, playFiles.ReadContent(file));
 
     PlayFileCompilation Compile(PlayFile file)
     {

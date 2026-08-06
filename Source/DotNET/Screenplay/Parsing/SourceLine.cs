@@ -12,7 +12,8 @@ namespace Cratis.Screenplay.Parsing;
 /// <param name="Raw">The verbatim line text.</param>
 /// <param name="Indent">The number of leading whitespace characters.</param>
 /// <param name="Content">The line content without indentation, comments and trailing whitespace.</param>
-internal sealed record SourceLine(int Number, string Raw, int Indent, string Content)
+/// <param name="Path">The path of the file the line came from, or <c>null</c> when the source text has no file identity.</param>
+internal sealed record SourceLine(int Number, string Raw, int Indent, string Content, string? Path = null)
 {
     /// <summary>
     /// Gets a value indicating whether the line has no significant content.
@@ -22,12 +23,17 @@ internal sealed record SourceLine(int Number, string Raw, int Indent, string Con
     /// <summary>
     /// Gets the <see cref="SourceLocation"/> of the first significant character on the line.
     /// </summary>
-    public SourceLocation Location => new(Number, Indent + 1);
+    public SourceLocation Location => new(Number, Indent + 1, Path);
+
+    /// <summary>
+    /// Gets the <see cref="SourceLocation"/> of the very start of the line, before any indentation.
+    /// </summary>
+    public SourceLocation Start => new(Number, 1, Path);
 
     /// <summary>
     /// Gets the <see cref="SourceLocation"/> at an offset into the line content.
     /// </summary>
     /// <param name="offset">The 0-based offset into the content.</param>
     /// <returns>The <see cref="SourceLocation"/> at the offset.</returns>
-    public SourceLocation LocationAt(int offset) => new(Number, Indent + offset + 1);
+    public SourceLocation LocationAt(int offset) => new(Number, Indent + offset + 1, Path);
 }

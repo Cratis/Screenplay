@@ -14,7 +14,7 @@ This puts a `screenplay` command on your path. Update it later with `dotnet tool
 
 ## Verify your files
 
-Run `screenplay` from the root of your project - it searches for every file matching the `**/*.play` glob pattern beneath the current directory, compiles each one and reports what it finds:
+Run `screenplay` from the root of your project - it searches for every file matching the `**/*.play` glob pattern beneath the current directory and reports what it finds:
 
 ```bash
 screenplay
@@ -26,7 +26,9 @@ You can also point it at a specific directory:
 screenplay path/to/screenplays
 ```
 
-Or at a single file, which is what you want when a generator just produced one and you only care about that one:
+A directory is verified as **one application**: the files are merged before anything is resolved, so an event declared in one file and produced in another resolves rather than looking missing. See [Folders](folders.md) for what that means and how the files fit together.
+
+Or point it at a single file, which is what you want when a generator just produced one and you only care about that one. A single file is verified on its own, so a name it uses but does not declare is reported:
 
 ```bash
 screenplay path/to/invoicing.play
@@ -81,12 +83,13 @@ if (result.Success)
 
 To turn the syntax tree into your own representation, implement one or more of the visitor interfaces (`IApplicationSyntaxVisitor<T>`, `ISliceSyntaxVisitor<T>`, `IProjectionSyntaxVisitor<T>`, ...) and pass the root visitor to `Compile` - the compiler drives it once parsing succeeds. See [Sub-language Pluggability](sub-languages.md) for how the language itself is layered.
 
-Discovering and compiling every `.play` file beneath a directory - what the CLI does - is a single call:
+Compiling every `.play` file beneath a directory as one application - what the CLI does for a directory - is a single call:
 
 ```csharp
 using Cratis.Screenplay.Files;
 
-var compilations = new PlayFileCompiler().CompileIn(rootDirectory);
+var compilation = new PlayFileCompiler().CompileFolder(rootDirectory);
+var application = compilation.Result.Value!;
 ```
 
 A single file is a single call too:
@@ -94,5 +97,7 @@ A single file is a single call too:
 ```csharp
 var compilation = new PlayFileCompiler().CompileFile(path);
 ```
+
+`CompileIn(rootDirectory)` is the third option: it compiles every discovered file as a document in its own right and hands back one result per file. Reach for it only when the files genuinely are separate documents that happen to share a directory - see [Folders](folders.md) for why a folder is normally one application.
 
 To go the other way - turn a syntax tree back into `.play` text, or generate Screenplay from a model - see [Printing and generating](printing.md).

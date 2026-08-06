@@ -26,37 +26,57 @@ var useColors = !Console.IsOutputRedirected &&
 
 var warnAsError = args.Contains("--warnaserror");
 
+// A folder of .play files describes one application, so it is verified as one - a name declared in one file
+// and used in another resolves, exactly as it would within a single document.
 var playFileCompiler = new PlayFileCompiler();
-var compilations = isFile
-    ? [playFileCompiler.CompileFile(target)]
-    : playFileCompiler.CompileIn(target).ToArray();
+var sources = new Dictionary<string, string>(StringComparer.Ordinal);
+IEnumerable<Diagnostic> diagnostics;
 
-if (compilations.Length == 0)
+if (isFile)
+{
+    var compilation = playFileCompiler.CompileFile(target);
+    sources[compilation.File.RelativePath] = compilation.Source;
+    diagnostics = compilation.Result.Diagnostics;
+}
+else
+{
+    var compilation = playFileCompiler.CompileFolder(target);
+    foreach (var source in compilation.Sources)
+    {
+        sources[source.File.RelativePath] = source.Source;
+    }
+
+    diagnostics = compilation.Result.Diagnostics;
+}
+
+if (sources.Count == 0)
 {
     Console.WriteLine($"No {PlayExtension} files found beneath {target}");
     return 0;
 }
 
+var fallbackFile = sources.Keys.First();
 var formatter = new DiagnosticFormatter();
 var errors = 0;
 var warnings = 0;
 
-foreach (var compilation in compilations)
+foreach (var diagnostic in diagnostics
+    .OrderBy(diagnostic => diagnostic.Location.Path ?? fallbackFile, StringComparer.Ordinal)
+    .ThenBy(diagnostic => diagnostic.Location.Line)
+    .ThenBy(diagnostic => diagnostic.Location.Column))
 {
-    foreach (var diagnostic in compilation.Result.Diagnostics)
+    switch (diagnostic.Severity)
     {
-        switch (diagnostic.Severity)
-        {
-            case DiagnosticSeverity.Error:
-                errors++;
-                break;
-            case DiagnosticSeverity.Warning:
-                warnings++;
-                break;
-        }
-
-        Console.WriteLine(formatter.Format(compilation.File.RelativePath, diagnostic, compilation.Source, useColors));
+        case DiagnosticSeverity.Error:
+            errors++;
+            break;
+        case DiagnosticSeverity.Warning:
+            warnings++;
+            break;
     }
+
+    var file = diagnostic.Location.Path ?? fallbackFile;
+    Console.WriteLine(formatter.Format(file, diagnostic, sources.GetValueOrDefault(file, string.Empty), useColors));
 }
 
 if (errors + warnings > 0)
@@ -65,7 +85,7 @@ if (errors + warnings > 0)
 }
 
 var failed = errors > 0 || (warnAsError && warnings > 0);
-var summary = $"{compilations.Length} file(s) compiled - {errors} error(s), {warnings} warning(s)";
+var summary = $"{sources.Count} file(s) compiled - {errors} error(s), {warnings} warning(s)";
 if (useColors)
 {
     var color = "\e[32m";
