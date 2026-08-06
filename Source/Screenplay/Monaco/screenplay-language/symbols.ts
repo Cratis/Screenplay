@@ -192,7 +192,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
             continue;
         }
 
-        const queryMatch = trimmed.match(/^query\s+(\w+)\s*=>\s*([\w[\]]+)\s*$/);
+        const queryMatch = trimmed.match(/^query\s+(\w+)\s*=>\s*(?:observable\s+)?([\w[\]]+)\s*$/);
         if (queryMatch) {
             // The return type names a read model, which no construct declares — only the
             // 'by' and 'filter' parameters resolve against the document's own types.
