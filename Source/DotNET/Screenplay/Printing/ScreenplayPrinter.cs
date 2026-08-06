@@ -330,10 +330,10 @@ public sealed partial class ScreenplayPrinter :
                 WriteQuery(writer, query);
             }
 
-            if (slice.Projection is not null)
+            foreach (var projection in slice.Projections)
             {
                 writer.Blank();
-                WriteProjection(writer, slice.Projection);
+                WriteProjection(writer, projection);
             }
 
             foreach (var capture in slice.Captures)
