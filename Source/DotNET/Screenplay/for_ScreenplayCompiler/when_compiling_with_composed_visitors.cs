@@ -32,7 +32,7 @@ public class when_compiling_with_composed_visitors : given.a_compiler
 
     class slice_visitor(IProjectionSyntaxVisitor<string> projections) : ISliceSyntaxVisitor<string>
     {
-        public string Visit(SliceSyntax syntax) => syntax.Projection is null ? syntax.Name : $"{syntax.Name}[{projections.Visit(syntax.Projection)}]";
+        public string Visit(SliceSyntax syntax) => $"{syntax.Name}[{string.Join(';', syntax.Projections.Select(projections.Visit))}]";
     }
 
     class feature_visitor(ISliceSyntaxVisitor<string> slices) : IFeatureSyntaxVisitor<string>
