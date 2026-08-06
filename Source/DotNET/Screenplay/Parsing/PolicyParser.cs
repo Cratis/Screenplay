@@ -24,7 +24,7 @@ internal static partial class PolicyParser
         var name = HeaderRegex().Match(header.Content);
         if (!name.Success)
         {
-            context.Error($"Invalid policy declaration '{header.Content}' - expected 'policy <Name>'", header.Location);
+            context.Error(DiagnosticCodes.InvalidPolicyDeclaration, $"Invalid policy declaration '{header.Content}' - expected 'policy <Name>'", header.Location);
         }
 
         PolicyConditionSyntax? condition = null;
@@ -50,14 +50,14 @@ internal static partial class PolicyParser
             }
             else
             {
-                context.Error($"Unexpected '{line.Content}' in policy body - expected 'require ...' or an inline code block", line.Location);
+                context.Error(DiagnosticCodes.UnknownPolicyDirective, $"Unexpected '{line.Content}' in policy body - expected 'require ...' or an inline code block", line.Location);
                 context.SkipBlock(line.Indent);
             }
         }
 
         if (condition is null && code is null)
         {
-            context.Error($"Policy '{name.Groups[1].Value}' must declare a 'require' condition or an inline code block", header.Location);
+            context.Error(DiagnosticCodes.PolicyWithoutRequirement, $"Policy '{name.Groups[1].Value}' must declare a 'require' condition or an inline code block", header.Location);
         }
 
         return new(name.Groups[1].Value, condition, code, header.Location);
@@ -70,7 +70,7 @@ internal static partial class PolicyParser
         var condition = ParseCombined(context, tokens, ref position, location);
         if (condition is not null && position < tokens.Count)
         {
-            context.Error($"Unexpected '{tokens[position]}' in policy condition", location);
+            context.Error(DiagnosticCodes.UnexpectedTokenInPolicyCondition, $"Unexpected '{tokens[position]}' in policy condition", location);
         }
 
         return condition;
@@ -98,7 +98,7 @@ internal static partial class PolicyParser
     {
         if (position >= tokens.Count)
         {
-            context.Error("Expected a policy condition", location);
+            context.Error(DiagnosticCodes.ExpectedPolicyCondition, "Expected a policy condition", location);
             return null;
         }
 
@@ -113,7 +113,7 @@ internal static partial class PolicyParser
                 }
                 else
                 {
-                    context.Error("Expected ')' in policy condition", location);
+                    context.Error(DiagnosticCodes.UnclosedPolicyConditionGroup, "Expected ')' in policy condition", location);
                 }
 
                 return condition;
@@ -126,7 +126,7 @@ internal static partial class PolicyParser
                 position++;
                 if (position >= tokens.Count || !IsString(tokens[position]))
                 {
-                    context.Error("Expected a quoted role name after 'role'", location);
+                    context.Error(DiagnosticCodes.ExpectedRoleName, "Expected a quoted role name after 'role'", location);
                     return null;
                 }
 
@@ -136,21 +136,21 @@ internal static partial class PolicyParser
                 position++;
                 if (position >= tokens.Count || !IsString(tokens[position]))
                 {
-                    context.Error("Expected a quoted claim name after 'claim'", location);
+                    context.Error(DiagnosticCodes.ExpectedClaimName, "Expected a quoted claim name after 'claim'", location);
                     return null;
                 }
 
                 var claim = Unquote(tokens[position++]);
                 if (position >= tokens.Count || tokens[position] != "matches")
                 {
-                    context.Error("Expected 'matches' after the claim name", location);
+                    context.Error(DiagnosticCodes.ExpectedClaimMatches, "Expected 'matches' after the claim name", location);
                     return null;
                 }
 
                 position++;
                 if (position >= tokens.Count)
                 {
-                    context.Error("Expected 'subject' or a value after 'matches'", location);
+                    context.Error(DiagnosticCodes.ExpectedClaimMatchTarget, "Expected 'subject' or a value after 'matches'", location);
                     return null;
                 }
 
@@ -160,7 +160,7 @@ internal static partial class PolicyParser
                     : new ClaimConditionSyntax(claim, false, ExpressionParser.ParseMappingSource(context, target, location), location);
 
             default:
-                context.Error($"Unexpected '{tokens[position]}' in policy condition", location);
+                context.Error(DiagnosticCodes.UnexpectedTokenInPolicyCondition, $"Unexpected '{tokens[position]}' in policy condition", location);
                 return null;
         }
     }

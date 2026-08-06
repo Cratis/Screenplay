@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
@@ -45,7 +46,7 @@ internal static class ValidateParser
             return code is null ? null : new CodeValidateSyntax(code, line.Location);
         }
 
-        context.Error($"Invalid validate declaration '{line.Content}' - expected 'validate' or 'validate csharp'", line.Location);
+        context.Error(DiagnosticCodes.InvalidValidateDeclaration, $"Invalid validate declaration '{line.Content}' - expected 'validate' or 'validate csharp'", line.Location);
         context.SkipBlock(line.Indent);
         return null;
     }

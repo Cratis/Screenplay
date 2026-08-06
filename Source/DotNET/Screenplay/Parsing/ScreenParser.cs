@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Text;
 
@@ -23,7 +24,7 @@ internal static partial class ScreenParser
         var name = HeaderRegex().Match(header.Content);
         if (!name.Success)
         {
-            context.Error($"Invalid screen declaration '{header.Content}' - expected 'screen <Name>'", header.Location);
+            context.Error(DiagnosticCodes.InvalidScreenDeclaration, $"Invalid screen declaration '{header.Content}' - expected 'screen <Name>'", header.Location);
         }
 
         FileReferenceSyntax? file = null;
@@ -72,7 +73,7 @@ internal static partial class ScreenParser
                     return code is null ? null : new ScreenCodeSyntax(code, line.Location);
                 }
 
-                context.Error($"Unexpected '{line.Content}' in screen body", line.Location);
+                context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unexpected '{line.Content}' in screen body", line.Location);
                 context.SkipBlock(line.Indent);
                 return null;
         }
@@ -83,7 +84,7 @@ internal static partial class ScreenParser
         var match = DataRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid data directive '{line.Content}' - expected 'data <ReadModel> via query <Query> [by <param>]'", line.Location);
+            context.Error(DiagnosticCodes.InvalidDataDirective, $"Invalid data directive '{line.Content}' - expected 'data <ReadModel> via query <Query> [by <param>]'", line.Location);
             return null;
         }
 
@@ -96,7 +97,7 @@ internal static partial class ScreenParser
         var match = ActionRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid action directive '{line.Content}' - expected 'action <Command>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidActionDirective, $"Invalid action directive '{line.Content}' - expected 'action <Command>'", line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }
@@ -118,7 +119,7 @@ internal static partial class ScreenParser
             }
             else
             {
-                context.Error($"Unexpected '{child.Content}' in action - expected 'label \"...\"' or 'navigate to ...'", child.Location);
+                context.Error(DiagnosticCodes.UnknownActionDirective, $"Unexpected '{child.Content}' in action - expected 'label \"...\"' or 'navigate to ...'", child.Location);
             }
         }
 
@@ -130,7 +131,7 @@ internal static partial class ScreenParser
         var match = NavigateRegex().Match(text);
         if (!match.Success)
         {
-            context.Error($"Invalid navigation '{text}' - expected 'navigate to <Screen> [by <param>]'", line.Location);
+            context.Error(DiagnosticCodes.InvalidNavigation, $"Invalid navigation '{text}' - expected 'navigate to <Screen> [by <param>]'", line.Location);
             return null;
         }
 
@@ -147,7 +148,7 @@ internal static partial class ScreenParser
             context.Reader.TakeSignificant();
             if (!SlotRegex().IsMatch(child.Content))
             {
-                context.Error($"Expected a slot name in layout '{name}', got '{child.Content}'", child.Location);
+                context.Error(DiagnosticCodes.InvalidScreenLayoutSlot, $"Expected a slot name in layout '{name}', got '{child.Content}'", child.Location);
                 context.SkipBlock(child.Indent);
                 continue;
             }
@@ -190,7 +191,7 @@ internal static partial class ScreenParser
         var match = TitleRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid title directive '{line.Content}' - expected 'title \"...\"'", line.Location);
+            context.Error(DiagnosticCodes.InvalidTitleDirective, $"Invalid title directive '{line.Content}' - expected 'title \"...\"'", line.Location);
             return new(string.Empty, line.Location);
         }
 
@@ -220,7 +221,7 @@ internal static partial class ScreenParser
                 continue;
             }
 
-            context.Error($"Unexpected '{child.Content}' in table - expected 'column ...' or 'on row-click navigate to ...'", child.Location);
+            context.Error(DiagnosticCodes.UnknownTableDirective, $"Unexpected '{child.Content}' in table - expected 'column ...' or 'on row-click navigate to ...'", child.Location);
         }
 
         return new(target, columns, rowClick, line.Location);
@@ -237,7 +238,7 @@ internal static partial class ScreenParser
             var field = FieldRegex().Match(child.Content);
             if (!field.Success)
             {
-                context.Error($"Unexpected '{child.Content}' in summary - expected 'field <property> label \"...\"'", child.Location);
+                context.Error(DiagnosticCodes.UnknownSummaryDirective, $"Unexpected '{child.Content}' in summary - expected 'field <property> label \"...\"'", child.Location);
                 continue;
             }
 

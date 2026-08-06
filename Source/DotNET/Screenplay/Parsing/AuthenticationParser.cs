@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
@@ -22,14 +23,14 @@ internal static partial class AuthenticationParser
     {
         if (header.Content != "authentication")
         {
-            context.Error($"Invalid authentication declaration '{header.Content}' - expected 'authentication'", header.Location);
+            context.Error(DiagnosticCodes.InvalidAuthenticationDeclaration, $"Invalid authentication declaration '{header.Content}' - expected 'authentication'", header.Location);
             context.SkipBlock(header.Indent);
             return existing;
         }
 
         if (existing is not null)
         {
-            context.Error("The document already declares an authentication block - a document can have at most one", header.Location);
+            context.Error(DiagnosticCodes.DuplicateAuthentication, "The document already declares an authentication block - a document can have at most one", header.Location);
             context.SkipBlock(header.Indent);
             return existing;
         }
@@ -41,7 +42,7 @@ internal static partial class AuthenticationParser
             var match = ProviderRegex().Match(line.Content);
             if (!match.Success)
             {
-                context.Error($"Invalid provider declaration '{line.Content}' - expected 'provider <Name>'", line.Location);
+                context.Error(DiagnosticCodes.InvalidProviderDeclaration, $"Invalid provider declaration '{line.Content}' - expected 'provider <Name>'", line.Location);
                 context.SkipBlock(line.Indent);
                 continue;
             }
@@ -61,7 +62,7 @@ internal static partial class AuthenticationParser
             var match = SettingRegex().Match(child.Content);
             if (!match.Success)
             {
-                context.Error($"Invalid provider setting '{child.Content}' - expected '<name> <value>'", child.Location);
+                context.Error(DiagnosticCodes.InvalidProviderSetting, $"Invalid provider setting '{child.Content}' - expected '<name> <value>'", child.Location);
                 continue;
             }
 

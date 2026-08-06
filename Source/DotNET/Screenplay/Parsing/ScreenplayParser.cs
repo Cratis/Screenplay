@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Text;
 
@@ -47,7 +48,7 @@ internal static partial class ScreenplayParser
                     }
                     else
                     {
-                        context.Error($"Invalid import '{line.Content}' - expected 'import <Qualified.Name>'", line.Location);
+                        context.Error(DiagnosticCodes.InvalidImportDeclaration, $"Invalid import '{line.Content}' - expected 'import <Qualified.Name>'", line.Location);
                     }
 
                     break;
@@ -73,7 +74,7 @@ internal static partial class ScreenplayParser
                     seeds.Add(SeedParser.Parse(context, line));
                     break;
                 default:
-                    context.Error($"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, type, policy, persona, authentication, module or seed", line.Location);
+                    context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, type, policy, persona, authentication, module or seed", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
@@ -87,19 +88,19 @@ internal static partial class ScreenplayParser
         var match = DomainRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid domain declaration '{line.Content}' - expected 'domain <Qualified.Name>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidDomainDeclaration, $"Invalid domain declaration '{line.Content}' - expected 'domain <Qualified.Name>'", line.Location);
             return existing;
         }
 
         if (existing is not null)
         {
-            context.Error("The document already declares a domain - a document can have at most one", line.Location);
+            context.Error(DiagnosticCodes.DuplicateDomain, "The document already declares a domain - a document can have at most one", line.Location);
             return existing;
         }
 
         if (hasOtherConstructs)
         {
-            context.Error("'domain' must be declared before any other construct", line.Location);
+            context.Error(DiagnosticCodes.DomainNotFirst, "'domain' must be declared before any other construct", line.Location);
         }
 
         return new(match.Groups[1].Value, line.Location);
@@ -118,7 +119,7 @@ internal static partial class ScreenplayParser
 
             if (!inFence && TabIndentRegex().IsMatch(line.Raw))
             {
-                context.Warning("Screenplay is indentation based - use spaces, not tabs", line.Start);
+                context.Warning(DiagnosticCodes.TabIndentation, "Screenplay is indentation based - use spaces, not tabs", line.Start);
             }
         }
     }
@@ -128,7 +129,7 @@ internal static partial class ScreenplayParser
         var match = ConceptRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid concept declaration '{line.Content}' - expected 'concept <Name> : <Type>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidConceptDeclaration, $"Invalid concept declaration '{line.Content}' - expected 'concept <Name> : <Type>'", line.Location);
             context.SkipBlock(line.Indent);
             return new(LineText.FirstWord(line.Content), string.Empty, [], [], line.Location);
         }
@@ -142,7 +143,7 @@ internal static partial class ScreenplayParser
 
         if (type != "Enum" && !ConceptSyntax.PrimitiveTypes.Contains(type))
         {
-            context.Error($"Unknown primitive type '{type}' - expected {string.Join(", ", ConceptSyntax.PrimitiveTypes)} or Enum", line.Location);
+            context.Error(DiagnosticCodes.UnknownPrimitiveType, $"Unknown primitive type '{type}' - expected {string.Join(", ", ConceptSyntax.PrimitiveTypes)} or Enum", line.Location);
         }
 
         var values = new List<string>();
@@ -155,6 +156,7 @@ internal static partial class ScreenplayParser
                 if (type == "Enum" && child.Content == "validate" && !context.TryPeekChild(child.Indent, out _))
                 {
                     context.Warning(
+                        DiagnosticCodes.ValidateReadAsEnumerationBlock,
                         $"'validate' in enumeration concept '{name}' declares an empty validate block, not a value named 'validate' - write '@validate' for the value",
                         child.Location);
                 }
@@ -174,11 +176,11 @@ internal static partial class ScreenplayParser
             }
             else if (type == "Enum")
             {
-                context.Error($"Invalid enum value '{child.Content}' - expected an identifier", child.Location);
+                context.Error(DiagnosticCodes.InvalidEnumerationValue, $"Invalid enum value '{child.Content}' - expected an identifier", child.Location);
             }
             else
             {
-                context.Error($"Unexpected '{child.Content}' in concept body - expected validate or '<attribute> reason \"<text>\"'", child.Location);
+                context.Error(DiagnosticCodes.UnknownConceptDirective, $"Unexpected '{child.Content}' in concept body - expected validate or '<attribute> reason \"<text>\"'", child.Location);
                 context.SkipBlock(child.Indent);
             }
         }
@@ -197,13 +199,13 @@ internal static partial class ScreenplayParser
         var index = attributes.FindIndex(candidate => candidate.Name == attribute);
         if (index < 0)
         {
-            context.Error($"Concept '{concept}' declares a reason for '{attribute}' without the attribute - write 'concept {concept} : <Type> @{attribute}'", line.Location);
+            context.Error(DiagnosticCodes.AttributeReasonWithoutAttribute, $"Concept '{concept}' declares a reason for '{attribute}' without the attribute - write 'concept {concept} : <Type> @{attribute}'", line.Location);
             return;
         }
 
         if (attributes[index].Reason is not null)
         {
-            context.Error($"Concept '{concept}' already declares a reason for '{attribute}' - at most one is allowed", line.Location);
+            context.Error(DiagnosticCodes.DuplicateAttributeReason, $"Concept '{concept}' already declares a reason for '{attribute}' - at most one is allowed", line.Location);
             return;
         }
 
@@ -215,7 +217,7 @@ internal static partial class ScreenplayParser
         var match = PersonaRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid persona declaration '{line.Content}' - expected 'persona <Name>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidPersonaDeclaration, $"Invalid persona declaration '{line.Content}' - expected 'persona <Name>'", line.Location);
         }
 
         var name = match.Groups[1].Value;
@@ -237,12 +239,12 @@ internal static partial class ScreenplayParser
                     }
                     else
                     {
-                        context.Error($"Invalid policy reference '{child.Content}' - expected 'policy <Name>'", child.Location);
+                        context.Error(DiagnosticCodes.InvalidPersonaPolicyReference, $"Invalid policy reference '{child.Content}' - expected 'policy <Name>'", child.Location);
                     }
 
                     break;
                 default:
-                    context.Error($"Unexpected '{LineText.FirstWord(child.Content)}' in persona body - expected description or policy", child.Location);
+                    context.Error(DiagnosticCodes.UnknownPersonaDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in persona body - expected description or policy", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
@@ -256,7 +258,7 @@ internal static partial class ScreenplayParser
         var match = ModuleRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid module declaration '{line.Content}' - expected 'module <Name>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidModuleDeclaration, $"Invalid module declaration '{line.Content}' - expected 'module <Name>'", line.Location);
         }
 
         var name = match.Groups[1].Value;
@@ -279,7 +281,7 @@ internal static partial class ScreenplayParser
                     features.Add(ParseFeature(context, child));
                     break;
                 default:
-                    context.Error($"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected description, layout or feature", child.Location);
+                    context.Error(DiagnosticCodes.UnknownModuleDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected description, layout or feature", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
@@ -307,13 +309,13 @@ internal static partial class ScreenplayParser
                     }
                     else
                     {
-                        context.Error($"Invalid slot name '{slot.Content}' - expected an identifier", slot.Location);
+                        context.Error(DiagnosticCodes.InvalidLayoutSlotName, $"Invalid slot name '{slot.Content}' - expected an identifier", slot.Location);
                     }
                 }
             }
             else
             {
-                context.Error($"Unexpected '{child.Content}' in layout body - expected 'template'", child.Location);
+                context.Error(DiagnosticCodes.UnknownLayoutDirective, $"Unexpected '{child.Content}' in layout body - expected 'template'", child.Location);
                 context.SkipBlock(child.Indent);
             }
         }
@@ -326,7 +328,7 @@ internal static partial class ScreenplayParser
         var match = FeatureRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid feature declaration '{line.Content}' - expected 'feature <Name>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidFeatureDeclaration, $"Invalid feature declaration '{line.Content}' - expected 'feature <Name>'", line.Location);
         }
 
         var name = match.Groups[1].Value;
@@ -349,7 +351,7 @@ internal static partial class ScreenplayParser
                     slices.Add(SliceParser.Parse(context, child));
                     break;
                 default:
-                    context.Error($"Unexpected '{LineText.FirstWord(child.Content)}' in feature body - expected description, feature or slice", child.Location);
+                    context.Error(DiagnosticCodes.UnknownFeatureDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in feature body - expected description, feature or slice", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }

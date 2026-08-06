@@ -31,7 +31,7 @@ internal static partial class SpecificationParser
             }
             else
             {
-                context.Error($"Expected 'specification', got '{LineText.FirstWord(line.Content)}'", line.Location);
+                context.Error(DiagnosticCodes.ExpectedSpecification, $"Expected 'specification', got '{LineText.FirstWord(line.Content)}'", line.Location);
                 context.Reader.TakeSignificant();
                 context.SkipBlock(line.Indent);
             }
@@ -39,7 +39,7 @@ internal static partial class SpecificationParser
 
         if (specifications.Count == 0 && context.Diagnostics.Count == 0)
         {
-            context.Error("Document must contain at least one specification", SourceLocation.Start);
+            context.Error(DiagnosticCodes.SpecificationDocumentWithoutSpecification, "Document must contain at least one specification", SourceLocation.Start);
         }
 
         return specifications;
@@ -58,7 +58,7 @@ internal static partial class SpecificationParser
 
         if (!match.Success)
         {
-            context.Error($"Invalid specification declaration '{header.Content}' - expected 'specification <Name>'", header.Location);
+            context.Error(DiagnosticCodes.InvalidSpecificationDeclaration, $"Invalid specification declaration '{header.Content}' - expected 'specification <Name>'", header.Location);
         }
         else
         {
@@ -94,7 +94,7 @@ internal static partial class SpecificationParser
                 case "when":
                     if (when is not null)
                     {
-                        context.Error($"Specification '{name}' already declares a 'when' - a specification can have at most one", line.Location);
+                        context.Error(DiagnosticCodes.DuplicateSpecificationWhen, $"Specification '{name}' already declares a 'when' - a specification can have at most one", line.Location);
                         context.SkipBlock(line.Indent);
                         break;
                     }
@@ -105,7 +105,7 @@ internal static partial class SpecificationParser
                     ParseThen(context, line, thenEvents, thenReadModels, thenErrors);
                     break;
                 default:
-                    context.Error($"Unexpected '{LineText.FirstWord(line.Content)}' in specification body", line.Location);
+                    context.Error(DiagnosticCodes.UnknownSpecificationDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in specification body", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
@@ -119,7 +119,7 @@ internal static partial class SpecificationParser
         var match = WhenRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid 'when' declaration '{line.Content}' - expected 'when <CommandType>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidSpecificationWhen, $"Invalid 'when' declaration '{line.Content}' - expected 'when <CommandType>'", line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }
@@ -151,7 +151,7 @@ internal static partial class SpecificationParser
 
         if (LineText.FirstWord(line.Content["then".Length..].Trim()) == "error")
         {
-            context.Error($"Invalid 'then error' declaration '{line.Content}' - expected 'then error' or 'then error \"<reason>\"'", line.Location);
+            context.Error(DiagnosticCodes.InvalidThenError, $"Invalid 'then error' declaration '{line.Content}' - expected 'then error' or 'then error \"<reason>\"'", line.Location);
             context.SkipBlock(line.Indent);
             return;
         }
@@ -177,7 +177,7 @@ internal static partial class SpecificationParser
         var match = regex.Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid '{keyword} readmodel' declaration '{line.Content}' - expected '{keyword} readmodel <ReadModelType>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidReadModelStep, $"Invalid '{keyword} readmodel' declaration '{line.Content}' - expected '{keyword} readmodel <ReadModelType>'", line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }
@@ -190,7 +190,7 @@ internal static partial class SpecificationParser
         var match = regex.Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid '{keyword}' declaration '{line.Content}' - expected '{keyword} <EventType>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidEventStep, $"Invalid '{keyword}' declaration '{line.Content}' - expected '{keyword} <EventType>'", line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }
@@ -207,7 +207,7 @@ internal static partial class SpecificationParser
             var match = MappingRegex().Match(child.Content);
             if (!match.Success)
             {
-                context.Error($"Invalid property mapping '{child.Content}' - expected '<property> = <value>'", child.Location);
+                context.Error(DiagnosticCodes.InvalidSpecificationValue, $"Invalid property mapping '{child.Content}' - expected '<property> = <value>'", child.Location);
                 continue;
             }
 

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Parsing;
@@ -30,7 +31,7 @@ internal static partial class DescriptionParser
         var match = DescriptionRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid description '{line.Content}' - expected 'description \"<text>\"'", line.Location);
+            context.Error(DiagnosticCodes.InvalidDescription, $"Invalid description '{line.Content}' - expected 'description \"<text>\"'", line.Location);
             return existing;
         }
 
@@ -47,7 +48,7 @@ internal static partial class DescriptionParser
 
         if (text.Trim().Length == 0)
         {
-            context.Error($"{owner} declares an empty description - the fenced block must contain text", line.Location);
+            context.Error(DiagnosticCodes.EmptyDescription, $"{owner} declares an empty description - the fenced block must contain text", line.Location);
             return existing;
         }
 
@@ -58,7 +59,7 @@ internal static partial class DescriptionParser
     {
         if (existing is not null)
         {
-            context.Error($"{owner} already declares a description - at most one is allowed", line.Location);
+            context.Error(DiagnosticCodes.DuplicateDescription, $"{owner} already declares a description - at most one is allowed", line.Location);
             return existing;
         }
 

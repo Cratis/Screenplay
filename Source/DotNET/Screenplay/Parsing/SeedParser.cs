@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Text;
 
@@ -22,7 +23,7 @@ internal static partial class SeedParser
     {
         if (header.Content != "seed")
         {
-            context.Error($"Invalid seed declaration '{header.Content}' - expected 'seed'", header.Location);
+            context.Error(DiagnosticCodes.InvalidSeedDeclaration, $"Invalid seed declaration '{header.Content}' - expected 'seed'", header.Location);
             context.SkipBlock(header.Indent);
             return new([], header.Location);
         }
@@ -34,7 +35,7 @@ internal static partial class SeedParser
             var match = ForRegex().Match(line.Content);
             if (!match.Success)
             {
-                context.Error($"Invalid seed group '{line.Content}' - expected 'for \"<event source id>\"'", line.Location);
+                context.Error(DiagnosticCodes.InvalidSeedGroup, $"Invalid seed group '{line.Content}' - expected 'for \"<event source id>\"'", line.Location);
                 context.SkipBlock(line.Indent);
                 continue;
             }
@@ -53,7 +54,7 @@ internal static partial class SeedParser
             context.Reader.TakeSignificant();
             if (!EventNameRegex().IsMatch(line.Content))
             {
-                context.Error($"Invalid seed event '{line.Content}' - expected an event type name", line.Location);
+                context.Error(DiagnosticCodes.InvalidSeedEvent, $"Invalid seed event '{line.Content}' - expected an event type name", line.Location);
                 context.SkipBlock(line.Indent);
                 continue;
             }
@@ -73,7 +74,7 @@ internal static partial class SeedParser
             var match = MappingRegex().Match(child.Content);
             if (!match.Success)
             {
-                context.Error($"Invalid property assignment '{child.Content}' - expected '<property> = <value>'", child.Location);
+                context.Error(DiagnosticCodes.InvalidSeedPropertyAssignment, $"Invalid property assignment '{child.Content}' - expected '<property> = <value>'", child.Location);
                 continue;
             }
 

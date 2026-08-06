@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
@@ -22,7 +23,7 @@ internal static partial class TypeParser
         var name = HeaderRegex().Match(header.Content);
         if (!name.Success)
         {
-            context.Error($"Invalid type declaration '{header.Content}' - expected 'type <Name>'", header.Location);
+            context.Error(DiagnosticCodes.InvalidTypeDeclaration, $"Invalid type declaration '{header.Content}' - expected 'type <Name>'", header.Location);
         }
 
         var properties = new List<PropertySyntax>();
@@ -42,13 +43,13 @@ internal static partial class TypeParser
 
             if (PropertyLineParser.TryParse(line) is not { } property)
             {
-                context.Error($"Invalid property '{line.Content}' - expected '<name> <Type>'", line.Location);
+                context.Error(DiagnosticCodes.InvalidPropertyDeclaration, $"Invalid property '{line.Content}' - expected '<name> <Type>'", line.Location);
                 continue;
             }
 
             if (property.IsIdentifier)
             {
-                context.Error($"Property '{property.Name}' of type '{name.Groups[1].Value}' cannot be marked identifier - only a command property can be", line.Location);
+                context.Error(DiagnosticCodes.IdentifierOutsideCommand, $"Property '{property.Name}' of type '{name.Groups[1].Value}' cannot be marked identifier - only a command property can be", line.Location);
                 property = property with { IsIdentifier = false };
             }
 
@@ -57,7 +58,7 @@ internal static partial class TypeParser
 
         if (properties.Count == 0)
         {
-            context.Error($"Type '{name.Groups[1].Value}' must declare at least one property", header.Location);
+            context.Error(DiagnosticCodes.TypeWithoutProperties, $"Type '{name.Groups[1].Value}' must declare at least one property", header.Location);
         }
 
         return new(name.Groups[1].Value, properties, header.Location, description);

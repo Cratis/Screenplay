@@ -31,7 +31,7 @@ internal static partial class CaptureParser
             }
             else
             {
-                context.Error($"Expected 'capture', got '{LineText.FirstWord(line.Content)}'", line.Location);
+                context.Error(DiagnosticCodes.ExpectedCapture, $"Expected 'capture', got '{LineText.FirstWord(line.Content)}'", line.Location);
                 context.Reader.TakeSignificant();
                 context.SkipBlock(line.Indent);
             }
@@ -39,7 +39,7 @@ internal static partial class CaptureParser
 
         if (captures.Count == 0 && context.Diagnostics.Count == 0)
         {
-            context.Error("Document must contain at least one capture", SourceLocation.Start);
+            context.Error(DiagnosticCodes.CaptureDocumentWithoutCapture, "Document must contain at least one capture", SourceLocation.Start);
         }
 
         return captures;
@@ -56,7 +56,7 @@ internal static partial class CaptureParser
         var name = HeaderRegex().Match(header.Content);
         if (!name.Success)
         {
-            context.Error($"Invalid capture declaration '{header.Content}' - expected 'capture <Name>'", header.Location);
+            context.Error(DiagnosticCodes.InvalidCaptureDeclaration, $"Invalid capture declaration '{header.Content}' - expected 'capture <Name>'", header.Location);
         }
 
         CaptureSourceSyntax? source = null;
@@ -102,7 +102,7 @@ internal static partial class CaptureParser
 
                     break;
                 default:
-                    context.Error($"Unexpected '{line.Content}' in capture body", line.Location);
+                    context.Error(DiagnosticCodes.UnknownCaptureDirective, $"Unexpected '{line.Content}' in capture body", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
@@ -155,7 +155,7 @@ internal static partial class CaptureParser
         var match = MapEntryRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid map entry '{line.Content}' - expected '<property> = <source> [translate]'", line.Location);
+            context.Error(DiagnosticCodes.InvalidMapEntry, $"Invalid map entry '{line.Content}' - expected '<property> = <source> [translate]'", line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }
@@ -172,7 +172,7 @@ internal static partial class CaptureParser
                 var translationMatch = TranslationRegex().Match(translation.Content);
                 if (!translationMatch.Success)
                 {
-                    context.Error($"Invalid translation '{translation.Content}' - expected '\"<source>\" => <target>'", translation.Location);
+                    context.Error(DiagnosticCodes.InvalidTranslation, $"Invalid translation '{translation.Content}' - expected '\"<source>\" => <target>'", translation.Location);
                     continue;
                 }
 
@@ -207,7 +207,7 @@ internal static partial class CaptureParser
         var match = SplitRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid split operation '{line.Content}' - expected 'split <property> by \"<separator>\"'", line.Location);
+            context.Error(DiagnosticCodes.InvalidSplitDeclaration, $"Invalid split operation '{line.Content}' - expected 'split <property> by \"<separator>\"'", line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }
@@ -219,7 +219,7 @@ internal static partial class CaptureParser
             context.Reader.TakeSignificant();
             if (!TargetRegex().IsMatch(child.Content))
             {
-                context.Error($"Invalid split target '{child.Content}' - expected a property path", child.Location);
+                context.Error(DiagnosticCodes.InvalidSplitTarget, $"Invalid split target '{child.Content}' - expected a property path", child.Location);
                 continue;
             }
 
@@ -234,7 +234,7 @@ internal static partial class CaptureParser
         var match = AppendRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid append declaration '{line.Content}' - expected 'append <EventType>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidAppendDeclaration, $"Invalid append declaration '{line.Content}' - expected 'append <EventType>'", line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }
@@ -260,7 +260,7 @@ internal static partial class CaptureParser
             }
             else if (!TryParseMapping(context, child, mappings))
             {
-                context.Error($"Unexpected '{child.Content}' in append body", child.Location);
+                context.Error(DiagnosticCodes.UnknownAppendDirective, $"Unexpected '{child.Content}' in append body", child.Location);
             }
         }
 
@@ -272,7 +272,7 @@ internal static partial class CaptureParser
         var trigger = line.Content["when".Length..].Trim();
         if (trigger.Length == 0)
         {
-            context.Error("Expected a trigger after 'when'", line.Location);
+            context.Error(DiagnosticCodes.WhenWithoutTrigger, "Expected a trigger after 'when'", line.Location);
             return null;
         }
 
@@ -288,7 +288,7 @@ internal static partial class CaptureParser
         {
             if (!trigger.EndsWith('`') || trigger.Length < 2)
             {
-                context.Error("Unterminated template expression in 'when' - expected a closing backtick", line.Location);
+                context.Error(DiagnosticCodes.UnterminatedTemplateExpression, "Unterminated template expression in 'when' - expected a closing backtick", line.Location);
             }
 
             return new(CaptureWhenKind.Expression, [], null, null, trigger, line.Location);
@@ -302,7 +302,7 @@ internal static partial class CaptureParser
         var tokens = WhenTokenRegex().Matches(trigger).Select(_ => _.Value).ToList();
         if (tokens.Count == 0)
         {
-            context.Error($"Invalid 'when' clause '{line.Content}'", line.Location);
+            context.Error(DiagnosticCodes.InvalidWhenClause, $"Invalid 'when' clause '{line.Content}'", line.Location);
             return null;
         }
 
@@ -319,7 +319,7 @@ internal static partial class CaptureParser
                 return new(CaptureWhenKind.ValueTransition, [property], Unquote(tokens[2]), Unquote(tokens[4]), null, line.Location);
             }
 
-            context.Error($"Invalid 'when ... from ... to ...' clause '{line.Content}' - expected 'when <Path> from <value> to <value>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidWhenTransitionClause, $"Invalid 'when ... from ... to ...' clause '{line.Content}' - expected 'when <Path> from <value> to <value>'", line.Location);
             return null;
         }
 
@@ -329,6 +329,7 @@ internal static partial class CaptureParser
         }
 
         context.Error(
+            DiagnosticCodes.InvalidWhenClause,
             $"Invalid 'when' clause '{line.Content}' - expected 'added', 'removed', a template, or '<Path> [from <value> to <value> | (or|and) <Path>...]'",
             line.Location);
         return null;
@@ -342,7 +343,7 @@ internal static partial class CaptureParser
         {
             if (tokens[i] != combinator)
             {
-                context.Error($"Cannot mix 'and' and 'or' in a single 'when' clause '{line.Content}'", line.Location);
+                context.Error(DiagnosticCodes.MixedWhenCombinators, $"Cannot mix 'and' and 'or' in a single 'when' clause '{line.Content}'", line.Location);
                 return null;
             }
 
@@ -351,7 +352,7 @@ internal static partial class CaptureParser
 
         if (tokens.Count % 2 == 0)
         {
-            context.Error($"Invalid 'when' clause '{line.Content}' - expected a property after '{combinator}'", line.Location);
+            context.Error(DiagnosticCodes.WhenCombinatorWithoutProperty, $"Invalid 'when' clause '{line.Content}' - expected a property after '{combinator}'", line.Location);
             return null;
         }
 
@@ -376,7 +377,7 @@ internal static partial class CaptureParser
             }
             else if (!TryParseMapping(context, child, mappings))
             {
-                context.Error($"Invalid property mapping '{child.Content}' - expected '<property> = <source>'", child.Location);
+                context.Error(DiagnosticCodes.InvalidPropertyMapping, $"Invalid property mapping '{child.Content}' - expected '<property> = <source>'", child.Location);
             }
         }
     }
@@ -398,7 +399,7 @@ internal static partial class CaptureParser
         var match = ChildrenRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid children declaration '{line.Content}' - expected 'children <collection> identified by <key>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidChildrenDeclaration, $"Invalid children declaration '{line.Content}' - expected 'children <collection> identified by <key>'", line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }
@@ -412,7 +413,7 @@ internal static partial class CaptureParser
         var match = NestedRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error($"Invalid nested declaration '{line.Content}' - expected 'nested <Property>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidNestedDeclaration, $"Invalid nested declaration '{line.Content}' - expected 'nested <Property>'", line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }
@@ -441,7 +442,7 @@ internal static partial class CaptureParser
 
                     break;
                 default:
-                    context.Error($"Unexpected '{child.Content}' in {blockName} block - expected 'map' or 'append <EventType>'", child.Location);
+                    context.Error(DiagnosticCodes.UnknownCaptureBlockDirective, $"Unexpected '{child.Content}' in {blockName} block - expected 'map' or 'append <EventType>'", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
