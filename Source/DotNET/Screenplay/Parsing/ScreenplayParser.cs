@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.RegularExpressions;
-using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Text;
 
@@ -80,7 +79,7 @@ internal static partial class ScreenplayParser
             }
         }
 
-        return new(imports, concepts, policies, modules, SourceLocation.Start, domain, personas, seeds, authentication, types);
+        return new(imports, concepts, policies, modules, context.Start, domain, personas, seeds, authentication, types);
     }
 
     static DomainSyntax? ParseDomain(ParserContext context, SourceLine line, DomainSyntax? existing, bool hasOtherConstructs)
@@ -119,7 +118,7 @@ internal static partial class ScreenplayParser
 
             if (!inFence && TabIndentRegex().IsMatch(line.Raw))
             {
-                context.Warning("Screenplay is indentation based - use spaces, not tabs", new(line.Number, 1));
+                context.Warning("Screenplay is indentation based - use spaces, not tabs", line.Start);
             }
         }
     }

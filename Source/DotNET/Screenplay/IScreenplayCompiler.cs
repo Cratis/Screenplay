@@ -30,6 +30,21 @@ public interface IScreenplayCompiler
     CompilationResult<TApplication> Compile<TApplication>(string source, IApplicationSyntaxVisitor<TApplication> visitor);
 
     /// <summary>
+    /// Parses Screenplay source text into its syntax tree without resolving cross references.
+    /// </summary>
+    /// <param name="source">The source text to parse.</param>
+    /// <param name="path">The path to attribute every <see cref="Diagnostics.SourceLocation"/> in the tree to.</param>
+    /// <returns>A <see cref="CompilationResult{TResult}"/> holding the <see cref="ApplicationSyntax"/> and any syntax diagnostics.</returns>
+    /// <remarks>
+    /// <see cref="Compile(string)"/> is this plus cross reference resolution - it reports every event, policy,
+    /// concept and type a document names but does not declare. That check belongs to the whole application, so
+    /// a document that is one file of several has to be parsed first and resolved once the rest is in hand.
+    /// Compiling a folder does exactly that; reach for this directly only when you are assembling an
+    /// application from documents yourself.
+    /// </remarks>
+    CompilationResult<ApplicationSyntax> Parse(string source, string? path = null);
+
+    /// <summary>
     /// Compiles a standalone projection document - source rooted at a <c>projection</c> declaration.
     /// </summary>
     /// <param name="source">The source text to compile.</param>

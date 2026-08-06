@@ -35,6 +35,14 @@ public class ScreenplayCompiler : IScreenplayCompiler
     }
 
     /// <inheritdoc/>
+    public CompilationResult<ApplicationSyntax> Parse(string source, string? path = null)
+    {
+        var lines = SourceLineSplitter.Split(source, path: path);
+        var context = new ParserContext(new(lines), path);
+        return new(ScreenplayParser.Parse(context, lines), context.Diagnostics);
+    }
+
+    /// <inheritdoc/>
     public CompilationResult<ProjectionSyntax> CompileProjection(string source)
     {
         var lines = SourceLineSplitter.Split(source, hashComments: true);
