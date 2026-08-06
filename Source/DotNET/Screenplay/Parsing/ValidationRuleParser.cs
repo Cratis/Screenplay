@@ -101,6 +101,7 @@ internal static partial class ValidationRuleParser
             "<" => ValidationRuleKind.LessThan,
             "<=" => ValidationRuleKind.LessThanOrEqual,
             "==" => ValidationRuleKind.Equal,
+            "!=" => ValidationRuleKind.NotEqual,
             "length ==" => ValidationRuleKind.Length,
             "matches" => ValidationRuleKind.Matches,
             "all >" => ValidationRuleKind.AllGreaterThan,
@@ -177,7 +178,7 @@ internal static partial class ValidationRuleParser
     [GeneratedRegex(@"^([\w.]+)\s+(.+)$", RegexOptions.None, 1000)]
     private static partial Regex RuleRegex();
 
-    [GeneratedRegex(@"^(not empty|length ==|all >=|all >|matches|max|min|rule|>=|<=|==|>|<)\s*(.*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(not empty|length ==|all >=|all >|matches|max|min|rule|>=|<=|==|!=|>|<)\s*(.*)$", RegexOptions.None, 1000)]
     private static partial Regex OperandRegex();
 
     [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.None, 1000)]
