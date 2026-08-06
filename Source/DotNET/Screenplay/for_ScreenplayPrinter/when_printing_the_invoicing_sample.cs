@@ -30,6 +30,10 @@ public class when_printing_the_invoicing_sample : given.a_printer
     [Fact] void should_preserve_the_enum_values() => Concept(_reparsed, "InvoiceStatus").Values.Count().ShouldEqual(Concept(_original, "InvoiceStatus").Values.Count());
     [Fact] void should_preserve_the_pii_attribute() => Concept(_reparsed, "EmailAddress").AttributeNames.ShouldContain("pii");
     [Fact] void should_preserve_the_policies() => _reparsed.Value!.Policies.Count().ShouldEqual(_original.Value!.Policies.Count());
+    [Fact] void should_group_the_policy_condition_when_printing() => _printed.ShouldContain(@"require (role ""InvoiceManager"" or role ""Accountant"") and authenticated");
+    [Fact] void should_preserve_the_grouped_policy_operator() => WriteOff(_reparsed).Operator.ShouldEqual(LogicalOperator.And);
+    [Fact] void should_preserve_the_grouped_policy_operand() => WriteOff(_reparsed).Left.ShouldBeOfExactType<LogicalPolicyConditionSyntax>();
+    [Fact] void should_quote_the_claim_value_when_printing() => _printed.ShouldContain(@"require claim ""department"" matches ""Finance""");
     [Fact] void should_preserve_the_personas() => _reparsed.Value!.Personas!.Count().ShouldEqual(_original.Value!.Personas!.Count());
     [Fact] void should_preserve_the_persona_policies() => _reparsed.Value!.Personas!.First().Policies.Count().ShouldEqual(_original.Value!.Personas!.First().Policies.Count());
     [Fact] void should_preserve_the_authentication_providers() => _reparsed.Value!.Authentication!.Providers.Count().ShouldEqual(_original.Value!.Authentication!.Providers.Count());
@@ -66,6 +70,9 @@ public class when_printing_the_invoicing_sample : given.a_printer
 
     static ConceptSyntax Concept(CompilationResult<ApplicationSyntax> result, string name) =>
         result.Value!.Concepts.Single(_ => _.Name == name);
+
+    static LogicalPolicyConditionSyntax WriteOff(CompilationResult<ApplicationSyntax> result) =>
+        (LogicalPolicyConditionSyntax)result.Value!.Policies.Single(_ => _.Name == "CanWriteOff").Condition!;
 
     static IEnumerable<SliceSyntax> Slices(CompilationResult<ApplicationSyntax> result) =>
         result.Value!.Modules.Single().Features.Single().Slices;
