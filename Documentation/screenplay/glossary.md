@@ -30,6 +30,7 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Command** — an imperative intent with properties, `authorize`, `validate`, and a `produces` block declaring the events it appends.
 - **Event** — a past-tense fact declaration: a named type and its properties.
 - **Query** — a read-side entry point mapping identifying and filter parameters to a read-model return type (`=> ReadModel[]`), optionally with a `performer` that performs it.
+- **Observable query** — a query whose return type is qualified with `observable` (`=> observable ReadModel[]`): a live read that keeps pushing as the read model changes, rather than answering once.
 - **Performer** — the code that performs a query — an external `file` or an inline `csharp`/`sql` block. The query's counterpart to a command's `handler`.
 - **Projection** — a declaration, written in PDL, that builds a read model by folding events (`from EventType key ...`).
 - **Capture** — a declaration, written in CDL, that turns polled or pushed external data into events.
