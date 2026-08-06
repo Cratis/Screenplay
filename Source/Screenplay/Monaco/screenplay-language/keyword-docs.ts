@@ -21,6 +21,7 @@ export const keywordDocs: Record<string, string> = {
     event: 'An event type — an immutable, past-tense fact. Properties use concepts or primitives.',
     command: 'An imperative intent. Declares authorization, validation, and what events it produces — declaratively, or via a full handler.',
     query: 'A read-side entry point mapping to a return type, with an optional description, parameters and performer.',
+    observable: 'Qualifies a query return type as a live read — `query <Name> => observable <ReadModel>` keeps pushing as the read model changes, instead of answering once.',
     performer: 'The code that performs a query — a `file <Path>` reference or an inline `csharp`/`sql` block. The query\'s counterpart to a command handler.',
     from: 'Fills a query parameter from the query context instead of the caller, as in `filter tenantId TenantId from $context.tenant`.',
     projection: 'Declares how events project into a read model, using the embedded Projection Declaration Language (PDL).',

@@ -49,6 +49,7 @@ export const clauseKeywords = [
     'produces',
     'handler',
     'performer',
+    'observable',
     'identifier',
     'reason',
     'from',
