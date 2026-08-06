@@ -58,7 +58,7 @@ export const commandItems: CompletionEntry[] = [
     { label: 'identifier property', insertText: '${1:property} ${2:Type} identifier', documentation: 'Marks the property a runtime resolves the event source id from. At most one per command.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'References the policies that must pass for the command to execute.' },
     { label: 'validate', insertText: 'validate\n    ${1:property} not empty message "${2:message}"', documentation: 'Declarative validation rules with messages.' },
-    { label: 'validate csharp', insertText: `validate ${fenced('csharp')}`, documentation: 'Imperative validation in C#, yielding ValidationError.' },
+    { label: 'validate csharp', insertText: `validate ${fenced('csharp')}`, documentation: 'Imperative validation in C#, yielding the message of every rule the artifact breaks.' },
     { label: 'produces', insertText: 'produces ${1:EventType}\n    ${2:property} = ${3:source}', documentation: 'Declares the event the command emits, with property mappings.' },
     { label: 'produces when', insertText: 'produces when ${1:condition}\n    ${2:EventType}\n        ${3:property} = ${4:source}', documentation: 'Conditionally emits an event when the condition holds.' },
     { label: 'handler', insertText: 'handler\n    ', documentation: 'Fully imperative command implementation — file reference or inline C#, instead of produces.' },
@@ -124,7 +124,7 @@ export const policyItems: CompletionEntry[] = [
     { label: 'require authenticated', insertText: 'require authenticated', documentation: 'Requires an authenticated caller.' },
     { label: 'require role', insertText: 'require role "${1:role}"', documentation: 'Requires the caller to have a role.' },
     { label: 'require claim', insertText: 'require claim "${1:claim}" matches ${2:subject}', documentation: 'Requires a claim to match the subject or a value.' },
-    { label: 'csharp', insertText: fenced('csharp'), documentation: 'Fully custom policy logic in C#, returning PolicyResult.' },
+    { label: 'csharp', insertText: fenced('csharp'), documentation: 'Fully custom policy logic in C#, returning a bool.' },
 ];
 
 export const validateItems: CompletionEntry[] = [
@@ -170,7 +170,12 @@ export const contextVariableItems: CompletionEntry[] = [
     { label: '$context.causedBy.name', insertText: '$context.causedBy.name', documentation: 'Display name of the identity that caused the command or query.' },
     { label: '$context.causedBy.userName', insertText: '$context.causedBy.userName', documentation: 'User name of the identity that caused the command or query.' },
     { label: '$context.causation.type', insertText: '$context.causation.type', documentation: 'What caused this — a command, a reactor, a schedule.' },
-    { label: '$context.identity.id', insertText: '$context.identity.id', documentation: 'Subject of the caller from the auth token.' },
+    { label: '$context.identity.id', insertText: '$context.identity.id', documentation: 'The identifier of the caller from the auth token.' },
+    { label: '$context.identity.name', insertText: '$context.identity.name', documentation: 'The display name of the caller.' },
+    { label: '$context.identity.userName', insertText: '$context.identity.userName', documentation: 'The user name of the caller.' },
+    { label: '$context.identity.isAuthenticated', insertText: '$context.identity.isAuthenticated', documentation: 'Whether the caller is authenticated.' },
+    { label: '$context.identity.roles', insertText: '$context.identity.roles', documentation: 'The roles the caller holds.' },
+    { label: '$context.identity.claims.', insertText: '$context.identity.claims.${1:name}', documentation: 'The value of a claim the caller carries.' },
     { label: '$env.', insertText: '$env.${1:VAR_NAME}', documentation: 'An environment variable.' },
     { label: '$eventContext.occurred', insertText: '$eventContext.occurred', documentation: 'Timestamp of the event being projected (PDL).' },
 ];
