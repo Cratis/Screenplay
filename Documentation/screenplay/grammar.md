@@ -63,6 +63,10 @@ PolicyDecl     = "policy", Ident, NL,
 PolicyBody     = PolicyExpr
                | InlineBlock ;
 
+(* An InlineBlock policy body compiles against PolicyContext and answers with
+   a bool, exactly like the PolicyExpr it stands in for -
+   see Documentation/screenplay/policies.md.                                  *)
+
 PolicyExpr     = "require", PolicyCondition, { ( "or" | "and" ), PolicyCondition } ;
 
 PolicyCondition = "authenticated"
@@ -230,6 +234,11 @@ RuleOp         = "not empty"
 RuleImplementation = FileDirective
                     | InlineBlock ;
 
+(* A RuleImplementation and a "validate csharp" InlineBlock both compile against
+   RuleContext. The rule implementation answers with a bool; the "validate csharp"
+   block yields the message of every rule the artifact breaks -
+   see Documentation/screenplay/context.md.                                  *)
+
 Value          = Number | StringLiteral | "today" | "true" | "false" ;
 
 (* -------------------------------------------------------------- *)
@@ -264,12 +273,16 @@ MappingSource  = Ident                         (* command property   *)
                | Expression ;
 
 (* The context paths mirror the members of CommandContext / QueryContext -
-   see Documentation/screenplay/context.md.                                  *)
+   see Documentation/screenplay/context.md. Everything after
+   "identity.claims." is the name of a claim and is not checked.             *)
 
 ContextPath    = "$context.", ContextRoot, { ".", Ident } ;
 
 ContextRoot    = "command" | "arguments" | "tenant" | "causedBy"
                | "causation" | "occurred" | "identity" ;
+
+IdentityProp   = "id" | "name" | "userName" | "isAuthenticated"
+               | "roles" | "claims" ;
 
 Expression     = (* arithmetic / method-call expression — freeform *) ;
 

@@ -46,7 +46,9 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Embedded code block** — an inline `csharp`, `typescript`, `react`, `html`, or `sql` block (between triple backticks) or a `file` reference — the escape hatch any construct can drop into.
 - **Realization metadata** — a `file` reference or inline code block attached to a construct once it is implemented. Always optional: a document must be meaningful with none of it.
 - **Context variables** — values the runtime supplies inside expressions: `$context` (the command or query context), `$env` (environment), `$eventContext`, and `$.` (the current capture item).
-- **Command context / query context** — what a handler or performer is given: the command or arguments, the tenant, the calling identity, the causation, and when it was received. Reachable declaratively through `$context.`.
+- **Context** — what a block of inline or file-referenced code is given, in scope as `context`. There is one per job: a **command context** and a **query context** (the command or arguments, the tenant, the caller, the causation, and when it was received — reachable declaratively through `$context.`), a **rule context** (what is under validation and who is calling), and a **policy context** (the caller and what the decision is about).
+- **Identity** — the authorization view of the caller: identifier, display name, user name, whether authenticated, roles and claims. What a policy decides on.
+- **Caused by** — the audit view of the same caller: subject, name and user name — the three values that travel with an appended event and that a projection reads through `$causedBy`.
 
 ## Tools and runtime
 
