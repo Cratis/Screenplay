@@ -19,7 +19,8 @@ public class when_compiling_a_named_predicate_rule_with_inline_code : given.a_co
                   orgNumber rule BeAValidOrganizationNumber message "Must be a valid organization number"
                     csharp
                       ```
-                      return OrgNumber.Length == 9 && OrgNumber.All(char.IsDigit);
+                      string orgNumber = context.Value;
+                      return orgNumber.Length == 9 && orgNumber.All(char.IsDigit);
                       ```
         """;
 
@@ -36,6 +37,6 @@ public class when_compiling_a_named_predicate_rule_with_inline_code : given.a_co
     [Fact] void should_succeed() => _result.Success.ShouldBeTrue();
     [Fact] void should_have_no_diagnostics() => _result.Diagnostics.ShouldBeEmpty();
     [Fact] void should_carry_the_code_language() => _rule.Code!.Language.ShouldEqual("csharp");
-    [Fact] void should_carry_the_inline_code() => _rule.Code!.Code.ShouldContain("OrgNumber.Length == 9");
+    [Fact] void should_carry_the_inline_code() => _rule.Code!.Code.ShouldContain("orgNumber.Length == 9");
     [Fact] void should_not_carry_a_file_reference() => _rule.File.ShouldBeNull();
 }
