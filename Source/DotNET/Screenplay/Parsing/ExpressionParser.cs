@@ -172,10 +172,24 @@ internal static partial class ExpressionParser
         }
 
         var segments = expression.Path.Split('.');
-        if (expression.Root == "causedBy" && segments.Length > 1 && !ContextExpressionSyntax.KnownCausedByProperties.Contains(segments[1]))
+        if (segments.Length < 2)
+        {
+            return;
+        }
+
+        if (expression.Root == "causedBy" && !ContextExpressionSyntax.KnownCausedByProperties.Contains(segments[1]))
         {
             context.Warning(
                 $"Unknown $context.causedBy property '{segments[1]}' - expected {string.Join(", ", ContextExpressionSyntax.KnownCausedByProperties)}",
+                expression.Location);
+        }
+
+        // Anything under 'claims' is the name of a claim rather than a member, so only the segment naming
+        // the member itself is checked against what the identity carries.
+        if (expression.Root == "identity" && !ContextExpressionSyntax.KnownIdentityProperties.Contains(segments[1]))
+        {
+            context.Warning(
+                $"Unknown $context.identity property '{segments[1]}' - expected {string.Join(", ", ContextExpressionSyntax.KnownIdentityProperties)}",
                 expression.Location);
         }
     }

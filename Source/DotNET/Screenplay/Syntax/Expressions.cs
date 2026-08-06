@@ -38,6 +38,12 @@ public record PathExpressionSyntax(string Path, SourceLocation Location) : Expre
 public record ContextExpressionSyntax(string Path, SourceLocation Location) : ExpressionSyntax(Location)
 {
     /// <summary>
+    /// The <see cref="KnownIdentityProperties">identity property</see> whose segments name a claim rather
+    /// than a member, so anything following it is a claim name and resolves at runtime.
+    /// </summary>
+    public const string IdentityClaims = "claims";
+
+    /// <summary>
     /// Gets the roots a <c>$context.</c> path can start with.
     /// </summary>
     public static readonly IEnumerable<string> KnownRoots =
@@ -47,6 +53,13 @@ public record ContextExpressionSyntax(string Path, SourceLocation Location) : Ex
     /// Gets the roots of <see cref="CausedByExpressionSyntax"/> and <c>$context.causedBy</c> paths.
     /// </summary>
     public static readonly IEnumerable<string> KnownCausedByProperties = ["subject", "name", "userName"];
+
+    /// <summary>
+    /// Gets the properties a <c>$context.identity.</c> path can name, mirroring the members of
+    /// <see cref="Contexts.Identity"/>.
+    /// </summary>
+    public static readonly IEnumerable<string> KnownIdentityProperties =
+        ["id", "name", "userName", "isAuthenticated", "roles", IdentityClaims];
 
     /// <summary>
     /// Gets the first segment of the <see cref="Path"/>.
