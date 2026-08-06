@@ -83,8 +83,13 @@ var source = new ScreenplayPrinter().Print(application);
 
 Every node carries a `SourceLocation`. The printer ignores it, so `SourceLocation.Start` is a fine placeholder when you are constructing nodes rather than parsing them.
 
+## When one document is too much
+
+The printer renders the whole application as one document, which is what you want until the application outgrows a file anyone can navigate. At that point the same tree can be written as a folder instead - a folder per module, per feature and per slice - and compiled back as one application. Same printer underneath, same round-trip guarantee. See [Folders](folders.md).
+
 ## See also
 
 - [Compiler and CLI](tool.md) - the reverse direction, text to tree.
+- [Folders](folders.md) - the same tree written as module, feature and slice folders.
 - [Grammar](grammar.md) - the shape the printer produces.
 - [Sub-language Pluggability](sub-languages.md) - how the language is layered.
