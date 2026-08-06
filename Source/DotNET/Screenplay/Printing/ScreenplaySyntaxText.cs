@@ -52,6 +52,17 @@ internal static partial class ScreenplaySyntaxText
         $"{type.Name}{(type.IsCollection ? "[]" : string.Empty)}{(type.IsOptional ? "?" : string.Empty)}";
 
     /// <summary>
+    /// Renders the return type of a <see cref="QuerySyntax"/>, prefixed with <c>observable</c> when the
+    /// query is a live read rather than a one-shot one.
+    /// </summary>
+    /// <param name="query">The <see cref="QuerySyntax"/> to render the return type of.</param>
+    /// <returns>The rendered return type text.</returns>
+    public static string QueryReturnType(QuerySyntax query) =>
+        query.IsObservable
+            ? $"{QuerySyntax.ObservableModifier} {TypeRef(query.ReturnType)}"
+            : TypeRef(query.ReturnType);
+
+    /// <summary>
     /// Renders a <see cref="QueryParameterSyntax"/> - its name, type and optional <c>from</c> source.
     /// </summary>
     /// <param name="parameter">The <see cref="QueryParameterSyntax"/> to render.</param>

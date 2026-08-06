@@ -16,6 +16,8 @@ namespace Cratis.Screenplay.Syntax;
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 /// <param name="Description">The optional human readable description of what the query is for.</param>
 /// <param name="Performer">The optional <see cref="PerformerSyntax"/> holding the code that performs the query.</param>
+/// <param name="IsObservable">Whether the return type is marked with <c>observable</c>, making the query a live
+/// read that keeps pushing as the read model changes rather than answering once.</param>
 public record QuerySyntax(
     string Name,
     TypeRefSyntax ReturnType,
@@ -24,7 +26,14 @@ public record QuerySyntax(
     AuthorizeSyntax? Authorize,
     SourceLocation Location,
     string? Description = null,
-    PerformerSyntax? Performer = null) : SyntaxNode(Location);
+    PerformerSyntax? Performer = null,
+    bool IsObservable = false) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// The marker that qualifies a query's return type as a live one.
+    /// </summary>
+    public const string ObservableModifier = "observable";
+}
 
 /// <summary>
 /// Represents a parameter of a query.

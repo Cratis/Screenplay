@@ -91,7 +91,7 @@ public partial class ScreenplayPrinter
 
     void WriteQuery(ScreenplayWriter writer, QuerySyntax query)
     {
-        writer.Line($"query {query.Name} => {ScreenplaySyntaxText.TypeRef(query.ReturnType)}");
+        writer.Line($"query {query.Name} => {ScreenplaySyntaxText.QueryReturnType(query)}");
         using (writer.Indent())
         {
             WriteDescription(writer, query.Description);
