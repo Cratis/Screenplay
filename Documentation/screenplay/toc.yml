@@ -30,7 +30,7 @@
   href: commands.md
 - name: Queries
   href: queries.md
-- name: Command and query context
+- name: Contexts
   href: context.md
 - name: Projections
   href: projections/toc.yml

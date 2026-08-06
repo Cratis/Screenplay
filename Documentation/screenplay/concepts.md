@@ -80,9 +80,15 @@ concept EmailAddress : String @pii
     matches "^.+@.+$"  message "Must be a valid email address"
   validate csharp
     ```
-    if (Value.EndsWith("@example.com")) yield ValidationError("Example addresses are not allowed");
+    string email = context.Value;
+    if (email.EndsWith("@example.com", StringComparison.OrdinalIgnoreCase))
+    {
+        yield return "Example addresses are not allowed";
+    }
     ```
 ````
+
+Inside the block `context` is the [`RuleContext`](context.md) — for a concept rule there is no surrounding artifact, so `context.Artifact` and `context.Value` are both the concept's own value. The block yields the message of every rule the value breaks, and yields nothing when the value is valid.
 
 Enum concepts can combine their values with validate blocks — the values remain bare identifiers and the blocks are recognized by the `validate` keyword:
 

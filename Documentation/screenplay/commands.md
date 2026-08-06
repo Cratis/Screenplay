@@ -19,7 +19,7 @@ command <Name>
 
   [validate csharp
     ```
-    <C# yielding ValidationError>
+    <C# yielding the message of every broken rule>
     ```]
 
   [produces ...]                  ← declarative — repeatable
@@ -137,24 +137,41 @@ validate
   orgNumber rule BeAValidOrganizationNumber message "Must be a valid organization number"
     csharp
       ```
-      return OrgNumber.Length == 9 && OrgNumber.All(char.IsDigit);
+      string orgNumber = context.Value;
+      return orgNumber.Length == 9 && orgNumber.All(char.IsDigit);
       ```
 ````
 
 Both forms are optional and mutually exclusive with each other — a rule with neither stays the bare, undetermined-location form from above. The `file`/`csharp` shapes and their compiled representation (`FileReferenceSyntax` / `CodeBlockSyntax`) are exactly the ones used by [`handler`](#the-handler-block) and [reactors](reactors.md), so a reader who knows one already knows the other. The same body is available on a concept's own `rule <Name>` (see [Concepts](concepts.md#validation)) — the implementation travels with the value everywhere it appears.
 
-Cross-field or complex rules drop into C#:
+Cross-field or complex rules drop into C#. The block yields the message of every rule the command breaks, and yields nothing when the command is valid:
 
 ````screenplay
 validate csharp
   ```
-  var total = Lines.Sum(l => l.Quantity * l.UnitPrice);
-  if (total > 1_000_000 && PaymentTerms == PaymentTerms.Immediate)
-      yield ValidationError("Invoices over 1,000,000 cannot require immediate payment");
+  if (context.Artifact.paymentTerms == "immediate" && context.Artifact.total > 1_000_000)
+  {
+      yield return "Invoices over 1,000,000 cannot require immediate payment";
+  }
   ```
 ````
 
 Both `validate` and `validate csharp` can coexist on the same command.
+
+### What a rule can see
+
+Inside a `rule` body and inside a `validate csharp` block, `context` is the `RuleContext`:
+
+| Member | Value |
+| --- | --- |
+| `context.Artifact` | The whole thing under validation — the command here, the concept's own value on a concept rule. |
+| `context.Value` | The value the rule is declared on. Equal to `Artifact` for a `validate csharp` block. |
+| `context.Property` | Where that value sits in the artifact — `orgNumber` above, empty for a whole-command block. |
+| `context.Tenant` | The tenant the command is executing for. |
+| `context.CausedBy` | The identity that caused the command, so a rule such as "you may not approve your own request" is expressible. |
+| `context.Occurred` | When the command was received. |
+
+A rule can see **who** is calling but not **what they are allowed to do** — there are no roles and no claims in a `RuleContext`. A rule that inspects those is an authorization decision wearing a validation hat, and belongs in a [policy](policies.md). See [Contexts](context.md) for all four shapes.
 
 ## Authorization
 
@@ -209,13 +226,14 @@ produces InvoiceRegistered
 | Tenant | `= $context.tenant` | The tenant the command executes for |
 | Calling identity | `= $context.causedBy.subject` | Subject of the identity that caused the command |
 | Causation | `= $context.causation.type` | What caused the command — a command, reactor, schedule |
-| Caller identity | `= $context.identity.id` | Subject from auth token |
+| Caller identity | `= $context.identity.id` | The caller's identifier from the auth token |
+| Caller claim | `= $context.identity.claims.<name>` | The value of a claim the caller carries |
 | Environment | `= $env.<VAR_NAME>` | Environment variable |
 | String constant | `= "value"` | Literal string |
 | Numeric constant | `= 0` | Literal number |
 | Expression | `= lines.sum(l => l.quantity * l.unitPrice)` | Computed value |
 
-Every `$context.` path names a member of the `CommandContext` an inline handler compiles against — see [Command and query context](context.md).
+Every `$context.` path names a member of the `CommandContext` an inline handler compiles against — see [Contexts](context.md).
 
 ### Multiple unconditional events
 
@@ -283,7 +301,7 @@ handler
 
 A command uses either `produces` blocks or a `handler` — not both. Keep handler logic small; anything substantial belongs in a `file` reference where it can be tested on its own.
 
-Inside either form, `context` is the [`CommandContext`](context.md) — the command itself, the tenant, the calling identity, the causation, and when the command was received. An inline block and a `file` reference compile against exactly the same type.
+Inside either form, `context` is the [`CommandContext`](context.md) — the command itself, the tenant, the caller, the identity recorded as having caused it, the causation, and when the command was received. An inline block and a `file` reference compile against exactly the same type.
 
 ## Concurrency
 

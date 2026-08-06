@@ -4,7 +4,7 @@ Policies are named authorization rules. Commands and queries reference them by n
 
 ## Syntax
 
-```screenplay
+````screenplay
 policy <Name>
   require authenticated
   require role "<role>"
@@ -13,9 +13,9 @@ policy <Name>
   require role "<role>" or (role "<role>" and claim "<claim>" matches "<value>")
   csharp
     ```
-    <C# returning PolicyResult>
+    <C# returning bool>
     ```
-```
+````
 
 ## Conditions
 
@@ -61,18 +61,39 @@ policy CanManageInvoice
 
 ## Custom logic
 
-When the declarative conditions cannot express the rule, drop into C#. The block must return a `PolicyResult`:
+When the declarative conditions cannot express the rule, drop into C#. The block answers with a `bool` — the same answer `require authenticated` gives, so a policy written in code and a policy written in conditions mean the same kind of thing and compose the same way:
 
-```screenplay
+````screenplay
 policy IsAdultCustomer
   csharp
     ```
-    var dob = context.User.FindFirst("dateOfBirth")?.Value;
-    if (dob is null) return PolicyResult.Fail("Date of birth claim missing");
-    return DateTime.Parse(dob) <= DateTime.UtcNow.AddYears(-18)
-        ? PolicyResult.Success()
-        : PolicyResult.Fail("Customer must be 18 or older");
+    var dateOfBirth = context.Identity.ClaimValue("dateOfBirth");
+    return dateOfBirth is not null && DateTime.Parse(dateOfBirth) <= DateTime.UtcNow.AddYears(-18);
     ```
+````
+
+There is deliberately no result type carrying a denial reason. The declarative half has no way to say *why* a `require` failed either, and adding one only to the code half would split the language into two kinds of policy — one that can explain itself and one that cannot. A policy answers whether the caller may act; the message a user sees is a runtime's concern, and `validate` is where the language attaches messages to rejections.
+
+## What the code can see
+
+`context` is the `PolicyContext` — the caller, and what the decision is about:
+
+| Member | Value |
+| --- | --- |
+| `context.Identity` | The caller: `Id`, `Name`, `UserName`, `IsAuthenticated`, `Roles`, `Claims`. |
+| `context.Artifact` | The command being authorized, or the arguments of the query. What a `matches <path>` condition resolves against. |
+| `context.Subject` | The identifier of the thing being acted on. What `matches subject` compares the claim to. |
+| `context.Tenant` | The tenant the authorized command or query is executing for. |
+| `context.Occurred` | When the authorized command or query was received. |
+
+`Identity` answers the same questions the conditions ask, so the two forms read alike:
+
+```csharp
+context.Identity.IsAuthenticated              // require authenticated
+context.Identity.HasRole("Accountant")        // require role "Accountant"
+context.Identity.ClaimValue("department")     // require claim "department" matches …
 ```
+
+A policy is given an `Identity` and not a `CausedBy`: it decides what a caller may do and needs what they can prove, and it records nothing. See [Contexts](context.md) for the full set and for how a rule's context deliberately differs.
 
 See [Commands](commands.md#authorization) and [Queries](queries.md) for how policies are applied.

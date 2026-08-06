@@ -123,7 +123,7 @@ query ListLineItems => InvoiceLineReportReadModel[]
       ```
 ````
 
-Inside a performer, `context` is the [`QueryContext`](context.md) — the query's arguments, the tenant, the calling identity, the causation, and when the query was received. A `file` reference compiles against the same type, so moving a block out to a file changes nothing about what it can see.
+Inside a performer, `context` is the [`QueryContext`](context.md) — the query's arguments, the tenant, the caller, the identity recorded as having caused it, the causation, and when the query was received. A `file` reference compiles against the same type, so moving a block out to a file changes nothing about what it can see.
 
 A query is complete without a performer. The `performer` is realization metadata, not a precondition — see [Declarative first](grammar.md#declarative-first--file-is-never-required).
 
