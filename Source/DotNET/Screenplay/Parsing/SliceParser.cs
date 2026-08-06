@@ -44,7 +44,7 @@ internal static partial class SliceParser
         var events = new List<EventSyntax>();
         var commands = new List<CommandSyntax>();
         var queries = new List<QuerySyntax>();
-        ProjectionSyntax? projection = null;
+        var projections = new List<ProjectionSyntax>();
         var captures = new List<CaptureSyntax>();
         var reactors = new List<ReactorSyntax>();
         var screens = new List<ScreenSyntax>();
@@ -69,14 +69,7 @@ internal static partial class SliceParser
                     queries.Add(QueryParser.Parse(context, line));
                     break;
                 case "projection":
-                    if (projection is not null)
-                    {
-                        context.Error($"Slice '{name}' already declares a projection - a slice can have at most one", line.Location);
-                        context.SkipBlock(line.Indent);
-                        break;
-                    }
-
-                    projection = ProjectionParser.Parse(context, line);
+                    projections.Add(ProjectionParser.Parse(context, line));
                     break;
                 case "capture":
                     captures.Add(CaptureParser.Parse(context, line));
@@ -100,7 +93,7 @@ internal static partial class SliceParser
             }
         }
 
-        return new(type, name, events, commands, queries, projection, captures, reactors, screens, constraints, specifications, header.Location, description);
+        return new(type, name, events, commands, queries, projections, captures, reactors, screens, constraints, specifications, header.Location, description);
     }
 
     [GeneratedRegex(@"^slice\s+([A-Za-z]\w*)\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]

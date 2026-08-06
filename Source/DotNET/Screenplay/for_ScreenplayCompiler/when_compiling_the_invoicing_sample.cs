@@ -47,7 +47,7 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_have_both_layouts() => _result.Value!.Modules.Single().Layouts.Count().ShouldEqual(2);
     [Fact] void should_have_the_master_detail_slots() => _result.Value!.Modules.Single().Layouts.First().Slots.ShouldContainOnly("sidebar", "main");
     [Fact] void should_have_all_slices() => _feature.Slices.Count().ShouldEqual(15);
-    [Fact] void should_have_the_fully_auto_mapped_projection() => Slice("CancelledInvoices").Projection!.Blocks.OfType<FromSyntax>().Single().Mappings.ShouldBeEmpty();
+    [Fact] void should_have_the_fully_auto_mapped_projection() => Slice("CancelledInvoices").Projections.Single().Blocks.OfType<FromSyntax>().Single().Mappings.ShouldBeEmpty();
     [Fact] void should_have_the_nested_feature() => _feature.Features.Single().Name.ShouldEqual("Adjustments");
     [Fact] void should_have_the_nested_feature_slices() => _feature.Features.Single().Slices.Select(_ => _.Name).ShouldContainOnly("ApplyDiscount", "WriteOffInvoice");
     [Fact] void should_parse_conditional_produces() => RegisterCommand.Produces.Count(_ => _.When is not null).ShouldEqual(4);
@@ -88,14 +88,14 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     CaptureSyntax Capture => Slice("LegacyInvoiceSync").Captures.Single();
 
     CaptureWhenSyntax ValueTransitionWhen => Capture.Appends.Single(_ => _.Event == "InvoicePaidFromSent").When!;
-    [Fact] void should_parse_the_list_projection() => Slice("InvoiceList").Projection!.Blocks.OfType<RemoveWithSyntax>().Single().Event.ShouldEqual("InvoiceCancelled");
-    [Fact] void should_parse_the_details_projection_join() => Slice("InvoiceDetails").Projection!.Blocks.OfType<JoinSyntax>().Single().On.ShouldEqual("customerId");
-    [Fact] void should_parse_the_details_projection_children() => Slice("InvoiceDetails").Projection!.Blocks.OfType<ChildrenSyntax>().Single().Property.ShouldEqual("lineItems");
-    [Fact] void should_parse_the_details_projection_every() => Slice("InvoiceDetails").Projection!.Blocks.OfType<EverySyntax>().Single().IncludeChildren.ShouldBeFalse();
-    [Fact] void should_parse_the_details_projection_remove_via_join() => Slice("InvoiceDetails").Projection!.Blocks.OfType<RemoveViaJoinSyntax>().Single().Event.ShouldEqual("CustomerAccountClosed");
-    [Fact] void should_parse_the_details_projection_nested() => Slice("InvoiceDetails").Projection!.Blocks.OfType<NestedSyntax>().Single().Property.ShouldEqual("shipping");
-    [Fact] void should_parse_the_line_report_composite_key() => ((CompositeKeySyntax)Slice("InvoiceLineReport").Projection!.Blocks.OfType<FromSyntax>().Single().Key!).Type.ShouldEqual("InvoiceLineKey");
-    [Fact] void should_parse_the_summary_counters() => Slice("InvoiceDashboard").Projection!.Blocks.OfType<FromSyntax>().First().Mappings.OfType<IncrementMappingSyntax>().Count().ShouldEqual(2);
+    [Fact] void should_parse_the_list_projection() => Slice("InvoiceList").Projections.Single().Blocks.OfType<RemoveWithSyntax>().Single().Event.ShouldEqual("InvoiceCancelled");
+    [Fact] void should_parse_the_details_projection_join() => Slice("InvoiceDetails").Projections.Single().Blocks.OfType<JoinSyntax>().Single().On.ShouldEqual("customerId");
+    [Fact] void should_parse_the_details_projection_children() => Slice("InvoiceDetails").Projections.Single().Blocks.OfType<ChildrenSyntax>().Single().Property.ShouldEqual("lineItems");
+    [Fact] void should_parse_the_details_projection_every() => Slice("InvoiceDetails").Projections.Single().Blocks.OfType<EverySyntax>().Single().IncludeChildren.ShouldBeFalse();
+    [Fact] void should_parse_the_details_projection_remove_via_join() => Slice("InvoiceDetails").Projections.Single().Blocks.OfType<RemoveViaJoinSyntax>().Single().Event.ShouldEqual("CustomerAccountClosed");
+    [Fact] void should_parse_the_details_projection_nested() => Slice("InvoiceDetails").Projections.Single().Blocks.OfType<NestedSyntax>().Single().Property.ShouldEqual("shipping");
+    [Fact] void should_parse_the_line_report_composite_key() => ((CompositeKeySyntax)Slice("InvoiceLineReport").Projections.Single().Blocks.OfType<FromSyntax>().Single().Key!).Type.ShouldEqual("InvoiceLineKey");
+    [Fact] void should_parse_the_summary_counters() => Slice("InvoiceDashboard").Projections.Single().Blocks.OfType<FromSyntax>().First().Mappings.OfType<IncrementMappingSyntax>().Count().ShouldEqual(2);
     [Fact] void should_parse_the_dashboard_screen_layout() => Slice("InvoiceDashboard").Screens.Single().Directives.OfType<ScreenLayoutSyntax>().Single().Slots.Count().ShouldEqual(4);
     [Fact] void should_parse_the_reactors() => Slice("NotifyCustomerOnInvoiceRegistered").Reactors.Single().Triggers.Single().File!.Path.ShouldEqual("Reactors/NotifyCustomerReactor.cs");
     [Fact] void should_parse_the_inline_reactor_code() => Slice("DetectOverdueInvoices").Reactors.Single().Triggers.First().Code.ShouldNotBeNull();

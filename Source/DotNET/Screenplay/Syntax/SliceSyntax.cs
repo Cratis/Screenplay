@@ -42,7 +42,7 @@ public enum SliceType
 /// <param name="Events">The <see cref="EventSyntax">events</see> declared in the slice.</param>
 /// <param name="Commands">The <see cref="CommandSyntax">commands</see> declared in the slice.</param>
 /// <param name="Queries">The <see cref="QuerySyntax">queries</see> declared in the slice.</param>
-/// <param name="Projection">The optional <see cref="ProjectionSyntax"/> declared in the slice.</param>
+/// <param name="Projections">The <see cref="ProjectionSyntax">projections</see> declared in the slice.</param>
 /// <param name="Captures">The <see cref="CaptureSyntax">captures</see> declared in the slice.</param>
 /// <param name="Reactors">The <see cref="ReactorSyntax">reactors</see> declared in the slice.</param>
 /// <param name="Screens">The <see cref="ScreenSyntax">screens</see> declared in the slice.</param>
@@ -50,13 +50,17 @@ public enum SliceType
 /// <param name="Specifications">The <see cref="SpecificationSyntax">specifications</see> declared in the slice.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 /// <param name="Description">The optional description of the slice.</param>
+/// <remarks>
+/// A slice declares as many projections as the behavior needs. The read model a screen binds to and the
+/// one a command reads to decide belong to the same behavior, so they belong to the same slice.
+/// </remarks>
 public record SliceSyntax(
     SliceType Type,
     string Name,
     IEnumerable<EventSyntax> Events,
     IEnumerable<CommandSyntax> Commands,
     IEnumerable<QuerySyntax> Queries,
-    ProjectionSyntax? Projection,
+    IEnumerable<ProjectionSyntax> Projections,
     IEnumerable<CaptureSyntax> Captures,
     IEnumerable<ReactorSyntax> Reactors,
     IEnumerable<ScreenSyntax> Screens,
