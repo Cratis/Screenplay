@@ -11,17 +11,21 @@ namespace Cratis.Screenplay.Contexts;
 /// parameters the <c>query</c> declaration gives it. Typically an <see cref="System.Dynamic.ExpandoObject"/>
 /// populated from the incoming request.</param>
 /// <param name="Tenant">The <see cref="TenantId"/> the query is executing for.</param>
+/// <param name="Identity">The <see cref="Contexts.Identity">caller</see> that sent the query.</param>
 /// <param name="CausedBy">The <see cref="Contexts.CausedBy">identity</see> that caused the query to run.</param>
 /// <param name="Causation">The <see cref="Contexts.Causation"/> linking the query back to what caused it.</param>
 /// <param name="Occurred">When the query was received.</param>
 /// <remarks>
 /// This is the type an inline <c>performer csharp</c> block and any imported C# performer file compile
 /// against - it is in scope as <c>context</c>. A query parameter declared with <c>from $context....</c>
-/// is filled from the same values before the performer runs.
+/// is filled from the same values before the performer runs. <see cref="Identity"/> and
+/// <see cref="CausedBy"/> describe the same caller from two sides - what a decision may inspect, and what a
+/// read narrows on.
 /// </remarks>
 public record QueryContext(
     dynamic Arguments,
     TenantId Tenant,
+    Identity Identity,
     CausedBy CausedBy,
     Causation Causation,
     DateTimeOffset Occurred);
