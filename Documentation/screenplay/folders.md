@@ -30,9 +30,9 @@ The merge happens *before* anything is resolved, and that is the entire point. A
 Compare that with [`CompileIn`](tool.md#use-the-compiler-as-a-library), which compiles every file as a document in its own right. Given a folder where `Register.play` declares `InvoiceRegistered` and `Submit.play` produces it, `CompileIn` reports:
 
 ```text
-Submit.play(5,9): warning: Unknown type 'InvoiceId' on 'invoiceId' of command 'Submit' - declare it with 'concept InvoiceId : <Primitive>' or 'type InvoiceId'
-Submit.play(6,9): warning: Unknown policy 'CanManageInvoice' - declare it with 'policy CanManageInvoice'
-Submit.play(7,9): warning: Unknown event 'InvoiceRegistered' - declare it with 'event InvoiceRegistered'
+Submit.play(5,9): warning PLAY0165: Unknown type 'InvoiceId' on 'invoiceId' of command 'Submit' - declare it with 'concept InvoiceId : <Primitive>' or 'type InvoiceId'
+Submit.play(6,9): warning PLAY0167: Unknown policy 'CanManageInvoice' - declare it with 'policy CanManageInvoice'
+Submit.play(7,9): warning PLAY0166: Unknown event 'InvoiceRegistered' - declare it with 'event InvoiceRegistered'
 ```
 
 None of those are real. `CompileFolder` reports nothing, because none of them are missing - they are just in another file. Both calls remain available: reach for `CompileIn` only when the files genuinely are separate documents that happen to share a folder.
@@ -159,9 +159,9 @@ Merging follows a single rule: **the documents of a folder are one document**. F
 A duplicate is reported **only when the same name is declared in more than one file**, and it always names both ends - the file the name was already claimed in, and the location of the file that tried to claim it again:
 
 ```text
-second.play(1,1): error: Duplicate declaration of 'InvoiceId' - already declared in 'first.play'
-second.play(3,5): error: Duplicate slice 'Register' in feature 'Invoices' - already declared in 'first.play'
-second.play(1,1): error: The folder already declares a domain in 'first.play' - a folder compiles to one application, which can have at most one
+second.play(1,1): error PLAY0173: Duplicate declaration of 'InvoiceId' - already declared in 'first.play'
+second.play(3,5): error PLAY0173: Duplicate slice 'Register' in feature 'Invoices' - already declared in 'first.play'
+second.play(1,1): error PLAY0172: The folder already declares a domain in 'first.play' - a folder compiles to one application, which can have at most one
 ```
 
 Duplicates *within* one file are left to the single document compiler, which already has its own rules for them. Compiling one document behaves exactly as it always has.
