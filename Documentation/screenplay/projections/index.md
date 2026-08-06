@@ -68,6 +68,26 @@ projection InvoiceSummary => InvoiceSummaryReadModel
     decrement totalCount
 ```
 
+## Several projections in one slice
+
+A slice is one behavior, and a behavior often needs more than one read model. The list a screen binds to is shaped for a reader; the state a command consults before it decides is shaped for a decision. Both are built from the same events by the same slice, so both `projection` blocks live in it:
+
+```screenplay
+slice StateView CustomerPortalReport
+  query GetPortalReport => PortalReportReadModel
+    by customerId CustomerId
+
+  projection PortalReport => PortalReportReadModel
+    from PortalInvitationSent
+      invitedAt = $eventContext.occurred
+
+  projection RevokedPortalToken => RevokedPortalTokenReadModel
+    from PortalTokenRevoked
+      revokedAt = $eventContext.occurred
+```
+
+Declare as many as the behavior needs. Each names its own read model, and [printing](../printing.md) writes them back out in the order they were declared. Splitting them across two slices would say the system has two behaviors where it has one.
+
 ## Topics
 
 - [From Event](from-event.md) - Define rules that trigger when events occur
