@@ -87,6 +87,8 @@ internal static class ScreenplayValidator
             ValidateSlice(slice, knownEvents, knownPolicies, knownTypes, knownReadModels, context);
             ValidateReactorConsequences(slice, knownEvents, knownCommands, context);
         }
+
+        ValidateScreenReferences(application, context);
     }
 
     /// <summary>
@@ -320,6 +322,142 @@ internal static class ScreenplayValidator
                     DiagnosticCodes.UnknownCommand,
                     $"Unknown command '{invokes.Command}' - declare it with 'command {invokes.Command}'",
                     invokes.Location);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates that what a screen binds to resolves - the queries it reads, the commands it invokes and
+    /// the screens it navigates to.
+    /// </summary>
+    /// <param name="application">The <see cref="ApplicationSyntax"/> to validate.</param>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <remarks>
+    /// A bare name resolves from the inside out - the slice, then the feature, then the module, then the
+    /// document - and the innermost match wins. Reported as warnings rather than errors: a name may resolve
+    /// to something outside the document, and the point is that the gap is visible.
+    /// </remarks>
+    static void ValidateScreenReferences(ApplicationSyntax application, ParserContext context)
+    {
+        var scoped = ScopedSlices(application).ToList();
+        var queries = scoped.SelectMany(entry => entry.Slice.Queries.Select(query => new Declaration(query.Name, entry.Scope))).ToList();
+        var commands = scoped.SelectMany(entry => entry.Slice.Commands.Select(command => new Declaration(command.Name, entry.Scope))).ToList();
+        var screens = scoped.SelectMany(entry => entry.Slice.Screens.Select(screen => new Declaration(screen.Name, entry.Scope))).ToList();
+
+        foreach (var (slice, scope) in scoped)
+        {
+            foreach (var directive in slice.Screens.SelectMany(screen => AllDirectives(screen.Directives)))
+            {
+                switch (directive)
+                {
+                    case ScreenDataSyntax data:
+                        Report(data.Query, scope, queries, DiagnosticCodes.UnknownQuery, "query", data.Location, context);
+                        break;
+                    case ScreenActionSyntax action:
+                        Report(action.Command, scope, commands, DiagnosticCodes.UnknownCommand, "command", action.Location, context);
+                        break;
+                    case ScreenNavigateSyntax navigate:
+                        Report(navigate.Screen, scope, screens, DiagnosticCodes.UnknownScreen, "screen", navigate.Location, context);
+                        break;
+                }
+            }
+        }
+    }
+
+    static void Report(
+        string reference,
+        DeclarationScope from,
+        IReadOnlyList<Declaration> declarations,
+        string unknownCode,
+        string kind,
+        SourceLocation location,
+        ParserContext context)
+    {
+        var resolution = ReferenceResolver.Resolve(reference, from, declarations);
+        if (resolution.Resolved is not null)
+        {
+            return;
+        }
+
+        if (resolution.Ambiguous.Count > 0)
+        {
+            var where = string.Join(", ", resolution.Ambiguous.Select(candidate => string.Join('.', candidate.Scope.Segments)));
+            context.Warning(
+                DiagnosticCodes.AmbiguousReference,
+                $"Ambiguous {kind} '{reference}' - it matches {resolution.Ambiguous.Count} declarations equally well ({where}); qualify it to say which",
+                location);
+            return;
+        }
+
+        context.Warning(unknownCode, $"Unknown {kind} '{reference}' - nothing in scope declares it", location);
+    }
+
+    /// <summary>
+    /// Yields every slice with the scope it sits in, outermost segment first.
+    /// </summary>
+    /// <param name="application">The <see cref="ApplicationSyntax"/> to walk.</param>
+    /// <returns>Each slice and where it sits.</returns>
+    static IEnumerable<(SliceSyntax Slice, DeclarationScope Scope)> ScopedSlices(ApplicationSyntax application)
+    {
+        foreach (var module in application.Modules)
+        {
+            foreach (var entry in ScopedSlicesIn(module.Features, [module.Name]))
+            {
+                yield return entry;
+            }
+        }
+    }
+
+    static IEnumerable<(SliceSyntax Slice, DeclarationScope Scope)> ScopedSlicesIn(IEnumerable<FeatureSyntax> features, IReadOnlyList<string> path)
+    {
+        foreach (var feature in features)
+        {
+            List<string> featurePath = [.. path, feature.Name];
+            foreach (var slice in feature.Slices)
+            {
+                yield return (slice, new DeclarationScope([.. featurePath, slice.Name]));
+            }
+
+            foreach (var nested in ScopedSlicesIn(feature.Features, featurePath))
+            {
+                yield return nested;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Flattens a screen's directives, descending into the layouts, slots and sections that hold more.
+    /// </summary>
+    /// <param name="directives">The directives to flatten.</param>
+    /// <returns>Every directive, including the ones nested inside another.</returns>
+    static IEnumerable<ScreenDirectiveSyntax> AllDirectives(IEnumerable<ScreenDirectiveSyntax> directives)
+    {
+        foreach (var directive in directives)
+        {
+            yield return directive;
+
+            var nested = directive switch
+            {
+                ScreenLayoutSyntax layout => layout.Slots.Cast<ScreenDirectiveSyntax>(),
+                ScreenSlotSyntax slot => slot.Directives,
+                ScreenSectionSyntax section => section.Directives,
+                _ => []
+            };
+
+            foreach (var child in AllDirectives(nested))
+            {
+                yield return child;
+            }
+
+            // A navigate hangs off an action or a table row rather than standing on its own.
+            if (directive is ScreenActionSyntax { Navigate: { } afterAction })
+            {
+                yield return afterAction;
+            }
+
+            if (directive is ScreenTableSyntax { RowClick: { } onRowClick })
+            {
+                yield return onRowClick;
             }
         }
     }
