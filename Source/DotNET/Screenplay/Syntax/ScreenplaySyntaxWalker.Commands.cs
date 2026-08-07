@@ -21,6 +21,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitProperty(property);
         }
 
+        foreach (var reads in syntax.Reads ?? [])
+        {
+            VisitReads(reads);
+        }
+
         if (syntax.Authorize is not null)
         {
             VisitAuthorize(syntax.Authorize);
@@ -52,6 +57,12 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The <see cref="ConcurrencySyntax"/> to visit.</param>
     public virtual void VisitConcurrency(ConcurrencySyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a <see cref="ReadsSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ReadsSyntax"/> to visit.</param>
+    public virtual void VisitReads(ReadsSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits an <see cref="AuthorizeSyntax"/> node and its children.

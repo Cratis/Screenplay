@@ -138,7 +138,25 @@ public record CommandSyntax(
     HandlerSyntax? Handler,
     SourceLocation Location,
     ConcurrencySyntax? Concurrency = null,
-    string? Description = null) : SyntaxNode(Location);
+    string? Description = null,
+    IEnumerable<ReadsSyntax>? Reads = null) : SyntaxNode(Location);
+
+/// <summary>
+/// Represents a <c>reads &lt;ReadModel&gt; [by &lt;property&gt;]</c> declaration on a command.
+/// </summary>
+/// <param name="ReadModel">The name of the read model the command reads to decide.</param>
+/// <param name="By">The command property the read model is looked up by, when it is looked up by one.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <remarks>
+/// This is the read-model-to-command arrow of Event Modeling - the state a command consults before it decides.
+/// Declaring it puts the read model in scope for the rest of the command, so a produces mapping can be fed from
+/// state and a validation rule can be stated against it, instead of both dropping to an inline code block.
+/// <para>
+/// <c>By</c> is absent for a read model that is not looked up by a key - a single view the whole application
+/// shares rather than one instance per identifier.
+/// </para>
+/// </remarks>
+public record ReadsSyntax(string ReadModel, string? By, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents an <c>authorize</c> declaration referencing one or more policies.
