@@ -28,6 +28,8 @@
   href: commands.md
 - name: Queries
   href: queries.md
+- name: Read models
+  href: readmodels.md
 - name: Contexts
   href: context.md
 - name: Projections

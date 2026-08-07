@@ -78,7 +78,9 @@ module Invoicing
 | `command` | `StateChange` | [Commands](commands.md) |
 | `constraint` | `StateChange` | [Constraints](constraints.md) |
 | `query` | `StateView` | [Queries](queries.md) |
+| `readmodel` | `StateView` | [Read models](readmodels.md) |
 | `projection` | `StateView` | [Projections](projections/index.md) |
+| `reducer` | `StateView` | [Read models](readmodels.md#reducers) |
 | `screen` | `StateView` | [Screens](screens.md) |
 | `reactor` | `Automation` | [Reactors](reactors.md) |
 | `capture` | `Translate` | [Captures](captures.md) |

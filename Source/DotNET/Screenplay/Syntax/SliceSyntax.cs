@@ -67,4 +67,6 @@ public record SliceSyntax(
     IEnumerable<ConstraintSyntax> Constraints,
     IEnumerable<SpecificationSyntax> Specifications,
     SourceLocation Location,
-    string? Description = null) : SyntaxNode(Location);
+    string? Description = null,
+    IEnumerable<ReadModelSyntax>? ReadModels = null,
+    IEnumerable<ReducerSyntax>? Reducers = null) : SyntaxNode(Location);

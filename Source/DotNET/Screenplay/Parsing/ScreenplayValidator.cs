@@ -31,12 +31,15 @@ internal static class ScreenplayValidator
             .ToHashSet();
         var knownPolicies = application.Policies.Select(policy => policy.Name).ToHashSet();
 
-        // A projection is what produces a read model, so its declared read model - or its own name when it
-        // does not rename one - is what a command can say it reads.
+        // A read model is whatever a builder names with '=>', plus anything declared on its own.
         var knownReadModels = slices.SelectMany(slice => slice.Projections)
             .Select(projection => projection.ReadModel ?? projection.Name)
+            .Concat(slices.SelectMany(slice => slice.Reducers ?? []).Select(reducer => reducer.ReadModel))
+            .Concat(slices.SelectMany(slice => slice.ReadModels ?? []).Select(readModel => readModel.Name))
             .Concat(application.Imports.Select(import => import.Name))
             .ToHashSet();
+
+        ValidateReadModels(slices, knownReadModels, knownEvents, context);
         var knownTypes = ConceptSyntax.PrimitiveTypes
             .Concat(application.Concepts.Select(concept => concept.Name))
             .Concat((application.Types ?? []).Select(type => type.Name))
@@ -78,6 +81,70 @@ internal static class ScreenplayValidator
         foreach (var slice in slices)
         {
             ValidateSlice(slice, knownEvents, knownPolicies, knownTypes, knownReadModels, context);
+        }
+    }
+
+    /// <summary>
+    /// Validates that a read model is declared once and built once.
+    /// </summary>
+    /// <param name="slices">Every <see cref="SliceSyntax"/> in the document.</param>
+    /// <param name="knownReadModels">The read models the document makes available.</param>
+    /// <param name="knownEvents">The events the document makes available.</param>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <remarks>
+    /// A read model is built by exactly one thing - a projection or a reducer, never both and never two of
+    /// either. Two builders would leave a reader, and a runtime, with no answer to which one produced the
+    /// value in front of them.
+    /// </remarks>
+    static void ValidateReadModels(
+        List<SliceSyntax> slices,
+        HashSet<string> knownReadModels,
+        HashSet<string> knownEvents,
+        ParserContext context)
+    {
+        var declarations = slices.SelectMany(slice => slice.ReadModels ?? []).ToList();
+        foreach (var duplicate in declarations.GroupBy(readModel => readModel.Name, StringComparer.Ordinal)
+            .Where(group => group.Count() > 1)
+            .SelectMany(group => group.Skip(1)))
+        {
+            context.Error(
+                DiagnosticCodes.DuplicateReadModel,
+                $"Duplicate read model '{duplicate.Name}' - a read model is declared once",
+                duplicate.Location);
+        }
+
+        var builders = slices.SelectMany(slice => slice.Projections
+                .Select(projection => (Name: projection.ReadModel ?? projection.Name, projection.Location)))
+            .Concat(slices.SelectMany(slice => (slice.Reducers ?? [])
+                .Select(reducer => (Name: reducer.ReadModel, reducer.Location))));
+
+        foreach (var second in builders.GroupBy(builder => builder.Name, StringComparer.Ordinal)
+            .Where(group => group.Count() > 1)
+            .SelectMany(group => group.Skip(1)))
+        {
+            context.Error(
+                DiagnosticCodes.ReadModelBuiltMoreThanOnce,
+                $"Read model '{second.Name}' is built more than once - a projection or a reducer builds it, and only one of them",
+                second.Location);
+        }
+
+        foreach (var reducer in slices.SelectMany(slice => slice.Reducers ?? []))
+        {
+            if (!knownReadModels.Contains(reducer.ReadModel))
+            {
+                context.Warning(
+                    DiagnosticCodes.UnknownReadModel,
+                    $"Unknown read model '{reducer.ReadModel}' - declare it with 'readmodel {reducer.ReadModel}'",
+                    reducer.Location);
+            }
+
+            foreach (var rule in reducer.Rules.Where(rule => !knownEvents.Contains(rule.Event)))
+            {
+                context.Warning(
+                    DiagnosticCodes.UnknownEvent,
+                    $"Unknown event '{rule.Event}' - declare it with 'event {rule.Event}'",
+                    rule.Location);
+            }
         }
     }
 
