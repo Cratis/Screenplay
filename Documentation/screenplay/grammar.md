@@ -510,6 +510,13 @@ InvokesDecl    = "invokes", Ident, NL,
 (* Screens                                                         *)
 (* -------------------------------------------------------------- *)
 
+(* A screen binds to a query, a command or another screen by name. A bare name
+   resolves from the inside out - the slice it is written in, then the feature,
+   then the module, then the document - and the innermost match wins, so a
+   slice keeps its own vocabulary. A name matching two declarations equally
+   well is a warning naming both, never a silent pick. Qualify with the scope
+   that holds it - "Queue.All", "Preparation.Queue.All" - to reach across.  *)
+
 ScreenDecl     = "screen", Ident, NL,
                  INDENT, ScreenBody, DEDENT ;
 

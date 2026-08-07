@@ -104,6 +104,53 @@ screen InvoiceDashboard
           on row-click navigate to InvoiceDetails by invoiceId
 ````
 
+## How a name resolves
+
+A screen binds to things by name — `via query All`, `action RegisterInvoice`, `navigate to InvoiceDetails`. A bare name resolves **from the inside out**: the slice it is written in, then the enclosing feature, then the module, then the document. The innermost match wins.
+
+That rule exists because a document generated from code cannot make every name unique. Query names come from C# method names, which are unique only per read model — one real application declares 76 queries under 37 distinct names, with `All` appearing 21 times. Two slices in one feature can each declare `All`, and each screen gets its own:
+
+```screenplay
+module Invoicing
+  feature Preparation
+    slice StateView Queue
+      query All => QueueReadModel
+
+      screen QueueScreen
+        data QueueReadModel[] via query All
+
+    slice StateView Deviations
+      query All => DeviationReadModel
+
+      screen DeviationScreen
+        data DeviationReadModel[] via query All
+```
+
+A slice keeps its own vocabulary, and a name declared next door does not silently take over.
+
+### Reaching across slices
+
+A screen that aggregates read models from several slices — a routine Event Modeling shape — qualifies the name with the scope that holds it:
+
+```screenplay
+screen OverviewScreen
+  data QueueReadModel[]     via query Queue.All
+  data DeviationReadModel[] via query Preparation.Deviations.All
+```
+
+Any trailing part of the scope will do: `Queue.All`, `Preparation.Queue.All`, or the whole `Invoicing.Preparation.Queue.All`. Use the shortest one that is unambiguous.
+
+### When a name matches two things equally well
+
+If a bare name matches more than one declaration at the same depth — two sibling slices both declaring `All`, referenced from a third — the compiler **warns and names the candidates** rather than picking one:
+
+```
+Ambiguous query 'All' - it matches 2 declarations equally well
+(Invoicing.Preparation.Queue, Invoicing.Preparation.Deviations); qualify it to say which
+```
+
+Unresolved and ambiguous references are warnings rather than errors, because a name may still resolve to something outside the document. The point is that the gap is visible: before this, a screen could navigate to a screen that did not exist and nothing said so.
+
 ## File reference
 
 Full external implementation — Stage uses the file, the Screenplay contract remains visible to Studio.

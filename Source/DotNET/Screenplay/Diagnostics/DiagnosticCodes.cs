@@ -1060,4 +1060,21 @@ public static class DiagnosticCodes
     /// A reactor invokes a command the document does not declare.
     /// </summary>
     public const string UnknownCommand = "PLAY0195";
+
+    // What a screen binds to.
+
+    /// <summary>
+    /// A screen binds data to a query nothing in scope declares.
+    /// </summary>
+    public const string UnknownQuery = "PLAY0196";
+
+    /// <summary>
+    /// A screen navigates to a screen nothing in scope declares.
+    /// </summary>
+    public const string UnknownScreen = "PLAY0197";
+
+    /// <summary>
+    /// A bare name matches more than one declaration at the same depth, so which one it means is undecided.
+    /// </summary>
+    public const string AmbiguousReference = "PLAY0198";
 }
