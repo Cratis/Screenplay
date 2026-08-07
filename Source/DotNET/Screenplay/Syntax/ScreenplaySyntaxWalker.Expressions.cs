@@ -34,9 +34,6 @@ public abstract partial class ScreenplaySyntaxWalker
             case EnvironmentExpressionSyntax environment:
                 VisitEnvironmentExpression(environment);
                 break;
-            case SecretExpressionSyntax secret:
-                VisitSecretExpression(secret);
-                break;
             case StringsExpressionSyntax strings:
                 VisitStringsExpression(strings);
                 break;
@@ -87,12 +84,6 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The <see cref="EnvironmentExpressionSyntax"/> to visit.</param>
     public virtual void VisitEnvironmentExpression(EnvironmentExpressionSyntax syntax) => VisitNode(syntax);
-
-    /// <summary>
-    /// Visits a <see cref="SecretExpressionSyntax"/> node.
-    /// </summary>
-    /// <param name="syntax">The <see cref="SecretExpressionSyntax"/> to visit.</param>
-    public virtual void VisitSecretExpression(SecretExpressionSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="StringsExpressionSyntax"/> node.

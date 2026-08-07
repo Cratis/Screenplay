@@ -987,4 +987,11 @@ public static class DiagnosticCodes
     /// A <c>require</c> operand names neither a property of the artifact nor state it reads.
     /// </summary>
     public const string UnknownRequirementOperand = "PLAY0182";
+
+    // How an application signs its users in.
+
+    /// <summary>
+    /// An authentication provider carries a configuration body, which belongs where the application runs.
+    /// </summary>
+    public const string ProviderWithConfiguration = "PLAY0183";
 }

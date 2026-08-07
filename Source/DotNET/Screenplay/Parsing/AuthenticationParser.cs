@@ -8,7 +8,7 @@ using Cratis.Screenplay.Syntax;
 namespace Cratis.Screenplay.Parsing;
 
 /// <summary>
-/// Parses top level <c>authentication</c> blocks - named identity providers with free-form settings.
+/// Parses top level <c>authentication</c> blocks - the identity providers the application signs users in with.
 /// </summary>
 internal static partial class AuthenticationParser
 {
@@ -42,39 +42,42 @@ internal static partial class AuthenticationParser
             var match = ProviderRegex().Match(line.Content);
             if (!match.Success)
             {
-                context.Error(DiagnosticCodes.InvalidProviderDeclaration, $"Invalid provider declaration '{line.Content}' - expected 'provider <Name>'", line.Location);
+                context.Error(DiagnosticCodes.InvalidProviderDeclaration, $"Invalid provider declaration '{line.Content}' - expected 'provider <Name>' or 'provider <Name> name <Alias>'", line.Location);
                 context.SkipBlock(line.Indent);
                 continue;
             }
 
-            providers.Add(new(match.Groups[1].Value, ParseSettings(context, line), line.Location));
+            var alias = match.Groups[2];
+            providers.Add(new(match.Groups[1].Value, alias.Success ? alias.Value : null, line.Location));
+            RejectBody(context, line);
         }
 
         return new(providers, header.Location);
     }
 
-    static List<AuthenticationSettingSyntax> ParseSettings(ParserContext context, SourceLine provider)
+    /// <summary>
+    /// Reports anything indented under a provider, which used to be where its configuration went.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <param name="provider">The <see cref="SourceLine"/> holding the provider declaration.</param>
+    /// <remarks>
+    /// A provider carries no configuration - what it takes to reach one is what running the application
+    /// needs to know, not what the application is - so a body under it is a document saying something the
+    /// language deliberately does not express, and silently dropping it would hide that.
+    /// </remarks>
+    static void RejectBody(ParserContext context, SourceLine provider)
     {
-        var settings = new List<AuthenticationSettingSyntax>();
         while (context.TryPeekChild(provider.Indent, out var child))
         {
             context.Reader.TakeSignificant();
-            var match = SettingRegex().Match(child.Content);
-            if (!match.Success)
-            {
-                context.Error(DiagnosticCodes.InvalidProviderSetting, $"Invalid provider setting '{child.Content}' - expected '<name> <value>'", child.Location);
-                continue;
-            }
-
-            settings.Add(new(match.Groups[1].Value, ExpressionParser.ParseMappingSource(context, match.Groups[2].Value, child.Location), child.Location));
+            context.Error(
+                DiagnosticCodes.ProviderWithConfiguration,
+                $"Unexpected '{child.Content}' under a provider - how to reach a provider is configured where the application runs, not in the document",
+                child.Location);
+            context.SkipBlock(child.Indent);
         }
-
-        return settings;
     }
 
-    [GeneratedRegex(@"^provider\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^provider\s+([A-Za-z_]\w*)(?:\s+name\s+([A-Za-z_]\w*))?$", RegexOptions.None, 1000)]
     private static partial Regex ProviderRegex();
-
-    [GeneratedRegex(@"^([A-Za-z_]\w*)\s+(.+)$", RegexOptions.None, 1000)]
-    private static partial Regex SettingRegex();
 }

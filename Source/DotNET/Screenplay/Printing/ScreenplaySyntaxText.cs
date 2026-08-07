@@ -32,7 +32,6 @@ internal static partial class ScreenplaySyntaxText
         PathExpressionSyntax path => path.Path,
         ContextExpressionSyntax context => $"$context.{context.Path}",
         EnvironmentExpressionSyntax environment => $"$env.{environment.Name}",
-        SecretExpressionSyntax secret => $"$secrets.{secret.Name}",
         StringsExpressionSyntax strings => $"$strings.{strings.Key}",
         SourceItemExpressionSyntax sourceItem => $"$.{sourceItem.Path}",
         EventSourceIdExpressionSyntax => "$eventSourceId",

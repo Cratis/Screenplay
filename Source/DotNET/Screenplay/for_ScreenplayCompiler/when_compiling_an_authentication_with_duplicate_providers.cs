@@ -11,10 +11,8 @@ public class when_compiling_an_authentication_with_duplicate_providers : given.a
     const string Source =
         """
         authentication
-          provider AzureAd
-            type oidc
-          provider AzureAd
-            type oauth
+          provider EntraId
+          provider EntraId
         """;
 
     CompilationResult<ApplicationSyntax> _result;
@@ -22,6 +20,6 @@ public class when_compiling_an_authentication_with_duplicate_providers : given.a
     void Because() => _result = _compiler.Compile(Source);
 
     [Fact] void should_not_succeed() => _result.Success.ShouldBeFalse();
-    [Fact] void should_report_the_duplicate_provider() => _result.Diagnostics.Single().Message.ShouldEqual("Duplicate provider 'AzureAd' - provider names must be unique");
+    [Fact] void should_report_the_duplicate_provider() => _result.Diagnostics.Single().Message.ShouldEqual("Duplicate provider 'EntraId' - a provider must be distinguishable, so give one of them a name");
     [Fact] void should_report_it_as_an_error() => _result.Diagnostics.Single().Severity.ShouldEqual(DiagnosticSeverity.Error);
 }

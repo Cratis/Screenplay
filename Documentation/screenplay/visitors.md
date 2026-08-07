@@ -99,12 +99,12 @@ The name of a method is the node type's name without the `Syntax` suffix, prefix
 Where a node kind is an abstract base with several concrete forms - an expression, a policy condition, a projection block, a screen directive, a mapping, a key - the base method dispatches to the concrete one. Override the base method to treat every form alike, or a concrete method to single one out:
 
 ```csharp
-public class SecretUsage : ScreenplaySyntaxWalker
+public class EnvironmentUsage : ScreenplaySyntaxWalker
 {
     public List<string> Names { get; } = [];
 
-    // Only $secrets references; every other expression form walks as usual.
-    public override void VisitSecretExpression(SecretExpressionSyntax syntax) => Names.Add(syntax.Name);
+    // Only $env references; every other expression form walks as usual.
+    public override void VisitEnvironmentExpression(EnvironmentExpressionSyntax syntax) => Names.Add(syntax.Name);
 }
 ```
 

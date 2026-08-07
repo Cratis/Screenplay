@@ -6,31 +6,42 @@ Policies and personas describe *who may do what* — but an application also has
 
 ```screenplay
 authentication
-  provider <Name>
-    <setting> <value>
-    ...
+  provider <Name> [name <Alias>]
   ...
 ```
 
 - `authentication` — top level, alongside concepts, policies and personas. At most one block per document; a second one is a compile error.
-- `provider <Name>` — one entry per identity provider. Provider names must be unique; duplicates are compile errors.
-- `<setting> <value>` — free-form settings. Screenplay does not prescribe the setting names — each provider type has its own vocabulary (`type`, `authority`, `clientId`, ...). Values use the same expression grammar as `produces` mappings: string literals, numbers, booleans, bare identifiers, `$env.` and [`$secrets.`](secrets.md) references.
+- `provider <Name>` — one entry per identity provider, naming which provider it is: `EntraId`, `GitHub`, `Google`, `Apple`, `OpenId`.
+- `name <Alias>` — what this provider goes by. Optional, and only needed when the provider alone does not identify it.
 
 ## Example
 
 ```screenplay
 authentication
-  provider AzureAd
-    type oidc
-    authority "https://login.microsoftonline.com/common/v2.0"
-    clientId $secrets.azureAdClientId
-    clientSecret $secrets.azureAdClientSecret
+  provider EntraId
   provider GitHub
-    type oauth
-    clientId $secrets.githubClientId
-    clientSecret $secrets.githubClientSecret
+  provider Google
+  provider Apple
 ```
 
-Credentials never appear as plaintext — `$secrets.` references stay symbolic in the syntax tree and resolve at runtime against the encrypted [secrets files](secrets.md), while `$env.` references resolve from the environment. This keeps the whole block safe to commit.
+## Naming a provider
 
-The compiler validates the shape of the block — the single-block rule, provider name uniqueness and the setting line format — and hands the providers to consumers as-is. What a runtime does with a provider declaration is up to it; the declaration is the contract.
+A generic provider can appear more than once. Two `OpenId` providers are two *different* identity providers, and nothing about the word `OpenId` tells them apart — so give them names:
+
+```screenplay
+authentication
+  provider OpenId name Partner
+  provider OpenId name Supplier
+```
+
+A provider must be distinguishable: two entries that resolve to the same name are a compile error. Where no alias is given, the provider name is the name.
+
+## What a provider deliberately does not carry
+
+A provider says *which* identity provider the application signs users in with. It says nothing about how to reach one — no authority, no client id, no secret.
+
+That is not an omission. Authority URLs, client ids and the credentials that go with them are what *running* the application needs to know, not what the application *is*, and they differ per environment while the document does not. A document that carried them would be a different document in test and in production, which is the opposite of what it is for.
+
+Configuration lines under a provider are therefore a compile error rather than something quietly ignored — a document that states them is saying something the language does not express, and hiding that would be worse than reporting it.
+
+A runtime such as Stage resolves the configuration itself, looking each provider up by name through the [compiler's visitors](visitors.md) when it runs or renders the application. How it stores that configuration — a JSON file holding encrypted values, a secret store, environment variables — is its own business, and the language stays out of it.

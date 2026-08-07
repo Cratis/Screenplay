@@ -13,17 +13,25 @@ namespace Cratis.Screenplay.Syntax;
 public record AuthenticationSyntax(IEnumerable<AuthenticationProviderSyntax> Providers, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
-/// Represents a named <c>provider</c> within an <c>authentication</c> block.
+/// Represents a <c>provider &lt;Name&gt; [name &lt;Alias&gt;]</c> within an <c>authentication</c> block.
 /// </summary>
-/// <param name="Name">The name of the provider.</param>
-/// <param name="Settings">The <see cref="AuthenticationSettingSyntax">settings</see> of the provider.</param>
+/// <param name="Name">The kind of provider - <c>EntraId</c>, <c>GitHub</c>, <c>OpenId</c>.</param>
+/// <param name="Alias">The name this provider goes by, when it needs one to be distinguishable.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record AuthenticationProviderSyntax(string Name, IEnumerable<AuthenticationSettingSyntax> Settings, SourceLocation Location) : SyntaxNode(Location);
-
-/// <summary>
-/// Represents a free-form setting of an authentication provider, such as <c>clientId $secrets.azureAdClientId</c>.
-/// </summary>
-/// <param name="Name">The name of the setting.</param>
-/// <param name="Value">The <see cref="ExpressionSyntax"/> providing the value.</param>
-/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record AuthenticationSettingSyntax(string Name, ExpressionSyntax Value, SourceLocation Location) : SyntaxNode(Location);
+/// <remarks>
+/// A provider says which identity provider the application signs users in with, and nothing about how it is
+/// configured. How to reach it - authority, client id, the secret that goes with it - is what running the
+/// application needs to know rather than what the application <em>is</em>, so it belongs to whatever runs
+/// the document, which looks the provider up by name.
+/// <para>
+/// <see cref="Alias"/> exists because a generic provider can appear more than once: two <c>OpenId</c>
+/// providers are two different identity providers, and only a name told apart tells them apart.
+/// </para>
+/// </remarks>
+public record AuthenticationProviderSyntax(string Name, string? Alias, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets what the provider is known by - its <see cref="Alias"/> when it has one, otherwise its <see cref="Name"/>.
+    /// </summary>
+    public string Identity => Alias ?? Name;
+}
