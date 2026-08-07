@@ -168,6 +168,24 @@ The message goes in the body rather than on the end of the line. A condition is 
 
 An operand is either a property of the command or a path into state the command declares it reads. Anything else is a warning — a requirement a reader cannot resolve says less than it appears to. A rule whose logic is not a comparison at all still belongs in a named `rule` or an inline block, as below; `require` is for the rules that *can* be stated.
 
+#### A rule that only applies sometimes
+
+A rule that holds only under a condition — "an extension has to move the end date out, but a renewal need not" — is a requirement like any other. State it as an implication rather than reaching for a second construct:
+
+```screenplay
+command ExtendEngagement
+  engagementId EngagementId identifier
+  isExtension  Bool
+  endDate      Date
+  newEndDate   Date
+
+  validate
+    require isExtension == false or newEndDate > endDate
+      message "An extension must move the end date out"
+```
+
+`or` is what makes the rule conditional: when `isExtension` is false the requirement is already satisfied and the comparison never decides anything. This is why the language has no separate `when` clause on a rule — the condition grammar already says it, and a second way to write the same rule would be a second thing to keep consistent.
+
 ### Rules whose logic is not expressible
 
 Not every rule is a comparison. A predicate — "is this a valid organization number", "is this still available" — has logic that lives in code, and the declarative shapes above cannot express it.
