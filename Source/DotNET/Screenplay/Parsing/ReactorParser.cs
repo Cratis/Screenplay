@@ -79,7 +79,7 @@ internal static partial class ReactorParser
             {
                 file = new(body.Content["file".Length..].Trim(), body.Location);
             }
-            else if (CodeBlockParser.Languages.Contains(body.Content))
+            else if (context.Languages.InlineLanguages.Contains(body.Content))
             {
                 code = CodeBlockParser.Parse(context, body.Content, body);
             }

@@ -3,6 +3,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Languages;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -11,7 +12,8 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 /// <param name="reader">The <see cref="LineReader"/> providing the source lines.</param>
 /// <param name="path">The path of the file being parsed, or <c>null</c> when the source text has no file identity.</param>
-internal sealed class ParserContext(LineReader reader, string? path = null)
+/// <param name="languages">The <see cref="IScreenplayLanguageRegistry"/> saying what the compiler recognizes.</param>
+internal sealed class ParserContext(LineReader reader, string? path = null, IScreenplayLanguageRegistry? languages = null)
 {
     readonly List<Diagnostic> _diagnostics = [];
 
@@ -24,6 +26,11 @@ internal sealed class ParserContext(LineReader reader, string? path = null)
     /// Gets the <see cref="SourceLocation"/> of the start of the document being parsed.
     /// </summary>
     public SourceLocation Start { get; } = SourceLocation.Start.In(path);
+
+    /// <summary>
+    /// Gets the <see cref="IScreenplayLanguageRegistry"/> saying what this compilation recognizes.
+    /// </summary>
+    public IScreenplayLanguageRegistry Languages { get; } = languages ?? ScreenplayLanguageRegistry.Default;
 
     /// <summary>
     /// Gets the <see cref="Diagnostic">diagnostics</see> collected so far.

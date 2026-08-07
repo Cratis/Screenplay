@@ -163,7 +163,7 @@ internal static partial class ValidationRuleParser
             return (new(body.Content["file".Length..].Trim(), body.Location), null);
         }
 
-        if (CodeBlockParser.Languages.Contains(body.Content))
+        if (context.Languages.InlineLanguages.Contains(body.Content))
         {
             return (null, CodeBlockParser.Parse(context, body.Content, body));
         }

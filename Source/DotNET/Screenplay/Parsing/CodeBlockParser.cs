@@ -12,11 +12,6 @@ namespace Cratis.Screenplay.Parsing;
 internal static class CodeBlockParser
 {
     /// <summary>
-    /// Gets the language tags that open an inline code block.
-    /// </summary>
-    public static readonly IEnumerable<string> Languages = ["csharp", "typescript", "react", "html", "sql"];
-
-    /// <summary>
     /// Parses the fenced code following an already consumed language tag line.
     /// </summary>
     /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>

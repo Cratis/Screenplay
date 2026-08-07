@@ -524,7 +524,14 @@ FileDirective  = "file", FilePath, NL ;
 FilePath       = (* relative path string *) ;
 
 InlineBlock    = LanguageTag, NL, "```", NL, { AnyLine }, "```", NL ;
-LanguageTag    = "csharp" | "typescript" | "react" | "html" | "sql" ;
+LanguageTag    = "csharp" | "typescript" | "react" | "html" | "sql"
+               | (* any language registered with the compiler *) ;
+
+(* The five above are what the language ships with, and what the surrounding
+   tooling understands end to end - a Stage renders them, an editor highlights
+   them. A consumer adds to the set by handing the compiler a language
+   registry; the compiler then carries a registered block as text without
+   claiming to read it. See sub-languages.md.                                *)
 
 StringLiteral  = '"', { StringChar }, '"' ;
 StringChar     = ? any char except '"', '\' and newline ? | Escape ;
