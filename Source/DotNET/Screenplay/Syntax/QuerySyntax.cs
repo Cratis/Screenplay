@@ -30,9 +30,27 @@ public record QuerySyntax(
     bool IsObservable = false) : SyntaxNode(Location)
 {
     /// <summary>
+    /// The scope a query is declared with to reach past the tenant it runs for.
+    /// </summary>
+    public const string GlobalScope = "global";
+
+    /// <summary>
     /// The marker that qualifies a query's return type as a live one.
     /// </summary>
     public const string ObservableModifier = "observable";
+
+    /// <summary>
+    /// Gets what the query's results are narrowed to, and <c>null</c> when they are narrowed to the tenant
+    /// the query runs for - the default, which a document leaves unstated.
+    /// </summary>
+    /// <remarks>
+    /// An <c>init</c> property rather than a parameter of the primary constructor, deliberately. A trailing
+    /// parameter on a positional record is source compatible and <em>binary</em> breaking: it replaces the
+    /// constructor and <c>Deconstruct</c> in the compiled signature, so a package built against the previous
+    /// version fails at run time with a missing method and no compiler error anywhere. Adding capability as
+    /// an init property is neither, and is how this record should grow from here.
+    /// </remarks>
+    public string? Scope { get; init; }
 }
 
 /// <summary>
