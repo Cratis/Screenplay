@@ -12,6 +12,9 @@ public class and_it_is_a_screen_label : given.a_printer
         module Invoicing
           feature InvoiceManagement
             slice StateView InvoiceDashboard
+              command RegisterInvoice
+                invoiceId Uuid
+
               screen InvoiceDashboard
                 action RegisterInvoice
                   label "Register a \"draft\" invoice"

@@ -13,6 +13,9 @@ public class when_compiling_a_screen_with_an_invalid_strings_label : given.a_com
         module Invoicing
           feature InvoiceManagement
             slice StateView InvoiceList
+              command RegisterInvoice
+                invoiceId Uuid
+
               screen InvoiceList
                 action RegisterInvoice
                   label $strings.

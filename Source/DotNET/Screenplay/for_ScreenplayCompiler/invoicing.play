@@ -629,6 +629,11 @@ module Invoicing
           status = status
         remove with InvoiceCancelled
 
+      screen RegisterInvoiceScreen
+        title "Register invoice"
+        action RegisterInvoice
+          navigate to InvoiceList
+
       screen InvoiceList
         title "Invoices"
         data InvoiceListReadModel[] via query ListInvoices
@@ -691,6 +696,10 @@ module Invoicing
             carrier = carrier
           clear with InvoiceShippingCleared
         remove via join on CustomerAccountClosed
+
+      screen InvoiceLineDetail
+        title "Line item"
+        data InvoiceDetailsReadModel via query GetInvoice by invoiceId
 
       screen InvoiceDetails
         layout MasterDetail

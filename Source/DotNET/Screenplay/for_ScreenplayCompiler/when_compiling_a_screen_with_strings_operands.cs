@@ -12,6 +12,9 @@ public class when_compiling_a_screen_with_strings_operands : given.a_compiler
         module Invoicing
           feature InvoiceManagement
             slice StateView InvoiceList
+              command RegisterInvoice
+                invoiceId Uuid
+
               screen InvoiceList
                 title $strings.invoices.title
                 action RegisterInvoice
