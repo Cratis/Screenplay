@@ -11,6 +11,9 @@ command <Name>
   <property> <Type>[?] [identifier]
   ...
 
+  [reads <ReadModel> [by <property>]]   ← state the command decides against
+  ...
+
   [authorize <PolicyName> [<PolicyName>]*]
 
   [validate
@@ -79,6 +82,30 @@ command ArchiveOldInvoices
 ```
 
 **At most one property per command** may be the identifier; a second one is a compile error, because there is no sensible way to choose between them. The modifier belongs to commands only — an event never carries its own event source id (it is implicit in the event context), so `identifier` on an event property is an error too.
+
+## What the command reads
+
+A command that changes state usually has to consult state first — whether the month is already started, which phase an engagement is in, who the consultant on a scope is. `reads` declares that dependency:
+
+```screenplay
+command StartMonth
+  engagementId EngagementId identifier
+  year         TimesheetYear
+  month        TimesheetMonth
+  reads EngagementScope by engagementId
+
+  produces TimesheetStarted
+    engagementId = engagementId
+    consultantId = EngagementScope.consultantId
+```
+
+This is the read-model-to-command arrow of Event Modeling — one of the four the method is built on, and the only one a document could not draw. Without it, a command that decides against state shows its inputs and its events but not what it consulted in between, and the mapping fed from that state has nowhere to come from.
+
+- `<ReadModel>` names a read model some [projection](projections/index.md) produces. Reading something no projection produces is a warning — the document says it depends on state nothing in it explains.
+- `by <property>` names the command property the read model is looked up by, and must be one of the command's own properties. Leave it out for a read model that is not looked up by a key — a single view the whole application shares rather than one instance per identifier.
+- A command may read more than one read model, but only once each; reading the same one twice says nothing the first declaration did not.
+
+With the read model in scope, its properties are addressable for the rest of the command body — in a produces mapping, as above, and in the validation rules below.
 
 ## Validation rules
 

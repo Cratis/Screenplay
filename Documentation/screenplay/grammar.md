@@ -197,11 +197,21 @@ CommandDecl    = "command", Ident, NL,
                  INDENT,
                    [ DescriptionDecl ],
                    { PropertyLine },
+                   { ReadsDecl },
                    [ AuthorizeDecl ],
                    { ValidateDecl },
                    ( { ProducesDecl } | HandlerDecl ),
                    [ ConcurrencyDecl ],
                  DEDENT ;
+
+ReadsDecl      = "reads", Ident, [ "by", Ident ], NL ;
+
+(* The read model a command consults before it decides. Declaring it puts the
+   read model in scope for the rest of the command body, so a produces mapping
+   can be fed from state - "consultantId = EngagementScope.consultantId" - and
+   a validation rule can be stated against it. "by" names the command property
+   the read model is looked up by, and is absent for a read model that is not
+   looked up by a key.                                                       *)
 
 ConcurrencyDecl = "concurrency", NL,
                  INDENT, { ConcurrencyDim }, DEDENT ;

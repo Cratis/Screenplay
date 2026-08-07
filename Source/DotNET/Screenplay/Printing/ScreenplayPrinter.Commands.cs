@@ -19,6 +19,13 @@ public partial class ScreenplayPrinter
             WriteDescription(writer, command.Description);
             WriteProperties(writer, command.Properties, ReservedWords.CommandBody);
 
+            // What the command reads comes before what references it - a mapping fed from state and a rule
+            // stated against state both read as though the read model were already in scope, because it is.
+            foreach (var reads in command.Reads ?? [])
+            {
+                writer.Line(reads.By is null ? $"reads {reads.ReadModel}" : $"reads {reads.ReadModel} by {reads.By}");
+            }
+
             if (command.Authorize is not null)
             {
                 WriteAuthorize(writer, command.Authorize);
