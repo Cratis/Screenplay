@@ -9,6 +9,7 @@ query <Name> => [observable] <ReturnType>[[]?]
   [description "<text>"]
   [by <paramName> <Type> [from <source>]]
   [filter <paramName> <Type>? [from <source>]]
+  [scoped to <scope>]
   [authorize <PolicyName> [or <PolicyName>]*]
   [performer
     file <Path>
@@ -65,6 +66,40 @@ query GetInvoice => InvoiceDetailsReadModel
 ```
 
 The marker qualifies only *how* the result arrives, so everything else about the query is unchanged: `observable` composes with `[]` and `?` (`observable InvoiceDetailsReadModel?`), with `by` and `filter` parameters, with `authorize`, and with a `performer`. A [screen](screens.md) binds to a live query exactly the way it binds to a one-shot one — `data <ReadModel> via query <QueryName>` — and gets the updates for free.
+
+## What the caller sees
+
+`authorize` says *who may call* a query. It says nothing about *what they get back* — and in a real application those are different questions. `All` and `Mine` may admit exactly the same callers and return entirely different rows, and that difference is the access model a reader needs.
+
+`scoped to` states it:
+
+```screenplay
+query Mine => Timesheet[]
+  scoped to identity
+  authorize Consultant
+
+query Everyones => Timesheet[]
+  scoped to global
+  authorize Administrator
+```
+
+Without it, a query returning only the caller's own rows reads as one returning everyone's — the opposite of what it does.
+
+### The tenant is the default, and stays unstated
+
+A query is scoped to the tenant it runs for unless it says otherwise. That is the overwhelmingly common case, so writing it down would be noise on almost every query in a document:
+
+```screenplay
+query ForTenant => Timesheet[]
+```
+
+That query is already scoped to the current tenant. Nothing states it, because nothing needs to.
+
+`scoped to global` is how a query *opts out* and reaches past the tenant. Making the narrow case the default means the dangerous case is the one you have to write down, rather than the one you get by forgetting.
+
+### The scope is a name, not a closed set
+
+`identity` and `global` are the two the language documents, but the grammar accepts any name. What scopes exist follows the identity model of whatever runs the document — Screenplay states that a query is scoped and to what, and leaves enforcing it to the runtime. A query declares at most one scope; results are narrowed one way.
 
 ## Parameters
 

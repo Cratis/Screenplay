@@ -36,6 +36,7 @@ internal static partial class QueryParser
         AuthorizeSyntax? authorize = null;
         PerformerSyntax? performer = null;
         string? description = null;
+        string? scope = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -61,14 +62,17 @@ internal static partial class QueryParser
                 case "performer":
                     performer = ParsePerformer(context, line, performer, name);
                     break;
+                case "scoped":
+                    scope = ParseScope(context, line, scope, name) ?? scope;
+                    break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownQueryDirective, $"Unexpected '{line.Content}' in query body - expected description, by, filter, authorize or performer", line.Location);
+                    context.Error(DiagnosticCodes.UnknownQueryDirective, $"Unexpected '{line.Content}' in query body - expected description, by, filter, authorize, scoped or performer", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
         }
 
-        return new(name, returnType, by, filters, authorize, header.Location, description, performer, isObservable);
+        return new(name, returnType, by, filters, authorize, header.Location, description, performer, isObservable) { Scope = scope };
     }
 
     static QueryParameterSyntax? ParseParameter(ParserContext context, SourceLine line, string keyword)
@@ -125,6 +129,35 @@ internal static partial class QueryParser
         context.SkipBlock(line.Indent);
         return null;
     }
+
+    /// <summary>
+    /// Parses a <c>scoped to &lt;scope&gt;</c> line, keeping the first when a query declares more than one.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <param name="line">The <see cref="SourceLine"/> holding the declaration.</param>
+    /// <param name="existing">The scope already declared, when there is one.</param>
+    /// <param name="queryName">The name of the query, used in diagnostics.</param>
+    /// <returns>The parsed scope, or <c>null</c> when the line is malformed.</returns>
+    static string? ParseScope(ParserContext context, SourceLine line, string? existing, string queryName)
+    {
+        var match = ScopeRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidScopeDeclaration, $"Invalid scope declaration '{line.Content}' - expected 'scoped to <scope>'", line.Location);
+            return null;
+        }
+
+        if (existing is not null)
+        {
+            context.Error(DiagnosticCodes.DuplicateScope, $"Query '{queryName}' already declares a scope - results are narrowed one way", line.Location);
+            return null;
+        }
+
+        return match.Groups[1].Value;
+    }
+
+    [GeneratedRegex(@"^scoped\s+to\s+([a-z_]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex ScopeRegex();
 
     [GeneratedRegex(@"^query\s+([A-Za-z_]\w*)\s*=>\s*(observable\s+)?([\w.]+(?:\[\])?\??)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
