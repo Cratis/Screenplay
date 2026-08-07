@@ -379,12 +379,21 @@ QueryDecl      = "query", Ident, "=>", [ "observable" ], TypeRef, NL,
                      [ DescriptionDecl ],
                      [ ByClause ],
                      { FilterClause },
+                     [ ScopeDecl ],
                      [ AuthorizeDecl ],
                      [ PerformerDecl ],
                    DEDENT ] ;
 
 (* "observable" qualifies the return type as a live read - the query keeps
    pushing as the read model changes. Without it the query answers once.      *)
+
+ScopeDecl      = "scoped", "to", Ident, NL ;
+
+(* What the caller sees, as distinct from who may call. Absent, a query is
+   scoped to the tenant it runs for - the common case, so it stays unstated.
+   "scoped to global" reaches past the tenant; "scoped to identity" narrows to
+   the caller. The scope is a name rather than a closed set, because what
+   scopes exist follows the identity model of whatever runs the document.   *)
 
 ByClause       = "by", Ident, TypeRef, [ FromClause ], NL ;
 FilterClause   = "filter", Ident, TypeRef, [ FromClause ], NL ;

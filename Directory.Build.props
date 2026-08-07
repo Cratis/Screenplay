@@ -12,6 +12,18 @@
 
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 
+        <!--
+            Compare every packable assembly against the last released one and fail on a binary break.
+            Screenplay's syntax nodes are positional records, so adding a trailing optional parameter is
+            source compatible and binary breaking: a package compiled against the older version names a
+            constructor that no longer exists, and the failure surfaces as a runtime 'Method not found' in
+            a consumer rather than an error here. That has already shipped once - Cratis.Arc.Screenplay
+            built against 1.5.2 broke against 1.7.0 exactly this way. This makes the break an error in the
+            pull request that causes it, and a deliberate act when it is one.
+        -->
+        <EnablePackageValidation>true</EnablePackageValidation>
+        <PackageValidationBaselineVersion>2.0.0</PackageValidationBaselineVersion>
+
         <RunAnalyzersDuringBuild>True</RunAnalyzersDuringBuild>
         <RunAnalyzersDuringLiveAnalysis>True</RunAnalyzersDuringLiveAnalysis>
         <RunAnalyzers>True</RunAnalyzers>

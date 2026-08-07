@@ -1077,4 +1077,16 @@ public static class DiagnosticCodes
     /// A bare name matches more than one declaration at the same depth, so which one it means is undecided.
     /// </summary>
     public const string AmbiguousReference = "PLAY0198";
+
+    // What a query's results are narrowed to.
+
+    /// <summary>
+    /// A <c>scoped</c> line is not <c>scoped to &lt;scope&gt;</c>.
+    /// </summary>
+    public const string InvalidScopeDeclaration = "PLAY0199";
+
+    /// <summary>
+    /// A query declares more than one scope, and results are narrowed one way.
+    /// </summary>
+    public const string DuplicateScope = "PLAY0200";
 }

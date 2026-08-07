@@ -113,6 +113,13 @@ public partial class ScreenplayPrinter
                 writer.Line($"filter {ScreenplaySyntaxText.QueryParameter(filter)}");
             }
 
+            // What the results are narrowed to comes before who may ask for them - the shape of the answer
+            // before the right to it.
+            if (query.Scope is not null)
+            {
+                writer.Line($"scoped to {query.Scope}");
+            }
+
             if (query.Authorize is not null)
             {
                 WriteAuthorize(writer, query.Authorize);
