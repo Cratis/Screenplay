@@ -1006,4 +1006,41 @@ public static class DiagnosticCodes
     /// A parenthesised group in an <c>authorize</c> is never closed.
     /// </summary>
     public const string UnclosedAuthorizeGroup = "PLAY0185";
+
+    // Read models and the reducers that build them.
+
+    /// <summary>
+    /// A <c>readmodel</c> line is not <c>readmodel &lt;Name&gt;</c>.
+    /// </summary>
+    public const string InvalidReadModelDeclaration = "PLAY0186";
+
+    /// <summary>
+    /// A <c>reducer</c> line is not <c>reducer &lt;Name&gt; =&gt; &lt;ReadModel&gt;</c>.
+    /// </summary>
+    public const string InvalidReducerDeclaration = "PLAY0187";
+
+    /// <summary>
+    /// A line in a reducer body is not an <c>on &lt;EventType&gt;</c> rule.
+    /// </summary>
+    public const string InvalidReducerRule = "PLAY0188";
+
+    /// <summary>
+    /// A reducer declares no rule, so nothing it observes is stated.
+    /// </summary>
+    public const string ReducerWithoutRule = "PLAY0189";
+
+    /// <summary>
+    /// The body of a reducer rule holds something other than a description, a file or inline code.
+    /// </summary>
+    public const string UnknownReducerRuleDirective = "PLAY0190";
+
+    /// <summary>
+    /// More than one projection or reducer builds the same read model.
+    /// </summary>
+    public const string ReadModelBuiltMoreThanOnce = "PLAY0191";
+
+    /// <summary>
+    /// A document declares the same read model more than once.
+    /// </summary>
+    public const string DuplicateReadModel = "PLAY0192";
 }

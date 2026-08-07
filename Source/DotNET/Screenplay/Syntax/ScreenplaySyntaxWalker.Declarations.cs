@@ -73,6 +73,53 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitPersona(PersonaSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
+    /// Visits a <see cref="ReadModelSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ReadModelSyntax"/> to visit.</param>
+    public virtual void VisitReadModel(ReadModelSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        foreach (var property in syntax.Properties)
+        {
+            VisitProperty(property);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="ReducerSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ReducerSyntax"/> to visit.</param>
+    public virtual void VisitReducer(ReducerSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        foreach (var rule in syntax.Rules)
+        {
+            VisitReducerRule(rule);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="ReducerRuleSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ReducerRuleSyntax"/> to visit.</param>
+    public virtual void VisitReducerRule(ReducerRuleSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        if (syntax.File is not null)
+        {
+            VisitFileReference(syntax.File);
+        }
+
+        if (syntax.Code is not null)
+        {
+            VisitCodeBlock(syntax.Code);
+        }
+    }
+
+    /// <summary>
     /// Visits an <see cref="AuthenticationSyntax"/> node and its children.
     /// </summary>
     /// <param name="syntax">The <see cref="AuthenticationSyntax"/> to visit.</param>

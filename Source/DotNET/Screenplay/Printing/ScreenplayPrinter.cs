@@ -137,6 +137,51 @@ public sealed partial class ScreenplayPrinter :
         }
     }
 
+    void WriteReadModel(ScreenplayWriter writer, ReadModelSyntax readModel)
+    {
+        writer.Line($"readmodel {readModel.Name}");
+        using (writer.Indent())
+        {
+            WriteDescription(writer, readModel.Description);
+            WriteProperties(writer, readModel.Properties, ReservedWords.ReadModelBody);
+        }
+    }
+
+    void WriteReducer(ScreenplayWriter writer, ReducerSyntax reducer)
+    {
+        writer.Line($"reducer {reducer.Name} => {reducer.ReadModel}");
+        using (writer.Indent())
+        {
+            WriteDescription(writer, reducer.Description);
+
+            foreach (var rule in reducer.Rules)
+            {
+                writer.Line($"on {rule.Event}");
+
+                // A rule that only names its event is complete on its own, as a reactor trigger is.
+                if (rule is { Description: null, File: null, Code: null })
+                {
+                    continue;
+                }
+
+                using (writer.Indent())
+                {
+                    WriteDescription(writer, rule.Description);
+
+                    if (rule.File is not null)
+                    {
+                        writer.Line($"file {rule.File.Path}");
+                    }
+
+                    if (rule.Code is not null)
+                    {
+                        WriteCodeBlock(writer, rule.Code);
+                    }
+                }
+            }
+        }
+    }
+
     void WriteSeed(ScreenplayWriter writer, SeedSyntax seed)
     {
         writer.Line("seed");
@@ -323,10 +368,23 @@ public sealed partial class ScreenplayPrinter :
                 WriteQuery(writer, query);
             }
 
+            // A read model comes before whatever builds it - the shape first, then where it comes from.
+            foreach (var readModel in slice.ReadModels ?? [])
+            {
+                writer.Blank();
+                WriteReadModel(writer, readModel);
+            }
+
             foreach (var projection in slice.Projections)
             {
                 writer.Blank();
                 WriteProjection(writer, projection);
+            }
+
+            foreach (var reducer in slice.Reducers ?? [])
+            {
+                writer.Blank();
+                WriteReducer(writer, reducer);
             }
 
             foreach (var capture in slice.Captures)

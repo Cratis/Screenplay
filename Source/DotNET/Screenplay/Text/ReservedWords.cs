@@ -26,6 +26,12 @@ internal static class ReservedWords
         new HashSet<string>(StringComparer.Ordinal) { "authorize", "produces", "reads" };
 
     /// <summary>
+    /// The keywords a <c>readmodel</c> body reserves, and so the property names that need escaping.
+    /// </summary>
+    public static readonly IReadOnlySet<string> ReadModelBody =
+        new HashSet<string>(StringComparer.Ordinal) { "description" };
+
+    /// <summary>
     /// The keywords an <c>event</c> body reserves, and so the property names that need escaping.
     /// </summary>
     public static readonly IReadOnlySet<string> EventBody =

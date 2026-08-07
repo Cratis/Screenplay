@@ -162,12 +162,34 @@ SliceType      = "StateChange" | "StateView" | "Automation" | "Translate" ;
 SliceBody      = EventDecl
                | CommandDecl
                | QueryDecl
+               | ReadModelDecl
                | ProjectionDecl
+               | ReducerDecl
                | CaptureDecl
                | SpecificationDecl
                | ReactorDecl
                | ScreenDecl
                | ConstraintDecl ;
+
+ReadModelDecl  = "readmodel", Ident, NL,
+                 INDENT, [ DescriptionDecl ], { PropertyLine }, DEDENT ;
+
+ReducerDecl    = "reducer", Ident, "=>", Ident, NL,
+                 INDENT, [ DescriptionDecl ], { ReducerRule }, DEDENT ;
+
+ReducerRule    = "on", Ident, NL,
+                 [ INDENT, [ DescriptionDecl ], [ FileDirective | InlineBlock ], DEDENT ] ;
+
+(* A read model declares what it is, never what composes it. Whatever builds it
+   - a projection or a reducer - names it with "=>", so the arrow always points
+   the same way and a reader follows one direction to find where state comes
+   from. Exactly one thing may build a read model; two builders leave no answer
+   to which produced the value in front of you.                              *)
+
+(* A reducer is for the views a projection cannot express - current state plus
+   an event gives the next state. Each rule reduces one event, inline or from a
+   file, against ReducerContext. Its State is null on the first event, because
+   nothing built the instance before the first fold.                         *)
 
 (* -------------------------------------------------------------- *)
 (* Events                                                          *)
