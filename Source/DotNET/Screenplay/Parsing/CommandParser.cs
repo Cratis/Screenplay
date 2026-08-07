@@ -332,7 +332,7 @@ internal static partial class CommandParser
             return new(new(body.Content["file".Length..].Trim(), body.Location), null, line.Location);
         }
 
-        if (CodeBlockParser.Languages.Contains(body.Content))
+        if (context.Languages.InlineLanguages.Contains(body.Content))
         {
             var code = CodeBlockParser.Parse(context, body.Content, body);
             return code is null ? null : new HandlerSyntax(null, code, line.Location);
