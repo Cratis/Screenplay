@@ -81,7 +81,12 @@ internal static partial class ScreenplaySyntaxText
     public static string Condition(ConditionSyntax condition) => condition switch
     {
         ComparisonConditionSyntax comparison => $"{comparison.Left} {Comparison(comparison.Operator)} {Expression(comparison.Right)}",
-        LogicalConditionSyntax logical => $"{Condition(logical.Left)} {Logical(logical.Operator)} {Condition(logical.Right)}",
+        LogicalConditionSyntax logical => Combined(
+            Condition(logical.Left),
+            OperatorOf(logical.Left),
+            logical.Operator,
+            Condition(logical.Right),
+            OperatorOf(logical.Right)),
         _ => string.Empty
     };
 
@@ -90,18 +95,17 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="condition">The <see cref="PolicyConditionSyntax"/> to render.</param>
     /// <returns>The rendered policy condition text.</returns>
-    /// <remarks>
-    /// A policy condition combines strictly from left to right - <c>and</c> and <c>or</c> carry no
-    /// precedence over each other - so where the grouping is not the one that reading left to right
-    /// produces, it is written out with parentheses.
-    /// </remarks>
     public static string PolicyCondition(PolicyConditionSyntax condition) => condition switch
     {
         AuthenticatedConditionSyntax => "authenticated",
         RoleConditionSyntax role => $"role {StringLiteral.Quote(role.Role)}",
         ClaimConditionSyntax claim => ClaimCondition(claim),
-        LogicalPolicyConditionSyntax logical =>
-            $"{LeftOperand(logical.Left, logical.Operator)} {Logical(logical.Operator)} {RightOperand(logical.Right)}",
+        LogicalPolicyConditionSyntax logical => Combined(
+            PolicyCondition(logical.Left),
+            OperatorOf(logical.Left),
+            logical.Operator,
+            PolicyCondition(logical.Right),
+            OperatorOf(logical.Right)),
         _ => string.Empty
     };
 
@@ -215,24 +219,27 @@ internal static partial class ScreenplaySyntaxText
     static string Logical(LogicalOperator @operator) => @operator == LogicalOperator.And ? "and" : "or";
 
     /// <summary>
-    /// Renders the left hand operand of a combined policy condition, grouping it when it combines with
-    /// a different operator - <c>a or b and c</c> means <c>(a or b) and c</c>, so the parentheses are
-    /// redundant to the parser but keep the text from reading as though <c>and</c> bound tighter.
+    /// Renders two conditions combined with an operator, parenthesising an operand that would otherwise
+    /// be read back as a different condition.
     /// </summary>
-    static string LeftOperand(PolicyConditionSyntax condition, LogicalOperator @operator) =>
-        condition is LogicalPolicyConditionSyntax logical && logical.Operator != @operator
-            ? Grouped(logical)
-            : PolicyCondition(condition);
+    /// <remarks>
+    /// <c>and</c> binds tighter than <c>or</c> and both are left associative, so an operand needs its
+    /// parentheses when it is itself a combination and either sits on the right - where left association
+    /// would otherwise claim its left operand - or combines with a different operator, where precedence
+    /// alone decides the grouping. The second case is only sometimes load bearing, <c>a or (b and c)</c>
+    /// reads back the same without them, but a document is written to be read by someone who should not
+    /// have to know the precedence table to know what it says.
+    /// </remarks>
+    static string Combined(string left, LogicalOperator? leftOperator, LogicalOperator @operator, string right, LogicalOperator? rightOperator) =>
+        $"{Group(left, leftOperator is { } nestedLeft && nestedLeft != @operator)} {Logical(@operator)} {Group(right, rightOperator is not null)}";
 
-    /// <summary>
-    /// Renders the right hand operand of a combined policy condition, grouping it whenever it is itself
-    /// a combination - reading left to right would otherwise pull its left operand out of the group and
-    /// give back a different condition.
-    /// </summary>
-    static string RightOperand(PolicyConditionSyntax condition) =>
-        condition is LogicalPolicyConditionSyntax ? Grouped(condition) : PolicyCondition(condition);
+    static string Group(string condition, bool grouped) => grouped ? $"({condition})" : condition;
 
-    static string Grouped(PolicyConditionSyntax condition) => $"({PolicyCondition(condition)})";
+    static LogicalOperator? OperatorOf(ConditionSyntax condition) =>
+        condition is LogicalConditionSyntax logical ? logical.Operator : null;
+
+    static LogicalOperator? OperatorOf(PolicyConditionSyntax condition) =>
+        condition is LogicalPolicyConditionSyntax logical ? logical.Operator : null;
 
     static string ClaimCondition(ClaimConditionSyntax claim)
     {

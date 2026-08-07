@@ -13,6 +13,11 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal static partial class ConditionParser
 {
+    static readonly LogicalConditionDiagnostics _diagnostics = new(
+        DiagnosticCodes.UnexpectedTokenInCondition,
+        DiagnosticCodes.UnclosedConditionGroup,
+        "condition");
+
     /// <summary>
     /// Parses a condition.
     /// </summary>
@@ -20,77 +25,21 @@ internal static partial class ConditionParser
     /// <param name="text">The condition text.</param>
     /// <param name="location">The <see cref="SourceLocation"/> of the condition.</param>
     /// <returns>The parsed <see cref="ConditionSyntax"/>, or <c>null</c> when the condition is malformed.</returns>
-    public static ConditionSyntax? Parse(ParserContext context, string text, SourceLocation location)
-    {
-        var tokens = Tokenize(text);
-        var position = 0;
-        var condition = ParseOr(context, tokens, ref position, location);
-        if (condition is not null && position < tokens.Count)
-        {
-            context.Error(DiagnosticCodes.UnexpectedTokenInCondition, $"Unexpected '{tokens[position]}' in condition", location);
-        }
+    public static ConditionSyntax? Parse(ParserContext context, string text, SourceLocation location) =>
+        LogicalConditionParser.Parse<ConditionSyntax>(
+            context,
+            Tokenize(text),
+            location,
+            ParseComparison,
+            static (left, @operator, right, location) => new LogicalConditionSyntax(left, @operator, right, location),
+            _diagnostics);
 
-        return condition;
-    }
-
-    static ConditionSyntax? ParseOr(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
-    {
-        var left = ParseAnd(context, tokens, ref position, location);
-        while (left is not null && position < tokens.Count && tokens[position] == "or")
-        {
-            position++;
-            var right = ParseAnd(context, tokens, ref position, location);
-            if (right is null)
-            {
-                return null;
-            }
-
-            left = new LogicalConditionSyntax(left, LogicalOperator.Or, right, location);
-        }
-
-        return left;
-    }
-
-    static ConditionSyntax? ParseAnd(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
-    {
-        var left = ParsePrimary(context, tokens, ref position, location);
-        while (left is not null && position < tokens.Count && tokens[position] == "and")
-        {
-            position++;
-            var right = ParsePrimary(context, tokens, ref position, location);
-            if (right is null)
-            {
-                return null;
-            }
-
-            left = new LogicalConditionSyntax(left, LogicalOperator.And, right, location);
-        }
-
-        return left;
-    }
-
-    static ConditionSyntax? ParsePrimary(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
+    static ConditionSyntax? ParseComparison(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
     {
         if (position >= tokens.Count)
         {
             context.Error(DiagnosticCodes.ExpectedCondition, "Expected a condition", location);
             return null;
-        }
-
-        if (tokens[position] == "(")
-        {
-            position++;
-            var condition = ParseOr(context, tokens, ref position, location);
-            if (position < tokens.Count && tokens[position] == ")")
-            {
-                position++;
-            }
-            else
-            {
-                context.Error(DiagnosticCodes.UnclosedConditionGroup, "Expected ')' in condition", location);
-            }
-
-            return condition;
         }
 
         var left = tokens[position++];
