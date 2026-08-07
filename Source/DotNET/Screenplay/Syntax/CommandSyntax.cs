@@ -184,7 +184,26 @@ public abstract record ValidateSyntax(SourceLocation Location) : SyntaxNode(Loca
 /// </summary>
 /// <param name="Rules">The <see cref="ValidationRuleSyntax">rules</see> in the block.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record DeclarativeValidateSyntax(IEnumerable<ValidationRuleSyntax> Rules, SourceLocation Location) : ValidateSyntax(Location);
+public record DeclarativeValidateSyntax(
+    IEnumerable<ValidationRuleSyntax> Rules,
+    SourceLocation Location,
+    IEnumerable<RequirementSyntax>? Requirements = null) : ValidateSyntax(Location);
+
+/// <summary>
+/// Represents a <c>require</c> rule - a condition the whole artifact must satisfy, rather than a rule
+/// about one of its properties.
+/// </summary>
+/// <param name="Condition">The <see cref="ConditionSyntax"/> that must hold.</param>
+/// <param name="Message">The message reported when it does not.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <remarks>
+/// A property rule says something about one value. A requirement says something about the command as a
+/// whole - most often against state it <see cref="ReadsSyntax">reads</see>, which is where the rules that
+/// actually guard a domain live: the month is not already started, the engagement is in its contract phase.
+/// It carries a <see cref="ConditionSyntax"/>, the same condition every other construct in the language
+/// carries, so <c>and</c> and <c>or</c> mean here exactly what they mean in a policy.
+/// </remarks>
+public record RequirementSyntax(ConditionSyntax Condition, string? Message, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents a <c>validate csharp</c> block holding inline code.

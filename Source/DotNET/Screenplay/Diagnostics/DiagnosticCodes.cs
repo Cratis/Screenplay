@@ -965,4 +965,26 @@ public static class DiagnosticCodes
     /// The <c>by</c> of a <c>reads</c> declaration does not name a property of the command.
     /// </summary>
     public const string UnknownReadsKey = "PLAY0178";
+
+    // Rules about the whole artifact rather than one of its properties.
+
+    /// <summary>
+    /// A <c>require</c> rule carries no condition.
+    /// </summary>
+    public const string InvalidRequirement = "PLAY0179";
+
+    /// <summary>
+    /// The body of a <c>require</c> rule holds something other than its <c>message</c>.
+    /// </summary>
+    public const string UnknownRequirementDirective = "PLAY0180";
+
+    /// <summary>
+    /// A <c>require</c> operand is qualified by something the command does not read.
+    /// </summary>
+    public const string UnknownRequirementOperandSource = "PLAY0181";
+
+    /// <summary>
+    /// A <c>require</c> operand names neither a property of the artifact nor state it reads.
+    /// </summary>
+    public const string UnknownRequirementOperand = "PLAY0182";
 }
