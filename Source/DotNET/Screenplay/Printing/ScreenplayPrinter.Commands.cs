@@ -238,6 +238,18 @@ public partial class ScreenplayPrinter
                         writer.Line(impliedSubject ? ScreenplaySyntaxText.ImpliedSubjectValidationRule(rule) : ScreenplaySyntaxText.ValidationRule(rule));
                         WriteRuleImplementation(writer, rule);
                     }
+
+                    foreach (var requirement in declarative.Requirements ?? [])
+                    {
+                        writer.Line($"require {ScreenplaySyntaxText.Condition(requirement.Condition)}");
+                        if (requirement.Message is not null)
+                        {
+                            using (writer.Indent())
+                            {
+                                writer.Line($"message {StringLiteral.Quote(requirement.Message)}");
+                            }
+                        }
+                    }
                 }
 
                 break;

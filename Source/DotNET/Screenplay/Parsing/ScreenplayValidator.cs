@@ -161,6 +161,64 @@ internal static class ScreenplayValidator
         }
     }
 
+    /// <summary>
+    /// Validates that the operands of a command's requirements name something the command can see.
+    /// </summary>
+    /// <param name="command">The <see cref="CommandSyntax"/> to validate.</param>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <remarks>
+    /// A requirement is only worth stating if a consumer can tell what it is about. An operand is either a
+    /// property of the command or a path into state the command declares it reads - anything else names
+    /// something no reader of the document can resolve.
+    /// </remarks>
+    static void ValidateRequirements(CommandSyntax command, ParserContext context)
+    {
+        var properties = command.Properties.Select(property => property.Name).ToHashSet();
+        var reads = (command.Reads ?? []).Select(read => read.ReadModel).ToHashSet();
+
+        foreach (var requirement in command.Validations.OfType<DeclarativeValidateSyntax>()
+            .SelectMany(validate => validate.Requirements ?? []))
+        {
+            foreach (var operand in Operands(requirement.Condition))
+            {
+                var separator = operand.IndexOf('.', StringComparison.Ordinal);
+                if (separator < 0)
+                {
+                    if (!properties.Contains(operand))
+                    {
+                        context.Warning(
+                            DiagnosticCodes.UnknownRequirementOperand,
+                            $"Command '{command.Name}' requires '{operand}', which is neither one of its properties nor state it reads",
+                            requirement.Location);
+                    }
+
+                    continue;
+                }
+
+                var source = operand[..separator];
+                if (!reads.Contains(source))
+                {
+                    context.Warning(
+                        DiagnosticCodes.UnknownRequirementOperandSource,
+                        $"Command '{command.Name}' requires '{operand}', but does not declare 'reads {source}'",
+                        requirement.Location);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Yields the left hand operand of every comparison in a condition.
+    /// </summary>
+    /// <param name="condition">The <see cref="ConditionSyntax"/> to walk.</param>
+    /// <returns>The operands, in the order they appear.</returns>
+    static IEnumerable<string> Operands(ConditionSyntax condition) => condition switch
+    {
+        ComparisonConditionSyntax comparison => [comparison.Left],
+        LogicalConditionSyntax logical => Operands(logical.Left).Concat(Operands(logical.Right)),
+        _ => []
+    };
+
     static void ValidateSlice(
         SliceSyntax slice,
         HashSet<string> knownEvents,
@@ -178,6 +236,7 @@ internal static class ScreenplayValidator
         {
             ValidatePropertyTypes(command.Properties, $"command '{command.Name}'", knownTypes, context);
             ValidateReads(command, knownReadModels, context);
+            ValidateRequirements(command, context);
         }
 
         // The return type of a query names a read model, which no construct declares - only the

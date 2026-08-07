@@ -227,11 +227,20 @@ AuthorizeDecl  = "authorize", PolicyRef, { ( NL, PolicyRef ) | ( "or", PolicyRef
 PolicyRef      = Ident ;
 
 ValidateDecl   = "validate", NL,
-                   INDENT, { ValidationRule }, DEDENT
+                   INDENT, { ValidationRule | RequireRule }, DEDENT
                | "validate", "csharp", NL, InlineBlock ;
 
 ValidationRule = Ident, RuleOp, [ "message", LocalizableString ], NL,
                    [ INDENT, RuleImplementation, DEDENT ] ;
+
+RequireRule    = "require", Condition, NL,
+                   [ INDENT, "message", LocalizableString, NL, DEDENT ] ;
+
+(* A rule about the whole artifact rather than one of its properties, and where
+   a rule that guards the domain lands - "the month is not already started".
+   Its operands are properties of the artifact, or paths into state a "reads"
+   declaration brought into scope. The Condition is the one every construct
+   shares, so "and" and "or" mean here what they mean in a policy.          *)
 
 RuleOp         = "not empty"
                | "max", Number
