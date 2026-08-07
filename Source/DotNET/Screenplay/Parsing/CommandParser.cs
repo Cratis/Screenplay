@@ -67,7 +67,7 @@ internal static partial class CommandParser
 
                     break;
                 case "produces":
-                    if (ParseProduces(context, line) is { } production)
+                    if (ProducesParser.Parse(context, line) is { } production)
                     {
                         produces.Add(production);
                     }
@@ -257,67 +257,6 @@ internal static partial class CommandParser
         return [.. names];
     }
 
-    static ProducesSyntax? ParseProduces(ParserContext context, SourceLine line)
-    {
-        var conditional = ProducesWhenRegex().Match(line.Content);
-        if (conditional.Success)
-        {
-            var condition = ConditionParser.Parse(context, conditional.Groups[1].Value, line.Location);
-            if (!context.TryPeekChild(line.Indent, out var eventLine) || !EventNameRegex().IsMatch(eventLine.Content))
-            {
-                context.Error(DiagnosticCodes.ProducesWhenWithoutEvent, "Expected an event name on the line after 'produces when'", line.Location);
-                context.SkipBlock(line.Indent);
-                return null;
-            }
-
-            context.Reader.TakeSignificant();
-            var (mappings, tags) = ParseMappingsAndTags(context, eventLine);
-            context.SkipBlock(line.Indent);
-            return new(eventLine.Content, condition, mappings, line.Location, tags);
-        }
-
-        var unconditional = ProducesRegex().Match(line.Content);
-        if (!unconditional.Success)
-        {
-            context.Error(DiagnosticCodes.InvalidProducesDeclaration, $"Invalid produces declaration '{line.Content}' - expected 'produces <EventType>' or 'produces when <condition>'", line.Location);
-            context.SkipBlock(line.Indent);
-            return null;
-        }
-
-        var (unconditionalMappings, unconditionalTags) = ParseMappingsAndTags(context, line);
-        return new(unconditional.Groups[1].Value, null, unconditionalMappings, line.Location, unconditionalTags);
-    }
-
-    static (List<PropertyMappingSyntax> Mappings, List<TagSyntax> Tags) ParseMappingsAndTags(ParserContext context, SourceLine parent)
-    {
-        var mappings = new List<PropertyMappingSyntax>();
-        var tags = new List<TagSyntax>();
-        while (context.TryPeekChild(parent.Indent, out var child))
-        {
-            context.Reader.TakeSignificant();
-            if (LineText.FirstWord(child.Content) == "tag")
-            {
-                if (TagParser.Parse(context, child) is { } tag)
-                {
-                    tags.Add(tag);
-                }
-
-                continue;
-            }
-
-            var match = MappingRegex().Match(child.Content);
-            if (!match.Success)
-            {
-                context.Error(DiagnosticCodes.InvalidPropertyMapping, $"Invalid property mapping '{child.Content}' - expected '<property> = <source>'", child.Location);
-                continue;
-            }
-
-            mappings.Add(new(LineText.Unescape(match.Groups[1].Value), ExpressionParser.ParseMappingSource(context, match.Groups[2].Value, child.Location), child.Location));
-        }
-
-        return (mappings, tags);
-    }
-
     static HandlerSyntax? ParseHandler(ParserContext context, SourceLine line)
     {
         if (!context.TryPeekChild(line.Indent, out var body))
@@ -346,18 +285,9 @@ internal static partial class CommandParser
     [GeneratedRegex(@"^command\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^produces\s+when\s+(.+)$", RegexOptions.None, 1000)]
-    private static partial Regex ProducesWhenRegex();
-
-    [GeneratedRegex(@"^produces\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
-    private static partial Regex ProducesRegex();
-
-    [GeneratedRegex(@"^([A-Z]\w*)$", RegexOptions.None, 1000)]
-    private static partial Regex EventNameRegex();
-
     [GeneratedRegex(@"^(sourceType|streamType|streamId)\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex ConcurrencyDimensionRegex();
 
-    [GeneratedRegex(@"^(@?[\w.]+)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
-    private static partial Regex MappingRegex();
+    [GeneratedRegex(@"^([A-Z]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex EventNameRegex();
 }

@@ -94,6 +94,16 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
 
+        foreach (var produces in syntax.Produces ?? [])
+        {
+            VisitProduces(produces);
+        }
+
+        foreach (var invokes in syntax.Invokes ?? [])
+        {
+            VisitInvokes(invokes);
+        }
+
         if (syntax.File is not null)
         {
             VisitFileReference(syntax.File);
