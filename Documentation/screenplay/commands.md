@@ -18,6 +18,8 @@ command <Name>
 
   [validate
     <rule> message "<message>"
+    require <condition>              ← a rule about the command as a whole
+      [message "<message>"]
     ...]
 
   [validate csharp
@@ -137,6 +139,34 @@ validate
   invoiceNumber matches "^INV-[0-9]{6}$"  message "Invoice number must match INV-000000"
   dueDate > today                          message "Due date must be in the future"
 ```
+
+### Rules about the command as a whole
+
+Every rule above says something about one property. The rules that actually guard a domain usually do not — "the month is already started", "the engagement must be in its contract phase" — they are about the command as a whole, and most often about state it [reads](#what-the-command-reads). `require` states one:
+
+```screenplay
+command StartMonth
+  engagementId EngagementId identifier
+  reads EngagementScope by engagementId
+
+  validate
+    require EngagementScope.isStarted == false
+      message "The month is already started"
+    require EngagementScope.phase == "Contract"
+      message "The engagement must be in its contract phase"
+```
+
+The condition is the language's [one condition grammar](grammar.md) — the same one a [policy](policies.md) `require` carries, so `and` and `or` mean the same thing here, `and` binds tighter than `or`, and parentheses group:
+
+```screenplay
+validate
+  require EngagementScope.isStarted == false and EngagementScope.phase == "Contract"
+    message "The month cannot be started yet"
+```
+
+The message goes in the body rather than on the end of the line. A condition is as long as the rule it states, and a message pushed out past it is the part nobody reads.
+
+An operand is either a property of the command or a path into state the command declares it reads. Anything else is a warning — a requirement a reader cannot resolve says less than it appears to. A rule whose logic is not a comparison at all still belongs in a named `rule` or an inline block, as below; `require` is for the rules that *can* be stated.
 
 ### Rules whose logic is not expressible
 

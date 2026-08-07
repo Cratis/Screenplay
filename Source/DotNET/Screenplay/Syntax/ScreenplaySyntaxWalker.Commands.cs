@@ -120,6 +120,21 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitValidationRule(rule);
         }
+
+        foreach (var requirement in syntax.Requirements ?? [])
+        {
+            VisitRequirement(requirement);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="RequirementSyntax"/> node and its condition.
+    /// </summary>
+    /// <param name="syntax">The <see cref="RequirementSyntax"/> to visit.</param>
+    public virtual void VisitRequirement(RequirementSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitCondition(syntax.Condition);
     }
 
     /// <summary>

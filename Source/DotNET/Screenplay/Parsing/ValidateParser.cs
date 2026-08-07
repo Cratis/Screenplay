@@ -25,9 +25,23 @@ internal static class ValidateParser
         if (line.Content == "validate")
         {
             var rules = new List<ValidationRuleSyntax>();
+            var requirements = new List<RequirementSyntax>();
             while (context.TryPeekChild(line.Indent, out var child))
             {
                 context.Reader.TakeSignificant();
+
+                // 'require' states a rule about the whole artifact, so it is a directive rather than a
+                // property subject - a property actually named 'require' cannot be ruled on declaratively.
+                if (LineText.FirstWord(child.Content) == "require")
+                {
+                    if (RequirementParser.Parse(context, child) is { } requirement)
+                    {
+                        requirements.Add(requirement);
+                    }
+
+                    continue;
+                }
+
                 var rule = impliedSubject
                     ? ValidationRuleParser.ParseImpliedSubject(context, child)
                     : ValidationRuleParser.Parse(context, child);
@@ -37,7 +51,7 @@ internal static class ValidateParser
                 }
             }
 
-            return new DeclarativeValidateSyntax(rules, line.Location);
+            return new DeclarativeValidateSyntax(rules, line.Location, requirements);
         }
 
         if (line.Content == "validate csharp")
