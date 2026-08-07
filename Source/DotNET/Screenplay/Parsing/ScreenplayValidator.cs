@@ -54,11 +54,11 @@ internal static class ScreenplayValidator
         }
 
         foreach (var duplicate in (application.Authentication?.Providers ?? [])
-            .GroupBy(provider => provider.Name)
+            .GroupBy(provider => provider.Identity, StringComparer.Ordinal)
             .Where(group => group.Count() > 1)
             .SelectMany(group => group.Skip(1)))
         {
-            context.Error(DiagnosticCodes.DuplicateProvider, $"Duplicate provider '{duplicate.Name}' - provider names must be unique", duplicate.Location);
+            context.Error(DiagnosticCodes.DuplicateProvider, $"Duplicate provider '{duplicate.Identity}' - a provider must be distinguishable, so give one of them a name", duplicate.Location);
         }
 
         foreach (var seed in application.Seeds ?? [])

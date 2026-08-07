@@ -87,28 +87,10 @@ public abstract partial class ScreenplaySyntaxWalker
     }
 
     /// <summary>
-    /// Visits an <see cref="AuthenticationProviderSyntax"/> node and its children.
+    /// Visits an <see cref="AuthenticationProviderSyntax"/> node.
     /// </summary>
     /// <param name="syntax">The <see cref="AuthenticationProviderSyntax"/> to visit.</param>
-    public virtual void VisitAuthenticationProvider(AuthenticationProviderSyntax syntax)
-    {
-        VisitNode(syntax);
-
-        foreach (var setting in syntax.Settings)
-        {
-            VisitAuthenticationSetting(setting);
-        }
-    }
-
-    /// <summary>
-    /// Visits an <see cref="AuthenticationSettingSyntax"/> node and its children.
-    /// </summary>
-    /// <param name="syntax">The <see cref="AuthenticationSettingSyntax"/> to visit.</param>
-    public virtual void VisitAuthenticationSetting(AuthenticationSettingSyntax syntax)
-    {
-        VisitNode(syntax);
-        VisitExpression(syntax.Value);
-    }
+    public virtual void VisitAuthenticationProvider(AuthenticationProviderSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="SeedSyntax"/> node and its children.

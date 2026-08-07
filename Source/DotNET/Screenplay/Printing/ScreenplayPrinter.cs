@@ -132,14 +132,7 @@ public sealed partial class ScreenplayPrinter :
         {
             foreach (var provider in authentication.Providers)
             {
-                writer.Line($"provider {provider.Name}");
-                using (writer.Indent())
-                {
-                    foreach (var setting in provider.Settings)
-                    {
-                        writer.Line($"{setting.Name} {ScreenplaySyntaxText.Expression(setting.Value)}");
-                    }
-                }
+                writer.Line(provider.Alias is null ? $"provider {provider.Name}" : $"provider {provider.Name} name {provider.Alias}");
             }
         }
     }

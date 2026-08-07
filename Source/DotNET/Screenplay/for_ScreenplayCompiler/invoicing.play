@@ -113,15 +113,9 @@ persona InvoiceManager
   policy CanManageInvoice
 
 authentication
-  provider AzureAd
-    type oidc
-    authority "https://login.microsoftonline.com/common/v2.0"
-    clientId $secrets.azureAdClientId
-    clientSecret $secrets.azureAdClientSecret
+  provider EntraId
   provider GitHub
-    type oauth
-    clientId $secrets.githubClientId
-    clientSecret $secrets.githubClientSecret
+  provider OpenId name Partner
 
 module Invoicing
   description
