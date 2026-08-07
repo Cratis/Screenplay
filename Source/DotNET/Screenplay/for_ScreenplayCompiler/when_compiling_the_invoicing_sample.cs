@@ -61,7 +61,7 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_parse_the_rule_file_reference() => RegisterCommand.Validations.OfType<DeclarativeValidateSyntax>().Single().Rules
         .Single(_ => _.Rule == ValidationRuleKind.Rule).File!.Path.ShouldEqual("Validations/BeUnusedInvoiceNumber.cs");
     [Fact] void should_parse_the_code_validation() => RegisterCommand.Validations.OfType<CodeValidateSyntax>().Count().ShouldEqual(1);
-    [Fact] void should_parse_the_authorize_policies() => RegisterCommand.Authorize!.Policies.Select(_ => _.Name).ShouldContainOnly("CanManageInvoice", "IsAdultCustomer");
+    [Fact] void should_parse_the_authorize_policies() => RegisterCommand.Authorize!.References().Select(_ => _.Name).ShouldContainOnly("CanManageInvoice", "IsAdultCustomer");
     [Fact] void should_parse_the_concurrency_event_source() => RegisterCommand.Concurrency!.EventSource.ShouldBeTrue();
     [Fact] void should_parse_the_concurrency_source_type() => RegisterCommand.Concurrency!.EventSourceType.ShouldEqual("Invoice");
     [Fact] void should_parse_the_concurrency_stream_type() => RegisterCommand.Concurrency!.EventStreamType.ShouldEqual("Invoicing");

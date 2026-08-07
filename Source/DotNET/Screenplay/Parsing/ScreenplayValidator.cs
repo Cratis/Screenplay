@@ -260,7 +260,7 @@ internal static class ScreenplayValidator
             .Concat(slice.Queries.Select(query => query.Authorize))
             .OfType<AuthorizeSyntax>())
         {
-            foreach (var policy in authorize.Policies.Where(policy => !knownPolicies.Contains(policy.Name)))
+            foreach (var policy in authorize.References().Where(policy => !knownPolicies.Contains(policy.Name)))
             {
                 context.Warning(DiagnosticCodes.UnknownPolicy, $"Unknown policy '{policy.Name}' - declare it with 'policy {policy.Name}'", policy.Location);
             }

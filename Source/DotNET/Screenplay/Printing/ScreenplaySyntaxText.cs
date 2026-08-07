@@ -109,6 +109,23 @@ internal static partial class ScreenplaySyntaxText
     };
 
     /// <summary>
+    /// Renders what an <c>authorize</c> requires to its surface form.
+    /// </summary>
+    /// <param name="requirement">The <see cref="PolicyRequirementSyntax"/> to render.</param>
+    /// <returns>The rendered requirement text.</returns>
+    public static string PolicyRequirement(PolicyRequirementSyntax requirement) => requirement switch
+    {
+        PolicyReferenceSyntax reference => reference.Name,
+        LogicalPolicyRequirementSyntax logical => Combined(
+            PolicyRequirement(logical.Left),
+            OperatorOf(logical.Left),
+            logical.Operator,
+            PolicyRequirement(logical.Right),
+            OperatorOf(logical.Right)),
+        _ => string.Empty
+    };
+
+    /// <summary>
     /// Renders the body of a declarative validation rule - everything after the property name.
     /// </summary>
     /// <param name="rule">The <see cref="ValidationRuleSyntax"/> to render.</param>
@@ -239,6 +256,9 @@ internal static partial class ScreenplaySyntaxText
 
     static LogicalOperator? OperatorOf(PolicyConditionSyntax condition) =>
         condition is LogicalPolicyConditionSyntax logical ? logical.Operator : null;
+
+    static LogicalOperator? OperatorOf(PolicyRequirementSyntax requirement) =>
+        requirement is LogicalPolicyRequirementSyntax logical ? logical.Operator : null;
 
     static string ClaimCondition(ClaimConditionSyntax claim)
     {

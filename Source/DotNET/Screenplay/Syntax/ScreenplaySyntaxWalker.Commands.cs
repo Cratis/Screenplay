@@ -72,10 +72,38 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
 
-        foreach (var policy in syntax.Policies)
+        VisitPolicyRequirement(syntax.Requirement);
+    }
+
+    /// <summary>
+    /// Visits a <see cref="PolicyRequirementSyntax"/> node by dispatching to the method for its kind.
+    /// </summary>
+    /// <param name="syntax">The <see cref="PolicyRequirementSyntax"/> to visit.</param>
+    public virtual void VisitPolicyRequirement(PolicyRequirementSyntax syntax)
+    {
+        switch (syntax)
         {
-            VisitPolicyReference(policy);
+            case PolicyReferenceSyntax reference:
+                VisitPolicyReference(reference);
+                break;
+            case LogicalPolicyRequirementSyntax logical:
+                VisitLogicalPolicyRequirement(logical);
+                break;
+            default:
+                VisitNode(syntax);
+                break;
         }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="LogicalPolicyRequirementSyntax"/> node and its operands.
+    /// </summary>
+    /// <param name="syntax">The <see cref="LogicalPolicyRequirementSyntax"/> to visit.</param>
+    public virtual void VisitLogicalPolicyRequirement(LogicalPolicyRequirementSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitPolicyRequirement(syntax.Left);
+        VisitPolicyRequirement(syntax.Right);
     }
 
     /// <summary>

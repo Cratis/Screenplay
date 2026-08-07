@@ -161,17 +161,61 @@ public record ReadsSyntax(string ReadModel, string? By, SourceLocation Location)
 /// <summary>
 /// Represents an <c>authorize</c> declaration referencing one or more policies.
 /// </summary>
-/// <param name="Policies">The <see cref="PolicyReferenceSyntax">policy references</see>, in declaration order.</param>
+/// <param name="Requirement">The <see cref="PolicyRequirementSyntax"/> that must hold for the caller to be allowed.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record AuthorizeSyntax(IEnumerable<PolicyReferenceSyntax> Policies, SourceLocation Location) : SyntaxNode(Location);
+public record AuthorizeSyntax(PolicyRequirementSyntax Requirement, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets every policy the requirement names, in the order they appear.
+    /// </summary>
+    /// <returns>The <see cref="PolicyReferenceSyntax">references</see> held anywhere in the requirement.</returns>
+    /// <remarks>
+    /// Derived from <see cref="Requirement"/> rather than stored beside it, for a consumer that only needs
+    /// to know which policies are involved - resolving them, listing them - and not how they combine. A
+    /// consumer that decides whether a caller is allowed needs the tree; a flat list cannot answer that,
+    /// which is what <see href="https://github.com/Cratis/Screenplay/issues/68">#68</see> was about.
+    /// <para>
+    /// A method rather than a property because it is a query over the tree and not a branch of it. The
+    /// properties of a syntax node are the edges it has to its children, and anything walking a tree by
+    /// reflection reads them as exactly that - a derived property would hand back nodes already reachable
+    /// through <see cref="Requirement"/> and be counted twice.
+    /// </para>
+    /// </remarks>
+    public IEnumerable<PolicyReferenceSyntax> References() => Flatten(Requirement);
+
+    static IEnumerable<PolicyReferenceSyntax> Flatten(PolicyRequirementSyntax requirement) => requirement switch
+    {
+        PolicyReferenceSyntax reference => [reference],
+        LogicalPolicyRequirementSyntax logical => Flatten(logical.Left).Concat(Flatten(logical.Right)),
+        _ => []
+    };
+}
+
+/// <summary>
+/// Represents the base of what an <c>authorize</c> requires - a policy, or policies combined.
+/// </summary>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public abstract record PolicyRequirementSyntax(SourceLocation Location) : SyntaxNode(Location);
+
+/// <summary>
+/// Represents two policy requirements combined with <c>and</c> or <c>or</c>.
+/// </summary>
+/// <param name="Left">The left hand <see cref="PolicyRequirementSyntax"/>.</param>
+/// <param name="Operator">The <see cref="LogicalOperator"/> combining them.</param>
+/// <param name="Right">The right hand <see cref="PolicyRequirementSyntax"/>.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record LogicalPolicyRequirementSyntax(
+    PolicyRequirementSyntax Left,
+    LogicalOperator Operator,
+    PolicyRequirementSyntax Right,
+    SourceLocation Location) : PolicyRequirementSyntax(Location);
 
 /// <summary>
 /// Represents a reference to a policy within an <c>authorize</c> declaration.
 /// </summary>
 /// <param name="Name">The name of the referenced policy.</param>
-/// <param name="IsAlternative">Whether the reference was introduced with <c>or</c>, making it an alternative to the preceding policies.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record PolicyReferenceSyntax(string Name, bool IsAlternative, SourceLocation Location) : SyntaxNode(Location);
+public record PolicyReferenceSyntax(string Name, SourceLocation Location) : PolicyRequirementSyntax(Location);
 
 /// <summary>
 /// Represents the base of a <c>validate</c> declaration.

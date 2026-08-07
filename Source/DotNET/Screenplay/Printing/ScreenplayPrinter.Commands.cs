@@ -207,23 +207,8 @@ public partial class ScreenplayPrinter
         }
     }
 
-    void WriteAuthorize(ScreenplayWriter writer, AuthorizeSyntax authorize)
-    {
-        var policies = authorize.Policies.ToList();
-        if (policies.Count == 0)
-        {
-            return;
-        }
-
-        writer.Line($"authorize {policies[0].Name}");
-        using (writer.Indent())
-        {
-            foreach (var policy in policies.Skip(1))
-            {
-                writer.Line(policy.IsAlternative ? $"or {policy.Name}" : policy.Name);
-            }
-        }
-    }
+    void WriteAuthorize(ScreenplayWriter writer, AuthorizeSyntax authorize) =>
+        writer.Line($"authorize {ScreenplaySyntaxText.PolicyRequirement(authorize.Requirement)}");
 
     void WriteValidate(ScreenplayWriter writer, ValidateSyntax validate, bool impliedSubject = false)
     {
