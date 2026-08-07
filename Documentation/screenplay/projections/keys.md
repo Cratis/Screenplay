@@ -30,7 +30,6 @@ When using multiple events in one `from` statement, each can have its own key:
 
 ```pdl
 from EventA key idA, EventB key idB, EventC
-  automap
 ```
 
 ## Block Key Syntax

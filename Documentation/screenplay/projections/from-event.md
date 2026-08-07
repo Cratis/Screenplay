@@ -44,7 +44,6 @@ Each event can have its own inline key specification:
 
 ```pdl
 from EventA key idA, EventB key idB, EventC
-  automap
   Property = value
 ```
 
@@ -62,14 +61,14 @@ See [Keys](keys.md) for more details on key handling.
 
 ## With AutoMap
 
-Automatically map matching properties:
+AutoMap is on by default, so matching properties are copied without asking for it:
 
 ```pdl
-from UserRegistered automap
+from UserRegistered
   IsActive = true
 ```
 
-AutoMap copies properties with matching names from the event to the read model, then applies any explicit mappings.
+AutoMap copies properties with matching names from the event to the read model, then applies any explicit mappings. Turn it off for a block with `no automap`.
 
 See [Auto-Map](auto-map) for more details.
 
@@ -98,7 +97,7 @@ projection User => UserReadModel
 When used within [Children](children) blocks, you can specify the parent relationship:
 
 ```pdl
-children members id userId
+children members identified by userId
   from UserAddedToGroup key userId
     parent groupId
     Role = role
