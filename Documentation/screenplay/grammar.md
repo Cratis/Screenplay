@@ -225,9 +225,23 @@ ConcurrencyDim = "eventSource", NL
                | "streamId", Ident, NL
                | "events", Ident, { ",", Ident }, NL ;
 
-AuthorizeDecl  = "authorize", PolicyRef, { ( NL, PolicyRef ) | ( "or", PolicyRef ) }, NL ;
+AuthorizeDecl  = "authorize", PolicyRequirement, NL ;
+
+PolicyRequirement = PolicyAll, { "or", PolicyAll } ;
+
+PolicyAll      = PolicyOperand, { [ "and" ], PolicyOperand } ;
+
+PolicyOperand  = PolicyRef
+               | "(", PolicyRequirement, ")" ;
 
 PolicyRef      = Ident ;
+
+(* Two policies written next to each other mean both, which is what "authorize
+   A B" has always meant, and "and" says the same thing out loud. Combining is
+   the language's one condition rule - "and" binds tighter than "or", both are
+   left associative, parentheses override - so "A or B and C" groups here
+   exactly as it groups in a policy. A requirement may continue on the next
+   line at deeper indentation.                                              *)
 
 ValidateDecl   = "validate", NL,
                    INDENT, { ValidationRule | RequireRule }, DEDENT

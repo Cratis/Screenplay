@@ -994,4 +994,16 @@ public static class DiagnosticCodes
     /// An authentication provider carries a configuration body, which belongs where the application runs.
     /// </summary>
     public const string ProviderWithConfiguration = "PLAY0183";
+
+    // What an authorize requires.
+
+    /// <summary>
+    /// Tokens are left over after the requirement of an <c>authorize</c>.
+    /// </summary>
+    public const string UnexpectedTokenInAuthorize = "PLAY0184";
+
+    /// <summary>
+    /// A parenthesised group in an <c>authorize</c> is never closed.
+    /// </summary>
+    public const string UnclosedAuthorizeGroup = "PLAY0185";
 }
