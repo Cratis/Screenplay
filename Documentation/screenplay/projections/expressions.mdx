@@ -270,7 +270,7 @@ DisplayName = `${firstName} ${lastName}`
 ### Keys
 
 ```pdl
-key expression
+key <expression>
 ```
 
 Examples:
@@ -284,8 +284,8 @@ from LineItem key order.id
 ### Composite Keys
 
 ```pdl
-key Type {
-  Property = expression
+key <Type> {
+  <Property> = <expression>
   ...
 }
 ```
@@ -303,8 +303,8 @@ key OrderLineKey {
 ### Arithmetic Operations
 
 ```pdl
-add Property by expression
-subtract Property by expression
+add <Property> by <expression>
+subtract <Property> by <expression>
 ```
 
 Examples:
@@ -318,7 +318,7 @@ add Total by lineItem.total
 ### Parent Keys
 
 ```pdl
-parent expression
+parent <expression>
 ```
 
 Examples:
@@ -332,7 +332,7 @@ parent order.customerId
 ### Child Identifiers
 
 ```pdl
-id expression
+children <collection> identified by <expression>
 ```
 
 Examples:

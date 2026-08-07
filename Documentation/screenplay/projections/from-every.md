@@ -164,7 +164,7 @@ projection Order => OrderReadModel
     DeliveredAt = $eventContext.occurred
     Status = "Delivered"
 
-  children items id itemId
+  children items identified by itemId
     from ItemAdded
       ProductId = productId
       Quantity = quantity
@@ -202,11 +202,11 @@ projection Group => GroupReadModel
   from GroupCreated
     Name = name
 
-  children members id userId
+  children members identified by userId
     from UserAdded
       Name = userName
 
-  children posts id postId
+  children posts identified by postId
     from PostCreated
       Title = title
 ```

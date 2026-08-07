@@ -80,7 +80,7 @@ Widgets:
 
 Combines layout templates, structural sections, and inline React/HTML/TypeScript blocks. The surrounding Screenplay context provides the typed data contract; the inline block receives it as `Props`.
 
-```screenplay
+````screenplay
 screen InvoiceDashboard
   layout DashboardLayout
     header
@@ -102,7 +102,7 @@ screen InvoiceDashboard
           column invoiceNumber label "Invoice #"
           column dueDate       label "Due Date"
           on row-click navigate to InvoiceDetails by invoiceId
-```
+````
 
 ## File reference
 
