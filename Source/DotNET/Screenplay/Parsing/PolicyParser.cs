@@ -13,6 +13,11 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal static partial class PolicyParser
 {
+    static readonly LogicalConditionDiagnostics _diagnostics = new(
+        DiagnosticCodes.UnexpectedTokenInPolicyCondition,
+        DiagnosticCodes.UnclosedPolicyConditionGroup,
+        "policy condition");
+
     /// <summary>
     /// Parses a policy from its already consumed header line.
     /// </summary>
@@ -63,38 +68,16 @@ internal static partial class PolicyParser
         return new(name.Groups[1].Value, condition, code, header.Location);
     }
 
-    static PolicyConditionSyntax? ParseCondition(ParserContext context, string text, SourceLocation location)
-    {
-        var tokens = Tokenize(text);
-        var position = 0;
-        var condition = ParseCombined(context, tokens, ref position, location);
-        if (condition is not null && position < tokens.Count)
-        {
-            context.Error(DiagnosticCodes.UnexpectedTokenInPolicyCondition, $"Unexpected '{tokens[position]}' in policy condition", location);
-        }
+    static PolicyConditionSyntax? ParseCondition(ParserContext context, string text, SourceLocation location) =>
+        LogicalConditionParser.Parse<PolicyConditionSyntax>(
+            context,
+            Tokenize(text),
+            location,
+            ParseOperand,
+            static (left, @operator, right, location) => new LogicalPolicyConditionSyntax(left, @operator, right, location),
+            _diagnostics);
 
-        return condition;
-    }
-
-    static PolicyConditionSyntax? ParseCombined(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
-    {
-        var left = ParsePrimary(context, tokens, ref position, location);
-        while (left is not null && position < tokens.Count && (tokens[position] == "and" || tokens[position] == "or"))
-        {
-            var combinator = tokens[position++] == "and" ? LogicalOperator.And : LogicalOperator.Or;
-            var right = ParsePrimary(context, tokens, ref position, location);
-            if (right is null)
-            {
-                return null;
-            }
-
-            left = new LogicalPolicyConditionSyntax(left, combinator, right, location);
-        }
-
-        return left;
-    }
-
-    static PolicyConditionSyntax? ParsePrimary(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
+    static PolicyConditionSyntax? ParseOperand(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
     {
         if (position >= tokens.Count)
         {
@@ -104,20 +87,6 @@ internal static partial class PolicyParser
 
         switch (tokens[position])
         {
-            case "(":
-                position++;
-                var condition = ParseCombined(context, tokens, ref position, location);
-                if (position < tokens.Count && tokens[position] == ")")
-                {
-                    position++;
-                }
-                else
-                {
-                    context.Error(DiagnosticCodes.UnclosedPolicyConditionGroup, "Expected ')' in policy condition", location);
-                }
-
-                return condition;
-
             case "authenticated":
                 position++;
                 return new AuthenticatedConditionSyntax(location);
