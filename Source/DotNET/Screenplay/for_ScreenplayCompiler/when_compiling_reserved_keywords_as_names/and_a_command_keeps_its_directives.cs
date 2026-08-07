@@ -42,7 +42,7 @@ public class and_a_command_keeps_its_directives : given.a_compiler
     [Fact] void should_have_no_diagnostics() => _result.Diagnostics.ShouldBeEmpty();
     [Fact] void should_have_only_the_declared_property() => _command.Properties.Single().Name.ShouldEqual("invoiceId");
     [Fact] void should_have_the_description() => _command.Description.ShouldEqual("Registers a new invoice");
-    [Fact] void should_have_the_authorize_declaration() => _command.Authorize!.Policies.Single().Name.ShouldEqual("CanManageInvoice");
+    [Fact] void should_have_the_authorize_declaration() => _command.Authorize!.References().Single().Name.ShouldEqual("CanManageInvoice");
     [Fact] void should_have_the_validate_block() => _command.Validations.Single().ShouldBeOfExactType<DeclarativeValidateSyntax>();
     [Fact] void should_have_the_concurrency_block() => _command.Concurrency!.EventSource.ShouldBeTrue();
     [Fact] void should_have_the_production() => _command.Produces.Single().Event.ShouldEqual("InvoiceRegistered");

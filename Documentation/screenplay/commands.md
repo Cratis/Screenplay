@@ -255,18 +255,26 @@ A rule can see **who** is calling but not **what they are allowed to do** — th
 ## Authorization
 
 ```screenplay
-authorize <PolicyName> [<PolicyName>]*
+authorize <requirement>
 ```
 
-Multiple policies must all pass. Continuation lines list additional policies; `or` makes policies alternatives:
+Two policies written next to each other mean both must pass, and `and` says the same thing out loud. `or` makes them alternatives. A requirement may continue on the next line at deeper indentation:
 
 ```screenplay
-authorize CanManageInvoice
-          IsAdultCustomer
+authorize CanManageInvoice IsAdultCustomer
 
 authorize IsAccountant
           or IsCustomerSelf
 ```
+
+This is the language's [one condition grammar](grammar.md) again, over policies instead of comparisons — so `and` binds tighter than `or`, and parentheses group:
+
+```screenplay
+authorize IsAccountant or IsFinance and OwnsInvoice     ← IsAccountant, or both of the others
+authorize (IsAccountant or IsFinance) and OwnsInvoice   ← one of the first two, and OwnsInvoice
+```
+
+Those two admit different callers, and the parentheses are the only thing that distinguishes them. Printing writes them back wherever the grouping is not the one precedence gives, so a document always says which one it means.
 
 Policies are declared at the top of the file — see [Policies](policies.md).
 
