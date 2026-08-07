@@ -31,7 +31,9 @@ A quoted target is the value itself; anything unquoted - a path such as `invoice
 
 Conditions combine with `or` and `and`, and parentheses group them. A condition may continue on the next line at deeper indentation.
 
-`or` and `and` do not take precedence over each other. Conditions combine strictly left to right, so `a or b and c` means `(a or b) and c` - not `a or (b and c)`. Parentheses are the only way to group differently, and printing a policy writes them wherever the grouping is not the one reading left to right produces.
+`and` binds tighter than `or`, and both are left associative - the rule a general purpose language follows, so `a or b and c` means `a or (b and c)` and `a or b or c` means `(a or b) or c`. Parentheses override that. This is the one condition grammar the language has: a `produces when` condition combines by exactly the same rules, over comparisons instead of roles and claims.
+
+Printing writes the parentheses back wherever the grouping is not the one those rules produce, so a printed policy always compiles to the condition it came from. It also writes them where mixing `or` and `and` would otherwise leave a reader to work the precedence out - the text says which grouping it means rather than assuming you know.
 
 ## Examples
 

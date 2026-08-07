@@ -67,12 +67,16 @@ PolicyBody     = PolicyExpr
    a bool, exactly like the PolicyExpr it stands in for -
    see Documentation/screenplay/policies.md.                                  *)
 
-PolicyExpr     = "require", PolicyCondition, { ( "or" | "and" ), PolicyCondition } ;
+PolicyExpr     = "require", PolicyCondition ;
 
-PolicyCondition = "authenticated"
+PolicyCondition = PolicyAnd, { "or", PolicyAnd } ;
+
+PolicyAnd      = PolicyOperand, { "and", PolicyOperand } ;
+
+PolicyOperand  = "authenticated"
                | "role", StringLiteral
                | "claim", StringLiteral, "matches", ClaimTarget
-               | "(", PolicyCondition, { ( "or" | "and" ), PolicyCondition }, ")" ;
+               | "(", PolicyCondition, ")" ;
 
 ClaimTarget    = "subject"
                | MappingSource ;
@@ -81,9 +85,13 @@ ClaimTarget    = "subject"
    MappingSource form - a path, "$context.", "$env.", "$secrets." - names where
    the value to compare against is read from.                                 *)
 
-(* "or" and "and" carry no precedence over each other in a policy condition -
-   conditions combine strictly left to right, so "a or b and c" means
-   "(a or b) and c". Parentheses are the only way to group differently.    *)
+(* Every condition in the language - a policy "require", a "produces when" -
+   is the same grammar over different operands, and combines the same way:
+   "and" binds tighter than "or", both are left associative, and parentheses
+   override that. "a or b and c" therefore means "a or (b and c)", and
+   "a or b or c" means "(a or b) or c" - what a general purpose language does.
+   Printing writes the parentheses back wherever the grouping is not the one
+   these rules produce, so a document always reads back as what it says.     *)
 
 (* -------------------------------------------------------------- *)
 (* Personas                                                        *)
@@ -253,11 +261,15 @@ ProducesDecl   = "produces", Ident, NL,
                    [ INDENT, { TagDecl }, { PropertyMapping }, DEDENT ],
                    DEDENT ;
 
-Condition      = ConditionExpr, { ( "and" | "or" ), ConditionExpr } ;
+(* Combines exactly as a policy condition does - see the note under Policies. *)
 
-ConditionExpr  = Ident, CompOp, Value
+Condition      = ConditionAnd, { "or", ConditionAnd } ;
+
+ConditionAnd   = ConditionOperand, { "and", ConditionOperand } ;
+
+ConditionOperand = Ident, CompOp, Value
                | Ident, CompOp, Ident
-               | "(" Condition ")" ;
+               | "(", Condition, ")" ;
 
 CompOp         = "==" | "!=" | ">" | ">=" | "<" | "<=" ;
 
