@@ -943,4 +943,26 @@ public static class DiagnosticCodes
     /// Two files of a folder describe the same thing differently, and the first description is kept.
     /// </summary>
     public const string ConflictingDescriptionAcrossFiles = "PLAY0174";
+
+    // What a command reads to decide.
+
+    /// <summary>
+    /// A <c>reads</c> line is not <c>reads &lt;ReadModel&gt;</c> or <c>reads &lt;ReadModel&gt; by &lt;property&gt;</c>.
+    /// </summary>
+    public const string InvalidReadsDeclaration = "PLAY0175";
+
+    /// <summary>
+    /// A command declares that it reads the same read model more than once.
+    /// </summary>
+    public const string DuplicateReads = "PLAY0176";
+
+    /// <summary>
+    /// A command reads a read model no projection in the document produces.
+    /// </summary>
+    public const string UnknownReadModel = "PLAY0177";
+
+    /// <summary>
+    /// The <c>by</c> of a <c>reads</c> declaration does not name a property of the command.
+    /// </summary>
+    public const string UnknownReadsKey = "PLAY0178";
 }

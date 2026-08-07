@@ -30,6 +30,7 @@ internal static partial class CommandParser
         AuthorizeSyntax? authorize = null;
         var validations = new List<ValidateSyntax>();
         var produces = new List<ProducesSyntax>();
+        var reads = new List<ReadsSyntax>();
         HandlerSyntax? handler = null;
         ConcurrencySyntax? concurrency = null;
         string? description = null;
@@ -72,6 +73,13 @@ internal static partial class CommandParser
                     }
 
                     break;
+                case "reads":
+                    if (ReadsParser.Parse(context, line) is { } read)
+                    {
+                        AddReads(context, reads, read, name.Groups[1].Value);
+                    }
+
+                    break;
                 case "handler":
                     handler = ParseHandler(context, line);
                     break;
@@ -95,7 +103,32 @@ internal static partial class CommandParser
             context.Error(DiagnosticCodes.CommandWithProducesAndHandler, $"Command '{name.Groups[1].Value}' cannot declare both 'produces' and 'handler'", header.Location);
         }
 
-        return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency, description);
+        return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency, description, reads);
+    }
+
+    /// <summary>
+    /// Adds a read model to the command, keeping at most one declaration per read model.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <param name="reads">The read models declared so far.</param>
+    /// <param name="read">The <see cref="ReadsSyntax"/> to add.</param>
+    /// <param name="commandName">The name of the command, used in diagnostics.</param>
+    /// <remarks>
+    /// A read model names what it holds, so reading it twice says nothing the first declaration did not - and
+    /// two declarations disagreeing about the key would leave a consumer no way to choose. The first wins.
+    /// </remarks>
+    static void AddReads(ParserContext context, List<ReadsSyntax> reads, ReadsSyntax read, string commandName)
+    {
+        if (reads.Exists(existing => existing.ReadModel == read.ReadModel))
+        {
+            context.Error(
+                DiagnosticCodes.DuplicateReads,
+                $"Command '{commandName}' already reads '{read.ReadModel}'",
+                read.Location);
+            return;
+        }
+
+        reads.Add(read);
     }
 
     /// <summary>

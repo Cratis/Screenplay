@@ -30,6 +30,13 @@ internal static class ScreenplayValidator
             .Concat(application.Imports.Select(import => import.Name))
             .ToHashSet();
         var knownPolicies = application.Policies.Select(policy => policy.Name).ToHashSet();
+
+        // A projection is what produces a read model, so its declared read model - or its own name when it
+        // does not rename one - is what a command can say it reads.
+        var knownReadModels = slices.SelectMany(slice => slice.Projections)
+            .Select(projection => projection.ReadModel ?? projection.Name)
+            .Concat(application.Imports.Select(import => import.Name))
+            .ToHashSet();
         var knownTypes = ConceptSyntax.PrimitiveTypes
             .Concat(application.Concepts.Select(concept => concept.Name))
             .Concat((application.Types ?? []).Select(type => type.Name))
@@ -70,7 +77,7 @@ internal static class ScreenplayValidator
 
         foreach (var slice in slices)
         {
-            ValidateSlice(slice, knownEvents, knownPolicies, knownTypes, context);
+            ValidateSlice(slice, knownEvents, knownPolicies, knownTypes, knownReadModels, context);
         }
     }
 
@@ -124,11 +131,42 @@ internal static class ScreenplayValidator
         }
     }
 
+    /// <summary>
+    /// Validates that what a command reads exists, and that the key it reads by is one of its own properties.
+    /// </summary>
+    /// <param name="command">The <see cref="CommandSyntax"/> to validate.</param>
+    /// <param name="knownReadModels">The read models the document's projections produce.</param>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    static void ValidateReads(CommandSyntax command, HashSet<string> knownReadModels, ParserContext context)
+    {
+        var properties = command.Properties.Select(property => property.Name).ToHashSet();
+
+        foreach (var reads in command.Reads ?? [])
+        {
+            if (!knownReadModels.Contains(reads.ReadModel))
+            {
+                context.Warning(
+                    DiagnosticCodes.UnknownReadModel,
+                    $"Unknown read model '{reads.ReadModel}' - no projection in the document produces it",
+                    reads.Location);
+            }
+
+            if (reads.By is { } by && !properties.Contains(by))
+            {
+                context.Warning(
+                    DiagnosticCodes.UnknownReadsKey,
+                    $"Command '{command.Name}' reads '{reads.ReadModel}' by '{by}', which is not one of its properties",
+                    reads.Location);
+            }
+        }
+    }
+
     static void ValidateSlice(
         SliceSyntax slice,
         HashSet<string> knownEvents,
         HashSet<string> knownPolicies,
         HashSet<string> knownTypes,
+        HashSet<string> knownReadModels,
         ParserContext context)
     {
         foreach (var @event in slice.Events)
@@ -139,6 +177,7 @@ internal static class ScreenplayValidator
         foreach (var command in slice.Commands)
         {
             ValidatePropertyTypes(command.Properties, $"command '{command.Name}'", knownTypes, context);
+            ValidateReads(command, knownReadModels, context);
         }
 
         // The return type of a query names a read model, which no construct declares - only the
