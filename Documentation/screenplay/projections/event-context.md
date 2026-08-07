@@ -104,7 +104,7 @@ from StateChanged
 Use event source ID for relationships:
 
 ```pdl
-children members id userId
+children members identified by userId
   from UserAddedToGroup key userId
     parent $eventContext.eventSourceId
     Role = role
@@ -177,7 +177,7 @@ projection Group => GroupReadModel
     CreatedAt = $eventContext.occurred
     CreatedBy = $eventContext.eventSourceId
 
-  children members id userId
+  children members identified by userId
     from UserAddedToGroup key userId
       parent groupId
       Name = userName

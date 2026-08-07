@@ -67,8 +67,8 @@ projection UserProfile => UserProfileReadModel
     UserId = userId
 
   join User on UserId
-    events UserCreated
-    Name = name
+    with UserCreated
+      Name = name
 
   remove via join on UserDeleted
 ```
@@ -92,8 +92,10 @@ children groups identified by groupId
     GroupId = groupId
 
   join Group on GroupId
-    events GroupCreated, GroupRenamed
-    Name = name
+    with GroupCreated
+      Name = name
+    with GroupRenamed
+      Name = name
 
   remove via join on GroupDeleted
 ```
@@ -148,8 +150,8 @@ projection Product => ProductReadModel
     CategoryId = categoryId
 
   join Category on CategoryId
-    events CategoryCreated
-    CategoryName = name
+    with CategoryCreated
+      CategoryName = name
 
   remove via join on CategoryDeleted
 ```
@@ -199,9 +201,12 @@ projection UserProfile => UserProfileReadModel
     UpdatedAt = $eventContext.occurred
 
   join User on UserId
-    events UserRegistered, UserUpdated
-    Name = name
-    Email = email
+    with UserRegistered
+      Name = name
+      Email = email
+    with UserUpdated
+      Name = name
+      Email = email
 
   remove via join on UserAccountDeleted
 ```
@@ -216,9 +221,12 @@ projection Subscription => SubscriptionReadModel
     StartDate = startDate
 
   join SubscriptionPlan on PlanId
-    events PlanCreated, PlanUpdated
-    PlanName = name
-    Price = price
+    with PlanCreated
+      PlanName = name
+      Price = price
+    with PlanUpdated
+      PlanName = name
+      Price = price
 
   remove with SubscriptionCancelled
 
@@ -237,12 +245,12 @@ projection Task => TaskReadModel
     AssignedTo = assigneeId
 
   join Project on ProjectId
-    events ProjectCreated
-    ProjectName = name
+    with ProjectCreated
+      ProjectName = name
 
   join User on AssignedTo
-    events UserCreated
-    AssigneeName = name
+    with UserCreated
+      AssigneeName = name
 
   remove via join on ProjectDeleted
 ```
@@ -258,8 +266,8 @@ projection Department => DepartmentReadModel
     CompanyId = companyId
 
   join Company on CompanyId
-    events CompanyCreated
-    CompanyName = name
+    with CompanyCreated
+      CompanyName = name
 
   children employees identified by employeeId
     from EmployeeAssigned key employeeId
@@ -306,8 +314,8 @@ projection Document => DocumentReadModel
     OwnerId = ownerId
 
   join User on OwnerId
-    events UserCreated
-    OwnerName = name
+    with UserCreated
+      OwnerName = name
 
   remove with DocumentDeleted
   remove via join on UserAccountClosed
@@ -351,8 +359,8 @@ projection Order => OrderReadModel
     CustomerId = customerId
 
   join Customer on CustomerId
-    events CustomerCreated
-    CustomerName = name
+    with CustomerCreated
+      CustomerName = name
 
   children items identified by itemId
     from ItemAdded key itemId

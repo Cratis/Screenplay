@@ -100,16 +100,19 @@ The `every` block within children works similarly to the top-level every block b
 Children can have joins:
 
 ```pdl
-children members id userId
+children members identified by userId
   from UserAddedToGroup key userId
     parent groupId
     UserId = userId
     Role = role
 
   join User on UserId
-    events UserCreated, UserUpdated
-    Name = name
-    Email = email
+    with UserCreated
+      Name = name
+      Email = email
+    with UserUpdated
+      Name = name
+      Email = email
 ```
 
 ## Removal in Children
@@ -117,7 +120,7 @@ children members id userId
 Remove children when specific events occur:
 
 ```pdl
-children members id userId
+children members identified by userId
   from UserAddedToGroup key userId
     parent groupId
     Role = role
@@ -133,12 +136,12 @@ See [Removal](removal.md) for more details.
 Children can contain their own children:
 
 ```pdl
-children departments id deptId
+children departments identified by deptId
   from DepartmentCreated key deptId
     parent companyId
     Name = name
 
-  children teams id teamId
+  children teams identified by teamId
     from TeamCreated key teamId
       parent deptId
       Name = name
@@ -154,7 +157,7 @@ projection Group => GroupReadModel
     Name = name
     Description = description
 
-  children members id userId
+  children members identified by userId
     automap
 
     from UserAddedToGroup key userId
@@ -178,7 +181,7 @@ projection Order => OrderReadModel
     CustomerId = customerId
     Total = 0
 
-  children items id lineNumber
+  children items identified by lineNumber
     from LineItemAdded key lineNumber
       parent orderId
       ProductId = productId
@@ -203,7 +206,7 @@ projection Project => ProjectReadModel
     Name = name
     Status = "Active"
 
-  children tasks id taskId
+  children tasks identified by taskId
     every
       LastModified = $eventContext.occurred
 
@@ -224,8 +227,8 @@ projection Project => ProjectReadModel
       AssignedTo = assigneeId
 
     join User on AssignedTo
-      events UserCreated
-      AssigneeName = name
+      with UserCreated
+        AssigneeName = name
 ```
 
 ### Invoice with Payments
@@ -238,7 +241,7 @@ projection Invoice => InvoiceReadModel
     Amount = amount
     Balance = amount
 
-  children payments id paymentId
+  children payments identified by paymentId
     from PaymentReceived key paymentId
       parent invoiceNumber
       Amount = amount
@@ -263,7 +266,7 @@ projection BlogPost => BlogPostReadModel
     Content = content
     UpdatedAt = $eventContext.occurred
 
-  children comments id commentId
+  children comments identified by commentId
     from CommentAdded key commentId
       parent postId
       AuthorId = authorId
@@ -279,8 +282,8 @@ projection BlogPost => BlogPostReadModel
       parent postId
 
     join User on AuthorId
-      events UserRegistered
-      AuthorName = name
+      with UserRegistered
+        AuthorName = name
 ```
 
 ### Multi-Level Nesting
@@ -290,17 +293,17 @@ projection Company => CompanyReadModel
   from CompanyCreated
     Name = name
 
-  children departments id deptId
+  children departments identified by deptId
     from DepartmentCreated key deptId
       parent companyId
       Name = name
 
-    children teams id teamId
+    children teams identified by teamId
       from TeamCreated key teamId
         parent deptId
         Name = name
 
-      children members id memberId
+      children members identified by memberId
         from MemberAdded key memberId
           parent teamId
           Name = name
@@ -312,7 +315,7 @@ projection Company => CompanyReadModel
 The parent key can use various expressions:
 
 ```pdl
-children items id itemId
+children items identified by itemId
   from ItemAdded key itemId
     parent orderId                        # Event property
     # or
@@ -326,7 +329,7 @@ children items id itemId
 AutoMap at the children level applies to all child events:
 
 ```pdl
-children members id userId
+children members identified by userId
   automap
 
   from UserAdded key userId
@@ -357,7 +360,7 @@ The children block maps to a collection property on the read model. For the `mem
 ### Add/Update/Remove
 
 ```pdl
-children items id itemId
+children items identified by itemId
   from ItemAdded key itemId
     parent parentId
     # properties
@@ -373,21 +376,24 @@ children items id itemId
 ### Enrichment with Joins
 
 ```pdl
-children members id userId
+children members identified by userId
   from MemberAdded key userId
     parent groupId
     UserId = userId
 
   join User on UserId
-    events UserCreated, UserUpdated
-    Name = name
-    Email = email
+    with UserCreated
+      Name = name
+      Email = email
+    with UserUpdated
+      Name = name
+      Email = email
 ```
 
 ### Versioning
 
 ```pdl
-children versions id versionNumber
+children versions identified by versionNumber
   from VersionCreated key versionNumber
     parent documentId
     Content = content

@@ -127,7 +127,7 @@ nested command
 A `nested` block can appear inside a `children` block:
 
 ```pdl
-children tasks id taskId
+children tasks identified by taskId
   from TaskAdded key taskId
     parent projectId
     Title = title
