@@ -51,6 +51,8 @@ internal static partial class SliceParser
         var screens = new List<ScreenSyntax>();
         var constraints = new List<ConstraintSyntax>();
         var specifications = new List<SpecificationSyntax>();
+        var readModels = new List<ReadModelSyntax>();
+        var reducers = new List<ReducerSyntax>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -87,6 +89,12 @@ internal static partial class SliceParser
                 case "specification":
                     specifications.Add(SpecificationParser.Parse(context, line));
                     break;
+                case "readmodel":
+                    readModels.Add(ReadModelParser.Parse(context, line));
+                    break;
+                case "reducer":
+                    reducers.Add(ReducerParser.Parse(context, line));
+                    break;
                 default:
                     context.Warning(DiagnosticCodes.UnknownSliceDirective, $"Unknown construct '{LineText.FirstWord(line.Content)}' in slice '{name}'", line.Location);
                     context.SkipBlock(line.Indent);
@@ -94,7 +102,7 @@ internal static partial class SliceParser
             }
         }
 
-        return new(type, name, events, commands, queries, projections, captures, reactors, screens, constraints, specifications, header.Location, description);
+        return new(type, name, events, commands, queries, projections, captures, reactors, screens, constraints, specifications, header.Location, description, readModels, reducers);
     }
 
     [GeneratedRegex(@"^slice\s+([A-Za-z]\w*)\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]

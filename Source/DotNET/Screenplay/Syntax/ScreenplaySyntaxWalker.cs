@@ -195,6 +195,16 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitProjection(projection);
         }
 
+        foreach (var readModel in syntax.ReadModels ?? [])
+        {
+            VisitReadModel(readModel);
+        }
+
+        foreach (var reducer in syntax.Reducers ?? [])
+        {
+            VisitReducer(reducer);
+        }
+
         foreach (var capture in syntax.Captures)
         {
             VisitCapture(capture);
