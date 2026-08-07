@@ -78,9 +78,14 @@ internal static class ScreenplayValidator
             }
         }
 
+        var knownCommands = slices.SelectMany(slice => slice.Commands.Select(command => command.Name))
+            .Concat(application.Imports.Select(import => import.Name))
+            .ToHashSet();
+
         foreach (var slice in slices)
         {
             ValidateSlice(slice, knownEvents, knownPolicies, knownTypes, knownReadModels, context);
+            ValidateReactorConsequences(slice, knownEvents, knownCommands, context);
         }
     }
 
@@ -285,6 +290,39 @@ internal static class ScreenplayValidator
         LogicalConditionSyntax logical => Operands(logical.Left).Concat(Operands(logical.Right)),
         _ => []
     };
+
+    /// <summary>
+    /// Validates that what a reactor sets off exists - the events it appends and the commands it invokes.
+    /// </summary>
+    /// <param name="slice">The <see cref="SliceSyntax"/> holding the reactors.</param>
+    /// <param name="knownEvents">The events the document makes available.</param>
+    /// <param name="knownCommands">The commands the document declares.</param>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    static void ValidateReactorConsequences(
+        SliceSyntax slice,
+        HashSet<string> knownEvents,
+        HashSet<string> knownCommands,
+        ParserContext context)
+    {
+        foreach (var trigger in slice.Reactors.SelectMany(reactor => reactor.Triggers))
+        {
+            foreach (var produces in (trigger.Produces ?? []).Where(produces => !knownEvents.Contains(produces.Event)))
+            {
+                context.Warning(
+                    DiagnosticCodes.UnknownEvent,
+                    $"Unknown event '{produces.Event}' - declare it with 'event {produces.Event}'",
+                    produces.Location);
+            }
+
+            foreach (var invokes in (trigger.Invokes ?? []).Where(invokes => !knownCommands.Contains(invokes.Command)))
+            {
+                context.Warning(
+                    DiagnosticCodes.UnknownCommand,
+                    $"Unknown command '{invokes.Command}' - declare it with 'command {invokes.Command}'",
+                    invokes.Location);
+            }
+        }
+    }
 
     static void ValidateSlice(
         SliceSyntax slice,

@@ -175,7 +175,7 @@ public partial class ScreenplayPrinter
 
                 // A trigger with nothing but its event is complete on its own, so it prints as a single
                 // line rather than an empty indented block.
-                if (trigger is { Description: null, File: null, Code: null })
+                if (trigger is { Description: null, File: null, Code: null } && !(trigger.Produces ?? []).Any() && !(trigger.Invokes ?? []).Any())
                 {
                     continue;
                 }
@@ -183,6 +183,20 @@ public partial class ScreenplayPrinter
                 using (writer.Indent())
                 {
                     WriteDescription(writer, trigger.Description);
+
+                    foreach (var produces in trigger.Produces ?? [])
+                    {
+                        WriteProduces(writer, produces);
+                    }
+
+                    foreach (var invokes in trigger.Invokes ?? [])
+                    {
+                        writer.Line($"invokes {invokes.Command}");
+                        using (writer.Indent())
+                        {
+                            WriteMappings(writer, invokes.Mappings, ReservedWords.MappingBlock);
+                        }
+                    }
 
                     if (trigger.File is not null)
                     {
@@ -277,6 +291,7 @@ public partial class ScreenplayPrinter
             writer.Line($"produces {produces.Event}");
             using (writer.Indent())
             {
+                WriteProducesTarget(writer, produces.For);
                 WriteTags(writer, produces.Tags);
                 WriteMappings(writer, produces.Mappings, ReservedWords.MappingBlock);
             }
@@ -290,9 +305,19 @@ public partial class ScreenplayPrinter
             writer.Line(produces.Event);
             using (writer.Indent())
             {
+                WriteProducesTarget(writer, produces.For);
                 WriteTags(writer, produces.Tags);
                 WriteMappings(writer, produces.Mappings, ReservedWords.MappingBlock);
             }
+        }
+    }
+
+    // Where the event lands comes before what fills it - the same order the reader asks the questions in.
+    void WriteProducesTarget(ScreenplayWriter writer, ExpressionSyntax? target)
+    {
+        if (target is not null)
+        {
+            writer.Line($"for {ScreenplaySyntaxText.Expression(target)}");
         }
     }
 

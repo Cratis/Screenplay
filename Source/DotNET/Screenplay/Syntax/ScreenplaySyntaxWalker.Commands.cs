@@ -221,6 +221,25 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitTag(tag);
         }
+
+        if (syntax.For is not null)
+        {
+            VisitExpression(syntax.For);
+        }
+    }
+
+    /// <summary>
+    /// Visits an <see cref="InvokesSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="InvokesSyntax"/> to visit.</param>
+    public virtual void VisitInvokes(InvokesSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        foreach (var mapping in syntax.Mappings)
+        {
+            VisitPropertyMapping(mapping);
+        }
     }
 
     /// <summary>

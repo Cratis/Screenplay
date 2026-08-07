@@ -313,11 +313,18 @@ Value          = Number | StringLiteral | "today" | "true" | "false" ;
 (* -------------------------------------------------------------- *)
 
 ProducesDecl   = "produces", Ident, NL,
-                   [ INDENT, { TagDecl }, { PropertyMapping }, DEDENT ]
+                   [ INDENT, [ ForDecl ], { TagDecl }, { PropertyMapping }, DEDENT ]
                | "produces", "when", Condition, NL,
                    INDENT, Ident, NL,
-                   [ INDENT, { TagDecl }, { PropertyMapping }, DEDENT ],
+                   [ INDENT, [ ForDecl ], { TagDecl }, { PropertyMapping }, DEDENT ],
                    DEDENT ;
+
+ForDecl        = "for", MappingSource, NL ;
+
+(* Where the event lands. Absent, it lands on the command's own event source,
+   which is the common case and stays unstated. A decision that appends to
+   several event sources is several "produces", each saying where it goes -
+   which is what the handler doing it already looks like.                    *)
 
 (* Combines exactly as a policy condition does - see the note under Policies. *)
 
@@ -484,8 +491,20 @@ ReactorDecl    = "reactor", Ident, NL,
 ReactorTrigger = "on", Ident, NL,
                  [ INDENT,
                      [ DescriptionDecl ],
+                     { ProducesDecl },
+                     { InvokesDecl },
                      [ FileDirective | InlineBlock ],
                    DEDENT ] ;
+
+InvokesDecl    = "invokes", Ident, NL,
+                 [ INDENT, { PropertyMapping }, DEDENT ] ;
+
+(* What the reaction sets off. "produces" is the same declaration a command
+   carries, because appending an event is the same act wherever it happens.
+   A command is not produced but asked for, so it is "invokes" - an event is a
+   fact the reaction appends, a command is an intent it hands on, and something
+   else may still reject it. One word for both would say those are the same
+   kind of consequence.                                                      *)
 
 (* -------------------------------------------------------------- *)
 (* Screens                                                         *)

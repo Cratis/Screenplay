@@ -322,6 +322,27 @@ produces InvoiceRegistered
 
 Every `$context.` path names a member of the `CommandContext` an inline handler compiles against — see [Contexts](context.md).
 
+### Where an event lands
+
+By default a produced event is appended to the command's own event source — the common case, and it stays unstated. When the decision affects something else, `for` says so on an indented line:
+
+```screenplay
+command Activate
+  requestId  Uuid identifier
+  contractId Uuid
+
+  produces RequestActivated
+    requestId = requestId
+
+  produces ContractPolicyActivated
+    for contractId
+    contractId = contractId
+```
+
+One decision, two event sources. A command that fans out to several is several `produces`, each saying where it goes — which is what the handler doing it already looks like.
+
+`for` is an indented line rather than an argument on the header, so the target sits beside the mappings that fill the event instead of out past the end of the line. Only one `for` per `produces`: an event is appended to one event source.
+
 ### Multiple unconditional events
 
 Repeat `produces` for each event; all are emitted:
