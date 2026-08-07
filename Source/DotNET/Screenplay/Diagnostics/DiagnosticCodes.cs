@@ -1043,4 +1043,21 @@ public static class DiagnosticCodes
     /// A document declares the same read model more than once.
     /// </summary>
     public const string DuplicateReadModel = "PLAY0192";
+
+    // Where a produced event lands, and what a reactor does as a consequence.
+
+    /// <summary>
+    /// A <c>produces</c> declares more than one <c>for</c>, and an event is appended to one event source.
+    /// </summary>
+    public const string DuplicateProducesTarget = "PLAY0193";
+
+    /// <summary>
+    /// An <c>invokes</c> line is not <c>invokes &lt;Command&gt;</c>.
+    /// </summary>
+    public const string InvalidInvokesDeclaration = "PLAY0194";
+
+    /// <summary>
+    /// A reactor invokes a command the document does not declare.
+    /// </summary>
+    public const string UnknownCommand = "PLAY0195";
 }
