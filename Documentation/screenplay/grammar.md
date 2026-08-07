@@ -82,7 +82,7 @@ ClaimTarget    = "subject"
                | MappingSource ;
 
 (* A quoted ClaimTarget is the literal value the claim must equal; every other
-   MappingSource form - a path, "$context.", "$env.", "$secrets." - names where
+   MappingSource form - a path, "$context.", "$env." - names where
    the value to compare against is read from.                                 *)
 
 (* Every condition in the language - a policy "require", a "produces when" -
@@ -110,10 +110,13 @@ PersonaDecl    = "persona", Ident, NL,
 AuthenticationDecl = "authentication", NL,
                  INDENT, { ProviderDecl }, DEDENT ;
 
-ProviderDecl   = "provider", Ident, NL,
-                 [ INDENT, { ProviderSetting }, DEDENT ] ;
+ProviderDecl   = "provider", Ident, [ "name", Ident ], NL ;
 
-ProviderSetting = Ident, MappingSource, NL ;
+(* A provider names which identity provider signs users in, and nothing about
+   how to reach one - an authority, a client id and its secret are what running
+   the application needs to know rather than what it is, and they differ per
+   environment while the document does not. "name" distinguishes two providers
+   of the same kind, which a generic OpenId or OAuth provider needs.         *)
 
 (* -------------------------------------------------------------- *)
 (* Module                                                          *)
@@ -297,7 +300,6 @@ PropertyMapping = [ "@" ], Ident, "=", MappingSource, NL ;
 MappingSource  = Ident                         (* command property   *)
                | ContextPath
                | "$env.", Ident
-               | "$secrets.", Path
                | "$strings.", Path
                | StringLiteral
                | Number
