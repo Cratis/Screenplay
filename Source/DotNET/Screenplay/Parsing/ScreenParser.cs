@@ -67,7 +67,7 @@ internal static partial class ScreenParser
             case "navigate":
                 return ParseNavigate(context, line.Content, line);
             default:
-                if (CodeBlockParser.Languages.Contains(line.Content))
+                if (context.Languages.InlineLanguages.Contains(line.Content))
                 {
                     var code = CodeBlockParser.Parse(context, line.Content, line);
                     return code is null ? null : new ScreenCodeSyntax(code, line.Location);

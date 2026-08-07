@@ -1,22 +1,32 @@
 # Sub-language Pluggability
 
-The Screenplay parser is designed as a **registry of named sub-language parsers**. When the parser encounters a construct keyword (`projection`, `capture`, or any registered extension), it delegates to the registered sub-parser for that construct's indented body.
+Screenplay carries languages it does not itself read. The [Projection Declaration Language](projections/index.md) (PDL) and the [Change Data Capture Language](captures.md) (CDL) are the two built-in ones, and an inline block carries a general purpose language for the parts a declaration cannot express.
 
-The [Projection Declaration Language](projections/index.md) (PDL) and the [Change Data Capture Language](captures.md) (CDL) are the two built-in sub-languages, registered exactly the way an extension would be — they are the reference implementations of the pluggability model.
+Two of those sets are open, and they are open in different places. Read this section before assuming which.
 
-## Plugging in a new sub-language
+## What the compiler can be extended with
 
-Additional domain-specific languages plug in by:
+**Inline languages are open.** The five an inline block ships with — `csharp`, `typescript`, `react`, `html`, `sql` — are what the surrounding tooling understands end to end: a Stage renders them, an editor highlights them. Hand the compiler a registry and it recognizes more:
 
-1. **Registering a construct keyword** — the word that introduces the construct inside a slice.
-2. **Providing a parser** that consumes the construct's indented block.
-3. **Optionally providing Monaco language service extensions** for the sub-language — token rules, completions, and hover documentation — so highlighting and IntelliSense compose cleanly.
+```csharp
+var compiler = new ScreenplayCompiler(new ScreenplayLanguageRegistry(["python", "kotlin"]));
+```
+
+A registered block parses, carries its language tag, and holds its text in the syntax tree. The compiler does not read it — whoever registered the language is what makes sense of it, and that boundary is exactly what lets the set be open. Nothing else changes: `new ScreenplayCompiler()` still recognizes the built-in five and nothing more.
+
+**Construct keywords are not open.** The words that introduce a construct inside a slice — `projection`, `capture`, `command`, and the rest — are fixed in the compiler. PDL and CDL are built in rather than registered, and a third construct keyword means changing the compiler. The editor is a different story, and the rest of this page is about that.
+
+## Plugging a new sub-language into the editor
+
+An editor extension registers a construct keyword together with its token rules, completions and hover documentation, so highlighting and IntelliSense compose cleanly.
 
 The construct's body is opaque to the Screenplay grammar: from the host's perspective it is `ExtensionConstruct = Ident, Ident, NL, [ INDENT, { AnyLine }, DEDENT ]` (see [Grammar](grammar.md)). The block ends where the indentation returns to the level of the construct keyword.
 
+Be aware of what this does and does not buy: a construct registered here highlights correctly and is then **discarded by the compiler**, because the compiler's set of construct keywords is closed. Until that set opens too, an editor extension is a reading aid rather than a language extension.
+
 ## The Monaco registration API
 
-The `@cratis/screenplay-language` package mirrors the parser's registry so editor tooling composes the same way. A sub-language registers its Monarch token rules and IntelliSense under a construct keyword:
+The `@cratis/screenplay-language` package has its own registry for editor tooling. A sub-language registers its Monarch token rules and IntelliSense under a construct keyword:
 
 ```typescript
 import { registerSubLanguage } from '@cratis/screenplay-language';
