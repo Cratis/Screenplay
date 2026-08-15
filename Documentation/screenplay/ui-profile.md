@@ -18,6 +18,7 @@ ui profile <Name>
 - `target platform` - the platform(s) this profile targets, e.g. `web`, `ios`, `android`. At most one per profile.
 - `target size` - the size class assumed by default: `compact`, `regular` or `expanded` (Apple/Material-style named classes, not raw pixel breakpoints - a narrow browser window and a compact phone are "the same" class, and a raw breakpoint means nothing on native). At most one per profile. The two-axis width x height matrix a `layout` resolves against is a separate, more specific concern.
 - `packages` - the component packages this profile draws from, one per line, in **override-priority order**: a later package's `Button` shadows an earlier one's on a name collision. `core`, the built-in vocabulary (`button`, `table`, `form`, `title`, ...), is always the final fallback regardless of what a profile lists here.
+- `theme` - the visual theme this profile applies. Optional, at most one per profile. A theme is only meaningful relative to a specific set of packages - see [Theme](theme.md) for how that compatibility is declared and checked.
 
 ## Example
 
