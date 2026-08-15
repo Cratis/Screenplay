@@ -24,9 +24,11 @@ internal static partial class UiProfileParser
         var platforms = new List<string>();
         string? defaultSizeClass = null;
         var packages = new List<string>();
+        string? theme = null;
         var hasTargetPlatform = false;
         var hasTargetSize = false;
         var hasPackagesBlock = false;
+        var hasTheme = false;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -47,14 +49,31 @@ internal static partial class UiProfileParser
                     hasPackagesBlock = true;
                     ParsePackages(context, line, packages);
                     break;
+                case "theme":
+                    if (hasTheme)
+                    {
+                        context.Error(DiagnosticCodes.DuplicateProfileTheme, "This ui profile already declares a theme - a profile can have at most one", line.Location);
+                        break;
+                    }
+
+                    var themeMatch = ThemeReferenceRegex().Match(line.Content);
+                    if (!themeMatch.Success)
+                    {
+                        context.Error(DiagnosticCodes.InvalidProfileTheme, $"Invalid theme reference '{line.Content}' - expected 'theme <Name>'", line.Location);
+                        break;
+                    }
+
+                    hasTheme = true;
+                    theme = themeMatch.Groups[1].Value;
+                    break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownUiProfileDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in ui profile body - expected target or packages", line.Location);
+                    context.Error(DiagnosticCodes.UnknownUiProfileDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in ui profile body - expected target, packages or theme", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
         }
 
-        return new(name, platforms, defaultSizeClass, packages, header.Location);
+        return new(name, platforms, defaultSizeClass, packages, header.Location, theme);
     }
 
     static void ParseTarget(ParserContext context, SourceLine line, List<string> platforms, ref bool hasTargetPlatform, ref bool hasTargetSize, ref string? defaultSizeClass)
@@ -126,4 +145,7 @@ internal static partial class UiProfileParser
 
     [GeneratedRegex(@"^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*$", RegexOptions.None, 1000)]
     private static partial Regex PackageNameRegex();
+
+    [GeneratedRegex(@"^theme\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex ThemeReferenceRegex();
 }

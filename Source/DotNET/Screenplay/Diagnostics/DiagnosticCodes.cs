@@ -1215,4 +1215,46 @@ public static class DiagnosticCodes
     /// A contribution names a contribution point nothing in scope declares.
     /// </summary>
     public const string UnknownContributionPoint = "PLAY0224";
+
+    // theme - a named visual theme and the component packages it is compatible with.
+
+    /// <summary>
+    /// A <c>theme</c> line is not <c>theme &lt;Name&gt;</c>.
+    /// </summary>
+    public const string InvalidThemeDeclaration = "PLAY0225";
+
+    /// <summary>
+    /// Two <c>theme</c> blocks in the same document declare the same name.
+    /// </summary>
+    public const string DuplicateTheme = "PLAY0226";
+
+    /// <summary>
+    /// A line in a <c>theme</c> body is not <c>compatible with &lt;Package&gt;</c>.
+    /// </summary>
+    public const string InvalidCompatibleWithDeclaration = "PLAY0227";
+
+    /// <summary>
+    /// A <c>theme</c> declares compatibility with the same package more than once.
+    /// </summary>
+    public const string DuplicateCompatibleWith = "PLAY0228";
+
+    /// <summary>
+    /// A <c>ui profile</c>'s <c>theme</c> line is not <c>theme &lt;Name&gt;</c>.
+    /// </summary>
+    public const string InvalidProfileTheme = "PLAY0229";
+
+    /// <summary>
+    /// A <c>ui profile</c> declares <c>theme</c> more than once.
+    /// </summary>
+    public const string DuplicateProfileTheme = "PLAY0230";
+
+    /// <summary>
+    /// A <c>ui profile</c> selects a theme nothing in the document declares.
+    /// </summary>
+    public const string UnknownTheme = "PLAY0231";
+
+    /// <summary>
+    /// A <c>ui profile</c> selects a theme not declared compatible with one of the profile's own packages.
+    /// </summary>
+    public const string ThemeNotCompatibleWithPackage = "PLAY0232";
 }

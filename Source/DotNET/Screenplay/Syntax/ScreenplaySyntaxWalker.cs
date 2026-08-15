@@ -95,6 +95,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitAuthentication(syntax.Authentication);
         }
 
+        foreach (var theme in syntax.Themes ?? [])
+        {
+            VisitTheme(theme);
+        }
+
         foreach (var uiProfile in syntax.UiProfiles ?? [])
         {
             VisitUiProfile(uiProfile);
