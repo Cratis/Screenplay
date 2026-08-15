@@ -26,7 +26,7 @@
         "keywords": {
             "patterns": [
                 {
-                    "match": "^\\s*(domain|import|concept|type|policy|persona|authentication|module|layout|feature|slice|event|command|query|reactor|screen|constraint|specification|seed)\\b",
+                    "match": "^\\s*(domain|import|concept|type|policy|persona|authentication|module|layout|feature|slice|event|command|query|reaction|trigger|screen|constraint|specification|seed)\\b",
                     "captures": {
                         "1": { "name": "keyword.control.screenplay" }
                     }

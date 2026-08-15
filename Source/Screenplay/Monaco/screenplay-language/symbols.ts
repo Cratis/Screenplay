@@ -66,6 +66,7 @@ export interface DocumentSymbols {
     commands: CommandSymbol[];
     queries: QuerySymbol[];
     screens: NamedSymbol[];
+    triggers: NamedSymbol[];
 }
 
 const conceptPattern = /^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@\w+)*)\s*$/;
@@ -111,6 +112,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
         commands: [],
         queries: [],
         screens: [],
+        triggers: [],
     };
     const fences = fenceMap(lines);
 
@@ -220,6 +222,12 @@ export function scanDocument(lines: string[]): DocumentSymbols {
         const screenMatch = trimmed.match(/^screen\s+(\w+)\s*$/);
         if (screenMatch) {
             symbols.screens.push({ name: screenMatch[1], line: index });
+            continue;
+        }
+
+        const triggerMatch = trimmed.match(/^trigger\s+(\w+)\s*$/);
+        if (triggerMatch && indent === 0) {
+            symbols.triggers.push({ name: triggerMatch[1], line: index });
         }
     }
 
@@ -230,6 +238,19 @@ export function knownEventNames(symbols: DocumentSymbols): string[] {
     return [
         ...symbols.events.map((event) => event.name),
         ...symbols.imports.map((imported) => imported.shortName),
+    ];
+}
+
+// The built-in host signals, which have no declaration to scan for because every application has them.
+export const builtInTriggerNames = ['Startup', 'Shutdown'];
+
+// What a reaction's `when` may name: an event, a declared trigger, or a host signal. The compiler resolves
+// the three in that order, and the editor offers them the same way rather than guessing which was meant.
+export function knownTriggerNames(symbols: DocumentSymbols): string[] {
+    return [
+        ...knownEventNames(symbols),
+        ...symbols.triggers.map((trigger) => trigger.name),
+        ...builtInTriggerNames,
     ];
 }
 

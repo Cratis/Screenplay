@@ -3,7 +3,7 @@
 
 import type { languages } from 'monaco-editor';
 import { Monaco, primitiveTypes } from './language';
-import { knownEventNames, scanDocument } from './symbols';
+import { knownEventNames, knownTriggerNames, scanDocument } from './symbols';
 import { planCompletions } from './completion-planner';
 import { contextVariableItems, producesItems, CompletionEntry } from './completion-items';
 
@@ -75,6 +75,18 @@ export function createCompletionProvider(monaco: Monaco): languages.CompletionIt
                     };
                 case 'events':
                     return { suggestions: eventNames() };
+                case 'triggers':
+                    return {
+                        suggestions: knownTriggerNames(symbols).map((name) =>
+                            symbolItem(name, kinds.Event, 'trigger'),
+                        ),
+                    };
+                case 'commands':
+                    return {
+                        suggestions: symbols.commands.map((command) =>
+                            symbolItem(command.name, kinds.Method, 'command'),
+                        ),
+                    };
                 case 'producesTargets':
                     return { suggestions: [...producesItems.map(snippet), ...eventNames()] };
                 case 'screens':
