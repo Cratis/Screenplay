@@ -307,7 +307,7 @@ internal static partial class ScreenplayParser
                     description = DescriptionParser.Parse(context, child, description, $"Module '{name}'");
                     break;
                 case "layout":
-                    layouts.Add(ParseLayout(context, child));
+                    layouts.Add(LayoutParser.Parse(context, child));
                     break;
                 case "form":
                     AddForm(context, FormParser.Parse(context, child), forms);
@@ -337,40 +337,6 @@ internal static partial class ScreenplayParser
         }
 
         forms.Add(form);
-    }
-
-    static LayoutSyntax ParseLayout(ParserContext context, SourceLine line)
-    {
-        var name = line.Content["layout".Length..].Trim();
-        var slots = new List<SlotSyntax>();
-
-        while (context.TryPeekChild(line.Indent, out var child))
-        {
-            context.Reader.TakeSignificant();
-            if (child.Content == "template")
-            {
-                while (context.TryPeekChild(child.Indent, out var slot))
-                {
-                    context.Reader.TakeSignificant();
-                    var slotMatch = SlotRegex().Match(slot.Content);
-                    if (slotMatch.Success)
-                    {
-                        slots.Add(new(slotMatch.Groups[1].Value, slotMatch.Groups[2].Success ? slotMatch.Groups[2].Value : null, slot.Location));
-                    }
-                    else
-                    {
-                        context.Error(DiagnosticCodes.InvalidLayoutSlotName, $"Invalid slot name '{slot.Content}' - expected an identifier, optionally followed by 'contributes <ContributionPoint>'", slot.Location);
-                    }
-                }
-            }
-            else
-            {
-                context.Error(DiagnosticCodes.UnknownLayoutDirective, $"Unexpected '{child.Content}' in layout body - expected 'template'", child.Location);
-                context.SkipBlock(child.Indent);
-            }
-        }
-
-        return new(name, slots, line.Location);
     }
 
     static FeatureSyntax ParseFeature(ParserContext context, SourceLine line)
@@ -428,9 +394,6 @@ internal static partial class ScreenplayParser
 
     [GeneratedRegex(@"^([a-z_]\w*)\s+reason\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.None, 1000)]
     private static partial Regex AttributeReasonRegex();
-
-    [GeneratedRegex(@"^([a-z_]\w*)(?:\s+contributes\s+([A-Za-z_]\w*))?$", RegexOptions.None, 1000)]
-    private static partial Regex SlotRegex();
 
     [GeneratedRegex(@"^persona\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex PersonaRegex();
