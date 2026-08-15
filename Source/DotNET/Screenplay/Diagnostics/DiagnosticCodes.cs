@@ -1257,4 +1257,67 @@ public static class DiagnosticCodes
     /// A <c>ui profile</c> selects a theme not declared compatible with one of the profile's own packages.
     /// </summary>
     public const string ThemeNotCompatibleWithPackage = "PLAY0232";
+
+    // layout arrangement - flow (responsive row/column/grid) vs. freeform (pixel-precise) placement.
+
+    /// <summary>
+    /// A layout's <c>arrangement</c> line is not <c>arrangement flow</c> or <c>arrangement freeform</c>.
+    /// </summary>
+    public const string InvalidArrangementDeclaration = "PLAY0233";
+
+    /// <summary>
+    /// A layout declares <c>arrangement</c> more than once.
+    /// </summary>
+    public const string DuplicateArrangement = "PLAY0234";
+
+    /// <summary>
+    /// A <c>row</c>, <c>column</c> or <c>grid</c> line in a template is malformed.
+    /// </summary>
+    public const string InvalidTemplateContainer = "PLAY0235";
+
+    /// <summary>
+    /// A slot leaf within a template tree has malformed sizing attributes.
+    /// </summary>
+    public const string InvalidTemplateSlotAttributes = "PLAY0236";
+
+    /// <summary>
+    /// A <c>when</c> override line in a template is not a valid width/height size-class condition.
+    /// </summary>
+    public const string InvalidTemplateOverride = "PLAY0237";
+
+    /// <summary>
+    /// A template declares more than one <c>when</c> override for the same width/height size-class combination.
+    /// </summary>
+    public const string DuplicateTemplateOverride = "PLAY0238";
+
+    /// <summary>
+    /// A layout's body does not match its declared (or default) <c>arrangement</c> - a <c>flow</c> layout
+    /// declares a <c>variant</c> block, or a <c>freeform</c> layout declares a <c>template</c> block.
+    /// </summary>
+    public const string ArrangementDirectiveMismatch = "PLAY0239";
+
+    /// <summary>
+    /// A <c>variant</c> line is not <c>variant width &lt;compact|regular&gt;, height &lt;compact|regular&gt;</c>.
+    /// </summary>
+    public const string InvalidVariantDeclaration = "PLAY0240";
+
+    /// <summary>
+    /// A layout declares more than one <c>variant</c> for the same width/height size-class combination.
+    /// </summary>
+    public const string DuplicateVariant = "PLAY0241";
+
+    /// <summary>
+    /// A <c>place</c> line is not <c>place &lt;Slot&gt; hidden</c> or <c>place &lt;Slot&gt; at x,y size w,h</c>.
+    /// </summary>
+    public const string InvalidPlaceDeclaration = "PLAY0242";
+
+    /// <summary>
+    /// A <c>variant</c> places (or hides) the same slot more than once.
+    /// </summary>
+    public const string DuplicatePlaceInVariant = "PLAY0243";
+
+    /// <summary>
+    /// A <c>freeform</c> layout's <c>variant</c> does not mention (place or hide) a slot another variant of the same layout places.
+    /// </summary>
+    public const string VariantMissingSlot = "PLAY0244";
 }
