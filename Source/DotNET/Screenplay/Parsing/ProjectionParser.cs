@@ -435,7 +435,18 @@ internal static partial class ProjectionParser
         var keyword = KeywordMappingRegex().Match(line.Content);
         if (keyword.Success)
         {
-            var property = Unescape(keyword.Groups[2].Value);
+            var target = keyword.Groups[2].Value;
+
+            // 'clear with' in a mapping position is a block directive someone stopped typing, not a property named
+            // 'with' - reading it as a clear would quietly do something other than what was meant. The escape gets
+            // the property back, so the guard costs nothing.
+            if (keyword.Groups[1].Value == "clear" && target == "with")
+            {
+                context.Error(DiagnosticCodes.InvalidProjectionMapping, $"Invalid mapping '{line.Content}' - 'clear with' is a block directive and needs an event type; to clear a property named 'with', write 'clear @with'", line.Location);
+                return null;
+            }
+
+            var property = Unescape(target);
             return keyword.Groups[1].Value switch
             {
                 "increment" => new IncrementMappingSyntax(property, line.Location),

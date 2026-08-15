@@ -71,6 +71,8 @@ from OwnerNoteCleared
 
 `clear <property>` is a mapping line inside a `from`, `every`, `all` or `with` block. It is not the same directive as `clear with <EventType>`, which nulls a whole child object — see [Nested Objects](nested).
 
+Because the two read alike, a bare `clear with` — the directive without its event type — is reported as an invalid mapping rather than read as clearing a property named `with`. If a read model really does have a property called `with`, escape it: `clear @with`.
+
 ## String Templates
 
 Create formatted strings using template literals:
