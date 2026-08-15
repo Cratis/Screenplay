@@ -107,6 +107,47 @@ internal static class ScreenplayValidator
         ValidateScreenReferences(scopedSlices, knownQueries, knownCommandDeclarations, knownScreenDeclarations, context);
         ValidateFormReferences(application, commandsByDeclaration, knownQueries, knownCommandDeclarations, knownScreenDeclarations, context);
         ValidateContributions(application, knownScreenDeclarations, context);
+        ValidateThemes(application, context);
+    }
+
+    /// <summary>
+    /// Validates that every <c>ui profile</c> selecting a theme names one the document declares, and that
+    /// the theme is declared compatible with every package the profile itself lists.
+    /// </summary>
+    /// <param name="application">The <see cref="ApplicationSyntax"/> to validate.</param>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <remarks>
+    /// An arbitrary theme/package pairing can silently produce unstyled or broken components, so a profile
+    /// selecting a theme not declared compatible with one of its own packages is reported - the pairing
+    /// might still work by coincidence, but the gap is made visible the same way an unknown or ambiguous
+    /// name already is.
+    /// </remarks>
+    static void ValidateThemes(ApplicationSyntax application, ParserContext context)
+    {
+        var themes = (application.Themes ?? []).ToDictionary(theme => theme.Name, StringComparer.Ordinal);
+
+        foreach (var profile in application.UiProfiles ?? [])
+        {
+            if (profile.Theme is not { } themeName)
+            {
+                continue;
+            }
+
+            if (!themes.TryGetValue(themeName, out var theme))
+            {
+                context.Warning(DiagnosticCodes.UnknownTheme, $"Unknown theme '{themeName}' - declare it with 'theme {themeName}'", profile.Location);
+                continue;
+            }
+
+            var compatibleWith = theme.CompatibleWith.ToHashSet(StringComparer.Ordinal);
+            foreach (var package in profile.Packages.Where(package => !compatibleWith.Contains(package)))
+            {
+                context.Warning(
+                    DiagnosticCodes.ThemeNotCompatibleWithPackage,
+                    $"Theme '{themeName}' is not declared compatible with package '{package}' - components from that package may not receive {themeName}'s styling",
+                    profile.Location);
+            }
+        }
     }
 
     /// <summary>
