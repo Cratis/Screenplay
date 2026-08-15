@@ -52,6 +52,8 @@
   href: screens.md
 - name: Forms
   href: forms.md
+- name: Contributions
+  href: contributions.md
 - name: Sub-language pluggability
   href: sub-languages.md
 - name: Grammar

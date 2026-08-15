@@ -26,6 +26,8 @@ layout DashboardLayout
     footer
 ```
 
+A slot may also declare `contributes <ContributionPoint>`, opening it up to many contributors declared anywhere in the module/feature tree instead of the one parent that owns the slot - see [Contributions](contributions.md).
+
 ## Level 1 — Intent
 
 Declares data and available actions. Studio generates the component.
