@@ -146,6 +146,12 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitUiProfile(UiProfileSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
+    /// Visits a <see cref="ThemeSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ThemeSyntax"/> to visit.</param>
+    public virtual void VisitTheme(ThemeSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
     /// Visits a <see cref="SeedSyntax"/> node and its children.
     /// </summary>
     /// <param name="syntax">The <see cref="SeedSyntax"/> to visit.</param>

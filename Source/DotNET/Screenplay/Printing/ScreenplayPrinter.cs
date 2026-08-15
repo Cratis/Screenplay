@@ -112,6 +112,12 @@ public sealed partial class ScreenplayPrinter :
             WriteAuthentication(writer, application.Authentication);
         }
 
+        foreach (var theme in application.Themes ?? [])
+        {
+            writer.Blank();
+            WriteTheme(writer, theme);
+        }
+
         foreach (var uiProfile in application.UiProfiles ?? [])
         {
             writer.Blank();
@@ -171,6 +177,24 @@ public sealed partial class ScreenplayPrinter :
                         writer.Line(package);
                     }
                 }
+            }
+
+            if (uiProfile.Theme is not null)
+            {
+                writer.Blank();
+                writer.Line($"theme {uiProfile.Theme}");
+            }
+        }
+    }
+
+    void WriteTheme(ScreenplayWriter writer, ThemeSyntax theme)
+    {
+        writer.Line($"theme {theme.Name}");
+        using (writer.Indent())
+        {
+            foreach (var package in theme.CompatibleWith)
+            {
+                writer.Line($"compatible with {package}");
             }
         }
     }
