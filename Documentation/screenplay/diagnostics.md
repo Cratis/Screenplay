@@ -345,6 +345,123 @@ var unexpected = result.Diagnostics
 | `PLAY0172` | Error | Two files of a folder each declare something the application has at most one of. |
 | `PLAY0173` | Error | Two files of a folder declare the same name. |
 | `PLAY0174` | Warning | Two files of a folder describe the same thing differently, and the first description is kept. |
+### What a command reads to decide
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0175` | Error | A `reads` line is not `reads <ReadModel>` or `reads <ReadModel> by <property>`. |
+| `PLAY0176` | Error | A command declares that it reads the same read model more than once. |
+| `PLAY0177` | Warning | A command reads a read model no projection in the document produces. |
+| `PLAY0178` | Warning | The `by` of a `reads` declaration does not name a property of the command. |
+
+### Rules about the whole artifact
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0179` | Error | A `require` rule carries no condition. |
+| `PLAY0180` | Error | The body of a `require` rule holds something other than its `message`. |
+| `PLAY0181` | Warning | A `require` operand is qualified by something the command does not read. |
+| `PLAY0182` | Warning | A `require` operand names neither a property of the artifact nor state it reads. |
+
+### Authentication
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0183` | Error | An authentication provider carries a configuration body, which belongs where the application runs. |
+
+### Authorize
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0184` | Error | Tokens are left over after the requirement of an `authorize`. |
+| `PLAY0185` | Error | A parenthesised group in an `authorize` is never closed. |
+
+### Read models and reducers
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0186` | Error | A `readmodel` line is not `readmodel <Name>`. |
+| `PLAY0187` | Error | A `reducer` line is not `reducer <Name> => <ReadModel>`. |
+| `PLAY0188` | Error | A line in a reducer body is not an `on <EventType>` rule. |
+| `PLAY0189` | Error | A reducer declares no rule, so nothing it observes is stated. |
+| `PLAY0190` | Error | The body of a reducer rule holds something other than a description, a file or inline code. |
+| `PLAY0191` | Error | More than one projection or reducer builds the same read model. |
+| `PLAY0192` | Error | A document declares the same read model more than once. |
+
+### Where a produced event lands, and what a reaction sets off
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0193` | Error | A `produces` declares more than one `for`, and an event is appended to one event source. |
+| `PLAY0194` | Error | An `invokes` line is not `invokes <Command>`. |
+| `PLAY0195` | Warning | A reactor invokes a command the document does not declare. |
+
+### What a screen binds to
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0196` | Warning | A screen binds data to a query nothing in scope declares. |
+| `PLAY0197` | Warning | A screen navigates to a screen nothing in scope declares. |
+| `PLAY0198` | Warning | A bare name matches more than one declaration at the same depth, so which one it means is undecided. |
+
+### What a query's results are narrowed to
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0199` | Error | A `scoped` line is not `scoped to <scope>`. |
+| `PLAY0200` | Error | A query declares more than one scope, and results are narrowed one way. |
+
+### UI profiles
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0201` | Error | A `ui profile` line is not `ui profile <Name>`. |
+| `PLAY0202` | Error | Two `ui profile` blocks in the same document declare the same name. |
+| `PLAY0203` | Error | A `target` line under a `ui profile` is neither `target platform ...` nor `target size ...`. |
+| `PLAY0204` | Error | A `ui profile` declares `target platform` or `target size` more than once. |
+| `PLAY0205` | Error | A line under a `packages` block is not a valid package name. |
+| `PLAY0206` | Error | A `ui profile`'s `packages` block lists the same package more than once. |
+| `PLAY0207` | Error | A line in a `ui profile` body is not `target` or `packages`, or `packages` is declared more than once. |
+
+### Forms
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0208` | Error | A `form` line is not `form <Name> for <Command>`. |
+| `PLAY0209` | Error | Two `form` blocks in the same document declare the same name. |
+| `PLAY0210` | Error | A line in a `form` body is not `populate`, `field` or `on submit`. |
+| `PLAY0211` | Error | A `populate` line is neither `populate via query ...` nor `populate from item`. |
+| `PLAY0212` | Error | A `form` declares `populate` more than once. |
+| `PLAY0213` | Error | A `field` line is not `field <property> [from <source>\|compose using <Callback>] [label "..."]`. |
+| `PLAY0214` | Error | An `on submit` line is not `on submit navigate to <Screen> [by <param>]`. |
+| `PLAY0215` | Error | A `form` declares `on submit` more than once. |
+| `PLAY0216` | Warning | A `field` binds to a property its form's command does not declare. |
+
+### Contributions
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0217` | Error | A `contribute` line is not `contribute to <ContributionPoint>`. |
+| `PLAY0218` | Error | A line in a `contribute to` body is not `navigate`, `label` or `order`. |
+| `PLAY0219` | Error | A contribution declares `navigate to` more than once. |
+| `PLAY0220` | Error | A contribution declares `label` more than once. |
+| `PLAY0221` | Error | A contribution declares `order` more than once. |
+| `PLAY0222` | Error | A contribution's `label` line is not `label "..."` or `label $strings....`. |
+| `PLAY0223` | Error | A contribution's `order` line is not `order <number>`. |
+| `PLAY0224` | Warning | A contribution names a contribution point nothing in scope declares. |
+
+### Themes
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0225` | Error | A `theme` line is not `theme <Name>`. |
+| `PLAY0226` | Error | Two `theme` blocks in the same document declare the same name. |
+| `PLAY0227` | Error | A line in a `theme` body is not `compatible with <Package>`. |
+| `PLAY0228` | Error | A `theme` declares compatibility with the same package more than once. |
+| `PLAY0229` | Error | A `ui profile`'s `theme` line is not `theme <Name>`. |
+| `PLAY0230` | Error | A `ui profile` declares `theme` more than once. |
+| `PLAY0231` | Warning | A `ui profile` selects a theme nothing in the document declares. |
+| `PLAY0232` | Warning | A `ui profile` selects a theme not declared compatible with one of the profile's own packages. |
 
 ### Layout arrangement
 

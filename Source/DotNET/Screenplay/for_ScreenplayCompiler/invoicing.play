@@ -124,6 +124,16 @@ trigger DirectoryChanged
   entry BillingContact
   changedAt DateTime
 
+theme Nordic
+  compatible with Cratis.Components
+
+ui profile Desktop
+  target platform web
+  target size regular
+  packages
+    Cratis.Components
+  theme Nordic
+
 module Invoicing
   description
     ```
