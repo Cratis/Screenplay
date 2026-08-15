@@ -45,7 +45,7 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_have_the_slice_description() => Slice("RegisterInvoice").Description.ShouldEqual("Registers a new invoice");
     [Fact] void should_have_the_command_description() => RegisterCommand.Description.ShouldEqual("Registers a new invoice with its lines and payment terms");
     [Fact] void should_have_both_layouts() => _result.Value!.Modules.Single().Layouts.Count().ShouldEqual(2);
-    [Fact] void should_have_the_master_detail_slots() => _result.Value!.Modules.Single().Layouts.First().Slots.ShouldContainOnly("sidebar", "main");
+    [Fact] void should_have_the_master_detail_slots() => _result.Value!.Modules.Single().Layouts.First().Slots.Select(_ => _.Name).ShouldContainOnly("sidebar", "main");
     [Fact] void should_have_all_slices() => _feature.Slices.Count().ShouldEqual(15);
     [Fact] void should_have_the_fully_auto_mapped_projection() => Slice("CancelledInvoices").Projections.Single().Blocks.OfType<FromSyntax>().Single().Mappings.ShouldBeEmpty();
     [Fact] void should_have_the_nested_feature() => _feature.Features.Single().Name.ShouldEqual("Adjustments");

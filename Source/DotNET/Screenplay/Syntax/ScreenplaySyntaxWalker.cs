@@ -141,6 +141,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitForm(form);
         }
 
+        foreach (var contribution in syntax.Contributions ?? [])
+        {
+            VisitContribution(contribution);
+        }
+
         foreach (var feature in syntax.Features)
         {
             VisitFeature(feature);
@@ -148,10 +153,24 @@ public abstract partial class ScreenplaySyntaxWalker
     }
 
     /// <summary>
-    /// Visits a <see cref="LayoutSyntax"/> node.
+    /// Visits a <see cref="LayoutSyntax"/> node and its children.
     /// </summary>
     /// <param name="syntax">The <see cref="LayoutSyntax"/> to visit.</param>
-    public virtual void VisitLayout(LayoutSyntax syntax) => VisitNode(syntax);
+    public virtual void VisitLayout(LayoutSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        foreach (var slot in syntax.Slots)
+        {
+            VisitSlot(slot);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="SlotSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SlotSyntax"/> to visit.</param>
+    public virtual void VisitSlot(SlotSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="FormSyntax"/> node and its children.
@@ -161,17 +180,47 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
 
+        if (syntax.Populate is not null)
+        {
+            VisitFormPopulate(syntax.Populate);
+        }
+
         foreach (var field in syntax.Fields)
         {
             VisitFormField(field);
         }
+
+        if (syntax.OnSubmit is not null)
+        {
+            VisitScreenNavigate(syntax.OnSubmit);
+        }
     }
+
+    /// <summary>
+    /// Visits a <see cref="FormPopulateSource"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="FormPopulateSource"/> to visit.</param>
+    public virtual void VisitFormPopulate(FormPopulateSource syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="FormFieldSyntax"/> node.
     /// </summary>
     /// <param name="syntax">The <see cref="FormFieldSyntax"/> to visit.</param>
     public virtual void VisitFormField(FormFieldSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a <see cref="ContributionSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ContributionSyntax"/> to visit.</param>
+    public virtual void VisitContribution(ContributionSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        if (syntax.Navigate is not null)
+        {
+            VisitScreenNavigate(syntax.Navigate);
+        }
+    }
 
     /// <summary>
     /// Visits a <see cref="FeatureSyntax"/> node and its children.
@@ -189,6 +238,11 @@ public abstract partial class ScreenplaySyntaxWalker
         foreach (var slice in syntax.Slices)
         {
             VisitSlice(slice);
+        }
+
+        foreach (var contribution in syntax.Contributions ?? [])
+        {
+            VisitContribution(contribution);
         }
     }
 
