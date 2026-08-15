@@ -108,6 +108,40 @@ internal static class ScreenplayValidator
         ValidateFormReferences(application, commandsByDeclaration, knownQueries, knownCommandDeclarations, knownScreenDeclarations, context);
         ValidateContributions(application, knownScreenDeclarations, context);
         ValidateThemes(application, context);
+        ValidateLayouts(application, context);
+    }
+
+    /// <summary>
+    /// Validates that every <c>freeform</c> layout's <c>variant</c>s agree on which slots exist - a variant
+    /// that omits a slot another variant of the same layout places (or explicitly hides) leaves that slot's
+    /// presence undefined for the size class the omitting variant targets.
+    /// </summary>
+    /// <param name="application">The <see cref="ApplicationSyntax"/> to validate.</param>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <remarks>
+    /// Whether a <c>ui profile</c> targeting a size class with no matching <c>variant</c> should warn is a
+    /// build-time concern - it depends on which layouts a profile's screens actually resolve to, which the
+    /// Screenplay compiler does not know. That check belongs to Stage's build pipeline, not here.
+    /// </remarks>
+    static void ValidateLayouts(ApplicationSyntax application, ParserContext context)
+    {
+        foreach (var layout in application.Modules.SelectMany(module => module.Layouts).Where(layout => layout.Variants is not null))
+        {
+            var variants = layout.Variants!.ToList();
+            var allSlots = variants.SelectMany(variant => variant.Places.Select(place => place.SlotName)).ToHashSet();
+
+            foreach (var variant in variants)
+            {
+                var declared = variant.Places.Select(place => place.SlotName).ToHashSet();
+                foreach (var missing in allSlots.Except(declared))
+                {
+                    context.Warning(
+                        DiagnosticCodes.VariantMissingSlot,
+                        $"Layout '{layout.Name}' variant for width {variant.Width}, height {variant.Height} does not mention slot '{missing}' - place it or declare it 'hidden'",
+                        variant.Location);
+                }
+            }
+        }
     }
 
     /// <summary>

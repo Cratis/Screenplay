@@ -28,9 +28,18 @@ public record ModuleSyntax(
 /// Represents a <c>layout</c> declaration - a reusable screen template with named slots.
 /// </summary>
 /// <param name="Name">The name of the layout.</param>
-/// <param name="Slots">The <see cref="SlotSyntax">slots</see> the layout template defines.</param>
+/// <param name="Slots">The <see cref="SlotSyntax">slots</see> the layout template defines, flattened regardless of arrangement.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record LayoutSyntax(string Name, IEnumerable<SlotSyntax> Slots, SourceLocation Location) : SyntaxNode(Location);
+/// <param name="Arrangement">The <see cref="LayoutArrangement"/> this layout's content is arranged by. Defaults to <see cref="LayoutArrangement.Flow"/>.</param>
+/// <param name="Template">The <see cref="TemplateSyntax"/> tree, present when <see cref="Arrangement"/> is <see cref="LayoutArrangement.Flow"/>.</param>
+/// <param name="Variants">The <see cref="VariantSyntax">variants</see>, present when <see cref="Arrangement"/> is <see cref="LayoutArrangement.Freeform"/>.</param>
+public record LayoutSyntax(
+    string Name,
+    IEnumerable<SlotSyntax> Slots,
+    SourceLocation Location,
+    LayoutArrangement Arrangement = LayoutArrangement.Flow,
+    TemplateSyntax? Template = null,
+    IEnumerable<VariantSyntax>? Variants = null) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents one named slot in a <c>layout</c> template.

@@ -452,16 +452,152 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"layout {layout.Name}");
         using (writer.Indent())
         {
+            if (layout.Arrangement == LayoutArrangement.Freeform)
+            {
+                writer.Line("arrangement freeform");
+
+                foreach (var variant in layout.Variants ?? [])
+                {
+                    writer.Blank();
+                    WriteVariant(writer, variant);
+                }
+
+                return;
+            }
+
+            if (layout.Template is null)
+            {
+                return;
+            }
+
             writer.Line("template");
             using (writer.Indent())
             {
-                foreach (var slot in layout.Slots)
+                WriteTemplateChildren(writer, layout.Template.Root);
+
+                foreach (var templateOverride in layout.Template.Overrides)
                 {
-                    writer.Line(slot.Contributes is null ? slot.Name : $"{slot.Name} contributes {slot.Contributes}");
+                    writer.Blank();
+                    WriteTemplateOverride(writer, templateOverride);
                 }
             }
         }
     }
+
+    void WriteTemplateChildren(ScreenplayWriter writer, TemplateNodeSyntax node)
+    {
+        if (node is TemplateContainerSyntax { Kind: TemplateContainerKind.Flat } flat)
+        {
+            foreach (var child in flat.Children)
+            {
+                WriteTemplateNode(writer, child);
+            }
+
+            return;
+        }
+
+        WriteTemplateNode(writer, node);
+    }
+
+    void WriteTemplateNode(ScreenplayWriter writer, TemplateNodeSyntax node)
+    {
+        switch (node)
+        {
+            case TemplateSlotSyntax slot:
+                writer.Line(WriteTemplateSlotLine(slot));
+                break;
+            case TemplateContainerSyntax container:
+                var keyword = container.Kind switch
+                {
+                    TemplateContainerKind.Row => "row",
+                    TemplateContainerKind.Column => "column",
+                    TemplateContainerKind.Grid => "grid",
+                    _ => string.Empty,
+                };
+                writer.Line(container.Gap is null ? keyword : $"{keyword} gap {container.Gap}");
+                using (writer.Indent())
+                {
+                    foreach (var child in container.Children)
+                    {
+                        WriteTemplateNode(writer, child);
+                    }
+                }
+
+                break;
+        }
+    }
+
+    void WriteTemplateOverride(ScreenplayWriter writer, TemplateOverrideSyntax templateOverride)
+    {
+        writer.Line($"when {WriteOverrideCondition(templateOverride)}");
+        using (writer.Indent())
+        {
+            WriteTemplateChildren(writer, templateOverride.Root);
+        }
+    }
+
+    void WriteVariant(ScreenplayWriter writer, VariantSyntax variant)
+    {
+        writer.Line($"variant width {variant.Width}, height {variant.Height}");
+        using (writer.Indent())
+        {
+            foreach (var place in variant.Places)
+            {
+                writer.Line(WritePlaceLine(place));
+            }
+        }
+    }
+
+    string WriteTemplateSlotLine(TemplateSlotSyntax slot)
+    {
+        var line = slot.Name;
+        if (slot.Contributes is not null)
+        {
+            line += $" contributes {slot.Contributes}";
+        }
+
+        if (slot.Width is not null)
+        {
+            line += $" width {slot.Width}";
+        }
+
+        if (slot.Height is not null)
+        {
+            line += $" height {slot.Height}";
+        }
+
+        if (slot.Grow)
+        {
+            line += " grow";
+        }
+
+        if (slot.Span is not null)
+        {
+            line += $" span {slot.Span}";
+        }
+
+        return line;
+    }
+
+    string WriteOverrideCondition(TemplateOverrideSyntax templateOverride)
+    {
+        if (templateOverride.Width is not null && templateOverride.Height is not null)
+        {
+            return $"width {templateOverride.Width}, height {templateOverride.Height}";
+        }
+
+        if (templateOverride.Width is not null)
+        {
+            return $"width {templateOverride.Width}";
+        }
+
+        return $"height {templateOverride.Height}";
+    }
+
+    string WritePlaceLine(PlaceSyntax place) =>
+        place.Hidden
+            ? $"place {place.SlotName} hidden"
+            : $"place {place.SlotName} at {place.X},{place.Y} size {place.SizeWidth},{place.SizeHeight}";
 
     void WriteFeature(ScreenplayWriter writer, FeatureSyntax feature)
     {

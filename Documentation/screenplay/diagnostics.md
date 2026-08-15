@@ -346,6 +346,23 @@ var unexpected = result.Diagnostics
 | `PLAY0173` | Error | Two files of a folder declare the same name. |
 | `PLAY0174` | Warning | Two files of a folder describe the same thing differently, and the first description is kept. |
 
+### Layout arrangement
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0233` | Error | A layout's `arrangement` line is not `arrangement flow` or `arrangement freeform`. |
+| `PLAY0234` | Error | A layout declares `arrangement` more than once. |
+| `PLAY0235` | Error | A `row`, `column` or `grid` line in a template is malformed. |
+| `PLAY0236` | Error | A slot leaf within a template tree has malformed sizing attributes. |
+| `PLAY0237` | Error | A `when` override line in a template is not a valid width/height size-class condition. |
+| `PLAY0238` | Error | A template declares more than one `when` override for the same width/height size-class combination. |
+| `PLAY0239` | Error | A layout's body does not match its declared (or default) `arrangement` - a `flow` layout declares a `variant` block, or a `freeform` layout declares a `template` block. |
+| `PLAY0240` | Error | A `variant` line is not `variant width <compact\|regular>, height <compact\|regular>`. |
+| `PLAY0241` | Error | A layout declares more than one `variant` for the same width/height size-class combination. |
+| `PLAY0242` | Error | A `place` line is not `place <Slot> hidden` or `place <Slot> at x,y size w,h`. |
+| `PLAY0243` | Error | A `variant` places (or hides) the same slot more than once. |
+| `PLAY0244` | Warning | A `freeform` layout's `variant` does not mention (place or hide) a slot another variant of the same layout places. |
+
 ## Retired codes
 
 None yet. When a code is retired it is listed here with the release it went in, and its number stays out of use forever.
