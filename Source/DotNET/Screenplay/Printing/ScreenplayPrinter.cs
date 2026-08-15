@@ -112,6 +112,12 @@ public sealed partial class ScreenplayPrinter :
             WriteAuthentication(writer, application.Authentication);
         }
 
+        foreach (var uiProfile in application.UiProfiles ?? [])
+        {
+            writer.Blank();
+            WriteUiProfile(writer, uiProfile);
+        }
+
         foreach (var module in application.Modules)
         {
             writer.Blank();
@@ -133,6 +139,38 @@ public sealed partial class ScreenplayPrinter :
             foreach (var provider in authentication.Providers)
             {
                 writer.Line(provider.Alias is null ? $"provider {provider.Name}" : $"provider {provider.Name} name {provider.Alias}");
+            }
+        }
+    }
+
+    void WriteUiProfile(ScreenplayWriter writer, UiProfileSyntax uiProfile)
+    {
+        writer.Line($"ui profile {uiProfile.Name}");
+        using (writer.Indent())
+        {
+            var platforms = uiProfile.Platforms.ToList();
+            if (platforms.Count > 0)
+            {
+                writer.Line($"target platform {string.Join(", ", platforms)}");
+            }
+
+            if (uiProfile.DefaultSizeClass is not null)
+            {
+                writer.Line($"target size {uiProfile.DefaultSizeClass}");
+            }
+
+            var packages = uiProfile.Packages.ToList();
+            if (packages.Count > 0)
+            {
+                writer.Blank();
+                writer.Line("packages");
+                using (writer.Indent())
+                {
+                    foreach (var package in packages)
+                    {
+                        writer.Line(package);
+                    }
+                }
             }
         }
     }

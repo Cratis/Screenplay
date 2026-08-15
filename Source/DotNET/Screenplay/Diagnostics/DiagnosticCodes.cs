@@ -1089,4 +1089,41 @@ public static class DiagnosticCodes
     /// A query declares more than one scope, and results are narrowed one way.
     /// </summary>
     public const string DuplicateScope = "PLAY0200";
+
+    // ui profile - the platform/size/package vocabulary a build targets.
+
+    /// <summary>
+    /// A <c>ui profile</c> line is not <c>ui profile &lt;Name&gt;</c>.
+    /// </summary>
+    public const string InvalidUiProfileDeclaration = "PLAY0201";
+
+    /// <summary>
+    /// Two <c>ui profile</c> blocks in the same document declare the same name.
+    /// </summary>
+    public const string DuplicateUiProfile = "PLAY0202";
+
+    /// <summary>
+    /// A <c>target</c> line under a <c>ui profile</c> is neither <c>target platform ...</c> nor <c>target size ...</c>.
+    /// </summary>
+    public const string InvalidTargetDeclaration = "PLAY0203";
+
+    /// <summary>
+    /// A <c>ui profile</c> declares <c>target platform</c> or <c>target size</c> more than once.
+    /// </summary>
+    public const string DuplicateTargetDeclaration = "PLAY0204";
+
+    /// <summary>
+    /// A line under a <c>packages</c> block is not a valid package name.
+    /// </summary>
+    public const string InvalidPackageName = "PLAY0205";
+
+    /// <summary>
+    /// A <c>ui profile</c>'s <c>packages</c> block lists the same package more than once.
+    /// </summary>
+    public const string DuplicatePackageDeclaration = "PLAY0206";
+
+    /// <summary>
+    /// A line in a <c>ui profile</c> body is not <c>target</c> or <c>packages</c>, or <c>packages</c> is declared more than once.
+    /// </summary>
+    public const string UnknownUiProfileDirective = "PLAY0207";
 }

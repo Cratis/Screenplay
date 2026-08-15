@@ -140,6 +140,12 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitAuthenticationProvider(AuthenticationProviderSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
+    /// Visits a <see cref="UiProfileSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="UiProfileSyntax"/> to visit.</param>
+    public virtual void VisitUiProfile(UiProfileSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
     /// Visits a <see cref="SeedSyntax"/> node and its children.
     /// </summary>
     /// <param name="syntax">The <see cref="SeedSyntax"/> to visit.</param>
