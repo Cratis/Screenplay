@@ -281,6 +281,7 @@ internal static partial class ScreenplayParser
         var layouts = new List<LayoutSyntax>();
         var features = new List<FeatureSyntax>();
         var forms = new List<FormSyntax>();
+        var contributions = new List<ContributionSyntax>();
 
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -296,17 +297,20 @@ internal static partial class ScreenplayParser
                 case "form":
                     AddForm(context, FormParser.Parse(context, child), forms);
                     break;
+                case "contribute":
+                    contributions.Add(ContributionParser.Parse(context, child));
+                    break;
                 case "feature":
                     features.Add(ParseFeature(context, child));
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownModuleDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected description, layout, form or feature", child.Location);
+                    context.Error(DiagnosticCodes.UnknownModuleDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected description, layout, form, contribute or feature", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
         }
 
-        return new(name, layouts, features, line.Location, description, forms);
+        return new(name, layouts, features, line.Location, description, forms, contributions);
     }
 
     static void AddForm(ParserContext context, FormSyntax form, List<FormSyntax> forms)
@@ -323,7 +327,7 @@ internal static partial class ScreenplayParser
     static LayoutSyntax ParseLayout(ParserContext context, SourceLine line)
     {
         var name = line.Content["layout".Length..].Trim();
-        var slots = new List<string>();
+        var slots = new List<SlotSyntax>();
 
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -333,13 +337,14 @@ internal static partial class ScreenplayParser
                 while (context.TryPeekChild(child.Indent, out var slot))
                 {
                     context.Reader.TakeSignificant();
-                    if (SlotNameRegex().IsMatch(slot.Content))
+                    var slotMatch = SlotRegex().Match(slot.Content);
+                    if (slotMatch.Success)
                     {
-                        slots.Add(slot.Content);
+                        slots.Add(new(slotMatch.Groups[1].Value, slotMatch.Groups[2].Success ? slotMatch.Groups[2].Value : null, slot.Location));
                     }
                     else
                     {
-                        context.Error(DiagnosticCodes.InvalidLayoutSlotName, $"Invalid slot name '{slot.Content}' - expected an identifier", slot.Location);
+                        context.Error(DiagnosticCodes.InvalidLayoutSlotName, $"Invalid slot name '{slot.Content}' - expected an identifier, optionally followed by 'contributes <ContributionPoint>'", slot.Location);
                     }
                 }
             }
@@ -365,6 +370,7 @@ internal static partial class ScreenplayParser
         string? description = null;
         var features = new List<FeatureSyntax>();
         var slices = new List<SliceSyntax>();
+        var contributions = new List<ContributionSyntax>();
 
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -380,14 +386,17 @@ internal static partial class ScreenplayParser
                 case "slice":
                     slices.Add(SliceParser.Parse(context, child));
                     break;
+                case "contribute":
+                    contributions.Add(ContributionParser.Parse(context, child));
+                    break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownFeatureDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in feature body - expected description, feature or slice", child.Location);
+                    context.Error(DiagnosticCodes.UnknownFeatureDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in feature body - expected description, feature, slice or contribute", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
         }
 
-        return new(name, features, slices, line.Location, description);
+        return new(name, features, slices, line.Location, description, contributions);
     }
 
     [GeneratedRegex(@"^domain\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]
@@ -405,8 +414,8 @@ internal static partial class ScreenplayParser
     [GeneratedRegex(@"^([a-z_]\w*)\s+reason\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.None, 1000)]
     private static partial Regex AttributeReasonRegex();
 
-    [GeneratedRegex(@"^[a-z_]\w*$", RegexOptions.None, 1000)]
-    private static partial Regex SlotNameRegex();
+    [GeneratedRegex(@"^([a-z_]\w*)(?:\s+contributes\s+([A-Za-z_]\w*))?$", RegexOptions.None, 1000)]
+    private static partial Regex SlotRegex();
 
     [GeneratedRegex(@"^persona\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex PersonaRegex();

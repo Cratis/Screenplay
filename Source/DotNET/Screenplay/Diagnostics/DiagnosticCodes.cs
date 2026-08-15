@@ -1173,4 +1173,46 @@ public static class DiagnosticCodes
     /// A <c>field</c> binds to a property its form's command does not declare.
     /// </summary>
     public const string UnknownFormFieldProperty = "PLAY0216";
+
+    // contribute to - one item contributed into a named contribution point.
+
+    /// <summary>
+    /// A <c>contribute</c> line is not <c>contribute to &lt;ContributionPoint&gt;</c>.
+    /// </summary>
+    public const string InvalidContributionDeclaration = "PLAY0217";
+
+    /// <summary>
+    /// A line in a <c>contribute to</c> body is not <c>navigate</c>, <c>label</c> or <c>order</c>.
+    /// </summary>
+    public const string UnknownContributionDirective = "PLAY0218";
+
+    /// <summary>
+    /// A contribution declares <c>navigate to</c> more than once.
+    /// </summary>
+    public const string DuplicateContributionNavigate = "PLAY0219";
+
+    /// <summary>
+    /// A contribution declares <c>label</c> more than once.
+    /// </summary>
+    public const string DuplicateContributionLabel = "PLAY0220";
+
+    /// <summary>
+    /// A contribution declares <c>order</c> more than once.
+    /// </summary>
+    public const string DuplicateContributionOrder = "PLAY0221";
+
+    /// <summary>
+    /// A contribution's <c>label</c> line is not <c>label "..."</c> or <c>label $strings....</c>.
+    /// </summary>
+    public const string InvalidContributionLabel = "PLAY0222";
+
+    /// <summary>
+    /// A contribution's <c>order</c> line is not <c>order &lt;number&gt;</c>.
+    /// </summary>
+    public const string InvalidOrderDeclaration = "PLAY0223";
+
+    /// <summary>
+    /// A contribution names a contribution point nothing in scope declares.
+    /// </summary>
+    public const string UnknownContributionPoint = "PLAY0224";
 }

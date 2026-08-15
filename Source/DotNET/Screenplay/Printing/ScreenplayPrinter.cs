@@ -336,10 +336,38 @@ public sealed partial class ScreenplayPrinter :
                 WriteForm(writer, form);
             }
 
+            foreach (var contribution in module.Contributions ?? [])
+            {
+                writer.Blank();
+                WriteContribution(writer, contribution);
+            }
+
             foreach (var feature in module.Features)
             {
                 writer.Blank();
                 WriteFeature(writer, feature);
+            }
+        }
+    }
+
+    void WriteContribution(ScreenplayWriter writer, ContributionSyntax contribution)
+    {
+        writer.Line($"contribute to {contribution.ContributionPoint}");
+        using (writer.Indent())
+        {
+            if (contribution.Navigate is not null)
+            {
+                writer.Line(WriteScreenNavigate(contribution.Navigate));
+            }
+
+            if (contribution.Label is not null)
+            {
+                writer.Line($"label {ScreenplaySyntaxText.LocalizableString(contribution.Label)}");
+            }
+
+            if (contribution.Order is not null)
+            {
+                writer.Line($"order {contribution.Order}");
             }
         }
     }
@@ -405,7 +433,7 @@ public sealed partial class ScreenplayPrinter :
             {
                 foreach (var slot in layout.Slots)
                 {
-                    writer.Line(slot);
+                    writer.Line(slot.Contributes is null ? slot.Name : $"{slot.Name} contributes {slot.Contributes}");
                 }
             }
         }
@@ -428,6 +456,12 @@ public sealed partial class ScreenplayPrinter :
             {
                 writer.Blank();
                 WriteSlice(writer, slice);
+            }
+
+            foreach (var contribution in feature.Contributions ?? [])
+            {
+                writer.Blank();
+                WriteContribution(writer, contribution);
             }
         }
     }

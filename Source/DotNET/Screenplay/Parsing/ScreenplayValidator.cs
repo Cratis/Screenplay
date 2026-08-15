@@ -106,6 +106,7 @@ internal static class ScreenplayValidator
 
         ValidateScreenReferences(scopedSlices, knownQueries, knownCommandDeclarations, knownScreenDeclarations, context);
         ValidateFormReferences(application, commandsByDeclaration, knownQueries, knownCommandDeclarations, knownScreenDeclarations, context);
+        ValidateContributions(application, knownScreenDeclarations, context);
     }
 
     /// <summary>
@@ -448,6 +449,112 @@ internal static class ScreenplayValidator
                 DiagnosticCodes.UnknownFormFieldProperty,
                 $"Form '{form.Name}' has a field for '{field.Property}', which is not a property of command '{command.Name}'",
                 field.Location);
+        }
+    }
+
+    /// <summary>
+    /// Validates that every contribution in the document resolves to a contribution point some layout
+    /// template's slot declares, and that the screen it navigates to, if any, resolves.
+    /// </summary>
+    /// <param name="application">The <see cref="ApplicationSyntax"/> to validate.</param>
+    /// <param name="screens">The screens the document declares, scoped to where they are declared.</param>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <remarks>
+    /// A contribution resolves to the nearest enclosing template that declares a matching contribution
+    /// point: first the contribution's own module - a module with its own matching slot stops contributions
+    /// inside it from bubbling further out - then every other module in the document. This is a different
+    /// algorithm from <see cref="ReferenceResolver"/>: it walks a physical containment tree (module owns
+    /// layout owns slot) rather than narrowing by declaration-scope depth.
+    /// </remarks>
+    static void ValidateContributions(ApplicationSyntax application, IReadOnlyList<Declaration> screens, ParserContext context)
+    {
+        var offers = application.Modules
+            .SelectMany(module => module.Layouts.SelectMany(layout => layout.Slots
+                .Where(slot => slot.Contributes is not null)
+                .Select(slot => (Module: module.Name, Layout: layout.Name, Slot: slot.Name, ContributionPoint: slot.Contributes!))))
+            .ToList();
+
+        foreach (var module in application.Modules)
+        {
+            var moduleScope = new DeclarationScope([module.Name]);
+            foreach (var contribution in module.Contributions ?? [])
+            {
+                ValidateContribution(contribution, module.Name, moduleScope, offers, screens, context);
+            }
+
+            foreach (var (feature, scope) in AllFeaturesScoped(module.Features, [module.Name]))
+            {
+                foreach (var contribution in feature.Contributions ?? [])
+                {
+                    ValidateContribution(contribution, module.Name, scope, offers, screens, context);
+                }
+            }
+        }
+    }
+
+    static void ValidateContribution(
+        ContributionSyntax contribution,
+        string ownModule,
+        DeclarationScope scope,
+        IReadOnlyList<(string Module, string Layout, string Slot, string ContributionPoint)> offers,
+        IReadOnlyList<Declaration> screens,
+        ParserContext context)
+    {
+        var ownModuleMatches = offers.Where(offer => offer.Module == ownModule && offer.ContributionPoint == contribution.ContributionPoint).ToList();
+        if (ownModuleMatches.Count > 1)
+        {
+            var where = string.Join(", ", ownModuleMatches.Select(offer => $"{offer.Layout}.{offer.Slot}"));
+            context.Warning(
+                DiagnosticCodes.AmbiguousReference,
+                $"Ambiguous contribution point '{contribution.ContributionPoint}' - {ownModuleMatches.Count} slots in module '{ownModule}' declare it ({where})",
+                contribution.Location);
+        }
+        else if (ownModuleMatches.Count == 0)
+        {
+            var elsewhereMatches = offers.Where(offer => offer.Module != ownModule && offer.ContributionPoint == contribution.ContributionPoint)
+                .Select(offer => offer.Module)
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+
+            if (elsewhereMatches.Count > 1)
+            {
+                context.Warning(
+                    DiagnosticCodes.AmbiguousReference,
+                    $"Ambiguous contribution point '{contribution.ContributionPoint}' - {elsewhereMatches.Count} modules declare it ({string.Join(", ", elsewhereMatches)})",
+                    contribution.Location);
+            }
+            else if (elsewhereMatches.Count == 0)
+            {
+                context.Warning(
+                    DiagnosticCodes.UnknownContributionPoint,
+                    $"Unknown contribution point '{contribution.ContributionPoint}' - no layout template slot declares 'contributes {contribution.ContributionPoint}'",
+                    contribution.Location);
+            }
+        }
+
+        if (contribution.Navigate is not null)
+        {
+            Report(contribution.Navigate.Screen, scope, screens, DiagnosticCodes.UnknownScreen, "screen", contribution.Navigate.Location, context);
+        }
+    }
+
+    /// <summary>
+    /// Yields every feature in a module's feature tree with the scope it sits in, at any nesting depth.
+    /// </summary>
+    /// <param name="features">The top level <see cref="FeatureSyntax">features</see> to walk.</param>
+    /// <param name="path">The scope path leading to <paramref name="features"/>, outermost first.</param>
+    /// <returns>Each feature and where it sits.</returns>
+    static IEnumerable<(FeatureSyntax Feature, DeclarationScope Scope)> AllFeaturesScoped(IEnumerable<FeatureSyntax> features, IReadOnlyList<string> path)
+    {
+        foreach (var feature in features)
+        {
+            List<string> featurePath = [.. path, feature.Name];
+            yield return (feature, new DeclarationScope(featurePath));
+
+            foreach (var nested in AllFeaturesScoped(feature.Features, featurePath))
+            {
+                yield return nested;
+            }
         }
     }
 
