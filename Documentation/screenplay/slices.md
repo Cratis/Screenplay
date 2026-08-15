@@ -67,7 +67,7 @@ module Invoicing
 | --- | --- |
 | `StateChange` | A command → events flow; something that changes the system |
 | `StateView` | A query + projection + screen; something that reads the system |
-| `Automation` | A reactor or reducer; something that reacts to events |
+| `Automation` | A reaction or reducer; something that runs when something happens |
 | `Translate` | A capture; converts external data into events |
 
 ### What goes in a slice
@@ -82,7 +82,7 @@ module Invoicing
 | `projection` | `StateView` | [Projections](projections/index.md) |
 | `reducer` | `StateView` | [Read models](readmodels.md#reducers) |
 | `screen` | `StateView` | [Screens](screens.md) |
-| `reactor` | `Automation` | [Reactors](reactors.md) |
+| `reaction` | `Automation` | [Reactions](reactions.md) |
 | `capture` | `Translate` | [Captures](captures.md) |
 
 Every one of these may appear as many times as the behavior needs — several events, several commands, [several projections](projections/index.md#several-projections-in-one-slice). Only `description` is limited to one. A slice is one behavior, not one artifact of each kind.

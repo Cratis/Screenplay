@@ -267,14 +267,14 @@ var unexpected = result.Diagnostics
 | `PLAY0134` | Error | A line in a constraint body is not one the language can read. |
 | `PLAY0135` | Error | A constraint states more than one rule, and a constraint states one. |
 
-### Reactors
+### Reactions
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0136` | Error | A `reactor` line is not `reactor <Name>`. |
-| `PLAY0137` | Error | A line in a reactor body is not `on <EventType>`. |
-| `PLAY0138` | Error | A reactor observes no events, so nothing ever reaches it. |
-| `PLAY0139` | Error | A line in a reactor trigger body opens with a word a trigger declares nothing by. |
+| `PLAY0136` | Error | A `reaction` line is not `reaction <Name>`. |
+| `PLAY0137` | Error | A line in a reaction body is not a trigger the language reads. |
+| `PLAY0138` | Error | A reaction states no trigger, so nothing ever sets it off. |
+| `PLAY0139` | Error | A line in a reaction trigger body opens with a word a trigger declares nothing by. |
 
 ### Validation rules
 
@@ -362,6 +362,20 @@ var unexpected = result.Diagnostics
 | `PLAY0242` | Error | A `place` line is not `place <Slot> hidden` or `place <Slot> at x,y size w,h`. |
 | `PLAY0243` | Error | A `variant` places (or hides) the same slot more than once. |
 | `PLAY0244` | Warning | A `freeform` layout's `variant` does not mention (place or hide) a slot another variant of the same layout places. |
+
+### Triggers
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0245` | Error | A `trigger` line is not `trigger <Name>`. |
+| `PLAY0246` | Error | A line in a trigger body is neither a description nor a value the trigger provides. |
+| `PLAY0247` | Error | The document declares two triggers by the same name, leaving no answer to which one a reaction means. |
+| `PLAY0248` | Warning | A `when` line names neither an event nor a trigger the document or the compiler knows. |
+| `PLAY0249` | Error | An `every` line is not `every <n> <seconds\|minutes\|hours\|days>`. |
+| `PLAY0250` | Error | An `at` line is not `at <HH:mm>`, optionally followed by `on <Weekday>` or `on day <n>`. |
+| `PLAY0251` | Warning | A reaction takes a value from an occurrence that the trigger does not provide. |
+| `PLAY0252` | Error | A reaction states more than one `where`, and a reaction is narrowed by one condition. |
+| `PLAY0253` | Error | A reaction declares the same trigger more than once, so the second says nothing the first did not. |
 
 ## Retired codes
 

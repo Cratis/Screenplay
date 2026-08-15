@@ -32,7 +32,7 @@ Screenplay files use the `.play` extension.
   <feature>+
     <feature>*          ← sub-features, arbitrarily deep
     <slice>+
-      <construct>+      ← events, commands, queries, projections, captures, reactors, screens, constraints
+      <construct>+      ← events, commands, queries, projections, captures, reactions, screens, constraints
 <seeds>
 ```
 
@@ -68,7 +68,8 @@ Line comments start with `//` and run to the end of the line.
 | CDL-embedded change data capture | [Captures](captures.md) |
 | Events seeded per event source id | [Event seeding](seeding.md) |
 | Server-side rules enforced before commit | [Constraints](constraints.md) |
-| Event reaction rules | [Reactors](reactors.md) |
+| Reaction rules | [Reactions](reactions.md) |
+| What sets a reaction off | [Triggers](triggers.md) |
 | UI declarations at three abstraction levels | [Screens](screens.md) |
 | Registering additional embedded sub-languages | [Sub-language Pluggability](sub-languages.md) |
 | The full EBNF grammar | [Grammar](grammar.md) |

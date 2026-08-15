@@ -36,4 +36,4 @@ seed
       name = "Globex"
 ```
 
-Each group appends its events, in declaration order, to the event stream of its event source id. The runtime performs the seeding through Chronicle's event seeding API, so seeded events flow through projections and reactors exactly like events produced by commands.
+Each group appends its events, in declaration order, to the event stream of its event source id. The runtime performs the seeding through Chronicle's event seeding API, so seeded events flow through projections and reactions exactly like events produced by commands.

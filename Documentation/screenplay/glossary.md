@@ -11,14 +11,14 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Module** — the top-level namespace of a `.play` file; maps to a bounded context. One module per file by convention.
 - **Feature** — a vertical grouping of related slices inside a module. Nests arbitrarily deep for sub-features.
 - **Slice** — the atomic unit of behavior, aligned with Event Modeling. Has a type and a name and contains the constructs that implement one behavior.
-- **Construct** — a declaration inside a slice: `event`, `command`, `query`, `projection`, `capture`, `constraint`, `reactor`, or `screen`.
+- **Construct** — a declaration inside a slice: `event`, `command`, `query`, `projection`, `capture`, `constraint`, `reaction`, or `screen`.
 - **Offside rule** — the indentation rule that defines structure: a construct owns everything indented beneath it. There are no braces.
 
 ## Slice types
 
 - **`StateChange`** — a command → events flow; something that changes the system.
 - **`StateView`** — a query + projection + screen; something that reads the system.
-- **`Automation`** — a reactor or reducer; something that reacts to events.
+- **`Automation`** — a reaction or reducer; something that runs when something happens.
 - **`Translate`** — a capture; converts external data into events.
 
 ## Constructs
@@ -35,7 +35,9 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Projection** — a declaration, written in PDL, that builds a read model by folding events (`from EventType key ...`).
 - **Capture** — a declaration, written in CDL, that turns polled or pushed external data into events.
 - **Constraint** — a server-side invariant (such as uniqueness) enforced in the Chronicle kernel before an event is committed.
-- **Reactor** — a rule that observes events and produces side effects — notifications, follow-up events, or commands.
+- **Reaction** — behavior that runs when something happens, producing side effects: notifications, follow-up events, or commands. Chronicle's *reactor* is one thing that can perform one.
+- **Trigger** — something that can cause a reaction to run: an event, the clock, a declared trigger, or one a consumer registered.
+- **Trigger data** — the values one occurrence of a trigger hands the reaction.
 - **Screen** — a UI declaration inside a `StateView` slice, expressible at three levels from pure intent to layout with inline React.
 - **Layout** — a reusable screen template with named slots, declared at module level and referenced by screens.
 
