@@ -330,12 +330,69 @@ public sealed partial class ScreenplayPrinter :
                 WriteLayout(writer, layout);
             }
 
+            foreach (var form in module.Forms ?? [])
+            {
+                writer.Blank();
+                WriteForm(writer, form);
+            }
+
             foreach (var feature in module.Features)
             {
                 writer.Blank();
                 WriteFeature(writer, feature);
             }
         }
+    }
+
+    void WriteForm(ScreenplayWriter writer, FormSyntax form)
+    {
+        writer.Line($"form {form.Name} for {form.For}");
+        using (writer.Indent())
+        {
+            if (form.Populate is not null)
+            {
+                writer.Line(WriteFormPopulate(form.Populate));
+            }
+
+            foreach (var field in form.Fields)
+            {
+                writer.Line(WriteFormField(field));
+            }
+
+            if (form.OnSubmit is not null)
+            {
+                writer.Line($"on submit {WriteScreenNavigate(form.OnSubmit)}");
+            }
+        }
+    }
+
+    string WriteFormPopulate(FormPopulateSource populate) => populate switch
+    {
+        FormPopulateViaQuerySyntax viaQuery => viaQuery.By is null
+            ? $"populate via query {viaQuery.Query}"
+            : $"populate via query {viaQuery.Query} by {viaQuery.By}",
+        FormPopulateFromItemSyntax => "populate from item",
+        _ => string.Empty
+    };
+
+    string WriteFormField(FormFieldSyntax field)
+    {
+        var head = $"field {field.Property}";
+        if (field.From is not null)
+        {
+            head += $" from {field.From}";
+        }
+        else if (field.ComposeUsing is not null)
+        {
+            head += $" compose using {field.ComposeUsing}";
+        }
+
+        if (field.Label is not null)
+        {
+            head += $" label {ScreenplaySyntaxText.LocalizableString(field.Label)}";
+        }
+
+        return head;
     }
 
     void WriteLayout(ScreenplayWriter writer, LayoutSyntax layout)
