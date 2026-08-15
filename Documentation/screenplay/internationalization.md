@@ -33,7 +33,9 @@ In addition, the operands that carry user-facing text accept an unquoted `$strin
 
 - the `message` operand of validation rules,
 - the `label` operand of screen actions, table columns and summary fields,
-- the `title` operand of screens and sections.
+- the `title` operand of screens and sections,
+- the `label` operand of a [contribution](contributions.md)'s `contribute to` block,
+- the `label` operand of a [form](forms.md) field.
 
 ```screenplay
 command CancelInvoice
