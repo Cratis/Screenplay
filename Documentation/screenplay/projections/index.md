@@ -51,6 +51,7 @@ projection InvoiceDetails => InvoiceDetailsReadModel
 | `parent <property>` | Identifies the owning parent of a child. |
 | `remove with <EventType>` | Removes the instance (or child) when the event occurs. |
 | `increment` / `decrement <property>` | Counters maintained per event. |
+| `clear <property>` | Removes the value the property holds. |
 | `$eventContext.occurred` | The timestamp of the event being projected. |
 
 An aggregating projection using counters:

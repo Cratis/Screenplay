@@ -134,6 +134,7 @@ KeyPart         = Ident, "=", Expr ;
 ParentDecl      = "parent", Expr, NL ;
 
 MappingLine     = Assignment
+                | ClearLine
                 | IncLine
                 | DecLine
                 | CountLine
@@ -141,6 +142,8 @@ MappingLine     = Assignment
                 | SubLine ;
 
 Assignment      = Ident, "=", Expr, NL ;
+
+ClearLine       = "clear", Path, NL ;
 
 IncLine         = "increment", Ident, NL ;
 DecLine         = "decrement", Ident, NL ;
@@ -364,6 +367,7 @@ Operations that modify the read model:
 
 ```ebnf
 MappingLine = Assignment
+            | ClearLine
             | IncLine
             | DecLine
             | CountLine
@@ -371,12 +375,15 @@ MappingLine = Assignment
             | SubLine ;
 
 Assignment = Ident, "=", Expr, NL ;
+ClearLine = "clear", Path, NL ;
 IncLine = "increment", Ident, NL ;
 DecLine = "decrement", Ident, NL ;
 CountLine = "count", Ident, NL ;
 AddLine = "add", Ident, "by", Expr, NL ;
 SubLine = "subtract", Ident, "by", Expr, NL ;
 ```
+
+**Note:** `ClearLine` removes the value a property holds, and takes a dotted `Path` so a property on a nested object can be cleared. It is a mapping line, distinct from `ClearWithBlock` — `clear with <EventType>` — which nulls a whole child object. The older `Assignment` spelling `<property> = null` still parses, and parses as an assignment of the null literal.
 
 ### Expressions
 

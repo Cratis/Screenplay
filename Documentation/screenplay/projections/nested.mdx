@@ -50,6 +50,8 @@ nested command
 
 When a `CommandClearedForSlice` event is appended, the `command` property on the parent is set to `null`.
 
+`clear with` takes an event and drops the whole nested object. To clear a single property instead, use the `clear <property>` mapping line inside a `from` block — see [Property Mapping](property-mapping.md#clearing-a-value).
+
 ## Multiple From Events
 
 The nested object can be updated by more than one event:
