@@ -83,6 +83,9 @@ public abstract partial class ScreenplaySyntaxWalker
             case SetMappingSyntax set:
                 VisitSetMapping(set);
                 break;
+            case ClearMappingSyntax clear:
+                VisitClearMapping(clear);
+                break;
             case IncrementMappingSyntax increment:
                 VisitIncrementMapping(increment);
                 break;
@@ -113,6 +116,12 @@ public abstract partial class ScreenplaySyntaxWalker
         VisitNode(syntax);
         VisitExpression(syntax.Source);
     }
+
+    /// <summary>
+    /// Visits a <see cref="ClearMappingSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ClearMappingSyntax"/> to visit.</param>
+    public virtual void VisitClearMapping(ClearMappingSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits an <see cref="IncrementMappingSyntax"/> node.

@@ -432,14 +432,15 @@ internal static partial class ProjectionParser
 
     static MappingSyntax? ParseMapping(ParserContext context, SourceLine line)
     {
-        var counter = CounterRegex().Match(line.Content);
-        if (counter.Success)
+        var keyword = KeywordMappingRegex().Match(line.Content);
+        if (keyword.Success)
         {
-            var property = Unescape(counter.Groups[2].Value);
-            return counter.Groups[1].Value switch
+            var property = Unescape(keyword.Groups[2].Value);
+            return keyword.Groups[1].Value switch
             {
                 "increment" => new IncrementMappingSyntax(property, line.Location),
                 "decrement" => new DecrementMappingSyntax(property, line.Location),
+                "clear" => new ClearMappingSyntax(property, line.Location),
                 _ => new CountMappingSyntax(property, line.Location)
             };
         }
@@ -505,8 +506,8 @@ internal static partial class ProjectionParser
     [GeneratedRegex(@"^clear\s+with\s+(@?[\w.]+)$", RegexOptions.None, 1000)]
     private static partial Regex ClearWithRegex();
 
-    [GeneratedRegex(@"^(increment|decrement|count)\s+(@?[$\w.]+)$", RegexOptions.None, 1000)]
-    private static partial Regex CounterRegex();
+    [GeneratedRegex(@"^(increment|decrement|count|clear)\s+(@?[$\w.]+)$", RegexOptions.None, 1000)]
+    private static partial Regex KeywordMappingRegex();
 
     [GeneratedRegex(@"^(add|subtract)\s+(@?[$\w.]+)\s+by\s+(.+)$", RegexOptions.None, 1000)]
     private static partial Regex ArithmeticRegex();
