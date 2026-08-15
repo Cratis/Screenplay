@@ -90,11 +90,22 @@ internal static class ScreenplayValidator
 
         var scopedSlices = ScopedSlices(application).ToList();
         var knownQueries = scopedSlices.SelectMany(entry => entry.Slice.Queries.Select(query => new Declaration(query.Name, entry.Scope))).ToList();
-        var knownCommandDeclarations = scopedSlices.SelectMany(entry => entry.Slice.Commands.Select(command => new Declaration(command.Name, entry.Scope))).ToList();
         var knownScreenDeclarations = scopedSlices.SelectMany(entry => entry.Slice.Screens.Select(screen => new Declaration(screen.Name, entry.Scope))).ToList();
 
+        var knownCommandDeclarations = new List<Declaration>();
+        var commandsByDeclaration = new Dictionary<Declaration, CommandSyntax>();
+        foreach (var entry in scopedSlices)
+        {
+            foreach (var command in entry.Slice.Commands)
+            {
+                var declaration = new Declaration(command.Name, entry.Scope);
+                knownCommandDeclarations.Add(declaration);
+                commandsByDeclaration[declaration] = command;
+            }
+        }
+
         ValidateScreenReferences(scopedSlices, knownQueries, knownCommandDeclarations, knownScreenDeclarations, context);
-        ValidateFormReferences(application, knownQueries, knownCommandDeclarations, knownScreenDeclarations, context);
+        ValidateFormReferences(application, commandsByDeclaration, knownQueries, knownCommandDeclarations, knownScreenDeclarations, context);
     }
 
     /// <summary>
@@ -374,10 +385,11 @@ internal static class ScreenplayValidator
     }
 
     /// <summary>
-    /// Validates that what a form binds to resolves - the command it submits, the query it populates from
-    /// and the screen it navigates to on submit.
+    /// Validates that what a form binds to resolves - the command it submits, the fields it maps onto that
+    /// command's properties, the query it populates from and the screen it navigates to on submit.
     /// </summary>
     /// <param name="application">The <see cref="ApplicationSyntax"/> to validate.</param>
+    /// <param name="commandsByDeclaration">Every declared command, keyed by its own declaration.</param>
     /// <param name="queries">The queries the document declares, scoped to where they are declared.</param>
     /// <param name="commands">The commands the document declares, scoped to where they are declared.</param>
     /// <param name="screens">The screens the document declares, scoped to where they are declared.</param>
@@ -388,6 +400,7 @@ internal static class ScreenplayValidator
     /// </remarks>
     static void ValidateFormReferences(
         ApplicationSyntax application,
+        Dictionary<Declaration, CommandSyntax> commandsByDeclaration,
         IReadOnlyList<Declaration> queries,
         IReadOnlyList<Declaration> commands,
         IReadOnlyList<Declaration> screens,
@@ -400,6 +413,12 @@ internal static class ScreenplayValidator
             {
                 Report(form.For, scope, commands, DiagnosticCodes.UnknownCommand, "command", form.Location, context);
 
+                var resolution = ReferenceResolver.Resolve(form.For, scope, commands);
+                if (resolution.Resolved is { } resolved && commandsByDeclaration.TryGetValue(resolved, out var command))
+                {
+                    ValidateFormFields(form, command, context);
+                }
+
                 if (form.Populate is FormPopulateViaQuerySyntax populate)
                 {
                     Report(populate.Query, scope, queries, DiagnosticCodes.UnknownQuery, "query", populate.Location, context);
@@ -410,6 +429,25 @@ internal static class ScreenplayValidator
                     Report(form.OnSubmit.Screen, scope, screens, DiagnosticCodes.UnknownScreen, "screen", form.OnSubmit.Location, context);
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Validates that every field a form declares binds to a property its command actually has - the same
+    /// rename-breaks-the-build guarantee AutoMap gives a projection.
+    /// </summary>
+    /// <param name="form">The <see cref="FormSyntax"/> to validate.</param>
+    /// <param name="command">The <see cref="CommandSyntax"/> the form binds to.</param>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    static void ValidateFormFields(FormSyntax form, CommandSyntax command, ParserContext context)
+    {
+        var properties = command.Properties.Select(property => property.Name).ToHashSet();
+        foreach (var field in form.Fields.Where(field => !properties.Contains(field.Property)))
+        {
+            context.Warning(
+                DiagnosticCodes.UnknownFormFieldProperty,
+                $"Form '{form.Name}' has a field for '{field.Property}', which is not a property of command '{command.Name}'",
+                field.Location);
         }
     }
 

@@ -1168,4 +1168,9 @@ public static class DiagnosticCodes
     /// A <c>form</c> declares <c>on submit</c> more than once.
     /// </summary>
     public const string DuplicateFormSubmit = "PLAY0215";
+
+    /// <summary>
+    /// A <c>field</c> binds to a property its form's command does not declare.
+    /// </summary>
+    public const string UnknownFormFieldProperty = "PLAY0216";
 }

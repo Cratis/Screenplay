@@ -14,6 +14,10 @@ public class when_printing_a_form : given.a_printer
             slice StateChange RegisterInvoice
               command RegisterInvoice
                 invoiceId Uuid
+                customerName String
+                dueDate Date
+                totalAmount Decimal
+                lineItems String[]
 
             slice StateView InvoiceDraft
               query GetInvoiceDraft => InvoiceDraftReadModel

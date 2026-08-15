@@ -17,6 +17,7 @@ public class when_compiling_a_document_with_a_form : given.a_compiler
                 customerName String
                 dueDate Date
                 totalAmount Decimal
+                lineItems String[]
 
             slice StateView InvoiceDraft
               query GetInvoiceDraft => InvoiceDraftReadModel
