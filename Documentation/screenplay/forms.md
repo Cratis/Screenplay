@@ -54,7 +54,7 @@ A bare `field <property>` binds straight to the command property of the same nam
 | `field <property> from <source>` | Binds from a differently-named source property. |
 | `field <property> compose using <Callback>` | Computes the value from a callback instead of binding it directly. |
 
-`from` and `compose using` are mutually exclusive on one field; either may still carry a `label`.
+`from` and `compose using` are mutually exclusive on one field; either may still carry a `label`. A field's `label` accepts an unquoted `$strings.<key>` token in place of a literal, the same as everywhere else in the document - see [Internationalization](internationalization.md).
 
 ## Submitting
 

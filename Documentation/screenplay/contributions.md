@@ -23,7 +23,7 @@ contribute to <ContributionPoint>
 ```
 
 - `<slot-name> contributes <ContributionPoint>` - marks a layout template slot as the target for contributions under that name. A slot without `contributes` behaves exactly as it always has.
-- `contribute to <ContributionPoint>` - one contributed item. Declared directly on a `module` (alongside `layout`, `form` and `feature`) or on a `feature` at any nesting depth. `navigate`, `label` and `order` are all optional.
+- `contribute to <ContributionPoint>` - one contributed item. Declared directly on a `module` (alongside `layout`, `form` and `feature`) or on a `feature` at any nesting depth. `navigate`, `label` and `order` are all optional. `label` accepts an unquoted `$strings.<key>` token in place of a literal - see [Internationalization](internationalization.md).
 
 ## Example
 
