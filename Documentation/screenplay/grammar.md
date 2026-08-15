@@ -784,6 +784,7 @@ The escape works wherever a name of your choosing meets a reserved first word - 
 | `event` body | `tag` |
 | mapping block | `tag` |
 | projection `from` block | `key`, `parent` |
+| projection `clear` mapping target | `with` |
 | enumeration `concept` body | `validate` |
 
 An unescaped `tag Audit` or a bare `validate` enumeration value keeps the meaning it has always had - the directive - and the compiler warns that the line does not declare what it looks like.
