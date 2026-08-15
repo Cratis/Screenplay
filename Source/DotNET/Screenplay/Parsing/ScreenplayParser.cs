@@ -32,6 +32,7 @@ internal static partial class ScreenplayParser
         var personas = new List<PersonaSyntax>();
         var modules = new List<ModuleSyntax>();
         var seeds = new List<SeedSyntax>();
+        var uiProfiles = new List<UiProfileSyntax>();
 
         while (context.Reader.PeekSignificant() is { } line)
         {
@@ -39,7 +40,7 @@ internal static partial class ScreenplayParser
             switch (LineText.FirstWord(line.Content))
             {
                 case "domain":
-                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null);
+                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null || uiProfiles.Count > 0);
                     break;
                 case "import":
                     if (ImportRegex().Match(line.Content) is { Success: true } import)
@@ -73,14 +74,28 @@ internal static partial class ScreenplayParser
                 case "seed":
                     seeds.Add(SeedParser.Parse(context, line));
                     break;
+                case "ui":
+                    AddUiProfile(context, UiProfileParser.Parse(context, line), uiProfiles);
+                    break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, type, policy, persona, authentication, module or seed", line.Location);
+                    context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, type, policy, persona, authentication, module, seed or ui profile", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
         }
 
-        return new(imports, concepts, policies, modules, context.Start, domain, personas, seeds, authentication, types);
+        return new(imports, concepts, policies, modules, context.Start, domain, personas, seeds, authentication, types, uiProfiles);
+    }
+
+    static void AddUiProfile(ParserContext context, UiProfileSyntax profile, List<UiProfileSyntax> uiProfiles)
+    {
+        if (uiProfiles.Exists(existing => existing.Name == profile.Name))
+        {
+            context.Error(DiagnosticCodes.DuplicateUiProfile, $"A ui profile named '{profile.Name}' is already declared - profile names must be unique", profile.Location);
+            return;
+        }
+
+        uiProfiles.Add(profile);
     }
 
     static DomainSyntax? ParseDomain(ParserContext context, SourceLine line, DomainSyntax? existing, bool hasOtherConstructs)
