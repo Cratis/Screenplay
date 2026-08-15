@@ -390,6 +390,7 @@ export class CompletionProvider implements languages.CompletionItemProvider {
             { label: 'remove with', insertText: 'remove with ', documentation: 'Remove items based on event', detail: 'remove with <EventType>' },
             { label: 'remove via', insertText: 'remove via join on ', documentation: 'Remove items via join', detail: 'remove via join on <EventType>' },
             { label: 'no automap', insertText: 'no automap', documentation: 'Disable automatic property mapping', detail: 'no automap' },
+            { label: 'clear', insertText: 'clear ', documentation: 'Remove the value a property holds', detail: 'clear <property>' },
             { label: 'increment', insertText: 'increment ', documentation: 'Increment a numeric property', detail: 'increment <property>' },
             { label: 'decrement', insertText: 'decrement ', documentation: 'Decrement a numeric property', detail: 'decrement <property>' },
             { label: 'count', insertText: 'count ', documentation: 'Count occurrences', detail: 'count <property>' },

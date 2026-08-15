@@ -44,6 +44,11 @@ export const pdl: SubLanguageDefinition = {
             documentation: 'Declares the property that identifies the parent of a child.',
         },
         {
+            label: 'clear',
+            insertText: 'clear ${1:property}',
+            documentation: 'Removes the value a property holds when the event occurs.',
+        },
+        {
             label: 'increment',
             insertText: 'increment ${1:property}',
             documentation: 'Increments a numeric property when the event occurs.',
@@ -63,6 +68,7 @@ export const pdl: SubLanguageDefinition = {
         key: 'PDL — declares which property identifies the read model instance.',
         parent: 'PDL — declares the property that identifies the parent of a child.',
         remove: 'PDL — removes the read model instance when an event occurs.',
+        clear: 'PDL — clear <property> removes the value a property holds; clear with <EventType> nulls a nested object.',
         increment: 'PDL — increments a numeric property when the event occurs.',
         decrement: 'PDL — decrements a numeric property when the event occurs.',
     },
