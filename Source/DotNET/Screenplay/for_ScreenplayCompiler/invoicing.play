@@ -117,6 +117,16 @@ authentication
   provider GitHub
   provider OpenId name Partner
 
+theme Nordic
+  compatible with Cratis.Components
+
+ui profile Desktop
+  target platform web
+  target size regular
+  packages
+    Cratis.Components
+  theme Nordic
+
 module Invoicing
   description
     ```
