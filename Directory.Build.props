@@ -22,17 +22,19 @@
             pull request that causes it, and a deliberate act when it is one.
         -->
         <!--
-            Off for the 3.0.0 major only. Every break in it is deliberate - reactor became reaction, and the
-            AST records that the screens, forms, contribution point, ui profile and theme work reshaped were
-            already breaking against the published 2.1.0. Validating a deliberate major against the line it
-            deliberately leaves has no answer to give.
+            Compare every packable assembly against the last released one and fail on a binary break.
+            Screenplay's syntax nodes are positional records, so adding a trailing optional parameter is
+            source compatible and binary breaking: a package compiled against the older version names a
+            constructor that no longer exists, and the failure surfaces as a runtime 'Method not found' in
+            a consumer rather than an error here. That has already shipped once - Cratis.Arc.Screenplay
+            built against 1.5.2 broke against 1.7.0 exactly this way.
 
-            Turn back on with the baseline at 3.0.0 once it is published - see Cratis/Screenplay#113, which
-            also covers the reason none of this surfaced in a pull request: the build workflow never packs,
-            and package validation only runs on pack.
+            The baseline moves to the first release of each major. Within a major it protects; at a major
+            it is reset, because validating a deliberate break against the line it deliberately leaves has
+            no answer to give.
         -->
-        <EnablePackageValidation>false</EnablePackageValidation>
-        <PackageValidationBaselineVersion>2.1.0</PackageValidationBaselineVersion>
+        <EnablePackageValidation>true</EnablePackageValidation>
+        <PackageValidationBaselineVersion>3.0.0</PackageValidationBaselineVersion>
 
         <RunAnalyzersDuringBuild>True</RunAnalyzersDuringBuild>
         <RunAnalyzersDuringLiveAnalysis>True</RunAnalyzersDuringLiveAnalysis>

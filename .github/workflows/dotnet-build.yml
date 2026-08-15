@@ -37,3 +37,11 @@ jobs:
 
       - name: Build Release
         run: dotnet build --configuration Release
+
+      # Package validation only runs on pack, so a binary break was invisible until the release failed on
+      # main - which is how eight versions came to be tagged with no package on NuGet. Packing here puts the
+      # break in the pull request that causes it, which is what Directory.Build.props already claims happens.
+      # The version is a sentinel, not a release: only the API surface is under test here, and the assembly
+      # version must sit at or above the baseline or the comparison rejects it before looking at the surface.
+      - name: Pack
+        run: dotnet pack --no-build --configuration Release -o ./Artifacts/NuGet -p:Version=9999.0.0
