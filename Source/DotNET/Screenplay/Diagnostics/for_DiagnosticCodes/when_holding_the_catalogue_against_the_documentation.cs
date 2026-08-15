@@ -13,7 +13,7 @@ namespace Cratis.Screenplay.Diagnostics.for_DiagnosticCodes;
 /// did not - added with the screens, forms, contribution point, ui profile and theme work, each of which
 /// updated <see cref="DiagnosticCodes"/> and not the page. Nothing compared the two, so nothing said so.
 /// </summary>
-public class when_holding_the_catalogue_against_the_documentation : Specification
+public partial class when_holding_the_catalogue_against_the_documentation : Specification
 {
     // Retired codes stay listed on the page after they stop being reported, so the section that records them
     // is not part of the comparison in either direction.
@@ -36,7 +36,7 @@ public class when_holding_the_catalogue_against_the_documentation : Specificatio
         var retired = catalogue.IndexOf(RetiredHeading, StringComparison.Ordinal);
         var current = retired < 0 ? catalogue : catalogue[..retired];
 
-        _documented = [.. Regex.Matches(current, @"`(PLAY\d{4})`").Select(match => match.Groups[1].Value).Distinct(StringComparer.Ordinal)];
+        _documented = [.. CodeRegex().Matches(current).Select(match => match.Groups[1].Value).Distinct(StringComparer.Ordinal)];
     }
 
     [Fact] void should_document_every_code_the_compiler_can_report() =>
@@ -50,4 +50,7 @@ public class when_holding_the_catalogue_against_the_documentation : Specificatio
         var offenders = codes.Order(StringComparer.Ordinal).ToList();
         return offenders.Count == 0 ? string.Empty : $"{offenders.Count} code(s) {what}: {string.Join(", ", offenders)}";
     }
+
+    [GeneratedRegex(@"`(PLAY\d{4})`", RegexOptions.None, 1000)]
+    private static partial Regex CodeRegex();
 }
