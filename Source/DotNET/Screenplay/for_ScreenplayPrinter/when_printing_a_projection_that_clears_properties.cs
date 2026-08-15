@@ -6,8 +6,9 @@ using Cratis.Screenplay.Syntax.Projections;
 namespace Cratis.Screenplay.for_ScreenplayPrinter;
 
 /// <summary>
-/// The two spellings of a clear share a block here on purpose - each has to come back out the way it went in,
-/// so printing a document never rewrites the author's choice into the other one.
+/// Every way of writing a clear shares a block here on purpose - both spellings, and the escaped property that
+/// reads as the block directive. Each has to come back out the way it went in, so printing a document never
+/// rewrites the author's choice into another one, and never emits a line that would not parse again.
 /// </summary>
 public class when_printing_a_projection_that_clears_properties : given.a_printer
 {
