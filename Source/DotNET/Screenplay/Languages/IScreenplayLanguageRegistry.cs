@@ -22,4 +22,15 @@ public interface IScreenplayLanguageRegistry
     /// Gets the languages an inline code block may be written in.
     /// </summary>
     IReadOnlySet<string> InlineLanguages { get; }
+
+    /// <summary>
+    /// Gets the triggers a reaction may respond to beyond the ones the document declares itself, by name.
+    /// </summary>
+    /// <remarks>
+    /// A trigger a runtime integration provides has no declaration in the document that uses it - the
+    /// integration is what knows the trigger exists and what makes one occur. Registering it is how the
+    /// compiler stops reporting it as an unknown name, and how it learns what an occurrence hands the
+    /// reaction. What <em>causes</em> one it still never learns.
+    /// </remarks>
+    IReadOnlyDictionary<string, TriggerDefinition> Triggers { get; }
 }

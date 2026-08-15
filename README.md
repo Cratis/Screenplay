@@ -94,7 +94,7 @@ Pick the slice type by what the slice *does*:
 | --- | --- | --- |
 | `StateChange` | something changes the system | `command` → `event` via `produces` or an imperative `handler`, with `validate`, `authorize`, `constraint` |
 | `StateView` | something reads the system | `query` + `projection` + `screen` |
-| `Automation` | something reacts to what happened | `reactor` |
+| `Automation` | something runs when something happens | `reaction` |
 | `Translate` | something turns outside data into events | `capture` |
 
 Three ideas keep the script both readable and complete:

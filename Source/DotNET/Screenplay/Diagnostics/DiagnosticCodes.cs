@@ -733,27 +733,27 @@ public static class DiagnosticCodes
     /// </summary>
     public const string DuplicateConstraintBody = "PLAY0135";
 
-    // Reactors.
+    // Reactions.
 
     /// <summary>
-    /// A <c>reactor</c> line is not <c>reactor &lt;Name&gt;</c>.
+    /// A <c>reaction</c> line is not <c>reaction &lt;Name&gt;</c>.
     /// </summary>
-    public const string InvalidReactorDeclaration = "PLAY0136";
+    public const string InvalidReactionDeclaration = "PLAY0136";
 
     /// <summary>
-    /// A line in a reactor body is not <c>on &lt;EventType&gt;</c>.
+    /// A line in a reaction body is not a trigger the language reads.
     /// </summary>
-    public const string InvalidReactorTrigger = "PLAY0137";
+    public const string InvalidReactionTrigger = "PLAY0137";
 
     /// <summary>
-    /// A reactor observes no events, so nothing ever reaches it.
+    /// A reaction states no trigger, so nothing ever sets it off.
     /// </summary>
-    public const string ReactorWithoutTrigger = "PLAY0138";
+    public const string ReactionWithoutTrigger = "PLAY0138";
 
     /// <summary>
-    /// A line in a reactor trigger body opens with a word a trigger declares nothing by.
+    /// A line in a reaction trigger body opens with a word a trigger declares nothing by.
     /// </summary>
-    public const string UnknownReactorTriggerDirective = "PLAY0139";
+    public const string UnknownReactionTriggerDirective = "PLAY0139";
 
     // Validation rules.
 
@@ -1044,7 +1044,7 @@ public static class DiagnosticCodes
     /// </summary>
     public const string DuplicateReadModel = "PLAY0192";
 
-    // Where a produced event lands, and what a reactor does as a consequence.
+    // Where a produced event lands, and what a reaction does as a consequence.
 
     /// <summary>
     /// A <c>produces</c> declares more than one <c>for</c>, and an event is appended to one event source.
@@ -1057,7 +1057,7 @@ public static class DiagnosticCodes
     public const string InvalidInvokesDeclaration = "PLAY0194";
 
     /// <summary>
-    /// A reactor invokes a command the document does not declare.
+    /// A reaction invokes a command the document does not declare.
     /// </summary>
     public const string UnknownCommand = "PLAY0195";
 
@@ -1320,4 +1320,51 @@ public static class DiagnosticCodes
     /// A <c>freeform</c> layout's <c>variant</c> does not mention (place or hide) a slot another variant of the same layout places.
     /// </summary>
     public const string VariantMissingSlot = "PLAY0244";
+
+    // Triggers.
+
+    /// <summary>
+    /// A <c>trigger</c> line is not <c>trigger &lt;Name&gt;</c>.
+    /// </summary>
+    public const string InvalidTriggerDeclaration = "PLAY0245";
+
+    /// <summary>
+    /// A line in a trigger body is neither a description nor a value the trigger provides.
+    /// </summary>
+    public const string InvalidTriggerData = "PLAY0246";
+
+    /// <summary>
+    /// The document declares two triggers by the same name, leaving no answer to which one a reaction means.
+    /// </summary>
+    public const string DuplicateTrigger = "PLAY0247";
+
+    /// <summary>
+    /// A <c>when</c> line names neither an event nor a trigger the document or the compiler knows.
+    /// </summary>
+    public const string UnknownTrigger = "PLAY0248";
+
+    /// <summary>
+    /// An <c>every</c> line is not <c>every &lt;n&gt; &lt;seconds|minutes|hours|days&gt;</c>.
+    /// </summary>
+    public const string InvalidIntervalTrigger = "PLAY0249";
+
+    /// <summary>
+    /// An <c>at</c> line is not <c>at &lt;HH:mm&gt;</c>, optionally followed by <c>on &lt;Weekday&gt;</c> or <c>on day &lt;n&gt;</c>.
+    /// </summary>
+    public const string InvalidScheduleTrigger = "PLAY0250";
+
+    /// <summary>
+    /// A reaction takes a value from an occurrence that the trigger does not provide.
+    /// </summary>
+    public const string UnknownTriggerData = "PLAY0251";
+
+    /// <summary>
+    /// A reaction states more than one <c>where</c>, and a reaction is narrowed by one condition.
+    /// </summary>
+    public const string DuplicateReactionCondition = "PLAY0252";
+
+    /// <summary>
+    /// A reaction declares the same trigger more than once, so the second says nothing the first did not.
+    /// </summary>
+    public const string DuplicateReactionTrigger = "PLAY0253";
 }

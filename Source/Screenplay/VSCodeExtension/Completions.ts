@@ -6,6 +6,7 @@ import {
     CompletionEntry,
     contextVariableItems,
     knownEventNames,
+    knownTriggerNames,
     languageId,
     planCompletions,
     primitiveTypes,
@@ -65,6 +66,14 @@ const provider: vscode.CompletionItemProvider = {
                 );
             case 'events':
                 return eventNames();
+            case 'triggers':
+                return knownTriggerNames(symbols).map((name) =>
+                    symbolItem(name, vscode.CompletionItemKind.Event, 'trigger'),
+                );
+            case 'commands':
+                return symbols.commands.map((command) =>
+                    symbolItem(command.name, vscode.CompletionItemKind.Method, 'command'),
+                );
             case 'producesTargets':
                 return [...producesItems.map(snippetItem), ...eventNames()];
             case 'screens':

@@ -8,7 +8,10 @@ namespace Cratis.Screenplay.Languages;
 /// compiler knows about, plus whatever a consumer adds to them.
 /// </summary>
 /// <param name="inlineLanguages">Languages to recognize in addition to <see cref="BuiltInInlineLanguages"/>.</param>
-public sealed class ScreenplayLanguageRegistry(IEnumerable<string>? inlineLanguages = null) : IScreenplayLanguageRegistry
+/// <param name="triggers">Triggers to recognize in addition to <see cref="BuiltInTriggers"/>.</param>
+public sealed class ScreenplayLanguageRegistry(
+    IEnumerable<string>? inlineLanguages = null,
+    IEnumerable<TriggerDefinition>? triggers = null) : IScreenplayLanguageRegistry
 {
     /// <summary>
     /// The languages an inline code block may be written in without anything being registered.
@@ -22,6 +25,24 @@ public sealed class ScreenplayLanguageRegistry(IEnumerable<string>? inlineLangua
         new HashSet<string>(StringComparer.Ordinal) { "csharp", "typescript", "react", "html", "sql" };
 
     /// <summary>
+    /// The triggers a reaction may respond to without anything being registered, beyond the events and the
+    /// triggers a document declares itself.
+    /// </summary>
+    /// <remarks>
+    /// These are the signals the host raises rather than the domain - there is no event to declare for
+    /// "the application started", and every application has one.
+    /// <para>
+    /// They carry no values, and say so rather than staying silent: a signal that the application started
+    /// hands the reaction nothing beyond the fact that it happened.
+    /// </para>
+    /// </remarks>
+    public static readonly IReadOnlyList<TriggerDefinition> BuiltInTriggers =
+    [
+        new("Startup", []),
+        new("Shutdown", [])
+    ];
+
+    /// <summary>
     /// Gets the registry a compiler uses when it is not given one.
     /// </summary>
     public static IScreenplayLanguageRegistry Default { get; } = new ScreenplayLanguageRegistry();
@@ -29,4 +50,14 @@ public sealed class ScreenplayLanguageRegistry(IEnumerable<string>? inlineLangua
     /// <inheritdoc/>
     public IReadOnlySet<string> InlineLanguages { get; } =
         new HashSet<string>(BuiltInInlineLanguages.Concat(inlineLanguages ?? []), StringComparer.Ordinal);
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// A registration wins over a built-in of the same name, so a host that raises a richer <c>Startup</c>
+    /// can say what it carries rather than being overruled by the empty one the language ships.
+    /// </remarks>
+    public IReadOnlyDictionary<string, TriggerDefinition> Triggers { get; } =
+        BuiltInTriggers.Concat(triggers ?? [])
+            .GroupBy(trigger => trigger.Name, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.Last(), StringComparer.Ordinal);
 }

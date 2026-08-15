@@ -46,7 +46,7 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_have_the_command_description() => RegisterCommand.Description.ShouldEqual("Registers a new invoice with its lines and payment terms");
     [Fact] void should_have_both_layouts() => _result.Value!.Modules.Single().Layouts.Count().ShouldEqual(2);
     [Fact] void should_have_the_master_detail_slots() => _result.Value!.Modules.Single().Layouts.First().Slots.Select(_ => _.Name).ShouldContainOnly("sidebar", "main");
-    [Fact] void should_have_all_slices() => _feature.Slices.Count().ShouldEqual(15);
+    [Fact] void should_have_all_slices() => _feature.Slices.Count().ShouldEqual(17);
     [Fact] void should_have_the_fully_auto_mapped_projection() => Slice("CancelledInvoices").Projections.Single().Blocks.OfType<FromSyntax>().Single().Mappings.ShouldBeEmpty();
     [Fact] void should_have_the_nested_feature() => _feature.Features.Single().Name.ShouldEqual("Adjustments");
     [Fact] void should_have_the_nested_feature_slices() => _feature.Features.Single().Slices.Select(_ => _.Name).ShouldContainOnly("ApplyDiscount", "WriteOffInvoice");
@@ -97,9 +97,9 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_parse_the_line_report_composite_key() => ((CompositeKeySyntax)Slice("InvoiceLineReport").Projections.Single().Blocks.OfType<FromSyntax>().Single().Key!).Type.ShouldEqual("InvoiceLineKey");
     [Fact] void should_parse_the_summary_counters() => Slice("InvoiceDashboard").Projections.Single().Blocks.OfType<FromSyntax>().First().Mappings.OfType<IncrementMappingSyntax>().Count().ShouldEqual(2);
     [Fact] void should_parse_the_dashboard_screen_layout() => Slice("InvoiceDashboard").Screens.Single().Directives.OfType<ScreenLayoutSyntax>().Single().Slots.Count().ShouldEqual(4);
-    [Fact] void should_parse_the_reactors() => Slice("NotifyCustomerOnInvoiceRegistered").Reactors.Single().Triggers.Single().File!.Path.ShouldEqual("Reactors/NotifyCustomerReactor.cs");
-    [Fact] void should_parse_the_inline_reactor_code() => Slice("DetectOverdueInvoices").Reactors.Single().Triggers.First().Code.ShouldNotBeNull();
-    [Fact] void should_parse_the_multiple_reactor_triggers() => Slice("DetectOverdueInvoices").Reactors.Single().Triggers.Select(_ => _.Event).ShouldContainOnly("InvoiceRegistered", "InvoiceSent");
+    [Fact] void should_parse_the_reactions() => Slice("NotifyCustomerOnInvoiceRegistered").Reactions.Single().Triggers.Single().File!.Path.ShouldEqual("Reactions/NotifyCustomerReaction.cs");
+    [Fact] void should_parse_the_inline_reaction_code() => Slice("DetectOverdueInvoices").Reactions.Single().Triggers.First().Code.ShouldNotBeNull();
+    [Fact] void should_parse_the_multiple_reaction_triggers() => Slice("DetectOverdueInvoices").Reactions.Single().Triggers.Select(_ => ((NamedTriggerSourceSyntax)_.Source).Name).ShouldContainOnly("InvoiceRegistered", "InvoiceSent");
     [Fact] void should_parse_the_constraints() => Slice("RegisterInvoice").Constraints.Count().ShouldEqual(2);
     [Fact] void should_parse_the_specifications() => Slice("RegisterInvoice").Specifications.Count().ShouldEqual(3);
     [Fact] void should_parse_the_given_of_the_first_specification() => FirstSpecification.Given.Single().EventType.ShouldEqual("CustomerRegistered");
@@ -127,9 +127,14 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_parse_the_sql_performer() => LineItemsQuery.Performer!.Code!.Language.ShouldEqual("sql");
     [Fact] void should_parse_the_file_performer() => Query("InvoiceDashboard", "GetInvoiceSummary").Performer!.File!.Path.ShouldEqual("Queries/InvoiceSummaryPerformer.cs");
     [Fact] void should_parse_the_csharp_performer() => Query("InvoiceDashboard", "GetOverdueInvoices").Performer!.Code!.Language.ShouldEqual("csharp");
-    [Fact] void should_parse_the_reactor_description() => Reconciler.Description.ShouldEqual("Matches settled payments against outstanding invoices and closes them out");
+    [Fact] void should_parse_the_reaction_description() => Reconciler.Description.ShouldEqual("Matches settled payments against outstanding invoices and closes them out");
     [Fact] void should_parse_a_trigger_with_no_body() => (Reconciler.Triggers.First() is { File: null, Code: null, Description: null }).ShouldBeTrue();
     [Fact] void should_parse_a_trigger_described_without_code() => Reconciler.Triggers.Last().Description.ShouldEqual("Re-checks whether a late payment has since arrived");
+    [Fact] void should_parse_a_schedule_trigger() => ((ScheduleTriggerSourceSyntax)Chaser.Triggers.Single().Source).Time.ShouldEqual(new TimeOnly(8, 0));
+    [Fact] void should_parse_an_interval_trigger() => ((IntervalTriggerSourceSyntax)DirectorySync.Triggers.First().Source).Unit.ShouldEqual(IntervalUnit.Minutes);
+    [Fact] void should_parse_a_declared_trigger() => ((NamedTriggerSourceSyntax)DirectorySync.Triggers.Last().Source).Name.ShouldEqual("DirectoryChanged");
+    [Fact] void should_parse_the_values_a_trigger_hands_the_reaction() => DirectorySync.Triggers.Last().Data.Select(_ => _.Name).ShouldContainOnly("entry", "changedAt");
+    [Fact] void should_parse_the_trigger_declaration() => _result.Value!.Triggers!.Single().Data.Select(_ => _.Name).ShouldContainOnly("entry", "changedAt");
     [Fact] void should_parse_the_tenant_context_mapping() => ContextMapping("registeredFor").Path.ShouldEqual("tenant");
     [Fact] void should_parse_the_caused_by_context_mapping() => ContextMapping("registeredByOn").Path.ShouldEqual("causedBy.subject");
     [Fact] void should_parse_the_causation_context_mapping() => ((ContextExpressionSyntax)Slice("CancelInvoice").Commands.Single().Produces.First().Mappings.Single(_ => _.Property == "cancelledVia").Source).Path.ShouldEqual("causation.type");
@@ -142,7 +147,11 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
 
     QuerySyntax LineItemsQuery => Query("InvoiceLineReport", "ListLineItems");
 
-    ReactorSyntax Reconciler => Slice("ReconcilePayments").Reactors.Single();
+    ReactionSyntax Reconciler => Slice("ReconcilePayments").Reactions.Single();
+
+    ReactionSyntax Chaser => Slice("ChaseOverdueInvoices").Reactions.Single();
+
+    ReactionSyntax DirectorySync => Slice("SyncBillingDirectory").Reactions.Single();
 
     ContextExpressionSyntax ContextMapping(string property) =>
         (ContextExpressionSyntax)RegisterCommand.Produces.First().Mappings.Single(_ => _.Property == property).Source;

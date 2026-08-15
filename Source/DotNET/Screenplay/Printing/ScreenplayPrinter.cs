@@ -118,6 +118,12 @@ public sealed partial class ScreenplayPrinter :
             WriteTheme(writer, theme);
         }
 
+        foreach (var trigger in application.Triggers ?? [])
+        {
+            writer.Blank();
+            WriteTrigger(writer, trigger);
+        }
+
         foreach (var uiProfile in application.UiProfiles ?? [])
         {
             writer.Blank();
@@ -199,6 +205,21 @@ public sealed partial class ScreenplayPrinter :
         }
     }
 
+    void WriteTrigger(ScreenplayWriter writer, TriggerSyntax trigger)
+    {
+        writer.Line($"trigger {trigger.Name}");
+        using (writer.Indent())
+        {
+            WriteDescription(writer, trigger.Description);
+
+            foreach (var datum in trigger.Data)
+            {
+                var name = ReservedWords.Escape(datum.Name, ReservedWords.TriggerBody);
+                writer.Line(datum.Type is null ? name : $"{name} {ScreenplaySyntaxText.TypeRef(datum.Type)}");
+            }
+        }
+    }
+
     void WriteReadModel(ScreenplayWriter writer, ReadModelSyntax readModel)
     {
         writer.Line($"readmodel {readModel.Name}");
@@ -220,7 +241,7 @@ public sealed partial class ScreenplayPrinter :
             {
                 writer.Line($"on {rule.Event}");
 
-                // A rule that only names its event is complete on its own, as a reactor trigger is.
+                // A rule that only names its event is complete on its own, as a reaction trigger is.
                 if (rule is { Description: null, File: null, Code: null })
                 {
                     continue;
@@ -682,10 +703,10 @@ public sealed partial class ScreenplayPrinter :
                 WriteCapture(writer, capture);
             }
 
-            foreach (var reactor in slice.Reactors)
+            foreach (var reaction in slice.Reactions)
             {
                 writer.Blank();
-                WriteReactor(writer, reactor);
+                WriteReaction(writer, reaction);
             }
 
             foreach (var screen in slice.Screens)

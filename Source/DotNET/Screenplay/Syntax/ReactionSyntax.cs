@@ -6,22 +6,30 @@ using Cratis.Screenplay.Diagnostics;
 namespace Cratis.Screenplay.Syntax;
 
 /// <summary>
-/// Represents a <c>reactor</c> declaration - reacts to events and produces side effects.
+/// Represents a <c>reaction</c> declaration - behavior that runs when something happens.
 /// </summary>
-/// <param name="Name">The name of the reactor.</param>
-/// <param name="Triggers">The <see cref="ReactorTriggerSyntax">triggers</see> the reactor reacts to.</param>
+/// <param name="Name">The name of the reaction.</param>
+/// <param name="Triggers">The <see cref="ReactionTriggerSyntax">triggers</see> that set the reaction off.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-/// <param name="Description">The optional human readable description of what the reactor does.</param>
-public record ReactorSyntax(
+/// <param name="Description">The optional human readable description of what the reaction does.</param>
+/// <param name="Where">The optional <see cref="ConditionSyntax"/> narrowing which occurrences run the reaction.</param>
+/// <remarks>
+/// <c>reaction</c> rather than <c>reactor</c>, because <em>reactor</em> is Chronicle's event observer and says
+/// the trigger is always a domain event. A reaction is the behavior; a trigger is what causes it, and the
+/// reaction does not need to know whether that trigger came from the event store, a clock or an integration.
+/// </remarks>
+public record ReactionSyntax(
     string Name,
-    IEnumerable<ReactorTriggerSyntax> Triggers,
+    IEnumerable<ReactionTriggerSyntax> Triggers,
     SourceLocation Location,
-    string? Description = null) : SyntaxNode(Location);
+    string? Description = null,
+    ConditionSyntax? Where = null) : SyntaxNode(Location);
 
 /// <summary>
-/// Represents an <c>on &lt;event&gt;</c> trigger within a reactor, with its optional implementation.
+/// Represents one trigger clause within a reaction - what sets it off, and what it does when set off.
 /// </summary>
-/// <param name="Event">The name of the event that triggers the reactor.</param>
+/// <param name="Source">The <see cref="TriggerSourceSyntax"/> naming what causes the reaction to run.</param>
+/// <param name="Data">The <see cref="TriggerDataSyntax">values</see> of the occurrence the reaction uses.</param>
 /// <param name="File">The <see cref="FileReferenceSyntax"/> when the implementation lives in an external file.</param>
 /// <param name="Code">The <see cref="CodeBlockSyntax"/> when the implementation is declared inline.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
@@ -29,17 +37,13 @@ public record ReactorSyntax(
 /// <param name="Produces">The <see cref="ProducesSyntax">events</see> the reaction appends.</param>
 /// <param name="Invokes">The <see cref="InvokesSyntax">commands</see> the reaction invokes.</param>
 /// <remarks>
-/// A trigger with no body is a complete statement of intent - this reactor observes this event. The
+/// A trigger with no body is a complete statement of intent - this reaction runs when that happens. The
 /// <c>file</c> reference and the inline code block are realization metadata attached once a slice is
 /// implemented, never a precondition for describing the reaction.
-/// <para>
-/// What the reaction <em>does</em> is a different thing from how it is implemented. A reactor that appends
-/// events and dispatches commands used to show neither, so a document could say an automation existed
-/// without saying what it set off - the arrows out of an automation were invisible.
-/// </para>
 /// </remarks>
-public record ReactorTriggerSyntax(
-    string Event,
+public record ReactionTriggerSyntax(
+    TriggerSourceSyntax Source,
+    IEnumerable<TriggerDataSyntax> Data,
     FileReferenceSyntax? File,
     CodeBlockSyntax? Code,
     SourceLocation Location,

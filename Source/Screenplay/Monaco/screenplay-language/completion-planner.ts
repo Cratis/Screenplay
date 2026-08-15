@@ -19,6 +19,8 @@ export type CompletionPlan =
     | { kind: 'contextVariables'; replaceLength: number }
     | { kind: 'policies' }
     | { kind: 'events' }
+    | { kind: 'triggers' }
+    | { kind: 'commands' }
     | { kind: 'producesTargets' }
     | { kind: 'screens' }
     | { kind: 'queries' }
@@ -52,10 +54,14 @@ export function completionEntriesFor(chain: string[]): CompletionEntry[] {
             return items.performerItems;
         case 'constraint':
             return items.constraintItems;
-        case 'reactor':
-            return items.reactorItems;
-        case 'on':
-            return items.reactorOnItems;
+        case 'reaction':
+            return items.reactionItems;
+        case 'trigger':
+            return items.triggerItems;
+        case 'when':
+        case 'every':
+        case 'at':
+            return chain.includes('reaction') ? items.reactionTriggerItems : [];
         case 'specification':
             return items.specificationItems;
         case 'policy':
@@ -100,8 +106,14 @@ export function planCompletions(
     if (/\bauthorize\s+[\w\s]*$/.test(textBefore) || chain[0] === 'authorize') {
         return { kind: 'policies' };
     }
-    if (/\bon\s+\w*$/.test(textBefore) && (chain.includes('reactor') || chain.includes('constraint'))) {
+    if (/\bwhen\s+\w*$/.test(textBefore) && chain.includes('reaction')) {
+        return { kind: 'triggers' };
+    }
+    if (/\bon\s+\w*$/.test(textBefore) && chain.includes('constraint')) {
         return { kind: 'events' };
+    }
+    if (/\binvokes\s+\w*$/.test(textBefore) && chain.includes('reaction')) {
+        return { kind: 'commands' };
     }
     if (/\b(?:on|unique\s+event)\s+\w*$/.test(textBefore) && chain[0] === 'constraint') {
         return { kind: 'events' };

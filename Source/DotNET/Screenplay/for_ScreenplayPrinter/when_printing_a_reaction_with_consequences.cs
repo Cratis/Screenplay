@@ -7,7 +7,7 @@ namespace Cratis.Screenplay.for_ScreenplayPrinter;
 
 public class when_printing_a_reaction_with_consequences : given.a_printer
 {
-    // A reactor states what it sets off: events it appends, commands it hands on. The verbs differ on
+    // A reaction states what it sets off: events it appends, commands it hands on. The verbs differ on
     // purpose - an event is a fact it produces, a command is an intent it invokes.
     const string Source =
         """
@@ -24,8 +24,8 @@ public class when_printing_a_reaction_with_consequences : given.a_printer
               command SendWelcomeMail
                 workspaceId Uuid
 
-              reactor Provisioner
-                on InvitationAccepted
+              reaction Provisioner
+                when InvitationAccepted
                   produces WorkspaceProvisioned
                     for workspaceId
                     workspaceId = workspaceId
@@ -51,7 +51,7 @@ public class when_printing_a_reaction_with_consequences : given.a_printer
     [Fact] void should_print_the_target_indented() => _roundtrip.Printed.ShouldContain("for workspaceId");
     [Fact] void should_print_the_invocation() => _roundtrip.Printed.ShouldContain("invokes SendWelcomeMail");
 
-    ReactorTriggerSyntax Trigger =>
+    ReactionTriggerSyntax Trigger =>
         _roundtrip.Reparsed.Value!.Modules.Single().Features.Single().Slices.Single()
-            .Reactors.Single().Triggers.Single();
+            .Reactions.Single().Triggers.Single();
 }

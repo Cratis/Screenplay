@@ -29,7 +29,8 @@ export const constructKeywords = [
     'event',
     'command',
     'query',
-    'reactor',
+    'reaction',
+    'trigger',
     'screen',
     'constraint',
     'specification',
@@ -96,6 +97,14 @@ export const clauseKeywords = [
     'tag',
     'for',
     'readmodel',
+    'when',
+    'every',
+    'at',
+    'where',
+    'invokes',
+    'contains',
+    'starts',
+    'with',
     'provider',
 ];
 
@@ -147,7 +156,7 @@ export const languageConfiguration: languages.LanguageConfiguration = {
     },
     indentationRules: {
         increaseIndentPattern:
-            /^\s*(module|feature|slice|policy|persona|authentication|provider|event|command|query|type|screen|projection|capture|reactor|constraint|layout|template|validate|produces|handler|performer|rule|section|concurrency|seed|for)\b.*$/,
+            /^\s*(module|feature|slice|policy|persona|authentication|provider|event|command|query|type|screen|projection|capture|reaction|trigger|constraint|layout|template|validate|produces|handler|performer|rule|section|concurrency|seed|for|when|every|at)\b.*$/,
         // Dedents are always explicit in an offside language — never auto-dedent.
         decreaseIndentPattern: /(?!)/,
     },

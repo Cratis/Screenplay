@@ -44,7 +44,7 @@ public enum SliceType
 /// <param name="Queries">The <see cref="QuerySyntax">queries</see> declared in the slice.</param>
 /// <param name="Projections">The <see cref="ProjectionSyntax">projections</see> declared in the slice.</param>
 /// <param name="Captures">The <see cref="CaptureSyntax">captures</see> declared in the slice.</param>
-/// <param name="Reactors">The <see cref="ReactorSyntax">reactors</see> declared in the slice.</param>
+/// <param name="Reactions">The <see cref="ReactionSyntax">reactions</see> declared in the slice.</param>
 /// <param name="Screens">The <see cref="ScreenSyntax">screens</see> declared in the slice.</param>
 /// <param name="Constraints">The <see cref="ConstraintSyntax">constraints</see> declared in the slice.</param>
 /// <param name="Specifications">The <see cref="SpecificationSyntax">specifications</see> declared in the slice.</param>
@@ -62,7 +62,7 @@ public record SliceSyntax(
     IEnumerable<QuerySyntax> Queries,
     IEnumerable<ProjectionSyntax> Projections,
     IEnumerable<CaptureSyntax> Captures,
-    IEnumerable<ReactorSyntax> Reactors,
+    IEnumerable<ReactionSyntax> Reactions,
     IEnumerable<ScreenSyntax> Screens,
     IEnumerable<ConstraintSyntax> Constraints,
     IEnumerable<SpecificationSyntax> Specifications,

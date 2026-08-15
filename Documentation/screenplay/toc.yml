@@ -48,8 +48,10 @@
   href: seeding.md
 - name: Constraints
   href: constraints.md
-- name: Reactors
-  href: reactors.md
+- name: Reactions
+  href: reactions.md
+- name: Triggers
+  href: triggers.md
 - name: Screens
   href: screens.md
 - name: Layout arrangement

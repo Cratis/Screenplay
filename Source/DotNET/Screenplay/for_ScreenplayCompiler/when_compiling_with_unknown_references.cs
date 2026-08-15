@@ -13,9 +13,9 @@ public class when_compiling_with_unknown_references : given.a_compiler
         module Invoicing
           feature Invoices
             slice Automation Notify
-              reactor Notifier
-                on SomethingHappened
-                  file Reactors/Notifier.cs
+              reaction Notifier
+                when SomethingHappened
+                  file Reactions/Notifier.cs
         """;
 
     CompilationResult<ApplicationSyntax> _result;
@@ -23,6 +23,6 @@ public class when_compiling_with_unknown_references : given.a_compiler
     void Because() => _result = _compiler.Compile(Source);
 
     [Fact] void should_succeed_with_warnings() => _result.Success.ShouldBeTrue();
-    [Fact] void should_warn_about_the_unknown_event() => _result.Diagnostics.Single().Message.ShouldEqual("Unknown event 'SomethingHappened' - declare it with 'event SomethingHappened'");
+    [Fact] void should_warn_about_the_unknown_trigger() => _result.Diagnostics.Single().Message.ShouldEqual("Unknown trigger 'SomethingHappened' - declare it with 'event SomethingHappened' or 'trigger SomethingHappened'");
     [Fact] void should_report_it_as_a_warning() => _result.Diagnostics.Single().Severity.ShouldEqual(DiagnosticSeverity.Warning);
 }

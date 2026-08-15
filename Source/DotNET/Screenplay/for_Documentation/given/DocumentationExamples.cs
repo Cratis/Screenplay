@@ -39,12 +39,12 @@ public static partial class DocumentationExamples
 {
     static readonly HashSet<string> _topLevel = new(StringComparer.Ordinal)
     {
-        "domain", "import", "concept", "type", "policy", "persona", "authentication", "seed", "module"
+        "domain", "import", "concept", "type", "policy", "persona", "authentication", "seed", "module", "trigger"
     };
 
     static readonly HashSet<string> _sliceMembers = new(StringComparer.Ordinal)
     {
-        "command", "query", "event", "projection", "reactor", "constraint", "specification", "screen", "layout", "capture", "slice", "feature"
+        "command", "query", "event", "projection", "reaction", "constraint", "specification", "screen", "layout", "capture", "slice", "feature"
     };
 
     static readonly HashSet<string> _projectionLevel = new(StringComparer.Ordinal)

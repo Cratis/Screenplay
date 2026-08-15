@@ -39,7 +39,7 @@ export const featureItems: CompletionEntry[] = [
     { label: 'feature', insertText: 'feature ${1:Name}\n    ', documentation: 'Declares a nested sub-feature.' },
     { label: 'slice StateChange', insertText: 'slice StateChange ${1:Name}\n    ', documentation: 'A command → events flow; something that changes the system.' },
     { label: 'slice StateView', insertText: 'slice StateView ${1:Name}\n    ', documentation: 'A query + projection + screen; something that reads the system.' },
-    { label: 'slice Automation', insertText: 'slice Automation ${1:Name}\n    ', documentation: 'A reactor or reducer; something that reacts to events.' },
+    { label: 'slice Automation', insertText: 'slice Automation ${1:Name}\n    ', documentation: 'A reaction or reducer; something that runs when something happens.' },
     { label: 'slice Translate', insertText: 'slice Translate ${1:Name}\n    ', documentation: 'A capture; converts external data into events.' },
 ];
 
@@ -50,7 +50,7 @@ export const sliceItems: CompletionEntry[] = [
     { label: 'query observable', insertText: 'query ${1:Name} => observable ${2:ReadModel}', documentation: 'Declares a live read — the query keeps pushing as the read model changes, instead of answering once.' },
     { label: 'projection', insertText: 'projection ${1:Name} => ${2:ReadModel}\n    from ${3:EventType}', documentation: 'Declares how events project into a read model (PDL).' },
     { label: 'capture', insertText: 'capture ${1:Name}\n    source ${2:api}', documentation: 'Declares a change data capture converting external data into events (CDL).' },
-    { label: 'reactor', insertText: 'reactor ${1:Name}\n    on ${2:EventType}', documentation: 'Declares an event reaction rule.' },
+    { label: 'reaction', insertText: 'reaction ${1:Name}\n    when ${2:Trigger}', documentation: 'Declares behavior that runs when something happens.' },
     { label: 'screen', insertText: 'screen ${1:Name}\n    data ${2:ReadModel} via query ${3:QueryName}', documentation: 'Declares a UI screen.' },
     { label: 'constraint', insertText: 'constraint ${1:Name}\n    unique ${2:property} on ${3:EventType}', documentation: 'Declares a server-side rule enforced before events are committed.' },
 ];
@@ -95,15 +95,25 @@ export const constraintItems: CompletionEntry[] = [
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Delegates the constraint to a custom C# implementation.' },
 ];
 
-export const reactorItems: CompletionEntry[] = [
-    { label: 'description', insertText: 'description "${1:what this reactor does}"', documentation: 'What the reactor does — a complete statement of intent before any code exists.' },
-    { label: 'on', insertText: 'on ${1:EventType}', documentation: 'Declares the event the reactor reacts to. A trigger needs no body.' },
+export const reactionItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:what this reaction does}"', documentation: 'What the reaction does — a complete statement of intent before any code exists.' },
+    { label: 'when', insertText: 'when ${1:Trigger}', documentation: 'An event, a declared trigger or a host signal that sets the reaction off. A trigger needs no body.' },
+    { label: 'every', insertText: 'every ${1:15} ${2|seconds,minutes,hours,days|}', documentation: 'Runs the reaction on an interval.' },
+    { label: 'at', insertText: 'at ${1:08:00}', documentation: 'Runs the reaction at a time of day — every day unless narrowed with `on <Weekday>` or `on day <n>`.' },
+    { label: 'where', insertText: 'where ${1:condition}', documentation: 'Narrows which occurrences actually run the reaction.' },
 ];
 
-export const reactorOnItems: CompletionEntry[] = [
+export const reactionTriggerItems: CompletionEntry[] = [
     { label: 'description', insertText: 'description "${1:what this reaction does}"', documentation: 'What this particular reaction does — enough on its own, with no file to point at.' },
+    { label: 'produces', insertText: 'produces ${1:EventType}', documentation: 'An event the reaction appends.' },
+    { label: 'invokes', insertText: 'invokes ${1:Command}', documentation: 'A command the reaction hands on. A command is asked for, not produced — it may still be rejected.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Delegates the reaction to an external C# file.' },
     { label: 'csharp', insertText: fenced('csharp'), documentation: 'Inline C# returning event side effects.' },
+];
+
+export const triggerItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:when this occurs}"', documentation: 'What makes an occurrence of this trigger happen.' },
+    { label: 'value', insertText: '${1:name} ${2:Type}', documentation: 'A value an occurrence hands the reaction. The type is optional.' },
 ];
 
 export const specificationItems: CompletionEntry[] = [

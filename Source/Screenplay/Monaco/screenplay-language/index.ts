@@ -79,7 +79,7 @@ export { cdl } from './sub-languages/cdl';
 export { screenplayDarkThemeName } from './themes/screenplay-dark';
 export { screenplayLightThemeName } from './themes/screenplay-light';
 export { enclosingChain, fenceMap, firstWord, indentOf } from './document-context';
-export { knownEventNames, knownTypeNames, scanDocument } from './symbols';
+export { builtInTriggerNames, knownEventNames, knownTriggerNames, knownTypeNames, scanDocument } from './symbols';
 export type {
     CommandSymbol,
     ConceptSymbol,

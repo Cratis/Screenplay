@@ -7,7 +7,7 @@ The full EBNF grammar of the Screenplay DSL. `INDENT`/`DEDENT` are synthesized b
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { TypeDecl }, { PolicyDecl }, { PersonaDecl }, [ AuthenticationDecl ], { ThemeDecl }, { UiProfileDecl }, { Module }, { SeedDecl } ;
+Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { TypeDecl }, { PolicyDecl }, { PersonaDecl }, [ AuthenticationDecl ], { TriggerDecl }, { ThemeDecl }, { UiProfileDecl }, { Module }, { SeedDecl } ;
 
 (* -------------------------------------------------------------- *)
 (* Domain                                                          *)
@@ -249,7 +249,7 @@ SliceBody      = EventDecl
                | ReducerDecl
                | CaptureDecl
                | SpecificationDecl
-               | ReactorDecl
+               | ReactionDecl
                | ScreenDecl
                | ConstraintDecl ;
 
@@ -418,7 +418,12 @@ ConditionOperand = Ident, CompOp, Value
                | Ident, CompOp, Ident
                | "(", Condition, ")" ;
 
-CompOp         = "==" | "!=" | ">" | ">=" | "<" | "<=" ;
+CompOp         = "==" | "!=" | ">" | ">=" | "<" | "<="
+               | "contains" | "starts", "with" ;
+
+(* The word operators compare text: "contains" for a substring anywhere,
+   "starts with" for one at the beginning. "starts with" is two words because
+   that is the phrase, so an operator is not always a single token.          *)
 
 PropertyMapping = [ "@" ], Ident, "=", MappingSource, NL ;
 
@@ -566,26 +571,56 @@ ConstraintBody = "unique", Ident, "on", Ident, NL   (* unique property  *)
                | FileDirective ;                       (* custom C#        *)
 
 (* -------------------------------------------------------------- *)
-(* Reactors                                                        *)
+(* Reactions and triggers                                          *)
 (* -------------------------------------------------------------- *)
 
-ReactorDecl    = "reactor", Ident, NL,
+ReactionDecl   = "reaction", Ident, NL,
                  INDENT,
                    [ DescriptionDecl ],
-                   ReactorTrigger, { ReactorTrigger },
+                   TriggerClause, { TriggerClause },
+                   [ WhereDecl ],
                  DEDENT ;
 
-(* A trigger with no body is a complete statement of intent - the reactor
-   observes the event. The file reference and the inline block are optional
+(* A trigger with no body is a complete statement of intent - the reaction runs
+   when that happens. The file reference and the inline block are optional
    realization metadata.                                                      *)
 
-ReactorTrigger = "on", Ident, NL,
+TriggerClause  = TriggerSource, NL,
                  [ INDENT,
                      [ DescriptionDecl ],
+                     { TriggerValue },
                      { ProducesDecl },
                      { InvokesDecl },
                      [ FileDirective | InlineBlock ],
                    DEDENT ] ;
+
+TriggerSource  = "when", Ident                      (* event, declared or registered trigger *)
+               | "every", Integer, IntervalUnit     (* every 15 minutes                      *)
+               | "at", Time, [ "on", ( Weekday | "day", Integer ) ] ;
+
+IntervalUnit   = "second"  | "seconds"
+               | "minute"  | "minutes"
+               | "hour"    | "hours"
+               | "day"     | "days" ;
+
+Weekday        = "Monday" | "Tuesday" | "Wednesday" | "Thursday"
+               | "Friday" | "Saturday" | "Sunday" ;
+
+Time           = Digit, Digit, ":", Digit, Digit ;   (* 24 hour, HH:mm *)
+
+(* A bare name selects a value the occurrence carries, so it is written without a
+   type - the shape belongs to the event or the trigger declaration.          *)
+
+TriggerValue   = Ident, [ TypeRef ], NL ;
+
+WhereDecl      = "where", Condition, NL ;
+
+(* The trigger declaration. It says the name exists and what an occurrence hands
+   the reaction - never what makes one occur, which belongs to whatever provides
+   it. That boundary is what lets the set of triggers be open.                *)
+
+TriggerDecl    = "trigger", Ident, NL,
+                 INDENT, [ DescriptionDecl ], { TriggerValue }, DEDENT ;
 
 InvokesDecl    = "invokes", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ] ;
@@ -700,17 +735,17 @@ Screenplay's workflow is *author the document first, then Stage performs it*. Th
 | `command` | `produces` with mappings and conditions | `handler` |
 | `query` | `=>` return type with optional `observable`, `by`/`filter`, `description` | `performer` |
 | `policy` | `require` conditions | inline `csharp` |
-| `reactor` | `description` on the reactor and on each `on` trigger | `file` / inline block |
+| `reaction` | `description` on the reaction and on each trigger, plus `produces` / `invokes` / `where` | `file` / inline block |
 | `screen` | title, sections, tables, `data`, `action`, `navigate`, layout | `file` |
 | `constraint` | `unique …` forms | `file` |
 | `projection` / `capture` | fully declarative (PDL / CDL) | — |
 
-So this is a complete, valid statement of intent for a reactor nobody has written yet:
+So this is a complete, valid statement of intent for a reaction nobody has written yet:
 
 ```screenplay
-reactor AcceptedInvitationProvisioner
+reaction AcceptedInvitationProvisioner
   description "Provisions the account when an invitation to join is accepted"
-  on InvitationAccepted
+  when InvitationAccepted
 ```
 
 Any construct added to the language follows the same rule: declarative meaning first, code pointer optional.

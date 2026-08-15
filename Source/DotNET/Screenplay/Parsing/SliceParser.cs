@@ -47,7 +47,7 @@ internal static partial class SliceParser
         var queries = new List<QuerySyntax>();
         var projections = new List<ProjectionSyntax>();
         var captures = new List<CaptureSyntax>();
-        var reactors = new List<ReactorSyntax>();
+        var reactions = new List<ReactionSyntax>();
         var screens = new List<ScreenSyntax>();
         var constraints = new List<ConstraintSyntax>();
         var specifications = new List<SpecificationSyntax>();
@@ -77,8 +77,8 @@ internal static partial class SliceParser
                 case "capture":
                     captures.Add(CaptureParser.Parse(context, line));
                     break;
-                case "reactor":
-                    reactors.Add(ReactorParser.Parse(context, line));
+                case "reaction":
+                    reactions.Add(ReactionParser.Parse(context, line));
                     break;
                 case "screen":
                     screens.Add(ScreenParser.Parse(context, line));
@@ -102,7 +102,7 @@ internal static partial class SliceParser
             }
         }
 
-        return new(type, name, events, commands, queries, projections, captures, reactors, screens, constraints, specifications, header.Location, description, readModels, reducers);
+        return new(type, name, events, commands, queries, projections, captures, reactions, screens, constraints, specifications, header.Location, description, readModels, reducers);
     }
 
     [GeneratedRegex(@"^slice\s+([A-Za-z]\w*)\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]

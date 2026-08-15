@@ -21,8 +21,18 @@
             built against 1.5.2 broke against 1.7.0 exactly this way. This makes the break an error in the
             pull request that causes it, and a deliberate act when it is one.
         -->
-        <EnablePackageValidation>true</EnablePackageValidation>
-        <PackageValidationBaselineVersion>2.0.0</PackageValidationBaselineVersion>
+        <!--
+            Off for the 3.0.0 major only. Every break in it is deliberate - reactor became reaction, and the
+            AST records that the screens, forms, contribution point, ui profile and theme work reshaped were
+            already breaking against the published 2.1.0. Validating a deliberate major against the line it
+            deliberately leaves has no answer to give.
+
+            Turn back on with the baseline at 3.0.0 once it is published - see Cratis/Screenplay#113, which
+            also covers the reason none of this surfaced in a pull request: the build workflow never packs,
+            and package validation only runs on pack.
+        -->
+        <EnablePackageValidation>false</EnablePackageValidation>
+        <PackageValidationBaselineVersion>2.1.0</PackageValidationBaselineVersion>
 
         <RunAnalyzersDuringBuild>True</RunAnalyzersDuringBuild>
         <RunAnalyzersDuringLiveAnalysis>True</RunAnalyzersDuringLiveAnalysis>
