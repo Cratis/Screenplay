@@ -135,9 +135,51 @@ Module         = "module", Ident, NL,
 
 LayoutDecl     = "layout", Ident, NL,
                  INDENT,
-                   "template", NL,
-                   INDENT, { Ident, NL }, DEDENT,
+                   [ ArrangementDecl ],
+                   ( TemplateDecl | { VariantDecl } ),
                  DEDENT ;
+
+ArrangementDecl = "arrangement", ( "flow" | "freeform" ), NL ;
+
+(* Default arrangement is "flow" when omitted - a bare "template" of plain
+   slot names (no row/column/grid nesting) is the pre-arrangement grammar
+   and still parses unchanged. *)
+
+TemplateDecl   = "template", NL,
+                 INDENT,
+                   { TemplateNode },
+                   { WhenDecl },
+                 DEDENT ;
+
+TemplateNode   = ContainerDecl | SlotDecl ;
+
+ContainerDecl  = ( "row" | "column" | "grid" ), [ "gap", Number ], NL,
+                 INDENT, { TemplateNode }, DEDENT ;
+
+SlotDecl       = Ident,
+                 [ "contributes", Ident ],
+                 [ "width", Number ],
+                 [ "height", Number ],
+                 [ "grow" ],
+                 [ "span", Number ],
+                 NL ;
+
+WhenDecl       = "when",
+                 ( "width", SizeClass, [ ",", "height", SizeClass ]
+                 | "height", SizeClass ), NL,
+                 INDENT, { TemplateNode }, DEDENT ;
+
+VariantDecl    = "variant", "width", SizeClass, ",", "height", SizeClass, NL,
+                 INDENT, { PlaceDecl }, DEDENT ;
+
+PlaceDecl      = "place", Ident,
+                 ( "hidden"
+                 | "at", Number, ",", Number, "size", SizeValue, ",", SizeValue ),
+                 NL ;
+
+SizeValue      = "fill" | Number ;
+
+SizeClass      = "compact" | "regular" ;
 
 (* -------------------------------------------------------------- *)
 (* Features                                                        *)

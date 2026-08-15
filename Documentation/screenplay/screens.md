@@ -28,6 +28,8 @@ layout DashboardLayout
 
 A slot may also declare `contributes <ContributionPoint>`, opening it up to many contributors declared anywhere in the module/feature tree instead of the one parent that owns the slot - see [Contributions](contributions.md).
 
+A layout also says how its slots share space and vary by device size - responsive `flow` (the default) or pixel-precise `freeform` - see [Layout arrangement](layout-arrangement.md).
+
 ## Level 1 — Intent
 
 Declares data and available actions. Studio generates the component.
