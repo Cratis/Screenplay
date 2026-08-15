@@ -280,6 +280,7 @@ internal static partial class ScreenplayParser
         string? description = null;
         var layouts = new List<LayoutSyntax>();
         var features = new List<FeatureSyntax>();
+        var forms = new List<FormSyntax>();
 
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -292,17 +293,31 @@ internal static partial class ScreenplayParser
                 case "layout":
                     layouts.Add(ParseLayout(context, child));
                     break;
+                case "form":
+                    AddForm(context, FormParser.Parse(context, child), forms);
+                    break;
                 case "feature":
                     features.Add(ParseFeature(context, child));
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownModuleDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected description, layout or feature", child.Location);
+                    context.Error(DiagnosticCodes.UnknownModuleDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected description, layout, form or feature", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
         }
 
-        return new(name, layouts, features, line.Location, description);
+        return new(name, layouts, features, line.Location, description, forms);
+    }
+
+    static void AddForm(ParserContext context, FormSyntax form, List<FormSyntax> forms)
+    {
+        if (forms.Exists(existing => existing.Name == form.Name))
+        {
+            context.Error(DiagnosticCodes.DuplicateForm, $"Duplicate form '{form.Name}' - a form is declared once", form.Location);
+            return;
+        }
+
+        forms.Add(form);
     }
 
     static LayoutSyntax ParseLayout(ParserContext context, SourceLine line)

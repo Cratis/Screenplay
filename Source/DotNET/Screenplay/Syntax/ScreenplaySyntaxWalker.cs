@@ -136,6 +136,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitLayout(layout);
         }
 
+        foreach (var form in syntax.Forms ?? [])
+        {
+            VisitForm(form);
+        }
+
         foreach (var feature in syntax.Features)
         {
             VisitFeature(feature);
@@ -147,6 +152,26 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The <see cref="LayoutSyntax"/> to visit.</param>
     public virtual void VisitLayout(LayoutSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a <see cref="FormSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="FormSyntax"/> to visit.</param>
+    public virtual void VisitForm(FormSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        foreach (var field in syntax.Fields)
+        {
+            VisitFormField(field);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="FormFieldSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="FormFieldSyntax"/> to visit.</param>
+    public virtual void VisitFormField(FormFieldSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="FeatureSyntax"/> node and its children.

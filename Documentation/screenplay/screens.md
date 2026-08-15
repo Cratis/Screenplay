@@ -48,7 +48,7 @@ screen InvoiceList
 
 ## Level 2 — Structure
 
-Adds named sections, tables, forms, and summary widgets, laid out in a layout template's slots:
+Adds named sections, tables, and summary widgets, laid out in a layout template's slots. Command-bound forms are a separate, module-scoped construct - see [Forms](forms.md).
 
 ```screenplay
 screen InvoiceDetails

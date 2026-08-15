@@ -1126,4 +1126,51 @@ public static class DiagnosticCodes
     /// A line in a <c>ui profile</c> body is not <c>target</c> or <c>packages</c>, or <c>packages</c> is declared more than once.
     /// </summary>
     public const string UnknownUiProfileDirective = "PLAY0207";
+
+    // form - a named, command-bound input surface declared at module level.
+
+    /// <summary>
+    /// A <c>form</c> line is not <c>form &lt;Name&gt; for &lt;Command&gt;</c>.
+    /// </summary>
+    public const string InvalidFormDeclaration = "PLAY0208";
+
+    /// <summary>
+    /// Two <c>form</c> blocks in the same document declare the same name.
+    /// </summary>
+    public const string DuplicateForm = "PLAY0209";
+
+    /// <summary>
+    /// A line in a <c>form</c> body is not <c>populate</c>, <c>field</c> or <c>on submit</c>.
+    /// </summary>
+    public const string UnknownFormDirective = "PLAY0210";
+
+    /// <summary>
+    /// A <c>populate</c> line is neither <c>populate via query ...</c> nor <c>populate from item</c>.
+    /// </summary>
+    public const string InvalidPopulateDeclaration = "PLAY0211";
+
+    /// <summary>
+    /// A <c>form</c> declares <c>populate</c> more than once.
+    /// </summary>
+    public const string DuplicatePopulate = "PLAY0212";
+
+    /// <summary>
+    /// A <c>field</c> line is not <c>field &lt;property&gt; [from &lt;source&gt;|compose using &lt;Callback&gt;] [label "..."]</c>.
+    /// </summary>
+    public const string InvalidFormField = "PLAY0213";
+
+    /// <summary>
+    /// An <c>on submit</c> line is not <c>on submit navigate to &lt;Screen&gt; [by &lt;param&gt;]</c>.
+    /// </summary>
+    public const string InvalidFormSubmit = "PLAY0214";
+
+    /// <summary>
+    /// A <c>form</c> declares <c>on submit</c> more than once.
+    /// </summary>
+    public const string DuplicateFormSubmit = "PLAY0215";
+
+    /// <summary>
+    /// A <c>field</c> binds to a property its form's command does not declare.
+    /// </summary>
+    public const string UnknownFormFieldProperty = "PLAY0216";
 }

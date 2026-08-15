@@ -13,12 +13,14 @@ namespace Cratis.Screenplay.Syntax;
 /// <param name="Features">The <see cref="FeatureSyntax">features</see> declared in the module.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 /// <param name="Description">The optional description of the module.</param>
+/// <param name="Forms">The <see cref="FormSyntax">forms</see> declared in the module.</param>
 public record ModuleSyntax(
     string Name,
     IEnumerable<LayoutSyntax> Layouts,
     IEnumerable<FeatureSyntax> Features,
     SourceLocation Location,
-    string? Description = null) : SyntaxNode(Location);
+    string? Description = null,
+    IEnumerable<FormSyntax>? Forms = null) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents a <c>layout</c> declaration - a reusable screen template with named slots.
