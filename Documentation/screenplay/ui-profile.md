@@ -42,15 +42,6 @@ Profile selection is a build/Stage concern, not something a `screen` states abou
 
 ## Component name resolution
 
-A profile's `packages` list is resolved the same way as any other bare name in Screenplay (see [Visitors and traversal](visitors.md) for the general inside-out walk this reuses): a bare widget name checks the active packages in declaration order, and a name matching two packages equally well is reported the same way an ambiguous query reference is - named candidates, not a silent pick.
-
-```screenplay
-screen InvoiceDetails
-  section summary
-    button "Cancel"                          // core - always resolves
-
-  section trend
-    Internal.Widgets.TrendChart bind data    // not in core, must qualify
-```
+A profile's `packages` list is resolved the same way as any other bare name in Screenplay (see [Visitors and traversal](visitors.md) for the general inside-out walk this reuses): a bare widget name checks the active packages in declaration order, and a name matching two packages equally well is reported the same way an ambiguous query reference is - named candidates, not a silent pick. A widget already in `core` (a button, say) always resolves without qualification; one that only exists in a package further down the list, like an internal chart widget, has to be qualified by that package's name to be found at all.
 
 Screenplay's own compiler has no visibility into what widgets a package like PrimeReact or an internal library actually defines - that catalog is external to the document. Resolving a bare widget name against it, and reporting the resulting ambiguity, is therefore a build-time concern owned by Stage and the package resolution engine, not something the Screenplay compiler itself checks. What the compiler does validate at compile time is the profile declaration itself: a profile name, or a package within one profile's list, is never allowed to be declared twice.
