@@ -7,7 +7,7 @@ using Cratis.Screenplay.Text;
 namespace Cratis.Screenplay.Printing;
 
 /// <summary>
-/// Printing of the host-language slice constructs - commands, events, queries, constraints and reactors.
+/// Printing of the host-language slice constructs - commands, events, queries, constraints and reactions.
 /// </summary>
 public partial class ScreenplayPrinter
 {
@@ -169,52 +169,69 @@ public partial class ScreenplayPrinter
         }
     }
 
-    void WriteReactor(ScreenplayWriter writer, ReactorSyntax reactor)
+    void WriteReaction(ScreenplayWriter writer, ReactionSyntax reaction)
     {
-        writer.Line($"reactor {reactor.Name}");
+        writer.Line($"reaction {reaction.Name}");
         using (writer.Indent())
         {
-            WriteDescription(writer, reactor.Description);
+            WriteDescription(writer, reaction.Description);
 
-            foreach (var trigger in reactor.Triggers)
+            foreach (var trigger in reaction.Triggers)
             {
-                writer.Line($"on {trigger.Event}");
+                WriteReactionTrigger(writer, trigger);
+            }
 
-                // A trigger with nothing but its event is complete on its own, so it prints as a single
-                // line rather than an empty indented block.
-                if (trigger is { Description: null, File: null, Code: null } && !(trigger.Produces ?? []).Any() && !(trigger.Invokes ?? []).Any())
-                {
-                    continue;
-                }
+            if (reaction.Where is not null)
+            {
+                writer.Line($"where {ScreenplaySyntaxText.Condition(reaction.Where)}");
+            }
+        }
+    }
 
+    void WriteReactionTrigger(ScreenplayWriter writer, ReactionTriggerSyntax trigger)
+    {
+        writer.Line(ScreenplaySyntaxText.TriggerSource(trigger.Source));
+
+        // A trigger with nothing but what sets it off is complete on its own, so it prints as a single line
+        // rather than an empty indented block.
+        if (trigger is { Description: null, File: null, Code: null } &&
+            !trigger.Data.Any() && !(trigger.Produces ?? []).Any() && !(trigger.Invokes ?? []).Any())
+        {
+            return;
+        }
+
+        using (writer.Indent())
+        {
+            WriteDescription(writer, trigger.Description);
+
+            foreach (var datum in trigger.Data)
+            {
+                var name = ReservedWords.Escape(datum.Name, ReservedWords.TriggerBody);
+                writer.Line(datum.Type is null ? name : $"{name} {ScreenplaySyntaxText.TypeRef(datum.Type)}");
+            }
+
+            foreach (var produces in trigger.Produces ?? [])
+            {
+                WriteProduces(writer, produces);
+            }
+
+            foreach (var invokes in trigger.Invokes ?? [])
+            {
+                writer.Line($"invokes {invokes.Command}");
                 using (writer.Indent())
                 {
-                    WriteDescription(writer, trigger.Description);
-
-                    foreach (var produces in trigger.Produces ?? [])
-                    {
-                        WriteProduces(writer, produces);
-                    }
-
-                    foreach (var invokes in trigger.Invokes ?? [])
-                    {
-                        writer.Line($"invokes {invokes.Command}");
-                        using (writer.Indent())
-                        {
-                            WriteMappings(writer, invokes.Mappings, ReservedWords.MappingBlock);
-                        }
-                    }
-
-                    if (trigger.File is not null)
-                    {
-                        writer.Line($"file {trigger.File.Path}");
-                    }
-
-                    if (trigger.Code is not null)
-                    {
-                        WriteCodeBlock(writer, trigger.Code);
-                    }
+                    WriteMappings(writer, invokes.Mappings, ReservedWords.MappingBlock);
                 }
+            }
+
+            if (trigger.File is not null)
+            {
+                writer.Line($"file {trigger.File.Path}");
+            }
+
+            if (trigger.Code is not null)
+            {
+                WriteCodeBlock(writer, trigger.Code);
             }
         }
     }

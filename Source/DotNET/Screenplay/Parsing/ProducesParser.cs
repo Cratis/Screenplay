@@ -8,11 +8,11 @@ using Cratis.Screenplay.Syntax;
 namespace Cratis.Screenplay.Parsing;
 
 /// <summary>
-/// Parses <c>produces</c> declarations - the events a command or a reactor appends, where they land, and
+/// Parses <c>produces</c> declarations - the events a command or a reaction appends, where they land, and
 /// how their properties are filled.
 /// </summary>
 /// <remarks>
-/// Shared rather than written twice: a reactor produces events the same way a command does, so the two say
+/// Shared rather than written twice: a reaction produces events the same way a command does, so the two say
 /// the same thing with the same words and a reader learns the construct once.
 /// </remarks>
 internal static partial class ProducesParser

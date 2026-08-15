@@ -6,7 +6,7 @@ using Cratis.Screenplay.Syntax;
 namespace Cratis.Screenplay.Printing;
 
 /// <summary>
-/// Printing of inline fenced code blocks shared across policies, handlers, reactors, validation and screens.
+/// Printing of inline fenced code blocks shared across policies, handlers, reactions, validation and screens.
 /// </summary>
 public partial class ScreenplayPrinter
 {

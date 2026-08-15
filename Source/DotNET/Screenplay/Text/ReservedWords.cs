@@ -38,6 +38,12 @@ internal static class ReservedWords
         new HashSet<string>(StringComparer.Ordinal) { "tag" };
 
     /// <summary>
+    /// The keywords a reaction trigger body reserves, and so the trigger values that need escaping.
+    /// </summary>
+    public static readonly IReadOnlySet<string> TriggerBody =
+        new HashSet<string>(StringComparer.Ordinal) { "description", "file", "produces", "invokes" };
+
+    /// <summary>
     /// The keywords a mapping block reserves, and so the mapping targets that need escaping.
     /// </summary>
     public static readonly IReadOnlySet<string> MappingBlock =

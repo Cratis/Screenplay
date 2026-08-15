@@ -152,6 +152,20 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitTheme(ThemeSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
+    /// Visits a <see cref="TriggerSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="TriggerSyntax"/> to visit.</param>
+    public virtual void VisitTrigger(TriggerSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        foreach (var datum in syntax.Data)
+        {
+            VisitTriggerData(datum);
+        }
+    }
+
+    /// <summary>
     /// Visits a <see cref="SeedSyntax"/> node and its children.
     /// </summary>
     /// <param name="syntax">The <see cref="SeedSyntax"/> to visit.</param>

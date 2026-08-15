@@ -73,6 +73,19 @@ internal static partial class ScreenplaySyntaxText
     }
 
     /// <summary>
+    /// Renders a <see cref="TriggerSourceSyntax"/> - the line a reaction's trigger clause opens with.
+    /// </summary>
+    /// <param name="source">The <see cref="TriggerSourceSyntax"/> to render.</param>
+    /// <returns>The rendered trigger text, including its leading keyword.</returns>
+    public static string TriggerSource(TriggerSourceSyntax source) => source switch
+    {
+        NamedTriggerSourceSyntax named => $"when {named.Name}",
+        IntervalTriggerSourceSyntax interval => $"every {interval.Amount} {IntervalUnitText(interval.Amount, interval.Unit)}",
+        ScheduleTriggerSourceSyntax schedule => Schedule(schedule),
+        _ => string.Empty
+    };
+
+    /// <summary>
     /// Renders a <c>produces when</c> <see cref="ConditionSyntax"/> to its surface form.
     /// </summary>
     /// <param name="condition">The <see cref="ConditionSyntax"/> to render.</param>
@@ -259,6 +272,32 @@ internal static partial class ScreenplaySyntaxText
 
     static LogicalOperator? OperatorOf(PolicyRequirementSyntax requirement) =>
         requirement is LogicalPolicyRequirementSyntax logical ? logical.Operator : null;
+
+    // 'every 1 day' rather than 'every 1 days' - a schedule is read aloud, and the plural is what the
+    // language accepts on the way in, not what it insists on writing back out.
+    static string IntervalUnitText(int amount, IntervalUnit unit)
+    {
+        var plural = unit switch
+        {
+            IntervalUnit.Seconds => "seconds",
+            IntervalUnit.Minutes => "minutes",
+            IntervalUnit.Hours => "hours",
+            _ => "days"
+        };
+
+        return amount == 1 ? plural[..^1] : plural;
+    }
+
+    static string Schedule(ScheduleTriggerSourceSyntax schedule)
+    {
+        var time = $"at {schedule.Time:HH\\:mm}";
+        if (schedule.DayOfWeek is { } dayOfWeek)
+        {
+            return $"{time} on {dayOfWeek}";
+        }
+
+        return schedule.DayOfMonth is { } dayOfMonth ? $"{time} on day {dayOfMonth.ToString(CultureInfo.InvariantCulture)}" : time;
+    }
 
     static string ClaimCondition(ClaimConditionSyntax claim)
     {

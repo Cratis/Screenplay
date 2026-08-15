@@ -117,6 +117,13 @@ authentication
   provider GitHub
   provider OpenId name Partner
 
+// A trigger the domain does not raise. The compiler knows the name and what an
+// occurrence carries; what makes one occur belongs to whoever provides it.
+trigger DirectoryChanged
+  description "The external billing directory published a change"
+  entry BillingContact
+  changedAt DateTime
+
 module Invoicing
   description
     ```
@@ -867,21 +874,21 @@ module Invoicing
 
     slice Automation NotifyCustomerOnInvoiceRegistered
 
-      reactor NotifyCustomer
+      reaction NotifyCustomer
         description "Emails the billing contact once an invoice is registered"
-        on InvoiceRegistered
-          file Reactors/NotifyCustomerReactor.cs
+        when InvoiceRegistered
+          file Reactions/NotifyCustomerReaction.cs
 
     slice Automation DetectOverdueInvoices
 
-      reactor OverdueInvoiceDetector
-        on InvoiceRegistered
+      reaction OverdueInvoiceDetector
+        when InvoiceRegistered
           csharp
             ```
             if (DueDate < DateTimeOffset.UtcNow)
                 return [new MarkInvoiceOverdue(InvoiceId, DateTimeOffset.UtcNow)];
             ```
-        on InvoiceSent
+        when InvoiceSent
           csharp
             ```
             if (DueDate < DateTimeOffset.UtcNow)
@@ -894,11 +901,29 @@ module Invoicing
       // A trigger states intent on its own. The 'file' reference and the inline
       // block are realization metadata a slice gains once it is built, never
       // something an author must invent to make the document parse.
-      reactor PaymentReconciler
+      reaction PaymentReconciler
         description "Matches settled payments against outstanding invoices and closes them out"
-        on InvoicePaid
-        on InvoiceMarkedOverdue
+        when InvoicePaid
+        when InvoiceMarkedOverdue
           description "Re-checks whether a late payment has since arrived"
+
+    slice Automation ChaseOverdueInvoices
+      description "Driven by the clock rather than by an event"
+
+      reaction OverdueChaser
+        description "Reminds the billing contact every morning while an invoice is late"
+        at 08:00
+          produces InvoiceMarkedOverdue
+            overdueAt = $context.occurred
+
+    slice Automation SyncBillingDirectory
+
+      reaction BillingDirectorySync
+        description "Reconciles the billing contact list against the external directory"
+        every 15 minutes
+        when DirectoryChanged
+          entry
+          changedAt
 
 seed
   for "3fa85f64-5717-4562-b3fc-2c963f66afa6"

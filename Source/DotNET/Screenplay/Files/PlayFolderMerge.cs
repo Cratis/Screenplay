@@ -57,7 +57,8 @@ internal static partial class PlayFolderMerge
             DeclaredInOneFile(applications.SelectMany(application => application.Personas ?? []), persona => persona.Name, persona => persona.Location, "persona", context),
             [.. applications.SelectMany(application => application.Seeds ?? [])],
             OnlyOne(applications.Select(application => application.Authentication), authentication => authentication.Location, "authentication block", context),
-            types);
+            types,
+            Triggers: DeclaredInOneFile(applications.SelectMany(application => application.Triggers ?? []), trigger => trigger.Name, trigger => trigger.Location, "trigger", context));
     }
 
     /// <summary>

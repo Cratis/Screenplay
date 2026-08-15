@@ -8,7 +8,7 @@ namespace Cratis.Screenplay.Parsing;
 
 /// <summary>
 /// Validates cross references in a parsed document - policies referenced by <c>authorize</c> and personas,
-/// events referenced by reactors, <c>produces</c>, constraints and <c>seed</c> blocks, and the types
+/// events referenced by reactions, <c>produces</c>, constraints and <c>seed</c> blocks, and the types
 /// referenced by properties - and that <c>concurrency</c> and <c>seed</c> blocks are not empty and
 /// <c>authentication</c> provider and <c>type</c> names are unique.
 /// </summary>
@@ -82,10 +82,16 @@ internal static class ScreenplayValidator
             .Concat(application.Imports.Select(import => import.Name))
             .ToHashSet();
 
+        var declaredTriggers = (application.Triggers ?? []).ToDictionary(trigger => trigger.Name, StringComparer.Ordinal);
+        var eventsByName = slices.SelectMany(slice => slice.Events)
+            .GroupBy(@event => @event.Name, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+
         foreach (var slice in slices)
         {
             ValidateSlice(slice, knownEvents, knownPolicies, knownTypes, knownReadModels, context);
-            ValidateReactorConsequences(slice, knownEvents, knownCommands, context);
+            ValidateReactionConsequences(slice, knownEvents, knownCommands, context);
+            ValidateReactionTriggers(slice, knownEvents, declaredTriggers, eventsByName, context);
         }
 
         var scopedSlices = ScopedSlices(application).ToList();
@@ -387,19 +393,105 @@ internal static class ScreenplayValidator
     };
 
     /// <summary>
-    /// Validates that what a reactor sets off exists - the events it appends and the commands it invokes.
+    /// Validates that what sets a reaction off resolves, and that it only takes values the occurrence carries.
     /// </summary>
-    /// <param name="slice">The <see cref="SliceSyntax"/> holding the reactors.</param>
+    /// <param name="slice">The <see cref="SliceSyntax"/> holding the reactions.</param>
+    /// <param name="knownEvents">The events the document makes available.</param>
+    /// <param name="declaredTriggers">The <see cref="TriggerSyntax">triggers</see> the document declares, by name.</param>
+    /// <param name="eventsByName">The events the document declares in full, by name.</param>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <remarks>
+    /// A name resolves against three sets, in the order they are closest to the document: the events it
+    /// declares or imports, the triggers it declares, and the triggers a consumer registered with the
+    /// compiler. Only when all three miss is the name unknown - an integration's trigger has no declaration
+    /// to find, and reporting it would punish the extensibility the registry exists for.
+    /// <para>
+    /// A reaction's <c>where</c> operands are deliberately left unchecked, unlike a command's <c>require</c>.
+    /// The two look alike and are not: a command requires against its own properties and what it declares it
+    /// reads, both of which the document states in full. A <c>where</c> narrows whatever set the reaction
+    /// off, and that shape is often unknown - an imported event is a bare name, a registered trigger need not
+    /// state its values, and a clock trigger has no modeled shape at all. A reaction may also carry several
+    /// triggers, so an operand valid for one is invalid for another. Checking under those conditions would
+    /// report correct documents, and a warning that fires on correct input is worse than no warning.
+    /// </para>
+    /// </remarks>
+    static void ValidateReactionTriggers(
+        SliceSyntax slice,
+        HashSet<string> knownEvents,
+        Dictionary<string, TriggerSyntax> declaredTriggers,
+        Dictionary<string, EventSyntax> eventsByName,
+        ParserContext context)
+    {
+        foreach (var trigger in slice.Reactions.SelectMany(reaction => reaction.Triggers))
+        {
+            if (trigger.Source is not NamedTriggerSourceSyntax named)
+            {
+                continue;
+            }
+
+            if (declaredTriggers.TryGetValue(named.Name, out var declared))
+            {
+                ValidateTriggerData(trigger, declared.Data.Select(datum => datum.Name), named.Name, context);
+                continue;
+            }
+
+            if (!knownEvents.Contains(named.Name))
+            {
+                if (!context.Languages.Triggers.TryGetValue(named.Name, out var registered))
+                {
+                    context.Warning(
+                        DiagnosticCodes.UnknownTrigger,
+                        $"Unknown trigger '{named.Name}' - declare it with 'event {named.Name}' or 'trigger {named.Name}'",
+                        named.Location);
+                    continue;
+                }
+
+                // A registration that states no shape is not a registration that states an empty one. The
+                // first leaves the values alone; the second says an occurrence carries nothing, and taking
+                // something from it is worth reporting.
+                if (registered.Values is { } values)
+                {
+                    ValidateTriggerData(trigger, values, named.Name, context);
+                }
+
+                continue;
+            }
+
+            // An imported event is a name and nothing more, so there is no property list to check against and
+            // taking a value from it says only what the author intends.
+            if (eventsByName.TryGetValue(named.Name, out var @event))
+            {
+                ValidateTriggerData(trigger, @event.Properties.Select(property => property.Name), named.Name, context);
+            }
+        }
+    }
+
+    static void ValidateTriggerData(ReactionTriggerSyntax trigger, IEnumerable<string> available, string source, ParserContext context)
+    {
+        var names = available.ToHashSet(StringComparer.Ordinal);
+        foreach (var datum in trigger.Data.Where(datum => !names.Contains(datum.Name)))
+        {
+            context.Warning(
+                DiagnosticCodes.UnknownTriggerData,
+                $"'{source}' carries no '{datum.Name}' - a reaction can only take values the occurrence provides",
+                datum.Location);
+        }
+    }
+
+    /// <summary>
+    /// Validates that what a reaction sets off exists - the events it appends and the commands it invokes.
+    /// </summary>
+    /// <param name="slice">The <see cref="SliceSyntax"/> holding the reactions.</param>
     /// <param name="knownEvents">The events the document makes available.</param>
     /// <param name="knownCommands">The commands the document declares.</param>
     /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
-    static void ValidateReactorConsequences(
+    static void ValidateReactionConsequences(
         SliceSyntax slice,
         HashSet<string> knownEvents,
         HashSet<string> knownCommands,
         ParserContext context)
     {
-        foreach (var trigger in slice.Reactors.SelectMany(reactor => reactor.Triggers))
+        foreach (var trigger in slice.Reactions.SelectMany(reaction => reaction.Triggers))
         {
             foreach (var produces in (trigger.Produces ?? []).Where(produces => !knownEvents.Contains(produces.Event)))
             {
@@ -782,12 +874,6 @@ internal static class ScreenplayValidator
             .Where(produces => !knownEvents.Contains(produces.Event)))
         {
             context.Warning(DiagnosticCodes.UnknownEvent, $"Unknown event '{produces.Event}' - declare it with 'event {produces.Event}'", produces.Location);
-        }
-
-        foreach (var trigger in slice.Reactors.SelectMany(reactor => reactor.Triggers)
-            .Where(trigger => !knownEvents.Contains(trigger.Event)))
-        {
-            context.Warning(DiagnosticCodes.UnknownEvent, $"Unknown event '{trigger.Event}' - declare it with 'event {trigger.Event}'", trigger.Location);
         }
 
         foreach (var constraint in slice.Constraints)

@@ -100,6 +100,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitTheme(theme);
         }
 
+        foreach (var trigger in syntax.Triggers ?? [])
+        {
+            VisitTrigger(trigger);
+        }
+
         foreach (var uiProfile in syntax.UiProfiles ?? [])
         {
             VisitUiProfile(uiProfile);
@@ -394,9 +399,9 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitCapture(capture);
         }
 
-        foreach (var reactor in syntax.Reactors)
+        foreach (var reaction in syntax.Reactions)
         {
-            VisitReactor(reactor);
+            VisitReaction(reaction);
         }
 
         foreach (var screen in syntax.Screens)

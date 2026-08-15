@@ -13,9 +13,9 @@ public class and_it_is_a_warning : given.a_compiler
         module Invoicing
           feature Invoices
             slice Automation Notify
-              reactor Notifier
-                on SomethingHappened
-                  file Reactors/Notifier.cs
+              reaction Notifier
+                when SomethingHappened
+                  file Reactions/Notifier.cs
         """;
 
     CompilationResult<ApplicationSyntax> _result;
@@ -23,5 +23,5 @@ public class and_it_is_a_warning : given.a_compiler
     void Because() => _result = _compiler.Compile(Source);
 
     [Fact] void should_report_it_as_a_warning() => _result.Diagnostics.Single().Severity.ShouldEqual(DiagnosticSeverity.Warning);
-    [Fact] void should_carry_the_code_of_the_condition() => _result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.UnknownEvent);
+    [Fact] void should_carry_the_code_of_the_condition() => _result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.UnknownTrigger);
 }

@@ -4,7 +4,7 @@
 namespace Cratis.Screenplay.Syntax;
 
 /// <summary>
-/// Traversal of the remaining members of a slice - queries, reactors and constraints.
+/// Traversal of the remaining members of a slice - queries, reactions and constraints.
 /// </summary>
 public abstract partial class ScreenplaySyntaxWalker
 {
@@ -73,26 +73,37 @@ public abstract partial class ScreenplaySyntaxWalker
     }
 
     /// <summary>
-    /// Visits a <see cref="ReactorSyntax"/> node and its children.
+    /// Visits a <see cref="ReactionSyntax"/> node and its children.
     /// </summary>
-    /// <param name="syntax">The <see cref="ReactorSyntax"/> to visit.</param>
-    public virtual void VisitReactor(ReactorSyntax syntax)
+    /// <param name="syntax">The <see cref="ReactionSyntax"/> to visit.</param>
+    public virtual void VisitReaction(ReactionSyntax syntax)
     {
         VisitNode(syntax);
 
         foreach (var trigger in syntax.Triggers)
         {
-            VisitReactorTrigger(trigger);
+            VisitReactionTrigger(trigger);
+        }
+
+        if (syntax.Where is not null)
+        {
+            VisitCondition(syntax.Where);
         }
     }
 
     /// <summary>
-    /// Visits a <see cref="ReactorTriggerSyntax"/> node and its children.
+    /// Visits a <see cref="ReactionTriggerSyntax"/> node and its children.
     /// </summary>
-    /// <param name="syntax">The <see cref="ReactorTriggerSyntax"/> to visit.</param>
-    public virtual void VisitReactorTrigger(ReactorTriggerSyntax syntax)
+    /// <param name="syntax">The <see cref="ReactionTriggerSyntax"/> to visit.</param>
+    public virtual void VisitReactionTrigger(ReactionTriggerSyntax syntax)
     {
         VisitNode(syntax);
+        VisitNode(syntax.Source);
+
+        foreach (var datum in syntax.Data)
+        {
+            VisitTriggerData(datum);
+        }
 
         foreach (var produces in syntax.Produces ?? [])
         {
@@ -112,6 +123,20 @@ public abstract partial class ScreenplaySyntaxWalker
         if (syntax.Code is not null)
         {
             VisitCodeBlock(syntax.Code);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="TriggerDataSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="TriggerDataSyntax"/> to visit.</param>
+    public virtual void VisitTriggerData(TriggerDataSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        if (syntax.Type is not null)
+        {
+            VisitTypeRef(syntax.Type);
         }
     }
 

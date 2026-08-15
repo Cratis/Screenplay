@@ -34,6 +34,7 @@ internal static partial class ScreenplayParser
         var seeds = new List<SeedSyntax>();
         var uiProfiles = new List<UiProfileSyntax>();
         var themes = new List<ThemeSyntax>();
+        var triggers = new List<TriggerSyntax>();
 
         while (context.Reader.PeekSignificant() is { } line)
         {
@@ -41,7 +42,7 @@ internal static partial class ScreenplayParser
             switch (LineText.FirstWord(line.Content))
             {
                 case "domain":
-                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null || uiProfiles.Count > 0 || themes.Count > 0);
+                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null || uiProfiles.Count > 0 || themes.Count > 0 || triggers.Count > 0);
                     break;
                 case "import":
                     if (ImportRegex().Match(line.Content) is { Success: true } import)
@@ -81,14 +82,17 @@ internal static partial class ScreenplayParser
                 case "theme":
                     AddTheme(context, ThemeParser.Parse(context, line), themes);
                     break;
+                case "trigger":
+                    AddTrigger(context, TriggerParser.Parse(context, line), triggers);
+                    break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, type, policy, persona, authentication, module, seed, ui profile or theme", line.Location);
+                    context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, type, policy, persona, authentication, module, seed, trigger, ui profile or theme", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
         }
 
-        return new(imports, concepts, policies, modules, context.Start, domain, personas, seeds, authentication, types, uiProfiles, themes);
+        return new(imports, concepts, policies, modules, context.Start, domain, personas, seeds, authentication, types, uiProfiles, themes, triggers);
     }
 
     static void AddUiProfile(ParserContext context, UiProfileSyntax profile, List<UiProfileSyntax> uiProfiles)
@@ -111,6 +115,17 @@ internal static partial class ScreenplayParser
         }
 
         themes.Add(theme);
+    }
+
+    static void AddTrigger(ParserContext context, TriggerSyntax trigger, List<TriggerSyntax> triggers)
+    {
+        if (triggers.Exists(existing => existing.Name == trigger.Name))
+        {
+            context.Error(DiagnosticCodes.DuplicateTrigger, $"A trigger named '{trigger.Name}' is already declared - trigger names must be unique", trigger.Location);
+            return;
+        }
+
+        triggers.Add(trigger);
     }
 
     static DomainSyntax? ParseDomain(ParserContext context, SourceLine line, DomainSyntax? existing, bool hasOtherConstructs)
