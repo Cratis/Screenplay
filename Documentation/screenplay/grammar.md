@@ -7,7 +7,7 @@ The full EBNF grammar of the Screenplay DSL. `INDENT`/`DEDENT` are synthesized b
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { TypeDecl }, { PolicyDecl }, { PersonaDecl }, [ AuthenticationDecl ], { Module }, { SeedDecl } ;
+Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { TypeDecl }, { PolicyDecl }, { PersonaDecl }, [ AuthenticationDecl ], { ThemeDecl }, { UiProfileDecl }, { Module }, { SeedDecl } ;
 
 (* -------------------------------------------------------------- *)
 (* Domain                                                          *)
@@ -117,6 +117,46 @@ ProviderDecl   = "provider", Ident, [ "name", Ident ], NL ;
    the application needs to know rather than what it is, and they differ per
    environment while the document does not. "name" distinguishes two providers
    of the same kind, which a generic OpenId or OAuth provider needs.         *)
+
+(* -------------------------------------------------------------- *)
+(* Themes and ui profiles                                          *)
+(* -------------------------------------------------------------- *)
+
+ThemeDecl      = "theme", Ident, NL,
+                 INDENT, { CompatibleWithDecl }, DEDENT ;
+
+CompatibleWithDecl = "compatible", "with", PackageName, NL ;
+
+(* A theme names a look, and which component packages it is built for. A package
+   may be declared compatible once; a second says nothing the first did not.  *)
+
+UiProfileDecl  = "ui", "profile", Ident, NL,
+                 INDENT,
+                   [ TargetPlatformDecl ],
+                   [ TargetSizeDecl ],
+                   [ PackagesBlock ],
+                   [ ProfileThemeDecl ],
+                 DEDENT ;
+
+TargetPlatformDecl = "target", "platform", PlatformName, { ",", PlatformName }, NL ;
+
+TargetSizeDecl = "target", "size", SizeClass, NL ;
+
+SizeClass      = "compact" | "regular" | "expanded" ;
+
+PackagesBlock  = "packages", NL,
+                 INDENT, PackageName, { PackageName }, DEDENT ;
+
+ProfileThemeDecl = "theme", Ident, NL ;
+
+PackageName    = Ident, { ".", Ident } ;
+
+(* Each of the four is optional and may appear at most once, in any order - the
+   body is read line by line rather than positionally. The size class names a
+   class rather than a pixel breakpoint, because a narrow browser window and a
+   compact phone are the same class and a breakpoint means nothing natively.
+   A profile's "theme" selects one declared elsewhere in the document; the
+   width x height matrix a layout resolves against is a separate concern.    *)
 
 (* -------------------------------------------------------------- *)
 (* Module                                                          *)
