@@ -18,6 +18,8 @@
   href: personas.md
 - name: Authentication
   href: authentication.md
+- name: UI profile
+  href: ui-profile.md
 - name: Internationalization
   href: internationalization.md
 - name: Modules, features and slices
