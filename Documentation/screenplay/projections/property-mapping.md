@@ -44,6 +44,33 @@ Supported literal types:
 - **Number**: `42`, `3.14`
 - **Null**: `null`
 
+## Clearing a Value
+
+Assigning a value and removing one are different acts, and `=` hides the difference. Use `clear` to remove the value a property holds:
+
+```pdl
+clear {Property}
+```
+
+### Example
+
+```pdl
+from NoteCleared
+  clear Note
+  ClearedAt = $eventContext.occurred
+```
+
+A dotted path clears a property on a nested object:
+
+```pdl
+from OwnerNoteCleared
+  clear Owner.Note
+```
+
+`Property = null` means the same thing and keeps working, so nothing written against the older spelling breaks. Prefer `clear` in new projections — it names the act instead of assigning nothing.
+
+`clear <property>` is a mapping line inside a `from`, `every`, `all` or `with` block. It is not the same directive as `clear with <EventType>`, which nulls a whole child object — see [Nested Objects](nested).
+
 ## String Templates
 
 Create formatted strings using template literals:
