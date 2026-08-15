@@ -21,6 +21,19 @@ public abstract record MappingSyntax(string Property, SourceLocation Location) :
 public record SetMappingSyntax(string Property, ExpressionSyntax Source, SourceLocation Location) : MappingSyntax(Property, Location);
 
 /// <summary>
+/// Represents a <c>clear</c> mapping - removes the value the property holds when the event occurs.
+/// </summary>
+/// <param name="Property">The dotted target property path on the read model.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <remarks>
+/// Clearing is its own act, not an assignment of nothing, so it is its own node rather than a
+/// <see cref="SetMappingSyntax"/> holding a null literal. The older spelling <c>property = null</c> still
+/// parses, and still parses to a <see cref="SetMappingSyntax"/> - the two forms stay distinguishable, so a
+/// consumer can render each one back the way it was written.
+/// </remarks>
+public record ClearMappingSyntax(string Property, SourceLocation Location) : MappingSyntax(Property, Location);
+
+/// <summary>
 /// Represents an <c>increment</c> mapping - adds one to the property when the event occurs.
 /// </summary>
 /// <param name="Property">The dotted target property path on the read model.</param>

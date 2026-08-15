@@ -212,6 +212,7 @@ public partial class ScreenplayPrinter
             writer.Line(mapping switch
             {
                 SetMappingSyntax set => $"{ReservedWords.Escape(set.Property, reserved)} = {ScreenplaySyntaxText.Expression(set.Source)}",
+                ClearMappingSyntax clear => $"clear {clear.Property}",
                 IncrementMappingSyntax increment => $"increment {increment.Property}",
                 DecrementMappingSyntax decrement => $"decrement {decrement.Property}",
                 CountMappingSyntax count => $"count {count.Property}",
