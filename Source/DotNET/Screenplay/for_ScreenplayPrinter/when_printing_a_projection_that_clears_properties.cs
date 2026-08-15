@@ -17,6 +17,7 @@ public class when_printing_a_projection_that_clears_properties : given.a_printer
           from NoteCleared
             clear note
             clear owner.note
+            clear @with
             summary = null
         """;
 
@@ -38,7 +39,8 @@ public class when_printing_a_projection_that_clears_properties : given.a_printer
     [Fact] void should_print_the_dotted_path_back_as_a_clear() => _printed.ShouldContain("clear owner.note");
     [Fact] void should_not_print_a_clear_as_an_assignment_of_null() => _printed.ShouldNotContain("note = null");
     [Fact] void should_print_the_assignment_of_null_back_as_an_assignment() => _printed.ShouldContain("summary = null");
-    [Fact] void should_reparse_the_clears_as_clear_mappings() => Mappings.OfType<ClearMappingSyntax>().Select(_ => _.Property).ShouldContainOnly("note", "owner.note");
+    [Fact] void should_escape_a_cleared_property_that_reads_as_the_block_directive() => _printed.ShouldContain("clear @with");
+    [Fact] void should_reparse_the_clears_as_clear_mappings() => Mappings.OfType<ClearMappingSyntax>().Select(_ => _.Property).ShouldContainOnly("note", "owner.note", "with");
     [Fact] void should_reparse_the_assignment_as_an_assignment() => Mappings.OfType<SetMappingSyntax>().Single().Property.ShouldEqual("summary");
 
     IEnumerable<MappingSyntax> Mappings => _reparsed.Value!.Blocks.OfType<FromSyntax>().Single().Mappings;

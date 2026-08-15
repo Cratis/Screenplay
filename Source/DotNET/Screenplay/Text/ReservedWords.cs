@@ -56,6 +56,17 @@ internal static class ReservedWords
         new HashSet<string>(StringComparer.Ordinal) { "key", "parent" };
 
     /// <summary>
+    /// The words a <c>clear</c> mapping reserves as its target, and so the property names that need escaping.
+    /// </summary>
+    /// <remarks>
+    /// <c>clear with</c> reads as the start of the <c>clear with &lt;EventType&gt;</c> block directive, so the parser
+    /// rejects it in mapping position. A property genuinely named <c>with</c> is written and printed as
+    /// <c>clear @with</c>.
+    /// </remarks>
+    public static readonly IReadOnlySet<string> ClearMapping =
+        new HashSet<string>(StringComparer.Ordinal) { "with" };
+
+    /// <summary>
     /// The keywords an enumeration <c>concept</c> body reserves, and so the values that need escaping.
     /// </summary>
     public static readonly IReadOnlySet<string> ConceptBody =
