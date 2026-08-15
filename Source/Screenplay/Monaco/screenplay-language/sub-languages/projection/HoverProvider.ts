@@ -199,6 +199,7 @@ export class HoverProvider implements languages.HoverProvider {
             'join': '**join** *<collection>* **on** *<property>*\n\nJoins with a child collection based on a property.',
             'children': '**children** *<collection>* **id** *<expression>*\n\nDefines operations on child collections.',
             'remove': '**remove with** *<EventType>* or **remove via join on** *<EventType>*\n\nRemoves items from the read model based on events.',
+            'clear': '**clear** *<property>*\n\nRemoves the value a property holds. **clear with** *<EventType>* nulls a whole nested object instead.',
             'automap': '**automap** or **no automap**\n\nControls automatic property mapping from events to the read model.',
             'increment': '**increment** *<property>*\n\nIncrements a numeric property by 1.',
             'decrement': '**decrement** *<property>*\n\nDecrements a numeric property by 1.',

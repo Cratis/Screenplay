@@ -239,7 +239,7 @@
             "while": "^(?=\\1[ ]+\\S|[ ]*$)",
             "patterns": [
                 {
-                    "match": "\\b(from|every|join|children|identified|by|key|parent|with|remove|on|set|increment|decrement|add|subtract|count)\\b",
+                    "match": "\\b(from|every|join|children|identified|by|key|parent|with|remove|clear|on|set|increment|decrement|add|subtract|count)\\b",
                     "name": "keyword.other.pdl.screenplay"
                 },
                 { "include": "#common" }
