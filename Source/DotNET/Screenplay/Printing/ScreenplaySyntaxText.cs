@@ -242,6 +242,8 @@ internal static partial class ScreenplaySyntaxText
         ComparisonOperator.GreaterThanOrEqual => ">=",
         ComparisonOperator.LessThan => "<",
         ComparisonOperator.LessThanOrEqual => "<=",
+        ComparisonOperator.Contains => "contains",
+        ComparisonOperator.StartsWith => "starts with",
         _ => "=="
     };
 

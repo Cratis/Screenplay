@@ -29,6 +29,7 @@ export const keywordDocs: Record<string, string> = {
     reaction: 'Behavior that runs when something happens. Lives inside Automation slices. A trigger with no body states intent on its own — `file`/code is optional realization metadata.',
     trigger: 'Declares a kind of occurrence a reaction can respond to, and the values it hands the reaction. What makes one occur belongs to whoever provides it, never to the compiler.',
     where: 'Narrows which occurrences actually run the reaction.',
+    contains: 'Text comparison — true when the left string holds the right one anywhere.',
     every: 'Runs a reaction on an interval — `every 15 minutes`, `every 1 day`.',
     invokes: 'A command a reaction hands on. A command is asked for, not produced — it may still be rejected.',
     screen: 'A UI declaration. Supports intent, structure, and layout-with-code levels, or a full file reference.',

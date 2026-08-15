@@ -94,14 +94,17 @@ parentheses:
 ```screenplay
 event IssueOpened
   labels String
-  priority String
+  title String
 
 reaction HandleImportantIssue
   when IssueOpened
     labels
-    priority
-  where priority == "high" or priority == "urgent"
+    title
+  where labels contains "important" or title starts with "URGENT"
 ```
+
+Alongside `==`, `!=` and the ordering operators, text compares with `contains` for a substring anywhere and
+`starts with` for one at the beginning.
 
 `where` belongs to the reaction rather than to one trigger: it says which occurrences are worth running
 for, whatever set them off.

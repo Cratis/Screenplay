@@ -114,7 +114,17 @@ public enum ComparisonOperator
     /// <summary>
     /// The left value must be less than or equal to the right.
     /// </summary>
-    LessThanOrEqual = 5
+    LessThanOrEqual = 5,
+
+    /// <summary>
+    /// The left string must contain the right one.
+    /// </summary>
+    Contains = 6,
+
+    /// <summary>
+    /// The left string must begin with the right one.
+    /// </summary>
+    StartsWith = 7
 }
 
 /// <summary>

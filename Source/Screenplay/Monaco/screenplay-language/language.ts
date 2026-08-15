@@ -102,6 +102,9 @@ export const clauseKeywords = [
     'at',
     'where',
     'invokes',
+    'contains',
+    'starts',
+    'with',
     'provider',
 ];
 

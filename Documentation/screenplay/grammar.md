@@ -418,7 +418,12 @@ ConditionOperand = Ident, CompOp, Value
                | Ident, CompOp, Ident
                | "(", Condition, ")" ;
 
-CompOp         = "==" | "!=" | ">" | ">=" | "<" | "<=" ;
+CompOp         = "==" | "!=" | ">" | ">=" | "<" | "<="
+               | "contains" | "starts", "with" ;
+
+(* The word operators compare text: "contains" for a substring anywhere,
+   "starts with" for one at the beginning. "starts with" is two words because
+   that is the phrase, so an operator is not always a single token.          *)
 
 PropertyMapping = [ "@" ], Ident, "=", MappingSource, NL ;
 
