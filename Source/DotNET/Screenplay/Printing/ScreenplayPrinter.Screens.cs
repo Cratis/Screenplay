@@ -40,8 +40,8 @@ public partial class ScreenplayPrinter
             case ScreenNavigateSyntax navigate:
                 writer.Line(WriteScreenNavigate(navigate));
                 break;
-            case ScreenLayoutSyntax layout:
-                WriteScreenLayout(writer, layout);
+            case ScreenTemplateReferenceSyntax template:
+                WriteScreenTemplateReference(writer, template);
                 break;
             case ScreenSectionSyntax section:
                 WriteScreenSection(writer, section);
@@ -95,12 +95,12 @@ public partial class ScreenplayPrinter
         }
     }
 
-    void WriteScreenLayout(ScreenplayWriter writer, ScreenLayoutSyntax layout)
+    void WriteScreenTemplateReference(ScreenplayWriter writer, ScreenTemplateReferenceSyntax template)
     {
-        writer.Line($"layout {layout.Name}");
+        writer.Line($"template {template.Name}");
         using (writer.Indent())
         {
-            foreach (var slot in layout.Slots)
+            foreach (var slot in template.Slots)
             {
                 writer.Line(slot.Name);
                 using (writer.Indent())

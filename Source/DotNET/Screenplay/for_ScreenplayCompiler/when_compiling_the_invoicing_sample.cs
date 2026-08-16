@@ -44,8 +44,14 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_have_the_feature_description() => _feature.Description.ShouldEqual("Registering and managing the lifecycle of invoices");
     [Fact] void should_have_the_slice_description() => Slice("RegisterInvoice").Description.ShouldEqual("Registers a new invoice");
     [Fact] void should_have_the_command_description() => RegisterCommand.Description.ShouldEqual("Registers a new invoice with its lines and payment terms");
-    [Fact] void should_have_both_layouts() => _result.Value!.Modules.Single().Layouts.Count().ShouldEqual(2);
-    [Fact] void should_have_the_master_detail_slots() => _result.Value!.Modules.Single().Layouts.First().Slots.Select(_ => _.Name).ShouldContainOnly("sidebar", "main");
+    [Fact] void should_have_both_screen_templates() => _result.Value!.Modules.Single().ScreenTemplates.Count().ShouldEqual(2);
+    [Fact] void should_have_the_master_detail_slots() => _result.Value!.Modules.Single().ScreenTemplates.First().Slots.Select(_ => _.Name).ShouldContainOnly("sidebar", "main");
+    [Fact] void should_have_the_slot_the_master_detail_template_fits() => _result.Value!.Modules.Single().ScreenTemplates.First().FitsSlot.ShouldEqual("content");
+    [Fact] void should_have_the_dialog_template() => _result.Value!.Modules.Single().DialogTemplates!.Single().Name.ShouldEqual("RegisterInvoiceDialog");
+    [Fact] void should_have_the_application_layout() => _result.Value!.Layouts!.Single().Name.ShouldEqual("AppShell");
+    [Fact] void should_have_the_application_layout_slots() => _result.Value!.Layouts!.Single().Slots.Select(_ => _.Name).ShouldContainOnly("topbar", "navigation", "content", "footer");
+    [Fact] void should_have_the_navigation_contribution_point_on_the_layout() => _result.Value!.Layouts!.Single().Slots.Single(_ => _.Name == "navigation").Contributes.ShouldEqual("Navigation");
+    [Fact] void should_have_the_profile_selecting_the_layout() => _result.Value!.UiProfiles!.Single().Layout.ShouldEqual("AppShell");
     [Fact] void should_have_all_slices() => _feature.Slices.Count().ShouldEqual(17);
     [Fact] void should_have_the_fully_auto_mapped_projection() => Slice("CancelledInvoices").Projections.Single().Blocks.OfType<FromSyntax>().Single().Mappings.ShouldBeEmpty();
     [Fact] void should_have_the_nested_feature() => _feature.Features.Single().Name.ShouldEqual("Adjustments");
@@ -96,7 +102,7 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_parse_the_details_projection_nested() => Slice("InvoiceDetails").Projections.Single().Blocks.OfType<NestedSyntax>().Single().Property.ShouldEqual("shipping");
     [Fact] void should_parse_the_line_report_composite_key() => ((CompositeKeySyntax)Slice("InvoiceLineReport").Projections.Single().Blocks.OfType<FromSyntax>().Single().Key!).Type.ShouldEqual("InvoiceLineKey");
     [Fact] void should_parse_the_summary_counters() => Slice("InvoiceDashboard").Projections.Single().Blocks.OfType<FromSyntax>().First().Mappings.OfType<IncrementMappingSyntax>().Count().ShouldEqual(2);
-    [Fact] void should_parse_the_dashboard_screen_layout() => Slice("InvoiceDashboard").Screens.Single().Directives.OfType<ScreenLayoutSyntax>().Single().Slots.Count().ShouldEqual(4);
+    [Fact] void should_parse_the_dashboard_screen_template() => Slice("InvoiceDashboard").Screens.Single().Directives.OfType<ScreenTemplateReferenceSyntax>().Single().Slots.Count().ShouldEqual(4);
     [Fact] void should_parse_the_reactions() => Slice("NotifyCustomerOnInvoiceRegistered").Reactions.Single().Triggers.Single().File!.Path.ShouldEqual("Reactions/NotifyCustomerReaction.cs");
     [Fact] void should_parse_the_inline_reaction_code() => Slice("DetectOverdueInvoices").Reactions.Single().Triggers.First().Code.ShouldNotBeNull();
     [Fact] void should_parse_the_multiple_reaction_triggers() => Slice("DetectOverdueInvoices").Reactions.Single().Triggers.Select(_ => ((NamedTriggerSourceSyntax)_.Source).Name).ShouldContainOnly("InvoiceRegistered", "InvoiceSent");

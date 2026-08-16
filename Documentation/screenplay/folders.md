@@ -110,7 +110,7 @@ Every level of the language gets a folder, and the file inside a folder carries 
 application.play                                    domain, imports, concepts, types,
                                                     policies, personas, authentication, seed
 Invoicing/
-  Invoicing.play                                    module Invoicing - description and layouts
+  Invoicing.play                                    module Invoicing - description and templates
   Invoices/
     Invoices.play                                   feature Invoices - description
     Register/
@@ -126,7 +126,7 @@ Invoicing/
 | File | Holds |
 |---|---|
 | `application.play` | Everything that belongs to the application as a whole rather than to any one module: `domain`, `import`, `concept`, `type`, `policy`, `persona`, `authentication` and `seed`. There is one, always, at the root. |
-| `<Module>/<Module>.play` | The module's own `description` and its `layout` declarations - not its features. |
+| `<Module>/<Module>.play` | The module's own `description` and its `screen template` / `dialog template` declarations - not its features. |
 | `<Module>/…/<Feature>/<Feature>.play` | The feature's own `description` - not its slices or sub features. |
 | `<Module>/…/<Feature>/<Slice>/<Slice>.play` | One slice, whole. |
 
@@ -140,7 +140,7 @@ module Invoicing
         invoiceId InvoiceId
 ```
 
-Nothing is written twice. The restated `module Invoicing` in a slice file carries no description and no layouts - those live in the module's own file - so there is never a second copy of anything to fall out of sync.
+Nothing is written twice. The restated `module Invoicing` in a slice file carries no description and no templates - those live in the module's own file - so there is never a second copy of anything to fall out of sync.
 
 ## How the files become one application
 
@@ -149,7 +149,7 @@ Merging follows a single rule: **the documents of a folder are one document**. F
 | Declaration | What the merge does |
 |---|---|
 | `module`, `feature` | **Combined by name.** Every file naming `module Invoicing` is talking about the same module. This is what lets a slice live in its own file and still belong to its feature. |
-| `slice`, `layout` | Accumulated. A second file declaring one that already exists is an error. |
+| `slice`, `screen template`, `dialog template` | Accumulated. A second file declaring one that already exists is an error. |
 | `concept`, `type`, `policy`, `persona` | Accumulated. Concepts and types share one namespace, so a `type` cannot take a `concept`'s name. A second file declaring one that already exists is an error. |
 | `domain`, `authentication` | At most one for the whole folder. A second file declaring one is an error. |
 | `import` | Merged and de-duplicated. An import declared anywhere applies to the whole application, exactly as it does within a single document. |

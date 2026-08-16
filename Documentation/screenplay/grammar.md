@@ -7,7 +7,7 @@ The full EBNF grammar of the Screenplay DSL. `INDENT`/`DEDENT` are synthesized b
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { TypeDecl }, { PolicyDecl }, { PersonaDecl }, [ AuthenticationDecl ], { TriggerDecl }, { ThemeDecl }, { UiProfileDecl }, { Module }, { SeedDecl } ;
+Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { TypeDecl }, { PolicyDecl }, { PersonaDecl }, [ AuthenticationDecl ], { TriggerDecl }, { ThemeDecl }, { LayoutDecl }, { UiProfileDecl }, { Module }, { SeedDecl } ;
 
 (* -------------------------------------------------------------- *)
 (* Domain                                                          *)
@@ -135,6 +135,7 @@ UiProfileDecl  = "ui", "profile", Ident, NL,
                    [ TargetPlatformDecl ],
                    [ TargetSizeDecl ],
                    [ PackagesBlock ],
+                   [ ProfileLayoutDecl ],
                    [ ProfileThemeDecl ],
                  DEDENT ;
 
@@ -147,16 +148,20 @@ SizeClass      = "compact" | "regular" | "expanded" ;
 PackagesBlock  = "packages", NL,
                  INDENT, PackageName, { PackageName }, DEDENT ;
 
+ProfileLayoutDecl = "layout", Ident, NL ;
+
 ProfileThemeDecl = "theme", Ident, NL ;
 
 PackageName    = Ident, { ".", Ident } ;
 
-(* Each of the four is optional and may appear at most once, in any order - the
+(* Each of the five is optional and may appear at most once, in any order - the
    body is read line by line rather than positionally. The size class names a
    class rather than a pixel breakpoint, because a narrow browser window and a
    compact phone are the same class and a breakpoint means nothing natively.
-   A profile's "theme" selects one declared elsewhere in the document; the
-   width x height matrix a layout resolves against is a separate concern.    *)
+   A profile's "theme" and "layout" each select one declared elsewhere in the
+   document - the layout being the navigational shell the build renders inside.
+   The width x height matrix an arrangement resolves against is a separate
+   concern.                                                                  *)
 
 (* -------------------------------------------------------------- *)
 (* Module                                                          *)
@@ -165,39 +170,50 @@ PackageName    = Ident, { ".", Ident } ;
 Module         = "module", Ident, NL,
                  INDENT,
                    [ DescriptionDecl ],
-                   { LayoutDecl },
+                   { ScreenTemplateDecl | DialogTemplateDecl },
                    { Feature },
                  DEDENT ;
 
 (* -------------------------------------------------------------- *)
-(* Layouts                                                         *)
+(* Layout, screen template and dialog template                     *)
 (* -------------------------------------------------------------- *)
 
+(* A "layout" is the application's base navigational look and is selected by a
+   "ui profile". A "screen template" is a reusable shape inside that shell and
+   names the slot of its parent it fills. A "dialog template" opens over the
+   application, so it fills no slot. The body is otherwise identical.        *)
+
 LayoutDecl     = "layout", Ident, NL,
-                 INDENT,
-                   [ ArrangementDecl ],
-                   ( TemplateDecl | { VariantDecl } ),
-                 DEDENT ;
+                 INDENT, StructureBody, DEDENT ;
 
-ArrangementDecl = "arrangement", ( "flow" | "freeform" ), NL ;
+ScreenTemplateDecl = "screen", "template", Ident, NL,
+                 INDENT, [ FitsSlotDecl ], StructureBody, DEDENT ;
 
-(* Default arrangement is "flow" when omitted - a bare "template" of plain
-   slot names (no row/column/grid nesting) is the pre-arrangement grammar
-   and still parses unchanged. *)
+DialogTemplateDecl = "dialog", "template", Ident, NL,
+                 INDENT, StructureBody, DEDENT ;
 
-TemplateDecl   = "template", NL,
-                 INDENT,
-                   { TemplateNode },
-                   { WhenDecl },
-                 DEDENT ;
+FitsSlotDecl   = "fits", "slot", Ident, NL ;
 
-TemplateNode   = ContainerDecl | SlotDecl ;
+StructureBody  = { SlotDecl }, [ ArrangementDecl ] ;
+
+SlotDecl       = Ident, [ "contributes", Ident ], NL ;
+
+ArrangementDecl = "arrangement", "flow", NL,
+                 INDENT, { ArrangementNode }, { WhenDecl }, DEDENT
+                | "arrangement", "freeform", NL,
+                 INDENT, { VariantDecl }, DEDENT ;
+
+(* The tree hangs directly off "arrangement" - there is no separate block for
+   it, so "template" means a screen or dialog template and nothing else. An
+   arrangement is optional: a body of plain slot names is a complete
+   declaration on its own.                                                   *)
+
+ArrangementNode = ContainerDecl | ArrangementSlot ;
 
 ContainerDecl  = ( "row" | "column" | "grid" ), [ "gap", Number ], NL,
-                 INDENT, { TemplateNode }, DEDENT ;
+                 INDENT, { ArrangementNode }, DEDENT ;
 
-SlotDecl       = Ident,
-                 [ "contributes", Ident ],
+ArrangementSlot = Ident,
                  [ "width", Number ],
                  [ "height", Number ],
                  [ "grow" ],
@@ -207,7 +223,7 @@ SlotDecl       = Ident,
 WhenDecl       = "when",
                  ( "width", SizeClass, [ ",", "height", SizeClass ]
                  | "height", SizeClass ), NL,
-                 INDENT, { TemplateNode }, DEDENT ;
+                 INDENT, { ArrangementNode }, DEDENT ;
 
 VariantDecl    = "variant", "width", SizeClass, ",", "height", SizeClass, NL,
                  INDENT, { PlaceDecl }, DEDENT ;
@@ -652,7 +668,7 @@ ScreenBody     = FileDirective                          (* full external file  *
 ScreenDirective = DataDecl
                | ActionDecl
                | SectionDecl
-               | LayoutRef
+               | TemplateRef
                | InlineBlock ;
 
 DataDecl       = "data", TypeRef, "via", "query", Ident,
@@ -666,10 +682,10 @@ ActionOption   = NavigateDecl
 
 NavigateDecl   = "navigate", "to", Ident, [ "by", Ident ], NL ;
 
-LayoutRef      = "layout", Ident, NL,
-                 INDENT, { SlotDecl }, DEDENT ;
+TemplateRef    = "template", Ident, NL,
+                 INDENT, { FilledSlot }, DEDENT ;
 
-SlotDecl       = Ident, NL,
+FilledSlot     = Ident, NL,
                  [ INDENT, { ScreenDirective }, DEDENT ] ;
 
 SectionDecl    = "section", Ident, NL,
@@ -736,7 +752,7 @@ Screenplay's workflow is *author the document first, then Stage performs it*. Th
 | `query` | `=>` return type with optional `observable`, `by`/`filter`, `description` | `performer` |
 | `policy` | `require` conditions | inline `csharp` |
 | `reaction` | `description` on the reaction and on each trigger, plus `produces` / `invokes` / `where` | `file` / inline block |
-| `screen` | title, sections, tables, `data`, `action`, `navigate`, layout | `file` |
+| `screen` | title, sections, tables, `data`, `action`, `navigate`, `template` | `file` |
 | `constraint` | `unique …` forms | `file` |
 | `projection` / `capture` | fully declarative (PDL / CDL) | — |
 

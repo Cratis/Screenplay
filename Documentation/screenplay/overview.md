@@ -28,7 +28,7 @@ Screenplay files use the `.play` extension.
 <policies>
 <personas>
 <module>
-  <layouts>
+  <screen templates>
   <feature>+
     <feature>*          ← sub-features, arbitrarily deep
     <slice>+

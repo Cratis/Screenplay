@@ -9,7 +9,7 @@ using Cratis.Screenplay.Text;
 namespace Cratis.Screenplay.Parsing;
 
 /// <summary>
-/// Parses <c>screen</c> declarations - intent level directives, structural layouts and inline code.
+/// Parses <c>screen</c> declarations - intent level directives, the template whose slots they fill, and inline code.
 /// </summary>
 internal static partial class ScreenParser
 {
@@ -54,8 +54,8 @@ internal static partial class ScreenParser
                 return ParseData(context, line);
             case "action":
                 return ParseAction(context, line);
-            case "layout":
-                return ParseLayout(context, line);
+            case "template":
+                return ParseTemplateReference(context, line);
             case "section":
                 return ParseSection(context, line);
             case "title":
@@ -138,9 +138,9 @@ internal static partial class ScreenParser
         return new(match.Groups[1].Value, match.Groups[2].Success ? match.Groups[2].Value : null, line.Location);
     }
 
-    static ScreenLayoutSyntax ParseLayout(ParserContext context, SourceLine line)
+    static ScreenTemplateReferenceSyntax ParseTemplateReference(ParserContext context, SourceLine line)
     {
-        var name = line.Content["layout".Length..].Trim();
+        var name = line.Content["template".Length..].Trim();
         var slots = new List<ScreenSlotSyntax>();
 
         while (context.TryPeekChild(line.Indent, out var child))
@@ -148,7 +148,7 @@ internal static partial class ScreenParser
             context.Reader.TakeSignificant();
             if (!SlotRegex().IsMatch(child.Content))
             {
-                context.Error(DiagnosticCodes.InvalidScreenLayoutSlot, $"Expected a slot name in layout '{name}', got '{child.Content}'", child.Location);
+                context.Error(DiagnosticCodes.InvalidScreenLayoutSlot, $"Expected a slot name in template '{name}', got '{child.Content}'", child.Location);
                 context.SkipBlock(child.Indent);
                 continue;
             }

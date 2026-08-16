@@ -93,7 +93,7 @@ public class when_printing_the_invoicing_sample : given.a_printer
 
     static ScreenActionSyntax FooterAction(CompilationResult<ApplicationSyntax> result) =>
         Slices(result).Single(_ => _.Name == "InvoiceDashboard").Screens.Single().Directives
-            .OfType<ScreenLayoutSyntax>().Single().Slots.Single(_ => _.Name == "footer").Directives
+            .OfType<ScreenTemplateReferenceSyntax>().Single().Slots.Single(_ => _.Name == "footer").Directives
             .OfType<ScreenSectionSyntax>().Single().Directives.OfType<ScreenActionSyntax>().Single();
 
     static IEnumerable<TagSyntax> AppendTags(CompilationResult<ApplicationSyntax> result) =>

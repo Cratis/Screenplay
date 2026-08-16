@@ -4,16 +4,18 @@
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
-namespace Cratis.Screenplay.for_ScreenplayCompiler.when_a_layouts_arrangement_mismatches_its_body;
+namespace Cratis.Screenplay.for_ScreenplayCompiler.when_an_arrangements_body_mismatches_its_mode;
 
-public class and_a_flow_layout_declares_a_variant : given.a_compiler
+public class and_a_freeform_arrangement_declares_a_tree : given.a_compiler
 {
     const string Source =
         """
         module Dashboards
-          layout DashboardCanvas
-            variant width regular, height regular
-              place header at 0,0 size fill,64
+          screen template DashboardCanvas
+            arrangement freeform
+              row
+                header
+                main
         """;
 
     CompilationResult<ApplicationSyntax> _result;
@@ -22,4 +24,5 @@ public class and_a_flow_layout_declares_a_variant : given.a_compiler
 
     [Fact] void should_report_the_arrangement_mismatch() => _result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.ArrangementDirectiveMismatch);
     [Fact] void should_report_it_as_an_error() => _result.Diagnostics.Single().Severity.ShouldEqual(DiagnosticSeverity.Error);
+    [Fact] void should_not_keep_a_tree() => _result.Value!.Modules.Single().ScreenTemplates.Single().Arrangement!.Root.ShouldBeNull();
 }

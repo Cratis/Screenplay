@@ -1,34 +1,25 @@
 # Screens
 
-Screens are UI declarations. They live inside `StateView` slices and support three levels of abstraction — from pure intent (Studio generates the component) to layout with inline code — plus a full external file reference.
+Screens are UI declarations. They live inside `StateView` slices and support three levels of abstraction — from pure intent (Studio generates the component) to a filled template with inline code — plus a full external file reference.
 
-## Layout templates
+## The structure a screen fills
 
-Reusable screen templates with named slots, declared at module level:
-
-```screenplay
-layout <Name>
-  template
-    <slot-name>+
-```
+A screen is an **instance**: it names the structure it fills and provides the content. That structure is a [screen template or dialog template](templates.md), declared at module level with named slots:
 
 ```screenplay
-layout MasterDetail
-  template
+module Invoicing
+  screen template MasterDetail
+    fits slot content
+
     sidebar
     main
-
-layout DashboardLayout
-  template
-    header
-    left
-    right
-    footer
 ```
+
+A screen never names the application's `layout` - the shell is selected once per build by a [ui profile](ui-profile.md), which is what keeps a screen portable across web, mobile and desktop.
 
 A slot may also declare `contributes <ContributionPoint>`, opening it up to many contributors declared anywhere in the module/feature tree instead of the one parent that owns the slot - see [Contributions](contributions.md).
 
-A layout also says how its slots share space and vary by device size - responsive `flow` (the default) or pixel-precise `freeform` - see [Layout arrangement](layout-arrangement.md).
+A template also says how its slots share space and vary by device size - responsive `flow` or pixel-precise `freeform` - see [Layout arrangement](layout-arrangement.md).
 
 ## Level 1 — Intent
 
@@ -52,11 +43,11 @@ screen InvoiceList
 
 ## Level 2 — Structure
 
-Adds named sections, tables, and summary widgets, laid out in a layout template's slots. Command-bound forms are a separate, module-scoped construct - see [Forms](forms.md).
+Adds named sections, tables, and summary widgets, filling a screen template's slots. Command-bound forms are a separate, module-scoped construct - see [Forms](forms.md).
 
 ```screenplay
 screen InvoiceDetails
-  layout MasterDetail
+  template MasterDetail
     sidebar
       data InvoiceDetailsReadModel via query GetInvoice by invoiceId
       section summary
@@ -80,13 +71,13 @@ Widgets:
 | `summary <ReadModel>` | `field <property> label "<text>"` rows |
 | `title "<text>"` | A section title |
 
-## Level 3 — Layout with inline code
+## Level 3 — Structure with inline code
 
-Combines layout templates, structural sections, and inline React/HTML/TypeScript blocks. The surrounding Screenplay context provides the typed data contract; the inline block receives it as `Props`.
+Combines screen templates, structural sections, and inline React/HTML/TypeScript blocks. The surrounding Screenplay context provides the typed data contract; the inline block receives it as `Props`.
 
 ````screenplay
 screen InvoiceDashboard
-  layout DashboardLayout
+  template Dashboard
     header
       section title
         data InvoiceSummaryReadModel via query GetInvoiceSummary

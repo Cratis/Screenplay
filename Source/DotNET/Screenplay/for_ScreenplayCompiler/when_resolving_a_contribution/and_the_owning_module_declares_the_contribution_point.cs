@@ -13,10 +13,9 @@ public class and_the_owning_module_declares_the_contribution_point : given.a_com
     const string Source =
         """
         module Invoicing
-          layout AppShell
-            template
-              navbar contributes Navigation
-              main
+          screen template AppShell
+            navbar contributes Navigation
+            main
 
           contribute to Navigation
             navigate to InvoiceList
@@ -26,10 +25,9 @@ public class and_the_owning_module_declares_the_contribution_point : given.a_com
               screen InvoiceList
 
         module Reporting
-          layout ReportShell
-            template
-              navbar contributes Navigation
-              main
+          screen template ReportShell
+            navbar contributes Navigation
+            main
         """;
 
     CompilationResult<ApplicationSyntax> _result;

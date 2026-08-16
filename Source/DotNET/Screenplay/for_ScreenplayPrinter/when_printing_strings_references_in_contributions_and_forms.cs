@@ -10,10 +10,9 @@ public class when_printing_strings_references_in_contributions_and_forms : given
     const string Source =
         """
         module Invoicing
-          layout AppShell
-            template
-              navbar contributes Navigation
-              main
+          screen template AppShell
+            navbar contributes Navigation
+            main
 
           contribute to Navigation
             navigate to InvoiceList

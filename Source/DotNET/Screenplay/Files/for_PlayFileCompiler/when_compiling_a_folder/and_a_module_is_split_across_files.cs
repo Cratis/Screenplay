@@ -19,10 +19,9 @@ public class and_a_module_is_split_across_files : given.a_folder_of_play_files
             module Invoicing
               description "Everything related to invoicing customers"
 
-              layout MasterDetail
-                template
-                  sidebar
-                  main
+              screen template MasterDetail
+                sidebar
+                main
             """);
 
         Write(
@@ -53,7 +52,7 @@ public class and_a_module_is_split_across_files : given.a_folder_of_play_files
     [Fact] void should_succeed() => _compilation.Result.Success.ShouldBeTrue();
     [Fact] void should_not_report_anything() => _compilation.Result.Diagnostics.ShouldBeEmpty();
     [Fact] void should_keep_the_module_description() => _module.Description.ShouldEqual("Everything related to invoicing customers");
-    [Fact] void should_keep_the_module_layout() => _module.Layouts.Single().Name.ShouldEqual("MasterDetail");
+    [Fact] void should_keep_the_module_screen_template() => _module.ScreenTemplates.Single().Name.ShouldEqual("MasterDetail");
     [Fact] void should_keep_the_feature_description() => _feature.Description.ShouldEqual("Registering and managing invoices");
     [Fact] void should_keep_the_slice() => _feature.Slices.Single().Name.ShouldEqual("Register");
 }

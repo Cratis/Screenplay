@@ -21,6 +21,7 @@ namespace Cratis.Screenplay.Syntax;
 /// <param name="UiProfiles">The <see cref="UiProfileSyntax">ui profiles</see> declared in the document.</param>
 /// <param name="Themes">The <see cref="ThemeSyntax">themes</see> declared in the document.</param>
 /// <param name="Triggers">The <see cref="TriggerSyntax">triggers</see> declared in the document.</param>
+/// <param name="Layouts">The <see cref="LayoutSyntax">layouts</see> declared in the document - the base navigational shells a <see cref="UiProfileSyntax"/> selects from.</param>
 public record ApplicationSyntax(
     IEnumerable<ImportSyntax> Imports,
     IEnumerable<ConceptSyntax> Concepts,
@@ -34,7 +35,8 @@ public record ApplicationSyntax(
     IEnumerable<TypeSyntax>? Types = null,
     IEnumerable<UiProfileSyntax>? UiProfiles = null,
     IEnumerable<ThemeSyntax>? Themes = null,
-    IEnumerable<TriggerSyntax>? Triggers = null) : SyntaxNode(Location);
+    IEnumerable<TriggerSyntax>? Triggers = null,
+    IEnumerable<LayoutSyntax>? Layouts = null) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents an <c>import</c> of a construct from another module.

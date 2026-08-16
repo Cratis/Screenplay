@@ -110,6 +110,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitUiProfile(uiProfile);
         }
 
+        foreach (var layout in syntax.Layouts ?? [])
+        {
+            VisitLayout(layout);
+        }
+
         foreach (var module in syntax.Modules)
         {
             VisitModule(module);
@@ -141,9 +146,14 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
 
-        foreach (var layout in syntax.Layouts)
+        foreach (var screenTemplate in syntax.ScreenTemplates)
         {
-            VisitLayout(layout);
+            VisitScreenTemplate(screenTemplate);
+        }
+
+        foreach (var dialogTemplate in syntax.DialogTemplates ?? [])
+        {
+            VisitDialogTemplate(dialogTemplate);
         }
 
         foreach (var form in syntax.Forms ?? [])
@@ -175,14 +185,47 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitSlot(slot);
         }
 
-        if (syntax.Template is not null)
+        if (syntax.Arrangement is not null)
         {
-            VisitTemplate(syntax.Template);
+            VisitArrangement(syntax.Arrangement);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="ScreenTemplateSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ScreenTemplateSyntax"/> to visit.</param>
+    public virtual void VisitScreenTemplate(ScreenTemplateSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        foreach (var slot in syntax.Slots)
+        {
+            VisitSlot(slot);
         }
 
-        foreach (var variant in syntax.Variants ?? [])
+        if (syntax.Arrangement is not null)
         {
-            VisitVariant(variant);
+            VisitArrangement(syntax.Arrangement);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="DialogTemplateSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="DialogTemplateSyntax"/> to visit.</param>
+    public virtual void VisitDialogTemplate(DialogTemplateSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        foreach (var slot in syntax.Slots)
+        {
+            VisitSlot(slot);
+        }
+
+        if (syntax.Arrangement is not null)
+        {
+            VisitArrangement(syntax.Arrangement);
         }
     }
 
@@ -193,68 +236,76 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitSlot(SlotSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
-    /// Visits a <see cref="TemplateSyntax"/> node and its children.
+    /// Visits an <see cref="ArrangementSyntax"/> node and its children.
     /// </summary>
-    /// <param name="syntax">The <see cref="TemplateSyntax"/> to visit.</param>
-    public virtual void VisitTemplate(TemplateSyntax syntax)
+    /// <param name="syntax">The <see cref="ArrangementSyntax"/> to visit.</param>
+    public virtual void VisitArrangement(ArrangementSyntax syntax)
     {
         VisitNode(syntax);
 
-        VisitTemplateNode(syntax.Root);
-
-        foreach (var templateOverride in syntax.Overrides)
+        if (syntax.Root is not null)
         {
-            VisitTemplateOverride(templateOverride);
+            VisitArrangementNode(syntax.Root);
+        }
+
+        foreach (var arrangementOverride in syntax.Overrides ?? [])
+        {
+            VisitArrangementOverride(arrangementOverride);
+        }
+
+        foreach (var variant in syntax.Variants ?? [])
+        {
+            VisitVariant(variant);
         }
     }
 
     /// <summary>
-    /// Visits a <see cref="TemplateNodeSyntax"/> node and its children, dispatching to
-    /// <see cref="VisitTemplateContainer"/> or <see cref="VisitTemplateSlot"/> by its runtime kind.
+    /// Visits an <see cref="ArrangementNodeSyntax"/> node and its children, dispatching to
+    /// <see cref="VisitArrangementContainer"/> or <see cref="VisitArrangementSlot"/> by its runtime kind.
     /// </summary>
-    /// <param name="syntax">The <see cref="TemplateNodeSyntax"/> to visit.</param>
-    public virtual void VisitTemplateNode(TemplateNodeSyntax syntax)
+    /// <param name="syntax">The <see cref="ArrangementNodeSyntax"/> to visit.</param>
+    public virtual void VisitArrangementNode(ArrangementNodeSyntax syntax)
     {
         switch (syntax)
         {
-            case TemplateContainerSyntax container:
-                VisitTemplateContainer(container);
+            case ArrangementContainerSyntax container:
+                VisitArrangementContainer(container);
                 break;
-            case TemplateSlotSyntax slot:
-                VisitTemplateSlot(slot);
+            case ArrangementSlotSyntax slot:
+                VisitArrangementSlot(slot);
                 break;
         }
     }
 
     /// <summary>
-    /// Visits a <see cref="TemplateContainerSyntax"/> node and its children.
+    /// Visits an <see cref="ArrangementContainerSyntax"/> node and its children.
     /// </summary>
-    /// <param name="syntax">The <see cref="TemplateContainerSyntax"/> to visit.</param>
-    public virtual void VisitTemplateContainer(TemplateContainerSyntax syntax)
+    /// <param name="syntax">The <see cref="ArrangementContainerSyntax"/> to visit.</param>
+    public virtual void VisitArrangementContainer(ArrangementContainerSyntax syntax)
     {
         VisitNode(syntax);
 
         foreach (var child in syntax.Children)
         {
-            VisitTemplateNode(child);
+            VisitArrangementNode(child);
         }
     }
 
     /// <summary>
-    /// Visits a <see cref="TemplateSlotSyntax"/> node.
+    /// Visits an <see cref="ArrangementSlotSyntax"/> node.
     /// </summary>
-    /// <param name="syntax">The <see cref="TemplateSlotSyntax"/> to visit.</param>
-    public virtual void VisitTemplateSlot(TemplateSlotSyntax syntax) => VisitNode(syntax);
+    /// <param name="syntax">The <see cref="ArrangementSlotSyntax"/> to visit.</param>
+    public virtual void VisitArrangementSlot(ArrangementSlotSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
-    /// Visits a <see cref="TemplateOverrideSyntax"/> node and its children.
+    /// Visits an <see cref="ArrangementOverrideSyntax"/> node and its children.
     /// </summary>
-    /// <param name="syntax">The <see cref="TemplateOverrideSyntax"/> to visit.</param>
-    public virtual void VisitTemplateOverride(TemplateOverrideSyntax syntax)
+    /// <param name="syntax">The <see cref="ArrangementOverrideSyntax"/> to visit.</param>
+    public virtual void VisitArrangementOverride(ArrangementOverrideSyntax syntax)
     {
         VisitNode(syntax);
 
-        VisitTemplateNode(syntax.Root);
+        VisitArrangementNode(syntax.Root);
     }
 
     /// <summary>

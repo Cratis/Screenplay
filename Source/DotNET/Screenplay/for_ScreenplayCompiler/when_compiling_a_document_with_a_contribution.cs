@@ -10,10 +10,9 @@ public class when_compiling_a_document_with_a_contribution : given.a_compiler
     const string Source =
         """
         module Invoicing
-          layout AppShell
-            template
-              navbar contributes Navigation
-              main
+          screen template AppShell
+            navbar contributes Navigation
+            main
 
           contribute to Navigation
             navigate to InvoiceList
@@ -39,7 +38,7 @@ public class when_compiling_a_document_with_a_contribution : given.a_compiler
     {
         _result = _compiler.Compile(Source);
         var module = _result.Value!.Modules.Single();
-        _slot = module.Layouts.Single().Slots.First();
+        _slot = module.ScreenTemplates.Single().Slots.First();
         _moduleContribution = module.Contributions!.Single();
         _featureContribution = module.Features.Single().Contributions!.Single();
     }

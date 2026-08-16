@@ -114,26 +114,32 @@ internal static class ScreenplayValidator
         ValidateFormReferences(application, commandsByDeclaration, knownQueries, knownCommandDeclarations, knownScreenDeclarations, context);
         ValidateContributions(application, knownScreenDeclarations, context);
         ValidateThemes(application, context);
-        ValidateLayouts(application, context);
+        ValidateProfileLayouts(application, context);
+        ValidateArrangements(application, context);
     }
 
     /// <summary>
-    /// Validates that every <c>freeform</c> layout's <c>variant</c>s agree on which slots exist - a variant
-    /// that omits a slot another variant of the same layout places (or explicitly hides) leaves that slot's
-    /// presence undefined for the size class the omitting variant targets.
+    /// Validates that the <c>variant</c>s of every <c>freeform</c> arrangement agree on which slots exist -
+    /// a variant that omits a slot another variant of the same arrangement places (or explicitly hides)
+    /// leaves that slot's presence undefined for the size class the omitting variant targets.
     /// </summary>
     /// <param name="application">The <see cref="ApplicationSyntax"/> to validate.</param>
     /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
     /// <remarks>
     /// Whether a <c>ui profile</c> targeting a size class with no matching <c>variant</c> should warn is a
-    /// build-time concern - it depends on which layouts a profile's screens actually resolve to, which the
+    /// build-time concern - it depends on which templates a profile's screens actually resolve to, which the
     /// Screenplay compiler does not know. That check belongs to Stage's build pipeline, not here.
     /// </remarks>
-    static void ValidateLayouts(ApplicationSyntax application, ParserContext context)
+    static void ValidateArrangements(ApplicationSyntax application, ParserContext context)
     {
-        foreach (var layout in application.Modules.SelectMany(module => module.Layouts).Where(layout => layout.Variants is not null))
+        foreach (var (kind, name, arrangement) in Arrangements(application))
         {
-            var variants = layout.Variants!.ToList();
+            var variants = (arrangement.Variants ?? []).ToList();
+            if (variants.Count == 0)
+            {
+                continue;
+            }
+
             var allSlots = variants.SelectMany(variant => variant.Places.Select(place => place.SlotName)).ToHashSet();
 
             foreach (var variant in variants)
@@ -143,9 +149,66 @@ internal static class ScreenplayValidator
                 {
                     context.Warning(
                         DiagnosticCodes.VariantMissingSlot,
-                        $"Layout '{layout.Name}' variant for width {variant.Width}, height {variant.Height} does not mention slot '{missing}' - place it or declare it 'hidden'",
+                        $"The {kind} '{name}' has a variant for width {variant.Width}, height {variant.Height} that does not mention slot '{missing}' - place it or declare it 'hidden'",
                         variant.Location);
                 }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Yields every <c>arrangement</c> in the document with what declares it.
+    /// </summary>
+    /// <param name="application">The <see cref="ApplicationSyntax"/> to walk.</param>
+    /// <returns>The kind and name of each structure that arranges its slots, with its arrangement.</returns>
+    static IEnumerable<(string Kind, string Name, ArrangementSyntax Arrangement)> Arrangements(ApplicationSyntax application)
+    {
+        foreach (var layout in application.Layouts ?? [])
+        {
+            if (layout.Arrangement is not null)
+            {
+                yield return ("layout", layout.Name, layout.Arrangement);
+            }
+        }
+
+        foreach (var module in application.Modules)
+        {
+            foreach (var template in module.ScreenTemplates)
+            {
+                if (template.Arrangement is not null)
+                {
+                    yield return ("screen template", template.Name, template.Arrangement);
+                }
+            }
+
+            foreach (var template in module.DialogTemplates ?? [])
+            {
+                if (template.Arrangement is not null)
+                {
+                    yield return ("dialog template", template.Name, template.Arrangement);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates that every <c>ui profile</c> selecting a layout names one the document declares.
+    /// </summary>
+    /// <param name="application">The <see cref="ApplicationSyntax"/> to validate.</param>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <remarks>
+    /// Reported the same way an unknown theme is - a warning, because a name may still resolve to something
+    /// outside the document, and the point is that the gap stays visible.
+    /// </remarks>
+    static void ValidateProfileLayouts(ApplicationSyntax application, ParserContext context)
+    {
+        var layouts = (application.Layouts ?? []).Select(layout => layout.Name).ToHashSet(StringComparer.Ordinal);
+
+        foreach (var profile in application.UiProfiles ?? [])
+        {
+            if (profile.Layout is { } layoutName && !layouts.Contains(layoutName))
+            {
+                context.Warning(DiagnosticCodes.UnknownLayout, $"Unknown layout '{layoutName}' - declare it with 'layout {layoutName}'", profile.Location);
             }
         }
     }
@@ -620,25 +683,29 @@ internal static class ScreenplayValidator
     }
 
     /// <summary>
-    /// Validates that every contribution in the document resolves to a contribution point some layout
-    /// template's slot declares, and that the screen it navigates to, if any, resolves.
+    /// Validates that every contribution in the document resolves to a contribution point some slot of the
+    /// application's layout or of a module's template declares, and that the screen it navigates to, if any, resolves.
     /// </summary>
     /// <param name="application">The <see cref="ApplicationSyntax"/> to validate.</param>
     /// <param name="screens">The screens the document declares, scoped to where they are declared.</param>
     /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
     /// <remarks>
-    /// A contribution resolves to the nearest enclosing template that declares a matching contribution
+    /// A contribution resolves to the nearest enclosing structure that declares a matching contribution
     /// point: first the contribution's own module - a module with its own matching slot stops contributions
-    /// inside it from bubbling further out - then every other module in the document. This is a different
-    /// algorithm from <see cref="ReferenceResolver"/>: it walks a physical containment tree (module owns
-    /// layout owns slot) rather than narrowing by declaration-scope depth.
+    /// inside it from bubbling further out - then every other module in the document, and finally the
+    /// application's own layouts, which belong to no module and are the outermost shell of all. This is a
+    /// different algorithm from <see cref="ReferenceResolver"/>: it walks a physical containment tree
+    /// (module owns template owns slot) rather than narrowing by declaration-scope depth.
     /// </remarks>
     static void ValidateContributions(ApplicationSyntax application, IReadOnlyList<Declaration> screens, ParserContext context)
     {
         var offers = application.Modules
-            .SelectMany(module => module.Layouts.SelectMany(layout => layout.Slots
+            .SelectMany(module => Structures(module).SelectMany(structure => structure.Slots
                 .Where(slot => slot.Contributes is not null)
-                .Select(slot => (Module: module.Name, Layout: layout.Name, Slot: slot.Name, ContributionPoint: slot.Contributes!))))
+                .Select(slot => (Module: module.Name, Structure: structure.Name, Slot: slot.Name, ContributionPoint: slot.Contributes!))))
+            .Concat((application.Layouts ?? []).SelectMany(layout => layout.Slots
+                .Where(slot => slot.Contributes is not null)
+                .Select(slot => (Module: string.Empty, Structure: layout.Name, Slot: slot.Name, ContributionPoint: slot.Contributes!))))
             .ToList();
 
         foreach (var module in application.Modules)
@@ -663,14 +730,14 @@ internal static class ScreenplayValidator
         ContributionSyntax contribution,
         string ownModule,
         DeclarationScope scope,
-        IReadOnlyList<(string Module, string Layout, string Slot, string ContributionPoint)> offers,
+        IReadOnlyList<(string Module, string Structure, string Slot, string ContributionPoint)> offers,
         IReadOnlyList<Declaration> screens,
         ParserContext context)
     {
         var ownModuleMatches = offers.Where(offer => offer.Module == ownModule && offer.ContributionPoint == contribution.ContributionPoint).ToList();
         if (ownModuleMatches.Count > 1)
         {
-            var where = string.Join(", ", ownModuleMatches.Select(offer => $"{offer.Layout}.{offer.Slot}"));
+            var where = string.Join(", ", ownModuleMatches.Select(offer => $"{offer.Structure}.{offer.Slot}"));
             context.Warning(
                 DiagnosticCodes.AmbiguousReference,
                 $"Ambiguous contribution point '{contribution.ContributionPoint}' - {ownModuleMatches.Count} slots in module '{ownModule}' declare it ({where})",
@@ -694,7 +761,7 @@ internal static class ScreenplayValidator
             {
                 context.Warning(
                     DiagnosticCodes.UnknownContributionPoint,
-                    $"Unknown contribution point '{contribution.ContributionPoint}' - no layout template slot declares 'contributes {contribution.ContributionPoint}'",
+                    $"Unknown contribution point '{contribution.ContributionPoint}' - no layout or template slot declares 'contributes {contribution.ContributionPoint}'",
                     contribution.Location);
             }
         }
@@ -704,6 +771,15 @@ internal static class ScreenplayValidator
             Report(contribution.Navigate.Screen, scope, screens, DiagnosticCodes.UnknownScreen, "screen", contribution.Navigate.Location, context);
         }
     }
+
+    /// <summary>
+    /// Yields the slot bearing structures a module declares - its screen templates and its dialog templates.
+    /// </summary>
+    /// <param name="module">The <see cref="ModuleSyntax"/> to read.</param>
+    /// <returns>The name and slots of each.</returns>
+    static IEnumerable<(string Name, IEnumerable<SlotSyntax> Slots)> Structures(ModuleSyntax module) =>
+        module.ScreenTemplates.Select(template => (template.Name, template.Slots))
+            .Concat((module.DialogTemplates ?? []).Select(template => (template.Name, template.Slots)));
 
     /// <summary>
     /// Yields every feature in a module's feature tree with the scope it sits in, at any nesting depth.
@@ -787,7 +863,7 @@ internal static class ScreenplayValidator
     }
 
     /// <summary>
-    /// Flattens a screen's directives, descending into the layouts, slots and sections that hold more.
+    /// Flattens a screen's directives, descending into the templates, slots and sections that hold more.
     /// </summary>
     /// <param name="directives">The directives to flatten.</param>
     /// <returns>Every directive, including the ones nested inside another.</returns>
@@ -799,7 +875,7 @@ internal static class ScreenplayValidator
 
             var nested = directive switch
             {
-                ScreenLayoutSyntax layout => layout.Slots.Cast<ScreenDirectiveSyntax>(),
+                ScreenTemplateReferenceSyntax template => template.Slots.Cast<ScreenDirectiveSyntax>(),
                 ScreenSlotSyntax slot => slot.Directives,
                 ScreenSectionSyntax section => section.Directives,
                 _ => []

@@ -39,12 +39,12 @@ public static partial class DocumentationExamples
 {
     static readonly HashSet<string> _topLevel = new(StringComparer.Ordinal)
     {
-        "domain", "import", "concept", "type", "policy", "persona", "authentication", "seed", "module", "trigger"
+        "domain", "import", "concept", "type", "policy", "persona", "authentication", "seed", "module", "trigger", "layout", "theme", "ui"
     };
 
     static readonly HashSet<string> _sliceMembers = new(StringComparer.Ordinal)
     {
-        "command", "query", "event", "projection", "reaction", "constraint", "specification", "screen", "layout", "capture", "slice", "feature"
+        "command", "query", "event", "projection", "reaction", "constraint", "specification", "screen", "capture", "slice", "feature"
     };
 
     static readonly HashSet<string> _projectionLevel = new(StringComparer.Ordinal)
@@ -146,6 +146,13 @@ public static partial class DocumentationExamples
             };
         }
 
+        // 'screen template' and 'dialog template' are module level declarations, while a bare 'screen' is a
+        // slice member - the keyword alone does not say which, so the two words together decide.
+        if (ModuleLevelRegex().IsMatch(first))
+        {
+            return (Wrap("module Doc", body), "template in a module");
+        }
+
         if (_topLevel.Contains(keyword))
         {
             return (Dedent(body), "document");
@@ -185,6 +192,9 @@ public static partial class DocumentationExamples
 
     [GeneratedRegex(@"^(`{3,4})(\w+)\s*$", RegexOptions.None, 1000)]
     private static partial Regex FenceRegex();
+
+    [GeneratedRegex(@"^(screen|dialog)\s+template\b", RegexOptions.None, 1000)]
+    private static partial Regex ModuleLevelRegex();
 
     [GeneratedRegex(@"<[A-Za-z][\w .]*>|\{[A-Za-z][\w .]*\}", RegexOptions.None, 1000)]
     private static partial Regex PlaceholderRegex();

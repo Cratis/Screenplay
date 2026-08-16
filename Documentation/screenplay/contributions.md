@@ -1,14 +1,20 @@
 # Contributions
 
-A NavBar needs its entries from wherever they are declared - a dozen features scattered across a dozen modules, each adding the one link it owns. `layout` slots are the wrong tool for this: a slot is one parent placing one block of content into one region, not many children contributing into a shared collection. `contribute to` is the many-to-one counterpart.
+A NavBar needs its entries from wherever they are declared - a dozen features scattered across a dozen modules, each adding the one link it owns. A slot on its own is the wrong tool for this: a slot is one parent placing one block of content into one region, not many children contributing into a shared collection. `contribute to` is the many-to-one counterpart.
 
 ## Syntax
 
-A slot declares it accepts contributions under a name:
+Slots live on the application's [`layout`](templates.md) and on every `screen template` and `dialog template`, and any of them can declare it accepts contributions under a name:
 
 ```screenplay
 layout <Name>
-  template
+  <slot-name> contributes <ContributionPoint>
+  <slot-name>
+```
+
+```screenplay
+module <Name>
+  screen template <TemplateName>
     <slot-name> contributes <ContributionPoint>
     <slot-name>
 ```
@@ -22,17 +28,16 @@ contribute to <ContributionPoint>
   order <number>
 ```
 
-- `<slot-name> contributes <ContributionPoint>` - marks a layout template slot as the target for contributions under that name. A slot without `contributes` behaves exactly as it always has.
-- `contribute to <ContributionPoint>` - one contributed item. Declared directly on a `module` (alongside `layout`, `form` and `feature`) or on a `feature` at any nesting depth. `navigate`, `label` and `order` are all optional. `label` accepts an unquoted `$strings.<key>` token in place of a literal - see [Internationalization](internationalization.md).
+- `<slot-name> contributes <ContributionPoint>` - marks a slot as the target for contributions under that name. A slot without `contributes` behaves exactly as it always has.
+- `contribute to <ContributionPoint>` - one contributed item. Declared directly on a `module` (alongside `screen template`, `dialog template`, `form` and `feature`) or on a `feature` at any nesting depth. `navigate`, `label` and `order` are all optional. `label` accepts an unquoted `$strings.<key>` token in place of a literal - see [Internationalization](internationalization.md).
 
 ## Example
 
 ```screenplay
 module Invoicing
-  layout AppShell
-    template
-      navbar contributes Navigation
-      main
+  screen template AppShell
+    navbar contributes Navigation
+    main
 
   feature InvoiceManagement
     slice StateView InvoiceList
@@ -46,9 +51,9 @@ module Invoicing
 
 ## How a contribution resolves
 
-A contribution attaches to the **nearest enclosing template that declares a matching contribution point**, walking outward the same way a bare name already resolves elsewhere in the document - just through the module/feature containment tree rather than by declaration scope. Concretely: a contribution first looks for a `contributes <ContributionPoint>` slot among its **own module's** layouts. A module with its own matching slot stops contributions inside it from bubbling any further - that module owns the point. Only when the module has no matching slot does the search continue outward, across every other module in the document.
+A contribution attaches to the **nearest enclosing structure that declares a matching contribution point**, walking outward the same way a bare name already resolves elsewhere in the document - just through the module/feature containment tree rather than by declaration scope. Concretely: a contribution first looks for a `contributes <ContributionPoint>` slot among its **own module's** templates. A module with its own matching slot stops contributions inside it from bubbling any further - that module owns the point. Only when the module has no matching slot does the search continue outward, across every other module in the document, and finally to the application's own `layout`s, which belong to no module and are the outermost shell of all.
 
-This gives two real tiers of nesting for free: **app-wide** (a contribution resolves to some other module's shell because its own module has no shell of its own) and **module-level** (a module's own shell claims every contribution inside it, however deeply nested in that module's features). A third tier - a feature declaring its own sub-shell that only its own slices contribute to - would need a layout scoped to a feature rather than a module. Layouts are module-scoped only today, so that tier does not exist yet.
+This gives three real tiers of nesting: **application-wide** (the `layout` declares the point, so every module in the document contributes into the one shell - the natural home of `Navigation`), **cross-module** (a contribution resolves to some other module's template because its own module has none that matches) and **module-level** (a module's own template claims every contribution inside it, however deeply nested in that module's features). A fourth tier - a feature declaring its own sub-shell that only its own slices contribute to - would need a template scoped to a feature rather than a module, which does not exist yet.
 
 Unresolved and ambiguous contribution points are warnings, the same as every other reference in the document: a name may still resolve to something outside the document, and the point is that the gap stays visible.
 
@@ -58,7 +63,7 @@ module Payments
     navigate to InvoiceList
 ```
 
-If `Payments` has no `layout` of its own, and two *other* modules each declare a `contributes Navigation` slot, the contribution is ambiguous - both are equally near, and nothing in the document says which one it means.
+If `Payments` has no template of its own, and two *other* modules each declare a `contributes Navigation` slot, the contribution is ambiguous - both are equally near, and nothing in the document says which one it means.
 
 ## Route arguments
 
