@@ -6,20 +6,19 @@ using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.for_ScreenplayCompiler;
 
-public class when_compiling_a_freeform_layout_with_a_variant_missing_a_slot : given.a_compiler
+public class when_compiling_a_freeform_arrangement_with_a_variant_missing_a_slot : given.a_compiler
 {
     const string Source =
         """
         module Dashboards
-          layout DashboardCanvas
+          screen template DashboardCanvas
             arrangement freeform
+              variant width regular, height regular
+                place header  at 0,0  size fill,64
+                place sidebar at 0,64 size 240,fill
 
-            variant width regular, height regular
-              place header  at 0,0  size fill,64
-              place sidebar at 0,64 size 240,fill
-
-            variant width compact, height regular
-              place header at 0,0 size fill,48
+              variant width compact, height regular
+                place header at 0,0 size fill,48
         """;
 
     CompilationResult<ApplicationSyntax> _result;

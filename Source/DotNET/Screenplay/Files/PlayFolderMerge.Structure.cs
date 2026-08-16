@@ -13,7 +13,7 @@ namespace Cratis.Screenplay.Files;
 /// <remarks>
 /// Modules and features are the levels a folder structure spreads an application over, so they are the levels
 /// that combine by name: every file that names <c>module Invoicing</c> is talking about the same module, and
-/// every file that names <c>feature Invoices</c> within it about the same feature. Slices and layouts are
+/// every file that names <c>feature Invoices</c> within it about the same feature. Slices and templates are
 /// leaves - they belong to exactly one file, and a second file claiming one is a duplicate.
 /// </remarks>
 internal static partial class PlayFolderMerge
@@ -32,11 +32,18 @@ internal static partial class PlayFolderMerge
         return parts[0] with
         {
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"module '{group.Key}'", context),
-            Layouts = DeclaredInOneFile(
-                parts.SelectMany(part => part.Layouts),
-                layout => layout.Name,
-                layout => layout.Location,
-                "layout",
+            ScreenTemplates = DeclaredInOneFile(
+                parts.SelectMany(part => part.ScreenTemplates),
+                template => template.Name,
+                template => template.Location,
+                "screen template",
+                context,
+                $"module '{group.Key}'"),
+            DialogTemplates = DeclaredInOneFile(
+                parts.SelectMany(part => part.DialogTemplates ?? []),
+                template => template.Name,
+                template => template.Location,
+                "dialog template",
                 context,
                 $"module '{group.Key}'"),
             Features = MergeFeatures(parts.SelectMany(part => part.Features), context)

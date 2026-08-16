@@ -16,10 +16,9 @@ public class when_expanding_an_application : Specification
         module Invoicing
           description "Everything related to invoicing customers"
 
-          layout MasterDetail
-            template
-              sidebar
-              main
+          screen template MasterDetail
+            sidebar
+            main
 
           feature Invoices
             description "Registering and managing invoices"
@@ -60,7 +59,7 @@ public class when_expanding_an_application : Specification
     [Fact] void should_put_the_seed_in_the_root_file() => Content("application.play").ShouldContain("seed");
     [Fact] void should_keep_the_modules_out_of_the_root_file() => Content("application.play").ShouldNotContain("module Invoicing");
     [Fact] void should_put_the_module_description_in_the_module_file() => Content(Path.Combine("Invoicing", "Invoicing.play")).ShouldContain("description \"Everything related to invoicing customers\"");
-    [Fact] void should_put_the_layouts_in_the_module_file() => Content(Path.Combine("Invoicing", "Invoicing.play")).ShouldContain("layout MasterDetail");
+    [Fact] void should_put_the_screen_templates_in_the_module_file() => Content(Path.Combine("Invoicing", "Invoicing.play")).ShouldContain("screen template MasterDetail");
     [Fact] void should_keep_the_features_out_of_the_module_file() => Content(Path.Combine("Invoicing", "Invoicing.play")).ShouldNotContain("feature");
     [Fact] void should_put_the_feature_description_in_the_feature_file() => Content(Path.Combine("Invoicing", "Invoices", "Invoices.play")).ShouldContain("description \"Registering and managing invoices\"");
     [Fact] void should_keep_the_slices_out_of_the_feature_file() => Content(Path.Combine("Invoicing", "Invoices", "Invoices.play")).ShouldNotContain("slice");

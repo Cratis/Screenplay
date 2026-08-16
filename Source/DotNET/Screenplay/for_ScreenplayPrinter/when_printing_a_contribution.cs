@@ -10,10 +10,9 @@ public class when_printing_a_contribution : given.a_printer
     const string Source =
         """
         module Invoicing
-          layout AppShell
-            template
-              navbar contributes Navigation
-              main
+          screen template AppShell
+            navbar contributes Navigation
+            main
 
           contribute to Navigation
             navigate to InvoiceList

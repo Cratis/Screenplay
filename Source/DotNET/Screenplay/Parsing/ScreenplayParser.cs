@@ -35,6 +35,7 @@ internal static partial class ScreenplayParser
         var uiProfiles = new List<UiProfileSyntax>();
         var themes = new List<ThemeSyntax>();
         var triggers = new List<TriggerSyntax>();
+        var layouts = new List<LayoutSyntax>();
 
         while (context.Reader.PeekSignificant() is { } line)
         {
@@ -42,7 +43,7 @@ internal static partial class ScreenplayParser
             switch (LineText.FirstWord(line.Content))
             {
                 case "domain":
-                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null || uiProfiles.Count > 0 || themes.Count > 0 || triggers.Count > 0);
+                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null || uiProfiles.Count > 0 || themes.Count > 0 || triggers.Count > 0 || layouts.Count > 0);
                     break;
                 case "import":
                     if (ImportRegex().Match(line.Content) is { Success: true } import)
@@ -85,14 +86,28 @@ internal static partial class ScreenplayParser
                 case "trigger":
                     AddTrigger(context, TriggerParser.Parse(context, line), triggers);
                     break;
+                case "layout":
+                    AddLayout(context, LayoutParser.ParseLayout(context, line), layouts);
+                    break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, type, policy, persona, authentication, module, seed, trigger, ui profile or theme", line.Location);
+                    context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, type, policy, persona, authentication, module, seed, trigger, ui profile, theme or layout", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
         }
 
-        return new(imports, concepts, policies, modules, context.Start, domain, personas, seeds, authentication, types, uiProfiles, themes, triggers);
+        return new(imports, concepts, policies, modules, context.Start, domain, personas, seeds, authentication, types, uiProfiles, themes, triggers, layouts);
+    }
+
+    static void AddLayout(ParserContext context, LayoutSyntax layout, List<LayoutSyntax> layouts)
+    {
+        if (layouts.Exists(existing => existing.Name == layout.Name))
+        {
+            context.Error(DiagnosticCodes.DuplicateLayout, $"A layout named '{layout.Name}' is already declared - layout names must be unique", layout.Location);
+            return;
+        }
+
+        layouts.Add(layout);
     }
 
     static void AddUiProfile(ParserContext context, UiProfileSyntax profile, List<UiProfileSyntax> uiProfiles)
@@ -308,7 +323,8 @@ internal static partial class ScreenplayParser
 
         var name = match.Groups[1].Value;
         string? description = null;
-        var layouts = new List<LayoutSyntax>();
+        var screenTemplates = new List<ScreenTemplateSyntax>();
+        var dialogTemplates = new List<DialogTemplateSyntax>();
         var features = new List<FeatureSyntax>();
         var forms = new List<FormSyntax>();
         var contributions = new List<ContributionSyntax>();
@@ -321,8 +337,11 @@ internal static partial class ScreenplayParser
                 case "description":
                     description = DescriptionParser.Parse(context, child, description, $"Module '{name}'");
                     break;
-                case "layout":
-                    layouts.Add(LayoutParser.Parse(context, child));
+                case "screen":
+                    screenTemplates.Add(LayoutParser.ParseScreenTemplate(context, child));
+                    break;
+                case "dialog":
+                    dialogTemplates.Add(LayoutParser.ParseDialogTemplate(context, child));
                     break;
                 case "form":
                     AddForm(context, FormParser.Parse(context, child), forms);
@@ -334,13 +353,13 @@ internal static partial class ScreenplayParser
                     features.Add(ParseFeature(context, child));
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownModuleDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected description, layout, form, contribute or feature", child.Location);
+                    context.Error(DiagnosticCodes.UnknownModuleDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected description, screen template, dialog template, form, contribute or feature", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
         }
 
-        return new(name, layouts, features, line.Location, description, forms, contributions);
+        return new(name, screenTemplates, features, line.Location, description, forms, contributions, dialogTemplates);
     }
 
     static void AddForm(ParserContext context, FormSyntax form, List<FormSyntax> forms)

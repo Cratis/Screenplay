@@ -5,27 +5,26 @@ using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.for_ScreenplayCompiler;
 
-public class when_compiling_a_document_with_a_freeform_layout : given.a_compiler
+public class when_compiling_a_screen_template_with_a_freeform_arrangement : given.a_compiler
 {
     const string Source =
         """
         module Dashboards
-          layout DashboardCanvas
+          screen template DashboardCanvas
             arrangement freeform
+              variant width regular, height regular
+                place header  at 0,0    size fill,64
+                place sidebar at 0,64   size 240,fill
+                place main    at 240,64 size fill,fill
 
-            variant width regular, height regular
-              place header  at 0,0    size fill,64
-              place sidebar at 0,64   size 240,fill
-              place main    at 240,64 size fill,fill
-
-            variant width compact, height regular
-              place header at 0,0  size fill,48
-              place main   at 0,48 size fill,fill
-              place sidebar hidden
+              variant width compact, height regular
+                place header at 0,0  size fill,48
+                place main   at 0,48 size fill,fill
+                place sidebar hidden
         """;
 
     CompilationResult<ApplicationSyntax> _result;
-    LayoutSyntax _layout;
+    ScreenTemplateSyntax _template;
     VariantSyntax _regular;
     VariantSyntax _compact;
     PlaceSyntax _regularSidebar;
@@ -34,17 +33,17 @@ public class when_compiling_a_document_with_a_freeform_layout : given.a_compiler
     void Because()
     {
         _result = _compiler.Compile(Source);
-        _layout = _result.Value!.Modules.Single().Layouts.Single();
-        _regular = _layout.Variants!.First();
-        _compact = _layout.Variants!.Skip(1).First();
+        _template = _result.Value!.Modules.Single().ScreenTemplates.Single();
+        _regular = _template.Arrangement!.Variants!.First();
+        _compact = _template.Arrangement!.Variants!.Skip(1).First();
         _regularSidebar = _regular.Places.Single(place => place.SlotName == "sidebar");
         _compactSidebar = _compact.Places.Single(place => place.SlotName == "sidebar");
     }
 
     [Fact] void should_succeed() => _result.Success.ShouldBeTrue();
     [Fact] void should_have_no_diagnostics() => _result.Diagnostics.ShouldBeEmpty();
-    [Fact] void should_have_freeform_arrangement() => _layout.Arrangement.ShouldEqual(LayoutArrangement.Freeform);
-    [Fact] void should_flatten_slots_across_variants() => _layout.Slots.Select(slot => slot.Name).ShouldContainOnly("header", "sidebar", "main");
+    [Fact] void should_have_freeform_arrangement() => _template.Arrangement!.Mode.ShouldEqual(ArrangementMode.Freeform);
+    [Fact] void should_declare_the_slots_the_variants_place() => _template.Slots.Select(slot => slot.Name).ShouldContainOnly("header", "sidebar", "main");
     [Fact] void should_parse_the_regular_variant_size_class() => (_regular.Width, _regular.Height).ShouldEqual(("regular", "regular"));
     [Fact] void should_parse_the_compact_variant_size_class() => (_compact.Width, _compact.Height).ShouldEqual(("compact", "regular"));
     [Fact] void should_parse_the_regular_sidebar_position() => (_regularSidebar.X, _regularSidebar.Y).ShouldEqual((0, 64));

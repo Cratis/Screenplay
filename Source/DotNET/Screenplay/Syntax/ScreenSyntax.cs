@@ -51,15 +51,21 @@ public record ScreenActionSyntax(string Command, string? Label, ScreenNavigateSy
 public record ScreenNavigateSyntax(string Screen, string? By, SourceLocation Location) : ScreenDirectiveSyntax(Location);
 
 /// <summary>
-/// Represents a <c>layout</c> reference filling the named slots of a declared layout.
+/// Represents a <c>template</c> reference filling the named slots of a declared <see cref="ScreenTemplateSyntax"/>
+/// or <see cref="DialogTemplateSyntax"/>.
 /// </summary>
-/// <param name="Name">The name of the referenced layout.</param>
+/// <param name="Name">The name of the referenced template.</param>
 /// <param name="Slots">The <see cref="ScreenSlotSyntax">slots</see> being filled.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record ScreenLayoutSyntax(string Name, IEnumerable<ScreenSlotSyntax> Slots, SourceLocation Location) : ScreenDirectiveSyntax(Location);
+/// <remarks>
+/// A screen is an instance: it names the structure it fills and provides the content. The structure it names
+/// is a template - the application's <see cref="LayoutSyntax"/> is selected once by a <see cref="UiProfileSyntax"/>
+/// rather than named per screen.
+/// </remarks>
+public record ScreenTemplateReferenceSyntax(string Name, IEnumerable<ScreenSlotSyntax> Slots, SourceLocation Location) : ScreenDirectiveSyntax(Location);
 
 /// <summary>
-/// Represents a named slot within a layout reference.
+/// Represents a named slot within a template reference.
 /// </summary>
 /// <param name="Name">The name of the slot.</param>
 /// <param name="Directives">The <see cref="ScreenDirectiveSyntax">directives</see> filling the slot.</param>

@@ -16,7 +16,7 @@ form <Name> for <Command>
   on submit navigate to <Screen> [by <param>]
 ```
 
-- `form <Name> for <Command>` - top level, alongside `layout` and `feature`, inside a `module`. A module can declare more than one; each name must be unique.
+- `form <Name> for <Command>` - top level, alongside `screen template` and `feature`, inside a `module`. A module can declare more than one; each name must be unique.
 - `populate` - where the form's initial values come from. At most one per form, and optional - a form with no `populate` starts empty.
 - `field` - binds one of the command's properties to the form. Zero or more.
 - `on submit` - what happens after a successful submit. At most one per form, and optional - a form with no `on submit` stays on the current screen.

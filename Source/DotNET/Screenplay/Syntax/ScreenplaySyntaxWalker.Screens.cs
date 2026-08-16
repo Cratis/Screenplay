@@ -48,8 +48,8 @@ public abstract partial class ScreenplaySyntaxWalker
             case ScreenNavigateSyntax navigate:
                 VisitScreenNavigate(navigate);
                 break;
-            case ScreenLayoutSyntax layout:
-                VisitScreenLayout(layout);
+            case ScreenTemplateReferenceSyntax template:
+                VisitScreenTemplateReference(template);
                 break;
             case ScreenSlotSyntax slot:
                 VisitScreenSlot(slot);
@@ -106,10 +106,10 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitScreenNavigate(ScreenNavigateSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
-    /// Visits a <see cref="ScreenLayoutSyntax"/> node and its children.
+    /// Visits a <see cref="ScreenTemplateReferenceSyntax"/> node and its children.
     /// </summary>
-    /// <param name="syntax">The <see cref="ScreenLayoutSyntax"/> to visit.</param>
-    public virtual void VisitScreenLayout(ScreenLayoutSyntax syntax)
+    /// <param name="syntax">The <see cref="ScreenTemplateReferenceSyntax"/> to visit.</param>
+    public virtual void VisitScreenTemplateReference(ScreenTemplateReferenceSyntax syntax)
     {
         VisitNode(syntax);
 

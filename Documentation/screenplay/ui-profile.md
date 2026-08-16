@@ -1,6 +1,6 @@
 # UI profile
 
-Screenplay's screen and layout constructs are platform-agnostic on purpose - the same `screen` should work on the web, on a phone, and on desktop. Something still has to say which platforms an application targets and which component packages (PrimeReact, an internal widget library, ...) a build resolves widget names against. That is `ui profile`.
+Screenplay's screen and template constructs are platform-agnostic on purpose - the same `screen` should work on the web, on a phone, and on desktop. Something still has to say which platforms an application targets, which shell it renders inside, and which component packages (PrimeReact, an internal widget library, ...) a build resolves widget names against. That is `ui profile`.
 
 ## Syntax
 
@@ -8,6 +8,8 @@ Screenplay's screen and layout constructs are platform-agnostic on purpose - the
 ui profile <Name>
   target platform <Platform>[, <Platform>...]
   target size <SizeClass>
+  layout <LayoutName>
+  theme <ThemeName>
 
   packages
     <Package>
@@ -19,13 +21,26 @@ ui profile <Name>
 - `target size` - the size class assumed by default: `compact`, `regular` or `expanded` (Apple/Material-style named classes, not raw pixel breakpoints - a narrow browser window and a compact phone are "the same" class, and a raw breakpoint means nothing on native). At most one per profile. The two-axis width x height matrix a `layout` resolves against is a separate, more specific concern.
 - `packages` - the component packages this profile draws from, one per line, in **override-priority order**: a later package's `Button` shadows an earlier one's on a name collision. `core`, the built-in vocabulary (`button`, `table`, `form`, `title`, ...), is always the final fallback regardless of what a profile lists here.
 - `theme` - the visual theme this profile applies. Optional, at most one per profile. A theme is only meaningful relative to a specific set of packages - see [Theme](theme.md) for how that compatibility is declared and checked.
+- `layout` - the application's base navigational shell this profile renders inside. Optional, at most one per profile. This is where an application states which shell it uses; naming a layout the document does not declare is reported as a warning, the same way an unknown theme is. See [Layouts and templates](templates.md).
 
 ## Example
 
 ```screenplay
+layout AppShell
+  topbar
+  navigation contributes Navigation
+  content
+
+theme Aurora
+  compatible with core
+  compatible with PrimeReact
+  compatible with Internal.Widgets
+
 ui profile Desktop
   target platform web
   target size expanded
+  layout AppShell
+  theme Aurora
 
   packages
     core

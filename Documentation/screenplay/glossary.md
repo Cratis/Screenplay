@@ -38,8 +38,11 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Reaction** — behavior that runs when something happens, producing side effects: notifications, follow-up events, or commands. Chronicle's *reactor* is one thing that can perform one.
 - **Trigger** — something that can cause a reaction to run: an event, the clock, a declared trigger, or one a consumer registered.
 - **Trigger data** — the values one occurrence of a trigger hands the reaction.
-- **Screen** — a UI declaration inside a `StateView` slice, expressible at three levels from pure intent to layout with inline React.
-- **Layout** — a reusable screen template with named slots, declared at module level and referenced by screens.
+- **Screen** — an instance: a UI declaration inside a `StateView` slice that names the template it fills and provides the content, expressible at three levels from pure intent to inline React.
+- **Layout** — the application's base navigational look: the shell with its top bar, navigation, content and footer. An application has one, declared at the top level and selected by a `ui profile`.
+- **Screen template** — a reusable shape with named slots that goes inside the shell, declared at module level and referenced by screens. An application has many; `fits slot` says which slot of its parent each one fills.
+- **Dialog template** — a screen template for content that opens over the application. It declares no `fits slot`, because it occupies no slot.
+- **Arrangement** — how a layout or template positions the slots it declares: responsive `flow` or pixel-precise `freeform`.
 
 ## Sub-languages
 

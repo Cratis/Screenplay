@@ -124,6 +124,12 @@ public sealed partial class ScreenplayPrinter :
             WriteTrigger(writer, trigger);
         }
 
+        foreach (var layout in application.Layouts ?? [])
+        {
+            writer.Blank();
+            WriteLayout(writer, layout);
+        }
+
         foreach (var uiProfile in application.UiProfiles ?? [])
         {
             writer.Blank();
@@ -185,9 +191,18 @@ public sealed partial class ScreenplayPrinter :
                 }
             }
 
-            if (uiProfile.Theme is not null)
+            if (uiProfile.Layout is not null || uiProfile.Theme is not null)
             {
                 writer.Blank();
+            }
+
+            if (uiProfile.Layout is not null)
+            {
+                writer.Line($"layout {uiProfile.Layout}");
+            }
+
+            if (uiProfile.Theme is not null)
+            {
                 writer.Line($"theme {uiProfile.Theme}");
             }
         }
@@ -369,10 +384,16 @@ public sealed partial class ScreenplayPrinter :
         {
             WriteDescription(writer, module.Description);
 
-            foreach (var layout in module.Layouts)
+            foreach (var screenTemplate in module.ScreenTemplates)
             {
                 writer.Blank();
-                WriteLayout(writer, layout);
+                WriteScreenTemplate(writer, screenTemplate);
+            }
+
+            foreach (var dialogTemplate in module.DialogTemplates ?? [])
+            {
+                writer.Blank();
+                WriteDialogTemplate(writer, dialogTemplate);
             }
 
             foreach (var form in module.Forms ?? [])
@@ -473,66 +494,123 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"layout {layout.Name}");
         using (writer.Indent())
         {
-            if (layout.Arrangement == LayoutArrangement.Freeform)
-            {
-                writer.Line("arrangement freeform");
+            WriteSlots(writer, layout.Slots);
+            WriteArrangement(writer, layout.Arrangement);
+        }
+    }
 
-                foreach (var variant in layout.Variants ?? [])
+    void WriteScreenTemplate(ScreenplayWriter writer, ScreenTemplateSyntax template)
+    {
+        writer.Line($"screen template {template.Name}");
+        using (writer.Indent())
+        {
+            if (template.FitsSlot is not null)
+            {
+                writer.Line($"fits slot {template.FitsSlot}");
+                writer.Blank();
+            }
+
+            WriteSlots(writer, template.Slots);
+            WriteArrangement(writer, template.Arrangement);
+        }
+    }
+
+    void WriteDialogTemplate(ScreenplayWriter writer, DialogTemplateSyntax template)
+    {
+        writer.Line($"dialog template {template.Name}");
+        using (writer.Indent())
+        {
+            WriteSlots(writer, template.Slots);
+            WriteArrangement(writer, template.Arrangement);
+        }
+    }
+
+    /// <summary>
+    /// Writes every slot the structure declares, one per line.
+    /// </summary>
+    /// <param name="writer">The <see cref="ScreenplayWriter"/> to write to.</param>
+    /// <param name="slots">The <see cref="SlotSyntax">slots</see> to write.</param>
+    /// <remarks>
+    /// Every slot is written, including one only an arrangement named - so a printed document always states
+    /// its slots explicitly, and says each of them exactly once.
+    /// </remarks>
+    void WriteSlots(ScreenplayWriter writer, IEnumerable<SlotSyntax> slots)
+    {
+        foreach (var slot in slots)
+        {
+            writer.Line(slot.Contributes is null ? slot.Name : $"{slot.Name} contributes {slot.Contributes}");
+        }
+    }
+
+    void WriteArrangement(ScreenplayWriter writer, ArrangementSyntax? arrangement)
+    {
+        if (arrangement is null)
+        {
+            return;
+        }
+
+        writer.Blank();
+        writer.Line(arrangement.Mode == ArrangementMode.Freeform ? "arrangement freeform" : "arrangement flow");
+        using (writer.Indent())
+        {
+            if (arrangement.Mode == ArrangementMode.Freeform)
+            {
+                var first = true;
+                foreach (var variant in arrangement.Variants ?? [])
                 {
-                    writer.Blank();
+                    if (!first)
+                    {
+                        writer.Blank();
+                    }
+
+                    first = false;
                     WriteVariant(writer, variant);
                 }
 
                 return;
             }
 
-            if (layout.Template is null)
+            if (arrangement.Root is not null)
             {
-                return;
+                WriteArrangementChildren(writer, arrangement.Root);
             }
 
-            writer.Line("template");
-            using (writer.Indent())
+            foreach (var arrangementOverride in arrangement.Overrides ?? [])
             {
-                WriteTemplateChildren(writer, layout.Template.Root);
-
-                foreach (var templateOverride in layout.Template.Overrides)
-                {
-                    writer.Blank();
-                    WriteTemplateOverride(writer, templateOverride);
-                }
+                writer.Blank();
+                WriteArrangementOverride(writer, arrangementOverride);
             }
         }
     }
 
-    void WriteTemplateChildren(ScreenplayWriter writer, TemplateNodeSyntax node)
+    void WriteArrangementChildren(ScreenplayWriter writer, ArrangementNodeSyntax node)
     {
-        if (node is TemplateContainerSyntax { Kind: TemplateContainerKind.Flat } flat)
+        if (node is ArrangementContainerSyntax { Kind: ArrangementContainerKind.Flat } flat)
         {
             foreach (var child in flat.Children)
             {
-                WriteTemplateNode(writer, child);
+                WriteArrangementNode(writer, child);
             }
 
             return;
         }
 
-        WriteTemplateNode(writer, node);
+        WriteArrangementNode(writer, node);
     }
 
-    void WriteTemplateNode(ScreenplayWriter writer, TemplateNodeSyntax node)
+    void WriteArrangementNode(ScreenplayWriter writer, ArrangementNodeSyntax node)
     {
         switch (node)
         {
-            case TemplateSlotSyntax slot:
-                writer.Line(WriteTemplateSlotLine(slot));
+            case ArrangementSlotSyntax slot:
+                writer.Line(WriteArrangementSlotLine(slot));
                 break;
-            case TemplateContainerSyntax container:
+            case ArrangementContainerSyntax container:
                 var keyword = container.Kind switch
                 {
-                    TemplateContainerKind.Row => "row",
-                    TemplateContainerKind.Column => "column",
-                    TemplateContainerKind.Grid => "grid",
+                    ArrangementContainerKind.Row => "row",
+                    ArrangementContainerKind.Column => "column",
+                    ArrangementContainerKind.Grid => "grid",
                     _ => string.Empty,
                 };
                 writer.Line(container.Gap is null ? keyword : $"{keyword} gap {container.Gap}");
@@ -540,7 +618,7 @@ public sealed partial class ScreenplayPrinter :
                 {
                     foreach (var child in container.Children)
                     {
-                        WriteTemplateNode(writer, child);
+                        WriteArrangementNode(writer, child);
                     }
                 }
 
@@ -548,12 +626,12 @@ public sealed partial class ScreenplayPrinter :
         }
     }
 
-    void WriteTemplateOverride(ScreenplayWriter writer, TemplateOverrideSyntax templateOverride)
+    void WriteArrangementOverride(ScreenplayWriter writer, ArrangementOverrideSyntax arrangementOverride)
     {
-        writer.Line($"when {WriteOverrideCondition(templateOverride)}");
+        writer.Line($"when {WriteOverrideCondition(arrangementOverride)}");
         using (writer.Indent())
         {
-            WriteTemplateChildren(writer, templateOverride.Root);
+            WriteArrangementChildren(writer, arrangementOverride.Root);
         }
     }
 
@@ -569,14 +647,9 @@ public sealed partial class ScreenplayPrinter :
         }
     }
 
-    string WriteTemplateSlotLine(TemplateSlotSyntax slot)
+    string WriteArrangementSlotLine(ArrangementSlotSyntax slot)
     {
         var line = slot.Name;
-        if (slot.Contributes is not null)
-        {
-            line += $" contributes {slot.Contributes}";
-        }
-
         if (slot.Width is not null)
         {
             line += $" width {slot.Width}";
@@ -600,19 +673,19 @@ public sealed partial class ScreenplayPrinter :
         return line;
     }
 
-    string WriteOverrideCondition(TemplateOverrideSyntax templateOverride)
+    string WriteOverrideCondition(ArrangementOverrideSyntax arrangementOverride)
     {
-        if (templateOverride.Width is not null && templateOverride.Height is not null)
+        if (arrangementOverride.Width is not null && arrangementOverride.Height is not null)
         {
-            return $"width {templateOverride.Width}, height {templateOverride.Height}";
+            return $"width {arrangementOverride.Width}, height {arrangementOverride.Height}";
         }
 
-        if (templateOverride.Width is not null)
+        if (arrangementOverride.Width is not null)
         {
-            return $"width {templateOverride.Width}";
+            return $"width {arrangementOverride.Width}";
         }
 
-        return $"height {templateOverride.Height}";
+        return $"height {arrangementOverride.Height}";
     }
 
     string WritePlaceLine(PlaceSyntax place) =>

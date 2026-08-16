@@ -17,7 +17,7 @@ namespace Cratis.Screenplay.Syntax;
 /// <remarks>
 /// A contribution may sit anywhere in the module/feature tree - directly on a <see cref="ModuleSyntax"/> or
 /// on a <see cref="FeatureSyntax"/> at any nesting depth. It resolves to the nearest enclosing
-/// <see cref="LayoutSyntax"/> slot whose <see cref="SlotSyntax.Contributes"/> names the same contribution
+/// <see cref="LayoutSyntax"/> or <see cref="ScreenTemplateSyntax"/> slot whose <see cref="SlotSyntax.Contributes"/> names the same contribution
 /// point: the module the contribution sits in first, then every other module in the document.
 /// </remarks>
 public record ContributionSyntax(

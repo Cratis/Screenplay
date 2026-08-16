@@ -15,6 +15,7 @@ namespace Cratis.Screenplay.Syntax;
 /// <param name="Packages">The component packages this profile draws from, in override-priority order.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 /// <param name="Theme">The name of the <see cref="ThemeSyntax"/> this profile applies, or <c>null</c> if not declared.</param>
+/// <param name="Layout">The name of the <see cref="LayoutSyntax"/> this profile renders inside, or <c>null</c> if not declared.</param>
 /// <remarks>
 /// A <c>screen</c> never declares which profile it targets - profile selection is a build/Stage concern, so
 /// the same screen resolves against different package chains per build. <c>core</c>, the built-in vocabulary,
@@ -26,4 +27,5 @@ public record UiProfileSyntax(
     string? DefaultSizeClass,
     IEnumerable<string> Packages,
     SourceLocation Location,
-    string? Theme = null) : SyntaxNode(Location);
+    string? Theme = null,
+    string? Layout = null) : SyntaxNode(Location);

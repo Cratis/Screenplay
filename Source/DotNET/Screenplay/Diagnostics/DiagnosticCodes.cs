@@ -157,12 +157,12 @@ public static class DiagnosticCodes
     public const string UnknownFeatureDirective = "PLAY0024";
 
     /// <summary>
-    /// A slot of a layout template is not an identifier.
+    /// A slot declared by a layout, screen template or dialog template is not an identifier optionally followed by <c>contributes</c>.
     /// </summary>
     public const string InvalidLayoutSlotName = "PLAY0025";
 
     /// <summary>
-    /// A line in a layout body opens with a word a layout declares nothing by.
+    /// A line in a layout, screen template or dialog template body opens a block none of them declares anything by.
     /// </summary>
     public const string UnknownLayoutDirective = "PLAY0026";
 
@@ -1258,41 +1258,41 @@ public static class DiagnosticCodes
     /// </summary>
     public const string ThemeNotCompatibleWithPackage = "PLAY0232";
 
-    // layout arrangement - flow (responsive row/column/grid) vs. freeform (pixel-precise) placement.
+    // arrangement - flow (responsive row/column/grid) vs. freeform (pixel-precise) placement.
 
     /// <summary>
-    /// A layout's <c>arrangement</c> line is not <c>arrangement flow</c> or <c>arrangement freeform</c>.
+    /// An <c>arrangement</c> line is not <c>arrangement flow</c> or <c>arrangement freeform</c>.
     /// </summary>
     public const string InvalidArrangementDeclaration = "PLAY0233";
 
     /// <summary>
-    /// A layout declares <c>arrangement</c> more than once.
+    /// A layout, screen template or dialog template declares <c>arrangement</c> more than once.
     /// </summary>
     public const string DuplicateArrangement = "PLAY0234";
 
     /// <summary>
-    /// A <c>row</c>, <c>column</c> or <c>grid</c> line in a template is malformed.
+    /// A <c>row</c>, <c>column</c> or <c>grid</c> line in an arrangement is malformed.
     /// </summary>
-    public const string InvalidTemplateContainer = "PLAY0235";
+    public const string InvalidArrangementContainer = "PLAY0235";
 
     /// <summary>
-    /// A slot leaf within a template tree has malformed sizing attributes.
+    /// A slot leaf within an arrangement tree has malformed sizing attributes.
     /// </summary>
-    public const string InvalidTemplateSlotAttributes = "PLAY0236";
+    public const string InvalidArrangementSlotAttributes = "PLAY0236";
 
     /// <summary>
-    /// A <c>when</c> override line in a template is not a valid width/height size-class condition.
+    /// A <c>when</c> override line in an arrangement is not a valid width/height size-class condition.
     /// </summary>
-    public const string InvalidTemplateOverride = "PLAY0237";
+    public const string InvalidArrangementOverride = "PLAY0237";
 
     /// <summary>
-    /// A template declares more than one <c>when</c> override for the same width/height size-class combination.
+    /// An arrangement declares more than one <c>when</c> override for the same width/height size-class combination.
     /// </summary>
-    public const string DuplicateTemplateOverride = "PLAY0238";
+    public const string DuplicateArrangementOverride = "PLAY0238";
 
     /// <summary>
-    /// A layout's body does not match its declared (or default) <c>arrangement</c> - a <c>flow</c> layout
-    /// declares a <c>variant</c> block, or a <c>freeform</c> layout declares a <c>template</c> block.
+    /// An <c>arrangement</c> block's body does not match its mode - a <c>flow</c> arrangement declares a
+    /// <c>variant</c>, or a <c>freeform</c> arrangement declares anything other than one.
     /// </summary>
     public const string ArrangementDirectiveMismatch = "PLAY0239";
 
@@ -1302,7 +1302,7 @@ public static class DiagnosticCodes
     public const string InvalidVariantDeclaration = "PLAY0240";
 
     /// <summary>
-    /// A layout declares more than one <c>variant</c> for the same width/height size-class combination.
+    /// An arrangement declares more than one <c>variant</c> for the same width/height size-class combination.
     /// </summary>
     public const string DuplicateVariant = "PLAY0241";
 
@@ -1317,7 +1317,7 @@ public static class DiagnosticCodes
     public const string DuplicatePlaceInVariant = "PLAY0243";
 
     /// <summary>
-    /// A <c>freeform</c> layout's <c>variant</c> does not mention (place or hide) a slot another variant of the same layout places.
+    /// A <c>freeform</c> arrangement's <c>variant</c> does not mention (place or hide) a slot another variant of the same arrangement places.
     /// </summary>
     public const string VariantMissingSlot = "PLAY0244";
 
@@ -1367,4 +1367,56 @@ public static class DiagnosticCodes
     /// A reaction declares the same trigger more than once, so the second says nothing the first did not.
     /// </summary>
     public const string DuplicateReactionTrigger = "PLAY0253";
+
+    // The application's layout, and the screen and dialog templates that go inside it.
+
+    /// <summary>
+    /// A <c>screen template</c> line is not <c>screen template &lt;Name&gt;</c>.
+    /// </summary>
+    public const string InvalidScreenTemplateDeclaration = "PLAY0254";
+
+    /// <summary>
+    /// A <c>dialog template</c> line is not <c>dialog template &lt;Name&gt;</c>.
+    /// </summary>
+    public const string InvalidDialogTemplateDeclaration = "PLAY0255";
+
+    /// <summary>
+    /// A <c>fits slot</c> line is not <c>fits slot &lt;name&gt;</c>.
+    /// </summary>
+    public const string InvalidFitsSlotDeclaration = "PLAY0256";
+
+    /// <summary>
+    /// A screen template declares <c>fits slot</c> more than once.
+    /// </summary>
+    public const string DuplicateFitsSlot = "PLAY0257";
+
+    /// <summary>
+    /// A layout or a dialog template declares <c>fits slot</c> - neither fills a slot of a parent structure.
+    /// </summary>
+    public const string FitsSlotNotAllowed = "PLAY0258";
+
+    /// <summary>
+    /// A top level <c>layout</c> line is not <c>layout &lt;Name&gt;</c>.
+    /// </summary>
+    public const string InvalidLayoutDeclaration = "PLAY0259";
+
+    /// <summary>
+    /// A document declares more than one layout by the same name.
+    /// </summary>
+    public const string DuplicateLayout = "PLAY0260";
+
+    /// <summary>
+    /// A <c>ui profile</c>'s <c>layout</c> line is not <c>layout &lt;Name&gt;</c>.
+    /// </summary>
+    public const string InvalidProfileLayout = "PLAY0261";
+
+    /// <summary>
+    /// A <c>ui profile</c> declares <c>layout</c> more than once.
+    /// </summary>
+    public const string DuplicateProfileLayout = "PLAY0262";
+
+    /// <summary>
+    /// A <c>ui profile</c> selects a layout nothing in the document declares.
+    /// </summary>
+    public const string UnknownLayout = "PLAY0263";
 }

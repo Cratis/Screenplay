@@ -8,11 +8,12 @@ The module is the top-level namespace and maps to a bounded context. One module 
 module <Name>
   [description "<text>"]
 
-  [<layouts>]
+  [<screen templates>]
+  [<dialog templates>]
   [<features>]
 ```
 
-Layout templates declared at module level are described in [Screens](screens.md#layout-templates).
+Screen templates and dialog templates declared at module level are described in [Layouts and templates](templates.md).
 
 ## Features
 

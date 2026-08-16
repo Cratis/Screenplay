@@ -100,8 +100,8 @@ var unexpected = result.Diagnostics
 | `PLAY0022` | Error | A line in a module body opens with a word a module declares nothing by. |
 | `PLAY0023` | Error | A `feature` line is not `feature <Name>`. |
 | `PLAY0024` | Error | A line in a feature body opens with a word a feature declares nothing by. |
-| `PLAY0025` | Error | A slot of a layout template is not an identifier. |
-| `PLAY0026` | Error | A line in a layout body opens with a word a layout declares nothing by. |
+| `PLAY0025` | Error | A slot declared by a layout, screen template or dialog template is not an identifier optionally followed by `contributes`. |
+| `PLAY0026` | Error | A line in a layout, screen template or dialog template body opens a block none of them declares anything by. |
 | `PLAY0027` | Error | A `slice` line is not `slice <Type> <Name>`. |
 | `PLAY0028` | Error | A slice is declared with a type the language does not have. |
 | `PLAY0029` | Warning | A line in a slice body opens with a word a slice declares nothing by. |
@@ -463,22 +463,22 @@ var unexpected = result.Diagnostics
 | `PLAY0231` | Warning | A `ui profile` selects a theme nothing in the document declares. |
 | `PLAY0232` | Warning | A `ui profile` selects a theme not declared compatible with one of the profile's own packages. |
 
-### Layout arrangement
+### Arrangement
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0233` | Error | A layout's `arrangement` line is not `arrangement flow` or `arrangement freeform`. |
-| `PLAY0234` | Error | A layout declares `arrangement` more than once. |
-| `PLAY0235` | Error | A `row`, `column` or `grid` line in a template is malformed. |
-| `PLAY0236` | Error | A slot leaf within a template tree has malformed sizing attributes. |
-| `PLAY0237` | Error | A `when` override line in a template is not a valid width/height size-class condition. |
-| `PLAY0238` | Error | A template declares more than one `when` override for the same width/height size-class combination. |
-| `PLAY0239` | Error | A layout's body does not match its declared (or default) `arrangement` - a `flow` layout declares a `variant` block, or a `freeform` layout declares a `template` block. |
+| `PLAY0233` | Error | An `arrangement` line is not `arrangement flow` or `arrangement freeform`. |
+| `PLAY0234` | Error | A layout, screen template or dialog template declares `arrangement` more than once. |
+| `PLAY0235` | Error | A `row`, `column` or `grid` line in an arrangement is malformed. |
+| `PLAY0236` | Error | A slot leaf within an arrangement tree has malformed sizing attributes. |
+| `PLAY0237` | Error | A `when` override line in an arrangement is not a valid width/height size-class condition. |
+| `PLAY0238` | Error | An arrangement declares more than one `when` override for the same width/height size-class combination. |
+| `PLAY0239` | Error | An `arrangement` block's body does not match its mode - a `flow` arrangement declares a `variant`, or a `freeform` arrangement declares anything other than one. |
 | `PLAY0240` | Error | A `variant` line is not `variant width <compact\|regular>, height <compact\|regular>`. |
-| `PLAY0241` | Error | A layout declares more than one `variant` for the same width/height size-class combination. |
+| `PLAY0241` | Error | An arrangement declares more than one `variant` for the same width/height size-class combination. |
 | `PLAY0242` | Error | A `place` line is not `place <Slot> hidden` or `place <Slot> at x,y size w,h`. |
 | `PLAY0243` | Error | A `variant` places (or hides) the same slot more than once. |
-| `PLAY0244` | Warning | A `freeform` layout's `variant` does not mention (place or hide) a slot another variant of the same layout places. |
+| `PLAY0244` | Warning | A `freeform` arrangement's `variant` does not mention (place or hide) a slot another variant of the same arrangement places. |
 
 ### Triggers
 
@@ -493,6 +493,21 @@ var unexpected = result.Diagnostics
 | `PLAY0251` | Warning | A reaction takes a value from an occurrence that the trigger does not provide. |
 | `PLAY0252` | Error | A reaction states more than one `where`, and a reaction is narrowed by one condition. |
 | `PLAY0253` | Error | A reaction declares the same trigger more than once, so the second says nothing the first did not. |
+
+### Layouts, screen templates and dialog templates
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0254` | Error | A `screen template` line is not `screen template <Name>`. |
+| `PLAY0255` | Error | A `dialog template` line is not `dialog template <Name>`. |
+| `PLAY0256` | Error | A `fits slot` line is not `fits slot <name>`. |
+| `PLAY0257` | Error | A screen template declares `fits slot` more than once. |
+| `PLAY0258` | Error | A layout or a dialog template declares `fits slot` - neither fills a slot of a parent structure. |
+| `PLAY0259` | Error | A top level `layout` line is not `layout <Name>`. |
+| `PLAY0260` | Error | A document declares more than one layout by the same name. |
+| `PLAY0261` | Error | A `ui profile`'s `layout` line is not `layout <Name>`. |
+| `PLAY0262` | Error | A `ui profile` declares `layout` more than once. |
+| `PLAY0263` | Warning | A `ui profile` selects a layout nothing in the document declares. |
 
 ## Retired codes
 
