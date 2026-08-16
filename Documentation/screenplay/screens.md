@@ -71,7 +71,7 @@ Widgets:
 | `summary <ReadModel>` | `field <property> label "<text>"` rows |
 | `title "<text>"` | A section title |
 
-## Level 3 — Structure with inline code
+## Level 3 — Template with inline code
 
 Combines screen templates, structural sections, and inline React/HTML/TypeScript blocks. The surrounding Screenplay context provides the typed data contract; the inline block receives it as `Props`.
 
