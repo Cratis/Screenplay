@@ -4,7 +4,7 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { isAbsoluteFileReferencePath } from '@cratis/screenplay-language';
-import { FileReferenceProbe, FileReferenceRoots } from './FileReferenceResolution';
+import { FileReferenceProbe, FileReferenceRoots, FileReferenceSearch } from './FileReferenceResolution';
 
 // The setting a workspace states its root with when the automatic probing cannot work it out.
 const sourceRootSetting = 'sourceRoot';
@@ -16,6 +16,8 @@ const sourceRootContainers = ['Source', 'src'];
 
 // How many files the base-name fallback is willing to look at. It exists to answer a single question —
 // is there exactly one file this path could mean — so a handful of results is enough to answer it.
+// One more than this is asked for, because a set that fills the cap is a set that may have been cut
+// short, and the resolver has to be told that rather than left to read a truncated set as a complete one.
 const searchLimit = 32;
 
 function configuredRoots(document: vscode.TextDocument, workspaceFolder: string | undefined): string[] {
@@ -81,13 +83,17 @@ export function workspaceProbe(): FileReferenceProbe {
                 return false;
             }
         },
-        async search(baseName: string): Promise<readonly string[]> {
+        async search(baseName: string): Promise<FileReferenceSearch> {
             const found = await vscode.workspace.findFiles(
                 `**/${baseName}`,
                 '**/node_modules/**',
-                searchLimit,
+                searchLimit + 1,
             );
-            return found.map((uri) => uri.fsPath);
+
+            // Nothing about `maxResults` promises an order or a complete set, so the only thing a full
+            // result set proves is that more files may exist beyond it. Asking for one over the limit is
+            // what turns that into an answer: fewer back than asked for means the search saw everything.
+            return { files: found.map((uri) => uri.fsPath), truncated: found.length > searchLimit };
         },
     };
 }
