@@ -65,7 +65,12 @@ export function registerFileLinks(context: vscode.ExtensionContext): void {
     // `cratis screenplay generate` fires none of them, which is precisely the workflow where a `.play`
     // names a file that is about to exist. A watcher sees those, so it is what the cache is hung on;
     // content changes are ignored, because whether a file exists is all a resolution ever asked.
+    const watcher = vscode.workspace.createFileSystemWatcher('**/*', false, true, false);
+
     context.subscriptions.push(
+        watcher,
+        watcher.onDidCreate(forget),
+        watcher.onDidDelete(forget),
         vscode.workspace.onDidCreateFiles(forget),
         vscode.workspace.onDidDeleteFiles(forget),
         vscode.workspace.onDidRenameFiles(forget),
