@@ -44,6 +44,7 @@ internal static partial class TriggerParser
         var name = match.Groups[1].Value;
         string? description = null;
         var data = new List<TriggerDataSyntax>();
+        FileReferenceSyntax? file = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -54,13 +55,21 @@ internal static partial class TriggerParser
                 continue;
             }
 
+            // The directive wins over a value of the same name, exactly as it does in the trigger clause of a
+            // reaction - a value named after it is written '@file', which is what the printer has always emitted.
+            if (FileReferenceParser.IsDirective(line))
+            {
+                file = FileReferenceParser.Parse(context, line);
+                continue;
+            }
+
             if (ParseData(context, line) is { } datum)
             {
                 data.Add(datum);
             }
         }
 
-        return new(name, data, header.Location, description);
+        return new(name, data, header.Location, description) { File = file };
     }
 
     /// <summary>

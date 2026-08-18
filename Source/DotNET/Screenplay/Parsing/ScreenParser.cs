@@ -33,9 +33,9 @@ internal static partial class ScreenParser
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
-            if (LineText.FirstWord(line.Content) == "file")
+            if (FileReferenceParser.IsDirective(line))
             {
-                file = new(line.Content["file".Length..].Trim(), line.Location);
+                file = FileReferenceParser.Parse(context, line);
             }
             else if (ParseDirective(context, line) is { } directive)
             {

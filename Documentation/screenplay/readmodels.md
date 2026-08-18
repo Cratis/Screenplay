@@ -9,9 +9,14 @@ A [projection](projections/index.md) says how state is built from events, and un
 ```screenplay
 readmodel <Name>
   [description "<text>"]
+  [file <path>]
   <property> <Type>[?]
   ...
 ```
+
+The optional `file` line names the repository relative file this declaration is realized by, so a document can be navigated back to the code it describes. It is additive - it never stands in for any part of the declaration. See [File references](file-references.md).
+
+A read model's `file` says where the *shape* lives, which is a different question from where whatever builds it lives - a reducer rule carries its own `file`, and so does a projection.
 
 A read model declares what it **is** — its shape, and nothing else:
 

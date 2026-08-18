@@ -1419,4 +1419,9 @@ public static class DiagnosticCodes
     /// A <c>ui profile</c> selects a layout nothing in the document declares.
     /// </summary>
     public const string UnknownLayout = "PLAY0263";
+
+    /// <summary>
+    /// A <c>file</c> directive names an absolute path, and a file reference is relative to the repository root.
+    /// </summary>
+    public const string AbsoluteFileReference = "PLAY0264";
 }

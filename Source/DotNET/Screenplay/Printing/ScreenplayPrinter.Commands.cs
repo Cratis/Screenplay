@@ -91,6 +91,7 @@ public partial class ScreenplayPrinter
         writer.Line($"event {@event.Name}");
         using (writer.Indent())
         {
+            WriteFile(writer, @event.File);
             WriteTags(writer, @event.Tags);
             WriteProperties(writer, @event.Properties, ReservedWords.EventBody);
         }

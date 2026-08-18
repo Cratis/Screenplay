@@ -226,6 +226,7 @@ public sealed partial class ScreenplayPrinter :
         using (writer.Indent())
         {
             WriteDescription(writer, trigger.Description);
+            WriteFile(writer, trigger.File);
 
             foreach (var datum in trigger.Data)
             {
@@ -241,6 +242,7 @@ public sealed partial class ScreenplayPrinter :
         using (writer.Indent())
         {
             WriteDescription(writer, readModel.Description);
+            WriteFile(writer, readModel.File);
             WriteProperties(writer, readModel.Properties, ReservedWords.ReadModelBody);
         }
     }
@@ -309,13 +311,15 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"concept {concept.Name} : {concept.Type}{string.Concat(attributes.Select(attribute => $" @{attribute.Name}"))}");
         var validations = concept.Validations?.ToList() ?? [];
         var reasoned = attributes.Where(attribute => attribute.Reason is not null).ToList();
-        if (!concept.IsEnum && validations.Count == 0 && reasoned.Count == 0)
+        if (!concept.IsEnum && validations.Count == 0 && reasoned.Count == 0 && concept.File is null)
         {
             return;
         }
 
         using (writer.Indent())
         {
+            WriteFile(writer, concept.File);
+
             foreach (var attribute in reasoned)
             {
                 writer.Line($"{attribute.Name} reason {StringLiteral.Quote(attribute.Reason!)}");
@@ -342,6 +346,7 @@ public sealed partial class ScreenplayPrinter :
         using (writer.Indent())
         {
             WriteDescription(writer, type.Description);
+            WriteFile(writer, type.File);
             WriteProperties(writer, type.Properties, ReservedWords.None);
         }
     }
@@ -726,6 +731,7 @@ public sealed partial class ScreenplayPrinter :
         using (writer.Indent())
         {
             WriteDescription(writer, slice.Description);
+            WriteFile(writer, slice.File);
 
             foreach (var command in slice.Commands)
             {
@@ -813,6 +819,16 @@ public sealed partial class ScreenplayPrinter :
         using (writer.Indent())
         {
             WriteFencedText(writer, description);
+        }
+    }
+
+    // A declaration's file reference is printed directly under its header, right after the description, because
+    // it belongs to the declaration itself rather than to any of the members that follow it.
+    void WriteFile(ScreenplayWriter writer, FileReferenceSyntax? file)
+    {
+        if (file is not null)
+        {
+            writer.Line($"file {file.Path}");
         }
     }
 }
