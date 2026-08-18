@@ -12,6 +12,9 @@ namespace Cratis.Screenplay.Syntax;
 /// <param name="Properties">The <see cref="PropertySyntax">properties</see> the read model holds.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 /// <param name="Description">The optional human readable description of the read model.</param>
+/// <param name="File">The <see cref="FileReferenceSyntax"/> naming the file the read model is realized by.
+/// It says where the shape lives, which is a different question from where whatever builds it lives - a
+/// reducer rule carries its own <c>file</c>.</param>
 /// <remarks>
 /// A read model declares what it <em>is</em> and never what composes it. Whatever builds it - a
 /// <see cref="Projections.ProjectionSyntax">projection</see> or a <see cref="ReducerSyntax">reducer</see> -
@@ -26,7 +29,8 @@ public record ReadModelSyntax(
     string Name,
     IEnumerable<PropertySyntax> Properties,
     SourceLocation Location,
-    string? Description = null) : SyntaxNode(Location);
+    string? Description = null,
+    FileReferenceSyntax? File = null) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents a <c>reducer &lt;Name&gt; =&gt; &lt;ReadModel&gt;</c> declaration - a read model built by

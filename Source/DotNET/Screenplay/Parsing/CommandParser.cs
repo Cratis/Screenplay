@@ -266,9 +266,9 @@ internal static partial class CommandParser
         }
 
         context.Reader.TakeSignificant();
-        if (LineText.FirstWord(body.Content) == "file")
+        if (FileReferenceParser.IsDirective(body))
         {
-            return new(new(body.Content["file".Length..].Trim(), body.Location), null, line.Location);
+            return new(FileReferenceParser.Parse(context, body), null, line.Location);
         }
 
         if (context.Languages.InlineLanguages.Contains(body.Content))

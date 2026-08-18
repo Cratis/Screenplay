@@ -12,8 +12,10 @@ namespace Cratis.Screenplay.Syntax;
 /// <param name="Properties">The <see cref="PropertySyntax">properties</see> the event carries.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 /// <param name="Tags">The <see cref="TagSyntax">tags</see> applied to the event.</param>
+/// <param name="File">The <see cref="FileReferenceSyntax"/> naming the file the event is realized by.</param>
 public record EventSyntax(
     string Name,
     IEnumerable<PropertySyntax> Properties,
     SourceLocation Location,
-    IEnumerable<TagSyntax>? Tags = null) : SyntaxNode(Location);
+    IEnumerable<TagSyntax>? Tags = null,
+    FileReferenceSyntax? File = null) : SyntaxNode(Location);

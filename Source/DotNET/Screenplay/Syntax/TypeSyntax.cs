@@ -13,6 +13,7 @@ namespace Cratis.Screenplay.Syntax;
 /// <param name="Properties">The <see cref="PropertySyntax">properties</see> the type carries.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 /// <param name="Description">The optional human readable description of the type.</param>
+/// <param name="File">The <see cref="FileReferenceSyntax"/> naming the file the type is realized by.</param>
 /// <remarks>
 /// A <c>concept</c> names a single primitive value; a <c>type</c> names a shape built from several of
 /// them. Both are referenced the same way from an event, command or another type - by name, optionally
@@ -22,4 +23,5 @@ public record TypeSyntax(
     string Name,
     IEnumerable<PropertySyntax> Properties,
     SourceLocation Location,
-    string? Description = null) : SyntaxNode(Location);
+    string? Description = null,
+    FileReferenceSyntax? File = null) : SyntaxNode(Location);

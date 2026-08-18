@@ -36,6 +36,7 @@ public enum AutoMapMode
 /// <param name="Key">The optional projection level <see cref="KeySyntax"/>.</param>
 /// <param name="Blocks">The <see cref="ProjectionBlockSyntax">blocks</see> making up the projection body.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <param name="File">The <see cref="FileReferenceSyntax"/> naming the file the projection is realized by.</param>
 public record ProjectionSyntax(
     string Name,
     string? ReadModel,
@@ -43,4 +44,5 @@ public record ProjectionSyntax(
     AutoMapMode AutoMap,
     KeySyntax? Key,
     IEnumerable<ProjectionBlockSyntax> Blocks,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location,
+    FileReferenceSyntax? File = null) : SyntaxNode(Location);

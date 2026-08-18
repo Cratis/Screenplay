@@ -17,6 +17,7 @@ namespace Cratis.Screenplay.Syntax.Specifications;
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 /// <param name="GivenReadModels">The <see cref="SpecificationReadModelSyntax">read model states</see> establishing prior state.</param>
 /// <param name="ThenReadModels">The <see cref="SpecificationReadModelSyntax">read model states</see> expected after the command.</param>
+/// <param name="File">The <see cref="FileReferenceSyntax"/> naming the file the specification is realized by.</param>
 public record SpecificationSyntax(
     string Name,
     IEnumerable<SpecificationEventSyntax> Given,
@@ -25,7 +26,8 @@ public record SpecificationSyntax(
     IEnumerable<SpecificationErrorSyntax> ThenErrors,
     SourceLocation Location,
     IEnumerable<SpecificationReadModelSyntax>? GivenReadModels = null,
-    IEnumerable<SpecificationReadModelSyntax>? ThenReadModels = null) : SyntaxNode(Location);
+    IEnumerable<SpecificationReadModelSyntax>? ThenReadModels = null,
+    FileReferenceSyntax? File = null) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents a reference to an event within a specification - used for both <c>given</c> and

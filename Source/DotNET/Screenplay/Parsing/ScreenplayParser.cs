@@ -208,10 +208,15 @@ internal static partial class ScreenplayParser
 
         var values = new List<string>();
         var validations = new List<ValidateSyntax>();
+        FileReferenceSyntax? file = null;
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
-            if (LineText.FirstWord(child.Content) == "validate")
+            if (FileReferenceParser.IsDirective(child))
+            {
+                file = FileReferenceParser.Parse(context, child);
+            }
+            else if (LineText.FirstWord(child.Content) == "validate")
             {
                 if (type == "Enum" && child.Content == "validate" && !context.TryPeekChild(child.Indent, out _))
                 {
@@ -240,12 +245,12 @@ internal static partial class ScreenplayParser
             }
             else
             {
-                context.Error(DiagnosticCodes.UnknownConceptDirective, $"Unexpected '{child.Content}' in concept body - expected validate or '<attribute> reason \"<text>\"'", child.Location);
+                context.Error(DiagnosticCodes.UnknownConceptDirective, $"Unexpected '{child.Content}' in concept body - expected validate, 'file <path>' or '<attribute> reason \"<text>\"'", child.Location);
                 context.SkipBlock(child.Indent);
             }
         }
 
-        return new(name, type, attributes, values, line.Location, validations);
+        return new(name, type, attributes, values, line.Location, validations, file);
     }
 
     static void ApplyAttributeReason(

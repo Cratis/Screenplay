@@ -39,6 +39,7 @@ public enum IntervalUnit
 /// <param name="Data">The <see cref="TriggerDataSyntax">values</see> an occurrence of this trigger provides.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 /// <param name="Description">The optional human readable description of when the trigger occurs.</param>
+/// <param name="File">The <see cref="FileReferenceSyntax"/> naming the file the trigger is realized by.</param>
 /// <remarks>
 /// A declared trigger is how the language stays open. The compiler knows the trigger exists and what it
 /// provides; it never knows what makes one occur - that belongs to whatever produces it, be it an
@@ -49,7 +50,8 @@ public record TriggerSyntax(
     string Name,
     IEnumerable<TriggerDataSyntax> Data,
     SourceLocation Location,
-    string? Description = null) : SyntaxNode(Location);
+    string? Description = null,
+    FileReferenceSyntax? File = null) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents one value a trigger provides, or one a reaction takes from the occurrence.

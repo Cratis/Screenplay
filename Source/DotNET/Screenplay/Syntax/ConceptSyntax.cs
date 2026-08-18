@@ -40,13 +40,15 @@ public record ConceptAttributeSyntax(string Name, SourceLocation Location, strin
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 /// <param name="Validations">The <see cref="ValidateSyntax">validation blocks</see> for the concept. Rules use
 /// <see cref="ValidationRuleSyntax.ConceptValue"/> as their implied property subject.</param>
+/// <param name="File">The <see cref="FileReferenceSyntax"/> naming the file the concept is realized by.</param>
 public record ConceptSyntax(
     string Name,
     string Type,
     IEnumerable<ConceptAttributeSyntax> Attributes,
     IEnumerable<string> Values,
     SourceLocation Location,
-    IEnumerable<ValidateSyntax>? Validations = null) : SyntaxNode(Location)
+    IEnumerable<ValidateSyntax>? Validations = null,
+    FileReferenceSyntax? File = null) : SyntaxNode(Location)
 {
     /// <summary>
     /// Gets the well known primitive type names a concept can be based on.

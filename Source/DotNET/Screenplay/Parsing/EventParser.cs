@@ -28,10 +28,15 @@ internal static partial class EventParser
 
         var properties = new List<PropertySyntax>();
         var tags = new List<TagSyntax>();
+        FileReferenceSyntax? file = null;
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
-            if (LineText.FirstWord(line.Content) == "tag")
+            if (FileReferenceParser.IsDirectiveAmongProperties(line))
+            {
+                file = FileReferenceParser.Parse(context, line);
+            }
+            else if (LineText.FirstWord(line.Content) == "tag")
             {
                 WarnOnAmbiguousTag(context, line);
                 if (TagParser.Parse(context, line) is { } tag)
@@ -55,7 +60,7 @@ internal static partial class EventParser
             }
         }
 
-        return new(name.Groups[1].Value, properties, header.Location, tags);
+        return new(name.Groups[1].Value, properties, header.Location, tags, file);
     }
 
     /// <summary>

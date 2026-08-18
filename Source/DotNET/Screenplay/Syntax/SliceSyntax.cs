@@ -50,6 +50,10 @@ public enum SliceType
 /// <param name="Specifications">The <see cref="SpecificationSyntax">specifications</see> declared in the slice.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 /// <param name="Description">The optional description of the slice.</param>
+/// <param name="ReadModels">The <see cref="ReadModelSyntax">read models</see> declared in the slice.</param>
+/// <param name="Reducers">The <see cref="ReducerSyntax">reducers</see> declared in the slice.</param>
+/// <param name="File">The <see cref="FileReferenceSyntax"/> naming the file the slice is realized by - the
+/// one file a slice's backend artifacts are kept in by convention.</param>
 /// <remarks>
 /// A slice declares as many projections as the behavior needs. The read model a screen binds to and the
 /// one a command reads to decide belong to the same behavior, so they belong to the same slice.
@@ -69,4 +73,5 @@ public record SliceSyntax(
     SourceLocation Location,
     string? Description = null,
     IEnumerable<ReadModelSyntax>? ReadModels = null,
-    IEnumerable<ReducerSyntax>? Reducers = null) : SyntaxNode(Location);
+    IEnumerable<ReducerSyntax>? Reducers = null,
+    FileReferenceSyntax? File = null) : SyntaxNode(Location);
