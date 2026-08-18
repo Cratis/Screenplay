@@ -49,7 +49,24 @@
                     "meta.embedded.block.sql": "sql"
                 }
             }
-        ]
+        ],
+        "configuration": {
+            "title": "Screenplay",
+            "properties": {
+                "screenplay.sourceRoot": {
+                    "type": [
+                        "string",
+                        "array"
+                    ],
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [],
+                    "scope": "resource",
+                    "markdownDescription": "Root, or roots, that a `file <path>` reference in a `.play` document is relative to. A relative entry resolves against the workspace folder. Nothing in a `.play` document records its root, so the extension otherwise probes the workspace folder, the document's own folder and the conventional source roots beneath the workspace, in that order. Set this when that probing finds the wrong tree — it is checked first, so it decides."
+                }
+            }
+        }
     },
     "scripts": {
         "vscode:prepublish": "node esbuild.mjs --production",
@@ -59,16 +76,20 @@
         "typecheck": "tsc --noEmit",
         "package": "vsce package --no-dependencies",
         "lint": "yarn g:lint",
-        "lint:ci": "yarn g:lint:ci"
+        "lint:ci": "yarn g:lint:ci",
+        "test": "vitest run"
     },
     "dependencies": {
         "@cratis/screenplay-language": "workspace:*"
     },
     "devDependencies": {
+        "@types/chai": "^5.2.3",
         "@types/node": "26.1.1",
         "@types/vscode": "^1.85.0",
         "@vscode/vsce": "^3.9.2",
+        "chai": "^6.2.2",
         "esbuild": "^0.28.1",
-        "typescript": "6.0.3"
+        "typescript": "6.0.3",
+        "vitest": "^4.1.11"
     }
 }

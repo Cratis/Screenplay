@@ -6,12 +6,14 @@ import { ensureBuiltInSubLanguages } from '@cratis/screenplay-language';
 import { registerCompletions } from './Completions';
 import { registerHover } from './Hover';
 import { registerDiagnostics } from './Diagnostics';
+import { registerFileLinks } from './FileLinks';
 
 export function activate(context: vscode.ExtensionContext): void {
     ensureBuiltInSubLanguages();
     registerCompletions(context);
     registerHover(context);
     registerDiagnostics(context);
+    registerFileLinks(context);
 }
 
 export function deactivate(): void {}

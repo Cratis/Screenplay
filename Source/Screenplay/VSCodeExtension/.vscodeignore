@@ -4,6 +4,7 @@ node_modules/**
 **/*.ts
 tsconfig.json
 esbuild.mjs
+vitest.config.mts
 .eslintcache
 .gitignore
 
