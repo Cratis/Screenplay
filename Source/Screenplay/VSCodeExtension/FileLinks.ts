@@ -85,6 +85,14 @@ export function registerFileLinks(context: vscode.ExtensionContext): void {
 
                 return links;
             },
+
+            // A link without a target is an incomplete link, and the editor completes one by calling
+            // back here when it is activated. Answering with the link unchanged is what makes the
+            // ambiguous case the inert, tooltip-only thing it is meant to be — with no resolver at all
+            // the editor has nothing to complete the link with, and reports that rather than nothing.
+            resolveDocumentLink(link) {
+                return link;
+            },
         }),
     );
 }
