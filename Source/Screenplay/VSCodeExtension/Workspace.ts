@@ -1,13 +1,3 @@
-
-// A glob has no escape character, so a base name carrying pattern syntax cannot be searched for
-// literally. `?` matches exactly one character in a segment, so substituting it for each metacharacter
-// keeps the real file in the result set — `[id].tsx` is searched for as `?id?.tsx`, which it matches —
-// and the literal suffix check in `matchesDeclaredPath` drops whatever else the widened pattern caught.
-const globMetaCharacters = /[*?[\]{}]/g;
-
-function asLiteralAsAGlobAllows(baseName: string): string {
-    return baseName.replace(globMetaCharacters, '?');
-}
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
@@ -29,6 +19,16 @@ const sourceRootContainers = ['Source', 'src'];
 // One more than this is asked for, because a set that fills the cap is a set that may have been cut
 // short, and the resolver has to be told that rather than left to read a truncated set as a complete one.
 const searchLimit = 32;
+
+// A glob has no escape character, so a base name carrying pattern syntax cannot be searched for
+// literally. `?` matches exactly one character in a segment, so substituting it for each metacharacter
+// keeps the real file in the result set — `[id].tsx` is searched for as `?id?.tsx`, which it matches —
+// and the literal suffix check in `matchesDeclaredPath` drops whatever else the widened pattern caught.
+const globMetaCharacters = /[*?[\]{}]/g;
+
+function asLiteralAsAGlobAllows(baseName: string): string {
+    return baseName.replace(globMetaCharacters, '?');
+}
 
 function configuredRoots(document: vscode.TextDocument, workspaceFolder: string | undefined): string[] {
     const configured = vscode.workspace
