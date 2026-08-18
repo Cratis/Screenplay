@@ -36,8 +36,12 @@ Projection      = "projection", Ident, [ "=>", TypeRef ], NL,
 
 ProjDirective   = "no", "automap", NL
                 | "sequence", Ident, NL
+                | FileDirective
                 | KeyDecl
                 | CompositeKeyDecl ;
+
+FileDirective   = "file", FilePath, NL ;
+FilePath        = (* repository relative path, never absolute *) ;
 
 Block           = EveryBlock
                 | FromAllBlock
@@ -220,8 +224,18 @@ Projection-level directives:
 
 ```ebnf
 ProjDirective = "no", "automap", NL
+              | FileDirective
               | KeyDecl
               | CompositeKeyDecl ;
+```
+
+`file` names the repository relative file the projection is realized by, so a document can be navigated back to the code it describes. It is additive rather than an alternative — a projection still declares its blocks. The compiler never resolves the path, so one that has gone stale does not make the document invalid.
+
+```pdl
+projection User => UserReadModel
+  file Users/UserProjection.cs
+  from UserCreated
+    Name = name
 ```
 
 ### Blocks

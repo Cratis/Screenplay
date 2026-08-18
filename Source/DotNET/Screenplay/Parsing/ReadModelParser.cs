@@ -28,6 +28,7 @@ internal static partial class ReadModelParser
 
         var properties = new List<PropertySyntax>();
         string? description = null;
+        FileReferenceSyntax? file = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -35,6 +36,10 @@ internal static partial class ReadModelParser
             if (LineText.FirstWord(line.Content) == "description" && PropertyLineParser.TryParse(line) is null)
             {
                 description = DescriptionParser.Parse(context, line, description, $"Read model '{name.Groups[1].Value}'");
+            }
+            else if (FileReferenceParser.IsDirectiveAmongProperties(line))
+            {
+                file = FileReferenceParser.Parse(context, line);
             }
             else if (PropertyLineParser.TryParse(line) is { } property)
             {
@@ -55,7 +60,7 @@ internal static partial class ReadModelParser
             }
         }
 
-        return new(name.Groups[1].Value, properties, header.Location, description);
+        return new(name.Groups[1].Value, properties, header.Location, description) { File = file };
     }
 
     [GeneratedRegex(@"^readmodel\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]

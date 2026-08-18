@@ -9,8 +9,13 @@ language having to grow a keyword per source.
 ```screenplay
 trigger <Name>
   [description "<text>"]
+  [file <path>]
   [<name> [<Type>]]*
 ```
+
+The optional `file` line names the repository relative file this declaration is realized by, so a document can be navigated back to the code it describes. It is additive - it never stands in for any part of the declaration. See [File references](file-references.md).
+
+A trigger body reserves `file`, so a trigger value by that name is written `@file`.
 
 A trigger is declared at the top level of a document, beside `concept`, `type` and `policy`, because what
 can happen to an application is not the property of one slice.

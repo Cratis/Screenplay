@@ -33,8 +33,11 @@ The slice is the atomic unit of behavior, aligned with Event Modeling. A slice h
 ```screenplay
 slice <SliceType> <Name>
   [description "<text>"]
+  [file <path>]
   <constructs>
 ```
+
+The optional `file` line names the repository relative file this declaration is realized by, so a document can be navigated back to the code it describes. It is additive - it never stands in for any part of the declaration. See [File references](file-references.md).
 
 ## Descriptions
 

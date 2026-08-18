@@ -16,6 +16,11 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
 
+        if (syntax.File is not null)
+        {
+            VisitFileReference(syntax.File);
+        }
+
         foreach (var attribute in syntax.Attributes)
         {
             VisitConceptAttribute(attribute);
@@ -41,6 +46,11 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
 
+        if (syntax.File is not null)
+        {
+            VisitFileReference(syntax.File);
+        }
+
         foreach (var property in syntax.Properties)
         {
             VisitProperty(property);
@@ -54,6 +64,11 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitEvent(EventSyntax syntax)
     {
         VisitNode(syntax);
+
+        if (syntax.File is not null)
+        {
+            VisitFileReference(syntax.File);
+        }
 
         foreach (var property in syntax.Properties)
         {
@@ -79,6 +94,11 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitReadModel(ReadModelSyntax syntax)
     {
         VisitNode(syntax);
+
+        if (syntax.File is not null)
+        {
+            VisitFileReference(syntax.File);
+        }
 
         foreach (var property in syntax.Properties)
         {
@@ -158,6 +178,11 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitTrigger(TriggerSyntax syntax)
     {
         VisitNode(syntax);
+
+        if (syntax.File is not null)
+        {
+            VisitFileReference(syntax.File);
+        }
 
         foreach (var datum in syntax.Data)
         {
