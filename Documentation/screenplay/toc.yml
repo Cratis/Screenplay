@@ -64,6 +64,8 @@
   href: contributions.md
 - name: Sub-language pluggability
   href: sub-languages.md
+- name: File references
+  href: file-references.md
 - name: Grammar
   href: grammar.md
 - name: Compiler and CLI
