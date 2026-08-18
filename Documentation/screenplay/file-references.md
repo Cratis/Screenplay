@@ -97,6 +97,8 @@ trigger LedgerFileArrived
 
 Every one of these is a `FileReferenceSyntax` on the node that declares it, reached through [`ScreenplaySyntaxWalker.VisitFileReference`](visitors.md). Override that one method and you see every file a document names, whichever construct named it.
 
+On a construct that has an implementation the reference is a constructor parameter, as it always was. On a declaration it is an `init` property named `File`, so a tool constructing one of those nodes sets it in an object initializer or a `with` expression rather than positionally - which is how every syntax node grows from here, for the reason [syntax tree compatibility](ast-compatibility.md) gives.
+
 ## See also
 
 - [Grammar](grammar.md) — the EBNF, and the declarative-first guarantee.
