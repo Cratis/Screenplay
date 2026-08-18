@@ -79,6 +79,13 @@ export { cdl } from './sub-languages/cdl';
 export { screenplayDarkThemeName } from './themes/screenplay-dark';
 export { screenplayLightThemeName } from './themes/screenplay-light';
 export { enclosingChain, fenceMap, firstWord, indentOf } from './document-context';
+export {
+    fileReferenceKeyword,
+    fileReferenceOn,
+    fileReferences,
+    isAbsoluteFileReferencePath,
+} from './file-references';
+export type { FileReference } from './file-references';
 export { builtInTriggerNames, knownEventNames, knownTriggerNames, knownTypeNames, scanDocument } from './symbols';
 export type {
     CommandSymbol,

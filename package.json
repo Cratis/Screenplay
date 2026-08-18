@@ -16,7 +16,8 @@
         "compile": "yarn workspaces foreach -At run compile",
         "dev": "yarn workspace screenplay-editor dev",
         "g:lint": "cd $INIT_CWD && eslint --cache --quiet --fix",
-        "g:lint:ci": "cd $INIT_CWD && eslint --cache --quiet"
+        "g:lint:ci": "cd $INIT_CWD && eslint --cache --quiet",
+        "test": "yarn workspaces foreach -At run test"
     },
     "devDependencies": {
         "@eslint/js": "10.0.1",
