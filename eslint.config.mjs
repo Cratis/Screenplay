@@ -82,4 +82,12 @@ export default [
             },
         },
     },
+    {
+        // Specs assert through Chai's `.should` fluent interface, whose property assertions —
+        // `.should.be.true`, `.should.be.empty` — are expressions rather than calls by design.
+        files: ['**/for_*/**/*.ts', '**/when_*/**/*.ts', '**/given_*/**/*.ts'],
+        rules: {
+            '@typescript-eslint/no-unused-expressions': 'off',
+        },
+    },
 ];
