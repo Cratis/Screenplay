@@ -53,17 +53,10 @@ internal static partial class SliceParser
         var specifications = new List<SpecificationSyntax>();
         var readModels = new List<ReadModelSyntax>();
         var reducers = new List<ReducerSyntax>();
-        FileReferenceSyntax? file = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
-            if (FileReferenceParser.IsDirective(line))
-            {
-                file = FileReferenceParser.Parse(context, line);
-                continue;
-            }
-
             switch (LineText.FirstWord(line.Content))
             {
                 case "description":
@@ -109,7 +102,7 @@ internal static partial class SliceParser
             }
         }
 
-        return new(type, name, events, commands, queries, projections, captures, reactions, screens, constraints, specifications, header.Location, description, readModels, reducers) { File = file };
+        return new(type, name, events, commands, queries, projections, captures, reactions, screens, constraints, specifications, header.Location, description, readModels, reducers);
     }
 
     [GeneratedRegex(@"^slice\s+([A-Za-z]\w*)\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]

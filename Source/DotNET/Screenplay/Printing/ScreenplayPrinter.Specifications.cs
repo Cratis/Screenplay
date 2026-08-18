@@ -17,8 +17,6 @@ public partial class ScreenplayPrinter
         writer.Line($"specification {specification.Name}");
         using (writer.Indent())
         {
-            WriteFile(writer, specification.File);
-
             foreach (var given in specification.Given)
             {
                 WriteSpecificationEvent(writer, "given", given);

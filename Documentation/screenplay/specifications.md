@@ -6,7 +6,6 @@ Specifications express Given/When/Then test scenarios directly against a slice's
 
 ```screenplay
 specification <Name>
-  [file <path>]
   given <EventType>
     <property> = <value>
   given readmodel <ReadModelType>
@@ -26,7 +25,6 @@ specification <Name>
 - `then <EventType>` — zero or more. An event expected to be produced by the command.
 - `then readmodel <ReadModelType>` — zero or more. The read model state expected after the command has run and its events have been projected.
 - `then error ["<message>"]` — zero or more. An expected rejection. See [Rejections](#rejections).
-- `file <path>` — zero or one. The repository relative file the specification is realized by. See [File references](file-references.md).
 
 Property values (`<property> = <value>`) accept the same expressions as `produces` and `capture` mappings — string, number and boolean literals, and `$context.*`/`$env.*` expressions.
 

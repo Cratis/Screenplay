@@ -25,7 +25,6 @@ describe('when resolving with several files found by search', () => {
     it('should name every file it could have meant', () => {
         result.should.deep.equal({
             kind: 'ambiguous',
-            truncated: false,
             candidates: [
                 '/repo/Modules/Invoicing/Handlers/RegisterInvoice.cs',
                 '/repo/Modules/Billing/Handlers/RegisterInvoice.cs',

@@ -71,17 +71,10 @@ internal static partial class SpecificationParser
         var thenEvents = new List<SpecificationEventSyntax>();
         var thenReadModels = new List<SpecificationReadModelSyntax>();
         var thenErrors = new List<SpecificationErrorSyntax>();
-        FileReferenceSyntax? file = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
-            if (FileReferenceParser.IsDirective(line))
-            {
-                file = FileReferenceParser.Parse(context, line);
-                continue;
-            }
-
             switch (LineText.FirstWord(line.Content))
             {
                 case "given":
@@ -118,7 +111,7 @@ internal static partial class SpecificationParser
             }
         }
 
-        return new(name, given, when, thenEvents, thenErrors, header.Location, givenReadModels, thenReadModels) { File = file };
+        return new(name, given, when, thenEvents, thenErrors, header.Location, givenReadModels, thenReadModels);
     }
 
     static SpecificationCommandSyntax? ParseWhen(ParserContext context, SourceLine line)

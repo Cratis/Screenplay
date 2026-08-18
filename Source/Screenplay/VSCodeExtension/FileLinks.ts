@@ -34,10 +34,7 @@ function toLink(reference: FileReference, resolution: FileReferenceResolution): 
     // answer; picking one would be a guess, and a link to the wrong file is worse than no link.
     if (resolution.kind === 'ambiguous') {
         const link = new vscode.DocumentLink(toRange(reference));
-        const heading = resolution.truncated
-            ? `The search for '${reference.path}' stopped early, so which file is meant cannot be told — none linked. Among the matches:`
-            : `${resolution.candidates.length} files match '${reference.path}' — none linked:`;
-        link.tooltip = `${heading}\n${resolution.candidates.join('\n')}`;
+        link.tooltip = `${resolution.candidates.length} files match '${reference.path}' — none linked:\n${resolution.candidates.join('\n')}`;
         return link;
     }
 
@@ -60,17 +57,7 @@ async function resolutionFor(
 export function registerFileLinks(context: vscode.ExtensionContext): void {
     const forget = () => resolutions.clear();
 
-    // The `onDid*Files` events only fire for changes the editor itself made — the explorer, or an edit
-    // applied through its API. A file that appears from a `git checkout`, a terminal, or a run of
-    // `cratis screenplay generate` fires none of them, which is precisely the workflow where a `.play`
-    // names a file that is about to exist. A watcher sees those, so it is what the cache is hung on;
-    // content changes are ignored, because whether a file exists is all a resolution ever asked.
-    const watcher = vscode.workspace.createFileSystemWatcher('**/*', false, true, false);
-
     context.subscriptions.push(
-        watcher,
-        watcher.onDidCreate(forget),
-        watcher.onDidDelete(forget),
         vscode.workspace.onDidCreateFiles(forget),
         vscode.workspace.onDidDeleteFiles(forget),
         vscode.workspace.onDidRenameFiles(forget),
@@ -89,14 +76,6 @@ export function registerFileLinks(context: vscode.ExtensionContext): void {
                 }
 
                 return links;
-            },
-
-            // A link without a target is an incomplete link, and the editor completes one by calling
-            // back here when it is activated. Answering with the link unchanged is what makes the
-            // ambiguous case the inert, tooltip-only thing it is meant to be — with no resolver at all
-            // the editor has nothing to complete the link with, and reports that rather than nothing.
-            resolveDocumentLink(link) {
-                return link;
             },
         }),
     );

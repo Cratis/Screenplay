@@ -20,8 +20,6 @@ public partial class ScreenplayPrinter
 
         using (writer.Indent())
         {
-            WriteFile(writer, projection.File);
-
             if (projection.Sequence is not null)
             {
                 writer.Line($"sequence {projection.Sequence}");

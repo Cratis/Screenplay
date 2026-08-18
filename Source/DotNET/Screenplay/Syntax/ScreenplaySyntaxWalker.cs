@@ -410,11 +410,6 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
 
-        if (syntax.File is not null)
-        {
-            VisitFileReference(syntax.File);
-        }
-
         foreach (var command in syntax.Commands)
         {
             VisitCommand(command);

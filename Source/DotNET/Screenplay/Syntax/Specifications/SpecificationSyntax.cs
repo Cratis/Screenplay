@@ -25,21 +25,7 @@ public record SpecificationSyntax(
     IEnumerable<SpecificationErrorSyntax> ThenErrors,
     SourceLocation Location,
     IEnumerable<SpecificationReadModelSyntax>? GivenReadModels = null,
-    IEnumerable<SpecificationReadModelSyntax>? ThenReadModels = null) : SyntaxNode(Location)
-{
-    /// <summary>
-    /// Gets the <see cref="FileReferenceSyntax"/> naming the file the specification is realized by,
-    /// and <c>null</c> when the document does not name one.
-    /// </summary>
-    /// <remarks>
-    /// An <c>init</c> property rather than a parameter of the primary constructor, deliberately. A trailing
-    /// parameter on a positional record is source compatible and <em>binary</em> breaking: it replaces the
-    /// constructor and <c>Deconstruct</c> in the compiled signature, so a package built against the previous
-    /// version fails at run time with a missing method and no compiler error anywhere. Adding capability as
-    /// an init property is neither, and is how this record should grow from here.
-    /// </remarks>
-    public FileReferenceSyntax? File { get; init; }
-}
+    IEnumerable<SpecificationReadModelSyntax>? ThenReadModels = null) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents a reference to an event within a specification - used for both <c>given</c> and

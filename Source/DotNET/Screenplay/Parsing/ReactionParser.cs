@@ -144,8 +144,8 @@ internal static partial class ReactionParser
                 case "description":
                     description = DescriptionParser.Parse(context, body, description, $"Trigger '{body.Content}'");
                     continue;
-                case FileReferenceParser.Keyword:
-                    file = FileReferenceParser.Parse(context, body);
+                case "file":
+                    file = new(body.Content["file".Length..].Trim(), body.Location);
                     continue;
                 case "produces":
                     if (ProducesParser.Parse(context, body) is { } produced)

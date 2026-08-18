@@ -509,17 +509,6 @@ var unexpected = result.Diagnostics
 | `PLAY0262` | Error | A `ui profile` declares `layout` more than once. |
 | `PLAY0263` | Warning | A `ui profile` selects a layout nothing in the document declares. |
 
-### File references
-
-| Code | Severity | Reported when |
-|---|---|---|
-| `PLAY0264` | Warning | A `file` directive names an absolute path, and a file reference is relative to the repository root. |
-
-A path that does not resolve is **not** a diagnostic, at any severity. A document is read in a designer, in a
-build and on a machine where the tree is not present, so the compiler never holds a path against a file system -
-a stale path must not be what makes a valid document invalid. A consumer that *can* resolve paths decides for
-itself what an unresolvable one means.
-
 ## Retired codes
 
 None yet. When a code is retired it is listed here with the release it went in, and its number stays out of use forever.

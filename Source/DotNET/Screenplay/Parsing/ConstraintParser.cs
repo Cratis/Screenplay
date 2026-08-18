@@ -66,9 +66,9 @@ internal static partial class ConstraintParser
             return new UniquePropertyConstraintSyntax(name, uniqueProperty.Groups[1].Value, uniqueProperty.Groups[2].Value, line.Location);
         }
 
-        if (FileReferenceParser.IsDirective(line))
+        if (LineText.FirstWord(line.Content) == "file")
         {
-            return new FileConstraintSyntax(name, FileReferenceParser.Parse(context, line), line.Location);
+            return new FileConstraintSyntax(name, new(line.Content["file".Length..].Trim(), line.Location), line.Location);
         }
 
         context.Error(DiagnosticCodes.InvalidConstraintBody, $"Invalid constraint body '{line.Content}'", line.Location);

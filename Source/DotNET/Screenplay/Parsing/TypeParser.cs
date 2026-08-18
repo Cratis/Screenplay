@@ -28,7 +28,6 @@ internal static partial class TypeParser
 
         var properties = new List<PropertySyntax>();
         string? description = null;
-        FileReferenceSyntax? file = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -39,12 +38,6 @@ internal static partial class TypeParser
             if (LineText.FirstWord(line.Content) == "description" && PropertyLineParser.TryParse(line) is null)
             {
                 description = DescriptionParser.Parse(context, line, description, $"Type '{name.Groups[1].Value}'");
-                continue;
-            }
-
-            if (FileReferenceParser.IsDirectiveAmongProperties(line))
-            {
-                file = FileReferenceParser.Parse(context, line);
                 continue;
             }
 
@@ -68,7 +61,7 @@ internal static partial class TypeParser
             context.Error(DiagnosticCodes.TypeWithoutProperties, $"Type '{name.Groups[1].Value}' must declare at least one property", header.Location);
         }
 
-        return new(name.Groups[1].Value, properties, header.Location, description) { File = file };
+        return new(name.Groups[1].Value, properties, header.Location, description);
     }
 
     [GeneratedRegex(@"^type\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]

@@ -66,17 +66,10 @@ internal static partial class ProjectionParser
         var autoMap = AutoMapMode.Inherit;
         KeySyntax? key = null;
         var blocks = new List<ProjectionBlockSyntax>();
-        FileReferenceSyntax? file = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
-            if (FileReferenceParser.IsDirective(line))
-            {
-                file = FileReferenceParser.Parse(context, line);
-                continue;
-            }
-
             switch (FirstWord(line.Content))
             {
                 case "sequence":
@@ -111,7 +104,7 @@ internal static partial class ProjectionParser
             context.Error(DiagnosticCodes.EmptyProjection, $"Projection '{name}' must contain at least one directive", header.Location);
         }
 
-        return new(name, readModel, sequence, autoMap, key, blocks, header.Location) { File = file };
+        return new(name, readModel, sequence, autoMap, key, blocks, header.Location);
     }
 
     static ProjectionBlockSyntax? ParseBlock(ParserContext context, SourceLine line, bool nestedScope)

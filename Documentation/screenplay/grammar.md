@@ -27,9 +27,9 @@ QualifiedName  = Ident, { ".", Ident } ;
 (* -------------------------------------------------------------- *)
 
 ConceptDecl    = "concept", Ident, ":", PrimitiveType, { Attribute }, NL,
-                   [ INDENT, [ FileDirective ], { AttributeReason }, { ConceptValidate }, DEDENT ]
+                   [ INDENT, { AttributeReason }, { ConceptValidate }, DEDENT ]
                | "concept", Ident, ":", "Enum", { Attribute }, NL,
-                   INDENT, [ FileDirective ], { AttributeReason }, { [ "@" ], Ident, NL }, { ConceptValidate }, DEDENT ;
+                   INDENT, { AttributeReason }, { [ "@" ], Ident, NL }, { ConceptValidate }, DEDENT ;
 
 AttributeReason = AttributeName, "reason", StringLiteral, NL ;
 
@@ -51,7 +51,7 @@ AttributeName  = "pii" | "sensitive" ;
 (* -------------------------------------------------------------- *)
 
 TypeDecl       = "type", Ident, NL,
-                 INDENT, [ DescriptionDecl ], [ FileDirective ], PropertyLine, { PropertyLine }, DEDENT ;
+                 INDENT, [ DescriptionDecl ], PropertyLine, { PropertyLine }, DEDENT ;
 
 (* -------------------------------------------------------------- *)
 (* Policies                                                        *)
@@ -253,7 +253,7 @@ Feature        = "feature", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 SliceDecl      = "slice", SliceType, Ident, NL,
-                 INDENT, [ DescriptionDecl ], [ FileDirective ], { SliceBody }, DEDENT ;
+                 INDENT, [ DescriptionDecl ], { SliceBody }, DEDENT ;
 
 SliceType      = "StateChange" | "StateView" | "Automation" | "Translate" ;
 
@@ -270,7 +270,7 @@ SliceBody      = EventDecl
                | ConstraintDecl ;
 
 ReadModelDecl  = "readmodel", Ident, NL,
-                 INDENT, [ DescriptionDecl ], [ FileDirective ], { PropertyLine }, DEDENT ;
+                 INDENT, [ DescriptionDecl ], { PropertyLine }, DEDENT ;
 
 ReducerDecl    = "reducer", Ident, "=>", Ident, NL,
                  INDENT, [ DescriptionDecl ], { ReducerRule }, DEDENT ;
@@ -294,7 +294,7 @@ ReducerRule    = "on", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 EventDecl      = "event", Ident, NL,
-                 INDENT, [ FileDirective ], { TagDecl }, { PropertyLine }, DEDENT ;
+                 INDENT, { TagDecl }, { PropertyLine }, DEDENT ;
 
 TagDecl        = "tag", TagValue, NL ;
 
@@ -536,7 +536,7 @@ CDLBody        = (* Change Data Capture Language grammar - covers source/key/map
 (* -------------------------------------------------------------- *)
 
 SpecificationDecl = "specification", Ident, NL,
-                 INDENT, [ FileDirective ], { SpecificationGiven | SpecificationWhen | SpecificationThen }, DEDENT ;
+                 INDENT, { SpecificationGiven | SpecificationWhen | SpecificationThen }, DEDENT ;
 
 SpecificationGiven = "given", [ "readmodel" ], Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ] ;
@@ -636,7 +636,7 @@ WhereDecl      = "where", Condition, NL ;
    it. That boundary is what lets the set of triggers be open.                *)
 
 TriggerDecl    = "trigger", Ident, NL,
-                 INDENT, [ DescriptionDecl ], [ FileDirective ], { TriggerValue }, DEDENT ;
+                 INDENT, [ DescriptionDecl ], { TriggerValue }, DEDENT ;
 
 InvokesDecl    = "invokes", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ] ;
@@ -711,32 +711,7 @@ LocalizableString = StringLiteral
                | "$strings.", Path ;
 
 FileDirective  = "file", FilePath, NL ;
-FilePath       = (* repository relative path, never absolute *) ;
-
-(* One keyword, and the construct it sits on says which of the language's two
-   file relationships is meant. On a construct that HAS an implementation - a
-   handler, a performer, a reducer rule, a reaction trigger, a rule predicate,
-   a constraint, a screen - it stands in for the inline body: the implementation
-   lives there. On a pure declaration - concept, type, event, readmodel,
-   projection, slice, specification, trigger - there is no body to delegate, so
-   it can only say which file realizes the declaration. Those are different
-   relationships, but the construct already decides which one, so a second
-   keyword would say nothing the reader does not already know and would be one
-   more word to learn.
-
-   A path is repository relative, so it means the same thing on every machine,
-   and it is never resolved by the compiler - a document is read in a designer,
-   in a build and where the tree is absent, so a path that has gone stale must
-   not be what makes a valid document invalid. An absolute one is reported as a
-   warning, because it is wrong without looking anything up.
-
-   In a block that also reads property lines - event, readmodel, type - the
-   directive is told from a property named "file" by shape: a type reference is
-   a bare identifier, so a value carrying a separator or an extension is a path
-   and nothing else, and the property wins the tie. This is the rule
-   "description" already follows in the same blocks. A trigger body reserves the
-   word outright, as it always has, so a trigger value named after it is written
-   "@file".                                                                  *)
+FilePath       = (* relative path string *) ;
 
 InlineBlock    = LanguageTag, NL, "```", NL, { AnyLine }, "```", NL ;
 LanguageTag    = "csharp" | "typescript" | "react" | "html" | "sql"
@@ -780,41 +755,6 @@ Screenplay's workflow is *author the document first, then Stage performs it*. Th
 | `screen` | title, sections, tables, `data`, `action`, `navigate`, `template` | `file` |
 | `constraint` | `unique …` forms | `file` |
 | `projection` / `capture` | fully declarative (PDL / CDL) | — |
-
-## The other `file` — where a declaration is realized
-
-The table above is `file` standing in for an implementation. A **declaration** has no implementation to stand in for, so on `concept`, `type`, `event`, `readmodel`, `projection`, `slice`, `specification` and `trigger` the same keyword says something else: **which file realizes this declaration**.
-
-```screenplay
-concept InvoiceId : Uuid
-  file Invoicing/InvoiceId.cs
-```
-
-```screenplay
-slice StateChange RegisterInvoice
-  file Invoicing/RegisterInvoice/RegisterInvoice.cs
-
-  event InvoiceRegistered
-    file Invoicing/RegisterInvoice/RegisterInvoice.cs
-    invoiceId InvoiceId
-```
-
-One keyword covers both, because the construct it sits on already decides which is meant — a second word would carry no information a reader does not already have, and would be one more thing to learn. It changes nothing about the guarantee above: a declaration still says everything it says without a `file`, and adding one never replaces any part of it. A `projection` still needs its blocks, an `event` still needs its properties.
-
-Two rules follow from a path being data rather than a claim about a machine:
-
-- **Repository relative, never absolute** — the same path means the same thing wherever the document is read. An absolute one is a warning ([`PLAY0264`](diagnostics.md)), not an error.
-- **Never resolved** — the compiler does not look for the file. A document is read in a designer, in a build and on a machine where the tree is absent, so a path that has gone stale is not what makes a valid document invalid. Whatever *can* resolve paths decides for itself what an unresolvable one means.
-
-In `event`, `readmodel` and `type` — the bodies that also read property lines — `file` is told from a property named `file` by shape. A type reference is a bare identifier, so a value carrying a separator or an extension is a path and nothing else, and a property wins the tie:
-
-```screenplay
-type Upload
-  file Attachment
-  size Int
-```
-
-That is a property named `file` of type `Attachment`, exactly as it was before the directive existed. A `trigger` body reserves the word outright, as it always has, so a trigger value named after it is written `@file`.
 
 So this is a complete, valid statement of intent for a reaction nobody has written yet:
 

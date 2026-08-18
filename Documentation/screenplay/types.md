@@ -9,12 +9,9 @@ Without it, a document can reference `lines InvoiceLine[]` but never say what an
 ```screenplay
 type <Name>
   [description "<text>"]
-  [file <path>]
   <property> <TypeRef>
   ...
 ```
-
-The optional `file` line names the repository relative file this declaration is realized by, so a document can be navigated back to the code it describes. It is additive - it never stands in for any part of the declaration. See [File references](file-references.md).
 
 A type declares at least one property. The property line is the same one events and commands use — a name, a type reference, and the optional `[]` and `?` suffixes — so everything you know about one applies to the other.
 

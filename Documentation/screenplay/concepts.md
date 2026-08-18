@@ -8,18 +8,14 @@ A concept names one primitive value. For a shape made of several — the child r
 
 ```screenplay
 concept <Name> : <PrimitiveType> [<attributes>]
-  [file <path>]
   [<attribute> reason "<text>"]*
   [validate ...]*
 
 concept <Name> : Enum
-  [file <path>]
   [<attribute> reason "<text>"]*
   <value>+
   [validate ...]*
 ```
-
-The optional `file` line names the repository relative file this declaration is realized by, so a document can be navigated back to the code it describes. It is additive - it never stands in for any part of the declaration. See [File references](file-references.md).
 
 ## Primitive types
 

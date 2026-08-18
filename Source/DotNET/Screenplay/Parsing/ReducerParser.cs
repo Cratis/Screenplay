@@ -78,9 +78,9 @@ internal static partial class ReducerParser
             {
                 description = DescriptionParser.Parse(context, body, description, $"Rule 'on {@event}'");
             }
-            else if (FileReferenceParser.IsDirective(body))
+            else if (LineText.FirstWord(body.Content) == "file")
             {
-                file = FileReferenceParser.Parse(context, body);
+                file = new(body.Content["file".Length..].Trim(), body.Location);
             }
             else if (context.Languages.InlineLanguages.Contains(body.Content))
             {

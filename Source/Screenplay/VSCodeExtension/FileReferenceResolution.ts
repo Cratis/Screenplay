@@ -15,27 +15,16 @@ export interface FileReferenceRoots {
     sourceRoots: readonly string[];
 }
 
-// What a search came back with, and whether it came back with all of it. A search that stopped at a cap
-// hands back an arbitrary subset, so the count of what survived says nothing about how many files exist
-// — `truncated` is what keeps a cut-short answer from being read as a complete one.
-export interface FileReferenceSearch {
-    files: readonly string[];
-    truncated: boolean;
-}
-
 // The file system, narrowed to the two questions the ladder asks of it.
 export interface FileReferenceProbe {
     exists(path: string): Promise<boolean>;
     // Every file in the workspace carrying the given base name.
-    search(baseName: string): Promise<FileReferenceSearch>;
+    search(baseName: string): Promise<readonly string[]>;
 }
 
 export type FileReferenceResolution =
     | { kind: 'resolved'; path: string }
-    // `truncated` records that the search was cut short, so the candidates are the files that were seen
-    // rather than every file that matches. It changes nothing about the outcome — nothing is linked
-    // either way — but the tooltip must not claim a count it does not know.
-    | { kind: 'ambiguous'; candidates: readonly string[]; truncated: boolean }
+    | { kind: 'ambiguous'; candidates: readonly string[] }
     | { kind: 'unresolved' };
 
 function normalize(path: string): string {
@@ -81,12 +70,6 @@ function matchesDeclaredPath(found: string, declaredPath: string): boolean {
 // workspace for the declared base name and keeping only the files whose path ends with the declared
 // path. That fallback answers only when it finds exactly one — several is reported as ambiguous rather
 // than resolved, because picking one of them would be a guess, and a wrong link is worse than none.
-//
-// "Exactly one" is a claim about the whole workspace, so it can only be made about a complete search. A
-// search that stopped at its cap saw an arbitrary subset: the lone survivor of that subset may sit
-// beside a second match that was simply never returned. A truncated search therefore never resolves —
-// it reports the candidates it did see and links none of them, which is the same honest answer as any
-// other case where the document does not say which file it meant.
 export async function resolveFileReference(
     declaredPath: string,
     roots: FileReferenceRoots,
@@ -101,11 +84,11 @@ export async function resolveFileReference(
     }
 
     const found = await probe.search(baseNameOf(declaredPath));
-    const matches = [...new Set(found.files.map(normalize))].filter((candidate) =>
+    const matches = [...new Set(found.map(normalize))].filter((candidate) =>
         matchesDeclaredPath(candidate, declaredPath),
     );
 
-    if (matches.length === 0) return { kind: 'unresolved' };
-    if (matches.length === 1 && !found.truncated) return { kind: 'resolved', path: matches[0] };
-    return { kind: 'ambiguous', candidates: matches, truncated: found.truncated };
+    if (matches.length === 1) return { kind: 'resolved', path: matches[0] };
+    if (matches.length > 1) return { kind: 'ambiguous', candidates: matches };
+    return { kind: 'unresolved' };
 }

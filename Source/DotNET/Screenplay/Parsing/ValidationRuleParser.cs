@@ -158,9 +158,9 @@ internal static partial class ValidationRuleParser
         }
 
         context.Reader.TakeSignificant();
-        if (FileReferenceParser.IsDirective(body))
+        if (LineText.FirstWord(body.Content) == "file")
         {
-            return (FileReferenceParser.Parse(context, body), null);
+            return (new(body.Content["file".Length..].Trim(), body.Location), null);
         }
 
         if (context.Languages.InlineLanguages.Contains(body.Content))

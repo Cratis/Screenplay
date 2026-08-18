@@ -22,11 +22,6 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
 
-        if (syntax.File is not null)
-        {
-            VisitFileReference(syntax.File);
-        }
-
         foreach (var @event in syntax.Given)
         {
             VisitSpecificationEvent(@event);

@@ -6,13 +6,10 @@ Events are immutable, past-tense facts — the record of something that happened
 
 ```screenplay
 event <Name>
-  [file <path>]
   [tag <value>]*
   <property> <Type>
   ...
 ```
-
-The optional `file` line names the repository relative file this declaration is realized by, so a document can be navigated back to the code it describes. It is additive - it never stands in for any part of the declaration. See [File references](file-references.md).
 
 ## Example
 
