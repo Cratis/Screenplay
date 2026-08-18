@@ -1,3 +1,13 @@
+
+// A glob has no escape character, so a base name carrying pattern syntax cannot be searched for
+// literally. `?` matches exactly one character in a segment, so substituting it for each metacharacter
+// keeps the real file in the result set — `[id].tsx` is searched for as `?id?.tsx`, which it matches —
+// and the literal suffix check in `matchesDeclaredPath` drops whatever else the widened pattern caught.
+const globMetaCharacters = /[*?[\]{}]/g;
+
+function asLiteralAsAGlobAllows(baseName: string): string {
+    return baseName.replace(globMetaCharacters, '?');
+}
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
@@ -85,7 +95,7 @@ export function workspaceProbe(): FileReferenceProbe {
         },
         async search(baseName: string): Promise<FileReferenceSearch> {
             const found = await vscode.workspace.findFiles(
-                `**/${baseName}`,
+                `**/${asLiteralAsAGlobAllows(baseName)}`,
                 '**/node_modules/**',
                 searchLimit + 1,
             );
