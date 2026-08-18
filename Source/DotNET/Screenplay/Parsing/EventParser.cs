@@ -60,7 +60,7 @@ internal static partial class EventParser
             }
         }
 
-        return new(name.Groups[1].Value, properties, header.Location, tags, file);
+        return new(name.Groups[1].Value, properties, header.Location, tags) { File = file };
     }
 
     /// <summary>

@@ -69,7 +69,7 @@ internal static partial class TriggerParser
             }
         }
 
-        return new(name, data, header.Location, description, file);
+        return new(name, data, header.Location, description) { File = file };
     }
 
     /// <summary>

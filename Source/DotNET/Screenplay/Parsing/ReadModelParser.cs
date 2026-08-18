@@ -60,7 +60,7 @@ internal static partial class ReadModelParser
             }
         }
 
-        return new(name.Groups[1].Value, properties, header.Location, description, file);
+        return new(name.Groups[1].Value, properties, header.Location, description) { File = file };
     }
 
     [GeneratedRegex(@"^readmodel\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]

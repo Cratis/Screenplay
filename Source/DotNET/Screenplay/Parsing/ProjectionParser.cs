@@ -111,7 +111,7 @@ internal static partial class ProjectionParser
             context.Error(DiagnosticCodes.EmptyProjection, $"Projection '{name}' must contain at least one directive", header.Location);
         }
 
-        return new(name, readModel, sequence, autoMap, key, blocks, header.Location, file);
+        return new(name, readModel, sequence, autoMap, key, blocks, header.Location) { File = file };
     }
 
     static ProjectionBlockSyntax? ParseBlock(ParserContext context, SourceLine line, bool nestedScope)

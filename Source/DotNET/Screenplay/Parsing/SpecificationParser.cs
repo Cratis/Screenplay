@@ -118,7 +118,7 @@ internal static partial class SpecificationParser
             }
         }
 
-        return new(name, given, when, thenEvents, thenErrors, header.Location, givenReadModels, thenReadModels, file);
+        return new(name, given, when, thenEvents, thenErrors, header.Location, givenReadModels, thenReadModels) { File = file };
     }
 
     static SpecificationCommandSyntax? ParseWhen(ParserContext context, SourceLine line)

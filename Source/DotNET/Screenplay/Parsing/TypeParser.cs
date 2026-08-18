@@ -68,7 +68,7 @@ internal static partial class TypeParser
             context.Error(DiagnosticCodes.TypeWithoutProperties, $"Type '{name.Groups[1].Value}' must declare at least one property", header.Location);
         }
 
-        return new(name.Groups[1].Value, properties, header.Location, description, file);
+        return new(name.Groups[1].Value, properties, header.Location, description) { File = file };
     }
 
     [GeneratedRegex(@"^type\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]

@@ -250,7 +250,7 @@ internal static partial class ScreenplayParser
             }
         }
 
-        return new(name, type, attributes, values, line.Location, validations, file);
+        return new(name, type, attributes, values, line.Location, validations) { File = file };
     }
 
     static void ApplyAttributeReason(

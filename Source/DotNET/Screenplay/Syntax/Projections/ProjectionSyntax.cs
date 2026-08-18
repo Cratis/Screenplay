@@ -36,7 +36,6 @@ public enum AutoMapMode
 /// <param name="Key">The optional projection level <see cref="KeySyntax"/>.</param>
 /// <param name="Blocks">The <see cref="ProjectionBlockSyntax">blocks</see> making up the projection body.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-/// <param name="File">The <see cref="FileReferenceSyntax"/> naming the file the projection is realized by.</param>
 public record ProjectionSyntax(
     string Name,
     string? ReadModel,
@@ -44,5 +43,18 @@ public record ProjectionSyntax(
     AutoMapMode AutoMap,
     KeySyntax? Key,
     IEnumerable<ProjectionBlockSyntax> Blocks,
-    SourceLocation Location,
-    FileReferenceSyntax? File = null) : SyntaxNode(Location);
+    SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the <see cref="FileReferenceSyntax"/> naming the file the projection is realized by, and
+    /// <c>null</c> when the document does not name one.
+    /// </summary>
+    /// <remarks>
+    /// An <c>init</c> property rather than a parameter of the primary constructor, deliberately. A trailing
+    /// parameter on a positional record is source compatible and <em>binary</em> breaking: it replaces the
+    /// constructor and <c>Deconstruct</c> in the compiled signature, so a package built against the previous
+    /// version fails at run time with a missing method and no compiler error anywhere. Adding capability as
+    /// an init property is neither, and is how this record should grow from here.
+    /// </remarks>
+    public FileReferenceSyntax? File { get; init; }
+}

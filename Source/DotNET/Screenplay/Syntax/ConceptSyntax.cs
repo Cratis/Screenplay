@@ -40,15 +40,13 @@ public record ConceptAttributeSyntax(string Name, SourceLocation Location, strin
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 /// <param name="Validations">The <see cref="ValidateSyntax">validation blocks</see> for the concept. Rules use
 /// <see cref="ValidationRuleSyntax.ConceptValue"/> as their implied property subject.</param>
-/// <param name="File">The <see cref="FileReferenceSyntax"/> naming the file the concept is realized by.</param>
 public record ConceptSyntax(
     string Name,
     string Type,
     IEnumerable<ConceptAttributeSyntax> Attributes,
     IEnumerable<string> Values,
     SourceLocation Location,
-    IEnumerable<ValidateSyntax>? Validations = null,
-    FileReferenceSyntax? File = null) : SyntaxNode(Location)
+    IEnumerable<ValidateSyntax>? Validations = null) : SyntaxNode(Location)
 {
     /// <summary>
     /// Gets the well known primitive type names a concept can be based on.
@@ -64,4 +62,17 @@ public record ConceptSyntax(
     /// Gets the names of the attributes applied to the concept, without the <c>@</c> prefix.
     /// </summary>
     public IEnumerable<string> AttributeNames => Attributes.Select(attribute => attribute.Name);
+
+    /// <summary>
+    /// Gets the <see cref="FileReferenceSyntax"/> naming the file the concept is realized by, and
+    /// <c>null</c> when the document does not name one.
+    /// </summary>
+    /// <remarks>
+    /// An <c>init</c> property rather than a parameter of the primary constructor, deliberately. A trailing
+    /// parameter on a positional record is source compatible and <em>binary</em> breaking: it replaces the
+    /// constructor and <c>Deconstruct</c> in the compiled signature, so a package built against the previous
+    /// version fails at run time with a missing method and no compiler error anywhere. Adding capability as
+    /// an init property is neither, and is how this record should grow from here.
+    /// </remarks>
+    public FileReferenceSyntax? File { get; init; }
 }
