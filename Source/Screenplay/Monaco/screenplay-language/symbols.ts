@@ -194,7 +194,11 @@ export function scanDocument(lines: string[]): DocumentSymbols {
             continue;
         }
 
-        const queryMatch = trimmed.match(/^query\s+(\w+)\s*=>\s*(?:observable\s+)?([\w[\]?]+)\s*$/);
+        // The return type shape is the compiler's, dots and all - QueryParser's
+        // ^query\s+([A-Za-z_]\w*)\s*=>\s*(observable\s+)?([\w.]+(?:\[\])?\??)$. A narrower one here
+        // silently drops the query from the symbol table, and with it every check and completion that
+        // reads from it.
+        const queryMatch = trimmed.match(/^query\s+(\w+)\s*=>\s*(?:observable\s+)?([\w.]+(?:\[\])?\??)\s*$/);
         if (queryMatch) {
             // The return type names a read model, which no construct declares — only the
             // 'by' and 'filter' parameters resolve against the document's own types.
