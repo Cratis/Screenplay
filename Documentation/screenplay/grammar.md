@@ -515,9 +515,10 @@ PerformerDecl  = "performer", NL,
 ProjectionDecl = "projection", Ident, "=>", Ident, NL,
                  INDENT, PDLBody, DEDENT ;
 
-PDLBody        = (* Projection Declaration Language grammar —
-                    see https://cratis.io/chronicle/projections/
-                    projection-declaration-language/grammar/ *) ;
+PDLBody        = (* Projection Declaration Language grammar - covers the projection
+                    directives (automap, sequence, file, key), the from/every/join/
+                    children/nested blocks, property mapping, expressions and removal
+                    - see Documentation/screenplay/projections/grammar.md *) ;
 
 (* -------------------------------------------------------------- *)
 (* Captures — CDL sub-language                                     *)
