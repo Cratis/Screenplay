@@ -29,7 +29,7 @@ monaco.editor.create(element, {
 - **Sub-languages** — the PDL (`projection`) and CDL (`capture`) bodies are tokenized by their own registered rules using Monarch's state stack.
 - **Completions** — context-aware by enclosing construct (top level, module, feature, slice, command, produces, handler, screen, constraint, …), plus in-scope symbol names: policies after `authorize`, events after `on` and `produces`, concepts and primitives in type positions.
 - **Hover** — keyword documentation, concept definitions (primitive + attributes), policy require expressions, and event property lists.
-- **Diagnostics** — unknown slice types, unknown primitive types, references to undeclared policies and events, tab indentation, and unclosed code fences.
+- **Diagnostics** — unknown slice types, unknown primitive types, references to undeclared policies and events, tab indentation, and unclosed code fences. Every one of them carries the compiler's own `PLAY` code (`diagnosticCodes`), so a squiggle and a CLI diagnostic for the same condition are the same code.
 
 ## Extending with new sub-languages
 

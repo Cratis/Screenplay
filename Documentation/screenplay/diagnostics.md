@@ -50,6 +50,29 @@ var unexpected = result.Diagnostics
 
 `DiagnosticCodes` declares every code in this catalogue as a named constant, so the compiler catches a typo that a string literal would not.
 
+## In the editor
+
+The language service behind the VS Code extension and the Monaco editor checks a subset of what the compiler
+checks, and it reports **the compiler's code** for every condition in that subset. So the `Unknown type 'Foo'`
+you get as a squiggle and the one the CLI prints are the same `PLAY0165`, and can be looked up here, filtered
+on, and matched against a build log:
+
+```typescript
+import { diagnosticCodes, validateLines } from '@cratis/screenplay-language';
+
+const unknownTypes = validateLines(lines).filter((issue) => issue.code === diagnosticCodes.unknownType);
+```
+
+`diagnosticCodes` names the codes the editor reports, the same way `DiagnosticCodes` names them for the
+compiler. A `ValidationIssue` carries the code as `code`, and it reaches the editor: a Monaco marker gets it as
+`code`, a VS Code diagnostic as `Diagnostic.code`.
+
+**A few editor checks carry no code, deliberately.** The capture and projection validators enforce structural
+rules that no compiler run reports - a capture must include a `source` block, an `append` block must include a
+`when` clause - and there is no `PLAY` number for something the compiler never emits. Minting one would make
+this catalogue describe two different tools, which is the thing the `PLAY` prefix was chosen to avoid. Those
+conditions are reported without a code until the compiler checks them too.
+
 ## The catalogue
 
 ### The document and its top level

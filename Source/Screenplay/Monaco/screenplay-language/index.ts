@@ -107,3 +107,5 @@ export type { CompletionPlan } from './completion-planner';
 export { hoverContent } from './hover-content';
 export { validateLines } from './validation';
 export type { ValidationIssue, ValidationSeverity } from './validation';
+export { diagnosticCodes } from './diagnostic-codes';
+export type { DiagnosticCode } from './diagnostic-codes';
