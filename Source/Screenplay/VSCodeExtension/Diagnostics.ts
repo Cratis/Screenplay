@@ -19,6 +19,10 @@ function toDiagnostic(issue: ValidationIssue): vscode.Diagnostic {
             : vscode.DiagnosticSeverity.Warning;
     const diagnostic = new vscode.Diagnostic(range, issue.message, severity);
     diagnostic.source = languageId;
+    if (issue.code) {
+        diagnostic.code = issue.code;
+    }
+
     return diagnostic;
 }
 

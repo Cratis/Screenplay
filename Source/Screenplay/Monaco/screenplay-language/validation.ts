@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { causedByProperties, contextRoots, identityProperties, primitiveTypes, sliceTypes } from './language';
+import { DiagnosticCode, diagnosticCodes } from './diagnostic-codes';
 import { fenceMap, indentOf } from './document-context';
 import {
     DocumentSymbols,
@@ -19,6 +20,10 @@ export interface ValidationIssue {
     endColumn: number;
     message: string;
     severity: ValidationSeverity;
+
+    // The compiler code for this condition, absent on the structural checks the editor makes and the
+    // compiler does not. See ./diagnostic-codes.ts.
+    code?: DiagnosticCode;
 }
 
 function issue(
@@ -27,8 +32,9 @@ function issue(
     startColumn: number,
     length: number,
     message: string,
+    code: DiagnosticCode,
 ): ValidationIssue {
-    return { severity, message, line, startColumn, endColumn: startColumn + length };
+    return { severity, message, line, startColumn, endColumn: startColumn + length, code };
 }
 
 function tokenIssue(
@@ -37,9 +43,10 @@ function tokenIssue(
     text: string,
     token: string,
     message: string,
+    code: DiagnosticCode,
 ): ValidationIssue {
     const column = text.indexOf(token) + 1;
-    return issue(severity, line, column, token.length, message);
+    return issue(severity, line, column, token.length, message, code);
 }
 
 // Reports every property whose type reference names nothing the document declares, and
@@ -60,6 +67,7 @@ function validateDeclarations(lines: string[], symbols: DocumentSymbols): Valida
                     lines[property.line],
                     property.type,
                     `Unknown type '${bare}' on '${property.name}' of ${owner} — declare it with 'concept ${bare} : <Primitive>' or 'type ${bare}'.`,
+                    diagnosticCodes.unknownType,
                 ),
             );
         }
@@ -79,6 +87,7 @@ function validateDeclarations(lines: string[], symbols: DocumentSymbols): Valida
                     lines[extra.line],
                     'identifier',
                     `Command '${command.name}' already marks '${identifiers[0].name}' as identifier — only one property can be the identifier.`,
+                    diagnosticCodes.duplicateCommandIdentifier,
                 ),
             );
         }
@@ -98,6 +107,7 @@ function validateDeclarations(lines: string[], symbols: DocumentSymbols): Valida
                 lines[declaration.line],
                 declaration.name,
                 `Duplicate declaration of '${declaration.name}' — concept and type names must be unique.`,
+                diagnosticCodes.duplicateDeclaration,
             ),
         );
     }
@@ -117,7 +127,14 @@ export function validateLines(lines: string[]): ValidationIssue[] {
     const checkEvent = (line: number, text: string, name: string) => {
         if (!events.has(name)) {
             issues.push(
-                tokenIssue('warning', line, text, name, `Unknown event type '${name}' — declare it in a slice or import it.`),
+                tokenIssue(
+                    'warning',
+                    line,
+                    text,
+                    name,
+                    `Unknown event type '${name}' — declare it in a slice or import it.`,
+                    diagnosticCodes.unknownEvent,
+                ),
             );
         }
     };
@@ -133,7 +150,14 @@ export function validateLines(lines: string[]): ValidationIssue[] {
         const leading = line.match(/^[ ]*(\t+)/);
         if (leading) {
             issues.push(
-                issue('warning', index, leading[0].length - leading[1].length + 1, leading[1].length, 'Screenplay is indentation-based — use spaces, not tabs.'),
+                issue(
+                    'warning',
+                    index,
+                    leading[0].length - leading[1].length + 1,
+                    leading[1].length,
+                    'Screenplay is indentation-based — use spaces, not tabs.',
+                    diagnosticCodes.tabIndentation,
+                ),
             );
         }
 
@@ -145,7 +169,16 @@ export function validateLines(lines: string[]): ValidationIssue[] {
             ) {
                 for (const name of trimmed.split(/\s+/).filter((token) => token !== 'or')) {
                     if (!policies.has(name)) {
-                        issues.push(tokenIssue('warning', index, line, name, `Unknown policy '${name}' — declare it with 'policy ${name}'.`));
+                        issues.push(
+                            tokenIssue(
+                                'warning',
+                                index,
+                                line,
+                                name,
+                                `Unknown policy '${name}' — declare it with 'policy ${name}'.`,
+                                diagnosticCodes.unknownPolicy,
+                            ),
+                        );
                     }
                 }
                 continue;
@@ -156,14 +189,28 @@ export function validateLines(lines: string[]): ValidationIssue[] {
         const slice = trimmed.match(/^slice\s+(\w+)/);
         if (slice && !sliceTypes.includes(slice[1])) {
             issues.push(
-                tokenIssue('error', index, line, slice[1], `Unknown slice type '${slice[1]}' — expected ${sliceTypes.join(', ')}.`),
+                tokenIssue(
+                    'error',
+                    index,
+                    line,
+                    slice[1],
+                    `Unknown slice type '${slice[1]}' — expected ${sliceTypes.join(', ')}.`,
+                    diagnosticCodes.unknownSliceType,
+                ),
             );
         }
 
         const concept = trimmed.match(/^concept\s+\w+\s*:\s*(\w+)/);
         if (concept && concept[1] !== 'Enum' && !primitiveTypes.includes(concept[1])) {
             issues.push(
-                tokenIssue('error', index, line, concept[1], `Unknown primitive type '${concept[1]}' — expected ${primitiveTypes.join(', ')} or Enum.`),
+                tokenIssue(
+                    'error',
+                    index,
+                    line,
+                    concept[1],
+                    `Unknown primitive type '${concept[1]}' — expected ${primitiveTypes.join(', ')} or Enum.`,
+                    diagnosticCodes.unknownPrimitiveType,
+                ),
             );
         }
 
@@ -172,7 +219,16 @@ export function validateLines(lines: string[]): ValidationIssue[] {
             authorizeIndent = indentOf(line);
             for (const name of authorize[1].split(/\s+/).filter((token) => token !== 'or' && token.length > 0)) {
                 if (!policies.has(name)) {
-                    issues.push(tokenIssue('warning', index, line, name, `Unknown policy '${name}' — declare it with 'policy ${name}'.`));
+                    issues.push(
+                        tokenIssue(
+                            'warning',
+                            index,
+                            line,
+                            name,
+                            `Unknown policy '${name}' — declare it with 'policy ${name}'.`,
+                            diagnosticCodes.unknownPolicy,
+                        ),
+                    );
                 }
             }
         }
@@ -206,7 +262,14 @@ export function validateLines(lines: string[]): ValidationIssue[] {
             const segments = path.substring('$context.'.length).split('.');
             if (!contextRoots.includes(segments[0])) {
                 issues.push(
-                    tokenIssue('warning', index, line, path, `Unknown $context path '${segments.join('.')}' — expected one of ${contextRoots.join(', ')}.`),
+                    tokenIssue(
+                        'warning',
+                        index,
+                        line,
+                        path,
+                        `Unknown $context path '${segments.join('.')}' — expected one of ${contextRoots.join(', ')}.`,
+                        diagnosticCodes.unknownContextPath,
+                    ),
                 );
             } else if (
                 segments[0] === 'causedBy' &&
@@ -214,7 +277,14 @@ export function validateLines(lines: string[]): ValidationIssue[] {
                 !causedByProperties.includes(segments[1])
             ) {
                 issues.push(
-                    tokenIssue('warning', index, line, path, `Unknown $context.causedBy property '${segments[1]}' — expected ${causedByProperties.join(', ')}.`),
+                    tokenIssue(
+                        'warning',
+                        index,
+                        line,
+                        path,
+                        `Unknown $context.causedBy property '${segments[1]}' — expected ${causedByProperties.join(', ')}.`,
+                        diagnosticCodes.unknownContextCausedByProperty,
+                    ),
                 );
             } else if (
                 segments[0] === 'identity' &&
@@ -222,7 +292,14 @@ export function validateLines(lines: string[]): ValidationIssue[] {
                 !identityProperties.includes(segments[1])
             ) {
                 issues.push(
-                    tokenIssue('warning', index, line, path, `Unknown $context.identity property '${segments[1]}' — expected ${identityProperties.join(', ')}.`),
+                    tokenIssue(
+                        'warning',
+                        index,
+                        line,
+                        path,
+                        `Unknown $context.identity property '${segments[1]}' — expected ${identityProperties.join(', ')}.`,
+                        diagnosticCodes.unknownContextIdentityProperty,
+                    ),
                 );
             }
         }
@@ -233,7 +310,16 @@ export function validateLines(lines: string[]): ValidationIssue[] {
         .filter(({ line }) => /^\s*```\s*$/.test(line));
     if (fenceLines.length % 2 === 1) {
         const last = fenceLines[fenceLines.length - 1];
-        issues.push(issue('error', last.index, 1, last.line.length + 1, 'Unclosed inline code block — expected a closing ``` line.'));
+        issues.push(
+            issue(
+                'error',
+                last.index,
+                1,
+                last.line.length + 1,
+                'Unclosed inline code block — expected a closing ``` line.',
+                diagnosticCodes.unclosedCodeBlock,
+            ),
+        );
     }
 
     return issues;
