@@ -138,14 +138,20 @@ public partial class ScreenplayPrinter
         writer.Line("performer");
         using (writer.Indent())
         {
-            if (performer.File is not null)
+            if (performer.File is null)
             {
-                writer.Line($"file {performer.File.Path}");
+                if (performer.Code is not null)
+                {
+                    WriteCodeBlock(writer, performer.Code);
+                }
+
+                return;
             }
 
+            writer.Line($"file {performer.File.Path}");
             if (performer.Code is not null)
             {
-                WriteCodeBlock(writer, performer.Code);
+                WriteOmittedCode(writer, performer.Code, ReadsOneImplementation("a performer"));
             }
         }
     }
@@ -288,6 +294,10 @@ public partial class ScreenplayPrinter
         }
     }
 
+    // A rule's implementation is read back only under a 'rule <Name>' predicate, and only one directive of
+    // it. Written anywhere else it lands a deeper indented line where the next rule is expected, and the
+    // document stops compiling - so what cannot be read back is noted rather than written. See
+    // ScreenplayPrinter.Omissions.cs.
     void WriteRuleImplementation(ScreenplayWriter writer, ValidationRuleSyntax rule)
     {
         if (rule.File is null && rule.Code is null)
@@ -297,14 +307,31 @@ public partial class ScreenplayPrinter
 
         using (writer.Indent())
         {
-            if (rule.File is not null)
+            if (rule.Rule != ValidationRuleKind.Rule)
             {
-                writer.Line($"file {rule.File.Path}");
+                if (rule.File is not null)
+                {
+                    WriteOmittedFile(writer, rule.File, OnlyOnANamedPredicate);
+                }
+
+                if (rule.Code is not null)
+                {
+                    WriteOmittedCode(writer, rule.Code, OnlyOnANamedPredicate);
+                }
+
+                return;
             }
 
+            if (rule.File is null)
+            {
+                WriteCodeBlock(writer, rule.Code!);
+                return;
+            }
+
+            writer.Line($"file {rule.File.Path}");
             if (rule.Code is not null)
             {
-                WriteCodeBlock(writer, rule.Code);
+                WriteOmittedCode(writer, rule.Code, ReadsOneImplementation("a validation rule"));
             }
         }
     }
@@ -351,14 +378,20 @@ public partial class ScreenplayPrinter
         writer.Line("handler");
         using (writer.Indent())
         {
-            if (handler.File is not null)
+            if (handler.File is null)
             {
-                writer.Line($"file {handler.File.Path}");
+                if (handler.Code is not null)
+                {
+                    WriteCodeBlock(writer, handler.Code);
+                }
+
+                return;
             }
 
+            writer.Line($"file {handler.File.Path}");
             if (handler.Code is not null)
             {
-                WriteCodeBlock(writer, handler.Code);
+                WriteOmittedCode(writer, handler.Code, ReadsOneImplementation("a handler"));
             }
         }
     }
