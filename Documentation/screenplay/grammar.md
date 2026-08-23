@@ -1,6 +1,6 @@
 # Grammar
 
-The full EBNF grammar of the Screenplay DSL. `INDENT`/`DEDENT` are synthesized by the lexer from changes in indentation (offside rule), as in Python. The PDL and CDL bodies are embedded sub-grammars — see [Sub-language Pluggability](sub-languages.md).
+The full EBNF grammar of the Screenplay DSL. `INDENT`/`DEDENT` are synthesized by the lexer from changes in indentation (offside rule), as in Python. The PDL and CDL bodies are built-in first-class sub-grammars — see [Sub-languages and inline code](sub-languages.md).
 
 ```ebnf
 (* ============================================================ *)
@@ -141,9 +141,11 @@ UiProfileDecl  = "ui", "profile", Ident, NL,
 
 TargetPlatformDecl = "target", "platform", PlatformName, { ",", PlatformName }, NL ;
 
-TargetSizeDecl = "target", "size", SizeClass, NL ;
+PlatformName   = Ident ;
 
-SizeClass      = "compact" | "regular" | "expanded" ;
+TargetSizeDecl = "target", "size", ProfileSizeClass, NL ;
+
+ProfileSizeClass = "compact" | "regular" | "expanded" ;
 
 PackagesBlock  = "packages", NL,
                  INDENT, PackageName, { PackageName }, DEDENT ;
@@ -169,10 +171,44 @@ PackageName    = Ident, { ".", Ident } ;
 
 Module         = "module", Ident, NL,
                  INDENT,
-                   [ DescriptionDecl ],
-                   { ScreenTemplateDecl | DialogTemplateDecl },
-                   { Feature },
+                   { DescriptionDecl
+                   | ScreenTemplateDecl
+                   | DialogTemplateDecl
+                   | FormDecl
+                   | ContributionDecl
+                   | Feature },
                  DEDENT ;
+
+(* -------------------------------------------------------------- *)
+(* Forms and contributions                                         *)
+(* -------------------------------------------------------------- *)
+
+FormDecl       = "form", Ident, "for", QualifiedName, NL,
+                 INDENT, { FormDirective }, DEDENT ;
+
+FormDirective  = FormPopulateDecl
+               | FormFieldDecl
+               | FormSubmitDecl ;
+
+FormPopulateDecl = "populate", "via", "query", QualifiedName, [ "by", Ident ], NL
+                 | "populate", "from", "item", NL ;
+
+FormFieldDecl  = "field", Path,
+                 [ "from", Path | "compose", "using", Ident ],
+                 [ "label", LocalizableString ], NL ;
+
+FormSubmitDecl = "on", "submit", NavigateDecl ;
+
+ContributionDecl = "contribute", "to", Ident, NL,
+                 [ INDENT, { ContributionDirective }, DEDENT ] ;
+
+ContributionDirective = NavigateDecl
+                      | "label", LocalizableString, NL
+                      | "order", Integer, NL ;
+
+(* Forms describe command input and optional query-backed population. A
+   contribution adds one navigable item to a named contribution point. Forms
+   are module-scoped; contributions may be declared on modules or features. *)
 
 (* -------------------------------------------------------------- *)
 (* Layout, screen template and dialog template                     *)
@@ -221,11 +257,11 @@ ArrangementSlot = Ident,
                  NL ;
 
 WhenDecl       = "when",
-                 ( "width", SizeClass, [ ",", "height", SizeClass ]
-                 | "height", SizeClass ), NL,
+                 ( "width", ArrangementSizeClass, [ ",", "height", ArrangementSizeClass ]
+                 | "height", ArrangementSizeClass ), NL,
                  INDENT, { ArrangementNode }, DEDENT ;
 
-VariantDecl    = "variant", "width", SizeClass, ",", "height", SizeClass, NL,
+VariantDecl    = "variant", "width", ArrangementSizeClass, ",", "height", ArrangementSizeClass, NL,
                  INDENT, { PlaceDecl }, DEDENT ;
 
 PlaceDecl      = "place", Ident,
@@ -235,7 +271,7 @@ PlaceDecl      = "place", Ident,
 
 SizeValue      = "fill" | Number ;
 
-SizeClass      = "compact" | "regular" ;
+ArrangementSizeClass = "compact" | "regular" ;
 
 (* -------------------------------------------------------------- *)
 (* Features                                                        *)
@@ -243,9 +279,10 @@ SizeClass      = "compact" | "regular" ;
 
 Feature        = "feature", Ident, NL,
                  INDENT,
-                   [ DescriptionDecl ],
-                   { Feature },
-                   { SliceDecl },
+                   { DescriptionDecl
+                   | Feature
+                   | SliceDecl
+                   | ContributionDecl },
                  DEDENT ;
 
 (* -------------------------------------------------------------- *)
@@ -566,15 +603,15 @@ SeedEvent      = Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ] ;
 
 (* -------------------------------------------------------------- *)
-(* Sub-language extension point                                    *)
+(* Extension boundary                                              *)
 (* -------------------------------------------------------------- *)
 
-(* Any registered keyword not listed above may appear as a
-   SliceBody construct. The parser delegates to the registered
-   sub-parser for the indented body.                               *)
-
-ExtensionConstruct = Ident, Ident, NL,
-                     [ INDENT, { AnyLine }, DEDENT ] ;
+(* Construct keywords are closed and every accepted construct appears in this
+   grammar. Inline language tags are open: the compiler carries a registered
+   block as opaque text, but registration does not add a new host-language
+   construct. Editor-only sub-language registrations are not valid Screenplay
+   syntax until the compiler itself gains that construct. See
+   sub-languages.md.                                                *)
 
 (* -------------------------------------------------------------- *)
 (* Constraints                                                     *)
@@ -672,16 +709,16 @@ ScreenDirective = DataDecl
                | TemplateRef
                | InlineBlock ;
 
-DataDecl       = "data", TypeRef, "via", "query", Ident,
+DataDecl       = "data", TypeRef, "via", "query", QualifiedName,
                  [ "by", Ident ], NL ;
 
-ActionDecl     = "action", Ident, NL,
+ActionDecl     = "action", QualifiedName, NL,
                  [ INDENT, { ActionOption }, DEDENT ] ;
 
 ActionOption   = NavigateDecl
                | "label", LocalizableString, NL ;
 
-NavigateDecl   = "navigate", "to", Ident, [ "by", Ident ], NL ;
+NavigateDecl   = "navigate", "to", QualifiedName, [ "by", Ident ], NL ;
 
 TemplateRef    = "template", Ident, NL,
                  INDENT, { FilledSlot }, DEDENT ;
@@ -752,7 +789,8 @@ LanguageTag    = "csharp" | "typescript" | "react" | "html" | "sql"
 StringLiteral  = '"', { StringChar }, '"' ;
 StringChar     = ? any char except '"', '\' and newline ? | Escape ;
 Escape         = "\", ( '"' | "\" | "n" | "r" | "t" ) ;
-Number         = [ "-" ], { "0".."9" }, [ ".", { "0".."9" } ] ;
+Number         = [ "-" ], Digit, { Digit }, [ ".", Digit, { Digit } ] ;
+Integer        = Digit, { Digit } ;
 Ident          = Letter, { Letter | Digit | "_" } ;
 Letter         = "A".."Z" | "a".."z" ;
 Digit          = "0".."9" ;

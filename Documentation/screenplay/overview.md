@@ -3,7 +3,7 @@ title: Language overview
 description: The design principles of the Screenplay language, the top-level structure of a .play file, and a map of every construct.
 ---
 
-Screenplay is the modeling language for the Cratis platform. It lets developers describe a complete bounded context — events, commands, queries, projections, screens, automations, authorization, validation, constraints, and concepts — in a single declarative file. Stage interprets a Screenplay and runs it as a live application; Studio uses the same contract to visualize and generate.
+Screenplay is a business-oriented language for specifying the desired functionality of an information system. It describes concepts, commands, facts, views, queries, automations, policies, and specifications without making a particular runtime authoritative. Screenplay now owns the versioned semantic foundation; Stage, Studio, and generated applications are being migrated to consume it capability by capability.
 
 ## File extension
 
@@ -12,9 +12,9 @@ Screenplay files use the `.play` extension.
 ## Design principles
 
 - **Indentation-based** — Python-style, no braces. Structure follows the offside rule: a construct owns everything indented beneath it.
-- **Declarative first, imperative escape hatch** — every construct has a declarative form; any construct can drop into C#, TypeScript, React, or HTML via inline code blocks or `file` references.
+- **Declarative first, bounded escape hatches** — behavior remains meaningful without implementation code. Selected implementation points can carry inline code or `file` references as realization attachments.
 - **Slices are the atom** — everything lives inside a typed slice aligned with Event Modeling's vocabulary.
-- **Sub-language pluggability** — the Projection Declaration Language (PDL) and Change Data Capture Language (CDL) are embedded sub-grammars. Additional sub-languages can be registered and parsed inside named constructs.
+- **First-class sub-languages** — the Projection Declaration Language (PDL) and Change Data Capture Language (CDL) are built-in, independently consumable grammars. Inline language tags are extensible, while host construct keywords remain closed.
 - **Concepts carry compliance** — value types declare PII and sensitivity attributes once, with the reason they are personal data; all usages inherit them.
 - **`file` is never required** — a document must be expressible, and meaningful, before any code exists. Code pointers are realization metadata a slice gains once it is built.
 
@@ -23,16 +23,18 @@ Screenplay files use the `.play` extension.
 ```text
 <domain>
 <imports>
-<concepts>
-<types>
-<policies>
-<personas>
-<module>
-  <screen templates>
+<concepts and composite types>
+<policies, personas, and authentication>
+<triggers>
+<layouts, themes, and UI profiles>
+<module>+
+  <screen and dialog templates>
+  <forms and contributions>
   <feature>+
     <feature>*          ← sub-features, arbitrarily deep
+    <contributions>
     <slice>+
-      <construct>+      ← events, commands, queries, projections, captures, reactions, screens, constraints
+      <construct>+      ← commands, events, read models, queries, projections, specifications, reactions, captures, screens, constraints
 <seeds>
 ```
 
@@ -71,7 +73,7 @@ Line comments start with `//` and run to the end of the line.
 | Reaction rules | [Reactions](reactions.md) |
 | What sets a reaction off | [Triggers](triggers.md) |
 | UI declarations at three abstraction levels | [Screens](screens.md) |
-| Registering additional embedded sub-languages | [Sub-language Pluggability](sub-languages.md) |
+| Built-in sub-languages and extensible inline language tags | [Sub-languages and inline code](sub-languages.md) |
 | The full EBNF grammar | [Grammar](grammar.md) |
 
 ## Tooling

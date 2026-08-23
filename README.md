@@ -2,7 +2,7 @@
 
 # 🎬 Screenplay
 
-**The modeling language for the Cratis platform — one declarative `.play` file describes a whole system, and the cast performs it live.**
+**A business-oriented declarative language for specifying the desired functionality of an information system.**
 
 [![Discord](https://img.shields.io/discord/1182595891576717413?label=Discord&logo=discord&logoColor=white)](https://discord.gg/kt4AMpV8WV)
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/cratis.screenplay?label=VS%20Code%20Marketplace&logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=cratis.screenplay)
@@ -15,12 +15,13 @@
 
 A screenplay is the one document a production works from — it names the cast, sets every scene, and writes
 every line, so the director, the actors, and the crew all put on the *same* show. That's the whole idea. A
-Screenplay `.play` file is the script for an entire system: its concepts, events, commands, queries,
-projections, screens, automations, and the rules that govern them — top to bottom, in one place.
+Screenplay `.play` file is the script for an information system: its concepts, events, commands, queries,
+projections, specifications, automations, and the rules that govern them — top to bottom, in one place.
 
-Hand that script to **Stage** and it puts on the performance — a live, running application. Hand it to
-**Studio** and it storyboards the same script — visualizing and generating from it. One script; no meaning
-lost between the model on the whiteboard and the app in production.
+Screenplay owns that language and its portable meaning; it does not prescribe the runtime. Downstream tools
+can interpret the same model: **Stage** is being built to run and render it, while **Studio** visualizes and
+edits it. The goal is one script with explicit capability checks, not a claim that every downstream surface
+already performs every construct.
 
 ## 🎬 Why "Screenplay"?
 
@@ -30,8 +31,9 @@ Four reasons, and they all line up:
   scenes, stage directions, dialogue. A `.play` file holds an entire system the same way: nothing
   about the behavior hides in another layer or another file.
 - **It's written to be performed, not just read.** A screenplay isn't the finished film — it's the thing you
-  perform. **Stage** reads it and runs the application; **Studio** reads it and draws it. The script is
-  executable, not merely descriptive.
+  perform. Screenplay now owns the versioned semantic foundation that runtimes and renderers are being
+  migrated to consume. The language is moving from descriptive syntax to verifiable execution without
+  making one runtime authoritative.
 - **The `.play` extension wears it on its sleeve.** A screenplay is a play; the file is a `.play`.
 - **The Cratis storytelling family.** Cratis names its products after telling a story: **Chronicle** records
   what happened, **Arc** shapes the plot, **Narrator**, **Lens**, **Studio**, **Prompter**… **Screenplay** is
@@ -99,19 +101,19 @@ Pick the slice type by what the slice *does*:
 
 Three ideas keep the script both readable and complete:
 
-- **Declarative first, with an escape hatch.** Every construct has a clean declarative form — but any of them
-  can drop into inline **C#**, **TypeScript**, **React**, or **HTML** (or a `file` reference) when a scene
-  needs custom staging. A command, for instance, swaps its declarative `produces` for an imperative `handler`.
-  Common cases stay terse; the hard 10% is never out of reach.
+- **Declarative first, with bounded escape hatches.** The behavior remains meaningful without implementation
+  files. Selected implementation points — such as a command handler, query performer, or rule predicate —
+  can carry inline code or a `file` reference. These bodies are realization attachments, not a second
+  application model, and the language is evolving toward typed, capability-limited contexts.
 - **Concepts carry compliance.** Value types declare their attributes once — `@pii`, `@sensitive` — and every
   usage inherits them, so GDPR and sensitivity travel with the data instead of being re-litigated per field.
-- **Pluggable sub-languages.** Projections are written in the **Projection Declaration Language (PDL)** and
-  captures in the **Change Data Capture Language (CDL)** — embedded sub-grammars parsed inside their
-  constructs. They're the reference implementations of a registry you can extend with sub-languages of your
-  own.
+- **First-class sub-languages.** Projections use the **Projection Declaration Language (PDL)** and captures
+  use the **Change Data Capture Language (CDL)**. Both are independently consumable built-in grammars.
+  Inline language tags are extensible and carried as opaque text; host-language construct keywords remain
+  closed so the compiler never silently discards an unknown behavior.
 
 The full construct reference and the complete EBNF grammar live in
-[`Documentation/screenplay`](Documentation/screenplay/index.md).
+[`Documentation/screenplay`](Documentation/screenplay/index).
 
 ## 🎥 One script, two performances
 
@@ -128,8 +130,9 @@ flowchart LR
     Studio --> Viz["🖼️ diagrams + generated code"]
 ```
 
-Because the model and the app are the same artifact, there's no drift to reconcile: change the script, and
-the performance changes with it.
+The intended contract is simple: change the semantic model and every conforming performance changes with it.
+Until a runtime declares and passes that capability, it must fail closed rather than silently omit or weaken
+what the script says.
 
 ## 🧰 What's in this repo
 
@@ -138,8 +141,8 @@ files pleasant:
 
 | Piece | What it is | Where |
 | --- | --- | --- |
-| **Language & grammar** | The language reference for every construct and the full EBNF grammar | [`Documentation/screenplay`](Documentation/screenplay/index.md) |
-| **`Cratis.Screenplay`** | The .NET compiler — parsing, the shared syntax tree, [visitors and tree traversal](Documentation/screenplay/visitors.md), diagnostics, and `**/*.play` file discovery | [`Source/DotNET/Screenplay`](Source/DotNET/Screenplay) |
+| **Language & grammar** | The language reference for every construct and the full EBNF grammar | [`Documentation/screenplay`](Documentation/screenplay/index) |
+| **`Cratis.Screenplay`** | The .NET compiler — parsing, the shared syntax tree, [visitors and tree traversal](Documentation/screenplay/visitors.md), diagnostics, file/folder compilation, and the versioned executable semantic model foundation | [`Source/DotNET/Screenplay`](Source/DotNET/Screenplay) |
 | **`Cratis.Screenplay.Tool`** | The `screenplay` CLI (a dotnet tool) — verifies every `.play` file in a directory tree | [`Source/DotNET/Tool`](Source/DotNET/Tool) |
 | **`@cratis/screenplay-language`** | Monaco language service — highlighting (incl. embedded C#/TS/React/HTML and PDL/CDL), IntelliSense, hover, diagnostics | [`Source/Screenplay/Monaco/screenplay-language`](Source/Screenplay/Monaco/screenplay-language) |
 | **`screenplay-editor`** | A standalone editor host for writing `.play` files right in the browser | [`Source/Screenplay/Monaco/screenplay-editor`](Source/Screenplay/Monaco/screenplay-editor) |
@@ -177,7 +180,7 @@ and launches an Extension Development Host with full `.play` support, ready to t
 
 ## 🗺️ Start here (for contributors)
 
-- [`Documentation/screenplay`](Documentation/screenplay/index.md) — the language overview, design principles, and top-level structure. **Start here to learn the language.**
+- [`Documentation/screenplay`](Documentation/screenplay/index) — the language overview, design principles, and top-level structure. **Start here to learn the language.**
 - [`Documentation/screenplay/slices.md`](Documentation/screenplay/slices.md) — modules, features, and the four slice types.
 - [`Documentation/screenplay/grammar.md`](Documentation/screenplay/grammar.md) — the complete EBNF grammar.
 - [`Documentation/screenplay/sub-languages.md`](Documentation/screenplay/sub-languages.md) — how PDL, CDL, and your own sub-languages plug in.

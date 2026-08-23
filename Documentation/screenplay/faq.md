@@ -1,6 +1,6 @@
 ---
 title: Frequently asked questions
-description: Common questions about the Screenplay language — indentation, the escape hatch to code, Stage and Studio, and how it relates to Arc and Chronicle.
+description: Common questions about Screenplay — its syntax, portable semantics, bounded code attachments, and downstream runtimes.
 ---
 
 ## Why indentation instead of braces?
@@ -9,27 +9,27 @@ Structure follows the offside rule: a construct owns everything indented beneath
 
 ## What does the `.play` extension mean?
 
-A Screenplay is a script for a production, so its file is a `.play`. The name is deliberate: **Stage** performs the script as a running application, and the extension carries that metaphor. Editors recognize `.play` files and give them the Screenplay icon and language support.
+A Screenplay is a script for a production, so its file is a `.play`. The name is deliberate: a runtime or renderer performs the script without becoming the authority for what it means. Editors recognize `.play` files and give them the Screenplay icon and language support.
 
 ## Do I still write C#, TypeScript, or React?
 
-Only where you want to. Every construct has a declarative form that covers the common case, and any construct can drop into an inline `csharp`, `typescript`, `react`, `html`, or `sql` block — or point at an external `file` — when a rule needs custom logic. The declarative form handles the routine 90%; the escape hatch is there for the rest, so you are never forced out of the model to express something hard.
+Only at the implementation points that admit code. A command handler, query performer, rule predicate, reducer rule, reaction, constraint, or screen can carry an inline block or `file` reference where the declarative language cannot state the realization. Concepts, commands, events, queries, and specifications still carry the business meaning; code is an attachment rather than a second application model.
 
 ## What are Stage and Studio?
 
-They are the two consumers of a `.play` file. **Stage** interprets a Screenplay and runs it as a live application — it is the runtime. **Studio** reads the same file to visualize and generate. Both work from the identical source of truth, which is why the model and the running system cannot drift apart. This repository is the third piece: the language itself, its documentation, and the editing tools (a Monaco language service, a standalone editor, and a VS Code extension).
+They are downstream consumers of a `.play` model. **Stage** is the runtime and rendering surface; **Studio** visualizes and edits the model. Screenplay remains the authority for portable meaning. A consumer must either preserve a declared capability or report it as unsupported — sharing a source file alone does not prove behavioral parity.
 
 ## How does Screenplay relate to Arc and Chronicle?
 
-A `.play` file describes the same artifacts you would otherwise write by hand on the Cratis platform: [Arc](/arc/) commands, queries, validation, and authorization, and [Chronicle](/chronicle/) events, projections, constraints, and reactors. Screenplay is a modeling layer *over* those frameworks, not a replacement for them — nothing about the runtime is hidden. Because the targets are the same, a hand-written slice and a modeled `.play` slice coexist in one application without friction.
+Screenplay describes portable command, fact, view, query, policy, and specification semantics. [Arc](/arc/) and [Chronicle](/chronicle/) are the first realization target for those semantics, but Screenplay does not depend on either product and does not copy their implementation vocabulary into the semantic authority. Realization profiles and renderers map the portable model to a framework.
 
 ## What are PDL and CDL?
 
-They are the two built-in sub-languages. **PDL**, the Projection Declaration Language, is the grammar inside a `projection` body. **CDL**, the Change Data Capture Language, is the grammar inside a `capture` body. The Screenplay parser delegates each construct's body to its registered sub-parser, so these are embedded grammars with their own highlighting and completions — not special-cased syntax. See [Projections](projections/index.md) and [Captures](captures.md).
+They are the two built-in first-class sub-languages. **PDL**, the Projection Declaration Language, defines projection bodies. **CDL**, the Change Data Capture Language, defines capture transformations. Both have standalone compiler entry points as well as their host-language constructs. See [Projections](projections/index.md) and [Captures](captures.md).
 
 ## Can I add my own sub-language?
 
-Yes. PDL and CDL are registered exactly the way an extension would be — they are the reference implementations of the pluggability model. You register a construct keyword, provide a parser for its indented body, and optionally supply Monaco token rules, completions, and hover text so highlighting and IntelliSense compose cleanly. See [Sub-language Pluggability](sub-languages.md).
+Not as a new Screenplay construct today. Host-language construct keywords are closed so the compiler cannot silently discard unknown behavior. You can register additional inline language tags, which the compiler carries as opaque text for the owning tool to interpret. Monaco can also register editor-only highlighting and completions, but that does not make the construct valid Screenplay syntax. See [Sub-languages and inline code](sub-languages.md).
 
 ## Where do highlighting and IntelliSense come from?
 
@@ -37,4 +37,4 @@ From the [`@cratis/screenplay-language`](https://github.com/Cratis/Screenplay/tr
 
 ## Is Screenplay production-ready?
 
-Screenplay is young and still evolving; the language and its tooling are under active development. Treat it accordingly — the reference documents what the language expresses today, and where a construct isn't covered yet, a hand-written Arc/Chronicle slice alongside your `.play` files is a perfectly good answer.
+Screenplay is young and still evolving. The compiler and authoring tools are usable, while portable execution and rendering are being delivered capability by capability. Treat the reference as the description of accepted syntax, and require a runtime or renderer to declare support before relying on it to perform that syntax.
