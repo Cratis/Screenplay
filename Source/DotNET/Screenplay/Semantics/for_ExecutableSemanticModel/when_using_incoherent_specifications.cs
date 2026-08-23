@@ -40,7 +40,7 @@ public class when_using_incoherent_specifications : a_valid_semantic_model
         var otherProjectIdProperty = Id(SemanticKind.Property, "ProjectArchived.ProjectId");
         var otherEvent = new SemanticEventContract(
             otherEventId,
-            EventContractId.CreateLegacy(Address(SemanticKind.EventContract, "ProjectArchived")),
+            EventContractId.CreateLegacy(_applicationIdentity, "ProjectArchived"),
             EventContractRevision.Initial,
             "ProjectArchived",
             [new(otherProjectIdProperty, "ProjectId", SemanticTypeReference.ForConcept(_projectIdConceptId), true)]);

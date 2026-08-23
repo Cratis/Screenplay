@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
-using System.Text;
 using Cratis.Screenplay.Semantics.Serialization;
 
 namespace Cratis.Screenplay.Semantics;
@@ -483,15 +482,7 @@ public sealed class SemanticIdentityCatalog
         return rename with { PreviousKey = NormalizeKey(rename.PreviousKey), CurrentKey = NormalizeKey(rename.CurrentKey) };
     }
 
-    static string NormalizeKey(string key)
-    {
-        if (string.IsNullOrEmpty(key))
-        {
-            throw new InvalidSemanticContract("A stable identity key cannot be empty.");
-        }
-
-        return key.Normalize(NormalizationForm.FormC);
-    }
+    static string NormalizeKey(string key) => SemanticDocumentText.NormalizeStableKey(key);
 
     static void ValidateDocumentAssignments(ImmutableArray<DocumentIdentityAssignment> assignments)
     {

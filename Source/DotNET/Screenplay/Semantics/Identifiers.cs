@@ -377,12 +377,8 @@ static class IdentityHash
 
     internal static string CreateDocument(string stableKey)
     {
-        if (string.IsNullOrEmpty(stableKey))
-        {
-            throw new InvalidSemanticContract("A document identity key cannot be empty.");
-        }
-
-        var part = SemanticAddressPart.Create(SemanticAddressPartKind.Discriminator, stableKey);
+        var normalized = SemanticDocumentText.NormalizeStableKey(stableKey);
+        var part = SemanticAddressPart.Create(SemanticAddressPartKind.Discriminator, normalized);
         return Create(IdentityText.DocumentPrefix, "document", 0, [part]);
     }
 

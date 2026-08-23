@@ -55,12 +55,12 @@ public readonly record struct SemanticSourceSpan
     public int StartColumn { get; }
 
     /// <summary>
-    /// Gets the one-based inclusive end line.
+    /// Gets the one-based line containing the end-exclusive position.
     /// </summary>
     public int EndLine { get; }
 
     /// <summary>
-    /// Gets the one-based exclusive end column.
+    /// Gets the one-based column of the end-exclusive position.
     /// </summary>
     public int EndColumn { get; }
 
@@ -92,5 +92,56 @@ public readonly record struct SemanticSourceSpan
         }
 
         return new(document, start, length, startLine, startColumn, endLine, endColumn);
+    }
+
+    internal void ValidateAgainst(string text)
+    {
+        if (text is null || Length > text.Length || Start > text.Length - Length)
+        {
+            throw new InvalidSemanticContract("A semantic source span is outside its source document.");
+        }
+
+        var startPosition = PositionAt(text, Start);
+        var endPosition = PositionAt(text, Start + Length);
+        if (startPosition.Line != StartLine || startPosition.Column != StartColumn ||
+            endPosition.Line != EndLine || endPosition.Column != EndColumn)
+        {
+            throw new InvalidSemanticContract("A semantic source span does not match its source document coordinates.");
+        }
+    }
+
+    static (int Line, int Column) PositionAt(string text, int offset)
+    {
+        var line = 1;
+        var column = 1;
+        for (var index = 0; index < offset; index++)
+        {
+            if (text[index] == '\r')
+            {
+                if (index + 1 < text.Length && text[index + 1] == '\n')
+                {
+                    if (offset == index + 1)
+                    {
+                        throw new InvalidSemanticContract("A semantic source span cannot split a CRLF line ending.");
+                    }
+
+                    index++;
+                }
+
+                line++;
+                column = 1;
+            }
+            else if (text[index] == '\n')
+            {
+                line++;
+                column = 1;
+            }
+            else
+            {
+                column++;
+            }
+        }
+
+        return (line, column);
     }
 }
