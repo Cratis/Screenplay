@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using System.Globalization;
 using System.Text;
 using Cratis.Screenplay.Semantics.Serialization;
 
@@ -88,7 +89,8 @@ static class SemanticModelValidator
         readonly HashSet<SemanticId> _ids = [];
         readonly Dictionary<SemanticId, SemanticConcept> _concepts = [];
         readonly Dictionary<SemanticId, SemanticCompositeType> _types = [];
-        readonly Dictionary<EventContractId, SemanticEventContract> _events = [];
+        readonly Dictionary<SemanticId, SemanticEventContract> _events = [];
+        readonly HashSet<EventContractId> _eventContractIds = [];
         readonly Dictionary<SemanticId, SemanticCommand> _commands = [];
         readonly Dictionary<SemanticId, SemanticReadModel> _readModels = [];
         readonly Dictionary<SemanticId, SemanticKeyedQuery> _queries = [];
@@ -96,9 +98,9 @@ static class SemanticModelValidator
         public void RegisterApplication(SemanticApplication application)
         {
             Register(application.Id, application.Name, "application");
-            RequireArray(application.Concepts, nameof(application.Concepts));
-            RequireArray(application.Types, nameof(application.Types));
-            RequireArray(application.Modules, nameof(application.Modules));
+            RequireObjects(application.Concepts, nameof(application.Concepts), "concept");
+            RequireObjects(application.Types, nameof(application.Types), "composite type");
+            RequireObjects(application.Modules, nameof(application.Modules), "module");
             RejectDuplicateNames(application.Concepts.Select(_ => _.Name), "concept");
             RejectDuplicateNames(application.Types.Select(_ => _.Name), "composite type");
             RejectDuplicateNames(application.Modules.Select(_ => _.Name), "module");
@@ -124,10 +126,10 @@ static class SemanticModelValidator
             foreach (var concept in application.Concepts)
             {
                 ValidatePrimitive(concept.Primitive);
-                RequireArray(concept.Validations, nameof(concept.Validations));
+                var conceptType = SemanticTypeReference.ForPrimitive(concept.Primitive);
                 foreach (var validation in concept.Validations)
                 {
-                    ValidateValidation(validation, null);
+                    ValidateValidation(validation, true, conceptType);
                 }
             }
 
@@ -144,17 +146,15 @@ static class SemanticModelValidator
 
         void RegisterConcept(SemanticConcept concept)
         {
-            RejectNull(concept, "concept");
             Register(concept.Id, concept.Name, "concept");
             RequireArray(concept.Values, nameof(concept.Values));
-            RequireArray(concept.Validations, nameof(concept.Validations));
+            RequireObjects(concept.Validations, nameof(concept.Validations), "validation rule");
             RejectDuplicateNames(concept.Values, $"value on concept '{concept.Name}'");
             _concepts.Add(concept.Id, concept);
         }
 
         void RegisterType(SemanticCompositeType type)
         {
-            RejectNull(type, "composite type");
             Register(type.Id, type.Name, "composite type");
             RegisterProperties(type.Properties, $"composite type '{type.Name}'");
             _types.Add(type.Id, type);
@@ -162,9 +162,8 @@ static class SemanticModelValidator
 
         void RegisterModule(SemanticModule module)
         {
-            RejectNull(module, "module");
             Register(module.Id, module.Name, "module");
-            RequireArray(module.Features, nameof(module.Features));
+            RequireObjects(module.Features, nameof(module.Features), "feature");
             RejectDuplicateNames(module.Features.Select(_ => _.Name), $"feature in module '{module.Name}'");
             foreach (var feature in module.Features)
             {
@@ -174,10 +173,9 @@ static class SemanticModelValidator
 
         void RegisterFeature(SemanticFeature feature)
         {
-            RejectNull(feature, "feature");
             Register(feature.Id, feature.Name, "feature");
-            RequireArray(feature.Features, nameof(feature.Features));
-            RequireArray(feature.Slices, nameof(feature.Slices));
+            RequireObjects(feature.Features, nameof(feature.Features), "nested feature");
+            RequireObjects(feature.Slices, nameof(feature.Slices), "slice");
             RejectDuplicateNames(feature.Features.Select(_ => _.Name), $"nested feature in '{feature.Name}'");
             RejectDuplicateNames(feature.Slices.Select(_ => _.Name), $"slice in feature '{feature.Name}'");
             foreach (var nested in feature.Features)
@@ -193,14 +191,13 @@ static class SemanticModelValidator
 
         void RegisterSlice(SemanticSlice slice)
         {
-            RejectNull(slice, "slice");
             Register(slice.Id, slice.Name, "slice");
-            RequireArray(slice.Events, nameof(slice.Events));
-            RequireArray(slice.Commands, nameof(slice.Commands));
-            RequireArray(slice.ReadModels, nameof(slice.ReadModels));
-            RequireArray(slice.Projections, nameof(slice.Projections));
-            RequireArray(slice.Queries, nameof(slice.Queries));
-            RequireArray(slice.Specifications, nameof(slice.Specifications));
+            RequireObjects(slice.Events, nameof(slice.Events), "event contract");
+            RequireObjects(slice.Commands, nameof(slice.Commands), "command");
+            RequireObjects(slice.ReadModels, nameof(slice.ReadModels), "read model");
+            RequireObjects(slice.Projections, nameof(slice.Projections), "projection");
+            RequireObjects(slice.Queries, nameof(slice.Queries), "query");
+            RequireObjects(slice.Specifications, nameof(slice.Specifications), "specification");
             RejectDuplicateNames(slice.Events.Select(_ => _.Name), $"event in slice '{slice.Name}'");
             RejectDuplicateNames(slice.Commands.Select(_ => _.Name), $"command in slice '{slice.Name}'");
             RejectDuplicateNames(slice.ReadModels.Select(_ => _.Name), $"read model in slice '{slice.Name}'");
@@ -225,21 +222,20 @@ static class SemanticModelValidator
 
             foreach (var projection in slice.Projections)
             {
-                RejectNull(projection, "projection");
                 Register(projection.Id, projection.Name, "projection");
-                RequireArray(projection.Transitions, nameof(projection.Transitions));
+                RequireObjects(projection.Transitions, nameof(projection.Transitions), "projection transition");
             }
 
             foreach (var query in slice.Queries)
             {
-                RejectNull(query, "query");
                 Register(query.Id, query.Name, "query");
+                RejectNull(query.Argument, "query argument");
+                Register(query.Argument.Id, query.Argument.Name, "query argument");
                 _queries.Add(query.Id, query);
             }
 
             foreach (var specification in slice.Specifications)
             {
-                RejectNull(specification, "specification");
                 Register(specification.Id, specification.Name, "specification");
                 RequireSpecificationArrays(specification);
             }
@@ -247,34 +243,32 @@ static class SemanticModelValidator
 
         void RegisterEvent(SemanticEventContract eventContract)
         {
-            RejectNull(eventContract, "event contract");
             Register(eventContract.Id, eventContract.Name, "event contract");
             if (!eventContract.ContractId.IsSet || eventContract.Revision != EventContractRevision.Initial)
             {
                 throw new InvalidSemanticContract($"Event contract '{eventContract.Name}' must use the initial ESM v1 contract revision.");
             }
 
-            if (!_events.TryAdd(eventContract.ContractId, eventContract))
+            if (!_eventContractIds.Add(eventContract.ContractId))
             {
                 throw new InvalidSemanticContract($"Event contract identity '{eventContract.ContractId}' is duplicated.");
             }
 
+            _events.Add(eventContract.Id, eventContract);
             RegisterProperties(eventContract.Properties, $"event contract '{eventContract.Name}'");
         }
 
         void RegisterCommand(SemanticCommand command)
         {
-            RejectNull(command, "command");
             Register(command.Id, command.Name, "command");
             RegisterProperties(command.Properties, $"command '{command.Name}'");
-            RequireArray(command.Validations, nameof(command.Validations));
-            RequireArray(command.Produces, nameof(command.Produces));
+            RequireObjects(command.Validations, nameof(command.Validations), "validation rule");
+            RequireObjects(command.Produces, nameof(command.Produces), "produced event");
             _commands.Add(command.Id, command);
         }
 
         void RegisterReadModel(SemanticReadModel readModel)
         {
-            RejectNull(readModel, "read model");
             Register(readModel.Id, readModel.Name, "read model");
             RegisterProperties(readModel.Properties, $"read model '{readModel.Name}'");
             _readModels.Add(readModel.Id, readModel);
@@ -282,11 +276,10 @@ static class SemanticModelValidator
 
         void RegisterProperties(ImmutableArray<SemanticProperty> properties, string owner)
         {
-            RequireArray(properties, nameof(properties));
+            RequireObjects(properties, nameof(properties), "property");
             RejectDuplicateNames(properties.Select(_ => _.Name), $"property on {owner}");
             foreach (var property in properties)
             {
-                RejectNull(property, "property");
                 Register(property.Id, property.Name, "property");
             }
         }
@@ -301,22 +294,13 @@ static class SemanticModelValidator
 
             foreach (var command in slice.Commands)
             {
-                ValidateProperties(command.Properties);
-                HashSet<SemanticId> commandProperties = [.. command.Properties.Select(_ => _.Id)];
-                foreach (var validation in command.Validations)
-                {
-                    ValidateValidation(validation, commandProperties);
-                }
-
-                foreach (var produced in command.Produces)
-                {
-                    ValidateProducedEvent(produced);
-                }
+                ValidateCommand(command);
             }
 
             foreach (var readModel in slice.ReadModels)
             {
                 ValidateProperties(readModel.Properties);
+                IdentifierProperty(readModel);
             }
 
             foreach (var projection in slice.Projections)
@@ -332,6 +316,26 @@ static class SemanticModelValidator
             foreach (var specification in slice.Specifications)
             {
                 ValidateSpecification(specification);
+            }
+        }
+
+        void ValidateCommand(SemanticCommand command)
+        {
+            ValidateProperties(command.Properties);
+            var properties = Properties(command.Properties);
+            foreach (var validation in command.Validations)
+            {
+                if (!properties.TryGetValue(validation.Property, out var property))
+                {
+                    throw new InvalidSemanticContract($"Validation property '{validation.Property}' is unresolved.");
+                }
+
+                ValidateValidation(validation, false, property.Type);
+            }
+
+            foreach (var produced in command.Produces)
+            {
+                ValidateProducedEvent(produced, command);
             }
         }
 
@@ -360,40 +364,85 @@ static class SemanticModelValidator
             }
         }
 
-        void ValidateValidation(SemanticValidationRule validation, HashSet<SemanticId>? allowedProperties)
+        void ValidateValidation(
+            SemanticValidationRule validation,
+            bool isConcept,
+            SemanticTypeReference propertyType)
         {
             RejectNull(validation, "validation rule");
             ValidateEnum(validation.Kind, SemanticValidationRuleKind.Unknown, "validation rule kind");
-            if (allowedProperties is null)
+            if (isConcept && validation.Property.IsSet)
             {
-                if (validation.Property.IsSet)
-                {
-                    throw new InvalidSemanticContract("A concept validation must use the implicit concept value.");
-                }
+                throw new InvalidSemanticContract("A concept validation must use the implicit concept value.");
             }
-            else if (!allowedProperties.Contains(validation.Property))
+
+            if (validation.Message?.Length == 0)
             {
-                throw new InvalidSemanticContract($"Validation property '{validation.Property}' is unresolved.");
+                throw new InvalidSemanticContract("A validation message cannot be empty.");
+            }
+
+            var requiresOperand = validation.Kind != SemanticValidationRuleKind.NotEmpty;
+            if (requiresOperand != (validation.Operand is not null))
+            {
+                throw new InvalidSemanticContract($"Validation rule '{validation.Kind}' has an invalid operand shape.");
+            }
+
+            var primitive = UnderlyingPrimitive(propertyType);
+            switch (validation.Kind)
+            {
+                case SemanticValidationRuleKind.NotEmpty when !propertyType.IsCollection && primitive != SemanticPrimitiveType.Text:
+                    throw new InvalidSemanticContract("Not-empty validation requires text or a collection.");
+                case SemanticValidationRuleKind.Maximum or SemanticValidationRuleKind.Minimum
+                    when propertyType.IsCollection || primitive is not (SemanticPrimitiveType.WholeNumber or SemanticPrimitiveType.DecimalNumber):
+                    throw new InvalidSemanticContract("Minimum and maximum validation require a scalar numeric value.");
+                case SemanticValidationRuleKind.Matches when propertyType.IsCollection || primitive != SemanticPrimitiveType.Text:
+                    throw new InvalidSemanticContract("Matches validation requires scalar text.");
             }
 
             if (validation.Operand is not null)
             {
-                ValidateExpression(validation.Operand);
+                if (validation.Operand is SemanticNullValue && validation.Kind is not (SemanticValidationRuleKind.Equal or SemanticValidationRuleKind.NotEqual))
+                {
+                    throw new InvalidSemanticContract($"Validation rule '{validation.Kind}' cannot use a null operand.");
+                }
+
+                ValidateValue(validation.Operand, propertyType, "validation operand");
+                if (validation.Kind == SemanticValidationRuleKind.Matches && validation.Operand is not SemanticTextValue)
+                {
+                    throw new InvalidSemanticContract("Matches validation requires a text operand.");
+                }
             }
         }
 
-        void ValidateProducedEvent(SemanticProducedEvent produced)
+        void ValidateProducedEvent(SemanticProducedEvent produced, SemanticCommand command)
         {
-            RejectNull(produced, "produced event");
             if (!_events.TryGetValue(produced.EventContract, out var eventContract))
             {
                 throw new InvalidSemanticContract($"Produced event contract '{produced.EventContract}' is unresolved.");
             }
 
-            ValidateOptionalExpression(produced.Condition);
-            ValidateOptionalExpression(produced.Destination);
-            HashSet<SemanticId> properties = [.. eventContract.Properties.Select(_ => _.Id)];
-            ValidateMappings(produced.Mappings, properties);
+            var sources = Properties(command.Properties);
+            if (produced.Condition is not null)
+            {
+                var conditionType = ResolveExpression(produced.Condition, SemanticExpressionRootKind.Command, sources, null);
+                RequireBoolean(conditionType, "produced event condition");
+            }
+
+            if (produced.Destination is not null)
+            {
+                var destinationType = ResolveExpression(produced.Destination, SemanticExpressionRootKind.Command, sources, null);
+                if (destinationType?.IsCollection is not false)
+                {
+                    throw new InvalidSemanticContract("A produced event destination must resolve to one scalar command value.");
+                }
+            }
+
+            ValidateMappings(produced.Mappings, Properties(eventContract.Properties), SemanticExpressionRootKind.Command, sources);
+            var mapped = produced.Mappings.Select(_ => _.TargetProperty).ToHashSet();
+            if (eventContract.Properties.Any(_ => !_.Type.IsOptional && !mapped.Contains(_.Id)))
+            {
+                throw new InvalidSemanticContract("A produced event must map every required event property.");
+            }
         }
 
         void ValidateProjection(SemanticProjection projection)
@@ -403,19 +452,29 @@ static class SemanticModelValidator
                 throw new InvalidSemanticContract($"Projection read model '{projection.ReadModel}' is unresolved.");
             }
 
-            HashSet<SemanticId> properties = [.. readModel.Properties.Select(_ => _.Id)];
+            var targets = Properties(readModel.Properties);
+            var identifier = IdentifierProperty(readModel);
             foreach (var transition in projection.Transitions)
             {
-                RejectNull(transition, "projection transition");
-                if (!_events.ContainsKey(transition.EventContract))
+                if (!_events.TryGetValue(transition.EventContract, out var eventContract))
                 {
                     throw new InvalidSemanticContract($"Projection event contract '{transition.EventContract}' is unresolved.");
                 }
 
                 RejectNull(transition.AffectedInstance, "affected instance");
                 ValidateEnum(transition.AffectedInstance.Cardinality, AffectedInstanceCardinality.Unknown, "affected instance cardinality");
-                ValidateExpression(transition.AffectedInstance.Key);
-                ValidateMappings(transition.Mappings, properties);
+                var sources = Properties(eventContract.Properties);
+                var keyType = ResolveExpression(transition.AffectedInstance.Key, SemanticExpressionRootKind.Event, sources, null) ??
+                    throw new InvalidSemanticContract("An affected-instance key cannot be null.");
+
+                var expectsCollection = transition.AffectedInstance.Cardinality == AffectedInstanceCardinality.Many;
+                var expectsOptional = transition.AffectedInstance.Cardinality == AffectedInstanceCardinality.ZeroOrOne;
+                if (keyType.IsCollection != expectsCollection || keyType.IsOptional != expectsOptional || !SameValueType(keyType, identifier.Type))
+                {
+                    throw new InvalidSemanticContract("An affected-instance key type, optionality or cardinality is incompatible with the read model identifier.");
+                }
+
+                ValidateMappings(transition.Mappings, targets, SemanticExpressionRootKind.Event, sources);
             }
         }
 
@@ -426,16 +485,23 @@ static class SemanticModelValidator
                 throw new InvalidSemanticContract($"Query read model '{query.ReadModel}' is unresolved.");
             }
 
-            RejectNull(query.Argument, "query argument");
-            RequireName(query.Argument.Name, "query argument");
             ValidateTypeReference(query.Argument.Type);
-            if (!readModel.Properties.Any(_ => _.Id == query.KeyProperty))
+            if (!Properties(readModel.Properties).TryGetValue(query.KeyProperty, out var keyProperty))
             {
                 throw new InvalidSemanticContract($"Query key property '{query.KeyProperty}' is unresolved.");
             }
 
             ValidateEnum(query.Cardinality, SemanticQueryCardinality.Unknown, "query cardinality");
             ValidateEnum(query.Delivery, SemanticQueryDelivery.Unknown, "query delivery");
+            if (query.Argument.Type.IsCollection || keyProperty.Type.IsCollection || !SameType(query.Argument.Type, keyProperty.Type))
+            {
+                throw new InvalidSemanticContract("A query argument and key property must have the same scalar type and optionality.");
+            }
+
+            if (keyProperty.IsIdentifier == (query.Cardinality == SemanticQueryCardinality.Many))
+            {
+                throw new InvalidSemanticContract("A query cardinality is incompatible with whether its key property is an identifier.");
+            }
         }
 
         void ValidateSpecification(SemanticSpecification specification)
@@ -445,93 +511,343 @@ static class SemanticModelValidator
                 throw new InvalidSemanticContract($"Specification command '{specification.When.Command}' is unresolved.");
             }
 
-            HashSet<SemanticId> commandProperties = [.. command.Properties.Select(_ => _.Id)];
-            ValidateMappings(specification.When.Values, commandProperties);
-            foreach (var value in specification.GivenEvents.Concat(specification.ThenEvents))
+            ValidatePropertyValues(specification.When.Values, command.Properties, true);
+            var producedEvents = command.Produces.Select(_ => _.EventContract).ToHashSet();
+            foreach (var value in specification.GivenEvents)
             {
                 ValidateSpecificationEvent(value);
             }
 
-            foreach (var state in specification.GivenReadModels.Concat(specification.ThenReadModels))
+            foreach (var value in specification.ThenEvents)
+            {
+                if (!producedEvents.Contains(value.EventContract))
+                {
+                    throw new InvalidSemanticContract("A specification expects an event the command does not produce.");
+                }
+
+                ValidateSpecificationEvent(value);
+            }
+
+            foreach (var state in specification.GivenReadModels)
+            {
+                ValidateSpecificationReadModel(state);
+            }
+
+            foreach (var state in specification.ThenReadModels)
             {
                 ValidateSpecificationReadModel(state);
             }
 
             foreach (var result in specification.ThenQueries)
             {
-                RejectNull(result, "specification query result");
-                if (!_queries.TryGetValue(result.Query, out var query))
-                {
-                    throw new InvalidSemanticContract($"Specification query '{result.Query}' is unresolved.");
-                }
-
-                ValidateExpression(result.Key);
-                RequireArray(result.Results, nameof(result.Results));
-                foreach (var state in result.Results)
-                {
-                    if (state.ReadModel != query.ReadModel)
-                    {
-                        throw new InvalidSemanticContract("A specification query result uses the wrong read model.");
-                    }
-
-                    ValidateSpecificationReadModel(state);
-                }
+                ValidateSpecificationQuery(result);
             }
 
             foreach (var error in specification.ThenErrors)
             {
-                RejectNull(error, "specification error");
-                if (error.Code is null && error.Message is null)
-                {
-                    continue;
-                }
+                ValidateSpecificationError(error);
+            }
 
-                if (error.Code?.Length == 0 || error.Message?.Length == 0)
-                {
-                    throw new InvalidSemanticContract("Specification error code and message cannot be empty strings.");
-                }
+            var hasRejection = specification.ThenErrors.Length > 0;
+            var hasSuccessOutcome = specification.ThenEvents.Length > 0 || specification.ThenReadModels.Length > 0 || specification.ThenQueries.Length > 0;
+            if (hasRejection && (specification.ThenErrors.Length != 1 || hasSuccessOutcome))
+            {
+                throw new InvalidSemanticContract("A rejection specification must contain exactly one rejection and no success outcomes.");
+            }
+
+            if (!hasRejection && !hasSuccessOutcome)
+            {
+                throw new InvalidSemanticContract("A success specification must contain at least one success outcome.");
             }
         }
 
         void ValidateSpecificationEvent(SemanticSpecificationEvent value)
         {
-            RejectNull(value, "specification event");
             if (!_events.TryGetValue(value.EventContract, out var eventContract))
             {
                 throw new InvalidSemanticContract($"Specification event '{value.EventContract}' is unresolved.");
             }
 
-            HashSet<SemanticId> eventProperties = [.. eventContract.Properties.Select(_ => _.Id)];
-            ValidateMappings(value.Values, eventProperties);
+            ValidatePropertyValues(value.Values, eventContract.Properties, true);
         }
 
         void ValidateSpecificationReadModel(SemanticSpecificationReadModel state)
         {
-            RejectNull(state, "specification read model");
             if (!_readModels.TryGetValue(state.ReadModel, out var readModel))
             {
                 throw new InvalidSemanticContract($"Specification read model '{state.ReadModel}' is unresolved.");
             }
 
-            ValidateExpression(state.Key);
-            HashSet<SemanticId> readModelProperties = [.. readModel.Properties.Select(_ => _.Id)];
-            ValidateMappings(state.Values, readModelProperties);
+            var identifier = IdentifierProperty(readModel);
+            ValidateValue(state.Key, identifier.Type, "specification read model key");
+            ValidatePropertyValues(state.Values, readModel.Properties, true);
+            var identifierValue = state.Values.Single(_ => _.TargetProperty == identifier.Id).Value;
+            if (!Equals(state.Key, identifierValue))
+            {
+                throw new InvalidSemanticContract("A specification read model key must equal its identifier property value.");
+            }
         }
 
-        void ValidateMappings(ImmutableArray<SemanticPropertyMapping> mappings, HashSet<SemanticId> allowedProperties)
+        void ValidateSpecificationQuery(SemanticSpecificationQueryResult result)
         {
-            RequireArray(mappings, nameof(mappings));
+            if (!_queries.TryGetValue(result.Query, out var query))
+            {
+                throw new InvalidSemanticContract($"Specification query '{result.Query}' is unresolved.");
+            }
+
+            ValidateValue(result.Key, query.Argument.Type, "specification query key");
+            RequireObjects(result.Results, nameof(result.Results), "specification query result state");
+            var validCount = query.Cardinality switch
+            {
+                SemanticQueryCardinality.One => result.Results.Length == 1,
+                SemanticQueryCardinality.ZeroOrOne => result.Results.Length <= 1,
+                SemanticQueryCardinality.Many => true,
+                _ => false
+            };
+            if (!validCount)
+            {
+                throw new InvalidSemanticContract("A specification query result count does not match its cardinality.");
+            }
+
+            var keyProperty = _readModels[query.ReadModel].Properties.Single(_ => _.Id == query.KeyProperty);
+            foreach (var state in result.Results)
+            {
+                if (state.ReadModel != query.ReadModel || (keyProperty.IsIdentifier && !Equals(state.Key, result.Key)))
+                {
+                    throw new InvalidSemanticContract("A specification query result uses the wrong read model or key.");
+                }
+
+                ValidateSpecificationReadModel(state);
+            }
+        }
+
+        void ValidateSpecificationError(SemanticSpecificationError error)
+        {
+            var isBare = error.Code is null && error.Message is null;
+            var isMessageOnly = error.Code is null && !string.IsNullOrEmpty(error.Message);
+            var isDetailed = !string.IsNullOrEmpty(error.Code) && !string.IsNullOrEmpty(error.Message);
+            if (!isBare && !isMessageOnly && !isDetailed)
+            {
+                throw new InvalidSemanticContract("A specification rejection must be bare, message-only, or contain both a non-empty code and message.");
+            }
+        }
+
+        void ValidateMappings(
+            ImmutableArray<SemanticPropertyMapping> mappings,
+            Dictionary<SemanticId, SemanticProperty> targets,
+            SemanticExpressionRootKind root,
+            Dictionary<SemanticId, SemanticProperty> sources)
+        {
+            RequireObjects(mappings, nameof(mappings), "property mapping");
+            var mapped = new HashSet<SemanticId>();
             foreach (var mapping in mappings)
             {
-                RejectNull(mapping, "property mapping");
-                if (!allowedProperties.Contains(mapping.TargetProperty))
+                if (!mapped.Add(mapping.TargetProperty))
+                {
+                    throw new InvalidSemanticContract($"Mapping target property '{mapping.TargetProperty}' is duplicated.");
+                }
+
+                if (!targets.TryGetValue(mapping.TargetProperty, out var target))
                 {
                     throw new InvalidSemanticContract($"Mapping target property '{mapping.TargetProperty}' is unresolved.");
                 }
 
-                ValidateExpression(mapping.Source);
+                if (mapping.Source is SemanticValueExpression value)
+                {
+                    ValidateValue(value.Value, target.Type, "property mapping");
+                }
+                else
+                {
+                    var sourceType = ResolveExpression(mapping.Source, root, sources, null);
+                    RequireCompatible(sourceType, target.Type, "property mapping");
+                }
             }
         }
+
+        void ValidatePropertyValues(
+            ImmutableArray<SemanticPropertyValue> values,
+            ImmutableArray<SemanticProperty> targetProperties,
+            bool requireExact)
+        {
+            RequireObjects(values, nameof(values), "property value");
+            var targets = Properties(targetProperties);
+            var assigned = new HashSet<SemanticId>();
+            foreach (var value in values)
+            {
+                RejectNull(value.Value, "semantic value");
+                if (!assigned.Add(value.TargetProperty))
+                {
+                    throw new InvalidSemanticContract($"Property value target '{value.TargetProperty}' is duplicated.");
+                }
+
+                if (!targets.TryGetValue(value.TargetProperty, out var target))
+                {
+                    throw new InvalidSemanticContract($"Property value target '{value.TargetProperty}' is unresolved.");
+                }
+
+                ValidateValue(value.Value, target.Type, "property value");
+            }
+
+            if (requireExact && assigned.Count != targets.Count)
+            {
+                throw new InvalidSemanticContract("A specification property value shape must assign every target exactly once.");
+            }
+        }
+
+        SemanticTypeReference? ResolveExpression(
+            SemanticExpression expression,
+            SemanticExpressionRootKind expectedRoot,
+            Dictionary<SemanticId, SemanticProperty> properties,
+            Dictionary<SemanticId, SemanticReadModelQueryArgument>? arguments)
+        {
+            RejectNull(expression, "expression");
+            ValidateEnum(expression.Kind, SemanticExpressionKind.Unknown, "expression kind");
+            switch (expression)
+            {
+                case SemanticValueExpression value when expression.Kind == SemanticExpressionKind.Value:
+                    RejectNull(value.Value, "semantic value");
+                    ValidateValueVariant(value.Value);
+                    return TypeOf(value.Value);
+                case SemanticResolvedExpression resolved when expression.Kind == SemanticExpressionKind.Resolved:
+                    ValidateEnum(resolved.Root, SemanticExpressionRootKind.Unknown, "expression root");
+                    ValidateEnum(resolved.Source, SemanticExpressionSourceKind.Unknown, "expression source");
+                    if (resolved.Root != expectedRoot || !resolved.Target.IsSet)
+                    {
+                        throw new InvalidSemanticContract("A resolved expression uses the wrong root or a default target identity.");
+                    }
+
+                    return resolved.Source switch
+                    {
+                        SemanticExpressionSourceKind.Property when properties.TryGetValue(resolved.Target, out var property) => property.Type,
+                        SemanticExpressionSourceKind.Argument when arguments is not null && arguments.TryGetValue(resolved.Target, out var argument) => argument.Type,
+                        _ => throw new InvalidSemanticContract($"Resolved expression target '{resolved.Target}' is unresolved in its root scope.")
+                    };
+                default:
+                    throw new InvalidSemanticContract("A semantic expression variant is malformed or unknown.");
+            }
+        }
+
+        void ValidateValue(SemanticValue value, SemanticTypeReference target, string description)
+        {
+            RejectNull(value, "semantic value");
+            ValidateValueVariant(value);
+            if (value is SemanticNullValue)
+            {
+                if (!target.IsOptional)
+                {
+                    throw new InvalidSemanticContract($"A null {description} is incompatible with a required target.");
+                }
+
+                return;
+            }
+
+            if (target.IsCollection)
+            {
+                throw new InvalidSemanticContract($"A scalar {description} is incompatible with a collection target.");
+            }
+
+            var primitive = UnderlyingPrimitive(target);
+            var compatible = value switch
+            {
+                SemanticTextValue text => ValidateText(text.Value, primitive),
+                SemanticNumberValue number => primitive == SemanticPrimitiveType.DecimalNumber ||
+                    (primitive == SemanticPrimitiveType.WholeNumber && decimal.Truncate(number.Value) == number.Value),
+                SemanticBooleanValue => primitive == SemanticPrimitiveType.Boolean,
+                _ => false
+            };
+            if (!compatible)
+            {
+                throw new InvalidSemanticContract($"A {description} is incompatible with its target type.");
+            }
+        }
+
+        void ValidateValueVariant(SemanticValue value)
+        {
+            ValidateEnum(value.Kind, SemanticValueKind.Unknown, "semantic value kind");
+            var valid = value switch
+            {
+                SemanticNullValue => value.Kind == SemanticValueKind.Null,
+                SemanticTextValue text => value.Kind == SemanticValueKind.Text && text.Value is not null,
+                SemanticNumberValue => value.Kind == SemanticValueKind.Number,
+                SemanticBooleanValue => value.Kind == SemanticValueKind.Boolean,
+                _ => false
+            };
+            if (!valid)
+            {
+                throw new InvalidSemanticContract("A semantic value variant is malformed or unknown.");
+            }
+        }
+
+        SemanticTypeReference? TypeOf(SemanticValue value) => value switch
+        {
+            SemanticNullValue => null,
+            SemanticTextValue => SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text),
+            SemanticNumberValue => SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.DecimalNumber),
+            SemanticBooleanValue => SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Boolean),
+            _ => throw new InvalidSemanticContract("A semantic value variant is malformed or unknown.")
+        };
+
+        void RequireCompatible(SemanticTypeReference? source, SemanticTypeReference target, string description)
+        {
+            if (source is null)
+            {
+                if (!target.IsOptional)
+                {
+                    throw new InvalidSemanticContract($"A null {description} source is incompatible with a required target.");
+                }
+
+                return;
+            }
+
+            if (!SameType(source, target) && !(SameValueType(source, target) && !source.IsOptional && target.IsOptional))
+            {
+                throw new InvalidSemanticContract($"A {description} source and target have incompatible types.");
+            }
+        }
+
+        bool SameType(SemanticTypeReference left, SemanticTypeReference right) =>
+            SameValueType(left, right) && left.IsCollection == right.IsCollection && left.IsOptional == right.IsOptional;
+
+        bool SameValueType(SemanticTypeReference left, SemanticTypeReference right) =>
+            left.Kind == right.Kind && left.Primitive == right.Primitive && left.Target == right.Target;
+
+        SemanticPrimitiveType UnderlyingPrimitive(SemanticTypeReference type) => type.Kind switch
+        {
+            SemanticTypeReferenceKind.Primitive => type.Primitive,
+            SemanticTypeReferenceKind.Concept when _concepts.TryGetValue(type.Target, out var concept) => concept.Primitive,
+            _ => SemanticPrimitiveType.Unknown
+        };
+
+        bool ValidateText(string value, SemanticPrimitiveType primitive) => primitive switch
+        {
+            SemanticPrimitiveType.Text => true,
+            SemanticPrimitiveType.Uuid => Guid.TryParseExact(value, "D", out var uuid) && uuid.ToString("D", CultureInfo.InvariantCulture) == value,
+            SemanticPrimitiveType.Date => DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _),
+            SemanticPrimitiveType.DateTime => DateTimeOffset.TryParseExact(value, "O", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out _),
+            _ => false
+        };
+
+        void RequireBoolean(SemanticTypeReference? type, string description)
+        {
+            if (type?.IsCollection is not false || type.IsOptional || UnderlyingPrimitive(type) != SemanticPrimitiveType.Boolean)
+            {
+                throw new InvalidSemanticContract($"A {description} must resolve to required scalar Boolean.");
+            }
+        }
+
+        SemanticProperty IdentifierProperty(SemanticReadModel readModel)
+        {
+            var identifiers = readModel.Properties.Where(_ => _.IsIdentifier).ToArray();
+            if (identifiers.Length != 1 || identifiers[0].Type.IsCollection || identifiers[0].Type.IsOptional)
+            {
+                throw new InvalidSemanticContract($"Read model '{readModel.Name}' must have exactly one required scalar identifier property.");
+            }
+
+            return identifiers[0];
+        }
+
+        Dictionary<SemanticId, SemanticProperty> Properties(ImmutableArray<SemanticProperty> properties) =>
+            properties.ToDictionary(_ => _.Id);
 
         void Register(SemanticId id, string name, string description)
         {
@@ -549,14 +865,14 @@ static class SemanticModelValidator
 
         void RequireSpecificationArrays(SemanticSpecification specification)
         {
-            RequireArray(specification.GivenEvents, nameof(specification.GivenEvents));
-            RequireArray(specification.GivenReadModels, nameof(specification.GivenReadModels));
+            RequireObjects(specification.GivenEvents, nameof(specification.GivenEvents), "specification event");
+            RequireObjects(specification.GivenReadModels, nameof(specification.GivenReadModels), "specification read model");
             RejectNull(specification.When, "specification command");
-            RequireArray(specification.When.Values, nameof(specification.When.Values));
-            RequireArray(specification.ThenEvents, nameof(specification.ThenEvents));
-            RequireArray(specification.ThenReadModels, nameof(specification.ThenReadModels));
-            RequireArray(specification.ThenQueries, nameof(specification.ThenQueries));
-            RequireArray(specification.ThenErrors, nameof(specification.ThenErrors));
+            RequireObjects(specification.When.Values, nameof(specification.When.Values), "property value");
+            RequireObjects(specification.ThenEvents, nameof(specification.ThenEvents), "specification event");
+            RequireObjects(specification.ThenReadModels, nameof(specification.ThenReadModels), "specification read model");
+            RequireObjects(specification.ThenQueries, nameof(specification.ThenQueries), "specification query result");
+            RequireObjects(specification.ThenErrors, nameof(specification.ThenErrors), "specification error");
         }
 
         IEnumerable<SemanticSlice> AllSlices(SemanticApplication application) =>
@@ -564,32 +880,6 @@ static class SemanticModelValidator
 
         IEnumerable<SemanticSlice> AllSlices(ImmutableArray<SemanticFeature> features) =>
             features.SelectMany(_ => _.Slices.Concat(AllSlices(_.Features)));
-
-        void ValidateExpression(SemanticExpression expression)
-        {
-            RejectNull(expression, "expression");
-            var valid = expression.Kind switch
-            {
-                SemanticExpressionKind.Null => expression.Text is null && expression.Number is null && expression.Boolean is null,
-                SemanticExpressionKind.Text => expression.Text is not null && expression.Number is null && expression.Boolean is null,
-                SemanticExpressionKind.Number => expression.Text is null && expression.Number is not null && expression.Boolean is null,
-                SemanticExpressionKind.Boolean => expression.Text is null && expression.Number is null && expression.Boolean is not null,
-                SemanticExpressionKind.Path => !string.IsNullOrEmpty(expression.Text) && expression.Number is null && expression.Boolean is null,
-                _ => false
-            };
-            if (!valid)
-            {
-                throw new InvalidSemanticContract("A semantic expression is malformed or unknown.");
-            }
-        }
-
-        void ValidateOptionalExpression(SemanticExpression? expression)
-        {
-            if (expression is not null)
-            {
-                ValidateExpression(expression);
-            }
-        }
 
         void ValidatePrimitive(SemanticPrimitiveType primitive) =>
             ValidateEnum(primitive, SemanticPrimitiveType.Unknown, "primitive type");
@@ -599,7 +889,7 @@ static class SemanticModelValidator
         {
             if (!Enum.IsDefined(value) || EqualityComparer<T>.Default.Equals(value, unknown))
             {
-                throw new InvalidSemanticContract($"The {description} value '{Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture)}' is unknown.");
+                throw new InvalidSemanticContract($"The {description} value '{Convert.ToInt32(value, CultureInfo.InvariantCulture)}' is unknown.");
             }
         }
 
@@ -629,6 +919,16 @@ static class SemanticModelValidator
             if (values.IsDefault)
             {
                 throw new InvalidSemanticContract($"The immutable array '{name}' cannot be default.");
+            }
+        }
+
+        void RequireObjects<T>(ImmutableArray<T> values, string name, string description)
+            where T : class
+        {
+            RequireArray(values, name);
+            foreach (var value in values)
+            {
+                RejectNull(value, description);
             }
         }
 

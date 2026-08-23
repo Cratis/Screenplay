@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#if DEBUG
 using System.Collections.Immutable;
 
 namespace Cratis.Screenplay.Semantics.given;
@@ -13,11 +14,14 @@ public class a_valid_semantic_model : Specification
     protected EventContractId _eventContractId;
     protected SemanticId _applicationId;
     protected SemanticId _commandId;
+    protected SemanticId _commandNamePropertyId;
+    protected SemanticId _commandProjectIdPropertyId;
     protected SemanticId _eventId;
     protected SemanticId _eventNamePropertyId;
     protected SemanticId _eventProjectIdPropertyId;
     protected SemanticId _projectIdConceptId;
     protected SemanticId _projectNameConceptId;
+    protected SemanticId _queryArgumentId;
     protected SemanticId _queryId;
     protected SemanticId _readModelId;
     protected SemanticId _readModelNamePropertyId;
@@ -33,8 +37,9 @@ public class a_valid_semantic_model : Specification
         _readModelId = Id(SemanticKind.ReadModel, "ProjectSummary");
         _queryId = Id(SemanticKind.Query, "ProjectById");
 
-        var commandProjectIdPropertyId = Id(SemanticKind.Property, "RegisterProject.ProjectId");
-        var commandNamePropertyId = Id(SemanticKind.Property, "RegisterProject.Name");
+        _commandProjectIdPropertyId = Id(SemanticKind.Property, "RegisterProject.ProjectId");
+        _commandNamePropertyId = Id(SemanticKind.Property, "RegisterProject.Name");
+        _queryArgumentId = Id(SemanticKind.Property, "ProjectById.ProjectId");
         _eventProjectIdPropertyId = Id(SemanticKind.Property, "ProjectRegistered.ProjectId");
         _eventNamePropertyId = Id(SemanticKind.Property, "ProjectRegistered.Name");
         _readModelProjectIdPropertyId = Id(SemanticKind.Property, "ProjectSummary.ProjectId");
@@ -55,17 +60,17 @@ public class a_valid_semantic_model : Specification
             _commandId,
             "RegisterProject",
             [
-                new(commandProjectIdPropertyId, "ProjectId", SemanticTypeReference.ForConcept(_projectIdConceptId), true),
-                new(commandNamePropertyId, "Name", SemanticTypeReference.ForConcept(_projectNameConceptId), false)
+                new(_commandProjectIdPropertyId, "ProjectId", SemanticTypeReference.ForConcept(_projectIdConceptId), true),
+                new(_commandNamePropertyId, "Name", SemanticTypeReference.ForConcept(_projectNameConceptId), false)
             ],
-            [new(commandNamePropertyId, SemanticValidationRuleKind.NotEmpty, null, "Project name is required")],
+            [new(_commandNamePropertyId, SemanticValidationRuleKind.NotEmpty, null, "Project name is required")],
             [new(
-                _eventContractId,
+                _eventId,
                 null,
-                SemanticExpression.Path("command.projectId"),
+                SemanticExpression.Property(SemanticExpressionRootKind.Command, _commandProjectIdPropertyId),
                 [
-                    new(_eventProjectIdPropertyId, SemanticExpression.Path("command.projectId")),
-                    new(_eventNamePropertyId, SemanticExpression.Path("command.name"))
+                    new(_eventProjectIdPropertyId, SemanticExpression.Property(SemanticExpressionRootKind.Command, _commandProjectIdPropertyId)),
+                    new(_eventNamePropertyId, SemanticExpression.Property(SemanticExpressionRootKind.Command, _commandNamePropertyId))
                 ])]);
         var readModel = new SemanticReadModel(
             _readModelId,
@@ -79,32 +84,33 @@ public class a_valid_semantic_model : Specification
             "ProjectSummaryProjection",
             _readModelId,
             [new(
-                _eventContractId,
-                new(AffectedInstanceCardinality.One, SemanticExpression.Path("event.projectId")),
+                _eventId,
+                new(AffectedInstanceCardinality.One, SemanticExpression.Property(SemanticExpressionRootKind.Event, _eventProjectIdPropertyId)),
                 [
-                    new(_readModelProjectIdPropertyId, SemanticExpression.Path("event.projectId")),
-                    new(_readModelNamePropertyId, SemanticExpression.Path("event.name"))
+                    new(_readModelProjectIdPropertyId, SemanticExpression.Property(SemanticExpressionRootKind.Event, _eventProjectIdPropertyId)),
+                    new(_readModelNamePropertyId, SemanticExpression.Property(SemanticExpressionRootKind.Event, _eventNamePropertyId))
                 ])]);
         var query = new SemanticKeyedQuery(
             _queryId,
             "ProjectById",
-            new("projectId", SemanticTypeReference.ForConcept(_projectIdConceptId)),
+            new(_queryArgumentId, "projectId", SemanticTypeReference.ForConcept(_projectIdConceptId)),
             _readModelId,
             _readModelProjectIdPropertyId,
             SemanticQueryCardinality.ZeroOrOne,
             SemanticQueryDelivery.Snapshot);
+        var projectId = SemanticValue.Text("00000000-0000-0000-0000-000000000001");
         var commandValues = ImmutableArray.Create(
-            new SemanticPropertyMapping(commandProjectIdPropertyId, SemanticExpression.TextValue("project-1")),
-            new SemanticPropertyMapping(commandNamePropertyId, SemanticExpression.TextValue("Screenplay")));
+            new SemanticPropertyValue(_commandProjectIdPropertyId, projectId),
+            new SemanticPropertyValue(_commandNamePropertyId, SemanticValue.Text("Screenplay")));
         var eventValues = ImmutableArray.Create(
-            new SemanticPropertyMapping(_eventProjectIdPropertyId, SemanticExpression.TextValue("project-1")),
-            new SemanticPropertyMapping(_eventNamePropertyId, SemanticExpression.TextValue("Screenplay")));
+            new SemanticPropertyValue(_eventProjectIdPropertyId, projectId),
+            new SemanticPropertyValue(_eventNamePropertyId, SemanticValue.Text("Screenplay")));
         var readModelState = new SemanticSpecificationReadModel(
             _readModelId,
-            SemanticExpression.TextValue("project-1"),
+            projectId,
             [
-                new(_readModelProjectIdPropertyId, SemanticExpression.TextValue("project-1")),
-                new(_readModelNamePropertyId, SemanticExpression.TextValue("Screenplay"))
+                new(_readModelProjectIdPropertyId, projectId),
+                new(_readModelNamePropertyId, SemanticValue.Text("Screenplay"))
             ]);
         var success = new SemanticSpecification(
             Id(SemanticKind.Specification, "registers a project"),
@@ -112,9 +118,9 @@ public class a_valid_semantic_model : Specification
             [],
             [],
             new(_commandId, commandValues),
-            [new(_eventContractId, eventValues)],
+            [new(_eventId, eventValues)],
             [readModelState],
-            [new(_queryId, SemanticExpression.TextValue("project-1"), [readModelState])],
+            [new(_queryId, projectId, [readModelState])],
             []);
         var rejection = new SemanticSpecification(
             Id(SemanticKind.Specification, "rejects an empty name"),
@@ -124,13 +130,13 @@ public class a_valid_semantic_model : Specification
             new(
                 _commandId,
                 [
-                    new(commandProjectIdPropertyId, SemanticExpression.TextValue("project-1")),
-                    new(commandNamePropertyId, SemanticExpression.TextValue(string.Empty))
+                    new(_commandProjectIdPropertyId, projectId),
+                    new(_commandNamePropertyId, SemanticValue.Text(string.Empty))
                 ]),
             [],
             [],
             [],
-            [new("validation", "Project name is required")]);
+            [new(null, "Project name is required")]);
         var stateChange = new SemanticSlice(
             Id(SemanticKind.Slice, "Registration"),
             "Registration",
@@ -175,8 +181,21 @@ public class a_valid_semantic_model : Specification
             [new(eventAddress, _eventContractId, EventContractRevision.Initial, SemanticIdentityOrigin.LegacyBootstrap)]);
     }
 
+    protected SemanticApplication ReplaceSlice(SemanticSlice replacement) => ReplaceSlices(replacement);
+
+    protected SemanticApplication ReplaceSlices(params SemanticSlice[] replacements)
+    {
+        var module = _application.Modules.Single();
+        var feature = module.Features.Single();
+        var replaced = feature.Slices.Select(slice => replacements.SingleOrDefault(_ => _.Id == slice.Id) ?? slice).ToImmutableArray();
+        var replacedFeature = feature with { Slices = replaced };
+        var replacedModule = module with { Features = [replacedFeature] };
+        return _application with { Modules = [replacedModule] };
+    }
+
     protected static SemanticAddress Address(SemanticKind kind, string key) =>
         SemanticAddress.Create(kind, [SemanticAddressPart.Create(SemanticAddressPartKind.Declaration, key)]);
 
     protected static SemanticId Id(SemanticKind kind, string key) => SemanticId.Create(Address(kind, key));
 }
+#endif

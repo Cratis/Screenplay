@@ -41,7 +41,7 @@ public enum SemanticValidationRuleKind
     NotEqual = 4,
 
     /// <summary>
-    /// The value must match the operand.
+    /// The text value must match the operand pattern.
     /// </summary>
     Matches = 5
 }
@@ -90,7 +90,12 @@ public enum SemanticQueryCardinality
     /// <summary>
     /// Zero or one result.
     /// </summary>
-    ZeroOrOne = 1
+    ZeroOrOne = 1,
+
+    /// <summary>
+    /// Zero or more results.
+    /// </summary>
+    Many = 2
 }
 
 /// <summary>
@@ -119,12 +124,12 @@ public enum SemanticQueryDelivery
 /// </summary>
 /// <param name="Property">The property identity, or a default identity for a concept value rule.</param>
 /// <param name="Kind">The rule kind.</param>
-/// <param name="Operand">The optional operand.</param>
+/// <param name="Operand">The optional concrete operand.</param>
 /// <param name="Message">The optional rejection message.</param>
 public sealed record SemanticValidationRule(
     SemanticId Property,
     SemanticValidationRuleKind Kind,
-    SemanticExpression? Operand,
+    SemanticValue? Operand,
     string? Message);
 
 /// <summary>
@@ -133,6 +138,13 @@ public sealed record SemanticValidationRule(
 /// <param name="TargetProperty">The target property identity.</param>
 /// <param name="Source">The source expression.</param>
 public sealed record SemanticPropertyMapping(SemanticId TargetProperty, SemanticExpression Source);
+
+/// <summary>
+/// Represents a concrete property value.
+/// </summary>
+/// <param name="TargetProperty">The target property identity.</param>
+/// <param name="Value">The concrete value.</param>
+public sealed record SemanticPropertyValue(SemanticId TargetProperty, SemanticValue Value);
 
 /// <summary>
 /// Represents a persisted event contract in ESM v1.
@@ -152,12 +164,12 @@ public sealed record SemanticEventContract(
 /// <summary>
 /// Represents one event a command can produce.
 /// </summary>
-/// <param name="EventContract">The event contract identity.</param>
+/// <param name="EventContract">The event declaration semantic identity.</param>
 /// <param name="Condition">The optional production condition.</param>
 /// <param name="Destination">The optional modeled event-source destination.</param>
 /// <param name="Mappings">The mappings in behavior order.</param>
 public sealed record SemanticProducedEvent(
-    EventContractId EventContract,
+    SemanticId EventContract,
     SemanticExpression? Condition,
     SemanticExpression? Destination,
     ImmutableArray<SemanticPropertyMapping> Mappings);
@@ -195,11 +207,11 @@ public sealed record SemanticAffectedInstance(AffectedInstanceCardinality Cardin
 /// <summary>
 /// Represents one event-driven projection transition.
 /// </summary>
-/// <param name="EventContract">The event contract that causes the transition.</param>
+/// <param name="EventContract">The event declaration semantic identity that causes the transition.</param>
 /// <param name="AffectedInstance">The affected read model identity.</param>
 /// <param name="Mappings">The state mappings in behavior order.</param>
 public sealed record SemanticProjectionTransition(
-    EventContractId EventContract,
+    SemanticId EventContract,
     SemanticAffectedInstance AffectedInstance,
     ImmutableArray<SemanticPropertyMapping> Mappings);
 
@@ -238,6 +250,7 @@ public sealed record SemanticKeyedQuery(
 /// <summary>
 /// Represents a typed keyed-query argument.
 /// </summary>
+/// <param name="Id">The stable semantic identity.</param>
 /// <param name="Name">The argument name.</param>
 /// <param name="Type">The argument type.</param>
-public sealed record SemanticReadModelQueryArgument(string Name, SemanticTypeReference Type);
+public sealed record SemanticReadModelQueryArgument(SemanticId Id, string Name, SemanticTypeReference Type);

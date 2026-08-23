@@ -156,7 +156,7 @@ static class SemanticModelCanonicalJson
         writer.WriteStartObject();
         WriteOptionalSemanticId(writer, "property", validation.Property);
         writer.WriteString("kind", ValidationKind(validation.Kind));
-        WriteOptionalExpression(writer, "operand", validation.Operand);
+        WriteOptionalValue(writer, "operand", validation.Operand);
         WriteOptionalString(writer, "message", validation.Message);
         writer.WriteEndObject();
     }
@@ -243,6 +243,7 @@ static class SemanticModelCanonicalJson
         writer.WriteString("readModel", query.ReadModel.ToString());
         writer.WritePropertyName("argument");
         writer.WriteStartObject();
+        WriteId(writer, query.Argument.Id);
         writer.WriteString("name", query.Argument.Name);
         writer.WritePropertyName("type");
         WriteTypeReference(writer, query.Argument.Type);
@@ -273,7 +274,7 @@ static class SemanticModelCanonicalJson
     {
         writer.WriteStartObject();
         writer.WriteString("eventContract", value.EventContract.ToString());
-        WriteArray(writer, "values", value.Values, WriteMapping);
+        WriteArray(writer, "values", value.Values.OrderBy(_ => _.TargetProperty.ToString(), StringComparer.Ordinal), WritePropertyValue);
         writer.WriteEndObject();
     }
 
@@ -281,7 +282,7 @@ static class SemanticModelCanonicalJson
     {
         writer.WriteStartObject();
         writer.WriteString("command", value.Command.ToString());
-        WriteArray(writer, "values", value.Values, WriteMapping);
+        WriteArray(writer, "values", value.Values.OrderBy(_ => _.TargetProperty.ToString(), StringComparer.Ordinal), WritePropertyValue);
         writer.WriteEndObject();
     }
 
@@ -290,8 +291,8 @@ static class SemanticModelCanonicalJson
         writer.WriteStartObject();
         writer.WriteString("readModel", value.ReadModel.ToString());
         writer.WritePropertyName("key");
-        WriteExpression(writer, value.Key);
-        WriteArray(writer, "values", value.Values, WriteMapping);
+        WriteValue(writer, value.Key);
+        WriteArray(writer, "values", value.Values.OrderBy(_ => _.TargetProperty.ToString(), StringComparer.Ordinal), WritePropertyValue);
         writer.WriteEndObject();
     }
 
@@ -300,7 +301,7 @@ static class SemanticModelCanonicalJson
         writer.WriteStartObject();
         writer.WriteString("query", value.Query.ToString());
         writer.WritePropertyName("key");
-        WriteExpression(writer, value.Key);
+        WriteValue(writer, value.Key);
         WriteArray(writer, "results", value.Results, WriteSpecificationReadModel);
         writer.WriteEndObject();
     }
@@ -313,27 +314,56 @@ static class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
+    static void WritePropertyValue(Utf8JsonWriter writer, SemanticPropertyValue value)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("targetProperty", value.TargetProperty.ToString());
+        writer.WritePropertyName("value");
+        WriteValue(writer, value.Value);
+        writer.WriteEndObject();
+    }
+
     static void WriteExpression(Utf8JsonWriter writer, SemanticExpression expression)
     {
         writer.WriteStartObject();
         writer.WriteString("kind", ExpressionKind(expression.Kind));
-        WriteOptionalString(writer, "text", expression.Text);
-        if (expression.Number is null)
+        switch (expression)
         {
-            writer.WriteNull("number");
-        }
-        else
-        {
-            writer.WriteNumber("number", expression.Number.Value);
+            case SemanticValueExpression value:
+                writer.WritePropertyName("value");
+                WriteValue(writer, value.Value);
+                break;
+            case SemanticResolvedExpression resolved:
+                writer.WriteString("root", ExpressionRoot(resolved.Root));
+                writer.WriteString("source", ExpressionSource(resolved.Source));
+                writer.WriteString("target", resolved.Target.ToString());
+                break;
+            default:
+                throw new InvalidSemanticContract("A semantic expression variant is malformed or unknown.");
         }
 
-        if (expression.Boolean is null)
+        writer.WriteEndObject();
+    }
+
+    static void WriteValue(Utf8JsonWriter writer, SemanticValue value)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("kind", ValueKind(value.Kind));
+        switch (value)
         {
-            writer.WriteNull("boolean");
-        }
-        else
-        {
-            writer.WriteBoolean("boolean", expression.Boolean.Value);
+            case SemanticNullValue:
+                break;
+            case SemanticTextValue text:
+                writer.WriteString("value", text.Value);
+                break;
+            case SemanticNumberValue number:
+                writer.WriteNumber("value", number.Value);
+                break;
+            case SemanticBooleanValue boolean:
+                writer.WriteBoolean("value", boolean.Value);
+                break;
+            default:
+                throw new InvalidSemanticContract("A semantic value variant is malformed or unknown.");
         }
 
         writer.WriteEndObject();
@@ -349,6 +379,19 @@ static class SemanticModelCanonicalJson
         else
         {
             WriteExpression(writer, expression);
+        }
+    }
+
+    static void WriteOptionalValue(Utf8JsonWriter writer, string name, SemanticValue? value)
+    {
+        writer.WritePropertyName(name);
+        if (value is null)
+        {
+            writer.WriteNullValue();
+        }
+        else
+        {
+            WriteValue(writer, value);
         }
     }
 
@@ -442,12 +485,33 @@ static class SemanticModelCanonicalJson
 
     static string ExpressionKind(SemanticExpressionKind value) => value switch
     {
-        SemanticExpressionKind.Null => "null",
-        SemanticExpressionKind.Text => "string",
-        SemanticExpressionKind.Number => "number",
-        SemanticExpressionKind.Boolean => "boolean",
-        SemanticExpressionKind.Path => "path",
+        SemanticExpressionKind.Value => "value",
+        SemanticExpressionKind.Resolved => "resolved",
         _ => throw Unknown(nameof(SemanticExpressionKind), value)
+    };
+
+    static string ExpressionRoot(SemanticExpressionRootKind value) => value switch
+    {
+        SemanticExpressionRootKind.Command => "command",
+        SemanticExpressionRootKind.Event => "event",
+        SemanticExpressionRootKind.Query => "query",
+        _ => throw Unknown(nameof(SemanticExpressionRootKind), value)
+    };
+
+    static string ExpressionSource(SemanticExpressionSourceKind value) => value switch
+    {
+        SemanticExpressionSourceKind.Property => "property",
+        SemanticExpressionSourceKind.Argument => "argument",
+        _ => throw Unknown(nameof(SemanticExpressionSourceKind), value)
+    };
+
+    static string ValueKind(SemanticValueKind value) => value switch
+    {
+        SemanticValueKind.Null => "null",
+        SemanticValueKind.Text => "string",
+        SemanticValueKind.Number => "number",
+        SemanticValueKind.Boolean => "boolean",
+        _ => throw Unknown(nameof(SemanticValueKind), value)
     };
 
     static string AffectedCardinality(AffectedInstanceCardinality value) => value switch
@@ -462,6 +526,7 @@ static class SemanticModelCanonicalJson
     {
         SemanticQueryCardinality.One => "one",
         SemanticQueryCardinality.ZeroOrOne => "zeroOrOne",
+        SemanticQueryCardinality.Many => "many",
         _ => throw Unknown(nameof(SemanticQueryCardinality), value)
     };
 

@@ -8,31 +8,31 @@ namespace Cratis.Screenplay.Semantics;
 /// <summary>
 /// Represents event values in a semantic specification.
 /// </summary>
-/// <param name="EventContract">The event contract identity.</param>
-/// <param name="Values">The event property values in declaration order.</param>
+/// <param name="EventContract">The event declaration semantic identity.</param>
+/// <param name="Values">The event property values, canonically ordered by target identity.</param>
 public sealed record SemanticSpecificationEvent(
-    EventContractId EventContract,
-    ImmutableArray<SemanticPropertyMapping> Values);
+    SemanticId EventContract,
+    ImmutableArray<SemanticPropertyValue> Values);
 
 /// <summary>
 /// Represents the command exercised by a semantic specification.
 /// </summary>
 /// <param name="Command">The command semantic identity.</param>
-/// <param name="Values">The command property values in declaration order.</param>
+/// <param name="Values">The command property values, canonically ordered by target identity.</param>
 public sealed record SemanticSpecificationCommand(
     SemanticId Command,
-    ImmutableArray<SemanticPropertyMapping> Values);
+    ImmutableArray<SemanticPropertyValue> Values);
 
 /// <summary>
 /// Represents one keyed read model state in a semantic specification.
 /// </summary>
 /// <param name="ReadModel">The read model semantic identity.</param>
 /// <param name="Key">The runtime instance key.</param>
-/// <param name="Values">The read model property values in declaration order.</param>
+/// <param name="Values">The read model property values, canonically ordered by target identity.</param>
 public sealed record SemanticSpecificationReadModel(
     SemanticId ReadModel,
-    SemanticExpression Key,
-    ImmutableArray<SemanticPropertyMapping> Values);
+    SemanticValue Key,
+    ImmutableArray<SemanticPropertyValue> Values);
 
 /// <summary>
 /// Represents an expected keyed query result.
@@ -42,14 +42,14 @@ public sealed record SemanticSpecificationReadModel(
 /// <param name="Results">The expected results in deterministic order.</param>
 public sealed record SemanticSpecificationQueryResult(
     SemanticId Query,
-    SemanticExpression Key,
+    SemanticValue Key,
     ImmutableArray<SemanticSpecificationReadModel> Results);
 
 /// <summary>
 /// Represents an expected validation rejection.
 /// </summary>
-/// <param name="Code">The stable rejection code, or <c>null</c> when only rejection is asserted.</param>
-/// <param name="Message">The expected message, or <c>null</c> when it is not asserted.</param>
+/// <param name="Code">The stable rejection code, or <see langword="null"/> when only rejection is asserted.</param>
+/// <param name="Message">The expected message, or <see langword="null"/> when it is not asserted.</param>
 public sealed record SemanticSpecificationError(string? Code, string? Message);
 
 /// <summary>

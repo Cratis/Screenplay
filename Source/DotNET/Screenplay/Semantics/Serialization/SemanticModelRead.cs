@@ -208,7 +208,7 @@ static class SemanticModelRead
         SemanticId propertyId = default;
         var propertyRead = false;
         SemanticValidationRuleKind? kind = null;
-        SemanticExpression? operand = null;
+        SemanticValue? operand = null;
         var operandRead = false;
         string? message = null;
         var messageRead = false;
@@ -218,7 +218,7 @@ static class SemanticModelRead
             {
                 case "property": propertyRead = true; propertyId = NullableString(ref reader, property) is { } propertyText ? SemanticId.Parse(propertyText) : default; break;
                 case "kind": kind = ParseValidationKind(String(ref reader, property)); break;
-                case "operand": operandRead = true; operand = NullableExpression(ref reader, property); break;
+                case "operand": operandRead = true; operand = NullableValue(ref reader, property); break;
                 case "message": messageRead = true; message = NullableString(ref reader, property); break;
                 default: throw Unknown(property, "validation");
             }
@@ -284,7 +284,7 @@ static class SemanticModelRead
     {
         Object(ref reader, "produced event");
         var seen = NewSeen();
-        EventContractId eventContract = default;
+        SemanticId eventContract = default;
         SemanticExpression? condition = null;
         var conditionRead = false;
         SemanticExpression? destination = null;
@@ -294,7 +294,7 @@ static class SemanticModelRead
         {
             switch (property)
             {
-                case "eventContract": eventContract = EventContractId.Parse(String(ref reader, property)); break;
+                case "eventContract": eventContract = SemanticId.Parse(String(ref reader, property)); break;
                 case "condition": conditionRead = true; condition = NullableExpression(ref reader, property); break;
                 case "destination": destinationRead = true; destination = NullableExpression(ref reader, property); break;
                 case "mappings": mappings = Array(ref reader, Mapping, property); break;
@@ -361,14 +361,14 @@ static class SemanticModelRead
     {
         Object(ref reader, "projection transition");
         var seen = NewSeen();
-        EventContractId eventContract = default;
+        SemanticId eventContract = default;
         SemanticAffectedInstance? affected = null;
         ImmutableArray<SemanticPropertyMapping> mappings = default;
         while (NextProperty(ref reader, seen, "projection transition") is { } property)
         {
             switch (property)
             {
-                case "eventContract": eventContract = EventContractId.Parse(String(ref reader, property)); break;
+                case "eventContract": eventContract = SemanticId.Parse(String(ref reader, property)); break;
                 case "affectedInstance": RequiredToken(ref reader, JsonTokenType.StartObject, property); affected = AffectedInstance(ref reader); break;
                 case "mappings": mappings = Array(ref reader, Mapping, property); break;
                 default: throw Unknown(property, "projection transition");
@@ -431,20 +431,22 @@ static class SemanticModelRead
     internal static SemanticReadModelQueryArgument QueryArgument(ref Utf8JsonReader reader)
     {
         var seen = NewSeen();
+        SemanticId id = default;
         string? name = null;
         SemanticTypeReference? type = null;
         while (NextProperty(ref reader, seen, "query argument") is { } property)
         {
             switch (property)
             {
+                case "id": id = SemanticId.Parse(String(ref reader, property)); break;
                 case "name": name = String(ref reader, property); break;
                 case "type": RequiredToken(ref reader, JsonTokenType.StartObject, property); type = TypeReference(ref reader); break;
                 default: throw Unknown(property, "query argument");
             }
         }
 
-        Required(name is not null && type is not null, "query argument");
-        return new(name!, type!);
+        Required(id.IsSet && name is not null && type is not null, "query argument");
+        return new(id, name!, type!);
     }
 
     internal static SemanticSpecification Specification(ref Utf8JsonReader reader)
@@ -488,14 +490,14 @@ static class SemanticModelRead
     {
         Object(ref reader, "specification event");
         var seen = NewSeen();
-        EventContractId eventContract = default;
-        ImmutableArray<SemanticPropertyMapping> values = default;
+        SemanticId eventContract = default;
+        ImmutableArray<SemanticPropertyValue> values = default;
         while (NextProperty(ref reader, seen, "specification event") is { } property)
         {
             switch (property)
             {
-                case "eventContract": eventContract = EventContractId.Parse(String(ref reader, property)); break;
-                case "values": values = Array(ref reader, Mapping, property); break;
+                case "eventContract": eventContract = SemanticId.Parse(String(ref reader, property)); break;
+                case "values": values = Array(ref reader, PropertyValue, property); break;
                 default: throw Unknown(property, "specification event");
             }
         }
@@ -508,13 +510,13 @@ static class SemanticModelRead
     {
         var seen = NewSeen();
         SemanticId command = default;
-        ImmutableArray<SemanticPropertyMapping> values = default;
+        ImmutableArray<SemanticPropertyValue> values = default;
         while (NextProperty(ref reader, seen, "specification command") is { } property)
         {
             switch (property)
             {
                 case "command": command = SemanticId.Parse(String(ref reader, property)); break;
-                case "values": values = Array(ref reader, Mapping, property); break;
+                case "values": values = Array(ref reader, PropertyValue, property); break;
                 default: throw Unknown(property, "specification command");
             }
         }
@@ -528,15 +530,15 @@ static class SemanticModelRead
         Object(ref reader, "specification read model");
         var seen = NewSeen();
         SemanticId readModel = default;
-        SemanticExpression? key = null;
-        ImmutableArray<SemanticPropertyMapping> values = default;
+        SemanticValue? key = null;
+        ImmutableArray<SemanticPropertyValue> values = default;
         while (NextProperty(ref reader, seen, "specification read model") is { } property)
         {
             switch (property)
             {
                 case "readModel": readModel = SemanticId.Parse(String(ref reader, property)); break;
-                case "key": RequiredToken(ref reader, JsonTokenType.StartObject, property); key = Expression(ref reader); break;
-                case "values": values = Array(ref reader, Mapping, property); break;
+                case "key": RequiredToken(ref reader, JsonTokenType.StartObject, property); key = Value(ref reader); break;
+                case "values": values = Array(ref reader, PropertyValue, property); break;
                 default: throw Unknown(property, "specification read model");
             }
         }
@@ -550,14 +552,14 @@ static class SemanticModelRead
         Object(ref reader, "specification query result");
         var seen = NewSeen();
         SemanticId query = default;
-        SemanticExpression? key = null;
+        SemanticValue? key = null;
         ImmutableArray<SemanticSpecificationReadModel> results = default;
         while (NextProperty(ref reader, seen, "specification query result") is { } property)
         {
             switch (property)
             {
                 case "query": query = SemanticId.Parse(String(ref reader, property)); break;
-                case "key": RequiredToken(ref reader, JsonTokenType.StartObject, property); key = Expression(ref reader); break;
+                case "key": RequiredToken(ref reader, JsonTokenType.StartObject, property); key = Value(ref reader); break;
                 case "results": results = Array(ref reader, SpecificationReadModel, property); break;
                 default: throw Unknown(property, "specification query result");
             }
@@ -589,30 +591,88 @@ static class SemanticModelRead
         return new(code, message);
     }
 
+    internal static SemanticPropertyValue PropertyValue(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "property value");
+        var seen = NewSeen();
+        SemanticId target = default;
+        SemanticValue? value = null;
+        while (NextProperty(ref reader, seen, "property value") is { } property)
+        {
+            switch (property)
+            {
+                case "targetProperty": target = SemanticId.Parse(String(ref reader, property)); break;
+                case "value": RequiredToken(ref reader, JsonTokenType.StartObject, property); value = Value(ref reader); break;
+                default: throw Unknown(property, "property value");
+            }
+        }
+
+        Required(target.IsSet && value is not null, "property value");
+        return new(target, value!);
+    }
+
     internal static SemanticExpression Expression(ref Utf8JsonReader reader)
     {
         var seen = NewSeen();
         SemanticExpressionKind? kind = null;
-        string? text = null;
-        var textRead = false;
-        decimal? number = null;
-        var numberRead = false;
-        bool? boolean = null;
-        var booleanRead = false;
+        SemanticValue? value = null;
+        var valueRead = false;
+        SemanticExpressionRootKind? root = null;
+        SemanticExpressionSourceKind? source = null;
+        SemanticId target = default;
+        var targetRead = false;
         while (NextProperty(ref reader, seen, "expression") is { } property)
         {
             switch (property)
             {
                 case "kind": kind = ParseExpressionKind(String(ref reader, property)); break;
-                case "text": textRead = true; text = NullableString(ref reader, property); break;
-                case "number": numberRead = true; number = NullableDecimal(ref reader, property); break;
-                case "boolean": booleanRead = true; boolean = NullableBoolean(ref reader, property); break;
+                case "value": valueRead = true; RequiredToken(ref reader, JsonTokenType.StartObject, property); value = Value(ref reader); break;
+                case "root": root = ParseExpressionRoot(String(ref reader, property)); break;
+                case "source": source = ParseExpressionSource(String(ref reader, property)); break;
+                case "target": targetRead = true; target = SemanticId.Parse(String(ref reader, property)); break;
                 default: throw Unknown(property, "expression");
             }
         }
 
-        Required(kind is not null && textRead && numberRead && booleanRead, "expression");
-        return new(kind!.Value, text, number, boolean);
+        return kind switch
+        {
+            SemanticExpressionKind.Value when valueRead && value is not null && root is null && source is null && !targetRead => new SemanticValueExpression(value),
+            SemanticExpressionKind.Resolved when !valueRead && root is not null && source is not null && targetRead && target.IsSet => new SemanticResolvedExpression(root.Value, source.Value, target),
+            _ => throw Malformed("expression", "one exact expression variant")
+        };
+    }
+
+    internal static SemanticValue Value(ref Utf8JsonReader reader)
+    {
+        var seen = NewSeen();
+        SemanticValueKind? kind = null;
+        SemanticValue? value = null;
+        var valueRead = false;
+        while (NextProperty(ref reader, seen, "value") is { } property)
+        {
+            switch (property)
+            {
+                case "kind": kind = ParseValueKind(String(ref reader, property)); break;
+                case "value":
+                    valueRead = true;
+                    value = kind switch
+                    {
+                        SemanticValueKind.Text => new SemanticTextValue(String(ref reader, property)),
+                        SemanticValueKind.Number => new SemanticNumberValue(Decimal(ref reader, property)),
+                        SemanticValueKind.Boolean => new SemanticBooleanValue(Boolean(ref reader, property)),
+                        _ => throw Malformed("value", "a kind discriminator before its typed value")
+                    };
+                    break;
+                default: throw Unknown(property, "value");
+            }
+        }
+
+        return kind switch
+        {
+            SemanticValueKind.Null when !valueRead => SemanticValue.Null,
+            SemanticValueKind.Text or SemanticValueKind.Number or SemanticValueKind.Boolean when valueRead && value is not null => value,
+            _ => throw Malformed("value", "one exact value variant")
+        };
     }
 
     internal static SemanticExpression? NullableExpression(ref Utf8JsonReader reader, string name)
@@ -629,6 +689,22 @@ static class SemanticModelRead
         }
 
         return Expression(ref reader);
+    }
+
+    internal static SemanticValue? NullableValue(ref Utf8JsonReader reader, string name)
+    {
+        RequiredRead(ref reader, name);
+        if (reader.TokenType == JsonTokenType.Null)
+        {
+            return null;
+        }
+
+        if (reader.TokenType != JsonTokenType.StartObject)
+        {
+            throw Malformed(name, "an object or null");
+        }
+
+        return Value(ref reader);
     }
 
     internal static (SemanticId Id, string Name, ImmutableArray<SemanticProperty> Properties) NamedProperties(
@@ -731,6 +807,17 @@ static class SemanticModelRead
             JsonTokenType.False => false,
             _ => throw Malformed(name, "a Boolean")
         };
+    }
+
+    internal static decimal Decimal(ref Utf8JsonReader reader, string name)
+    {
+        RequiredRead(ref reader, name);
+        if (reader.TokenType != JsonTokenType.Number || !reader.TryGetDecimal(out var value))
+        {
+            throw Malformed(name, "a decimal number");
+        }
+
+        return value;
     }
 
     internal static decimal? NullableDecimal(ref Utf8JsonReader reader, string name)
@@ -872,12 +959,33 @@ static class SemanticModelRead
 
     internal static SemanticExpressionKind ParseExpressionKind(string value) => value switch
     {
-        "null" => SemanticExpressionKind.Null,
-        "string" => SemanticExpressionKind.Text,
-        "number" => SemanticExpressionKind.Number,
-        "boolean" => SemanticExpressionKind.Boolean,
-        "path" => SemanticExpressionKind.Path,
+        "value" => SemanticExpressionKind.Value,
+        "resolved" => SemanticExpressionKind.Resolved,
         _ => throw DiscriminatorError(value, "expression kind")
+    };
+
+    internal static SemanticExpressionRootKind ParseExpressionRoot(string value) => value switch
+    {
+        "command" => SemanticExpressionRootKind.Command,
+        "event" => SemanticExpressionRootKind.Event,
+        "query" => SemanticExpressionRootKind.Query,
+        _ => throw DiscriminatorError(value, "expression root")
+    };
+
+    internal static SemanticExpressionSourceKind ParseExpressionSource(string value) => value switch
+    {
+        "property" => SemanticExpressionSourceKind.Property,
+        "argument" => SemanticExpressionSourceKind.Argument,
+        _ => throw DiscriminatorError(value, "expression source")
+    };
+
+    internal static SemanticValueKind ParseValueKind(string value) => value switch
+    {
+        "null" => SemanticValueKind.Null,
+        "string" => SemanticValueKind.Text,
+        "number" => SemanticValueKind.Number,
+        "boolean" => SemanticValueKind.Boolean,
+        _ => throw DiscriminatorError(value, "value kind")
     };
 
     internal static AffectedInstanceCardinality ParseAffectedCardinality(string value) => value switch
@@ -892,6 +1000,7 @@ static class SemanticModelRead
     {
         "one" => SemanticQueryCardinality.One,
         "zeroOrOne" => SemanticQueryCardinality.ZeroOrOne,
+        "many" => SemanticQueryCardinality.Many,
         _ => throw DiscriminatorError(value, "query cardinality")
     };
 
