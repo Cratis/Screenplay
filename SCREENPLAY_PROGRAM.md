@@ -3,9 +3,9 @@ Copyright (c) Cratis. All rights reserved.
 Licensed under the MIT license. See LICENSE file in the project root for full license information.
 -->
 
-# Screenplay++ delivery program
+# Screenplay delivery program
 
-This program implements [the Screenplay++ architecture](./SCREENPLAY_PLUS_ARCHITECTURE.md) in independently releasable increments.
+This program implements [the Screenplay architecture](./SCREENPLAY_ARCHITECTURE.md) in independently releasable increments.
 
 ## North star and Program v1 boundary
 
@@ -15,6 +15,8 @@ One serialized semantic model and one specification corpus must produce equivale
 - direct Stage execution;
 - a Cratis-rendered backend;
 - the named second target: a TypeScript/Node.js backend runtime and renderer.
+
+For every admitted recovery capability, rendering that model to a supported target and recovering the generated result must preserve the same semantic identities, contracts, and observable specification outcomes. Hand-written code may contribute only evidence and explicitly reviewed proposals; it never becomes semantic authority by being discovered.
 
 Code is an artifact. Unsupported behavior fails closed. No product owns a competing semantic model. Program v1 is backend-only: existing Screenplay UI and Stage Scene compatibility is preserved, while frontend and deployment profiles remain excluded until separately approved.
 
@@ -128,7 +130,7 @@ Rules:
 
 The contract is staged, journaled, crash-recoverable publication—not absolute multi-file filesystem atomicity. Manifest and identity-schema upgrades require explicit migration vectors, including interrupted-upgrade recovery.
 
-The generated backend builds and its shared success/rejection specifications pass. This is the first public Screenplay++ vertical milestone.
+The generated backend builds and its shared success/rejection specifications pass. This is the first public Screenplay vertical milestone.
 
 ## Increment 4 — rendering completeness, then semantic waves
 
@@ -162,7 +164,8 @@ Generation issues #24–#26 own the current source-identity, evidence, admission
 5. shared root/feature/module placement derivation;
 6. lockstep release of affected Generation packages;
 7. downstream atomic adapters and compatibility-facade parity;
-8. deterministic Generation-owned realization-report fragments.
+8. deterministic Generation-owned realization-report fragments;
+9. shared render → recover conformance vectors for every admitted bidirectional capability.
 
 Source adapter and renderer target rosters remain separate. Vogen is independent, executes at most once, belongs only to the source adapter roster, and has no renderer-target or Critter/Arc ownership.
 
@@ -232,7 +235,9 @@ Use these current operations; superseded numbers from earlier drafts are not pro
 | ------------ | ------------------- | ----------------------------------------------- |
 | Screenplay   | #69                 | Retained                                        |
 | Screenplay   | #130                | Closed; does not replace #69                    |
-| Screenplay   | #135–#142           | Current Screenplay++ delivery issue set         |
+| Screenplay   | #135–#142           | Current semantic delivery issue set             |
+| Screenplay   | #146                | Release-complete documentation and grammar      |
+| Screenplay   | #148                | Bidirectional render → recover fidelity          |
 | Screenplay   | #71                 | Existing owner of full event-contract evolution |
 | Screenplay   | PR #123 and PR #124 | Completed                                       |
 | Generation   | #24–#26             | Current source-recovery/adapter/report lane     |
@@ -295,7 +300,7 @@ The program is complete when:
 - admitted semantic capabilities pass their shared behavioral vectors on every ledger surface marked `Required`;
 - Cratis rendering and Stage execution pass the required shared corpus;
 - `cratis render` is publicly verified with crash-recovery evidence;
-- source recovery is released with independent Vogen handling and composable report evidence;
+- source recovery is released with independent Vogen handling, composable report evidence, and render → recover semantic conformance for admitted capabilities;
 - standalone PDL/CDL and the explicit Workbench gate pass;
 - Studio performs its declared lossless round trips using separate document, semantic, and authoring IDs;
 - Prologue and AI use reviewable revision-bound patches without conflating candidate identity;
