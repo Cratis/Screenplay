@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
+
 namespace Cratis.Screenplay.Semantics;
 
 /// <summary>
@@ -103,7 +105,17 @@ public enum SemanticValueKind
     /// <summary>
     /// A Boolean value.
     /// </summary>
-    Boolean = 3
+    Boolean = 3,
+
+    /// <summary>
+    /// An ordered collection value.
+    /// </summary>
+    Array = 4,
+
+    /// <summary>
+    /// A composite object value keyed by semantic property identity.
+    /// </summary>
+    Composite = 5
 }
 
 /// <summary>
@@ -254,6 +266,20 @@ public abstract record SemanticValue(SemanticValueKind Kind)
     /// <param name="value">The Boolean.</param>
     /// <returns>The value.</returns>
     public static SemanticValue Boolean(bool value) => new SemanticBooleanValue(value);
+
+    /// <summary>
+    /// Creates an immutable ordered collection value.
+    /// </summary>
+    /// <param name="values">The values in their semantic order.</param>
+    /// <returns>The value.</returns>
+    public static SemanticValue Array(ImmutableArray<SemanticValue> values) => new SemanticArrayValue(values);
+
+    /// <summary>
+    /// Creates an immutable composite object value keyed by target semantic property identity.
+    /// </summary>
+    /// <param name="properties">The property values.</param>
+    /// <returns>The value.</returns>
+    public static SemanticValue Composite(ImmutableArray<SemanticPropertyValue> properties) => new SemanticCompositeValue(properties);
 }
 
 /// <summary>
@@ -283,6 +309,18 @@ public sealed record SemanticNumberValue(decimal Value) : SemanticValue(Semantic
 /// </summary>
 /// <param name="Value">The Boolean.</param>
 public sealed record SemanticBooleanValue(bool Value) : SemanticValue(SemanticValueKind.Boolean);
+
+/// <summary>
+/// Represents an immutable ordered collection portable value.
+/// </summary>
+/// <param name="Values">The values in their semantic order.</param>
+public sealed record SemanticArrayValue(ImmutableArray<SemanticValue> Values) : SemanticValue(SemanticValueKind.Array);
+
+/// <summary>
+/// Represents an immutable composite object portable value keyed by semantic property identity.
+/// </summary>
+/// <param name="Properties">The property values.</param>
+public sealed record SemanticCompositeValue(ImmutableArray<SemanticPropertyValue> Properties) : SemanticValue(SemanticValueKind.Composite);
 
 /// <summary>
 /// Represents a constrained portable expression used by mappings and keys.

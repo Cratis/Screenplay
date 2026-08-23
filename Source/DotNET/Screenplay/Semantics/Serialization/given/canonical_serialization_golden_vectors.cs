@@ -44,17 +44,20 @@ public static class canonical_serialization_golden_vectors
         var commandAmount = Id(203);
         var commandNote = Id(204);
         var commandDestination = Id(205);
+        var commandDetails = Id(206);
         var eventId = Id(210);
         var eventLabel = Id(211);
         var eventAmount = Id(212);
         var eventEnabled = Id(213);
         var eventNote = Id(214);
         var eventCode = Id(215);
+        var eventDetails = Id(216);
         var optionalEventId = Id(220);
         var manyEventIds = Id(230);
         var readModelId = Id(240);
         var readModelLabel = Id(241);
         var readModelNote = Id(242);
+        var readModelDetails = Id(243);
 
         var concepts = ImmutableArray.Create(
             new SemanticConcept(dateTimeConcept, "OccurredAt", SemanticPrimitiveType.DateTime, [], []),
@@ -73,7 +76,7 @@ public static class canonical_serialization_golden_vectors
                 textConcept,
                 "Label",
                 SemanticPrimitiveType.Text,
-                ["second", "café", "first", "accepted", "rejected", "^[a-z]+$", "created", "screenplay"],
+                ["second", "café", "first", "accepted", "rejected", "created", "screenplay"],
                 [
                     new(default, SemanticValidationRuleKind.NotEmpty, null, "Label is required"),
                     new(default, SemanticValidationRuleKind.Equal, SemanticValue.Text("accepted"), null),
@@ -87,14 +90,18 @@ public static class canonical_serialization_golden_vectors
             new SemanticCompositeType(
                 envelopeType,
                 "Envelope",
-                [new(Id(123), "Enabled", SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Boolean), false)]),
+                [
+                    new(Id(125), "Note", SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text, isOptional: true), false),
+                    new(Id(123), "Enabled", SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Boolean), false)
+                ]),
             new SemanticCompositeType(
                 detailsType,
                 "Details",
                 [
                     new(Id(122), "Envelope", SemanticTypeReference.ForCompositeType(envelopeType, isOptional: true), false),
                     new(Id(120), "Count", SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.WholeNumber), false),
-                    new(Id(121), "Label", SemanticTypeReference.ForConcept(textConcept, isCollection: true), false)
+                    new(Id(121), "Label", SemanticTypeReference.ForConcept(textConcept, isCollection: true), false),
+                    new(Id(124), "EmptyLabels", SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text, isCollection: true), false)
                 ]));
 
         var createdContract = new SemanticEventContract(
@@ -108,7 +115,8 @@ public static class canonical_serialization_golden_vectors
                 new(eventCode, "Code", SemanticTypeReference.ForConcept(textConcept), false),
                 new(eventEnabled, "Enabled", SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Boolean), false),
                 new(eventAmount, "Amount", SemanticTypeReference.ForConcept(decimalNumberConcept), false),
-                new(eventLabel, "Label", SemanticTypeReference.ForConcept(textConcept), false)
+                new(eventLabel, "Label", SemanticTypeReference.ForConcept(textConcept), false),
+                new(eventDetails, "Details", SemanticTypeReference.ForCompositeType(detailsType), false)
             ]);
         var optionalContract = new SemanticEventContract(
             optionalEvent,
@@ -132,7 +140,8 @@ public static class canonical_serialization_golden_vectors
                 new(commandDestination, "Destination", SemanticTypeReference.ForConcept(uuidConcept), false),
                 new(commandAmount, "Amount", SemanticTypeReference.ForConcept(decimalNumberConcept), false),
                 new(commandTitle, "Title", SemanticTypeReference.ForConcept(textConcept), false),
-                new(commandEnabled, "Enabled", SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Boolean), false)
+                new(commandEnabled, "Enabled", SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Boolean), false),
+                new(commandDetails, "Details", SemanticTypeReference.ForCompositeType(detailsType), false)
             ],
             [new(commandTitle, SemanticValidationRuleKind.NotEmpty, null, "Title is required")],
             [new(
@@ -145,7 +154,8 @@ public static class canonical_serialization_golden_vectors
                     new(eventCode, SemanticExpression.FromValue(SemanticValue.Text("created"))),
                     new(eventAmount, SemanticExpression.FromValue(SemanticValue.Number(123.4500m))),
                     new(eventEnabled, SemanticExpression.FromValue(SemanticValue.Boolean(true))),
-                    new(eventNote, SemanticExpression.FromValue(SemanticValue.Null))
+                    new(eventNote, SemanticExpression.FromValue(SemanticValue.Null)),
+                    new(eventDetails, SemanticExpression.Property(SemanticExpressionRootKind.Command, commandDetails))
                 ]),
                 new(optionalEvent, null, null, [])]);
 
@@ -155,7 +165,8 @@ public static class canonical_serialization_golden_vectors
             [
                 new(readModelNote, "Note", SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text, isOptional: true), false),
                 new(readModelLabel, "Label", SemanticTypeReference.ForConcept(textConcept), false),
-                new(readModelId, "Id", SemanticTypeReference.ForConcept(uuidConcept), true)
+                new(readModelId, "Id", SemanticTypeReference.ForConcept(uuidConcept), true),
+                new(readModelDetails, "Details", SemanticTypeReference.ForCompositeType(detailsType), false)
             ]);
         var entityProjection = new SemanticProjection(
             projection,
@@ -172,7 +183,8 @@ public static class canonical_serialization_golden_vectors
                     [
                         new(readModelLabel, SemanticExpression.Property(SemanticExpressionRootKind.Event, eventLabel)),
                         new(readModelId, SemanticExpression.Property(SemanticExpressionRootKind.Event, eventId)),
-                        new(readModelNote, SemanticExpression.FromValue(SemanticValue.Null))
+                        new(readModelNote, SemanticExpression.FromValue(SemanticValue.Null)),
+                        new(readModelDetails, SemanticExpression.Property(SemanticExpressionRootKind.Event, eventDetails))
                     ]),
                 new(
                     manyEvent,
@@ -208,27 +220,41 @@ public static class canonical_serialization_golden_vectors
 
         var idValue = SemanticValue.Text("00000000-0000-0000-0000-000000000123");
         var titleValue = SemanticValue.Text("screenplay");
+        var detailsValue = SemanticValue.Composite(
+        [
+            new(Id(122), SemanticValue.Composite(
+            [
+                new(Id(125), SemanticValue.Null),
+                new(Id(123), SemanticValue.Boolean(true))
+            ])),
+            new(Id(124), SemanticValue.Array([])),
+            new(Id(121), SemanticValue.Array([SemanticValue.Text("second"), SemanticValue.Text("first")])),
+            new(Id(120), SemanticValue.Number(2))
+        ]);
         var commandValues = ImmutableArray.Create(
             new SemanticPropertyValue(commandEnabled, SemanticValue.Boolean(true)),
             new SemanticPropertyValue(commandNote, SemanticValue.Null),
             new SemanticPropertyValue(commandDestination, idValue),
             new SemanticPropertyValue(commandAmount, SemanticValue.Number(123.4500m)),
             new SemanticPropertyValue(commandTitle, titleValue),
-            new SemanticPropertyValue(commandId, idValue));
+            new SemanticPropertyValue(commandId, idValue),
+            new SemanticPropertyValue(commandDetails, detailsValue));
         var eventValues = ImmutableArray.Create(
             new SemanticPropertyValue(eventEnabled, SemanticValue.Boolean(true)),
             new SemanticPropertyValue(eventNote, SemanticValue.Null),
             new SemanticPropertyValue(eventCode, SemanticValue.Text("created")),
             new SemanticPropertyValue(eventAmount, SemanticValue.Number(123.4500m)),
             new SemanticPropertyValue(eventLabel, titleValue),
-            new SemanticPropertyValue(eventId, idValue));
+            new SemanticPropertyValue(eventId, idValue),
+            new SemanticPropertyValue(eventDetails, detailsValue));
         var readModelState = new SemanticSpecificationReadModel(
             readModel,
             idValue,
             [
                 new(readModelNote, SemanticValue.Null),
                 new(readModelLabel, titleValue),
-                new(readModelId, idValue)
+                new(readModelId, idValue),
+                new(readModelDetails, detailsValue)
             ]);
         var success = new SemanticSpecification(
             Id(95),
@@ -304,6 +330,12 @@ public static class canonical_serialization_golden_vectors
         SemanticExpression.FromValue(SemanticValue.Text("Café")),
         SemanticExpression.FromValue(SemanticValue.Number(1.2300m)),
         SemanticExpression.FromValue(SemanticValue.Boolean(true)),
+        SemanticExpression.FromValue(SemanticValue.Array([SemanticValue.Text("second"), SemanticValue.Text("first")])),
+        SemanticExpression.FromValue(SemanticValue.Composite(
+        [
+            new(Id(5), SemanticValue.Array([])),
+            new(Id(4), SemanticValue.Composite([]))
+        ])),
         SemanticExpression.Property(SemanticExpressionRootKind.Command, Id(1)),
         SemanticExpression.Property(SemanticExpressionRootKind.Event, Id(2)),
         SemanticExpression.Argument(SemanticExpressionRootKind.Query, Id(3))

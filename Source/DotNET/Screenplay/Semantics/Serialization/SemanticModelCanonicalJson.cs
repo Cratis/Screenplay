@@ -393,6 +393,28 @@ static class SemanticModelCanonicalJson
             case SemanticBooleanValue boolean:
                 writer.WriteBoolean("value", boolean.Value);
                 break;
+            case SemanticArrayValue array:
+                if (array.Values.IsDefault || array.Values.Any(_ => _ is null))
+                {
+                    throw new InvalidSemanticContract("A semantic array value is malformed.");
+                }
+
+                WriteArray(writer, "values", array.Values, WriteValue);
+                break;
+            case SemanticCompositeValue objectValue:
+                if (objectValue.Properties.IsDefault ||
+                    objectValue.Properties.Any(_ => _ is not { TargetProperty.IsSet: true, Value: not null }) ||
+                    objectValue.Properties.Select(_ => _.TargetProperty).Distinct().Count() != objectValue.Properties.Length)
+                {
+                    throw new InvalidSemanticContract("A semantic object value is malformed.");
+                }
+
+                WriteArray(
+                    writer,
+                    "properties",
+                    objectValue.Properties.OrderBy(_ => _.TargetProperty.ToString(), StringComparer.Ordinal),
+                    WritePropertyValue);
+                break;
             default:
                 throw new InvalidSemanticContract("A semantic value variant is malformed or unknown.");
         }
@@ -542,6 +564,8 @@ static class SemanticModelCanonicalJson
         SemanticValueKind.Text => "string",
         SemanticValueKind.Number => "number",
         SemanticValueKind.Boolean => "boolean",
+        SemanticValueKind.Array => "array",
+        SemanticValueKind.Composite => "object",
         _ => throw Unknown(nameof(SemanticValueKind), value)
     };
 

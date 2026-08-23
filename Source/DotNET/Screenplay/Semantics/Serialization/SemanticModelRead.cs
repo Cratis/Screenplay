@@ -648,6 +648,10 @@ static class SemanticModelRead
         SemanticValueKind? kind = null;
         SemanticValue? value = null;
         var valueRead = false;
+        ImmutableArray<SemanticValue> values = default;
+        var valuesRead = false;
+        ImmutableArray<SemanticPropertyValue> properties = default;
+        var propertiesRead = false;
         while (NextProperty(ref reader, seen, "value") is { } property)
         {
             switch (property)
@@ -663,16 +667,43 @@ static class SemanticModelRead
                         _ => throw Malformed("value", "a kind discriminator before its typed value")
                     };
                     break;
+                case "values":
+                    if (kind != SemanticValueKind.Array)
+                    {
+                        throw Malformed("value", "an array kind discriminator before its values");
+                    }
+
+                    valuesRead = true;
+                    values = Array(ref reader, ValueElement, property);
+                    break;
+                case "properties":
+                    if (kind != SemanticValueKind.Composite)
+                    {
+                        throw Malformed("value", "an object kind discriminator before its properties");
+                    }
+
+                    propertiesRead = true;
+                    properties = Array(ref reader, PropertyValue, property);
+                    break;
                 default: throw Unknown(property, "value");
             }
         }
 
         return kind switch
         {
-            SemanticValueKind.Null when !valueRead => SemanticValue.Null,
-            SemanticValueKind.Text or SemanticValueKind.Number or SemanticValueKind.Boolean when valueRead && value is not null => value,
+            SemanticValueKind.Null when !valueRead && !valuesRead && !propertiesRead => SemanticValue.Null,
+            SemanticValueKind.Text or SemanticValueKind.Number or SemanticValueKind.Boolean
+                when valueRead && value is not null && !valuesRead && !propertiesRead => value,
+            SemanticValueKind.Array when !valueRead && valuesRead && !propertiesRead => new SemanticArrayValue(values),
+            SemanticValueKind.Composite when !valueRead && !valuesRead && propertiesRead => new SemanticCompositeValue(properties),
             _ => throw Malformed("value", "one exact value variant")
         };
+    }
+
+    internal static SemanticValue ValueElement(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "semantic array element");
+        return Value(ref reader);
     }
 
     internal static SemanticExpression? NullableExpression(ref Utf8JsonReader reader, string name)
@@ -985,6 +1016,8 @@ static class SemanticModelRead
         "string" => SemanticValueKind.Text,
         "number" => SemanticValueKind.Number,
         "boolean" => SemanticValueKind.Boolean,
+        "array" => SemanticValueKind.Array,
+        "object" => SemanticValueKind.Composite,
         _ => throw DiscriminatorError(value, "value kind")
     };
 
