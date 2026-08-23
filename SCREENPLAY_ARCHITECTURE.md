@@ -3,9 +3,9 @@ Copyright (c) Cratis. All rights reserved.
 Licensed under the MIT license. See LICENSE file in the project root for full license information.
 -->
 
-# Screenplay++ architecture
+# Screenplay architecture
 
-**Status:** Proposed
+**Status:** Accepted
 
 **Vision basis:** 2026-08-06
 
@@ -25,6 +25,21 @@ Screenplay is the authoritative, declarative, executable semantic model of the d
 Code is one realization artifact and a means to an end. Stage and generated applications implement Screenplay semantics; neither defines them. The boundary is **portable model semantics versus replaceable realization choices**, not human-readable versus technical.
 
 The first delivery program is backend-only. Existing Screenplay UI and Stage Scene behavior remain compatible. Frontend and deployment generation require separately approved profiles and are not implied by this decision.
+
+## Bidirectional model and code flow
+
+Screenplay supports two complementary directions around one semantic authority:
+
+```text
+Screenplay source → ESM → execution plan → artifacts/code
+code → source evidence → reviewed semantic proposal → Screenplay source
+```
+
+The forward direction renders or executes the desired functional state. The recovery direction observes an existing implementation and proposes the meaning it can prove. Recovery never makes code authoritative, invents missing domain intent, or applies an uncertain proposal without review.
+
+Bidirectional fidelity is measured at the semantic boundary, not by requiring generated code to reproduce identical source text. For an admitted capability, rendering and recovering the generated result must preserve the same semantic identities, contracts, and observable specification outcomes. Realization-only details and any loss or uncertainty remain explicit in the composable realization report.
+
+This makes code useful in both directions: a replaceable realization produced from Screenplay, and evidence that can help create or update Screenplay. It does not turn Screenplay into a general-purpose source-code decompiler.
 
 ## Target architecture
 

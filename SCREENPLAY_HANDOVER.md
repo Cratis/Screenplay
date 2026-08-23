@@ -3,24 +3,26 @@ Copyright (c) Cratis. All rights reserved.
 Licensed under the MIT license. See LICENSE file in the project root for full license information.
 -->
 
-# Screenplay++ implementation handover
+# Screenplay implementation handover
 
 ## Current conclusion
 
-Screenplay is the authoritative human/AI-authored executable semantic model of the desired functional state of an information system.
+Screenplay is the product and language name. The plus-sign shorthand in the original notes only meant “Screenplay and related delivery work”; it was never a product, program, milestone, or public name.
 
-- Studio visualizes and edits it.
-- A reference evaluator and Stage execute it.
-- Specifications verify it.
+Screenplay is the authoritative human/AI-authored semantic model of the desired functional state of an information system. The v4.3 ESM foundation is released; binding, reference evaluation, Stage execution, and ESM-based rendering remain active delivery work.
+
+- Studio visualizes and edits Screenplay.
+- Specifications define portable observable behavior.
+- A reference evaluator and Stage execute admitted capabilities.
 - Renderers produce code and other target artifacts.
 - Generation, Arc, Critter Stack, and Prologue contribute evidence or proposed meaning without making code authoritative.
 
-The boundary is **portable model semantics versus replaceable realization choices**.
+The boundary is **portable model semantics versus replaceable realization choices**. The bidirectional goal is Screenplay → code through rendering and code → Screenplay through reviewed evidence recovery, with semantic fidelity measured at the ESM/specification boundary.
 
 The architecture and dependency-ordered program are merged in:
 
-- [`SCREENPLAY_PLUS_ARCHITECTURE.md`](./SCREENPLAY_PLUS_ARCHITECTURE.md)
-- [`SCREENPLAY_PLUS_PROGRAM.md`](./SCREENPLAY_PLUS_PROGRAM.md)
+- [`SCREENPLAY_ARCHITECTURE.md`](./SCREENPLAY_ARCHITECTURE.md)
+- [`SCREENPLAY_PROGRAM.md`](./SCREENPLAY_PROGRAM.md)
 
 Do not add a Saga construct. Long-running workflows are commands, events, process/todo views, reactions, typed identities, business deadlines, rules, and specifications. Framework Saga details remain realization provenance.
 
@@ -29,8 +31,14 @@ Do not add a Saga construct. Long-running workflows are commands, events, proces
 ### Screenplay
 
 - `v4.2.2` is the released baseline before ESM code.
+- `v4.3.0` released the ESM foundation from PR #145 at merge/tag commit `e8b52c236dddb021c318ea9a34c6911c8f02e60a`.
+  - `Cratis.Screenplay` nupkg SHA-256: `7db25db241cf6787c9297fd007150428d32e6d96402dee3f32f035aaa28c5237`
+  - `Cratis.Screenplay.Tool` nupkg SHA-256: `d97dece537a4ad027cec22f879e617f63c2d9f532be8aa41b2b118b7c3aa339b`
+  - Debug: 1,842 Screenplay specs plus 2 canonical-vector specs passed.
+  - Release net8/net9/net10, cross-TFM canonical vectors, package validation, CI, and public package verification passed.
+- PR #147 aligned public documentation and grammar with portable Screenplay semantics at `e9f857f56191d42ac2d4aef54af9c4575e245044`; #146 owns automated documentation/grammar conformance.
 - PR #124 fixed implementation-slot print/parse round trips.
-- PR #143 merged the Screenplay++ architecture and program at `4026897d646c586090f64c1c7e0ba6db230abd17`.
+- PR #143 merged the Screenplay architecture and program at `4026897d646c586090f64c1c7e0ba6db230abd17`.
 - #128 is now the executable-semantics epic.
 - Technical language proposals #130, #131, #133, and #134 were closed or replaced by portable semantic work.
 - New focused issues:
@@ -41,7 +49,9 @@ Do not add a Saga construct. Long-running workflows are commands, events, proces
   - #139 constrained implementations/language services;
   - #140 portable query semantics;
   - #141 data-subject relationships;
-  - #142 portable policies.
+  - #142 portable policies;
+  - #146 release-complete language documentation and grammar;
+  - #148 bidirectional render → recover semantic fidelity.
 - Existing issues were rewritten:
   - #69 view/todo-driven automation and business due time;
   - #71 event-contract identity and evolution;
@@ -135,75 +145,35 @@ Do not add a Saga construct. Long-running workflows are commands, events, proces
 - StudioIssues #260 owns semantic IDs/layout separation.
 - StudioIssues #261 owns atomic semantic patches.
 
-## Active ESM implementation
+## Current implementation state
 
-### Parent worktree
+The ESM foundation is released in Screenplay `v4.3.0`. There are no active ESM child branches, worktrees, or background tasks. The Screenplay, Screenplay.CritterStack, and handover checkouts were clean at the release boundary.
 
-```text
-repo: /Volumes/sourcecode/repos/cratis/Screenplay
-worktree: /Users/sindrewilting/.cache/pi-worktrees/Screenplay-esm-kernel
-branch: feat/executable-semantic-model
-remote branch: not pushed
-```
+Delivered foundation:
 
-Integrated local commits:
+- immutable, versioned ESM v1 contracts;
+- stable semantic, document, query-argument, and event-contract identities;
+- revision-bound identity-catalog migrations;
+- source documents, source maps, and semantic compilation integrity;
+- canonical ESM/catalog serialization and deterministic revisions;
+- recursive collection/composite value validation;
+- net8/net9/net10 canonical-byte vectors;
+- fail-closed model coherence and package/API validation.
 
-```text
-be2296b Add executable semantic model contracts
-5056376 Harden executable semantic model contracts
-8ff1267 Harden semantic identity and catalog contracts
-7e62083 Harden semantic source and compilation integrity
-08df205 Harden canonical semantic serialization
-```
+Next dependency-ordered work:
 
-The parent branch has not been reviewed after the two currently active child branches are integrated. Do not push it yet.
+1. Screenplay #87: decide and add the smallest compatibility-safe authored query-result assertion syntax. The binder must not infer query assertions from `then readmodel`.
+2. Screenplay #135: implement exhaustive `ApplicationSyntax → ESM` binding and the complete syntax disposition matrix.
+3. Screenplay #136: implement the minimum execution plan and deterministic RegisterProject evaluator.
+4. Stage #56/#23: consume ESM through a pure `ArtifactRenderPlan` and render the Cratis vertical.
+5. CLI #101: publish the plan safely through root `cratis render` with manifests, journaling, and recovery.
+6. Generation/Critter/Arc source recovery: continue atomic adapters and prove render → recover semantic fidelity for admitted capabilities.
 
-### Active child worktrees/tasks at handover time
+The bidirectional goal is explicit: Screenplay → code is rendering; code → Screenplay is evidence-backed recovery. Screenplay remains authoritative in both directions, and any loss or uncertainty is reported rather than guessed.
 
-```text
-worktree: /Users/sindrewilting/.cache/pi-worktrees/Screenplay-esm-coherence
-branch: fix/esm-model-coherence
-task: b27b8dc6f
-purpose: enum enforcement, query-argument IDs, specification uniqueness,
-         source-origin/catalog coherence, malformed Unicode
+Do not add `EventSyntax contract` grammar in Increment 1. Event contract IDs remain ESM/catalog concerns until the lossless workspace/evolution work can materialize them safely.
 
-worktree: /Users/sindrewilting/.cache/pi-worktrees/Screenplay-esm-values
-branch: fix/esm-value-algebra
-task: b915abaf2
-purpose: canonical collection/composite semantic values and recursive validation
-```
-
-Both agents were explicitly pinned to `openai-codex/gpt-5.6-sol`. Do not mutate either worktree until its terminal notification or until it is confirmed that no process is active.
-
-### Latest verified parent gates before active child work
-
-```text
-Screenplay specs: 1,790 passed
-Debug build: zero warnings/errors
-Release net8.0/net9.0/net10.0: zero warnings/errors
-9999.0.0 nupkg/snupkg package validation: passed
-```
-
-These gates predate the active child changes and must be rerun after integration.
-
-### Remaining ESM foundation work
-
-1. Retrieve/review each active child result.
-2. Require each child to have one clean logical commit; if not, review and commit it.
-3. Cherry-pick model-coherence and value-algebra commits into `feat/executable-semantic-model`.
-4. Resolve any conflict semantically; both branches started from `08df205`.
-5. Add a dedicated multi-target canonical-vector test/consumer so identical ESM/catalog bytes are tested on net8, net9, and net10 in CI. Inline Debug specs alone do not prove cross-TFM bytes.
-6. Run full combined Debug/Release/package gates.
-7. Run a final GPT-only review of the complete ESM foundation.
-8. Only then implement:
-   - `ApplicationSyntax -> ESM` binder;
-   - minimum execution plan;
-   - deterministic RegisterProject reference evaluator;
-   - accepted/rejected/query specification vector.
-9. Keep all unknown or unsupported current syntax fail-closed via the disposition matrix attached to #135.
-10. Do not add `EventSyntax contract` grammar in Increment 1. Event contract IDs remain ESM/catalog concerns until the lossless workspace/evolution work can materialize them safely.
-
-## First public Screenplay++ milestone after ESM
+## First public Screenplay milestone after ESM
 
 1. Screenplay semantic kernel/reference vertical.
 2. Stage #56 pure `ArtifactRenderPlan` and Cratis vertical renderer.
@@ -233,6 +203,6 @@ Do not delay this milestone for complete direct Stage runtime, Studio, AI, sourc
 
 ## Program completion
 
-The full program is complete only when the conditions in `SCREENPLAY_PLUS_PROGRAM.md` pass, including ESM/workspace/identity, shared specifications, Stage and Cratis conformance, safe `cratis render`, atomic source recovery, Studio/AI patches, Prologue bridge, and a second target.
+The full program is complete only when the conditions in `SCREENPLAY_PROGRAM.md` pass, including ESM/workspace/identity, shared specifications, Stage and Cratis conformance, safe `cratis render`, atomic source recovery, Studio/AI patches, Prologue bridge, and a second target.
 
-Do not call the entire Screenplay++ program complete after the ESM foundation or first Cratis rendering milestone. Use the explicit milestone stop conditions in the program document.
+Do not call the entire Screenplay program complete after the ESM foundation or first Cratis rendering milestone. Use the explicit milestone stop conditions in the program document.
