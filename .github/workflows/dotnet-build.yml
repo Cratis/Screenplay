@@ -4,9 +4,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  DOTNET_VERSION: "10.0.x"
-
 on:
   workflow_dispatch:
   pull_request:
@@ -30,7 +27,10 @@ jobs:
       - name: Setup .Net
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
 
       - name: Build & run tests
         run: dotnet test --configuration Debug
@@ -40,6 +40,9 @@ jobs:
       # be set on the build, since the pack below reuses what this produces.
       - name: Build Release
         run: dotnet build --configuration Release -p:Version=9999.0.0
+
+      - name: Run canonical vectors on all supported runtimes
+        run: dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj --configuration Release --no-build --no-restore
 
       # Package validation only runs on pack, so a binary break was invisible until the release failed on
       # main - which is how eight versions came to be tagged with no package on NuGet. Packing here puts the

@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Screenplay.CanonicalVectors.Specs</AssemblyName>
+        <RootNamespace>Cratis.Screenplay.CanonicalVectors.Specs</RootNamespace>
+        <IsTestProject>true</IsTestProject>
+        <IsPackable>false</IsPackable>
+        <EnablePackageValidation>false</EnablePackageValidation>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Screenplay/Screenplay.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Cratis.Specifications" PrivateAssets="all" />
+        <PackageReference Include="Cratis.Specifications.XUnit" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" PrivateAssets="all" />
+        <PackageReference Include="xunit" PrivateAssets="all" />
+        <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v1.json"
+                          Link="Golden/full-esm-v1.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v1.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-identity-catalog-v1.json"
+                          Link="Golden/full-identity-catalog-v1.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-identity-catalog-v1.json" />
+    </ItemGroup>
+</Project>
