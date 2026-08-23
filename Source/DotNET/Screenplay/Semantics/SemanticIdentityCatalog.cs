@@ -386,6 +386,11 @@ public sealed class SemanticIdentityCatalog
             throw new InvalidSemanticContract("Current identity addresses are malformed or belong to another application.");
         }
 
+        if (eventAddresses.Any(_ => !semanticAddresses.Contains(_)))
+        {
+            throw new InvalidSemanticContract("Every current event address must also have a semantic identity assignment.");
+        }
+
         RejectDuplicates(documentKeys, StringComparer.Ordinal, "current document key");
         RejectDuplicates(semanticAddresses, EqualityComparer<SemanticAddress>.Default, "current semantic address");
         RejectDuplicates(eventAddresses, EqualityComparer<SemanticAddress>.Default, "current event address");

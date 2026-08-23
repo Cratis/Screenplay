@@ -24,7 +24,7 @@ public class when_renaming_an_event_with_a_persisted_assignment : Specification
             previous,
             previous.Revision,
             [],
-            [],
+            [renamedAddress],
             [renamedAddress],
             [],
             [],

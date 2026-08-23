@@ -11,7 +11,6 @@ public class when_using_undeclared_enumeration_values : a_valid_semantic_model
     Exception _collectionSpecificationValue;
     Exception _invalidRepresentation;
     Exception _literalMapping;
-    Exception _matchesPattern;
     Exception _nestedSpecificationValue;
     Exception _specificationValue;
     Exception _validationOperand;
@@ -28,12 +27,6 @@ public class when_using_undeclared_enumeration_values : a_valid_semantic_model
             enumeration with
             {
                 Validations = [.. enumeration.Validations, new(default, SemanticValidationRuleKind.Equal, SemanticValue.Text("Undeclared"), null)]
-            },
-            enumerationSlice);
-        _matchesPattern = Validate(
-            enumeration with
-            {
-                Validations = [.. enumeration.Validations, new(default, SemanticValidationRuleKind.Matches, SemanticValue.Text("^[A-Z].+$"), null)]
             },
             enumerationSlice);
 
@@ -147,7 +140,6 @@ public class when_using_undeclared_enumeration_values : a_valid_semantic_model
         }
     }
 
-    [Fact] void should_allow_a_pattern_that_is_not_an_enumeration_member() => _matchesPattern.ShouldBeNull();
     [Fact] void should_reject_an_enumeration_with_a_non_text_representation() => _invalidRepresentation.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_an_undeclared_collection_element() => _collectionSpecificationValue.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_an_undeclared_literal_mapping() => _literalMapping.ShouldBeOfExactType<InvalidSemanticContract>();

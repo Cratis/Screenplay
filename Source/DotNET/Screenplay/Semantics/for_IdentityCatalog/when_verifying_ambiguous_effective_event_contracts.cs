@@ -17,7 +17,7 @@ public class when_verifying_ambiguous_effective_event_contracts : Specification
         var sameNameInAnotherSlice = SemanticAddress.ForEventContract(import, "ProjectRegistered");
         _legacyCollisionException = Catch.Exception(() => SemanticIdentityCatalog.Empty(application).VerifyAgainst(
             [],
-            [],
+            [first, sameNameInAnotherSlice],
             [first, sameNameInAnotherSlice]));
 
         var persisted = SemanticAddress.ForEventContract(registration, "ImportedProjectRegistered");
@@ -28,7 +28,7 @@ public class when_verifying_ambiguous_effective_event_contracts : Specification
             [],
             [],
             [new(persisted, legacyId, EventContractRevision.Initial, SemanticIdentityOrigin.Persisted)]);
-        _persistedAndLegacyCollisionException = Catch.Exception(() => catalog.VerifyAgainst([], [], [persisted, legacy]));
+        _persistedAndLegacyCollisionException = Catch.Exception(() => catalog.VerifyAgainst([], [persisted, legacy], [persisted, legacy]));
     }
 
     [Fact] void should_reject_same_name_legacy_bootstrap_ambiguity() => _legacyCollisionException.ShouldBeOfExactType<InvalidSemanticContract>();

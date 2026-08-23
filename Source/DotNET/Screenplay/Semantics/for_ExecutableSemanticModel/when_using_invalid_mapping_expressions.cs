@@ -31,7 +31,10 @@ public class when_using_invalid_mapping_expressions : a_valid_semantic_model
         {
             Mappings = produced.Mappings.SetItem(0, produced.Mappings[0] with
             {
-                Source = SemanticExpression.Argument(SemanticExpressionRootKind.Command, _queryArgumentId)
+                Source = new SemanticResolvedExpression(
+                    SemanticExpressionRootKind.Command,
+                    (SemanticExpressionSourceKind)1,
+                    _queryArgumentId)
             })
         });
         _wrongType = Validate(produced with

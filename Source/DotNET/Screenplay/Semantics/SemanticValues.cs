@@ -157,12 +157,7 @@ public enum SemanticExpressionRootKind
     /// <summary>
     /// The event currently being projected.
     /// </summary>
-    Event = 1,
-
-    /// <summary>
-    /// The query currently being evaluated.
-    /// </summary>
-    Query = 2
+    Event = 1
 }
 
 /// <summary>
@@ -178,12 +173,7 @@ public enum SemanticExpressionSourceKind
     /// <summary>
     /// A property declared by the expression root.
     /// </summary>
-    Property = 0,
-
-    /// <summary>
-    /// An argument declared by the expression root.
-    /// </summary>
-    Argument = 1
+    Property = 0
 }
 
 /// <summary>
@@ -343,15 +333,6 @@ public abstract record SemanticExpression(SemanticExpressionKind Kind)
     /// <returns>The expression.</returns>
     public static SemanticExpression Property(SemanticExpressionRootKind root, SemanticId property) =>
         new SemanticResolvedExpression(root, SemanticExpressionSourceKind.Property, property);
-
-    /// <summary>
-    /// Creates a resolved argument expression.
-    /// </summary>
-    /// <param name="root">The semantic root.</param>
-    /// <param name="argument">The stable argument identity.</param>
-    /// <returns>The expression.</returns>
-    public static SemanticExpression Argument(SemanticExpressionRootKind root, SemanticId argument) =>
-        new SemanticResolvedExpression(root, SemanticExpressionSourceKind.Argument, argument);
 }
 
 /// <summary>
@@ -365,7 +346,7 @@ public sealed record SemanticValueExpression(SemanticValue Value) : SemanticExpr
 /// </summary>
 /// <param name="Root">The semantic root that supplies the value.</param>
 /// <param name="Source">The target kind within the root.</param>
-/// <param name="Target">The stable property or argument identity.</param>
+/// <param name="Target">The stable property identity.</param>
 public sealed record SemanticResolvedExpression(
     SemanticExpressionRootKind Root,
     SemanticExpressionSourceKind Source,

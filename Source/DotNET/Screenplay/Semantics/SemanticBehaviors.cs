@@ -38,12 +38,7 @@ public enum SemanticValidationRuleKind
     /// <summary>
     /// The value must not equal the operand.
     /// </summary>
-    NotEqual = 4,
-
-    /// <summary>
-    /// The text value must match the operand pattern.
-    /// </summary>
-    Matches = 5
+    NotEqual = 4
 }
 
 /// <summary>

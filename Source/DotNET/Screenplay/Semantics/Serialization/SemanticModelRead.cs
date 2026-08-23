@@ -984,7 +984,6 @@ static class SemanticModelRead
         "minimum" => SemanticValidationRuleKind.Minimum,
         "equal" => SemanticValidationRuleKind.Equal,
         "notEqual" => SemanticValidationRuleKind.NotEqual,
-        "matches" => SemanticValidationRuleKind.Matches,
         _ => throw DiscriminatorError(value, "validation kind")
     };
 
@@ -999,14 +998,12 @@ static class SemanticModelRead
     {
         "command" => SemanticExpressionRootKind.Command,
         "event" => SemanticExpressionRootKind.Event,
-        "query" => SemanticExpressionRootKind.Query,
         _ => throw DiscriminatorError(value, "expression root")
     };
 
     internal static SemanticExpressionSourceKind ParseExpressionSource(string value) => value switch
     {
         "property" => SemanticExpressionSourceKind.Property,
-        "argument" => SemanticExpressionSourceKind.Argument,
         _ => throw DiscriminatorError(value, "expression source")
     };
 

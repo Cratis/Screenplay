@@ -532,7 +532,6 @@ static class SemanticModelCanonicalJson
         SemanticValidationRuleKind.Minimum => "minimum",
         SemanticValidationRuleKind.Equal => "equal",
         SemanticValidationRuleKind.NotEqual => "notEqual",
-        SemanticValidationRuleKind.Matches => "matches",
         _ => throw Unknown(nameof(SemanticValidationRuleKind), value)
     };
 
@@ -547,14 +546,12 @@ static class SemanticModelCanonicalJson
     {
         SemanticExpressionRootKind.Command => "command",
         SemanticExpressionRootKind.Event => "event",
-        SemanticExpressionRootKind.Query => "query",
         _ => throw Unknown(nameof(SemanticExpressionRootKind), value)
     };
 
     static string ExpressionSource(SemanticExpressionSourceKind value) => value switch
     {
         SemanticExpressionSourceKind.Property => "property",
-        SemanticExpressionSourceKind.Argument => "argument",
         _ => throw Unknown(nameof(SemanticExpressionSourceKind), value)
     };
 

@@ -80,8 +80,7 @@ public static class canonical_serialization_golden_vectors
                 [
                     new(default, SemanticValidationRuleKind.NotEmpty, null, "Label is required"),
                     new(default, SemanticValidationRuleKind.Equal, SemanticValue.Text("accepted"), null),
-                    new(default, SemanticValidationRuleKind.NotEqual, SemanticValue.Text("rejected"), null),
-                    new(default, SemanticValidationRuleKind.Matches, SemanticValue.Text("^[a-z]+$"), "Use lowercase letters")
+                    new(default, SemanticValidationRuleKind.NotEqual, SemanticValue.Text("rejected"), null)
                 ]),
             new SemanticConcept(dateConcept, "EffectiveDate", SemanticPrimitiveType.Date, [], []),
             new SemanticConcept(wholeNumberConcept, "Count", SemanticPrimitiveType.WholeNumber, [], []));
@@ -137,7 +136,7 @@ public static class canonical_serialization_golden_vectors
             [
                 new(commandNote, "Note", SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text, isOptional: true), false),
                 new(commandId, "Id", SemanticTypeReference.ForConcept(uuidConcept), true),
-                new(commandDestination, "Destination", SemanticTypeReference.ForConcept(uuidConcept), false),
+                new(commandDestination, "Destination", SemanticTypeReference.ForConcept(uuidConcept), true),
                 new(commandAmount, "Amount", SemanticTypeReference.ForConcept(decimalNumberConcept), false),
                 new(commandTitle, "Title", SemanticTypeReference.ForConcept(textConcept), false),
                 new(commandEnabled, "Enabled", SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Boolean), false),
@@ -337,8 +336,7 @@ public static class canonical_serialization_golden_vectors
             new(Id(4), SemanticValue.Composite([]))
         ])),
         SemanticExpression.Property(SemanticExpressionRootKind.Command, Id(1)),
-        SemanticExpression.Property(SemanticExpressionRootKind.Event, Id(2)),
-        SemanticExpression.Argument(SemanticExpressionRootKind.Query, Id(3))
+        SemanticExpression.Property(SemanticExpressionRootKind.Event, Id(2))
     ];
 
     public static ExecutableSemanticModel CreateSemanticModelWithDecimal(decimal value)

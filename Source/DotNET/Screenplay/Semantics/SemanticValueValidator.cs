@@ -48,10 +48,7 @@ sealed class SemanticValueValidator(
     IReadOnlyDictionary<SemanticId, SemanticCompositeType> types)
 {
     public void Validate(SemanticValue value, SemanticTypeReference target, string description) =>
-        Validate(value, target, description, 0, true);
-
-    public void ValidatePattern(SemanticValue value, SemanticTypeReference target, string description) =>
-        Validate(value, target, description, 0, false);
+        Validate(value, target, description, 0);
 
     public void ValidateVariant(SemanticValue value) => ValidateVariant(value, 0);
 
@@ -69,7 +66,7 @@ sealed class SemanticValueValidator(
         };
     }
 
-    void Validate(SemanticValue value, SemanticTypeReference target, string description, int depth, bool enforceEnumeration)
+    void Validate(SemanticValue value, SemanticTypeReference target, string description, int depth)
     {
         ValidateNode(value, depth);
         if (value is SemanticNullValue)
@@ -92,7 +89,7 @@ sealed class SemanticValueValidator(
             var elementType = target with { IsCollection = false, IsOptional = false };
             foreach (var element in array.Values)
             {
-                Validate(element, elementType, $"element of {description}", depth + 1, enforceEnumeration);
+                Validate(element, elementType, $"element of {description}", depth + 1);
             }
 
             return;
@@ -105,7 +102,7 @@ sealed class SemanticValueValidator(
 
         if (target.Kind == SemanticTypeReferenceKind.CompositeType)
         {
-            ValidateObject(value, target, description, depth, enforceEnumeration);
+            ValidateObject(value, target, description, depth);
             return;
         }
 
@@ -123,8 +120,7 @@ sealed class SemanticValueValidator(
             throw new InvalidSemanticContract($"A {description} is incompatible with its target type.");
         }
 
-        if (enforceEnumeration &&
-            target.Kind == SemanticTypeReferenceKind.Concept &&
+        if (target.Kind == SemanticTypeReferenceKind.Concept &&
             concepts[target.Target].Values is { IsEmpty: false } declaredValues &&
             (value is not SemanticTextValue enumeratedText || !declaredValues.Contains(enumeratedText.Value, StringComparer.Ordinal)))
         {
@@ -136,8 +132,7 @@ sealed class SemanticValueValidator(
         SemanticValue value,
         SemanticTypeReference target,
         string description,
-        int depth,
-        bool enforceEnumeration)
+        int depth)
     {
         if (value is not SemanticCompositeValue objectValue || !types.TryGetValue(target.Target, out var compositeType))
         {
@@ -162,8 +157,7 @@ sealed class SemanticValueValidator(
                 propertyValue.Value,
                 property.Type,
                 $"property '{property.Name}' of {description}",
-                depth + 1,
-                enforceEnumeration);
+                depth + 1);
         }
 
         if (compositeType.Properties.Any(_ => !_.Type.IsOptional && !assigned.Contains(_.Id)))

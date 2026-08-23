@@ -18,7 +18,7 @@ public class when_using_invalid_validation_operands : a_valid_semantic_model
     {
         _forbidden = Validate(new(_commandNamePropertyId, SemanticValidationRuleKind.NotEmpty, SemanticValue.Text("x"), null));
         _missing = Validate(new(_commandNamePropertyId, SemanticValidationRuleKind.Equal, null, null));
-        _wrongType = Validate(new(_commandNamePropertyId, SemanticValidationRuleKind.Matches, SemanticValue.Number(1), null));
+        _wrongType = Validate(new(_commandNamePropertyId, SemanticValidationRuleKind.Maximum, SemanticValue.Number(1), null));
     }
 
     Exception Validate(SemanticValidationRule validation)

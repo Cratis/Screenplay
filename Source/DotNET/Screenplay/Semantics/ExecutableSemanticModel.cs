@@ -399,8 +399,6 @@ static class SemanticModelValidator
                 case SemanticValidationRuleKind.Maximum or SemanticValidationRuleKind.Minimum
                     when propertyType.IsCollection || primitive is not (SemanticPrimitiveType.WholeNumber or SemanticPrimitiveType.DecimalNumber):
                     throw new InvalidSemanticContract("Minimum and maximum validation require a scalar numeric value.");
-                case SemanticValidationRuleKind.Matches when propertyType.IsCollection || primitive != SemanticPrimitiveType.Text:
-                    throw new InvalidSemanticContract("Matches validation requires scalar text.");
             }
 
             if (validation.Operand is not null)
@@ -410,18 +408,7 @@ static class SemanticModelValidator
                     throw new InvalidSemanticContract($"Validation rule '{validation.Kind}' cannot use a null operand.");
                 }
 
-                if (validation.Kind == SemanticValidationRuleKind.Matches)
-                {
-                    _valueValidator.ValidatePattern(validation.Operand, propertyType, "validation operand");
-                    if (validation.Operand is not SemanticTextValue)
-                    {
-                        throw new InvalidSemanticContract("Matches validation requires a text operand.");
-                    }
-                }
-                else
-                {
-                    ValidateValue(validation.Operand, propertyType, "validation operand");
-                }
+                ValidateValue(validation.Operand, propertyType, "validation operand");
             }
         }
 
@@ -435,16 +422,22 @@ static class SemanticModelValidator
             var sources = Properties(command.Properties);
             if (produced.Condition is not null)
             {
-                var conditionType = ResolveExpression(produced.Condition, SemanticExpressionRootKind.Command, sources, null);
+                var conditionType = ResolveExpression(produced.Condition, SemanticExpressionRootKind.Command, sources);
                 RequireBoolean(conditionType, "produced event condition");
             }
 
             if (produced.Destination is not null)
             {
-                var destinationType = ResolveExpression(produced.Destination, SemanticExpressionRootKind.Command, sources, null);
-                if (destinationType?.IsCollection is not false)
+                var destinationType = ResolveExpression(produced.Destination, SemanticExpressionRootKind.Command, sources);
+                var destinationProperty = produced.Destination is SemanticResolvedExpression
                 {
-                    throw new InvalidSemanticContract("A produced event destination must resolve to one scalar command value.");
+                    Source: SemanticExpressionSourceKind.Property
+                } resolved && sources.TryGetValue(resolved.Target, out var property)
+                    ? property
+                    : null;
+                if (destinationType?.IsCollection is not false || destinationType.IsOptional || destinationProperty?.IsIdentifier is not true)
+                {
+                    throw new InvalidSemanticContract("A produced event destination must resolve to one required scalar command identity.");
                 }
             }
 
@@ -475,7 +468,7 @@ static class SemanticModelValidator
                 RejectNull(transition.AffectedInstance, "affected instance");
                 ValidateEnum(transition.AffectedInstance.Cardinality, AffectedInstanceCardinality.Unknown, "affected instance cardinality");
                 var sources = Properties(eventContract.Properties);
-                var keyType = ResolveExpression(transition.AffectedInstance.Key, SemanticExpressionRootKind.Event, sources, null) ??
+                var keyType = ResolveExpression(transition.AffectedInstance.Key, SemanticExpressionRootKind.Event, sources) ??
                     throw new InvalidSemanticContract("An affected-instance key cannot be null.");
 
                 var expectsCollection = transition.AffectedInstance.Cardinality == AffectedInstanceCardinality.Many;
@@ -633,7 +626,8 @@ static class SemanticModelValidator
                 }
 
                 ValidateSpecificationReadModel(state);
-                if (keyProperty.IsIdentifier && !SemanticValueRules.AreEqual(state.Key, result.Key))
+                var queryKeyValue = state.Values.Single(_ => _.TargetProperty == keyProperty.Id).Value;
+                if (!SemanticValueRules.AreEqual(queryKeyValue, result.Key))
                 {
                     throw new InvalidSemanticContract("A specification query result uses the wrong read model or key.");
                 }
@@ -679,7 +673,7 @@ static class SemanticModelValidator
                 }
                 else
                 {
-                    var sourceType = ResolveExpression(mapping.Source, root, sources, null);
+                    var sourceType = ResolveExpression(mapping.Source, root, sources);
                     RequireCompatible(sourceType, target.Type, "property mapping");
                 }
             }
@@ -718,8 +712,7 @@ static class SemanticModelValidator
         SemanticTypeReference? ResolveExpression(
             SemanticExpression expression,
             SemanticExpressionRootKind expectedRoot,
-            Dictionary<SemanticId, SemanticProperty> properties,
-            Dictionary<SemanticId, SemanticReadModelQueryArgument>? arguments)
+            Dictionary<SemanticId, SemanticProperty> properties)
         {
             RejectNull(expression, "expression");
             ValidateEnum(expression.Kind, SemanticExpressionKind.Unknown, "expression kind");
@@ -740,7 +733,6 @@ static class SemanticModelValidator
                     return resolved.Source switch
                     {
                         SemanticExpressionSourceKind.Property when properties.TryGetValue(resolved.Target, out var property) => property.Type,
-                        SemanticExpressionSourceKind.Argument when arguments is not null && arguments.TryGetValue(resolved.Target, out var argument) => argument.Type,
                         _ => throw new InvalidSemanticContract($"Resolved expression target '{resolved.Target}' is unresolved in its root scope.")
                     };
                 default:
