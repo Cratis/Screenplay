@@ -17,6 +17,11 @@ specification <Name>
     <property> = <value>
   then readmodel <ReadModelType>
     <property> = <value>
+  then query <Query>
+    arguments
+      <argument> = <value>
+    result
+      <property> = <value>
   then error ["<message>"]
 ```
 
@@ -25,6 +30,7 @@ specification <Name>
 - `when <CommandType>` — zero or one. The command being exercised. A specification can declare at most one `when`; declaring a second is a compile error.
 - `then <EventType>` — zero or more. An event expected to be produced by the command.
 - `then readmodel <ReadModelType>` — zero or more. The read model state expected after the command has run and its events have been projected.
+- `then query <Query>` — zero or more. Executes the named query with the authored `arguments` and compares its ordered `result` blocks. No `result` blocks means the query is expected to return nothing.
 - `then error ["<message>"]` — zero or more. An expected rejection. See [Rejections](#rejections).
 - `file <path>` — zero or one. The repository relative file the specification is realized by. See [File references](file-references.md).
 
@@ -55,6 +61,37 @@ specification RejectingAnInvoiceWhoseNumberIsAlreadyTaken
 ```
 
 Write the bare form rather than `then error ""`. An empty string reads as a reason someone left blank; the bare form says one was never stated. Both forms may appear in the same specification, and both round-trip through the [printer](printing.md) unchanged — which is what keeps generated documents diffable.
+
+## Query results
+
+A read model assertion proves that projected state exists. A query assertion proves that callers can actually retrieve the expected state through the declared read contract. State must not be used as an implicit query assertion because one read model can have several queries with different arguments and filtering.
+
+```screenplay
+specification LookingUpARegisteredProject
+  when RegisterProject
+    projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+    name = "Screenplay"
+  then query ProjectById
+    arguments
+      projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+    result
+      projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+      name = "Screenplay"
+```
+
+Repeat `result` for a query that returns several items. Their order is the authored comparison order. To assert that an optional or collection query returns nothing, omit `result`:
+
+```screenplay
+specification NotFindingAnUnknownProject
+  when RegisterProject
+    projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+    name = "Screenplay"
+  then query ProjectById
+    arguments
+      projectId = "00000000-0000-0000-0000-000000000000"
+```
+
+The query declaration already states its return read model, so a `result` block contains only expected properties. Program v1 compares exact results in authored order. Explicit subset and unordered comparison remain additive future qualifiers rather than implicit behavior.
 
 ## Example
 
@@ -115,6 +152,9 @@ Both forms combine freely with `given`/`then` events in the same specification �
 | `when <CommandType>` | The command under test, with its property values. |
 | `then <EventType>` | An event expected to be produced by the command. |
 | `then readmodel <ReadModelType>` | The read model state expected after the command. |
+| `then query <Query>` | Ordered query results for explicit arguments; no `result` means empty. |
+| `arguments` | The values supplied to the query. |
+| `result` | One expected query result; repeat for many. |
 | `then error "<message>"` | A rejection, for the named reason. |
 | `then error` | A rejection, for a reason the specification does not name. |
 | `<property> = <value>` | A property value, using the same expression grammar as `produces`/`capture` mappings. |

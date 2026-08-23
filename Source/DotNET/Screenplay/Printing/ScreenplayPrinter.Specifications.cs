@@ -48,6 +48,11 @@ public partial class ScreenplayPrinter
                 WriteSpecificationReadModel(writer, "then", then);
             }
 
+            foreach (var then in specification.ThenQueries)
+            {
+                WriteSpecificationQuery(writer, then);
+            }
+
             foreach (var error in specification.ThenErrors)
             {
                 writer.Line(error.Name is null ? "then error" : $"then error {StringLiteral.Quote(error.Name)}");
@@ -70,6 +75,31 @@ public partial class ScreenplayPrinter
         using (writer.Indent())
         {
             WriteSpecificationValues(writer, readModel.Properties);
+        }
+    }
+
+    void WriteSpecificationQuery(ScreenplayWriter writer, SpecificationQuerySyntax query)
+    {
+        writer.Line($"then query {query.Query}");
+        using (writer.Indent())
+        {
+            if (query.Arguments.Any())
+            {
+                writer.Line("arguments");
+                using (writer.Indent())
+                {
+                    WriteSpecificationValues(writer, query.Arguments);
+                }
+            }
+
+            foreach (var result in query.Results)
+            {
+                writer.Line("result");
+                using (writer.Indent())
+                {
+                    WriteSpecificationValues(writer, result.Properties);
+                }
+            }
         }
     }
 

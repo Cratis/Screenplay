@@ -70,6 +70,7 @@ internal static partial class SpecificationParser
         SpecificationCommandSyntax? when = null;
         var thenEvents = new List<SpecificationEventSyntax>();
         var thenReadModels = new List<SpecificationReadModelSyntax>();
+        var thenQueries = new List<SpecificationQuerySyntax>();
         var thenErrors = new List<SpecificationErrorSyntax>();
         FileReferenceSyntax? file = null;
 
@@ -109,7 +110,7 @@ internal static partial class SpecificationParser
                     when = ParseWhen(context, line);
                     break;
                 case "then":
-                    ParseThen(context, line, thenEvents, thenReadModels, thenErrors);
+                    ParseThen(context, line, thenEvents, thenReadModels, thenQueries, thenErrors);
                     break;
                 default:
                     context.Error(DiagnosticCodes.UnknownSpecificationDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in specification body", line.Location);
@@ -118,7 +119,11 @@ internal static partial class SpecificationParser
             }
         }
 
-        return new(name, given, when, thenEvents, thenErrors, header.Location, givenReadModels, thenReadModels) { File = file };
+        return new(name, given, when, thenEvents, thenErrors, header.Location, givenReadModels, thenReadModels)
+        {
+            File = file,
+            ThenQueries = thenQueries
+        };
     }
 
     static SpecificationCommandSyntax? ParseWhen(ParserContext context, SourceLine line)
@@ -139,6 +144,7 @@ internal static partial class SpecificationParser
         SourceLine line,
         List<SpecificationEventSyntax> thenEvents,
         List<SpecificationReadModelSyntax> thenReadModels,
+        List<SpecificationQuerySyntax> thenQueries,
         List<SpecificationErrorSyntax> thenErrors)
     {
         // A bare 'then error' states the operation is rejected without naming a reason - the reason a
@@ -163,6 +169,16 @@ internal static partial class SpecificationParser
             return;
         }
 
+        if (ThenQueryPrefixRegex().IsMatch(line.Content))
+        {
+            if (ParseQuery(context, line) is { } query)
+            {
+                thenQueries.Add(query);
+            }
+
+            return;
+        }
+
         if (ReadModelPrefixRegex().IsMatch(line.Content))
         {
             if (ParseReadModel(context, line, ThenReadModelRegex(), "then") is { } thenReadModel)
@@ -177,6 +193,51 @@ internal static partial class SpecificationParser
         {
             thenEvents.Add(thenEvent);
         }
+    }
+
+    static SpecificationQuerySyntax? ParseQuery(ParserContext context, SourceLine line)
+    {
+        var match = ThenQueryRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidSpecificationQuery, $"Invalid 'then query' declaration '{line.Content}' - expected 'then query <Query>'", line.Location);
+            context.SkipBlock(line.Indent);
+            return null;
+        }
+
+        var arguments = new List<PropertyMappingSyntax>();
+        var results = new List<SpecificationQueryResultSyntax>();
+        var hasArguments = false;
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            switch (child.Content)
+            {
+                case "arguments":
+                    if (hasArguments)
+                    {
+                        context.Error(DiagnosticCodes.DuplicateSpecificationQueryArguments, $"Query assertion '{match.Groups[1].Value}' already declares arguments", child.Location);
+                        context.SkipBlock(child.Indent);
+                        break;
+                    }
+
+                    hasArguments = true;
+                    arguments.AddRange(ParseValues(context, child));
+                    break;
+                case "result":
+                    results.Add(new(ParseValues(context, child), child.Location));
+                    break;
+                default:
+                    context.Error(
+                        DiagnosticCodes.UnknownSpecificationQueryDirective,
+                        $"Unexpected '{LineText.FirstWord(child.Content)}' in 'then query' body - expected arguments or result",
+                        child.Location);
+                    context.SkipBlock(child.Indent);
+                    break;
+            }
+        }
+
+        return new(match.Groups[1].Value, arguments, results, line.Location);
     }
 
     static SpecificationReadModelSyntax? ParseReadModel(ParserContext context, SourceLine line, Regex regex, string keyword)
@@ -235,6 +296,12 @@ internal static partial class SpecificationParser
 
     [GeneratedRegex(@"^then\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex ThenEventRegex();
+
+    [GeneratedRegex(@"^then\s+query\b", RegexOptions.None, 1000)]
+    private static partial Regex ThenQueryPrefixRegex();
+
+    [GeneratedRegex(@"^then\s+query\s+([A-Z]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    private static partial Regex ThenQueryRegex();
 
     [GeneratedRegex(@"^(?:given|then)\s+readmodel\b", RegexOptions.None, 1000)]
     private static partial Regex ReadModelPrefixRegex();

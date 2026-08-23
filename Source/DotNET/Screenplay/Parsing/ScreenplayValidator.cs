@@ -97,6 +97,7 @@ internal static class ScreenplayValidator
         var scopedSlices = ScopedSlices(application).ToList();
         var knownQueries = scopedSlices.SelectMany(entry => entry.Slice.Queries.Select(query => new Declaration(query.Name, entry.Scope))).ToList();
         var knownScreenDeclarations = scopedSlices.SelectMany(entry => entry.Slice.Screens.Select(screen => new Declaration(screen.Name, entry.Scope))).ToList();
+        ValidateSpecificationQueries(scopedSlices, knownQueries, context);
 
         var knownCommandDeclarations = new List<Declaration>();
         var commandsByDeclaration = new Dictionary<Declaration, CommandSyntax>();
@@ -570,6 +571,26 @@ internal static class ScreenplayValidator
                     DiagnosticCodes.UnknownCommand,
                     $"Unknown command '{invokes.Command}' - declare it with 'command {invokes.Command}'",
                     invokes.Location);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates that every query asserted by a specification resolves from the specification's slice.
+    /// </summary>
+    /// <param name="scoped">Every slice in the document, with the scope it sits in.</param>
+    /// <param name="queries">The queries the document declares, scoped to where they are declared.</param>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    static void ValidateSpecificationQueries(
+        IReadOnlyList<(SliceSyntax Slice, DeclarationScope Scope)> scoped,
+        IReadOnlyList<Declaration> queries,
+        ParserContext context)
+    {
+        foreach (var (slice, scope) in scoped)
+        {
+            foreach (var query in slice.Specifications.SelectMany(specification => specification.ThenQueries))
+            {
+                Report(query.Query, scope, queries, DiagnosticCodes.UnknownQuery, "query", query.Location, context);
             }
         }
     }

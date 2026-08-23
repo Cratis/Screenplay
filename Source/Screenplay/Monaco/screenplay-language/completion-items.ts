@@ -127,6 +127,7 @@ export const specificationItems: CompletionEntry[] = [
     { label: 'when', insertText: 'when ${1:CommandType}\n    ${2:property} = ${3:value}', documentation: 'The command being exercised.' },
     { label: 'then', insertText: 'then ${1:EventType}\n    ${2:property} = ${3:value}', documentation: 'An event expected to be produced by the command.' },
     { label: 'then readmodel', insertText: 'then readmodel ${1:ReadModelType}\n    ${2:property} = ${3:value}', documentation: 'The read model state expected after the command.' },
+    { label: 'then query', insertText: 'then query ${1:QueryName}\n    arguments\n        ${2:argument} = ${3:value}\n    result\n        ${4:property} = ${5:value}', documentation: 'The ordered query results expected for explicit arguments. Remove the result block to assert an empty result.' },
     { label: 'then error', insertText: 'then error', documentation: 'A rejection, for a reason this specification does not name.' },
     { label: 'then error "..."', insertText: 'then error "${1:reason}"', documentation: 'A rejection, for the named reason.' },
 ];

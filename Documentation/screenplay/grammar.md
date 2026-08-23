@@ -584,7 +584,18 @@ SpecificationWhen = "when", Ident, NL,
 
 SpecificationThen = "then", [ "readmodel" ], Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
+               | "then", "query", QualifiedName, NL,
+                 [ INDENT, { SpecificationQueryDirective }, DEDENT ]
                | "then", "error", [ StringLiteral ], NL ;
+
+SpecificationQueryDirective = "arguments", NL,
+                 [ INDENT, { PropertyMapping }, DEDENT ]
+               | "result", NL,
+                 [ INDENT, { PropertyMapping }, DEDENT ] ;
+
+(* Repeat "result" to assert several results in authored comparison order. A
+   "then query" with no result blocks asserts an empty result. The query
+   declaration supplies the result read-model type, so it is not repeated. *)
 
 (* A bare "then error" states a rejection whose reason the specification does
    not name; the quoted form names it. Both may appear in one specification.  *)

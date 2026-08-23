@@ -124,7 +124,7 @@ export function planCompletions(
     if (/\bnavigate\s+to\s+\w*$/.test(textBefore)) {
         return { kind: 'screens' };
     }
-    if (/\bvia\s+query\s+\w*$/.test(textBefore)) {
+    if (/\b(?:via|then)\s+query\s+[\w.]*$/.test(textBefore)) {
         return { kind: 'queries' };
     }
     if (

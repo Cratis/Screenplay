@@ -52,6 +52,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitSpecificationReadModel(readModel);
         }
 
+        foreach (var query in syntax.ThenQueries)
+        {
+            VisitSpecificationQuery(query);
+        }
+
         foreach (var error in syntax.ThenErrors)
         {
             VisitSpecificationError(error);
@@ -91,6 +96,39 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The <see cref="SpecificationReadModelSyntax"/> to visit.</param>
     public virtual void VisitSpecificationReadModel(SpecificationReadModelSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        foreach (var property in syntax.Properties)
+        {
+            VisitPropertyMapping(property);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="SpecificationQuerySyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SpecificationQuerySyntax"/> to visit.</param>
+    public virtual void VisitSpecificationQuery(SpecificationQuerySyntax syntax)
+    {
+        VisitNode(syntax);
+
+        foreach (var argument in syntax.Arguments)
+        {
+            VisitPropertyMapping(argument);
+        }
+
+        foreach (var result in syntax.Results)
+        {
+            VisitSpecificationQueryResult(result);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="SpecificationQueryResultSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SpecificationQueryResultSyntax"/> to visit.</param>
+    public virtual void VisitSpecificationQueryResult(SpecificationQueryResultSyntax syntax)
     {
         VisitNode(syntax);
 

@@ -65,6 +65,8 @@ export const keywordDocs: Record<string, string> = {
     seed: 'Declares events to seed into the event store per event source id — multiple blocks accumulate.',
     for: 'Introduces a seed group — the events to seed for one event source id.',
     readmodel: 'Read model state in a specification — `given readmodel` establishes it, `then readmodel` asserts it.',
+    arguments: 'The values supplied to a query asserted by `then query`.',
+    result: 'One expected result of a `then query` assertion. Repeat it to assert several results in authored order.',
     file: 'Delegates the implementation to an external file; the Screenplay contract stays visible.',
     by: 'Introduces the identifying parameter.',
     via: 'Connects screen data to the query that supplies it.',
