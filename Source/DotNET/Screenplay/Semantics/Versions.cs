@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using System.Globalization;
 using System.Runtime.InteropServices;
 
@@ -20,19 +21,19 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V1 = new(1, 0);
 
     /// <summary>
-    /// Parses a canonical language version.
+    /// Parses a canonical, supported language version.
     /// </summary>
     /// <param name="value">The value to parse.</param>
     /// <returns>The parsed version.</returns>
-    /// <exception cref="InvalidSemanticContract">The value is not canonical.</exception>
+    /// <exception cref="InvalidSemanticContract">The value is not canonical or supported by ESM schema v1.</exception>
     public static LanguageVersion Parse(string value) => VersionParser.ParseLanguage(value);
 
     /// <summary>
-    /// Tries to parse a canonical language version.
+    /// Tries to parse a canonical, supported language version.
     /// </summary>
     /// <param name="value">The value to parse.</param>
     /// <param name="version">The parsed version when successful.</param>
-    /// <returns><c>true</c> when the value is canonical; otherwise, <c>false</c>.</returns>
+    /// <returns><c>true</c> when the value is canonical and supported; otherwise, <c>false</c>.</returns>
     public static bool TryParse(string? value, out LanguageVersion version) => VersionParser.TryParse(value, out version);
 
     /// <inheritdoc/>
@@ -63,19 +64,19 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     public static readonly SemanticVersion V1 = new(1, 0);
 
     /// <summary>
-    /// Parses a canonical semantic version.
+    /// Parses a canonical, supported semantic version.
     /// </summary>
     /// <param name="value">The value to parse.</param>
     /// <returns>The parsed version.</returns>
-    /// <exception cref="InvalidSemanticContract">The value is not canonical.</exception>
+    /// <exception cref="InvalidSemanticContract">The value is not canonical or supported by ESM schema v1.</exception>
     public static SemanticVersion Parse(string value) => VersionParser.ParseSemantic(value);
 
     /// <summary>
-    /// Tries to parse a canonical semantic version.
+    /// Tries to parse a canonical, supported semantic version.
     /// </summary>
     /// <param name="value">The value to parse.</param>
     /// <param name="version">The parsed version when successful.</param>
-    /// <returns><c>true</c> when the value is canonical; otherwise, <c>false</c>.</returns>
+    /// <returns><c>true</c> when the value is canonical and supported; otherwise, <c>false</c>.</returns>
     public static bool TryParse(string? value, out SemanticVersion version) => VersionParser.TryParse(value, out version);
 
     /// <inheritdoc/>
@@ -92,13 +93,58 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
         destination.TryWrite(CultureInfo.InvariantCulture, $"{Major}.{Minor}", out charsWritten);
 }
 
+/// <summary>
+/// Defines the language and semantic versions admitted by ESM schema v1.
+/// </summary>
+public static class EsmSchemaV1Support
+{
+    /// <summary>
+    /// Gets the supported source language versions.
+    /// </summary>
+    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [LanguageVersion.V1];
+
+    /// <summary>
+    /// Gets the supported portable semantic versions.
+    /// </summary>
+    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [SemanticVersion.V1];
+
+    /// <summary>
+    /// Determines whether a language version is supported by ESM schema v1.
+    /// </summary>
+    /// <param name="version">The language version.</param>
+    /// <returns><c>true</c> when supported; otherwise, <c>false</c>.</returns>
+    public static bool Supports(LanguageVersion version) => LanguageVersions.Contains(version);
+
+    /// <summary>
+    /// Determines whether a semantic version is supported by ESM schema v1.
+    /// </summary>
+    /// <param name="version">The semantic version.</param>
+    /// <returns><c>true</c> when supported; otherwise, <c>false</c>.</returns>
+    public static bool Supports(SemanticVersion version) => SemanticVersions.Contains(version);
+
+    /// <summary>
+    /// Rejects a language and semantic version pair not supported by ESM schema v1.
+    /// </summary>
+    /// <param name="languageVersion">The source language version.</param>
+    /// <param name="semanticVersion">The portable semantic version.</param>
+    /// <exception cref="InvalidSemanticContract">One or both versions are unsupported.</exception>
+    public static void EnsureSupported(LanguageVersion languageVersion, SemanticVersion semanticVersion)
+    {
+        if (!Supports(languageVersion) || !Supports(semanticVersion))
+        {
+            throw new InvalidSemanticContract(
+                $"ESM schema v1 supports language version '{LanguageVersion.V1}' and semantic version '{SemanticVersion.V1}' only; received '{languageVersion}' and '{semanticVersion}'.");
+        }
+    }
+}
+
 static class VersionParser
 {
     internal static LanguageVersion ParseLanguage(string value)
     {
         if (!TryParse(value, out LanguageVersion version))
         {
-            throw new InvalidSemanticContract($"'{value}' is not a canonical language version.");
+            throw new InvalidSemanticContract($"'{value}' is not a canonical language version supported by ESM schema v1.");
         }
 
         return version;
@@ -108,7 +154,7 @@ static class VersionParser
     {
         if (!TryParse(value, out SemanticVersion version))
         {
-            throw new InvalidSemanticContract($"'{value}' is not a canonical semantic version.");
+            throw new InvalidSemanticContract($"'{value}' is not a canonical semantic version supported by ESM schema v1.");
         }
 
         return version;
@@ -118,6 +164,12 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
+        if (success && !EsmSchemaV1Support.Supports(version))
+        {
+            version = default;
+            return false;
+        }
+
         return success;
     }
 
@@ -125,6 +177,12 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
+        if (success && !EsmSchemaV1Support.Supports(version))
+        {
+            version = default;
+            return false;
+        }
+
         return success;
     }
 

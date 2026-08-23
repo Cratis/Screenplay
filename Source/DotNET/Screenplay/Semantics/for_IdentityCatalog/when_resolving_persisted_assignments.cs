@@ -8,18 +8,21 @@ public class when_resolving_persisted_assignments : Specification
     SemanticAddress _address;
     SemanticId _assignedId;
     SemanticId _resolvedId;
+    ApplicationIdentity _application;
 
     void Establish()
     {
-        _address = SemanticAddress.Create(
-            SemanticKind.Command,
-            [SemanticAddressPart.Create(SemanticAddressPartKind.Declaration, "RenamedCommand")]);
+        _application = ApplicationIdentity.Create("Projects");
+        _address = SemanticAddress.ForCommand(
+            SemanticAddress.ForSlice(_application, "Projects", "Projects", "Registration"),
+            "RenamedCommand");
         _assignedId = SemanticId.Parse("sem1:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
     }
 
     void Because()
     {
         var catalog = SemanticIdentityCatalog.Create(
+            _application,
             [],
             [new(_address, _assignedId, SemanticIdentityOrigin.Persisted)],
             []);

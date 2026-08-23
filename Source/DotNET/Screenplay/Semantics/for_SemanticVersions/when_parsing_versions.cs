@@ -10,14 +10,12 @@ public class when_parsing_versions : Specification
 
     void Because()
     {
-        _languageVersion = LanguageVersion.Parse("12.34");
-        _semanticVersion = SemanticVersion.Parse("5.6");
+        _languageVersion = LanguageVersion.Parse("1.0");
+        _semanticVersion = SemanticVersion.Parse("1.0");
     }
 
-    [Fact] void should_parse_language_major() => _languageVersion.Major.ShouldEqual(12u);
-    [Fact] void should_parse_language_minor() => _languageVersion.Minor.ShouldEqual(34u);
-    [Fact] void should_parse_semantic_major() => _semanticVersion.Major.ShouldEqual(5u);
-    [Fact] void should_parse_semantic_minor() => _semanticVersion.Minor.ShouldEqual(6u);
-    [Fact] void should_write_language_version_canonically() => _languageVersion.ToString().ShouldEqual("12.34");
-    [Fact] void should_write_semantic_version_canonically() => _semanticVersion.ToString().ShouldEqual("5.6");
+    [Fact] void should_parse_supported_language_version() => _languageVersion.ShouldEqual(LanguageVersion.V1);
+    [Fact] void should_parse_supported_semantic_version() => _semanticVersion.ShouldEqual(SemanticVersion.V1);
+    [Fact] void should_expose_one_supported_language_version() => EsmSchemaV1Support.LanguageVersions.ShouldContainOnly(LanguageVersion.V1);
+    [Fact] void should_expose_one_supported_semantic_version() => EsmSchemaV1Support.SemanticVersions.ShouldContainOnly(SemanticVersion.V1);
 }

@@ -9,10 +9,12 @@ public class when_creating_duplicate_addresses : Specification
 
     void Because()
     {
-        var address = SemanticAddress.Create(
-            SemanticKind.Command,
-            [SemanticAddressPart.Create(SemanticAddressPartKind.Declaration, "Register")]);
+        var application = ApplicationIdentity.Create("Projects");
+        var address = SemanticAddress.ForCommand(
+            SemanticAddress.ForSlice(application, "Projects", "Projects", "Registration"),
+            "Register");
         _exception = Catch.Exception(() => SemanticIdentityCatalog.Create(
+            application,
             [],
             [
                 new(address, SemanticId.Create(address), SemanticIdentityOrigin.Persisted),

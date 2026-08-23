@@ -9,10 +9,13 @@ public class when_creating_ambiguous_assignments : Specification
 
     void Because()
     {
+        var application = ApplicationIdentity.Create("Projects");
         var id = SemanticId.Parse("sem1:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
-        var first = Address("First");
-        var second = Address("Second");
+        var slice = SemanticAddress.ForSlice(application, "Projects", "Projects", "Registration");
+        var first = SemanticAddress.ForCommand(slice, "First");
+        var second = SemanticAddress.ForCommand(slice, "Second");
         _exception = Catch.Exception(() => SemanticIdentityCatalog.Create(
+            application,
             [],
             [
                 new(first, id, SemanticIdentityOrigin.Persisted),
@@ -22,8 +25,4 @@ public class when_creating_ambiguous_assignments : Specification
     }
 
     [Fact] void should_reject_the_catalog() => _exception.ShouldBeOfExactType<InvalidSemanticContract>();
-
-    static SemanticAddress Address(string key) => SemanticAddress.Create(
-        SemanticKind.Command,
-        [SemanticAddressPart.Create(SemanticAddressPartKind.Declaration, key)]);
 }

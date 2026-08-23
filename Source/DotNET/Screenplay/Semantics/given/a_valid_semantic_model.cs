@@ -11,6 +11,7 @@ public class a_valid_semantic_model : Specification
     protected ExecutableSemanticModel _model;
     protected SemanticApplication _application;
     protected SemanticIdentityCatalog _catalog;
+    protected ApplicationIdentity _applicationIdentity;
     protected EventContractId _eventContractId;
     protected SemanticId _applicationId;
     protected SemanticId _commandId;
@@ -29,6 +30,7 @@ public class a_valid_semantic_model : Specification
 
     void Establish()
     {
+        _applicationIdentity = ApplicationIdentity.Create("Projects");
         _applicationId = Id(SemanticKind.Application, "Projects");
         _projectIdConceptId = Id(SemanticKind.Concept, "ProjectId");
         _projectNameConceptId = Id(SemanticKind.Concept, "ProjectName");
@@ -46,7 +48,7 @@ public class a_valid_semantic_model : Specification
         _readModelNamePropertyId = Id(SemanticKind.Property, "ProjectSummary.Name");
 
         var eventAddress = Address(SemanticKind.EventContract, "ProjectRegistered");
-        _eventContractId = EventContractId.CreateLegacy(eventAddress);
+        _eventContractId = EventContractId.CreateLegacy(_applicationIdentity, eventAddress.Name);
         var eventContract = new SemanticEventContract(
             _eventId,
             _eventContractId,
@@ -176,6 +178,7 @@ public class a_valid_semantic_model : Specification
                 [new(Id(SemanticKind.Feature, "Projects"), "Projects", [], [stateView, stateChange])])]);
         _model = ExecutableSemanticModel.Create(LanguageVersion.V1, SemanticVersion.V1, _application);
         _catalog = SemanticIdentityCatalog.Create(
+            _applicationIdentity,
             [],
             [new(Address(SemanticKind.Application, "Projects"), _applicationId, SemanticIdentityOrigin.Persisted)],
             [new(eventAddress, _eventContractId, EventContractRevision.Initial, SemanticIdentityOrigin.LegacyBootstrap)]);
@@ -193,9 +196,49 @@ public class a_valid_semantic_model : Specification
         return _application with { Modules = [replacedModule] };
     }
 
-    protected static SemanticAddress Address(SemanticKind kind, string key) =>
-        SemanticAddress.Create(kind, [SemanticAddressPart.Create(SemanticAddressPartKind.Declaration, key)]);
+    protected static SemanticAddress Address(SemanticKind kind, string key)
+    {
+        var application = ApplicationIdentity.Create("Projects");
+        var stateChange = SemanticAddress.ForSlice(application, "Projects", "Projects", "Registration");
+        var stateView = SemanticAddress.ForSlice(application, "Projects", "Projects", "ProjectSummaries");
+        return kind switch
+        {
+            SemanticKind.Application => SemanticAddress.ForApplication(application),
+            SemanticKind.Module => SemanticAddress.ForModule(application, key),
+            SemanticKind.Feature => SemanticAddress.ForFeature(application, "Projects", key),
+            SemanticKind.Slice => SemanticAddress.ForSlice(application, "Projects", "Projects", key),
+            SemanticKind.Concept => SemanticAddress.ForConcept(application, key),
+            SemanticKind.CompositeType => SemanticAddress.ForCompositeType(application, key),
+            SemanticKind.Command => SemanticAddress.ForCommand(stateChange, key),
+            SemanticKind.EventContract => SemanticAddress.ForEventContract(stateChange, key),
+            SemanticKind.ReadModel => SemanticAddress.ForReadModel(stateView, key),
+            SemanticKind.Projection => SemanticAddress.ForProjection(stateView, key),
+            SemanticKind.Query => SemanticAddress.ForQuery(stateView, key),
+            SemanticKind.Specification => SemanticAddress.ForSpecification(stateChange, key),
+            SemanticKind.Property => PropertyAddress(application, stateChange, stateView, key),
+            _ => throw new InvalidSemanticContract($"Unsupported semantic kind '{kind}'.")
+        };
+    }
 
     protected static SemanticId Id(SemanticKind kind, string key) => SemanticId.Create(Address(kind, key));
+
+    static SemanticAddress PropertyAddress(
+        ApplicationIdentity application,
+        SemanticAddress stateChange,
+        SemanticAddress stateView,
+        string key)
+    {
+        var separator = key.IndexOf('.');
+        var owner = key[..separator];
+        var member = key[(separator + 1)..];
+        var ownerAddress = owner switch
+        {
+            "RegisterProject" => SemanticAddress.ForCommand(stateChange, owner),
+            "ProjectRegistered" => SemanticAddress.ForEventContract(stateChange, owner),
+            "ProjectSummary" => SemanticAddress.ForReadModel(stateView, owner),
+            _ => SemanticAddress.ForCompositeType(application, owner)
+        };
+        return SemanticAddress.ForProperty(ownerAddress, member);
+    }
 }
 #endif

@@ -18,6 +18,8 @@ public class when_round_tripping_a_catalog : a_valid_semantic_model
         _reserialized = SemanticIdentityCatalogSerializer.Serialize(_roundTripped);
     }
 
+    [Fact] void should_preserve_the_application_identity() => _roundTripped.Application.ShouldEqual(_applicationIdentity);
+    [Fact] void should_preserve_the_catalog_revision() => _roundTripped.Revision.ShouldEqual(_catalog.Revision);
     [Fact] void should_preserve_semantic_assignments() => _roundTripped.Semantics.Single().Id.ShouldEqual(_applicationId);
     [Fact] void should_preserve_event_assignments() => _roundTripped.EventContracts.Single().Id.ShouldEqual(_eventContractId);
     [Fact] void should_be_byte_identical() => _reserialized.SequenceEqual(_json).ShouldBeTrue();

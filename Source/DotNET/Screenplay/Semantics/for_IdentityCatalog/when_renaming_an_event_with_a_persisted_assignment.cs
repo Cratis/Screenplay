@@ -11,22 +11,34 @@ public class when_renaming_an_event_with_a_persisted_assignment : Specification
 
     void Because()
     {
-        var oldAddress = Address("ProjectRegistered");
-        var renamedAddress = Address("ProjectCreated");
-        _originalId = EventContractId.CreateLegacy(oldAddress);
-        var catalog = SemanticIdentityCatalog.Create(
+        var application = ApplicationIdentity.Create("Projects");
+        var oldAddress = Address(application, "ProjectRegistered");
+        var renamedAddress = Address(application, "ProjectCreated");
+        _originalId = EventContractId.CreateLegacy(application, oldAddress.Name);
+        var previous = SemanticIdentityCatalog.Create(
+            application,
             [],
             [],
-            [new(renamedAddress, _originalId, EventContractRevision.Initial, SemanticIdentityOrigin.Persisted)]);
-        _renamedAssignment = catalog.ResolveEventContract(renamedAddress);
-        _inferredAssignment = SemanticIdentityCatalog.Empty.ResolveEventContract(renamedAddress);
+            [new(oldAddress, _originalId, EventContractRevision.Initial, SemanticIdentityOrigin.LegacyBootstrap)]);
+        var plan = SemanticIdentityCatalog.PlanMigration(
+            previous,
+            previous.Revision,
+            [],
+            [],
+            [renamedAddress],
+            [],
+            [],
+            [new(oldAddress, renamedAddress)]);
+        _renamedAssignment = plan.Catalog.ResolveEventContract(renamedAddress);
+        _inferredAssignment = SemanticIdentityCatalog.Empty(application).ResolveEventContract(renamedAddress);
     }
 
     [Fact] void should_preserve_the_persisted_contract_identity() => _renamedAssignment.Id.ShouldEqual(_originalId);
+    [Fact] void should_make_the_migrated_assignment_persisted() => _renamedAssignment.Origin.ShouldEqual(SemanticIdentityOrigin.Persisted);
     [Fact] void should_keep_the_initial_contract_revision() => _renamedAssignment.Revision.ShouldEqual(EventContractRevision.Initial);
     [Fact] void should_never_infer_rename_continuity() => _inferredAssignment.Id.ShouldNotEqual(_originalId);
 
-    static SemanticAddress Address(string key) => SemanticAddress.Create(
-        SemanticKind.EventContract,
-        [SemanticAddressPart.Create(SemanticAddressPartKind.Declaration, key)]);
+    static SemanticAddress Address(ApplicationIdentity application, string key) => SemanticAddress.ForEventContract(
+        SemanticAddress.ForSlice(application, "Projects", "Projects", "Registration"),
+        key);
 }

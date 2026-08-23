@@ -58,11 +58,7 @@ public sealed record ExecutableSemanticModel
         SemanticVersion semanticVersion,
         SemanticApplication application)
     {
-        if (languageVersion.Major == 0 || semanticVersion.Major == 0)
-        {
-            throw new InvalidSemanticContract("Language and semantic versions must have a positive major version.");
-        }
-
+        EsmSchemaV1Support.EnsureSupported(languageVersion, semanticVersion);
         SemanticModelValidator.Validate(application);
         var withoutRevision = SemanticModelCanonicalJson.SerializeWithoutRevision(languageVersion, semanticVersion, application);
         var revision = SemanticRevision.Compute(withoutRevision);

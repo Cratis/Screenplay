@@ -10,9 +10,11 @@ public class when_relocating_a_source_document : Specification
 
     void Because()
     {
+        var application = ApplicationIdentity.Create("Projects");
         var id = DocumentId.Create("projects-main");
-        _first = SemanticDocumentSet.Create([SemanticSourceDocument.Create(id, "projects-main", "old/projects.play", "module Projects")], SemanticIdentityCatalog.Empty);
-        _relocated = SemanticDocumentSet.Create([SemanticSourceDocument.Create(id, "projects-main", "new/split/projects.play", "module Projects")], SemanticIdentityCatalog.Empty);
+        var catalog = SemanticIdentityCatalog.Empty(application);
+        _first = SemanticDocumentSet.Create([SemanticSourceDocument.Create(id, "projects-main", "old/projects.play", "module Projects")], catalog);
+        _relocated = SemanticDocumentSet.Create([SemanticSourceDocument.Create(id, "projects-main", "new/split/projects.play", "module Projects")], catalog);
     }
 
     [Fact] void should_preserve_document_identity() => _relocated.Documents.Single().Id.ShouldEqual(_first.Documents.Single().Id);

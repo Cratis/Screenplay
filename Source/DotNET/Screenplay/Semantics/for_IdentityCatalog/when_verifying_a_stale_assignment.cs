@@ -9,8 +9,12 @@ public class when_verifying_a_stale_assignment : Specification
 
     void Because()
     {
-        var staleAddress = Address("RemovedCommand");
+        var application = ApplicationIdentity.Create("Projects");
+        var staleAddress = SemanticAddress.ForCommand(
+            SemanticAddress.ForSlice(application, "Projects", "Projects", "Registration"),
+            "RemovedCommand");
         var catalog = SemanticIdentityCatalog.Create(
+            application,
             [],
             [new(staleAddress, SemanticId.Create(staleAddress), SemanticIdentityOrigin.Persisted)],
             []);
@@ -18,8 +22,4 @@ public class when_verifying_a_stale_assignment : Specification
     }
 
     [Fact] void should_reject_the_stale_assignment() => _exception.ShouldBeOfExactType<InvalidSemanticContract>();
-
-    static SemanticAddress Address(string key) => SemanticAddress.Create(
-        SemanticKind.Command,
-        [SemanticAddressPart.Create(SemanticAddressPartKind.Declaration, key)]);
 }

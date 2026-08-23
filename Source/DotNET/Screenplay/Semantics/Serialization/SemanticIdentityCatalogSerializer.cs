@@ -28,8 +28,12 @@ public static class SemanticIdentityCatalogSerializer
             throw new InvalidSemanticContract("The semantic identity catalog cannot be null.");
         }
 
-        var payload = Write(catalog, null);
-        var revision = SemanticRevision.Compute(payload);
+        var revision = ComputeRevision(catalog);
+        if (catalog.Revision != revision)
+        {
+            throw new InvalidSemanticContract($"Identity catalog revision '{catalog.Revision}' does not match computed revision '{revision}'.");
+        }
+
         return Write(catalog, revision);
     }
 
@@ -58,7 +62,8 @@ public static class SemanticIdentityCatalogSerializer
             var seen = new HashSet<string>(StringComparer.Ordinal);
             string? schema = null;
             uint? schemaVersion = null;
-            SemanticRevision? revision = null;
+            ApplicationIdentity application = default;
+            CatalogRevision? revision = null;
             ImmutableArray<DocumentIdentityAssignment> documents = default;
             ImmutableArray<SemanticIdentityAssignment> semantics = default;
             ImmutableArray<EventContractIdentityAssignment> events = default;
@@ -68,7 +73,8 @@ public static class SemanticIdentityCatalogSerializer
                 {
                     case "schema": schema = CatalogRead.String(ref reader, property); break;
                     case "schemaVersion": schemaVersion = CatalogRead.UInt32(ref reader, property); break;
-                    case "revision": revision = SemanticRevision.Parse(CatalogRead.String(ref reader, property)); break;
+                    case "applicationIdentity": application = ApplicationIdentity.Parse(CatalogRead.String(ref reader, property)); break;
+                    case "revision": revision = CatalogRevision.Parse(CatalogRead.String(ref reader, property)); break;
                     case "documents": documents = CatalogRead.Array(ref reader, CatalogRead.DocumentAssignment, property); break;
                     case "semantics": semantics = CatalogRead.Array(ref reader, CatalogRead.SemanticAssignment, property); break;
                     case "eventContracts": events = CatalogRead.Array(ref reader, CatalogRead.EventAssignment, property); break;
@@ -76,7 +82,7 @@ public static class SemanticIdentityCatalogSerializer
                 }
             }
 
-            if (schema != Schema || schemaVersion != SchemaVersion || revision is null ||
+            if (schema != Schema || schemaVersion != SchemaVersion || !application.IsSet || revision is null ||
                 documents.IsDefault || semantics.IsDefault || events.IsDefault)
             {
                 throw new InvalidSemanticContract("The identity catalog root is missing a required field or uses an unsupported schema.");
@@ -87,8 +93,8 @@ public static class SemanticIdentityCatalogSerializer
                 throw new InvalidSemanticContract("Canonical identity catalog JSON contains trailing data.");
             }
 
-            var catalog = SemanticIdentityCatalog.Create(documents, semantics, events);
-            var expectedRevision = SemanticRevision.Compute(Write(catalog, null));
+            var catalog = SemanticIdentityCatalog.Create(application, documents, semantics, events);
+            var expectedRevision = ComputeRevision(catalog);
             if (revision.Value != expectedRevision)
             {
                 throw new InvalidSemanticContract($"Identity catalog revision '{revision}' does not match computed revision '{expectedRevision}'.");
@@ -112,13 +118,16 @@ public static class SemanticIdentityCatalogSerializer
         }
     }
 
-    static byte[] Write(SemanticIdentityCatalog catalog, SemanticRevision? revision)
+    internal static CatalogRevision ComputeRevision(SemanticIdentityCatalog catalog) => CatalogRevision.Compute(Write(catalog, null));
+
+    static byte[] Write(SemanticIdentityCatalog catalog, CatalogRevision? revision)
     {
         var buffer = new ArrayBufferWriter<byte>();
         using var writer = new Utf8JsonWriter(buffer, new() { Indented = false, SkipValidation = false });
         writer.WriteStartObject();
         writer.WriteString("schema", Schema);
         writer.WriteNumber("schemaVersion", SchemaVersion);
+        writer.WriteString("applicationIdentity", catalog.Application.ToString());
         if (revision is not null)
         {
             writer.WriteString("revision", revision.Value.ToString());
@@ -288,7 +297,7 @@ static class CatalogRead
         }
 
         Required(kind is not null && !parts.IsDefault, "semantic address");
-        return SemanticAddress.Create(kind!.Value, parts);
+        return SemanticAddress.FromCanonical(kind!.Value, parts);
     }
 
     internal static SemanticAddressPart AddressPart(ref Utf8JsonReader reader)
