@@ -93,16 +93,16 @@ Declare as many as the behavior needs. Each names its own read model, and [print
 
 - [From Event](from-event.md) - Define rules that trigger when events occur
 - [Property Mapping](property-mapping.md) - Map event data to read model properties
-- [Auto-Map](auto-map) - Automatically map matching properties
+- [Auto-Map](from-event.md#with-automap) - Automatically map matching properties
 - [Keys](keys.md) - Explicit and composite keys for projection instances
 - [Event Context](event-context.md) - Access event metadata like timestamps and correlation IDs
 - [From Every](from-every.md) - Apply rules to all events the projection subscribes to
 - [From All](from-all.md) - Subscribe to all event types without filtering
-- [Counters](counters) - Increment, decrement, and count operations
+- [Counters](from-event.md#counter-operations) - Increment, decrement, and count operations
 - [Arithmetic](arithmetic.md) - Add and subtract operations
 - [Joins](joins.md) - Combine data from related events
-- [Children](children) - Define nested collections
-- [Nested Objects](nested) - Single nullable child objects
+- [Children](grammar.md#children-block) - Define nested collections
+- [Nested Objects](grammar.md#nested-block) - Single nullable child objects
 - [Removal](removal.md) - Remove projection instances based on events
-- [Expressions](expressions) - Understanding expression syntax
+- [Expressions](grammar.md#expressions) - Understanding expression syntax
 - [Grammar (EBNF)](grammar.md) - Complete formal grammar specification

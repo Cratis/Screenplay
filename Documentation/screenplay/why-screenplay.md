@@ -39,7 +39,7 @@ slice StateChange RegisterInvoice
     registeredAt  DateTime
 ```
 
-The command, its rules, and the fact it records sit together in one place, in the order you reasoned about them. There is no second copy to keep in sync, because there is no second copy. **Stage** interprets the `.play` file and runs it as a live application; **Studio** reads the same file to visualize and generate. The model and the running system are the same artifact, so they cannot drift.
+The command, its rules, and the fact it records sit together in one place, in the order you reasoned about them. Screenplay now owns a versioned portable semantic foundation, and the compiler and downstream products are being connected to it capability by capability. Stage, Studio, and generated applications may not redefine that meaning or silently ignore a capability they cannot preserve.
 
 ```mermaid
 flowchart LR
@@ -51,8 +51,8 @@ flowchart LR
     end
     subgraph screenplay["With Screenplay — one source of truth"]
       direction TB
-      Play["📄 one .play file"] --> Stage["🎬 Stage runs it"]
-      Play --> Studio["🎨 Studio visualizes it"]
+      Play["📄 one .play model"] --> Stage["🎬 runtimes perform it"]
+      Play --> Studio["🎨 tools visualize it"]
     end
     by_hand -.->|"collapses into"| screenplay
 ```
@@ -63,14 +63,14 @@ Three design choices keep the single file both complete and honest — they are 
 
 - **Slices are the atom.** Every construct lives inside a typed slice aligned with Event Modeling's vocabulary, so the file's structure *is* the model's structure — not a technical layering of it.
 - **Concepts carry compliance.** A value type declares `@pii` or `@sensitive` once, and every place that value appears inherits it. Compliance stops being a per-field decision you can forget.
-- **Declarative first, with an escape hatch.** The common shape is terse and declarative, but any construct can drop into inline C#, TypeScript, React, or HTML — so the hard cases never force you out of the model.
+- **Declarative first, with bounded escape hatches.** The business meaning stays declarative. Selected implementation points can carry constrained inline code or a `file` reference without turning code into the semantic authority.
 
 ## When a hand-written slice is the better fit
 
 Screenplay is not always the right tool, and pretending otherwise would waste your time:
 
-- **You are not building a Cratis event-sourced CQRS app.** Screenplay models Arc commands/queries and Chronicle events/projections. If your system isn't shaped that way, the language has nothing to describe. Start with [Why developers choose Cratis](/why-cratis/) first.
+- **Your system is not naturally command- and fact-oriented.** Screenplay is grounded in Event Modeling, event sourcing, commands, views, and vertical slices. It should not be forced onto a problem that has no useful expression in those terms.
 - **Almost every construct needs custom logic.** The escape hatch is there for the hard 10%. If a slice is 90% inline C#, the declarative wrapper is adding ceremony rather than removing it — write that slice by hand.
-- **You need something the language can't yet express.** Screenplay is young and evolving. When a construct isn't covered, a hand-written slice alongside your `.play` files is a perfectly good answer — the two coexist because a `.play` file targets the very same Arc and Chronicle artifacts you would otherwise write yourself.
+- **You need behavior the portable model cannot yet express.** Do not hide that gap behind a large code block or assume every runtime behaves the same way. Keep the implementation explicit and contribute evidence for the smallest missing semantic capability.
 
 Convinced it fits? [Write your first `.play` file →](./getting-started.md)

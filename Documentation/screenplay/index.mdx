@@ -1,14 +1,14 @@
 ---
 title: Screenplay
-description: The modeling language for the Cratis platform — describe a whole bounded context (events, commands, queries, projections, screens, automations, rules) in one declarative .play file, and run it live.
+description: A business-oriented declarative language for specifying the desired functionality of an information system.
 ---
 
 import { CardGrid } from '@astrojs/starlight/components';
 import SimpleCard from '@components/SimpleCard.astro';
 import TopicHero from '@components/TopicHero.astro';
 
-<TopicHero icon="open-book" eyebrow="Screenplay" title="Model the whole thing in one file">
-You already model a feature end to end on the whiteboard — the events, the command that produces them, the read model, the screen. Then you write it three more times: the C# backend, the generated proxies, the React UI — and from that moment the model and the app drift apart. Screenplay removes the re-typing: describe a **complete bounded context in one declarative `.play` file**, and let **Stage** run it live. [Get started →](/screenplay/getting-started/) · [Why Screenplay →](/screenplay/why-screenplay/)
+<TopicHero icon="open-book" eyebrow="Screenplay" title="Specify the behavior once">
+You already model a feature end to end on the whiteboard — the events, the command that produces them, and the read model they build. Then implementation details scatter that meaning across several layers. Screenplay records the desired functionality in one declarative `.play` model. Its versioned semantic model is the contract runtimes and renderers are being migrated to consume; none of them gets to redefine or silently weaken what it says. [Get started →](/screenplay/getting-started/) · [Why Screenplay →](/screenplay/why-screenplay/)
 </TopicHero>
 
 ## Start here
@@ -54,8 +54,8 @@ You already model a feature end to end on the whiteboard — the events, the com
 ## Go deeper
 
 <CardGrid>
-  <SimpleCard title="Sub-language pluggability" icon="puzzle" link="/screenplay/sub-languages/">
-    PDL and CDL are embedded sub-grammars registered exactly the way your own sub-language would be.
+  <SimpleCard title="Sub-languages and inline code" icon="puzzle" link="/screenplay/sub-languages/">
+    PDL and CDL are built-in first-class grammars; registered inline language tags are carried as bounded realization attachments.
   </SimpleCard>
   <SimpleCard title="The grammar" icon="open-book" link="/screenplay/grammar/">
     The full EBNF grammar — the precise, exhaustive definition of the language.
@@ -65,4 +65,4 @@ You already model a feature end to end on the whiteboard — the events, the com
   </SimpleCard>
 </CardGrid>
 
-Screenplay is the script; the rest of the Cratis platform is the cast that performs it. A `.play` file targets the same [Arc](/arc/) commands and queries and [Chronicle](/chronicle/) events and projections you would otherwise write by hand — so nothing about the runtime is hidden, and you can drop to code for any construct whenever you need to. See [Why developers choose Cratis](/why-cratis/) for how the pieces fit together.
+Screenplay owns the script, not the cast. A `.play` file expresses portable desired functionality; Stage and generated applications are replaceable performances of that meaning. Cratis [Arc](/arc/) and [Chronicle](/chronicle/) are the first realization target, not dependencies of the language or its semantic authority. See [Why developers choose Cratis](/why-cratis/) for how that realization fits into the wider platform.

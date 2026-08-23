@@ -62,7 +62,7 @@
   href: forms.md
 - name: Contributions
   href: contributions.md
-- name: Sub-language pluggability
+- name: Sub-languages and inline code
   href: sub-languages.md
 - name: File references
   href: file-references.md
