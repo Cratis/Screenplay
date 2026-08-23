@@ -228,16 +228,23 @@ public sealed class SemanticIdentityCatalog
     }
 
     /// <summary>
+    /// Resolves a semantic identity assignment, preferring an authoritative catalog assignment.
+    /// </summary>
+    /// <param name="address">The current semantic address.</param>
+    /// <returns>The authoritative assignment, or a deterministic legacy-bootstrap assignment.</returns>
+    public SemanticIdentityAssignment ResolveSemanticAssignment(SemanticAddress address)
+    {
+        RequireApplicationAddress(Application, address);
+        var assignment = Semantics.FirstOrDefault(_ => _.Address.Equals(address));
+        return assignment ?? new(address, SemanticId.Create(address), SemanticIdentityOrigin.LegacyBootstrap);
+    }
+
+    /// <summary>
     /// Resolves a semantic identity, preferring an authoritative catalog assignment.
     /// </summary>
     /// <param name="address">The current semantic address.</param>
     /// <returns>The assigned identity, or a deterministic provisional identity.</returns>
-    public SemanticId ResolveSemantic(SemanticAddress address)
-    {
-        RequireApplicationAddress(Application, address);
-        var assignment = Semantics.FirstOrDefault(_ => _.Address.Equals(address));
-        return assignment?.Id ?? SemanticId.Create(address);
-    }
+    public SemanticId ResolveSemantic(SemanticAddress address) => ResolveSemanticAssignment(address).Id;
 
     /// <summary>
     /// Resolves an event contract assignment, preferring an authoritative catalog assignment.

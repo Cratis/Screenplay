@@ -39,7 +39,7 @@ public sealed record SemanticSpecificationReadModel(
 /// </summary>
 /// <param name="Query">The query semantic identity.</param>
 /// <param name="Key">The query key.</param>
-/// <param name="Results">The expected results in deterministic order.</param>
+/// <param name="Results">The expected results in authored comparison order; each read-model/key pair must be unique.</param>
 public sealed record SemanticSpecificationQueryResult(
     SemanticId Query,
     SemanticValue Key,
@@ -58,12 +58,12 @@ public sealed record SemanticSpecificationError(string? Code, string? Message);
 /// <param name="Id">The stable semantic identity.</param>
 /// <param name="Name">The display name.</param>
 /// <param name="GivenEvents">The events establishing prior state, in occurrence order.</param>
-/// <param name="GivenReadModels">The read model states establishing prior state.</param>
+/// <param name="GivenReadModels">The read model states establishing prior state, in authored order with unique read-model/key pairs.</param>
 /// <param name="When">The command being exercised.</param>
-/// <param name="ThenEvents">The expected events in append order.</param>
-/// <param name="ThenReadModels">The expected read model states.</param>
-/// <param name="ThenQueries">The expected keyed query results.</param>
-/// <param name="ThenErrors">The expected validation rejections.</param>
+/// <param name="ThenEvents">The expected events in authored append order.</param>
+/// <param name="ThenReadModels">The expected read model states, in authored order with unique read-model/key pairs.</param>
+/// <param name="ThenQueries">The expected keyed query results, in authored order with unique query/key pairs.</param>
+/// <param name="ThenErrors">The expected validation rejections, in authored order.</param>
 public sealed record SemanticSpecification(
     SemanticId Id,
     string Name,

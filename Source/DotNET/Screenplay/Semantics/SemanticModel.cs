@@ -41,7 +41,7 @@ public sealed record SemanticProperty(SemanticId Id, string Name, SemanticTypeRe
 /// <param name="Id">The stable semantic identity.</param>
 /// <param name="Name">The display name.</param>
 /// <param name="Primitive">The underlying primitive type.</param>
-/// <param name="Values">The declared enumeration values, in declaration order.</param>
+/// <param name="Values">The declared text enumeration values, in declaration order; non-empty only when <paramref name="Primitive"/> is text.</param>
 /// <param name="Validations">The validation rules, in behavior order.</param>
 public sealed record SemanticConcept(
     SemanticId Id,

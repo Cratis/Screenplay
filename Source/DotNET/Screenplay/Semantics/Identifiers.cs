@@ -395,7 +395,7 @@ static class IdentityHash
         var bytes = new ArrayBufferWriter<byte>();
         WriteText(bytes, "Cratis.Screenplay.EventContract.LegacyBootstrap.v1");
         WriteText(bytes, application.ToString());
-        WriteText(bytes, eventName.Normalize(NormalizationForm.FormC));
+        WriteText(bytes, SemanticDocumentText.NormalizeRequiredUnicode(eventName, "event declaration name"));
         return IdentityText.EventPrefix + IdentityText.ToLowerHex(SHA256.HashData(bytes.WrittenSpan));
     }
 
@@ -410,7 +410,7 @@ static class IdentityHash
         foreach (var part in parts)
         {
             WriteUInt32(bytes, checked((uint)part.Kind));
-            WriteText(bytes, part.Key.Normalize(NormalizationForm.FormC));
+            WriteText(bytes, part.Key);
         }
 
         return prefix + IdentityText.ToLowerHex(SHA256.HashData(bytes.WrittenSpan));

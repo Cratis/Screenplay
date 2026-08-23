@@ -3,7 +3,6 @@
 
 using System.Collections.Immutable;
 using System.Globalization;
-using System.Text;
 
 namespace Cratis.Screenplay.Semantics;
 
@@ -80,7 +79,12 @@ public enum SemanticKind
     /// <summary>
     /// A specification.
     /// </summary>
-    Specification = 12
+    Specification = 12,
+
+    /// <summary>
+    /// A keyed-query argument.
+    /// </summary>
+    QueryArgument = 13
 }
 
 /// <summary>
@@ -129,7 +133,7 @@ public enum SemanticAddressPartKind
     Discriminator = 6,
 
     /// <summary>
-    /// The semantic kind of a property's owner.
+    /// The semantic kind of a member's owner.
     /// </summary>
     OwnerKind = 7
 }
@@ -155,12 +159,7 @@ public readonly record struct SemanticAddressPart(SemanticAddressPartKind Kind, 
             throw new InvalidSemanticContract($"Semantic address part kind '{(int)kind}' is unknown.");
         }
 
-        if (string.IsNullOrEmpty(key))
-        {
-            throw new InvalidSemanticContract("A semantic address part key cannot be empty.");
-        }
-
-        return new(kind, key.Normalize(NormalizationForm.FormC));
+        return new(kind, SemanticDocumentText.NormalizeRequiredUnicode(key, "semantic address component key"));
     }
 }
 
@@ -196,9 +195,9 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
     public ApplicationIdentity Application => ApplicationIdentity.Parse(Parts[0].Key);
 
     /// <summary>
-    /// Gets the property owner's semantic kind, or <see cref="SemanticKind.Unknown"/> for a non-property address.
+    /// Gets the member owner's semantic kind, or <see cref="SemanticKind.Unknown"/> for a non-member address.
     /// </summary>
-    public SemanticKind OwnerKind => Kind == SemanticKind.Property ? ParseOwnerKind(Parts[^2]) : SemanticKind.Unknown;
+    public SemanticKind OwnerKind => Kind is SemanticKind.Property or SemanticKind.QueryArgument ? ParseOwnerKind(Parts[^2]) : SemanticKind.Unknown;
 
     /// <summary>
     /// Creates an application address.
@@ -318,6 +317,22 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
     public static SemanticAddress ForQuery(SemanticAddress slice, string name) => BuildSliceDeclaration(SemanticKind.Query, slice, name);
 
     /// <summary>
+    /// Creates a query-argument address below a query.
+    /// </summary>
+    /// <param name="query">The owning query address.</param>
+    /// <param name="name">The argument name.</param>
+    /// <returns>The query-argument address.</returns>
+    public static SemanticAddress ForQueryArgument(SemanticAddress query, string name)
+    {
+        if (query is null || query.Kind != SemanticKind.Query)
+        {
+            throw new InvalidSemanticContract("A query-argument address requires a query owner.");
+        }
+
+        return Build(SemanticKind.QueryArgument, [.. query.Parts, OwnerKindPart(query.Kind), Part(SemanticAddressPartKind.Member, name)]);
+    }
+
+    /// <summary>
     /// Creates a specification address in a slice.
     /// </summary>
     /// <param name="slice">The owning slice address.</param>
@@ -428,6 +443,7 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
             SemanticKind.Concept or SemanticKind.CompositeType => Matches(parts, SemanticAddressPartKind.Application, SemanticAddressPartKind.Declaration),
             SemanticKind.Command or SemanticKind.EventContract or SemanticKind.ReadModel or SemanticKind.Projection or SemanticKind.Query or SemanticKind.Specification => IsSliceDeclaration(parts),
             SemanticKind.Property => IsProperty(parts),
+            SemanticKind.QueryArgument => IsQueryArgument(parts),
             _ => false
         };
         if (!legal)
@@ -445,6 +461,10 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
 
     static bool IsSliceDeclaration(ImmutableArray<SemanticAddressPart> parts) =>
         parts.Length >= 5 && parts[^1].Kind == SemanticAddressPartKind.Declaration && IsSlice(parts[..^1]);
+
+    static bool IsQueryArgument(ImmutableArray<SemanticAddressPart> parts) =>
+        parts.Length >= 7 && parts[^1].Kind == SemanticAddressPartKind.Member &&
+        TryParseOwnerKind(parts[^2], out var ownerKind) && ownerKind == SemanticKind.Query && IsSliceDeclaration(parts[..^2]);
 
     static bool IsProperty(ImmutableArray<SemanticAddressPart> parts)
     {
@@ -500,7 +520,7 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
         }
 
         ownerKind = (SemanticKind)value;
-        return ownerKind is SemanticKind.CompositeType or SemanticKind.Command or SemanticKind.EventContract or SemanticKind.ReadModel;
+        return ownerKind is SemanticKind.CompositeType or SemanticKind.Command or SemanticKind.EventContract or SemanticKind.ReadModel or SemanticKind.Query;
     }
 
     static SemanticAddressPart Part(SemanticAddressPartKind kind, string key) => SemanticAddressPart.Create(kind, key);

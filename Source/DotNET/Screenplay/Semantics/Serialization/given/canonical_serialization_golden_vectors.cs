@@ -73,7 +73,7 @@ public static class canonical_serialization_golden_vectors
                 textConcept,
                 "Label",
                 SemanticPrimitiveType.Text,
-                ["second", "café", "first"],
+                ["second", "café", "first", "accepted", "rejected", "^[a-z]+$", "created", "screenplay"],
                 [
                     new(default, SemanticValidationRuleKind.NotEmpty, null, "Label is required"),
                     new(default, SemanticValidationRuleKind.Equal, SemanticValue.Text("accepted"), null),
@@ -105,7 +105,7 @@ public static class canonical_serialization_golden_vectors
             [
                 new(eventNote, "Note", SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text, isOptional: true), false),
                 new(eventId, "Id", SemanticTypeReference.ForConcept(uuidConcept), true),
-                new(eventCode, "Code", SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text), false),
+                new(eventCode, "Code", SemanticTypeReference.ForConcept(textConcept), false),
                 new(eventEnabled, "Enabled", SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Boolean), false),
                 new(eventAmount, "Amount", SemanticTypeReference.ForConcept(decimalNumberConcept), false),
                 new(eventLabel, "Label", SemanticTypeReference.ForConcept(textConcept), false)
@@ -146,7 +146,8 @@ public static class canonical_serialization_golden_vectors
                     new(eventAmount, SemanticExpression.FromValue(SemanticValue.Number(123.4500m))),
                     new(eventEnabled, SemanticExpression.FromValue(SemanticValue.Boolean(true))),
                     new(eventNote, SemanticExpression.FromValue(SemanticValue.Null))
-                ])]);
+                ]),
+                new(optionalEvent, null, null, [])]);
 
         var entitySummary = new SemanticReadModel(
             readModel,
@@ -253,6 +254,18 @@ public static class canonical_serialization_golden_vectors
             [],
             [],
             [new("title.required", "Title is required")]);
+        var bareRejection = rejection with
+        {
+            Id = Id(97),
+            Name = "rejects without details",
+            ThenErrors = [new(null, null)]
+        };
+        var messageOnlyRejection = rejection with
+        {
+            Id = Id(98),
+            Name = "rejects with only a message",
+            ThenErrors = [new(null, "Title is invalid")]
+        };
 
         var stateChange = new SemanticSlice(
             Id(40),
@@ -263,7 +276,7 @@ public static class canonical_serialization_golden_vectors
             [],
             [],
             [],
-            [rejection, success]);
+            [messageOnlyRejection, rejection, success, bareRejection]);
         var stateView = new SemanticSlice(
             Id(41),
             "EntitySummaries",
@@ -341,6 +354,8 @@ public static class canonical_serialization_golden_vectors
         var eventContract = SemanticAddress.ForEventContract(slice, "InvoiceApproved");
         var secondEventContract = SemanticAddress.ForEventContract(slice, "InvoiceRejected");
         var readModel = SemanticAddress.ForReadModel(slice, "InvoiceStatus");
+        var query = SemanticAddress.ForQuery(slice, "InvoiceById");
+        var queryArgument = SemanticAddress.ForQueryArgument(query, "invoiceId");
         var addresses = new[]
         {
             SemanticAddress.ForProperty(readModel, "Status"),
@@ -348,7 +363,7 @@ public static class canonical_serialization_golden_vectors
             SemanticAddress.ForApplication(application),
             eventContract,
             SemanticAddress.ForProperty(compositeType, "Amount"),
-            SemanticAddress.ForQuery(slice, "InvoiceById"),
+            query,
             nestedFeature,
             SemanticAddress.ForConcept(application, "InvoiceId"),
             SemanticAddress.ForProperty(command, "InvoiceId"),
@@ -359,7 +374,8 @@ public static class canonical_serialization_golden_vectors
             SemanticAddress.ForCompositeType(application, "InvoiceDetails"),
             command,
             slice,
-            feature
+            feature,
+            queryArgument
         };
         var semantics = addresses
             .Select((address, index) => new SemanticIdentityAssignment(

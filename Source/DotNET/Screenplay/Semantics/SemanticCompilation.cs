@@ -80,6 +80,11 @@ public sealed class SemanticCompilation
             {
                 throw new InvalidSemanticContract($"Source map identity '{entry.SemanticId}' does not exist in the executable semantic model.");
             }
+
+            if (entry.Origin != index.ResolveOrigin(entry.SemanticId, documents.IdentityCatalog))
+            {
+                throw new InvalidSemanticContract($"Source map identity '{entry.SemanticId}' disagrees with its effective catalog assignment origin.");
+            }
         }
 
         return new(model, documents, validatedSourceMap);
@@ -128,6 +133,14 @@ sealed class SemanticCompilationIndex
         }
 
         return index;
+    }
+
+    internal SemanticIdentityOrigin ResolveOrigin(SemanticId id, SemanticIdentityCatalog catalog)
+    {
+        var address = _declarations.Single(_ => _.Value == id).Key;
+        return _events.ContainsKey(address)
+            ? catalog.ResolveEventContract(address).Origin
+            : catalog.ResolveSemanticAssignment(address).Origin;
     }
 
     void RegisterModule(SemanticModule module)
@@ -187,8 +200,9 @@ sealed class SemanticCompilationIndex
 
         foreach (var query in slice.Queries)
         {
-            Register(SemanticAddress.ForQuery(sliceAddress, query.Name), query.Id);
-            RegisterUnaddressed(query.Argument.Id);
+            var queryAddress = SemanticAddress.ForQuery(sliceAddress, query.Name);
+            Register(queryAddress, query.Id);
+            Register(SemanticAddress.ForQueryArgument(queryAddress, query.Argument.Name), query.Argument.Id);
         }
 
         foreach (var specification in slice.Specifications)
@@ -210,14 +224,6 @@ sealed class SemanticCompilationIndex
         if (!_declarations.TryAdd(address, id) || !_ids.Add(id))
         {
             throw new InvalidSemanticContract("A semantic compilation contains a duplicate declaration address or identity.");
-        }
-    }
-
-    void RegisterUnaddressed(SemanticId id)
-    {
-        if (!_ids.Add(id))
-        {
-            throw new InvalidSemanticContract($"Semantic identity '{id}' is duplicated in the compilation.");
         }
     }
 }

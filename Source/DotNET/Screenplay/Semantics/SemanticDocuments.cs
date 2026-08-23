@@ -60,7 +60,7 @@ public sealed record SemanticSourceDocument
 /// </summary>
 /// <param name="SemanticId">The semantic identity.</param>
 /// <param name="Span">The original source span.</param>
-/// <param name="Origin">The identity origin, which is not part of semantic revision.</param>
+/// <param name="Origin">The effective semantic assignment origin, or event-contract assignment origin for an event declaration; not part of semantic revision.</param>
 public sealed record SemanticSourceMapEntry(
     SemanticId SemanticId,
     SemanticSourceSpan Span,
@@ -188,7 +188,7 @@ static class SemanticDocumentText
 {
     internal static string NormalizeStableKey(string stableKey)
     {
-        var normalized = NormalizeUnicode(stableKey, "stable document key");
+        var normalized = NormalizeRequiredUnicode(stableKey, "stable document key");
         if (string.Equals(normalized, ".", StringComparison.Ordinal) || string.Equals(normalized, "..", StringComparison.Ordinal) ||
             normalized.Contains('/') || normalized.Contains('\\') || IsDrivePath(normalized))
         {
@@ -201,7 +201,7 @@ static class SemanticDocumentText
 
     internal static string NormalizeDisplayPath(string displayPath)
     {
-        var normalized = NormalizeUnicode(displayPath, "source document display path").Replace('\\', '/');
+        var normalized = NormalizeRequiredUnicode(displayPath, "source document display path").Replace('\\', '/');
         RequireNoControlCharacters(normalized, "source document display path");
         if (normalized[0] == '/' || IsDrivePath(normalized))
         {
@@ -237,7 +237,7 @@ static class SemanticDocumentText
         }
     }
 
-    static string NormalizeUnicode(string value, string description)
+    internal static string NormalizeRequiredUnicode(string value, string description)
     {
         if (string.IsNullOrEmpty(value))
         {

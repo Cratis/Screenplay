@@ -3,14 +3,16 @@
 
 #if DEBUG
 using Cratis.Screenplay.Semantics.given;
-using Cratis.Specifications;
-using Xunit;
 
 namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel;
 
 public class when_using_incoherent_specifications : a_valid_semantic_model
 {
+    Exception _conflictingGivenReadModel;
+    Exception _conflictingThenReadModel;
     Exception _duplicateCommandTarget;
+    Exception _duplicateQueryExpectation;
+    Exception _duplicateQueryResultState;
     Exception _inconsistentStateKey;
     Exception _mixedOutcome;
     Exception _inexactCommand;
@@ -35,6 +37,22 @@ public class when_using_incoherent_specifications : a_valid_semantic_model
             })
         };
         _inconsistentStateKey = Validate(success with { ThenReadModels = [inconsistentState] });
+
+        var conflictingState = state with
+        {
+            Values = state.Values.SetItem(1, state.Values[1] with { Value = SemanticValue.Text("Conflicting") })
+        };
+        _conflictingGivenReadModel = Validate(success with { GivenReadModels = [state, conflictingState] });
+        _conflictingThenReadModel = Validate(success with { ThenReadModels = [state, conflictingState] });
+        var queryExpectation = success.ThenQueries.Single();
+        _duplicateQueryExpectation = Validate(success with
+        {
+            ThenQueries = [queryExpectation, queryExpectation with { Results = [] }]
+        });
+        _duplicateQueryResultState = Validate(success with
+        {
+            ThenQueries = [queryExpectation with { Results = [state, state] }]
+        });
 
         var otherEventId = Id(SemanticKind.EventContract, "ProjectArchived");
         var otherProjectIdProperty = Id(SemanticKind.Property, "ProjectArchived.ProjectId");
@@ -66,7 +84,11 @@ public class when_using_incoherent_specifications : a_valid_semantic_model
             })));
     }
 
+    [Fact] void should_reject_a_conflicting_given_read_model_state() => _conflictingGivenReadModel.ShouldBeOfExactType<InvalidSemanticContract>();
+    [Fact] void should_reject_a_conflicting_then_read_model_state() => _conflictingThenReadModel.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_a_duplicate_command_target() => _duplicateCommandTarget.ShouldBeOfExactType<InvalidSemanticContract>();
+    [Fact] void should_reject_a_duplicate_query_expectation() => _duplicateQueryExpectation.ShouldBeOfExactType<InvalidSemanticContract>();
+    [Fact] void should_reject_a_duplicate_query_result_state() => _duplicateQueryResultState.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_an_inconsistent_state_key() => _inconsistentStateKey.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_mixed_rejection_and_success_outcomes() => _mixedOutcome.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_an_inexact_command_shape() => _inexactCommand.ShouldBeOfExactType<InvalidSemanticContract>();

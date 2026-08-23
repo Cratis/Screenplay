@@ -41,7 +41,7 @@ public class a_valid_semantic_model : Specification
 
         _commandProjectIdPropertyId = Id(SemanticKind.Property, "RegisterProject.ProjectId");
         _commandNamePropertyId = Id(SemanticKind.Property, "RegisterProject.Name");
-        _queryArgumentId = Id(SemanticKind.Property, "ProjectById.ProjectId");
+        _queryArgumentId = Id(SemanticKind.QueryArgument, "ProjectById.projectId");
         _eventProjectIdPropertyId = Id(SemanticKind.Property, "ProjectRegistered.ProjectId");
         _eventNamePropertyId = Id(SemanticKind.Property, "ProjectRegistered.Name");
         _readModelProjectIdPropertyId = Id(SemanticKind.Property, "ProjectSummary.ProjectId");
@@ -216,11 +216,20 @@ public class a_valid_semantic_model : Specification
             SemanticKind.Query => SemanticAddress.ForQuery(stateView, key),
             SemanticKind.Specification => SemanticAddress.ForSpecification(stateChange, key),
             SemanticKind.Property => PropertyAddress(application, stateChange, stateView, key),
+            SemanticKind.QueryArgument => QueryArgumentAddress(stateView, key),
             _ => throw new InvalidSemanticContract($"Unsupported semantic kind '{kind}'.")
         };
     }
 
     protected static SemanticId Id(SemanticKind kind, string key) => SemanticId.Create(Address(kind, key));
+
+    static SemanticAddress QueryArgumentAddress(SemanticAddress stateView, string key)
+    {
+        var separator = key.IndexOf('.');
+        var owner = key[..separator];
+        var member = key[(separator + 1)..];
+        return SemanticAddress.ForQueryArgument(SemanticAddress.ForQuery(stateView, owner), member);
+    }
 
     static SemanticAddress PropertyAddress(
         ApplicationIdentity application,
