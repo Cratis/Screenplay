@@ -30,36 +30,67 @@ static class SemanticModelCanonicalJson
         SemanticApplication application) =>
         Write(languageVersion, semanticVersion, null, application);
 
+#if DEBUG
+    internal static byte[] SerializeExpressionVector(ImmutableArray<SemanticExpression> expressions)
+    {
+        try
+        {
+            var buffer = new ArrayBufferWriter<byte>();
+            using var writer = new Utf8JsonWriter(buffer, CanonicalJson.WriterOptions);
+            writer.WriteStartArray();
+            foreach (var expression in expressions)
+            {
+                WriteExpression(writer, expression);
+            }
+
+            writer.WriteEndArray();
+            writer.Flush();
+            return buffer.WrittenSpan.ToArray();
+        }
+        catch (InvalidOperationException)
+        {
+            throw new InvalidSemanticContract($"The semantic expression vector exceeds the canonical maximum depth of {CanonicalJson.MaximumDepth}.");
+        }
+    }
+#endif
+
     static byte[] Write(
         LanguageVersion languageVersion,
         SemanticVersion semanticVersion,
         SemanticRevision? revision,
         SemanticApplication application)
     {
-        var buffer = new ArrayBufferWriter<byte>();
-        using var writer = new Utf8JsonWriter(buffer, new() { Indented = false, SkipValidation = false });
-        writer.WriteStartObject();
-        writer.WriteString("schema", Schema);
-        writer.WriteNumber("schemaVersion", SchemaVersion);
-        writer.WriteString("languageVersion", languageVersion.ToString());
-        writer.WriteString("semanticVersion", semanticVersion.ToString());
-        if (revision is not null)
+        try
         {
-            writer.WriteString("revision", revision.Value.ToString());
-        }
+            var buffer = new ArrayBufferWriter<byte>();
+            using var writer = new Utf8JsonWriter(buffer, CanonicalJson.WriterOptions);
+            writer.WriteStartObject();
+            writer.WriteString("schema", Schema);
+            writer.WriteNumber("schemaVersion", SchemaVersion);
+            writer.WriteString("languageVersion", languageVersion.ToString());
+            writer.WriteString("semanticVersion", semanticVersion.ToString());
+            if (revision is not null)
+            {
+                writer.WriteString("revision", revision.Value.ToString());
+            }
 
-        writer.WritePropertyName("application");
-        WriteApplication(writer, application);
-        writer.WriteEndObject();
-        writer.Flush();
-        return buffer.WrittenSpan.ToArray();
+            writer.WritePropertyName("application");
+            WriteApplication(writer, application);
+            writer.WriteEndObject();
+            writer.Flush();
+            return buffer.WrittenSpan.ToArray();
+        }
+        catch (InvalidOperationException)
+        {
+            throw new InvalidSemanticContract($"The semantic model exceeds the canonical maximum depth of {CanonicalJson.MaximumDepth}.");
+        }
     }
 
     static void WriteApplication(Utf8JsonWriter writer, SemanticApplication application)
     {
         writer.WriteStartObject();
         WriteId(writer, application.Id);
-        writer.WriteString("name", application.Name);
+        CanonicalJson.WriteString(writer, "name", application.Name);
         WriteArray(writer, "concepts", application.Concepts.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteConcept);
         WriteArray(writer, "types", application.Types.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteCompositeType);
         WriteArray(writer, "modules", application.Modules.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteModule);
@@ -70,7 +101,7 @@ static class SemanticModelCanonicalJson
     {
         writer.WriteStartObject();
         WriteId(writer, concept.Id);
-        writer.WriteString("name", concept.Name);
+        CanonicalJson.WriteString(writer, "name", concept.Name);
         writer.WriteString("primitive", Primitive(concept.Primitive));
         WriteStringArray(writer, "values", concept.Values);
         WriteArray(writer, "validations", concept.Validations, WriteValidation);
@@ -81,7 +112,7 @@ static class SemanticModelCanonicalJson
     {
         writer.WriteStartObject();
         WriteId(writer, type.Id);
-        writer.WriteString("name", type.Name);
+        CanonicalJson.WriteString(writer, "name", type.Name);
         WriteArray(writer, "properties", type.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProperty);
         writer.WriteEndObject();
     }
@@ -90,7 +121,7 @@ static class SemanticModelCanonicalJson
     {
         writer.WriteStartObject();
         WriteId(writer, module.Id);
-        writer.WriteString("name", module.Name);
+        CanonicalJson.WriteString(writer, "name", module.Name);
         WriteArray(writer, "features", module.Features.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteFeature);
         writer.WriteEndObject();
     }
@@ -99,7 +130,7 @@ static class SemanticModelCanonicalJson
     {
         writer.WriteStartObject();
         WriteId(writer, feature.Id);
-        writer.WriteString("name", feature.Name);
+        CanonicalJson.WriteString(writer, "name", feature.Name);
         WriteArray(writer, "features", feature.Features.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteFeature);
         WriteArray(writer, "slices", feature.Slices.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteSlice);
         writer.WriteEndObject();
@@ -109,7 +140,7 @@ static class SemanticModelCanonicalJson
     {
         writer.WriteStartObject();
         WriteId(writer, slice.Id);
-        writer.WriteString("name", slice.Name);
+        CanonicalJson.WriteString(writer, "name", slice.Name);
         writer.WriteString("kind", SliceKind(slice.Kind));
         WriteArray(writer, "events", slice.Events.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteEvent);
         WriteArray(writer, "commands", slice.Commands.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteCommand);
@@ -124,7 +155,7 @@ static class SemanticModelCanonicalJson
     {
         writer.WriteStartObject();
         WriteId(writer, property.Id);
-        writer.WriteString("name", property.Name);
+        CanonicalJson.WriteString(writer, "name", property.Name);
         writer.WritePropertyName("type");
         WriteTypeReference(writer, property.Type);
         writer.WriteBoolean("identifier", property.IsIdentifier);
@@ -167,7 +198,7 @@ static class SemanticModelCanonicalJson
         WriteId(writer, eventContract.Id);
         writer.WriteString("contractId", eventContract.ContractId.ToString());
         writer.WriteNumber("contractRevision", eventContract.Revision.Value);
-        writer.WriteString("name", eventContract.Name);
+        CanonicalJson.WriteString(writer, "name", eventContract.Name);
         WriteArray(writer, "properties", eventContract.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProperty);
         writer.WriteEndObject();
     }
@@ -176,7 +207,7 @@ static class SemanticModelCanonicalJson
     {
         writer.WriteStartObject();
         WriteId(writer, command.Id);
-        writer.WriteString("name", command.Name);
+        CanonicalJson.WriteString(writer, "name", command.Name);
         WriteArray(writer, "properties", command.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProperty);
         WriteArray(writer, "validations", command.Validations, WriteValidation);
         WriteArray(writer, "produces", command.Produces, WriteProducedEvent);
@@ -206,7 +237,7 @@ static class SemanticModelCanonicalJson
     {
         writer.WriteStartObject();
         WriteId(writer, readModel.Id);
-        writer.WriteString("name", readModel.Name);
+        CanonicalJson.WriteString(writer, "name", readModel.Name);
         WriteArray(writer, "properties", readModel.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProperty);
         writer.WriteEndObject();
     }
@@ -215,7 +246,7 @@ static class SemanticModelCanonicalJson
     {
         writer.WriteStartObject();
         WriteId(writer, projection.Id);
-        writer.WriteString("name", projection.Name);
+        CanonicalJson.WriteString(writer, "name", projection.Name);
         writer.WriteString("readModel", projection.ReadModel.ToString());
         WriteArray(writer, "transitions", projection.Transitions, WriteTransition);
         writer.WriteEndObject();
@@ -239,12 +270,12 @@ static class SemanticModelCanonicalJson
     {
         writer.WriteStartObject();
         WriteId(writer, query.Id);
-        writer.WriteString("name", query.Name);
+        CanonicalJson.WriteString(writer, "name", query.Name);
         writer.WriteString("readModel", query.ReadModel.ToString());
         writer.WritePropertyName("argument");
         writer.WriteStartObject();
         WriteId(writer, query.Argument.Id);
-        writer.WriteString("name", query.Argument.Name);
+        CanonicalJson.WriteString(writer, "name", query.Argument.Name);
         writer.WritePropertyName("type");
         WriteTypeReference(writer, query.Argument.Type);
         writer.WriteEndObject();
@@ -258,7 +289,7 @@ static class SemanticModelCanonicalJson
     {
         writer.WriteStartObject();
         WriteId(writer, specification.Id);
-        writer.WriteString("name", specification.Name);
+        CanonicalJson.WriteString(writer, "name", specification.Name);
         WriteArray(writer, "givenEvents", specification.GivenEvents, WriteSpecificationEvent);
         WriteArray(writer, "givenReadModels", specification.GivenReadModels, WriteSpecificationReadModel);
         writer.WritePropertyName("when");
@@ -354,10 +385,10 @@ static class SemanticModelCanonicalJson
             case SemanticNullValue:
                 break;
             case SemanticTextValue text:
-                writer.WriteString("value", text.Value);
+                CanonicalJson.WriteString(writer, "value", text.Value);
                 break;
             case SemanticNumberValue number:
-                writer.WriteNumber("value", number.Value);
+                CanonicalJson.WriteDecimal(writer, "value", number.Value);
                 break;
             case SemanticBooleanValue boolean:
                 writer.WriteBoolean("value", boolean.Value);
@@ -417,7 +448,7 @@ static class SemanticModelCanonicalJson
         }
         else
         {
-            writer.WriteString(name, value);
+            CanonicalJson.WriteString(writer, name, value);
         }
     }
 
@@ -427,7 +458,7 @@ static class SemanticModelCanonicalJson
         writer.WriteStartArray();
         foreach (var value in values)
         {
-            writer.WriteStringValue(value);
+            CanonicalJson.WriteStringValue(writer, value);
         }
 
         writer.WriteEndArray();

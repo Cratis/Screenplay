@@ -773,7 +773,7 @@ static class SemanticModelRead
             throw Malformed(name, "a string");
         }
 
-        return reader.GetString()!;
+        return CanonicalJson.RequireNfc(reader.GetString()!, name);
     }
 
     internal static string? NullableString(ref Utf8JsonReader reader, string name)
@@ -782,7 +782,7 @@ static class SemanticModelRead
         return reader.TokenType switch
         {
             JsonTokenType.Null => null,
-            JsonTokenType.String => reader.GetString(),
+            JsonTokenType.String => CanonicalJson.RequireNfc(reader.GetString()!, name),
             _ => throw Malformed(name, "a string or null")
         };
     }

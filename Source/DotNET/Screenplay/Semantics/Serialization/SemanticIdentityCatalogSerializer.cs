@@ -52,12 +52,7 @@ public static class SemanticIdentityCatalogSerializer
 
         try
         {
-            var reader = new Utf8JsonReader(json, new JsonReaderOptions
-            {
-                AllowTrailingCommas = false,
-                CommentHandling = JsonCommentHandling.Disallow,
-                MaxDepth = 64
-            });
+            var reader = new Utf8JsonReader(json, CanonicalJson.ReaderOptions);
             CatalogRead.RequiredToken(ref reader, JsonTokenType.StartObject, "identity catalog root");
             var seen = new HashSet<string>(StringComparer.Ordinal);
             string? schema = null;
@@ -116,35 +111,46 @@ public static class SemanticIdentityCatalogSerializer
         {
             throw new InvalidSemanticContract($"Identity catalog JSON is malformed: {error.Message}");
         }
+        catch (InvalidOperationException error)
+        {
+            throw new InvalidSemanticContract($"Identity catalog JSON is malformed: {error.Message}");
+        }
     }
 
     internal static CatalogRevision ComputeRevision(SemanticIdentityCatalog catalog) => CatalogRevision.Compute(Write(catalog, null));
 
     static byte[] Write(SemanticIdentityCatalog catalog, CatalogRevision? revision)
     {
-        var buffer = new ArrayBufferWriter<byte>();
-        using var writer = new Utf8JsonWriter(buffer, new() { Indented = false, SkipValidation = false });
-        writer.WriteStartObject();
-        writer.WriteString("schema", Schema);
-        writer.WriteNumber("schemaVersion", SchemaVersion);
-        writer.WriteString("applicationIdentity", catalog.Application.ToString());
-        if (revision is not null)
+        try
         {
-            writer.WriteString("revision", revision.Value.ToString());
-        }
+            var buffer = new ArrayBufferWriter<byte>();
+            using var writer = new Utf8JsonWriter(buffer, CanonicalJson.WriterOptions);
+            writer.WriteStartObject();
+            writer.WriteString("schema", Schema);
+            writer.WriteNumber("schemaVersion", SchemaVersion);
+            writer.WriteString("applicationIdentity", catalog.Application.ToString());
+            if (revision is not null)
+            {
+                writer.WriteString("revision", revision.Value.ToString());
+            }
 
-        WriteArray(writer, "documents", catalog.Documents.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteDocumentAssignment);
-        WriteArray(writer, "semantics", catalog.Semantics.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteSemanticAssignment);
-        WriteArray(writer, "eventContracts", catalog.EventContracts.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteEventAssignment);
-        writer.WriteEndObject();
-        writer.Flush();
-        return buffer.WrittenSpan.ToArray();
+            WriteArray(writer, "documents", catalog.Documents.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteDocumentAssignment);
+            WriteArray(writer, "semantics", catalog.Semantics.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteSemanticAssignment);
+            WriteArray(writer, "eventContracts", catalog.EventContracts.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteEventAssignment);
+            writer.WriteEndObject();
+            writer.Flush();
+            return buffer.WrittenSpan.ToArray();
+        }
+        catch (InvalidOperationException)
+        {
+            throw new InvalidSemanticContract($"The identity catalog exceeds the canonical maximum depth of {CanonicalJson.MaximumDepth}.");
+        }
     }
 
     static void WriteDocumentAssignment(Utf8JsonWriter writer, DocumentIdentityAssignment assignment)
     {
         writer.WriteStartObject();
-        writer.WriteString("key", assignment.Key);
+        CanonicalJson.WriteString(writer, "key", assignment.Key);
         writer.WriteString("id", assignment.Id.ToString());
         writer.WriteString("origin", Origin(assignment.Origin));
         writer.WriteEndObject();
@@ -181,7 +187,7 @@ public static class SemanticIdentityCatalogSerializer
         {
             writer.WriteStartObject();
             writer.WriteNumber("kind", (int)part.Kind);
-            writer.WriteString("key", part.Key);
+            CanonicalJson.WriteString(writer, "key", part.Key);
             writer.WriteEndObject();
         }
 
@@ -380,7 +386,7 @@ static class CatalogRead
             throw Malformed(name, "a string");
         }
 
-        return reader.GetString()!;
+        return CanonicalJson.RequireNfc(reader.GetString()!, name);
     }
 
     internal static uint UInt32(ref Utf8JsonReader reader, string name)

@@ -22,12 +22,7 @@ public static partial class SemanticModelSerializer
 
         try
         {
-            var reader = new Utf8JsonReader(json, new JsonReaderOptions
-            {
-                AllowTrailingCommas = false,
-                CommentHandling = JsonCommentHandling.Disallow,
-                MaxDepth = 128
-            });
+            var reader = new Utf8JsonReader(json, CanonicalJson.ReaderOptions);
             SemanticModelRead.RequiredToken(ref reader, JsonTokenType.StartObject, "ESM root");
             var seen = new HashSet<string>(StringComparer.Ordinal);
             string? schema = null;
@@ -80,6 +75,10 @@ public static partial class SemanticModelSerializer
             throw;
         }
         catch (JsonException error)
+        {
+            throw new InvalidSemanticContract($"ESM JSON is malformed: {error.Message}");
+        }
+        catch (InvalidOperationException error)
         {
             throw new InvalidSemanticContract($"ESM JSON is malformed: {error.Message}");
         }

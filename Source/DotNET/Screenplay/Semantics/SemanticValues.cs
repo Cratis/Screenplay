@@ -270,6 +270,11 @@ public sealed record SemanticTextValue(string Value) : SemanticValue(SemanticVal
 /// <summary>
 /// Represents an invariant decimal portable value.
 /// </summary>
+/// <remarks>
+/// Canonical JSON uses <c>0</c>, or an optional minus followed by a non-zero ASCII digit and zero or more ASCII
+/// digits, optionally followed by a period and one or more ASCII digits ending in a non-zero digit. Exponents,
+/// leading zeros, insignificant trailing fractional zeros, and negative zero are not canonical.
+/// </remarks>
 /// <param name="Value">The number.</param>
 public sealed record SemanticNumberValue(decimal Value) : SemanticValue(SemanticValueKind.Number);
 

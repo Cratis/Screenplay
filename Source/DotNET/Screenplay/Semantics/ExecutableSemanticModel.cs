@@ -891,9 +891,21 @@ static class SemanticModelValidator
 
         void RequireName(string name, string description)
         {
-            if (string.IsNullOrEmpty(name) || !name.IsNormalized(NormalizationForm.FormC))
+            if (string.IsNullOrEmpty(name) || !IsNfc(name))
             {
-                throw new InvalidSemanticContract($"The {description} name must be non-empty Unicode NFC text.");
+                throw new InvalidSemanticContract($"The {description} name must be non-empty, well-formed Unicode NFC text.");
+            }
+        }
+
+        bool IsNfc(string value)
+        {
+            try
+            {
+                return value.IsNormalized(NormalizationForm.FormC);
+            }
+            catch (ArgumentException)
+            {
+                return false;
             }
         }
 
