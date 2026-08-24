@@ -213,9 +213,15 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                     {
                         if (!state.TryGetValue(property.Id, out var value))
                         {
-                            failure = $"Projection '{projection.Name}' did not establish required read-model property '{property.Name}'.";
-                            readModels = current;
-                            return false;
+                            if (!property.Type.IsOptional)
+                            {
+                                failure = $"Projection '{projection.Name}' did not establish required read-model property '{property.Name}'.";
+                                readModels = current;
+                                return false;
+                            }
+
+                            value = SemanticValue.Null;
+                            state[property.Id] = value;
                         }
 
                         try

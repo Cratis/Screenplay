@@ -65,7 +65,12 @@ public enum SemanticExecutionCapability
     /// <summary>
     /// Projection of a complete keyed read-model state.
     /// </summary>
-    Projection = 3
+    Projection = 3,
+
+    /// <summary>
+    /// Specification dispatch for the requested semantic identity.
+    /// </summary>
+    Specification = 4
 }
 
 /// <summary>
