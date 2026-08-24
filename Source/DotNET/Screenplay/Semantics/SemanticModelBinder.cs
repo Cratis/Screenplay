@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Globalization;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Projections;
 
 namespace Cratis.Screenplay.Semantics;
 
@@ -45,6 +46,12 @@ public sealed class SemanticModelBinder : ISemanticModelBinder
         readonly List<Diagnostic> _diagnostics = [];
         readonly List<SemanticSourceMapEntry> _sourceMapEntries = [];
         readonly Dictionary<string, (SemanticAddress Address, SemanticId Id)> _concepts = new(StringComparer.Ordinal);
+        readonly Dictionary<EventSyntax, BoundEvent> _eventDeclarations = [];
+        readonly Dictionary<string, BoundEvent> _events = new(StringComparer.Ordinal);
+        readonly Dictionary<QuerySyntax, SemanticKeyedQuery> _queryDeclarations = [];
+        readonly Dictionary<string, SemanticKeyedQuery> _queries = new(StringComparer.Ordinal);
+        readonly Dictionary<ReadModelSyntax, BoundReadModel> _readModelDeclarations = [];
+        readonly Dictionary<string, BoundReadModel> _readModels = new(StringComparer.Ordinal);
         readonly Dictionary<string, (SemanticAddress Address, SemanticId Id)> _types = new(StringComparer.Ordinal);
         readonly ApplicationIdentity _applicationIdentity = documents.IdentityCatalog.Application;
 
@@ -61,6 +68,9 @@ public sealed class SemanticModelBinder : ISemanticModelBinder
             var applicationId = Resolve(applicationAddress, syntax.Location);
 
             RegisterTypeDeclarations();
+            RegisterEventDeclarations();
+            RegisterReadModelDeclarations();
+            RegisterQueryDeclarations();
             var concepts = syntax.Concepts.Select(BindConcept).ToImmutableArray();
             var types = (syntax.Types ?? []).Select(BindType).ToImmutableArray();
             var modules = syntax.Modules.Select(BindModule).ToImmutableArray();
@@ -138,6 +148,175 @@ public sealed class SemanticModelBinder : ISemanticModelBinder
             {
                 var address = SemanticAddress.ForCompositeType(_applicationIdentity, type.Name);
                 _types[type.Name] = (address, Resolve(address, type.Location));
+            }
+        }
+
+        void RegisterEventDeclarations()
+        {
+            foreach (var (module, featurePath, slice) in AllSlices())
+            {
+                var sliceAddress = SemanticAddress.ForSlice(_applicationIdentity, module, featurePath, slice.Name);
+                foreach (var @event in slice.Events)
+                {
+                    var bound = BindEvent(sliceAddress, @event);
+                    _eventDeclarations.Add(@event, bound);
+                    if (!_events.TryAdd(@event.Name, bound))
+                    {
+                        Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Event reference '{@event.Name}' is ambiguous across slices in the current ESM v1 binder.", @event.Location);
+                    }
+                }
+            }
+        }
+
+        void RegisterReadModelDeclarations()
+        {
+            foreach (var (module, featurePath, slice) in AllSlices())
+            {
+                var sliceAddress = SemanticAddress.ForSlice(_applicationIdentity, module, featurePath, slice.Name);
+                foreach (var readModel in slice.ReadModels ?? [])
+                {
+                    var bound = BindReadModel(sliceAddress, slice, readModel);
+                    _readModelDeclarations.Add(readModel, bound);
+                    if (!_readModels.TryAdd(readModel.Name, bound))
+                    {
+                        Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Read model reference '{readModel.Name}' is ambiguous across slices in the current ESM v1 binder.", readModel.Location);
+                    }
+                }
+            }
+        }
+
+        void RegisterQueryDeclarations()
+        {
+            foreach (var (module, featurePath, slice) in AllSlices())
+            {
+                var sliceAddress = SemanticAddress.ForSlice(_applicationIdentity, module, featurePath, slice.Name);
+                foreach (var query in slice.Queries)
+                {
+                    var bound = BindQuery(sliceAddress, query);
+                    if (bound is null)
+                    {
+                        continue;
+                    }
+
+                    _queryDeclarations.Add(query, bound);
+                    if (!_queries.TryAdd(query.Name, bound))
+                    {
+                        Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query reference '{query.Name}' is ambiguous across slices in the current ESM v1 binder.", query.Location);
+                    }
+                }
+            }
+        }
+
+        BoundReadModel BindReadModel(SemanticAddress slice, SliceSyntax owner, ReadModelSyntax readModel)
+        {
+            if (readModel.Description is not null)
+            {
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Read model '{readModel.Name}' description is authoring metadata.", readModel.Location);
+            }
+
+            if (readModel.File is not null)
+            {
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Read model '{readModel.Name}' file reference is realization provenance.", readModel.File.Location);
+            }
+
+            var identifierNames = owner.Queries
+                .Where(query => ShortName(query.ReturnType.Name) == readModel.Name && query.By is not null)
+                .Select(query => query.By!.Name)
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+            if (identifierNames.Length != 1)
+            {
+                Error(
+                    DiagnosticCodes.UnsupportedSemanticSyntax,
+                    $"Read model '{readModel.Name}' must have one unambiguous keyed query to identify instances in the first ESM v1 vertical.",
+                    readModel.Location);
+            }
+
+            var identifier = identifierNames.SingleOrDefault();
+            var address = SemanticAddress.ForReadModel(slice, readModel.Name);
+            var id = Resolve(address, readModel.Location);
+            var properties = readModel.Properties
+                .Select(property => BindProperty(address, property, property.Name == identifier))
+                .ToImmutableArray();
+            return new(
+                readModel,
+                new(id, readModel.Name, properties),
+                properties.ToDictionary(_ => _.Name, StringComparer.Ordinal));
+        }
+
+        SemanticKeyedQuery? BindQuery(SemanticAddress slice, QuerySyntax query)
+        {
+            if (query.Description is not null)
+            {
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Query '{query.Name}' description is authoring metadata.", query.Location);
+            }
+
+            if (query.IsObservable || query.Filters.Any() || query.Scope is not null || query.Authorize is not null || query.Performer is not null)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query '{query.Name}' uses delivery, filtering, scope, authorization, or implementation behavior outside the first ESM v1 vertical.", query.Location);
+            }
+
+            if (query.By is null || query.By.Source is not null)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query '{query.Name}' must declare one caller-supplied 'by' argument in the first ESM v1 vertical.", query.Location);
+                return null;
+            }
+
+            if (query.ReturnType.IsCollection || !query.ReturnType.IsOptional)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query '{query.Name}' must return one optional read model in the first ESM v1 vertical.", query.ReturnType.Location);
+            }
+
+            var readModelName = ShortName(query.ReturnType.Name);
+            if (!_readModels.TryGetValue(readModelName, out var readModel) || !readModel.Properties.TryGetValue(query.By.Name, out var keyProperty))
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"Query '{query.Name}' read model or key property is unresolved.", query.Location);
+                return null;
+            }
+
+            var address = SemanticAddress.ForQuery(slice, query.Name);
+            var id = Resolve(address, query.Location);
+            var argumentAddress = SemanticAddress.ForQueryArgument(address, query.By.Name);
+            var argumentId = Resolve(argumentAddress, query.By.Location);
+            var argument = new SemanticReadModelQueryArgument(argumentId, query.By.Name, BindTypeReference(query.By.Type));
+            return new(
+                id,
+                query.Name,
+                argument,
+                readModel.Model.Id,
+                keyProperty.Id,
+                SemanticQueryCardinality.ZeroOrOne,
+                SemanticQueryDelivery.Snapshot);
+        }
+
+        IEnumerable<(string Module, ImmutableArray<string> FeaturePath, SliceSyntax Slice)> AllSlices()
+        {
+            foreach (var module in syntax.Modules)
+            {
+                foreach (var value in AllSlices(module.Name, [], module.Features))
+                {
+                    yield return value;
+                }
+            }
+        }
+
+        IEnumerable<(string Module, ImmutableArray<string> FeaturePath, SliceSyntax Slice)> AllSlices(
+            string module,
+            ImmutableArray<string> parentPath,
+            IEnumerable<FeatureSyntax> features)
+        {
+            foreach (var feature in features)
+            {
+                var path = parentPath.Add(feature.Name);
+                foreach (var slice in feature.Slices)
+                {
+                    yield return (module, path, slice);
+                }
+
+                foreach (var nested in AllSlices(module, path, feature.Features))
+                {
+                    yield return nested;
+                }
             }
         }
 
@@ -257,11 +436,13 @@ public sealed class SemanticModelBinder : ISemanticModelBinder
 
             var address = SemanticAddress.ForSlice(_applicationIdentity, module, featurePath, slice.Name);
             var id = Resolve(address, slice.Location);
-            var events = slice.Events.Select(value => BindEvent(address, value)).ToArray();
-            var eventsByName = events.ToDictionary(value => value.Syntax.Name, StringComparer.Ordinal);
-            var commands = slice.Commands.Select(value => BindCommand(address, value, eventsByName)).ToImmutableArray();
+            var events = slice.Events.Select(value => _eventDeclarations[value]).ToArray();
+            var commands = slice.Commands.Select(value => BindCommand(address, value, _events)).ToImmutableArray();
+            var readModels = (slice.ReadModels ?? []).Select(value => _readModelDeclarations[value].Model).ToImmutableArray();
+            var projections = slice.Projections.Select(value => BindProjection(address, value)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
+            var queries = slice.Queries.Select(value => _queryDeclarations.GetValueOrDefault(value)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             ReportUnsupportedSliceMembers(slice);
-            return new(id, slice.Name, kind, [.. events.Select(_ => _.Contract)], commands, [], [], [], []);
+            return new(id, slice.Name, kind, [.. events.Select(_ => _.Contract)], commands, readModels, projections, queries, []);
         }
 
         BoundEvent BindEvent(SemanticAddress slice, EventSyntax @event)
@@ -414,7 +595,7 @@ public sealed class SemanticModelBinder : ISemanticModelBinder
                     continue;
                 }
 
-                if (BindExpression(mapping.Source, commandProperties, "produced event mapping") is { } source)
+                if (BindExpression(mapping.Source, commandProperties, SemanticExpressionRootKind.Command, "produced event mapping") is { } source)
                 {
                     mappings.Add(new(target.Id, source));
                 }
@@ -440,10 +621,11 @@ public sealed class SemanticModelBinder : ISemanticModelBinder
         SemanticExpression? BindExpression(
             ExpressionSyntax expression,
             Dictionary<string, SemanticProperty> properties,
+            SemanticExpressionRootKind root,
             string description) => expression switch
         {
             PathExpressionSyntax path when properties.TryGetValue(path.Path, out var property) =>
-                SemanticExpression.Property(SemanticExpressionRootKind.Command, property.Id),
+                SemanticExpression.Property(root, property.Id),
             LiteralExpressionSyntax literal => SemanticExpression.FromValue(BindLiteral(literal)),
             _ => UnsupportedExpression(expression, description)
         };
@@ -463,23 +645,112 @@ public sealed class SemanticModelBinder : ISemanticModelBinder
             return null;
         }
 
+        SemanticProjection? BindProjection(SemanticAddress slice, ProjectionSyntax projection)
+        {
+            if (projection.File is not null)
+            {
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Projection '{projection.Name}' file reference is realization provenance.", projection.File.Location);
+            }
+
+            if (projection.Sequence is not null)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection '{projection.Name}' sequence is not portable ESM v1 behavior.", projection.Location);
+            }
+
+            if (projection.ReadModel is null || !_readModels.TryGetValue(ShortName(projection.ReadModel), out var readModel))
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"Projection '{projection.Name}' read model is unresolved.", projection.Location);
+                return null;
+            }
+
+            foreach (var block in projection.Blocks.Where(_ => _ is not FromSyntax))
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection block '{block.GetType().Name}' is not admitted by the first ESM v1 vertical.", block.Location);
+            }
+
+            var address = SemanticAddress.ForProjection(slice, projection.Name);
+            var id = Resolve(address, projection.Location);
+            var transitions = projection.Blocks
+                .OfType<FromSyntax>()
+                .Select(value => BindProjectionTransition(projection, value, readModel))
+                .Where(_ => _ is not null)
+                .Select(_ => _!)
+                .ToImmutableArray();
+            return new(id, projection.Name, readModel.Model.Id, transitions);
+        }
+
+        SemanticProjectionTransition? BindProjectionTransition(
+            ProjectionSyntax projection,
+            FromSyntax from,
+            BoundReadModel readModel)
+        {
+            var eventSpecs = from.Events.ToArray();
+            if (eventSpecs.Length != 1 || !_events.TryGetValue(eventSpecs[0].Event, out var @event))
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection '{projection.Name}' transition must name one unambiguous event in the first ESM v1 vertical.", from.Location);
+                return null;
+            }
+
+            if (from.ParentKey is not null)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection '{projection.Name}' parent keys are not admitted by the first ESM v1 vertical.", from.ParentKey.Location);
+            }
+
+            var keySyntax = eventSpecs[0].Key ?? ExpressionFrom(from.Key) ?? ExpressionFrom(projection.Key);
+            if (keySyntax is null || BindExpression(keySyntax, @event.Properties, SemanticExpressionRootKind.Event, "projection affected key") is not { } key)
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"Projection '{projection.Name}' transition requires one resolved affected key.", from.Location);
+                return null;
+            }
+
+            var mappings = ImmutableArray.CreateBuilder<SemanticPropertyMapping>();
+            var explicitlyMapped = from.Mappings.Select(_ => _.Property).ToHashSet(StringComparer.Ordinal);
+            if (projection.AutoMap != AutoMapMode.Disabled)
+            {
+                foreach (var property in readModel.Model.Properties.Where(_ => !explicitlyMapped.Contains(_.Name)))
+                {
+                    if (@event.Properties.TryGetValue(property.Name, out var source))
+                    {
+                        mappings.Add(new(property.Id, SemanticExpression.Property(SemanticExpressionRootKind.Event, source.Id)));
+                    }
+                }
+            }
+
+            foreach (var mapping in from.Mappings)
+            {
+                if (mapping is not SetMappingSyntax set || !readModel.Properties.TryGetValue(mapping.Property, out var target))
+                {
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection mapping '{mapping.Property}' is not a direct set mapping admitted by ESM v1.", mapping.Location);
+                    continue;
+                }
+
+                if (BindExpression(set.Source, @event.Properties, SemanticExpressionRootKind.Event, "projection mapping") is { } source)
+                {
+                    mappings.Add(new(target.Id, source));
+                }
+            }
+
+            return new(
+                @event.Contract.Id,
+                new(AffectedInstanceCardinality.One, key),
+                mappings.ToImmutable());
+        }
+
+        ExpressionSyntax? ExpressionFrom(KeySyntax? key) => key switch
+        {
+            null => null,
+            ExpressionKeySyntax expression => expression.Expression,
+            _ => UnsupportedKey(key)
+        };
+
+        ExpressionSyntax? UnsupportedKey(KeySyntax key)
+        {
+            Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection key '{key.GetType().Name}' is not admitted by the first ESM v1 vertical.", key.Location);
+            return null;
+        }
+
         void ReportUnsupportedSliceMembers(SliceSyntax slice)
         {
-            foreach (var readModel in slice.ReadModels ?? [])
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Read model '{readModel.Name}' binding is not implemented in the current ESM increment.", readModel.Location);
-            }
-
-            foreach (var projection in slice.Projections)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection '{projection.Name}' binding is not implemented in the current ESM increment.", projection.Location);
-            }
-
-            foreach (var query in slice.Queries)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query '{query.Name}' binding is not implemented in the current ESM increment.", query.Location);
-            }
-
             foreach (var specification in slice.Specifications)
             {
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Specification '{specification.Name}' binding is not implemented in the current ESM increment.", specification.Location);
@@ -531,6 +802,8 @@ public sealed class SemanticModelBinder : ISemanticModelBinder
             _ when _types.TryGetValue(type.Name, out var composite) => SemanticTypeReference.ForCompositeType(composite.Id, type.IsCollection, type.IsOptional),
             _ => throw new InvalidSemanticContract($"Type reference '{type.Name}' is unresolved during semantic binding.")
         };
+
+        string ShortName(string value) => value[(value.LastIndexOf('.') + 1)..];
 
         SemanticPrimitiveType Primitive(string value) => value switch
         {
@@ -635,6 +908,11 @@ public sealed class SemanticModelBinder : ISemanticModelBinder
         sealed record BoundEvent(
             EventSyntax Syntax,
             SemanticEventContract Contract,
+            Dictionary<string, SemanticProperty> Properties);
+
+        sealed record BoundReadModel(
+            ReadModelSyntax Syntax,
+            SemanticReadModel Model,
             Dictionary<string, SemanticProperty> Properties);
     }
 }
