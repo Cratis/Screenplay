@@ -1424,4 +1424,19 @@ public static class DiagnosticCodes
     /// A <c>file</c> directive names an absolute path, and a file reference is relative to the repository root.
     /// </summary>
     public const string AbsoluteFileReference = "PLAY0264";
+
+    /// <summary>
+    /// A <c>then query</c> line does not name a query.
+    /// </summary>
+    public const string InvalidSpecificationQuery = "PLAY0265";
+
+    /// <summary>
+    /// A line in a <c>then query</c> body is neither <c>arguments</c> nor <c>result</c>.
+    /// </summary>
+    public const string UnknownSpecificationQueryDirective = "PLAY0266";
+
+    /// <summary>
+    /// A <c>then query</c> assertion declares its <c>arguments</c> block more than once.
+    /// </summary>
+    public const string DuplicateSpecificationQueryArguments = "PLAY0267";
 }

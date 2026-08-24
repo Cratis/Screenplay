@@ -39,6 +39,16 @@ public record SpecificationSyntax(
     /// an init property is neither, and is how this record should grow from here.
     /// </remarks>
     public FileReferenceSyntax? File { get; init; }
+
+    /// <summary>
+    /// Gets the expected query results, in authored order.
+    /// </summary>
+    /// <remarks>
+    /// An init-only property preserves the positional record's constructor and deconstruction shape for
+    /// existing consumers. A query assertion is additive specification behavior rather than a replacement
+    /// for <see cref="ThenReadModels"/>.
+    /// </remarks>
+    public IEnumerable<SpecificationQuerySyntax> ThenQueries { get; init; } = [];
 }
 
 /// <summary>
@@ -73,6 +83,28 @@ public record SpecificationCommandSyntax(
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record SpecificationReadModelSyntax(
     string Name,
+    IEnumerable<PropertyMappingSyntax> Properties,
+    SourceLocation Location) : SyntaxNode(Location);
+
+/// <summary>
+/// Represents an expected query result declared with <c>then query &lt;Query&gt;</c>.
+/// </summary>
+/// <param name="Query">The name of the query being asserted.</param>
+/// <param name="Arguments">The query arguments in authored order.</param>
+/// <param name="Results">The expected results in authored comparison order.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record SpecificationQuerySyntax(
+    string Query,
+    IEnumerable<PropertyMappingSyntax> Arguments,
+    IEnumerable<SpecificationQueryResultSyntax> Results,
+    SourceLocation Location) : SyntaxNode(Location);
+
+/// <summary>
+/// Represents one expected result inside a <see cref="SpecificationQuerySyntax"/>.
+/// </summary>
+/// <param name="Properties">The expected result properties.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record SpecificationQueryResultSyntax(
     IEnumerable<PropertyMappingSyntax> Properties,
     SourceLocation Location) : SyntaxNode(Location);
 

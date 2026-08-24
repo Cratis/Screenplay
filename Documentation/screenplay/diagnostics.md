@@ -543,6 +543,14 @@ build and on a machine where the tree is not present, so the compiler never hold
 a stale path must not be what makes a valid document invalid. A consumer that *can* resolve paths decides for
 itself what an unresolvable one means.
 
+### Specification query results
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0265` | Error | A `then query` line does not name a query. |
+| `PLAY0266` | Error | A line in a `then query` body is neither `arguments` nor `result`. |
+| `PLAY0267` | Error | A `then query` assertion declares `arguments` more than once. |
+
 ## Retired codes
 
 None yet. When a code is retired it is listed here with the release it went in, and its number stays out of use forever.
