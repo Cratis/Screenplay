@@ -89,6 +89,14 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         return new SemanticAccepted(tentative, facts.ToImmutable(), queryResults.ToImmutable());
     }
 
+    internal static bool Establish(
+        SemanticExecutionPlan plan,
+        ImmutableArray<SemanticReadModelInstance> current,
+        ImmutableArray<SemanticFact> facts,
+        out ImmutableArray<SemanticReadModelInstance> readModels,
+        out string? failure) =>
+        TryProject(plan, current, facts, out readModels, out failure);
+
     static string? ValidateRequest(
         SemanticExecutionPlan plan,
         SemanticCommand command,

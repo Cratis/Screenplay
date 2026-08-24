@@ -58,9 +58,15 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             return new(specification, false, unsupported, [unsupported.Details]);
         }
 
-        var world = SemanticWorld.Create(
-            [.. expected.GivenEvents.Select(value => new SemanticFact(value.EventContract, SemanticValue.Null, value.Values))],
-            [.. expected.GivenReadModels.Select(value => new SemanticReadModelInstance(value.ReadModel, value.Key, value.Values))]);
+        if (EstablishWorld(plan, expected, out var establishmentFailure) is not { } world)
+        {
+            var unsupported = new SemanticUnsupported(
+                SemanticWorld.Empty,
+                SemanticExecutionCapability.Projection,
+                establishmentFailure!);
+            return new(specification, false, unsupported, [unsupported.Details]);
+        }
+
         var request = SemanticExecutionRequest.Create(
             expected.When.Command,
             expected.When.Values,
@@ -68,6 +74,36 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         var execution = evaluator.Execute(plan, world, request);
         var failures = Compare(expected, execution);
         return new(specification, failures.IsEmpty, execution, failures);
+    }
+
+    static SemanticWorld? EstablishWorld(
+        SemanticExecutionPlan plan,
+        SemanticSpecification specification,
+        out string? failure)
+    {
+        var facts = specification.GivenEvents
+            .Select(value => new SemanticFact(value.EventContract, SemanticValue.Null, value.Values))
+            .ToImmutableArray();
+        if (!SemanticEvaluator.Establish(plan, [], facts, out var projected, out failure))
+        {
+            return null;
+        }
+
+        var readModels = projected.ToList();
+        foreach (var state in specification.GivenReadModels)
+        {
+            var existing = readModels.SingleOrDefault(value =>
+                value.ReadModel == state.ReadModel && SemanticValueRules.AreEqual(value.Key, state.Key));
+            if (existing is not null)
+            {
+                readModels.Remove(existing);
+            }
+
+            readModels.Add(new(state.ReadModel, state.Key, state.Values));
+        }
+
+        failure = null;
+        return SemanticWorld.Create(facts, [.. readModels]);
     }
 
     static ImmutableArray<string> Compare(
