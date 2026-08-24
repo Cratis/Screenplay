@@ -9,6 +9,8 @@ public class when_binding_command_event_behavior : given.a_semantic_binder
         """
         concept ProjectId : Uuid
         concept ProjectName : String
+          validate
+            not empty message "Project name is required"
         module Projects
           feature Registration
             slice StateChange RegisterProject
@@ -34,6 +36,7 @@ public class when_binding_command_event_behavior : given.a_semantic_binder
     [Fact] void should_have_no_diagnostics() => _result.Diagnostics.ShouldBeEmpty();
     [Fact] void should_bind_the_event_contract() => Event.Name.ShouldEqual("ProjectRegistered");
     [Fact] void should_bind_the_initial_event_contract_revision() => Event.Revision.ShouldEqual(EventContractRevision.Initial);
+    [Fact] void should_bind_concept_not_empty_validation() => _result.Value!.Model.Application.Concepts.Single(_ => _.Name == "ProjectName").Validations.Single().Kind.ShouldEqual(SemanticValidationRuleKind.NotEmpty);
     [Fact] void should_bind_the_command_identifier() => Command.Properties.Single(_ => _.Name == "projectId").IsIdentifier.ShouldBeTrue();
     [Fact] void should_bind_not_empty_validation() => Command.Validations.Single().Kind.ShouldEqual(SemanticValidationRuleKind.NotEmpty);
     [Fact] void should_bind_the_validation_message() => Command.Validations.Single().Message.ShouldEqual("Project name is required");

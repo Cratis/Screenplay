@@ -333,13 +333,41 @@ public sealed class SemanticModelBinder : ISemanticModelBinder
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' compliance attributes require portable data-subject semantics.", concept.Location);
             }
 
-            if ((concept.Validations ?? []).Any())
+            var primitive = concept.IsEnum ? SemanticPrimitiveType.Text : Primitive(concept.Type);
+            var validations = BindConceptValidations(concept);
+            return new(_concepts[concept.Name].Id, concept.Name, primitive, [.. concept.Values], validations);
+        }
+
+        ImmutableArray<SemanticValidationRule> BindConceptValidations(ConceptSyntax concept)
+        {
+            var validations = ImmutableArray.CreateBuilder<SemanticValidationRule>();
+            foreach (var validation in concept.Validations ?? [])
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' validation binding is not admitted by the current ESM v1 subset.", concept.Location);
+                if (validation is not DeclarativeValidateSyntax declarative)
+                {
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' code validation requires a constrained implementation attachment.", validation.Location);
+                    continue;
+                }
+
+                foreach (var requirement in declarative.Requirements ?? [])
+                {
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' requirement conditions are not admitted by the first ESM v1 vertical.", requirement.Location);
+                }
+
+                foreach (var rule in declarative.Rules)
+                {
+                    if (rule.Property != ValidationRuleSyntax.ConceptValue || rule.Rule != ValidationRuleKind.NotEmpty ||
+                        rule.Value is not null || rule.File is not null || rule.Code is not null)
+                    {
+                        Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept validation rule '{rule.Rule}' is not admitted by the first ESM v1 vertical.", rule.Location);
+                        continue;
+                    }
+
+                    validations.Add(new(default, SemanticValidationRuleKind.NotEmpty, null, rule.Message));
+                }
             }
 
-            var primitive = concept.IsEnum ? SemanticPrimitiveType.Text : Primitive(concept.Type);
-            return new(_concepts[concept.Name].Id, concept.Name, primitive, [.. concept.Values], []);
+            return validations.ToImmutable();
         }
 
         SemanticCompositeType BindType(TypeSyntax type)
