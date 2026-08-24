@@ -79,7 +79,7 @@ Use one portable fixture end to end: a valid `RegisterProject` command produces 
 
 Before Increment 1 closes:
 
-- every current `ApplicationSyntax` construct is listed in a disposition matrix;
+- every current `ApplicationSyntax` construct is listed in [`SCREENPLAY_SYNTAX_DISPOSITIONS.md`](./SCREENPLAY_SYNTAX_DISPOSITIONS.md);
 - each row is `bind`, `preserve legacy`, `report-only`, `block`, `migrate`, or `defer`;
 - existing `reads` keeps its legacy semantics unless the model opts into or migrates to the new semantic version;
 - existing `ConcurrencySyntax` is classified as preserved legacy/report-only realization metadata, not as implicit decision consistency;

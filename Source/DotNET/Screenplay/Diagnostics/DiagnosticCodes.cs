@@ -1439,4 +1439,39 @@ public static class DiagnosticCodes
     /// A <c>then query</c> assertion declares its <c>arguments</c> block more than once.
     /// </summary>
     public const string DuplicateSpecificationQueryArguments = "PLAY0267";
+
+    /// <summary>
+    /// Source syntax carries portable behavior that ESM v1 cannot represent.
+    /// </summary>
+    public const string UnsupportedSemanticSyntax = "PLAY0268";
+
+    /// <summary>
+    /// Source syntax is explicitly deferred from the current backend semantic profile.
+    /// </summary>
+    public const string DeferredSemanticSyntax = "PLAY0269";
+
+    /// <summary>
+    /// Source syntax is realization or operational metadata rather than portable behavior.
+    /// </summary>
+    public const string ReportOnlySemanticSyntax = "PLAY0270";
+
+    /// <summary>
+    /// Source syntax keeps its legacy meaning but cannot be strengthened into ESM v1 implicitly.
+    /// </summary>
+    public const string PreservedLegacySemanticSyntax = "PLAY0271";
+
+    /// <summary>
+    /// Source syntax requires an explicit reviewed semantic migration before binding.
+    /// </summary>
+    public const string SemanticMigrationRequired = "PLAY0272";
+
+    /// <summary>
+    /// The source syntax and identity catalog could not produce a coherent semantic compilation.
+    /// </summary>
+    public const string InvalidSemanticBinding = "PLAY0273";
+
+    /// <summary>
+    /// A syntax location cannot be mapped to one of the supplied semantic source documents.
+    /// </summary>
+    public const string UnknownSemanticSourceDocument = "PLAY0274";
 }

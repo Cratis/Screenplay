@@ -163,7 +163,7 @@ Delivered foundation:
 Next dependency-ordered work:
 
 1. Screenplay #87: decide and add the smallest compatibility-safe authored query-result assertion syntax. The binder must not infer query assertions from `then readmodel`.
-2. Screenplay #135: implement exhaustive `ApplicationSyntax → ESM` binding and the complete syntax disposition matrix.
+2. Screenplay #135: implement exhaustive `ApplicationSyntax → ESM` binding against `SCREENPLAY_SYNTAX_DISPOSITIONS.md`.
 3. Screenplay #136: implement the minimum execution plan and deterministic RegisterProject evaluator.
 4. Stage #56/#23: consume ESM through a pure `ArtifactRenderPlan` and render the Cratis vertical.
 5. CLI #101: publish the plan safely through root `cratis render` with manifests, journaling, and recovery.
