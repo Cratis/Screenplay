@@ -19,7 +19,8 @@ Read completely:
 2. `SCREENPLAY_ARCHITECTURE.md`.
 3. `SCREENPLAY_PROGRAM.md`.
 4. `SCREENPLAY_HANDOVER.md`.
-5. Latest comments/states for the owning GitHub issues before changing their scope.
+5. `SCREENPLAY_SYNTAX_DISPOSITIONS.md`.
+6. Latest comments/states for the owning GitHub issues before changing their scope.
 
 Treat the merged architecture/program as authoritative. Keep language documentation and grammar release-complete through Screenplay #146.
 
