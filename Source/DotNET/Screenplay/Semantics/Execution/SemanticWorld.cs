@@ -44,7 +44,9 @@ public sealed class SemanticWorld
         ImmutableArray<SemanticFact> facts,
         ImmutableArray<SemanticReadModelInstance> readModels)
     {
-        if (facts.IsDefault || readModels.IsDefault || facts.Any(_ => _ is null) || readModels.Any(_ => _ is null))
+        if (facts.IsDefault || readModels.IsDefault ||
+            facts.Any(fact => fact is not { EventContract.IsSet: true, Destination: not null } || !ValidValues(fact.Values)) ||
+            readModels.Any(readModel => readModel is not { ReadModel.IsSet: true, Key: not null } || !ValidValues(readModel.Values)))
         {
             throw new InvalidSemanticContract("Semantic world state is malformed.");
         }
@@ -74,6 +76,9 @@ public sealed class SemanticWorld
         ImmutableArray<SemanticFact> facts,
         ImmutableArray<SemanticReadModelInstance> readModels) =>
         Create([.. Facts, .. facts], readModels);
+
+    static bool ValidValues(ImmutableArray<SemanticPropertyValue> values) =>
+        !values.IsDefault && values.All(_ => _ is { TargetProperty.IsSet: true, Value: not null });
 
     static string CanonicalKey(SemanticValue value) => value switch
     {
