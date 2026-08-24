@@ -11,6 +11,11 @@ namespace Cratis.Screenplay.Semantics.Execution;
 public enum SemanticExecutionOutcomeKind
 {
     /// <summary>
+    /// An unknown outcome. Unknown values are never emitted.
+    /// </summary>
+    Unknown = -1,
+
+    /// <summary>
     /// The command and requested queries completed atomically.
     /// </summary>
     Accepted = 0,
@@ -37,6 +42,11 @@ public enum SemanticExecutionOutcomeKind
 public enum SemanticConflictCategory
 {
     /// <summary>
+    /// An unknown conflict. Unknown values are never emitted.
+    /// </summary>
+    Unknown = -1,
+
+    /// <summary>
     /// The decision state changed after it was read.
     /// </summary>
     DecisionStateChanged = 0
@@ -47,6 +57,11 @@ public enum SemanticConflictCategory
 /// </summary>
 public enum SemanticExecutionCapability
 {
+    /// <summary>
+    /// An unknown capability. Unknown values are never emitted.
+    /// </summary>
+    Unknown = -1,
+
     /// <summary>
     /// Command dispatch for the requested semantic identity.
     /// </summary>
@@ -78,6 +93,11 @@ public enum SemanticExecutionCapability
 /// </summary>
 public enum SemanticRejectionCategory
 {
+    /// <summary>
+    /// An unknown rejection. Unknown values are never emitted.
+    /// </summary>
+    Unknown = -1,
+
     /// <summary>
     /// The request does not match its command contract.
     /// </summary>
