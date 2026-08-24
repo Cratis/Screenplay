@@ -39,9 +39,10 @@ Do not add a Saga construct. Long-running workflows are commands, events, proces
 - `v4.4.0` added authored query-result assertions from PR #150 at `aa1ee5c4ded36bfbda1531a469bd05213233647d`.
 - `v4.5.0` added fail-closed `ApplicationSyntax → ESM` binding and closed #135 from PR #152 at `479270892b9d7e845aed7befad0d26bb096378d9`.
 - `v4.6.0` added the deterministic execution plan/reference evaluator and closed #136 from PR #153 at `f9afbdc9f9c335ae6989dab4d8b24f28df4f2473`.
+  - `Cratis.Screenplay` nupkg SHA-256: `c3c54d68c23330ea469c9f6f42dc20290b7db989f5e9f5f79bc651b5cc8d9e08`
+  - `Cratis.Screenplay.Tool` nupkg SHA-256: `bef455468d2bf2df4e61d0bbc7ac29c27ef520ee623bbd02fc3f57feefe668c3`
   - Debug: 1,951 Screenplay specs plus 2 canonical-vector specs passed before merge.
-  - Release net8/net9/net10, canonical vectors, package validation, and CI passed.
-  - Public NuGet propagation should be rechecked in the next session if the package index has not yet updated.
+  - Release net8/net9/net10, canonical vectors, package validation, CI, and public NuGet verification passed.
 - PR #147 aligned public documentation and grammar with portable Screenplay semantics at `e9f857f56191d42ac2d4aef54af9c4575e245044`; #146 owns automated documentation/grammar conformance.
 - PR #151 fixed the constrained implementation/AI boundary at `3e512fa5c1ff4658549307a4b0936f366cdd0fd2`; #139 owns implementation attachments.
 - PR #149 removed historical plus-sign shorthand and made bidirectional rendering/recovery explicit at `dabe26de1611284dc531703736b273c56f4fe9a4`.
@@ -140,7 +141,7 @@ Do not add a Saga construct. Long-running workflows are commands, events, proces
   - Current commit: `53e9389 Add pure ESM artifact render plan contracts`.
   - Takes Screenplay `4.6.0`.
   - Focused contract specs: 12 passed with zero warnings after fixes.
-  - Remaining before merge: full Stage Debug/Release gates, ESM Cratis planner implementation, generated specification/build proof, and legacy `IRenderer` compatibility.
+  - Remaining before merge: first merge current `origin/main` (`6ef4a87` at handover) into the feature branch because PR #60 is currently dirty; then run full Stage Debug/Release gates, implement the ESM Cratis planner, prove generated specification/build output, and preserve legacy `IRenderer` compatibility.
 
 ### Prologue
 

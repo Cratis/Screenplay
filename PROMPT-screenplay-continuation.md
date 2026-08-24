@@ -40,6 +40,8 @@ Use delegation only for independent bounded work. Prefer authoritative builds/sp
 ```text
 Screenplay 4.6.0
   merge/tag: f9afbdc9f9c335ae6989dab4d8b24f28df4f2473
+  Cratis.Screenplay nupkg SHA-256: c3c54d68c23330ea469c9f6f42dc20290b7db989f5e9f5f79bc651b5cc8d9e08
+  Cratis.Screenplay.Tool nupkg SHA-256: bef455468d2bf2df4e61d0bbc7ac29c27ef520ee623bbd02fc3f57feefe668c3
   query assertions: v4.4.0 / PR #150
   source→ESM binder: v4.5.0 / PR #152 / #135 closed
   reference evaluator: v4.6.0 / PR #153 / #136 closed
@@ -49,7 +51,7 @@ CLI 2.16.0
 Stage 3.8.2 before the active PR
 ```
 
-Screenplay v4.6 publish workflow passed. Recheck public NuGet visibility if needed; the prior session had not yet recorded the v4.6 package hashes.
+Screenplay v4.6 publish workflow and public NuGet package verification passed.
 
 ## Completed semantic-kernel path
 
@@ -92,21 +94,23 @@ Current commit adds:
 ### Immediate next actions
 
 1. Inspect the current Stage worktree and PR #60 diff; confirm no uncommitted or post-format changes.
-2. Run full Stage Debug and Release gates for the contract commit before expanding it.
-3. Implement a direct ESM Cratis planner for only the RegisterProject vertical:
+2. Fetch Stage and merge current `origin/main` (`6ef4a87` at handover) into `feat/esm-artifact-render-plan`—never rebase. PR #60 is currently `mergeable_state: dirty` because the branch started from stale local main.
+3. Resolve conflicts semantically, preserving the ESM artifact-plan contracts, then rerun the 12 focused contract specs.
+4. Run full Stage Debug and Release gates for the contract commit before expanding it.
+5. Implement a direct ESM Cratis planner for only the RegisterProject vertical:
    - concepts/composite types;
    - command + `not empty` validation;
    - event contract/destination/mappings;
    - read model + one-instance projection;
    - optional snapshot by-key query;
    - generated success/rejection specifications.
-4. Do **not** convert ESM back into `ApplicationSyntax`; that recreates the old semantic ambiguity.
-5. Produce only in-memory `ArtifactRenderPlan` artifacts. No filesystem/network/process/clock/ambient-environment access.
-6. Compile the generated backend/specifications against real Cratis packages. Unsupported semantics produce blocking typed diagnostics and no publishable TODO/stub application.
-7. Add repeated-plan byte equality and application/module/feature/slice scope specs.
-8. Preserve legacy `IRenderer` through an explicit compatibility adapter; do not route new ESM planning through direct writes.
-9. Review, merge, release, and record Stage version/commit/package hashes only after the complete vertical is green.
-10. Then update CLI #101 to consume the released plan and safely publish it.
+6. Do **not** convert ESM back into `ApplicationSyntax`; that recreates the old semantic ambiguity.
+7. Produce only in-memory `ArtifactRenderPlan` artifacts. No filesystem/network/process/clock/ambient-environment access.
+8. Compile the generated backend/specifications against real Cratis packages. Unsupported semantics produce blocking typed diagnostics and no publishable TODO/stub application.
+9. Add repeated-plan byte equality and application/module/feature/slice scope specs.
+10. Preserve legacy `IRenderer` through an explicit compatibility adapter; do not route new ESM planning through direct writes.
+11. Review, merge, release, and record Stage version/commit/package hashes only after the complete vertical is green.
+12. Then update CLI #101 to consume the released plan and safely publish it.
 
 ## Priority and bidirectional goal
 
