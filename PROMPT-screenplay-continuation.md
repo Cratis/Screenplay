@@ -5,7 +5,7 @@ Licensed under the MIT license. See LICENSE file in the project root for full li
 
 # Fresh-session prompt: continue Screenplay delivery
 
-Start the fresh Pi session in `/Volumes/sourcecode/repos/cratis/Screenplay` and then continue the active Stage worktree named below.
+Start the fresh Pi session in `/Volumes/sourcecode/repos/cratis/Screenplay` and then continue the active CLI worktree named below.
 
 ---
 
@@ -47,13 +47,18 @@ Screenplay 4.6.0
   reference evaluator: v4.6.0 / PR #153 / #136 closed
 Screenplay.Generation 0.9.0
 Screenplay.CritterStack 0.21.0
-CLI 2.16.0
-Stage 3.8.2 before the active PR
+CLI 2.16.0 before the active PR
+Stage 3.9.0
+  merge/tag: 32f7eba189c836f3f5c7409511ade367786834bc / v3.9.0
+  Cratis.Stage nupkg SHA-256: 07ba0fd7ad6651fd2cec3af4a547851b4b5b3580551a04332a07a6a5c9622c91
+  Cratis.Stage.Contracts nupkg SHA-256: 8677519adaf3f2de0f739fa035e71c55d21638f1e326805627d47fe95c9c0de9
+  Cratis.Stage.Rendering.Cratis nupkg SHA-256: d8be56ac6692be99232494792d26f60d45ceed0a2e1bb57a8169e96fa9fbf64c
+  Cratis.Stage.Rendering.Cratis.Scaffolding nupkg SHA-256: 2c60e45465a8cf3ba5decd5244cde8baf687d1718bc32b6e2904d3498081c155
 ```
 
-Screenplay v4.6 publish workflow and public NuGet package verification passed.
+Screenplay v4.6 and Stage v3.9 publish workflows and public NuGet package verification passed.
 
-## Completed semantic-kernel path
+## Completed semantic and Stage path
 
 ```text
 .play file/folder
@@ -63,62 +68,59 @@ Screenplay v4.6 publish workflow and public NuGet package verification passed.
 → immutable world evaluation
 → Accepted/Rejected/Conflict/Unsupported
 → deterministic specification comparison
+→ Stage pure ArtifactRenderPlan
+→ direct Cratis backend/specification artifacts
 ```
 
-The source-bound RegisterProject success and rejection vectors pass. Do not reopen #135 or #136; broader policies, reads/consistency, automation/time/effects, query waves, and implementation attachments remain in their focused issues.
+Stage PR #60 released the versioned pure plan contracts and first direct ESM Cratis vertical. It consumes materialized ESM identities/mappings without converting back to `ApplicationSyntax`; supports application/module/feature/slice scopes; normalizes and hashes artifacts; blocks unsupported behavior with typed diagnostics; generates command/event/projection/query and success/rejection specification sources; and preserves legacy `IRenderer` through an explicit compatibility adapter. Repeated-plan bytes and generated-source compilation against real Cratis assemblies pass. Stage #56 is closed; #23 and parent #11 remain open for broader migration/coverage. Do not reopen Screenplay #135/#136 or Stage #56.
 
-## Active work: Stage ESM ArtifactRenderPlan
+## Active work: CLI safe `cratis render`
 
 ```text
-repo: /Volumes/sourcecode/repos/cratis/Stage
-worktree: /Users/sindrewilting/.cache/pi-worktrees/Stage-artifact-render-plan
-branch: feat/esm-artifact-render-plan
-commit: 53e9389 Add pure ESM artifact render plan contracts
+repo: /Volumes/sourcecode/repos/cratis/cli
+worktree: /Users/sindrewilting/.cache/pi-worktrees/cli-safe-screenplay-render
+branch: feat/safe-screenplay-render
+commit: c36d822 Take Screenplay 4.6 and Stage 3.9
 remote branch: pushed
-PR: Cratis/Stage#60 (draft, minor)
-issues: Stage #23 and #56; parent #11
+PR: Cratis/cli#106 (draft, minor)
+issue: CLI #101; related #65
 ```
 
-Current commit adds:
+Current commit:
 
-- Screenplay package 4.6.0;
-- `IArtifactRenderPlanner`;
-- application/module/feature/slice semantic scope;
-- immutable render request/profile/resolved-input contracts;
-- normalized UTF-8/LF text and binary artifacts;
-- SHA-256 hashes and deterministic ordering;
-- duplicate/traversing/absolute/case-colliding path rejection;
-- typed diagnostics and non-publishable error plans;
-- focused contract specs (12 passed, zero warnings after fixes).
+- takes Screenplay 4.6.0 and Stage Contracts/Cratis renderer 3.9.0;
+- aligns bundled CritterStack provenance metadata and frozen package closure to the already-shipped 0.21.0 package;
+- passes 819 CLI specs plus 164 Chronicle integration specs;
+- builds Release with zero warnings and zero errors.
+
+The existing prototype still compiles separate `ApplicationSyntax` documents and invokes legacy direct writes. It has no ESM document-set compilation, static renderer profile, ownership manifest, user-file protection, staged publication, journal, or recovery.
 
 ### Immediate next actions
 
-1. Inspect the current Stage worktree and PR #60 diff; confirm no uncommitted or post-format changes.
-2. Fetch Stage and merge current `origin/main` (`6ef4a87` at handover) into `feat/esm-artifact-render-plan`—never rebase. PR #60 is currently `mergeable_state: dirty` because the branch started from stale local main.
-3. Resolve conflicts semantically, preserving the ESM artifact-plan contracts, then rerun the 12 focused contract specs.
-4. Run full Stage Debug and Release gates for the contract commit before expanding it.
-5. Implement a direct ESM Cratis planner for only the RegisterProject vertical:
-   - concepts/composite types;
-   - command + `not empty` validation;
-   - event contract/destination/mappings;
-   - read model + one-instance projection;
-   - optional snapshot by-key query;
-   - generated success/rejection specifications.
-6. Do **not** convert ESM back into `ApplicationSyntax`; that recreates the old semantic ambiguity.
-7. Produce only in-memory `ArtifactRenderPlan` artifacts. No filesystem/network/process/clock/ambient-environment access.
-8. Compile the generated backend/specifications against real Cratis packages. Unsupported semantics produce blocking typed diagnostics and no publishable TODO/stub application.
-9. Add repeated-plan byte equality and application/module/feature/slice scope specs.
-10. Preserve legacy `IRenderer` through an explicit compatibility adapter; do not route new ESM planning through direct writes.
-11. Review, merge, release, and record Stage version/commit/package hashes only after the complete vertical is green.
-12. Then update CLI #101 to consume the released plan and safely publish it.
+1. Inspect the CLI worktree and draft PR #106; confirm it is clean and current.
+2. Keep existing `screenplay validate` compatibility, but replace the render path with one logical file/folder `SemanticDocumentSet` → ESM → `SemanticExecutionPlan` compilation.
+3. Implement the public surface from #101:
+   - `cratis render [PATH]`;
+   - `--target cratis` from a static reviewed renderer-target roster;
+   - `--destination ./out`;
+   - explicit application `--name` independent of destination;
+   - `--force` only for artifacts already owned by the prior manifest.
+4. Build a fully resolved immutable Cratis profile/scaffold input in the trusted CLI host; do not let the planner read templates, packages, files, clocks, processes, network, or environment.
+5. Produce the complete Stage `ArtifactRenderPlan` before any destination mutation. Compiler errors, planner errors, unresolved implementation gaps, unknown target/profile/schema, or unsafe/colliding paths commit nothing.
+6. Add a versioned `.cratis-render.json` ownership manifest binding semantic revision, target/profile/renderer/schema versions, paths, and hashes.
+7. Protect unmanaged files and user-modified managed files; remove only unchanged stale managed files. Never let `--force` authorize an unmanaged overwrite or deletion of a modified stale file.
+8. Publish through staging plus a durable journal recording intended operations and prior manifest state. Publish the new manifest last. On restart, deterministically complete cleanup or roll back an interrupted commit.
+9. Add focused infrastructure-free specs for planning/admission and filesystem specs for first render, byte-identical rerender, unmanaged collision, modified managed file, unchanged stale removal, cancellation before commit, interruption/recovery, manifest/schema mismatch, and deterministic JSON/text output.
+10. Verify the generated Cratis solution builds and generated specifications pass from the installed CLI package, not only the project output.
+11. Review, merge with a true merge commit, release, publicly verify hashes/native artifacts, close #101 only when every acceptance criterion passes, and record the exact continuation point.
 
 ## Priority and bidirectional goal
 
 Primary product proof:
 
 ```text
-Screenplay → ESM → Stage plan → generated, buildable Cratis application
-                         └──────→ generated passing specifications
+Screenplay → ESM → Stage plan → CLI safe publication → buildable Cratis application
+                                                  └──→ passing generated specifications
 ```
 
 Secondary explicit proof after the generated app:
@@ -130,20 +132,20 @@ existing Cratis code
 → Studio import and visible model/view
 ```
 
-Track the second path through Screenplay #148, Generation #24–#26, CritterStack #29/#44, and StudioIssues #52/#101/#260/#261. Keep shared render→recover vectors, but do not delay the first generated Cratis application for full Studio integration.
+Track the second path through Screenplay #148, Generation #24–#26, CritterStack #29/#44, and StudioIssues #52/#101/#260/#261. Keep shared render→recover vectors, but do not delay safe CLI publication for full Studio integration.
 
 ## Implementation attachments and optional AI
 
 Screenplay #139 and merged PR #151 define the boundary:
 
-- ESM carries small role-specific implementation requirements, not raw code as portable meaning.
+- ESM carries small role-specific implementation requirements, not raw code as portable meaning;
 - accepted inline/file source is separately revisioned attachment;
 - pure planning returns blocking implementation gaps;
 - AI runs outside the planner and proposes a candidate bound to semantic/profile/attachment revisions;
 - compilation, static analysis, Screenplay specifications, review, and explicit acceptance precede deterministic re-planning;
 - no successful TODO, `NotImplementedException`, empty handler, guessed policy, or silent omission.
 
-Do not implement the attachment framework in Stage PR #60. Finish the declarative vertical first. The first later pilot is one query-performer role and one Cratis target provider.
+Do not implement the attachment framework in CLI #106. The CLI only refuses incomplete plans and publishes accepted generated artifacts; it does not make semantic or AI decisions.
 
 ## Repository ownership
 
@@ -170,4 +172,4 @@ Do not implement the attachment framework in Stage PR #60. Finish the declarativ
 
 At each release boundary record versions, commits, public hashes, authoritative gates, limitations, and exact continuation points. Update issue comments with what landed and what remains; close only fully satisfied issues and verify closure. Clean worktrees/branches after merge.
 
-Do not call the full Screenplay program complete after the Stage/Cratis vertical. Use `SCREENPLAY_PROGRAM.md` completion criteria.
+Do not call the full Screenplay program complete after safe `cratis render`. Use `SCREENPLAY_PROGRAM.md` completion criteria.
