@@ -149,6 +149,8 @@ After that gate, deliver separate waves with reference and Cratis conformance ve
 9. complete specification context: source, event source, compliance subject, caller, execution scope, keys, clocks, IDs, outcomes, effects, and ordering;
 10. independently reusable PDL/CDL conformance.
 
+The constrained-implementation wave is delivered role by role, starting from one real rendering gap rather than designing every possible language and body at once. Its first release includes the common requirement/attachment envelope, one role-specific context/result contract, one target provider, virtual-document diagnostics, blocking planner gaps, and accepted-attachment rendering. Additional roles and languages reuse the envelope only after a concrete product need. AI candidate generation remains optional orchestration outside the pure planner; revision-checked acceptance joins the Studio/AI work in Increment 7.
+
 PDL and CDL parsers/compilers remain usable without constructing the full ESM. The ESM may reference their versioned portable compiled plans. Workbench adoption is explicitly gated on standalone package conformance, existing API compatibility, and shared policy/constraint vectors.
 
 A capability closes only when all ledger cells declared `Required` pass. Studio and AI cells are not automatically required for these early waves; they become required only when the capability issue explicitly declares them.

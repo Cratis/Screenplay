@@ -273,9 +273,79 @@ Commands express intent, facts record progress, views represent process state, r
 
 ## Constrained implementation bodies and standalone sublanguages
 
-Inline and referenced C#, TypeScript/React, SQL, and future languages are constrained implementation bodies, not second applications. Every body has stable semantic identity and implementation role, typed context and result, admitted capabilities, an exact source map, and identical inline/file semantics.
+Inline and referenced C#, TypeScript/React, SQL, and future languages are constrained implementation bodies, not second applications. They fill explicit implementation requirements where the portable model cannot deterministically state the realization.
 
-Tooling uses virtual documents and existing language services. Namespaces, application entry points, undeclared capabilities, and unsafe paths are rejected. Completion filtering alone is not a sandbox; renderer and runtime admission enforce the same contract.
+### Small common contract
+
+Screenplay defines only a small language-neutral envelope:
+
+```text
+ImplementationRequirement
+  stable identity
+  owning SemanticId
+  role
+  context-contract version
+  result-contract version
+  required capabilities
+
+ImplementationAttachment
+  requirement identity
+  language identity
+  inline or file-backed source
+  content revision/hash
+  exact source map and provenance
+```
+
+Roles are specific—command handler, query performer, rule predicate, policy, reducer rule, reaction, and later screen implementation—because each receives a different context and returns a different result. Screenplay does not invent one universal code AST or a general-purpose portable function language. A target provider translates the versioned role contract into its own function signature, imports, framework APIs, and file layout.
+
+The ESM records the implementation requirement and its observable contract, not raw target code as portable business meaning. Accepted source remains an attachment with its own revision. Artifact manifests bind the semantic revision, target profile, requirement identities, and attachment revisions, so changing code cannot pass unnoticed merely because the declarative semantic revision stayed the same.
+
+### Inline and file forms
+
+Inline and file-backed bodies have identical role, context, result, capability, and validation semantics. Their storage differs:
+
+- inline source is held by the Screenplay workspace;
+- a file reference is a portable repository-relative locator resolved by the authoring/rendering host, never by the pure semantic binder;
+- file paths are provenance and placement, not semantic or attachment identity;
+- after resolution, tooling validates the same virtual body against the same contract.
+
+Tooling creates a virtual document that wraps only the method body with the target provider's generated context/signature. Diagnostics and edits map back to the exact inline block or referenced file. Namespaces, classes, application entry points, unsafe paths, undeclared capabilities, and APIs outside the role contract are rejected. Completion filtering alone is not a sandbox; binder admission, renderer validation, and runtime execution enforce the same contract.
+
+### Deterministic generation and implementation gaps
+
+Rendering is deterministic first. A target renderer produces everything implied by portable semantics and returns typed implementation gaps for requirements it cannot satisfy from accepted attachments:
+
+```text
+ArtifactRenderPlan
+  deterministic artifacts
+  implementation gaps
+  blocking diagnostics
+  publishable: true | false
+```
+
+A missing body, unsupported language, stale attachment, or capability mismatch is a blocking gap. The renderer never emits a successful application containing `TODO`, `NotImplementedException`, empty success, or guessed behavior. Partial artifacts may be previewed, but the CLI cannot publish them as a complete application.
+
+Target integrations are named, versioned, explicitly enabled by the realization profile, and deterministically ordered. They may contribute at declared generation sections or add files, but cannot arbitrarily post-process the model or redefine semantics. Generated files and user-owned attachment files remain separate; the CLI manifest owns only generated artifacts. This follows the generation-gap principle rather than protected regions inside files users edit.
+
+### Optional AI assistance
+
+AI is an optional gap resolver outside the pure renderer. It never runs inside `IArtifactRenderPlanner` and never writes application files directly.
+
+```text
+plan → typed gap → AI/user candidate → verify → review/accept → re-plan
+```
+
+A candidate is bound to the exact semantic revision, target profile/version, implementation requirement, and base attachment revision. It records provider/model provenance and input/output hashes. Compilation, static analysis, and the requirement's Screenplay specifications verify it. Acceptance is an explicit revision-checked workspace/semantic patch; only accepted source becomes an implementation attachment. Re-running the planner with the accepted attachment is deterministic.
+
+AI may propose a missing target implementation or translate an accepted attachment to another target language. It may not invent domain events, policies, query behavior, or acceptance criteria to make generation succeed. If specifications and the role contract do not constrain a gap sufficiently, the candidate remains unresolved and the model needs clarification.
+
+### Runtime and recovery
+
+Stage executes an implementation body only through a registered provider that supports its language, role-contract version, and capabilities. Otherwise execution returns typed `Unsupported`; it does not interpret arbitrary source opportunistically.
+
+Source recovery follows the inverse boundary. Generated manifests and stable requirement identities allow exact recovery of generated/accepted attachments. Hand-written code contributes located source evidence and a reviewable proposal. Recovery may preserve an opaque body and its role without claiming to understand all behavior. Loss, ambiguity, unsupported APIs, and target-only details remain explicit in the realization report.
+
+The design deliberately applies three established patterns rather than inventing a universal code model: the [Generation Gap](https://martinfowler.com/dslCatalog/generationGap.html) separates generated and authored files; [Smithy codegen integrations](https://smithy.io/2.0/guides/building-codegen/making-codegen-pluggable.html) use named opt-in target hooks; and [VS Code embedded-language tooling](https://code.visualstudio.com/api/language-extensions/embedded-languages) uses virtual documents with explicit source mapping and known cross-language limitations.
 
 PDL and CDL remain independently consumable first-class sublanguages. Their parsers, compilers, and portable compiled-plan contracts must not depend on constructing the full application ESM. The ESM may reference their versioned portable compiled plans. Workbench adoption is gated on standalone package conformance, existing API compatibility, and shared policy/constraint behavioral vectors; it is not an implicit consequence of ESM delivery.
 

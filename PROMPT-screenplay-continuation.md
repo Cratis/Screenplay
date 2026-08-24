@@ -142,6 +142,7 @@ Vogen remains independent, source-only, and executes at most once.
 - Source, document, semantic, event-contract, Studio authoring, Prologue candidate, and runtime identities remain distinct.
 - PDL and CDL remain independently consumable first-class sublanguages.
 - Inline/file code is constrained realization attachment, not a free-form second application.
+- Deterministic planning returns typed implementation gaps. AI may propose revision-bound candidates outside the pure planner, but never writes files or invents semantics directly.
 - Source-adapter and renderer-target rosters remain separate.
 - Frontend and deployment remain excluded until separately approved.
 - Register future capabilities and improvements as focused GitHub issues in the owning repository. Do not silently expand another issue or PR.
