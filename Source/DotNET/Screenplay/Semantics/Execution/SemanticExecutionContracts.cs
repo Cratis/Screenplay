@@ -153,7 +153,10 @@ public sealed record SemanticExecutionRequest(
         SemanticId command,
         ImmutableArray<SemanticPropertyValue> values,
         ImmutableArray<SemanticQueryRequest> queries) =>
-        new(command, values, queries, []);
+        new(command, values, queries, EmptyAllocatedIdentities());
+
+    static ImmutableDictionary<SemanticId, SemanticValue> EmptyAllocatedIdentities() =>
+        ImmutableDictionary<SemanticId, SemanticValue>.Empty.WithComparers(EqualityComparer<SemanticId>.Default);
 }
 
 /// <summary>

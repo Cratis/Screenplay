@@ -143,6 +143,30 @@ When a scenario is really about derived state rather than events, `given readmod
 
 Both forms combine freely with `given`/`then` events in the same specification — establish state with events or read models, and assert on events, read models and errors as the scenario requires.
 
+## Reference execution
+
+Screenplay supplies a framework-neutral reference path for admitted semantic capabilities. It does not start Arc, Chronicle, a database, the filesystem, or a network service. It executes against an immutable in-memory world so Stage and rendered targets have one normalized behavior to match.
+
+```mermaid
+flowchart LR
+    Source[".play document set"] --> Bind["bind to ESM"]
+    Bind --> Plan["capability-admitted plan"]
+    Plan --> Execute["validate → facts → projection → query"]
+    Execute --> Trace["Accepted / Rejected / Conflict / Unsupported"]
+    Trace --> Compare["compare specification outcomes"]
+```
+
+The minimum evaluator currently admits the RegisterProject-style vertical: `not empty` validation, unconditional event production, one affected read-model instance, optional snapshot lookup, and exact ordered specification results. Unsupported reachable capabilities block plan creation rather than producing a partial or stubbed execution.
+
+```csharp
+var semanticCompilation = semanticCompiler.Compile("Projects", documents);
+var planCompilation = SemanticExecutionPlan.Compile(semanticCompilation.Value!.Model);
+var specificationId = planCompilation.Plan!.Specifications.Keys.First();
+var run = new SemanticSpecificationRunner().Run(planCompilation.Plan, specificationId);
+```
+
+A rejected execution returns the unchanged world. An accepted execution commits its facts and projected state once, then evaluates the requested queries against that tentative committed state. The same normalized specification run is the conformance input for Stage and generated applications.
+
 ## The specification vocabulary at a glance
 
 | Construct | Meaning |
