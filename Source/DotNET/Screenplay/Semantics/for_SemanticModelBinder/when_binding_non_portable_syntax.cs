@@ -19,6 +19,7 @@ public class when_binding_non_portable_syntax : given.a_semantic_binder
               feature Registration
                 slice StateChange RegisterProject
                   command RegisterProject
+                    reads ProjectState
             """);
         _deferred = Bind(
             """
@@ -37,7 +38,7 @@ public class when_binding_non_portable_syntax : given.a_semantic_binder
             "other.play");
     }
 
-    [Fact] void should_block_unsupported_behavior() => _unsupported.Diagnostics.Any(_ => _.Code == DiagnosticCodes.UnsupportedSemanticSyntax && _.Severity == DiagnosticSeverity.Error).ShouldBeTrue();
+    [Fact] void should_block_unmigrated_legacy_behavior() => _unsupported.Diagnostics.Any(_ => _.Code == DiagnosticCodes.PreservedLegacySemanticSyntax && _.Severity == DiagnosticSeverity.Error).ShouldBeTrue();
     [Fact] void should_bind_with_explicit_deferred_metadata() => _deferred.Success.ShouldBeTrue();
     [Fact] void should_report_deferred_metadata() => _deferred.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.DeferredSemanticSyntax);
     [Fact] void should_block_a_location_outside_the_document_set() => _unknownDocument.Diagnostics.Any(_ => _.Code == DiagnosticCodes.UnknownSemanticSourceDocument).ShouldBeTrue();
