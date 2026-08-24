@@ -5,11 +5,11 @@ Licensed under the MIT license. See LICENSE file in the project root for full li
 
 # Fresh-session prompt: continue Screenplay delivery
 
-Copy everything below this line into a fresh Pi session started in `/Volumes/sourcecode/repos/cratis/Screenplay`.
+Start the fresh Pi session in `/Volumes/sourcecode/repos/cratis/Screenplay` and then continue the active Stage worktree named below.
 
 ---
 
-Continue the cross-repository Screenplay delivery program. The plus-sign shorthand in the original notes only meant “Screenplay and related delivery work”; it was never a product, program, language, milestone, or public name. Use **Screenplay** everywhere.
+Continue the cross-repository Screenplay delivery program. Screenplay is the product and language name; historical plus-sign shorthand in old notes was never a product or public name.
 
 ## Read first
 
@@ -20,137 +20,150 @@ Read completely:
 3. `SCREENPLAY_PROGRAM.md`.
 4. `SCREENPLAY_HANDOVER.md`.
 5. `SCREENPLAY_SYNTAX_DISPOSITIONS.md`.
-6. Latest comments/states for the owning GitHub issues before changing their scope.
+6. Latest comments/states for owning GitHub issues and draft PRs.
 
-Treat the merged architecture/program as authoritative. Keep language documentation and grammar release-complete through Screenplay #146.
+Treat the architecture/program as authoritative. Keep documentation and grammar release-complete through Screenplay #146.
 
-## Model restrictions
+## Model restrictions and working style
 
-Use only GPT/OpenAI models for delegation. Prefer explicitly pinned:
+Use only GPT/OpenAI models for delegation, explicitly pinned when possible:
 
 ```text
 provider: openai-codex
 model: gpt-5.6-sol
 ```
 
-Do not use the generic `Agent` tool unless its route is guaranteed. Use delegation only where it protects context or parallelizes independent work; do not repeatedly review or gather evidence after an authoritative gate has answered the question.
+Use delegation only for independent bounded work. Prefer authoritative builds/specs over repeated reviews. Keep one branch/worktree and early draft PR per repository increment; make logical append-only commits and push them.
 
 ## Current released baseline
 
 ```text
-Screenplay 4.3.0
-  merge/tag: e8b52c236dddb021c318ea9a34c6911c8f02e60a
-  Cratis.Screenplay nupkg SHA-256: 7db25db241cf6787c9297fd007150428d32e6d96402dee3f32f035aaa28c5237
-  Cratis.Screenplay.Tool nupkg SHA-256: d97dece537a4ad027cec22f879e617f63c2d9f532be8aa41b2b118b7c3aa339b
+Screenplay 4.6.0
+  merge/tag: f9afbdc9f9c335ae6989dab4d8b24f28df4f2473
+  query assertions: v4.4.0 / PR #150
+  source→ESM binder: v4.5.0 / PR #152 / #135 closed
+  reference evaluator: v4.6.0 / PR #153 / #136 closed
 Screenplay.Generation 0.9.0
 Screenplay.CritterStack 0.21.0
 CLI 2.16.0
-Stage 3.8.2
-Arc adapter 22.1.0
+Stage 3.8.2 before the active PR
 ```
 
-Screenplay PR #145 released the ESM foundation. Screenplay PR #147 aligned public documentation and grammar with portable semantics. There are no active ESM child worktrees or branches from the prior handover.
+Screenplay v4.6 publish workflow passed. Recheck public NuGet visibility if needed; the prior session had not yet recorded the v4.6 package hashes.
 
-## Bidirectional goal
-
-Screenplay supports two directions around one semantic authority:
+## Completed semantic-kernel path
 
 ```text
-Screenplay source → ESM → execution plan → artifacts/code
-code → source evidence → reviewed semantic proposal → Screenplay source
+.play file/folder
+→ ApplicationSyntax
+→ ESM + source map + fail-closed dispositions
+→ capability-admitted execution plan
+→ immutable world evaluation
+→ Accepted/Rejected/Conflict/Unsupported
+→ deterministic specification comparison
 ```
 
-For admitted capabilities, render → recover must preserve semantic identities, contracts, and observable specification outcomes. Recovery never makes code authoritative, guesses missing intent, or silently applies uncertain evidence. Realization-only details and loss remain explicit in the composable report. Screenplay #148 owns the shared bidirectional conformance contract.
+The source-bound RegisterProject success and rejection vectors pass. Do not reopen #135 or #136; broader policies, reads/consistency, automation/time/effects, query waves, and implementation attachments remain in their focused issues.
 
-## Immediate dependency order
-
-### 1. Portable specification query assertions — Screenplay #87
-
-Current `.play` specifications can state events, read-model state, a command, and rejection, but cannot author expected query results. ESM can represent them. The binder must not infer query assertions from `then readmodel`.
-
-Use an additive, binary-compatible `SpecificationSyntax` init property only after the authored syntax is explicitly decided. It must name the query, supply typed arguments/key, represent zero/one/many results, and preserve authored comparison order. Do not invent syntax inside the binder.
-
-### 2. `ApplicationSyntax → ESM` binder — Screenplay #135
-
-Implement exhaustive binding with typed diagnostics after `PLAY0264`. Bind only the Program v1 vertical:
-
-- module/feature/slice;
-- concepts and composite types;
-- one state-change command;
-- declarative `not empty` validation;
-- one produced event and required identity destination;
-- event contract revision 1;
-- one read model/projection affected key;
-- one deterministic optional by-key query;
-- accepted/rejected specifications, including authored query assertions when #87 supplies them.
-
-Every reachable syntax construct gets exactly one disposition: bind, preserve legacy, report-only realization, block, migrate, or explicitly defer. Existing `reads` and `ConcurrencySyntax` retain legacy meaning. Unknown or unsupported behavior blocks; nothing is silently omitted or strengthened.
-
-### 3. Minimum execution plan and evaluator — Screenplay #136
-
-Execute the deterministic RegisterProject vector:
+## Active work: Stage ESM ArtifactRenderPlan
 
 ```text
-validate → produce fact → project tentative view → commit once → query → normalized trace
+repo: /Volumes/sourcecode/repos/cratis/Stage
+worktree: /Users/sindrewilting/.cache/pi-worktrees/Stage-artifact-render-plan
+branch: feat/esm-artifact-render-plan
+commit: 53e9389 Add pure ESM artifact render plan contracts
+remote branch: pushed
+PR: Cratis/Stage#60 (draft, minor)
+issues: Stage #23 and #56; parent #11
 ```
 
-A valid command produces `ProjectRegistered`, updates `ProjectSummary`, and makes `ProjectById` return it. An empty name rejects with no event, projection change, or query result.
+Current commit adds:
 
-### 4. Pure Cratis artifact planning — Stage #56/#23
+- Screenplay package 4.6.0;
+- `IArtifactRenderPlanner`;
+- application/module/feature/slice semantic scope;
+- immutable render request/profile/resolved-input contracts;
+- normalized UTF-8/LF text and binary artifacts;
+- SHA-256 hashes and deterministic ordering;
+- duplicate/traversing/absolute/case-colliding path rejection;
+- typed diagnostics and non-publishable error plans;
+- focused contract specs (12 passed, zero warnings after fixes).
 
-Add `IArtifactRenderPlanner` and immutable `ArtifactRenderPlan`. Consume ESM and the execution plan without creating a competing Stage model. Support application/module/feature/slice planning requests, generated success/rejection specifications, deterministic paths/hashes, and typed unsupported diagnostics. Planning performs no filesystem, process, network, clock, or ambient-environment I/O.
+### Immediate next actions
 
-### 5. Safe root render — CLI #101
+1. Inspect the current Stage worktree and PR #60 diff; confirm no uncommitted or post-format changes.
+2. Run full Stage Debug and Release gates for the contract commit before expanding it.
+3. Implement a direct ESM Cratis planner for only the RegisterProject vertical:
+   - concepts/composite types;
+   - command + `not empty` validation;
+   - event contract/destination/mappings;
+   - read model + one-instance projection;
+   - optional snapshot by-key query;
+   - generated success/rejection specifications.
+4. Do **not** convert ESM back into `ApplicationSyntax`; that recreates the old semantic ambiguity.
+5. Produce only in-memory `ArtifactRenderPlan` artifacts. No filesystem/network/process/clock/ambient-environment access.
+6. Compile the generated backend/specifications against real Cratis packages. Unsupported semantics produce blocking typed diagnostics and no publishable TODO/stub application.
+7. Add repeated-plan byte equality and application/module/feature/slice scope specs.
+8. Preserve legacy `IRenderer` through an explicit compatibility adapter; do not route new ESM planning through direct writes.
+9. Review, merge, release, and record Stage version/commit/package hashes only after the complete vertical is green.
+10. Then update CLI #101 to consume the released plan and safely publish it.
 
-Only after the real Stage plan contract exists, implement safe publication:
+## Priority and bidirectional goal
 
-- `cratis render` at the root;
-- one folder = one application;
-- static reviewed target roster;
-- plan before writes;
-- managed-file manifest;
-- protect unmanaged and modified files;
-- deterministic stale-file removal;
-- staged journaled publication;
-- deterministic resume/rollback;
-- publish the manifest last.
+Primary product proof:
 
-Do not let the CLI invent semantic, artifact, ownership, or capability contracts owned by Screenplay and Stage.
+```text
+Screenplay → ESM → Stage plan → generated, buildable Cratis application
+                         └──────→ generated passing specifications
+```
 
-## Source recovery
+Secondary explicit proof after the generated app:
 
-Continue in parallel where dependency-safe:
+```text
+existing Cratis code
+→ Generation/CritterStack evidence
+→ Screenplay source/ESM
+→ Studio import and visible model/view
+```
 
-1. Generation #18 authored-source helpers.
-2. Generation #23 descriptors/probes/frozen admission.
-3. Generation #19 granular facts aligned to ESM.
-4. Generation #20 neutral validation.
-5. Generation #25 specification facts.
-6. Generation #26 shared source placement.
-7. Critter Stack #44 atomic adapters.
-8. CLI #95 static profiles/rosters.
-9. Arc #2601/#2600 shadow export/parity.
-10. Generation #24 realization report and render → recover conformance evidence.
+Track the second path through Screenplay #148, Generation #24–#26, CritterStack #29/#44, and StudioIssues #52/#101/#260/#261. Keep shared render→recover vectors, but do not delay the first generated Cratis application for full Studio integration.
 
-Vogen remains independent, source-only, and executes at most once.
+## Implementation attachments and optional AI
+
+Screenplay #139 and merged PR #151 define the boundary:
+
+- ESM carries small role-specific implementation requirements, not raw code as portable meaning.
+- accepted inline/file source is separately revisioned attachment;
+- pure planning returns blocking implementation gaps;
+- AI runs outside the planner and proposes a candidate bound to semantic/profile/attachment revisions;
+- compilation, static analysis, Screenplay specifications, review, and explicit acceptance precede deterministic re-planning;
+- no successful TODO, `NotImplementedException`, empty handler, guessed policy, or silent omission.
+
+Do not implement the attachment framework in Stage PR #60. Finish the declarative vertical first. The first later pilot is one query-performer role and one Cratis target provider.
+
+## Repository ownership
+
+- Screenplay: language, ESM, identities, binder, evaluator, specifications, attachment/candidate contracts, Monaco.
+- Stage: runtime providers, pure planning, Cratis renderer target, generated specification artifacts.
+- CLI: profile selection and safe journaled publication; no semantic or implicit AI decisions.
+- Generation/CritterStack/Arc: source evidence and framework-specific recovery; code never becomes authority.
+- Studio: visual authoring and candidate review/acceptance.
+- Scene/frontend and deployment remain deferred for the backend milestone.
 
 ## Non-negotiable boundaries
 
-- Screenplay is the product and language name; do not turn historical note shorthand into a public name.
-- No Saga syntax/node/slice/execution construct.
-- No HTTP, broker, database, storage tenancy, framework-upcaster, or framework class vocabulary in portable semantics.
-- Code is a replaceable artifact and recovery evidence, never semantic authority.
-- Source, document, semantic, event-contract, Studio authoring, Prologue candidate, and runtime identities remain distinct.
-- PDL and CDL remain independently consumable first-class sublanguages.
-- Inline/file code is constrained realization attachment, not a free-form second application.
-- Deterministic planning returns typed implementation gaps. AI may propose revision-bound candidates outside the pure planner, but never writes files or invents semantics directly.
+- No Saga syntax/node/slice/runtime/Studio construct.
+- No HTTP, broker, database, storage tenancy, framework upcaster, or framework class vocabulary in portable semantics.
+- Unsupported behavior blocks; never omit, weaken, approximate, or guess.
+- Source, document, semantic, event-contract, attachment, Studio authoring, candidate, and runtime identities remain distinct.
+- PDL/CDL remain independently consumable first-class sublanguages.
 - Source-adapter and renderer-target rosters remain separate.
-- Frontend and deployment remain excluded until separately approved.
-- Register future capabilities and improvements as focused GitHub issues in the owning repository. Do not silently expand another issue or PR.
-- Prefer the smallest coherent vertical. Use enough evidence to establish correctness; do not optimize for proof volume.
+- Frontend/deployment remain excluded until separately approved.
+- Record future ideas as focused issues in the owning repository; do not expand another PR silently.
+- Prefer the smallest coherent vertical and enough evidence to establish correctness—not proof volume.
 
-## Quality and reporting
+## Quality and handover
 
-At each release boundary record the version, commit, package hashes, authoritative gates, limitations, migrations, and exact continuation point. Keep branches and worktrees clean. Update the owning issues with what landed and what remains; close only fully satisfied issues.
+At each release boundary record versions, commits, public hashes, authoritative gates, limitations, and exact continuation points. Update issue comments with what landed and what remains; close only fully satisfied issues and verify closure. Clean worktrees/branches after merge.
 
-Do not call the full Screenplay program complete after the ESM foundation or first Cratis rendering milestone. Use `SCREENPLAY_PROGRAM.md` completion criteria.
+Do not call the full Screenplay program complete after the Stage/Cratis vertical. Use `SCREENPLAY_PROGRAM.md` completion criteria.

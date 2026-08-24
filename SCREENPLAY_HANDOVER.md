@@ -9,7 +9,7 @@ Licensed under the MIT license. See LICENSE file in the project root for full li
 
 Screenplay is the product and language name. The plus-sign shorthand in the original notes only meant “Screenplay and related delivery work”; it was never a product, program, milestone, or public name.
 
-Screenplay is the authoritative human/AI-authored semantic model of the desired functional state of an information system. The v4.3 ESM foundation is released; binding, reference evaluation, Stage execution, and ESM-based rendering remain active delivery work.
+Screenplay is the authoritative human/AI-authored semantic model of the desired functional state of an information system. The v4.6 semantic kernel, source binder, and deterministic reference evaluator are released; Stage ESM artifact planning and Cratis rendering are the active delivery work.
 
 - Studio visualizes and edits Screenplay.
 - Specifications define portable observable behavior.
@@ -36,7 +36,15 @@ Do not add a Saga construct. Long-running workflows are commands, events, proces
   - `Cratis.Screenplay.Tool` nupkg SHA-256: `d97dece537a4ad027cec22f879e617f63c2d9f532be8aa41b2b118b7c3aa339b`
   - Debug: 1,842 Screenplay specs plus 2 canonical-vector specs passed.
   - Release net8/net9/net10, cross-TFM canonical vectors, package validation, CI, and public package verification passed.
+- `v4.4.0` added authored query-result assertions from PR #150 at `aa1ee5c4ded36bfbda1531a469bd05213233647d`.
+- `v4.5.0` added fail-closed `ApplicationSyntax → ESM` binding and closed #135 from PR #152 at `479270892b9d7e845aed7befad0d26bb096378d9`.
+- `v4.6.0` added the deterministic execution plan/reference evaluator and closed #136 from PR #153 at `f9afbdc9f9c335ae6989dab4d8b24f28df4f2473`.
+  - Debug: 1,951 Screenplay specs plus 2 canonical-vector specs passed before merge.
+  - Release net8/net9/net10, canonical vectors, package validation, and CI passed.
+  - Public NuGet propagation should be rechecked in the next session if the package index has not yet updated.
 - PR #147 aligned public documentation and grammar with portable Screenplay semantics at `e9f857f56191d42ac2d4aef54af9c4575e245044`; #146 owns automated documentation/grammar conformance.
+- PR #151 fixed the constrained implementation/AI boundary at `3e512fa5c1ff4658549307a4b0936f366cdd0fd2`; #139 owns implementation attachments.
+- PR #149 removed historical plus-sign shorthand and made bidirectional rendering/recovery explicit at `dabe26de1611284dc531703736b273c56f4fe9a4`.
 - PR #124 fixed implementation-slot print/parse round trips.
 - PR #143 merged the Screenplay architecture and program at `4026897d646c586090f64c1c7e0ba6db230abd17`.
 - #128 is now the executable-semantics epic.
@@ -128,6 +136,11 @@ Do not add a Saga construct. Long-running workflows are commands, events, proces
   - #57 policy rendering;
   - #58 query rendering.
 - PR #51 was closed because it expanded a competing partial Stage model.
+- Draft PR #60 is active on branch `feat/esm-artifact-render-plan` in worktree `/Users/sindrewilting/.cache/pi-worktrees/Stage-artifact-render-plan`.
+  - Current commit: `53e9389 Add pure ESM artifact render plan contracts`.
+  - Takes Screenplay `4.6.0`.
+  - Focused contract specs: 12 passed with zero warnings after fixes.
+  - Remaining before merge: full Stage Debug/Release gates, ESM Cratis planner implementation, generated specification/build proof, and legacy `IRenderer` compatibility.
 
 ### Prologue
 
@@ -147,33 +160,64 @@ Do not add a Saga construct. Long-running workflows are commands, events, proces
 
 ## Current implementation state
 
-The ESM foundation is released in Screenplay `v4.3.0`. There are no active ESM child branches, worktrees, or background tasks. The Screenplay, Screenplay.CritterStack, and handover checkouts were clean at the release boundary.
+Screenplay `v4.6.0` completes the first semantic-kernel path:
 
-Delivered foundation:
+```text
+.play file/folder
+→ ApplicationSyntax
+→ ESM + source map + dispositions
+→ capability-admitted execution plan
+→ immutable world evaluation
+→ Accepted/Rejected trace
+→ specification comparison
+```
 
-- immutable, versioned ESM v1 contracts;
-- stable semantic, document, query-argument, and event-contract identities;
-- revision-bound identity-catalog migrations;
-- source documents, source maps, and semantic compilation integrity;
-- canonical ESM/catalog serialization and deterministic revisions;
-- recursive collection/composite value validation;
-- net8/net9/net10 canonical-byte vectors;
-- fail-closed model coherence and package/API validation.
+Completed and closed:
 
-Next dependency-ordered work:
+- #135 ESM identities, canonical model, exhaustive binder, file/folder equivalence, and Program v1 disposition matrix;
+- #136 deterministic reference execution and source-bound RegisterProject success/rejection vectors.
 
-1. Screenplay #87: decide and add the smallest compatibility-safe authored query-result assertion syntax. The binder must not infer query assertions from `then readmodel`.
-2. Screenplay #135: implement exhaustive `ApplicationSyntax → ESM` binding against `SCREENPLAY_SYNTAX_DISPOSITIONS.md`.
-3. Screenplay #136: implement the minimum execution plan and deterministic RegisterProject evaluator.
-4. Stage #56/#23: consume ESM through a pure `ArtifactRenderPlan` and render the Cratis vertical.
-5. CLI #101: publish the plan safely through root `cratis render` with manifests, journaling, and recovery.
-6. Generation/Critter/Arc source recovery: continue atomic adapters and prove render → recover semantic fidelity for admitted capabilities.
+Active Stage work:
 
-The bidirectional goal is explicit: Screenplay → code is rendering; code → Screenplay is evidence-backed recovery. Screenplay remains authoritative in both directions, and any loss or uncertainty is reported rather than guessed.
+```text
+repo: /Volumes/sourcecode/repos/cratis/Stage
+worktree: /Users/sindrewilting/.cache/pi-worktrees/Stage-artifact-render-plan
+branch: feat/esm-artifact-render-plan
+commit: 53e9389
+PR: Cratis/Stage#60 (draft, minor)
+issues: Stage #23 and #56
+```
 
-Screenplay #139 owns the constrained implementation boundary. Keep it small: a common requirement/attachment envelope plus role-specific contracts delivered one at a time. Pure rendering returns blocking implementation gaps. Optional AI resolves a gap only by proposing a revision-bound candidate that is compiled, checked against specifications, reviewed, accepted, and then deterministically re-planned.
+PR #60 currently adds the pure contract foundation:
 
-Do not add `EventSyntax contract` grammar in Increment 1. Event contract IDs remain ESM/catalog concerns until the lossless workspace/evolution work can materialize them safely.
+- `IArtifactRenderPlanner` and semantic application/module/feature/slice scopes;
+- immutable destination-independent request/profile/input contracts;
+- normalized UTF-8/LF text and binary artifacts with SHA-256;
+- deterministic artifact/diagnostic ordering;
+- duplicate, traversal, absolute, and case-collision validation;
+- non-publishable error plans;
+- Screenplay 4.6.0 dependency.
+
+Immediate continuation order:
+
+1. Run full Stage Debug and Release gates for the contract commit.
+2. Implement the ESM Cratis planner for the exact RegisterProject vertical without adapting back to `ApplicationSyntax`.
+3. Generate the Cratis backend and success/rejection specifications as in-memory `ArtifactRenderPlan` data.
+4. Compile the generated application/specifications against real Cratis packages.
+5. Preserve legacy `IRenderer` through an explicit compatibility adapter; no new direct writes in the ESM path.
+6. Review/merge/release Stage PR #60 only when the complete declarative vertical is green.
+7. Move to CLI #101 for safe root publication.
+
+Product priority:
+
+- **Primary:** Screenplay → ESM → Stage → generated, buildable Cratis application with generated behavioral specifications.
+- **Secondary but explicit:** CritterStack/Generation source recovery → Screenplay → Studio import/view. Track this through Screenplay #148, Generation #24–#26, CritterStack #29/#44, and StudioIssues #52/#101/#260/#261. Do not delay the first generated Cratis application for full Studio integration, but keep shared render → recover vectors and a visible Studio slice/view as the next bidirectional proof.
+
+The bidirectional goal remains Screenplay → code through rendering and code → Screenplay through reviewed evidence recovery. Screenplay is authoritative in both directions; loss and uncertainty are reported rather than guessed.
+
+Screenplay #139 owns constrained implementation requirements/attachments. Deterministic planning returns blocking gaps; optional AI proposes revision-bound candidates outside the pure planner and requires compile/spec verification plus explicit acceptance.
+
+Do not add `EventSyntax contract` grammar in the initial rendering milestone. Event contract IDs remain ESM/catalog concerns until lossless workspace/evolution work can materialize them safely.
 
 ## First public Screenplay milestone after ESM
 
