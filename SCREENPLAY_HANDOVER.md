@@ -9,7 +9,7 @@ Licensed under the MIT license. See LICENSE file in the project root for full li
 
 Screenplay is the product and language name. The plus-sign shorthand in the original notes only meant “Screenplay and related delivery work”; it was never a product, program, milestone, or public name.
 
-Screenplay is the authoritative human/AI-authored semantic model of the desired functional state of an information system. The v4.6 semantic kernel, source binder, and deterministic reference evaluator are released; Stage ESM artifact planning and Cratis rendering are the active delivery work.
+Screenplay is the authoritative human/AI-authored semantic model of the desired functional state of an information system. The v4.6 semantic kernel/reference evaluator and Stage v3.9 pure ESM Cratis planning vertical are released; safe CLI artifact publication is the active delivery work.
 
 - Studio visualizes and edits Screenplay.
 - Specifications define portable observable behavior.
@@ -119,29 +119,29 @@ Do not add a Saga construct. Long-running workflows are commands, events, proces
 - #95 remains the atomic adapter/profile roster.
 - #65 defines one folder as one logical application.
 - #101 defines safe, deterministic, profile-driven `cratis render`.
+- Draft PR #106 is active on branch `feat/safe-screenplay-render` in worktree `/Users/sindrewilting/.cache/pi-worktrees/cli-safe-screenplay-render`.
+  - Current commit: `c36d822 Take Screenplay 4.6 and Stage 3.9`.
+  - Takes Screenplay `4.6.0` and Stage Contracts/Cratis renderer `3.9.0`.
+  - Aligns the bundled CritterStack provenance metadata and frozen package closure with the already-shipped `0.21.0` package.
+  - Package-adoption gates: 819 CLI specs plus 164 Chronicle integration specs passed; Release built with zero warnings/errors.
+  - Remaining: replace legacy syntax/direct-write rendering with ESM planning, static Cratis profile resolution, versioned ownership manifest, user-file protection, staged/journaled publication, interruption recovery, installed-tool deterministic render/build/spec vectors, then review/merge/release.
 
 ### Stage
 
-- `v3.8.2`, commit/tag `08acf7e0832266154aff8846619bd4cf7581e2ea` / `v3.8.2`.
-- #19, #20, and #30 are closed.
-- Unsupported authorization blocks rendering instead of weakening it.
-- Query runtime denies access and data until portable query authorization exists.
-- Open roadmap:
-  - #11 deterministic Cratis rendering epic;
-  - #13 fail-closed construct coverage;
-  - #14 specification rendering;
-  - #15 executable specification conformance;
-  - #23 migrate Stage to Screenplay ESM;
-  - #28 portable data-subject behavior;
-  - #56 `ArtifactRenderPlan`;
-  - #57 policy rendering;
-  - #58 query rendering.
-- PR #51 was closed because it expanded a competing partial Stage model.
-- Draft PR #60 is active on branch `feat/esm-artifact-render-plan` in worktree `/Users/sindrewilting/.cache/pi-worktrees/Stage-artifact-render-plan`.
-  - Current commit: `53e9389 Add pure ESM artifact render plan contracts`.
-  - Takes Screenplay `4.6.0`.
-  - Focused contract specs: 12 passed with zero warnings after fixes.
-  - Remaining before merge: first merge current `origin/main` (`6ef4a87` at handover) into the feature branch because PR #60 is currently dirty; then run full Stage Debug/Release gates, implement the ESM Cratis planner, prove generated specification/build output, and preserve legacy `IRenderer` compatibility.
+- `v3.9.0`, merge/tag `32f7eba189c836f3f5c7409511ade367786834bc` / `v3.9.0` from PR #60.
+- Public NuGet SHA-256:
+  - Stage: `07ba0fd7ad6651fd2cec3af4a547851b4b5b3580551a04332a07a6a5c9622c91`
+  - Contracts: `8677519adaf3f2de0f739fa035e71c55d21638f1e326805627d47fe95c9c0de9`
+  - Rendering.Cratis: `d8be56ac6692be99232494792d26f60d45ceed0a2e1bb57a8169e96fa9fbf64c`
+  - Rendering.Cratis.Scaffolding: `2c60e45465a8cf3ba5decd5244cde8baf687d1718bc32b6e2904d3498081c155`
+- #56 is closed after the pure versioned `ArtifactRenderPlan` and direct ESM Cratis vertical release; #23 and parent #11 remain open for broader migration/coverage.
+- The planner consumes ESM identities and materialized mappings directly, without converting back to `ApplicationSyntax`.
+- Application/module/feature/slice scopes, exact resolved inputs, normalized paths/bytes, SHA-256, deterministic ordering, schema version, typed blocking diagnostics, and non-publishable failure plans are released.
+- The first Cratis target capability covers concepts/composite types, command + `not empty`, event destination/mappings, one-instance projection, optional snapshot by-key query, and generated success/rejection specification sources.
+- Generated backend/specification sources compile against real Cratis assemblies; repeated plans are byte-identical; unsupported destination/affected-instance behavior blocks with no TODO/stub application.
+- Legacy `IRenderer` remains through an explicit compatibility adapter; the new ESM path performs no direct writes.
+- Final gates: 748 Debug specs passed; Release built with zero warnings/errors; all four package-validation packs, CI, release, public NuGet verification, and both Docker publishes passed.
+- Remaining Stage roadmap includes #11, #13–#15, #23, #28, #57, and #58.
 
 ### Prologue
 
@@ -178,36 +178,37 @@ Completed and closed:
 - #135 ESM identities, canonical model, exhaustive binder, file/folder equivalence, and Program v1 disposition matrix;
 - #136 deterministic reference execution and source-bound RegisterProject success/rejection vectors.
 
-Active Stage work:
+The released forward path now reaches pure target artifacts:
 
 ```text
-repo: /Volumes/sourcecode/repos/cratis/Stage
-worktree: /Users/sindrewilting/.cache/pi-worktrees/Stage-artifact-render-plan
-branch: feat/esm-artifact-render-plan
-commit: 53e9389
-PR: Cratis/Stage#60 (draft, minor)
-issues: Stage #23 and #56
+.play file/folder
+→ Screenplay 4.6 ESM + execution plan
+→ Stage 3.9 pure ArtifactRenderPlan
+→ direct Cratis backend + generated specification artifacts
 ```
 
-PR #60 currently adds the pure contract foundation:
+Active CLI work:
 
-- `IArtifactRenderPlanner` and semantic application/module/feature/slice scopes;
-- immutable destination-independent request/profile/input contracts;
-- normalized UTF-8/LF text and binary artifacts with SHA-256;
-- deterministic artifact/diagnostic ordering;
-- duplicate, traversal, absolute, and case-collision validation;
-- non-publishable error plans;
-- Screenplay 4.6.0 dependency.
+```text
+repo: /Volumes/sourcecode/repos/cratis/cli
+worktree: /Users/sindrewilting/.cache/pi-worktrees/cli-safe-screenplay-render
+branch: feat/safe-screenplay-render
+commit: c36d822
+PR: Cratis/cli#106 (draft, minor)
+issue: CLI #101; related #65
+```
 
 Immediate continuation order:
 
-1. Run full Stage Debug and Release gates for the contract commit.
-2. Implement the ESM Cratis planner for the exact RegisterProject vertical without adapting back to `ApplicationSyntax`.
-3. Generate the Cratis backend and success/rejection specifications as in-memory `ArtifactRenderPlan` data.
-4. Compile the generated application/specifications against real Cratis packages.
-5. Preserve legacy `IRenderer` through an explicit compatibility adapter; no new direct writes in the ESM path.
-6. Review/merge/release Stage PR #60 only when the complete declarative vertical is green.
-7. Move to CLI #101 for safe root publication.
+1. Replace the render prototype's separate `ApplicationSyntax` compilation/direct writes with one logical document-set ESM compilation and full Stage plan before writes.
+2. Add static `--target cratis`, `--destination`, explicit destination-independent `--name`, and managed `--force` semantics.
+3. Resolve deterministic Cratis scaffold/profile inputs in the trusted CLI host; the pure Stage planner remains free of I/O and ambient inputs.
+4. Add versioned `.cratis-render.json` ownership and reject unknown schema/target/profile/renderer versions.
+5. Protect unmanaged and user-modified files; remove only unchanged stale managed files.
+6. Add staging plus a durable operation/prior-state journal, publish the new manifest last, and deterministically roll back or finish cleanup after interruption.
+7. Add deterministic text/JSON, cancellation, collision, rerender, stale, modification, and recovery specs.
+8. Verify the installed tool produces byte-identical output whose generated solution builds and generated specifications pass.
+9. Review/merge/release CLI PR #106 only when every #101 criterion is green; close and verify #101, then record versions/hashes and the next exact continuation point.
 
 Product priority:
 
