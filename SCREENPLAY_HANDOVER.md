@@ -71,13 +71,16 @@ Do not add a Saga construct. Long-running workflows are commands, events, proces
 
 ### Screenplay.Generation
 
-- `v0.9.0`, commit/tag `ff5e863cda14e79f9377b36c050ce1b64b4696a6` / `v0.9.0`.
+- `v0.10.0`, merge/tag `8958f7086e3b616d99a60a751aa1b7e17021b53c` / `v0.10.0` from PR #28.
 - #21 is closed after Generation, Critter canonical-host, and CLI host adoption.
 - Public package SHA-256:
-  - Contracts: `2e9771479dc61fa3c1e87b8677bcda662e527bb875b249b917d9e6e1bcddf9a0`
-  - Generation: `2b416441df64a15a90e7bdc5ca3104e76ef36ab3dfcd5699708d0d49b37cd7d3`
-  - DotNet: `8e2f8c4c538a92c006b464d8444a25a383fd3738f6ba30374ed8b00105e04ec7`
-  - DotNet.Vogen: `687bfc318d93f5a29219ca2667d2e8cedc411dd83297e4e6001b8a2fe59d3ddc`
+  - Contracts: `4206a3cf0f62dcee018674de3d545627b73e688eb83e44a126d7624ea899ea25`
+  - Generation: `421cb91437426e40fdb1f343d00b49d6c4fc5cbb0f5c3badf5487d1cf838222e`
+  - DotNet: `d395f8bf95dd4b314572ad4c6185dc3442a332822aa904297c14bc51ec70a270`
+  - DotNet.Vogen: `ba02595905f067befe86c825fbb6e2608404b0c5825d179250836c9da724f470`
+- v0.10 adds neutral scenario/ordered-step/typed-value facts, stable discriminator diagnostics, deterministic resolution, atomic whole-scenario admission, exact target placement, and Screenplay 4.6 lowering.
+- #25 remains open for owning-adapter adoption and full success/read-model/query extraction.
+- #29 owns the bare `then error` admission patch required by the first real Arc adapter vector.
 - All four packages remain lockstep and Vogen remains independent from Critter/JasperFx/Arc and the target Vogen runtime.
 - Active roadmap:
   - #17 atomic-composition epic;
@@ -197,28 +200,44 @@ The released first public backend path now reaches safe publication:
 → buildable Cratis backend + 7 passing generated specifications
 ```
 
-Active next work:
+Active blocked patch and adapter work:
 
 ```text
-repo: /Volumes/sourcecode/repos/cratis/Screenplay.Generation
-worktree: /Users/sindrewilting/.cache/pi-worktrees/Generation-neutral-specification-facts
-branch: feat/neutral-specification-facts
-base commit: cd424ac
-issue: Screenplay.Generation #25; parent #17 and Screenplay #87/#148
-PR: not opened yet — create a draft after the first green logical commit
+Generation patch:
+  repo: /Volumes/sourcecode/repos/cratis/Screenplay.Generation
+  worktree: /Users/sindrewilting/.cache/pi-worktrees/Generation-bare-specification-rejection
+  branch: fix/bare-specification-rejection
+  commit: a5ed42a Admit bare specification rejections
+  PR: Screenplay.Generation#30 (patch)
+  issue: #29
+
+Arc adapter:
+  repo: /Volumes/sourcecode/repos/cratis/Arc
+  worktree: /Users/sindrewilting/.cache/pi-worktrees/Arc-neutral-specification-facts
+  branch: feat/neutral-specification-facts
+  commits: 4b7d8edd, 8489eb3e, 3f78948f, a2791a87
+  PR: Cratis/Arc#2602 (draft, minor)
+  issue owner: Screenplay.Generation #25
 ```
+
+Current local evidence:
+
+- Generation #30: 319 Debug specs; net8/net9/net10 warning-free Release; all four package-validation packs passed.
+- Arc compatibility/evidence: 1,271 legacy specs passed; net8/net9/net10 Release warning-free.
+- Arc neutral adapter against locally packed Generation 0.10.1: 14 focused specs passed, including raw facts, resolved/admitted bare rejection, exact source ranges, lowering back to bare `then error`, and fail-closed event predicate values.
+- Arc docs linted and 321 links passed; sentinel Arc Screenplay package packed.
+- GitHub Actions jobs in both repositories are stuck `queued` without receiving a runner. Do not merge while checks are queued; this is the current infrastructure blocker.
 
 Immediate continuation order:
 
-1. Read Generation `AGENTS.md`, applicable rules, #25, current contracts/resolver/lowerer, and canonical source-evidence fixtures completely.
-2. Design the smallest framework-neutral specification/scenario, step, typed-value, outcome, and step-level-evidence contracts; no Roslyn/Arc/xUnit/Chronicle vocabulary.
-3. Start from the generated RegisterProject Cratis source/specification artifacts as real evidence, not from a universal test abstraction.
-4. Admit exact Given events/read models, When command/read behavior available from source, and Then events/read models/errors/target artifacts/placement only when every authored step is representable.
-5. Fail the whole scenario contribution on unknown discriminators, computed/conditional/repeated/ambiguous semantics, or non-allowlisted API/signature evidence; never contribute a partial scenario.
-6. Attach resolved scenarios by exact target artifact/source placement and preserve source/project/subject/fact identities independently from semantic IDs.
-7. Add permutation/relocation vectors and shared render→recover evidence for the RegisterProject success/rejection corpus.
-8. Keep Arc extraction movable behind an independent specification adapter; do not mix atomic CritterStack adapter work (#44) or the realization report (#24) into the #25 PR.
-9. Build/spec/pack Release, open an early draft PR, merge/release only when neutral contracts and one real adapter vector are green, then continue #26 placement and #24 report composition.
+1. Re-read PR #30/#2602 checks and issue comments; do not rerun work already proven locally unless source changed.
+2. Wait for or restore GitHub runner availability. PR #30 build/verify jobs were canceled/re-run once and a workflow-dispatch build also remained queued.
+3. When Generation #30 CI is green, merge with a true merge commit, close/verify #29, release v0.10.1, download/hash all four public packages, and clean its worktree/branches.
+4. Restore Arc against public Generation 0.10.1 (remove the temporary `/tmp/generation-0.10.1-local` source from commands only; no NuGet config was changed).
+5. Rerun all Arc Screenplay specs, net8/net9/net10 Release, package validation, docs, and focused adapter/lowering vectors. Current expected counts are 1,285 full specs and 14 focused adapter specs.
+6. Keep Arc PR #2602 draft until public-package gates and GitHub checks pass. Its Roslyn floor changes from 5.6/.NET SDK 10.0.301 to 5.9/.NET SDK 10.0.400 and must remain a minor release note.
+7. Merge/release Arc only when CI is green. Record version/commit/public hash and keep Generation #25 open: the current adapter proves exact rejection and blocks event predicates/read-model assertions it cannot fully retain; it does not yet complete success/read-model/query extraction.
+8. After Arc release, resume Generation #26 shared placement before replacing the adapter's compatibility namespace placement; then finish #25 success/read-model/query vectors and #24 realization report.
 
 Product priority:
 
