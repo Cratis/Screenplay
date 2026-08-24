@@ -171,6 +171,8 @@ Next dependency-ordered work:
 
 The bidirectional goal is explicit: Screenplay → code is rendering; code → Screenplay is evidence-backed recovery. Screenplay remains authoritative in both directions, and any loss or uncertainty is reported rather than guessed.
 
+Screenplay #139 owns the constrained implementation boundary. Keep it small: a common requirement/attachment envelope plus role-specific contracts delivered one at a time. Pure rendering returns blocking implementation gaps. Optional AI resolves a gap only by proposing a revision-bound candidate that is compiled, checked against specifications, reviewed, accepted, and then deterministically re-planned.
+
 Do not add `EventSyntax contract` grammar in Increment 1. Event contract IDs remain ESM/catalog concerns until the lossless workspace/evolution work can materialize them safely.
 
 ## First public Screenplay milestone after ESM
