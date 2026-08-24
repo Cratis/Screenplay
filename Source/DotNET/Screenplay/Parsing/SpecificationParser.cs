@@ -300,7 +300,7 @@ internal static partial class SpecificationParser
     [GeneratedRegex(@"^then\s+query\b", RegexOptions.None, 1000)]
     private static partial Regex ThenQueryPrefixRegex();
 
-    [GeneratedRegex(@"^then\s+query\s+([A-Z]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^then\s+query\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
     private static partial Regex ThenQueryRegex();
 
     [GeneratedRegex(@"^(?:given|then)\s+readmodel\b", RegexOptions.None, 1000)]

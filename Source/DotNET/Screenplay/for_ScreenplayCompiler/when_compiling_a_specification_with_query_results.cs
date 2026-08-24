@@ -13,7 +13,7 @@ public class when_compiling_a_specification_with_query_results : given.a_compile
         specification LookingUpAProject
           when RegisterProject
             projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-          then query Projects.ProjectById
+          then query projectById
             arguments
               projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
             result
@@ -30,7 +30,7 @@ public class when_compiling_a_specification_with_query_results : given.a_compile
 
     [Fact] void should_compile_successfully() => _result.Success.ShouldBeTrue();
     [Fact] void should_parse_both_query_assertions() => _result.Value!.ThenQueries.Count().ShouldEqual(2);
-    [Fact] void should_preserve_a_qualified_query_name() => Query.Query.ShouldEqual("Projects.ProjectById");
+    [Fact] void should_preserve_a_lowercase_query_name() => Query.Query.ShouldEqual("projectById");
     [Fact] void should_parse_the_query_argument() => Query.Arguments.Single().Property.ShouldEqual("projectId");
     [Fact] void should_parse_the_query_argument_value() => ((LiteralExpressionSyntax)Query.Arguments.Single().Source).Value.ShouldEqual("3fa85f64-5717-4562-b3fc-2c963f66afa6");
     [Fact] void should_parse_the_expected_result() => Query.Results.Single().Properties.Count().ShouldEqual(2);
