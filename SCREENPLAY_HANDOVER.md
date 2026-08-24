@@ -9,7 +9,7 @@ Licensed under the MIT license. See LICENSE file in the project root for full li
 
 Screenplay is the product and language name. The plus-sign shorthand in the original notes only meant “Screenplay and related delivery work”; it was never a product, program, milestone, or public name.
 
-Screenplay is the authoritative human/AI-authored semantic model of the desired functional state of an information system. The v4.6 semantic kernel/reference evaluator and Stage v3.9 pure ESM Cratis planning vertical are released; safe CLI artifact publication is the active delivery work.
+Screenplay is the authoritative human/AI-authored semantic model of the desired functional state of an information system. The v4.6 semantic kernel/reference evaluator, Stage v3.9 ESM Cratis planner, and CLI v2.17 safe publication vertical are released. The first public backend milestone is complete; neutral source-recovery specification evidence is the active next increment.
 
 - Studio visualizes and edits Screenplay.
 - Specifications define portable observable behavior.
@@ -110,37 +110,37 @@ Do not add a Saga construct. Long-running workflows are commands, events, proces
 
 ### CLI
 
-- `v2.16.0`, commit/tag `58f702fdf8381f7bf8bf9b143eebb81522cd3793` / `v2.16.0`.
-- Public NuGet SHA-256: `5b00cb3461a66e49f95869b846ba460f75f7846d76f0508f72b71529e384fcfd`
-- macOS ARM64 native/Homebrew SHA-256: `782d26dce00f78f9db00f07763a0b53c700b67ef9319a7b104f25c1a49b96c3e`
-- Installed-tool seven-fixture hashes remained unchanged.
-- Source path policy is explicit and physical roots do not enter source-policy provenance.
-- #102 is closed.
-- #95 remains the atomic adapter/profile roster.
-- #65 defines one folder as one logical application.
-- #101 defines safe, deterministic, profile-driven `cratis render`.
-- Draft PR #106 is active on branch `feat/safe-screenplay-render` in worktree `/Users/sindrewilting/.cache/pi-worktrees/cli-safe-screenplay-render`.
-  - Current commit: `c36d822 Take Screenplay 4.6 and Stage 3.9`.
-  - Takes Screenplay `4.6.0` and Stage Contracts/Cratis renderer `3.9.0`.
-  - Aligns the bundled CritterStack provenance metadata and frozen package closure with the already-shipped `0.21.0` package.
-  - Package-adoption gates: 819 CLI specs plus 164 Chronicle integration specs passed; Release built with zero warnings/errors.
-  - Remaining: replace legacy syntax/direct-write rendering with ESM planning, static Cratis profile resolution, versioned ownership manifest, user-file protection, staged/journaled publication, interruption recovery, installed-tool deterministic render/build/spec vectors, then review/merge/release.
+- `v2.17.0`, merge/tag `75a54935ae0ba4933c2d56a0d9f2e0caef9a95f7` / `v2.17.0` from PR #106.
+- Public artifact SHA-256:
+  - NuGet tool: `ff1725708f134bc97681bd305bce78dd9a3f7efbc91c6bca6e5b1b9e3acab92f`
+  - Linux ARM64: `3a8bbaf80a05f8d45c34f8ace3013b9268a4d1b19dcd1e29d6c87e3f9c3726e2`
+  - Linux x64: `bf259c4b54b2d6be40c401d1e821f7f45be760bd1749cab61c3b70fc4b10918d`
+  - macOS ARM64: `3c7aa3acaf2d05068bee57a98d2b474ab0d501c63344074b302694031cc130d9`
+  - macOS x64: `03f4db6160846b9220147ae557a25dac766363899712d58a3aa362677ff39319`
+- #101 is closed after safe deterministic root `cratis render`; #65 remains open only for migrating `screenplay validate <folder>` to the same document-set semantics.
+- One file/folder now binds one ESM application, selects only the static `cratis` target, and plans completely before destination mutation.
+- Versioned `.cratis-render.json` ownership, unmanaged/modified-file protection, unchanged-only stale removal, staging, durable journal/backups, manifest-last commit, and rollback/cleanup recovery are released.
+- `--force` applies only to modified active managed files; it never authorizes unmanaged overwrite or modified stale deletion.
+- Final gates: 885 CLI specs plus 164 Chronicle integration specs passed; Release built warning-free; markdown/link checks and package metadata closure passed.
+- A locally packed/installed tool rendered twice byte-identically, ran 7 generated Debug specifications, and built generated Release with zero warnings/errors.
+- Source path policy remains explicit and physical roots do not enter source-policy provenance; #95 remains the source-adapter roster migration.
 
 ### Stage
 
-- `v3.9.0`, merge/tag `32f7eba189c836f3f5c7409511ade367786834bc` / `v3.9.0` from PR #60.
+- `v3.9.1`, merge/tag `9e9c05cf4367947aaba2ce24711364baf9bf2e1c` / `v3.9.1` from PR #62 after the PR #60 v3.9.0 vertical.
 - Public NuGet SHA-256:
-  - Stage: `07ba0fd7ad6651fd2cec3af4a547851b4b5b3580551a04332a07a6a5c9622c91`
-  - Contracts: `8677519adaf3f2de0f739fa035e71c55d21638f1e326805627d47fe95c9c0de9`
-  - Rendering.Cratis: `d8be56ac6692be99232494792d26f60d45ceed0a2e1bb57a8169e96fa9fbf64c`
-  - Rendering.Cratis.Scaffolding: `2c60e45465a8cf3ba5decd5244cde8baf687d1718bc32b6e2904d3498081c155`
+  - Stage: `df947318b4453fb6485eaf463045c671c38785d0a64412cb17903bde0435fe59`
+  - Contracts: `c12c66a145baa85dee4ce892f8b5d777636c8106c1a20ba5f95bc6f25f091acd`
+  - Rendering.Cratis: `bdd5705ce87dee92973408beceb25337594269d1987bcebb7e25878b607e957d`
+  - Rendering.Cratis.Scaffolding: `a8f402c7b25d156a550a5375198e5bda7e5826271c48ac54d9fcc1bd5f1e3761`
 - #56 is closed after the pure versioned `ArtifactRenderPlan` and direct ESM Cratis vertical release; #23 and parent #11 remain open for broader migration/coverage.
 - The planner consumes ESM identities and materialized mappings directly, without converting back to `ApplicationSyntax`.
 - Application/module/feature/slice scopes, exact resolved inputs, normalized paths/bytes, SHA-256, deterministic ordering, schema version, typed blocking diagnostics, and non-publishable failure plans are released.
 - The first Cratis target capability covers concepts/composite types, command + `not empty`, event destination/mappings, one-instance projection, optional snapshot by-key query, and generated success/rejection specification sources.
 - Generated backend/specification sources compile against real Cratis assemblies; repeated plans are byte-identical; unsupported destination/affected-instance behavior blocks with no TODO/stub application.
 - Legacy `IRenderer` remains through an explicit compatibility adapter; the new ESM path performs no direct writes.
-- Final gates: 748 Debug specs passed; Release built with zero warnings/errors; all four package-validation packs, CI, release, public NuGet verification, and both Docker publishes passed.
+- v3.9.1 generates optional snapshot queries without nullability warnings; #61 is closed.
+- Final patch gates: 749 Debug specs passed; Release built with zero warnings/errors; all four package-validation packs, CI, release, public NuGet verification, and both Docker publishes passed.
 - Remaining Stage roadmap includes #11, #13–#15, #23, #28, #57, and #58.
 
 ### Prologue
@@ -187,28 +187,38 @@ The released forward path now reaches pure target artifacts:
 → direct Cratis backend + generated specification artifacts
 ```
 
-Active CLI work:
+The released first public backend path now reaches safe publication:
 
 ```text
-repo: /Volumes/sourcecode/repos/cratis/cli
-worktree: /Users/sindrewilting/.cache/pi-worktrees/cli-safe-screenplay-render
-branch: feat/safe-screenplay-render
-commit: c36d822
-PR: Cratis/cli#106 (draft, minor)
-issue: CLI #101; related #65
+.play file/folder
+→ Screenplay 4.6 ESM + execution plan
+→ Stage 3.9.1 pure ArtifactRenderPlan
+→ CLI 2.17 journaled managed publication
+→ buildable Cratis backend + 7 passing generated specifications
+```
+
+Active next work:
+
+```text
+repo: /Volumes/sourcecode/repos/cratis/Screenplay.Generation
+worktree: /Users/sindrewilting/.cache/pi-worktrees/Generation-neutral-specification-facts
+branch: feat/neutral-specification-facts
+base commit: cd424ac
+issue: Screenplay.Generation #25; parent #17 and Screenplay #87/#148
+PR: not opened yet — create a draft after the first green logical commit
 ```
 
 Immediate continuation order:
 
-1. Replace the render prototype's separate `ApplicationSyntax` compilation/direct writes with one logical document-set ESM compilation and full Stage plan before writes.
-2. Add static `--target cratis`, `--destination`, explicit destination-independent `--name`, and managed `--force` semantics.
-3. Resolve deterministic Cratis scaffold/profile inputs in the trusted CLI host; the pure Stage planner remains free of I/O and ambient inputs.
-4. Add versioned `.cratis-render.json` ownership and reject unknown schema/target/profile/renderer versions.
-5. Protect unmanaged and user-modified files; remove only unchanged stale managed files.
-6. Add staging plus a durable operation/prior-state journal, publish the new manifest last, and deterministically roll back or finish cleanup after interruption.
-7. Add deterministic text/JSON, cancellation, collision, rerender, stale, modification, and recovery specs.
-8. Verify the installed tool produces byte-identical output whose generated solution builds and generated specifications pass.
-9. Review/merge/release CLI PR #106 only when every #101 criterion is green; close and verify #101, then record versions/hashes and the next exact continuation point.
+1. Read Generation `AGENTS.md`, applicable rules, #25, current contracts/resolver/lowerer, and canonical source-evidence fixtures completely.
+2. Design the smallest framework-neutral specification/scenario, step, typed-value, outcome, and step-level-evidence contracts; no Roslyn/Arc/xUnit/Chronicle vocabulary.
+3. Start from the generated RegisterProject Cratis source/specification artifacts as real evidence, not from a universal test abstraction.
+4. Admit exact Given events/read models, When command/read behavior available from source, and Then events/read models/errors/target artifacts/placement only when every authored step is representable.
+5. Fail the whole scenario contribution on unknown discriminators, computed/conditional/repeated/ambiguous semantics, or non-allowlisted API/signature evidence; never contribute a partial scenario.
+6. Attach resolved scenarios by exact target artifact/source placement and preserve source/project/subject/fact identities independently from semantic IDs.
+7. Add permutation/relocation vectors and shared render→recover evidence for the RegisterProject success/rejection corpus.
+8. Keep Arc extraction movable behind an independent specification adapter; do not mix atomic CritterStack adapter work (#44) or the realization report (#24) into the #25 PR.
+9. Build/spec/pack Release, open an early draft PR, merge/release only when neutral contracts and one real adapter vector are green, then continue #26 placement and #24 report composition.
 
 Product priority:
 
@@ -221,15 +231,15 @@ Screenplay #139 owns constrained implementation requirements/attachments. Determ
 
 Do not add `EventSyntax contract` grammar in the initial rendering milestone. Event contract IDs remain ESM/catalog concerns until lossless workspace/evolution work can materialize them safely.
 
-## First public Screenplay milestone after ESM
+## First public Screenplay milestone after ESM — complete
 
-1. Screenplay semantic kernel/reference vertical.
-2. Stage #56 pure `ArtifactRenderPlan` and Cratis vertical renderer.
-3. CLI #101 safe root `cratis render`.
-4. Generated solution builds and generated success/rejection specifications pass.
-5. File/folder forms and repeated render are deterministic.
+1. Screenplay 4.6 semantic kernel/reference vertical is public.
+2. Stage 3.9.1 pure `ArtifactRenderPlan` and Cratis vertical renderer are public.
+3. CLI 2.17 safe root `cratis render` is public.
+4. The generated solution builds warning-free and its 7 generated success/rejection/projection/query specifications pass.
+5. File/folder forms, repeated plan, installed-tool artifact bytes, and ownership-manifest bytes are deterministic.
 
-Do not delay this milestone for complete direct Stage runtime, Studio, AI, source recovery, frontend, or a second backend.
+This completes the first public backend milestone, not the full Screenplay program. Direct Stage runtime breadth, full workspace/Studio/AI, source recovery, the second backend, frontend, and deployment remain in their named increments.
 
 ## Operational caveats
 
