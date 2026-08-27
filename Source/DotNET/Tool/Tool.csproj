@@ -11,6 +11,7 @@
         <PackAsTool>true</PackAsTool>
         <ToolCommandName>screenplay</ToolCommandName>
         <Description>Command-line tool for compiling and verifying Cratis Screenplay (.play) files</Description>
+        <PackageTags>cratis;event-sourcing;event-modeling;cqrs;screenplay;dsl;compiler;dotnet-tool</PackageTags>
         <NoWarn>$(NoWarn);CS7022</NoWarn>
     </PropertyGroup>
 

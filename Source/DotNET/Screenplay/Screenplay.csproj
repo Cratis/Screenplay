@@ -4,6 +4,7 @@
         <RootNamespace>Cratis.Screenplay</RootNamespace>
         <IsPackable>true</IsPackable>
         <Description>Compiler for the Cratis Screenplay language - parsing, syntax tree and visitor contracts</Description>
+        <PackageTags>cratis;event-sourcing;event-modeling;cqrs;screenplay;dsl;compiler</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
