@@ -1474,4 +1474,14 @@ public static class DiagnosticCodes
     /// A syntax location cannot be mapped to one of the supplied semantic source documents.
     /// </summary>
     public const string UnknownSemanticSourceDocument = "PLAY0274";
+
+    /// <summary>
+    /// A specification event-source assertion is missing or malformed.
+    /// </summary>
+    public const string InvalidSpecificationEventSource = "PLAY0275";
+
+    /// <summary>
+    /// A specification step declares its event-source assertion more than once.
+    /// </summary>
+    public const string DuplicateSpecificationEventSource = "PLAY0276";
 }

@@ -61,7 +61,17 @@ public record SpecificationSyntax(
 public record SpecificationEventSyntax(
     string EventType,
     IEnumerable<PropertyMappingSyntax> Values,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the explicit event-source identity asserted for this event occurrence.
+    /// </summary>
+    /// <remarks>
+    /// This is an init-only property to preserve the public positional constructor and deconstruction shape.
+    /// The expression identifies occurrence context and is not part of the event payload.
+    /// </remarks>
+    public ExpressionSyntax? For { get; init; }
+}
 
 /// <summary>
 /// Represents a reference to a command within a specification's <c>when</c> declaration.
@@ -72,7 +82,17 @@ public record SpecificationEventSyntax(
 public record SpecificationCommandSyntax(
     string CommandType,
     IEnumerable<PropertyMappingSyntax> Values,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the explicit state-change destination asserted for this command occurrence.
+    /// </summary>
+    /// <remarks>
+    /// This is an init-only property to preserve the public positional constructor and deconstruction shape.
+    /// It must agree with the command's semantic destination and is not a second source of truth.
+    /// </remarks>
+    public ExpressionSyntax? For { get; init; }
+}
 
 /// <summary>
 /// Represents a reference to a read model state within a specification - used for both

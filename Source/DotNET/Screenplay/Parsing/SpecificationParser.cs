@@ -136,7 +136,11 @@ internal static partial class SpecificationParser
             return null;
         }
 
-        return new(match.Groups[1].Value, ParseValues(context, line), line.Location);
+        var body = ParseValuesWithEventSource(context, line);
+        return new SpecificationCommandSyntax(match.Groups[1].Value, body.Values, line.Location)
+        {
+            For = body.For
+        };
     }
 
     static void ParseThen(
@@ -263,7 +267,52 @@ internal static partial class SpecificationParser
             return null;
         }
 
-        return new(match.Groups[1].Value, ParseValues(context, line), line.Location);
+        var body = ParseValuesWithEventSource(context, line);
+        return new SpecificationEventSyntax(match.Groups[1].Value, body.Values, line.Location)
+        {
+            For = body.For
+        };
+    }
+
+    static (List<PropertyMappingSyntax> Values, ExpressionSyntax? For) ParseValuesWithEventSource(
+        ParserContext context,
+        SourceLine parent)
+    {
+        var values = new List<PropertyMappingSyntax>();
+        ExpressionSyntax? eventSource = null;
+        while (context.TryPeekChild(parent.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            var mapping = MappingRegex().Match(child.Content);
+            if (mapping.Success)
+            {
+                values.Add(new(mapping.Groups[1].Value, ExpressionParser.ParseMappingSource(context, mapping.Groups[2].Value, child.Location), child.Location));
+                continue;
+            }
+
+            if (LineText.FirstWord(child.Content) == "for")
+            {
+                var source = child.Content["for".Length..].Trim();
+                if (source.Length == 0)
+                {
+                    context.Error(DiagnosticCodes.InvalidSpecificationEventSource, "Invalid event-source assertion 'for' - expected 'for <value>'", child.Location);
+                    continue;
+                }
+
+                if (eventSource is not null)
+                {
+                    context.Error(DiagnosticCodes.DuplicateSpecificationEventSource, "A specification step can declare its event-source assertion only once", child.Location);
+                    continue;
+                }
+
+                eventSource = ExpressionParser.ParseMappingSource(context, source, child.Location);
+                continue;
+            }
+
+            context.Error(DiagnosticCodes.InvalidSpecificationValue, $"Invalid property mapping '{child.Content}' - expected '<property> = <value>'", child.Location);
+        }
+
+        return (values, eventSource);
     }
 
     static List<PropertyMappingSyntax> ParseValues(ParserContext context, SourceLine parent)

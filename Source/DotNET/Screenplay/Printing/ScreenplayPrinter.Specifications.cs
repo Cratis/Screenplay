@@ -34,6 +34,7 @@ public partial class ScreenplayPrinter
                 writer.Line($"when {specification.When.CommandType}");
                 using (writer.Indent())
                 {
+                    WriteSpecificationEventSource(writer, specification.When.For);
                     WriteSpecificationValues(writer, specification.When.Values);
                 }
             }
@@ -65,6 +66,7 @@ public partial class ScreenplayPrinter
         writer.Line($"{keyword} {@event.EventType}");
         using (writer.Indent())
         {
+            WriteSpecificationEventSource(writer, @event.For);
             WriteSpecificationValues(writer, @event.Values);
         }
     }
@@ -100,6 +102,14 @@ public partial class ScreenplayPrinter
                     WriteSpecificationValues(writer, result.Properties);
                 }
             }
+        }
+    }
+
+    void WriteSpecificationEventSource(ScreenplayWriter writer, ExpressionSyntax? eventSource)
+    {
+        if (eventSource is not null)
+        {
+            writer.Line($"for {ScreenplaySyntaxText.Expression(eventSource)}");
         }
     }
 

@@ -9,12 +9,15 @@ public class and_it_is_a_specification : Specification
         """
         specification RegisteringADraftInvoice
           given CustomerRegistered
+            for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
             customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
             name       = "Acme Corp"
           when RegisterInvoice
+            for "9c858901-8a57-4791-81fe-4c455b099bc9"
             invoiceId  = "9c858901-8a57-4791-81fe-4c455b099bc9"
             customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
           then InvoiceRegistered
+            for "9c858901-8a57-4791-81fe-4c455b099bc9"
             invoiceId  = "9c858901-8a57-4791-81fe-4c455b099bc9"
             customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
           then query InvoiceById
