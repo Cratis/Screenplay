@@ -18,10 +18,13 @@ every line, so the director, the actors, and the crew all put on the *same* show
 Screenplay `.play` file is the script for an information system: its concepts, events, commands, queries,
 projections, specifications, automations, and the rules that govern them — top to bottom, in one place.
 
-Screenplay owns that language and its portable meaning; it does not prescribe the runtime. Downstream tools
-can interpret the same model: **Stage** is being built to run and render it, while **Studio** visualizes and
-edits it. The goal is one script with explicit capability checks, not a claim that every downstream surface
-already performs every construct.
+Screenplay owns that language and its portable meaning; it does not prescribe the runtime. It is a
+model-first language for event-sourced, CQRS systems — commands, events, projections, and the screens they
+feed — and it is part of the experimental Cratis model-first layer. Downstream tools can interpret the same
+model: [**Stage**](https://github.com/Cratis/Stage) is being built to render it into a running
+[Cratis Arc](https://github.com/Cratis/Arc) + [Chronicle](https://github.com/Cratis/Chronicle) application,
+while [**Studio**](https://github.com/Cratis/Studio) visualizes and edits it. The goal is one script with
+explicit capability checks, not a claim that every downstream surface already performs every construct.
 
 ## 🎬 Why "Screenplay"?
 
@@ -196,6 +199,21 @@ yarn compile   # zero TypeScript errors
 dotnet build Screenplay.slnx --configuration Release   # zero errors, zero warnings
 dotnet test Screenplay.slnx                            # all specs pass
 ```
+
+## The Cratis ecosystem
+
+This project is part of [Cratis](https://www.cratis.io) — free, MIT-licensed tools for building event-sourced and CQRS applications.
+
+- **[Chronicle](https://github.com/Cratis/Chronicle)** — event-sourcing database and runtime. Orleans-based kernel, pluggable storage (MongoDB default; PostgreSQL, SQL Server, SQLite, in-memory), language-agnostic gRPC contracts. [Docs](https://www.cratis.io/chronicle/)
+- **Chronicle clients** — first-class [.NET SDK](https://github.com/Cratis/Chronicle), plus [TypeScript](https://github.com/Cratis/Chronicle.TypeScript), [Kotlin/Java](https://github.com/Cratis/Chronicle.Kotlin), and [Elixir](https://github.com/Cratis/Chronicle.Elixir); [Python](https://github.com/Cratis/Chronicle.Python) coming soon (pre-alpha). AI agents connect through the [Chronicle MCP server](https://github.com/Cratis/Chronicle.Mcp).
+- **[Arc](https://github.com/Cratis/Arc)** — opinionated CQRS framework for ASP.NET Core with commands, queries, validation, authorization, and TypeScript proxy generation. Works without event sourcing. [Docs](https://www.cratis.io/arc/)
+- **[Components](https://github.com/Cratis/Components)** — React components aligned with Arc patterns. [Docs](https://www.cratis.io/components/)
+- **[CLI](https://github.com/Cratis/cli) + Workbench** — inspect and diagnose Chronicle from the terminal or the browser. [Docs](https://www.cratis.io/cli/)
+- **Model-first layer (experimental)** — [Studio](https://github.com/Cratis/Studio), Screenplay (this repository), [Stage](https://github.com/Cratis/Stage), [Scene](https://github.com/Cratis/Scene), [Prologue](https://github.com/Cratis/Prologue)
+- **Supporting** — [Fundamentals](https://github.com/Cratis/Fundamentals), [Specifications](https://github.com/Cratis/Specifications), [Synopsis](https://github.com/Cratis/Synopsis), [Lens](https://github.com/Cratis/Lens), [Narrator](https://github.com/Cratis/Narrator), and free [AI tooling](https://github.com/Cratis/AI) (preview); [Ensemble](https://github.com/Cratis/Ensemble) coming soon (pre-release)
+- **[Samples](https://github.com/Cratis/Samples)** — runnable event sourcing and CQRS samples for the whole stack
+
+Everything Cratis publishes today is MIT licensed and free to use.
 
 ---
 

@@ -2,6 +2,16 @@
     "name": "@cratis/screenplay-language",
     "version": "0.0.0",
     "description": "Monaco language service for the Cratis Screenplay DSL — syntax highlighting, IntelliSense, hover and diagnostics for .play files",
+    "keywords": [
+        "cratis",
+        "screenplay",
+        "event-sourcing",
+        "event-modeling",
+        "cqrs",
+        "monaco",
+        "dsl",
+        "language-service"
+    ],
     "license": "MIT",
     "repository": {
         "type": "git",

@@ -2,6 +2,14 @@
     "name": "screenplay",
     "displayName": "Screenplay Language",
     "description": "Language support for the Cratis Screenplay DSL (.play) — syntax highlighting, IntelliSense, hover documentation, and diagnostics",
+    "keywords": [
+        "cratis",
+        "screenplay",
+        "event-sourcing",
+        "event-modeling",
+        "cqrs",
+        "dsl"
+    ],
     "version": "0.1.0",
     "publisher": "cratis",
     "repository": {
