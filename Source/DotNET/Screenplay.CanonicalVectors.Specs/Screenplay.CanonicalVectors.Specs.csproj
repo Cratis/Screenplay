@@ -9,6 +9,7 @@
 
     <ItemGroup>
         <ProjectReference Include="../Screenplay/Screenplay.csproj" />
+        <ProjectReference Include="../Screenplay.CanonicalCorpus/Screenplay.CanonicalCorpus.csproj" />
     </ItemGroup>
 
     <ItemGroup>
