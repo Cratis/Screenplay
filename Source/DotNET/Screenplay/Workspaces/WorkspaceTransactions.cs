@@ -93,6 +93,34 @@ public sealed record RemoveWorkspaceDocument : WorkspaceOperation
 }
 
 /// <summary>
+/// Patches one slice's existing single-line quoted description in place, addressed by its stable semantic
+/// identity rather than by document and byte range.
+/// </summary>
+/// <remarks>
+/// This is the first semantic patch operation. It shares the whole-document transaction contract - the same
+/// revision gates, owner-conflict detection, and parse/merge/bind/identity pipeline - rather than introducing a
+/// second mutation contract. Only an existing single-line quoted slice description is admitted; a missing or
+/// fenced description, or a semantic identity that does not address a slice, is rejected typed.
+/// </remarks>
+public sealed record UpdateSliceDescription : WorkspaceOperation
+{
+    /// <summary>
+    /// Gets the stable semantic identity of the slice whose description is patched.
+    /// </summary>
+    public required SemanticId SemanticId { get; init; }
+
+    /// <summary>
+    /// Gets the exact current description the caller expects, compared ordinally against the decoded source.
+    /// </summary>
+    public required string ExpectedCurrentDescription { get; init; }
+
+    /// <summary>
+    /// Gets the new description to write in place of <see cref="ExpectedCurrentDescription"/>.
+    /// </summary>
+    public required string NewDescription { get; init; }
+}
+
+/// <summary>
 /// Represents one revision-bound workspace transaction request.
 /// </summary>
 public sealed record WorkspaceTransactionRequest
