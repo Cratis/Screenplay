@@ -189,31 +189,19 @@ public sealed class SemanticIdentityCatalog
         ImmutableArray<SemanticAddress> eventAddresses,
         ImmutableArray<DocumentIdentityRename> documentRenames,
         ImmutableArray<SemanticIdentityRename> semanticRenames,
-        ImmutableArray<EventContractIdentityRename> eventRenames)
-    {
-        if (previous is null || !baseRevision.IsSet || previous.Revision != baseRevision)
-        {
-            throw new InvalidSemanticContract("The identity catalog migration base revision is stale or does not identify the supplied catalog.");
-        }
-
-        RejectDefault(documentKeys, nameof(documentKeys));
-        RejectDefault(semanticAddresses, nameof(semanticAddresses));
-        RejectDefault(eventAddresses, nameof(eventAddresses));
-        RejectDefault(documentRenames, nameof(documentRenames));
-        RejectDefault(semanticRenames, nameof(semanticRenames));
-        RejectDefault(eventRenames, nameof(eventRenames));
-
-        var normalizedKeys = documentKeys.Select(NormalizeKey).ToImmutableArray();
-        ValidateCurrent(previous.Application, normalizedKeys, semanticAddresses, eventAddresses);
-        var normalizedDocumentRenames = documentRenames.Select(Normalize).ToImmutableArray();
-        ValidateRenames(previous, normalizedKeys, semanticAddresses, eventAddresses, normalizedDocumentRenames, semanticRenames, eventRenames);
-
-        var documents = PlanDocuments(previous, normalizedKeys, normalizedDocumentRenames);
-        var semantics = PlanSemantics(previous, semanticAddresses, semanticRenames);
-        var events = PlanEvents(previous, eventAddresses, eventRenames);
-        var catalog = Create(previous.Application, documents, semantics, events);
-        return new(baseRevision, catalog);
-    }
+        ImmutableArray<EventContractIdentityRename> eventRenames) =>
+        PlanMigration(
+            previous,
+            baseRevision,
+            documentKeys,
+            semanticAddresses,
+            eventAddresses,
+            documentRenames,
+            semanticRenames,
+            eventRenames,
+            [],
+            [],
+            []);
 
     /// <summary>
     /// Resolves a document identity, preferring an authoritative catalog assignment.
@@ -293,6 +281,57 @@ public sealed class SemanticIdentityCatalog
         }
 
         ValidateEffectiveEventContracts(eventAddresses.Select(ResolveEventContract));
+    }
+
+    internal static SemanticIdentityCatalogMigrationPlan PlanMigration(
+        SemanticIdentityCatalog previous,
+        CatalogRevision baseRevision,
+        ImmutableArray<string> documentKeys,
+        ImmutableArray<SemanticAddress> semanticAddresses,
+        ImmutableArray<SemanticAddress> eventAddresses,
+        ImmutableArray<DocumentIdentityRename> documentRenames,
+        ImmutableArray<SemanticIdentityRename> semanticRenames,
+        ImmutableArray<EventContractIdentityRename> eventRenames,
+        ImmutableArray<string> retiredDocumentKeys,
+        ImmutableArray<SemanticAddress> retiredSemanticAddresses,
+        ImmutableArray<SemanticAddress> retiredEventAddresses)
+    {
+        if (previous is null || !baseRevision.IsSet || previous.Revision != baseRevision)
+        {
+            throw new InvalidSemanticContract("The identity catalog migration base revision is stale or does not identify the supplied catalog.");
+        }
+
+        RejectDefault(documentKeys, nameof(documentKeys));
+        RejectDefault(semanticAddresses, nameof(semanticAddresses));
+        RejectDefault(eventAddresses, nameof(eventAddresses));
+        RejectDefault(documentRenames, nameof(documentRenames));
+        RejectDefault(semanticRenames, nameof(semanticRenames));
+        RejectDefault(eventRenames, nameof(eventRenames));
+        RejectDefault(retiredDocumentKeys, nameof(retiredDocumentKeys));
+        RejectDefault(retiredSemanticAddresses, nameof(retiredSemanticAddresses));
+        RejectDefault(retiredEventAddresses, nameof(retiredEventAddresses));
+
+        var normalizedKeys = documentKeys.Select(NormalizeKey).ToImmutableArray();
+        var normalizedRetiredKeys = retiredDocumentKeys.Select(NormalizeKey).ToImmutableArray();
+        ValidateCurrent(previous.Application, normalizedKeys, semanticAddresses, eventAddresses);
+        var normalizedDocumentRenames = documentRenames.Select(Normalize).ToImmutableArray();
+        ValidateContinuity(
+            previous,
+            normalizedKeys,
+            semanticAddresses,
+            eventAddresses,
+            normalizedDocumentRenames,
+            semanticRenames,
+            eventRenames,
+            normalizedRetiredKeys,
+            retiredSemanticAddresses,
+            retiredEventAddresses);
+
+        var documents = PlanDocuments(previous, normalizedKeys, normalizedDocumentRenames);
+        var semantics = PlanSemantics(previous, semanticAddresses, semanticRenames);
+        var events = PlanEvents(previous, eventAddresses, eventRenames);
+        var catalog = Create(previous.Application, documents, semantics, events);
+        return new(baseRevision, catalog);
     }
 
     static ImmutableArray<DocumentIdentityAssignment> PlanDocuments(
@@ -396,20 +435,26 @@ public sealed class SemanticIdentityCatalog
         RejectDuplicates(eventAddresses, EqualityComparer<SemanticAddress>.Default, "current event address");
     }
 
-    static void ValidateRenames(
+    static void ValidateContinuity(
         SemanticIdentityCatalog previous,
         ImmutableArray<string> currentKeys,
         ImmutableArray<SemanticAddress> currentSemantics,
         ImmutableArray<SemanticAddress> currentEvents,
         ImmutableArray<DocumentIdentityRename> documentRenames,
         ImmutableArray<SemanticIdentityRename> semanticRenames,
-        ImmutableArray<EventContractIdentityRename> eventRenames)
+        ImmutableArray<EventContractIdentityRename> eventRenames,
+        ImmutableArray<string> retiredDocumentKeys,
+        ImmutableArray<SemanticAddress> retiredSemanticAddresses,
+        ImmutableArray<SemanticAddress> retiredEventAddresses)
     {
         ValidateSemanticRenameEndpoints(semanticRenames);
         ValidateEventRenameEndpoints(eventRenames);
         ValidateOneToOne(documentRenames, _ => _.PreviousKey, _ => _.CurrentKey, StringComparer.Ordinal, "document rename");
         ValidateOneToOne(semanticRenames, _ => _.PreviousAddress, _ => _.CurrentAddress, EqualityComparer<SemanticAddress>.Default, "semantic rename");
         ValidateOneToOne(eventRenames, _ => _.PreviousAddress, _ => _.CurrentAddress, EqualityComparer<SemanticAddress>.Default, "event rename");
+        RejectDuplicates(retiredDocumentKeys, StringComparer.Ordinal, "retired document key");
+        RejectDuplicates(retiredSemanticAddresses, EqualityComparer<SemanticAddress>.Default, "retired semantic address");
+        RejectDuplicates(retiredEventAddresses, EqualityComparer<SemanticAddress>.Default, "retired event address");
 
         if (documentRenames.Any(_ => _.PreviousKey == _.CurrentKey || !previous.Documents.Any(a => a.Key == _.PreviousKey) ||
                                     previous.Documents.Any(a => a.Key == _.CurrentKey) || !currentKeys.Contains(_.CurrentKey) || currentKeys.Contains(_.PreviousKey)) ||
@@ -424,11 +469,21 @@ public sealed class SemanticIdentityCatalog
         var renamedDocumentSources = documentRenames.Select(_ => _.PreviousKey).ToHashSet(StringComparer.Ordinal);
         var renamedSemanticSources = semanticRenames.Select(_ => _.PreviousAddress).ToHashSet();
         var renamedEventSources = eventRenames.Select(_ => _.PreviousAddress).ToHashSet();
-        if (previous.Documents.Any(_ => !currentKeys.Contains(_.Key) && !renamedDocumentSources.Contains(_.Key)) ||
-            previous.Semantics.Any(_ => !currentSemantics.Contains(_.Address) && !renamedSemanticSources.Contains(_.Address)) ||
-            previous.EventContracts.Any(_ => !currentEvents.Contains(_.Address) && !renamedEventSources.Contains(_.Address)))
+        if (retiredDocumentKeys.Any(key => !previous.Documents.Any(_ => _.Key == key) || currentKeys.Contains(key) || renamedDocumentSources.Contains(key)) ||
+            retiredSemanticAddresses.Any(address => !previous.Semantics.Any(_ => _.Address.Equals(address)) || currentSemantics.Contains(address) || renamedSemanticSources.Contains(address)) ||
+            retiredEventAddresses.Any(address => !previous.EventContracts.Any(_ => _.Address.Equals(address)) || currentEvents.Contains(address) || renamedEventSources.Contains(address)))
         {
-            throw new InvalidSemanticContract("A base catalog assignment is stale and has no explicit one-to-one rename.");
+            throw new InvalidSemanticContract("An identity retirement is stale, still current, duplicated by a rename, or was never assigned.");
+        }
+
+        var retiredDocuments = retiredDocumentKeys.ToHashSet(StringComparer.Ordinal);
+        var retiredSemantics = retiredSemanticAddresses.ToHashSet();
+        var retiredEvents = retiredEventAddresses.ToHashSet();
+        if (previous.Documents.Any(_ => !currentKeys.Contains(_.Key) && !renamedDocumentSources.Contains(_.Key) && !retiredDocuments.Contains(_.Key)) ||
+            previous.Semantics.Any(_ => !currentSemantics.Contains(_.Address) && !renamedSemanticSources.Contains(_.Address) && !retiredSemantics.Contains(_.Address)) ||
+            previous.EventContracts.Any(_ => !currentEvents.Contains(_.Address) && !renamedEventSources.Contains(_.Address) && !retiredEvents.Contains(_.Address)))
+        {
+            throw new InvalidSemanticContract("A base catalog assignment is stale and has no explicit one-to-one rename or retirement.");
         }
     }
 

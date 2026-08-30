@@ -83,6 +83,64 @@ screenplay path/to/screenplays          # the folder, as one application
 screenplay path/to/invoicing.play       # that file, on its own
 ```
 
+## Propose revision-safe workspace changes
+
+A host that edits existing source should keep the exact documents—not only the merged syntax tree—as its
+authority. `ScreenplayWorkspace` admits strict UTF-8 documents, portable paths, stable document identities, and an
+identity catalog, then derives the current semantic compilation without rewriting the source bytes:
+
+```csharp
+using Cratis.Screenplay.Semantics;
+using Cratis.Screenplay.Workspaces;
+
+var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Invoicing"));
+var document = WorkspaceDocument.Create(
+    "application",
+    PortablePlayPath.Parse("application.play"),
+    sourceBytes);
+var workspace = ScreenplayWorkspace.Create("Invoicing", [document], catalog);
+```
+
+When the source compiles, workspace creation materializes the current document, semantic, and event-contract
+identities into the returned catalog. When it does not compile, the workspace still retains every exact authored
+byte and exposes the failed `Compilation`; opening imperfect source never destroys it.
+
+Changes are pure proposals tied to both the workspace revision and identity-catalog revision:
+
+```csharp
+var result = workspace.Propose(new WorkspaceTransactionRequest
+{
+    ExpectedRevision = workspace.Revision,
+    ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
+    Operations =
+    [
+        new ReplaceWorkspaceDocument
+        {
+            Document = document.Id,
+            Bytes = updatedSourceBytes
+        }
+    ]
+});
+
+if (result.Success)
+{
+    var candidate = result.Workspace!;
+    foreach (var entry in result.WritePlan!.Entries)
+    {
+        Console.WriteLine($"{entry.Kind}: {entry.Before?.Path} -> {entry.After?.Path}");
+    }
+}
+```
+
+A stale revision, portable path collision, duplicate owner, malformed operation, invalid identity migration, or
+failed compile rejects the complete proposal. The original workspace is untouched. The write plan contains exact
+before/after documents but performs no file-system operation; CLI and Studio decide whether and where to publish it.
+Document key renames preserve `DocumentId` explicitly. Removing declarations requires explicit semantic and event
+retirements, so deleting source cannot silently erase durable identity continuity.
+
+This transaction layer deliberately operates on whole documents. Token/CST-level semantic patches and
+single-file↔folder restructuring build on top of it rather than introducing a second mutation contract.
+
 ## Write an application out as a folder
 
 The inverse lives next to it. `Expand` turns an application into the files of a folder structure without touching the file system, and `WriteTo` puts them on disk:
