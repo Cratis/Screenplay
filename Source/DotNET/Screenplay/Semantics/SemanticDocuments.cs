@@ -7,6 +7,27 @@ using System.Text;
 namespace Cratis.Screenplay.Semantics;
 
 /// <summary>
+/// Defines what a <see cref="SemanticSourceMapEntry"/> captures for its semantic identity.
+/// </summary>
+public enum SemanticSourceMapRole
+{
+    /// <summary>
+    /// An unknown role. Unknown values are never admitted.
+    /// </summary>
+    Unknown = -1,
+
+    /// <summary>
+    /// The declaration site of the semantic identity itself.
+    /// </summary>
+    Declaration = 0,
+
+    /// <summary>
+    /// The single-line quoted description body owned by the semantic identity, patchable in place.
+    /// </summary>
+    Description = 1
+}
+
+/// <summary>
 /// Represents an immutable Screenplay source document.
 /// </summary>
 public sealed record SemanticSourceDocument
@@ -64,7 +85,20 @@ public sealed record SemanticSourceDocument
 public sealed record SemanticSourceMapEntry(
     SemanticId SemanticId,
     SemanticSourceSpan Span,
-    SemanticIdentityOrigin Origin);
+    SemanticIdentityOrigin Origin)
+{
+    /// <summary>
+    /// Gets the role this entry captures for <see cref="SemanticId"/>.
+    /// </summary>
+    /// <remarks>
+    /// An <c>init</c> property rather than a parameter of the primary constructor, deliberately. A trailing
+    /// parameter on a positional record is source compatible and <em>binary</em> breaking: it replaces the
+    /// constructor and <c>Deconstruct</c> in the compiled signature, so a package built against the previous
+    /// version fails at run time with a missing method and no compiler error anywhere. Adding capability as
+    /// an init property is neither, and is how this record should grow from here.
+    /// </remarks>
+    public SemanticSourceMapRole Role { get; init; } = SemanticSourceMapRole.Declaration;
+}
 
 /// <summary>
 /// Represents the immutable source-to-semantic map for a compilation.
@@ -104,17 +138,18 @@ public sealed class SemanticSourceMap
             }
         }
 
-        var mappedSpans = new HashSet<(SemanticId SemanticId, SemanticSourceSpan Span)>();
+        var mappedSpans = new HashSet<(SemanticId SemanticId, SemanticSourceSpan Span, SemanticSourceMapRole Role)>();
         foreach (var entry in entries)
         {
             if (entry?.SemanticId.IsSet != true || !documentsById.TryGetValue(entry.Span.Document, out var document) ||
-                !Enum.IsDefined(entry.Origin) || entry.Origin == SemanticIdentityOrigin.Unknown)
+                !Enum.IsDefined(entry.Origin) || entry.Origin == SemanticIdentityOrigin.Unknown ||
+                !Enum.IsDefined(entry.Role) || entry.Role == SemanticSourceMapRole.Unknown)
             {
                 throw new InvalidSemanticContract("A semantic source map entry is malformed or unresolved.");
             }
 
             entry.Span.ValidateAgainst(document.Text);
-            if (!mappedSpans.Add((entry.SemanticId, entry.Span)))
+            if (!mappedSpans.Add((entry.SemanticId, entry.Span, entry.Role)))
             {
                 throw new InvalidSemanticContract($"Semantic source map identity '{entry.SemanticId}' contains a duplicate source span.");
             }
@@ -127,6 +162,7 @@ public sealed class SemanticSourceMap
                 .ThenBy(_ => _.Span.Document.ToString(), StringComparer.Ordinal)
                 .ThenBy(_ => _.Span.Start)
                 .ThenBy(_ => _.Span.Length)
+                .ThenBy(_ => _.Role)
         ]);
     }
 }

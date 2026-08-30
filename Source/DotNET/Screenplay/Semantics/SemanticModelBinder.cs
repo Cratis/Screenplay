@@ -464,7 +464,7 @@ public sealed class SemanticModelBinder : ISemanticModelBinder
             }
 
             var address = SemanticAddress.ForSlice(_applicationIdentity, module, featurePath, slice.Name);
-            var id = Resolve(address, slice.Location);
+            var id = ResolveSlice(address, slice.Location, slice.DescriptionLocation, slice.DescriptionRawLength);
             var events = slice.Events.Select(value => _eventDeclarations[value]).ToArray();
             var commands = slice.Commands.Select(value => BindCommand(address, value, _events)).ToImmutableArray();
             var readModels = (slice.ReadModels ?? []).Select(value => _readModelDeclarations[value].Model).ToImmutableArray();
@@ -1019,7 +1019,28 @@ public sealed class SemanticModelBinder : ISemanticModelBinder
             return assignment.Id;
         }
 
-        void Map(SemanticId id, SemanticIdentityOrigin origin, SourceLocation location)
+        SemanticId ResolveSlice(
+            SemanticAddress address,
+            SourceLocation location,
+            SourceLocation? descriptionLocation,
+            int? descriptionRawLength)
+        {
+            var assignment = documents.IdentityCatalog.ResolveSemanticAssignment(address);
+            Map(assignment.Id, assignment.Origin, location);
+            if (descriptionLocation is { } resolvedLocation && descriptionRawLength is { } resolvedLength)
+            {
+                Map(assignment.Id, assignment.Origin, resolvedLocation, SemanticSourceMapRole.Description, resolvedLength);
+            }
+
+            return assignment.Id;
+        }
+
+        void Map(
+            SemanticId id,
+            SemanticIdentityOrigin origin,
+            SourceLocation location,
+            SemanticSourceMapRole role = SemanticSourceMapRole.Declaration,
+            int length = 0)
         {
             if (DocumentAt(location) is not { } document)
             {
@@ -1029,8 +1050,8 @@ public sealed class SemanticModelBinder : ISemanticModelBinder
             try
             {
                 var offset = OffsetAt(document.Text, location);
-                var span = SemanticSourceSpan.Create(document.Id, offset, 0, location.Line, location.Column, location.Line, location.Column);
-                _sourceMapEntries.Add(new(id, span, origin));
+                var span = SemanticSourceSpan.Create(document.Id, offset, length, location.Line, location.Column, location.Line, location.Column + length);
+                _sourceMapEntries.Add(new(id, span, origin) { Role = role });
             }
             catch (InvalidSemanticContract exception)
             {

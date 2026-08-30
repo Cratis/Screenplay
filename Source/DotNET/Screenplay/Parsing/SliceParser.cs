@@ -42,6 +42,8 @@ internal static partial class SliceParser
         }
 
         string? description = null;
+        SourceLocation? descriptionLocation = null;
+        int? descriptionRawLength = null;
         var events = new List<EventSyntax>();
         var commands = new List<CommandSyntax>();
         var queries = new List<QuerySyntax>();
@@ -67,7 +69,13 @@ internal static partial class SliceParser
             switch (LineText.FirstWord(line.Content))
             {
                 case "description":
-                    description = DescriptionParser.Parse(context, line, description, $"Slice '{name}'");
+                    description = DescriptionParser.Parse(context, line, description, $"Slice '{name}'", out var descriptionSpan);
+                    if (descriptionSpan is { } span)
+                    {
+                        descriptionLocation = span.Location;
+                        descriptionRawLength = span.RawLength;
+                    }
+
                     break;
                 case "event":
                     events.Add(EventParser.Parse(context, line));
@@ -109,7 +117,12 @@ internal static partial class SliceParser
             }
         }
 
-        return new(type, name, events, commands, queries, projections, captures, reactions, screens, constraints, specifications, header.Location, description, readModels, reducers) { File = file };
+        return new(type, name, events, commands, queries, projections, captures, reactions, screens, constraints, specifications, header.Location, description, readModels, reducers)
+        {
+            File = file,
+            DescriptionLocation = descriptionLocation,
+            DescriptionRawLength = descriptionRawLength
+        };
     }
 
     [GeneratedRegex(@"^slice\s+([A-Za-z]\w*)\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
