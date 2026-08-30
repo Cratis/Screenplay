@@ -12,7 +12,13 @@ namespace Cratis.Screenplay.Semantics;
 /// <param name="Values">The event property values, canonically ordered by target identity.</param>
 public sealed record SemanticSpecificationEvent(
     SemanticId EventContract,
-    ImmutableArray<SemanticPropertyValue> Values);
+    ImmutableArray<SemanticPropertyValue> Values)
+{
+    /// <summary>
+    /// Gets the exact typed event source asserted for this occurrence; <see langword="null"/> is retained for semantic-v1 compatibility only.
+    /// </summary>
+    public SemanticEventSourceIdentity? EventSource { get; init; }
+}
 
 /// <summary>
 /// Represents the command exercised by a semantic specification.
@@ -21,7 +27,13 @@ public sealed record SemanticSpecificationEvent(
 /// <param name="Values">The command property values, canonically ordered by target identity.</param>
 public sealed record SemanticSpecificationCommand(
     SemanticId Command,
-    ImmutableArray<SemanticPropertyValue> Values);
+    ImmutableArray<SemanticPropertyValue> Values)
+{
+    /// <summary>
+    /// Gets the exact typed state-change destination asserted for this command occurrence; <see langword="null"/> means no modeled default is applicable under legacy semantic-v1 behavior.
+    /// </summary>
+    public SemanticEventSourceIdentity? EventSource { get; init; }
+}
 
 /// <summary>
 /// Represents one keyed read model state in a semantic specification.

@@ -21,6 +21,11 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V1 = new(1, 0);
 
     /// <summary>
+    /// Gets the language version reserved for explicit specification event-source assertions and event-context semantics.
+    /// </summary>
+    public static readonly LanguageVersion V2 = new(2, 0);
+
+    /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
     /// <param name="value">The value to parse.</param>
@@ -62,6 +67,11 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// Gets the initial semantic version.
     /// </summary>
     public static readonly SemanticVersion V1 = new(1, 0);
+
+    /// <summary>
+    /// Gets the semantic version reserved for typed state-change destinations and event occurrence context.
+    /// </summary>
+    public static readonly SemanticVersion V2 = new(2, 0);
 
     /// <summary>
     /// Parses a canonical, supported semantic version.
@@ -134,6 +144,61 @@ public static class EsmSchemaV1Support
         {
             throw new InvalidSemanticContract(
                 $"ESM schema v1 supports language version '{LanguageVersion.V1}' and semantic version '{SemanticVersion.V1}' only; received '{languageVersion}' and '{semanticVersion}'.");
+        }
+    }
+}
+
+/// <summary>
+/// Defines language and semantic version pairs reserved by the ESM schema-v2 contract.
+/// </summary>
+public static class EsmSchemaV2Support
+{
+    /// <summary>
+    /// Gets the source language versions declared by the schema-v2 contract.
+    /// </summary>
+    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [LanguageVersion.V1, LanguageVersion.V2];
+
+    /// <summary>
+    /// Gets the portable semantic versions declared by the schema-v2 contract.
+    /// </summary>
+    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [SemanticVersion.V1, SemanticVersion.V2];
+
+    /// <summary>
+    /// Determines whether a language version is known to schema v2.
+    /// </summary>
+    /// <param name="version">The language version.</param>
+    /// <returns><see langword="true"/> when known; otherwise, <see langword="false"/>.</returns>
+    public static bool Supports(LanguageVersion version) => LanguageVersions.Contains(version);
+
+    /// <summary>
+    /// Determines whether a semantic version is known to schema v2.
+    /// </summary>
+    /// <param name="version">The semantic version.</param>
+    /// <returns><see langword="true"/> when known; otherwise, <see langword="false"/>.</returns>
+    public static bool Supports(SemanticVersion version) => SemanticVersions.Contains(version);
+
+    /// <summary>
+    /// Determines whether one exact language and semantic version pair has defined schema-v2 meaning.
+    /// </summary>
+    /// <param name="languageVersion">The source language version.</param>
+    /// <param name="semanticVersion">The portable semantic version.</param>
+    /// <returns><see langword="true"/> when the pair has defined meaning; otherwise, <see langword="false"/>.</returns>
+    public static bool Supports(LanguageVersion languageVersion, SemanticVersion semanticVersion) =>
+        (languageVersion == LanguageVersion.V1 && semanticVersion == SemanticVersion.V1) ||
+        (languageVersion == LanguageVersion.V2 && semanticVersion == SemanticVersion.V2);
+
+    /// <summary>
+    /// Rejects a version pair not declared by the ESM schema-v2 contract.
+    /// </summary>
+    /// <param name="languageVersion">The source language version.</param>
+    /// <param name="semanticVersion">The portable semantic version.</param>
+    /// <exception cref="InvalidSemanticContract">One or both versions are unsupported.</exception>
+    public static void EnsureSupported(LanguageVersion languageVersion, SemanticVersion semanticVersion)
+    {
+        if (!Supports(languageVersion, semanticVersion))
+        {
+            throw new InvalidSemanticContract(
+                $"The ESM schema-v2 contract does not declare language version '{languageVersion}' and semantic version '{semanticVersion}'.");
         }
     }
 }

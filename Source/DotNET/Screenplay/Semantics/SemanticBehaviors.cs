@@ -161,13 +161,26 @@ public sealed record SemanticEventContract(
 /// </summary>
 /// <param name="EventContract">The event declaration semantic identity.</param>
 /// <param name="Condition">The optional production condition.</param>
-/// <param name="Destination">The optional modeled event-source destination.</param>
+/// <param name="Destination">The optional per-occurrence override of the command's default state-change destination.</param>
 /// <param name="Mappings">The mappings in behavior order.</param>
 public sealed record SemanticProducedEvent(
     SemanticId EventContract,
     SemanticExpression? Condition,
     SemanticExpression? Destination,
     ImmutableArray<SemanticPropertyMapping> Mappings);
+
+/// <summary>
+/// Represents the typed default state-change destination of a command.
+/// </summary>
+/// <param name="Type">The portable destination identity type.</param>
+/// <param name="Value">The optional expression resolving the destination from command input; <see langword="null"/> requests one deterministic allocated identity.</param>
+/// <remarks>
+/// <paramref name="Type"/> must be a required scalar portable type. A non-null <paramref name="Value"/> must resolve from command input to exactly that type.
+/// A produced event with no override uses this default; an override may target another required scalar type for explicit cross-stream production.
+/// </remarks>
+public sealed record SemanticStateChangeDestination(
+    SemanticTypeReference Type,
+    SemanticExpression? Value);
 
 /// <summary>
 /// Represents a portable command contract.
@@ -182,7 +195,17 @@ public sealed record SemanticCommand(
     string Name,
     ImmutableArray<SemanticProperty> Properties,
     ImmutableArray<SemanticValidationRule> Validations,
-    ImmutableArray<SemanticProducedEvent> Produces);
+    ImmutableArray<SemanticProducedEvent> Produces)
+{
+    /// <summary>
+    /// Gets the typed default event-source destination changed by this command.
+    /// </summary>
+    /// <remarks>
+    /// This is an init-only property to preserve the public positional constructor and deconstruction shape.
+    /// A produced event's own destination remains an optional per-occurrence override.
+    /// </remarks>
+    public SemanticStateChangeDestination? Destination { get; init; }
+}
 
 /// <summary>
 /// Represents a keyed read model.
