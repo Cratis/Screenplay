@@ -1,5 +1,6 @@
 <Solution>
     <Folder Name="/Source/">
+        <Project Path="Source/DotNET/Screenplay.CanonicalCorpus/Screenplay.CanonicalCorpus.csproj" />
         <Project Path="Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj" />
         <Project Path="Source/DotNET/Screenplay/Screenplay.csproj" />
         <Project Path="Source/DotNET/Tool/Tool.csproj" />

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Screenplay.CanonicalCorpus</AssemblyName>
+        <RootNamespace>Cratis.Screenplay.CanonicalCorpus</RootNamespace>
+        <Description>Canonical Screenplay conformance corpora shared by authoring, rendering, publication, and recovery hosts</Description>
+        <IsPackable>true</IsPackable>
+        <IsTestProject>false</IsTestProject>
+        <EnablePackageValidation>false</EnablePackageValidation>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Corpus/**/*.play" />
+        <EmbeddedResource Include="Corpus/**/*.json" />
+        <EmbeddedResource Include="Corpus/**/*.txt" />
+        <ProjectReference Include="../Screenplay/Screenplay.csproj" />
+    </ItemGroup>
+</Project>
