@@ -138,8 +138,52 @@ before/after documents but performs no file-system operation; CLI and Studio dec
 Document key renames preserve `DocumentId` explicitly. Removing declarations requires explicit semantic and event
 retirements, so deleting source cannot silently erase durable identity continuity.
 
-This transaction layer deliberately operates on whole documents. Token/CST-level semantic patches and
-single-file↔folder restructuring build on top of it rather than introducing a second mutation contract.
+This transaction layer deliberately operates on whole documents. Single-file↔folder restructuring builds on
+top of it rather than introducing a second mutation contract - and so does the first semantic patch below.
+
+### Patch a slice description by its stable semantic identity
+
+Most edits a host makes are whole-document replacements. One field is different: a slice's single-line quoted
+`description` is small, frequent to edit, and addressed more naturally by the slice's stable `SemanticId` than
+by document and byte range. `UpdateSliceDescription` is a `WorkspaceOperation` like any other - it goes through
+the exact same `Operations` array, the same revision gates, and the same parse/merge/bind/identity pipeline -
+it is not a second preview/apply method:
+
+```csharp
+var slice = workspace.Compilation.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single();
+var result = workspace.Propose(new WorkspaceTransactionRequest
+{
+    ExpectedRevision = workspace.Revision,
+    ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
+    Operations =
+    [
+        new UpdateSliceDescription
+        {
+            SemanticId = slice.Id,
+            ExpectedCurrentDescription = "Registers a new project",
+            NewDescription = "Registers a brand new project"
+        }
+    ]
+});
+```
+
+A successful proposal changes only the description's literal body bytes - every other byte of the owning
+document, and every other document in the workspace, is untouched - and produces exactly one `Replaced` write
+entry, going through the same `WritePlan` shape as a whole-document edit. The operation is admitted only for an
+existing **single-line quoted** slice description; it fails typed rather than falling back to raw text editing:
+
+- `SemanticIdNotFound` - the semantic identity does not exist in the workspace's identity catalog.
+- `UnsupportedSemanticField` - the identity exists but does not address a slice (a module, feature, or command
+  identity), or the slice has no single-line quoted description to patch (missing entirely, or written as a
+  fenced multi-line block).
+- `SemanticFieldValueDrift` - `ExpectedCurrentDescription` does not match the decoded current text exactly.
+- `MultiOwnerSemanticEdit` - another operation in the same transaction, semantic or whole-document, already
+  claims the owning document; a transaction may touch one document once regardless of how many of its
+  operations reach it.
+
+The stale-revision and stale-catalog-revision gates run before any operation is even inspected, exactly as they
+do for whole-document operations. This is the first semantic patch; broadening it to other fields or to
+multi-line descriptions is future work, not something this operation attempts today.
 
 ## Write an application out as a folder
 
