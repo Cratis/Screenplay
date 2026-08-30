@@ -250,6 +250,20 @@ static class WorkspaceTransactionOperations
         HashSet<DocumentId> targeted,
         HashSet<DocumentId> semanticTargeted)
     {
+        if (!workspace.Compilation.Success || workspace.Compilation.Value is null)
+        {
+            return Conflict(
+                WorkspaceConflictKind.CompilationFailed,
+                "Semantic patches require a successfully compiled workspace source map.");
+        }
+
+        if (operation.ExpectedCurrentDescription is null || operation.NewDescription is null)
+        {
+            return Conflict(
+                WorkspaceConflictKind.InvalidOperation,
+                "A slice-description patch requires non-null expected and replacement values.");
+        }
+
         var assignment = workspace.IdentityCatalog.Semantics.FirstOrDefault(value => value.Id == operation.SemanticId);
         if (assignment is null)
         {
@@ -265,15 +279,25 @@ static class WorkspaceTransactionOperations
                 $"Semantic identity '{operation.SemanticId}' does not address a slice description.");
         }
 
-        var descriptionEntry = workspace.Compilation.Value?.SourceMap.Entries.FirstOrDefault(
-            entry => entry.SemanticId == operation.SemanticId && entry.Role == SemanticSourceMapRole.Description);
-        if (descriptionEntry is null)
+        var descriptionEntries = workspace.Compilation.Value.SourceMap.Entries
+            .Where(entry => entry.SemanticId == operation.SemanticId && entry.Role == SemanticSourceMapRole.Description)
+            .Take(2)
+            .ToArray();
+        if (descriptionEntries.Length == 0)
         {
             return Conflict(
                 WorkspaceConflictKind.UnsupportedSemanticField,
                 $"Slice '{operation.SemanticId}' has no single-line quoted description available to patch.");
         }
 
+        if (descriptionEntries.Length > 1)
+        {
+            return Conflict(
+                WorkspaceConflictKind.MultiOwnerSemanticEdit,
+                $"Slice '{operation.SemanticId}' has more than one description source owner.");
+        }
+
+        var descriptionEntry = descriptionEntries[0];
         var documentId = descriptionEntry.Span.Document;
         if (targeted.Contains(documentId))
         {
