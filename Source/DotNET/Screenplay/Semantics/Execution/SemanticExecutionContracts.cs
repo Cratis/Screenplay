@@ -118,7 +118,17 @@ public enum SemanticRejectionCategory
 public sealed record SemanticFact(
     SemanticId EventContract,
     SemanticValue Destination,
-    ImmutableArray<SemanticPropertyValue> Values);
+    ImmutableArray<SemanticPropertyValue> Values)
+{
+    /// <summary>
+    /// Gets the typed occurrence context; <see langword="null"/> is retained only for legacy semantic-v1 construction.
+    /// </summary>
+    /// <remarks>
+    /// This is init-only to preserve the positional constructor and deconstruction shape during migration.
+    /// When present, <see cref="SemanticEventContext.EventSource"/> must agree with <see cref="Destination"/>.
+    /// </remarks>
+    public SemanticEventContext? Context { get; init; }
+}
 
 /// <summary>
 /// Represents one keyed read-model instance in the portable world.

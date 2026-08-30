@@ -12,12 +12,15 @@ public class when_compiling_a_standalone_specification : given.a_compiler
         """
         specification RegisteringADraftInvoice
           given CustomerRegistered
+            for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
             customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
             name       = "Acme Corp"
           when RegisterInvoice
+            for "9c858901-8a57-4791-81fe-4c455b099bc9"
             invoiceId  = "9c858901-8a57-4791-81fe-4c455b099bc9"
             customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
           then InvoiceRegistered
+            for "9c858901-8a57-4791-81fe-4c455b099bc9"
             invoiceId  = "9c858901-8a57-4791-81fe-4c455b099bc9"
             customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
           then ProFormaInvoiceIssued
@@ -34,11 +37,14 @@ public class when_compiling_a_standalone_specification : given.a_compiler
     [Fact] void should_have_the_name() => _result.Value!.Name.ShouldEqual("RegisteringADraftInvoice");
     [Fact] void should_have_one_given_event() => _result.Value!.Given.Count().ShouldEqual(1);
     [Fact] void should_have_the_given_event_type() => _result.Value!.Given.Single().EventType.ShouldEqual("CustomerRegistered");
+    [Fact] void should_have_the_given_event_source() => ((LiteralExpressionSyntax)_result.Value!.Given.Single().For!).Value.ShouldEqual("3fa85f64-5717-4562-b3fc-2c963f66afa6");
     [Fact] void should_have_the_given_property_value() => ((LiteralExpressionSyntax)Value(_result.Value!.Given.Single(), "customerId").Source).Value.ShouldEqual("3fa85f64-5717-4562-b3fc-2c963f66afa6");
     [Fact] void should_have_the_when() => _result.Value!.When!.CommandType.ShouldEqual("RegisterInvoice");
+    [Fact] void should_have_the_when_event_source() => ((LiteralExpressionSyntax)_result.Value!.When!.For!).Value.ShouldEqual("9c858901-8a57-4791-81fe-4c455b099bc9");
     [Fact] void should_have_the_when_property_values() => _result.Value!.When!.Values.Count().ShouldEqual(2);
     [Fact] void should_have_two_then_events() => _result.Value!.ThenEvents.Count().ShouldEqual(2);
     [Fact] void should_have_the_first_then_event_type() => _result.Value!.ThenEvents.First().EventType.ShouldEqual("InvoiceRegistered");
+    [Fact] void should_have_the_first_then_event_source() => ((LiteralExpressionSyntax)_result.Value!.ThenEvents.First().For!).Value.ShouldEqual("9c858901-8a57-4791-81fe-4c455b099bc9");
     [Fact] void should_have_the_second_then_event_type() => _result.Value!.ThenEvents.Last().EventType.ShouldEqual("ProFormaInvoiceIssued");
     [Fact] void should_have_one_then_error() => _result.Value!.ThenErrors.Count().ShouldEqual(1);
     [Fact] void should_have_the_then_error_message() => _result.Value!.ThenErrors.Single().Name.ShouldEqual("An invoice must have at least one line");

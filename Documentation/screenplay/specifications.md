@@ -8,12 +8,15 @@ Specifications express Given/When/Then test scenarios directly against a slice's
 specification <Name>
   [file <path>]
   given <EventType>
+    [for <event-source-value>]
     <property> = <value>
   given readmodel <ReadModelType>
     <property> = <value>
   when <CommandType>
+    [for <event-source-value>]
     <property> = <value>
   then <EventType>
+    [for <event-source-value>]
     <property> = <value>
   then readmodel <ReadModelType>
     <property> = <value>
@@ -33,6 +36,9 @@ specification <Name>
 - `then query <Query>` — zero or more. Executes the named query with the authored `arguments` and compares its ordered `result` blocks. No `result` blocks means the query is expected to return nothing.
 - `then error ["<message>"]` — zero or more. An expected rejection. See [Rejections](#rejections).
 - `file <path>` — zero or one. The repository relative file the specification is realized by. See [File references](file-references.md).
+- `for <event-source-value>` — zero or one inside an event `given`, the command `when`, or an event `then`. It identifies occurrence context rather than an event payload property.
+
+> **ESM v2 reservation:** the parser, printer, and syntax tree preserve `for <event-source-value>`, but ESM v1 semantic binding reports blocking diagnostic `PLAY0268`. It cannot execute or render silently until the typed event-context semantics are admitted by ESM v2.
 
 Property values (`<property> = <value>`) accept the same expressions as `produces` and `capture` mappings — string, number and boolean literals, and `$context.*`/`$env.*` expressions.
 

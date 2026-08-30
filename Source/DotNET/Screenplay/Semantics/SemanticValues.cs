@@ -119,7 +119,7 @@ public enum SemanticValueKind
 }
 
 /// <summary>
-/// Defines the portable expression variants admitted by ESM v1.
+/// Defines portable expression variants across declared ESM contracts.
 /// </summary>
 public enum SemanticExpressionKind
 {
@@ -136,7 +136,28 @@ public enum SemanticExpressionKind
     /// <summary>
     /// A resolved semantic reference expression.
     /// </summary>
-    Resolved = 1
+    Resolved = 1,
+
+    /// <summary>
+    /// A typed value supplied by the current event occurrence context, reserved for semantic/schema v2.
+    /// </summary>
+    EventContext = 2
+}
+
+/// <summary>
+/// Defines a typed value available from the current event occurrence context.
+/// </summary>
+public enum SemanticEventContextValueKind
+{
+    /// <summary>
+    /// An unknown context value. Unknown values are never admitted.
+    /// </summary>
+    Unknown = -1,
+
+    /// <summary>
+    /// The typed identity of the event source carrying the occurrence.
+    /// </summary>
+    EventSourceIdentity = 0
 }
 
 /// <summary>
@@ -340,6 +361,15 @@ public abstract record SemanticExpression(SemanticExpressionKind Kind)
 /// </summary>
 /// <param name="Value">The concrete value.</param>
 public sealed record SemanticValueExpression(SemanticValue Value) : SemanticExpression(SemanticExpressionKind.Value);
+
+/// <summary>
+/// Represents one typed value supplied by the current event occurrence context.
+/// </summary>
+/// <param name="Value">The context value to read.</param>
+/// <param name="Type">The statically proven portable type.</param>
+public sealed record SemanticEventContextExpression(
+    SemanticEventContextValueKind Value,
+    SemanticTypeReference Type) : SemanticExpression(SemanticExpressionKind.EventContext);
 
 /// <summary>
 /// Represents a resolved reference expression using stable semantic identity.

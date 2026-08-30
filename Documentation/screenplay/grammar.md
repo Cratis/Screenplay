@@ -576,17 +576,23 @@ CDLBody        = (* Change Data Capture Language grammar - covers source/key/map
 SpecificationDecl = "specification", Ident, NL,
                  INDENT, [ FileDirective ], { SpecificationGiven | SpecificationWhen | SpecificationThen }, DEDENT ;
 
-SpecificationGiven = "given", [ "readmodel" ], Ident, NL,
-                 [ INDENT, { PropertyMapping }, DEDENT ] ;
+SpecificationGiven = "given", "readmodel", Ident, NL,
+                 [ INDENT, { PropertyMapping }, DEDENT ]
+               | "given", Ident, NL,
+                 [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ] ;
 
 SpecificationWhen = "when", Ident, NL,
-                 [ INDENT, { PropertyMapping }, DEDENT ] ;
+                 [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ] ;
 
-SpecificationThen = "then", [ "readmodel" ], Ident, NL,
+SpecificationThen = "then", "readmodel", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
                | "then", "query", QualifiedName, NL,
                  [ INDENT, { SpecificationQueryDirective }, DEDENT ]
-               | "then", "error", [ StringLiteral ], NL ;
+               | "then", "error", [ StringLiteral ], NL
+               | "then", Ident, NL,
+                 [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ] ;
+
+SpecificationEventSource = "for", Expression, NL ;
 
 SpecificationQueryDirective = "arguments", NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]

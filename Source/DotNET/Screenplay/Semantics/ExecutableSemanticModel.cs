@@ -325,6 +325,11 @@ static class SemanticModelValidator
 
         void ValidateCommand(SemanticCommand command)
         {
+            if (command.Destination is not null)
+            {
+                throw new InvalidSemanticContract("A command state-change destination requires ESM v2.");
+            }
+
             ValidateProperties(command.Properties);
             var properties = Properties(command.Properties);
             foreach (var validation in command.Validations)
@@ -515,6 +520,11 @@ static class SemanticModelValidator
                 throw new InvalidSemanticContract($"Specification command '{specification.When.Command}' is unresolved.");
             }
 
+            if (specification.When.EventSource is not null)
+            {
+                throw new InvalidSemanticContract("A specification command event source requires ESM v2.");
+            }
+
             ValidatePropertyValues(specification.When.Values, command.Properties, true);
             var producedEvents = command.Produces.Select(_ => _.EventContract).ToHashSet();
             foreach (var value in specification.GivenEvents)
@@ -571,6 +581,11 @@ static class SemanticModelValidator
 
         void ValidateSpecificationEvent(SemanticSpecificationEvent value)
         {
+            if (value.EventSource is not null)
+            {
+                throw new InvalidSemanticContract("A specification event source requires ESM v2.");
+            }
+
             if (!_events.TryGetValue(value.EventContract, out var eventContract))
             {
                 throw new InvalidSemanticContract($"Specification event '{value.EventContract}' is unresolved.");

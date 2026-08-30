@@ -800,6 +800,14 @@ public sealed class SemanticModelBinder : ISemanticModelBinder
                 return null;
             }
 
+            if (specification.When.For is not null)
+            {
+                Error(
+                    DiagnosticCodes.UnsupportedSemanticSyntax,
+                    $"Specification command destination assertion 'for' on '{specification.When.CommandType}' is not admitted by ESM v1.",
+                    specification.When.For.Location);
+            }
+
             var address = SemanticAddress.ForSpecification(slice, specification.Name);
             var id = Resolve(address, specification.Location);
             var givenEvents = specification.Given.Select(BindSpecificationEvent).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
@@ -833,6 +841,14 @@ public sealed class SemanticModelBinder : ISemanticModelBinder
 
         SemanticSpecificationEvent? BindSpecificationEvent(SpecificationEventSyntax value)
         {
+            if (value.For is not null)
+            {
+                Error(
+                    DiagnosticCodes.UnsupportedSemanticSyntax,
+                    $"Specification event-source assertion 'for' on '{value.EventType}' is not admitted by ESM v1.",
+                    value.For.Location);
+            }
+
             if (!_events.TryGetValue(ShortName(value.EventType), out var @event))
             {
                 Error(DiagnosticCodes.InvalidSemanticBinding, $"Specification event '{value.EventType}' is unresolved.", value.Location);

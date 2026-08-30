@@ -555,13 +555,20 @@ itself what an unresolvable one means.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0268` | Error | Source syntax carries portable behavior ESM v1 cannot represent. |
+| `PLAY0268` | Error | Source syntax carries portable behavior ESM v1 cannot represent, including a specification `for <value>` event-source assertion reserved for ESM v2. |
 | `PLAY0269` | Information | Source syntax is explicitly deferred from the current backend semantic profile. |
 | `PLAY0270` | Information | Source syntax is realization or operational metadata rather than portable behavior. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly. |
 | `PLAY0272` | Error | Source syntax requires an explicit reviewed semantic migration before binding. |
 | `PLAY0273` | Error | Syntax and identity information cannot produce a coherent semantic compilation. |
 | `PLAY0274` | Error | A syntax location cannot be mapped to a supplied semantic source document. |
+
+### Specification event-source assertions
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0275` | Error | A specification event-source assertion is a bare `for` and does not provide a value. |
+| `PLAY0276` | Error | One specification command or event step declares its `for <value>` event-source assertion more than once. |
 
 The complete Program v1 disposition of current syntax is maintained as a delivery artifact alongside the Screenplay architecture and program.
 

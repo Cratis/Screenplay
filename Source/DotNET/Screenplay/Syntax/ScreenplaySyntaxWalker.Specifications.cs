@@ -71,6 +71,11 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
 
+        if (syntax.For is not null)
+        {
+            VisitExpression(syntax.For);
+        }
+
         foreach (var value in syntax.Values)
         {
             VisitPropertyMapping(value);
@@ -84,6 +89,11 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitSpecificationCommand(SpecificationCommandSyntax syntax)
     {
         VisitNode(syntax);
+
+        if (syntax.For is not null)
+        {
+            VisitExpression(syntax.For);
+        }
 
         foreach (var value in syntax.Values)
         {
