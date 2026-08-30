@@ -43,14 +43,17 @@ sealed class WorkspaceTransaction(ScreenplayWorkspace workspace)
 
         var candidates = _workspace.Documents.ToDictionary(document => document.Id);
         var targeted = new HashSet<DocumentId>();
+        var semanticTargeted = new HashSet<DocumentId>();
         var documentRenames = ImmutableArray.CreateBuilder<DocumentIdentityRename>();
         var retiredDocumentKeys = ImmutableArray.CreateBuilder<string>();
         foreach (var operation in request.Operations)
         {
             var conflict = WorkspaceTransactionOperations.Apply(
                 operation,
+                _workspace,
                 candidates,
                 targeted,
+                semanticTargeted,
                 documentRenames,
                 retiredDocumentKeys);
             if (conflict is not null)

@@ -41,7 +41,29 @@ public enum WorkspaceConflictKind
     /// <summary>
     /// Explicit identity continuity could not be migrated from the requested catalog revision.
     /// </summary>
-    InvalidIdentityMigration = 5
+    InvalidIdentityMigration = 5,
+
+    /// <summary>
+    /// A semantic patch operation addressed a semantic identity that does not exist.
+    /// </summary>
+    SemanticIdNotFound = 6,
+
+    /// <summary>
+    /// A semantic patch operation addressed a field that is not admitted by the operation - a non-slice
+    /// identity, or a slice with no single-line quoted description to patch.
+    /// </summary>
+    UnsupportedSemanticField = 7,
+
+    /// <summary>
+    /// A semantic patch operation's expected current value did not match the decoded source.
+    /// </summary>
+    SemanticFieldValueDrift = 8,
+
+    /// <summary>
+    /// More than one operation in the same transaction claims the same owning document, at least one of which
+    /// is a semantic patch.
+    /// </summary>
+    MultiOwnerSemanticEdit = 9
 }
 
 /// <summary>

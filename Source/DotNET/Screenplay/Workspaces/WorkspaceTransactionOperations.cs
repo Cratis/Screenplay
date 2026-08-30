@@ -2,17 +2,24 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using System.Text;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Workspaces;
 
 static class WorkspaceTransactionOperations
 {
+    static readonly UTF8Encoding _strictUtf8 = new(false, true);
+    static readonly byte[] _utf8Bom = [0xef, 0xbb, 0xbf];
+
     internal static WorkspaceConflict? Apply(
         WorkspaceOperation? operation,
+        ScreenplayWorkspace workspace,
         Dictionary<DocumentId, WorkspaceDocument> candidates,
         HashSet<DocumentId> targeted,
+        HashSet<DocumentId> semanticTargeted,
         ImmutableArray<DocumentIdentityRename>.Builder documentRenames,
         ImmutableArray<string>.Builder retiredDocumentKeys)
     {
@@ -26,10 +33,11 @@ static class WorkspaceTransactionOperations
             return operation switch
             {
                 AddWorkspaceDocument add => Add(add, candidates, targeted),
-                ReplaceWorkspaceDocument replace => Replace(replace, candidates, targeted),
-                MoveWorkspaceDocument move => Move(move, candidates, targeted),
-                RenameWorkspaceDocument rename => Rename(rename, candidates, targeted, documentRenames),
-                RemoveWorkspaceDocument remove => Remove(remove, candidates, targeted, retiredDocumentKeys),
+                ReplaceWorkspaceDocument replace => Replace(replace, candidates, targeted, semanticTargeted),
+                MoveWorkspaceDocument move => Move(move, candidates, targeted, semanticTargeted),
+                RenameWorkspaceDocument rename => Rename(rename, candidates, targeted, semanticTargeted, documentRenames),
+                RemoveWorkspaceDocument remove => Remove(remove, candidates, targeted, semanticTargeted, retiredDocumentKeys),
+                UpdateSliceDescription update => UpdateSliceDescription(update, workspace, candidates, targeted, semanticTargeted),
                 _ => Conflict(WorkspaceConflictKind.InvalidOperation, $"Workspace operation '{operation.GetType().Name}' is not supported.")
             };
         }
@@ -135,9 +143,10 @@ static class WorkspaceTransactionOperations
     static WorkspaceConflict? Replace(
         ReplaceWorkspaceDocument operation,
         Dictionary<DocumentId, WorkspaceDocument> candidates,
-        HashSet<DocumentId> targeted)
+        HashSet<DocumentId> targeted,
+        HashSet<DocumentId> semanticTargeted)
     {
-        var conflict = Existing(operation.Document, candidates, targeted, out var current);
+        var conflict = Existing(operation.Document, candidates, targeted, semanticTargeted, out var current);
         if (conflict is not null)
         {
             return conflict;
@@ -163,9 +172,10 @@ static class WorkspaceTransactionOperations
     static WorkspaceConflict? Move(
         MoveWorkspaceDocument operation,
         Dictionary<DocumentId, WorkspaceDocument> candidates,
-        HashSet<DocumentId> targeted)
+        HashSet<DocumentId> targeted,
+        HashSet<DocumentId> semanticTargeted)
     {
-        var conflict = Existing(operation.Document, candidates, targeted, out var current);
+        var conflict = Existing(operation.Document, candidates, targeted, semanticTargeted, out var current);
         if (conflict is not null)
         {
             return conflict;
@@ -192,9 +202,10 @@ static class WorkspaceTransactionOperations
         RenameWorkspaceDocument operation,
         Dictionary<DocumentId, WorkspaceDocument> candidates,
         HashSet<DocumentId> targeted,
+        HashSet<DocumentId> semanticTargeted,
         ImmutableArray<DocumentIdentityRename>.Builder documentRenames)
     {
-        var conflict = Existing(operation.Document, candidates, targeted, out var current);
+        var conflict = Existing(operation.Document, candidates, targeted, semanticTargeted, out var current);
         if (conflict is not null)
         {
             return conflict;
@@ -218,9 +229,10 @@ static class WorkspaceTransactionOperations
         RemoveWorkspaceDocument operation,
         Dictionary<DocumentId, WorkspaceDocument> candidates,
         HashSet<DocumentId> targeted,
+        HashSet<DocumentId> semanticTargeted,
         ImmutableArray<string>.Builder retiredDocumentKeys)
     {
-        var conflict = Existing(operation.Document, candidates, targeted, out var current);
+        var conflict = Existing(operation.Document, candidates, targeted, semanticTargeted, out var current);
         if (conflict is not null)
         {
             return conflict;
@@ -231,14 +243,145 @@ static class WorkspaceTransactionOperations
         return null;
     }
 
+    static WorkspaceConflict? UpdateSliceDescription(
+        UpdateSliceDescription operation,
+        ScreenplayWorkspace workspace,
+        Dictionary<DocumentId, WorkspaceDocument> candidates,
+        HashSet<DocumentId> targeted,
+        HashSet<DocumentId> semanticTargeted)
+    {
+        if (!workspace.Compilation.Success || workspace.Compilation.Value is null)
+        {
+            return Conflict(
+                WorkspaceConflictKind.CompilationFailed,
+                "Semantic patches require a successfully compiled workspace source map.");
+        }
+
+        if (operation.ExpectedCurrentDescription is null || operation.NewDescription is null)
+        {
+            return Conflict(
+                WorkspaceConflictKind.InvalidOperation,
+                "A slice-description patch requires non-null expected and replacement values.");
+        }
+
+        var assignment = workspace.IdentityCatalog.Semantics.FirstOrDefault(value => value.Id == operation.SemanticId);
+        if (assignment is null)
+        {
+            return Conflict(
+                WorkspaceConflictKind.SemanticIdNotFound,
+                $"Semantic identity '{operation.SemanticId}' does not exist in the workspace identity catalog.");
+        }
+
+        if (assignment.Address.Kind != SemanticKind.Slice)
+        {
+            return Conflict(
+                WorkspaceConflictKind.UnsupportedSemanticField,
+                $"Semantic identity '{operation.SemanticId}' does not address a slice description.");
+        }
+
+        var descriptionEntries = workspace.Compilation.Value.SourceMap.Entries
+            .Where(entry => entry.SemanticId == operation.SemanticId && entry.Role == SemanticSourceMapRole.Description)
+            .Take(2)
+            .ToArray();
+        if (descriptionEntries.Length == 0)
+        {
+            return Conflict(
+                WorkspaceConflictKind.UnsupportedSemanticField,
+                $"Slice '{operation.SemanticId}' has no single-line quoted description available to patch.");
+        }
+
+        if (descriptionEntries.Length > 1)
+        {
+            return Conflict(
+                WorkspaceConflictKind.MultiOwnerSemanticEdit,
+                $"Slice '{operation.SemanticId}' has more than one description source owner.");
+        }
+
+        var descriptionEntry = descriptionEntries[0];
+        var documentId = descriptionEntry.Span.Document;
+        if (targeted.Contains(documentId))
+        {
+            return Conflict(
+                WorkspaceConflictKind.MultiOwnerSemanticEdit,
+                $"Workspace document '{documentId}' is already targeted by another operation in this transaction.",
+                documentId);
+        }
+
+        if (!candidates.TryGetValue(documentId, out var current))
+        {
+            return Conflict(
+                WorkspaceConflictKind.SemanticIdNotFound,
+                $"Workspace document '{documentId}' owning slice '{operation.SemanticId}' does not exist.",
+                documentId);
+        }
+
+        var span = descriptionEntry.Span;
+        var rawBody = current.Text.Substring(span.Start, span.Length);
+        var currentDescription = StringLiteral.Unescape(rawBody);
+        if (!string.Equals(currentDescription, operation.ExpectedCurrentDescription, StringComparison.Ordinal))
+        {
+            return Conflict(
+                WorkspaceConflictKind.SemanticFieldValueDrift,
+                $"Slice '{operation.SemanticId}' description does not match the expected current value.",
+                documentId);
+        }
+
+        SemanticDocumentText.RequireWellFormedUnicode(operation.NewDescription, "new slice description");
+        var escapedNewDescription = StringLiteral.Escape(operation.NewDescription);
+        var newText = string.Concat(
+            current.Text.AsSpan(0, span.Start),
+            escapedNewDescription,
+            current.Text.AsSpan(span.Start + span.Length));
+        var bytes = EncodeStrictUtf8(newText, current.Encoding == WorkspaceTextEncoding.Utf8WithBom);
+        if (!current.Bytes.AsSpan().SequenceEqual(bytes.AsSpan()))
+        {
+            candidates[documentId] = WorkspaceDocument.Create(current.Id, current.StableKey, current.Path, bytes.AsSpan());
+        }
+
+        targeted.Add(documentId);
+        semanticTargeted.Add(documentId);
+        return null;
+    }
+
+    static ImmutableArray<byte> EncodeStrictUtf8(string text, bool withBom)
+    {
+        var byteCount = _strictUtf8.GetByteCount(text);
+        var prefixLength = withBom ? _utf8Bom.Length : 0;
+        var bytes = new byte[prefixLength + byteCount];
+        if (withBom)
+        {
+            _utf8Bom.CopyTo(bytes.AsSpan());
+        }
+
+        _strictUtf8.GetBytes(text, bytes.AsSpan(prefixLength));
+        return ImmutableArray.Create(bytes);
+    }
+
     static WorkspaceConflict? Existing(
         DocumentId id,
         Dictionary<DocumentId, WorkspaceDocument> candidates,
         HashSet<DocumentId> targeted,
+        HashSet<DocumentId> semanticTargeted,
         out WorkspaceDocument? current)
     {
         current = null;
-        if (!id.IsSet || !targeted.Add(id))
+        if (!id.IsSet)
+        {
+            return Conflict(
+                WorkspaceConflictKind.InvalidOperation,
+                $"Workspace document '{id}' is unset or targeted more than once.",
+                id);
+        }
+
+        if (semanticTargeted.Contains(id))
+        {
+            return Conflict(
+                WorkspaceConflictKind.MultiOwnerSemanticEdit,
+                $"Workspace document '{id}' is already claimed by a semantic patch in this transaction.",
+                id);
+        }
+
+        if (!targeted.Add(id))
         {
             return Conflict(
                 WorkspaceConflictKind.InvalidOperation,

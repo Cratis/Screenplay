@@ -86,4 +86,22 @@ public record SliceSyntax(
     /// an init property is neither, and is how this record should grow from here.
     /// </remarks>
     public FileReferenceSyntax? File { get; init; }
+
+    /// <summary>
+    /// Gets the <see cref="Diagnostics.SourceLocation"/> of the first character of the raw quoted body of
+    /// <see cref="Description"/>, or <c>null</c> when the slice has no single-line quoted description.
+    /// </summary>
+    /// <remarks>
+    /// An <c>init</c> property for the same binary-compatibility reason as <see cref="File"/>.
+    /// </remarks>
+    public SourceLocation? DescriptionLocation { get; init; }
+
+    /// <summary>
+    /// Gets the raw escaped length, in UTF-16 code units, of <see cref="Description"/>'s quoted body exactly as
+    /// it appears in the source text, or <c>null</c> when the slice has no single-line quoted description.
+    /// </summary>
+    /// <remarks>
+    /// An <c>init</c> property for the same binary-compatibility reason as <see cref="File"/>.
+    /// </remarks>
+    public int? DescriptionRawLength { get; init; }
 }
