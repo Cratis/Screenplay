@@ -32,17 +32,17 @@ internal static class SourceLineSplitter
         return result;
     }
 
-    static string StripComments(string text, bool hashComments)
+    internal static int CommentStart(string text, bool hashComments = false)
     {
         var inString = false;
         var inTemplate = false;
 
-        for (var i = 0; i < text.Length; i++)
+        for (var index = 0; index < text.Length; index++)
         {
-            var current = text[i];
-            if (current == '\\' && inString && i + 1 < text.Length)
+            var current = text[index];
+            if (current == '\\' && inString && index + 1 < text.Length)
             {
-                i++;
+                index++;
             }
             else if (current == '"' && !inTemplate)
             {
@@ -54,18 +54,24 @@ internal static class SourceLineSplitter
             }
             else if (!inString && !inTemplate)
             {
-                if (current == '/' && i + 1 < text.Length && text[i + 1] == '/')
+                if (current == '/' && index + 1 < text.Length && text[index + 1] == '/')
                 {
-                    return text[..i];
+                    return index;
                 }
 
                 if (hashComments && current == '#')
                 {
-                    return text[..i];
+                    return index;
                 }
             }
         }
 
-        return text;
+        return -1;
+    }
+
+    static string StripComments(string text, bool hashComments)
+    {
+        var comment = CommentStart(text, hashComments);
+        return comment < 0 ? text : text[..comment];
     }
 }
