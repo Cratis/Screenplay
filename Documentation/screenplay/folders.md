@@ -105,6 +105,71 @@ When the source compiles, workspace creation materializes the current document, 
 identities into the returned catalog. When it does not compile, the workspace still retains every exact authored
 byte and exposes the failed `Compilation`; opening imperfect source never destroys it.
 
+### Use identities owned by another system
+
+An authoring system such as Studio can keep its durable keys authoritative without constructing semantic addresses
+for hashing or formatting canonical identity strings. Create semantic identities from the artifact kind and stable
+key, and scope event-contract identities to the stable application identity:
+
+```csharp
+using System.Text;
+using Cratis.Screenplay.Semantics;
+using Cratis.Screenplay.Workspaces;
+
+var applicationIdentity = ApplicationIdentity.Create("studio-application-42");
+var document = WorkspaceDocument.Create(
+    "registration",
+    PortablePlayPath.Parse("Projects/Registration.play"),
+    Encoding.UTF8.GetBytes(
+        """
+        module Projects
+          feature Registration
+            slice StateChange RegisterProject
+              command RegisterProject
+              event ProjectRegistered
+        """));
+var sliceAddress = SemanticAddress.ForSlice(
+    applicationIdentity,
+    "Projects",
+    "Registration",
+    "RegisterProject");
+var commandAddress = SemanticAddress.ForCommand(sliceAddress, "RegisterProject");
+var eventAddress = SemanticAddress.ForEventContract(sliceAddress, "ProjectRegistered");
+var commandIdentity = SemanticId.Create(SemanticKind.Command, "studio-command-node-42");
+var eventSemanticIdentity = SemanticId.Create(SemanticKind.EventContract, "studio-event-node-42");
+var eventContractIdentity = EventContractId.Create(applicationIdentity, "studio-event-contract-42");
+var catalog = SemanticIdentityCatalog.Create(
+    applicationIdentity,
+    [],
+    [
+        new(commandAddress, commandIdentity, SemanticIdentityOrigin.Persisted),
+        new(eventAddress, eventSemanticIdentity, SemanticIdentityOrigin.Persisted)
+    ],
+    [
+        new(
+            eventAddress,
+            eventContractIdentity,
+            EventContractRevision.Initial,
+            SemanticIdentityOrigin.Persisted)
+    ]);
+var workspace = ScreenplayWorkspace.Create(
+    applicationIdentity,
+    "Project portfolio",
+    [document],
+    catalog);
+```
+
+`SemanticId.Create(SemanticKind, string)` separates every semantic kind. `EventContractId.Create(ApplicationIdentity,
+string)` also separates applications. Both external-key factories normalize keys to Unicode NFC and reject empty
+keys, malformed Unicode, control characters, and path-like values. Treat their canonical results as opaque.
+
+The explicit `ScreenplayWorkspace.Create` overload keeps `ApplicationIdentity` independent from the friendly ESM
+application name. A display-name change therefore changes the semantic and workspace revisions but not the catalog
+revision or assigned identities. Persisted assignments also survive document moves. Declaration renames preserve
+them only through the transaction's explicit `SemanticIdentityRename` and `EventContractIdentityRename` mappings;
+Screenplay never guesses continuity from similar names or locations. The original three-argument overload and the
+address/name-derived identity factories remain the compatibility path for existing source.
+
 Changes are pure proposals tied to both the workspace revision and identity-catalog revision:
 
 ```csharp
