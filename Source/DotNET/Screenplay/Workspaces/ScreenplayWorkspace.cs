@@ -64,35 +64,24 @@ public sealed class ScreenplayWorkspace
     public static ScreenplayWorkspace Create(
         string applicationName,
         ImmutableArray<WorkspaceDocument> documents,
-        SemanticIdentityCatalog identityCatalog)
-    {
-        try
-        {
-            var normalizedName = SemanticDocumentText.NormalizeRequiredUnicode(applicationName, "workspace application name");
-            if (identityCatalog is null || identityCatalog.Application != ApplicationIdentity.Create(normalizedName))
-            {
-                throw new InvalidScreenplayWorkspace("The workspace application name and identity catalog describe different applications.");
-            }
+        SemanticIdentityCatalog identityCatalog) =>
+        CreateCore(applicationName, null, documents, identityCatalog);
 
-            var ordered = AdmitDocuments(documents);
-            var compilation = Compile(normalizedName, ordered, identityCatalog);
-            if (compilation.Success)
-            {
-                identityCatalog = MaterializeCatalog(ordered, identityCatalog, compilation.Value!);
-                compilation = Compile(normalizedName, ordered, identityCatalog);
-            }
-
-            return CreateValidated(normalizedName, ordered, identityCatalog, compilation);
-        }
-        catch (InvalidScreenplayWorkspace)
-        {
-            throw;
-        }
-        catch (Exception exception) when (exception is InvalidSemanticContract or InvalidWorkspaceDocument)
-        {
-            throw new InvalidScreenplayWorkspace(exception.Message, exception);
-        }
-    }
+    /// <summary>
+    /// Creates an immutable workspace with an application identity independent from its friendly semantic name.
+    /// </summary>
+    /// <param name="applicationIdentity">The stable application identity.</param>
+    /// <param name="applicationName">The friendly application name supplied to semantic compilation.</param>
+    /// <param name="documents">The complete exact document set.</param>
+    /// <param name="identityCatalog">The authoritative identity catalog.</param>
+    /// <returns>The admitted workspace and its current derived compilation.</returns>
+    /// <exception cref="InvalidScreenplayWorkspace">The application, identity, documents, paths, or catalog are structurally invalid.</exception>
+    public static ScreenplayWorkspace Create(
+        ApplicationIdentity applicationIdentity,
+        string applicationName,
+        ImmutableArray<WorkspaceDocument> documents,
+        SemanticIdentityCatalog identityCatalog) =>
+        CreateCore(applicationName, applicationIdentity, documents, identityCatalog);
 
     /// <summary>
     /// Proposes one pure revision-bound transaction without mutating this workspace or touching a destination.
@@ -152,6 +141,42 @@ public sealed class ScreenplayWorkspace
                 document.Text))
         ],
         identityCatalog);
+
+    static ScreenplayWorkspace CreateCore(
+        string applicationName,
+        ApplicationIdentity? explicitApplicationIdentity,
+        ImmutableArray<WorkspaceDocument> documents,
+        SemanticIdentityCatalog identityCatalog)
+    {
+        try
+        {
+            var normalizedName = SemanticDocumentText.NormalizeRequiredUnicode(applicationName, "workspace application name");
+            var applicationIdentity = explicitApplicationIdentity ?? ApplicationIdentity.Create(normalizedName);
+            if (!applicationIdentity.IsSet || identityCatalog is null || identityCatalog.Application != applicationIdentity)
+            {
+                var subject = explicitApplicationIdentity.HasValue ? "application identity" : "application name";
+                throw new InvalidScreenplayWorkspace($"The workspace {subject} and identity catalog describe different applications.");
+            }
+
+            var ordered = AdmitDocuments(documents);
+            var compilation = Compile(normalizedName, ordered, identityCatalog);
+            if (compilation.Success)
+            {
+                identityCatalog = MaterializeCatalog(ordered, identityCatalog, compilation.Value!);
+                compilation = Compile(normalizedName, ordered, identityCatalog);
+            }
+
+            return CreateValidated(normalizedName, ordered, identityCatalog, compilation);
+        }
+        catch (InvalidScreenplayWorkspace)
+        {
+            throw;
+        }
+        catch (Exception exception) when (exception is InvalidSemanticContract or InvalidWorkspaceDocument)
+        {
+            throw new InvalidScreenplayWorkspace(exception.Message, exception);
+        }
+    }
 
     static CompilationResult<SemanticCompilation> Compile(
         string applicationName,

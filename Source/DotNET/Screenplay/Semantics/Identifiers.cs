@@ -132,6 +132,16 @@ public readonly record struct SemanticId
     }
 
     /// <summary>
+    /// Creates a deterministic semantic identity from an externally stable key.
+    /// </summary>
+    /// <param name="kind">The semantic artifact kind.</param>
+    /// <param name="stableKey">The stable, non-path external key.</param>
+    /// <returns>The deterministic identity.</returns>
+    /// <exception cref="InvalidSemanticContract">The kind or key is invalid.</exception>
+    public static SemanticId Create(SemanticKind kind, string stableKey) =>
+        new(IdentityHash.CreateExternalSemantic(kind, stableKey));
+
+    /// <summary>
     /// Parses a canonical semantic identity.
     /// </summary>
     /// <param name="value">The value to parse.</param>
@@ -169,6 +179,16 @@ public readonly record struct EventContractId
     /// Gets a value indicating whether the identity is set.
     /// </summary>
     public bool IsSet => _value is not null;
+
+    /// <summary>
+    /// Creates a deterministic event contract identity from an externally stable key.
+    /// </summary>
+    /// <param name="application">The stable application identity.</param>
+    /// <param name="stableKey">The stable, non-path external key.</param>
+    /// <returns>The deterministic event contract identity.</returns>
+    /// <exception cref="InvalidSemanticContract">The application or key is invalid.</exception>
+    public static EventContractId Create(ApplicationIdentity application, string stableKey) =>
+        new(IdentityHash.CreateExternalEvent(application, stableKey));
 
     /// <summary>
     /// Creates the deterministic legacy bootstrap identity for an event declaration.
@@ -384,6 +404,31 @@ static class IdentityHash
 
     internal static string CreateSemantic(SemanticAddress address) =>
         Create(IdentityText.SemanticPrefix, "semantic", checked((uint)address.Kind), address.Parts);
+
+    internal static string CreateExternalSemantic(SemanticKind kind, string stableKey)
+    {
+        if (!Enum.IsDefined(kind) || kind == SemanticKind.Unknown)
+        {
+            throw new InvalidSemanticContract($"Semantic kind '{(int)kind}' is unknown.");
+        }
+
+        var normalized = SemanticDocumentText.NormalizeStableKey(stableKey, "external stable identity key");
+        var part = SemanticAddressPart.Create(SemanticAddressPartKind.Discriminator, normalized);
+        return Create(IdentityText.SemanticPrefix, "semantic.external-stable-key", checked((uint)kind), [part]);
+    }
+
+    internal static string CreateExternalEvent(ApplicationIdentity application, string stableKey)
+    {
+        if (!application.IsSet)
+        {
+            throw new InvalidSemanticContract("An external event contract identity requires an application identity.");
+        }
+
+        var normalized = SemanticDocumentText.NormalizeStableKey(stableKey, "external stable identity key");
+        var applicationPart = SemanticAddressPart.Create(SemanticAddressPartKind.Application, application.ToString());
+        var keyPart = SemanticAddressPart.Create(SemanticAddressPartKind.Discriminator, normalized);
+        return Create(IdentityText.EventPrefix, "event-contract.external-stable-key", 0, [applicationPart, keyPart]);
+    }
 
     internal static string CreateEvent(ApplicationIdentity application, string eventName)
     {
