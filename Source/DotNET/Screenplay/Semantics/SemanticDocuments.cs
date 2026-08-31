@@ -222,16 +222,18 @@ public sealed class SemanticDocumentSet
 
 static class SemanticDocumentText
 {
-    internal static string NormalizeStableKey(string stableKey)
+    internal static string NormalizeStableKey(string stableKey) => NormalizeStableKey(stableKey, "stable document key");
+
+    internal static string NormalizeStableKey(string stableKey, string description)
     {
-        var normalized = NormalizeRequiredUnicode(stableKey, "stable document key");
+        var normalized = NormalizeRequiredUnicode(stableKey, description);
         if (string.Equals(normalized, ".", StringComparison.Ordinal) || string.Equals(normalized, "..", StringComparison.Ordinal) ||
             normalized.Contains('/') || normalized.Contains('\\') || IsDrivePath(normalized))
         {
-            throw new InvalidSemanticContract("A stable document key cannot contain path semantics.");
+            throw new InvalidSemanticContract($"A {description} cannot contain path semantics.");
         }
 
-        RequireNoControlCharacters(normalized, "stable document key");
+        RequireNoControlCharacters(normalized, description);
         return normalized;
     }
 
