@@ -138,3 +138,4 @@ if (result.Success)
 - [Printing and generating](printing.md) - the other direction, tree to text.
 - [Compiler and CLI](tool.md) - text to tree.
 - [Sub-language pluggability](sub-languages.md) - how projections and captures layer into the grammar.
+- [Build a renderer target](https://github.com/Cratis/Stage/blob/main/Documentation/guides/build-renderer-target.md) - turn the executable semantic model into deterministic framework code through Stage artifact plans.
