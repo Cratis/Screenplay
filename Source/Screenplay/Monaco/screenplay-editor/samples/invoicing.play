@@ -127,11 +127,30 @@ trigger DirectoryChanged
 theme Nordic
   compatible with Cratis.Components
 
+// A 'layout' is the application's base navigational look - the shell everything
+// else renders inside. An application has one and selects it from a 'ui profile'.
+// Its slots are the outermost a template can fit into, which makes the shell the
+// natural home of an application wide contribution point like Navigation.
+layout AppShell
+  topbar
+  navigation contributes Navigation
+  content
+  footer
+
+  arrangement flow
+    column
+      topbar height 56
+      row
+        navigation width 240
+        content grow
+      footer height 32
+
 ui profile Desktop
   target platform web
   target size regular
   packages
     Cratis.Components
+  layout AppShell
   theme Nordic
 
 module Invoicing
@@ -141,17 +160,28 @@ module Invoicing
     Registration, lifecycle and payment tracking of invoices.
     ```
 
-  layout MasterDetail
-    template
-      sidebar
-      main
+  // A 'screen template' is a reusable shape that goes inside the shell. 'fits slot'
+  // names the slot of its parent it fills - here the application layout's 'content' -
+  // and is the one rule that lets templates nest arbitrarily deep.
+  screen template MasterDetail
+    fits slot content
 
-  layout DashboardLayout
-    template
-      header
-      left
-      right
-      footer
+    sidebar
+    main
+
+  screen template Dashboard
+    fits slot content
+
+    header
+    left
+    right
+    footer
+
+  // A 'dialog template' is the same, for content that opens over the application.
+  // It declares no 'fits slot', because it occupies none.
+  dialog template RegisterInvoiceDialog
+    body
+    actions
 
   feature InvoiceManagement
     description "Registering and managing the lifecycle of invoices"
@@ -647,9 +677,12 @@ module Invoicing
         remove with InvoiceCancelled
 
       screen RegisterInvoiceScreen
-        title "Register invoice"
-        action RegisterInvoice
-          navigate to InvoiceList
+        template RegisterInvoiceDialog
+          body
+            title "Register invoice"
+          actions
+            action RegisterInvoice
+              navigate to InvoiceList
 
       screen InvoiceList
         title "Invoices"
@@ -719,7 +752,7 @@ module Invoicing
         data InvoiceDetailsReadModel via query GetInvoice by invoiceId
 
       screen InvoiceDetails
-        layout MasterDetail
+        template MasterDetail
           sidebar
             data InvoiceDetailsReadModel via query GetInvoice by invoiceId
             summary InvoiceDetailsReadModel
@@ -822,7 +855,7 @@ module Invoicing
           decrement totalCount
 
       screen InvoiceDashboard
-        layout DashboardLayout
+        template Dashboard
           header
             section title
               data InvoiceSummaryReadModel via query GetInvoiceSummary
