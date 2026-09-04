@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { fenceMap, indentOf } from './document-context';
+import { clauseKeywords } from './language';
 
 export interface PropertySymbol {
     name: string;
@@ -75,10 +76,16 @@ const attributeReasonPattern = /^([a-z_]\w*)\s+reason\s+"((?:[^"\\]|\\.)*)"\s*$/
 const queryParameterPattern =
     /^\s*(?:by|filter)\s+([a-z_]\w*)\s+([\w.]+(?:\[\])?\??)(?:\s+from\s+.+)?\s*$/;
 
+// A body line can only be a genuine PropertyLine when its name is not itself a reserved clause
+// keyword - 'authorize CanManageInvoice', 'produces InvoiceRegistered', 'tag audit', 'validate csharp'
+// and every 'concurrency' dimension ('sourceType Invoice', 'streamType Invoicing', ...) all have the
+// same two-token shape a property line does. The grammar's own keyword escape ('@authorize ...') is
+// the one way a real property may share a name with one of these, so only that form survives here.
 function propertiesIn(lines: string[], body: number[]): PropertySymbol[] {
     return body
         .map((index) => ({ index, match: lines[index].match(propertyPattern) }))
         .filter((entry): entry is { index: number; match: RegExpMatchArray } => entry.match !== null)
+        .filter(({ match }) => match[1].startsWith('@') || !clauseKeywords.includes(match[1]))
         .map(({ index, match }) => ({
             name: match[1].replace(/^@/, ''),
             type: match[2],
