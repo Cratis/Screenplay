@@ -23,17 +23,7 @@ public enum SemanticSliceKind
     /// <summary>
     /// A state view behavior.
     /// </summary>
-    StateView = 1,
-
-    /// <summary>
-    /// An automation behavior that reacts to events.
-    /// </summary>
-    Automation = 2,
-
-    /// <summary>
-    /// A translation behavior that transforms events to other streams.
-    /// </summary>
-    Translation = 3
+    StateView = 1
 }
 
 /// <summary>

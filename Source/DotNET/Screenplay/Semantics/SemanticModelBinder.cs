@@ -456,8 +456,6 @@ public sealed class SemanticModelBinder : ISemanticModelBinder
             {
                 SliceType.StateChange => SemanticSliceKind.StateChange,
                 SliceType.StateView => SemanticSliceKind.StateView,
-                SliceType.Automation => SemanticSliceKind.Automation,
-                SliceType.Translate => SemanticSliceKind.Translation,
                 _ => SemanticSliceKind.Unknown
             };
             if (kind == SemanticSliceKind.Unknown)
