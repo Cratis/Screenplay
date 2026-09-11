@@ -41,6 +41,16 @@ sealed class WorkspaceTransaction(ScreenplayWorkspace workspace)
             return Success(_workspace, []);
         }
 
+        var mappingOperations = request.Operations.OfType<UpdateProducedEventMappingSource>().ToArray();
+        if (mappingOperations.Length > 0 && (request.Operations.Length != 1 ||
+            !request.SemanticRenames.IsEmpty || !request.EventRenames.IsEmpty ||
+            !request.RetiredSemanticAddresses.IsEmpty || !request.RetiredEventAddresses.IsEmpty))
+        {
+            return WorkspaceTransactionOperations.Failure(
+                WorkspaceConflictKind.InvalidOperation,
+                "A produced-event mapping patch must be the only operation and cannot include identity migrations.");
+        }
+
         var candidates = _workspace.Documents.ToDictionary(document => document.Id);
         var targeted = new HashSet<DocumentId>();
         var semanticTargeted = new HashSet<DocumentId>();
@@ -160,6 +170,11 @@ sealed class WorkspaceTransaction(ScreenplayWorkspace workspace)
             ordered,
             migratedCatalog,
             compilation);
+        if (mappingOperations.Length == 1 && ProducedEventMappingPatch.Verify(mappingOperations[0], _workspace, candidate) is { } mappingConflict)
+        {
+            return WorkspaceTransactionOperations.Failure(mappingConflict);
+        }
+
         return Success(
             candidate,
             WorkspaceTransactionOperations.WriteEntries(_workspace.Documents, candidate.Documents));
