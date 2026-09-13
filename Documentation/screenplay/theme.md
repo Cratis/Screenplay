@@ -43,7 +43,7 @@ theme Midnight
 
 A `ui profile` selecting a theme not declared compatible with one of the profile's own packages gets a compile-time warning, the same class of diagnostic an ambiguous or unknown name already gets:
 
-```
+```text
 Theme 'Midnight' is not declared compatible with package 'PrimeReact' -
 components from that package may not receive Midnight's styling
 ```

@@ -18,6 +18,7 @@ EBNF is a notation for formally describing syntax. Here are the key elements use
 | `,` | Sequence | `"a", "b"` matches "a" followed by "b" |
 
 **Special Symbols:**
+
 - `NL` - Newline
 - `INDENT` - Increased indentation level
 - `DEDENT` - Decreased indentation level
@@ -507,6 +508,7 @@ projection Order => OrderReadModel
 ```
 
 This projection uses:
+
 - Projection declaration
 - Every block with exclude children at the projection level
 - Multiple from blocks with keys

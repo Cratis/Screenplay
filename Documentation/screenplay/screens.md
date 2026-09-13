@@ -139,7 +139,7 @@ Any trailing part of the scope will do: `Queue.All`, `Preparation.Queue.All`, or
 
 If a bare name matches more than one declaration at the same depth — two sibling slices both declaring `All`, referenced from a third — the compiler **warns and names the candidates** rather than picking one:
 
-```
+```text
 Ambiguous query 'All' - it matches 2 declarations equally well
 (Invoicing.Preparation.Queue, Invoicing.Preparation.Deviations); qualify it to say which
 ```
