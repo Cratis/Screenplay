@@ -25,7 +25,7 @@ if (compilation.Result.Success)
 }
 ```
 
-The merge happens *before* anything is resolved, and that is the entire point. An event declared in one file and produced in another resolves. A concept declared once at the root is available to every slice. A policy an `authorize` names is found wherever it lives.
+The merge happens _before_ anything is resolved, and that is the entire point. An event declared in one file and produced in another resolves. A concept declared once at the root is available to every slice. A policy an `authorize` names is found wherever it lives.
 
 Compare that with [`CompileIn`](tool.md#use-the-compiler-as-a-library), which compiles every file as a document in its own right. Given a folder where `Register.play` declares `InvoiceRegistered` and `Submit.play` produces it, `CompileIn` reports:
 
@@ -203,8 +203,8 @@ before/after documents but performs no file-system operation; CLI and Studio dec
 Document key renames preserve `DocumentId` explicitly. Removing declarations requires explicit semantic and event
 retirements, so deleting source cannot silently erase durable identity continuity.
 
-This transaction layer deliberately operates on whole documents. Single-file↔folder restructuring builds on
-top of it rather than introducing a second mutation contract - and so does the first semantic patch below.
+This transaction layer supports whole documents and bounded semantic patches. Single-file↔folder restructuring
+builds on top of it rather than introducing a second mutation contract.
 
 ### Patch a slice description by its stable semantic identity
 
@@ -247,8 +247,61 @@ existing **single-line quoted** slice description; it fails typed rather than fa
   operations reach it.
 
 The stale-revision and stale-catalog-revision gates run before any operation is even inspected, exactly as they
-do for whole-document operations. This is the first semantic patch; broadening it to other fields or to
-multi-line descriptions is future work, not something this operation attempts today.
+do for whole-document operations. Multi-line descriptions remain outside this operation.
+
+### Change one produced-event mapping source
+
+To change which command property supplies an existing event property, use `UpdateProducedEventMappingSource`.
+You address declarations, not text occurrences: even when a comment or another command repeats the same mapping,
+only the selected right-hand source changes. Start with a compiled workspace containing one explicit mapping such
+as `name = name`, and a compatible `displayName` property on that command:
+
+```csharp
+var slice = workspace.Compilation.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single();
+var command = slice.Commands.Single(value => value.Name == "RegisterProject");
+var producedEvent = slice.Events.Single(value => value.Name == "ProjectRegistered");
+var result = workspace.Propose(new WorkspaceTransactionRequest
+{
+    ExpectedRevision = workspace.Revision,
+    ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
+    Operations =
+    [
+        new UpdateProducedEventMappingSource
+        {
+            Command = command.Id,
+            ProducedEvent = producedEvent.Id,
+            TargetProperty = producedEvent.Properties.Single(value => value.Name == "name").Id,
+            ExpectedSourceCommandProperty = command.Properties.Single(value => value.Name == "name").Id,
+            NewSourceCommandProperty = command.Properties.Single(value => value.Name == "displayName").Id
+        }
+    ]
+});
+```
+
+`ProducedEvent` is the event declaration's **`SemanticId`**, not its persisted **`EventContractId`**. Both source
+properties must belong to the addressed command; the target must belong to the addressed event. Their resolved
+value types and collection shapes must match the target, and an optional source cannot fill a required target.
+Exactly one production of that event must exist on the command, and it must be unconditional. The mapping must
+already be explicit and use a direct property source. Literals, computed or nested expressions, inferred mappings,
+and repeated productions are not editable through this operation.
+
+Submit this operation **alone**, without document operations, other semantic patches, or identity migrations.
+Stale workspace and catalog checks still run first. Unknown identities reject with `SemanticIdNotFound`, wrong
+owners, incompatible types, unsupported grammar, ambiguous source ownership, or unproven equivalence with
+`UnsupportedSemanticField`, and a changed expected source with `SemanticFieldValueDrift`. Mixed operations or
+identity migrations reject with `InvalidOperation`; an unbindable workspace rejects with `CompilationFailed`.
+Every rejection returns neither a candidate workspace nor a write plan.
+
+A successful proposal preserves the UTF-8 BOM, comments, whitespace, line endings, Unicode, and every byte outside
+the parser-owned source range. It passes the normal compile/migrate/recompile pipeline, compares the complete
+candidate semantics against an independent one-mapping graph edit, and proves canonical print/recompile semantic
+equivalence without printing over authored source. Identities, destinations, conditions, and specification
+expectations remain unchanged. Selecting the current source is an admitted no-op with no write entries.
+
+This changes real declarative behavior, not code attachments. Run your semantic specifications on the candidate:
+an expectation for the previous source may now fail, and Screenplay does **not** rewrite it to make it pass.
+This bounded operation does not complete general declarative patching or provide a file-system publisher; use the
+[write plan](#propose-revision-safe-workspace-changes) to review exact changes before your host publishes them.
 
 ## Write an application out as a folder
 
@@ -290,12 +343,12 @@ Invoicing/
         Archive.play                                slice StateChange Archive
 ```
 
-| File | Holds |
-|---|---|
-| `application.play` | Everything that belongs to the application as a whole rather than to any one module: `domain`, `import`, `concept`, `type`, `policy`, `persona`, `authentication` and `seed`. There is one, always, at the root. |
-| `<Module>/<Module>.play` | The module's own `description` and its `screen template` / `dialog template` declarations - not its features. |
-| `<Module>/…/<Feature>/<Feature>.play` | The feature's own `description` - not its slices or sub features. |
-| `<Module>/…/<Feature>/<Slice>/<Slice>.play` | One slice, whole. |
+| File                                        | Holds                                                                                                                                                                                                            |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `application.play`                          | Everything that belongs to the application as a whole rather than to any one module: `domain`, `import`, `concept`, `type`, `policy`, `persona`, `authentication` and `seed`. There is one, always, at the root. |
+| `<Module>/<Module>.play`                    | The module's own `description` and its `screen template` / `dialog template` declarations - not its features.                                                                                                    |
+| `<Module>/…/<Feature>/<Feature>.play`       | The feature's own `description` - not its slices or sub features.                                                                                                                                                |
+| `<Module>/…/<Feature>/<Slice>/<Slice>.play` | One slice, whole.                                                                                                                                                                                                |
 
 Every one of those is a complete `.play` document. A slice file restates the module and feature it belongs to, because that is what the language needs in order to place a slice:
 
@@ -313,15 +366,15 @@ Nothing is written twice. The restated `module Invoicing` in a slice file carrie
 
 Merging follows a single rule: **the documents of a folder are one document**. From that everything else follows.
 
-| Declaration | What the merge does |
-|---|---|
-| `module`, `feature` | **Combined by name.** Every file naming `module Invoicing` is talking about the same module. This is what lets a slice live in its own file and still belong to its feature. |
-| `slice`, `screen template`, `dialog template` | Accumulated. A second file declaring one that already exists is an error. |
-| `concept`, `type`, `policy`, `persona` | Accumulated. Concepts and types share one namespace, so a `type` cannot take a `concept`'s name. A second file declaring one that already exists is an error. |
-| `domain`, `authentication` | At most one for the whole folder. A second file declaring one is an error. |
-| `import` | Merged and de-duplicated. An import declared anywhere applies to the whole application, exactly as it does within a single document. |
-| `seed` | Accumulated, the same way multiple `seed` blocks accumulate within one document. |
-| `description` on a module or feature | The first one given wins. A second, different one is a warning - only the file that owns the folder is expected to describe it. |
+| Declaration                                   | What the merge does                                                                                                                                                          |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `module`, `feature`                           | **Combined by name.** Every file naming `module Invoicing` is talking about the same module. This is what lets a slice live in its own file and still belong to its feature. |
+| `slice`, `screen template`, `dialog template` | Accumulated. A second file declaring one that already exists is an error.                                                                                                    |
+| `concept`, `type`, `policy`, `persona`        | Accumulated. Concepts and types share one namespace, so a `type` cannot take a `concept`'s name. A second file declaring one that already exists is an error.                |
+| `domain`, `authentication`                    | At most one for the whole folder. A second file declaring one is an error.                                                                                                   |
+| `import`                                      | Merged and de-duplicated. An import declared anywhere applies to the whole application, exactly as it does within a single document.                                         |
+| `seed`                                        | Accumulated, the same way multiple `seed` blocks accumulate within one document.                                                                                             |
+| `description` on a module or feature          | The first one given wins. A second, different one is a warning - only the file that owns the folder is expected to describe it.                                              |
 
 A duplicate is reported **only when the same name is declared in more than one file**, and it always names both ends - the file the name was already claimed in, and the location of the file that tried to claim it again:
 
@@ -331,7 +384,7 @@ second.play(3,5): error PLAY0173: Duplicate slice 'Register' in feature 'Invoice
 second.play(1,1): error PLAY0172: The folder already declares a domain in 'first.play' - a folder compiles to one application, which can have at most one
 ```
 
-Duplicates *within* one file are left to the single document compiler, which already has its own rules for them. Compiling one document behaves exactly as it always has.
+Duplicates _within_ one file are left to the single document compiler, which already has its own rules for them. Compiling one document behaves exactly as it always has.
 
 ### Why `import` still means what it meant
 
