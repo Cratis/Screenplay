@@ -39,6 +39,7 @@ from UserRegistered
 ```
 
 Supported literal types:
+
 - **Boolean**: `true`, `false`
 - **String**: `"text"` (double quotes)
 - **Number**: `42`, `3.14`
@@ -84,6 +85,7 @@ from PersonRegistered
 ```
 
 Template syntax:
+
 - Wrap in backticks: `` `template` ``
 - Use `${expression}` for substitutions
 - Can combine multiple expressions

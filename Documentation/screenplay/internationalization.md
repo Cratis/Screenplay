@@ -6,7 +6,7 @@ User-facing text — validation messages, screen titles, labels — should not b
 
 By convention `MySystem.play` pairs with `MySystem.<locale>.strings` — one file per locale:
 
-```
+```text
 invoicing.play
 invoicing.en.strings
 invoicing.nb.strings
@@ -14,7 +14,7 @@ invoicing.nb.strings
 
 The format is line based, with dotted keys and `//` comments:
 
-```
+```text
 // English strings
 invoices.title      = "Invoices"
 invoices.registered = "Invoice {number} registered"

@@ -31,7 +31,7 @@ readmodel AccountBalance
 
 A read model never declares what composes it. Whatever builds it names it, with the same `=>` a projection uses:
 
-```
+```text
 projection Deposits => AccountBalance     ← a projection builds it
 reducer    Balance  => AccountBalance     ← or a reducer does, never both
 ```
