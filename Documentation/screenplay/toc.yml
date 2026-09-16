@@ -76,6 +76,8 @@
   href: printing.md
 - name: Interoperability and extensions
   href: interoperability.md
+- name: Workspace transport
+  href: workspace-transport.md
 - name: Visitors and traversal
   href: visitors.md
 - name: Syntax tree compatibility
