@@ -54,7 +54,7 @@ Block           = EveryBlock
 
 EveryBlock      = "every", NL,
                   INDENT,
-                    [ "no", "automap", NL ],
+                    [ "automap" | "no", "automap", NL ],
                     { MappingLine },
                     [ "exclude", "children", NL ],
                   DEDENT ;
@@ -127,11 +127,11 @@ RemoveWithJoinBlock
 KeyDecl         = "key", Expr, NL ;
 
 CompositeKeyDecl
-               = "key", TypeRef, "{", NL,
+               = "key", TypeRef, [ "{" ], NL,
                   INDENT,
                     KeyPart, { NL, KeyPart }, NL?,
                   DEDENT,
-                 "}", NL ;
+                 [ "}", NL ] ;
 
 KeyPart         = Ident, "=", Expr ;
 
@@ -162,7 +162,8 @@ Expr            = Template
                 | Path ;
 
 DollarExpr      = "$eventSourceId"
-                | "$eventContext", ".", Ident ;
+                | "$eventContext", ".", Ident
+                | "$causedBy", ".", Ident ;
 
 Path            = Ident, { ".", Ident } ;
 
@@ -366,11 +367,11 @@ Define instance keys:
 ```ebnf
 KeyDecl = "key", Expr, NL ;
 
-CompositeKeyDecl = "key", TypeRef, "{", NL,
+CompositeKeyDecl = "key", TypeRef, [ "{" ], NL,
                    INDENT,
                      KeyPart, { NL, KeyPart }, NL?,
                    DEDENT,
-                   "}", NL ;
+                   [ "}", NL ] ;
 
 KeyPart = Ident, "=", Expr ;
 ```

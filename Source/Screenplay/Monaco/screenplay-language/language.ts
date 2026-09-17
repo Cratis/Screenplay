@@ -14,6 +14,10 @@ export const languageExtensionPoint: languages.ILanguageExtensionPoint = {
     mimetypes: ['text/x-screenplay'],
 };
 
+// Every word the parser dispatches on at the top level, inside a module, or inside a slice.
+// `for_LanguageService.when_comparing_keywords_against_the_parsers` derives that set from
+// ScreenplayParser and SliceParser and fails when this list has drifted from it, so a construct
+// added to the compiler cannot silently lose its highlighting and completion.
 export const constructKeywords = [
     'domain',
     'import',
@@ -24,14 +28,22 @@ export const constructKeywords = [
     'authentication',
     'module',
     'layout',
+    'theme',
+    'ui',
     'feature',
     'slice',
     'event',
     'command',
     'query',
+    'projection',
+    'capture',
     'reaction',
+    'reducer',
     'trigger',
     'screen',
+    'dialog',
+    'form',
+    'contribute',
     'constraint',
     'specification',
     'seed',
@@ -40,6 +52,7 @@ export const constructKeywords = [
 export const clauseKeywords = [
     'description',
     'template',
+    'profile',
     'require',
     'authenticated',
     'role',
