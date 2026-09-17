@@ -139,3 +139,31 @@ public record RemoveWithSyntax(
 /// <param name="Key">The optional key <see cref="ExpressionSyntax"/>.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record RemoveViaJoinSyntax(string Event, ExpressionSyntax? Key, SourceLocation Location) : ProjectionBlockSyntax(Location);
+
+/// <summary>
+/// Represents a <c>variant</c> block - one of several mutually exclusive named read models sharing the
+/// enclosing projection's logical identity.
+/// </summary>
+/// <param name="Name">The name of the variant, which also identifies the read model it produces.</param>
+/// <param name="EntersOn">The <see cref="ProjectionEntersOnSyntax">events</see> that activate this variant.</param>
+/// <param name="Blocks">The <see cref="ProjectionBlockSyntax">blocks</see> making up the variant's own body.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+/// <remarks>
+/// A block declared at the projection level, outside every <c>variant</c>, is a handler shared by every
+/// variant that has the property it maps - there is no separate keyword for that; being outside a
+/// <c>variant</c> block is what makes it global. Entering one variant removes the entity from every other
+/// variant of the same identity; the engine, not the author, maintains that exclusion.
+/// </remarks>
+public record ProjectionVariantSyntax(
+    string Name,
+    IEnumerable<ProjectionEntersOnSyntax> EntersOn,
+    IEnumerable<ProjectionBlockSyntax> Blocks,
+    SourceLocation Location) : ProjectionBlockSyntax(Location);
+
+/// <summary>
+/// Represents a single <c>enters on</c> declaration within a <c>variant</c> block - the event that activates it.
+/// </summary>
+/// <param name="Event">The name of the event.</param>
+/// <param name="Key">The optional inline key <see cref="ExpressionSyntax"/>.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record ProjectionEntersOnSyntax(string Event, ExpressionSyntax? Key, SourceLocation Location) : SyntaxNode(Location);

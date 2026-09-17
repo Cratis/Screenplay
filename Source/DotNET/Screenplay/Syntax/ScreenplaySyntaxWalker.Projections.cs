@@ -77,6 +77,9 @@ public abstract partial class ScreenplaySyntaxWalker
             case RemoveViaJoinSyntax removeViaJoin:
                 VisitRemoveViaJoin(removeViaJoin);
                 break;
+            case ProjectionVariantSyntax variant:
+                VisitProjectionVariant(variant);
+                break;
             default:
                 VisitNode(syntax);
                 break;
@@ -241,6 +244,39 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The <see cref="RemoveViaJoinSyntax"/> to visit.</param>
     public virtual void VisitRemoveViaJoin(RemoveViaJoinSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        if (syntax.Key is not null)
+        {
+            VisitExpression(syntax.Key);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="ProjectionVariantSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ProjectionVariantSyntax"/> to visit.</param>
+    public virtual void VisitProjectionVariant(ProjectionVariantSyntax syntax)
+    {
+        VisitNode(syntax);
+
+        foreach (var entersOn in syntax.EntersOn)
+        {
+            VisitProjectionEntersOn(entersOn);
+        }
+
+        foreach (var block in syntax.Blocks)
+        {
+            VisitProjectionBlock(block);
+        }
+    }
+
+    /// <summary>
+    /// Visits an <see cref="ProjectionEntersOnSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ProjectionEntersOnSyntax"/> to visit.</param>
+    public virtual void VisitProjectionEntersOn(ProjectionEntersOnSyntax syntax)
     {
         VisitNode(syntax);
 

@@ -96,6 +96,9 @@ internal static partial class ProjectionParser
 
                     key = ParseKey(context, line);
                     break;
+                case "variant":
+                    blocks.Add(ParseProjectionVariant(context, line));
+                    break;
                 default:
                     if (ParseBlock(context, line, nestedScope: false) is { } block)
                     {
@@ -104,6 +107,14 @@ internal static partial class ProjectionParser
 
                     break;
             }
+        }
+
+        foreach (var duplicate in blocks.OfType<ProjectionVariantSyntax>()
+            .GroupBy(variant => variant.Name, StringComparer.Ordinal)
+            .Where(group => group.Count() > 1)
+            .SelectMany(group => group.Skip(1)))
+        {
+            context.Error(DiagnosticCodes.DuplicateProjectionVariantName, $"Duplicate variant '{duplicate.Name}' - a variant name is declared once", duplicate.Location);
         }
 
         if (blocks.Count == 0)
@@ -355,6 +366,76 @@ internal static partial class ProjectionParser
         return new RemoveWithSyntax(Unescape(match.Groups[1].Value), key, parentKey, line.Location);
     }
 
+    /// <summary>
+    /// Parses a <c>variant</c> block from its already consumed header line.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
+    /// <param name="line">The consumed <see cref="SourceLine"/> holding the <c>variant</c> header.</param>
+    /// <returns>The parsed <see cref="ProjectionVariantSyntax"/>.</returns>
+    static ProjectionVariantSyntax ParseProjectionVariant(ParserContext context, SourceLine line)
+    {
+        var match = VariantHeaderRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidProjectionVariantDeclaration, $"Invalid variant declaration '{line.Content}' - expected 'variant <Name>'", line.Location);
+            context.SkipBlock(line.Indent);
+            return new(FirstWord(line.Content), [], [], line.Location);
+        }
+
+        var name = Unescape(match.Groups[1].Value);
+        var entersOn = new List<ProjectionEntersOnSyntax>();
+        var blocks = new List<ProjectionBlockSyntax>();
+
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            if (FirstWord(child.Content) == "enters")
+            {
+                entersOn.Add(ParseEntersOn(context, child));
+            }
+            else if (FirstWord(child.Content) == "variant")
+            {
+                context.Error(DiagnosticCodes.NestedProjectionVariantNotAllowed, "A variant cannot be declared inside another variant", child.Location);
+                context.SkipBlock(child.Indent);
+            }
+            else if (ParseBlock(context, child, nestedScope: false) is { } block)
+            {
+                blocks.Add(block);
+            }
+        }
+
+        if (entersOn.Count == 0)
+        {
+            context.Error(DiagnosticCodes.ProjectionVariantWithoutEntersOn, $"Variant '{name}' must declare at least one 'enters on' event", line.Location);
+        }
+
+        return new(name, entersOn, blocks, line.Location);
+    }
+
+    /// <summary>
+    /// Parses an <c>enters on</c> line from within a <c>variant</c> block.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
+    /// <param name="line">The <see cref="SourceLine"/> holding the <c>enters on</c> declaration.</param>
+    /// <returns>The parsed <see cref="ProjectionEntersOnSyntax"/>.</returns>
+    static ProjectionEntersOnSyntax ParseEntersOn(ParserContext context, SourceLine line)
+    {
+        var match = EntersOnRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidEntersOnDeclaration, $"Invalid 'enters on' declaration '{line.Content}' - expected 'enters on <EventType> [key <expression>]'", line.Location);
+            context.SkipBlock(line.Indent);
+            return new(string.Empty, null, line.Location);
+        }
+
+        var eventName = Unescape(match.Groups[1].Value);
+        var key = match.Groups[2].Success
+            ? ExpressionParser.ParseProjectionExpression(context, match.Groups[2].Value, line.Location)
+            : null;
+
+        return new(eventName, key, line.Location);
+    }
+
     static ClearWithSyntax ParseClearWith(ParserContext context, SourceLine line)
     {
         var match = ClearWithRegex().Match(line.Content);
@@ -523,6 +604,12 @@ internal static partial class ProjectionParser
 
     [GeneratedRegex(@"^clear\s+with\s+(@?[\w.]+)$", RegexOptions.None, 1000)]
     private static partial Regex ClearWithRegex();
+
+    [GeneratedRegex(@"^variant\s+(@?[\w.]+)\s*$", RegexOptions.None, 1000)]
+    private static partial Regex VariantHeaderRegex();
+
+    [GeneratedRegex(@"^enters\s+on\s+(@?[\w.]+)(?:\s+key\s+(.+))?$", RegexOptions.None, 1000)]
+    private static partial Regex EntersOnRegex();
 
     [GeneratedRegex(@"^(increment|decrement|count|clear)\s+(@?[$\w.]+)$", RegexOptions.None, 1000)]
     private static partial Regex KeywordMappingRegex();

@@ -98,6 +98,28 @@ public partial class ScreenplayPrinter
                     ? $"remove via join on {removeViaJoin.Event}"
                     : $"remove via join on {removeViaJoin.Event} key {ScreenplaySyntaxText.Expression(removeViaJoin.Key)}");
                 break;
+            case ProjectionVariantSyntax variant:
+                WriteProjectionVariant(writer, variant);
+                break;
+        }
+    }
+
+    void WriteProjectionVariant(ScreenplayWriter writer, ProjectionVariantSyntax variant)
+    {
+        writer.Line($"variant {variant.Name}");
+        using (writer.Indent())
+        {
+            foreach (var entersOn in variant.EntersOn)
+            {
+                writer.Line(entersOn.Key is null
+                    ? $"enters on {entersOn.Event}"
+                    : $"enters on {entersOn.Event} key {ScreenplaySyntaxText.Expression(entersOn.Key)}");
+            }
+
+            foreach (var block in variant.Blocks)
+            {
+                WriteProjectionBlock(writer, block);
+            }
         }
     }
 
