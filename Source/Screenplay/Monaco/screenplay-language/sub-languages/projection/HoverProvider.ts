@@ -214,6 +214,8 @@ export class HoverProvider implements languages.HoverProvider {
             'by': 'Used with **add** or **subtract** to specify the value.',
             'id': 'Used with **children** to specify the child identifier expression.',
             'no': 'Used with **no automap** to disable automatic property mapping.',
+            'variant': '**variant** *<Name>*\n\nDeclares one of several mutually exclusive named read models sharing the projection\'s identity. Entering one variant removes the entity from every other variant of the same projection.',
+            'enters': '**enters on** *<EventType>*\n\nDeclares the event that activates this variant - the only event allowed to create it. Every other event the variant subscribes to is update-only.',
         };
 
         return keywords[word] || null;

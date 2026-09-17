@@ -3,6 +3,7 @@
 
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Projections;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -31,9 +32,11 @@ internal static class ScreenplayValidator
             .ToHashSet();
         var knownPolicies = application.Policies.Select(policy => policy.Name).ToHashSet();
 
-        // A read model is whatever a builder names with '=>', plus anything declared on its own.
+        // A read model is whatever a builder names with '=>', plus anything declared on its own. A
+        // projection with variants produces no read model of its own name - each variant is its own,
+        // named by the variant instead.
         var knownReadModels = slices.SelectMany(slice => slice.Projections)
-            .Select(projection => projection.ReadModel ?? projection.Name)
+            .SelectMany(ProjectionBuiltReadModelNames)
             .Concat(slices.SelectMany(slice => slice.Reducers ?? []).Select(reducer => reducer.ReadModel))
             .Concat(slices.SelectMany(slice => slice.ReadModels ?? []).Select(readModel => readModel.Name))
             .Concat(application.Imports.Select(import => import.Name))
@@ -284,7 +287,7 @@ internal static class ScreenplayValidator
         }
 
         var builders = slices.SelectMany(slice => slice.Projections
-                .Select(projection => (Name: projection.ReadModel ?? projection.Name, projection.Location)))
+                .SelectMany(projection => ProjectionBuiltReadModelNames(projection).Select(name => (Name: name, projection.Location))))
             .Concat(slices.SelectMany(slice => (slice.Reducers ?? [])
                 .Select(reducer => (Name: reducer.ReadModel, reducer.Location))));
 
@@ -320,6 +323,19 @@ internal static class ScreenplayValidator
 
     static IEnumerable<FeatureSyntax> AllFeatures(FeatureSyntax feature) =>
         new[] { feature }.Concat(feature.Features.SelectMany(AllFeatures));
+
+    /// <summary>
+    /// Gets the names of the read model(s) a projection builds. A projection with <c>variant</c> blocks builds
+    /// one read model per variant, named after the variant, rather than one named after the projection itself -
+    /// the projection's own name identifies the shared logical identity, not a read model.
+    /// </summary>
+    /// <param name="projection">The <see cref="ProjectionSyntax"/> to inspect.</param>
+    /// <returns>The read model name(s) the projection builds.</returns>
+    static IEnumerable<string> ProjectionBuiltReadModelNames(ProjectionSyntax projection)
+    {
+        var variants = projection.Blocks.OfType<ProjectionVariantSyntax>().ToList();
+        return variants.Count > 0 ? variants.Select(variant => variant.Name) : [projection.ReadModel ?? projection.Name];
+    }
 
     static void ValidateTypes(ApplicationSyntax application, HashSet<string> knownTypes, ParserContext context)
     {

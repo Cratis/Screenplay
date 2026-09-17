@@ -72,6 +72,19 @@ export class CompletionProvider implements languages.CompletionItemProvider {
             this.addEventSequenceCompletions(suggestions, context);
         } else if (this.isAfterKeyword(context, 'from') || this.isAfterKeyword(context, 'every')) {
             this.addEventTypeCompletions(suggestions, context);
+        } else if (/\benters\s+on\s+\w*$/.test(context.textBeforeCursor)) {
+            this.addEventTypeCompletions(suggestions, context);
+        } else if (/\benters\s+\w*$/.test(context.textBeforeCursor)) {
+            suggestions.push({
+                label: 'on',
+                kind: 14, // Keyword
+                insertText: 'on ',
+                documentation: 'Declares the event that activates this variant.',
+                detail: 'enters on <EventType>',
+                range: this.getRangeForWord(context),
+            });
+        } else if (this.isAfterKeyword(context, 'variant')) {
+            this.addVariantNameCompletions(suggestions, context);
         } else if (this.isAfterKeyword(context, 'key')) {
             this.addKeyCompletions(suggestions, context, activeSchema);
         } else if (this.isAfterKeyword(context, 'parent')) {
@@ -376,10 +389,28 @@ export class CompletionProvider implements languages.CompletionItemProvider {
         }
     }
 
+    private addVariantNameCompletions(suggestions: languages.CompletionItem[], context: CompletionContext): void {
+        // After "variant ", suggest read model names - a variant names the read model it produces.
+        this.readModels.forEach((readModel) => {
+            if (!context.currentWord || readModel.displayName.toLowerCase().startsWith(context.currentWord.toLowerCase())) {
+                suggestions.push({
+                    label: readModel.displayName,
+                    kind: 6, // Class
+                    insertText: readModel.displayName,
+                    documentation: `Read model: ${readModel.displayName} (${readModel.identifier})`,
+                    detail: readModel.identifier,
+                    range: this.getRangeForWord(context),
+                });
+            }
+        });
+    }
+
     private addStatementCompletions(suggestions: languages.CompletionItem[], context: CompletionContext, activeSchema?: JsonSchema): void {
         // Add all statement keywords
         const keywords = [
             { label: 'sequence', insertText: 'sequence ', documentation: 'Specify which event sequence to use for this projection', detail: 'sequence <event-sequence-id>' },
+            { label: 'variant', insertText: 'variant ', documentation: 'Declare one of several mutually exclusive named read models sharing this projection\'s identity', detail: 'variant <Name>' },
+            { label: 'enters on', insertText: 'enters on ', documentation: 'Declare the event that activates a variant', detail: 'enters on <EventType>' },
             { label: 'from', insertText: 'from ', documentation: 'Handle specific event types', detail: 'from <EventType>' },
             { label: 'all', insertText: 'all', documentation: 'Subscribe to all event types in the system — mappings run for every event system-wide, regardless of explicit from blocks', detail: 'all' },
             { label: 'every', insertText: 'every', documentation: 'Handle all events for automatic mapping (only events explicitly subscribed to via from blocks)', detail: 'every' },

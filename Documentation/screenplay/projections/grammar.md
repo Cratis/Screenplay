@@ -50,7 +50,16 @@ Block           = EveryBlock
                 | ChildrenBlock
                 | NestedBlock
                 | RemoveWithBlock
-                | RemoveWithJoinBlock ;
+                | RemoveWithJoinBlock
+                | VariantBlock ;
+
+VariantBlock    = "variant", Ident, NL,
+                  INDENT,
+                    EntersOnDecl, { EntersOnDecl },
+                    { ProjDirective | Block },
+                  DEDENT ;
+
+EntersOnDecl    = "enters", "on", TypeRef, [ KeyInline ], NL ;
 
 EveryBlock      = "every", NL,
                   INDENT,
@@ -360,6 +369,22 @@ RemoveWithBlock = "remove", "with", TypeRef, [ KeyInline ], NL,
 RemoveWithJoinBlock = "remove", "via", "join", "on", TypeRef, [ KeyInline ], NL ;
 ```
 
+### Variant Block
+
+Declare one of several mutually exclusive named read models sharing the projection's identity - see [Variants](variants.md):
+
+```ebnf
+VariantBlock = "variant", Ident, NL,
+               INDENT,
+                 EntersOnDecl, { EntersOnDecl },
+                 { ProjDirective | Block },
+               DEDENT ;
+
+EntersOnDecl = "enters", "on", TypeRef, [ KeyInline ], NL ;
+```
+
+**Note:** A variant must declare at least one `enters on` - the event(s) allowed to create it. Every other event a variant subscribes to, and every block declared at the projection level outside any `variant`, is update-only for that variant: it can bring an already-active instance up to date, but never create or resurrect one. A `variant` cannot itself contain another `variant`.
+
 ### Key Declarations
 
 Define instance keys:
@@ -455,6 +480,10 @@ Beyond the grammar, these semantic rules apply:
 7. Composite keys must contain at least one field
 8. Parent keys required in children's from and remove blocks
 9. `nested` blocks must contain at least one `from` directive
+10. `variant` blocks must declare at least one `enters on` event
+11. `variant` blocks cannot nest inside one another
+12. Two variants of the same projection cannot share a name
+13. A projection-level (shared) handler must map only properties every variant that has them declares - a variant lacking a mapped property is a declaration error
 
 ## Formatting Conventions
 
@@ -519,5 +548,6 @@ This projection uses:
 
 ## See Also
 
+- [Variants](variants.md) - Mutually exclusive named read models sharing one projection identity
 - [Expressions](expressions) - Understanding expression syntax
 - All other topic pages for specific features described in the grammar

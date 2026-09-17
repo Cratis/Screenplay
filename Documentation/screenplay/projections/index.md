@@ -53,6 +53,7 @@ projection InvoiceDetails => InvoiceDetailsReadModel
 | `increment` / `decrement <property>` | Counters maintained per event. |
 | `clear <property>` | Removes the value the property holds. |
 | `$eventContext.occurred` | The timestamp of the event being projected. |
+| `variant <Name>` / `enters on <EventType>` | One of several mutually exclusive named read models sharing the projection's identity. |
 
 An aggregating projection using counters:
 
@@ -104,5 +105,6 @@ Declare as many as the behavior needs. Each names its own read model, and [print
 - [Children](grammar.md#children-block) - Define nested collections
 - [Nested Objects](grammar.md#nested-block) - Single nullable child objects
 - [Removal](removal.md) - Remove projection instances based on events
+- [Variants](variants.md) - Mutually exclusive named read models sharing one projection identity
 - [Expressions](grammar.md#expressions) - Understanding expression syntax
 - [Grammar (EBNF)](grammar.md) - Complete formal grammar specification

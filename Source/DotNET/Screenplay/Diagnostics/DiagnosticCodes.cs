@@ -1484,4 +1484,31 @@ public static class DiagnosticCodes
     /// A specification step declares its event-source assertion more than once.
     /// </summary>
     public const string DuplicateSpecificationEventSource = "PLAY0276";
+
+    // Projection variants - mutually exclusive named read models sharing one projection identity.
+
+    /// <summary>
+    /// A <c>variant</c> line is not <c>variant &lt;Name&gt;</c>.
+    /// </summary>
+    public const string InvalidProjectionVariantDeclaration = "PLAY0277";
+
+    /// <summary>
+    /// A variant declares no <c>enters on</c> event, so nothing ever activates it.
+    /// </summary>
+    public const string ProjectionVariantWithoutEntersOn = "PLAY0278";
+
+    /// <summary>
+    /// An <c>enters on</c> line is not <c>enters on &lt;EventType&gt; [key &lt;expression&gt;]</c>.
+    /// </summary>
+    public const string InvalidEntersOnDeclaration = "PLAY0279";
+
+    /// <summary>
+    /// A <c>variant</c> is declared inside another variant, and variants do not nest.
+    /// </summary>
+    public const string NestedProjectionVariantNotAllowed = "PLAY0280";
+
+    /// <summary>
+    /// Two variants of the same projection declare the same name.
+    /// </summary>
+    public const string DuplicateProjectionVariantName = "PLAY0281";
 }
