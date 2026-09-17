@@ -168,6 +168,45 @@ export class Validator {
                 }
             }
 
+            // Validate variant declarations - each names its own read model, which becomes the active
+            // schema for property validation inside the block (mirrors the projection-header handling above).
+            const variantMatch = trimmed.match(/^variant\s+([\w.]+)\s*$/);
+            if (variantMatch) {
+                const [, variantName] = variantMatch;
+                const col = line.indexOf(variantName) + 1;
+                const isDraft = this.isDraftReadModel(variantName);
+                const readModelExists = this.resolveReadModelIdentifier(variantName) !== null;
+
+                if (!readModelExists && !isDraft) {
+                    markers.push(this.createError(lineNumber, col, col + variantName.length, `Read model '${variantName}' not found`));
+                } else if (isDraft) {
+                    markers.push(this.createInfo(lineNumber, col, col + variantName.length, `Read model '${variantName}' is a draft (not yet saved)`));
+                }
+
+                const variantSchema = isDraft ? this.draftReadModel!.schema : this.resolveReadModelInfo(variantName)?.schema;
+                contextStack.push(variantSchema!);
+                indentStack.push(currentIndent);
+                eventContextStack.push(new Map());
+            }
+
+            // Validate 'enters on' - the event that activates a variant. Read exactly like a 'from' block for
+            // event-existence and duplicate-at-this-level purposes.
+            const entersOnMatch = trimmed.match(/^enters\s+on\s+([\w-]+)/);
+            if (entersOnMatch) {
+                const eventType = entersOnMatch[1];
+                const col = line.indexOf(eventType) + 1;
+
+                if (Object.keys(this.eventSchemas).length > 0 && !this.eventSchemas[eventType]) {
+                    markers.push(this.createError(lineNumber, col, col + eventType.length, `Event type '${eventType}' not found`));
+                }
+
+                if (currentEventContext.has(eventType)) {
+                    markers.push(this.createError(lineNumber, col, col + eventType.length, `Duplicate event type '${eventType}' - event types can only be used once at each level`));
+                } else {
+                    currentEventContext.set(eventType, { lineNumber, col });
+                }
+            }
+
             // Validate event types in join/remove blocks
             const eventsMatch = trimmed.match(/^events\s+([\w-]+)/);
             if (eventsMatch) {

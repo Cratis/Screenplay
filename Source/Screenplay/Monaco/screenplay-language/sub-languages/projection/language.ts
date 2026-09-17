@@ -37,6 +37,8 @@ const KEYWORDS = [
     'events',
     'id',
     'exclude',
+    'variant',
+    'enters',
 ] as const;
 
 // Built-in expressions and functions
@@ -77,13 +79,13 @@ export const configuration: languages.LanguageConfiguration = {
         { open: '`', close: '`' },
     ],
     indentationRules: {
-        increaseIndentPattern: /^.*(:|\bon\b|\ball\b|\bevery\b|\bchildren\b|\bnested\b|\bparent\b)\s*$/,
+        increaseIndentPattern: /^.*(:|\bon\b|\ball\b|\bevery\b|\bchildren\b|\bnested\b|\bparent\b|\bvariant\b)\s*$/,
         decreaseIndentPattern: /^.*\}.*$/,
     },
     folding: {
         offSide: true,
         markers: {
-            start: /^\s*(projection|all|every|on|children|nested|parent)/,
+            start: /^\s*(projection|all|every|on|children|nested|parent|variant)/,
             end: /^\s*$/,
         },
     },
