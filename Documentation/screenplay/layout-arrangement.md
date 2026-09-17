@@ -82,7 +82,7 @@ Critically: **one `screen`, one data/action/form contract, N `variant`s purely f
 
 A `variant` that omits a slot another variant of the same arrangement places (or explicitly hides) gets a compile-time warning - the slot's presence for that size class is otherwise undefined:
 
-```
+```text
 The screen template 'DashboardCanvas' has a variant for width compact, height regular
 that does not mention slot 'x' - place it or declare it 'hidden'
 ```

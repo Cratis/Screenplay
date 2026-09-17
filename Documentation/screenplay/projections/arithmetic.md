@@ -37,6 +37,7 @@ from WithdrawalMade
 ## Expression Values
 
 The expression after `by` can be:
+
 - Event property: `amount`, `value`, `cost.total`
 - Literal: `100`, `10.50`
 - Template: `` `${baseAmount}` ``
@@ -195,6 +196,7 @@ from SaleCompleted
 ## Property Requirements
 
 The target property must be a numeric type:
+
 - `int`
 - `long`
 - `decimal`
@@ -206,6 +208,7 @@ The expression value must be compatible with the target type.
 ## Error Handling
 
 Arithmetic operations are validated when the projection is compiled:
+
 - Type mismatches result in compilation errors
 - Ensure the event property used exists and is numeric
 - Consider domain rules (e.g., balance can't go negative) in your application logic

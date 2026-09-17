@@ -368,6 +368,7 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0172` | Error | Two files of a folder each declare something the application has at most one of. |
 | `PLAY0173` | Error | Two files of a folder declare the same name. |
 | `PLAY0174` | Warning | Two files of a folder describe the same thing differently, and the first description is kept. |
+
 ### What a command reads to decide
 
 | Code | Severity | Reported when |
@@ -386,7 +387,9 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0181` | Warning | A `require` operand is qualified by something the command does not read. |
 | `PLAY0182` | Warning | A `require` operand names neither a property of the artifact nor state it reads. |
 
-### Authentication
+<a id="authentication-1"></a>
+
+### Authentication provider configuration
 
 | Code | Severity | Reported when |
 |---|---|---|
