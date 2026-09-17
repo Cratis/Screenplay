@@ -570,6 +570,16 @@ itself what an unresolvable one means.
 | `PLAY0275` | Error | A specification event-source assertion is a bare `for` and does not provide a value. |
 | `PLAY0276` | Error | One specification command or event step declares its `for <value>` event-source assertion more than once. |
 
+### Projection variants
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0277` | Error | A `variant` line is not `variant <Name>`. |
+| `PLAY0278` | Error | A variant declares no `enters on` event, so nothing ever activates it. |
+| `PLAY0279` | Error | An `enters on` line is not `enters on <EventType> [key <expression>]`. |
+| `PLAY0280` | Error | A `variant` is declared inside another variant, and variants do not nest. |
+| `PLAY0281` | Error | Two variants of the same projection declare the same name. |
+
 The complete Program v1 disposition of current syntax is maintained as a delivery artifact alongside the Screenplay architecture and program.
 
 ## Retired codes
