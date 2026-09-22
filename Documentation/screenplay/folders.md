@@ -293,8 +293,8 @@ Invoicing/
 | File | Holds |
 |---|---|
 | `application.play` | Everything that belongs to the application as a whole rather than to any one module: `domain`, `import`, `concept`, `type`, `policy`, `persona`, `authentication` and `seed`. There is one, always, at the root. |
-| `<Module>/<Module>.play` | The module's own `description` and its `screen template` / `dialog template` declarations - not its features. |
-| `<Module>/…/<Feature>/<Feature>.play` | The feature's own `description` - not its slices or sub features. |
+| `<Module>/<Module>.play` | The module's own `description`, `screen template`, `dialog template`, `form`, and `contribute` declarations - not its features. |
+| `<Module>/…/<Feature>/<Feature>.play` | The feature's own `description` and `contribute` declarations - not its slices or sub features. |
 | `<Module>/…/<Feature>/<Slice>/<Slice>.play` | One slice, whole. |
 
 Every one of those is a complete `.play` document. A slice file restates the module and feature it belongs to, because that is what the language needs in order to place a slice:
@@ -307,7 +307,7 @@ module Invoicing
         invoiceId InvoiceId
 ```
 
-Nothing is written twice. The restated `module Invoicing` in a slice file carries no description and no templates - those live in the module's own file - so there is never a second copy of anything to fall out of sync.
+Nothing is written twice. The restated `module Invoicing` in a slice file carries no description, templates, forms, or contributions - those live in the module's own file. Restated features likewise carry no description or contributions, including when they are ancestors of a nested feature.
 
 ## How the files become one application
 
@@ -316,7 +316,8 @@ Merging follows a single rule: **the documents of a folder are one document**. F
 | Declaration | What the merge does |
 |---|---|
 | `module`, `feature` | **Combined by name.** Every file naming `module Invoicing` is talking about the same module. This is what lets a slice live in its own file and still belong to its feature. |
-| `slice`, `screen template`, `dialog template` | Accumulated. A second file declaring one that already exists is an error. |
+| `slice`, `screen template`, `dialog template`, `form` | Accumulated. A second file declaring one that already exists in the same owner is an error. |
+| `contribute` on a module or feature | Accumulated under that owner. Several contributions may target the same contribution point. |
 | `concept`, `type`, `policy`, `persona` | Accumulated. Concepts and types share one namespace, so a `type` cannot take a `concept`'s name. A second file declaring one that already exists is an error. |
 | `domain`, `authentication` | At most one for the whole folder. A second file declaring one is an error. |
 | `import` | Merged and de-duplicated. An import declared anywhere applies to the whole application, exactly as it does within a single document. |
@@ -339,7 +340,7 @@ Duplicates *within* one file are left to the single document compiler, which alr
 
 ## Round-tripping
 
-Writing a folder and compiling it back gives an equivalent application. The invoicing sample - which exercises the whole language - is the gate on that: it expands to twenty-one files, compiles back with no diagnostics, and expanding the result again produces exactly the same twenty-one files, byte for byte.
+Writing a folder and compiling it back gives an equivalent application. The invoicing sample exercises the broad round-trip: it expands to twenty-one files, compiles back with no diagnostics, and expanding the result again produces exactly the same twenty-one files, byte for byte. A separate fixture covers module forms and contributions on modules, features, and nested features, including when the owner's file sorts after its descendants.
 
 One thing does not survive, and it cannot: **declaration order**. A file system has paths, not order, so modules, features and slices come back sorted by name rather than in the order they were authored. Everything within a slice - its events, commands, projections, mappings, code blocks, descriptions - comes back exactly as it went in, because it never left its file.
 
@@ -352,6 +353,8 @@ One thing does not survive, and it cannot: **declaration order**. A file system 
 
 ## See also
 
+- [AST authoring API](ast-authoring.md) - create and edit typed nodes atomically across original documents.
+- [MCP authoring](mcp-authoring.md) - review and apply AST changes or choose a new file layout from an MCP client.
 - [Compiler and CLI](tool.md) - compiling, diagnostics, and the command line tool.
 - [Printing and generating](printing.md) - the whole application as one document.
 - [Modules, features and slices](slices.md) - the structure the folders mirror.

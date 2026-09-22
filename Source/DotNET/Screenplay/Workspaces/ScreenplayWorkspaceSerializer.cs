@@ -85,6 +85,7 @@ public static class ScreenplayWorkspaceSerializer
     /// The envelope is malformed, non-canonical, unsupported, duplicated, structurally inconsistent, or has a revision mismatch.
     /// A catalog that workspace admission would change is rejected rather than silently materialized or replaced.
     /// </exception>
+    /// <exception cref="InvalidSemanticContract"></exception>
     public static ScreenplayWorkspace Deserialize(ReadOnlySpan<byte> json)
     {
         try
@@ -125,7 +126,9 @@ public static class ScreenplayWorkspaceSerializer
                 throw new InvalidScreenplayWorkspace("Workspace JSON contains trailing data.");
             }
 
-            var workspace = ScreenplayWorkspace.Create(application, name, documents, catalog);
+            var workspace = documents.IsEmpty
+                ? ScreenplayWorkspace.CreateEmpty(application, name, catalog)
+                : ScreenplayWorkspace.Create(application, name, documents, catalog);
             if (!SemanticIdentityCatalogSerializer.Serialize(catalog).AsSpan().SequenceEqual(
                 SemanticIdentityCatalogSerializer.Serialize(workspace.IdentityCatalog)))
             {

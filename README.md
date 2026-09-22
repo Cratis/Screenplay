@@ -146,7 +146,7 @@ files pleasant:
 | --- | --- | --- |
 | **Language & grammar** | The language reference for every construct and the full EBNF grammar | [`Documentation/screenplay`](Documentation/screenplay/index) |
 | **`Cratis.Screenplay`** | The .NET compiler — parsing, the shared syntax tree, [visitors and tree traversal](Documentation/screenplay/visitors.md), diagnostics, file/folder compilation, and the versioned executable semantic model foundation | [`Source/DotNET/Screenplay`](Source/DotNET/Screenplay) |
-| **`Cratis.Screenplay.Tool`** | The `screenplay` CLI (a dotnet tool) — verifies every `.play` file in a directory tree | [`Source/DotNET/Tool`](Source/DotNET/Tool) |
+| **`Cratis.Screenplay.Tool`** | The `screenplay` CLI (a dotnet tool) — verifies `.play` files and exposes syntax and workspace tools over MCP | [`Source/DotNET/Tool`](Source/DotNET/Tool) |
 | **`@cratis/screenplay-language`** | Monaco language service — highlighting (incl. embedded C#/TS/React/HTML and PDL/CDL), IntelliSense, hover, diagnostics | [`Source/Screenplay/Monaco/screenplay-language`](Source/Screenplay/Monaco/screenplay-language) |
 | **`screenplay-editor`** | A standalone editor host for writing `.play` files right in the browser | [`Source/Screenplay/Monaco/screenplay-editor`](Source/Screenplay/Monaco/screenplay-editor) |
 | **`screenplay` (VS Code extension)** | The same language support in VS Code — `.play` files even get the Cratis icon | [`Source/Screenplay/VSCodeExtension`](Source/Screenplay/VSCodeExtension) |
@@ -168,6 +168,13 @@ Embedding the compiler in your own tooling is one package away — see
 ```shell
 dotnet add package Cratis.Screenplay
 ```
+
+For AI clients, [install the stdio MCP server](Documentation/screenplay/install-mcp.md) from the
+same tool package. Navigate large split models, inspect dependencies and fixtures, and use
+[typed AST authoring and model-aware rename](Documentation/screenplay/mcp-authoring.md).
+Review revision-bound proposals before applying them. Stable identities persist beside source,
+and interrupted writes require explicit recovery. Source validity and executable backend
+readiness remain separate verdicts.
 
 ## 🚀 Quick start
 

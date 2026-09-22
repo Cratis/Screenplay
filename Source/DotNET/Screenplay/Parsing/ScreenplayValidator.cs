@@ -98,6 +98,12 @@ internal static class ScreenplayValidator
         }
 
         var scopedSlices = ScopedSlices(application).ToList();
+        var declarations = new ConsistencyDeclarations(application, scopedSlices);
+        CommandConsistencyValidator.Validate(declarations, context);
+        EventFieldConsistencyValidator.Validate(declarations, context);
+        ProjectionCompletenessValidator.Validate(declarations, context);
+        SpecificationValueConsistencyValidator.Validate(declarations, context);
+        SpecificationOutcomeConsistencyValidator.Validate(declarations, context);
         var knownQueries = scopedSlices.SelectMany(entry => entry.Slice.Queries.Select(query => new Declaration(query.Name, entry.Scope))).ToList();
         var knownScreenDeclarations = scopedSlices.SelectMany(entry => entry.Slice.Screens.Select(screen => new Declaration(screen.Name, entry.Scope))).ToList();
         ValidateSpecificationQueries(scopedSlices, knownQueries, context);

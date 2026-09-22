@@ -580,7 +580,31 @@ itself what an unresolvable one means.
 | `PLAY0280` | Error | A `variant` is declared inside another variant, and variants do not nest. |
 | `PLAY0281` | Error | Two variants of the same projection declare the same name. |
 
+### Model consistency
+
+These errors are reported by ordinary compilation, including compilation of a folder as one application; semantic binding is not required. References resolve from the innermost scope outward. Unknown or ambiguous declarations and imported shapes are not guessed.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0282` | Error | A declarative `validate` rule targets a field absent from the command's declared shape, including named rules with implementation blocks. |
+| `PLAY0283` | Error | The type supplied by `reads <View> by <field>` is incompatible with every declared query `by` parameter of that view. Filter parameters do not substitute for a key. Parameter names may differ; distinct concepts remain distinct types. |
+| `PLAY0284` | Error | A `children` or `nested` block never populates a declared element field through its identity, explicit mappings, inherited `every` mappings, nested blocks, joins, or compatible AutoMap. Coverage is across the block's events, not a requirement that every update event fill every field. |
+| `PLAY0285` | Error | A specification's expected event contradicts every possible declared producer of its `when` command, using decidable literals, property copies and equality conditions. |
+| `PLAY0286` | Error | A specification value is not a member of the enum declared by that specific command, event, read-model field or query parameter. Bare members, qualified members and quoted member names are accepted. |
+| `PLAY0287` | Error | A command or reaction producer, a capture append mapping, or a specification's `given`/`then` event step, assigns a field absent from the referenced event's declaration. |
+
+These checks do not execute handlers, custom predicates or opaque expressions. An undeclared query signature does not establish a read-key mismatch. An unknown event shape under AutoMap, or an open `all` subscription with AutoMap, leaves projection coverage undecidable. Outcome checks compare explicit producer mappings only; they do not invent mappings for omitted fields.
+
 The complete Program v1 disposition of current syntax is maintained as a delivery artifact alongside the Screenplay architecture and program.
+
+### AST authoring
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0288` | Information | An accepted AST authoring operation canonicalizes a touched document. Its formatting and comments may change; untouched documents retain their exact bytes. |
+| `PLAY0289` | Error | An empty authoring workspace has no source documents to compile to an executable model. You can still propose its first typed document. |
+
+Source-authoring acceptance and executable readiness are separate verdicts. An authoring proposal validates the complete `.play` application and identity continuity without claiming that every language construct is supported by the executable backend profile. Executable-only workspace transactions remain strict.
 
 ## Retired codes
 

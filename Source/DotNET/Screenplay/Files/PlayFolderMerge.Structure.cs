@@ -46,6 +46,14 @@ internal static partial class PlayFolderMerge
                 "dialog template",
                 context,
                 $"module '{group.Key}'"),
+            Forms = DeclaredInOneFile(
+                parts.SelectMany(part => part.Forms ?? []),
+                form => form.Name,
+                form => form.Location,
+                "form",
+                context,
+                $"module '{group.Key}'"),
+            Contributions = [.. parts.SelectMany(part => part.Contributions ?? [])],
             Features = MergeFeatures(parts.SelectMany(part => part.Features), context)
         };
     }
@@ -64,6 +72,7 @@ internal static partial class PlayFolderMerge
         return parts[0] with
         {
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"feature '{group.Key}'", context),
+            Contributions = [.. parts.SelectMany(part => part.Contributions ?? [])],
             Features = MergeFeatures(parts.SelectMany(part => part.Features), context),
             Slices = DeclaredInOneFile(
                 parts.SelectMany(part => part.Slices),

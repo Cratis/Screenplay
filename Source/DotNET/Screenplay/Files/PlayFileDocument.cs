@@ -62,7 +62,15 @@ internal static class PlayFileDocument
         return current;
     }
 
-    static ModuleSyntax Bare(ModuleSyntax module) => module with { ScreenTemplates = [], DialogTemplates = [], Features = [], Description = null };
+    static ModuleSyntax Bare(ModuleSyntax module) => module with
+    {
+        ScreenTemplates = [],
+        DialogTemplates = [],
+        Forms = [],
+        Contributions = [],
+        Features = [],
+        Description = null
+    };
 
-    static FeatureSyntax Bare(FeatureSyntax feature) => feature with { Features = [], Slices = [], Description = null };
+    static FeatureSyntax Bare(FeatureSyntax feature) => feature with { Features = [], Slices = [], Contributions = [], Description = null };
 }

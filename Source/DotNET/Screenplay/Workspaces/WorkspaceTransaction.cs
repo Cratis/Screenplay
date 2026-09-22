@@ -38,6 +38,16 @@ sealed class WorkspaceTransaction(ScreenplayWorkspace workspace)
         if (request.Operations.IsEmpty && request.SemanticRenames.IsEmpty && request.EventRenames.IsEmpty &&
             request.RetiredSemanticAddresses.IsEmpty && request.RetiredEventAddresses.IsEmpty)
         {
+            if (!_workspace.Compilation.Success)
+            {
+                return WorkspaceTransactionOperations.Failure(
+                    WorkspaceConflictKind.CompilationFailed,
+                    "An executable-only transaction requires successful semantic compilation, including when no changes are requested.") with
+                {
+                    Diagnostics = [.. _workspace.Compilation.Diagnostics]
+                };
+            }
+
             return Success(_workspace, []);
         }
 
