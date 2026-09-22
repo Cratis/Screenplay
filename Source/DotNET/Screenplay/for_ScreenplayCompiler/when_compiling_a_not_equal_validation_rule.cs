@@ -18,6 +18,7 @@ public class when_compiling_a_not_equal_validation_rule : given.a_compiler
             slice StateChange ChangeInvoiceStatus
               command ChangeInvoiceStatus
                 status InvoiceStatus
+                lineCount Int
                 validate
                   status != "draft"     message "A draft cannot be published"
                   status == "sent"

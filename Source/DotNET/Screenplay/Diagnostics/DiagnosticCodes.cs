@@ -1511,4 +1511,34 @@ public static class DiagnosticCodes
     /// Two variants of the same projection declare the same name.
     /// </summary>
     public const string DuplicateProjectionVariantName = "PLAY0281";
+
+    /// <summary>
+    /// A declarative validation rule targets no declared command field.
+    /// </summary>
+    public const string UnknownValidationTarget = "PLAY0282";
+
+    /// <summary>
+    /// A read key's type is incompatible with every declared query parameter of its view.
+    /// </summary>
+    public const string IncompatibleReadsKey = "PLAY0283";
+
+    /// <summary>
+    /// No mapping in a child or nested projection populates a declared element field.
+    /// </summary>
+    public const string UnpopulatedProjectionField = "PLAY0284";
+
+    /// <summary>
+    /// A specification outcome contradicts every applicable declared producer mapping.
+    /// </summary>
+    public const string UnreachableSpecificationOutcome = "PLAY0285";
+
+    /// <summary>
+    /// A specification supplies a value outside its field's declared enumeration.
+    /// </summary>
+    public const string UnknownSpecificationEnumMember = "PLAY0286";
+
+    /// <summary>
+    /// A producer or specification assigns a field the referenced event does not declare.
+    /// </summary>
+    public const string UnknownEventField = "PLAY0287";
 }
