@@ -3,6 +3,12 @@
 
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
+using Cratis.Screenplay.Tool.Mcp;
+
+if (args.FirstOrDefault() == "mcp")
+{
+    return McpCommand.Run(args);
+}
 
 const string PlayExtension = ".play";
 

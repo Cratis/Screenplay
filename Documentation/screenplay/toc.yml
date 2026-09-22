@@ -70,6 +70,8 @@
   href: grammar.md
 - name: Compiler and CLI
   href: tool.md
+- name: MCP server
+  href: mcp.md
 - name: Diagnostics
   href: diagnostics.md
 - name: Printing and generating
