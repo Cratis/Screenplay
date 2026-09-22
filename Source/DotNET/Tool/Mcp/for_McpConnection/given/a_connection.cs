@@ -41,7 +41,7 @@ public class a_connection : Specification
             repository = repository.Parent;
         }
 
-        var output = Environment.GetEnvironmentVariable("AI_WORK_OUTPUT") ?? Path.Combine(repository!.FullName, ".ai-work", "mcp-specs");
+        var output = Environment.GetEnvironmentVariable("AI_WORK_OUTPUT") ?? Path.Combine(repository.FullName, ".ai-work", "mcp-specs");
         RootPath = Path.Combine(output, Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(RootPath);
         File.WriteAllText(Path.Combine(RootPath, "application.play"), Source, new UTF8Encoding(false));
@@ -51,14 +51,14 @@ public class a_connection : Specification
 
     internal void Initialize()
     {
-        Connection.Handle("""{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"spec","version":"1"}}}""");
-        Connection.Handle("""{"jsonrpc":"2.0","method":"notifications/initialized"}""");
+        Connection.Handle(/*lang=json,strict*/ """{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"spec","version":"1"}}}""");
+        Connection.Handle(/*lang=json,strict*/ """{"jsonrpc":"2.0","method":"notifications/initialized"}""");
     }
 
     internal JsonElement Call(string name, object? arguments = null)
     {
         var request = JsonSerializer.Serialize(new { jsonrpc = "2.0", id = 1, method = "tools/call", @params = new { name, arguments = arguments ?? new { } } });
-        using var result = JsonDocument.Parse(Connection.Handle(request)!);
+        using var result = JsonDocument.Parse(Connection.Handle(request));
         return result.RootElement.Clone();
     }
 

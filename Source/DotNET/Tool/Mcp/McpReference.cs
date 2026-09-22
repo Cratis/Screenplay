@@ -5,4 +5,4 @@ using Cratis.Screenplay.Diagnostics;
 
 namespace Cratis.Screenplay.Tool.Mcp;
 
-sealed record McpReference(string Name, string[] Kinds, string[] Scope, SourceLocation Location);
+sealed record McpReference(string Name, string[] Kinds, string[] Scope, SourceLocation Location, string Role = "reference", McpReadOwner? Owner = null);

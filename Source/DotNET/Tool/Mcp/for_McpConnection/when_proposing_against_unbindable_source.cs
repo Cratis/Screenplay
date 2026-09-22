@@ -17,8 +17,8 @@ public class when_proposing_against_unbindable_source : given.a_connection
 
     void Because()
     {
-        var opened = Call("open-workspace", new { applicationName = "Demo" }).GetProperty("result").GetProperty("structuredContent");
-        using var envelope = JsonDocument.Parse(opened.GetProperty("workspaceJson").GetString()!);
+        var opened = Call("open-workspace", new { applicationName = "Demo", includeContent = true }).GetProperty("result").GetProperty("structuredContent");
+        using var envelope = JsonDocument.Parse(opened.GetProperty("workspaceJson").GetString());
         _result = Call("propose", new
         {
             expectedRevision = opened.GetProperty("revision").GetString(),

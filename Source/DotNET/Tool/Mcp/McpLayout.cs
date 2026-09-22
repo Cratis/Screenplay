@@ -3,16 +3,15 @@
 
 using System.Collections.Immutable;
 using System.Text;
-using Cratis.Screenplay.Files;
-using Cratis.Screenplay.Printing;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Serialization;
 using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Tool.Mcp;
 
 static class McpLayout
 {
-    internal static ImmutableArray<WorkspaceOperation> Expand(ScreenplayWorkspace workspace)
+    internal static ImmutableArray<WorkspaceOperation> Expand(ScreenplayWorkspace workspace, string layout = "slice")
     {
         var snapshot = new McpSnapshot(workspace.Documents);
         if (!snapshot.Compilation.Success)
@@ -20,12 +19,11 @@ static class McpLayout
             throw new McpFailure("Layout expansion requires successfully parsed, merged, and resolved syntax.");
         }
 
-        var expanded = new PlayFileWriter().Expand(snapshot.Compilation.Value!).Select(file =>
+        var expanded = McpLayoutDocuments.Create(snapshot.Compilation.Value!, layout).Select(file =>
             WorkspaceDocument.Create(McpDocumentKeys.For(file.RelativePath.Replace('\\', '/')), PortablePlayPath.Parse(file.RelativePath.Replace('\\', '/')), Encoding.UTF8.GetBytes(file.Content))).ToImmutableArray();
         McpRoot.CheckDocuments(expanded);
         var expandedSyntax = new McpSnapshot(expanded).Compilation;
-        var printer = new ScreenplayPrinter();
-        if (!expandedSyntax.Success || printer.Print(Normalize(snapshot.Compilation.Value!)) != printer.Print(Normalize(expandedSyntax.Value!)))
+        if (!expandedSyntax.Success || !SyntaxJson.StructurallyEqual(Normalize(snapshot.Compilation.Value!), Normalize(expandedSyntax.Value!)))
         {
             throw new McpFailure("Layout expansion failed the syntax round-trip check; no proposal was created.");
         }

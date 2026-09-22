@@ -353,6 +353,8 @@ One thing does not survive, and it cannot: **declaration order**. A file system 
 
 ## See also
 
+- [AST authoring API](ast-authoring.md) - create and edit typed nodes atomically across original documents.
+- [MCP authoring](mcp-authoring.md) - review and apply AST changes or choose a new file layout from an MCP client.
 - [Compiler and CLI](tool.md) - compiling, diagnostics, and the command line tool.
 - [Printing and generating](printing.md) - the whole application as one document.
 - [Modules, features and slices](slices.md) - the structure the folders mirror.

@@ -5,4 +5,10 @@ using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Tool.Mcp;
 
-sealed record McpProposal(ScreenplayWorkspace Before, WorkspaceTransactionResult Transaction);
+sealed record McpProposal(ScreenplayWorkspace Before, WorkspaceTransactionResult Transaction) : IMcpProposal
+{
+    public ScreenplayWorkspace Workspace => Transaction.Workspace!;
+    public WorkspaceWritePlan WritePlan => Transaction.WritePlan!;
+    public bool Accepted => Transaction.Success && Workspace.Compilation.Success;
+    public string Validation => "Executable";
+}

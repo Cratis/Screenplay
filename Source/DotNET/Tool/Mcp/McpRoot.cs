@@ -8,11 +8,11 @@ namespace Cratis.Screenplay.Tool.Mcp;
 
 sealed class McpRoot
 {
-    internal const int MaximumFiles = 128;
-    internal const int MaximumBytes = 1024 * 1024;
-    const int MaximumFileBytes = 256 * 1024;
-    const int MaximumEntries = 4096;
-    static readonly HashSet<string> _excludedDirectories = new(StringComparer.OrdinalIgnoreCase) { ".git", ".ai-work", "bin", "obj", "node_modules" };
+    internal const int MaximumFiles = 512;
+    internal const int MaximumBytes = 8 * 1024 * 1024;
+    internal const int MaximumFileBytes = 2 * 1024 * 1024;
+    const int MaximumEntries = 32768;
+    static readonly HashSet<string> _excludedDirectories = new(StringComparer.OrdinalIgnoreCase) { ".git", ".ai-work", ".screenplay", "bin", "obj", "node_modules" };
     readonly string _path;
 
     internal McpRoot(string path)
@@ -27,11 +27,20 @@ sealed class McpRoot
 
     internal string ApplicationName => new DirectoryInfo(_path).Name;
 
-    internal static void CheckDocuments(ImmutableArray<WorkspaceDocument> documents)
+    internal string DirectoryPath
     {
-        if (documents.IsDefaultOrEmpty || documents.Length > MaximumFiles || documents.Sum(document => document.Bytes.Length) > MaximumBytes)
+        get
         {
-            throw new McpFailure("Workspace exceeds the nonempty, 128-file, one-MiB source limits.");
+            CheckAncestors(_path);
+            return _path;
+        }
+    }
+
+    internal static void CheckDocuments(ImmutableArray<WorkspaceDocument> documents, bool allowEmpty = false)
+    {
+        if (documents.IsDefault || (!allowEmpty && documents.IsEmpty) || documents.Length > MaximumFiles || documents.Sum(document => document.Bytes.Length) > MaximumBytes)
+        {
+            throw new McpFailure($"Workspace must contain 1–{MaximumFiles} files and at most {MaximumBytes} source bytes.");
         }
 
         foreach (var document in documents)
@@ -40,7 +49,18 @@ sealed class McpRoot
         }
     }
 
-    internal ImmutableArray<WorkspaceDocument> Read()
+    internal static void CheckAncestors(string path)
+    {
+        for (var current = path; current is not null; current = Path.GetDirectoryName(current))
+        {
+            if (File.GetAttributes(current).HasFlag(FileAttributes.ReparsePoint))
+            {
+                throw new McpFailure($"Symbolic links and reparse points are not admitted: '{current}'.");
+            }
+        }
+    }
+
+    internal ImmutableArray<WorkspaceDocument> Read(bool allowEmpty = false)
     {
         CheckAncestors(_path);
         var directories = new Stack<(string Path, int Depth)>();
@@ -58,6 +78,16 @@ sealed class McpRoot
                 }
 
                 var attributes = File.GetAttributes(entry);
+                if (Path.GetFileName(entry).Equals(".screenplay", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (attributes.HasFlag(FileAttributes.ReparsePoint) || !attributes.HasFlag(FileAttributes.Directory))
+                    {
+                        throw new McpFailure("ReservedPath: .screenplay must be a real, root-local metadata directory.");
+                    }
+
+                    continue;
+                }
+
                 if (attributes.HasFlag(FileAttributes.Directory) && _excludedDirectories.Contains(Path.GetFileName(entry)))
                 {
                     continue;
@@ -95,7 +125,7 @@ sealed class McpRoot
                 bytes += content.Length;
                 if (bytes > MaximumBytes)
                 {
-                    throw new McpFailure("Root exceeds one MiB of .play source.");
+                    throw new McpFailure($"Root exceeds {MaximumBytes} bytes of .play source.");
                 }
 
                 var document = WorkspaceDocument.Create(McpDocumentKeys.For(relative), portable, content);
@@ -104,7 +134,7 @@ sealed class McpRoot
             }
         }
 
-        if (documents.Count == 0)
+        if (documents.Count == 0 && !allowEmpty)
         {
             throw new McpFailure("The root contains no .play files.");
         }
@@ -131,6 +161,7 @@ sealed class McpRoot
         foreach (var segment in segments[..^1])
         {
             current = Path.Combine(current, segment);
+            McpManagedFiles.CheckExisting(current);
             if (Directory.Exists(current) || File.Exists(current))
             {
                 CheckAncestors(current);
@@ -146,6 +177,7 @@ sealed class McpRoot
             }
         }
 
+        McpManagedFiles.CheckExisting(full);
         if (File.Exists(full) || Directory.Exists(full))
         {
             CheckAncestors(full);
@@ -156,7 +188,7 @@ sealed class McpRoot
 
     internal void Verify(ScreenplayWorkspace workspace)
     {
-        var current = Read().ToDictionary(document => document.Path.Value, StringComparer.Ordinal);
+        var current = Read(allowEmpty: true).ToDictionary(document => document.Path.Value, StringComparer.Ordinal);
         if (current.Count != workspace.Documents.Length || workspace.Documents.Any(document =>
             !current.TryGetValue(document.Path.Value, out var actual) || !actual.Bytes.AsSpan().SequenceEqual(document.Bytes.AsSpan())))
         {
@@ -168,7 +200,7 @@ sealed class McpRoot
     {
         if (document.Bytes.Length > MaximumFileBytes)
         {
-            throw new McpFailure($"'{document.Path}' exceeds 256 KiB.");
+            throw new McpFailure($"'{document.Path}' exceeds {MaximumFileBytes} bytes.");
         }
 
         var lines = document.Text.Split('\n');
@@ -184,7 +216,7 @@ sealed class McpRoot
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
         if (stream.Length > MaximumFileBytes)
         {
-            throw new McpFailure($"'{path}' exceeds 256 KiB.");
+            throw new McpFailure($"'{path}' exceeds {MaximumFileBytes} bytes.");
         }
 
         var content = new byte[checked((int)stream.Length)];
@@ -196,16 +228,5 @@ sealed class McpRoot
 
         CheckAncestors(path);
         return content;
-    }
-
-    static void CheckAncestors(string path)
-    {
-        for (var current = path; current is not null; current = Path.GetDirectoryName(current))
-        {
-            if (File.GetAttributes(current).HasFlag(FileAttributes.ReparsePoint))
-            {
-                throw new McpFailure($"Symbolic links and reparse points are not admitted: '{current}'.");
-            }
-        }
     }
 }

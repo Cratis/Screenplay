@@ -13,9 +13,26 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     readonly List<McpDeclaration> _declarations = [];
     readonly List<McpReference> _references = [];
     readonly List<string> _scope = [];
+    readonly McpReadOwnership _ownership = new();
+    readonly Dictionary<SyntaxNode, McpDeclaration> _owners = new(ReferenceEqualityComparer.Instance);
+    readonly Dictionary<(string Kind, string Name, string Scope), McpDeclaration> _scaffolds = [];
+    McpQueryIndex _queries = null!;
 
     internal IEnumerable<McpDeclaration> Declarations => _declarations;
     internal IEnumerable<McpReference> References => _references;
+
+    internal IEnumerable<McpQueryIndexResolution> ResolvedReferences => _queries.ResolvedReferences;
+
+    internal int ResolutionCount => _queries.ResolutionCount;
+
+    internal int CandidateInspectionCount => _queries.CandidateInspectionCount;
+
+    /// <inheritdoc/>
+    public override void VisitApplication(ApplicationSyntax syntax)
+    {
+        _ownership.VisitApplication(syntax);
+        base.VisitApplication(syntax);
+    }
 
     /// <inheritdoc/>
     public override void VisitModule(ModuleSyntax syntax)
@@ -62,6 +79,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
             case ScreenTemplateSyntax value: Declare("ScreenTemplate", value.Name, value); break;
             case DialogTemplateSyntax value: Declare("DialogTemplate", value.Name, value); break;
             case FormSyntax value: Declare("Form", value.Name, value); break;
+            case SlotSyntax { Contributes: not null } value: Declare("ContributionPoint", value.Contributes, value); break;
             case UiProfileSyntax value: Declare("UiProfile", value.Name, value); break;
             case ThemeSyntax value: Declare("Theme", value.Name, value); break;
             case TriggerSyntax value: Declare("Trigger", value.Name, value); break;
@@ -82,40 +100,53 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
                 break;
         }
 
-        if (McpReferenceKinds.For(node) is { } reference)
+        var owningSyntax = _ownership.For(node);
+        var owner = owningSyntax is null ? null : _owners.GetValueOrDefault(owningSyntax);
+        foreach (var reference in McpReferenceKinds.For(node, owningSyntax))
         {
-            _references.Add(new(reference.Name, reference.Kinds, [.. _scope], node.Location));
+            var role = owner?.Syntax is SpecificationSyntax specification ? McpFixtureOccurrences.Role(specification, node, reference.Role) : reference.Role;
+            _references.Add(new(reference.Name, reference.Kinds, [.. _scope], node.Location, role, owner?.Owner));
         }
     }
 
-    internal McpDeclaration[] Resolve(McpReference reference)
+    internal void Complete(ApplicationSyntax? application)
     {
-        var segments = reference.Name.Split('.', StringSplitOptions.RemoveEmptyEntries);
-        if (segments.Length == 0)
+        if (application is not null)
         {
-            return [];
+            McpLogicalDeclarations.Complete(_declarations, application);
         }
 
-        var named = _declarations.Where(declaration => reference.Kinds.Contains(declaration.Kind, StringComparer.Ordinal) && declaration.Name == segments[^1]).ToArray();
-        if (segments.Length > 1)
-        {
-            var qualifiers = segments[..^1];
-            return [.. named.Where(declaration => declaration.Scope.Length >= qualifiers.Length && declaration.Scope.TakeLast(qualifiers.Length).SequenceEqual(qualifiers, StringComparer.Ordinal))];
-        }
-
-        // Matches the compiler's nearest shared scope rule, never a raw name grep.
-        for (var depth = reference.Scope.Length; depth >= 0; depth--)
-        {
-            var visible = named.Where(declaration => declaration.Scope.Length >= depth && declaration.Scope.Take(depth).SequenceEqual(reference.Scope.Take(depth), StringComparer.Ordinal)).ToArray();
-            if (visible.Length > 0)
-            {
-                return visible;
-            }
-        }
-
-        return [];
+        _declarations.AddRange([.. McpLogicalReadModels.From(_declarations)]);
+        _queries = new(_declarations, _references);
     }
 
-    void Declare(string kind, string name, SyntaxNode node, string? description = null, object? details = null) =>
-        _declarations.Add(new(kind, name, [.. _scope], node.Location, description, details, node));
+    internal McpDeclaration[] Resolve(McpReference reference) => _queries.Resolve(reference);
+
+    internal McpDeclaration[] Find(string address, string kind) => _queries.Find(address, kind);
+
+    internal IEnumerable<McpQueryIndexResolution> Incoming(McpDeclaration declaration) => _queries.Incoming(declaration);
+
+    internal IEnumerable<McpReference> Outgoing(McpReadOwner owner) => _queries.Outgoing(owner);
+
+    internal IEnumerable<McpReference> Outgoing(string ownerAddress) => _queries.Outgoing(ownerAddress);
+
+    void Declare(string kind, string name, SyntaxNode node, string? description = null, object? details = null)
+    {
+        var key = (kind, name, McpQueryIndex.ScopeKey(_scope));
+        var isScaffold = kind == "Module" || kind == "Feature";
+        if (isScaffold && _scaffolds.TryGetValue(key, out var scaffold))
+        {
+            scaffold.Parts.Add(node);
+            _owners[node] = scaffold;
+            return;
+        }
+
+        var declaration = new McpDeclaration(kind, name, [.. _scope], node.Location, description, details, node);
+        _declarations.Add(declaration);
+        _owners[node] = declaration;
+        if (isScaffold)
+        {
+            _scaffolds.Add(key, declaration);
+        }
+    }
 }

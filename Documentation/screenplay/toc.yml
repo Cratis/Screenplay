@@ -72,6 +72,14 @@
   href: tool.md
 - name: MCP server
   href: mcp.md
+- name: Install the MCP server
+  href: install-mcp.md
+- name: MCP identity state and recovery
+  href: mcp-recovery.md
+- name: Create and edit a model with MCP
+  href: mcp-authoring.md
+- name: AST authoring API
+  href: ast-authoring.md
 - name: Diagnostics
   href: diagnostics.md
 - name: Printing and generating

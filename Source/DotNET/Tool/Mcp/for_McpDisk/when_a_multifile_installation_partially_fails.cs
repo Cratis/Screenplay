@@ -26,7 +26,7 @@ public class when_a_multifile_installation_partially_fails : for_McpConnection.g
             }
 
             File.Move(source, destination);
-        }).Apply(new(workspace, transaction));
+        }).Apply(new McpProposal(workspace, transaction));
     }
 
     [Fact] void should_not_report_partial_success() => _result.Success.ShouldBeFalse();

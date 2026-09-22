@@ -169,8 +169,12 @@ Embedding the compiler in your own tooling is one package away — see
 dotnet add package Cratis.Screenplay
 ```
 
-For AI clients, [the stdio MCP server](Documentation/screenplay/mcp.md) exposes declarations,
-references, diagnostics, and revision-bound workspace proposals without regex editing.
+For AI clients, [install the stdio MCP server](Documentation/screenplay/install-mcp.md) from the
+same tool package. Navigate large split models, inspect dependencies and fixtures, and use
+[typed AST authoring and model-aware rename](Documentation/screenplay/mcp-authoring.md).
+Review revision-bound proposals before applying them. Stable identities persist beside source,
+and interrupted writes require explicit recovery. Source validity and executable backend
+readiness remain separate verdicts.
 
 ## 🚀 Quick start
 

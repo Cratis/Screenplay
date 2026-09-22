@@ -3,7 +3,13 @@
 
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
+using Cratis.Screenplay.Tool;
 using Cratis.Screenplay.Tool.Mcp;
+
+if (CommandLineInformation.TryPrint(args, Console.Out))
+{
+    return 0;
+}
 
 if (args.FirstOrDefault() == "mcp")
 {

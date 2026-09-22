@@ -18,8 +18,8 @@ public class when_applying_a_reviewed_proposal : given.a_connection
 
     void Because()
     {
-        var opened = Call("open-workspace", new { applicationName = "Projects" }).GetProperty("result").GetProperty("structuredContent");
-        var workspace = ScreenplayWorkspaceSerializer.Deserialize(Encoding.UTF8.GetBytes(opened.GetProperty("workspaceJson").GetString()!));
+        var opened = Call("open-workspace", new { applicationName = "Projects", includeContent = true }).GetProperty("result").GetProperty("structuredContent");
+        var workspace = ScreenplayWorkspaceSerializer.Deserialize(Encoding.UTF8.GetBytes(opened.GetProperty("workspaceJson").GetString()));
         var expectedRevision = opened.GetProperty("revision").GetString();
         var expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString();
         _proposal = Call("propose", new
@@ -27,11 +27,12 @@ public class when_applying_a_reviewed_proposal : given.a_connection
             expectedRevision,
             expectedCatalogRevision,
             operation = "move-document",
+            includeContent = true,
             documentId = workspace.Documents[0].Id.ToString(),
             path = "organized/main.play"
         }).GetProperty("result").GetProperty("structuredContent");
         _before = File.ReadAllText(Path.Combine(RootPath, "application.play"));
-        _applied = Call("apply", new { proposalId = _proposal.GetProperty("proposalId").GetString(), expectedRevision, expectedCatalogRevision }).GetProperty("result").GetProperty("structuredContent");
+        _applied = Call("apply", new { proposalId = _proposal.GetProperty("proposalId").GetString(), expectedRevision, expectedCatalogRevision, includeContent = true }).GetProperty("result").GetProperty("structuredContent");
         if (!_applied.GetProperty("success").GetBoolean())
         {
             throw new McpFailure(_applied.GetRawText());

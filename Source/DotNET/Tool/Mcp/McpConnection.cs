@@ -8,7 +8,7 @@ namespace Cratis.Screenplay.Tool.Mcp;
 
 sealed class McpConnection(McpTools tools)
 {
-    internal const int MaximumRequestCharacters = 4 * 1024 * 1024;
+    internal const int MaximumRequestCharacters = 32 * 1024 * 1024;
     bool _initialized;
     bool _ready;
 
@@ -30,13 +30,19 @@ sealed class McpConnection(McpTools tools)
         object? id = null;
         try
         {
-            using var document = JsonDocument.Parse(line, new JsonDocumentOptions { MaxDepth = 64 });
+            using var document = JsonDocument.Parse(line, new JsonDocumentOptions { MaxDepth = 256 });
             var request = document.RootElement;
             if (request.ValueKind != JsonValueKind.Object ||
                 !request.TryGetProperty("jsonrpc", out var version) || version.ValueKind != JsonValueKind.String || version.GetString() != "2.0" ||
                 !request.TryGetProperty("method", out var method) || method.ValueKind != JsonValueKind.String)
             {
                 throw new McpFailure("Expected one JSON-RPC 2.0 request object.", -32600);
+            }
+
+            var members = request.EnumerateObject().Select(property => property.Name).ToArray();
+            if (members.Distinct(StringComparer.Ordinal).Count() != members.Length)
+            {
+                throw new McpFailure("Duplicate JSON-RPC members are not admitted.", -32600);
             }
 
             var hasId = request.TryGetProperty("id", out var requestId);
@@ -102,7 +108,7 @@ sealed class McpConnection(McpTools tools)
             if (text.Length >= MaximumRequestCharacters)
             {
                 // Terminate rather than buffer or drain an unbounded hostile stream.
-                throw new McpFailure("MCP request exceeds the four-million-character limit.");
+                throw new McpFailure($"MCP request exceeds the {MaximumRequestCharacters}-character limit.");
             }
 
             text.Append((char)character);
@@ -139,8 +145,8 @@ sealed class McpConnection(McpTools tools)
             {
                 protocolVersion = "2025-06-18",
                 capabilities = new { tools = new { listChanged = false } },
-                serverInfo = new { name = "cratis.screenplay", version = "1.0.0" },
-                instructions = "Read the full Screenplay syntax tree, propose revision-bound changes, review their exact before/after documents, then apply the server proposal. Save returned workspaceJson to preserve identities. Apply writes only inside the configured trusted local root."
+                serverInfo = new { name = "cratis.screenplay", version = typeof(McpConnection).Assembly.GetName().Version!.ToString() },
+                instructions = "Read full Screenplay syntax, discover syntax-schema, open a revision-bound workspace, and use read-ast handles with propose-ast for typed edits. Source authoring acceptance is separate from executable readiness. Review exact bytes with read-proposal; save export-workspace to preserve identities. Only apply writes source. The root must be trusted and exclusively owned during apply; rollback is not crash-atomic."
             };
         }
 

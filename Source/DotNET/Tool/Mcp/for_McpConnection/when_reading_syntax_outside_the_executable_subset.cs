@@ -26,7 +26,7 @@ public class when_reading_syntax_outside_the_executable_subset : given.a_connect
         Initialize();
     }
 
-    void Because() => _result = Call("find-declaration", new { name = "CreateInvoiceForm", kind = "Form" }).GetProperty("result");
+    void Because() => _result = Call("find-declaration", new { name = "CreateInvoiceForm", kind = "Form", includeContent = true }).GetProperty("result");
 
     [Fact] void should_succeed_without_semantic_binding() => _result.GetProperty("isError").GetBoolean().ShouldBeFalse();
     [Fact] void should_return_the_concrete_form_field() => _result.GetProperty("structuredContent").GetProperty("matches")[0].GetProperty("syntax").GetProperty("fields")[0].GetProperty("label").GetString().ShouldEqual("Amount");

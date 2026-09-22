@@ -9,99 +9,76 @@ sealed class McpDisk(McpRoot root, Action<string, string>? move = null)
 {
     readonly Action<string, string> _move = move ?? ((source, destination) => File.Move(source, destination));
 
-    internal McpDiskResult Apply(McpProposal proposal)
+    internal McpDiskResult Apply(IMcpProposal proposal, McpStatePlan? state = null)
     {
-        var transaction = proposal.Transaction;
-        if (!transaction.Success || !transaction.Workspace!.Compilation.Success || transaction.WritePlan!.BeforeRevision != proposal.Before.Revision ||
-            transaction.WritePlan.BeforeCatalogRevision != proposal.Before.IdentityCatalog.Revision)
+        if (!proposal.Accepted || proposal.WritePlan.BeforeRevision != proposal.Before.Revision ||
+            proposal.WritePlan.BeforeCatalogRevision != proposal.Before.IdentityCatalog.Revision ||
+            proposal.WritePlan.AfterRevision != proposal.Workspace.Revision ||
+            proposal.WritePlan.AfterCatalogRevision != proposal.Workspace.IdentityCatalog.Revision)
         {
             throw new McpFailure("InvalidProposal: the server proposal is not a successful revision-bound transaction.");
         }
 
+        McpRecoveryJournal.RefusePending(root);
+        var files = new McpManagedFiles(root);
+        state ??= new(files.Read(McpState.FileName), McpState.Serialize(proposal.Workspace));
+        files.Verify(McpState.FileName, state.Before);
         root.Verify(proposal.Before);
-        var changes = transaction.WritePlan.Entries.Select(entry => new McpDiskChange(entry)).ToArray();
         CheckDestinations(proposal);
-        var recovery = new List<string>();
+        var journal = McpRecoveryJournal.Prepare(root, proposal, state);
+        var changes = journal.Changes;
         try
         {
             Stage(changes);
+            McpManagedFiles.WritePrivate(journal.StateStage, state.After);
+            journal.VerifyMarker();
             root.Verify(proposal.Before);
+            files.Verify(McpState.FileName, state.Before);
             CheckDestinations(proposal);
-            Backup(changes);
-            Install(changes);
-            root.Verify(transaction.Workspace);
+            Backup(changes, journal);
+            Install(changes, journal);
+            InstallState(files, state, journal);
+            root.Verify(proposal.Workspace);
+            files.Verify(McpState.FileName, state.After);
+            journal.Complete(applied: true);
         }
         catch (Exception exception)
         {
-            recovery.Add($"Apply failed: {exception.Message}");
-            var restored = Rollback(changes, recovery);
-            CleanupStages(changes, recovery);
+            var recovery = new List<string> { $"Apply failed: {exception.Message}" };
+            var restored = false;
             try
             {
-                root.Verify(proposal.Before);
+                new McpRecovery(root, journal).Rollback();
+                restored = true;
             }
-            catch (Exception verification)
+            catch (Exception failure)
             {
-                restored = false;
-                recovery.Add($"Original workspace could not be verified after rollback: {verification.Message}");
+                recovery.Add($"RecoveryRequired: {failure.Message}. Preserve .screenplay/pending.json and all backup files; inspect workspace-state before explicit rollback.");
+                recovery.AddRange(changes.Where(change => change.Backup is not null).Select(change => $"Recovery backup: '{change.Backup}'"));
+                recovery.Add($"Identity backup: '{journal.StateBackup}'");
             }
 
             return new(false, restored ? "RolledBack" : "RecoveryRequired", recovery, changes.Length, changes.Count(change => change.Installed));
         }
 
-        // The applied snapshot is verified before any backup is discarded. Cleanup failures are explicit.
-        foreach (var change in changes.Where(change => change.Backup is not null))
-        {
-            try
-            {
-                File.Delete(change.Backup!);
-            }
-            catch (Exception exception)
-            {
-                recovery.Add($"Applied; retained backup '{change.Backup}': {exception.Message}");
-            }
-        }
-
-        return new(true, recovery.Count == 0 ? $"Applied {changes.Length} document changes" : "AppliedWithRetainedBackups", recovery, changes.Length, changes.Count(change => change.Installed));
-    }
-
-    static void CleanupStages(IEnumerable<McpDiskChange> changes, List<string> recovery)
-    {
-        foreach (var change in changes.Where(change => change.Stage is not null))
-        {
-            try
-            {
-                File.Delete(change.Stage!);
-            }
-            catch (Exception exception)
-            {
-                recovery.Add($"Retained staging file '{change.Stage}': {exception.Message}");
-            }
-        }
+        return new(true, $"Applied {changes.Length} document changes and durable identity state", [], changes.Length, changes.Count(change => change.Installed));
     }
 
     static void VerifyBytes(string path, WorkspaceDocument document)
     {
-        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-        if (stream.Length != document.Bytes.Length)
-        {
-            throw new McpFailure($"DiskDrift: '{document.Path}' changed.");
-        }
-
-        var bytes = new byte[document.Bytes.Length];
-        stream.ReadExactly(bytes);
-        if (!bytes.AsSpan().SequenceEqual(document.Bytes.AsSpan()) || stream.ReadByte() != -1)
+        if (!McpManagedFiles.Equal(McpManagedFiles.ReadPath(path, McpRoot.MaximumBytes), [.. document.Bytes]))
         {
             throw new McpFailure($"DiskDrift: '{document.Path}' changed.");
         }
     }
 
-    void CheckDestinations(McpProposal proposal)
+    void CheckDestinations(IMcpProposal proposal)
     {
         var before = proposal.Before.Documents.Select(document => document.Path.Value).ToHashSet(StringComparer.Ordinal);
-        foreach (var document in proposal.Transaction.Workspace!.Documents)
+        foreach (var document in proposal.Workspace.Documents)
         {
             var path = root.PathFor(document.Path);
+            McpManagedFiles.CheckExisting(path);
             if (!before.Contains(document.Path.Value) && (File.Exists(path) || Directory.Exists(path)))
             {
                 throw new McpFailure($"DestinationOccupied: '{document.Path}' is not owned by this workspace.");
@@ -113,76 +90,57 @@ sealed class McpDisk(McpRoot root, Action<string, string>? move = null)
     {
         foreach (var change in changes.Where(change => change.Entry.After is not null))
         {
-            var after = change.Entry.After!;
-            var destination = root.PathFor(after.Path, true);
-            var stage = $"{destination}.screenplay-mcp-{Guid.NewGuid():N}.stage";
-            using var stream = new FileStream(stage, FileMode.CreateNew, FileAccess.Write, FileShare.None);
-            change.Stage = stage;
-            stream.Write(after.Bytes.AsSpan());
-            stream.Flush(true);
+            _ = root.PathFor(change.Entry.After!.Path, createParents: true);
+            McpManagedFiles.WritePrivate(change.Stage!, [.. change.Entry.After.Bytes]);
         }
     }
 
-    void Backup(IEnumerable<McpDiskChange> changes)
+    void Backup(IEnumerable<McpDiskChange> changes, McpRecoveryJournal journal)
     {
         foreach (var change in changes.Where(change => change.Entry.Before is not null))
         {
+            journal.VerifyMarker();
             var before = change.Entry.Before!;
             var path = root.PathFor(before.Path);
             VerifyBytes(path, before);
-            var backup = $"{path}.screenplay-mcp-{Guid.NewGuid():N}.backup";
-            _move(path, backup);
-            change.Backup = backup;
+            McpManagedFiles.CheckExisting(change.Backup!);
+            _move(path, change.Backup!);
         }
     }
 
-    void Install(IEnumerable<McpDiskChange> changes)
+    void Install(IEnumerable<McpDiskChange> changes, McpRecoveryJournal journal)
     {
         foreach (var change in changes.Where(change => change.Entry.After is not null))
         {
+            journal.VerifyMarker();
             var path = root.PathFor(change.Entry.After!.Path);
+            VerifyBytes(change.Stage!, change.Entry.After);
+            if (change.Backup is not null)
+            {
+                VerifyBytes(change.Backup, change.Entry.Before!);
+                McpFileAccess.Preserve(change.Backup, change.Stage!);
+            }
+
             _move(change.Stage!, path);
             change.Installed = true;
-            change.Stage = null;
         }
     }
 
-    bool Rollback(IEnumerable<McpDiskChange> changes, List<string> recovery)
+    void InstallState(McpManagedFiles files, McpStatePlan state, McpRecoveryJournal journal)
     {
-        var restored = true;
-        foreach (var change in changes.Reverse().Where(change => change.Installed))
+        journal.VerifyMarker();
+        files.Verify(McpState.FileName, state.Before);
+        if (state.Before is not null)
         {
-            try
-            {
-                var path = root.PathFor(change.Entry.After!.Path);
-                VerifyBytes(path, change.Entry.After);
-                File.Delete(path);
-            }
-            catch (Exception exception)
-            {
-                restored = false;
-                recovery.Add($"Cannot remove installed '{change.Entry.After!.Path}': {exception.Message}");
-            }
+            _move(files.PathFor(McpState.FileName), journal.StateBackup);
+            McpFileAccess.Preserve(journal.StateBackup, journal.StateStage);
         }
 
-        foreach (var change in changes.Where(change => change.Backup is not null))
+        if (!McpManagedFiles.Equal(McpManagedFiles.ReadPath(journal.StateStage, McpManagedFiles.MaximumStateBytes), state.After))
         {
-            try
-            {
-                var path = root.PathFor(change.Entry.Before!.Path);
-
-                // No overwrite: a concurrently created file must not be destroyed by recovery.
-                VerifyBytes(change.Backup!, change.Entry.Before);
-                File.Move(change.Backup!, path);
-                change.Backup = null;
-            }
-            catch (Exception exception)
-            {
-                restored = false;
-                recovery.Add($"Restore '{change.Entry.Before!.Path}' from '{change.Backup}': {exception.Message}");
-            }
+            throw new McpFailure("IdentityStateDrift: staged identities changed before installation.");
         }
 
-        return restored;
+        _move(journal.StateStage, files.PathFor(McpState.FileName));
     }
 }
