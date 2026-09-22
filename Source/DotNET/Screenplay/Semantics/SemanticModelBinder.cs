@@ -233,7 +233,7 @@ public sealed class SemanticModelBinder : ISemanticModelBinder
                     readModel.Location);
             }
 
-            var identifier = identifierNames.SingleOrDefault();
+            var identifier = identifierNames.Length == 1 ? identifierNames[0] : null;
             var address = SemanticAddress.ForReadModel(slice, readModel.Name);
             var id = Resolve(address, readModel.Location);
             var properties = readModel.Properties

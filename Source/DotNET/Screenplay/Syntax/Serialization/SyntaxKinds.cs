@@ -1,0 +1,179 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using Cratis.Screenplay.Syntax.Captures;
+using Cratis.Screenplay.Syntax.Projections;
+using Cratis.Screenplay.Syntax.Specifications;
+
+namespace Cratis.Screenplay.Syntax.Serialization;
+
+internal static class SyntaxKinds
+{
+    // Only these compiler-owned constructors can be activated by the wire format.
+    static readonly Type[] _types =
+    [
+        typeof(AddMappingSyntax),
+        typeof(AllSyntax),
+        typeof(ApplicationSyntax),
+        typeof(ArrangementContainerSyntax),
+        typeof(ArrangementOverrideSyntax),
+        typeof(ArrangementSlotSyntax),
+        typeof(ArrangementSyntax),
+        typeof(AuthenticatedConditionSyntax),
+        typeof(AuthenticationProviderSyntax),
+        typeof(AuthenticationSyntax),
+        typeof(AuthorizeSyntax),
+        typeof(CaptureAppendSyntax),
+        typeof(CaptureChildrenSyntax),
+        typeof(CaptureMapEntrySyntax),
+        typeof(CaptureNestedSyntax),
+        typeof(CaptureSourceSettingSyntax),
+        typeof(CaptureSourceSyntax),
+        typeof(CaptureSplitSyntax),
+        typeof(CaptureSyntax),
+        typeof(CaptureTranslationSyntax),
+        typeof(CaptureWhenSyntax),
+        typeof(CausedByExpressionSyntax),
+        typeof(ChildrenSyntax),
+        typeof(ClaimConditionSyntax),
+        typeof(ClearMappingSyntax),
+        typeof(ClearWithSyntax),
+        typeof(CodeBlockSyntax),
+        typeof(CodeValidateSyntax),
+        typeof(CommandSyntax),
+        typeof(ComparisonConditionSyntax),
+        typeof(CompositeKeySyntax),
+        typeof(ConceptAttributeSyntax),
+        typeof(ConceptSyntax),
+        typeof(ConcurrencySyntax),
+        typeof(ContextExpressionSyntax),
+        typeof(ContributionSyntax),
+        typeof(CountMappingSyntax),
+        typeof(DeclarativeValidateSyntax),
+        typeof(DecrementMappingSyntax),
+        typeof(DialogTemplateSyntax),
+        typeof(DomainSyntax),
+        typeof(EnvironmentExpressionSyntax),
+        typeof(EventContextExpressionSyntax),
+        typeof(EventSourceIdExpressionSyntax),
+        typeof(EventSpecSyntax),
+        typeof(EventSyntax),
+        typeof(EverySyntax),
+        typeof(ExpressionKeySyntax),
+        typeof(FeatureSyntax),
+        typeof(FileConstraintSyntax),
+        typeof(FileReferenceSyntax),
+        typeof(FormFieldSyntax),
+        typeof(FormPopulateFromItemSyntax),
+        typeof(FormPopulateViaQuerySyntax),
+        typeof(FormSyntax),
+        typeof(FromSyntax),
+        typeof(HandlerSyntax),
+        typeof(ImportSyntax),
+        typeof(IncrementMappingSyntax),
+        typeof(IntervalTriggerSourceSyntax),
+        typeof(InvokesSyntax),
+        typeof(JoinEventSyntax),
+        typeof(JoinSyntax),
+        typeof(KeyPartSyntax),
+        typeof(LayoutSyntax),
+        typeof(LiteralExpressionSyntax),
+        typeof(LogicalConditionSyntax),
+        typeof(LogicalPolicyConditionSyntax),
+        typeof(LogicalPolicyRequirementSyntax),
+        typeof(ModuleSyntax),
+        typeof(NamedTriggerSourceSyntax),
+        typeof(NestedSyntax),
+        typeof(PathExpressionSyntax),
+        typeof(PerformerSyntax),
+        typeof(PersonaSyntax),
+        typeof(PlaceSyntax),
+        typeof(PolicyReferenceSyntax),
+        typeof(PolicySyntax),
+        typeof(ProducesSyntax),
+        typeof(ProjectionEntersOnSyntax),
+        typeof(ProjectionSyntax),
+        typeof(ProjectionVariantSyntax),
+        typeof(PropertyMappingSyntax),
+        typeof(PropertySyntax),
+        typeof(QueryParameterSyntax),
+        typeof(QuerySyntax),
+        typeof(RawExpressionSyntax),
+        typeof(ReactionSyntax),
+        typeof(ReactionTriggerSyntax),
+        typeof(ReadModelSyntax),
+        typeof(ReadsSyntax),
+        typeof(ReducerRuleSyntax),
+        typeof(ReducerSyntax),
+        typeof(RemoveViaJoinSyntax),
+        typeof(RemoveWithSyntax),
+        typeof(RequirementSyntax),
+        typeof(RoleConditionSyntax),
+        typeof(ScheduleTriggerSourceSyntax),
+        typeof(ScreenActionSyntax),
+        typeof(ScreenCodeSyntax),
+        typeof(ScreenColumnSyntax),
+        typeof(ScreenDataSyntax),
+        typeof(ScreenFieldSyntax),
+        typeof(ScreenNavigateSyntax),
+        typeof(ScreenSectionSyntax),
+        typeof(ScreenSlotSyntax),
+        typeof(ScreenSummarySyntax),
+        typeof(ScreenSyntax),
+        typeof(ScreenTableSyntax),
+        typeof(ScreenTemplateReferenceSyntax),
+        typeof(ScreenTemplateSyntax),
+        typeof(ScreenTitleSyntax),
+        typeof(SeedEventSyntax),
+        typeof(SeedGroupSyntax),
+        typeof(SeedSyntax),
+        typeof(SetMappingSyntax),
+        typeof(SliceSyntax),
+        typeof(SlotSyntax),
+        typeof(SourceItemExpressionSyntax),
+        typeof(SpecificationCommandSyntax),
+        typeof(SpecificationErrorSyntax),
+        typeof(SpecificationEventSyntax),
+        typeof(SpecificationQueryResultSyntax),
+        typeof(SpecificationQuerySyntax),
+        typeof(SpecificationReadModelSyntax),
+        typeof(SpecificationSyntax),
+        typeof(StringsExpressionSyntax),
+        typeof(SubtractMappingSyntax),
+        typeof(TagSyntax),
+        typeof(TemplateExpressionSyntax),
+        typeof(TemplateInterpolationSyntax),
+        typeof(TemplateTextSyntax),
+        typeof(ThemeSyntax),
+        typeof(TriggerDataSyntax),
+        typeof(TriggerSyntax),
+        typeof(TypeRefSyntax),
+        typeof(TypeSyntax),
+        typeof(UiProfileSyntax),
+        typeof(UniqueEventConstraintSyntax),
+        typeof(UniquePropertyConstraintSyntax),
+        typeof(ValidationRuleSyntax),
+        typeof(VariantSyntax)
+    ];
+
+    static readonly IReadOnlyDictionary<string, SyntaxDescriptor> _descriptors = _types
+        .Select(type => new SyntaxDescriptor(type))
+        .ToDictionary(descriptor => descriptor.Type.Name, StringComparer.Ordinal);
+
+    internal static IEnumerable<SyntaxDescriptor> All => _descriptors.Values;
+
+    internal static SyntaxDescriptor For(string kind) => _descriptors.TryGetValue(kind, out var descriptor)
+        ? descriptor
+        : throw new InvalidSyntaxJson($"Unknown syntax kind '{kind}'.");
+
+    internal static SyntaxDescriptor For(Type type)
+    {
+        var descriptor = For(type.Name);
+        if (descriptor.Type != type)
+        {
+            throw new InvalidSyntaxJson($"Type '{type.FullName}' is not a compiler-owned syntax kind.");
+        }
+
+        return descriptor;
+    }
+}

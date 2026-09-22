@@ -597,6 +597,15 @@ These checks do not execute handlers, custom predicates or opaque expressions. A
 
 The complete Program v1 disposition of current syntax is maintained as a delivery artifact alongside the Screenplay architecture and program.
 
+### AST authoring
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0288` | Information | An accepted AST authoring operation canonicalizes a touched document. Its formatting and comments may change; untouched documents retain their exact bytes. |
+| `PLAY0289` | Error | An empty authoring workspace has no source documents to compile to an executable model. You can still propose its first typed document. |
+
+Source-authoring acceptance and executable readiness are separate verdicts. An authoring proposal validates the complete `.play` application and identity continuity without claiming that every language construct is supported by the executable backend profile. Executable-only workspace transactions remain strict.
+
 ## Retired codes
 
 None yet. When a code is retired it is listed here with the release it went in, and its number stays out of use forever.

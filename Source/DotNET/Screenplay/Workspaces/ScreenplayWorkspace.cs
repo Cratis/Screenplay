@@ -5,6 +5,7 @@ using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Immutable;
 using System.Text;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 
 namespace Cratis.Screenplay.Workspaces;
@@ -84,12 +85,56 @@ public sealed class ScreenplayWorkspace
         CreateCore(applicationName, applicationIdentity, documents, identityCatalog);
 
     /// <summary>
+    /// Creates an empty authoring workspace for bootstrapping a new application's first typed documents.
+    /// Empty source is not executable and does not relax ordinary workspace admission or strict transactions.
+    /// </summary>
+    /// <param name="applicationIdentity">The stable application identity.</param>
+    /// <param name="applicationName">The friendly application name.</param>
+    /// <returns>The empty, revision-bound authoring workspace.</returns>
+    /// <exception cref="InvalidSemanticContract">The application identity or name is invalid.</exception>
+    public static ScreenplayWorkspace CreateEmpty(ApplicationIdentity applicationIdentity, string applicationName) =>
+        CreateEmpty(applicationIdentity, applicationName, SemanticIdentityCatalog.Empty(applicationIdentity));
+
+    /// <summary>
     /// Proposes one pure revision-bound transaction without mutating this workspace or touching a destination.
     /// </summary>
     /// <param name="request">The complete transaction request.</param>
     /// <returns>A new immutable workspace and write plan, or typed conflicts.</returns>
     public WorkspaceTransactionResult Propose(WorkspaceTransactionRequest request) =>
         new WorkspaceTransaction(this).Propose(request);
+
+    /// <summary>
+    /// Proposes one atomic typed-source transaction with source validity independent from executable readiness.
+    /// The existing <see cref="Propose"/> contract remains executable-only.
+    /// </summary>
+    /// <param name="request">The revision-bound typed authoring request.</param>
+    /// <returns>The source-authoring verdict, executable readiness, and accepted write plan.</returns>
+    public WorkspaceAuthoringResult ProposeAuthoring(WorkspaceAuthoringRequest request) =>
+        new WorkspaceAuthoringTransaction(this).Propose(request);
+
+    /// <summary>
+    /// Proposes a logical rename, repairing proven typed references and migrating assigned descendant identities.
+    /// No source or catalog is written by a proposal.
+    /// </summary>
+    /// <param name="request">The revision-bound rename and explicit formatting policy.</param>
+    /// <returns>The accepted immutable candidate and write plan, or a bounded refusal.</returns>
+    public WorkspaceAuthoringResult ProposeRename(WorkspaceRenameRequest request) =>
+        new WorkspaceRefactoring(this).Rename(request);
+
+    internal static ScreenplayWorkspace CreateEmpty(ApplicationIdentity applicationIdentity, string applicationName, SemanticIdentityCatalog catalog)
+    {
+        var name = SemanticDocumentText.NormalizeRequiredUnicode(applicationName, "workspace application name");
+        if (catalog.Application != applicationIdentity || !catalog.Documents.IsEmpty || !catalog.EventContracts.IsEmpty ||
+            catalog.Semantics.Any(assignment => assignment.Address.Kind != SemanticKind.Application))
+        {
+            throw new InvalidSemanticContract("An empty authoring workspace cannot carry document or source declaration assignments.");
+        }
+
+        return CreateValidated(name, [], catalog, EmptyCompilation());
+    }
+
+    internal static CompilationResult<SemanticCompilation> EmptyCompilation() => CompilationResult<SemanticCompilation>.Failed(
+        [Diagnostic.Error(DiagnosticCodes.EmptyAuthoringWorkspace, "An empty authoring workspace has no executable source documents.", SourceLocation.Start)]);
 
     internal static ScreenplayWorkspace CreateValidated(
         string applicationName,

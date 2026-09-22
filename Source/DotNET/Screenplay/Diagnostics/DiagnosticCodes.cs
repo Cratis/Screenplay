@@ -1541,4 +1541,14 @@ public static class DiagnosticCodes
     /// A producer or specification assigns a field the referenced event does not declare.
     /// </summary>
     public const string UnknownEventField = "PLAY0287";
+
+    /// <summary>
+    /// A typed authoring change canonicalizes a document and may discard source comments or trivia.
+    /// </summary>
+    public const string AuthoringSourceNormalization = "PLAY0288";
+
+    /// <summary>
+    /// An empty authoring workspace has no source documents and is not executable.
+    /// </summary>
+    public const string EmptyAuthoringWorkspace = "PLAY0289";
 }
