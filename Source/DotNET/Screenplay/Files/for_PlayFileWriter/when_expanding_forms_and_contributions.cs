@@ -9,7 +9,13 @@ public class when_expanding_forms_and_contributions : Specification
 {
     const string Source =
         """
+        behavior Confirming
+          on click
+            execute Register
+
         module Sales
+          uses Confirming
+
           screen template Shell
             navbar contributes Navigation
             main
@@ -25,6 +31,9 @@ public class when_expanding_forms_and_contributions : Specification
             contribute to Navigation
               navigate to List
               label "Orders"
+
+            on enter
+              navigate to List
 
             slice StateChange Register
               command Register
@@ -72,5 +81,11 @@ public class when_expanding_forms_and_contributions : Specification
     [Fact] void should_preserve_one_module_contribution() => _merged.Value!.Modules.Single().Contributions!.Count().ShouldEqual(1);
     [Fact] void should_preserve_one_feature_contribution() => _merged.Value!.Modules.Single().Features.Single().Contributions!.Count().ShouldEqual(1);
     [Fact] void should_preserve_one_nested_contribution() => _merged.Value!.Modules.Single().Features.Single().Features.Single().Contributions!.Count().ShouldEqual(1);
+    [Fact] void should_write_the_behavior_only_in_the_application_document() => _files.Where(file => file.Content.Contains("behavior Confirming", StringComparison.Ordinal)).Select(file => file.RelativePath).ShouldContainOnly("application.play");
+    [Fact] void should_write_the_module_attachment_only_in_the_module_document() => _files.Where(file => file.Content.Contains("uses Confirming", StringComparison.Ordinal)).Select(file => file.RelativePath).ShouldContainOnly(Path.Combine("Sales", "Sales.play"));
+    [Fact] void should_write_the_feature_attachment_only_in_its_document() => _files.Where(file => file.Content.Contains("on enter", StringComparison.Ordinal)).Select(file => file.RelativePath).ShouldContainOnly(Path.Combine("Sales", "Orders", "Orders.play"));
+    [Fact] void should_preserve_one_behavior() => _merged.Value!.Behaviors.Count().ShouldEqual(1);
+    [Fact] void should_preserve_one_module_attachment() => _merged.Value!.Modules.Single().UsedBehaviors.Count().ShouldEqual(1);
+    [Fact] void should_preserve_one_feature_attachment() => _merged.Value!.Modules.Single().Features.Single().Behaviors.Count().ShouldEqual(1);
     [Fact] void should_expand_identically_after_merging() => _expandedAgain.ShouldContainOnly(_files);
 }
