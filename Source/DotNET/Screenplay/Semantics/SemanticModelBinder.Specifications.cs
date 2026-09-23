@@ -61,7 +61,11 @@ public sealed partial class SemanticModelBinder
                 .Select(_ => _!)
                 .ToImmutableArray();
             var thenQueries = specification.ThenQueries.Select(BindSpecificationQuery).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
-            var thenErrors = specification.ThenErrors.Select(value => new SemanticSpecificationError(null, value.Name)).ToImmutableArray();
+            var thenErrors = specification.ThenErrors.Select(value =>
+            {
+                ValidateStringKey(value.Name, value.Location);
+                return new SemanticSpecificationError(null, value.Name);
+            }).ToImmutableArray();
             return new(
                 id,
                 specification.Name,

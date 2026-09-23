@@ -146,9 +146,11 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             failures.Add($"Expected rejection code '{error.Code}', got '{rejected.Code}'.");
         }
 
-        if (error.Message is not null && error.Message != rejected.Details)
+        if (error.Message is not null &&
+            (error.Message != rejected.Details ||
+             error.Message.StartsWith("$strings.", StringComparison.Ordinal) != rejected.MessageIsStringKey))
         {
-            failures.Add($"Expected rejection message '{error.Message}', got '{rejected.Details}'.");
+            failures.Add($"Expected rejection message '{error.Message}', got '{rejected.Details}' (string key: {rejected.MessageIsStringKey}).");
         }
     }
 

@@ -62,6 +62,10 @@ public sealed record SemanticSpecificationQueryResult(
 /// </summary>
 /// <param name="Code">The stable rejection code, or <see langword="null"/> when only rejection is asserted.</param>
 /// <param name="Message">The expected message, or <see langword="null"/> when it is not asserted.</param>
+/// <remarks>
+/// A value beginning with <c>$strings.</c> is a string-key reference, never display text. The realization
+/// resolves it against the active locale's paired <c>.strings</c> file (see internationalization.md).
+/// </remarks>
 public sealed record SemanticSpecificationError(string? Code, string? Message);
 
 /// <summary>

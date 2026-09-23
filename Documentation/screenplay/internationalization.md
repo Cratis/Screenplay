@@ -50,6 +50,12 @@ screen InvoiceList
     label $strings.invoices.actions.newInvoice
 ```
 
+## Executable semantic model and rejections
+
+The executable semantic model (ESM) retains message references symbolically on command and concept validation rules, command `require` guards, and append-time constraints. A value beginning with `$strings.` is a key, **not text to display**. Its dotted key must follow the `.strings` assignment-key grammar; malformed keys block semantic binding (`PLAY0357`). The reference evaluator returns the original key in `SemanticRejected.Details` with `MessageIsStringKey = true`. A realization resolves that key using its active locale's paired `.strings` file before presenting the rejection. Literal messages and generated default messages have `MessageIsStringKey = false`. The reference evaluator does not load string tables or choose a locale.
+
+For specifications, write `then error "$strings.invoices.validation.reasonRequired"` to assert a localized rejection key. The `then error` grammar accepts quoted messages only; it does not accept an unquoted `$strings` token. See [Specifications](specifications.md#rejections).
+
 ## How references are stored and printed
 
 For the `message`, `label` and `title` operands the reference is stored in the same string property as a literal would be — as the literal text `$strings.<key>`. A consumer recognizes a localized value by the `$strings.` prefix. When printing, the [printer](printing.md) emits values starting with `$strings.` unquoted, so a compile → print → recompile round trip preserves the reference exactly.

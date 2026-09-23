@@ -237,12 +237,22 @@ public sealed record SemanticAccepted(
 /// <param name="World">The unchanged world.</param>
 /// <param name="Category">The rejection category.</param>
 /// <param name="Code">The optional stable rejection code.</param>
-/// <param name="Details">Human-readable rejection details.</param>
+/// <param name="Details">Rejection details, or a symbolic string key when <see cref="MessageIsStringKey"/> is true.</param>
 public sealed record SemanticRejected(
     SemanticWorld World,
     SemanticRejectionCategory Category,
     string? Code,
-    string Details) : SemanticExecutionResult(SemanticExecutionOutcomeKind.Rejected, World);
+    string Details) : SemanticExecutionResult(SemanticExecutionOutcomeKind.Rejected, World)
+{
+    /// <summary>
+    /// Gets whether <see cref="Details"/> is a string key rather than text for display.
+    /// </summary>
+    /// <remarks>
+    /// A key beginning with <c>$strings.</c> must be resolved by the realization against the active
+    /// locale's paired <c>.strings</c> file (see internationalization.md); it is never display text.
+    /// </remarks>
+    public bool MessageIsStringKey { get; init; }
+}
 
 /// <summary>
 /// Represents a decision conflict requiring reconsideration.

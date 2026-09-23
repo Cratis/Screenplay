@@ -167,6 +167,10 @@ public enum SemanticQueryDelivery
 /// <param name="Kind">The rule kind.</param>
 /// <param name="Operand">The optional concrete operand.</param>
 /// <param name="Message">The optional rejection message.</param>
+/// <remarks>
+/// A value beginning with <c>$strings.</c> is a string-key reference, never display text. The realization
+/// resolves it against the active locale's paired <c>.strings</c> file (see internationalization.md).
+/// </remarks>
 public sealed record SemanticValidationRule(
     SemanticId Property,
     SemanticValidationRuleKind Kind,

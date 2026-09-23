@@ -1836,6 +1836,11 @@ public static class DiagnosticCodes
     public const string DuplicateSemanticValueMember = "PLAY0356";
 
     /// <summary>
+    /// A localized semantic message does not name a valid dotted string key.
+    /// </summary>
+    public const string InvalidSemanticStringKey = "PLAY0357";
+
+    /// <summary>
     /// A projection construct binds, but Chronicle's projection lowering drops part of it: <c>all</c> inside a
     /// <c>children</c> or <c>nested</c> block loses its subscription to every event type, and an auto-map setting on a
     /// joined event is replaced by the level's.
