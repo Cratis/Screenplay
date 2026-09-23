@@ -39,7 +39,7 @@ internal static partial class ScreenplaySyntaxText
         CausedByExpressionSyntax causedBy => causedBy.Property is null ? "$causedBy" : $"$causedBy.{causedBy.Property}",
         TemplateExpressionSyntax template => Template(template),
         RawExpressionSyntax raw => raw.Text,
-        _ => string.Empty
+        _ => throw Unsupported("expression", expression)
     };
 
     /// <summary>
@@ -82,7 +82,7 @@ internal static partial class ScreenplaySyntaxText
         NamedTriggerSourceSyntax named => $"when {named.Name}",
         IntervalTriggerSourceSyntax interval => $"every {interval.Amount} {IntervalUnitText(interval.Amount, interval.Unit)}",
         ScheduleTriggerSourceSyntax schedule => Schedule(schedule),
-        _ => string.Empty
+        _ => throw Unsupported("trigger source", source)
     };
 
     /// <summary>
@@ -99,7 +99,7 @@ internal static partial class ScreenplaySyntaxText
             logical.Operator,
             Condition(logical.Right),
             OperatorOf(logical.Right)),
-        _ => string.Empty
+        _ => throw Unsupported("condition", condition)
     };
 
     /// <summary>
@@ -118,7 +118,7 @@ internal static partial class ScreenplaySyntaxText
             logical.Operator,
             PolicyCondition(logical.Right),
             OperatorOf(logical.Right)),
-        _ => string.Empty
+        _ => throw Unsupported("policy condition", condition)
     };
 
     /// <summary>
@@ -135,7 +135,7 @@ internal static partial class ScreenplaySyntaxText
             logical.Operator,
             PolicyRequirement(logical.Right),
             OperatorOf(logical.Right)),
-        _ => string.Empty
+        _ => throw Unsupported("policy requirement", requirement)
     };
 
     /// <summary>
@@ -192,7 +192,7 @@ internal static partial class ScreenplaySyntaxText
         EventInteractionTriggerSyntax @event => $"event {@event.EventName}",
         IntervalInteractionTriggerSyntax interval => $"interval {interval.Amount} {IntervalUnitText(interval.Amount, interval.Unit)}",
         ApplicationTriggerInteractionTriggerSyntax application => application.TriggerName,
-        _ => string.Empty
+        _ => throw Unsupported("interaction trigger", trigger)
     };
 
     /// <summary>
@@ -213,7 +213,7 @@ internal static partial class ScreenplaySyntaxText
         NotifyActionSyntax notify => $"notify {NotificationLevelText(notify.Level)} {InteractionMessage(notify.Message, notify.MessageIsLiteral)}",
         ConfirmActionSyntax confirm => $"confirm {InteractionMessage(confirm.Message, confirm.MessageIsLiteral)}",
         RaiseTriggerActionSyntax raise => $"raise {raise.Trigger}",
-        _ => string.Empty
+        _ => throw Unsupported("interaction action", action)
     };
 
     /// <summary>
@@ -234,7 +234,7 @@ internal static partial class ScreenplaySyntaxText
             CaptureWhenKind.LogicalOr => string.Join(" or ", properties),
             CaptureWhenKind.LogicalAnd => string.Join(" and ", properties),
             CaptureWhenKind.Expression => when.Expression ?? string.Empty,
-            _ => string.Empty
+            _ => throw new UnsupportedSyntaxForPrinting("capture trigger kind", when.Kind.ToString())
         };
     }
 
@@ -262,7 +262,7 @@ internal static partial class ScreenplaySyntaxText
             {
                 TemplateTextSyntax text => text.Text,
                 TemplateInterpolationSyntax interpolation => $"${{{Expression(interpolation.Expression)}}}",
-                _ => string.Empty
+                _ => throw Unsupported("template part", part)
             });
         }
 
@@ -279,7 +279,7 @@ internal static partial class ScreenplaySyntaxText
         ComparisonOperator.LessThanOrEqual => "<=",
         ComparisonOperator.Contains => "contains",
         ComparisonOperator.StartsWith => "starts with",
-        _ => "=="
+        _ => throw new UnsupportedSyntaxForPrinting("comparison operator", @operator.ToString())
     };
 
     static string Logical(LogicalOperator @operator) => @operator == LogicalOperator.And ? "and" : "or";
@@ -328,7 +328,7 @@ internal static partial class ScreenplaySyntaxText
         InteractionTriggerKind.Unload => "unload",
         InteractionTriggerKind.Enter => "enter",
         InteractionTriggerKind.Leave => "leave",
-        _ => string.Empty
+        _ => throw new UnsupportedSyntaxForPrinting("interaction trigger kind", kind.ToString())
     };
 
     static string NotificationLevelText(NotificationLevel level) => level switch
@@ -336,7 +336,7 @@ internal static partial class ScreenplaySyntaxText
         NotificationLevel.Info => "info",
         NotificationLevel.Warning => "warning",
         NotificationLevel.Error => "error",
-        _ => string.Empty
+        _ => throw new UnsupportedSyntaxForPrinting("notification level", level.ToString())
     };
 
     // 'every 1 day' rather than 'every 1 days' - a schedule is read aloud, and the plural is what the
@@ -348,7 +348,8 @@ internal static partial class ScreenplaySyntaxText
             IntervalUnit.Seconds => "seconds",
             IntervalUnit.Minutes => "minutes",
             IntervalUnit.Hours => "hours",
-            _ => "days"
+            IntervalUnit.Days => "days",
+            _ => throw new UnsupportedSyntaxForPrinting("interval unit", unit.ToString())
         };
 
         return amount == 1 ? plural[..^1] : plural;
@@ -395,9 +396,12 @@ internal static partial class ScreenplaySyntaxText
             ValidationRuleKind.AllGreaterThan => $"all > {value}",
             ValidationRuleKind.AllGreaterThanOrEqual => $"all >= {value}",
             ValidationRuleKind.Rule => $"rule {value}",
-            _ => value
+            _ => throw new UnsupportedSyntaxForPrinting("validation rule kind", rule.Rule.ToString())
         };
     }
+
+    static UnsupportedSyntaxForPrinting Unsupported(string construct, SyntaxNode node) =>
+        new(construct, node.GetType().Name);
 
     [GeneratedRegex(@"^[A-Za-z_]\w*$", RegexOptions.None, 1000)]
     private static partial Regex IdentifierRegex();

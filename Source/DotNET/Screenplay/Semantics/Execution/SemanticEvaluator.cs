@@ -97,6 +97,16 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         out string? failure) =>
         TryProject(plan, current, facts, out readModels, out failure);
 
+    // Every variant answers explicitly: an unknown variant is not quietly "present", it is a malformed value.
+    internal static bool IsEmpty(SemanticValue value) => value switch
+    {
+        SemanticNullValue => true,
+        SemanticTextValue text => string.IsNullOrEmpty(text.Value),
+        SemanticArrayValue array => array.Values.IsEmpty,
+        SemanticNumberValue or SemanticBooleanValue or SemanticCompositeValue => false,
+        _ => throw SemanticValueRules.Malformed()
+    };
+
     static string? ValidateRequest(
         SemanticExecutionPlan plan,
         SemanticCommand command,
@@ -180,14 +190,6 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return exception.Message;
         }
     }
-
-    static bool IsEmpty(SemanticValue value) => value switch
-    {
-        SemanticNullValue => true,
-        SemanticTextValue text => string.IsNullOrEmpty(text.Value),
-        SemanticArrayValue array => array.Values.IsEmpty,
-        _ => false
-    };
 
     static bool TryProject(
         SemanticExecutionPlan plan,

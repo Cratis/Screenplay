@@ -480,7 +480,7 @@ public sealed partial class ScreenplayPrinter :
             ? $"populate via query {viaQuery.Query}"
             : $"populate via query {viaQuery.Query} by {viaQuery.By}",
         FormPopulateFromItemSyntax => "populate from item",
-        _ => string.Empty
+        _ => throw new UnsupportedSyntaxForPrinting("form populate source", populate.GetType().Name)
     };
 
     string WriteFormField(FormFieldSyntax field)
@@ -628,7 +628,7 @@ public sealed partial class ScreenplayPrinter :
                     ArrangementContainerKind.Row => "row",
                     ArrangementContainerKind.Column => "column",
                     ArrangementContainerKind.Grid => "grid",
-                    _ => string.Empty,
+                    _ => throw new UnsupportedSyntaxForPrinting("nested arrangement container kind", container.Kind.ToString()),
                 };
                 writer.Line(container.Gap is null ? keyword : $"{keyword} gap {container.Gap}");
                 using (writer.Indent())
@@ -640,6 +640,8 @@ public sealed partial class ScreenplayPrinter :
                 }
 
                 break;
+            default:
+                throw new UnsupportedSyntaxForPrinting("arrangement node", node.GetType().Name);
         }
     }
 
