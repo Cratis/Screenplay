@@ -601,7 +601,7 @@ The complete Program v1 disposition of current syntax is maintained as a deliver
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0288` | Information | An accepted AST authoring operation canonicalizes a touched document. Its formatting and comments may change; untouched documents retain their exact bytes. |
+| `PLAY0288` | Warning | An accepted AST authoring operation canonically prints a touched document. The message states how many comments that document loses and on which lines; whitespace and declaration order are normalized, and untouched documents retain their exact bytes. |
 | `PLAY0289` | Error | An empty authoring workspace has no source documents to compile to an executable model. You can still propose its first typed document. |
 
 Source-authoring acceptance and executable readiness are separate verdicts. An authoring proposal validates the complete `.play` application and identity continuity without claiming that every language construct is supported by the executable backend profile. Executable-only workspace transactions remain strict.

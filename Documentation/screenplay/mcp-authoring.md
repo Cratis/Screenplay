@@ -153,10 +153,20 @@ parent/child operations. See [the authoring contract](ast-authoring.md).
 ## Review and apply
 
 An accepted proposal returns a `proposalId`, before/after revisions, changed-file
-count, normalization disclosure and executable readiness. Acceptance is not a
-filesystem effect.
+count, normalization disclosure, the number of dropped comments and executable
+readiness. Acceptance is not a filesystem effect.
 
-1. Call `read-proposal` with its ID and `view: "changes"`.
+To change a specification value or a `produces` mapping without touching anything
+else, `replace` its `PropertyMappingSyntax` with `formatting: "PreserveTrivia"`.
+Changing `channel = "web"` to `"store"` rewrites only `"web"`; every comment,
+blank line and declaration stays where it was. `CanonicalizeTouchedDocuments`
+reprints the whole document instead: comments are dropped and member order is
+normalized, and the `dropped-comments` view lists exactly what is lost.
+
+1. Call `read-proposal` with its ID and `view: "changes"`. Check the proposal's
+   `droppedCommentCount`; when it is not zero, call `read-proposal` with
+   `view: "dropped-comments"` to see each comment a changed document loses, with
+   its `path`, `line`, `column` and `text`.
 2. For each changed document, retrieve `before` and `after` byte pages by
    `documentId`. Base64 pages reconstruct exact source bytes, including BOM and
    Unicode. Inspect authoring and executable diagnostics separately.

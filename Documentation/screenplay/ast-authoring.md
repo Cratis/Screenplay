@@ -173,6 +173,26 @@ source stays byte-identical; touched documents preserve their UTF-8 BOM policy.
 applies only byte patches whose result reparses to the complete intended AST;
 unsupported changes reject without a canonicalization fallback.
 
+`PreserveTrivia` patches three kinds of change in place:
+
+- An identifier member, such as a declaration name or an event reference, through
+  its proven identifier span.
+- A literal value (string, number, boolean or `null`) of a `produces` mapping or a
+  specification value. Only the literal's authored text is rewritten, so a
+  trailing comment on the same line survives, and the value may change type.
+- A whole property mapping of a `produces` block or a specification value. When
+  only its source changes, only the right-hand side is rewritten; when its target
+  property changes too, the mapping text is rewritten up to the end of its source.
+
+Adding, removing or reordering nodes is structural and still requires
+`CanonicalizeTouchedDocuments`.
+
+Canonical printing does not keep comments and normalizes blank lines and member
+order. Before applying such a result, call
+`WorkspaceDroppedComments.In(result.WritePlan)` to list every comment a changed
+document loses, with its path, line, column and text. The `PLAY0288` warning for
+each canonically printed document states the same count and lines.
+
 Successful results provide the candidate workspace and exact `WorkspaceWritePlan`
 before/after documents. The destination adapter owns file application and failure
 recovery. Atomic proposal acceptance is not a promise of crash-atomic file writes.

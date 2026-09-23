@@ -134,8 +134,8 @@ whole-document replacement can repair parser-invalid source without node handles
 
 `propose-rename` coordinates logical declarations, fragments, supported typed
 references and assigned identities. It preserves trivia by default. Ambiguity,
-name capture, opaque impact, unsupported spans or resolver disagreement refuse
-automation. It is not global text replacement or automatic property-schema evolution.
+name capture, opaque text naming the old or new name, unsupported spans or resolver
+disagreement refuse automation. It is not global text replacement or automatic property-schema evolution.
 
 Two independent choices control AST authoring:
 
@@ -150,9 +150,11 @@ Source acceptance is not executable readiness or proof of business correctness.
 Explicit valid reference edits differ from an untouched reference changing meaning.
 
 Formatting policies are `PreserveExactSource`, `PreserveTrivia`, and
-`CanonicalizeTouchedDocuments`. Verified trivia patches must reparse to the intended
-AST; unsupported patches reject rather than silently canonicalizing. Explicit
-canonicalization may remove comments in touched files. Untouched bytes and BOM
+`CanonicalizeTouchedDocuments`. Verified trivia patches cover identifiers, literal
+values and whole property mappings, and must reparse to the intended AST;
+unsupported patches reject rather than silently canonicalizing. Explicit
+canonicalization removes comments in touched files and normalizes member order;
+each proposal reports its `droppedCommentCount`. Untouched bytes and BOM
 policy are retained. Printer omissions reject the proposal.
 
 See [the AST API](ast-authoring.md) and [authoring procedure](mcp-authoring.md).
@@ -160,8 +162,8 @@ See [the AST API](ast-authoring.md) and [authoring procedure](mcp-authoring.md).
 ## Review, durable state and recovery
 
 Open/proposal/apply responses are compact. `read-proposal` exposes paged changed
-paths/identities, exact before/after bytes, authoring diagnostics and executable
-diagnostics. `workspace-state` also exposes proposed identity-state bytes.
+paths/identities, exact before/after bytes, authoring diagnostics, executable
+diagnostics and `dropped-comments`, every comment a changed document loses. `workspace-state` also exposes proposed identity-state bytes.
 
 Apply accepts only a retained server proposal and checks revisions, source
 preimages, identity-state preimages and destination ownership. Stable assignments
