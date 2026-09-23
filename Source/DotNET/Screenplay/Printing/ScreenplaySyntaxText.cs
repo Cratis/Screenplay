@@ -151,7 +151,7 @@ internal static partial class ScreenplaySyntaxText
     /// <returns>The rendered rule text including any message.</returns>
     public static string ValidationRule(ValidationRuleSyntax rule)
     {
-        var head = $"{rule.Property} {ValidationRuleBody(rule)}";
+        var head = $"{rule.Property} {ValidationRuleBody(rule)}{Severity(rule.Severity)}";
         return rule.Message is null ? head : $"{head} message {LocalizableString(rule.Message)}";
     }
 
@@ -163,7 +163,7 @@ internal static partial class ScreenplaySyntaxText
     /// <returns>The rendered rule text including any message.</returns>
     public static string ImpliedSubjectValidationRule(ValidationRuleSyntax rule)
     {
-        var head = ValidationRuleBody(rule);
+        var head = $"{ValidationRuleBody(rule)}{Severity(rule.Severity)}";
         return rule.Message is null ? head : $"{head} message {LocalizableString(rule.Message)}";
     }
 
@@ -173,6 +173,14 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="value">The value to render.</param>
     /// <returns>The rendered operand text.</returns>
+    internal static string Severity(ValidationSeverity severity) => severity switch
+    {
+        ValidationSeverity.Error => string.Empty,
+        ValidationSeverity.Warning => " severity warning",
+        ValidationSeverity.Information => " severity information",
+        _ => throw new UnsupportedSyntaxForPrinting("validation severity", severity.ToString())
+    };
+
     public static string LocalizableString(string value) =>
         value.StartsWith("$strings.", StringComparison.Ordinal) ? value : StringLiteral.Quote(value);
 

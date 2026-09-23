@@ -292,11 +292,19 @@ public partial class ScreenplayPrinter
                     foreach (var requirement in declarative.Requirements ?? [])
                     {
                         writer.Line($"require {ScreenplaySyntaxText.Condition(requirement.Condition)}");
-                        if (requirement.Message is not null)
+                        if (requirement.Message is not null || requirement.Severity != ValidationSeverity.Error)
                         {
                             using (writer.Indent())
                             {
-                                writer.Line($"message {StringLiteral.Quote(requirement.Message)}");
+                                if (requirement.Severity != ValidationSeverity.Error)
+                                {
+                                    writer.Line(ScreenplaySyntaxText.Severity(requirement.Severity).TrimStart());
+                                }
+
+                                if (requirement.Message is not null)
+                                {
+                                    writer.Line($"message {StringLiteral.Quote(requirement.Message)}");
+                                }
                             }
                         }
                     }

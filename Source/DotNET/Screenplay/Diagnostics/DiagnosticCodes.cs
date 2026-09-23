@@ -1851,6 +1851,16 @@ public static class DiagnosticCodes
     public const string InvalidMatchPattern = "PLAY0367";
 
     /// <summary>
+    /// A validation rule names a severity other than information, warning or error.
+    /// </summary>
+    public const string InvalidValidationSeverity = "PLAY0368";
+
+    /// <summary>
+    /// A command requirement has an invalid or repeated severity directive.
+    /// </summary>
+    public const string InvalidRequirementSeverity = "PLAY0369";
+
+    /// <summary>
     /// A projection construct binds, but Chronicle's projection lowering drops part of it: <c>all</c> inside a
     /// <c>children</c> or <c>nested</c> block loses its subscription to every event type, and an auto-map setting on a
     /// joined event is replaced by the level's.
