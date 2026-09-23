@@ -7,7 +7,7 @@ using System.Text.Json;
 
 namespace Cratis.Screenplay.Semantics.Serialization;
 
-static class SemanticModelCanonicalJson
+internal static partial class SemanticModelCanonicalJson
 {
     internal const string Schema = "cratis.screenplay.esm";
     internal const uint SchemaVersion = 1;
@@ -249,6 +249,7 @@ static class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", projection.Name);
         writer.WriteString("readModel", projection.ReadModel.ToString());
         WriteArray(writer, "transitions", projection.Transitions, WriteTransition);
+        WriteProjectionScope(writer, projection.Scope);
         writer.WriteEndObject();
     }
 

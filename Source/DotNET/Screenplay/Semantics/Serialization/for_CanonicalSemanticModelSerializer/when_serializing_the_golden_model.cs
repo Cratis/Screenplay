@@ -40,7 +40,7 @@ public class when_serializing_the_golden_model : Specification
     [Fact] void should_cover_a_message_only_rejection() => _errors.Any(_ => _.Code is null && _.Message == "Title is invalid").ShouldBeTrue();
     [Fact] void should_keep_the_behavior_order() =>
         _roundTripped.Application.Modules.Single().Features.Single().Features.Single().Slices
-            .Single(_ => _.Kind == SemanticSliceKind.StateView).Projections.Single().Transitions
+            .Single(_ => _.Name == "EntitySummaries").Projections.Single().Transitions
             .Select(_ => _.AffectedInstance.Cardinality)
             .ShouldContainOnly([AffectedInstanceCardinality.ZeroOrOne, AffectedInstanceCardinality.One, AffectedInstanceCardinality.Many]);
 }
