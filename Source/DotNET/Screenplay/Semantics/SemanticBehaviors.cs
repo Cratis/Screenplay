@@ -159,6 +159,10 @@ public enum SemanticQueryDelivery
 /// <summary>
 /// Represents one declarative validation rule.
 /// </summary>
+/// <remarks>
+/// Concept value rules are enforced on command input wherever the concept occurs, including collection elements
+/// and values nested inside composites. They do not validate event payloads, read-model state or query keys.
+/// </remarks>
 /// <param name="Property">The property identity, or a default identity for a concept value rule.</param>
 /// <param name="Kind">The rule kind.</param>
 /// <param name="Operand">The optional concrete operand.</param>

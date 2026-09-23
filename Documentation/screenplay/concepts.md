@@ -117,7 +117,7 @@ concept Quantity : Int
     min 1      message "Order at least one"
 ```
 
-A concept's rules constrain every value of the concept, wherever it appears — a command property, each element of a collection, or a property inside a composite [type](types.md). The executable semantic model admits the same rules for a concept as for a command property, and rejects the same ones for the same reasons — see [what the executable model admits](commands.md#what-the-executable-model-admits). `all >` and `all >=` quantify over a collection, which a concept's own value never is, so they belong on the command property instead.
+The executable semantic model enforces concept rules on **command input**: every value of the concept, including each collection element and values inside composite [types](types.md). It does not enforce those rules on event payloads, read-model state or query keys. The executable semantic model admits the same rules for a concept as for a command property, and rejects the same ones for the same reasons — see [what the executable model admits](commands.md#what-the-executable-model-admits). `all >` and `all >=` quantify over a collection, which a concept's own value never is, so they belong on the command property instead.
 
 In the compiled syntax tree the implied subject is represented by the well-known property name `value` — the `ValidationRuleSyntax.ConceptValue` constant — so consumers can treat concept rules and command rules uniformly.
 

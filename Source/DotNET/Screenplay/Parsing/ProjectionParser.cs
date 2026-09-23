@@ -559,7 +559,7 @@ internal static partial class ProjectionParser
         if (arithmetic.Success)
         {
             var property = Unescape(arithmetic.Groups[2].Value);
-            var value = ExpressionParser.ParseProjectionExpression(context, arithmetic.Groups[3].Value, line.Location);
+            var value = ExpressionParser.ParseProjectionMappingSource(context, arithmetic.Groups[3], line);
             return arithmetic.Groups[1].Value == "add"
                 ? new AddMappingSyntax(property, value, line.Location)
                 : new SubtractMappingSyntax(property, value, line.Location);
@@ -568,14 +568,14 @@ internal static partial class ProjectionParser
         var set = SetRegex().Match(line.Content);
         if (set.Success)
         {
-            var source = ExpressionParser.ParseProjectionExpression(context, set.Groups[2].Value, line.Location);
+            var source = ExpressionParser.ParseProjectionMappingSource(context, set.Groups[2], line);
             return new SetMappingSyntax(Unescape(set.Groups[1].Value), source, line.Location);
         }
 
         var assignment = AssignmentRegex().Match(line.Content);
         if (assignment.Success)
         {
-            var source = ExpressionParser.ParseProjectionExpression(context, assignment.Groups[2].Value, line.Location);
+            var source = ExpressionParser.ParseProjectionMappingSource(context, assignment.Groups[2], line);
             return new SetMappingSyntax(Unescape(assignment.Groups[1].Value), source, line.Location);
         }
 

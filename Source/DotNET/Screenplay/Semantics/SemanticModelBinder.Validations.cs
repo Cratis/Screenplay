@@ -36,6 +36,9 @@ public sealed partial class SemanticModelBinder
         static string? Inadmissible(SemanticValidationRuleKind kind, ValidationSubject subject) => kind switch
         {
             SemanticValidationRuleKind.Unknown => "ESM v1 does not define this rule",
+            SemanticValidationRuleKind.NotEmpty when !subject.IsCollection && subject.Primitive != SemanticPrimitiveType.Text =>
+                "not empty requires text or a collection",
+            SemanticValidationRuleKind.NotEmpty => null,
             _ when subject.IsDate => NoDateValue,
             SemanticValidationRuleKind.Maximum or SemanticValidationRuleKind.Minimum when subject.IsCollection || !(subject.IsNumber || subject.IsText) =>
                 "a bound constrains the length of one text value or the size of one number",
@@ -179,15 +182,18 @@ public sealed partial class SemanticModelBinder
             }
 
             var kind = Kind(rule.Rule);
+            if (Inadmissible(kind, subject) is { } reason)
+            {
+                Error(
+                    kind == SemanticValidationRuleKind.NotEmpty ? DiagnosticCodes.InvalidSemanticBinding : DiagnosticCodes.UnsupportedSemanticSyntax,
+                    $"Validation rule '{spelling}' on {subject.Description} is not admitted: {reason}.",
+                    rule.Location);
+                return null;
+            }
+
             if (kind == SemanticValidationRuleKind.NotEmpty)
             {
                 return new(property, kind, null, rule.Message);
-            }
-
-            if (Inadmissible(kind, subject) is { } reason)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Validation rule '{spelling}' on {subject.Description} is not admitted: {reason}.", rule.Location);
-                return null;
             }
 
             var operand = BindValidationOperand(rule, kind, subject, spelling);

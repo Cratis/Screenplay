@@ -78,7 +78,7 @@ internal static partial class SeedParser
                 continue;
             }
 
-            properties.Add(new(match.Groups[1].Value, ExpressionParser.ParseMappingSource(context, match.Groups[2].Value, child.Location), child.Location));
+            properties.Add(ExpressionParser.ParseMapping(context, match.Groups[1].Value, match.Groups[2], child));
         }
 
         return properties;

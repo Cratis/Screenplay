@@ -56,22 +56,18 @@ static class ProducedEventMappingSourcePatch
         }
 
         var tokens = WorkspaceSourceTokenizer.Tokenize(document).Tokens;
-        var tokensAtSource = tokens.Where(token => token.Kind == WorkspaceSourceTokenKind.Text && token.Span.Line == location.Line &&
-            token.Span.Column <= location.Column && location.Column - token.Span.Column + length <= token.Span.TextLength).ToArray();
-        if (tokensAtSource.Length != 1 || length != oldSource.Name.Length)
+        var range = WorkspaceSourceRanges.Bytes(tokens, location, length);
+        if (range is not { } bytesAtSource || length != oldSource.Name.Length)
         {
             return Unsupported("The parser-owned source range does not identify one exact workspace token.");
         }
 
-        var token = tokensAtSource[0];
-        var offset = token.Span.TextOffset + location.Column - token.Span.Column;
-        if (!document.Text.AsSpan(offset, length).SequenceEqual(oldSource.Name.AsSpan()))
+        var (byteOffset, byteLength) = bytesAtSource;
+        if (!document.Bytes.AsSpan(byteOffset, byteLength).SequenceEqual(Encoding.UTF8.GetBytes(oldSource.Name)))
         {
             return Unsupported("The parser-owned source range disagrees with the authored command property.");
         }
 
-        var byteOffset = token.Span.ByteOffset + Encoding.UTF8.GetByteCount(document.Text.AsSpan(token.Span.TextOffset, offset - token.Span.TextOffset));
-        var byteLength = Encoding.UTF8.GetByteCount(document.Text.AsSpan(offset, length));
         var replacement = Encoding.UTF8.GetBytes(newSource.Name);
         var bytes = ImmutableArray.CreateBuilder<byte>(document.Bytes.Length - byteLength + replacement.Length);
         bytes.AddRange(document.Bytes.AsSpan(0, byteOffset));
