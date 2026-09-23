@@ -30,11 +30,8 @@ internal static partial class TagParser
         var offset = "tag".Length + (line.Content["tag".Length..].Length - line.Content["tag".Length..].TrimStart().Length);
         if (IdentifierRegex().IsMatch(value))
         {
-            return new(new LiteralExpressionSyntax(value, line.Location)
-            {
-                RawLocation = line.LocationAt(offset),
-                RawLength = value.Length
-            }, line.Location);
+            var identifier = new LiteralExpressionSyntax(value, line.Location) { RawLocation = line.LocationAt(offset), RawLength = value.Length };
+            return new(identifier, line.Location);
         }
 
         var expression = ExpressionParser.ParseMappingSource(context, value, line.Location);
