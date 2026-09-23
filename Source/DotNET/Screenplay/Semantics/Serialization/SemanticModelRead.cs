@@ -995,6 +995,7 @@ internal static partial class SemanticModelRead
         "length" => SemanticValidationRuleKind.Length,
         "allGreaterThan" => SemanticValidationRuleKind.AllGreaterThan,
         "allGreaterThanOrEqual" => SemanticValidationRuleKind.AllGreaterThanOrEqual,
+        "matches" => SemanticValidationRuleKind.Matches,
         _ => throw DiscriminatorError(value, "validation kind")
     };
 

@@ -544,6 +544,7 @@ internal static partial class SemanticModelCanonicalJson
         SemanticValidationRuleKind.Length => "length",
         SemanticValidationRuleKind.AllGreaterThan => "allGreaterThan",
         SemanticValidationRuleKind.AllGreaterThanOrEqual => "allGreaterThanOrEqual",
+        SemanticValidationRuleKind.Matches => "matches",
         _ => throw Unknown(nameof(SemanticValidationRuleKind), value)
     };
 

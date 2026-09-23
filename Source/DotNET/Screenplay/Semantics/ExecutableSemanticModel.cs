@@ -418,6 +418,8 @@ internal static partial class SemanticModelValidator
                     throw new InvalidSemanticContract("Ordering validation requires a scalar number.");
                 case SemanticValidationRuleKind.Length when !scalar || !text:
                     throw new InvalidSemanticContract("Length validation requires a scalar non-enumerated text value.");
+                case SemanticValidationRuleKind.Matches when !scalar || !text:
+                    throw new InvalidSemanticContract("Matches validation requires a scalar non-enumerated text value.");
                 case SemanticValidationRuleKind.AllGreaterThan or SemanticValidationRuleKind.AllGreaterThanOrEqual when scalar || !number:
                     throw new InvalidSemanticContract("Quantified validation requires a collection of numbers.");
             }
@@ -435,11 +437,29 @@ internal static partial class SemanticModelValidator
                 var operandType = validation.Kind switch
                 {
                     _ when bindsLength => SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.WholeNumber),
+                    SemanticValidationRuleKind.Matches => SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text),
                     SemanticValidationRuleKind.AllGreaterThan or SemanticValidationRuleKind.AllGreaterThanOrEqual =>
                         propertyType with { IsCollection = false, IsOptional = false },
                     _ => propertyType
                 };
                 ValidateValue(validation.Operand, operandType, "validation operand");
+                if (validation.Kind == SemanticValidationRuleKind.Matches)
+                {
+                    if (validation.Operand is not SemanticTextValue pattern)
+                    {
+                        throw new InvalidSemanticContract("Matches validation requires a text pattern.");
+                    }
+
+                    try
+                    {
+                        _ = SemanticMatchPattern.Create(pattern.Value);
+                    }
+                    catch (ArgumentException exception)
+                    {
+                        throw new InvalidSemanticContract($"Matches validation has an invalid ECMAScript pattern: {exception.Message}");
+                    }
+                }
+
                 if (bindsLength && validation.Operand is SemanticNumberValue { Value: < 0 })
                 {
                     throw new InvalidSemanticContract($"Validation rule '{validation.Kind}' bounds a length and cannot use a negative operand.");
