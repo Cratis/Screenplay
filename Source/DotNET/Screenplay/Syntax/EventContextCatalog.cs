@@ -120,6 +120,7 @@ public static class EventContextCatalog
         var segments = path.Split('.');
         EventContextMember? current = null;
         var expected = Members;
+        var resolved = new List<EventContextMember>();
         foreach (var segment in segments)
         {
             if (segment.Length == 0)
@@ -140,10 +141,11 @@ public static class EventContextCatalog
             }
 
             current = next;
+            resolved.Add(next);
             expected = MembersOf(next);
         }
 
-        return new(path, EventContextPathStatus.Known) { Member = current };
+        return new(path, EventContextPathStatus.Known) { Member = current, Members = resolved };
     }
 
     static IEnumerable<EventContextPath> Flatten(string prefix, string type, IReadOnlyList<string> above)

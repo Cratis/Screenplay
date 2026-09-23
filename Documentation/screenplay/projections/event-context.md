@@ -146,6 +146,18 @@ The path is checked against the same catalog. Only `$eventContext` is resolved i
 
 `$eventContext` and `$context` are separate namespaces. `$eventContext` reads the event being projected and is available in projections. [`$context`](../context.md) reads the command or query being handled and is available in `produces` and `capture` mappings. Neither falls back to the other, and they are checked against different catalogs.
 
+## In the Semantic Model
+
+The executable semantic model binds a projection value only when it is one portable scalar. Of the paths above, it admits every member that holds a single value with a portable type, written in its canonical camelCase spelling - `.value` on a concept and an uppercased first letter both bind as the plain member, and `eventSourceId` binds as the event source identity. It does not admit:
+
+- the collections `causation` and `tags`,
+- `eventType` and `causedBy` without a member below them,
+- `occurred.Week`, which is a function Chronicle computes rather than a value the event carries,
+- paths through `causedBy.onBehalfOf`, which is optional,
+- `observationState`, which has no portable type and differs between live processing and replay.
+
+The reference executor does not evaluate event-context values yet; a projection that reads one compiles to a plan that reports it.
+
 ## Common Patterns
 
 ### Audit Fields

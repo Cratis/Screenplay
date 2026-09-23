@@ -189,14 +189,19 @@ public sealed partial class SemanticModelBinder
                     return SemanticProjectionValue.Literal(BindLiteral(literal));
                 case EventSourceIdExpressionSyntax:
                     return SemanticProjectionValue.EventSourceIdentity;
-                case EventContextExpressionSyntax context when context.Path == SemanticEventContextPaths.EventSourceId:
-                    return SemanticProjectionValue.EventSourceIdentity;
-                case EventContextExpressionSyntax context when SemanticEventContextPaths.TryGetPrimitive(context.Path, out _):
-                    return SemanticProjectionValue.EventContext(context.Path);
                 case EventContextExpressionSyntax context:
+                    var scalar = SemanticEventContextScalars.Resolve(context.Path);
+                    switch (scalar.Kind)
+                    {
+                        case SemanticEventContextScalarKind.EventSource:
+                            return SemanticProjectionValue.EventSourceIdentity;
+                        case SemanticEventContextScalarKind.Scalar:
+                            return SemanticProjectionValue.EventContext(scalar.Path);
+                    }
+
                     Error(
                         DiagnosticCodes.InvalidSemanticBinding,
-                        $"'$eventContext.{context.Path}' is not a path ESM v1 admits on Chronicle's event context; admitted paths are {string.Join(", ", SemanticEventContextPaths.All.Prepend(SemanticEventContextPaths.EventSourceId))}.",
+                        $"'$eventContext.{context.Path}' is not a path ESM v1 admits on Chronicle's event context: {scalar.Reason}. Admitted paths are {string.Join(", ", SemanticEventContextScalars.All)}.",
                         expression.Location);
                     return null;
 
