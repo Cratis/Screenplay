@@ -599,6 +599,7 @@ These errors are reported by ordinary compilation, including compilation of a fo
 | `PLAY0291` | Error | A mapping value starts with `{` or `[` but is not a valid single-line JSON object or list (keys must be quoted). |
 | `PLAY0292` | Error | An object key does not name a property of the target's declared composite `type`. Unknown or imported types remain undecided. |
 | `PLAY0293` | Error | A statically known value has the wrong shape for its target: a collection expects a list, a declared composite expects an object, and a scalar cannot accept a list or object. |
+| `PLAY0294` | Error | An inline JSON object repeats a key (including inside a nested object or list); each property may be stated once. |
 
 An `import` never changes what these checks see: a name the application declares resolves to that declaration whether or not it is also imported, and an imported name nothing here declares keeps an unknown shape.
 
@@ -634,6 +635,10 @@ Every `$eventContext.<path>` - in a projection expression or in a dynamic dictio
 | `PLAY0350` | Error | A command or event specification value is `null`; in Chronicle an optional fact is a separate event. Optional read-model values may be null. |
 | `PLAY0351` | Error | A `given readmodel` or `then readmodel` block does not state the identifier inferred from its keyed query. A `then query … result` block may derive it from the argument. |
 | `PLAY0352` | Error | A specification without `when` asserts an event or error, or has no `then query` or `then readmodel` outcome. |
+| `PLAY0353` | Error | A specification value is null for a required property, or a nested command/event property is null; only optional read-model properties admit null. |
+| `PLAY0354` | Error | A structured specification object omits a required property of its declared composite type. |
+| `PLAY0355` | Error | The composite type declared for a structured specification value cannot be resolved. |
+| `PLAY0356` | Error | A typed structured specification object repeats a member; inline JSON duplicates are caught earlier by `PLAY0294`. |
 
 ### Interaction
 

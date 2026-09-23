@@ -10,7 +10,7 @@ namespace Cratis.Screenplay.Parsing;
 /// <summary>
 /// Reads JSON-shaped values, retaining the exact authored spans of keys and nested literals.
 /// </summary>
-internal sealed class StructuredValueParser(string text, SourceLocation start)
+internal sealed class StructuredValueParser(string text, SourceLocation start, ParserContext context)
 {
     int _position;
 
@@ -82,6 +82,7 @@ internal sealed class StructuredValueParser(string text, SourceLocation start)
         {
             _position++;
             var members = new List<ObjectMemberSyntax>();
+            var names = new HashSet<string>(StringComparer.Ordinal);
             foreach (var property in element.EnumerateObject())
             {
                 Whitespace();
@@ -91,11 +92,19 @@ internal sealed class StructuredValueParser(string text, SourceLocation start)
                 var keyLength = _position - keyStart;
                 Whitespace();
                 _position++; // colon
-                members.Add(new ObjectMemberSyntax(property.Name, Value(property.Value), keyLocation)
+                var memberValue = Value(property.Value);
+                if (!names.Add(property.Name))
                 {
-                    RawLocation = keyLocation,
-                    RawLength = keyLength
-                });
+                    context.Error(DiagnosticCodes.DuplicateStructuredValueMember, $"Duplicate property '{property.Name}' in structured value", keyLocation);
+                }
+                else
+                {
+                    members.Add(new ObjectMemberSyntax(property.Name, memberValue, keyLocation)
+                    {
+                        RawLocation = keyLocation,
+                        RawLength = keyLength
+                    });
+                }
                 Whitespace();
                 if (text[_position] == ',')
                 {

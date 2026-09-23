@@ -132,7 +132,7 @@ internal static partial class ExpressionParser
         {
             try
             {
-                var expression = new StructuredValueParser(text, location).Parse();
+                var expression = new StructuredValueParser(text, location, context).Parse();
                 if (expression is ObjectExpressionSyntax or ListExpressionSyntax)
                 {
                     return expression;

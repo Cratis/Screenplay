@@ -371,6 +371,21 @@ public static partial class canonical_serialization_golden_vectors
             ]
         };
 
+        // #207 structured specification values: a nested object with an ordered list, empty list, and optional null.
+        stateView = stateView with
+        {
+            Specifications = stateView.Specifications.Add(new SemanticSpecification(
+                Id(2071),
+                "asserts a structured read model subset",
+                [],
+                [readModelState],
+                null,
+                [],
+                [new(readModel, idValue, [new(readModelId, idValue), new(readModelDetails, detailsValue), new(readModelNote, SemanticValue.Null)])],
+                [],
+                []))
+        };
+
         // end #207 when-less specifications
 
         // #209 validation
