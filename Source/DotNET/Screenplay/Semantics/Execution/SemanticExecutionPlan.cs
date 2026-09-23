@@ -182,6 +182,8 @@ public sealed class SemanticExecutionPlan
             []);
     }
 
+    // A containment level or slice member this walk does not know would be skipped silently, so
+    // for_SemanticExecutionPlan/when_inspecting_the_containment_it_traverses holds the ESM shape against it.
     static IEnumerable<SemanticSlice> AllSlices(SemanticApplication application) =>
         application.Modules.SelectMany(_ => AllSlices(_.Features));
 

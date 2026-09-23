@@ -1,0 +1,145 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Collections.Immutable;
+using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Syntax;
+
+namespace Cratis.Screenplay.Semantics;
+
+public sealed partial class SemanticModelBinder
+{
+    private sealed partial class BindingContext
+    {
+        SemanticCommand BindCommand(
+            SemanticAddress slice,
+            CommandSyntax command,
+            Dictionary<string, BoundEvent> events)
+        {
+            if (command.Description is not null)
+            {
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Command '{command.Name}' description is authoring metadata.", command.Location);
+            }
+
+            if (command.Authorize is not null)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' authorization requires portable policy semantics.", command.Authorize.Location);
+            }
+
+            foreach (var reads in command.Reads ?? [])
+            {
+                Error(
+                    DiagnosticCodes.PreservedLegacySemanticSyntax,
+                    $"Command '{command.Name}' reads '{reads.ReadModel}' with legacy semantics that cannot imply decision consistency.",
+                    reads.Location);
+            }
+
+            if (command.Concurrency is not null)
+            {
+                Error(
+                    DiagnosticCodes.PreservedLegacySemanticSyntax,
+                    $"Command '{command.Name}' concurrency metadata keeps its legacy meaning and cannot bind to ESM v1.",
+                    command.Concurrency.Location);
+            }
+
+            if (command.Handler is not null)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' handler requires a constrained implementation attachment.", command.Handler.Location);
+            }
+
+            var address = SemanticAddress.ForCommand(slice, command.Name);
+            var id = Resolve(address, command.Location);
+            var properties = command.Properties.Select(property => BindProperty(address, property, property.IsIdentifier)).ToImmutableArray();
+            var propertiesByName = properties.ToDictionary(_ => _.Name, StringComparer.Ordinal);
+            var validations = BindValidations(command, propertiesByName);
+            var produced = command.Produces
+                .Select(value => BindProducedEvent(command, value, propertiesByName, events))
+                .Where(_ => _ is not null)
+                .Select(_ => _!)
+                .ToImmutableArray();
+            return new(id, command.Name, properties, validations, produced);
+        }
+
+        ImmutableArray<SemanticValidationRule> BindValidations(
+            CommandSyntax command,
+            Dictionary<string, SemanticProperty> properties)
+        {
+            var validations = ImmutableArray.CreateBuilder<SemanticValidationRule>();
+            foreach (var validation in command.Validations)
+            {
+                if (validation is not DeclarativeValidateSyntax declarative)
+                {
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' code validation requires a constrained implementation attachment.", validation.Location);
+                    continue;
+                }
+
+                foreach (var requirement in declarative.Requirements ?? [])
+                {
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' requirement conditions are not admitted by the first ESM v1 vertical.", requirement.Location);
+                }
+
+                foreach (var rule in declarative.Rules)
+                {
+                    if (rule.Rule != ValidationRuleKind.NotEmpty || rule.Value is not null || rule.File is not null || rule.Code is not null)
+                    {
+                        Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Validation rule '{rule.Rule}' on '{rule.Property}' is not admitted by the first ESM v1 vertical.", rule.Location);
+                        continue;
+                    }
+
+                    if (!properties.TryGetValue(rule.Property, out var property))
+                    {
+                        Error(DiagnosticCodes.InvalidSemanticBinding, $"Validation rule property '{rule.Property}' is unresolved on command '{command.Name}'.", rule.Location);
+                        continue;
+                    }
+
+                    validations.Add(new(property.Id, SemanticValidationRuleKind.NotEmpty, null, rule.Message));
+                }
+            }
+
+            return validations.ToImmutable();
+        }
+
+        SemanticProducedEvent? BindProducedEvent(
+            CommandSyntax command,
+            ProducesSyntax produced,
+            Dictionary<string, SemanticProperty> commandProperties,
+            Dictionary<string, BoundEvent> events)
+        {
+            if (!events.TryGetValue(produced.Event, out var @event))
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"Produced event '{produced.Event}' is not declared in slice '{command.Name}'.", produced.Location);
+                return null;
+            }
+
+            if (produced.When is not null)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Conditional production of '{produced.Event}' is not admitted by the first ESM v1 vertical.", produced.When.Location);
+            }
+
+            if ((produced.Tags ?? []).Any())
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Produced event '{produced.Event}' tags are not admitted by ESM v1.", produced.Location);
+            }
+
+            var destination = produced.For is null
+                ? null
+                : BindPropertyExpression(produced.For, commandProperties, "produced event destination");
+            var mappings = ImmutableArray.CreateBuilder<SemanticPropertyMapping>();
+            foreach (var mapping in produced.Mappings)
+            {
+                if (!@event.Properties.TryGetValue(mapping.Property, out var target))
+                {
+                    Error(DiagnosticCodes.InvalidSemanticBinding, $"Produced event mapping target '{mapping.Property}' is unresolved on '{@event.Syntax.Name}'.", mapping.Location);
+                    continue;
+                }
+
+                if (BindExpression(mapping.Source, commandProperties, SemanticExpressionRootKind.Command, "produced event mapping") is { } source)
+                {
+                    mappings.Add(new(target.Id, source));
+                }
+            }
+
+            return new(@event.Contract.Id, null, destination, mappings.ToImmutable());
+        }
+    }
+}

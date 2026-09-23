@@ -103,6 +103,8 @@ public partial class ScreenplayPrinter
                 }
 
                 break;
+            default:
+                throw new UnsupportedSyntaxForPrinting("capture map operation", operation.GetType().Name);
         }
     }
 
