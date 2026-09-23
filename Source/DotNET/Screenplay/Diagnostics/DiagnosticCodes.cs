@@ -1552,6 +1552,11 @@ public static class DiagnosticCodes
     /// </summary>
     public const string EmptyAuthoringWorkspace = "PLAY0289";
 
+    /// <summary>
+    /// An <c>import</c> names something the application declares itself, so it has no effect.
+    /// </summary>
+    public const string RedundantImport = "PLAY0290";
+
     // PLAY0300-PLAY0349 is reserved for the interaction model - behaviors, interaction triggers, actions and
     // continuations. The range is contiguous and allocated up front so the constructs land as one coherent
     // revision rather than accreting codes in three places. PLAY0290-PLAY0299 is left free deliberately.

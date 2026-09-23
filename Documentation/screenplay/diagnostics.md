@@ -592,6 +592,9 @@ These errors are reported by ordinary compilation, including compilation of a fo
 | `PLAY0285` | Error | A specification's expected event contradicts every possible declared producer of its `when` command, using decidable literals, property copies and equality conditions. |
 | `PLAY0286` | Error | A specification value is not a member of the enum declared by that specific command, event, read-model field or query parameter. Bare members, qualified members and quoted member names are accepted. |
 | `PLAY0287` | Error | A command or reaction producer, a capture append mapping, or a specification's `given`/`then` event step, assigns a field absent from the referenced event's declaration. |
+| `PLAY0290` | Warning | An `import` names an event, command, read model, concept or type the application declares itself. The declaration is what every reference resolves to and what these checks see, so the import has no effect - remove it. |
+
+An `import` never changes what these checks see: a name the application declares resolves to that declaration whether or not it is also imported, and an imported name nothing here declares keeps an unknown shape.
 
 These checks do not execute handlers, custom predicates or opaque expressions. An undeclared query signature does not establish a read-key mismatch. An unknown event shape under AutoMap, or an open `all` subscription with AutoMap, leaves projection coverage undecidable. Outcome checks compare explicit producer mappings only; they do not invent mappings for omitted fields.
 

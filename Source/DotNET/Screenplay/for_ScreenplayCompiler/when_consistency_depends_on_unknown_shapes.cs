@@ -41,17 +41,12 @@ public class when_consistency_depends_on_unknown_shapes : given.a_compiler
                   from ImportedEvent
               query Lookup => View
                 by identity Identity
-        module Unrelated
-          feature Other
-            slice StateChange Record
-              event ImportedEvent
-                different String
         """;
 
     CompilationResult<ApplicationSyntax> _result;
 
     void Because() => _result = _compiler.Compile(Source);
 
-    [Fact] void should_not_guess_imported_shapes_from_an_unrelated_same_named_declaration() => _result.Success.ShouldBeTrue();
+    [Fact] void should_succeed() => _result.Success.ShouldBeTrue();
     [Fact] void should_leave_unknown_property_paths_read_types_enum_values_and_automap_sources_undecided() => _result.Diagnostics.ShouldBeEmpty();
 }

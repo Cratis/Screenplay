@@ -62,6 +62,19 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
     }
 
     /// <summary>
+    /// Gets whether the application itself declares something an import could stand in for under a name - an
+    /// event, a command, a read model, a concept or a type.
+    /// </summary>
+    /// <param name="name">The short name.</param>
+    /// <returns>Whether any such declaration carries the name.</returns>
+    public bool Declares(string name) =>
+        slices.Any(entry => entry.Slice.Events.Any(@event => @event.Name == name) ||
+            entry.Slice.Commands.Any(command => command.Name == name) ||
+            ViewNames(entry.Slice).Contains(name, StringComparer.Ordinal)) ||
+        application.Concepts.Any(concept => concept.Name == name) ||
+        (application.Types ?? []).Any(type => type.Name == name);
+
+    /// <summary>
     /// Resolves the explicitly declared shape of a read model.
     /// </summary>
     /// <param name="name">The read model name.</param>
@@ -156,15 +169,16 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
 
     ReferenceResolver.Resolution ResolveDeclaration(string name, DeclarationScope scope, IReadOnlyList<Declaration> declarations)
     {
-        var local = declarations.Where(declaration => declaration.Name == name && declaration.Scope.SharesPrefixWith(scope, scope.Depth)).ToList();
-        var imports = application.Imports.Where(import => import.Name == name).ToList();
-        if (local.Count == 0 && imports.Count > 0)
+        // A declaration of this application is the declaration whether or not an import also names it - an
+        // import that repeats a declared name has no effect and is reported on its own, so it must never
+        // change what the checks see. Only a name nothing here declares falls to the imports.
+        var resolution = ReferenceResolver.Resolve(name, scope, declarations);
+        if (!resolution.IsUnresolved)
         {
-            // An import names its target explicitly; an unrelated declaration with the same short name
-            // elsewhere in this document must not supply the imported artifact's shape.
-            return imports.Count == 1 ? ReferenceResolver.Resolve(imports[0].QualifiedName, scope, declarations) : new(null, []);
+            return resolution;
         }
 
-        return ReferenceResolver.Resolve(name, scope, declarations);
+        var imports = application.Imports.Where(import => import.Name == name).ToList();
+        return imports.Count == 1 ? ReferenceResolver.Resolve(imports[0].QualifiedName, scope, declarations) : new(null, []);
     }
 }

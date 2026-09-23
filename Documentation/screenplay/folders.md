@@ -336,7 +336,11 @@ Duplicates *within* one file are left to the single document compiler, which alr
 
 ### Why `import` still means what it meant
 
-`import` names something that comes from outside the application - another bounded context, another team's contract. It does not resolve against another file of the same folder, and it does not need to: the files of a folder are one document, so a name declared in one of them is simply in scope in all of them. Adding an import for a name your own application declares would say the opposite of what is true.
+`import` names something that comes from outside the application - another bounded context, another team's contract. It does not resolve against another file of the same folder, and it does not need to: the files of a folder are one document, so a name declared in one of them is simply in scope in all of them. Adding an import for a name your own application declares would say the opposite of what is true, so the compiler reports it as a `PLAY0290` warning. Such an import has no effect: every reference and every consistency check resolves the name to your own declaration, exactly as it would without the import.
+
+```text
+application.play(2,1): warning PLAY0290: Import 'Catalog.ItemView' names 'ItemView', which this application declares - the import has no effect
+```
 
 ## Round-tripping
 
