@@ -29,7 +29,7 @@ public class when_serializing_the_golden_model : Specification
         _reserialized = SemanticModelSerializer.Serialize(_roundTripped);
         var slices = _roundTripped.Application.Modules.Single().Features.Single().Features.Single().Slices;
         _errors = [.. slices.SelectMany(_ => _.Specifications).SelectMany(_ => _.ThenErrors)];
-        _produced = [.. slices.Single(_ => _.Kind == SemanticSliceKind.StateChange).Commands.Single().Produces];
+        _produced = [.. slices.Single(_ => _.Name == "Creation").Commands.Single().Produces];
     }
 
     [Fact] void should_match_the_checked_in_utf8_bytes() => _serialized.SequenceEqual(_expected).ShouldBeTrue();

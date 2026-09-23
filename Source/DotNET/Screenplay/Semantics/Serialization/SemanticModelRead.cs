@@ -986,6 +986,13 @@ internal static partial class SemanticModelRead
         "minimum" => SemanticValidationRuleKind.Minimum,
         "equal" => SemanticValidationRuleKind.Equal,
         "notEqual" => SemanticValidationRuleKind.NotEqual,
+        "greaterThan" => SemanticValidationRuleKind.GreaterThan,
+        "greaterThanOrEqual" => SemanticValidationRuleKind.GreaterThanOrEqual,
+        "lessThan" => SemanticValidationRuleKind.LessThan,
+        "lessThanOrEqual" => SemanticValidationRuleKind.LessThanOrEqual,
+        "length" => SemanticValidationRuleKind.Length,
+        "allGreaterThan" => SemanticValidationRuleKind.AllGreaterThan,
+        "allGreaterThanOrEqual" => SemanticValidationRuleKind.AllGreaterThanOrEqual,
         _ => throw DiscriminatorError(value, "validation kind")
     };
 

@@ -533,6 +533,13 @@ internal static partial class SemanticModelCanonicalJson
         SemanticValidationRuleKind.Minimum => "minimum",
         SemanticValidationRuleKind.Equal => "equal",
         SemanticValidationRuleKind.NotEqual => "notEqual",
+        SemanticValidationRuleKind.GreaterThan => "greaterThan",
+        SemanticValidationRuleKind.GreaterThanOrEqual => "greaterThanOrEqual",
+        SemanticValidationRuleKind.LessThan => "lessThan",
+        SemanticValidationRuleKind.LessThanOrEqual => "lessThanOrEqual",
+        SemanticValidationRuleKind.Length => "length",
+        SemanticValidationRuleKind.AllGreaterThan => "allGreaterThan",
+        SemanticValidationRuleKind.AllGreaterThanOrEqual => "allGreaterThanOrEqual",
         _ => throw Unknown(nameof(SemanticValidationRuleKind), value)
     };
 

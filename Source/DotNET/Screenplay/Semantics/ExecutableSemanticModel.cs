@@ -401,13 +401,25 @@ internal static partial class SemanticModelValidator
             }
 
             var primitive = UnderlyingPrimitive(propertyType);
+            var scalar = !propertyType.IsCollection;
+            var number = primitive is SemanticPrimitiveType.WholeNumber or SemanticPrimitiveType.DecimalNumber;
+            var text = primitive == SemanticPrimitiveType.Text && !IsEnumeration(propertyType);
             switch (validation.Kind)
             {
-                case SemanticValidationRuleKind.NotEmpty when !propertyType.IsCollection && primitive != SemanticPrimitiveType.Text:
+                case SemanticValidationRuleKind.NotEmpty when scalar && primitive != SemanticPrimitiveType.Text:
                     throw new InvalidSemanticContract("Not-empty validation requires text or a collection.");
-                case SemanticValidationRuleKind.Maximum or SemanticValidationRuleKind.Minimum
-                    when propertyType.IsCollection || primitive is not (SemanticPrimitiveType.WholeNumber or SemanticPrimitiveType.DecimalNumber):
-                    throw new InvalidSemanticContract("Minimum and maximum validation require a scalar numeric value.");
+                case SemanticValidationRuleKind.Maximum or SemanticValidationRuleKind.Minimum when !scalar || !(number || text):
+                    throw new InvalidSemanticContract("Minimum and maximum validation require a scalar number or a scalar non-enumerated text value.");
+                case SemanticValidationRuleKind.Equal or SemanticValidationRuleKind.NotEqual
+                    when !scalar || !(number || primitive is SemanticPrimitiveType.Text or SemanticPrimitiveType.Boolean):
+                    throw new InvalidSemanticContract("Equality validation requires a scalar text, enumeration, number or boolean value.");
+                case SemanticValidationRuleKind.GreaterThan or SemanticValidationRuleKind.GreaterThanOrEqual or
+                    SemanticValidationRuleKind.LessThan or SemanticValidationRuleKind.LessThanOrEqual when !scalar || !number:
+                    throw new InvalidSemanticContract("Ordering validation requires a scalar number.");
+                case SemanticValidationRuleKind.Length when !scalar || !text:
+                    throw new InvalidSemanticContract("Length validation requires a scalar non-enumerated text value.");
+                case SemanticValidationRuleKind.AllGreaterThan or SemanticValidationRuleKind.AllGreaterThanOrEqual when scalar || !number:
+                    throw new InvalidSemanticContract("Quantified validation requires a collection of numbers.");
             }
 
             if (validation.Operand is not null)
@@ -417,9 +429,28 @@ internal static partial class SemanticModelValidator
                     throw new InvalidSemanticContract($"Validation rule '{validation.Kind}' cannot use a null operand.");
                 }
 
-                ValidateValue(validation.Operand, propertyType, "validation operand");
+                // A length rule and a bound on text constrain its length, so the operand is a length, not text.
+                var bindsLength = validation.Kind == SemanticValidationRuleKind.Length ||
+                    (text && validation.Kind is SemanticValidationRuleKind.Maximum or SemanticValidationRuleKind.Minimum);
+                var operandType = validation.Kind switch
+                {
+                    _ when bindsLength => SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.WholeNumber),
+                    SemanticValidationRuleKind.AllGreaterThan or SemanticValidationRuleKind.AllGreaterThanOrEqual =>
+                        propertyType with { IsCollection = false, IsOptional = false },
+                    _ => propertyType
+                };
+                ValidateValue(validation.Operand, operandType, "validation operand");
+                if (bindsLength && validation.Operand is SemanticNumberValue { Value: < 0 })
+                {
+                    throw new InvalidSemanticContract($"Validation rule '{validation.Kind}' bounds a length and cannot use a negative operand.");
+                }
             }
         }
+
+        bool IsEnumeration(SemanticTypeReference type) =>
+            type.Kind == SemanticTypeReferenceKind.Concept &&
+            _concepts.TryGetValue(type.Target, out var concept) &&
+            !concept.Values.IsEmpty;
 
         void ValidateProducedEvent(SemanticProducedEvent produced, SemanticCommand command)
         {

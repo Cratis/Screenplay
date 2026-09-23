@@ -69,20 +69,20 @@ public sealed partial class SemanticModelBinder
             {
                 if (validation is not DeclarativeValidateSyntax declarative)
                 {
-                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' code validation requires a constrained implementation attachment.", validation.Location);
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' code validation requires a constrained implementation attachment (#139).", validation.Location);
                     continue;
                 }
 
                 foreach (var requirement in declarative.Requirements ?? [])
                 {
-                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' requirement conditions are not admitted by the first ESM v1 vertical.", requirement.Location);
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' requirement conditions await decision consistency (#129).", requirement.Location);
                 }
 
                 foreach (var rule in declarative.Rules)
                 {
-                    if (rule.Rule != ValidationRuleKind.NotEmpty || rule.Value is not null || rule.File is not null || rule.Code is not null)
+                    if (rule.Property.Contains('.', StringComparison.Ordinal))
                     {
-                        Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Validation rule '{rule.Rule}' on '{rule.Property}' is not admitted by the first ESM v1 vertical.", rule.Location);
+                        Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Validation rule on '{rule.Property}' is not admitted: ESM v1 validates command properties, not nested paths - declare the rule on the nested value's concept instead.", rule.Location);
                         continue;
                     }
 
@@ -92,7 +92,10 @@ public sealed partial class SemanticModelBinder
                         continue;
                     }
 
-                    validations.Add(new(property.Id, SemanticValidationRuleKind.NotEmpty, null, rule.Message));
+                    if (BindValidationRule(rule, property.Id, CommandValidationSubject(rule.Property, property.Type)) is { } bound)
+                    {
+                        validations.Add(bound);
+                    }
                 }
             }
 

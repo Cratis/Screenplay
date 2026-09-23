@@ -338,7 +338,52 @@ public static class canonical_serialization_golden_vectors
             [entityProjection],
             queries,
             []);
-        var nestedFeature = new SemanticFeature(Id(32), "Nested", [], [stateView, stateChange]);
+
+        // #209 validation
+        var referenceConcept = new SemanticConcept(
+            Id(2090),
+            "Reference",
+            SemanticPrimitiveType.Text,
+            [],
+            [
+                new(default, SemanticValidationRuleKind.Length, SemanticValue.Number(10), "A reference has ten characters"),
+                new(default, SemanticValidationRuleKind.Minimum, SemanticValue.Number(2), null),
+                new(default, SemanticValidationRuleKind.Maximum, SemanticValue.Number(20), null)
+            ]);
+        var priorityConcept = new SemanticConcept(
+            Id(2091),
+            "Priority",
+            SemanticPrimitiveType.WholeNumber,
+            [],
+            [
+                new(default, SemanticValidationRuleKind.GreaterThan, SemanticValue.Number(0), "Priority is positive"),
+                new(default, SemanticValidationRuleKind.GreaterThanOrEqual, SemanticValue.Number(1), null),
+                new(default, SemanticValidationRuleKind.LessThan, SemanticValue.Number(10), null),
+                new(default, SemanticValidationRuleKind.LessThanOrEqual, SemanticValue.Number(9), null)
+            ]);
+        concepts = [.. concepts, referenceConcept, priorityConcept];
+        var validationWeights = Id(2094);
+        var validationReference = Id(2095);
+        var validationEnabled = Id(2096);
+        var validationCommand = new SemanticCommand(
+            Id(2093),
+            "ValidateEntity",
+            [
+                new(validationWeights, "Weights", SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.DecimalNumber, isCollection: true), false),
+                new(validationReference, "Reference", SemanticTypeReference.ForConcept(referenceConcept.Id, isOptional: true), false),
+                new(validationEnabled, "Enabled", SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Boolean), false)
+            ],
+            [
+                new(validationWeights, SemanticValidationRuleKind.AllGreaterThan, SemanticValue.Number(0), "Every weight counts"),
+                new(validationWeights, SemanticValidationRuleKind.AllGreaterThanOrEqual, SemanticValue.Number(0.5000m), null),
+                new(validationReference, SemanticValidationRuleKind.Length, SemanticValue.Number(10), null),
+                new(validationEnabled, SemanticValidationRuleKind.Equal, SemanticValue.Boolean(true), "Only enabled entities validate")
+            ],
+            []);
+        var validation = new SemanticSlice(Id(2092), "Validation", SemanticSliceKind.StateChange, [], [validationCommand], [], [], [], []);
+
+        // end #209 validation
+        var nestedFeature = new SemanticFeature(Id(32), "Nested", [], [stateView, stateChange, validation]);
         var application = new SemanticApplication(
             Id(1),
             "Canonical Golden Application",

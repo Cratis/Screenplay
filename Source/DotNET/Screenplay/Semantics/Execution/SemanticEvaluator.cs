@@ -157,25 +157,54 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         foreach (var validation in command.Validations)
         {
             var value = valuesByTarget[validation.Property];
-            if (validation.Kind == SemanticValidationRuleKind.NotEmpty && IsEmpty(value))
+            if (!SemanticValidationRules.Satisfies(validation, value))
             {
-                return validation.Message ?? "A required value is empty.";
+                return validation.Message ?? SemanticValidationRules.DefaultMessage(validation, value, "A required value is empty.");
             }
         }
 
-        foreach (var property in command.Properties.Where(_ => _.Type.Kind == SemanticTypeReferenceKind.Concept))
+        var concepts = plan.Model.Application.Concepts.ToDictionary(_ => _.Id);
+        var types = plan.Model.Application.Types.ToDictionary(_ => _.Id);
+        foreach (var property in command.Properties)
         {
-            var concept = plan.Model.Application.Concepts.Single(_ => _.Id == property.Type.Target);
-            foreach (var validation in concept.Validations)
+            if (ValidateConceptValues(concepts, types, property.Type, valuesByTarget[property.Id]) is { } rejection)
             {
-                if (validation.Kind == SemanticValidationRuleKind.NotEmpty && IsEmpty(valuesByTarget[property.Id]))
-                {
-                    return validation.Message ?? "A required concept value is empty.";
-                }
+                return rejection;
             }
         }
 
         return null;
+    }
+
+    // A concept's rules constrain every value of the concept - directly, as each element of a collection and
+    // inside composite values - so they are applied wherever the command carries one.
+    static string? ValidateConceptValues(
+        Dictionary<SemanticId, SemanticConcept> concepts,
+        Dictionary<SemanticId, SemanticCompositeType> types,
+        SemanticTypeReference type,
+        SemanticValue value)
+    {
+        if (type.IsCollection)
+        {
+            var elementType = type with { IsCollection = false, IsOptional = false };
+            return value is SemanticArrayValue array
+                ? array.Values.Select(element => ValidateConceptValues(concepts, types, elementType, element)).FirstOrDefault(_ => _ is not null)
+                : null;
+        }
+
+        switch (type.Kind)
+        {
+            case SemanticTypeReferenceKind.Concept:
+                var failed = concepts[type.Target].Validations.FirstOrDefault(validation => !SemanticValidationRules.Satisfies(validation, value));
+                return failed is null ? null : failed.Message ?? SemanticValidationRules.DefaultMessage(failed, value, "A required concept value is empty.");
+            case SemanticTypeReferenceKind.CompositeType when value is SemanticCompositeValue composite:
+                var properties = types[type.Target].Properties.ToDictionary(_ => _.Id);
+                return composite.Properties
+                    .Select(property => ValidateConceptValues(concepts, types, properties[property.TargetProperty].Type, property.Value))
+                    .FirstOrDefault(_ => _ is not null);
+            default:
+                return null;
+        }
     }
 
     static string? ValidateQueryKey(
