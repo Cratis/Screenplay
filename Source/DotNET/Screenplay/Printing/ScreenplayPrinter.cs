@@ -124,6 +124,12 @@ public sealed partial class ScreenplayPrinter :
             WriteTrigger(writer, trigger);
         }
 
+        foreach (var behavior in application.Behaviors)
+        {
+            writer.Blank();
+            WriteBehavior(writer, behavior);
+        }
+
         foreach (var layout in application.Layouts ?? [])
         {
             writer.Blank();

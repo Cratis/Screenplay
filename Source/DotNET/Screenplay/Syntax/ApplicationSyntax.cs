@@ -36,7 +36,13 @@ public record ApplicationSyntax(
     IEnumerable<UiProfileSyntax>? UiProfiles = null,
     IEnumerable<ThemeSyntax>? Themes = null,
     IEnumerable<TriggerSyntax>? Triggers = null,
-    IEnumerable<LayoutSyntax>? Layouts = null) : SyntaxNode(Location);
+    IEnumerable<LayoutSyntax>? Layouts = null) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the named behaviors the document declares, attached where a <c>uses</c> clause references them.
+    /// </summary>
+    public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];
+}
 
 /// <summary>
 /// Represents an <c>import</c> of a construct from another module.

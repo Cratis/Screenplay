@@ -182,6 +182,41 @@ internal static partial class ScreenplaySyntaxText
             : Expression(tag.Value);
 
     /// <summary>
+    /// Renders an <see cref="InteractionTriggerSyntax"/> to the text that follows <c>on</c>.
+    /// </summary>
+    /// <param name="trigger">The <see cref="InteractionTriggerSyntax"/> to render.</param>
+    /// <returns>The rendered trigger text, without the leading <c>on</c>.</returns>
+    public static string InteractionTrigger(InteractionTriggerSyntax trigger) => trigger switch
+    {
+        BuiltInInteractionTriggerSyntax builtIn => InteractionTriggerKindText(builtIn.Kind),
+        EventInteractionTriggerSyntax @event => $"event {@event.EventName}",
+        IntervalInteractionTriggerSyntax interval => $"interval {interval.Amount} {IntervalUnitText(interval.Amount, interval.Unit)}",
+        ApplicationTriggerInteractionTriggerSyntax application => application.TriggerName,
+        _ => string.Empty
+    };
+
+    /// <summary>
+    /// Renders an <see cref="InteractionActionSyntax"/> to its single line surface form, without its arguments
+    /// or continuations.
+    /// </summary>
+    /// <param name="action">The <see cref="InteractionActionSyntax"/> to render.</param>
+    /// <returns>The rendered action text.</returns>
+    public static string InteractionAction(InteractionActionSyntax action) => action switch
+    {
+        ExecuteCommandActionSyntax execute => $"execute {execute.Command}",
+        NavigateActionSyntax navigate => $"navigate to {navigate.Screen}",
+        NavigateBackActionSyntax => "navigate back",
+        OpenDialogActionSyntax open => $"open dialog {open.DialogTemplate}",
+        CloseDialogActionSyntax => "close dialog",
+        RefreshQueryActionSyntax refresh => $"refresh {refresh.Query}",
+        SetStateActionSyntax set => $"set {set.Target} to {set.Value}",
+        NotifyActionSyntax notify => $"notify {NotificationLevelText(notify.Level)} {InteractionMessage(notify.Message, notify.MessageIsLiteral)}",
+        ConfirmActionSyntax confirm => $"confirm {InteractionMessage(confirm.Message, confirm.MessageIsLiteral)}",
+        RaiseTriggerActionSyntax raise => $"raise {raise.Trigger}",
+        _ => string.Empty
+    };
+
+    /// <summary>
     /// Renders the <c>when</c> trigger of a capture <c>append</c> to its surface form.
     /// </summary>
     /// <param name="when">The <see cref="CaptureWhenSyntax"/> to render.</param>
@@ -274,6 +309,35 @@ internal static partial class ScreenplaySyntaxText
 
     static LogicalOperator? OperatorOf(PolicyRequirementSyntax requirement) =>
         requirement is LogicalPolicyRequirementSyntax logical ? logical.Operator : null;
+
+    /// <summary>
+    /// Renders a message operand in the form it was authored - quoted when it was a literal, bare when it was a
+    /// <c>$strings.</c> reference or a binding.
+    /// </summary>
+    static string InteractionMessage(string message, bool isLiteral) =>
+        isLiteral ? StringLiteral.Quote(message) : message;
+
+    static string InteractionTriggerKindText(InteractionTriggerKind kind) => kind switch
+    {
+        InteractionTriggerKind.Click => "click",
+        InteractionTriggerKind.DoubleClick => "double click",
+        InteractionTriggerKind.Select => "select",
+        InteractionTriggerKind.Submit => "submit",
+        InteractionTriggerKind.Change => "change",
+        InteractionTriggerKind.Load => "load",
+        InteractionTriggerKind.Unload => "unload",
+        InteractionTriggerKind.Enter => "enter",
+        InteractionTriggerKind.Leave => "leave",
+        _ => string.Empty
+    };
+
+    static string NotificationLevelText(NotificationLevel level) => level switch
+    {
+        NotificationLevel.Info => "info",
+        NotificationLevel.Warning => "warning",
+        NotificationLevel.Error => "error",
+        _ => string.Empty
+    };
 
     // 'every 1 day' rather than 'every 1 days' - a schedule is read aloud, and the plural is what the
     // language accepts on the way in, not what it insists on writing back out.

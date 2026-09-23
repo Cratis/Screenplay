@@ -42,6 +42,23 @@ internal sealed record DeclarationScope(IReadOnlyList<string> Segments)
 internal sealed record Declaration(string Name, DeclarationScope Scope);
 
 /// <summary>
+/// The declarations an interaction's operands resolve against.
+/// </summary>
+/// <param name="Commands">Every declared command, scoped to where it is declared.</param>
+/// <param name="Screens">Every declared screen, scoped to where it is declared.</param>
+/// <param name="Queries">Every declared query, scoped to where it is declared.</param>
+/// <param name="DialogTemplates">The names of every dialog template the document declares.</param>
+/// <param name="Events">The names of every event in scope, including imported ones.</param>
+/// <param name="Triggers">The names of every declared application trigger.</param>
+internal sealed record InteractionReferences(
+    IReadOnlyList<Declaration> Commands,
+    IReadOnlyList<Declaration> Screens,
+    IReadOnlyList<Declaration> Queries,
+    IReadOnlySet<string> DialogTemplates,
+    IReadOnlySet<string> Events,
+    IReadOnlySet<string> Triggers);
+
+/// <summary>
 /// Resolves the bare and qualified names a screen binds to - a query, a command, another screen.
 /// </summary>
 /// <remarks>

@@ -98,7 +98,18 @@ public record ScreenTableSyntax(
     string Target,
     IEnumerable<ScreenColumnSyntax> Columns,
     ScreenNavigateSyntax? RowClick,
-    SourceLocation Location) : ScreenDirectiveSyntax(Location);
+    SourceLocation Location) : ScreenDirectiveSyntax(Location)
+{
+    /// <summary>
+    /// Gets the behaviors attached inline to the table.
+    /// </summary>
+    public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the named behaviors attached to the table with <c>uses</c>.
+    /// </summary>
+    public IEnumerable<UsesBehaviorSyntax> UsedBehaviors { get; init; } = [];
+}
 
 /// <summary>
 /// Represents a column of a <c>table</c> widget.
@@ -130,3 +141,18 @@ public record ScreenFieldSyntax(string Property, string Label, SourceLocation Lo
 /// <param name="Code">The <see cref="CodeBlockSyntax"/> holding the code.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record ScreenCodeSyntax(CodeBlockSyntax Code, SourceLocation Location) : ScreenDirectiveSyntax(Location);
+
+/// <summary>
+/// Represents a behavior attached where it was written - an inline <c>on</c> block, which is an anonymous
+/// <see cref="BehaviorSyntax"/>.
+/// </summary>
+/// <param name="Behavior">The attached behavior.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> of the attachment.</param>
+public record ScreenBehaviorSyntax(BehaviorSyntax Behavior, SourceLocation Location) : ScreenDirectiveSyntax(Location);
+
+/// <summary>
+/// Represents a named behavior attached with <c>uses</c>.
+/// </summary>
+/// <param name="Uses">The attachment.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> of the attachment.</param>
+public record ScreenUsesBehaviorSyntax(UsesBehaviorSyntax Uses, SourceLocation Location) : ScreenDirectiveSyntax(Location);

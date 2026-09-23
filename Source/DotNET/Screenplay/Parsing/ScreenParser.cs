@@ -66,6 +66,14 @@ internal static partial class ScreenParser
                 return ParseSummary(context, line);
             case "navigate":
                 return ParseNavigate(context, line.Content, line);
+            case "on":
+                return InteractionParser.ParseInlineBehavior(context, line) is { } behavior
+                    ? new ScreenBehaviorSyntax(behavior, line.Location)
+                    : null;
+            case "uses":
+                return InteractionParser.ParseUses(context, line) is { } uses
+                    ? new ScreenUsesBehaviorSyntax(uses, line.Location)
+                    : null;
             default:
                 if (context.Languages.InlineLanguages.Contains(line.Content))
                 {
@@ -202,6 +210,8 @@ internal static partial class ScreenParser
     {
         var target = line.Content["table".Length..].Trim();
         var columns = new List<ScreenColumnSyntax>();
+        var behaviors = new List<BehaviorSyntax>();
+        var usedBehaviors = new List<UsesBehaviorSyntax>();
         ScreenNavigateSyntax? rowClick = null;
 
         while (context.TryPeekChild(line.Indent, out var child))
@@ -221,10 +231,30 @@ internal static partial class ScreenParser
                 continue;
             }
 
-            context.Error(DiagnosticCodes.UnknownTableDirective, $"Unexpected '{child.Content}' in table - expected 'column ...' or 'on row-click navigate to ...'", child.Location);
+            // A table is the element interaction is most often attached to - a row opening a dialog, a
+            // selection driving a detail pane. 'on row-click' above stays what it was; anything else starting
+            // with 'on', plus 'uses', is a behavior attached to the table.
+            if (InteractionParser.IsInteractionDirective(child))
+            {
+                if (LineText.FirstWord(child.Content) == "uses")
+                {
+                    if (InteractionParser.ParseUses(context, child) is { } tableUses)
+                    {
+                        usedBehaviors.Add(tableUses);
+                    }
+                }
+                else if (InteractionParser.ParseInlineBehavior(context, child) is { } tableBehavior)
+                {
+                    behaviors.Add(tableBehavior);
+                }
+
+                continue;
+            }
+
+            context.Error(DiagnosticCodes.UnknownTableDirective, $"Unexpected '{child.Content}' in table - expected 'column ...', 'on row-click navigate to ...', 'on <trigger>' or 'uses <Behavior>'", child.Location);
         }
 
-        return new(target, columns, rowClick, line.Location);
+        return new(target, columns, rowClick, line.Location) { Behaviors = behaviors, UsedBehaviors = usedBehaviors };
     }
 
     static ScreenSummarySyntax ParseSummary(ParserContext context, SourceLine line)

@@ -1551,4 +1551,193 @@ public static class DiagnosticCodes
     /// An empty authoring workspace has no source documents and is not executable.
     /// </summary>
     public const string EmptyAuthoringWorkspace = "PLAY0289";
+
+    // PLAY0300-PLAY0349 is reserved for the interaction model - behaviors, interaction triggers, actions and
+    // continuations. The range is contiguous and allocated up front so the constructs land as one coherent
+    // revision rather than accreting codes in three places. PLAY0290-PLAY0299 is left free deliberately.
+
+    /// <summary>
+    /// A behavior declaration is not of the form <c>behavior &lt;Name&gt;</c>.
+    /// </summary>
+    public const string InvalidBehaviorDeclaration = "PLAY0300";
+
+    /// <summary>
+    /// A behavior name is declared more than once.
+    /// </summary>
+    public const string DuplicateBehavior = "PLAY0301";
+
+    /// <summary>
+    /// A line in a behavior body is not one of description, parameter, order or an <c>on</c> binding.
+    /// </summary>
+    public const string UnknownBehaviorDirective = "PLAY0302";
+
+    /// <summary>
+    /// A behavior parameter declaration is not of the form <c>parameter &lt;name&gt; [&lt;Type&gt;]</c>.
+    /// </summary>
+    public const string InvalidBehaviorParameter = "PLAY0303";
+
+    /// <summary>
+    /// A behavior declares the same parameter name more than once.
+    /// </summary>
+    public const string DuplicateBehaviorParameter = "PLAY0304";
+
+    /// <summary>
+    /// A behavior <c>order</c> is not an integer.
+    /// </summary>
+    public const string InvalidBehaviorOrder = "PLAY0305";
+
+    /// <summary>
+    /// A behavior declares no bindings, so nothing can ever run.
+    /// </summary>
+    public const string BehaviorWithoutBindings = "PLAY0306";
+
+    /// <summary>
+    /// An <c>on</c> clause does not name a built-in interaction kind, an event, an interval or a declared application trigger.
+    /// </summary>
+    public const string InvalidInteractionTrigger = "PLAY0307";
+
+    /// <summary>
+    /// An interaction binding declares no actions, so its trigger has nothing to do.
+    /// </summary>
+    public const string InteractionBindingWithoutActions = "PLAY0308";
+
+    /// <summary>
+    /// An interaction binding declares <c>where</c> more than once.
+    /// </summary>
+    public const string RepeatedInteractionCondition = "PLAY0309";
+
+    /// <summary>
+    /// A line where an action was expected does not name one of the action kinds.
+    /// </summary>
+    public const string UnknownInteractionAction = "PLAY0310";
+
+    /// <summary>
+    /// An <c>execute</c> action is not of the form <c>execute &lt;Command&gt;</c>.
+    /// </summary>
+    public const string InvalidExecuteAction = "PLAY0311";
+
+    /// <summary>
+    /// A <c>navigate</c> action is neither <c>navigate to &lt;Screen&gt;</c> nor <c>navigate back</c>.
+    /// </summary>
+    public const string InvalidNavigateAction = "PLAY0312";
+
+    /// <summary>
+    /// An <c>open dialog</c> action does not name a dialog template.
+    /// </summary>
+    public const string InvalidOpenDialogAction = "PLAY0313";
+
+    /// <summary>
+    /// A <c>refresh</c> action does not name a query.
+    /// </summary>
+    public const string InvalidRefreshAction = "PLAY0314";
+
+    /// <summary>
+    /// A <c>set</c> action is not of the form <c>set &lt;target&gt; to &lt;value&gt;</c>.
+    /// </summary>
+    public const string InvalidSetAction = "PLAY0315";
+
+    /// <summary>
+    /// A <c>notify</c> action is not of the form <c>notify &lt;info|warning|error&gt; "&lt;text&gt;"</c>.
+    /// </summary>
+    public const string InvalidNotifyAction = "PLAY0316";
+
+    /// <summary>
+    /// A <c>confirm</c> action does not carry a message.
+    /// </summary>
+    public const string InvalidConfirmAction = "PLAY0317";
+
+    /// <summary>
+    /// A <c>raise</c> action does not name an application trigger.
+    /// </summary>
+    public const string InvalidRaiseAction = "PLAY0318";
+
+    /// <summary>
+    /// An action argument is not of the form <c>with &lt;name&gt; from &lt;binding&gt;</c>.
+    /// </summary>
+    public const string InvalidInteractionArgument = "PLAY0319";
+
+    /// <summary>
+    /// A continuation is attached to an action that cannot fail, so it could never run.
+    /// </summary>
+    public const string ContinuationOnNonFailableAction = "PLAY0320";
+
+    /// <summary>
+    /// An <c>on result</c> continuation is attached to something other than <c>open dialog</c>.
+    /// </summary>
+    public const string ResultContinuationOnNonDialogAction = "PLAY0321";
+
+    /// <summary>
+    /// A <c>uses</c> clause is not of the form <c>uses &lt;Behavior&gt;</c>.
+    /// </summary>
+    public const string InvalidUsesDeclaration = "PLAY0322";
+
+    /// <summary>
+    /// An argument at a <c>uses</c> site is not of the form <c>&lt;parameter&gt; &lt;value&gt;</c>.
+    /// </summary>
+    public const string InvalidBehaviorArgument = "PLAY0323";
+
+    /// <summary>
+    /// Interaction nesting went deeper than the compiler admits.
+    /// </summary>
+    public const string InteractionNestingTooDeep = "PLAY0324";
+
+    /// <summary>
+    /// An <c>interval</c> trigger is below the floor a client can honour.
+    /// </summary>
+    public const string IntervalBelowFloor = "PLAY0325";
+
+    /// <summary>
+    /// An application trigger is declared with a name reserved as a built-in interaction kind.
+    /// </summary>
+    public const string ApplicationTriggerCollidesWithInteractionKind = "PLAY0326";
+
+    /// <summary>
+    /// An action names a command the document does not declare.
+    /// </summary>
+    public const string UnknownActionCommand = "PLAY0330";
+
+    /// <summary>
+    /// A <c>navigate to</c> action names a screen the document does not declare.
+    /// </summary>
+    public const string UnknownActionScreen = "PLAY0331";
+
+    /// <summary>
+    /// A <c>refresh</c> action names a query the document does not declare.
+    /// </summary>
+    public const string UnknownActionQuery = "PLAY0332";
+
+    /// <summary>
+    /// An <c>open dialog</c> action names a dialog template the document does not declare.
+    /// </summary>
+    public const string UnknownActionDialogTemplate = "PLAY0333";
+
+    /// <summary>
+    /// A <c>raise</c> action or an <c>on</c> clause names an application trigger the document does not declare.
+    /// </summary>
+    public const string UnknownActionTrigger = "PLAY0334";
+
+    /// <summary>
+    /// An <c>on event</c> clause names an event the document does not declare.
+    /// </summary>
+    public const string UnknownInteractionEvent = "PLAY0335";
+
+    /// <summary>
+    /// A <c>uses</c> clause names a behavior the document does not declare.
+    /// </summary>
+    public const string UnknownUsedBehavior = "PLAY0336";
+
+    /// <summary>
+    /// A <c>uses</c> site supplies an argument the behavior does not declare a parameter for.
+    /// </summary>
+    public const string UnknownBehaviorArgument = "PLAY0337";
+
+    /// <summary>
+    /// A <c>uses</c> site leaves a behavior parameter without an argument.
+    /// </summary>
+    public const string MissingBehaviorArgument = "PLAY0338";
+
+    /// <summary>
+    /// Actions follow an unconditional navigation, so they could never run.
+    /// </summary>
+    public const string UnreachableInteractionContinuation = "PLAY0339";
 }

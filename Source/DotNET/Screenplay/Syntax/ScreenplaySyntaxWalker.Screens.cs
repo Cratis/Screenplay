@@ -69,6 +69,12 @@ public abstract partial class ScreenplaySyntaxWalker
             case ScreenCodeSyntax code:
                 VisitScreenCode(code);
                 break;
+            case ScreenBehaviorSyntax behavior:
+                VisitScreenBehavior(behavior);
+                break;
+            case ScreenUsesBehaviorSyntax uses:
+                VisitScreenUsesBehavior(uses);
+                break;
             default:
                 VisitNode(syntax);
                 break;
@@ -170,6 +176,16 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitScreenNavigate(syntax.RowClick);
         }
+
+        foreach (var behavior in syntax.Behaviors)
+        {
+            VisitBehavior(behavior);
+        }
+
+        foreach (var uses in syntax.UsedBehaviors)
+        {
+            VisitUsesBehavior(uses);
+        }
     }
 
     /// <summary>
@@ -206,5 +222,25 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         VisitCodeBlock(syntax.Code);
+    }
+
+    /// <summary>
+    /// Visits a <see cref="ScreenBehaviorSyntax"/> node and the behavior it attaches.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ScreenBehaviorSyntax"/> to visit.</param>
+    public virtual void VisitScreenBehavior(ScreenBehaviorSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitBehavior(syntax.Behavior);
+    }
+
+    /// <summary>
+    /// Visits a <see cref="ScreenUsesBehaviorSyntax"/> node and the attachment it carries.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ScreenUsesBehaviorSyntax"/> to visit.</param>
+    public virtual void VisitScreenUsesBehavior(ScreenUsesBehaviorSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitUsesBehavior(syntax.Uses);
     }
 }

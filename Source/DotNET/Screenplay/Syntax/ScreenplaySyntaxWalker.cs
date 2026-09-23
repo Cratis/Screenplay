@@ -100,6 +100,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitTheme(theme);
         }
 
+        foreach (var behavior in syntax.Behaviors)
+        {
+            VisitBehavior(behavior);
+        }
+
         foreach (var trigger in syntax.Triggers ?? [])
         {
             VisitTrigger(trigger);
