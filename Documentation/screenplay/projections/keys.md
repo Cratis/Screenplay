@@ -65,9 +65,9 @@ key {TypeName}
 
 The `{TypeName}` must match a complex type defined in your read model schema.
 
-### Composite Key with Event Context and Causation
+### Composite Key with Event Context
 
-You can include event context and causation values in composite keys:
+You can include event context values - among them who caused the event - in composite keys:
 
 ```pdl
 from LineItemAdded
@@ -75,7 +75,7 @@ from LineItemAdded
     OrderId = orderId
     LineNumber = lineNumber
     SequenceNumber = $eventContext.sequenceNumber
-    CreatedBy = $causedBy.subject
+    CreatedBy = $eventContext.causedBy.subject
   Product = productName
   Quantity = quantity
 ```

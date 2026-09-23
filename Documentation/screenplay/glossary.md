@@ -70,7 +70,7 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Context variables** — values the runtime supplies inside expressions: `$context` (the command or query context), `$env` (environment), `$eventContext`, and `$.` (the current capture item).
 - **Context** — what a block of inline or file-referenced code is given, in scope as `context`. There is one per job: a **command context** and a **query context** (the command or arguments, the tenant, the caller, the causation, and when it was received — reachable declaratively through `$context.`), a **rule context** (what is under validation and who is calling), and a **policy context** (the caller and what the decision is about).
 - **Identity** — the authorization view of the caller: identifier, display name, user name, whether authenticated, roles and claims. What a policy decides on.
-- **Caused by** — the audit view of the same caller: subject, name and user name — the three values that travel with an appended event and that a projection reads through `$causedBy`.
+- **Caused by** — the audit view of the same caller: subject, name and user name — the three values that travel with an appended event and that a projection reads through `$eventContext.causedBy` (the short form `$causedBy` parses, but Chronicle cannot yet evaluate it - Cratis/Chronicle#4119).
 
 ## Tools and runtime
 
