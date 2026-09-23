@@ -92,14 +92,14 @@ internal sealed class StructuredValueParser(string text, SourceLocation start, P
                 var keyLength = _position - keyStart;
                 Whitespace();
                 _position++; // colon
-                var value = Value(property.Value);
+                var memberValue = Value(property.Value);
                 if (!names.Add(property.Name))
                 {
                     context.Error(DiagnosticCodes.DuplicateStructuredValueMember, $"Duplicate property '{property.Name}' in structured value", keyLocation);
                 }
                 else
                 {
-                    members.Add(new ObjectMemberSyntax(property.Name, value, keyLocation)
+                    members.Add(new ObjectMemberSyntax(property.Name, memberValue, keyLocation)
                     {
                         RawLocation = keyLocation,
                         RawLength = keyLength
