@@ -6,7 +6,7 @@ using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Files.for_PlayFileCompiler.when_merging_behavior_attachments;
 
-public class and_the_same_behavior_is_attached_in_two_files : when_compiling_a_folder.given.a_folder_of_play_files
+public class and_an_identical_inline_behavior_is_attached_in_two_files : when_compiling_a_folder.given.a_folder_of_play_files
 {
     ApplicationCompilation<ApplicationSyntax> _compilation;
     ModuleSyntax _module;
@@ -14,30 +14,20 @@ public class and_the_same_behavior_is_attached_in_two_files : when_compiling_a_f
     void Establish()
     {
         Write(
-            "application.play",
-            """
-            behavior Refreshing
-              on enter
-                navigate to List
-
-            behavior Opening
-              parameter screen
-              on click
-                navigate to screen
-            """);
-
-        Write(
             Path.Combine("Alpha", "Alpha.play"),
             """
             module Alpha
-              uses Refreshing
+              on enter
+                navigate to List
             """);
 
         Write(
             Path.Combine("Alpha", "Browsing", "List", "List.play"),
             """
             module Alpha
-              uses Refreshing
+
+              on enter
+                navigate to List
 
               feature Browsing
                 slice StateView List
@@ -51,9 +41,9 @@ public class and_the_same_behavior_is_attached_in_two_files : when_compiling_a_f
         _module = _compilation.Result.Value!.Modules.Single();
     }
 
-    [Fact] void should_keep_the_attachment_once() => _module.UsedBehaviors.Single().Location.Path.ShouldEqual(Path.Combine("Alpha", "Alpha.play"));
+    [Fact] void should_keep_the_attachment_once() => _module.Behaviors.Single().Location.Path.ShouldEqual(Path.Combine("Alpha", "Alpha.play"));
     [Fact] void should_report_the_repeated_attachment() => _compilation.Result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.DuplicateBehaviorAttachment);
     [Fact] void should_report_it_as_a_warning() => _compilation.Result.Diagnostics.Single().Severity.ShouldEqual(DiagnosticSeverity.Warning);
     [Fact] void should_locate_the_later_attachment() => _compilation.Result.Diagnostics.Single().Location.Path.ShouldEqual(Path.Combine("Alpha", "Browsing", "List", "List.play"));
-    [Fact] void should_name_the_first_file() => _compilation.Result.Diagnostics.Single().Message.ShouldEqual($"Behavior 'Refreshing' is already attached to the module 'Alpha' in '{Path.Combine("Alpha", "Alpha.play")}' - this repeated attachment is ignored");
+    [Fact] void should_name_the_first_file() => _compilation.Result.Diagnostics.Single().Message.ShouldEqual($"An identical inline behavior is already attached to the module 'Alpha' in '{Path.Combine("Alpha", "Alpha.play")}' - this repeated attachment is ignored");
 }

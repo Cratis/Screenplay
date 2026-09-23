@@ -1747,7 +1747,8 @@ public static class DiagnosticCodes
     public const string UnreachableInteractionContinuation = "PLAY0339";
 
     /// <summary>
-    /// Another file of a folder attaches the same behavior, with the same arguments, to the same module or feature.
+    /// Another file of a folder repeats an attachment of a module or feature - the same behavior with the same
+    /// arguments, or an identical inline behavior - so the repeat is ignored.
     /// </summary>
     public const string DuplicateBehaviorAttachment = "PLAY0340";
 }

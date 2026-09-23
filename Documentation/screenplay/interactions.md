@@ -169,7 +169,7 @@ behavior ConfirmDestructive
 
 This is the same outward-resolving rule [contributions](contributions.md) already use.
 
-In a [folder of files](folders.md), a module's or a feature's attachments may be written in any file that names it, and they accumulate the same way; expansion writes them back into the owner's own file.
+In a [folder of files](folders.md), a module's or a feature's attachments may be written in any file that names it, and they accumulate the same way. An attachment identical to one another file already makes is ignored with a warning rather than run twice; expansion writes them back into the owner's own file.
 
 ## What the compiler checks
 
