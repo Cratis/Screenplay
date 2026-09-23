@@ -88,3 +88,15 @@ describe('when completing the week of when the event occurred', () => {
         labels.should.have.members(['Week']);
     });
 });
+
+describe('when completing below the caused by short form', () => {
+    let labels: string[];
+
+    beforeEach(() => {
+        labels = complete('    by = $causedBy.onBehalfOf.');
+    });
+
+    it('should offer the members of the identity it acted for', () => {
+        labels.should.have.members(['subject', 'name', 'userName', 'onBehalfOf']);
+    });
+});

@@ -15,6 +15,8 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal static partial class ExpressionParser
 {
+    const string CausedByMember = "causedBy";
+
     /// <summary>
     /// Parses an expression as used inside a projection body.
     /// </summary>
@@ -62,10 +64,17 @@ internal static partial class ExpressionParser
 
         if (text.StartsWith("$causedBy.", StringComparison.Ordinal))
         {
+            // The short form reads the same identity as $eventContext.causedBy, so it admits what the catalog lists below it.
             var property = text["$causedBy.".Length..];
-            if (property is not ("subject" or "name" or "userName"))
+            var resolution = EventContextCatalog.Resolve($"{CausedByMember}.{property}");
+            if (!resolution.IsKnown)
             {
-                context.Error(DiagnosticCodes.UnknownCausedByProperty, $"Unknown $causedBy property '{property}' - expected subject, name or userName", location);
+                context.Error(
+                    DiagnosticCodes.UnknownCausedByProperty,
+                    resolution.Expected.Count == 0
+                        ? $"Unknown $causedBy property '{property}' - '{resolution.Member?.Name}' has no members"
+                        : $"Unknown $causedBy property '{property}' - expected {string.Join(", ", resolution.Expected.Select(member => member.Name))}",
+                    location);
             }
 
             return new CausedByExpressionSyntax(property, location);

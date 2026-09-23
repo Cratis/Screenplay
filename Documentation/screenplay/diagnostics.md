@@ -324,7 +324,7 @@ conditions are reported without a code until the compiler checks them too.
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0150` | Error | A `literal` expression carries no value. |
-| `PLAY0151` | Error | A $causedBy expression names a property the cause does not carry. |
+| `PLAY0151` | Error | A `$causedBy` expression names a property the cause does not carry. The short form admits what the [event context catalog](projections/event-context.md#available-properties) lists below `causedBy`: `subject`, `name`, `userName` and `onBehalfOf`, which is itself an identity with the same members. |
 | `PLAY0152` | Error | An expression is not one the language can read. |
 | `PLAY0153` | Warning | A $context path opens with a root the context does not have. |
 | `PLAY0154` | Warning | A $context.causedBy path names a property the cause does not carry. |
