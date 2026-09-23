@@ -302,6 +302,32 @@ public static class canonical_serialization_golden_vectors
             [],
             [],
             [messageOnlyRejection, rejection, success, bareRejection]);
+
+        // #212 constraints
+        stateChange = stateChange with
+        {
+            Constraints =
+            [
+                new(
+                    "UniqueEntityCode",
+                    SemanticConstraintKind.UniquePropertyValue,
+                    SemanticConstraintScope.EventSequence,
+                    [new(createdEvent, [eventLabel, eventCode]), new(optionalEvent, [optionalEventId])],
+                    [manyEvent],
+                    true,
+                    "Codes are unique"),
+                new(
+                    "OneCreationPerEntity",
+                    SemanticConstraintKind.UniqueEventOccurrence,
+                    SemanticConstraintScope.EventSequence,
+                    [new(createdEvent, [])],
+                    [],
+                    false,
+                    null)
+            ]
+        };
+
+        // end #212 constraints
         var stateView = new SemanticSlice(
             Id(41),
             "EntitySummaries",

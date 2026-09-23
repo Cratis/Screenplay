@@ -101,7 +101,10 @@ public sealed partial class SemanticModelBinder
                 .Select(_ => _!)
                 .ToImmutableArray();
             ReportUnsupportedSliceMembers(slice);
-            return new(id, slice.Name, kind, [.. events.Select(_ => _.Contract)], commands, readModels, projections, queries, specifications);
+            return new(id, slice.Name, kind, [.. events.Select(_ => _.Contract)], commands, readModels, projections, queries, specifications)
+            {
+                Constraints = BindConstraints(slice)
+            };
         }
 
         BoundEvent BindEvent(SemanticAddress slice, EventSyntax @event)

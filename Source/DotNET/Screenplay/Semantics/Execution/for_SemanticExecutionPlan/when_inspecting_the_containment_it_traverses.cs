@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace Cratis.Screenplay.Semantics.Execution.for_SemanticExecutionPlan;
 
-// The plan walks modules -> features (nested) -> slices and indexes six slice members. A containment level or a
+// The plan walks modules -> features (nested) -> slices and indexes seven slice members, constraints by name. A containment level or a
 // slice member added to ESM without teaching the plan would be skipped silently and never executed or rejected,
 // so the ESM shape is held against exactly what SemanticExecutionPlan.Compile traverses.
 public class when_inspecting_the_containment_it_traverses : Specification
@@ -33,7 +33,7 @@ public class when_inspecting_the_containment_it_traverses : Specification
         _containment.ShouldContainOnly(["SemanticApplication.Modules", "SemanticModule.Features", "SemanticFeature.Features", "SemanticFeature.Slices"]);
 
     [Fact] void should_only_carry_the_slice_members_the_plan_indexes() =>
-        _sliceMembers.ShouldContainOnly(["Events", "Commands", "ReadModels", "Projections", "Queries", "Specifications"]);
+        _sliceMembers.ShouldContainOnly(["Events", "Commands", "ReadModels", "Projections", "Queries", "Specifications", "Constraints"]);
 
     static Type ElementType(Type type) =>
         type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ImmutableArray<>) ? type.GetGenericArguments()[0] : type;

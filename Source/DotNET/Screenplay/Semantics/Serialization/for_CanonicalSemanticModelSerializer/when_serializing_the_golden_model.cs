@@ -38,6 +38,9 @@ public class when_serializing_the_golden_model : Specification
     [Fact] void should_cover_a_produced_event_without_a_condition_or_destination() => _produced.Any(_ => _.Condition is null && _.Destination is null).ShouldBeTrue();
     [Fact] void should_cover_a_bare_rejection() => _errors.Any(_ => _.Code is null && _.Message is null).ShouldBeTrue();
     [Fact] void should_cover_a_message_only_rejection() => _errors.Any(_ => _.Code is null && _.Message == "Title is invalid").ShouldBeTrue();
+    [Fact] void should_cover_both_constraint_kinds() =>
+        _roundTripped.Application.Modules.Single().Features.Single().Features.Single().Slices.SelectMany(_ => _.Constraints).Select(_ => _.Kind)
+            .ShouldContainOnly([SemanticConstraintKind.UniqueEventOccurrence, SemanticConstraintKind.UniquePropertyValue]);
     [Fact] void should_keep_the_behavior_order() =>
         _roundTripped.Application.Modules.Single().Features.Single().Features.Single().Slices
             .Single(_ => _.Kind == SemanticSliceKind.StateView).Projections.Single().Transitions

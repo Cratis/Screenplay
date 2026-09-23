@@ -71,7 +71,8 @@ public sealed class SemanticExecutionPlan
         ImmutableDictionary<SemanticId, SemanticProjection> projections,
         ImmutableDictionary<SemanticId, SemanticReadModel> readModels,
         ImmutableDictionary<SemanticId, SemanticKeyedQuery> queries,
-        ImmutableDictionary<SemanticId, SemanticSpecification> specifications)
+        ImmutableDictionary<SemanticId, SemanticSpecification> specifications,
+        ImmutableDictionary<string, SemanticConstraint> constraints)
     {
         Model = model;
         Commands = commands;
@@ -80,6 +81,7 @@ public sealed class SemanticExecutionPlan
         ReadModels = readModels;
         Queries = queries;
         Specifications = specifications;
+        Constraints = constraints;
     }
 
     /// <summary>
@@ -121,6 +123,11 @@ public sealed class SemanticExecutionPlan
     /// Gets specifications by semantic identity.
     /// </summary>
     public ImmutableDictionary<SemanticId, SemanticSpecification> Specifications { get; }
+
+    /// <summary>
+    /// Gets append-time constraints by name, which is a constraint's identity.
+    /// </summary>
+    public ImmutableDictionary<string, SemanticConstraint> Constraints { get; }
 
     /// <summary>
     /// Compiles ESM into a plan only when every reachable capability is admitted.
@@ -178,7 +185,8 @@ public sealed class SemanticExecutionPlan
                 slices.SelectMany(_ => _.Projections).ToImmutableDictionary(_ => _.Id),
                 slices.SelectMany(_ => _.ReadModels).ToImmutableDictionary(_ => _.Id),
                 slices.SelectMany(_ => _.Queries).ToImmutableDictionary(_ => _.Id),
-                slices.SelectMany(_ => _.Specifications).ToImmutableDictionary(_ => _.Id)),
+                slices.SelectMany(_ => _.Specifications).ToImmutableDictionary(_ => _.Id),
+                slices.SelectMany(_ => _.Constraints).ToImmutableDictionary(_ => _.Name, StringComparer.Ordinal)),
             []);
     }
 
