@@ -1811,4 +1811,9 @@ public static class DiagnosticCodes
     /// across the whole application.
     /// </summary>
     public const string DuplicateConstraintName = "PLAY0392";
+
+    /// <summary>
+    /// Ignoring casing is only meaningful for unique property values, not unique event occurrences.
+    /// </summary>
+    public const string InvalidConstraintCasing = "PLAY0393";
 }

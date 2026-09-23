@@ -642,9 +642,16 @@ SeedEvent      = Ident, NL,
 ConstraintDecl = "constraint", Ident, NL,
                  INDENT, ConstraintBody, DEDENT ;
 
-ConstraintBody = "unique", Ident, "on", Ident, NL   (* unique property  *)
-               | "unique", "event", Ident, NL         (* unique event     *)
-               | FileDirective ;                       (* custom C#        *)
+ConstraintBody = { ConstraintOption }, UniquePropertyRule,
+                   { UniquePropertyRule | ConstraintOption }
+               | { ConstraintOption }, UniqueEventRule,
+                   { UniqueEventRule | ConstraintOption }
+               | FileDirective ;
+UniquePropertyRule = "unique", Ident, { ",", Ident }, "on", Ident, NL ;
+UniqueEventRule = "unique", "event", Ident, NL ;
+ConstraintOption = "released", "by", Ident, NL
+                 | "message", String, NL
+                 | "ignore", "casing", NL ;  (* property rules only *)
 
 (* -------------------------------------------------------------- *)
 (* Reactions and triggers                                          *)

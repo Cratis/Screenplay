@@ -4,6 +4,7 @@
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -24,46 +25,136 @@ internal static partial class ConstraintParser
             ? match.Groups[1].Value
             : ReportInvalidHeader(context, header);
 
-        ConstraintSyntax? constraint = null;
+        var rules = new List<ConstraintSyntax>();
+        var releases = new List<string>();
+        string? message = null;
+        var ignoreCasing = false;
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
-            var parsed = ParseBody(context, name, line);
+            if (ReleaseRegex().Match(line.Content) is { Success: true } release)
+            {
+                var releaseName = release.Groups[1].Value;
+                if (releases.Contains(releaseName))
+                {
+                    context.Error(DiagnosticCodes.DuplicateConstraintBody, $"Constraint '{name}' already releases with event '{releaseName}'", line.Location);
+                }
+                else
+                {
+                    releases.Add(releaseName);
+                }
+
+                continue;
+            }
+
+            if (MessageRegex().Match(line.Content) is { Success: true } text)
+            {
+                if (message is not null)
+                {
+                    context.Error(DiagnosticCodes.DuplicateConstraintBody, $"Constraint '{name}' already has a message", line.Location);
+                }
+                else
+                {
+                    message = StringLiteral.Unescape(text.Groups[1].Value);
+                }
+
+                continue;
+            }
+
+            if (line.Content == "ignore casing")
+            {
+                if (ignoreCasing)
+                {
+                    context.Error(DiagnosticCodes.DuplicateConstraintBody, $"Constraint '{name}' already ignores casing", line.Location);
+                }
+
+                ignoreCasing = true;
+                continue;
+            }
+
+            var parsed = ParseRule(context, name, line);
             if (parsed is null)
             {
                 continue;
             }
 
-            if (constraint is not null)
+            if (rules.Count > 0 && (parsed is FileConstraintSyntax || rules[0] is FileConstraintSyntax ||
+                (parsed is UniqueEventConstraintSyntax) != (rules[0] is UniqueEventConstraintSyntax)))
             {
-                context.Error(DiagnosticCodes.DuplicateConstraintBody, $"Constraint '{name}' already has a body", line.Location);
+                context.Error(DiagnosticCodes.DuplicateConstraintBody, $"Constraint '{name}' cannot mix constraint kinds", line.Location);
                 continue;
             }
 
-            constraint = parsed;
+            var eventName = parsed switch
+            {
+                UniquePropertyConstraintSyntax property => property.Event,
+                UniqueEventConstraintSyntax occurrence => occurrence.Event,
+                _ => null
+            };
+            if (eventName is not null && rules.Exists(rule => rule switch
+            {
+                UniquePropertyConstraintSyntax property => property.Event == eventName,
+                UniqueEventConstraintSyntax occurrence => occurrence.Event == eventName,
+                _ => false
+            }))
+            {
+                context.Error(DiagnosticCodes.DuplicateConstraintBody, $"Constraint '{name}' already targets event '{eventName}'", line.Location);
+                continue;
+            }
+
+            rules.Add(parsed);
         }
 
-        if (constraint is null)
+        foreach (var release in releases.Where(release => rules.Exists(rule => rule switch
+        {
+            UniquePropertyConstraintSyntax property => property.Event == release,
+            UniqueEventConstraintSyntax occurrence => occurrence.Event == release,
+            _ => false
+        })))
+        {
+            context.Error(DiagnosticCodes.DuplicateConstraintBody, $"Constraint '{name}' cannot target and release event '{release}'", header.Location);
+        }
+
+        if (rules.Count == 0)
         {
             context.Error(DiagnosticCodes.ConstraintWithoutRule, $"Constraint '{name}' must declare 'unique ... on ...', 'unique event ...' or 'file ...'", header.Location);
-            constraint = new UniqueEventConstraintSyntax(name, string.Empty, header.Location);
+            rules.Add(new UniqueEventConstraintSyntax(name, string.Empty, header.Location));
         }
 
-        return constraint;
+        if (rules[0] is FileConstraintSyntax && (releases.Count > 0 || message is not null || ignoreCasing))
+        {
+            context.Error(DiagnosticCodes.InvalidConstraintBody, $"File constraint '{name}' cannot have declarative options", header.Location);
+        }
+
+        return rules[0] with
+        {
+            AdditionalRules = [.. rules.Skip(1)],
+            ReleasedBy = releases,
+            Message = message,
+            IgnoreCasing = ignoreCasing
+        };
     }
 
-    static ConstraintSyntax? ParseBody(ParserContext context, string name, SourceLine line)
+    static ConstraintSyntax? ParseRule(ParserContext context, string name, SourceLine line)
     {
-        var uniqueEvent = UniqueEventRegex().Match(line.Content);
-        if (uniqueEvent.Success)
+        if (UniqueEventRegex().Match(line.Content) is { Success: true } uniqueEvent)
         {
             return new UniqueEventConstraintSyntax(name, uniqueEvent.Groups[1].Value, line.Location);
         }
 
-        var uniqueProperty = UniquePropertyRegex().Match(line.Content);
-        if (uniqueProperty.Success)
+        if (UniquePropertyRegex().Match(line.Content) is { Success: true } uniqueProperty)
         {
-            return new UniquePropertyConstraintSyntax(name, uniqueProperty.Groups[1].Value, uniqueProperty.Groups[2].Value, line.Location);
+            var properties = uniqueProperty.Groups[1].Value.Split(',').Select(_ => _.Trim()).ToArray();
+            if (properties.Distinct(StringComparer.Ordinal).Count() != properties.Length)
+            {
+                context.Error(DiagnosticCodes.DuplicateConstraintBody, $"Constraint '{name}' repeats a property in its composite key", line.Location);
+                return null;
+            }
+
+            return new UniquePropertyConstraintSyntax(name, properties[0], uniqueProperty.Groups[2].Value, line.Location)
+            {
+                AdditionalProperties = [.. properties.Skip(1)]
+            };
         }
 
         if (FileReferenceParser.IsDirective(line))
@@ -87,6 +178,12 @@ internal static partial class ConstraintParser
     [GeneratedRegex(@"^unique\s+event\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex UniqueEventRegex();
 
-    [GeneratedRegex(@"^unique\s+([a-z_][\w.]*)\s+on\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^unique\s+([a-z_][\w.]*(?:\s*,\s*[a-z_][\w.]*)*)\s+on\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex UniquePropertyRegex();
+
+    [GeneratedRegex(@"^released\s+by\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex ReleaseRegex();
+
+    [GeneratedRegex("^message\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
+    private static partial Regex MessageRegex();
 }

@@ -161,19 +161,37 @@ public partial class ScreenplayPrinter
         writer.Line($"constraint {constraint.Name}");
         using (writer.Indent())
         {
-            switch (constraint)
+            foreach (var rule in new[] { constraint }.Concat(constraint.AdditionalRules))
             {
-                case UniquePropertyConstraintSyntax unique:
-                    writer.Line($"unique {unique.Property} on {unique.Event}");
-                    break;
-                case UniqueEventConstraintSyntax uniqueEvent:
-                    writer.Line($"unique event {uniqueEvent.Event}");
-                    break;
-                case FileConstraintSyntax file:
-                    writer.Line($"file {file.File.Path}");
-                    break;
-                default:
-                    throw new UnsupportedSyntaxForPrinting("constraint", constraint.GetType().Name);
+                switch (rule)
+                {
+                    case UniquePropertyConstraintSyntax unique:
+                        writer.Line($"unique {string.Join(", ", new[] { unique.Property }.Concat(unique.AdditionalProperties))} on {unique.Event}");
+                        break;
+                    case UniqueEventConstraintSyntax uniqueEvent:
+                        writer.Line($"unique event {uniqueEvent.Event}");
+                        break;
+                    case FileConstraintSyntax file:
+                        writer.Line($"file {file.File.Path}");
+                        break;
+                    default:
+                        throw new UnsupportedSyntaxForPrinting("constraint", rule.GetType().Name);
+                }
+            }
+
+            foreach (var releasedBy in constraint.ReleasedBy)
+            {
+                writer.Line($"released by {releasedBy}");
+            }
+
+            if (constraint.IgnoreCasing)
+            {
+                writer.Line("ignore casing");
+            }
+
+            if (constraint.Message is not null)
+            {
+                writer.Line($"message {StringLiteral.Quote(constraint.Message)}");
             }
         }
     }
