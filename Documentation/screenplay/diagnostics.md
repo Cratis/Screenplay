@@ -644,13 +644,13 @@ A behavior is *deferred* from the backend ESM v1 profile in the same way every o
 | `PLAY0324` | Error | Interaction nesting went deeper than the compiler admits. Extract the inner actions into a named behavior. |
 | `PLAY0325` | Warning | An `interval` trigger is below the floor a client can usefully honour. |
 | `PLAY0326` | Error | An application trigger is declared with a name reserved as a built-in interaction kind. `on <Name>` would mean the interaction and never the trigger, so the declaration would be unreachable. |
-| `PLAY0330` | Error | An action names a command the document does not declare. |
-| `PLAY0331` | Error | A `navigate to` action names a screen the document does not declare. |
-| `PLAY0332` | Error | A `refresh` action names a query the document does not declare. |
-| `PLAY0333` | Error | An `open dialog` action names a dialog template the document does not declare. |
-| `PLAY0334` | Error | A `raise` action or an `on` clause names an application trigger the document does not declare. |
-| `PLAY0335` | Error | An `on event` clause names an event the document does not declare. |
-| `PLAY0336` | Error | A `uses` clause names a behavior the document does not declare. |
+| `PLAY0330` | Warning | An action names a command the document does not declare. |
+| `PLAY0331` | Warning | A `navigate to` action names a screen the document does not declare. |
+| `PLAY0332` | Warning | A `refresh` action names a query the document does not declare. |
+| `PLAY0333` | Warning | An `open dialog` action names a dialog template the document does not declare. |
+| `PLAY0334` | Warning | A `raise` action or an `on` clause names an application trigger the document does not declare. |
+| `PLAY0335` | Warning | An `on event` clause names an event the document does not declare. |
+| `PLAY0336` | Warning | A `uses` clause names a behavior the document does not declare. |
 | `PLAY0337` | Error | A `uses` site supplies an argument the behavior declares no parameter for. |
 | `PLAY0338` | Error | A `uses` site leaves a behavior parameter without an argument. |
 | `PLAY0339` | Warning | Actions follow an unconditional navigation, so they could never run. |
