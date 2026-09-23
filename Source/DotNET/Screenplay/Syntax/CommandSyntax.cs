@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Syntax;
 
@@ -324,6 +325,7 @@ public record PropertyMappingSyntax(string Property, ExpressionSyntax Source, So
     /// <summary>
     /// Gets the parser-owned UTF-16 length of the source expression, or <c>null</c> without exact source evidence.
     /// </summary>
+    [SourceSpanMetadata]
     public int? SourceLength { get; init; }
 }
 

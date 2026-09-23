@@ -15,7 +15,7 @@ internal sealed class SyntaxDescriptor
         Constructor = type.GetConstructors().OrderByDescending(constructor => constructor.GetParameters().Length).First();
         Parameters = Constructor.GetParameters();
         Members = [.. type.GetProperties(BindingFlags.Instance | BindingFlags.Public)
-            .Where(property => !IsMetadata(property.Name) && (Parameters.Any(parameter => parameter.Name == property.Name) || IsInit(property)))
+            .Where(property => !IsMetadata(property) && (Parameters.Any(parameter => parameter.Name == property.Name) || IsInit(property)))
             .Select(property => new SyntaxMember(property, Parameters.FirstOrDefault(parameter => parameter.Name == property.Name)))
             .OrderBy(member => member.Name, StringComparer.Ordinal)];
     }
@@ -42,7 +42,10 @@ internal sealed class SyntaxDescriptor
         return node;
     }
 
-    static bool IsMetadata(string name) => name == nameof(SyntaxNode.Location) || name == nameof(SliceSyntax.DescriptionLocation) || name == nameof(SliceSyntax.DescriptionRawLength);
+    static bool IsMetadata(PropertyInfo property) =>
+        property.PropertyType == typeof(SourceLocation) ||
+        property.Name == nameof(SliceSyntax.DescriptionRawLength) ||
+        property.IsDefined(typeof(SourceSpanMetadataAttribute), inherit: true);
 
     static bool IsInit(PropertyInfo property) => property.SetMethod is { IsPublic: true } setter &&
         setter.ReturnParameter.GetRequiredCustomModifiers().Contains(typeof(IsExternalInit));
