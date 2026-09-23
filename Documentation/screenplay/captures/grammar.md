@@ -18,6 +18,7 @@ EBNF is a notation for formally describing syntax. Here are the key elements use
 | `,` | Sequence | `"a", "b"` matches "a" followed by "b" |
 
 **Special Symbols:**
+
 - `NL` - Newline
 - `INDENT` - Increased indentation level
 - `DEDENT` - Decreased indentation level
@@ -248,7 +249,7 @@ map
   summary = `${status} invoice`
 ```
 
-`status = status` is a plain rename (the source property and target property happen to share a name); `summary = \`...\`` is a template - the same backtick/`${...}` syntax `produces` and PDL expressions use.
+`status = status` is a plain rename (the source property and target property happen to share a name); `` summary = `...` `` is a template - the same backtick/`${...}` syntax `produces` and PDL expressions use.
 
 #### Split Operation
 
@@ -467,6 +468,7 @@ capture LegacyInvoiceCapture
 ```
 
 This capture uses:
+
 - A `source` block with `api`, `route` and `poll` settings
 - A `map` block with a `translate` mapping and a `split` operation
 - Two capture-level `append` blocks - a plain property-changed `when` and a value-transition `when`
