@@ -333,7 +333,7 @@ const mappingTarget = /^(?:(?:increment|decrement|count|clear|add|subtract|set)\
 
 // Every $eventContext.<path> - in an expression or as the dynamic key of a mapping target - checked against the
 // event-context catalog the way the compiler checks it (Parsing/EventContextPathValidator.cs).
-function validateEventContextPaths(lines: string[], fences: boolean[]): ValidationIssue[] {
+export function validateEventContextPaths(lines: string[], fences: boolean[]): ValidationIssue[] {
     const issues: ValidationIssue[] = [];
     const names = (members: readonly { name: string }[]) => members.map((member) => member.name).join(', ');
 
