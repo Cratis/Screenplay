@@ -134,7 +134,30 @@ Writing actions *after* an unconditional `navigate` is reported too: the screen 
 
 ## Where a behavior attaches
 
-A behavior can attach to an element, a form, a screen, a screen or dialog template, a layout, a module or a feature.
+A behavior attaches at every level of the containment tree, and means the same thing at each:
+
+| Level | Reaches |
+| --- | --- |
+| `layout` | every screen in the application |
+| `module` | every screen in the module |
+| `feature` | every screen in the feature, including nested ones |
+| `screen template`, `dialog template` | every screen that uses it |
+| `form` | that form |
+| `screen`, `section`, slot, `table` | that element and what is inside it |
+
+```screenplay
+module Invoicing
+  uses ConfirmDestructive
+
+  screen template Workspace
+    fits slot main
+    content
+
+    on enter
+      refresh Invoices
+```
+
+In a form body, `on submit navigate to <Screen>` keeps its existing one-line meaning. Any other `on` is a behavior attached to the form.
 
 Attachments are **additive**. A behavior on a template and a behavior on an element both run — the more specific one does not replace the less specific one. They run outermost first, unless a behavior declares its own `order`:
 

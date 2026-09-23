@@ -363,6 +363,8 @@ internal static partial class ScreenplayParser
         var features = new List<FeatureSyntax>();
         var forms = new List<FormSyntax>();
         var contributions = new List<ContributionSyntax>();
+        var behaviors = new List<BehaviorSyntax>();
+        var usedBehaviors = new List<UsesBehaviorSyntax>();
 
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -371,6 +373,12 @@ internal static partial class ScreenplayParser
             {
                 case "description":
                     description = DescriptionParser.Parse(context, child, description, $"Module '{name}'");
+                    break;
+                case "on":
+                case "uses":
+                    // Attached here, a behavior covers every screen in the module - the level a confirm on
+                    // every destructive action belongs at.
+                    InteractionParser.ParseAttachment(context, child, behaviors, usedBehaviors);
                     break;
                 case "screen":
                     screenTemplates.Add(LayoutParser.ParseScreenTemplate(context, child));
@@ -388,13 +396,17 @@ internal static partial class ScreenplayParser
                     features.Add(ParseFeature(context, child));
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownModuleDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected description, screen template, dialog template, form, contribute or feature", child.Location);
+                    context.Error(DiagnosticCodes.UnknownModuleDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected description, screen template, dialog template, form, contribute, feature, 'on <trigger>' or 'uses <Behavior>'", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
         }
 
-        return new(name, screenTemplates, features, line.Location, description, forms, contributions, dialogTemplates);
+        return new(name, screenTemplates, features, line.Location, description, forms, contributions, dialogTemplates)
+        {
+            Behaviors = behaviors,
+            UsedBehaviors = usedBehaviors
+        };
     }
 
     static void AddForm(ParserContext context, FormSyntax form, List<FormSyntax> forms)
@@ -421,6 +433,8 @@ internal static partial class ScreenplayParser
         var features = new List<FeatureSyntax>();
         var slices = new List<SliceSyntax>();
         var contributions = new List<ContributionSyntax>();
+        var behaviors = new List<BehaviorSyntax>();
+        var usedBehaviors = new List<UsesBehaviorSyntax>();
 
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -429,6 +443,10 @@ internal static partial class ScreenplayParser
             {
                 case "description":
                     description = DescriptionParser.Parse(context, child, description, $"Feature '{name}'");
+                    break;
+                case "on":
+                case "uses":
+                    InteractionParser.ParseAttachment(context, child, behaviors, usedBehaviors);
                     break;
                 case "feature":
                     features.Add(ParseFeature(context, child));
@@ -440,13 +458,17 @@ internal static partial class ScreenplayParser
                     contributions.Add(ContributionParser.Parse(context, child));
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownFeatureDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in feature body - expected description, feature, slice or contribute", child.Location);
+                    context.Error(DiagnosticCodes.UnknownFeatureDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in feature body - expected description, feature, slice, contribute, 'on <trigger>' or 'uses <Behavior>'", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
         }
 
-        return new(name, features, slices, line.Location, description, contributions);
+        return new(name, features, slices, line.Location, description, contributions)
+        {
+            Behaviors = behaviors,
+            UsedBehaviors = usedBehaviors
+        };
     }
 
     [GeneratedRegex(@"^domain\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]

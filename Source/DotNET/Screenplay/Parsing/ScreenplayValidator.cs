@@ -693,11 +693,46 @@ internal static class ScreenplayValidator
         ParserContext context)
     {
         var behaviors = application.Behaviors.ToDictionary(behavior => behavior.Name ?? string.Empty, StringComparer.Ordinal);
+        var root = new DeclarationScope([]);
 
         // A named behavior is declared at the top level, so it resolves against the document as a whole.
         foreach (var behavior in application.Behaviors)
         {
-            ValidateBindings(behavior.Bindings, new DeclarationScope([]), references, behavior.Parameters.Select(parameter => parameter.Name).ToHashSet(StringComparer.Ordinal), context);
+            ValidateBindings(behavior.Bindings, root, references, behavior.Parameters.Select(parameter => parameter.Name).ToHashSet(StringComparer.Ordinal), context);
+        }
+
+        // Structural attachments - a layout, a template, a module, a feature, a form. Each resolves from the
+        // scope it sits in, the same as a screen's own attachment does.
+        foreach (var layout in application.Layouts ?? [])
+        {
+            ValidateAttachments(layout.Behaviors, layout.UsedBehaviors, root, references, behaviors, context);
+        }
+
+        foreach (var module in application.Modules)
+        {
+            var moduleScope = new DeclarationScope([module.Name]);
+            ValidateAttachments(module.Behaviors, module.UsedBehaviors, moduleScope, references, behaviors, context);
+
+            foreach (var template in module.ScreenTemplates)
+            {
+                ValidateAttachments(template.Behaviors, template.UsedBehaviors, moduleScope, references, behaviors, context);
+            }
+
+            foreach (var template in module.DialogTemplates ?? [])
+            {
+                ValidateAttachments(template.Behaviors, template.UsedBehaviors, moduleScope, references, behaviors, context);
+            }
+
+            foreach (var form in module.Forms ?? [])
+            {
+                ValidateAttachments(form.Behaviors, form.UsedBehaviors, moduleScope, references, behaviors, context);
+            }
+
+            // Scoped from the module down, so a feature's attachment resolves the way a slice inside it does.
+            foreach (var (feature, scope) in AllFeaturesScoped(module.Features, [module.Name]))
+            {
+                ValidateAttachments(feature.Behaviors, feature.UsedBehaviors, scope, references, behaviors, context);
+            }
         }
 
         foreach (var (slice, scope) in scoped)
@@ -726,6 +761,25 @@ internal static class ScreenplayValidator
                         break;
                 }
             }
+        }
+    }
+
+    static void ValidateAttachments(
+        IEnumerable<BehaviorSyntax> attached,
+        IEnumerable<UsesBehaviorSyntax> used,
+        DeclarationScope scope,
+        InteractionReferences references,
+        Dictionary<string, BehaviorSyntax> behaviors,
+        ParserContext context)
+    {
+        foreach (var behavior in attached)
+        {
+            ValidateBindings(behavior.Bindings, scope, references, _noParameters, context);
+        }
+
+        foreach (var uses in used)
+        {
+            ValidateUses(uses, behaviors, context);
         }
     }
 

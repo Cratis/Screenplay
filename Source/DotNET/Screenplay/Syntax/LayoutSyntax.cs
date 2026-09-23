@@ -27,7 +27,19 @@ public record LayoutSyntax(
     string Name,
     IEnumerable<SlotSyntax> Slots,
     SourceLocation Location,
-    ArrangementSyntax? Arrangement = null) : SyntaxNode(Location);
+    ArrangementSyntax? Arrangement = null) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the behaviors attached inline to the layout. Every screen beneath it inherits them, additively
+    /// with whatever is attached closer in.
+    /// </summary>
+    public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the named behaviors attached to the layout with <c>uses</c>.
+    /// </summary>
+    public IEnumerable<UsesBehaviorSyntax> UsedBehaviors { get; init; } = [];
+}
 
 /// <summary>
 /// Represents a <c>screen template &lt;Name&gt;</c> declaration - a reusable shape that goes inside the
@@ -48,7 +60,19 @@ public record ScreenTemplateSyntax(
     IEnumerable<SlotSyntax> Slots,
     SourceLocation Location,
     string? FitsSlot = null,
-    ArrangementSyntax? Arrangement = null) : SyntaxNode(Location);
+    ArrangementSyntax? Arrangement = null) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the behaviors attached inline to the screen template. Every screen beneath it inherits them, additively
+    /// with whatever is attached closer in.
+    /// </summary>
+    public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the named behaviors attached to the screen template with <c>uses</c>.
+    /// </summary>
+    public IEnumerable<UsesBehaviorSyntax> UsedBehaviors { get; init; } = [];
+}
 
 /// <summary>
 /// Represents a <c>dialog template &lt;Name&gt;</c> declaration - a reusable shape for content that opens
@@ -66,7 +90,19 @@ public record DialogTemplateSyntax(
     string Name,
     IEnumerable<SlotSyntax> Slots,
     SourceLocation Location,
-    ArrangementSyntax? Arrangement = null) : SyntaxNode(Location);
+    ArrangementSyntax? Arrangement = null) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the behaviors attached inline to the dialog template. Every screen beneath it inherits them, additively
+    /// with whatever is attached closer in.
+    /// </summary>
+    public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the named behaviors attached to the dialog template with <c>uses</c>.
+    /// </summary>
+    public IEnumerable<UsesBehaviorSyntax> UsedBehaviors { get; init; } = [];
+}
 
 /// <summary>
 /// Represents one named slot of a <see cref="LayoutSyntax"/>, <see cref="ScreenTemplateSyntax"/> or <see cref="DialogTemplateSyntax"/>.

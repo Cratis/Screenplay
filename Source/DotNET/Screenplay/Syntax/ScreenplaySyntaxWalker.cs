@@ -147,6 +147,24 @@ public abstract partial class ScreenplaySyntaxWalker
     /// Visits a <see cref="ModuleSyntax"/> node and its children.
     /// </summary>
     /// <param name="syntax">The <see cref="ModuleSyntax"/> to visit.</param>
+    /// <summary>
+    /// Visits the behaviors attached to a structure - the inline ones, then the named attachments.
+    /// </summary>
+    /// <param name="behaviors">The inline behaviors.</param>
+    /// <param name="usedBehaviors">The named attachments.</param>
+    public virtual void VisitAttachments(IEnumerable<BehaviorSyntax> behaviors, IEnumerable<UsesBehaviorSyntax> usedBehaviors)
+    {
+        foreach (var behavior in behaviors)
+        {
+            VisitBehavior(behavior);
+        }
+
+        foreach (var uses in usedBehaviors)
+        {
+            VisitUsesBehavior(uses);
+        }
+    }
+
     public virtual void VisitModule(ModuleSyntax syntax)
     {
         VisitNode(syntax);
@@ -175,6 +193,8 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitFeature(feature);
         }
+
+        VisitAttachments(syntax.Behaviors, syntax.UsedBehaviors);
     }
 
     /// <summary>
@@ -194,6 +214,8 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitArrangement(syntax.Arrangement);
         }
+
+        VisitAttachments(syntax.Behaviors, syntax.UsedBehaviors);
     }
 
     /// <summary>
@@ -213,6 +235,8 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitArrangement(syntax.Arrangement);
         }
+
+        VisitAttachments(syntax.Behaviors, syntax.UsedBehaviors);
     }
 
     /// <summary>
@@ -232,6 +256,8 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitArrangement(syntax.Arrangement);
         }
+
+        VisitAttachments(syntax.Behaviors, syntax.UsedBehaviors);
     }
 
     /// <summary>
@@ -355,6 +381,8 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitScreenNavigate(syntax.OnSubmit);
         }
+
+        VisitAttachments(syntax.Behaviors, syntax.UsedBehaviors);
     }
 
     /// <summary>
@@ -405,6 +433,8 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitContribution(contribution);
         }
+
+        VisitAttachments(syntax.Behaviors, syntax.UsedBehaviors);
     }
 
     /// <summary>

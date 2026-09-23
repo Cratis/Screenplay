@@ -81,6 +81,25 @@ public partial class ScreenplayPrinter
         }
     }
 
+    /// <summary>
+    /// Writes every behavior attached to a structure - the inline ones, then the named attachments.
+    /// </summary>
+    /// <param name="writer">The <see cref="ScreenplayWriter"/> to write to.</param>
+    /// <param name="behaviors">The inline behaviors.</param>
+    /// <param name="usedBehaviors">The named attachments.</param>
+    void WriteAttachments(ScreenplayWriter writer, IEnumerable<BehaviorSyntax> behaviors, IEnumerable<UsesBehaviorSyntax> usedBehaviors)
+    {
+        foreach (var behavior in behaviors)
+        {
+            WriteAttachedBehavior(writer, behavior);
+        }
+
+        foreach (var uses in usedBehaviors)
+        {
+            WriteUsesBehavior(writer, uses);
+        }
+    }
+
     void WriteInteractionBindings(ScreenplayWriter writer, IEnumerable<InteractionBindingSyntax> bindings)
     {
         foreach (var binding in bindings)

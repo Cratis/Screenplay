@@ -72,6 +72,40 @@ internal static partial class InteractionParser
     }
 
     /// <summary>
+    /// Parses an interaction directive - an inline <c>on</c> binding or a <c>uses</c> attachment - into
+    /// whichever collection it belongs in.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
+    /// <param name="line">The consumed <see cref="SourceLine"/> holding the directive.</param>
+    /// <param name="behaviors">The inline behaviors attached so far.</param>
+    /// <param name="usedBehaviors">The named behaviors attached so far.</param>
+    /// <remarks>
+    /// Every attachment site - layout, template, module, feature, form, screen, element - runs this, so a
+    /// behavior means the same thing and reports the same diagnostics wherever it is written.
+    /// </remarks>
+    public static void ParseAttachment(
+        ParserContext context,
+        SourceLine line,
+        List<BehaviorSyntax> behaviors,
+        List<UsesBehaviorSyntax> usedBehaviors)
+    {
+        if (string.Equals(LineText.FirstWord(line.Content), "uses", StringComparison.Ordinal))
+        {
+            if (ParseUses(context, line) is { } uses)
+            {
+                usedBehaviors.Add(uses);
+            }
+
+            return;
+        }
+
+        if (ParseInlineBehavior(context, line) is { } behavior)
+        {
+            behaviors.Add(behavior);
+        }
+    }
+
+    /// <summary>
     /// Parses a named behavior from its already consumed header line.
     /// </summary>
     /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
