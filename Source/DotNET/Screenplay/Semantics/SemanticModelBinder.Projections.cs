@@ -12,6 +12,16 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        static bool IsFlatSource(ExpressionSyntax source, Dictionary<string, SemanticProperty> properties) => source switch
+        {
+            LiteralExpressionSyntax literal => literal.Value is not null,
+            PathExpressionSyntax path => IsFlatProperty(path.Path, properties),
+            _ => false
+        };
+
+        static bool IsFlatProperty(string path, Dictionary<string, SemanticProperty> properties) =>
+            !path.Contains('.') && properties.ContainsKey(path);
+
         SemanticProjection? BindProjection(SemanticAddress slice, ProjectionSyntax projection)
         {
             if (projection.File is not null)
@@ -21,7 +31,10 @@ public sealed partial class SemanticModelBinder
 
             if (projection.Sequence is not null)
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection '{projection.Name}' sequence is not portable ESM v1 behavior.", projection.Location);
+                Error(
+                    DiagnosticCodes.UnsupportedSemanticSyntax,
+                    $"Projection '{projection.Name}' sequence is not portable ESM v1 behavior: which event sequence a projection observes is a realization concern.",
+                    projection.Location);
             }
 
             if (projection.ReadModel is null || !_readModels.TryGetValue(ShortName(projection.ReadModel), out var readModel))
@@ -30,47 +43,45 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            foreach (var block in projection.Blocks.Where(_ => _ is not FromSyntax))
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection block '{block.GetType().Name}' is not admitted by the first ESM v1 vertical.", block.Location);
-            }
-
             var address = SemanticAddress.ForProjection(slice, projection.Name);
             var id = Resolve(address, projection.Location);
-            var transitions = projection.Blocks
-                .OfType<FromSyntax>()
-                .Select(value => BindProjectionTransition(projection, value, readModel))
-                .Where(_ => _ is not null)
-                .Select(_ => _!)
-                .ToImmutableArray();
-            return new(id, projection.Name, readModel.Model.Id, transitions);
+
+            // The flat shape is kept for every projection it can express, so existing consumers read those unchanged.
+            if (IsFlat(projection, readModel))
+            {
+                var transitions = projection.Blocks
+                    .Cast<FromSyntax>()
+                    .SelectMany(from => from.Events.Select(spec => BindFlatTransition(projection, from, spec, readModel)))
+                    .ToImmutableArray();
+                return new(id, projection.Name, readModel.Model.Id, transitions);
+            }
+
+            var identifier = readModel.Model.Properties.FirstOrDefault(_ => _.IsIdentifier)?.Name ?? string.Empty;
+            var root = new ProjectionLevel(projection.Name, readModel.Properties, projection.AutoMap != AutoMapMode.Disabled, true, false, identifier);
+            var scope = BindScope(projection.Blocks, root, projection.AutoMap);
+            return new(id, projection.Name, readModel.Model.Id, []) { Scope = scope };
         }
 
-        SemanticProjectionTransition? BindProjectionTransition(
+        bool IsFlat(ProjectionSyntax projection, BoundReadModel readModel) =>
+            projection.Blocks.All(block => block is FromSyntax { ParentKey: null, Key: null or ExpressionKeySyntax } from &&
+                from.Events.All(spec => _events.TryGetValue(spec.Event, out var @event) &&
+                    (spec.Key ?? (from.Key as ExpressionKeySyntax)?.Expression) is PathExpressionSyntax key && IsFlatProperty(key.Path, @event.Properties) &&
+                    from.Mappings.All(mapping => mapping is SetMappingSyntax set &&
+                        IsFlatProperty(set.Property, readModel.Properties) &&
+                        IsFlatSource(set.Source, @event.Properties))));
+
+        SemanticProjectionTransition BindFlatTransition(
             ProjectionSyntax projection,
             FromSyntax from,
+            EventSpecSyntax spec,
             BoundReadModel readModel)
         {
-            var eventSpecs = from.Events.ToArray();
-            if (eventSpecs.Length != 1 || !_events.TryGetValue(eventSpecs[0].Event, out var @event))
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection '{projection.Name}' transition must name one unambiguous event in the first ESM v1 vertical.", from.Location);
-                return null;
-            }
-
-            if (from.ParentKey is not null)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection '{projection.Name}' parent keys are not admitted by the first ESM v1 vertical.", from.ParentKey.Location);
-            }
+            var @event = _events[spec.Event];
 
             // Chronicle routes on the inline event key, then the from-block key, then the event source - it never
             // reads a projection-level key (ProjectionDefinitionSyntaxVisitor.ProcessFrom), so neither does ESM.
-            var keySyntax = eventSpecs[0].Key ?? ExpressionFrom(from.Key);
-            if (keySyntax is null || BindExpression(keySyntax, @event.Properties, SemanticExpressionRootKind.Event, "projection affected key") is not { } key)
-            {
-                Error(DiagnosticCodes.InvalidSemanticBinding, $"Projection '{projection.Name}' transition requires one resolved affected key.", from.Location);
-                return null;
-            }
+            var keySyntax = (PathExpressionSyntax)(spec.Key ?? ((ExpressionKeySyntax)from.Key!).Expression);
+            var key = SemanticExpression.Property(SemanticExpressionRootKind.Event, @event.Properties[keySyntax.Path].Id);
 
             var mappings = ImmutableArray.CreateBuilder<SemanticPropertyMapping>();
             var explicitlyMapped = from.Mappings.Select(_ => _.Property).ToHashSet(StringComparer.Ordinal);
@@ -85,37 +96,23 @@ public sealed partial class SemanticModelBinder
                 }
             }
 
-            foreach (var mapping in from.Mappings)
+            foreach (var set in from.Mappings.Cast<SetMappingSyntax>())
             {
-                if (mapping is not SetMappingSyntax set || !readModel.Properties.TryGetValue(mapping.Property, out var target))
-                {
-                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection mapping '{mapping.Property}' is not a direct set mapping admitted by ESM v1.", mapping.Location);
-                    continue;
-                }
-
-                if (BindExpression(set.Source, @event.Properties, SemanticExpressionRootKind.Event, "projection mapping") is { } source)
-                {
-                    mappings.Add(new(target.Id, source));
-                }
+                var source = set.Source is LiteralExpressionSyntax literal
+                    ? SemanticExpression.FromValue(BindLiteral(literal))
+                    : SemanticExpression.Property(SemanticExpressionRootKind.Event, @event.Properties[((PathExpressionSyntax)set.Source).Path].Id);
+                mappings.Add(new(readModel.Properties[set.Property].Id, source));
             }
 
-            return new(
-                @event.Contract.Id,
-                new(AffectedInstanceCardinality.One, key),
-                mappings.ToImmutable());
+            return new(@event.Contract.Id, new(AffectedInstanceCardinality.One, key), mappings.ToImmutable());
         }
 
-        ExpressionSyntax? ExpressionFrom(KeySyntax? key) => key switch
-        {
-            null => null,
-            ExpressionKeySyntax expression => expression.Expression,
-            _ => UnsupportedKey(key)
-        };
-
-        ExpressionSyntax? UnsupportedKey(KeySyntax key)
-        {
-            Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection key '{key.GetType().Name}' is not admitted by the first ESM v1 vertical.", key.Location);
-            return null;
-        }
+        sealed record ProjectionLevel(
+            string Projection,
+            Dictionary<string, SemanticProperty> Targets,
+            bool AutoMap,
+            bool IsRoot,
+            bool IsChildContext,
+            string IdentifierName);
     }
 }
