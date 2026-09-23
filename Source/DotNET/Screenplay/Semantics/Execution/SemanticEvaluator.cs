@@ -59,7 +59,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             facts.Add(new(produced.EventContract, destination, values));
         }
 
-        if (!TryProject(plan, world.ReadModels, facts.ToImmutable(), out var readModels, out var projectionFailure))
+        if (!TryProject(plan, world.Facts, world.ReadModels, facts.ToImmutable(), out var readModels, out var projectionFailure))
         {
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, projectionFailure!);
         }
@@ -95,7 +95,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         ImmutableArray<SemanticFact> facts,
         out ImmutableArray<SemanticReadModelInstance> readModels,
         out string? failure) =>
-        TryProject(plan, current, facts, out readModels, out failure);
+        TryProject(plan, [], current, facts, out readModels, out failure);
 
     // Every variant answers explicitly: an unknown variant is not quietly "present", it is a malformed value.
     internal static bool IsEmpty(SemanticValue value) => value switch
@@ -193,6 +193,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
 
     static bool TryProject(
         SemanticExecutionPlan plan,
+        ImmutableArray<SemanticFact> history,
         ImmutableArray<SemanticReadModelInstance> current,
         ImmutableArray<SemanticFact> facts,
         out ImmutableArray<SemanticReadModelInstance> readModels,
@@ -202,10 +203,24 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         var concepts = plan.Model.Application.Concepts.ToDictionary(_ => _.Id);
         var types = plan.Model.Application.Types.ToDictionary(_ => _.Id);
         var validator = new SemanticValueValidator(concepts, types);
+        var observed = history.ToList();
         foreach (var fact in facts)
         {
             foreach (var projection in plan.Projections.Values.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal))
             {
+                // A scoped projection runs through the reference semantics of every Chronicle projection block.
+                if (projection.Scope is not null)
+                {
+                    if (new SemanticScopedProjection(plan, projection, validator, observed).Apply(instances, fact) is { } scopedFailure)
+                    {
+                        failure = scopedFailure;
+                        readModels = current;
+                        return false;
+                    }
+
+                    continue;
+                }
+
                 foreach (var transition in projection.Transitions.Where(_ => _.EventContract == fact.EventContract))
                 {
                     var eventValues = fact.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
@@ -265,6 +280,8 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                         [.. readModel.Properties.Select(property => new SemanticPropertyValue(property.Id, state[property.Id]))]));
                 }
             }
+
+            observed.Add(fact);
         }
 
         failure = null;
