@@ -59,6 +59,9 @@ VariantBlock    = "variant", Ident, NL,
                     { ProjDirective | Block },
                   DEDENT ;
 
+(* A projection-level key is parsed but does not route events; put routing keys
+   on each from block or its events. *)
+
 EntersOnDecl    = "enters", "on", TypeRef, [ KeyInline ], NL ;
 
 EveryBlock      = "every", NL,
@@ -241,6 +244,7 @@ Projection-level directives:
 
 ```ebnf
 ProjDirective = "no", "automap", NL
+              | "sequence", Ident, NL
               | FileDirective
               | KeyDecl
               | CompositeKeyDecl ;
