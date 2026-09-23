@@ -20,6 +20,31 @@ Symbolic links are rejected. An empty root can be opened to create its first mod
 Only `apply` and `recover-workspace` mutate files. Keep client approval enabled
 for both. Source queries, schemas, proposals and status checks are read-only.
 
+## Embedding API
+
+The `Cratis.Screenplay.Mcp` library targets .NET 10 and references the Screenplay
+compiler. Hosts can embed the server without launching or installing another
+executable. The standalone `screenplay mcp <root>` command remains supported and
+delegates to the same server. Cratis CLI/AI-distribution integration is delivered
+separately; installing this library alone does not configure an AI client.
+
+The public entry point is
+`Cratis.Screenplay.Mcp.ScreenplayMcpServer.Run(string root, TextReader input, TextWriter output)`.
+It returns `void` and serves one sequential connection until input reaches EOF.
+
+| Contract | Behavior |
+| --- | --- |
+| Root | Existing physical application directory; the same scope and limits as the standalone command |
+| Streams | Caller-owned; never disposed by the server; the caller selects UTF-8 encoding for stdio |
+| Output | JSON-RPC responses only, flushed after each response; no console logging or encoding changes |
+| Failures | Startup, transport and request-size failures propagate; request errors remain protocol responses |
+| Effects | No installation, update or network operations; only explicit apply/recovery requests mutate model files |
+
+`McpFailure` identifies server admission failures such as a rejected root or an
+oversized request. File-system and stream exceptions also propagate unchanged.
+Internal protocol, root and tool types are not public embedding APIs. Hosts own
+process exit codes and any diagnostics outside the protocol stream.
+
 ## Model understanding
 
 Syntax queries work independently of executable backend support. Inspect

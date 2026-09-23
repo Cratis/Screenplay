@@ -25,11 +25,16 @@ screenplay --version
 ```
 
 Ensure the .NET global-tool directory is on `PATH`. The MCP server is part of the
-same `screenplay` executable; there is no separate MCP package or daemon.
+same `screenplay` executable; no separate MCP tool or daemon is required.
 
-The Cratis CLI's `cratis screenplay generate` command generates source models;
-it is not an MCP installer. AI-guidance installation is likewise separate from
-installing this executable.
+Cratis CLI hosting and AI-distribution integration are coming in a coordinated
+release. They will use the embeddable `Cratis.Screenplay.Mcp` library rather than
+require a separate Screenplay tool installation. Until that release is available,
+use the standalone setup below; installing AI guidance alone does not install this
+executable. The existing `cratis screenplay generate` command generates source
+models, not an MCP server.
+
+Host developers can consult the [embedding API](mcp.md#embedding-api).
 
 ## Choose one application root
 
