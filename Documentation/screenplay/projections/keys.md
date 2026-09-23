@@ -1,6 +1,6 @@
 # Keys
 
-Keys identify individual projection instances. They determine which read model instance to create or update when an event occurs.
+Keys on `from` blocks (or individual events in a `from`) identify individual projection instances. They determine which read model instance to create or update when an event occurs. A `key` directly on the projection is parsed and retained in syntax, but neither Chronicle's visitor nor the executable semantic model uses it to route events; it does not provide a default for `from`. The parser reports `PLAY0381` as a warning. Declare the key on every relevant `from` (or its events) instead.
 
 ## Explicit Keys
 
