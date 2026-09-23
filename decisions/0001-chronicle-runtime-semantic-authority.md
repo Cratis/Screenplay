@@ -1,8 +1,10 @@
 ---
 id: 0001
 title: Use Chronicle's runtime meaning for portable executable semantics
-status: proposed
+status: accepted
 stage: none
+decided: 2026-09-24
+decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
 applies-to:
