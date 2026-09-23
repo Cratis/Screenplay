@@ -7,7 +7,7 @@ public class and_the_text_names_the_new_name : given.a_workspace_with_a_structur
 {
     WorkspaceAuthoringResult _result = null!;
 
-    void Establish() => CreateWith("""[{"sku":"A-1","quantity":SalesChannel}]""");
+    void Establish() => CreateWith("calculate(SalesChannel)");
 
     void Because() => _result = RenameChannel();
 

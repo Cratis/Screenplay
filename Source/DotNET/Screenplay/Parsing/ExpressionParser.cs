@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Globalization;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
@@ -127,6 +128,26 @@ internal static partial class ExpressionParser
             return new SourceItemExpressionSyntax(text["$.".Length..], location);
         }
 
+        if (text.StartsWith('{') || text.StartsWith('['))
+        {
+            try
+            {
+                var expression = new StructuredValueParser(text, location).Parse();
+                if (expression is ObjectExpressionSyntax or ListExpressionSyntax)
+                {
+                    return expression;
+                }
+            }
+            catch (Exception exception) when (exception is JsonException or InvalidStructuredNumber)
+            {
+                context.Error(DiagnosticCodes.InvalidStructuredValue, $"Invalid inline structured value: {exception.Message}", location);
+                return new RawExpressionSyntax(text, location);
+            }
+
+            context.Error(DiagnosticCodes.InvalidStructuredValue, "Expected a JSON object or list value", location);
+            return new RawExpressionSyntax(text, location);
+        }
+
         if (ParseLiteral(text, location) is { } literal)
         {
             return literal;
@@ -152,7 +173,7 @@ internal static partial class ExpressionParser
     {
         var text = source.Value.Trim();
         var start = line.LocationAt(source.Index + (source.Value.Length - source.Value.TrimStart().Length));
-        var expression = ParseMappingSource(context, text, line.Location);
+        var expression = ParseMappingSource(context, text, text.StartsWith('{') || text.StartsWith('[') ? start : line.Location);
         if (expression is LiteralExpressionSyntax literal)
         {
             expression = literal with { RawLocation = start, RawLength = text.Length };

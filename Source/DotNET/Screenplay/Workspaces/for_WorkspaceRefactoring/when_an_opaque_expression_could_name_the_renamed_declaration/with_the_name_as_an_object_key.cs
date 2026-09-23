@@ -7,7 +7,7 @@ public class with_the_name_as_an_object_key : given.a_workspace_with_a_structure
 {
     WorkspaceAuthoringResult _result = null!;
 
-    void Establish() => CreateWith("""[{"Channel":"A-1","quantity":2}]""");
+    void Establish() => CreateWith("""calculate({"Channel":2})""");
 
     void Because() => _result = RenameChannel();
 

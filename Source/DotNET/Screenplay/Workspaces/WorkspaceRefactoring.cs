@@ -111,9 +111,10 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
     {
         var index = WorkspaceSyntaxIndex.Create(workspace);
         var target = request.Target is null ? null : index.Find(request.Target);
-        if (target?.Address is null || target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax))
+        var compositeProperty = target?.Node is PropertySyntax && target.Parent is { } parent && index.Find(parent)?.Node is TypeSyntax;
+        if (target?.Address is null || (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax)))
         {
-            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, command, event, read model, query, module, feature, or slice declaration handle.");
+            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property, command, event, read model, query, module, feature, or slice declaration handle.");
         }
 
         if (WorkspaceReferenceBindings.Name(target.Node) != request.ExpectedName || !Identifier(request.NewName))
@@ -124,6 +125,12 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         if (index.Entries.Count(entry => entry.Parent is null) != workspace.Documents.Length)
         {
             throw new InvalidWorkspaceAuthoring("Every document must parse before references can be proven safe.");
+        }
+
+        if (compositeProperty && target.Parent is { } typeParent && index.Find(typeParent)?.Node is TypeSyntax owner &&
+            owner.Properties.Any(property => property.Name == request.NewName && property.Name != request.ExpectedName))
+        {
+            throw new InvalidWorkspaceAuthoring($"Composite type '{owner.Name}' already declares property '{request.NewName}'.");
         }
 
         RejectHierarchyCollision(index, target, request.NewName);

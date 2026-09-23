@@ -40,7 +40,7 @@ specification <Name>
 
 > **ESM v2 reservation:** the parser, printer, and syntax tree preserve `for <event-source-value>`, but ESM v1 semantic binding reports blocking diagnostic `PLAY0268`. It cannot execute or render silently until the typed event-context semantics are admitted by ESM v2.
 
-Property values (`<property> = <value>`) accept the same expressions as `produces` and `capture` mappings — string, number and boolean literals, and `$context.*`/`$env.*` expressions.
+Property values (`<property> = <value>`) accept literals (including `null`), single-line JSON-shaped objects and lists with quoted keys, and the same mapping expressions as `produces` and `capture`. For example, `lines = [{"sku":"A-1","quantity":2}]` and `tags = []` are typed values, not opaque expressions. Keys must name properties of the target's declared composite `type`; list items are checked against the element type. Unknown or imported shapes remain undecided. A value with the wrong object/list shape is an error. `null` remains a literal; ESM admits it for optional read-model fields, not as an optional event fact.
 
 ## Rejections
 
