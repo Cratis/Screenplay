@@ -520,6 +520,17 @@ internal static partial class ProjectionParser
 
     static MappingSyntax? ParseMapping(ParserContext context, SourceLine line)
     {
+        var mapping = ParseMappingLine(context, line);
+        if (mapping is not null)
+        {
+            EventContextPathValidator.ValidateDynamicKey(context, mapping.Property, line.Location);
+        }
+
+        return mapping;
+    }
+
+    static MappingSyntax? ParseMappingLine(ParserContext context, SourceLine line)
+    {
         var keyword = KeywordMappingRegex().Match(line.Content);
         if (keyword.Success)
         {

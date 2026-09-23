@@ -609,6 +609,18 @@ The complete Program v1 disposition of current syntax is maintained as a deliver
 
 Source-authoring acceptance and executable readiness are separate verdicts. An authoring proposal validates the complete `.play` application and identity continuity without claiming that every language construct is supported by the executable backend profile. Executable-only workspace transactions remain strict.
 
+### Event context paths
+
+Every `$eventContext.<path>` - in a projection expression or in a dynamic dictionary key such as `countByType.$eventContext.eventType.id` - is checked against the [event context catalog](projections/event-context.md#available-properties). Chronicle resolves the path by reflection when it builds the projection and fails on one it cannot resolve, so this is the only place the mistake can be caught early. An unlisted member is a warning because a runtime may resolve more than the catalog lists; a path that can never resolve is an error.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0295` | Warning | An `$eventContext.<path>` opens with a member the event context does not have, such as `$eventContext.causationId`. A member resolves written camelCase or with only its first letter uppercased. |
+| `PLAY0296` | Warning | An `$eventContext.<path>` continues into something the member before it does not have, such as `$eventContext.eventType.name`. The derived function `Week` is case-sensitive: `occurred.Week` resolves and `occurred.week` does not. |
+| `PLAY0297` | Error | An `$eventContext.<path>` continues below `causation` or `tags`. They are collections with no addressing grammar, so a path below them never resolves. |
+| `PLAY0298` | Error | An `$eventContext` reference names no member, as in `$eventContext.` or a dynamic key ending in `.$eventContext`, or has an empty segment. |
+| `PLAY0299` | Warning | A dynamic dictionary key names a `$` source other than `$eventContext`, such as `byUser.$causedBy.subject`. Only `$eventContext.<path>` is resolved; any other source becomes the literal key. Write `byUser.$eventContext.causedBy.subject`. |
+
 ### Interaction
 
 The interaction model - behaviors, the `on` clauses that start them, the actions they run and the continuations those actions branch into. The fifty codes from `PLAY0300` upwards are reserved for this band as a whole, so a later addition lands beside its siblings rather than wherever there happened to be room.
