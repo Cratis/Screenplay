@@ -250,6 +250,62 @@ The stale-revision and stale-catalog-revision gates run before any operation is 
 do for whole-document operations. This is the first semantic patch; broadening it to other fields or to
 multi-line descriptions is future work, not something this operation attempts today.
 
+### Change one produced-event mapping source
+
+To change which command property supplies an existing event property, use `UpdateProducedEventMappingSource`.
+You address declarations, not text occurrences: even when a comment or another command repeats the same mapping,
+only the selected right-hand source changes. Start with a compiled workspace containing one explicit mapping such
+as `name = name`, and a compatible `displayName` property on that command:
+
+```csharp
+var slice = workspace.Compilation.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single();
+var command = slice.Commands.Single(value => value.Name == "RegisterProject");
+var producedEvent = slice.Events.Single(value => value.Name == "ProjectRegistered");
+var result = workspace.Propose(new WorkspaceTransactionRequest
+{
+    ExpectedRevision = workspace.Revision,
+    ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
+    Operations =
+    [
+        new UpdateProducedEventMappingSource
+        {
+            Command = command.Id,
+            ProducedEvent = producedEvent.Id,
+            TargetProperty = producedEvent.Properties.Single(value => value.Name == "name").Id,
+            ExpectedSourceCommandProperty = command.Properties.Single(value => value.Name == "name").Id,
+            NewSourceCommandProperty = command.Properties.Single(value => value.Name == "displayName").Id
+        }
+    ]
+});
+```
+
+`ProducedEvent` is the event declaration's **`SemanticId`**, not its persisted **`EventContractId`**. Both source
+properties must belong to the addressed command; the target must belong to the addressed event. Their resolved
+value types and collection shapes must match the target, and an optional source cannot fill a required target.
+Exactly one production of that event must exist on the command, and it must be unconditional. The mapping must
+already be explicit and use a direct property source. Literals, computed or nested expressions, inferred mappings,
+and repeated productions are not editable through this operation.
+
+Submit this operation **alone**, without document operations, other semantic patches, or identity migrations.
+Stale workspace and catalog checks still run first. Unknown identities reject with `SemanticIdNotFound`, wrong
+owners, incompatible types, unsupported grammar, ambiguous source ownership, or unproven equivalence with
+`UnsupportedSemanticField`, and a changed expected source with `SemanticFieldValueDrift`. Mixed operations or
+identity migrations reject with `InvalidOperation`; an unbindable workspace rejects with `CompilationFailed`.
+Every rejection returns neither a candidate workspace nor a write plan.
+
+A successful proposal preserves the UTF-8 BOM, comments, whitespace, line endings, Unicode, and every byte outside
+the parser-owned source range. It passes the normal compile/migrate/recompile pipeline, compares the complete
+candidate semantics against an independent one-mapping graph edit, and proves canonical print/recompile semantic
+equivalence without printing over authored source. Identities, destinations, conditions, and specification
+expectations remain unchanged. Selecting the current source is an admitted no-op with no write entries.
+
+This changes real declarative behavior, not code attachments, and Screenplay does **not** rewrite specification
+expectations to make them pass. A `then` value that the new source can no longer produce from the stated `when`
+values is a compile error (`PLAY0285`), so such a proposal rejects with `CompilationFailed` and its diagnostics.
+Run your semantic specifications on an accepted candidate for everything the static check cannot decide.
+This bounded operation does not complete general declarative patching or provide a file-system publisher; use the
+[write plan](#propose-revision-safe-workspace-changes) to review exact changes before your host publishes them.
+
 ## Write an application out as a folder
 
 The inverse lives next to it. `Expand` turns an application into the files of a folder structure without touching the file system, and `WriteTo` puts them on disk:

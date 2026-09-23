@@ -44,13 +44,32 @@ var printed = printer.Print(tree);
 var reprinted = printer.Print(compiler.Compile(printed).Value!);
 ```
 
-Because the two directions agree, you can read a `.play` file, adjust the syntax tree - rename a slice, add an event, change a mapping - and print it back out without disturbing the rest of the document.
+Because the two directions agree, you can read a `.play` file, adjust the syntax tree - rename a slice, add an event, change a mapping - and print it back out with the rest of the document meaning exactly what it did. Comments and layout are a different matter - see [what printing does not keep](#what-printing-does-not-keep).
 
 Two details make the guarantee hold for values you did not type yourself:
 
 - **Strings are escaped.** A description, message, label or tag holding a `"` or a `\` prints with the backslash escapes described in [the grammar](grammar.md#string-escapes), and compiling that text gives the original value back. You never have to strip quotes out of a value before handing it to the printer.
 - **Numbers are culture-invariant.** Every numeric literal - `decimal`, `float`, `int`, `long` or `double` - prints with a `.` decimal separator regardless of `CurrentCulture`, so output produced on a machine set to `nb-NO` compiles anywhere.
 - **Grouping is written out.** Every condition - a [policy](policies.md) `require`, a `produces when` - binds `and` tighter than `or`, so the printer adds the parentheses a condition needs to compile back to the tree it came from, and adds them again wherever `or` and `and` mix so the text does not rely on the reader knowing which binds tighter. You build the tree you mean and the text follows - there is no flag to remember to set.
+
+## What printing does not keep
+
+The printer is faithful to the syntax tree, and the tree does not hold everything
+a file does:
+
+- **Comments are dropped.** The parser does not attach comments to syntax nodes,
+  so a printed document has none.
+- **Member order is normalized.** A slice, feature or module keeps each kind of
+  member in its own collection, so the printer writes them in one fixed order
+  (for example, a slice's commands, then events, constraints, queries, read models
+  and so on, with specifications last) regardless of the order they were authored in.
+- **Blank lines are normalized.** The printer separates members with its own blank lines.
+
+Round-tripping preserves meaning, not layout. To change a document without losing
+its comments, edit it through the [authoring workspace](ast-authoring.md) with
+`PreserveTrivia`, which patches only the changed text. Folder expansion writes
+files with this printer too, so it drops comments and normalizes order in the
+same way.
 
 ## Generating from a model
 

@@ -130,6 +130,31 @@ internal static partial class ExpressionParser
     }
 
     /// <summary>
+    /// Parses a <c>property = source</c> mapping line, recording the exact source spans of the right-hand side.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <param name="property">The target property.</param>
+    /// <param name="source">The regular expression group capturing the right-hand source text on <paramref name="line"/>.</param>
+    /// <param name="line">The <see cref="SourceLine"/> the mapping is declared on.</param>
+    /// <returns>The parsed <see cref="PropertyMappingSyntax"/> with server-owned source spans.</returns>
+    public static PropertyMappingSyntax ParseMapping(ParserContext context, string property, Group source, SourceLine line)
+    {
+        var text = source.Value.Trim();
+        var start = line.LocationAt(source.Index + (source.Value.Length - source.Value.TrimStart().Length));
+        var expression = ParseMappingSource(context, text, line.Location);
+        if (expression is LiteralExpressionSyntax literal)
+        {
+            expression = literal with { RawLocation = start, RawLength = text.Length };
+        }
+
+        return new(property, expression, line.Location)
+        {
+            SourceLocation = start,
+            SourceLength = text.Length
+        };
+    }
+
+    /// <summary>
     /// Parses a literal value - a string, number, boolean or null.
     /// </summary>
     /// <param name="text">The text to parse.</param>

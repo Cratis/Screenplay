@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Syntax;
 
@@ -314,7 +315,19 @@ public record ProducesSyntax(
 /// <param name="Property">The target property.</param>
 /// <param name="Source">The <see cref="ExpressionSyntax"/> providing the value.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record PropertyMappingSyntax(string Property, ExpressionSyntax Source, SourceLocation Location) : SyntaxNode(Location);
+public record PropertyMappingSyntax(string Property, ExpressionSyntax Source, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the parser-owned start of the right-hand source expression, excluding surrounding trivia.
+    /// </summary>
+    public SourceLocation? SourceLocation { get; init; }
+
+    /// <summary>
+    /// Gets the parser-owned UTF-16 length of the source expression, or <c>null</c> without exact source evidence.
+    /// </summary>
+    [SourceSpanMetadata]
+    public int? SourceLength { get; init; }
+}
 
 /// <summary>
 /// Represents a <c>handler</c> declaration - the imperative alternative to <c>produces</c>.

@@ -38,6 +38,7 @@ static class WorkspaceTransactionOperations
                 RenameWorkspaceDocument rename => Rename(rename, candidates, targeted, semanticTargeted, documentRenames),
                 RemoveWorkspaceDocument remove => Remove(remove, candidates, targeted, semanticTargeted, retiredDocumentKeys),
                 UpdateSliceDescription update => UpdateSliceDescription(update, workspace, candidates, targeted, semanticTargeted),
+                UpdateProducedEventMappingSource mapping => ProducedEventMappingPatch.Apply(mapping, workspace, candidates),
                 _ => Conflict(WorkspaceConflictKind.InvalidOperation, $"Workspace operation '{operation.GetType().Name}' is not supported.")
             };
         }

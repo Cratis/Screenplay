@@ -36,7 +36,8 @@ internal static class syntax_examples
         if (left is SyntaxNode node && right is SyntaxNode other)
         {
             return node.GetType() == other.GetType() && node.GetType().GetProperties()
-                .Where(property => property.SetMethod?.IsPublic == true && property.Name is not "Location" and not "DescriptionLocation" and not "DescriptionRawLength")
+                .Where(property => property.SetMethod?.IsPublic == true && property.PropertyType != typeof(SourceLocation) &&
+                    property.Name is not "DescriptionRawLength" && !property.IsDefined(typeof(SourceSpanMetadataAttribute), true))
                 .All(property => SameValues(property.GetValue(node), property.GetValue(other)));
         }
 

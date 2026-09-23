@@ -49,14 +49,23 @@ static class WorkspaceAuthoringPrinter
             throw new InvalidWorkspaceAuthoring($"Printing '{path}' did not reparse to the intended typed AST. A printer omission, unrepresentable value, or malformed syntax cannot be committed.");
         }
 
-        diagnostics.Add(Diagnostic.Warning(
-            DiagnosticCodes.AuthoringSourceNormalization,
-            $"'{path}' was canonically printed. Existing comments and whitespace trivia are not retained; its UTF-8 BOM policy is preserved. Untouched documents remain byte-exact.",
-            SourceLocation.Start.In(path.Value)));
         var utf8 = new UTF8Encoding(false, true);
         var bytes = encoding == WorkspaceTextEncoding.Utf8WithBom
             ? [0xef, 0xbb, 0xbf, .. utf8.GetBytes(text)]
             : utf8.GetBytes(text);
-        return WorkspaceDocument.Create(id, key, path, bytes);
+        var printed = WorkspaceDocument.Create(id, key, path, bytes);
+        var dropped = original is null ? [] : WorkspaceDroppedComments.Between(original, printed);
+        diagnostics.Add(Diagnostic.Warning(
+            DiagnosticCodes.AuthoringSourceNormalization,
+            $"'{path}' was canonically printed and {Dropped(dropped)}. Whitespace trivia and declaration order are normalized; its UTF-8 BOM policy is preserved. Untouched documents remain byte-exact.",
+            SourceLocation.Start.In(path.Value)));
+        return printed;
     }
+
+    static string Dropped(ImmutableArray<WorkspaceDroppedComment> dropped) => dropped.Length switch
+    {
+        0 => "dropped no comments",
+        1 => $"dropped 1 comment (line {dropped[0].Line})",
+        _ => $"dropped {dropped.Length} comments (lines {string.Join(", ", dropped.Select(comment => comment.Line))})"
+    };
 }
