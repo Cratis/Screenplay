@@ -80,7 +80,12 @@ public enum SemanticValidationRuleKind
     /// <summary>
     /// Every number in the collection must be greater than or equal to the operand. An empty collection satisfies it.
     /// </summary>
-    AllGreaterThanOrEqual = 11
+    AllGreaterThanOrEqual = 11,
+
+    /// <summary>
+    /// A scalar text value must contain a match for the ECMAScript regular expression in the text operand.
+    /// </summary>
+    Matches = 12
 }
 
 /// <summary>

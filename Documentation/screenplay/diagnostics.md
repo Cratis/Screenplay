@@ -689,6 +689,13 @@ A behavior is *deferred* from the backend ESM v1 profile in the same way every o
 
 An inline `on` block is an anonymous behavior, so it has no name to report against. Diagnostics inside one cite the position and the trigger instead.
 
+### Match validation binding
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0366` | Error | A bare named `matches` pattern is not defined; only `email` is defined. Use a quoted ECMAScript pattern for custom matching. |
+| `PLAY0367` | Error | A quoted `matches` operand is not a valid ECMAScript regular expression. |
+
 ### Projection binding
 
 | Code | Severity | Reported when |
