@@ -177,7 +177,12 @@ export class CompletionProvider implements languages.CompletionItemProvider {
     }
 
     private isPropertyDotAccess(context: CompletionContext): boolean {
-        return /(\w+|\$\w+)\.(\w*)$/.test(context.textBeforeCursor);
+        // Match simple property access: propertyName.member or $eventContext.member
+        // Also match dynamic dictionary paths: propertyName.$eventContext.member
+        // Also match nested paths: $eventContext.eventType.member or propertyName.$eventContext.eventType.member
+        return /(\w+|\$\w+)\.(\w*)$/.test(context.textBeforeCursor) ||
+               /\w+\.\$(\w+)\.(\w*)$/.test(context.textBeforeCursor) ||
+               /(?:.*\.)?\$eventContext\.\w+\.(\w*)$/.test(context.textBeforeCursor);
     }
 
     private addProjectionLineCompletions(suggestions: languages.CompletionItem[], context: CompletionContext): void {
@@ -550,10 +555,48 @@ export class CompletionProvider implements languages.CompletionItemProvider {
     }
 
     private addPropertyMemberCompletions(suggestions: languages.CompletionItem[], context: CompletionContext): void {
-        const match = context.textBeforeCursor.match(/(\w+|\$\w+)\.(\w*)$/);
-        if (!match) return;
+        // Try to match nested property access: $eventContext.eventType.id or propertyName.$eventContext.eventType.id
+        const nestedMatch = context.textBeforeCursor.match(/(?:.*\.)?\$eventContext\.(\w+)\.(\w*)$/);
+        if (nestedMatch) {
+            const [, parentProp, partialProp] = nestedMatch;
+            // Handle nested EventType properties
+            if (parentProp === 'eventType') {
+                const eventTypeProps = [
+                    { name: 'id', doc: 'The unique identifier of the event type', type: 'string' },
+                    { name: 'generation', doc: 'The generation of the event type', type: 'uint' },
+                    { name: 'tombstone', doc: 'Whether the event is a tombstone event', type: 'bool' },
+                ];
+                eventTypeProps.forEach((prop) => {
+                    if (!partialProp || prop.name.startsWith(partialProp)) {
+                        suggestions.push({
+                            label: prop.name,
+                            kind: 9,
+                            insertText: prop.name,
+                            documentation: prop.doc,
+                            detail: prop.type,
+                            range: this.getRangeForWord(context),
+                        });
+                    }
+                });
+            }
+            return;
+        }
 
-        const [, objectName, partialProp] = match;
+        // Try to match simple property access first: propertyName.member or $eventContext.member
+        const match = context.textBeforeCursor.match(/(\w+|\$\w+)\.(\w*)$/);
+        let objectName: string;
+        let partialProp: string;
+
+        if (match) {
+            [, objectName, partialProp] = match;
+        } else {
+            // Try to match dynamic dictionary path: propertyName.$eventContext.member
+            const dynamicMatch = context.textBeforeCursor.match(/\w+\.\$(\w+)\.(\w*)$/);
+            if (!dynamicMatch) return;
+            // Extract the $-prefixed object name and the partial property
+            objectName = `$${dynamicMatch[1]}`;
+            partialProp = dynamicMatch[2];
+        }
 
         // Handle $causedBy properties
         if (objectName === '$causedBy') {
@@ -581,10 +624,20 @@ export class CompletionProvider implements languages.CompletionItemProvider {
         // Handle $eventContext properties
         if (objectName === '$eventContext') {
             const contextProps = [
-                { name: 'sequenceNumber', doc: 'The event sequence number', type: 'EventSequenceNumber' },
+                { name: 'eventType', doc: 'The type of the event', type: 'EventType' },
+                { name: 'eventSourceType', doc: 'The type of the event source', type: 'string' },
+                { name: 'eventSourceId', doc: 'The id of the event source', type: 'string' },
+                { name: 'sequenceNumber', doc: 'The sequence number of the event', type: 'ulong' },
+                { name: 'eventStreamType', doc: 'The type of the event stream', type: 'string' },
+                { name: 'eventStreamId', doc: 'The id of the event stream', type: 'string' },
                 { name: 'occurred', doc: 'When the event occurred', type: 'DateTimeOffset' },
-                { name: 'eventSourceId', doc: 'The event source identifier', type: 'string' },
-                { name: 'namespace', doc: 'The event namespace', type: 'string' },
+                { name: 'correlationId', doc: 'The correlation id for the event', type: 'Guid' },
+                { name: 'causation', doc: 'Collection of causation for what caused the event', type: 'Causation[]' },
+                { name: 'causedBy', doc: 'Identity that caused the event', type: 'Identity' },
+                { name: 'tags', doc: 'Collection of tags associated with the event', type: 'string[]' },
+                { name: 'hash', doc: 'The hash of the event\'s content', type: 'EventHash' },
+                { name: 'observationState', doc: 'The state relevant for the observer', type: 'EventObservationState' },
+                { name: 'subject', doc: 'The subject the event is about (compliance identity)', type: 'string' },
             ];
 
             contextProps.forEach((prop) => {
