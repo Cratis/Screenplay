@@ -409,6 +409,9 @@ static class SemanticModelValidator
                 case SemanticValidationRuleKind.Equal or SemanticValidationRuleKind.NotEqual
                     when !scalar || !(number || primitive is SemanticPrimitiveType.Text or SemanticPrimitiveType.Boolean):
                     throw new InvalidSemanticContract("Equality validation requires a scalar text, enumeration, number or boolean value.");
+                case SemanticValidationRuleKind.GreaterThan or SemanticValidationRuleKind.GreaterThanOrEqual or
+                    SemanticValidationRuleKind.LessThan or SemanticValidationRuleKind.LessThanOrEqual when !scalar || !number:
+                    throw new InvalidSemanticContract("Ordering validation requires a scalar number.");
             }
 
             if (validation.Operand is not null)

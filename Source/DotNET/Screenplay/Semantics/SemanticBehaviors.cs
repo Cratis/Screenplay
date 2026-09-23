@@ -45,7 +45,27 @@ public enum SemanticValidationRuleKind
     /// <summary>
     /// The value must not equal the operand. Admitted for text, enumeration members, numbers and booleans.
     /// </summary>
-    NotEqual = 4
+    NotEqual = 4,
+
+    /// <summary>
+    /// The number must be greater than the operand.
+    /// </summary>
+    GreaterThan = 5,
+
+    /// <summary>
+    /// The number must be greater than or equal to the operand.
+    /// </summary>
+    GreaterThanOrEqual = 6,
+
+    /// <summary>
+    /// The number must be less than the operand.
+    /// </summary>
+    LessThan = 7,
+
+    /// <summary>
+    /// The number must be less than or equal to the operand.
+    /// </summary>
+    LessThanOrEqual = 8
 }
 
 /// <summary>

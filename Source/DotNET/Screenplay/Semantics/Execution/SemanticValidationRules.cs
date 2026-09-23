@@ -26,7 +26,11 @@ static class SemanticValidationRules
         SemanticValidationRuleKind.Maximum or
         SemanticValidationRuleKind.Minimum or
         SemanticValidationRuleKind.Equal or
-        SemanticValidationRuleKind.NotEqual;
+        SemanticValidationRuleKind.NotEqual or
+        SemanticValidationRuleKind.GreaterThan or
+        SemanticValidationRuleKind.GreaterThanOrEqual or
+        SemanticValidationRuleKind.LessThan or
+        SemanticValidationRuleKind.LessThanOrEqual;
 
     /// <summary>
     /// Decides whether a value satisfies a rule.
@@ -42,6 +46,10 @@ static class SemanticValidationRules
         SemanticValidationRuleKind.Minimum => Measure(value) >= Number(rule.Operand),
         SemanticValidationRuleKind.Equal => SemanticValueRules.AreEqual(value, rule.Operand!),
         SemanticValidationRuleKind.NotEqual => !SemanticValueRules.AreEqual(value, rule.Operand!),
+        SemanticValidationRuleKind.GreaterThan => Measure(value) > Number(rule.Operand),
+        SemanticValidationRuleKind.GreaterThanOrEqual => Measure(value) >= Number(rule.Operand),
+        SemanticValidationRuleKind.LessThan => Measure(value) < Number(rule.Operand),
+        SemanticValidationRuleKind.LessThanOrEqual => Measure(value) <= Number(rule.Operand),
         _ => throw new InvalidSemanticContract($"Validation rule '{rule.Kind}' is not executable by the reference evaluator.")
     };
 
@@ -61,6 +69,10 @@ static class SemanticValidationRules
         SemanticValidationRuleKind.Minimum => $"A value must be at least {Format(rule.Operand)}.",
         SemanticValidationRuleKind.Equal => $"A value must equal {Format(rule.Operand)}.",
         SemanticValidationRuleKind.NotEqual => $"A value must not equal {Format(rule.Operand)}.",
+        SemanticValidationRuleKind.GreaterThan => $"A value must be greater than {Format(rule.Operand)}.",
+        SemanticValidationRuleKind.GreaterThanOrEqual => $"A value must be at least {Format(rule.Operand)}.",
+        SemanticValidationRuleKind.LessThan => $"A value must be less than {Format(rule.Operand)}.",
+        SemanticValidationRuleKind.LessThanOrEqual => $"A value must be at most {Format(rule.Operand)}.",
         _ => $"A value does not satisfy the '{rule.Kind}' rule."
     };
 

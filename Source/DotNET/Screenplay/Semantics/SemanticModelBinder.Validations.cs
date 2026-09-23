@@ -42,6 +42,9 @@ public sealed partial class SemanticModelBinder
             SemanticValidationRuleKind.Equal or SemanticValidationRuleKind.NotEqual
                 when subject.IsCollection || !(subject.IsNumber || subject.Primitive is SemanticPrimitiveType.Text or SemanticPrimitiveType.Boolean) =>
                 "equality compares one text, enumeration, number or boolean value",
+            SemanticValidationRuleKind.GreaterThan or SemanticValidationRuleKind.GreaterThanOrEqual or
+                SemanticValidationRuleKind.LessThan or SemanticValidationRuleKind.LessThanOrEqual when subject.IsCollection || !subject.IsNumber =>
+                "ordering compares one whole or decimal number",
             _ => null
         };
 
@@ -86,6 +89,10 @@ public sealed partial class SemanticModelBinder
             ValidationRuleKind.Min => SemanticValidationRuleKind.Minimum,
             ValidationRuleKind.Equal => SemanticValidationRuleKind.Equal,
             ValidationRuleKind.NotEqual => SemanticValidationRuleKind.NotEqual,
+            ValidationRuleKind.GreaterThan => SemanticValidationRuleKind.GreaterThan,
+            ValidationRuleKind.GreaterThanOrEqual => SemanticValidationRuleKind.GreaterThanOrEqual,
+            ValidationRuleKind.LessThan => SemanticValidationRuleKind.LessThan,
+            ValidationRuleKind.LessThanOrEqual => SemanticValidationRuleKind.LessThanOrEqual,
             _ => SemanticValidationRuleKind.Unknown
         };
 
