@@ -404,7 +404,7 @@ ValidateDecl   = "validate", NL,
                    INDENT, { ValidationRule | RequireRule }, DEDENT
                | "validate", "csharp", NL, InlineBlock ;
 
-ValidationRule = Ident, RuleOp, [ "message", LocalizableString ], NL,
+ValidationRule = Path, RuleOp, [ "message", LocalizableString ], NL,
                    [ INDENT, RuleImplementation, DEDENT ] ;
 
 RequireRule    = "require", Condition, NL,
@@ -441,7 +441,12 @@ RuleImplementation = FileDirective
    block yields the message of every rule the artifact breaks -
    see Documentation/screenplay/context.md.                                  *)
 
-Value          = Number | StringLiteral | "today" | "true" | "false" ;
+Value          = Number | StringLiteral | "today" | "true" | "false" | Path ;
+
+(* "max" and "min" take their meaning from the property type: a text length or
+   a number's value. In a ValidationRule a Path operand names a member of an
+   enum concept - see Documentation/screenplay/commands.md for the rules the
+   executable model admits.                                                  *)
 
 (* -------------------------------------------------------------- *)
 (* Produces                                                        *)
