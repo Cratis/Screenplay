@@ -250,6 +250,7 @@ internal static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", projection.Name);
         writer.WriteString("readModel", projection.ReadModel.ToString());
         WriteArray(writer, "transitions", projection.Transitions, WriteTransition);
+        WriteProjectionScope(writer, projection.Scope);
         writer.WriteEndObject();
     }
 

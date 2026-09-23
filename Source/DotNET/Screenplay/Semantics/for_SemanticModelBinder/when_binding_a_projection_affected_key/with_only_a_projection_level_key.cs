@@ -6,7 +6,8 @@ using Cratis.Screenplay.Diagnostics;
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_a_projection_affected_key;
 
 // Chronicle never routes on a projection-level key (ProjectionDefinitionSyntaxVisitor reads only the inline event
-// key and the from-block key), so ESM must not either: a projection-level key alone binds exactly as no key at all.
+// key and the from-block key, ProjectionDefinitionSyntaxVisitor.cs:109-121), so ESM must not either: a projection-level
+// key alone binds exactly as no key at all - on the event source identity (ProjectionFactory.cs:1009-1017).
 public class with_only_a_projection_level_key : given.a_semantic_binder
 {
     const string WithProjectionLevelKey =
@@ -63,9 +64,10 @@ public class with_only_a_projection_level_key : given.a_semantic_binder
         _withoutAnyKey = Bind(WithoutAnyKey);
     }
 
-    [Fact] void should_not_bind() => _withProjectionLevelKey.Success.ShouldBeFalse();
-    [Fact] void should_report_the_unresolved_affected_key() =>
-        _withProjectionLevelKey.Diagnostics.Any(_ => _.Code == DiagnosticCodes.InvalidSemanticBinding && _.Message.Contains("requires one resolved affected key")).ShouldBeTrue();
+    [Fact] void should_bind() => _withProjectionLevelKey.Success.ShouldBeTrue();
+    [Fact] void should_key_on_the_event_source_identity() =>
+        _withProjectionLevelKey.Value!.Model.Application.Modules.Single().Features.Single().Slices
+            .SelectMany(_ => _.Projections).Single().Scope!.From.Single().Key.ShouldEqual(SemanticProjectionKey.EventSourceIdentity);
     [Fact] void should_report_exactly_what_no_key_reports() =>
         _withProjectionLevelKey.Diagnostics.Select(Describe).ShouldContainOnly(_withoutAnyKey.Diagnostics.Select(Describe));
 

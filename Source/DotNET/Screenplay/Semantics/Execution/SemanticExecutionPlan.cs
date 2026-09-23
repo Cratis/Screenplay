@@ -33,7 +33,17 @@ public enum SemanticPlanIssueKind
     /// <summary>
     /// A query cardinality or delivery contract is not admitted by the minimum evaluator.
     /// </summary>
-    UnsupportedQuery = 3
+    UnsupportedQuery = 3,
+
+    /// <summary>
+    /// A projection block combination has no verified reference semantics.
+    /// </summary>
+    UnsupportedProjectionBlock = 4,
+
+    /// <summary>
+    /// A projection reads an event-context value the reference evaluator has no occurrence context for.
+    /// </summary>
+    UnsupportedEventContext = 5
 }
 
 /// <summary>
@@ -165,6 +175,8 @@ public sealed class SemanticExecutionPlan
             {
                 issues.Add(new(projection.Id, SemanticPlanIssueKind.UnsupportedAffectedCardinality, $"Affected cardinality '{transition.AffectedInstance.Cardinality}' is not admitted by the minimum evaluator."));
             }
+
+            issues.AddRange(SemanticScopedProjectionIssues.For(projection));
         }
 
         foreach (var query in slices.SelectMany(_ => _.Queries).Where(_ => _.Cardinality != SemanticQueryCardinality.ZeroOrOne || _.Delivery != SemanticQueryDelivery.Snapshot))

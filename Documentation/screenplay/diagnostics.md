@@ -658,6 +658,12 @@ A behavior is *deferred* from the backend ESM v1 profile in the same way every o
 
 An inline `on` block is an anonymous behavior, so it has no name to report against. Diagnostics inside one cite the position and the trigger instead.
 
+### Projection binding
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0380` | Warning | A projection construct binds, but Chronicle's projection lowering drops part of it: `all` inside a `children` or `nested` block loses its subscription to every event type and behaves as `every`, and an `automap` or `no automap` on a joined event is replaced by the auto-map of the level the join sits in. |
+
 ### Constraints in the semantic model
 
 These errors are reported when a `unique` [constraint](constraints.md) is bound into the semantic model.

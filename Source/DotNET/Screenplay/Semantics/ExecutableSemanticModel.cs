@@ -496,6 +496,12 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract($"Projection read model '{projection.ReadModel}' is unresolved.");
             }
 
+            if (projection.Scope is not null)
+            {
+                ValidateProjectionScope(projection, readModel);
+                return;
+            }
+
             var targets = Properties(readModel.Properties);
             var identifier = IdentifierProperty(readModel);
             foreach (var transition in projection.Transitions)

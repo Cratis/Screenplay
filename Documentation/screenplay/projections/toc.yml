@@ -30,5 +30,7 @@
   href: variants.md
 - name: Expressions
   href: expressions.mdx
+- name: Semantic Model
+  href: semantic-model.md
 - name: Grammar (EBNF)
   href: grammar.md

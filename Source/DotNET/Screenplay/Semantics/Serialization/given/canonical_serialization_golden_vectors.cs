@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 
 namespace Cratis.Screenplay.Semantics.Serialization.given;
 
-public static class canonical_serialization_golden_vectors
+public static partial class canonical_serialization_golden_vectors
 {
     const string SemanticModelResource = "Cratis.Screenplay.Semantics.Serialization.Golden.full-esm-v1.json";
     const string ExpressionResource = "Cratis.Screenplay.Semantics.Serialization.Golden.full-expressions-v1.json";
@@ -383,12 +383,14 @@ public static class canonical_serialization_golden_vectors
         var validation = new SemanticSlice(Id(2092), "Validation", SemanticSliceKind.StateChange, [], [validationCommand], [], [], [], []);
 
         // end #209 validation
-        var nestedFeature = new SemanticFeature(Id(32), "Nested", [], [stateView, stateChange, validation]);
+        // #211 projection blocks: the scoped projection shape lives in its own slice and composite types.
+        var projectionBlocks = CreateProjectionBlocks(applicationIdentity, uuidConcept, textConcept, decimalNumberConcept);
+        var nestedFeature = new SemanticFeature(Id(32), "Nested", [], [stateView, stateChange, validation, projectionBlocks.Slice]);
         var application = new SemanticApplication(
             Id(1),
             "Canonical Golden Application",
             concepts,
-            types,
+            types.AddRange(projectionBlocks.Types),
             [new(Id(30), "Operations", [new(Id(31), "Entities", [nestedFeature], [])])]);
 
         return ExecutableSemanticModel.Create(LanguageVersion.V1, SemanticVersion.V1, application);

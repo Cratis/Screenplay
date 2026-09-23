@@ -343,6 +343,7 @@ internal static partial class SemanticModelRead
         string? name = null;
         SemanticId readModel = default;
         ImmutableArray<SemanticProjectionTransition> transitions = default;
+        SemanticProjectionScope? scope = null;
         while (NextProperty(ref reader, seen, "projection") is { } property)
         {
             switch (property)
@@ -351,12 +352,13 @@ internal static partial class SemanticModelRead
                 case "name": name = String(ref reader, property); break;
                 case "readModel": readModel = SemanticId.Parse(String(ref reader, property)); break;
                 case "transitions": transitions = Array(ref reader, Transition, property); break;
+                case "scope": RequiredToken(ref reader, JsonTokenType.StartObject, property); scope = ProjectionScope(ref reader); break;
                 default: throw Unknown(property, "projection");
             }
         }
 
         Required(id.IsSet && name is not null && readModel.IsSet && !transitions.IsDefault, "projection");
-        return new(id, name!, readModel, transitions);
+        return new(id, name!, readModel, transitions) { Scope = scope };
     }
 
     internal static SemanticProjectionTransition Transition(ref Utf8JsonReader reader)
