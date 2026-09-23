@@ -40,16 +40,36 @@ public class when_serializing_every_validation_kind : a_valid_semantic_model
             SemanticPrimitiveType.Text,
             [],
             [new(default, SemanticValidationRuleKind.Length, SemanticValue.Number(3), null)]);
+        var slice = _application.Modules.Single().Features.Single().Slices.Single(_ => _.Commands.Length > 0);
+        var weights = new SemanticProperty(
+            Id(SemanticKind.Property, "RegisterProject.Weights"),
+            "Weights",
+            SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.DecimalNumber, isCollection: true),
+            false);
+        var command = slice.Commands.Single() with
+        {
+            Properties = [.. slice.Commands.Single().Properties, weights],
+            Validations =
+            [
+                new(weights.Id, SemanticValidationRuleKind.AllGreaterThan, SemanticValue.Number(0), null),
+                new(weights.Id, SemanticValidationRuleKind.AllGreaterThanOrEqual, SemanticValue.Number(0.5m), null)
+            ]
+        };
+        var application = ReplaceSlice(slice with { Commands = [command], Specifications = [] });
         _source = ExecutableSemanticModel.Create(
             LanguageVersion.V1,
             SemanticVersion.V1,
-            _application with { Concepts = [.. _application.Concepts, quantity, code] });
+            application with { Concepts = [.. application.Concepts, quantity, code] });
         _json = SemanticModelSerializer.Serialize(_source);
         _text = Encoding.UTF8.GetString(_json);
         _roundTripped = SemanticModelSerializer.Deserialize(_json);
         _reserialized = SemanticModelSerializer.Serialize(_roundTripped);
     }
 
+    [Fact] void should_write_all_greater_than() => _text.Contains("\"kind\":\"allGreaterThan\"", StringComparison.Ordinal).ShouldBeTrue();
+    [Fact] void should_write_all_greater_than_or_equal() => _text.Contains("\"kind\":\"allGreaterThanOrEqual\"", StringComparison.Ordinal).ShouldBeTrue();
+    [Fact] void should_read_the_quantified_rules_back() => CommandRules(_roundTripped).Select(_ => _.Kind).SequenceEqual([SemanticValidationRuleKind.AllGreaterThan, SemanticValidationRuleKind.AllGreaterThanOrEqual]).ShouldBeTrue();
+    [Fact] void should_read_the_element_operand_back() => CommandRules(_roundTripped).Last().Operand.ShouldEqual(SemanticValue.Number(0.5m));
     [Fact] void should_write_length() => _text.Contains("\"kind\":\"length\"", StringComparison.Ordinal).ShouldBeTrue();
     [Fact] void should_read_the_length_back() => _roundTripped.Application.Concepts.Single(_ => _.Name == "Code").Validations.Single().Kind.ShouldEqual(SemanticValidationRuleKind.Length);
     [Fact] void should_write_greater_than() => _text.Contains("\"kind\":\"greaterThan\"", StringComparison.Ordinal).ShouldBeTrue();
@@ -60,6 +80,9 @@ public class when_serializing_every_validation_kind : a_valid_semantic_model
     [Fact] void should_read_every_operand_back() => Rules(_roundTripped).All(_ => _.Operand == SemanticValue.Number(1)).ShouldBeTrue();
     [Fact] void should_preserve_the_revision() => _roundTripped.Revision.ShouldEqual(_source.Revision);
     [Fact] void should_be_byte_identical() => _reserialized.SequenceEqual(_json).ShouldBeTrue();
+
+    static IEnumerable<SemanticValidationRule> CommandRules(ExecutableSemanticModel model) =>
+        model.Application.Modules.Single().Features.Single().Slices.Single(_ => _.Commands.Length > 0).Commands.Single().Validations;
 
     static IEnumerable<SemanticValidationRule> Rules(ExecutableSemanticModel model) =>
         model.Application.Concepts.Single(_ => _.Name == "Quantity").Validations;

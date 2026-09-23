@@ -47,6 +47,8 @@ public sealed partial class SemanticModelBinder
                 "ordering compares one whole or decimal number",
             SemanticValidationRuleKind.Length when subject.IsCollection || !subject.IsText =>
                 "a length measures one text value that is not an enumeration",
+            SemanticValidationRuleKind.AllGreaterThan or SemanticValidationRuleKind.AllGreaterThanOrEqual when !subject.IsCollection || !subject.IsNumber =>
+                "'all' quantifies over a collection of whole or decimal numbers",
             _ => null
         };
 
@@ -96,6 +98,8 @@ public sealed partial class SemanticModelBinder
             ValidationRuleKind.LessThan => SemanticValidationRuleKind.LessThan,
             ValidationRuleKind.LessThanOrEqual => SemanticValidationRuleKind.LessThanOrEqual,
             ValidationRuleKind.Length => SemanticValidationRuleKind.Length,
+            ValidationRuleKind.AllGreaterThan => SemanticValidationRuleKind.AllGreaterThan,
+            ValidationRuleKind.AllGreaterThanOrEqual => SemanticValidationRuleKind.AllGreaterThanOrEqual,
             _ => SemanticValidationRuleKind.Unknown
         };
 

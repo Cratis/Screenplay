@@ -30,6 +30,7 @@ public class a_validated_command_plan : Specification
                 priority Int
                 discount Decimal
                 code String
+                weights Decimal[]
                 validate
                   name min 2 message "A name has at least two characters"
                   name max 10
@@ -41,6 +42,8 @@ public class a_validated_command_plan : Specification
                   priority < 6 message "Priority stops at five"
                   discount <= 100 message "A discount is at most 100"
                   code length == 3
+                  weights all > 0 message "Every weight counts"
+                  weights all >= 0.5 message "No weight is below a half"
         """;
 
     protected SemanticExecutionPlanCompilation _compilation;
@@ -71,7 +74,8 @@ public class a_validated_command_plan : Specification
             ["status"] = SemanticValue.Text("open"),
             ["priority"] = SemanticValue.Number(1),
             ["discount"] = SemanticValue.Number(0),
-            ["code"] = SemanticValue.Text("NOK")
+            ["code"] = SemanticValue.Text("NOK"),
+            ["weights"] = SemanticValue.Array([SemanticValue.Number(0.5m), SemanticValue.Number(2)])
         };
         foreach (var (property, value) in changes)
         {

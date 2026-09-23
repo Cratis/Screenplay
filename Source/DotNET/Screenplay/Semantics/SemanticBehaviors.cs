@@ -70,7 +70,17 @@ public enum SemanticValidationRuleKind
     /// <summary>
     /// The text length must equal the operand, which is a non-negative whole number rather than text.
     /// </summary>
-    Length = 9
+    Length = 9,
+
+    /// <summary>
+    /// Every number in the collection must be greater than the operand. An empty collection satisfies it.
+    /// </summary>
+    AllGreaterThan = 10,
+
+    /// <summary>
+    /// Every number in the collection must be greater than or equal to the operand. An empty collection satisfies it.
+    /// </summary>
+    AllGreaterThanOrEqual = 11
 }
 
 /// <summary>

@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using System.Globalization;
 
 namespace Cratis.Screenplay.Semantics.Execution;
@@ -31,7 +32,9 @@ static class SemanticValidationRules
         SemanticValidationRuleKind.GreaterThanOrEqual or
         SemanticValidationRuleKind.LessThan or
         SemanticValidationRuleKind.LessThanOrEqual or
-        SemanticValidationRuleKind.Length;
+        SemanticValidationRuleKind.Length or
+        SemanticValidationRuleKind.AllGreaterThan or
+        SemanticValidationRuleKind.AllGreaterThanOrEqual;
 
     /// <summary>
     /// Decides whether a value satisfies a rule.
@@ -52,6 +55,8 @@ static class SemanticValidationRules
         SemanticValidationRuleKind.LessThan => Measure(value) < Number(rule.Operand),
         SemanticValidationRuleKind.LessThanOrEqual => Measure(value) <= Number(rule.Operand),
         SemanticValidationRuleKind.Length => value is SemanticTextValue text ? text.Value.Length == Number(rule.Operand) : throw SemanticValueRules.Malformed(),
+        SemanticValidationRuleKind.AllGreaterThan => Elements(value).All(_ => Measure(_) > Number(rule.Operand)),
+        SemanticValidationRuleKind.AllGreaterThanOrEqual => Elements(value).All(_ => Measure(_) >= Number(rule.Operand)),
         _ => throw new InvalidSemanticContract($"Validation rule '{rule.Kind}' is not executable by the reference evaluator.")
     };
 
@@ -76,6 +81,8 @@ static class SemanticValidationRules
         SemanticValidationRuleKind.LessThan => $"A value must be less than {Format(rule.Operand)}.",
         SemanticValidationRuleKind.LessThanOrEqual => $"A value must be at most {Format(rule.Operand)}.",
         SemanticValidationRuleKind.Length => $"A value must be exactly {Format(rule.Operand)} characters long.",
+        SemanticValidationRuleKind.AllGreaterThan => $"Every value must be greater than {Format(rule.Operand)}.",
+        SemanticValidationRuleKind.AllGreaterThanOrEqual => $"Every value must be at least {Format(rule.Operand)}.",
         _ => $"A value does not satisfy the '{rule.Kind}' rule."
     };
 
@@ -85,6 +92,9 @@ static class SemanticValidationRules
         SemanticNumberValue number => number.Value,
         _ => throw SemanticValueRules.Malformed()
     };
+
+    static ImmutableArray<SemanticValue> Elements(SemanticValue value) =>
+        value is SemanticArrayValue array ? array.Values : throw SemanticValueRules.Malformed();
 
     static decimal Number(SemanticValue? operand) =>
         operand is SemanticNumberValue number ? number.Value : throw SemanticValueRules.Malformed();
