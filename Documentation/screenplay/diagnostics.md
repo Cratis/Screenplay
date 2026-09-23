@@ -658,6 +658,16 @@ A behavior is *deferred* from the backend ESM v1 profile in the same way every o
 
 An inline `on` block is an anonymous behavior, so it has no name to report against. Diagnostics inside one cite the position and the trigger instead.
 
+### Constraints in the semantic model
+
+These errors are reported when a `unique` [constraint](constraints.md) is bound into the semantic model.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0390` | Error | A `unique` constraint names an event the application does not declare. |
+| `PLAY0391` | Error | A `unique <property> on <Event>` constraint names a property the event does not declare. |
+| `PLAY0392` | Error | Two constraints in the application share a name. The name is a constraint's identity in the event store - it keys the constraint's index and its violations - so it is unique across the whole application, not just its slice. |
+
 ## Retired codes
 
 None yet. When a code is retired it is listed here with the release it went in, and its number stays out of use forever.

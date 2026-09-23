@@ -1751,4 +1751,22 @@ public static class DiagnosticCodes
     /// arguments, or an identical inline behavior - so the repeat is ignored.
     /// </summary>
     public const string DuplicateBehaviorAttachment = "PLAY0340";
+
+    // Constraints in the semantic model.
+
+    /// <summary>
+    /// A <c>unique</c> constraint names an event the application does not declare.
+    /// </summary>
+    public const string UnknownConstraintEvent = "PLAY0390";
+
+    /// <summary>
+    /// A <c>unique &lt;property&gt; on &lt;Event&gt;</c> constraint names a property the event does not declare.
+    /// </summary>
+    public const string UnknownConstraintProperty = "PLAY0391";
+
+    /// <summary>
+    /// Two constraints share a name. The name is a constraint's identity in the event store, so it is unique
+    /// across the whole application.
+    /// </summary>
+    public const string DuplicateConstraintName = "PLAY0392";
 }

@@ -27,11 +27,6 @@ public sealed partial class SemanticModelBinder
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Capture '{capture.Name}' requires a portable compiled CDL plan.", capture.Location);
             }
 
-            foreach (var constraint in slice.Constraints)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Constraint '{constraint.Name}' requires a portable constraint contract.", constraint.Location);
-            }
-
             foreach (var screen in slice.Screens)
             {
                 Information(DiagnosticCodes.DeferredSemanticSyntax, $"Screen '{screen.Name}' is explicitly deferred from the backend ESM v1 profile.", screen.Location);
