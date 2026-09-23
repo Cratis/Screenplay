@@ -2,7 +2,7 @@
 
 Projections declare how events are projected into a queryable read model. The body of a `projection` block is written in the **Projection Declaration Language (PDL)** — an embedded sub-grammar. The Screenplay parser delegates the indented body to the PDL parser (see [Sub-language Pluggability](../sub-languages.md)).
 
-The pages in this section document the full projection sub-language — every directive, operation, and expression the PDL supports. The same language is also used standalone by Cratis Chronicle to define projections without writing code; see [Chronicle projections](/chronicle/projections/projection-declaration-language/) for how Chronicle hosts and executes it.
+The pages in this section document the full projection sub-language — every directive, operation, and expression the PDL supports. The same language is also used standalone by Cratis Chronicle to define projections without writing code; see [Chronicle projections](/chronicle/projections/projection-declaration-language/) for how Chronicle hosts and executes it. Chronicle is also the semantic reference for what a projection means: the executable semantic model mirrors how Chronicle lowers and runs it — see [Semantic Model](semantic-model.md).
 
 ## Syntax
 
@@ -107,4 +107,5 @@ Declare as many as the behavior needs. Each names its own read model, and [print
 - [Removal](removal.md) - Remove projection instances based on events
 - [Variants](variants.md) - Mutually exclusive named read models sharing one projection identity
 - [Expressions](grammar.md#expressions) - Understanding expression syntax
+- [Semantic Model](semantic-model.md) - How projections bind to the executable semantic model, with Chronicle as the semantic reference
 - [Grammar (EBNF)](grammar.md) - Complete formal grammar specification
