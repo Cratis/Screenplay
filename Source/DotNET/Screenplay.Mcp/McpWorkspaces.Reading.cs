@@ -125,6 +125,17 @@ internal sealed partial class McpWorkspaces
                 proposal.Workspace.Revision.ToString()),
             "diagnostics" => McpPaging.Page(proposal is McpAuthoringProposal authoring ? authoring.Result.AuthoringDiagnostics : [], arguments, proposal.Workspace.Revision.ToString()),
             "executable-diagnostics" => McpPaging.Page(proposal.Workspace.Compilation.Diagnostics, arguments, proposal.Workspace.Revision.ToString()),
+            "dropped-comments" => McpPaging.Page(
+                WorkspaceDroppedComments.In(proposal.WritePlan).Select(comment => new
+                {
+                    documentId = comment.Document.ToString(),
+                    path = comment.Path.Value,
+                    comment.Line,
+                    comment.Column,
+                    comment.Text
+                }),
+                arguments,
+                proposal.Workspace.Revision.ToString()),
             "before" or "after" => ProposalBytes(proposal, arguments, view),
             _ => throw new McpFailure("Unknown proposal view.", -32602)
         };

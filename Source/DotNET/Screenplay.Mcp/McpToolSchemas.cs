@@ -63,7 +63,7 @@ static class McpToolSchemas
         "view" when tool == "declaration-details" => McpAstSchemas.Choice("summary", "properties", "occurrences", "commands", "specifications", "produces", "values", "syntax"),
         "view" when tool == "merged-document" => McpAstSchemas.Choice("source", "syntax", "both"),
         "view" when tool == "read-workspace" => McpAstSchemas.Choice("documents", "semantics", "eventContracts", "diagnostics", "executable-diagnostics"),
-        "view" when tool == "read-proposal" => McpAstSchemas.Choice("changes", "before", "after", "diagnostics", "executable-diagnostics"),
+        "view" when tool == "read-proposal" => McpAstSchemas.Choice("changes", "before", "after", "diagnostics", "executable-diagnostics", "dropped-comments"),
         "view" when tool == "read-ast" => McpAstSchemas.Choice("nodes", "children"),
         _ => McpAstSchemas.String()
     };
