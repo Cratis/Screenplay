@@ -36,7 +36,9 @@ public class a_connection : Specification
     void Establish()
     {
         var repository = new DirectoryInfo(Directory.GetCurrentDirectory());
-        while (repository is not null && !Directory.Exists(Path.Combine(repository.FullName, ".git")))
+
+        // A worktree checkout has a .git file rather than a .git directory.
+        while (repository is not null && !Directory.Exists(Path.Combine(repository.FullName, ".git")) && !File.Exists(Path.Combine(repository.FullName, ".git")))
         {
             repository = repository.Parent;
         }
