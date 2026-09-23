@@ -14,7 +14,7 @@ public sealed partial class SemanticModelBinder
         {
             foreach (var reducer in slice.Reducers ?? [])
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Reducer '{reducer.Name}' requires a portable reducer contract.", reducer.Location);
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, UnsupportedReducerMessage(reducer), reducer.Location);
             }
 
             foreach (var reaction in slice.Reactions)
@@ -37,5 +37,12 @@ public sealed partial class SemanticModelBinder
                 Information(DiagnosticCodes.DeferredSemanticSyntax, $"Screen '{screen.Name}' is explicitly deferred from the backend ESM v1 profile.", screen.Location);
             }
         }
+
+        // A reducer whose rules only list events has nothing to fold - it is a projection written as a reducer,
+        // so the author is pointed at the form that expresses it. A reducer with a body awaits a portable contract.
+        string UnsupportedReducerMessage(ReducerSyntax reducer) =>
+            reducer.Rules.All(rule => rule.File is null && rule.Code is null)
+                ? $"Reducer '{reducer.Name}' has no transition body. A reducer that only lists events is a projection - declare 'projection <Name> => {reducer.ReadModel}' - or give each 'on <Event>' an inline code block or 'file <path>'."
+                : $"Reducer '{reducer.Name}' requires a portable reducer contract.";
     }
 }
