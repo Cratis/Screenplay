@@ -161,8 +161,11 @@ else, `replace` its `PropertyMappingSyntax` with `formatting: "PreserveTrivia"`.
 Changing `channel = "web"` to `"store"` rewrites only `"web"`; every comment,
 blank line and declaration stays where it was. `CanonicalizeTouchedDocuments`
 reprints the whole document instead: comments are dropped and blank lines are
-normalized, but parsed members retain their order. The `dropped-comments` view
-lists exactly which comments are lost.
+normalized. Existing members from the same parsed document retain their authored
+order, including when an edited member is replaced through typed JSON. Newly authored
+members without comparable source positions follow the canonical insertion rule;
+see [Printing and generating](printing.md#what-printing-does-not-keep). The
+`dropped-comments` view lists exactly which comments are lost.
 
 1. Call `read-proposal` with its ID and `view: "changes"`. Check the proposal's
    `droppedCommentCount`; when it is not zero, call `read-proposal` with

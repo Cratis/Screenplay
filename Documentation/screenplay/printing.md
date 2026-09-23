@@ -65,7 +65,8 @@ a file does:
   the printer uses canonical kind order for that owner. Syntax created without source
   positions (including typed JSON) also uses canonical kind order. A new member added
   to a parsed owner prints after the last member of its kind, or before the first
-  member of a later canonical kind when none exists.
+  member of a later canonical kind when none exists. Workspace AST replacements
+  inherit their original position, even though typed JSON omits source positions.
 - **Blank lines are normalized.** The printer separates members with its own blank lines.
 
 Round-tripping preserves meaning, not layout. To change a document without losing

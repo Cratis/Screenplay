@@ -23,6 +23,7 @@ public class when_canonicalizing_an_edited_interleaved_document : given.a_docume
     void Because()
     {
         var entry = Value("remark");
+        var constraint = WorkspaceSyntaxIndex.Create(Workspace).Entries.Single(candidate => candidate.Node is UniqueEventConstraintSyntax);
         Result = Workspace.ProposeAuthoring(new()
         {
             ExpectedRevision = Workspace.Revision,
@@ -32,12 +33,16 @@ public class when_canonicalizing_an_edited_interleaved_document : given.a_docume
             Operations = [new ReplaceWorkspaceNode(
                 entry.Handle,
                 entry.Node,
-                ((PropertyMappingSyntax)entry.Node) with { Source = new LiteralExpressionSyntax("sturdy", SourceLocation.Start) })]
+                ((PropertyMappingSyntax)entry.Node) with { Source = new LiteralExpressionSyntax("sturdy", SourceLocation.Start) }),
+                new ReplaceWorkspaceNode(
+                    constraint.Handle,
+                    constraint.Node,
+                    ((UniqueEventConstraintSyntax)constraint.Node) with { Name = "UpdatedUniqueOrder", Location = SourceLocation.Start })]
         });
     }
 
     [Fact] void should_accept_the_proposal() => Result.Accepted.ShouldBeTrue();
-    [Fact] void should_keep_constraint_after_specifications() => InOrder("specification PlacingAnOrder", "constraint UniqueOrder");
+    [Fact] void should_keep_constraint_after_specifications() => InOrder("specification PlacingAnOrder", "constraint UpdatedUniqueOrder");
     [Fact] void should_keep_screen_between_queries() => InOrder("query Find", "screen List", "query Other");
     [Fact] void should_print_the_edit() => Result.Workspace!.Documents.Single().Text.ShouldContain("remark = \"sturdy\"");
 

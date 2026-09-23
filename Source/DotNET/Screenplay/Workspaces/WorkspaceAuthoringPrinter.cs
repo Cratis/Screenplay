@@ -38,7 +38,8 @@ static class WorkspaceAuthoringPrinter
             throw new InvalidWorkspaceAuthoring("The requested document encoding is unknown.");
         }
 
-        // Round-trip through the codec first: reject malformed runtime trees and server-managed source metadata.
+        // Round-trip through the codec first: reject malformed runtime trees without adding server-managed
+        // source metadata to the typed contract.
         var checkedSyntax = SyntaxJson.Deserialize(SyntaxJson.Serialize(intended)) as ApplicationSyntax
             ?? throw new InvalidWorkspaceAuthoring("A typed document requires an ApplicationSyntax root.");
 

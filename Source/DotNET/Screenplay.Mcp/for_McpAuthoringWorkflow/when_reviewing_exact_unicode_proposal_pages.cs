@@ -34,8 +34,8 @@ public class when_reviewing_exact_unicode_proposal_pages : given.an_authoring_co
         var root = Node("ApplicationSyntax", opened.GetProperty("revision").GetString());
         var replacement = new ScreenplayCompiler().Parse(FullSource.Replace("Registers café projects 🚀", "Registers naïve projects 🌍", StringComparison.Ordinal)).Value;
 
-        // Typed JSON does not carry authored source positions, so its canonical print uses kind order.
-        _expected = [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes(new ScreenplayPrinter().Print((Cratis.Screenplay.Syntax.ApplicationSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(replacement))))];
+        // The authoring path restores source positions from the original document after typed JSON admission.
+        _expected = [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes(new ScreenplayPrinter().Print(replacement))];
         _proposal = Result("propose-ast", new
         {
             expectedRevision = opened.GetProperty("revision").GetString(),
