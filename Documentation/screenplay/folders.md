@@ -299,8 +299,10 @@ candidate semantics against an independent one-mapping graph edit, and proves ca
 equivalence without printing over authored source. Identities, destinations, conditions, and specification
 expectations remain unchanged. Selecting the current source is an admitted no-op with no write entries.
 
-This changes real declarative behavior, not code attachments. Run your semantic specifications on the candidate:
-an expectation for the previous source may now fail, and Screenplay does **not** rewrite it to make it pass.
+This changes real declarative behavior, not code attachments, and Screenplay does **not** rewrite specification
+expectations to make them pass. A `then` value that the new source can no longer produce from the stated `when`
+values is a compile error (`PLAY0285`), so such a proposal rejects with `CompilationFailed` and its diagnostics.
+Run your semantic specifications on an accepted candidate for everything the static check cannot decide.
 This bounded operation does not complete general declarative patching or provide a file-system publisher; use the
 [write plan](#propose-revision-safe-workspace-changes) to review exact changes before your host publishes them.
 

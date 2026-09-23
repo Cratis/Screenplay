@@ -33,11 +33,11 @@ public class a_workspace_with_a_produced_mapping : Specification
                 name ProjectName
               specification Registering
                 when RegisterProject
-                  name = "Old"
-                  displayName = "New"
+                  name = "Same"
+                  displayName = "Same"
                   count = 42
                 then ProjectRegistered
-                  name = "New"
+                  name = "Same"
         """;
 
     protected ScreenplayWorkspace _workspace = null!;
