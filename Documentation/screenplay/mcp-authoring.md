@@ -160,8 +160,9 @@ To change a specification value or a `produces` mapping without touching anythin
 else, `replace` its `PropertyMappingSyntax` with `formatting: "PreserveTrivia"`.
 Changing `channel = "web"` to `"store"` rewrites only `"web"`; every comment,
 blank line and declaration stays where it was. `CanonicalizeTouchedDocuments`
-reprints the whole document instead: comments are dropped and member order is
-normalized, and the `dropped-comments` view lists exactly what is lost.
+reprints the whole document instead: comments are dropped and blank lines are
+normalized, but parsed members retain their order. The `dropped-comments` view
+lists exactly which comments are lost.
 
 1. Call `read-proposal` with its ID and `view: "changes"`. Check the proposal's
    `droppedCommentCount`; when it is not zero, call `read-proposal` with
