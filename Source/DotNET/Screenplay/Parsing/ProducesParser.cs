@@ -107,12 +107,7 @@ internal static partial class ProducesParser
                 continue;
             }
 
-            var source = match.Groups[2];
-            mappings.Add(new(LineText.Unescape(match.Groups[1].Value), ExpressionParser.ParseMappingSource(context, source.Value, child.Location), child.Location)
-            {
-                SourceLocation = child.LocationAt(source.Index),
-                SourceLength = source.Length
-            });
+            mappings.Add(ExpressionParser.ParseMapping(context, LineText.Unescape(match.Groups[1].Value), match.Groups[2], child));
         }
 
         return (mappings, tags, target);

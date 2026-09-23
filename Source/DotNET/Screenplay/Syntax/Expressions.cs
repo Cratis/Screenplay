@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Syntax;
 
@@ -16,7 +17,19 @@ public abstract record ExpressionSyntax(SourceLocation Location) : SyntaxNode(Lo
 /// </summary>
 /// <param name="Value">The literal value, <c>null</c> for the <c>null</c> literal.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record LiteralExpressionSyntax(object? Value, SourceLocation Location) : ExpressionSyntax(Location);
+public record LiteralExpressionSyntax(object? Value, SourceLocation Location) : ExpressionSyntax(Location)
+{
+    /// <summary>
+    /// Gets the parser-owned start of the literal's authored text, including any quotes, or <c>null</c> without exact source evidence.
+    /// </summary>
+    public SourceLocation? RawLocation { get; init; }
+
+    /// <summary>
+    /// Gets the parser-owned UTF-16 length of the literal's authored text, or <c>null</c> without exact source evidence.
+    /// </summary>
+    [SourceSpanMetadata]
+    public int? RawLength { get; init; }
+}
 
 /// <summary>
 /// Represents a dotted property path expression, such as <c>customer.name</c>.

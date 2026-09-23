@@ -286,7 +286,7 @@ internal static partial class SpecificationParser
             var mapping = MappingRegex().Match(child.Content);
             if (mapping.Success)
             {
-                values.Add(new(mapping.Groups[1].Value, ExpressionParser.ParseMappingSource(context, mapping.Groups[2].Value, child.Location), child.Location));
+                values.Add(ExpressionParser.ParseMapping(context, mapping.Groups[1].Value, mapping.Groups[2], child));
                 continue;
             }
 
@@ -328,7 +328,7 @@ internal static partial class SpecificationParser
                 continue;
             }
 
-            values.Add(new(match.Groups[1].Value, ExpressionParser.ParseMappingSource(context, match.Groups[2].Value, child.Location), child.Location));
+            values.Add(ExpressionParser.ParseMapping(context, match.Groups[1].Value, match.Groups[2], child));
         }
 
         return values;
