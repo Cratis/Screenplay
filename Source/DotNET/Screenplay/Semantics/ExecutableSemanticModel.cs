@@ -66,7 +66,7 @@ public sealed record ExecutableSemanticModel
     }
 }
 
-static class SemanticModelValidator
+internal static partial class SemanticModelValidator
 {
     public static void Validate(SemanticApplication application)
     {
@@ -80,7 +80,7 @@ static class SemanticModelValidator
         context.ValidateReferences(application);
     }
 
-    sealed class ValidationContext
+    private sealed partial class ValidationContext
     {
         readonly HashSet<SemanticId> _ids = [];
         readonly Dictionary<SemanticId, SemanticConcept> _concepts = [];
@@ -243,6 +243,8 @@ static class SemanticModelValidator
                 Register(specification.Id, specification.Name, "specification");
                 RequireSpecificationArrays(specification);
             }
+
+            RegisterConstraints(slice);
         }
 
         void RegisterEvent(SemanticEventContract eventContract)
@@ -321,6 +323,8 @@ static class SemanticModelValidator
             {
                 ValidateSpecification(specification);
             }
+
+            ValidateConstraints(slice);
         }
 
         void ValidateCommand(SemanticCommand command)
