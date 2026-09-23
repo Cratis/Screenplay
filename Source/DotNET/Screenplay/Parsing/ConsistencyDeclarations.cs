@@ -97,6 +97,12 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
     /// <summary>
     /// Resolves a property's own type, following declared composite paths.
     /// </summary>
+    /// <remarks>
+    /// A path that continues past a primitive, concept or enum field is provably absent - a concept wraps exactly
+    /// one value, so there is nothing below it to name. A path through an undeclared, imported or ambiguous type
+    /// stays unknown. A collection or optional composite field is addressed element-wise: <c>rows.note</c> names
+    /// the <c>note</c> of each <c>Row</c> in <c>rows Row[]</c>.
+    /// </remarks>
     /// <param name="properties">The containing declaration's properties.</param>
     /// <param name="path">The property path.</param>
     /// <param name="missing">Whether the path is provably absent rather than unknown.</param>
@@ -123,6 +129,12 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
             if (index == segments.Length - 1)
             {
                 return property;
+            }
+
+            if (IsScalar(property.Type.Name))
+            {
+                missing = true;
+                return null;
             }
 
             properties = TypeProperties(property.Type.Name);
@@ -166,6 +178,12 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
             .Concat(slice.Projections.SelectMany(projection => projection.Blocks.OfType<ProjectionVariantSyntax>().Any()
                 ? projection.Blocks.OfType<ProjectionVariantSyntax>().Select(variant => variant.Name)
                 : [projection.ReadModel ?? projection.Name]));
+
+    // A concept wraps exactly one primitive, so nothing sits below a primitive, a concept or an enum. A name that
+    // is also a composite type is ambiguous and stays unknown.
+    bool IsScalar(string type) =>
+        ConceptSyntax.PrimitiveTypes.Contains(type, StringComparer.Ordinal) ||
+        (application.Concepts.Any(concept => concept.Name == type) && !(application.Types ?? []).Any(composite => composite.Name == type));
 
     ReferenceResolver.Resolution ResolveDeclaration(string name, DeclarationScope scope, IReadOnlyList<Declaration> declarations)
     {

@@ -586,12 +586,12 @@ These errors are reported by ordinary compilation, including compilation of a fo
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0282` | Error | A declarative `validate` rule targets a field absent from the command's declared shape, including named rules with implementation blocks. |
+| `PLAY0282` | Error | A declarative `validate` rule targets a field absent from the command's declared shape, including named rules with implementation blocks. A dotted path is followed through declared composite `type`s; continuing past a primitive, concept or enum field is reported, while a path through an undeclared or imported type is left undecided. |
 | `PLAY0283` | Error | The type supplied by `reads <View> by <field>` is incompatible with every declared query `by` parameter of that view. Filter parameters do not substitute for a key. Parameter names may differ; distinct concepts remain distinct types. |
 | `PLAY0284` | Error | A `children` or `nested` block never populates a declared element field through its identity, explicit mappings, inherited `every` mappings, nested blocks, joins, or compatible AutoMap. Coverage is across the block's events, not a requirement that every update event fill every field. |
 | `PLAY0285` | Error | A specification's expected event contradicts every possible declared producer of its `when` command, using decidable literals, property copies and equality conditions. |
 | `PLAY0286` | Error | A specification value is not a member of the enum declared by that specific command, event, read-model field or query parameter. Bare members, qualified members and quoted member names are accepted. |
-| `PLAY0287` | Error | A command or reaction producer, a capture append mapping, or a specification's `given`/`then` event step, assigns a field absent from the referenced event's declaration. |
+| `PLAY0287` | Error | A command or reaction producer, a capture append mapping, or a specification's `given`/`then` event step, assigns a field absent from the referenced event's declaration. Dotted paths follow the same rule as `PLAY0282`: `title.missing` is reported when `title` is a primitive, concept or enum, `detail.missing` when `Detail` is a declared `type` without that field. A collection or optional composite field is addressed element-wise. |
 | `PLAY0290` | Warning | An `import` names an event, command, read model, concept or type the application declares itself. The declaration is what every reference resolves to and what these checks see, so the import has no effect - remove it. |
 
 An `import` never changes what these checks see: a name the application declares resolves to that declaration whether or not it is also imported, and an imported name nothing here declares keeps an unknown shape.
