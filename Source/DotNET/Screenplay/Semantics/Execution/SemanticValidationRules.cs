@@ -30,7 +30,8 @@ static class SemanticValidationRules
         SemanticValidationRuleKind.GreaterThan or
         SemanticValidationRuleKind.GreaterThanOrEqual or
         SemanticValidationRuleKind.LessThan or
-        SemanticValidationRuleKind.LessThanOrEqual;
+        SemanticValidationRuleKind.LessThanOrEqual or
+        SemanticValidationRuleKind.Length;
 
     /// <summary>
     /// Decides whether a value satisfies a rule.
@@ -50,6 +51,7 @@ static class SemanticValidationRules
         SemanticValidationRuleKind.GreaterThanOrEqual => Measure(value) >= Number(rule.Operand),
         SemanticValidationRuleKind.LessThan => Measure(value) < Number(rule.Operand),
         SemanticValidationRuleKind.LessThanOrEqual => Measure(value) <= Number(rule.Operand),
+        SemanticValidationRuleKind.Length => value is SemanticTextValue text ? text.Value.Length == Number(rule.Operand) : throw SemanticValueRules.Malformed(),
         _ => throw new InvalidSemanticContract($"Validation rule '{rule.Kind}' is not executable by the reference evaluator.")
     };
 
@@ -73,6 +75,7 @@ static class SemanticValidationRules
         SemanticValidationRuleKind.GreaterThanOrEqual => $"A value must be at least {Format(rule.Operand)}.",
         SemanticValidationRuleKind.LessThan => $"A value must be less than {Format(rule.Operand)}.",
         SemanticValidationRuleKind.LessThanOrEqual => $"A value must be at most {Format(rule.Operand)}.",
+        SemanticValidationRuleKind.Length => $"A value must be exactly {Format(rule.Operand)} characters long.",
         _ => $"A value does not satisfy the '{rule.Kind}' rule."
     };
 

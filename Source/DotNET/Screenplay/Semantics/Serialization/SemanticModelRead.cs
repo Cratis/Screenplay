@@ -988,6 +988,7 @@ static class SemanticModelRead
         "greaterThanOrEqual" => SemanticValidationRuleKind.GreaterThanOrEqual,
         "lessThan" => SemanticValidationRuleKind.LessThan,
         "lessThanOrEqual" => SemanticValidationRuleKind.LessThanOrEqual,
+        "length" => SemanticValidationRuleKind.Length,
         _ => throw DiscriminatorError(value, "validation kind")
     };
 

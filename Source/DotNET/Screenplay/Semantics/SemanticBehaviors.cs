@@ -65,7 +65,12 @@ public enum SemanticValidationRuleKind
     /// <summary>
     /// The number must be less than or equal to the operand.
     /// </summary>
-    LessThanOrEqual = 8
+    LessThanOrEqual = 8,
+
+    /// <summary>
+    /// The text length must equal the operand, which is a non-negative whole number rather than text.
+    /// </summary>
+    Length = 9
 }
 
 /// <summary>

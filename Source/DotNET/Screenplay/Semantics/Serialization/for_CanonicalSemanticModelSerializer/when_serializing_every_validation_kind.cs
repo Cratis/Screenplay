@@ -34,16 +34,24 @@ public class when_serializing_every_validation_kind : a_valid_semantic_model
             SemanticPrimitiveType.WholeNumber,
             [],
             [.. _numberKinds.Select(kind => new SemanticValidationRule(default, kind, SemanticValue.Number(1), $"{kind} one"))]);
+        var code = new SemanticConcept(
+            Id(SemanticKind.Concept, "Code"),
+            "Code",
+            SemanticPrimitiveType.Text,
+            [],
+            [new(default, SemanticValidationRuleKind.Length, SemanticValue.Number(3), null)]);
         _source = ExecutableSemanticModel.Create(
             LanguageVersion.V1,
             SemanticVersion.V1,
-            _application with { Concepts = [.. _application.Concepts, quantity] });
+            _application with { Concepts = [.. _application.Concepts, quantity, code] });
         _json = SemanticModelSerializer.Serialize(_source);
         _text = Encoding.UTF8.GetString(_json);
         _roundTripped = SemanticModelSerializer.Deserialize(_json);
         _reserialized = SemanticModelSerializer.Serialize(_roundTripped);
     }
 
+    [Fact] void should_write_length() => _text.Contains("\"kind\":\"length\"", StringComparison.Ordinal).ShouldBeTrue();
+    [Fact] void should_read_the_length_back() => _roundTripped.Application.Concepts.Single(_ => _.Name == "Code").Validations.Single().Kind.ShouldEqual(SemanticValidationRuleKind.Length);
     [Fact] void should_write_greater_than() => _text.Contains("\"kind\":\"greaterThan\"", StringComparison.Ordinal).ShouldBeTrue();
     [Fact] void should_write_greater_than_or_equal() => _text.Contains("\"kind\":\"greaterThanOrEqual\"", StringComparison.Ordinal).ShouldBeTrue();
     [Fact] void should_write_less_than() => _text.Contains("\"kind\":\"lessThan\"", StringComparison.Ordinal).ShouldBeTrue();

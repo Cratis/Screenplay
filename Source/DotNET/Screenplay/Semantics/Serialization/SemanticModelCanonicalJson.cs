@@ -536,6 +536,7 @@ static class SemanticModelCanonicalJson
         SemanticValidationRuleKind.GreaterThanOrEqual => "greaterThanOrEqual",
         SemanticValidationRuleKind.LessThan => "lessThan",
         SemanticValidationRuleKind.LessThanOrEqual => "lessThanOrEqual",
+        SemanticValidationRuleKind.Length => "length",
         _ => throw Unknown(nameof(SemanticValidationRuleKind), value)
     };
 

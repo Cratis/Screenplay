@@ -412,6 +412,8 @@ static class SemanticModelValidator
                 case SemanticValidationRuleKind.GreaterThan or SemanticValidationRuleKind.GreaterThanOrEqual or
                     SemanticValidationRuleKind.LessThan or SemanticValidationRuleKind.LessThanOrEqual when !scalar || !number:
                     throw new InvalidSemanticContract("Ordering validation requires a scalar number.");
+                case SemanticValidationRuleKind.Length when !scalar || !text:
+                    throw new InvalidSemanticContract("Length validation requires a scalar non-enumerated text value.");
             }
 
             if (validation.Operand is not null)
@@ -421,8 +423,9 @@ static class SemanticModelValidator
                     throw new InvalidSemanticContract($"Validation rule '{validation.Kind}' cannot use a null operand.");
                 }
 
-                // A bound on text constrains its length, so its operand is a length, not text (Maximum/Minimum).
-                var bindsLength = text && validation.Kind is SemanticValidationRuleKind.Maximum or SemanticValidationRuleKind.Minimum;
+                // A length rule and a bound on text constrain its length, so the operand is a length, not text.
+                var bindsLength = validation.Kind == SemanticValidationRuleKind.Length ||
+                    (text && validation.Kind is SemanticValidationRuleKind.Maximum or SemanticValidationRuleKind.Minimum);
                 var operandType = bindsLength ? SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.WholeNumber) : propertyType;
                 ValidateValue(validation.Operand, operandType, "validation operand");
                 if (bindsLength && validation.Operand is SemanticNumberValue { Value: < 0 })

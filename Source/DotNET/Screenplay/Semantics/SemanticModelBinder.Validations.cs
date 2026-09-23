@@ -45,6 +45,8 @@ public sealed partial class SemanticModelBinder
             SemanticValidationRuleKind.GreaterThan or SemanticValidationRuleKind.GreaterThanOrEqual or
                 SemanticValidationRuleKind.LessThan or SemanticValidationRuleKind.LessThanOrEqual when subject.IsCollection || !subject.IsNumber =>
                 "ordering compares one whole or decimal number",
+            SemanticValidationRuleKind.Length when subject.IsCollection || !subject.IsText =>
+                "a length measures one text value that is not an enumeration",
             _ => null
         };
 
@@ -55,11 +57,11 @@ public sealed partial class SemanticModelBinder
                 return "cannot be null - use 'not empty' to require a value";
             }
 
-            if (subject.IsText && kind is SemanticValidationRuleKind.Maximum or SemanticValidationRuleKind.Minimum)
+            if (kind == SemanticValidationRuleKind.Length || (subject.IsText && kind is SemanticValidationRuleKind.Maximum or SemanticValidationRuleKind.Minimum))
             {
                 return operand is SemanticNumberValue { Value: >= 0 } length && decimal.Truncate(length.Value) == length.Value
                     ? null
-                    : "must be a non-negative whole number because it bounds the text length";
+                    : "must be a non-negative whole number because it is a text length";
             }
 
             return (subject.Primitive, operand) switch
@@ -93,6 +95,7 @@ public sealed partial class SemanticModelBinder
             ValidationRuleKind.GreaterThanOrEqual => SemanticValidationRuleKind.GreaterThanOrEqual,
             ValidationRuleKind.LessThan => SemanticValidationRuleKind.LessThan,
             ValidationRuleKind.LessThanOrEqual => SemanticValidationRuleKind.LessThanOrEqual,
+            ValidationRuleKind.Length => SemanticValidationRuleKind.Length,
             _ => SemanticValidationRuleKind.Unknown
         };
 
