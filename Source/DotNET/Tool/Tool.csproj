@@ -17,5 +17,6 @@
 
     <ItemGroup>
         <ProjectReference Include="../Screenplay/Screenplay.csproj" />
+        <ProjectReference Include="../Screenplay.Mcp/Screenplay.Mcp.csproj" />
     </ItemGroup>
 </Project>

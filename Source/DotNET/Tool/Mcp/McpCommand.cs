@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text;
+using Cratis.Screenplay.Mcp;
 
 namespace Cratis.Screenplay.Tool.Mcp;
 
@@ -19,8 +20,7 @@ static class McpCommand
         {
             Console.InputEncoding = new UTF8Encoding(false, true);
             Console.OutputEncoding = new UTF8Encoding(false, true);
-            var root = new McpRoot(arguments[1]);
-            new McpConnection(new McpTools(root)).Run(Console.In, Console.Out);
+            ScreenplayMcpServer.Run(arguments[1], Console.In, Console.Out);
             return 0;
         }
         catch (Exception exception)

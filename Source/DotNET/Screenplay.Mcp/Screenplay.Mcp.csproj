@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Screenplay.Mcp</AssemblyName>
+        <RootNamespace>Cratis.Screenplay.Mcp</RootNamespace>
+        <PackageId>Cratis.Screenplay.Mcp</PackageId>
+        <TargetFramework>net10.0</TargetFramework>
+        <TargetFrameworks></TargetFrameworks>
+        <IsPackable>true</IsPackable>
+        <!-- This new package has no 4.0.0 baseline. Keep package validation enabled. -->
+        <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
+        <Description>Embeddable MCP server for Cratis Screenplay model navigation and authoring</Description>
+        <PackageTags>cratis;screenplay;dsl;mcp</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../Screenplay/Screenplay.csproj" />
+    </ItemGroup>
+</Project>
