@@ -157,6 +157,28 @@ internal static partial class ExpressionParser
     }
 
     /// <summary>
+    /// Parses a projection mapping's source, retaining the exact span of a literal for workspace edits.
+    /// </summary>
+    /// <param name="context">The parser context.</param>
+    /// <param name="source">The regular expression group containing the source.</param>
+    /// <param name="line">The authored source line.</param>
+    /// <returns>The parsed projection expression.</returns>
+    public static ExpressionSyntax ParseProjectionMappingSource(ParserContext context, Group source, SourceLine line)
+    {
+        var text = source.Value.Trim();
+        var expression = ParseProjectionExpression(context, text, line.Location);
+        if (expression is LiteralExpressionSyntax literal)
+        {
+            // 'literal ' is projection syntax, not part of the raw literal value.
+            var prefix = text.StartsWith("literal ", StringComparison.Ordinal) ? text.Length - text["literal ".Length..].TrimStart().Length : 0;
+            var offset = source.Index + (source.Value.Length - source.Value.TrimStart().Length) + prefix;
+            expression = literal with { RawLocation = line.LocationAt(offset), RawLength = text.Length - prefix };
+        }
+
+        return expression;
+    }
+
+    /// <summary>
     /// Parses a literal value - a string, number, boolean or null.
     /// </summary>
     /// <param name="text">The text to parse.</param>
