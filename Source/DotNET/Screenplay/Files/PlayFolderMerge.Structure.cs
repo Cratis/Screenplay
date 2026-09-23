@@ -54,6 +54,8 @@ internal static partial class PlayFolderMerge
                 context,
                 $"module '{group.Key}'"),
             Contributions = [.. parts.SelectMany(part => part.Contributions ?? [])],
+            Behaviors = [.. parts.SelectMany(part => part.Behaviors)],
+            UsedBehaviors = AttachedAcrossFiles(parts.SelectMany(part => part.UsedBehaviors), $"module '{group.Key}'", context),
             Features = MergeFeatures(parts.SelectMany(part => part.Features), context)
         };
     }
@@ -73,6 +75,8 @@ internal static partial class PlayFolderMerge
         {
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"feature '{group.Key}'", context),
             Contributions = [.. parts.SelectMany(part => part.Contributions ?? [])],
+            Behaviors = [.. parts.SelectMany(part => part.Behaviors)],
+            UsedBehaviors = AttachedAcrossFiles(parts.SelectMany(part => part.UsedBehaviors), $"feature '{group.Key}'", context),
             Features = MergeFeatures(parts.SelectMany(part => part.Features), context),
             Slices = DeclaredInOneFile(
                 parts.SelectMany(part => part.Slices),
@@ -118,5 +122,41 @@ internal static partial class PlayFolderMerge
         }
 
         return described[0].Description;
+    }
+
+    /// <summary>
+    /// Keeps every named behavior the files attach to one module or feature, reporting a repeated attachment.
+    /// </summary>
+    /// <param name="attachments">The <c>uses</c> clauses of every file, in path order.</param>
+    /// <param name="owner">The declaration the behaviors are attached to, used in the diagnostic.</param>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <returns>Every attachment, in path order.</returns>
+    /// <remarks>
+    /// Attachments are additive, so every one is kept - the same as contributions. The same behavior attached
+    /// again with the same arguments from another file runs twice and almost certainly repeats a line by
+    /// mistake, so it is reported; it stays a warning because the application is still well defined. The same
+    /// behavior with different arguments is two distinct attachments - a parameterized behavior wired twice -
+    /// and is not reported.
+    /// </remarks>
+    static List<UsesBehaviorSyntax> AttachedAcrossFiles(
+        IEnumerable<UsesBehaviorSyntax> attachments,
+        string owner,
+        ParserContext context)
+    {
+        var kept = attachments.ToList();
+        var first = new Dictionary<string, SourceLocation>(StringComparer.Ordinal);
+        foreach (var uses in kept)
+        {
+            var signature = string.Join('\n', uses.Arguments.OrderBy(argument => argument.Name, StringComparer.Ordinal).Select(argument => $"{argument.Name}={argument.Value}").Prepend(uses.Behavior));
+            if (!first.TryAdd(signature, uses.Location) && !string.Equals(first[signature].Path, uses.Location.Path, StringComparison.Ordinal))
+            {
+                context.Warning(
+                    DiagnosticCodes.DuplicateBehaviorAttachment,
+                    $"Behavior '{uses.Behavior}' is already attached to the {owner} in '{Describe(first[signature].Path)}' - both attachments run",
+                    uses.Location);
+            }
+        }
+
+        return kept;
     }
 }

@@ -654,6 +654,7 @@ A behavior is *deferred* from the backend ESM v1 profile in the same way every o
 | `PLAY0337` | Error | A `uses` site supplies an argument the behavior declares no parameter for. |
 | `PLAY0338` | Error | A `uses` site leaves a behavior parameter without an argument. |
 | `PLAY0339` | Warning | Actions follow an unconditional navigation, so they could never run. |
+| `PLAY0340` | Warning | Another file of a folder attaches the same behavior, with the same arguments, to the same `module` or `feature` with `uses`. Both attachments are kept and both run; the warning names the file that attached it first. |
 
 An inline `on` block is an anonymous behavior, so it has no name to report against. Diagnostics inside one cite the position and the trigger instead.
 

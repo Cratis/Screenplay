@@ -1745,4 +1745,9 @@ public static class DiagnosticCodes
     /// Actions follow an unconditional navigation, so they could never run.
     /// </summary>
     public const string UnreachableInteractionContinuation = "PLAY0339";
+
+    /// <summary>
+    /// Another file of a folder attaches the same behavior, with the same arguments, to the same module or feature.
+    /// </summary>
+    public const string DuplicateBehaviorAttachment = "PLAY0340";
 }

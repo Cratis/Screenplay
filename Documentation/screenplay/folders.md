@@ -307,7 +307,7 @@ module Invoicing
         invoiceId InvoiceId
 ```
 
-Nothing is written twice. The restated `module Invoicing` in a slice file carries no description, templates, forms, or contributions - those live in the module's own file. Restated features likewise carry no description or contributions, including when they are ancestors of a nested feature.
+Nothing is written twice. The restated `module Invoicing` in a slice file carries no description, templates, forms, contributions, or behavior attachments - those live in the module's own file. Restated features likewise carry no description, contributions, or behavior attachments, including when they are ancestors of a nested feature.
 
 ## How the files become one application
 
@@ -318,6 +318,8 @@ Merging follows a single rule: **the documents of a folder are one document**. F
 | `module`, `feature` | **Combined by name.** Every file naming `module Invoicing` is talking about the same module. This is what lets a slice live in its own file and still belong to its feature. |
 | `slice`, `screen template`, `dialog template`, `form` | Accumulated. A second file declaring one that already exists in the same owner is an error. |
 | `contribute` on a module or feature | Accumulated under that owner. Several contributions may target the same contribution point. |
+| `on` on a module or feature | Accumulated under that owner. Inline behaviors are additive, so every file's `on` blocks run. Expansion writes them only in the owner's own file. |
+| `uses` on a module or feature | Accumulated under that owner, in file-path order. Attaching the same behavior with the same arguments from a second file is a `PLAY0340` warning, because both attachments run; the same behavior with different arguments is two distinct attachments and is not reported. Expansion writes them only in the owner's own file. |
 | `concept`, `type`, `policy`, `persona` | Accumulated. Concepts and types share one namespace, so a `type` cannot take a `concept`'s name. A second file declaring one that already exists is an error. |
 | `domain`, `authentication` | At most one for the whole folder. A second file declaring one is an error. |
 | `import` | Merged and de-duplicated. An import declared anywhere applies to the whole application, exactly as it does within a single document. |
@@ -344,7 +346,7 @@ application.play(2,1): warning PLAY0290: Import 'Catalog.ItemView' names 'ItemVi
 
 ## Round-tripping
 
-Writing a folder and compiling it back gives an equivalent application. The invoicing sample exercises the broad round-trip: it expands to twenty-one files, compiles back with no diagnostics, and expanding the result again produces exactly the same twenty-one files, byte for byte. A separate fixture covers module forms and contributions on modules, features, and nested features, including when the owner's file sorts after its descendants.
+Writing a folder and compiling it back gives an equivalent application. The invoicing sample exercises the broad round-trip: it expands to twenty-one files, compiles back with no diagnostics, and expanding the result again produces exactly the same twenty-one files, byte for byte. A separate fixture covers module forms, behavior attachments on modules and features, and contributions on modules, features, and nested features, including when the owner's file sorts after its descendants.
 
 One thing does not survive, and it cannot: **declaration order**. A file system has paths, not order, so modules, features and slices come back sorted by name rather than in the order they were authored. Everything within a slice - its events, commands, projections, mappings, code blocks, descriptions - comes back exactly as it went in, because it never left its file.
 
