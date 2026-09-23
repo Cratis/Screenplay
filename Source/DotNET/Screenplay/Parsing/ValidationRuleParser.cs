@@ -173,7 +173,7 @@ internal static partial class ValidationRuleParser
         return (null, null);
     }
 
-    [GeneratedRegex("\\bmessage\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("\\bmessage\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\S*))$", RegexOptions.None, 1000)]
     private static partial Regex MessageRegex();
 
     [GeneratedRegex(@"^([\w.]+)\s+(.+)$", RegexOptions.None, 1000)]

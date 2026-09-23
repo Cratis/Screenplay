@@ -54,7 +54,7 @@ public sealed partial class SemanticModelBinder
             var validations = BindValidations(command, propertiesByName);
             var requirements = command.Validations.OfType<DeclarativeValidateSyntax>()
                 .SelectMany(_ => _.Requirements ?? [])
-                .Select(requirement => (requirement, condition: BindCondition(requirement.Condition, propertiesByName)))
+                .Select(requirement => (requirement, condition: BindCondition(requirement.Condition, propertiesByName), validMessage: ValidateStringKey(requirement.Message, requirement.Location)))
                 .Where(_ => _.condition is not null)
                 .Select(_ => new SemanticRequirement(_.condition!, _.requirement.Message))
                 .ToImmutableArray();

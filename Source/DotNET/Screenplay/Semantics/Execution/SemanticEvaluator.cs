@@ -43,7 +43,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
 
         if (ValidateRules(plan, command, request.Values) is { } validationRejection)
         {
-            return new SemanticRejected(world, SemanticRejectionCategory.Validation, null, validationRejection);
+            return RejectWithMessage(world, SemanticRejectionCategory.Validation, null, validationRejection);
         }
 
         var commandValues = request.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
@@ -51,7 +51,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         {
             if (!SemanticConditionEvaluation.Evaluate(requirement.Condition, commandValues))
             {
-                return new SemanticRejected(world, SemanticRejectionCategory.Validation, null, requirement.Message ?? "Command requirement was not met.");
+                return RejectWithMessage(world, SemanticRejectionCategory.Validation, null, requirement.Message ?? "Command requirement was not met.");
             }
         }
 
@@ -89,7 +89,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         // A violation is an outcome, not a failure: the command is rejected and the world is unchanged.
         if (SemanticConstraintEnforcement.FindViolation(plan, world, facts.ToImmutable()) is { } violated)
         {
-            return new SemanticRejected(world, SemanticRejectionCategory.Constraint, violated.Name, SemanticConstraintEnforcement.MessageFor(violated));
+            return RejectWithMessage(world, SemanticRejectionCategory.Constraint, violated.Name, SemanticConstraintEnforcement.MessageFor(violated));
         }
 
         if (!TryProject(plan, world.Facts, world.ReadModels, facts.ToImmutable(), out var readModels, out var projectionFailure))
@@ -118,6 +118,9 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         SemanticNumberValue or SemanticBooleanValue or SemanticCompositeValue => false,
         _ => throw SemanticValueRules.Malformed()
     };
+
+    static SemanticRejected RejectWithMessage(SemanticWorld world, SemanticRejectionCategory category, string? code, string message) =>
+        new(world, category, code, message) { MessageIsStringKey = message.StartsWith("$strings.", StringComparison.Ordinal) };
 
     static SemanticExecutionResult ExecuteQueries(
         SemanticExecutionPlan plan,

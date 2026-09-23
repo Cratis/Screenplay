@@ -639,6 +639,7 @@ Every `$eventContext.<path>` - in a projection expression or in a dynamic dictio
 | `PLAY0354` | Error | A structured specification object omits a required property of its declared composite type. |
 | `PLAY0355` | Error | The composite type declared for a structured specification value cannot be resolved. |
 | `PLAY0356` | Error | A typed structured specification object repeats a member; inline JSON duplicates are caught earlier by `PLAY0294`. |
+| `PLAY0357` | Error | An ESM message beginning with `$strings.` has no valid dotted key. Keys follow `.strings` assignments: an ASCII letter or underscore first, then word characters; subsequent segments contain one or more word characters. |
 
 ### Interaction
 

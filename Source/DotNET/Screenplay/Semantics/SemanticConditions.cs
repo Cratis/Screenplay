@@ -88,4 +88,8 @@ public sealed record SemanticConditionOperand(SemanticId Property, SemanticValue
 /// </summary>
 /// <param name="Condition">The guard.</param>
 /// <param name="Message">The rejection message.</param>
+/// <remarks>
+/// A value beginning with <c>$strings.</c> is a string-key reference, never display text. The realization
+/// resolves it against the active locale's paired <c>.strings</c> file (see internationalization.md).
+/// </remarks>
 public sealed record SemanticRequirement(SemanticCondition Condition, string? Message);

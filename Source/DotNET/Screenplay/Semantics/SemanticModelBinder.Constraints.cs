@@ -19,6 +19,7 @@ public sealed partial class SemanticModelBinder
 
         SemanticConstraint? BindConstraint(ConstraintSyntax constraint)
         {
+            ValidateStringKey(constraint.Message, constraint.Location);
             if (!_constraintNames.Add(constraint.Name))
             {
                 Error(

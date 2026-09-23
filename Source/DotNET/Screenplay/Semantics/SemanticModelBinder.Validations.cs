@@ -165,6 +165,7 @@ public sealed partial class SemanticModelBinder
         /// </remarks>
         SemanticValidationRule? BindValidationRule(ValidationRuleSyntax rule, SemanticId property, ValidationSubject subject)
         {
+            ValidateStringKey(rule.Message, rule.Location);
             var spelling = Spelling(rule.Rule);
             if (rule.Rule == ValidationRuleKind.Rule)
             {

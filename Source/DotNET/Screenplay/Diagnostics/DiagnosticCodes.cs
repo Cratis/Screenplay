@@ -1836,6 +1836,11 @@ public static class DiagnosticCodes
     public const string DuplicateSemanticValueMember = "PLAY0356";
 
     /// <summary>
+    /// A localized semantic message does not name a valid dotted string key.
+    /// </summary>
+    public const string InvalidSemanticStringKey = "PLAY0357";
+
+    /// <summary>
     /// A named match pattern has no portable definition.
     /// </summary>
     public const string UnknownMatchPattern = "PLAY0366";

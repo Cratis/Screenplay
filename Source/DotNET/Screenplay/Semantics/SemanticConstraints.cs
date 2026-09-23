@@ -98,7 +98,9 @@ public sealed record SemanticConstraintTarget(SemanticId EventContract, Immutabl
 /// <para>
 /// A violation is a result, not a failure: Chronicle rejects the whole append and reports the constraint by name
 /// (<c>Kernel/Core/EventSequences/AppendResult.cs:89-93</c>, <c>Kernel/Core/Events/Constraints/ConstraintViolation.cs:18-24</c>).
-/// Violation messages never contain the colliding value.
+/// Violation messages never contain the colliding value. A <see cref="Message"/> beginning with
+/// <c>$strings.</c> is a string-key reference, never display text. The realization resolves it against the
+/// active locale's paired <c>.strings</c> file (see internationalization.md).
 /// </para>
 /// <para>
 /// The language admits composite keys, multiple targets of the same kind, releasing events, optional casing
