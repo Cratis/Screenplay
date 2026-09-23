@@ -61,7 +61,7 @@ public record AllSyntax(
 /// <summary>
 /// Represents a <c>join</c> block enriching the read model with joined events.
 /// </summary>
-/// <param name="Property">The property being joined onto.</param>
+/// <param name="Property">A label for readers; Chronicle discards it during lowering, so it has no runtime meaning.</param>
 /// <param name="On">The key property the join matches on.</param>
 /// <param name="Events">The <see cref="JoinEventSyntax">joined events</see>.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
