@@ -15,7 +15,7 @@ public class when_binding_a_localized_message : given.a_semantic_binder
               command RegisterProject
                 name String
                 validate
-                  name not empty message 
+                  name not empty message
         """;
 
     CompilationResult<SemanticCompilation> _valid;
@@ -23,8 +23,8 @@ public class when_binding_a_localized_message : given.a_semantic_binder
 
     void Because()
     {
-        _valid = Bind(Prefix + "$strings.projects.name_required");
-        _invalid = Bind(Prefix + "$strings.projects..required");
+        _valid = Bind(Prefix + " $strings.projects.name_required");
+        _invalid = Bind(Prefix + " $strings.projects..required");
     }
 
     [Fact] void should_bind_a_dotted_key() => _valid.Success.ShouldBeTrue();
