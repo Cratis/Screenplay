@@ -1572,7 +1572,10 @@ public static class DiagnosticCodes
     /// </summary>
     public const string IncompatibleStructuredValue = "PLAY0293";
 
-    // PLAY0294 remains reserved.
+    /// <summary>
+    /// An inline object declares the same property name more than once.
+    /// </summary>
+    public const string DuplicateStructuredValueMember = "PLAY0294";
 
     // Event context paths, checked against Syntax.EventContextCatalog.
 
@@ -1811,6 +1814,26 @@ public static class DiagnosticCodes
     /// A specification without a command has an incompatible or missing outcome.
     /// </summary>
     public const string InvalidWhenlessSpecification = "PLAY0352";
+
+    /// <summary>
+    /// A specification value is null where its declared type or role disallows null.
+    /// </summary>
+    public const string InvalidSpecificationNull = "PLAY0353";
+
+    /// <summary>
+    /// A specification composite value omits a required declared property.
+    /// </summary>
+    public const string MissingStructuredValueMember = "PLAY0354";
+
+    /// <summary>
+    /// The declared composite target of a specification value could not be resolved.
+    /// </summary>
+    public const string UnresolvedStructuredValueType = "PLAY0355";
+
+    /// <summary>
+    /// A specification composite value declares the same member more than once in typed syntax.
+    /// </summary>
+    public const string DuplicateSemanticValueMember = "PLAY0356";
 
     /// <summary>
     /// A projection construct binds, but Chronicle's projection lowering drops part of it: <c>all</c> inside a
