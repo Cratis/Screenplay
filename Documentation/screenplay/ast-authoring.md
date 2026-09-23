@@ -133,6 +133,14 @@ resolver disagreement reject rather than guess. It is not a global text replace
 or a general property-schema refactor. Low-level typed operations remain available
 for explicit coordinated edits outside the automatic planner's supported cases.
 
+Opaque syntax (raw expressions such as structured specification values, code
+blocks, imports, file references, capture sources and template triggers, and form
+`compose using` callbacks) refuses a rename only when its text contains the
+current or the new name as a whole identifier. The scan includes string literals
+and object keys, so `"Channel"` inside a JSON value refuses a rename of `Channel`,
+while `ChannelCode` does not. The conflict names the document path, line and
+column, the syntax pointer, and the matched name.
+
 The default rename formatting is `PreserveTrivia`: verified byte patches retain
 comments, BOM, line endings and every byte outside the proved member spans.
 Unsupported changes require an explicit canonical formatting choice; semantic

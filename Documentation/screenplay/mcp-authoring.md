@@ -119,6 +119,13 @@ name capture, opaque impact and unsupported spans. Do not treat a refusal as
 permission to perform a global text replacement. Use explicit typed operations
 and migrations only after resolving the uncertainty.
 
+Opaque text only blocks a rename that it could affect. A structured value such as
+`lines = [{"sku":"A-1","quantity":2}]` does not stop you renaming an unrelated
+`Channel` concept; a value, code block or import whose text contains `Channel` or
+the new name as a whole identifier, including inside a string or an object key,
+does. The conflict message gives the file, line and column, for example
+`'Shop/Orders/PlaceOrder/PlaceOrder.play(22,11)'`, and the name it matched.
+
 ## Coordinate changes across files
 
 Put related node edits in one `operations` array and document creations/moves in
