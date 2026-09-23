@@ -32,6 +32,40 @@ public record LiteralExpressionSyntax(object? Value, SourceLocation Location) : 
 }
 
 /// <summary>
+/// Represents an inline JSON-shaped list value.
+/// </summary>
+/// <param name="Items">The values in authored order.</param>
+/// <param name="Location">The location of the opening bracket.</param>
+public record ListExpressionSyntax(IEnumerable<ExpressionSyntax> Items, SourceLocation Location) : ExpressionSyntax(Location);
+
+/// <summary>
+/// Represents an inline JSON-shaped object value.
+/// </summary>
+/// <param name="Members">The named values in authored order.</param>
+/// <param name="Location">The location of the opening brace.</param>
+public record ObjectExpressionSyntax(IEnumerable<ObjectMemberSyntax> Members, SourceLocation Location) : ExpressionSyntax(Location);
+
+/// <summary>
+/// Represents one named value in an inline object.
+/// </summary>
+/// <param name="Name">The quoted key's decoded name.</param>
+/// <param name="Value">The member value.</param>
+/// <param name="Location">The location of the opening key quote.</param>
+public record ObjectMemberSyntax(string Name, ExpressionSyntax Value, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the parser-owned span of the quoted key for trivia-preserving rename.
+    /// </summary>
+    public SourceLocation? RawLocation { get; init; }
+
+    /// <summary>
+    /// Gets the UTF-16 length of the quoted key, including its quotes.
+    /// </summary>
+    [SourceSpanMetadata]
+    public int? RawLength { get; init; }
+}
+
+/// <summary>
 /// Represents a dotted property path expression, such as <c>customer.name</c>.
 /// </summary>
 /// <param name="Path">The dotted path.</param>

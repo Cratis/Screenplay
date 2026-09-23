@@ -7,7 +7,7 @@ public class and_the_text_names_the_expected_name : given.a_workspace_with_a_str
 {
     WorkspaceAuthoringResult _result = null!;
 
-    void Establish() => CreateWith("""[{"sku":"A-1","quantity":2}, Channel.web]""");
+    void Establish() => CreateWith("calculate(Channel.web)");
 
     void Because() => _result = RenameChannel();
 

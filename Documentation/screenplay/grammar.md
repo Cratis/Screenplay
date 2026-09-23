@@ -491,8 +491,19 @@ MappingSource  = Ident                         (* command property   *)
                | "$strings.", Path
                | StringLiteral
                | Number
-               | "true" | "false"
+               | "true" | "false" | "null"
+               | StructuredValue
                | Expression ;
+
+StructuredValue = "[", [ JSONValue, { ",", JSONValue } ], "]"
+                | "{", [ JSONString, ":", JSONValue,
+                         { ",", JSONString, ":", JSONValue } ], "}" ;
+JSONValue       = StructuredValue | JSONString | Number | "true" | "false" | "null" ;
+JSONString      = (* double-quoted JSON string, including escaped characters *) ;
+
+(* Structured values are single-line JSON-shaped data with quoted object keys.
+   They are typed syntax in mapping sources; projection expressions keep their
+   existing expression grammar.                                        *)
 
 (* The context paths mirror the members of CommandContext / QueryContext -
    see Documentation/screenplay/context.md. Everything after

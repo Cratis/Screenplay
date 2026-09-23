@@ -1557,7 +1557,22 @@ public static class DiagnosticCodes
     /// </summary>
     public const string RedundantImport = "PLAY0290";
 
-    // PLAY0291-PLAY0294 is left free deliberately.
+    /// <summary>
+    /// An inline JSON-shaped value is malformed.
+    /// </summary>
+    public const string InvalidStructuredValue = "PLAY0291";
+
+    /// <summary>
+    /// A structured value names no property in its declared composite target.
+    /// </summary>
+    public const string UnknownStructuredValueMember = "PLAY0292";
+
+    /// <summary>
+    /// A structured value has the wrong shape for its declared target.
+    /// </summary>
+    public const string IncompatibleStructuredValue = "PLAY0293";
+
+    // PLAY0294 remains reserved.
 
     // Event context paths, checked against Syntax.EventContextCatalog.
 

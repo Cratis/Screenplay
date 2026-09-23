@@ -8,7 +8,7 @@ using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Workspaces;
 
-sealed record WorkspaceReferenceDeclaration(string Key, string Name, DeclarationScope Scope, WorkspaceReferenceDomain Domain, WorkspaceSyntaxEntry? Entry);
+sealed record WorkspaceReferenceDeclaration(string Key, string Name, DeclarationScope Scope, WorkspaceReferenceDomain Domain, WorkspaceSyntaxEntry? Entry, string? Owner = null);
 sealed record WorkspaceReferenceBinding(WorkspaceReferenceMember Reference, WorkspaceReferenceDeclaration? Target, string Outcome);
 
 sealed class WorkspaceReferenceBindings
@@ -90,11 +90,13 @@ sealed class WorkspaceReferenceBindings
                 ScreenSyntax => WorkspaceReferenceDomain.Screen,
                 PolicySyntax => WorkspaceReferenceDomain.Policy,
                 TriggerSyntax => WorkspaceReferenceDomain.Trigger,
+                PropertySyntax when entry.Parent is { } parent && index.Find(parent)?.Node is TypeSyntax => WorkspaceReferenceDomain.Property,
                 _ => null
             };
             if (domain is { } actual)
             {
-                yield return new(Key(entry), Name(entry.Node)!, Scope(entry, index), actual, entry);
+                var owner = actual == WorkspaceReferenceDomain.Property ? ((TypeSyntax)index.Find(entry.Parent!)!.Node).Name : null;
+                yield return new(Key(entry), Name(entry.Node)!, Scope(entry, index), actual, entry, owner);
             }
         }
 
@@ -130,6 +132,15 @@ sealed class WorkspaceReferenceBindings
     WorkspaceReferenceBinding Bind(WorkspaceReferenceMember reference)
     {
         var domain = reference.Domain;
+        if (domain == WorkspaceReferenceDomain.Property)
+        {
+            var properties = (_byName.GetValueOrDefault((domain, reference.Text)) ?? [])
+                .Where(declaration => declaration.Owner == reference.Owner).ToArray();
+            return properties.Length == 1
+                ? new(reference, properties[0], "resolved")
+                : new(reference, null, properties.Length == 0 ? "unresolved" : "ambiguous");
+        }
+
         if (reference.Text.Contains('.') && (domain is WorkspaceReferenceDomain.Type or WorkspaceReferenceDomain.Policy or WorkspaceReferenceDomain.Trigger ||
             (domain == WorkspaceReferenceDomain.Event && reference.Entry.Node is not SpecificationEventSyntax) ||
             reference.Entry.Node is InvokesSyntax or ReadsSyntax or ProjectionSyntax or ReducerSyntax))

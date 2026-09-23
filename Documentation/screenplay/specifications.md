@@ -40,7 +40,9 @@ specification <Name>
 
 > **ESM v2 reservation (#226):** the parser, printer, and syntax tree preserve `for <event-source-value>`, but ESM v1 semantic binding reports blocking diagnostic `PLAY0268`. It cannot execute or render silently until ESM v2.
 
-Executable specification values must be concrete literals (string, number, boolean, or `null` for an optional read-model property). `null` in command or event values is rejected (`PLAY0350`): in Chronicle, an optional fact is a separate event. Non-literal mapping expressions are not portable specification values in ESM v1.
+Property values (`<property> = <value>`) accept literals (including `null`), single-line JSON-shaped objects and lists with quoted keys, and the same mapping expressions as `produces` and `capture`. For example, `lines = [{"sku":"A-1","quantity":2}]` and `tags = []` are typed values, not opaque expressions. Keys must name properties of the target's declared composite `type`; list items are checked against the element type. Unknown or imported shapes remain undecided. A value with the wrong object/list shape is an error.
+
+Executable specification values must be concrete: literals (string, number, boolean, or `null` for an optional read-model property). `null` in command or event values is rejected (`PLAY0350`): in Chronicle, an optional fact is a separate event. Non-literal mapping expressions are not portable specification values in ESM v1.
 
 ## Rejections
 

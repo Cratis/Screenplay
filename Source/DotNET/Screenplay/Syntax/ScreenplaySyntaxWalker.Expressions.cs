@@ -25,6 +25,12 @@ public abstract partial class ScreenplaySyntaxWalker
             case LiteralExpressionSyntax literal:
                 VisitLiteralExpression(literal);
                 break;
+            case ListExpressionSyntax list:
+                VisitListExpression(list);
+                break;
+            case ObjectExpressionSyntax obj:
+                VisitObjectExpression(obj);
+                break;
             case PathExpressionSyntax path:
                 VisitPathExpression(path);
                 break;
@@ -66,6 +72,42 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The <see cref="LiteralExpressionSyntax"/> to visit.</param>
     public virtual void VisitLiteralExpression(LiteralExpressionSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a list and each of its values.
+    /// </summary>
+    /// <param name="syntax">The list to visit.</param>
+    public virtual void VisitListExpression(ListExpressionSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var item in syntax.Items)
+        {
+            VisitExpression(item);
+        }
+    }
+
+    /// <summary>
+    /// Visits an object and each of its members.
+    /// </summary>
+    /// <param name="syntax">The object to visit.</param>
+    public virtual void VisitObjectExpression(ObjectExpressionSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var member in syntax.Members)
+        {
+            VisitObjectMember(member);
+        }
+    }
+
+    /// <summary>
+    /// Visits a named object member and its value.
+    /// </summary>
+    /// <param name="syntax">The member to visit.</param>
+    public virtual void VisitObjectMember(ObjectMemberSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitExpression(syntax.Value);
+    }
 
     /// <summary>
     /// Visits a <see cref="PathExpressionSyntax"/> node.

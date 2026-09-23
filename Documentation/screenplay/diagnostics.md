@@ -596,6 +596,9 @@ These errors are reported by ordinary compilation, including compilation of a fo
 | `PLAY0286` | Error | A specification value is not a member of the enum declared by that specific command, event, read-model field or query parameter. Bare members, qualified members and quoted member names are accepted. |
 | `PLAY0287` | Error | A command or reaction producer, a capture append mapping, or a specification's `given`/`then` event step, assigns a field absent from the referenced event's declaration. Dotted paths follow the same rule as `PLAY0282`: `title.missing` is reported when `title` is a primitive, concept or enum, `detail.missing` when `Detail` is a declared `type` without that field. A collection or optional composite field is addressed element-wise. |
 | `PLAY0290` | Warning | An `import` names an event, command, read model, concept or type the application declares itself. The declaration is what every reference resolves to and what these checks see, so the import has no effect - remove it. |
+| `PLAY0291` | Error | A mapping value starts with `{` or `[` but is not a valid single-line JSON object or list (keys must be quoted). |
+| `PLAY0292` | Error | An object key does not name a property of the target's declared composite `type`. Unknown or imported types remain undecided. |
+| `PLAY0293` | Error | A statically known value has the wrong shape for its target: a collection expects a list, a declared composite expects an object, and a scalar cannot accept a list or object. |
 
 An `import` never changes what these checks see: a name the application declares resolves to that declaration whether or not it is also imported, and an imported name nothing here declares keeps an unknown shape.
 

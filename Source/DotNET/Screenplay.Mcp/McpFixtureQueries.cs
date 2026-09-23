@@ -90,6 +90,9 @@ static class McpFixtureQueries
     static object? Value(ExpressionSyntax expression) => expression switch
     {
         LiteralExpressionSyntax literal => literal.Value,
+        ListExpressionSyntax list => list.Items.Select(Value).ToArray(),
+        ObjectExpressionSyntax obj => obj.Members.GroupBy(member => member.Name, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => Value(group.Last().Value), StringComparer.Ordinal),
         PathExpressionSyntax path => path.Path,
         RawExpressionSyntax raw => raw.Text,
         ContextExpressionSyntax context => $"$context.{context.Path}",

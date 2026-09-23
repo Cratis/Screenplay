@@ -25,6 +25,7 @@ static class WorkspaceIdentifierSpans
             (ReadModelSyntax, "name") => keyword == "readmodel",
             (QuerySyntax, "name") => keyword == "query",
             (TypeRefSyntax, "name") => line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries).Length >= 2,
+            (PropertySyntax, "name") => line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries).Length >= 2,
             (CompositeKeySyntax, "type") => keyword == "key",
             (ProducesSyntax, "event") => keyword == "produces",
             (SeedEventSyntax, "event") => keyword == "event" || keyword == "append",
