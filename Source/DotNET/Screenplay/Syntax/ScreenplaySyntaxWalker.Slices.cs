@@ -165,6 +165,11 @@ public abstract partial class ScreenplaySyntaxWalker
                 VisitNode(syntax);
                 break;
         }
+
+        foreach (var rule in syntax.AdditionalRules)
+        {
+            VisitConstraint(rule);
+        }
     }
 
     /// <summary>

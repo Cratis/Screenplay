@@ -288,7 +288,7 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0132` | Error | A `constraint` line is not `constraint <Name>`. |
 | `PLAY0133` | Error | A constraint states nothing it holds the application to. |
 | `PLAY0134` | Error | A line in a constraint body is not one the language can read. |
-| `PLAY0135` | Error | A constraint states more than one rule, and a constraint states one. |
+| `PLAY0135` | Error | A constraint mixes unique event and unique property rules, combines a file rule with another rule, repeats a singular option, or repeats a target, release, or property. An event cannot both claim and release the same constraint. Several distinct unique rules of the same kind are allowed. |
 
 ### Reactions
 
@@ -700,6 +700,7 @@ These errors are reported when a `unique` [constraint](constraints.md) is bound 
 | `PLAY0390` | Error | A `unique` constraint names an event the application does not declare. |
 | `PLAY0391` | Error | A `unique <property> on <Event>` constraint names a property the event does not declare. |
 | `PLAY0392` | Error | Two constraints in the application share a name. The name is a constraint's identity in the event store - it keys the constraint's index and its violations - so it is unique across the whole application, not just its slice. |
+| `PLAY0393` | Error | `ignore casing` is declared on a `unique event` constraint; it applies only to unique property values. |
 
 ## Retired codes
 

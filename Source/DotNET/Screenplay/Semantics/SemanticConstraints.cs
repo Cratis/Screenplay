@@ -101,8 +101,9 @@ public sealed record SemanticConstraintTarget(SemanticId EventContract, Immutabl
 /// Violation messages never contain the colliding value.
 /// </para>
 /// <para>
-/// Today's language always produces one target, no releasing events, case-sensitive comparison and no message;
-/// the contract carries them so that composite keys, release, ignore casing and messages need no change of shape.
+/// The language admits composite keys, multiple targets of the same kind, releasing events, optional casing
+/// normalization for property values and a client-resolvable violation message. Constraint scope is currently
+/// fixed to the event sequence within a namespace.
 /// </para>
 /// </remarks>
 public sealed record SemanticConstraint(
