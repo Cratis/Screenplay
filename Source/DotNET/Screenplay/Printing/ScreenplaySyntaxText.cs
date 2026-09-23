@@ -282,7 +282,12 @@ internal static partial class ScreenplaySyntaxText
         _ => throw new UnsupportedSyntaxForPrinting("comparison operator", @operator.ToString())
     };
 
-    static string Logical(LogicalOperator @operator) => @operator == LogicalOperator.And ? "and" : "or";
+    static string Logical(LogicalOperator @operator) => @operator switch
+    {
+        LogicalOperator.And => "and",
+        LogicalOperator.Or => "or",
+        _ => throw new UnsupportedSyntaxForPrinting("logical operator", @operator.ToString())
+    };
 
     /// <summary>
     /// Renders two conditions combined with an operator, parenthesising an operand that would otherwise
