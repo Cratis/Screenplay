@@ -66,7 +66,8 @@ internal static partial class PlayFolderMerge
             // A behavior is declared at the top level, so it merges and is name-checked across the folder the
             // same way a layout or a theme is. Without this a 'uses' in one file cannot see a behavior declared
             // in another - and the folder is one application.
-            Behaviors = DeclaredInOneFile(applications.SelectMany(application => application.Behaviors), behavior => behavior.Name ?? string.Empty, behavior => behavior.Location, "behavior", context)
+            Behaviors = DeclaredInOneFile(applications.SelectMany(application => application.Behaviors), behavior => behavior.Name ?? string.Empty, behavior => behavior.Location, "behavior", context),
+            SourceComments = [.. applications.SelectMany(application => application.SourceComments)]
         };
     }
 

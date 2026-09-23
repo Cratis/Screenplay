@@ -20,6 +20,7 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
         .ToDictionary(entry => entry.Handle.Document, entry => ToJson(entry.Node));
     readonly List<Edit> _edits = [];
     readonly Dictionary<JsonNode, SourceLocation> _sourceLocations = [];
+    readonly Dictionary<JsonNode, ImmutableArray<SourceComment>> _sourceComments = [];
 
     internal ImmutableArray<DocumentId> Touched => [.. _edits.SelectMany(edit => new[] { edit.Target?.Handle.Document, edit.Destination?.Parent.Handle.Document }).OfType<DocumentId>().Distinct()];
 
@@ -53,6 +54,7 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
         foreach (var entry in index.Entries)
         {
             _sourceLocations[Resolve(entry.Handle)] = entry.Location;
+            _sourceComments[Resolve(entry.Handle)] = entry.Node.SourceComments;
         }
 
         foreach (var edit in _edits.Where(edit => edit.Target is not null))
