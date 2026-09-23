@@ -250,6 +250,62 @@ The stale-revision and stale-catalog-revision gates run before any operation is 
 do for whole-document operations. This is the first semantic patch; broadening it to other fields or to
 multi-line descriptions is future work, not something this operation attempts today.
 
+### Change one produced-event mapping source
+
+To change which command property supplies an existing event property, use `UpdateProducedEventMappingSource`.
+You address declarations, not text occurrences: even when a comment or another command repeats the same mapping,
+only the selected right-hand source changes. Start with a compiled workspace containing one explicit mapping such
+as `name = name`, and a compatible `displayName` property on that command:
+
+```csharp
+var slice = workspace.Compilation.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single();
+var command = slice.Commands.Single(value => value.Name == "RegisterProject");
+var producedEvent = slice.Events.Single(value => value.Name == "ProjectRegistered");
+var result = workspace.Propose(new WorkspaceTransactionRequest
+{
+    ExpectedRevision = workspace.Revision,
+    ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
+    Operations =
+    [
+        new UpdateProducedEventMappingSource
+        {
+            Command = command.Id,
+            ProducedEvent = producedEvent.Id,
+            TargetProperty = producedEvent.Properties.Single(value => value.Name == "name").Id,
+            ExpectedSourceCommandProperty = command.Properties.Single(value => value.Name == "name").Id,
+            NewSourceCommandProperty = command.Properties.Single(value => value.Name == "displayName").Id
+        }
+    ]
+});
+```
+
+`ProducedEvent` is the event declaration's **`SemanticId`**, not its persisted **`EventContractId`**. Both source
+properties must belong to the addressed command; the target must belong to the addressed event. Their resolved
+value types and collection shapes must match the target, and an optional source cannot fill a required target.
+Exactly one production of that event must exist on the command, and it must be unconditional. The mapping must
+already be explicit and use a direct property source. Literals, computed or nested expressions, inferred mappings,
+and repeated productions are not editable through this operation.
+
+Submit this operation **alone**, without document operations, other semantic patches, or identity migrations.
+Stale workspace and catalog checks still run first. Unknown identities reject with `SemanticIdNotFound`, wrong
+owners, incompatible types, unsupported grammar, ambiguous source ownership, or unproven equivalence with
+`UnsupportedSemanticField`, and a changed expected source with `SemanticFieldValueDrift`. Mixed operations or
+identity migrations reject with `InvalidOperation`; an unbindable workspace rejects with `CompilationFailed`.
+Every rejection returns neither a candidate workspace nor a write plan.
+
+A successful proposal preserves the UTF-8 BOM, comments, whitespace, line endings, Unicode, and every byte outside
+the parser-owned source range. It passes the normal compile/migrate/recompile pipeline, compares the complete
+candidate semantics against an independent one-mapping graph edit, and proves canonical print/recompile semantic
+equivalence without printing over authored source. Identities, destinations, conditions, and specification
+expectations remain unchanged. Selecting the current source is an admitted no-op with no write entries.
+
+This changes real declarative behavior, not code attachments, and Screenplay does **not** rewrite specification
+expectations to make them pass. A `then` value that the new source can no longer produce from the stated `when`
+values is a compile error (`PLAY0285`), so such a proposal rejects with `CompilationFailed` and its diagnostics.
+Run your semantic specifications on an accepted candidate for everything the static check cannot decide.
+This bounded operation does not complete general declarative patching or provide a file-system publisher; use the
+[write plan](#propose-revision-safe-workspace-changes) to review exact changes before your host publishes them.
+
 ## Write an application out as a folder
 
 The inverse lives next to it. `Expand` turns an application into the files of a folder structure without touching the file system, and `WriteTo` puts them on disk:
@@ -307,7 +363,7 @@ module Invoicing
         invoiceId InvoiceId
 ```
 
-Nothing is written twice. The restated `module Invoicing` in a slice file carries no description, templates, forms, or contributions - those live in the module's own file. Restated features likewise carry no description or contributions, including when they are ancestors of a nested feature.
+Nothing is written twice. The restated `module Invoicing` in a slice file carries no description, templates, forms, contributions, or behavior attachments - those live in the module's own file. Restated features likewise carry no description, contributions, or behavior attachments, including when they are ancestors of a nested feature.
 
 ## How the files become one application
 
@@ -318,6 +374,8 @@ Merging follows a single rule: **the documents of a folder are one document**. F
 | `module`, `feature` | **Combined by name.** Every file naming `module Invoicing` is talking about the same module. This is what lets a slice live in its own file and still belong to its feature. |
 | `slice`, `screen template`, `dialog template`, `form` | Accumulated. A second file declaring one that already exists in the same owner is an error. |
 | `contribute` on a module or feature | Accumulated under that owner. Several contributions may target the same contribution point. |
+| `on` on a module or feature | Accumulated under that owner, in file-path order. Inline behaviors are additive, so distinct `on` blocks from different files all run. A block identical to one another file already attaches is ignored with a `PLAY0340` warning, so it runs once. Expansion writes them only in the owner's own file. |
+| `uses` on a module or feature | Accumulated under that owner, in file-path order. Attaching the same behavior with the same arguments from a second file is ignored with a `PLAY0340` warning, so it runs once; the same behavior with different arguments is two distinct attachments, and both are kept. Expansion writes them only in the owner's own file. |
 | `concept`, `type`, `policy`, `persona` | Accumulated. Concepts and types share one namespace, so a `type` cannot take a `concept`'s name. A second file declaring one that already exists is an error. |
 | `domain`, `authentication` | At most one for the whole folder. A second file declaring one is an error. |
 | `import` | Merged and de-duplicated. An import declared anywhere applies to the whole application, exactly as it does within a single document. |
@@ -336,13 +394,17 @@ Duplicates *within* one file are left to the single document compiler, which alr
 
 ### Why `import` still means what it meant
 
-`import` names something that comes from outside the application - another bounded context, another team's contract. It does not resolve against another file of the same folder, and it does not need to: the files of a folder are one document, so a name declared in one of them is simply in scope in all of them. Adding an import for a name your own application declares would say the opposite of what is true.
+`import` names something that comes from outside the application - another bounded context, another team's contract. It does not resolve against another file of the same folder, and it does not need to: the files of a folder are one document, so a name declared in one of them is simply in scope in all of them. Adding an import for a name your own application declares would say the opposite of what is true, so the compiler reports it as a `PLAY0290` warning. Such an import has no effect: every reference and every consistency check resolves the name to your own declaration, exactly as it would without the import.
+
+```text
+application.play(2,1): warning PLAY0290: Import 'Catalog.ItemView' names 'ItemView', which this application declares - the import has no effect
+```
 
 ## Round-tripping
 
-Writing a folder and compiling it back gives an equivalent application. The invoicing sample exercises the broad round-trip: it expands to twenty-one files, compiles back with no diagnostics, and expanding the result again produces exactly the same twenty-one files, byte for byte. A separate fixture covers module forms and contributions on modules, features, and nested features, including when the owner's file sorts after its descendants.
+Writing a folder and compiling it back gives an equivalent application. The invoicing sample exercises the broad round-trip: it expands to twenty-one files, compiles back with no diagnostics, and expanding the result again produces exactly the same twenty-one files, byte for byte. A separate fixture covers module forms, behavior attachments on modules and features, and contributions on modules, features, and nested features, including when the owner's file sorts after its descendants.
 
-One thing does not survive, and it cannot: **declaration order**. A file system has paths, not order, so modules, features and slices come back sorted by name rather than in the order they were authored. Everything within a slice - its events, commands, projections, mappings, code blocks, descriptions - comes back exactly as it went in, because it never left its file.
+One thing does not survive, and it cannot: **declaration order**. A file system has paths, not order, so modules, features and slices come back sorted by name rather than in the order they were authored. Everything within a slice - including the order of its events, commands, constraints and specifications - comes back in authored order, because it never left its file. Members of a module or feature that span different files have no shared source order; canonical printing uses kind order for those members.
 
 ## When a folder is the wrong fit
 

@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { eventContextPaths } from './event-context';
+
 export interface CompletionEntry {
     label: string;
     insertText: string;
@@ -196,5 +198,9 @@ export const contextVariableItems: CompletionEntry[] = [
     { label: '$context.identity.roles', insertText: '$context.identity.roles', documentation: 'The roles the caller holds.' },
     { label: '$context.identity.claims.', insertText: '$context.identity.claims.${1:name}', documentation: 'The value of a claim the caller carries.' },
     { label: '$env.', insertText: '$env.${1:VAR_NAME}', documentation: 'An environment variable.' },
-    { label: '$eventContext.occurred', insertText: '$eventContext.occurred', documentation: 'Timestamp of the event being projected (PDL).' },
+    // Every $eventContext path the event-context catalog lists, for projections - the underlying value of a concept
+    // is left out, it reads the same as the member it belongs to.
+    ...eventContextPaths
+        .filter((path) => path.name !== 'value')
+        .map((path) => ({ label: `$eventContext.${path.path}`, insertText: `$eventContext.${path.path}`, documentation: `${path.description} (PDL)` })),
 ];

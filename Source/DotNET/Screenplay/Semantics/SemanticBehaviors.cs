@@ -8,6 +8,11 @@ namespace Cratis.Screenplay.Semantics;
 /// <summary>
 /// Defines declarative validation behavior in ESM v1.
 /// </summary>
+/// <remarks>
+/// Every rule except <see cref="NotEmpty"/> is satisfied by an absent value of an optional property -
+/// presence is stated by <see cref="NotEmpty"/> alone. Text length counts UTF-16 code units of the
+/// normalized text, the length .NET and JavaScript targets both report.
+/// </remarks>
 public enum SemanticValidationRuleKind
 {
     /// <summary>
@@ -21,24 +26,61 @@ public enum SemanticValidationRuleKind
     NotEmpty = 0,
 
     /// <summary>
-    /// The value must be no greater than the operand.
+    /// The value must be no greater than the operand. The meaning follows the property type: a text value's
+    /// length must be at most the whole-number operand, and a number must be at most the operand.
     /// </summary>
     Maximum = 1,
 
     /// <summary>
-    /// The value must be no less than the operand.
+    /// The value must be no less than the operand. The meaning follows the property type: a text value's
+    /// length must be at least the whole-number operand, and a number must be at least the operand.
     /// </summary>
     Minimum = 2,
 
     /// <summary>
-    /// The value must equal the operand.
+    /// The value must equal the operand. Admitted for text, enumeration members, numbers and booleans.
     /// </summary>
     Equal = 3,
 
     /// <summary>
-    /// The value must not equal the operand.
+    /// The value must not equal the operand. Admitted for text, enumeration members, numbers and booleans.
     /// </summary>
-    NotEqual = 4
+    NotEqual = 4,
+
+    /// <summary>
+    /// The number must be greater than the operand.
+    /// </summary>
+    GreaterThan = 5,
+
+    /// <summary>
+    /// The number must be greater than or equal to the operand.
+    /// </summary>
+    GreaterThanOrEqual = 6,
+
+    /// <summary>
+    /// The number must be less than the operand.
+    /// </summary>
+    LessThan = 7,
+
+    /// <summary>
+    /// The number must be less than or equal to the operand.
+    /// </summary>
+    LessThanOrEqual = 8,
+
+    /// <summary>
+    /// The text length must equal the operand, which is a non-negative whole number rather than text.
+    /// </summary>
+    Length = 9,
+
+    /// <summary>
+    /// Every number in the collection must be greater than the operand. An empty collection satisfies it.
+    /// </summary>
+    AllGreaterThan = 10,
+
+    /// <summary>
+    /// Every number in the collection must be greater than or equal to the operand. An empty collection satisfies it.
+    /// </summary>
+    AllGreaterThanOrEqual = 11
 }
 
 /// <summary>
@@ -117,6 +159,10 @@ public enum SemanticQueryDelivery
 /// <summary>
 /// Represents one declarative validation rule.
 /// </summary>
+/// <remarks>
+/// Concept value rules are enforced on command input wherever the concept occurs, including collection elements
+/// and values nested inside composites. They do not validate event payloads, read-model state or query keys.
+/// </remarks>
 /// <param name="Property">The property identity, or a default identity for a concept value rule.</param>
 /// <param name="Kind">The rule kind.</param>
 /// <param name="Operand">The optional concrete operand.</param>
@@ -239,12 +285,30 @@ public sealed record SemanticProjectionTransition(
 /// <param name="Id">The stable semantic identity.</param>
 /// <param name="Name">The display name.</param>
 /// <param name="ReadModel">The target read model identity.</param>
-/// <param name="Transitions">The transitions in behavior order.</param>
+/// <param name="Transitions">The flat transitions in behavior order; empty when <see cref="Scope"/> carries the behavior.</param>
+/// <remarks>
+/// A projection has two shapes. The flat shape - <see cref="Transitions"/> with no <see cref="Scope"/> - is the original ESM v1
+/// vertical: one transition per event, keyed by one event property, setting read-model properties directly. The scoped shape -
+/// <see cref="Scope"/> with empty <see cref="Transitions"/> - carries everything Chronicle's projection definition can express:
+/// children, nested objects, joins, removals, <c>every</c>/<c>all</c>, event-source and composite keys and every mapping kind.
+/// A flat transition <c>(E, (One, event property k), [p := s])</c> is the scoped transition
+/// <c>From(E, Value(EventProperty([k])), null, [Set([p], s)])</c>. The binder writes the flat shape whenever it can express the
+/// projection, so existing consumers keep reading it unchanged, and the scoped shape otherwise.
+/// </remarks>
 public sealed record SemanticProjection(
     SemanticId Id,
     string Name,
     SemanticId ReadModel,
-    ImmutableArray<SemanticProjectionTransition> Transitions);
+    ImmutableArray<SemanticProjectionTransition> Transitions)
+{
+    /// <summary>
+    /// Gets the recursive projection behavior, or <see langword="null"/> for the flat shape.
+    /// </summary>
+    /// <remarks>
+    /// This is an init-only property to preserve the public positional constructor and deconstruction shape.
+    /// </remarks>
+    public SemanticProjectionScope? Scope { get; init; }
+}
 
 /// <summary>
 /// Represents a deterministic keyed query.

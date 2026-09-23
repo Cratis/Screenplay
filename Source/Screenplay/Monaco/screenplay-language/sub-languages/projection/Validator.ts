@@ -3,6 +3,8 @@
 
 import type { editor } from 'monaco-editor';
 import type { JsonSchema, ReadModelInfo, DraftReadModelInfo } from './index';
+import { fenceMap } from '../../document-context';
+import { validateEventContextPaths } from '../../validation';
 
 export class Validator {
     private readModels: ReadModelInfo[] = [];
@@ -347,6 +349,19 @@ export class Validator {
                     markers.push(this.createWarning(lineNumber, col, col + keyName.length, `Composite key type '${keyName}' not found in read model schema`));
                 }
             }
+        }
+
+        // Share the host's event-context path checks and catalog resolution, including dynamic dictionary keys.
+        for (const issue of validateEventContextPaths(lines, fenceMap(lines))) {
+            markers.push({
+                severity: issue.severity === 'error' ? 8 : 4,
+                startLineNumber: issue.line + 1,
+                endLineNumber: issue.line + 1,
+                startColumn: issue.startColumn,
+                endColumn: issue.endColumn,
+                message: issue.message,
+                code: issue.code,
+            });
         }
 
         return markers;

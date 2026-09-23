@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace Cratis.Screenplay.Semantics.Serialization;
 
-static class SemanticModelRead
+internal static partial class SemanticModelRead
 {
     internal delegate T ValueReader<T>(ref Utf8JsonReader reader);
 
@@ -127,6 +127,7 @@ static class SemanticModelRead
         ImmutableArray<SemanticProjection> projections = default;
         ImmutableArray<SemanticKeyedQuery> queries = default;
         ImmutableArray<SemanticSpecification> specifications = default;
+        ImmutableArray<SemanticConstraint> constraints = [];
         while (NextProperty(ref reader, seen, "slice") is { } property)
         {
             switch (property)
@@ -140,6 +141,7 @@ static class SemanticModelRead
                 case "projections": projections = Array(ref reader, Projection, property); break;
                 case "queries": queries = Array(ref reader, Query, property); break;
                 case "specifications": specifications = Array(ref reader, Specification, property); break;
+                case "constraints": constraints = Array(ref reader, Constraint, property); break;
                 default: throw Unknown(property, "slice");
             }
         }
@@ -148,7 +150,7 @@ static class SemanticModelRead
             id.IsSet && name is not null && kind is not null && !events.IsDefault && !commands.IsDefault &&
             !readModels.IsDefault && !projections.IsDefault && !queries.IsDefault && !specifications.IsDefault,
             "slice");
-        return new(id, name!, kind!.Value, events, commands, readModels, projections, queries, specifications);
+        return new(id, name!, kind!.Value, events, commands, readModels, projections, queries, specifications) { Constraints = constraints };
     }
 
     internal static SemanticProperty Property(ref Utf8JsonReader reader)
@@ -341,6 +343,7 @@ static class SemanticModelRead
         string? name = null;
         SemanticId readModel = default;
         ImmutableArray<SemanticProjectionTransition> transitions = default;
+        SemanticProjectionScope? scope = null;
         while (NextProperty(ref reader, seen, "projection") is { } property)
         {
             switch (property)
@@ -349,12 +352,13 @@ static class SemanticModelRead
                 case "name": name = String(ref reader, property); break;
                 case "readModel": readModel = SemanticId.Parse(String(ref reader, property)); break;
                 case "transitions": transitions = Array(ref reader, Transition, property); break;
+                case "scope": RequiredToken(ref reader, JsonTokenType.StartObject, property); scope = ProjectionScope(ref reader); break;
                 default: throw Unknown(property, "projection");
             }
         }
 
         Required(id.IsSet && name is not null && readModel.IsSet && !transitions.IsDefault, "projection");
-        return new(id, name!, readModel, transitions);
+        return new(id, name!, readModel, transitions) { Scope = scope };
     }
 
     internal static SemanticProjectionTransition Transition(ref Utf8JsonReader reader)
@@ -984,6 +988,13 @@ static class SemanticModelRead
         "minimum" => SemanticValidationRuleKind.Minimum,
         "equal" => SemanticValidationRuleKind.Equal,
         "notEqual" => SemanticValidationRuleKind.NotEqual,
+        "greaterThan" => SemanticValidationRuleKind.GreaterThan,
+        "greaterThanOrEqual" => SemanticValidationRuleKind.GreaterThanOrEqual,
+        "lessThan" => SemanticValidationRuleKind.LessThan,
+        "lessThanOrEqual" => SemanticValidationRuleKind.LessThanOrEqual,
+        "length" => SemanticValidationRuleKind.Length,
+        "allGreaterThan" => SemanticValidationRuleKind.AllGreaterThan,
+        "allGreaterThanOrEqual" => SemanticValidationRuleKind.AllGreaterThanOrEqual,
         _ => throw DiscriminatorError(value, "validation kind")
     };
 

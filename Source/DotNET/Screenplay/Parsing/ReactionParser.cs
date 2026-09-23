@@ -208,7 +208,7 @@ internal static partial class ReactionParser
                 continue;
             }
 
-            mappings.Add(new(LineText.Unescape(mapping.Groups[1].Value), ExpressionParser.ParseMappingSource(context, mapping.Groups[2].Value, child.Location), child.Location));
+            mappings.Add(ExpressionParser.ParseMapping(context, LineText.Unescape(mapping.Groups[1].Value), mapping.Groups[2], child));
         }
 
         return new(match.Groups[1].Value, mappings, line.Location);

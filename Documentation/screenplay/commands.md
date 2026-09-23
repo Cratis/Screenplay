@@ -131,6 +131,8 @@ Declarative validation covers the common cases without code:
 | `all >= <value>` (on collection) | `lines.unitPrice all >= 0` |
 | `rule <Name>` | `orgNumber rule BeAValidOrganizationNumber` |
 
+`max` and `min` take their meaning from the property's type: on text they bound its length (`reason max 500` — at most 500 characters), and on a number they bound its value (`quantity min 1`). There is one rule for each, not a separate length and value form.
+
 Every rule carries a `message` shown when it fails:
 
 ```screenplay
@@ -251,6 +253,52 @@ Inside a `rule` body and inside a `validate csharp` block, `context` is the `Rul
 | `context.Occurred` | When the command was received. |
 
 A rule can see **who** is calling but not **what they are allowed to do** — there are no roles and no claims in a `RuleContext`. A rule that inspects those is an authorization decision wearing a validation hat, and belongs in a [policy](policies.md). See [Contexts](context.md) for all four shapes.
+
+### What the executable model admits
+
+Every rule above parses, prints and round-trips. The executable semantic model (ESM v1) — what the [reference execution](specifications.md#reference-execution) runs and what Stage renders — admits the rules that have one portable meaning, and reports blocking diagnostic `PLAY0268` for the rest, with a message that says why.
+
+| Rule | Admitted on | Operand |
+| --- | --- | --- |
+| `not empty` | text, or a collection | none |
+| `max`, `min` | text (bounds its length) or a whole or decimal number (bounds its value) | a non-negative whole number on text; a number of the property's type otherwise |
+| `>`, `>=`, `<`, `<=` | a whole or decimal number | a number of the property's type |
+| `==`, `!=` | text, an enum member, a whole or decimal number, or a boolean | a literal of the property's type, or a bare member name of an enum concept |
+| `length ==` | text that is not an enum | a non-negative whole number |
+| `all >`, `all >=` | a collection of whole or decimal numbers | a number of the element type |
+
+```screenplay
+command RegisterInvoice
+  invoiceId InvoiceId identifier
+  currency String
+  amount Decimal
+  lineAmounts Decimal[]
+  status InvoiceStatus
+
+  validate
+    currency length == 3        message "A currency code has three letters"
+    amount > 0                  message "An invoice for nothing is not an invoice"
+    lineAmounts all >= 0        message "No line can be negative"
+    status != cancelled         message "A cancelled invoice cannot be registered"
+```
+
+The meaning is fixed so every target agrees:
+
+- An absent value of an optional property satisfies every rule except `not empty` — presence is what `not empty` states. An empty collection satisfies `all >` and `all >=`.
+- Text length counts UTF-16 code units, the length .NET and JavaScript both report.
+- An operand is a literal. A property reference is not admitted, and an operand that does not fit the property's type — `quantity min 1.5` on an `Int`, `status == "pending"` on an enum without that member — is a binding error (`PLAY0273`) on the rule.
+- A failed rule rejects the command with its `message`; a rule without one gets a generated description.
+
+Still rejected, and why:
+
+| Rule | Why |
+| --- | --- |
+| any comparison on `Date` or `DateTime`, and `today` | ESM v1 has no runtime date value — a date is text in a fixed format — so it has nothing to compare against. |
+| `matches` | It awaits a portable pattern definition: whether `email` is a named pattern or a regular expression, and in which dialect, is undecided. |
+| `require` | A requirement is decision-consistency semantics, which waits on a consistent snapshot of what the command reads. |
+| `rule <Name>` with a `file` or inline body, and `validate csharp` | Code validation requires a constrained implementation attachment. |
+| a bare `rule <Name>` | Its logic lives outside the document, so it has no portable meaning. |
+| a rule on a nested path such as `lines.quantity` | ESM v1 validates command properties; put the rule on the nested value's [concept](concepts.md#validation) instead. |
 
 ## Authorization
 

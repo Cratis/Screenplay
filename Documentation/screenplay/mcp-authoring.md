@@ -119,6 +119,13 @@ name capture, opaque impact and unsupported spans. Do not treat a refusal as
 permission to perform a global text replacement. Use explicit typed operations
 and migrations only after resolving the uncertainty.
 
+Opaque text only blocks a rename that it could affect. A structured value such as
+`lines = [{"sku":"A-1","quantity":2}]` does not stop you renaming an unrelated
+`Channel` concept; a value, code block or import whose text contains `Channel` or
+the new name as a whole identifier, including inside a string or an object key,
+does. The conflict message gives the file, line and column, for example
+`'Shop/Orders/PlaceOrder/PlaceOrder.play(22,11)'`, and the name it matched.
+
 ## Coordinate changes across files
 
 Put related node edits in one `operations` array and document creations/moves in
@@ -146,10 +153,24 @@ parent/child operations. See [the authoring contract](ast-authoring.md).
 ## Review and apply
 
 An accepted proposal returns a `proposalId`, before/after revisions, changed-file
-count, normalization disclosure and executable readiness. Acceptance is not a
-filesystem effect.
+count, normalization disclosure, the number of dropped comments and executable
+readiness. Acceptance is not a filesystem effect.
 
-1. Call `read-proposal` with its ID and `view: "changes"`.
+To change a specification value or a `produces` mapping without touching anything
+else, `replace` its `PropertyMappingSyntax` with `formatting: "PreserveTrivia"`.
+Changing `channel = "web"` to `"store"` rewrites only `"web"`; every comment,
+blank line and declaration stays where it was. `CanonicalizeTouchedDocuments`
+reprints the whole document instead: comments are dropped and blank lines are
+normalized. Existing members from the same parsed document retain their authored
+order, including when an edited member is replaced through typed JSON. Newly authored
+members without comparable source positions follow the canonical insertion rule;
+see [Printing and generating](printing.md#what-printing-does-not-keep). The
+`dropped-comments` view lists exactly which comments are lost.
+
+1. Call `read-proposal` with its ID and `view: "changes"`. Check the proposal's
+   `droppedCommentCount`; when it is not zero, call `read-proposal` with
+   `view: "dropped-comments"` to see each comment a changed document loses, with
+   its `path`, `line`, `column` and `text`.
 2. For each changed document, retrieve `before` and `after` byte pages by
    `documentId`. Base64 pages reconstruct exact source bytes, including BOM and
    Unicode. Inspect authoring and executable diagnostics separately.

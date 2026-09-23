@@ -149,9 +149,10 @@ internal sealed partial class McpWorkspaces(McpRoot root)
             changeCount = proposal.WritePlan.Entries.Length,
             stateChange = statePlan.Describe(),
             authoringDiagnosticCount = proposal is McpAuthoringProposal authored ? authored.Result.AuthoringDiagnostics.Length : 0,
+            droppedCommentCount = WorkspaceDroppedComments.In(proposal.WritePlan).Length,
             canonicalizedSource = proposal is McpAuthoringProposal formatted && formatted.Result.AuthoringDiagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.AuthoringSourceNormalization),
             changes = includeContent ? proposal.WritePlan.Entries.Select(DescribeChange) : null,
-            review = "Use read-proposal to inspect the complete plan and exact before/after bytes before apply."
+            review = "Use read-proposal to inspect the complete plan, any dropped comments, and exact before/after bytes before apply."
         };
         var response = McpJson.ToolResult(result);
         _proposals.Add(id, proposal);

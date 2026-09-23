@@ -4,7 +4,6 @@
 using System.Collections.Immutable;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
-using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
 
 namespace Cratis.Screenplay.Workspaces;
@@ -48,13 +47,15 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         }
     }
 
-    static void RejectOpaque(WorkspaceSyntaxIndex index, WorkspaceSyntaxEntry target, WorkspaceRenameRequest request)
+    static void RejectOpaque(ImmutableArray<WorkspaceDocument> documents, WorkspaceSyntaxIndex index, WorkspaceSyntaxEntry target, WorkspaceRenameRequest request)
     {
         foreach (var entry in index.Entries)
         {
-            if (entry.Node is ImportSyntax or CodeBlockSyntax or FileReferenceSyntax or RawExpressionSyntax or CaptureSourceSyntax or CaptureWhenSyntax { Expression: not null } or FormFieldSyntax { ComposeUsing: not null } || PossibleReferencePaths(entry.Node).Any(path => path.Split('.').Any(segment => segment == request.ExpectedName || segment == request.NewName)))
+            var named = WorkspaceOpaqueText.Named(entry.Node, request.ExpectedName, request.NewName) ??
+                PossibleReferencePaths(entry.Node).SelectMany(path => path.Split('.')).FirstOrDefault(segment => segment == request.ExpectedName || segment == request.NewName);
+            if (named is not null)
             {
-                throw new InvalidWorkspaceAuthoring($"Cannot prove reference safety through {entry.Kind} at '{entry.Handle.Document}:{entry.Handle.Path}'. Use explicit coordinated typed edits; canonical formatting does not make opaque references safe.");
+                throw new InvalidWorkspaceAuthoring($"Cannot prove reference safety through {entry.Kind} at '{Position(documents, entry)}' ({entry.Handle.Path}), which names '{named}'. Use explicit coordinated typed edits; canonical formatting does not make opaque references safe.");
             }
 
             if (target.Node is ReadModelSyntax && entry.Node is ProjectionVariantSyntax variant && variant.Name == request.ExpectedName)
@@ -68,6 +69,9 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             }
         }
     }
+
+    static string Position(ImmutableArray<WorkspaceDocument> documents, WorkspaceSyntaxEntry entry) =>
+        $"{documents.Single(document => document.Id == entry.Handle.Document).Path.Value}({entry.Location.Line},{entry.Location.Column})";
 
     static IEnumerable<string> PossibleReferencePaths(SyntaxNode node) => node switch
     {
@@ -123,7 +127,7 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         }
 
         RejectHierarchyCollision(index, target, request.NewName);
-        RejectOpaque(index, target, request);
+        RejectOpaque(workspace.Documents, index, target, request);
         var bindings = new WorkspaceReferenceBindings(index);
         bindings.RequireNoCollisions();
         var roots = index.Entries.Where(entry => entry.Parent is null).ToDictionary(entry => entry.Handle.Document, entry => WorkspaceSyntaxMutation.Json(entry.Node));

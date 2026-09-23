@@ -121,6 +121,41 @@ public sealed record UpdateSliceDescription : WorkspaceOperation
 }
 
 /// <summary>
+/// Changes one existing explicit unconditional produced-event mapping from one direct command property to another.
+/// </summary>
+/// <remarks>
+/// All addresses are declaration semantic identities, including the event (not its persisted event-contract identity).
+/// This operation must be the transaction's only operation, with no identity migrations.
+/// </remarks>
+public sealed record UpdateProducedEventMappingSource : WorkspaceOperation
+{
+    /// <summary>
+    /// Gets the owning command's semantic identity.
+    /// </summary>
+    public required SemanticId Command { get; init; }
+
+    /// <summary>
+    /// Gets the produced event declaration's semantic identity.
+    /// </summary>
+    public required SemanticId ProducedEvent { get; init; }
+
+    /// <summary>
+    /// Gets the target property belonging to the produced event.
+    /// </summary>
+    public required SemanticId TargetProperty { get; init; }
+
+    /// <summary>
+    /// Gets the expected current source property belonging to the command.
+    /// </summary>
+    public required SemanticId ExpectedSourceCommandProperty { get; init; }
+
+    /// <summary>
+    /// Gets the replacement source property belonging to the same command.
+    /// </summary>
+    public required SemanticId NewSourceCommandProperty { get; init; }
+}
+
+/// <summary>
 /// Represents one revision-bound workspace transaction request.
 /// </summary>
 public sealed record WorkspaceTransactionRequest

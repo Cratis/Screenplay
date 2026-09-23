@@ -115,4 +115,10 @@ public sealed record SemanticSlice(
     ImmutableArray<SemanticReadModel> ReadModels,
     ImmutableArray<SemanticProjection> Projections,
     ImmutableArray<SemanticKeyedQuery> Queries,
-    ImmutableArray<SemanticSpecification> Specifications);
+    ImmutableArray<SemanticSpecification> Specifications)
+{
+    /// <summary>
+    /// Gets the append-time constraints the slice declares.
+    /// </summary>
+    public ImmutableArray<SemanticConstraint> Constraints { get; init; } = [];
+}

@@ -7,7 +7,7 @@ using System.Text.Json;
 
 namespace Cratis.Screenplay.Semantics.Serialization;
 
-static class SemanticModelCanonicalJson
+internal static partial class SemanticModelCanonicalJson
 {
     internal const string Schema = "cratis.screenplay.esm";
     internal const uint SchemaVersion = 1;
@@ -148,6 +148,7 @@ static class SemanticModelCanonicalJson
         WriteArray(writer, "projections", slice.Projections.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProjection);
         WriteArray(writer, "queries", slice.Queries.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteQuery);
         WriteArray(writer, "specifications", slice.Specifications.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteSpecification);
+        WriteConstraints(writer, slice.Constraints);
         writer.WriteEndObject();
     }
 
@@ -249,6 +250,7 @@ static class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", projection.Name);
         writer.WriteString("readModel", projection.ReadModel.ToString());
         WriteArray(writer, "transitions", projection.Transitions, WriteTransition);
+        WriteProjectionScope(writer, projection.Scope);
         writer.WriteEndObject();
     }
 
@@ -532,6 +534,13 @@ static class SemanticModelCanonicalJson
         SemanticValidationRuleKind.Minimum => "minimum",
         SemanticValidationRuleKind.Equal => "equal",
         SemanticValidationRuleKind.NotEqual => "notEqual",
+        SemanticValidationRuleKind.GreaterThan => "greaterThan",
+        SemanticValidationRuleKind.GreaterThanOrEqual => "greaterThanOrEqual",
+        SemanticValidationRuleKind.LessThan => "lessThan",
+        SemanticValidationRuleKind.LessThanOrEqual => "lessThanOrEqual",
+        SemanticValidationRuleKind.Length => "length",
+        SemanticValidationRuleKind.AllGreaterThan => "allGreaterThan",
+        SemanticValidationRuleKind.AllGreaterThanOrEqual => "allGreaterThanOrEqual",
         _ => throw Unknown(nameof(SemanticValidationRuleKind), value)
     };
 

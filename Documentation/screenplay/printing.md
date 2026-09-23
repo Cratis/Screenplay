@@ -44,13 +44,36 @@ var printed = printer.Print(tree);
 var reprinted = printer.Print(compiler.Compile(printed).Value!);
 ```
 
-Because the two directions agree, you can read a `.play` file, adjust the syntax tree - rename a slice, add an event, change a mapping - and print it back out without disturbing the rest of the document.
+Because the two directions agree, you can read a `.play` file, adjust the syntax tree - rename a slice, add an event, change a mapping - and print it back out with the rest of the document meaning exactly what it did. Comments and layout are a different matter - see [what printing does not keep](#what-printing-does-not-keep).
 
 Two details make the guarantee hold for values you did not type yourself:
 
 - **Strings are escaped.** A description, message, label or tag holding a `"` or a `\` prints with the backslash escapes described in [the grammar](grammar.md#string-escapes), and compiling that text gives the original value back. You never have to strip quotes out of a value before handing it to the printer.
 - **Numbers are culture-invariant.** Every numeric literal - `decimal`, `float`, `int`, `long` or `double` - prints with a `.` decimal separator regardless of `CurrentCulture`, so output produced on a machine set to `nb-NO` compiles anywhere.
 - **Grouping is written out.** Every condition - a [policy](policies.md) `require`, a `produces when` - binds `and` tighter than `or`, so the printer adds the parentheses a condition needs to compile back to the tree it came from, and adds them again wherever `or` and `and` mix so the text does not rely on the reader knowing which binds tighter. You build the tree you mean and the text follows - there is no flag to remember to set.
+
+## What printing does not keep
+
+The printer is faithful to the syntax tree, and the tree does not hold everything
+a file does:
+
+- **Comments are dropped.** The parser does not attach comments to syntax nodes,
+  so a printed document has none.
+- **Order across files cannot be recovered.** Parsed members of a slice, feature or
+  module keep their authored order when they share a source file. A folder merge may
+  combine members from different files; their line numbers cannot be compared, so
+  the printer uses canonical kind order for that owner. Syntax created without source
+  positions (including typed JSON) also uses canonical kind order. A new member added
+  to a parsed owner prints after the last member of its kind, or before the first
+  member of a later canonical kind when none exists. Workspace AST replacements
+  inherit their original position, even though typed JSON omits source positions.
+- **Blank lines are normalized.** The printer separates members with its own blank lines.
+
+Round-tripping preserves meaning, not layout. To change a document without losing
+its comments, edit it through the [authoring workspace](ast-authoring.md) with
+`PreserveTrivia`, which patches only the changed text. Folder expansion writes
+files with this printer too, so it drops comments; each slice file retains its
+within-slice authored order.
 
 ## Generating from a model
 
@@ -81,7 +104,9 @@ var application = new ApplicationSyntax([], [], [], [module], SourceLocation.Sta
 var source = new ScreenplayPrinter().Print(application);
 ```
 
-Every node carries a `SourceLocation`. The printer ignores it, so `SourceLocation.Start` is a fine placeholder when you are constructing nodes rather than parsing them.
+Every node carries a `SourceLocation`. The printer uses comparable source positions
+for member order; `SourceLocation.Start` is the placeholder for nodes constructed
+without source text, which print in canonical kind order.
 
 ## When one document is too much
 

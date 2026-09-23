@@ -62,7 +62,7 @@ These live in `Cratis.Screenplay.Contexts`. A runtime such as Stage supplies the
 | `TenantId` | The tenant identifier. `TenantId.Default` for a single-tenant application. |
 | `Identity` | `Id`, `Name`, `UserName`, `IsAuthenticated`, `Roles`, `Claims` — who the caller is and what they can prove. |
 | `Claim` | `Name` and `Value`. A caller may carry the same claim name more than once, so claims are a sequence rather than a dictionary. |
-| `CausedBy` | `Subject`, `Name`, `UserName` — the same three values a projection reads through `$causedBy`. |
+| `CausedBy` | `Subject`, `Name`, `UserName` — the same three values a projection reads through `$eventContext.causedBy`. |
 | `Causation` | `Type` (`Command`, `Reactor`, `Schedule`, …), `Occurred`, and free-form `Properties`. |
 
 `Identity` and `CausedBy` describe the same caller from two sides. `Identity` is the **decision** view — what a policy is allowed to inspect. `CausedBy` is the **audit** view — the three values that travel with an appended event. `Identity.Id` and `CausedBy.Subject` are the same value.
@@ -120,7 +120,7 @@ produces InvoiceRegistered
 
 A path outside this set is a **warning** — it can never resolve against the context the language defines, though a runtime is free to expose more than the language names. Everything after `$context.identity.claims.` is a claim name, so it is never checked; every other segment is.
 
-`$context.` reaches the command and query contexts only. A rule and a policy have no declarative half — a `rule` names a predicate and a `policy` states conditions, and those *are* the declarative form.
+`$context.` reaches the command and query contexts only. It is a separate namespace from [`$eventContext.`](projections/event-context.md), which reads the metadata of the event a projection is processing: neither falls back to the other, and each is checked against its own catalog. A rule and a policy have no declarative half — a `rule` names a predicate and a `policy` states conditions, and those *are* the declarative form.
 
 ## Filling a query parameter from the context
 

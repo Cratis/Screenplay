@@ -324,7 +324,7 @@ conditions are reported without a code until the compiler checks them too.
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0150` | Error | A `literal` expression carries no value. |
-| `PLAY0151` | Error | A $causedBy expression names a property the cause does not carry. |
+| `PLAY0151` | Error | A `$causedBy` expression names a property the cause does not carry. The short form admits what the [event context catalog](projections/event-context.md#available-properties) lists below `causedBy`: `subject`, `name`, `userName` and `onBehalfOf`, which is itself an identity with the same members. |
 | `PLAY0152` | Error | An expression is not one the language can read. |
 | `PLAY0153` | Warning | A $context path opens with a root the context does not have. |
 | `PLAY0154` | Warning | A $context.causedBy path names a property the cause does not carry. |
@@ -558,7 +558,7 @@ itself what an unresolvable one means.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0268` | Error | Source syntax carries portable behavior ESM v1 cannot represent, including a specification `for <value>` event-source assertion reserved for ESM v2. |
+| `PLAY0268` | Error | Source syntax carries portable behavior ESM v1 cannot represent, including a specification `for <value>` event-source assertion reserved for ESM v2 and a validation rule ESM v1 does not admit - a comparison on a date, `matches`, `require` or code validation (see [Commands](commands.md#what-the-executable-model-admits)). |
 | `PLAY0269` | Information | Source syntax is explicitly deferred from the current backend semantic profile. |
 | `PLAY0270` | Information | Source syntax is realization or operational metadata rather than portable behavior. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly. |
@@ -589,25 +589,40 @@ These errors are reported by ordinary compilation, including compilation of a fo
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0282` | Error | A declarative `validate` rule targets a field absent from the command's declared shape, including named rules with implementation blocks. |
+| `PLAY0282` | Error | A declarative `validate` rule targets a field absent from the command's declared shape, including named rules with implementation blocks. A dotted path is followed through declared composite `type`s; continuing past a primitive, concept or enum field is reported, while a path through an undeclared or imported type is left undecided. |
 | `PLAY0283` | Error | The type supplied by `reads <View> by <field>` is incompatible with every declared query `by` parameter of that view. Filter parameters do not substitute for a key. Parameter names may differ; distinct concepts remain distinct types. |
 | `PLAY0284` | Error | A `children` or `nested` block never populates a declared element field through its identity, explicit mappings, inherited `every` mappings, nested blocks, joins, or compatible AutoMap. Coverage is across the block's events, not a requirement that every update event fill every field. |
 | `PLAY0285` | Error | A specification's expected event contradicts every possible declared producer of its `when` command, using decidable literals, property copies and equality conditions. |
 | `PLAY0286` | Error | A specification value is not a member of the enum declared by that specific command, event, read-model field or query parameter. Bare members, qualified members and quoted member names are accepted. |
-| `PLAY0287` | Error | A command or reaction producer, a capture append mapping, or a specification's `given`/`then` event step, assigns a field absent from the referenced event's declaration. |
+| `PLAY0287` | Error | A command or reaction producer, a capture append mapping, or a specification's `given`/`then` event step, assigns a field absent from the referenced event's declaration. Dotted paths follow the same rule as `PLAY0282`: `title.missing` is reported when `title` is a primitive, concept or enum, `detail.missing` when `Detail` is a declared `type` without that field. A collection or optional composite field is addressed element-wise. |
+| `PLAY0290` | Warning | An `import` names an event, command, read model, concept or type the application declares itself. The declaration is what every reference resolves to and what these checks see, so the import has no effect - remove it. |
+
+An `import` never changes what these checks see: a name the application declares resolves to that declaration whether or not it is also imported, and an imported name nothing here declares keeps an unknown shape.
 
 These checks do not execute handlers, custom predicates or opaque expressions. An undeclared query signature does not establish a read-key mismatch. An unknown event shape under AutoMap, or an open `all` subscription with AutoMap, leaves projection coverage undecidable. Outcome checks compare explicit producer mappings only; they do not invent mappings for omitted fields.
 
-The complete Program v1 disposition of current syntax is maintained as a delivery artifact alongside the Screenplay architecture and program.
+For executable-model dispositions, see `PLAY0268`–`PLAY0271` above, [projection semantic-model admission](projections/semantic-model.md), [what the executable model admits for commands](commands.md#what-the-executable-model-admits), and [constraints](constraints.md).
 
 ### AST authoring
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0288` | Information | An accepted AST authoring operation canonicalizes a touched document. Its formatting and comments may change; untouched documents retain their exact bytes. |
+| `PLAY0288` | Warning | An accepted AST authoring operation canonically prints a touched document. The message states how many comments that document loses and on which lines; whitespace and declaration order are normalized, and untouched documents retain their exact bytes. |
 | `PLAY0289` | Error | An empty authoring workspace has no source documents to compile to an executable model. You can still propose its first typed document. |
 
 Source-authoring acceptance and executable readiness are separate verdicts. An authoring proposal validates the complete `.play` application and identity continuity without claiming that every language construct is supported by the executable backend profile. Executable-only workspace transactions remain strict.
+
+### Event context paths
+
+Every `$eventContext.<path>` - in a projection expression or in a dynamic dictionary key such as `countByType.$eventContext.eventType.id` - is checked against the [event context catalog](projections/event-context.md#available-properties). Chronicle resolves the path by reflection when it builds the projection and fails on one it cannot resolve, so this is the only place the mistake can be caught early. An unlisted member is a warning because a runtime may resolve more than the catalog lists; a path that can never resolve is an error.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0295` | Warning | An `$eventContext.<path>` opens with a member the event context does not have, such as `$eventContext.causationId`. A member resolves written camelCase or with only its first letter uppercased. |
+| `PLAY0296` | Warning | An `$eventContext.<path>` continues into something the member before it does not have, such as `$eventContext.eventType.name`. The derived function `Week` is case-sensitive: `occurred.Week` resolves and `occurred.week` does not. |
+| `PLAY0297` | Error | An `$eventContext.<path>` continues below `causation` or `tags`. They are collections with no addressing grammar, so a path below them never resolves. |
+| `PLAY0298` | Error | An `$eventContext` reference names no member, as in `$eventContext.` or a dynamic key ending in `.$eventContext`, or has an empty segment. |
+| `PLAY0299` | Warning | A dynamic dictionary key names a `$` source other than `$eventContext`, such as `byUser.$causedBy.subject`. Only `$eventContext.<path>` is resolved; any other source becomes the literal key. Write `byUser.$eventContext.causedBy.subject`. |
 
 ### Interaction
 
@@ -644,18 +659,36 @@ A behavior is *deferred* from the backend ESM v1 profile in the same way every o
 | `PLAY0324` | Error | Interaction nesting went deeper than the compiler admits. Extract the inner actions into a named behavior. |
 | `PLAY0325` | Warning | An `interval` trigger is below the floor a client can usefully honour. |
 | `PLAY0326` | Error | An application trigger is declared with a name reserved as a built-in interaction kind. `on <Name>` would mean the interaction and never the trigger, so the declaration would be unreachable. |
-| `PLAY0330` | Error | An action names a command the document does not declare. |
-| `PLAY0331` | Error | A `navigate to` action names a screen the document does not declare. |
-| `PLAY0332` | Error | A `refresh` action names a query the document does not declare. |
-| `PLAY0333` | Error | An `open dialog` action names a dialog template the document does not declare. |
-| `PLAY0334` | Error | A `raise` action or an `on` clause names an application trigger the document does not declare. |
-| `PLAY0335` | Error | An `on event` clause names an event the document does not declare. |
-| `PLAY0336` | Error | A `uses` clause names a behavior the document does not declare. |
+| `PLAY0330` | Warning | An action names a command the document does not declare. |
+| `PLAY0331` | Warning | A `navigate to` action names a screen the document does not declare. |
+| `PLAY0332` | Warning | A `refresh` action names a query the document does not declare. |
+| `PLAY0333` | Warning | An `open dialog` action names a dialog template the document does not declare. |
+| `PLAY0334` | Warning | A `raise` action or an `on` clause names an application trigger the document does not declare. |
+| `PLAY0335` | Warning | An `on event` clause names an event the document does not declare. |
+| `PLAY0336` | Warning | A `uses` clause names a behavior the document does not declare. |
 | `PLAY0337` | Error | A `uses` site supplies an argument the behavior declares no parameter for. |
 | `PLAY0338` | Error | A `uses` site leaves a behavior parameter without an argument. |
 | `PLAY0339` | Warning | Actions follow an unconditional navigation, so they could never run. |
+| `PLAY0340` | Warning | Another file of a folder repeats an attachment of the same `module` or `feature` - a `uses` of the same behavior with the same arguments, or an inline `on` block identical to one already attached. Only the first, in file-path order, is kept; the repeat is ignored and the warning names the file that attached it first. Folders written by earlier versions restate a module's or feature's attachments in every descendant file, and report this once per copy. |
 
 An inline `on` block is an anonymous behavior, so it has no name to report against. Diagnostics inside one cite the position and the trigger instead.
+
+### Projection binding
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0380` | Warning | A projection construct binds, but Chronicle's projection lowering drops part of it: `all` inside a `children` or `nested` block loses its subscription to every event type and behaves as `every`, and an `automap` or `no automap` on a joined event is replaced by the auto-map of the level the join sits in. |
+| `PLAY0381` | Warning | A projection-level `key` is parsed but does not route events in Chronicle or the executable semantic model. Declare keys on each `from` (or its events). |
+
+### Constraints in the semantic model
+
+These errors are reported when a `unique` [constraint](constraints.md) is bound into the semantic model.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0390` | Error | A `unique` constraint names an event the application does not declare. |
+| `PLAY0391` | Error | A `unique <property> on <Event>` constraint names a property the event does not declare. |
+| `PLAY0392` | Error | Two constraints in the application share a name. The name is a constraint's identity in the event store - it keys the constraint's index and its violations - so it is unique across the whole application, not just its slice. |
 
 ## Retired codes
 

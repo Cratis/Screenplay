@@ -162,7 +162,7 @@ flowchart LR
     Trace --> Compare["compare specification outcomes"]
 ```
 
-The minimum evaluator currently admits the RegisterProject-style vertical: `not empty` validation, unconditional event production, one affected read-model instance, optional snapshot lookup, and exact ordered specification results. Unsupported reachable capabilities block plan creation rather than producing a partial or stubbed execution.
+The minimum evaluator currently admits the RegisterProject-style vertical: declarative validation rules on command properties and concepts (`not empty`, `max`/`min`, the ordering and equality comparisons, `length ==`, and `all >`/`all >=` — see [what the executable model admits](commands.md#what-the-executable-model-admits)), unconditional event production, optional snapshot lookup, and exact ordered specification results. A failed rule rejects the command with the rule's message. Projections run with the reference semantics of Chronicle's projection engine - children, nested objects, update-only joins, `every` and `all`, removals and every mapping kind; see [Projections in the semantic model](projections/semantic-model.md). Unsupported reachable capabilities block plan creation rather than producing a partial or stubbed execution.
 
 ```csharp
 var semanticCompilation = semanticCompiler.Compile("Projects", documents);

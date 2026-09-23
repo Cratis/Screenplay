@@ -4,6 +4,7 @@
 import { causedByProperties, contextRoots, identityProperties, primitiveTypes, sliceTypes } from './language';
 import { DiagnosticCode, diagnosticCodes } from './diagnostic-codes';
 import { fenceMap, indentOf } from './document-context';
+import { resolveEventContextPath } from './event-context';
 import {
     DocumentSymbols,
     PropertySymbol,
@@ -305,6 +306,8 @@ export function validateLines(lines: string[]): ValidationIssue[] {
         }
     }
 
+    issues.push(...validateEventContextPaths(lines, fences));
+
     const fenceLines = lines
         .map((line, index) => ({ line, index }))
         .filter(({ line }) => /^\s*```\s*$/.test(line));
@@ -320,6 +323,62 @@ export function validateLines(lines: string[]): ValidationIssue[] {
                 diagnosticCodes.unclosedCodeBlock,
             ),
         );
+    }
+
+    return issues;
+}
+
+// A mapping target: the first word of a mapping line, after the keyword that opens it if there is one.
+const mappingTarget = /^(?:(?:increment|decrement|count|clear|add|subtract|set)\s+)?@?([$\w.]+)(?=\s|=|$)/;
+
+// Every $eventContext.<path> - in an expression or as the dynamic key of a mapping target - checked against the
+// event-context catalog the way the compiler checks it (Parsing/EventContextPathValidator.cs).
+export function validateEventContextPaths(lines: string[], fences: boolean[]): ValidationIssue[] {
+    const issues: ValidationIssue[] = [];
+    const names = (members: readonly { name: string }[]) => members.map((member) => member.name).join(', ');
+
+    for (let index = 0; index < lines.length; index++) {
+        const line = lines[index];
+        if (fences[index]) continue;
+
+        for (const match of line.matchAll(/(\.)?\$eventContext((?:\.(?:\w+(?:\(\))?)?)*)/g)) {
+            const token = match[0].substring(match[1]?.length ?? 0);
+            const written = match[2];
+            if (written.length === 0) {
+                // A bare $eventContext names nothing only as a dynamic key; in an expression the compiler rejects it as invalid.
+                if (match[1]) {
+                    issues.push(issue('error', index, (match.index ?? 0) + 2, token.length, `'$eventContext' names no member - expected one of ${names(resolveEventContextPath('').expected)}.`, diagnosticCodes.missingEventContextPath));
+                }
+                continue;
+            }
+
+            const path = written.substring(1);
+            const resolution = resolveEventContextPath(path);
+            const column = (match.index ?? 0) + (match[1]?.length ?? 0) + 1;
+            switch (resolution.status) {
+                case 'missing':
+                    issues.push(issue('error', index, column, token.length, `'$eventContext.${path}' names no member - expected one of ${names(resolution.expected)}.`, diagnosticCodes.missingEventContextPath));
+                    break;
+                case 'unknownMember':
+                    issues.push(issue('warning', index, column, token.length, `Unknown event context member '${resolution.segment}' in '$eventContext.${path}' - expected one of ${names(resolution.expected)}.`, diagnosticCodes.unknownEventContextMember));
+                    break;
+                case 'unknownSubPath': {
+                    const has = resolution.expected.length === 0 ? 'no members to address' : `members ${names(resolution.expected)}`;
+                    issues.push(issue('warning', index, column, token.length, `Unknown event context path '$eventContext.${path}' - '${resolution.member?.name}' (${resolution.member?.type}) has ${has}.`, diagnosticCodes.unknownEventContextPath));
+                    break;
+                }
+                case 'belowCollection':
+                    issues.push(issue('error', index, column, token.length, `'$eventContext.${path}' cannot resolve - '${resolution.member?.name}' is a collection (${resolution.member?.type}) and cannot be addressed below.`, diagnosticCodes.eventContextPathBelowCollection));
+                    break;
+            }
+        }
+
+        // Only $eventContext resolves in a dynamic key; any other $ source is kept as the literal key text.
+        const target = line.trim().match(mappingTarget)?.[1];
+        const source = target?.match(/\.\$(\w+)/)?.[1];
+        if (target && source && source !== 'eventContext') {
+            issues.push(tokenIssue('warning', index, line, target, `Dynamic dictionary key '$${source}' in '${target}' is never resolved - only '$eventContext.<path>' is, so the literal text '$${source}' becomes the key.`, diagnosticCodes.unresolvedDynamicKeySource));
+        }
     }
 
     return issues;

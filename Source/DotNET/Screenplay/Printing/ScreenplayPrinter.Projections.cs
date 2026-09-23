@@ -101,6 +101,8 @@ public partial class ScreenplayPrinter
             case ProjectionVariantSyntax variant:
                 WriteProjectionVariant(writer, variant);
                 break;
+            default:
+                throw new UnsupportedSyntaxForPrinting("projection block", block.GetType().Name);
         }
     }
 
@@ -213,6 +215,8 @@ public partial class ScreenplayPrinter
                 }
 
                 break;
+            default:
+                throw new UnsupportedSyntaxForPrinting("projection key", key.GetType().Name);
         }
     }
 
@@ -226,6 +230,10 @@ public partial class ScreenplayPrinter
             case AutoMapMode.Disabled:
                 writer.Line("no automap");
                 break;
+            case AutoMapMode.Inherit:
+                break;
+            default:
+                throw new UnsupportedSyntaxForPrinting("automap mode", autoMap.ToString());
         }
     }
 
@@ -242,7 +250,7 @@ public partial class ScreenplayPrinter
                 CountMappingSyntax count => $"count {count.Property}",
                 AddMappingSyntax add => $"add {add.Property} by {ScreenplaySyntaxText.Expression(add.Value)}",
                 SubtractMappingSyntax subtract => $"subtract {subtract.Property} by {ScreenplaySyntaxText.Expression(subtract.Value)}",
-                _ => mapping.Property
+                _ => throw new UnsupportedSyntaxForPrinting("projection mapping", mapping.GetType().Name)
             });
         }
     }

@@ -172,6 +172,8 @@ public partial class ScreenplayPrinter
                 case FileConstraintSyntax file:
                     writer.Line($"file {file.File.Path}");
                     break;
+                default:
+                    throw new UnsupportedSyntaxForPrinting("constraint", constraint.GetType().Name);
             }
         }
     }
@@ -291,6 +293,8 @@ public partial class ScreenplayPrinter
                 }
 
                 break;
+            default:
+                throw new UnsupportedSyntaxForPrinting("validation", validate.GetType().Name);
         }
     }
 

@@ -89,6 +89,7 @@ internal static partial class ProjectionParser
                     autoMap = AutoMapMode.Disabled;
                     break;
                 case "key":
+                    context.Warning(DiagnosticCodes.UnusedProjectionKey, "A projection-level key does not route events - declare the key on each 'from' (or its events)", line.Location);
                     if (key is not null)
                     {
                         context.Error(DiagnosticCodes.DuplicateProjectionKey, "Duplicate key directive - a projection can only declare one key", line.Location);
@@ -520,6 +521,17 @@ internal static partial class ProjectionParser
 
     static MappingSyntax? ParseMapping(ParserContext context, SourceLine line)
     {
+        var mapping = ParseMappingLine(context, line);
+        if (mapping is not null)
+        {
+            EventContextPathValidator.ValidateDynamicKey(context, mapping.Property, line.Location);
+        }
+
+        return mapping;
+    }
+
+    static MappingSyntax? ParseMappingLine(ParserContext context, SourceLine line)
+    {
         var keyword = KeywordMappingRegex().Match(line.Content);
         if (keyword.Success)
         {
@@ -548,7 +560,7 @@ internal static partial class ProjectionParser
         if (arithmetic.Success)
         {
             var property = Unescape(arithmetic.Groups[2].Value);
-            var value = ExpressionParser.ParseProjectionExpression(context, arithmetic.Groups[3].Value, line.Location);
+            var value = ExpressionParser.ParseProjectionMappingSource(context, arithmetic.Groups[3], line);
             return arithmetic.Groups[1].Value == "add"
                 ? new AddMappingSyntax(property, value, line.Location)
                 : new SubtractMappingSyntax(property, value, line.Location);
@@ -557,14 +569,14 @@ internal static partial class ProjectionParser
         var set = SetRegex().Match(line.Content);
         if (set.Success)
         {
-            var source = ExpressionParser.ParseProjectionExpression(context, set.Groups[2].Value, line.Location);
+            var source = ExpressionParser.ParseProjectionMappingSource(context, set.Groups[2], line);
             return new SetMappingSyntax(Unescape(set.Groups[1].Value), source, line.Location);
         }
 
         var assignment = AssignmentRegex().Match(line.Content);
         if (assignment.Success)
         {
-            var source = ExpressionParser.ParseProjectionExpression(context, assignment.Groups[2].Value, line.Location);
+            var source = ExpressionParser.ParseProjectionMappingSource(context, assignment.Groups[2], line);
             return new SetMappingSyntax(Unescape(assignment.Groups[1].Value), source, line.Location);
         }
 

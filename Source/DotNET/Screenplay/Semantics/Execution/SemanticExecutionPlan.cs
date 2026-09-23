@@ -33,7 +33,17 @@ public enum SemanticPlanIssueKind
     /// <summary>
     /// A query cardinality or delivery contract is not admitted by the minimum evaluator.
     /// </summary>
-    UnsupportedQuery = 3
+    UnsupportedQuery = 3,
+
+    /// <summary>
+    /// A projection block combination has no verified reference semantics.
+    /// </summary>
+    UnsupportedProjectionBlock = 4,
+
+    /// <summary>
+    /// A projection reads an event-context value the reference evaluator has no occurrence context for.
+    /// </summary>
+    UnsupportedEventContext = 5
 }
 
 /// <summary>
@@ -71,7 +81,8 @@ public sealed class SemanticExecutionPlan
         ImmutableDictionary<SemanticId, SemanticProjection> projections,
         ImmutableDictionary<SemanticId, SemanticReadModel> readModels,
         ImmutableDictionary<SemanticId, SemanticKeyedQuery> queries,
-        ImmutableDictionary<SemanticId, SemanticSpecification> specifications)
+        ImmutableDictionary<SemanticId, SemanticSpecification> specifications,
+        ImmutableDictionary<string, SemanticConstraint> constraints)
     {
         Model = model;
         Commands = commands;
@@ -80,6 +91,7 @@ public sealed class SemanticExecutionPlan
         ReadModels = readModels;
         Queries = queries;
         Specifications = specifications;
+        Constraints = constraints;
     }
 
     /// <summary>
@@ -123,6 +135,11 @@ public sealed class SemanticExecutionPlan
     public ImmutableDictionary<SemanticId, SemanticSpecification> Specifications { get; }
 
     /// <summary>
+    /// Gets append-time constraints by name, which is a constraint's identity.
+    /// </summary>
+    public ImmutableDictionary<string, SemanticConstraint> Constraints { get; }
+
+    /// <summary>
     /// Compiles ESM into a plan only when every reachable capability is admitted.
     /// </summary>
     /// <param name="model">The validated executable semantic model.</param>
@@ -133,7 +150,7 @@ public sealed class SemanticExecutionPlan
         var slices = AllSlices(model.Application).ToArray();
         foreach (var concept in model.Application.Concepts)
         {
-            foreach (var validation in concept.Validations.Where(_ => _.Kind != SemanticValidationRuleKind.NotEmpty))
+            foreach (var validation in concept.Validations.Where(_ => !SemanticValidationRules.Evaluates(_.Kind)))
             {
                 issues.Add(new(concept.Id, SemanticPlanIssueKind.UnsupportedValidation, $"Concept validation '{validation.Kind}' is not admitted by the minimum evaluator."));
             }
@@ -141,7 +158,7 @@ public sealed class SemanticExecutionPlan
 
         foreach (var command in slices.SelectMany(_ => _.Commands))
         {
-            foreach (var validation in command.Validations.Where(_ => _.Kind != SemanticValidationRuleKind.NotEmpty))
+            foreach (var validation in command.Validations.Where(_ => !SemanticValidationRules.Evaluates(_.Kind)))
             {
                 issues.Add(new(command.Id, SemanticPlanIssueKind.UnsupportedValidation, $"Validation '{validation.Kind}' is not admitted by the minimum evaluator."));
             }
@@ -158,6 +175,8 @@ public sealed class SemanticExecutionPlan
             {
                 issues.Add(new(projection.Id, SemanticPlanIssueKind.UnsupportedAffectedCardinality, $"Affected cardinality '{transition.AffectedInstance.Cardinality}' is not admitted by the minimum evaluator."));
             }
+
+            issues.AddRange(SemanticScopedProjectionIssues.For(projection));
         }
 
         foreach (var query in slices.SelectMany(_ => _.Queries).Where(_ => _.Cardinality != SemanticQueryCardinality.ZeroOrOne || _.Delivery != SemanticQueryDelivery.Snapshot))
@@ -178,10 +197,13 @@ public sealed class SemanticExecutionPlan
                 slices.SelectMany(_ => _.Projections).ToImmutableDictionary(_ => _.Id),
                 slices.SelectMany(_ => _.ReadModels).ToImmutableDictionary(_ => _.Id),
                 slices.SelectMany(_ => _.Queries).ToImmutableDictionary(_ => _.Id),
-                slices.SelectMany(_ => _.Specifications).ToImmutableDictionary(_ => _.Id)),
+                slices.SelectMany(_ => _.Specifications).ToImmutableDictionary(_ => _.Id),
+                slices.SelectMany(_ => _.Constraints).ToImmutableDictionary(_ => _.Name, StringComparer.Ordinal)),
             []);
     }
 
+    // A containment level or slice member this walk does not know would be skipped silently, so
+    // for_SemanticExecutionPlan/when_inspecting_the_containment_it_traverses holds the ESM shape against it.
     static IEnumerable<SemanticSlice> AllSlices(SemanticApplication application) =>
         application.Modules.SelectMany(_ => AllSlices(_.Features));
 

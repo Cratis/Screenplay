@@ -29,7 +29,7 @@ public class when_serializing_the_golden_model : Specification
         _reserialized = SemanticModelSerializer.Serialize(_roundTripped);
         var slices = _roundTripped.Application.Modules.Single().Features.Single().Features.Single().Slices;
         _errors = [.. slices.SelectMany(_ => _.Specifications).SelectMany(_ => _.ThenErrors)];
-        _produced = [.. slices.Single(_ => _.Kind == SemanticSliceKind.StateChange).Commands.Single().Produces];
+        _produced = [.. slices.Single(_ => _.Name == "Creation").Commands.Single().Produces];
     }
 
     [Fact] void should_match_the_checked_in_utf8_bytes() => _serialized.SequenceEqual(_expected).ShouldBeTrue();
@@ -38,9 +38,12 @@ public class when_serializing_the_golden_model : Specification
     [Fact] void should_cover_a_produced_event_without_a_condition_or_destination() => _produced.Any(_ => _.Condition is null && _.Destination is null).ShouldBeTrue();
     [Fact] void should_cover_a_bare_rejection() => _errors.Any(_ => _.Code is null && _.Message is null).ShouldBeTrue();
     [Fact] void should_cover_a_message_only_rejection() => _errors.Any(_ => _.Code is null && _.Message == "Title is invalid").ShouldBeTrue();
+    [Fact] void should_cover_both_constraint_kinds() =>
+        _roundTripped.Application.Modules.Single().Features.Single().Features.Single().Slices.SelectMany(_ => _.Constraints).Select(_ => _.Kind)
+            .ShouldContainOnly([SemanticConstraintKind.UniqueEventOccurrence, SemanticConstraintKind.UniquePropertyValue]);
     [Fact] void should_keep_the_behavior_order() =>
         _roundTripped.Application.Modules.Single().Features.Single().Features.Single().Slices
-            .Single(_ => _.Kind == SemanticSliceKind.StateView).Projections.Single().Transitions
+            .Single(_ => _.Name == "EntitySummaries").Projections.Single().Transitions
             .Select(_ => _.AffectedInstance.Cardinality)
             .ShouldContainOnly([AffectedInstanceCardinality.ZeroOrOne, AffectedInstanceCardinality.One, AffectedInstanceCardinality.Many]);
 }

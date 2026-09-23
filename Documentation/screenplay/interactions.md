@@ -169,6 +169,8 @@ behavior ConfirmDestructive
 
 This is the same outward-resolving rule [contributions](contributions.md) already use.
 
+In a [folder of files](folders.md), a module's or a feature's attachments may be written in any file that names it, and they accumulate the same way. An attachment identical to one another file already makes is ignored with a warning rather than run twice; expansion writes them back into the owner's own file.
+
 ## What the compiler checks
 
 - Every operand resolves, or is reported. Unknown commands, screens, queries, dialog templates, events, triggers and behaviors are warnings, the way every other reference in the document is — a name may still resolve to something outside it, and what matters is that the gap stays visible.

@@ -11,7 +11,7 @@ namespace Cratis.Screenplay.Files;
 /// </summary>
 /// <remarks>
 /// Each file carries exactly one thing plus the scaffolding needed to place it: a module file carries the
-/// module's own description and layouts, a feature file its description, a slice file the slice. Everything
+/// module's own description, layouts and behavior attachments, a feature file its description and attachments, a slice file the slice. Everything
 /// above it is restated stripped of its own content, so nothing is written twice and merging on the way back
 /// in has nothing to disagree about.
 /// </remarks>
@@ -69,8 +69,18 @@ internal static class PlayFileDocument
         Forms = [],
         Contributions = [],
         Features = [],
-        Description = null
+        Description = null,
+        Behaviors = [],
+        UsedBehaviors = []
     };
 
-    static FeatureSyntax Bare(FeatureSyntax feature) => feature with { Features = [], Slices = [], Contributions = [], Description = null };
+    static FeatureSyntax Bare(FeatureSyntax feature) => feature with
+    {
+        Features = [],
+        Slices = [],
+        Contributions = [],
+        Description = null,
+        Behaviors = [],
+        UsedBehaviors = []
+    };
 }

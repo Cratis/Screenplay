@@ -59,7 +59,13 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             facts.Add(new(produced.EventContract, destination, values));
         }
 
-        if (!TryProject(plan, world.ReadModels, facts.ToImmutable(), out var readModels, out var projectionFailure))
+        // A violation is an outcome, not a failure: the command is rejected and the world is unchanged.
+        if (SemanticConstraintEnforcement.FindViolation(plan, world, facts.ToImmutable()) is { } violated)
+        {
+            return new SemanticRejected(world, SemanticRejectionCategory.Constraint, violated.Name, SemanticConstraintEnforcement.MessageFor(violated));
+        }
+
+        if (!TryProject(plan, world.Facts, world.ReadModels, facts.ToImmutable(), out var readModels, out var projectionFailure))
         {
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, projectionFailure!);
         }
@@ -95,7 +101,17 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         ImmutableArray<SemanticFact> facts,
         out ImmutableArray<SemanticReadModelInstance> readModels,
         out string? failure) =>
-        TryProject(plan, current, facts, out readModels, out failure);
+        TryProject(plan, [], current, facts, out readModels, out failure);
+
+    // Every variant answers explicitly: an unknown variant is not quietly "present", it is a malformed value.
+    internal static bool IsEmpty(SemanticValue value) => value switch
+    {
+        SemanticNullValue => true,
+        SemanticTextValue text => string.IsNullOrEmpty(text.Value),
+        SemanticArrayValue array => array.Values.IsEmpty,
+        SemanticNumberValue or SemanticBooleanValue or SemanticCompositeValue => false,
+        _ => throw SemanticValueRules.Malformed()
+    };
 
     static string? ValidateRequest(
         SemanticExecutionPlan plan,
@@ -141,25 +157,54 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         foreach (var validation in command.Validations)
         {
             var value = valuesByTarget[validation.Property];
-            if (validation.Kind == SemanticValidationRuleKind.NotEmpty && IsEmpty(value))
+            if (!SemanticValidationRules.Satisfies(validation, value))
             {
-                return validation.Message ?? "A required value is empty.";
+                return validation.Message ?? SemanticValidationRules.DefaultMessage(validation, value, "A required value is empty.");
             }
         }
 
-        foreach (var property in command.Properties.Where(_ => _.Type.Kind == SemanticTypeReferenceKind.Concept))
+        var concepts = plan.Model.Application.Concepts.ToDictionary(_ => _.Id);
+        var types = plan.Model.Application.Types.ToDictionary(_ => _.Id);
+        foreach (var property in command.Properties)
         {
-            var concept = plan.Model.Application.Concepts.Single(_ => _.Id == property.Type.Target);
-            foreach (var validation in concept.Validations)
+            if (ValidateConceptValues(concepts, types, property.Type, valuesByTarget[property.Id]) is { } rejection)
             {
-                if (validation.Kind == SemanticValidationRuleKind.NotEmpty && IsEmpty(valuesByTarget[property.Id]))
-                {
-                    return validation.Message ?? "A required concept value is empty.";
-                }
+                return rejection;
             }
         }
 
         return null;
+    }
+
+    // A concept's rules constrain every value of the concept - directly, as each element of a collection and
+    // inside composite values - so they are applied wherever the command carries one.
+    static string? ValidateConceptValues(
+        Dictionary<SemanticId, SemanticConcept> concepts,
+        Dictionary<SemanticId, SemanticCompositeType> types,
+        SemanticTypeReference type,
+        SemanticValue value)
+    {
+        if (type.IsCollection)
+        {
+            var elementType = type with { IsCollection = false, IsOptional = false };
+            return value is SemanticArrayValue array
+                ? array.Values.Select(element => ValidateConceptValues(concepts, types, elementType, element)).FirstOrDefault(_ => _ is not null)
+                : null;
+        }
+
+        switch (type.Kind)
+        {
+            case SemanticTypeReferenceKind.Concept:
+                var failed = concepts[type.Target].Validations.FirstOrDefault(validation => !SemanticValidationRules.Satisfies(validation, value));
+                return failed is null ? null : failed.Message ?? SemanticValidationRules.DefaultMessage(failed, value, "A required concept value is empty.");
+            case SemanticTypeReferenceKind.CompositeType when value is SemanticCompositeValue composite:
+                var properties = types[type.Target].Properties.ToDictionary(_ => _.Id);
+                return composite.Properties
+                    .Select(property => ValidateConceptValues(concepts, types, properties[property.TargetProperty].Type, property.Value))
+                    .FirstOrDefault(_ => _ is not null);
+            default:
+                return null;
+        }
     }
 
     static string? ValidateQueryKey(
@@ -181,16 +226,9 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         }
     }
 
-    static bool IsEmpty(SemanticValue value) => value switch
-    {
-        SemanticNullValue => true,
-        SemanticTextValue text => string.IsNullOrEmpty(text.Value),
-        SemanticArrayValue array => array.Values.IsEmpty,
-        _ => false
-    };
-
     static bool TryProject(
         SemanticExecutionPlan plan,
+        ImmutableArray<SemanticFact> history,
         ImmutableArray<SemanticReadModelInstance> current,
         ImmutableArray<SemanticFact> facts,
         out ImmutableArray<SemanticReadModelInstance> readModels,
@@ -200,10 +238,24 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         var concepts = plan.Model.Application.Concepts.ToDictionary(_ => _.Id);
         var types = plan.Model.Application.Types.ToDictionary(_ => _.Id);
         var validator = new SemanticValueValidator(concepts, types);
+        var observed = history.ToList();
         foreach (var fact in facts)
         {
             foreach (var projection in plan.Projections.Values.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal))
             {
+                // A scoped projection runs through the reference semantics of every Chronicle projection block.
+                if (projection.Scope is not null)
+                {
+                    if (new SemanticScopedProjection(plan, projection, validator, observed).Apply(instances, fact) is { } scopedFailure)
+                    {
+                        failure = scopedFailure;
+                        readModels = current;
+                        return false;
+                    }
+
+                    continue;
+                }
+
                 foreach (var transition in projection.Transitions.Where(_ => _.EventContract == fact.EventContract))
                 {
                     var eventValues = fact.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
@@ -263,6 +315,8 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                         [.. readModel.Properties.Select(property => new SemanticPropertyValue(property.Id, state[property.Id]))]));
                 }
             }
+
+            observed.Add(fact);
         }
 
         failure = null;

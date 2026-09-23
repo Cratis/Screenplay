@@ -64,6 +64,8 @@ public partial class ScreenplayPrinter
             case ScreenUsesBehaviorSyntax uses:
                 WriteUsesBehavior(writer, uses.Uses);
                 break;
+            default:
+                throw new UnsupportedSyntaxForPrinting("screen directive", directive.GetType().Name);
         }
     }
 

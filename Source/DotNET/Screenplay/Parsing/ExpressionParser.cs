@@ -15,6 +15,8 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal static partial class ExpressionParser
 {
+    const string CausedByMember = "causedBy";
+
     /// <summary>
     /// Parses an expression as used inside a projection body.
     /// </summary>
@@ -50,7 +52,9 @@ internal static partial class ExpressionParser
 
         if (text.StartsWith("$eventContext.", StringComparison.Ordinal))
         {
-            return new EventContextExpressionSyntax(text["$eventContext.".Length..], location);
+            var path = text["$eventContext.".Length..];
+            EventContextPathValidator.Validate(context, path, location);
+            return new EventContextExpressionSyntax(path, location);
         }
 
         if (text == "$causedBy")
@@ -60,10 +64,17 @@ internal static partial class ExpressionParser
 
         if (text.StartsWith("$causedBy.", StringComparison.Ordinal))
         {
+            // The short form reads the same identity as $eventContext.causedBy, so it admits what the catalog lists below it.
             var property = text["$causedBy.".Length..];
-            if (property is not ("subject" or "name" or "userName"))
+            var resolution = EventContextCatalog.Resolve($"{CausedByMember}.{property}");
+            if (!resolution.IsKnown)
             {
-                context.Error(DiagnosticCodes.UnknownCausedByProperty, $"Unknown $causedBy property '{property}' - expected subject, name or userName", location);
+                context.Error(
+                    DiagnosticCodes.UnknownCausedByProperty,
+                    resolution.Expected.Count == 0
+                        ? $"Unknown $causedBy property '{property}' - '{resolution.Member?.Name}' has no members"
+                        : $"Unknown $causedBy property '{property}' - expected {string.Join(", ", resolution.Expected.Select(member => member.Name))}",
+                    location);
             }
 
             return new CausedByExpressionSyntax(property, location);
@@ -127,6 +138,53 @@ internal static partial class ExpressionParser
         }
 
         return new RawExpressionSyntax(text, location);
+    }
+
+    /// <summary>
+    /// Parses a <c>property = source</c> mapping line, recording the exact source spans of the right-hand side.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <param name="property">The target property.</param>
+    /// <param name="source">The regular expression group capturing the right-hand source text on <paramref name="line"/>.</param>
+    /// <param name="line">The <see cref="SourceLine"/> the mapping is declared on.</param>
+    /// <returns>The parsed <see cref="PropertyMappingSyntax"/> with server-owned source spans.</returns>
+    public static PropertyMappingSyntax ParseMapping(ParserContext context, string property, Group source, SourceLine line)
+    {
+        var text = source.Value.Trim();
+        var start = line.LocationAt(source.Index + (source.Value.Length - source.Value.TrimStart().Length));
+        var expression = ParseMappingSource(context, text, line.Location);
+        if (expression is LiteralExpressionSyntax literal)
+        {
+            expression = literal with { RawLocation = start, RawLength = text.Length };
+        }
+
+        return new(property, expression, line.Location)
+        {
+            SourceLocation = start,
+            SourceLength = text.Length
+        };
+    }
+
+    /// <summary>
+    /// Parses a projection mapping's source, retaining the exact span of a literal for workspace edits.
+    /// </summary>
+    /// <param name="context">The parser context.</param>
+    /// <param name="source">The regular expression group containing the source.</param>
+    /// <param name="line">The authored source line.</param>
+    /// <returns>The parsed projection expression.</returns>
+    public static ExpressionSyntax ParseProjectionMappingSource(ParserContext context, Group source, SourceLine line)
+    {
+        var text = source.Value.Trim();
+        var expression = ParseProjectionExpression(context, text, line.Location);
+        if (expression is LiteralExpressionSyntax literal)
+        {
+            // 'literal ' is projection syntax, not part of the raw literal value.
+            var prefix = text.StartsWith("literal ", StringComparison.Ordinal) ? text.Length - text["literal ".Length..].TrimStart().Length : 0;
+            var offset = source.Index + (source.Value.Length - source.Value.TrimStart().Length) + prefix;
+            expression = literal with { RawLocation = line.LocationAt(offset), RawLength = text.Length - prefix };
+        }
+
+        return expression;
     }
 
     /// <summary>

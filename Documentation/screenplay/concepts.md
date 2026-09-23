@@ -104,6 +104,21 @@ concept InvoiceStatus : Enum
     not empty  message "Status is required"
 ```
 
+Rules on a concept take their meaning from the concept's type, exactly as on a command property: `max` and `min` bound the length of a `String` concept and the value of an `Int` or `Decimal` concept, and `length ==` fixes the length of text:
+
+```screenplay
+concept InvoiceNumber : String
+  validate
+    not empty  message "An invoice needs a number"
+    length == 10
+
+concept Quantity : Int
+  validate
+    min 1      message "Order at least one"
+```
+
+The executable semantic model enforces concept rules on **command input**: every value of the concept, including each collection element and values inside composite [types](types.md). It does not enforce those rules on event payloads, read-model state or query keys. The executable semantic model admits the same rules for a concept as for a command property, and rejects the same ones for the same reasons — see [what the executable model admits](commands.md#what-the-executable-model-admits). `all >` and `all >=` quantify over a collection, which a concept's own value never is, so they belong on the command property instead.
+
 In the compiled syntax tree the implied subject is represented by the well-known property name `value` — the `ValidationRuleSyntax.ConceptValue` constant — so consumers can treat concept rules and command rules uniformly.
 
 ## Attribute inheritance

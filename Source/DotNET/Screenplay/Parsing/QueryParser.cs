@@ -77,7 +77,9 @@ internal static partial class QueryParser
 
     static QueryParameterSyntax? ParseParameter(ParserContext context, SourceLine line, string keyword)
     {
-        var match = ParameterRegex().Match(line.Content[keyword.Length..].Trim());
+        var parameter = line.Content[keyword.Length..];
+        var leading = parameter.Length - parameter.TrimStart().Length;
+        var match = ParameterRegex().Match(parameter.Trim());
         if (!match.Success)
         {
             context.Error(DiagnosticCodes.InvalidQueryParameter, $"Invalid '{keyword}' parameter '{line.Content}' - expected '{keyword} <name> <Type> [from <source>]'", line.Location);
@@ -85,7 +87,7 @@ internal static partial class QueryParser
         }
 
         var source = match.Groups[3].Success
-            ? ExpressionParser.ParseMappingSource(context, match.Groups[3].Value, line.Location)
+            ? ExpressionParser.ParseMapping(context, match.Groups[1].Value, match.Groups[3], line with { Indent = line.Indent + keyword.Length + leading }).Source
             : null;
 
         return new(match.Groups[1].Value, PropertyLineParser.ParseTypeRef(match.Groups[2].Value, line.Location), line.Location, source);

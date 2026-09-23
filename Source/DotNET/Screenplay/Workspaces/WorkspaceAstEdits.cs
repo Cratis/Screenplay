@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
@@ -18,6 +19,7 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
     readonly Dictionary<DocumentId, JsonNode> _roots = index.Entries.Where(entry => entry.Parent is null)
         .ToDictionary(entry => entry.Handle.Document, entry => ToJson(entry.Node));
     readonly List<Edit> _edits = [];
+    readonly Dictionary<JsonNode, SourceLocation> _sourceLocations = [];
 
     internal ImmutableArray<DocumentId> Touched => [.. _edits.SelectMany(edit => new[] { edit.Target?.Handle.Document, edit.Destination?.Parent.Handle.Document }).OfType<DocumentId>().Distinct()];
 
@@ -48,6 +50,11 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
 
     internal Dictionary<DocumentId, ApplicationSyntax> Apply()
     {
+        foreach (var entry in index.Entries)
+        {
+            _sourceLocations[Resolve(entry.Handle)] = entry.Location;
+        }
+
         foreach (var edit in _edits.Where(edit => edit.Target is not null))
         {
             Replace(edit.Target!, edit.Original!, edit.Destination is null && edit.Value is not null ? ToJson(edit.Value) : null);
@@ -58,8 +65,12 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
             Insert(edit.Destination!, ToJson(edit.Value!));
         }
 
-        return Touched.ToDictionary(document => document, document => SyntaxJson.Deserialize(JsonSerializer.SerializeToElement(_roots[document], _jsonOptions)) as ApplicationSyntax
-            ?? throw new InvalidWorkspaceAuthoring("A document root must remain an ApplicationSyntax."));
+        return Touched.ToDictionary(
+            document => document,
+            document => RestoreSourceLocations(
+                _roots[document],
+                SyntaxJson.Deserialize(JsonSerializer.SerializeToElement(_roots[document], _jsonOptions)) as ApplicationSyntax
+                    ?? throw new InvalidWorkspaceAuthoring("A document root must remain an ApplicationSyntax.")));
     }
 
     static bool RequireSlotType(WorkspaceSyntaxEntry parent, string member, SyntaxNode value)
@@ -232,6 +243,11 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
 
     void Replace(WorkspaceSyntaxEntry target, JsonNode original, JsonNode? replacement)
     {
+        if (replacement is not null)
+        {
+            CarrySourceLocations(original, replacement);
+        }
+
         if (target.Parent is null)
         {
             _roots[target.Handle.Document] = replacement!;
