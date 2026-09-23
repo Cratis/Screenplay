@@ -36,7 +36,7 @@ public class when_binding_specification_event_source_syntax : given.a_semantic_b
     [Fact] void should_report_every_event_source_assertion() => UnsupportedDiagnostics.Length.ShouldEqual(3);
     [Fact] void should_report_the_exact_assertion_lines() => UnsupportedDiagnostics.Select(diagnostic => diagnostic.Location.Line).Order().ShouldEqual(12, 14, 17);
     [Fact] void should_report_real_source_columns() => UnsupportedDiagnostics.All(diagnostic => diagnostic.Location.Column > 0).ShouldBeTrue();
-    [Fact] void should_name_the_unsupported_v1_boundary() => UnsupportedDiagnostics.All(diagnostic => diagnostic.Message.Contains("not admitted by ESM v1", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_name_the_unsupported_v1_boundary() => UnsupportedDiagnostics.All(diagnostic => diagnostic.Message.Contains("reserved for ESM v2 (issue #226)", StringComparison.Ordinal)).ShouldBeTrue();
 
     Diagnostic[] UnsupportedDiagnostics => [.. _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax)];
 }

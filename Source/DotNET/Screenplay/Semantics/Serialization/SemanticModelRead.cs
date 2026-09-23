@@ -484,10 +484,10 @@ internal static partial class SemanticModelRead
         }
 
         Required(
-            id.IsSet && name is not null && !givenEvents.IsDefault && !givenReadModels.IsDefault && when is not null &&
+            id.IsSet && name is not null && !givenEvents.IsDefault && !givenReadModels.IsDefault &&
             !thenEvents.IsDefault && !thenReadModels.IsDefault && !thenQueries.IsDefault && !thenErrors.IsDefault,
             "specification");
-        return new(id, name!, givenEvents, givenReadModels, when!, thenEvents, thenReadModels, thenQueries, thenErrors);
+        return new(id, name!, givenEvents, givenReadModels, when, thenEvents, thenReadModels, thenQueries, thenErrors);
     }
 
     internal static SemanticSpecificationEvent SpecificationEvent(ref Utf8JsonReader reader)

@@ -16,6 +16,16 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         SemanticWorld world,
         SemanticExecutionRequest request)
     {
+        if (request.IsReadOnly)
+        {
+            if (request.Command.IsSet || !request.Values.IsEmpty || !request.AllocatedIdentities.IsEmpty)
+            {
+                return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A read-only request cannot carry command values or allocated identities.");
+            }
+
+            return ExecuteQueries(plan, world, world, [], request.Queries);
+        }
+
         if (!plan.Commands.TryGetValue(request.Command, out var command))
         {
             return new SemanticUnsupported(world, SemanticExecutionCapability.Command, $"Command '{request.Command}' is not in the execution plan.");
@@ -71,28 +81,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         }
 
         var tentative = world.Commit(facts.ToImmutable(), readModels);
-        var queryResults = ImmutableArray.CreateBuilder<SemanticQueryResult>();
-        foreach (var queryRequest in request.Queries)
-        {
-            if (!plan.Queries.TryGetValue(queryRequest.Query, out var query))
-            {
-                return new SemanticUnsupported(world, SemanticExecutionCapability.Query, $"Query '{queryRequest.Query}' is not in the execution plan.");
-            }
-
-            if (ValidateQueryKey(plan, query, queryRequest.Key) is { } queryRejection)
-            {
-                return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, queryRejection);
-            }
-
-            var results = tentative.ReadModels
-                .Where(instance => instance.ReadModel == query.ReadModel)
-                .Where(instance => instance.Values.Any(value =>
-                    value.TargetProperty == query.KeyProperty && SemanticValueRules.AreEqual(value.Value, queryRequest.Key)))
-                .ToImmutableArray();
-            queryResults.Add(new(query.Id, queryRequest.Key, results));
-        }
-
-        return new SemanticAccepted(tentative, facts.ToImmutable(), queryResults.ToImmutable());
+        return ExecuteQueries(plan, world, tentative, facts.ToImmutable(), request.Queries);
     }
 
     internal static bool Establish(
@@ -112,6 +101,42 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         SemanticNumberValue or SemanticBooleanValue or SemanticCompositeValue => false,
         _ => throw SemanticValueRules.Malformed()
     };
+
+    static SemanticExecutionResult ExecuteQueries(
+        SemanticExecutionPlan plan,
+        SemanticWorld original,
+        SemanticWorld tentative,
+        ImmutableArray<SemanticFact> facts,
+        ImmutableArray<SemanticQueryRequest> queries)
+    {
+        if (queries.IsDefault)
+        {
+            return new SemanticRejected(original, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default.");
+        }
+
+        var queryResults = ImmutableArray.CreateBuilder<SemanticQueryResult>();
+        foreach (var queryRequest in queries)
+        {
+            if (!plan.Queries.TryGetValue(queryRequest.Query, out var query))
+            {
+                return new SemanticUnsupported(original, SemanticExecutionCapability.Query, $"Query '{queryRequest.Query}' is not in the execution plan.");
+            }
+
+            if (ValidateQueryKey(plan, query, queryRequest.Key) is { } queryRejection)
+            {
+                return new SemanticRejected(original, SemanticRejectionCategory.Contract, null, queryRejection);
+            }
+
+            var results = tentative.ReadModels
+                .Where(instance => instance.ReadModel == query.ReadModel)
+                .Where(instance => instance.Values.Any(value =>
+                    value.TargetProperty == query.KeyProperty && SemanticValueRules.AreEqual(value.Value, queryRequest.Key)))
+                .ToImmutableArray();
+            queryResults.Add(new(query.Id, queryRequest.Key, results));
+        }
+
+        return new SemanticAccepted(tentative, facts, queryResults.ToImmutable());
+    }
 
     static string? ValidateRequest(
         SemanticExecutionPlan plan,

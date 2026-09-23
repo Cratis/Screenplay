@@ -556,18 +556,23 @@ internal static partial class SemanticModelValidator
 
         void ValidateSpecification(SemanticSpecification specification)
         {
-            if (!_commands.TryGetValue(specification.When.Command, out var command))
+            SemanticCommand? command = null;
+            if (specification.When is not null)
             {
-                throw new InvalidSemanticContract($"Specification command '{specification.When.Command}' is unresolved.");
+                if (!_commands.TryGetValue(specification.When.Command, out command))
+                {
+                    throw new InvalidSemanticContract($"Specification command '{specification.When.Command}' is unresolved.");
+                }
+
+                if (specification.When.EventSource is not null)
+                {
+                    throw new InvalidSemanticContract("A specification command event source requires ESM v2.");
+                }
+
+                ValidatePropertyValues(specification.When.Values, command.Properties, true);
             }
 
-            if (specification.When.EventSource is not null)
-            {
-                throw new InvalidSemanticContract("A specification command event source requires ESM v2.");
-            }
-
-            ValidatePropertyValues(specification.When.Values, command.Properties, true);
-            var producedEvents = command.Produces.Select(_ => _.EventContract).ToHashSet();
+            var producedEvents = command?.Produces.Select(_ => _.EventContract).ToHashSet();
             foreach (var value in specification.GivenEvents)
             {
                 ValidateSpecificationEvent(value);
@@ -575,7 +580,7 @@ internal static partial class SemanticModelValidator
 
             foreach (var value in specification.ThenEvents)
             {
-                if (!producedEvents.Contains(value.EventContract))
+                if (producedEvents?.Contains(value.EventContract) != true)
                 {
                     throw new InvalidSemanticContract("A specification expects an event the command does not produce.");
                 }
@@ -585,13 +590,13 @@ internal static partial class SemanticModelValidator
 
             foreach (var state in specification.GivenReadModels)
             {
-                ValidateSpecificationReadModel(state);
+                ValidateSpecificationReadModel(state, true, true);
             }
 
             RejectDuplicateReadModelStates(specification.GivenReadModels, "given read model");
             foreach (var state in specification.ThenReadModels)
             {
-                ValidateSpecificationReadModel(state);
+                ValidateSpecificationReadModel(state, false, true);
             }
 
             RejectDuplicateReadModelStates(specification.ThenReadModels, "expected read model");
@@ -612,6 +617,12 @@ internal static partial class SemanticModelValidator
             if (hasRejection && (specification.ThenErrors.Length != 1 || hasSuccessOutcome))
             {
                 throw new InvalidSemanticContract("A rejection specification must contain exactly one rejection and no success outcomes.");
+            }
+
+            if (specification.When is null && (hasRejection || specification.ThenEvents.Length > 0 ||
+                (specification.ThenReadModels.Length == 0 && specification.ThenQueries.Length == 0)))
+            {
+                throw new InvalidSemanticContract("A specification without a command requires a read model or query outcome and cannot assert events or errors.");
             }
 
             if (!hasRejection && !hasSuccessOutcome)
@@ -635,7 +646,7 @@ internal static partial class SemanticModelValidator
             ValidatePropertyValues(value.Values, eventContract.Properties, true);
         }
 
-        void ValidateSpecificationReadModel(SemanticSpecificationReadModel state)
+        void ValidateSpecificationReadModel(SemanticSpecificationReadModel state, bool requireExact, bool requireIdentifier)
         {
             if (!_readModels.TryGetValue(state.ReadModel, out var readModel))
             {
@@ -644,9 +655,10 @@ internal static partial class SemanticModelValidator
 
             var identifier = IdentifierProperty(readModel);
             ValidateValue(state.Key, identifier.Type, "specification read model key");
-            ValidatePropertyValues(state.Values, readModel.Properties, true);
-            var identifierValue = state.Values.Single(_ => _.TargetProperty == identifier.Id).Value;
-            if (!SemanticValueRules.AreEqual(state.Key, identifierValue))
+            ValidatePropertyValues(state.Values, readModel.Properties, requireExact);
+            var identifierValue = state.Values.SingleOrDefault(_ => _.TargetProperty == identifier.Id)?.Value;
+            if ((requireIdentifier && identifierValue is null) ||
+                (identifierValue is not null && !SemanticValueRules.AreEqual(state.Key, identifierValue)))
             {
                 throw new InvalidSemanticContract("A specification read model key must equal its identifier property value.");
             }
@@ -681,9 +693,15 @@ internal static partial class SemanticModelValidator
                     throw new InvalidSemanticContract("A specification query result uses the wrong read model or key.");
                 }
 
-                ValidateSpecificationReadModel(state);
-                var queryKeyValue = state.Values.Single(_ => _.TargetProperty == keyProperty.Id).Value;
-                if (!SemanticValueRules.AreEqual(queryKeyValue, result.Key))
+                ValidateSpecificationReadModel(state, false, false);
+                var queryKeyValue = state.Values.SingleOrDefault(_ => _.TargetProperty == keyProperty.Id)?.Value;
+                if (queryKeyValue is null && keyProperty.IsIdentifier)
+                {
+                    queryKeyValue = state.Key;
+                }
+
+                if (queryKeyValue is null || !SemanticValueRules.AreEqual(queryKeyValue, result.Key) ||
+                    (keyProperty.IsIdentifier && !SemanticValueRules.AreEqual(state.Key, result.Key)))
                 {
                     throw new InvalidSemanticContract("A specification query result uses the wrong read model or key.");
                 }
@@ -906,8 +924,10 @@ internal static partial class SemanticModelValidator
         {
             RequireObjects(specification.GivenEvents, nameof(specification.GivenEvents), "specification event");
             RequireObjects(specification.GivenReadModels, nameof(specification.GivenReadModels), "specification read model");
-            RejectNull(specification.When, "specification command");
-            RequireObjects(specification.When.Values, nameof(specification.When.Values), "property value");
+            if (specification.When is not null)
+            {
+                RequireObjects(specification.When.Values, nameof(specification.When.Values), "property value");
+            }
             RequireObjects(specification.ThenEvents, nameof(specification.ThenEvents), "specification event");
             RequireObjects(specification.ThenReadModels, nameof(specification.ThenReadModels), "specification read model");
             RequireObjects(specification.ThenQueries, nameof(specification.ThenQueries), "specification query result");

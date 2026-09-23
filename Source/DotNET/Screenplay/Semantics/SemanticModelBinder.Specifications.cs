@@ -22,18 +22,25 @@ public sealed partial class SemanticModelBinder
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Specification '{specification.Name}' file reference is realization provenance.", specification.File.Location);
             }
 
-            if (specification.When is null || !commands.TryGetValue(ShortName(specification.When.CommandType), out var command))
+            SemanticCommand? command = null;
+            if (specification.When is not null && !commands.TryGetValue(ShortName(specification.When.CommandType), out command))
             {
-                Error(DiagnosticCodes.InvalidSemanticBinding, $"Specification '{specification.Name}' command is unresolved in its slice.", specification.Location);
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"Specification '{specification.Name}' command is unresolved in its slice.", specification.When.Location);
                 return null;
             }
 
-            if (specification.When.For is not null)
+            if (specification.When?.For is not null)
             {
                 Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
-                    $"Specification command destination assertion 'for' on '{specification.When.CommandType}' is not admitted by ESM v1.",
+                    $"Specification command destination assertion 'for' on '{specification.When.CommandType}' is reserved for ESM v2 (issue #226).",
                     specification.When.For.Location);
+            }
+
+            if (specification.When is null && (specification.ThenEvents.Any() || specification.ThenErrors.Any() ||
+                (!(specification.ThenReadModels?.Any() ?? false) && !specification.ThenQueries.Any())))
+            {
+                Error(DiagnosticCodes.InvalidWhenlessSpecification, "A specification without 'when' requires at least one 'then readmodel' or 'then query' and cannot assert 'then' events or errors.", specification.Location);
             }
 
             var address = SemanticAddress.ForSpecification(slice, specification.Name);
@@ -44,8 +51,8 @@ public sealed partial class SemanticModelBinder
                 .Where(_ => _ is not null)
                 .Select(_ => _!)
                 .ToImmutableArray();
-            var when = new SemanticSpecificationCommand(
-                command.Id,
+            var when = specification.When is null ? null : new SemanticSpecificationCommand(
+                command!.Id,
                 BindPropertyValues(specification.When.Values, command.Properties.ToDictionary(_ => _.Name, StringComparer.Ordinal), "specification command"));
             var thenEvents = specification.ThenEvents.Select(BindSpecificationEvent).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             var thenReadModels = (specification.ThenReadModels ?? [])
@@ -73,7 +80,7 @@ public sealed partial class SemanticModelBinder
             {
                 Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
-                    $"Specification event-source assertion 'for' on '{value.EventType}' is not admitted by ESM v1.",
+                    $"Specification event-source assertion 'for' on '{value.EventType}' is reserved for ESM v2 (issue #226).",
                     value.For.Location);
             }
 
@@ -99,20 +106,21 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            return BindReadModelState(readModel, values, location);
+            return BindReadModelState(readModel, values, location, null);
         }
 
         SemanticSpecificationReadModel? BindReadModelState(
             BoundReadModel readModel,
             IEnumerable<PropertyMappingSyntax> values,
-            SourceLocation location)
+            SourceLocation location,
+            SemanticValue? inferredKey)
         {
             var bound = BindPropertyValues(values, readModel.Properties, "specification read model");
             var identifier = readModel.Model.Properties.SingleOrDefault(_ => _.IsIdentifier);
-            var key = identifier is null ? null : bound.SingleOrDefault(_ => _.TargetProperty == identifier.Id)?.Value;
+            var key = identifier is null ? null : bound.SingleOrDefault(_ => _.TargetProperty == identifier.Id)?.Value ?? inferredKey;
             if (key is null)
             {
-                Error(DiagnosticCodes.InvalidSemanticBinding, $"Specification read model '{readModel.Model.Name}' does not state its identifier property.", location);
+                Error(DiagnosticCodes.MissingSpecificationReadModelIdentifier, $"Specification read model '{readModel.Model.Name}' must state its identifier property '{identifier?.Name}' in this block.", location);
                 return null;
             }
 
@@ -136,7 +144,7 @@ public sealed partial class SemanticModelBinder
 
             var readModel = _readModels.Values.Single(_ => _.Model.Id == query.ReadModel);
             var results = value.Results
-                .Select(result => BindReadModelState(readModel, result.Properties, result.Location))
+                .Select(result => BindReadModelState(readModel, result.Properties, result.Location, key))
                 .Where(_ => _ is not null)
                 .Select(_ => _!)
                 .ToImmutableArray();
@@ -154,6 +162,13 @@ public sealed partial class SemanticModelBinder
                 if (!properties.TryGetValue(value.Property, out var property))
                 {
                     Error(DiagnosticCodes.InvalidSemanticBinding, $"The {description} property '{value.Property}' is unresolved.", value.Location);
+                    continue;
+                }
+
+                if (value.Source is LiteralExpressionSyntax { Value: null } &&
+                    (description == "specification command" || description == "specification event"))
+                {
+                    Error(DiagnosticCodes.NullSpecificationFact, $"A {description} cannot contain null: in Chronicle, an optional fact is a separate event.", value.Source.Location);
                     continue;
                 }
 

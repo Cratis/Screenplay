@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #if DEBUG
+using System.Text.Json;
 using Cratis.Screenplay.Semantics.Serialization.given;
 
 namespace Cratis.Screenplay.Semantics.Serialization.for_CanonicalSemanticModelSerializer;
@@ -36,6 +37,18 @@ public class when_serializing_the_golden_model : Specification
     [Fact] void should_reserialize_the_golden_bytes_identically() => _reserialized.SequenceEqual(_expected).ShouldBeTrue();
     [Fact] void should_preserve_the_distinct_semantic_revision() => _roundTripped.Revision.ShouldEqual(_model.Revision);
     [Fact] void should_cover_a_produced_event_without_a_condition_or_destination() => _produced.Any(_ => _.Condition is null && _.Destination is null).ShouldBeTrue();
+    [Fact] void should_omit_when_for_the_read_only_specification()
+    {
+        using var document = JsonDocument.Parse(_serialized);
+        var specifications = document.RootElement.GetProperty("application").GetProperty("modules")[0].GetProperty("features")[0]
+            .GetProperty("features")[0].GetProperty("slices").EnumerateArray()
+            .SelectMany(slice => slice.GetProperty("specifications").EnumerateArray())
+            .ToArray();
+        specifications.Single(_ => _.GetProperty("name").GetString() == "looks up established state without a command")
+            .TryGetProperty("when", out _).ShouldBeFalse();
+        specifications.Single(_ => _.GetProperty("name").GetString() == "creates an entity from existing state")
+            .TryGetProperty("when", out _).ShouldBeTrue();
+    }
     [Fact] void should_cover_a_bare_rejection() => _errors.Any(_ => _.Code is null && _.Message is null).ShouldBeTrue();
     [Fact] void should_cover_a_message_only_rejection() => _errors.Any(_ => _.Code is null && _.Message == "Title is invalid").ShouldBeTrue();
     [Fact] void should_cover_both_constraint_kinds() =>

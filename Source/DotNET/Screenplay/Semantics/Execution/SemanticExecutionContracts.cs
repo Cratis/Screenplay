@@ -179,6 +179,19 @@ public sealed record SemanticExecutionRequest(
     ImmutableDictionary<SemanticId, SemanticValue> AllocatedIdentities)
 {
     /// <summary>
+    /// Gets a value indicating that the request runs queries without a command.
+    /// </summary>
+    public bool IsReadOnly { get; init; }
+
+    /// <summary>
+    /// Creates a request that only queries established world state.
+    /// </summary>
+    /// <param name="queries">Queries to execute.</param>
+    /// <returns>The read-only request.</returns>
+    public static SemanticExecutionRequest ForQueries(ImmutableArray<SemanticQueryRequest> queries) =>
+        new(default, [], queries, EmptyAllocatedIdentities()) { IsReadOnly = true };
+
+    /// <summary>
     /// Creates a request with no generated identity requirements.
     /// </summary>
     /// <param name="command">The command semantic identity.</param>
