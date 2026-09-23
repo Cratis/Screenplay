@@ -2,7 +2,7 @@
 
 Projections declare how events are projected into a queryable read model. The body of a `projection` block is written in the **Projection Declaration Language (PDL)** — an embedded sub-grammar. The Screenplay parser delegates the indented body to the PDL parser (see [Sub-language Pluggability](../sub-languages.md)).
 
-For documentation examples, use `pdl` fences in this section (compiled with `CompileProjection`); outside projections use `screenplay` fences for whole-document examples. A projection-level `key` is parsed but does not route events; declare keys on each `from` (or its events).
+For documentation examples, use `pdl` fences for projection-only snippets in `projections/*` (compiled with `CompileProjection`); use `screenplay` fences for whole-document examples, including ones on this page. A projection-level `key` is parsed but does not route events; declare keys on each `from` (or its events).
 
 The pages in this section document the full projection sub-language — every directive, operation, and expression the PDL supports. The same language is also used standalone by Cratis Chronicle to define projections without writing code; see [Chronicle projections](/chronicle/projections/projection-declaration-language/) for how Chronicle hosts and executes it. Chronicle is also the semantic reference for what a projection means: the executable semantic model mirrors how Chronicle lowers and runs it — see [Semantic Model](semantic-model.md).
 
