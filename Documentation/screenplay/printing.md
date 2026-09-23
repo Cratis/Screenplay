@@ -59,17 +59,21 @@ a file does:
 
 - **Comments are dropped.** The parser does not attach comments to syntax nodes,
   so a printed document has none.
-- **Member order is normalized.** A slice, feature or module keeps each kind of
-  member in its own collection, so the printer writes them in one fixed order
-  (for example, a slice's commands, then events, constraints, queries, read models
-  and so on, with specifications last) regardless of the order they were authored in.
+- **Order across files cannot be recovered.** Parsed members of a slice, feature or
+  module keep their authored order when they share a source file. A folder merge may
+  combine members from different files; their line numbers cannot be compared, so
+  the printer uses canonical kind order for that owner. Syntax created without source
+  positions (including typed JSON) also uses canonical kind order. A new member added
+  to a parsed owner prints after the last member of its kind, or before the first
+  member of a later canonical kind when none exists. Workspace AST replacements
+  inherit their original position, even though typed JSON omits source positions.
 - **Blank lines are normalized.** The printer separates members with its own blank lines.
 
 Round-tripping preserves meaning, not layout. To change a document without losing
 its comments, edit it through the [authoring workspace](ast-authoring.md) with
 `PreserveTrivia`, which patches only the changed text. Folder expansion writes
-files with this printer too, so it drops comments and normalizes order in the
-same way.
+files with this printer too, so it drops comments; each slice file retains its
+within-slice authored order.
 
 ## Generating from a model
 
@@ -100,7 +104,9 @@ var application = new ApplicationSyntax([], [], [], [module], SourceLocation.Sta
 var source = new ScreenplayPrinter().Print(application);
 ```
 
-Every node carries a `SourceLocation`. The printer ignores it, so `SourceLocation.Start` is a fine placeholder when you are constructing nodes rather than parsing them.
+Every node carries a `SourceLocation`. The printer uses comparable source positions
+for member order; `SourceLocation.Start` is the placeholder for nodes constructed
+without source text, which print in canonical kind order.
 
 ## When one document is too much
 

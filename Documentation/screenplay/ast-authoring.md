@@ -187,8 +187,9 @@ unsupported changes reject without a canonicalization fallback.
 Adding, removing or reordering nodes is structural and still requires
 `CanonicalizeTouchedDocuments`.
 
-Canonical printing does not keep comments and normalizes blank lines and member
-order. Before applying such a result, call
+Canonical printing does not keep comments and normalizes blank lines. It preserves
+parsed member order within a document; new members follow the insertion rule in
+[Printing and generating](printing.md#what-printing-does-not-keep). Before applying such a result, call
 `WorkspaceDroppedComments.In(result.WritePlan)` to list every comment a changed
 document loses, with its path, line, column and text. The `PLAY0288` warning for
 each canonically printed document states the same count and lines.

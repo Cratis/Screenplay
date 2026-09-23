@@ -404,7 +404,7 @@ application.play(2,1): warning PLAY0290: Import 'Catalog.ItemView' names 'ItemVi
 
 Writing a folder and compiling it back gives an equivalent application. The invoicing sample exercises the broad round-trip: it expands to twenty-one files, compiles back with no diagnostics, and expanding the result again produces exactly the same twenty-one files, byte for byte. A separate fixture covers module forms, behavior attachments on modules and features, and contributions on modules, features, and nested features, including when the owner's file sorts after its descendants.
 
-One thing does not survive, and it cannot: **declaration order**. A file system has paths, not order, so modules, features and slices come back sorted by name rather than in the order they were authored. Everything within a slice - its events, commands, projections, mappings, code blocks, descriptions - comes back exactly as it went in, because it never left its file.
+One thing does not survive, and it cannot: **declaration order**. A file system has paths, not order, so modules, features and slices come back sorted by name rather than in the order they were authored. Everything within a slice - including the order of its events, commands, constraints and specifications - comes back in authored order, because it never left its file. Members of a module or feature that span different files have no shared source order; canonical printing uses kind order for those members.
 
 ## When a folder is the wrong fit
 
