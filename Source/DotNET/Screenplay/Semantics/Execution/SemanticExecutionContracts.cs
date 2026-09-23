@@ -106,7 +106,13 @@ public enum SemanticRejectionCategory
     /// <summary>
     /// Declarative validation rejected the command.
     /// </summary>
-    Validation = 1
+    Validation = 1,
+
+    /// <summary>
+    /// An append-time constraint rejected the facts the command would append. The rejection code is the
+    /// constraint name.
+    /// </summary>
+    Constraint = 2
 }
 
 /// <summary>

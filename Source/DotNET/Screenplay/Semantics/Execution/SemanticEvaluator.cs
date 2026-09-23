@@ -59,6 +59,12 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             facts.Add(new(produced.EventContract, destination, values));
         }
 
+        // A violation is an outcome, not a failure: the command is rejected and the world is unchanged.
+        if (SemanticConstraintEnforcement.FindViolation(plan, world, facts.ToImmutable()) is { } violated)
+        {
+            return new SemanticRejected(world, SemanticRejectionCategory.Constraint, violated.Name, SemanticConstraintEnforcement.MessageFor(violated));
+        }
+
         if (!TryProject(plan, world.ReadModels, facts.ToImmutable(), out var readModels, out var projectionFailure))
         {
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, projectionFailure!);
