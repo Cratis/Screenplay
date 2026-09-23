@@ -394,37 +394,15 @@ public sealed partial class ScreenplayPrinter :
         using (writer.Indent())
         {
             WriteDescription(writer, module.Description);
-            WriteAttachments(writer, module.Behaviors, module.UsedBehaviors);
-
-            foreach (var screenTemplate in module.ScreenTemplates)
-            {
-                writer.Blank();
-                WriteScreenTemplate(writer, screenTemplate);
-            }
-
-            foreach (var dialogTemplate in module.DialogTemplates ?? [])
-            {
-                writer.Blank();
-                WriteDialogTemplate(writer, dialogTemplate);
-            }
-
-            foreach (var form in module.Forms ?? [])
-            {
-                writer.Blank();
-                WriteForm(writer, form);
-            }
-
-            foreach (var contribution in module.Contributions ?? [])
-            {
-                writer.Blank();
-                WriteContribution(writer, contribution);
-            }
-
-            foreach (var feature in module.Features)
-            {
-                writer.Blank();
-                WriteFeature(writer, feature);
-            }
+            var members = new List<PrintableMember>();
+            AddMembers(members, module.Behaviors, 0, behavior => WriteAttachedBehavior(writer, behavior));
+            AddMembers(members, module.UsedBehaviors, 1, uses => WriteUsesBehavior(writer, uses));
+            AddSeparatedMembers(members, writer, module.ScreenTemplates, 2, WriteScreenTemplate);
+            AddSeparatedMembers(members, writer, module.DialogTemplates ?? [], 3, WriteDialogTemplate);
+            AddSeparatedMembers(members, writer, module.Forms ?? [], 4, WriteForm);
+            AddSeparatedMembers(members, writer, module.Contributions ?? [], 5, WriteContribution);
+            AddSeparatedMembers(members, writer, module.Features, 6, WriteFeature);
+            WriteMembers(members);
         }
     }
 
@@ -718,25 +696,13 @@ public sealed partial class ScreenplayPrinter :
         using (writer.Indent())
         {
             WriteDescription(writer, feature.Description);
-            WriteAttachments(writer, feature.Behaviors, feature.UsedBehaviors);
-
-            foreach (var nested in feature.Features)
-            {
-                writer.Blank();
-                WriteFeature(writer, nested);
-            }
-
-            foreach (var slice in feature.Slices)
-            {
-                writer.Blank();
-                WriteSlice(writer, slice);
-            }
-
-            foreach (var contribution in feature.Contributions ?? [])
-            {
-                writer.Blank();
-                WriteContribution(writer, contribution);
-            }
+            var members = new List<PrintableMember>();
+            AddMembers(members, feature.Behaviors, 0, behavior => WriteAttachedBehavior(writer, behavior));
+            AddMembers(members, feature.UsedBehaviors, 1, uses => WriteUsesBehavior(writer, uses));
+            AddSeparatedMembers(members, writer, feature.Features, 2, WriteFeature);
+            AddSeparatedMembers(members, writer, feature.Slices, 3, WriteSlice);
+            AddSeparatedMembers(members, writer, feature.Contributions ?? [], 4, WriteContribution);
+            WriteMembers(members);
         }
     }
 
@@ -748,72 +714,21 @@ public sealed partial class ScreenplayPrinter :
             WriteDescription(writer, slice.Description);
             WriteFile(writer, slice.File);
 
-            foreach (var command in slice.Commands)
-            {
-                writer.Blank();
-                WriteCommand(writer, command);
-            }
-
-            foreach (var @event in slice.Events)
-            {
-                writer.Blank();
-                WriteEvent(writer, @event);
-            }
-
-            foreach (var constraint in slice.Constraints)
-            {
-                writer.Blank();
-                WriteConstraint(writer, constraint);
-            }
-
-            foreach (var query in slice.Queries)
-            {
-                writer.Blank();
-                WriteQuery(writer, query);
-            }
+            var members = new List<PrintableMember>();
+            AddSeparatedMembers(members, writer, slice.Commands, 0, WriteCommand);
+            AddSeparatedMembers(members, writer, slice.Events, 1, WriteEvent);
+            AddSeparatedMembers(members, writer, slice.Constraints, 2, WriteConstraint);
+            AddSeparatedMembers(members, writer, slice.Queries, 3, WriteQuery);
 
             // A read model comes before whatever builds it - the shape first, then where it comes from.
-            foreach (var readModel in slice.ReadModels ?? [])
-            {
-                writer.Blank();
-                WriteReadModel(writer, readModel);
-            }
-
-            foreach (var projection in slice.Projections)
-            {
-                writer.Blank();
-                WriteProjection(writer, projection);
-            }
-
-            foreach (var reducer in slice.Reducers ?? [])
-            {
-                writer.Blank();
-                WriteReducer(writer, reducer);
-            }
-
-            foreach (var capture in slice.Captures)
-            {
-                writer.Blank();
-                WriteCapture(writer, capture);
-            }
-
-            foreach (var reaction in slice.Reactions)
-            {
-                writer.Blank();
-                WriteReaction(writer, reaction);
-            }
-
-            foreach (var screen in slice.Screens)
-            {
-                writer.Blank();
-                WriteScreen(writer, screen);
-            }
-
-            foreach (var specification in slice.Specifications)
-            {
-                writer.Blank();
-                WriteSpecification(writer, specification);
-            }
+            AddSeparatedMembers(members, writer, slice.ReadModels ?? [], 4, WriteReadModel);
+            AddSeparatedMembers(members, writer, slice.Projections, 5, WriteProjection);
+            AddSeparatedMembers(members, writer, slice.Reducers ?? [], 6, WriteReducer);
+            AddSeparatedMembers(members, writer, slice.Captures, 7, WriteCapture);
+            AddSeparatedMembers(members, writer, slice.Reactions, 8, WriteReaction);
+            AddSeparatedMembers(members, writer, slice.Screens, 9, WriteScreen);
+            AddSeparatedMembers(members, writer, slice.Specifications, 10, WriteSpecification);
+            WriteMembers(members);
         }
     }
 

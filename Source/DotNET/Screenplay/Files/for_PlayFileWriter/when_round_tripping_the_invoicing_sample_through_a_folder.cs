@@ -1,8 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Cratis.Screenplay.Printing;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Files.for_PlayFileWriter;
 
@@ -14,7 +14,6 @@ namespace Cratis.Screenplay.Files.for_PlayFileWriter;
 public class when_round_tripping_the_invoicing_sample_through_a_folder : Specification
 {
     DirectoryInfo _root;
-    ScreenplayPrinter _printer;
     ApplicationSyntax _original;
     IEnumerable<PlayFileContent> _written;
     ApplicationCompilation<ApplicationSyntax> _recompiled;
@@ -23,7 +22,6 @@ public class when_round_tripping_the_invoicing_sample_through_a_folder : Specifi
     void Establish()
     {
         _root = Directory.CreateTempSubdirectory("playroundtrip");
-        _printer = new();
         _original = new ScreenplayCompiler().Compile(for_ScreenplayCompiler.given.Samples.Invoicing).Value!;
     }
 
@@ -40,7 +38,7 @@ public class when_round_tripping_the_invoicing_sample_through_a_folder : Specifi
     [Fact] void should_resolve_every_reference_across_the_folder() => _recompiled.Result.Diagnostics.ShouldBeEmpty();
     [Fact] void should_discover_every_file_it_wrote() => _recompiled.Sources.Count().ShouldEqual(_written.Count());
     [Fact] void should_write_a_file_per_module_feature_slice_and_one_for_the_application() => _written.Count().ShouldEqual(1 + Modules + Features + Slices);
-    [Fact] void should_give_back_an_equivalent_application() => _printer.Print(_recompiled.Result.Value!).ShouldEqual(_printer.Print(InPathOrder(_original)));
+    [Fact] void should_give_back_an_equivalent_application() => SyntaxJson.StructurallyEqual(_recompiled.Result.Value!, InPathOrder(_original)).ShouldBeTrue();
     [Fact] void should_expand_to_the_same_files_again() => _rewritten.Select(file => file.RelativePath).ShouldContainOnly(_written.Select(file => file.RelativePath));
     [Fact] void should_expand_to_the_same_content_again() => _rewritten.Select(Content).ShouldContainOnly(_written.Select(Content));
 
