@@ -50,7 +50,9 @@ internal static partial class ExpressionParser
 
         if (text.StartsWith("$eventContext.", StringComparison.Ordinal))
         {
-            return new EventContextExpressionSyntax(text["$eventContext.".Length..], location);
+            var path = text["$eventContext.".Length..];
+            EventContextPathValidator.Validate(context, path, location);
+            return new EventContextExpressionSyntax(path, location);
         }
 
         if (text == "$causedBy")

@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { eventContextPaths } from './event-context';
+
 export const keywordDocs: Record<string, string> = {
     domain: 'The domain the file belongs to — optional, at most one per file, before everything else.',
     import: 'Imports a type from another module; it becomes available by its short name.',
@@ -128,5 +130,6 @@ export const contextVariableDocs: Record<string, string> = {
     '$env': 'An environment variable, e.g. `$env.SERVICE_NAME`.',
     '$secrets': 'An encrypted secret resolved at runtime, e.g. `$secrets.azureAdClientId` — stays symbolic in the compiled tree.',
     '$strings': 'A localized string resolved from the `.strings` file of the active locale, e.g. `$strings.invoices.title`.',
-    '$eventContext.occurred': 'The timestamp of the event being projected.',
+    // Every $eventContext path the event-context catalog lists, for projections.
+    ...Object.fromEntries(eventContextPaths.map((path) => [`$eventContext.${path.path}`, path.description])),
 };

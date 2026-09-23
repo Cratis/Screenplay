@@ -45,8 +45,6 @@ const KEYWORDS = [
 const BUILTINS = [
     '$eventSourceId',
     '$causedBy',
-    '$occurred',
-    '$namespace',
     '$eventContext',
 ] as const;
 

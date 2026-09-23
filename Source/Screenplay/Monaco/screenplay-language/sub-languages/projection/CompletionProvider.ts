@@ -3,6 +3,7 @@
 
 import type { editor, languages, IRange, Position } from 'monaco-editor';
 import type { JsonSchema, JsonSchemaProperty, ReadModelInfo } from './index';
+import { eventContextMembers, eventContextMembersAfter } from '../../event-context';
 
 interface CompletionContext {
     lineContent: string;
@@ -12,6 +13,13 @@ interface CompletionContext {
     indentLevel: number;
     lineNumber: number;
 }
+
+// The path typed so far after $eventContext. - on its own or as the dynamic key of a mapping target - and the
+// partial segment under the cursor.
+const EVENT_CONTEXT_PATH = /\$eventContext\.((?:\w+\.)*)(\w*)$/;
+
+// The members the parser accepts after the $causedBy short form.
+const CAUSED_BY_SHORT_FORM: readonly string[] = ['subject', 'name', 'userName'];
 
 export class CompletionProvider implements languages.CompletionItemProvider {
     private readModels: ReadModelInfo[] = [];
@@ -177,7 +185,10 @@ export class CompletionProvider implements languages.CompletionItemProvider {
     }
 
     private isPropertyDotAccess(context: CompletionContext): boolean {
-        return /(\w+|\$\w+)\.(\w*)$/.test(context.textBeforeCursor);
+        // A member of an event property or a $-expression, or any depth of an event-context path - written as an
+        // expression or as the dynamic key of a mapping target (propertyName.$eventContext.<path>).
+        return /(\w+|\$\w+)\.(\w*)$/.test(context.textBeforeCursor) ||
+               EVENT_CONTEXT_PATH.test(context.textBeforeCursor);
     }
 
     private addProjectionLineCompletions(suggestions: languages.CompletionItem[], context: CompletionContext): void {
@@ -501,37 +512,14 @@ export class CompletionProvider implements languages.CompletionItemProvider {
             {
                 label: '$causedBy',
                 insertText: '$causedBy',
-                documentation: 'Information about who/what caused the event',
-                detail: 'Identity Expression',
-                children: [
-                    { name: 'subject', doc: 'The subject identifier' },
-                    { name: 'name', doc: 'The display name' },
-                    { name: 'userName', doc: 'The username' },
-                ]
+                documentation: 'The identity that caused the event. Chronicle cannot yet evaluate this short form (Cratis/Chronicle#4119) - prefer $eventContext.causedBy.<property>.',
+                detail: 'Identity Expression'
             },
             {
                 label: '$eventContext',
                 insertText: '$eventContext.',
-                documentation: 'Access event context properties',
-                detail: 'Event Context Expression',
-                children: [
-                    { name: 'sequenceNumber', doc: 'The event sequence number' },
-                    { name: 'occurred', doc: 'When the event occurred' },
-                    { name: 'eventSourceId', doc: 'The event source identifier' },
-                    { name: 'namespace', doc: 'The event namespace' },
-                ]
-            },
-            {
-                label: '$occurred',
-                insertText: '$occurred',
-                documentation: 'Timestamp when the event occurred',
-                detail: 'Occurred Expression'
-            },
-            {
-                label: '$namespace',
-                insertText: '$namespace',
-                documentation: 'The namespace of the event',
-                detail: 'Namespace Expression'
+                documentation: `Metadata about the event: ${eventContextMembers.map((member) => member.name).join(', ')}`,
+                detail: 'Event Context Expression'
             },
         ];
 
@@ -550,55 +538,22 @@ export class CompletionProvider implements languages.CompletionItemProvider {
     }
 
     private addPropertyMemberCompletions(suggestions: languages.CompletionItem[], context: CompletionContext): void {
+        // Any depth of an event-context path, as an expression or as a dynamic key (propertyName.$eventContext.<path>)
+        const eventContextMatch = context.textBeforeCursor.match(EVENT_CONTEXT_PATH);
+        if (eventContextMatch) {
+            const segments = eventContextMatch[1].split('.').filter((segment) => segment.length > 0);
+            this.addEventContextMemberCompletions(suggestions, context, segments, eventContextMatch[2]);
+            return;
+        }
+
         const match = context.textBeforeCursor.match(/(\w+|\$\w+)\.(\w*)$/);
         if (!match) return;
 
         const [, objectName, partialProp] = match;
 
-        // Handle $causedBy properties
+        // $causedBy reads the identity that caused the event - the members the parser accepts on the short form
         if (objectName === '$causedBy') {
-            const causedByProps = [
-                { name: 'subject', doc: 'The subject identifier', type: 'string' },
-                { name: 'name', doc: 'The display name', type: 'string' },
-                { name: 'userName', doc: 'The username', type: 'string' },
-            ];
-
-            causedByProps.forEach((prop) => {
-                if (!partialProp || prop.name.startsWith(partialProp)) {
-                    suggestions.push({
-                        label: prop.name,
-                        kind: 9,
-                        insertText: prop.name,
-                        documentation: prop.doc,
-                        detail: prop.type,
-                        range: this.getRangeForWord(context),
-                    });
-                }
-            });
-            return;
-        }
-
-        // Handle $eventContext properties
-        if (objectName === '$eventContext') {
-            const contextProps = [
-                { name: 'sequenceNumber', doc: 'The event sequence number', type: 'EventSequenceNumber' },
-                { name: 'occurred', doc: 'When the event occurred', type: 'DateTimeOffset' },
-                { name: 'eventSourceId', doc: 'The event source identifier', type: 'string' },
-                { name: 'namespace', doc: 'The event namespace', type: 'string' },
-            ];
-
-            contextProps.forEach((prop) => {
-                if (!partialProp || prop.name.startsWith(partialProp)) {
-                    suggestions.push({
-                        label: prop.name,
-                        kind: 9,
-                        insertText: prop.name,
-                        documentation: prop.doc,
-                        detail: prop.type,
-                        range: this.getRangeForWord(context),
-                    });
-                }
-            });
+            this.addEventContextMemberCompletions(suggestions, context, ['causedBy'], partialProp, CAUSED_BY_SHORT_FORM);
             return;
         }
 
@@ -618,6 +573,29 @@ export class CompletionProvider implements languages.CompletionItemProvider {
                 }
             });
         }
+    }
+
+    private addEventContextMemberCompletions(
+        suggestions: languages.CompletionItem[],
+        context: CompletionContext,
+        segments: readonly string[],
+        partial: string,
+        only?: readonly string[]
+    ): void {
+        const members = eventContextMembersAfter(segments) ?? [];
+        members
+            .filter((member) => !only || only.includes(member.name))
+            .filter((member) => !partial || member.name.startsWith(partial))
+            .forEach((member) => {
+                suggestions.push({
+                    label: member.name,
+                    kind: member.kind === 'function' ? 1 : 9,
+                    insertText: member.name,
+                    documentation: member.description,
+                    detail: member.type,
+                    range: this.getRangeForWord(context),
+                });
+            });
     }
 
     private getCurrentEventType(model: editor.ITextModel, lineNumber: number): string | null {

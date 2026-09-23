@@ -1557,9 +1557,39 @@ public static class DiagnosticCodes
     /// </summary>
     public const string RedundantImport = "PLAY0290";
 
+    // PLAY0291-PLAY0294 is left free deliberately.
+
+    // Event context paths, checked against Syntax.EventContextCatalog.
+
+    /// <summary>
+    /// An <c>$eventContext.&lt;path&gt;</c> opens with a member the event context does not have.
+    /// </summary>
+    public const string UnknownEventContextMember = "PLAY0295";
+
+    /// <summary>
+    /// An <c>$eventContext.&lt;path&gt;</c> continues into something the member before it does not have.
+    /// </summary>
+    public const string UnknownEventContextPath = "PLAY0296";
+
+    /// <summary>
+    /// An <c>$eventContext.&lt;path&gt;</c> continues below a collection - <c>causation</c> or <c>tags</c> - which has
+    /// no addressing grammar and never resolves.
+    /// </summary>
+    public const string EventContextPathBelowCollection = "PLAY0297";
+
+    /// <summary>
+    /// An <c>$eventContext</c> reference names no member, or has an empty segment.
+    /// </summary>
+    public const string MissingEventContextPath = "PLAY0298";
+
+    /// <summary>
+    /// A dynamic dictionary key names a <c>$</c> source other than <c>$eventContext</c>, which the runtime never resolves.
+    /// </summary>
+    public const string UnresolvedDynamicKeySource = "PLAY0299";
+
     // PLAY0300-PLAY0349 is reserved for the interaction model - behaviors, interaction triggers, actions and
     // continuations. The range is contiguous and allocated up front so the constructs land as one coherent
-    // revision rather than accreting codes in three places. PLAY0290-PLAY0299 is left free deliberately.
+    // revision rather than accreting codes in three places.
 
     /// <summary>
     /// A behavior declaration is not of the form <c>behavior &lt;Name&gt;</c>.

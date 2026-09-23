@@ -3,6 +3,7 @@
 
 import type { editor, languages, Position } from 'monaco-editor';
 import type { JsonSchema, JsonSchemaProperty, ReadModelInfo, DraftReadModelInfo } from './index';
+import { describeEventContext, describeEventContextMember, eventContextMemberAt } from '../../event-context';
 
 export class HoverProvider implements languages.HoverProvider {
     private readModels: ReadModelInfo[] = [];
@@ -58,6 +59,20 @@ export class HoverProvider implements languages.HoverProvider {
         if (projectionNameMatch) {
             return {
                 contents: [{ value: 'The name of the projection' }],
+                range: {
+                    startLineNumber: position.lineNumber,
+                    startColumn: word.startColumn,
+                    endLineNumber: position.lineNumber,
+                    endColumn: word.endColumn,
+                },
+            };
+        }
+
+        // A segment of an $eventContext path - before keywords, since a member such as 'id' is also a keyword
+        const eventContextInfo = this.getEventContextInfo(lineContent, word.startColumn);
+        if (eventContextInfo) {
+            return {
+                contents: [{ value: eventContextInfo }],
                 range: {
                     startLineNumber: position.lineNumber,
                     startColumn: word.startColumn,
@@ -224,13 +239,34 @@ export class HoverProvider implements languages.HoverProvider {
     private getExpressionInfo(word: string): string | null {
         const expressions: Record<string, string> = {
             '$eventSourceId': '**$eventSourceId**\n\nThe identifier of the event source (aggregate/entity) that generated the event.',
-            '$causedBy': '**$causedBy**\n\nInformation about who/what caused the event.\n\n**Properties:**\n- `subject` - The subject identifier\n- `name` - The display name\n- `userName` - The username',
-            '$eventContext': '**$eventContext**\n\nAccess to event context properties.\n\n**Properties:**\n- `sequenceNumber` - The event sequence number\n- `occurred` - When the event occurred\n- `eventSourceId` - The event source identifier\n- `namespace` - The event namespace',
-            '$occurred': '**$occurred**\n\nThe timestamp when the event occurred.',
-            '$namespace': '**$namespace**\n\nThe namespace of the event.',
+            '$causedBy': '**$causedBy**\n\nThe identity that caused the event - `subject`, `name` or `userName`.\n\nChronicle cannot yet evaluate this short form (Cratis/Chronicle#4119); prefer **$eventContext.causedBy**.*property*.',
+            '$eventContext': describeEventContext(),
         };
 
         return expressions[word] || null;
+    }
+
+    // Describes the $eventContext path segment starting at the given column, if the word there is one.
+    private getEventContextInfo(lineContent: string, startColumn: number): string | null {
+        for (const match of lineContent.matchAll(/\$eventContext((?:\.\w+(?:\(\))?)*)/g)) {
+            let column = (match.index ?? 0) + 1;
+            if (startColumn === column) return describeEventContext();
+
+            column += '$eventContext'.length;
+            const segments = match[1].split('.').slice(1);
+            for (let index = 0; index < segments.length; index++) {
+                column += 1;
+                if (startColumn === column) {
+                    const path = segments.slice(0, index + 1);
+                    const member = eventContextMemberAt(path);
+                    return member ? describeEventContextMember(path.join('.'), member) : null;
+                }
+
+                column += segments[index].length;
+            }
+        }
+
+        return null;
     }
 
     private getPropertyInfo(model: editor.ITextModel, position: Position, propertyName: string): string | null {
