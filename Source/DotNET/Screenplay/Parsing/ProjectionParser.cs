@@ -89,6 +89,7 @@ internal static partial class ProjectionParser
                     autoMap = AutoMapMode.Disabled;
                     break;
                 case "key":
+                    context.Warning(DiagnosticCodes.UnusedProjectionKey, "A projection-level key does not route events - declare the key on each 'from' (or its events)", line.Location);
                     if (key is not null)
                     {
                         context.Error(DiagnosticCodes.DuplicateProjectionKey, "Duplicate key directive - a projection can only declare one key", line.Location);

@@ -1,0 +1,498 @@
+[
+  {
+    "path": "eventType",
+    "status": "known"
+  },
+  {
+    "path": "eventType.id",
+    "status": "known"
+  },
+  {
+    "path": "eventType.id.value",
+    "status": "known"
+  },
+  {
+    "path": "eventType.generation",
+    "status": "known"
+  },
+  {
+    "path": "eventType.generation.value",
+    "status": "known"
+  },
+  {
+    "path": "eventType.tombstone",
+    "status": "known"
+  },
+  {
+    "path": "eventSourceType",
+    "status": "known"
+  },
+  {
+    "path": "eventSourceType.value",
+    "status": "known"
+  },
+  {
+    "path": "eventSourceId",
+    "status": "known"
+  },
+  {
+    "path": "eventSourceId.value",
+    "status": "known"
+  },
+  {
+    "path": "eventStreamType",
+    "status": "known"
+  },
+  {
+    "path": "eventStreamType.value",
+    "status": "known"
+  },
+  {
+    "path": "eventStreamId",
+    "status": "known"
+  },
+  {
+    "path": "eventStreamId.value",
+    "status": "known"
+  },
+  {
+    "path": "sequenceNumber",
+    "status": "known"
+  },
+  {
+    "path": "sequenceNumber.value",
+    "status": "known"
+  },
+  {
+    "path": "occurred",
+    "status": "known"
+  },
+  {
+    "path": "occurred.Week",
+    "status": "known"
+  },
+  {
+    "path": "eventStore",
+    "status": "known"
+  },
+  {
+    "path": "eventStore.value",
+    "status": "known"
+  },
+  {
+    "path": "namespace",
+    "status": "known"
+  },
+  {
+    "path": "namespace.value",
+    "status": "known"
+  },
+  {
+    "path": "correlationId",
+    "status": "known"
+  },
+  {
+    "path": "correlationId.value",
+    "status": "known"
+  },
+  {
+    "path": "causation",
+    "status": "known"
+  },
+  {
+    "path": "causedBy",
+    "status": "known"
+  },
+  {
+    "path": "causedBy.subject",
+    "status": "known"
+  },
+  {
+    "path": "causedBy.name",
+    "status": "known"
+  },
+  {
+    "path": "causedBy.userName",
+    "status": "known"
+  },
+  {
+    "path": "causedBy.onBehalfOf",
+    "status": "known"
+  },
+  {
+    "path": "tags",
+    "status": "known"
+  },
+  {
+    "path": "hash",
+    "status": "known"
+  },
+  {
+    "path": "hash.value",
+    "status": "known"
+  },
+  {
+    "path": "observationState",
+    "status": "known"
+  },
+  {
+    "path": "subject",
+    "status": "known"
+  },
+  {
+    "path": "subject.value",
+    "status": "known"
+  },
+  {
+    "path": "subjectIsEventSourceId",
+    "status": "known"
+  },
+  {
+    "path": "EventType",
+    "status": "known"
+  },
+  {
+    "path": "EventType.id",
+    "status": "known"
+  },
+  {
+    "path": "EventType.id.value",
+    "status": "known"
+  },
+  {
+    "path": "EventType.generation",
+    "status": "known"
+  },
+  {
+    "path": "EventType.generation.value",
+    "status": "known"
+  },
+  {
+    "path": "EventType.tombstone",
+    "status": "known"
+  },
+  {
+    "path": "EventSourceType",
+    "status": "known"
+  },
+  {
+    "path": "EventSourceType.value",
+    "status": "known"
+  },
+  {
+    "path": "EventSourceId",
+    "status": "known"
+  },
+  {
+    "path": "EventSourceId.value",
+    "status": "known"
+  },
+  {
+    "path": "EventStreamType",
+    "status": "known"
+  },
+  {
+    "path": "EventStreamType.value",
+    "status": "known"
+  },
+  {
+    "path": "EventStreamId",
+    "status": "known"
+  },
+  {
+    "path": "EventStreamId.value",
+    "status": "known"
+  },
+  {
+    "path": "SequenceNumber",
+    "status": "known"
+  },
+  {
+    "path": "SequenceNumber.value",
+    "status": "known"
+  },
+  {
+    "path": "Occurred",
+    "status": "known"
+  },
+  {
+    "path": "Occurred.Week",
+    "status": "known"
+  },
+  {
+    "path": "EventStore",
+    "status": "known"
+  },
+  {
+    "path": "EventStore.value",
+    "status": "known"
+  },
+  {
+    "path": "Namespace",
+    "status": "known"
+  },
+  {
+    "path": "Namespace.value",
+    "status": "known"
+  },
+  {
+    "path": "CorrelationId",
+    "status": "known"
+  },
+  {
+    "path": "CorrelationId.value",
+    "status": "known"
+  },
+  {
+    "path": "Causation",
+    "status": "known"
+  },
+  {
+    "path": "CausedBy",
+    "status": "known"
+  },
+  {
+    "path": "CausedBy.subject",
+    "status": "known"
+  },
+  {
+    "path": "CausedBy.name",
+    "status": "known"
+  },
+  {
+    "path": "CausedBy.userName",
+    "status": "known"
+  },
+  {
+    "path": "CausedBy.onBehalfOf",
+    "status": "known"
+  },
+  {
+    "path": "Tags",
+    "status": "known"
+  },
+  {
+    "path": "Hash",
+    "status": "known"
+  },
+  {
+    "path": "Hash.value",
+    "status": "known"
+  },
+  {
+    "path": "ObservationState",
+    "status": "known"
+  },
+  {
+    "path": "Subject",
+    "status": "known"
+  },
+  {
+    "path": "Subject.value",
+    "status": "known"
+  },
+  {
+    "path": "SubjectIsEventSourceId",
+    "status": "known"
+  },
+  {
+    "path": "eventType.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "eventType.id.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "eventType.id.value.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "eventType.generation.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "eventType.generation.value.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "eventType.tombstone.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "eventSourceType.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "eventSourceType.value.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "eventSourceId.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "eventSourceId.value.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "eventStreamType.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "eventStreamType.value.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "eventStreamId.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "eventStreamId.value.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "sequenceNumber.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "sequenceNumber.value.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "occurred.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "occurred.Week.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "eventStore.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "eventStore.value.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "namespace.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "namespace.value.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "correlationId.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "correlationId.value.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "causation.unknown",
+    "status": "belowCollection"
+  },
+  {
+    "path": "causedBy.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "causedBy.subject.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "causedBy.name.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "causedBy.userName.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "causedBy.onBehalfOf.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "tags.unknown",
+    "status": "belowCollection"
+  },
+  {
+    "path": "hash.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "hash.value.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "observationState.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "subject.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "subject.value.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "subjectIsEventSourceId.unknown",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "",
+    "status": "missing"
+  },
+  {
+    "path": "eventType.",
+    "status": "missing"
+  },
+  {
+    "path": ".eventType",
+    "status": "missing"
+  },
+  {
+    "path": "unknown",
+    "status": "unknownMember"
+  },
+  {
+    "path": "unknown.id",
+    "status": "unknownMember"
+  },
+  {
+    "path": "eventType.name",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "tags.value",
+    "status": "belowCollection"
+  },
+  {
+    "path": "causation.occurred",
+    "status": "belowCollection"
+  },
+  {
+    "path": "causedBy.onBehalfOf.onBehalfOf.userName",
+    "status": "known"
+  },
+  {
+    "path": "occurred.Week()",
+    "status": "known"
+  },
+  {
+    "path": "occurred.week",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "occurred.Week.value",
+    "status": "unknownSubPath"
+  },
+  {
+    "path": "EventType.Id",
+    "status": "known"
+  }
+]

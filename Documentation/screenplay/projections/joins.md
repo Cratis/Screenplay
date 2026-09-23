@@ -1,6 +1,6 @@
 # Joins
 
-Joins allow you to enrich a projection with data from related events that share a common key. This is useful when you need to combine information from different event streams.
+Joins allow you to enrich a projection with data from related events that share a common key. This is useful when you need to combine information from different event streams. In `join <Name> on <Property>`, `<Name>` is a label for readers only: Chronicle discards it during lowering, so it has no runtime meaning. `<Property>` is the join key used at runtime.
 
 ## Basic Syntax
 

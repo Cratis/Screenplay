@@ -598,7 +598,7 @@ An `import` never changes what these checks see: a name the application declares
 
 These checks do not execute handlers, custom predicates or opaque expressions. An undeclared query signature does not establish a read-key mismatch. An unknown event shape under AutoMap, or an open `all` subscription with AutoMap, leaves projection coverage undecidable. Outcome checks compare explicit producer mappings only; they do not invent mappings for omitted fields.
 
-The complete Program v1 disposition of current syntax is maintained as a delivery artifact alongside the Screenplay architecture and program.
+For executable-model dispositions, see `PLAY0268`–`PLAY0271` above, [projection semantic-model admission](projections/semantic-model.md), [what the executable model admits for commands](commands.md#what-the-executable-model-admits), and [constraints](constraints.md).
 
 ### AST authoring
 
@@ -675,6 +675,7 @@ An inline `on` block is an anonymous behavior, so it has no name to report again
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0380` | Warning | A projection construct binds, but Chronicle's projection lowering drops part of it: `all` inside a `children` or `nested` block loses its subscription to every event type and behaves as `every`, and an `automap` or `no automap` on a joined event is replaced by the auto-map of the level the join sits in. |
+| `PLAY0381` | Warning | A projection-level `key` is parsed but does not route events in Chronicle or the executable semantic model. Declare keys on each `from` (or its events). |
 
 ### Constraints in the semantic model
 

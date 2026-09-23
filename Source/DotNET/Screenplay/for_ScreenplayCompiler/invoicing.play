@@ -703,7 +703,6 @@ module Invoicing
         authorize OwnsInvoice or IsAuthenticated
 
       projection InvoiceDetails => InvoiceDetailsReadModel
-        key invoiceId
         every
           lastUpdatedAt = $eventContext.occurred
           exclude children

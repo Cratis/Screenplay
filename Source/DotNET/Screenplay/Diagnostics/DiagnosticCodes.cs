@@ -1789,6 +1789,11 @@ public static class DiagnosticCodes
     /// </summary>
     public const string PartiallyLoweredProjectionSyntax = "PLAY0380";
 
+    /// <summary>
+    /// A projection-level key is accepted by the parser but is not used to route events by Chronicle.
+    /// </summary>
+    public const string UnusedProjectionKey = "PLAY0381";
+
     // Constraints in the semantic model.
 
     /// <summary>
