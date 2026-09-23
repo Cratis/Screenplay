@@ -339,6 +339,26 @@ public static partial class canonical_serialization_golden_vectors
             queries,
             []);
 
+        // #207 when-less specifications
+        stateView = stateView with
+        {
+            Specifications =
+            [
+                new(
+                    Id(2070),
+                    "looks up established state without a command",
+                    [],
+                    [readModelState],
+                    null,
+                    [],
+                    [new(readModel, idValue, [new(readModelId, idValue)])],
+                    [new(byId, idValue, [new(readModel, idValue, [new(readModelLabel, titleValue)])])],
+                    [])
+            ]
+        };
+
+        // end #207 when-less specifications
+
         // #209 validation
         var referenceConcept = new SemanticConcept(
             Id(2090),

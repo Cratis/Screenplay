@@ -44,6 +44,10 @@ public class when_inspecting_the_containment_it_traverses : Specification
     [Fact] void should_only_contain_the_levels_the_plan_walks() =>
         _containment.ShouldContainOnly(["SemanticApplication.Modules", "SemanticModule.Features", "SemanticFeature.Features", "SemanticFeature.Slices"]);
 
+    [Fact] void should_traverse_specifications_with_or_without_a_command() =>
+        new NullabilityInfoContext().Create(typeof(SemanticSpecification).GetProperty(nameof(SemanticSpecification.When))!).ReadState
+            .ShouldEqual(NullabilityState.Nullable);
+
     [Fact] void should_only_carry_the_slice_members_the_plan_indexes() =>
         _sliceMembers.ShouldContainOnly(["Events", "Commands", "ReadModels", "Projections", "Queries", "Specifications", "Constraints"]);
 

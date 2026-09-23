@@ -1783,6 +1783,21 @@ public static class DiagnosticCodes
     public const string DuplicateBehaviorAttachment = "PLAY0340";
 
     /// <summary>
+    /// A command or event specification value uses null instead of modeling an optional fact as a separate event.
+    /// </summary>
+    public const string NullSpecificationFact = "PLAY0350";
+
+    /// <summary>
+    /// A read model state does not state its identifier property.
+    /// </summary>
+    public const string MissingSpecificationReadModelIdentifier = "PLAY0351";
+
+    /// <summary>
+    /// A specification without a command has an incompatible or missing outcome.
+    /// </summary>
+    public const string InvalidWhenlessSpecification = "PLAY0352";
+
+    /// <summary>
     /// A projection construct binds, but Chronicle's projection lowering drops part of it: <c>all</c> inside a
     /// <c>children</c> or <c>nested</c> block loses its subscription to every event type, and an auto-map setting on a
     /// joined event is replaced by the level's.

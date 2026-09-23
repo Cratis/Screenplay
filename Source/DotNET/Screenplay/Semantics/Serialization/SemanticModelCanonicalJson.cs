@@ -294,8 +294,11 @@ internal static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", specification.Name);
         WriteArray(writer, "givenEvents", specification.GivenEvents, WriteSpecificationEvent);
         WriteArray(writer, "givenReadModels", specification.GivenReadModels, WriteSpecificationReadModel);
-        writer.WritePropertyName("when");
-        WriteSpecificationCommand(writer, specification.When);
+        if (specification.When is not null)
+        {
+            writer.WritePropertyName("when");
+            WriteSpecificationCommand(writer, specification.When);
+        }
         WriteArray(writer, "thenEvents", specification.ThenEvents, WriteSpecificationEvent);
         WriteArray(writer, "thenReadModels", specification.ThenReadModels, WriteSpecificationReadModel);
         WriteArray(writer, "thenQueries", specification.ThenQueries, WriteSpecificationQuery);

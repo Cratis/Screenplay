@@ -27,6 +27,10 @@ readmodel AccountBalance
   movements Int
 ```
 
+## Identifying an instance in specifications
+
+In the executable semantic model, the read model's identifier is inferred from its single unambiguous keyed query: `query InvoiceById => InvoiceSummary? by invoiceId` identifies `InvoiceSummary` instances by `invoiceId`. Do not mark a read-model property `identifier`; supply a keyed query instead. `given readmodel` and `then readmodel` blocks must state that property to select an instance. A `then query … result` block can omit it because its `arguments` already supply the key. See [Specifications](specifications.md#read-model-state).
+
 ## The arrow always points the same way
 
 A read model never declares what composes it. Whatever builds it names it, with the same `=>` a projection uses:
