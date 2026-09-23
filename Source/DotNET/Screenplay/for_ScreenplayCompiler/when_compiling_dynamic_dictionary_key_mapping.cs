@@ -12,7 +12,7 @@ public class when_compiling_dynamic_dictionary_key_mapping : given.a_compiler
         projection EventStatistics => EventStatisticsReadModel
           all
             count eventCountByType.$eventContext.eventType.id
-            increment processingAttempts.$eventContext.causationId
+            increment processingAttempts.$eventContext.eventSourceId
             decrement pendingItems.$eventContext.correlationId
         """;
 
@@ -29,6 +29,6 @@ public class when_compiling_dynamic_dictionary_key_mapping : given.a_compiler
     [Fact] void should_have_no_diagnostics() => _result.Diagnostics.ShouldBeEmpty();
     [Fact] void should_have_three_mappings() => _all.Mappings.Count().ShouldEqual(3);
     [Fact] void should_parse_count_with_dynamic_key() => _all.Mappings.OfType<CountMappingSyntax>().Single().Property.ShouldEqual("eventCountByType.$eventContext.eventType.id");
-    [Fact] void should_parse_increment_with_dynamic_key() => _all.Mappings.OfType<IncrementMappingSyntax>().Single().Property.ShouldEqual("processingAttempts.$eventContext.causationId");
+    [Fact] void should_parse_increment_with_dynamic_key() => _all.Mappings.OfType<IncrementMappingSyntax>().Single().Property.ShouldEqual("processingAttempts.$eventContext.eventSourceId");
     [Fact] void should_parse_decrement_with_dynamic_key() => _all.Mappings.OfType<DecrementMappingSyntax>().Single().Property.ShouldEqual("pendingItems.$eventContext.correlationId");
 }

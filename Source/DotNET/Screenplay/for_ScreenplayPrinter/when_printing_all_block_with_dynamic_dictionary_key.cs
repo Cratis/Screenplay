@@ -15,7 +15,7 @@ public class when_printing_all_block_with_dynamic_dictionary_key : given.a_print
               projection EventStatistics => EventStatisticsReadModel
                 all
                   count eventCountByType.$eventContext.eventType.id
-                  increment processingAttempts.$eventContext.causationId
+                  increment processingAttempts.$eventContext.eventSourceId
                   decrement pendingItems.$eventContext.correlationId
                   lastOccurred = $eventContext.occurred
         """;
@@ -28,7 +28,7 @@ public class when_printing_all_block_with_dynamic_dictionary_key : given.a_print
     [Fact] void should_reparse_without_diagnostics() => _roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
     [Fact] void should_print_the_same_text_on_a_second_pass() => _roundtrip.PrintedAgain.ShouldEqual(_roundtrip.Printed);
     [Fact] void should_preserve_count_with_dynamic_key() => _roundtrip.Printed.ShouldContain("count eventCountByType.$eventContext.eventType.id");
-    [Fact] void should_preserve_increment_with_dynamic_key() => _roundtrip.Printed.ShouldContain("increment processingAttempts.$eventContext.causationId");
+    [Fact] void should_preserve_increment_with_dynamic_key() => _roundtrip.Printed.ShouldContain("increment processingAttempts.$eventContext.eventSourceId");
     [Fact] void should_preserve_decrement_with_dynamic_key() => _roundtrip.Printed.ShouldContain("decrement pendingItems.$eventContext.correlationId");
     [Fact] void should_not_escape_mid_path_keywords() => _roundtrip.Printed.ShouldNotContain("@id");
     [Fact] void should_preserve_the_all_block() => _roundtrip.Printed.ShouldContain("all");
