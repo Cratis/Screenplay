@@ -558,7 +558,7 @@ itself what an unresolvable one means.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0268` | Error | Source syntax carries portable behavior ESM v1 cannot represent, including a specification `for <value>` event-source assertion reserved for ESM v2 (#226) and a validation rule ESM v1 does not admit - a comparison on a date, `matches`, `require` or code validation (see [Commands](commands.md#what-the-executable-model-admits)). |
+| `PLAY0268` | Error | Source syntax carries portable behavior ESM v1 cannot represent, including a specification `for <value>` event-source assertion reserved for ESM v2 (#226) and a validation rule ESM v1 does not admit - a comparison on a date, `require` or code validation (see [Commands](commands.md#what-the-executable-model-admits)). |
 | `PLAY0269` | Information | Source syntax is explicitly deferred from the current backend semantic profile. |
 | `PLAY0270` | Information | Source syntax is realization or operational metadata rather than portable behavior. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly. |
@@ -683,6 +683,13 @@ A behavior is *deferred* from the backend ESM v1 profile in the same way every o
 | `PLAY0340` | Warning | Another file of a folder repeats an attachment of the same `module` or `feature` - a `uses` of the same behavior with the same arguments, or an inline `on` block identical to one already attached. Only the first, in file-path order, is kept; the repeat is ignored and the warning names the file that attached it first. Folders written by earlier versions restate a module's or feature's attachments in every descendant file, and report this once per copy. |
 
 An inline `on` block is an anonymous behavior, so it has no name to report against. Diagnostics inside one cite the position and the trigger instead.
+
+### Match validation binding
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0366` | Error | A bare named `matches` pattern is not defined; only `email` is defined. Use a quoted ECMAScript pattern for custom matching. |
+| `PLAY0367` | Error | A quoted `matches` operand is not a valid ECMAScript regular expression. |
 
 ### Projection binding
 

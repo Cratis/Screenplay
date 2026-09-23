@@ -125,13 +125,15 @@ Declarative validation covers the common cases without code:
 | `== <value>` | `currency == "NOK"` |
 | `!= <value>` | `status != "draft"` |
 | `length == <n>` | `currency length == 3` |
-| `matches <regex>` | `email matches email` |
-| `matches "<pattern>"` | `invoiceNumber matches "^INV-[0-9]{6}$"` |
+| `matches email` | `email matches email` |
+| `matches "<regex>"` | `invoiceNumber matches "^INV-[0-9]{6}$"` |
 | `all > <value>` (on collection) | `lines.quantity all > 0` |
 | `all >= <value>` (on collection) | `lines.unitPrice all >= 0` |
 | `rule <Name>` | `orgNumber rule BeAValidOrganizationNumber` |
 
 `max` and `min` take their meaning from the property's type: on text they bound its length (`reason max 500` — at most 500 characters), and on a number they bound its value (`quantity min 1`). There is one rule for each, not a separate length and value form.
+
+`matches "<regex>"` uses ECMAScript regular expression syntax. Like JavaScript `RegExp.test`, it succeeds if **any part** of the text matches; use `^` and `$` to require a whole-value match. Patterns are checked at binding, and an execution timeout rejects rather than accepting the value. It applies only to a single text value (not an enum or collection). `matches email` expands to `^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$`: exactly one `@`, a non-empty local part without whitespace or `@`, and a domain with at least two non-empty dot-separated parts without whitespace or `@`. This is a conservative pattern, **not** RFC 5322 email validation. Other bare names have no definition and are rejected; quote a pattern to use a custom regular expression.
 
 Every rule carries a `message` shown when it fails:
 
@@ -294,7 +296,7 @@ Still rejected, and why:
 | Rule | Why |
 | --- | --- |
 | any comparison on `Date` or `DateTime`, and `today` | ESM v1 has no runtime date value — a date is text in a fixed format — so it has nothing to compare against. |
-| `matches` | It awaits a portable pattern definition: whether `email` is a named pattern or a regular expression, and in which dialect, is undecided. |
+| a named `matches` pattern other than `email` | Only `email` has a portable definition; other names are rejected (`PLAY0366`). Invalid quoted ECMAScript patterns are rejected (`PLAY0367`). |
 | `require` | A requirement is decision-consistency semantics, which waits on a consistent snapshot of what the command reads. |
 | `rule <Name>` with a `file` or inline body, and `validate csharp` | Code validation requires a constrained implementation attachment. |
 | a bare `rule <Name>` | Its logic lives outside the document, so it has no portable meaning. |

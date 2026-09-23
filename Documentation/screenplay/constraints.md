@@ -84,6 +84,8 @@ A violation is an outcome, not an error in the system. The command that would ha
 | `unique <property> on <EventType>` | `Constraint '<Name>' is violated: another event source already holds the constrained value.` |
 | `unique event <EventType>` | `Constraint '<Name>' is violated: the event source already has the constrained event.` |
 
+The reference executor compares composite constraint values component-wise; Chronicle currently joins components with `-` before hashing, so values containing `-` can collide there until [Cratis/Chronicle#4131](https://github.com/Cratis/Chronicle/issues/4131) is fixed.
+
 The default message never contains the value that collided. A value can be personal data, and a rejection travels further than the event store does. If you declare `message`, its text is returned instead; do not include a sensitive value in that text.
 
 A constraint is checked against what the command would append, together with everything already in the event sequence — including events the same command appends before the one being checked.

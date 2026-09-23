@@ -431,6 +431,10 @@ RuleOp         = "not empty"
                | "all", ">=", Value
                | "rule", Ident ;
 
+(* "email" is the one defined named match pattern. StringLiteral here holds an
+   ECMAScript regular expression, not another named pattern; see Commands for
+   its definition and substring-matching semantics.                         *)
+
 (* RuleImplementation is only meaningful after "rule", Ident - the other RuleOp
    forms are already fully declarative and take no implementation body. *)
 RuleImplementation = FileDirective
