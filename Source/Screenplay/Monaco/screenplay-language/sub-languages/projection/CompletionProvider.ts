@@ -3,6 +3,7 @@
 
 import type { editor, languages, IRange, Position } from 'monaco-editor';
 import type { JsonSchema, JsonSchemaProperty, ReadModelInfo } from './index';
+import { eventContextMembers, eventContextMembersAfter } from '../../event-context';
 
 interface CompletionContext {
     lineContent: string;
@@ -12,6 +13,13 @@ interface CompletionContext {
     indentLevel: number;
     lineNumber: number;
 }
+
+// The path typed so far after $eventContext. - on its own or as the dynamic key of a mapping target - and the
+// partial segment under the cursor.
+const EVENT_CONTEXT_PATH = /\$eventContext\.((?:\w+\.)*)(\w*)$/;
+
+// The members the parser accepts after the $causedBy short form.
+const CAUSED_BY_SHORT_FORM: readonly string[] = ['subject', 'name', 'userName'];
 
 export class CompletionProvider implements languages.CompletionItemProvider {
     private readModels: ReadModelInfo[] = [];
@@ -177,12 +185,10 @@ export class CompletionProvider implements languages.CompletionItemProvider {
     }
 
     private isPropertyDotAccess(context: CompletionContext): boolean {
-        // Match simple property access: propertyName.member or $eventContext.member
-        // Also match dynamic dictionary paths: propertyName.$eventContext.member
-        // Also match nested paths: $eventContext.eventType.member or propertyName.$eventContext.eventType.member
+        // A member of an event property or a $-expression, or any depth of an event-context path - written as an
+        // expression or as the dynamic key of a mapping target (propertyName.$eventContext.<path>).
         return /(\w+|\$\w+)\.(\w*)$/.test(context.textBeforeCursor) ||
-               /\w+\.\$(\w+)\.(\w*)$/.test(context.textBeforeCursor) ||
-               /(?:.*\.)?\$eventContext\.\w+\.(\w*)$/.test(context.textBeforeCursor);
+               EVENT_CONTEXT_PATH.test(context.textBeforeCursor);
     }
 
     private addProjectionLineCompletions(suggestions: languages.CompletionItem[], context: CompletionContext): void {
@@ -506,37 +512,14 @@ export class CompletionProvider implements languages.CompletionItemProvider {
             {
                 label: '$causedBy',
                 insertText: '$causedBy',
-                documentation: 'Information about who/what caused the event',
-                detail: 'Identity Expression',
-                children: [
-                    { name: 'subject', doc: 'The subject identifier' },
-                    { name: 'name', doc: 'The display name' },
-                    { name: 'userName', doc: 'The username' },
-                ]
+                documentation: 'The identity that caused the event. Chronicle cannot yet evaluate this short form (Cratis/Chronicle#4119) - prefer $eventContext.causedBy.<property>.',
+                detail: 'Identity Expression'
             },
             {
                 label: '$eventContext',
                 insertText: '$eventContext.',
-                documentation: 'Access event context properties',
-                detail: 'Event Context Expression',
-                children: [
-                    { name: 'sequenceNumber', doc: 'The event sequence number' },
-                    { name: 'occurred', doc: 'When the event occurred' },
-                    { name: 'eventSourceId', doc: 'The event source identifier' },
-                    { name: 'namespace', doc: 'The event namespace' },
-                ]
-            },
-            {
-                label: '$occurred',
-                insertText: '$occurred',
-                documentation: 'Timestamp when the event occurred',
-                detail: 'Occurred Expression'
-            },
-            {
-                label: '$namespace',
-                insertText: '$namespace',
-                documentation: 'The namespace of the event',
-                detail: 'Namespace Expression'
+                documentation: `Metadata about the event: ${eventContextMembers.map((member) => member.name).join(', ')}`,
+                detail: 'Event Context Expression'
             },
         ];
 
@@ -555,103 +538,22 @@ export class CompletionProvider implements languages.CompletionItemProvider {
     }
 
     private addPropertyMemberCompletions(suggestions: languages.CompletionItem[], context: CompletionContext): void {
-        // Try to match nested property access: $eventContext.eventType.id or propertyName.$eventContext.eventType.id
-        const nestedMatch = context.textBeforeCursor.match(/(?:.*\.)?\$eventContext\.(\w+)\.(\w*)$/);
-        if (nestedMatch) {
-            const [, parentProp, partialProp] = nestedMatch;
-            // Handle nested EventType properties
-            if (parentProp === 'eventType') {
-                const eventTypeProps = [
-                    { name: 'id', doc: 'The unique identifier of the event type', type: 'string' },
-                    { name: 'generation', doc: 'The generation of the event type', type: 'uint' },
-                    { name: 'tombstone', doc: 'Whether the event is a tombstone event', type: 'bool' },
-                ];
-                eventTypeProps.forEach((prop) => {
-                    if (!partialProp || prop.name.startsWith(partialProp)) {
-                        suggestions.push({
-                            label: prop.name,
-                            kind: 9,
-                            insertText: prop.name,
-                            documentation: prop.doc,
-                            detail: prop.type,
-                            range: this.getRangeForWord(context),
-                        });
-                    }
-                });
-            }
+        // Any depth of an event-context path, as an expression or as a dynamic key (propertyName.$eventContext.<path>)
+        const eventContextMatch = context.textBeforeCursor.match(EVENT_CONTEXT_PATH);
+        if (eventContextMatch) {
+            const segments = eventContextMatch[1].split('.').filter((segment) => segment.length > 0);
+            this.addEventContextMemberCompletions(suggestions, context, segments, eventContextMatch[2]);
             return;
         }
 
-        // Try to match simple property access first: propertyName.member or $eventContext.member
         const match = context.textBeforeCursor.match(/(\w+|\$\w+)\.(\w*)$/);
-        let objectName: string;
-        let partialProp: string;
+        if (!match) return;
 
-        if (match) {
-            [, objectName, partialProp] = match;
-        } else {
-            // Try to match dynamic dictionary path: propertyName.$eventContext.member
-            const dynamicMatch = context.textBeforeCursor.match(/\w+\.\$(\w+)\.(\w*)$/);
-            if (!dynamicMatch) return;
-            // Extract the $-prefixed object name and the partial property
-            objectName = `$${dynamicMatch[1]}`;
-            partialProp = dynamicMatch[2];
-        }
+        const [, objectName, partialProp] = match;
 
-        // Handle $causedBy properties
+        // $causedBy reads the identity that caused the event - the members the parser accepts on the short form
         if (objectName === '$causedBy') {
-            const causedByProps = [
-                { name: 'subject', doc: 'The subject identifier', type: 'string' },
-                { name: 'name', doc: 'The display name', type: 'string' },
-                { name: 'userName', doc: 'The username', type: 'string' },
-            ];
-
-            causedByProps.forEach((prop) => {
-                if (!partialProp || prop.name.startsWith(partialProp)) {
-                    suggestions.push({
-                        label: prop.name,
-                        kind: 9,
-                        insertText: prop.name,
-                        documentation: prop.doc,
-                        detail: prop.type,
-                        range: this.getRangeForWord(context),
-                    });
-                }
-            });
-            return;
-        }
-
-        // Handle $eventContext properties
-        if (objectName === '$eventContext') {
-            const contextProps = [
-                { name: 'eventType', doc: 'The type of the event', type: 'EventType' },
-                { name: 'eventSourceType', doc: 'The type of the event source', type: 'string' },
-                { name: 'eventSourceId', doc: 'The id of the event source', type: 'string' },
-                { name: 'sequenceNumber', doc: 'The sequence number of the event', type: 'ulong' },
-                { name: 'eventStreamType', doc: 'The type of the event stream', type: 'string' },
-                { name: 'eventStreamId', doc: 'The id of the event stream', type: 'string' },
-                { name: 'occurred', doc: 'When the event occurred', type: 'DateTimeOffset' },
-                { name: 'correlationId', doc: 'The correlation id for the event', type: 'Guid' },
-                { name: 'causation', doc: 'Collection of causation for what caused the event', type: 'Causation[]' },
-                { name: 'causedBy', doc: 'Identity that caused the event', type: 'Identity' },
-                { name: 'tags', doc: 'Collection of tags associated with the event', type: 'string[]' },
-                { name: 'hash', doc: 'The hash of the event\'s content', type: 'EventHash' },
-                { name: 'observationState', doc: 'The state relevant for the observer', type: 'EventObservationState' },
-                { name: 'subject', doc: 'The subject the event is about (compliance identity)', type: 'string' },
-            ];
-
-            contextProps.forEach((prop) => {
-                if (!partialProp || prop.name.startsWith(partialProp)) {
-                    suggestions.push({
-                        label: prop.name,
-                        kind: 9,
-                        insertText: prop.name,
-                        documentation: prop.doc,
-                        detail: prop.type,
-                        range: this.getRangeForWord(context),
-                    });
-                }
-            });
+            this.addEventContextMemberCompletions(suggestions, context, ['causedBy'], partialProp, CAUSED_BY_SHORT_FORM);
             return;
         }
 
@@ -671,6 +573,29 @@ export class CompletionProvider implements languages.CompletionItemProvider {
                 }
             });
         }
+    }
+
+    private addEventContextMemberCompletions(
+        suggestions: languages.CompletionItem[],
+        context: CompletionContext,
+        segments: readonly string[],
+        partial: string,
+        only?: readonly string[]
+    ): void {
+        const members = eventContextMembersAfter(segments) ?? [];
+        members
+            .filter((member) => !only || only.includes(member.name))
+            .filter((member) => !partial || member.name.startsWith(partial))
+            .forEach((member) => {
+                suggestions.push({
+                    label: member.name,
+                    kind: member.kind === 'function' ? 1 : 9,
+                    insertText: member.name,
+                    documentation: member.description,
+                    detail: member.type,
+                    range: this.getRangeForWord(context),
+                });
+            });
     }
 
     private getCurrentEventType(model: editor.ITextModel, lineNumber: number): string | null {

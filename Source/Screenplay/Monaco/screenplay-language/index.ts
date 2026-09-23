@@ -100,6 +100,8 @@ export type {
     TypeSymbol,
 } from './symbols';
 export { attributeDocs, contextVariableDocs, keywordDocs } from './keyword-docs';
+export { eventContextMemberAt, eventContextMembers, eventContextMembersAfter, eventContextPaths, namesEventContextMember } from './event-context';
+export type { EventContextMember, EventContextPath } from './event-context';
 export { contextVariableItems, producesItems } from './completion-items';
 export type { CompletionEntry } from './completion-items';
 export { completionEntriesFor, planCompletions } from './completion-planner';

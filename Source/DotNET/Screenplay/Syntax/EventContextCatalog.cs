@@ -101,7 +101,14 @@ public static class EventContextCatalog
     public static IReadOnlyList<EventContextMember> MembersOf(EventContextMember member) =>
         member.Kind is EventContextMemberKind.Collection or EventContextMemberKind.Function
             ? []
-            : _types.GetValueOrDefault(member.Type, []);
+            : MembersOf(member.Type);
+
+    /// <summary>
+    /// Gets the members of a type the catalog describes.
+    /// </summary>
+    /// <param name="type">The name of the type, such as <c>EventType</c> or <see cref="EventContextType"/>.</param>
+    /// <returns>The members of the type; empty for a primitive or a type the catalog does not describe.</returns>
+    public static IReadOnlyList<EventContextMember> MembersOf(string type) => _types.GetValueOrDefault(type, []);
 
     /// <summary>
     /// Resolves a path, as written after <c>$eventContext.</c>, against the catalog.
