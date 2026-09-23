@@ -47,9 +47,18 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         }
 
         var commandValues = request.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
+        foreach (var requirement in command.Requirements)
+        {
+            if (!SemanticConditionEvaluation.Evaluate(requirement.Condition, commandValues))
+            {
+                return new SemanticRejected(world, SemanticRejectionCategory.Validation, null, requirement.Message ?? "Command requirement was not met.");
+            }
+        }
+
         var facts = ImmutableArray.CreateBuilder<SemanticFact>();
         foreach (var produced in command.Produces)
         {
+            if (produced.When is not null && !SemanticConditionEvaluation.Evaluate(produced.When, commandValues)) continue;
             var destination = produced.Destination is null
                 ? request.AllocatedIdentities.GetValueOrDefault(command.Id)
                 : Evaluate(produced.Destination, SemanticExpressionRootKind.Command, commandValues);
@@ -66,7 +75,10 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                     mapping.TargetProperty,
                     Evaluate(mapping.Source, SemanticExpressionRootKind.Command, commandValues)))
                 .ToImmutableArray();
-            facts.Add(new(produced.EventContract, destination, values));
+            facts.Add(new SemanticFact(produced.EventContract, destination, values)
+            {
+                Tags = plan.Events[produced.EventContract].Tags.AddRange(produced.Tags)
+            });
         }
 
         // A violation is an outcome, not a failure: the command is rejected and the world is unchanged.
