@@ -12,7 +12,7 @@ public class when_mapping_unsupported_production_grammar : given.a_workspace_wit
 
     void Establish()
     {
-        var source = Source.Replace("        produces ProjectRegistered\n          for name\n          name = name", "        produces when count == 42\n          ProjectRegistered\n            for name\n            name = name", StringComparison.Ordinal);
+        var source = Source.Replace("        produces ProjectRegistered\n          for name\n          name = name", "        produces when count == $env.MINIMUM\n          ProjectRegistered\n            for name\n            name = name", StringComparison.Ordinal);
         var document = WorkspaceDocument.Create(_document.Id, _document.StableKey, _document.Path, Encoding.UTF8.GetBytes(source));
         _workspace = ScreenplayWorkspace.Create("Projects", [document, _concepts], _workspace.IdentityCatalog);
     }

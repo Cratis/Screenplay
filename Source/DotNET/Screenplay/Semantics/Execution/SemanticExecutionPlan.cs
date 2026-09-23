@@ -162,7 +162,6 @@ public sealed class SemanticExecutionPlan
             {
                 issues.Add(new(command.Id, SemanticPlanIssueKind.UnsupportedValidation, $"Validation '{validation.Kind}' is not admitted by the minimum evaluator."));
             }
-
         }
 
         foreach (var projection in slices.SelectMany(_ => _.Projections))

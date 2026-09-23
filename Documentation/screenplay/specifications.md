@@ -179,7 +179,7 @@ flowchart LR
     Trace --> Compare["compare specification outcomes"]
 ```
 
-The minimum evaluator currently admits the RegisterProject-style vertical: declarative validation rules on command properties and concepts (`not empty`, `max`/`min`, the ordering and equality comparisons, `length ==`, and `all >`/`all >=` — see [what the executable model admits](commands.md#what-the-executable-model-admits)), unconditional event production, optional snapshot lookup, and ordered query rows with subset property assertions. A failed rule rejects the command with the rule's message. Projections run with the reference semantics of Chronicle's projection engine - children, nested objects, update-only joins, `every` and `all`, removals and every mapping kind; see [Projections in the semantic model](projections/semantic-model.md). Unsupported reachable capabilities block plan creation rather than producing a partial or stubbed execution.
+The minimum evaluator currently admits the RegisterProject-style vertical: declarative validation rules on command properties and concepts (`not empty`, `max`/`min`, the ordering and equality comparisons, `length ==`, and `all >`/`all >=` — see [what the executable model admits](commands.md#what-the-executable-model-admits)), unconditional and command-property-conditional event production, command-property `require` guards, literal append tags, optional snapshot lookup, and ordered query rows with subset property assertions. A failed rule rejects the command with the rule's message. Projections run with the reference semantics of Chronicle's projection engine - children, nested objects, update-only joins, `every` and `all`, removals and every mapping kind; see [Projections in the semantic model](projections/semantic-model.md). Unsupported reachable capabilities block plan creation rather than producing a partial or stubbed execution.
 
 ```csharp
 var semanticCompilation = semanticCompiler.Compile("Projects", documents);
@@ -188,7 +188,7 @@ var specificationId = planCompilation.Plan!.Specifications.Keys.First();
 var run = new SemanticSpecificationRunner().Run(planCompilation.Plan, specificationId);
 ```
 
-A rejected execution returns the unchanged world. An accepted execution commits its facts and projected state once, then evaluates the requested queries against that tentative committed state. The same normalized specification run is the conformance input for Stage and generated applications.
+Tags are append metadata: `then` event assertions compare payload properties and ignore tags unless explicitly asserted by a future tag-aware assertion contract. A command with all production conditions false is accepted with zero facts. A rejected execution returns the unchanged world. An accepted execution commits its facts and projected state once, then evaluates the requested queries against that tentative committed state. The same normalized specification run is the conformance input for Stage and generated applications.
 
 ## The specification vocabulary at a glance
 
