@@ -63,7 +63,9 @@ public sealed partial class SemanticModelBinder
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Projection '{projection.Name}' parent keys are not admitted by the first ESM v1 vertical.", from.ParentKey.Location);
             }
 
-            var keySyntax = eventSpecs[0].Key ?? ExpressionFrom(from.Key) ?? ExpressionFrom(projection.Key);
+            // Chronicle routes on the inline event key, then the from-block key, then the event source - it never
+            // reads a projection-level key (ProjectionDefinitionSyntaxVisitor.ProcessFrom), so neither does ESM.
+            var keySyntax = eventSpecs[0].Key ?? ExpressionFrom(from.Key);
             if (keySyntax is null || BindExpression(keySyntax, @event.Properties, SemanticExpressionRootKind.Event, "projection affected key") is not { } key)
             {
                 Error(DiagnosticCodes.InvalidSemanticBinding, $"Projection '{projection.Name}' transition requires one resolved affected key.", from.Location);
