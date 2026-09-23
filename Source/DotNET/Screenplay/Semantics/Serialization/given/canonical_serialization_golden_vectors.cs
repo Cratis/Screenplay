@@ -142,7 +142,14 @@ public static partial class canonical_serialization_golden_vectors
                 new(commandEnabled, "Enabled", SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Boolean), false),
                 new(commandDetails, "Details", SemanticTypeReference.ForCompositeType(detailsType), false)
             ],
-            [new(commandTitle, SemanticValidationRuleKind.NotEmpty, null, "Title is required")],
+            [
+                new(commandTitle, SemanticValidationRuleKind.NotEmpty, null, "Title is required"),
+
+                // #209 matches
+                new(commandNote, SemanticValidationRuleKind.Matches, SemanticValue.Text(SemanticMatchPattern.Email), "Note must be an email address")
+
+                // End #209 matches
+            ],
             [new(
                 createdEvent,
                 SemanticExpression.Property(SemanticExpressionRootKind.Command, commandEnabled),
