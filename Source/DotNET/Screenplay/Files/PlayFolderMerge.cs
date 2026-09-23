@@ -61,7 +61,13 @@ internal static partial class PlayFolderMerge
             DeclaredInOneFile(applications.SelectMany(application => application.UiProfiles ?? []), profile => profile.Name, profile => profile.Location, "ui profile", context),
             DeclaredInOneFile(applications.SelectMany(application => application.Themes ?? []), theme => theme.Name, theme => theme.Location, "theme", context),
             DeclaredInOneFile(applications.SelectMany(application => application.Triggers ?? []), trigger => trigger.Name, trigger => trigger.Location, "trigger", context),
-            DeclaredInOneFile(applications.SelectMany(application => application.Layouts ?? []), layout => layout.Name, layout => layout.Location, "layout", context));
+            DeclaredInOneFile(applications.SelectMany(application => application.Layouts ?? []), layout => layout.Name, layout => layout.Location, "layout", context))
+        {
+            // A behavior is declared at the top level, so it merges and is name-checked across the folder the
+            // same way a layout or a theme is. Without this a 'uses' in one file cannot see a behavior declared
+            // in another - and the folder is one application.
+            Behaviors = DeclaredInOneFile(applications.SelectMany(application => application.Behaviors), behavior => behavior.Name ?? string.Empty, behavior => behavior.Location, "behavior", context)
+        };
     }
 
     /// <summary>
