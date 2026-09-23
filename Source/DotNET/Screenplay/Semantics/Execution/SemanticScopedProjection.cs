@@ -263,7 +263,7 @@ internal sealed partial class SemanticScopedProjection(
 
     Document? RootDocument(SemanticValue key, bool create)
     {
-        var document = _documents.FirstOrDefault(_ => !_.Removed && SemanticValueRules.AreEqual(_.Key, key));
+        var document = _documents.Find(_ => !_.Removed && SemanticValueRules.AreEqual(_.Key, key));
         if (document is null && create)
         {
             // The instance key is the read model's identifier, as the document key is in Chronicle.
