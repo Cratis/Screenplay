@@ -21,7 +21,7 @@ public enum SemanticPlanIssueKind
     UnsupportedValidation = 0,
 
     /// <summary>
-    /// Conditional event production is not admitted by the minimum evaluator.
+    /// Reserved legacy issue kind (no longer emitted; conditional production is evaluated).
     /// </summary>
     ConditionalProduction = 1,
 
@@ -163,10 +163,6 @@ public sealed class SemanticExecutionPlan
                 issues.Add(new(command.Id, SemanticPlanIssueKind.UnsupportedValidation, $"Validation '{validation.Kind}' is not admitted by the minimum evaluator."));
             }
 
-            foreach (var produced in command.Produces.Where(_ => _.Condition is not null))
-            {
-                issues.Add(new(command.Id, SemanticPlanIssueKind.ConditionalProduction, "Conditional event production is not admitted by the minimum evaluator."));
-            }
         }
 
         foreach (var projection in slices.SelectMany(_ => _.Projections))

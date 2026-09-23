@@ -58,7 +58,12 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         var facts = ImmutableArray.CreateBuilder<SemanticFact>();
         foreach (var produced in command.Produces)
         {
-            if (produced.When is not null && !SemanticConditionEvaluation.Evaluate(produced.When, commandValues)) continue;
+            if ((produced.When is not null && !SemanticConditionEvaluation.Evaluate(produced.When, commandValues)) ||
+                (produced.Condition is not null && Evaluate(produced.Condition, SemanticExpressionRootKind.Command, commandValues) is SemanticBooleanValue { Value: false }))
+            {
+                continue;
+            }
+
             var destination = produced.Destination is null
                 ? request.AllocatedIdentities.GetValueOrDefault(command.Id)
                 : Evaluate(produced.Destination, SemanticExpressionRootKind.Command, commandValues);
