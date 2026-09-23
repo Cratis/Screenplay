@@ -27,12 +27,21 @@ internal static partial class TagParser
             return null;
         }
 
+        var offset = "tag".Length + (line.Content["tag".Length..].Length - line.Content["tag".Length..].TrimStart().Length);
         if (IdentifierRegex().IsMatch(value))
         {
-            return new(new LiteralExpressionSyntax(value, line.Location), line.Location);
+            return new(new LiteralExpressionSyntax(value, line.Location)
+            {
+                RawLocation = line.LocationAt(offset),
+                RawLength = value.Length
+            }, line.Location);
         }
 
         var expression = ExpressionParser.ParseMappingSource(context, value, line.Location);
+        if (expression is LiteralExpressionSyntax literal)
+        {
+            expression = literal with { RawLocation = line.LocationAt(offset), RawLength = value.Length };
+        }
         if (expression is RawExpressionSyntax)
         {
             context.Error(DiagnosticCodes.InvalidTagValue, $"Invalid tag value '{value}' - expected an identifier, a string literal or a context expression", line.Location);
