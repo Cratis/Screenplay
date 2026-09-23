@@ -112,6 +112,7 @@ The `id userId` specifies the child identifier property, while `key userId` spec
 ## Key Expressions
 
 Keys can be:
+
 - **Property paths**: `userId`, `order.id`, `data.customerId`
 - **Event source ID**: `$eventSourceId`
 - **Event context**: `$eventContext.correlationId`
@@ -230,27 +231,32 @@ All events from all users accumulate into the single `SiteMetricsReadModel` docu
 ## When to Use Each Approach
 
 **Simple Keys (inline):**
+
 - Single property identifies the instance
 - Property name is clear from context
 - Most common scenario
 
 **Block Keys:**
+
 - When you want visual separation
 - Complex event structures
 - Personal preference for readability
 
 **Composite Keys:**
+
 - Multiple properties together form identity
 - Natural keys from business domain
 - Partitioning or sharding scenarios
 - Complex relationships
 
 **Event Source ID:**
+
 - Each event stream represents one instance
 - Aggregate-based event sourcing
 - One-to-one event stream to read model
 
 **Literal (Constant) Keys:**
+
 - All events update the same instance
 - Global counters and system-wide aggregates
 - Singleton read models

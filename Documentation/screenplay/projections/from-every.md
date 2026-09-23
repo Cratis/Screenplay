@@ -225,6 +225,7 @@ Group-level events update `LastActivity`, but member and post events do not.
 ## When to Use
 
 **Use `every` when:**
+
 - Setting last modified timestamps
 - Tracking latest sequence numbers
 - Maintaining version counters
@@ -232,6 +233,7 @@ Group-level events update `LastActivity`, but member and post events do not.
 - Applying AutoMap universally
 
 **Avoid `every` when:**
+
 - Only specific events should update a property
 - Different events require different logic
 - Children should be treated independently
