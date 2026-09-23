@@ -4,6 +4,13 @@ A trigger is something that can cause a [reaction](reactions.md) to run. Domain 
 built in; everything else is declared, so the set of things an application can react to is open without the
 language having to grow a keyword per source.
 
+> **Two kinds of trigger, one of them declared.** This page is about *application triggers* - the declared
+> signal, with a payload shape, that a `reaction ... when` consumes. What starts something in the UI is an
+> *interaction trigger*: the anonymous `on click` / `on enter` clause of a behavior, which is never declared.
+> See [Interactions](interactions.md). The two meet in two places: `on <ApplicationTrigger>` lets an
+> interaction observe a declared trigger, and `raise <ApplicationTrigger>` lets one fire it. A trigger declared
+> with the name of a built-in interaction kind is an error, since `on <Name>` would then mean the interaction.
+
 ## Syntax
 
 ```screenplay

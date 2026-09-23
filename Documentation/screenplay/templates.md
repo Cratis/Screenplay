@@ -5,7 +5,7 @@ Four words, each meaning exactly one thing:
 | Word | What it is | How many |
 | --- | --- | --- |
 | **Layout** | The application's base navigational look — the shell holding a top bar, a navigation region, a content region, a footer. | An application has **one**, and selects it. |
-| **Screen template** | A reusable shape that goes *inside* that shell, at module, feature or slice level. | An application has **many**. |
+| **Screen template** | A reusable shape that goes *inside* that shell, declared at module level. | An application has **many**. |
 | **Dialog template** | The same, for content that opens *over* the application. | An application has **many**. |
 | **Screen** | An instance — it names the structure it fills and provides the content. | One per thing a user looks at. |
 
@@ -70,7 +70,9 @@ module Invoicing
           sidebar
 ```
 
-`fits slot <name>` is the single rule that makes nesting work at every level: a module's template fits a slot on the application layout, a feature's template fits a slot the module's template declares, a slice's fits one the feature's declares. The same word means the same thing however deep you go.
+`fits slot <name>` is the single rule that makes nesting work at every level, and it works by **slot name** rather than by where the template was declared: a template fits whichever structure in scope declares a slot of that name — the application layout, or another template that is itself inside it. Nesting therefore goes as deep as you build it, and the same word means the same thing however deep you go.
+
+Templates are declared on a `module`. A feature or slice does not declare its own templates; it uses the ones its module declares. If two templates claim the same slot name, that is reported as ambiguous rather than guessed at — placing a template in the wrong region is far harder to diagnose than being told the name is not unique.
 
 It is optional. A template that does not say which slot it fills is still a valid declaration — where it lands is then decided by whatever renders it.
 

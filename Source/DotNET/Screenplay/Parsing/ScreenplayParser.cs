@@ -36,6 +36,7 @@ internal static partial class ScreenplayParser
         var themes = new List<ThemeSyntax>();
         var triggers = new List<TriggerSyntax>();
         var layouts = new List<LayoutSyntax>();
+        var behaviors = new List<BehaviorSyntax>();
 
         while (context.Reader.PeekSignificant() is { } line)
         {
@@ -89,14 +90,20 @@ internal static partial class ScreenplayParser
                 case "layout":
                     AddLayout(context, LayoutParser.ParseLayout(context, line), layouts);
                     break;
+                case "behavior":
+                    AddBehavior(context, InteractionParser.ParseBehavior(context, line), behaviors);
+                    break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, type, policy, persona, authentication, module, seed, trigger, ui profile, theme or layout", line.Location);
+                    context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, type, policy, persona, authentication, module, seed, trigger, behavior, ui profile, theme or layout", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
         }
 
-        return new(imports, concepts, policies, modules, context.Start, domain, personas, seeds, authentication, types, uiProfiles, themes, triggers, layouts);
+        return new(imports, concepts, policies, modules, context.Start, domain, personas, seeds, authentication, types, uiProfiles, themes, triggers, layouts)
+        {
+            Behaviors = behaviors
+        };
     }
 
     static void AddLayout(ParserContext context, LayoutSyntax layout, List<LayoutSyntax> layouts)
@@ -140,7 +147,30 @@ internal static partial class ScreenplayParser
             return;
         }
 
+        // An application trigger is reachable from an interaction as 'on <Name>'. If its name is also a
+        // built-in interaction kind, the built-in wins and the declaration becomes unreachable - so the
+        // collision is reported here rather than silently capturing what the author meant.
+        if (InteractionParser.IsBuiltInTriggerName(trigger.Name))
+        {
+            context.Error(
+                DiagnosticCodes.ApplicationTriggerCollidesWithInteractionKind,
+                $"A trigger named '{trigger.Name}' collides with the built-in interaction kind of the same name - 'on {trigger.Name}' would mean the interaction, never this trigger",
+                trigger.Location);
+            return;
+        }
+
         triggers.Add(trigger);
+    }
+
+    static void AddBehavior(ParserContext context, BehaviorSyntax behavior, List<BehaviorSyntax> behaviors)
+    {
+        if (behaviors.Exists(existing => existing.Name == behavior.Name))
+        {
+            context.Error(DiagnosticCodes.DuplicateBehavior, $"A behavior named '{behavior.Name}' is already declared - behavior names must be unique", behavior.Location);
+            return;
+        }
+
+        behaviors.Add(behavior);
     }
 
     static DomainSyntax? ParseDomain(ParserContext context, SourceLine line, DomainSyntax? existing, bool hasOtherConstructs)
@@ -333,6 +363,8 @@ internal static partial class ScreenplayParser
         var features = new List<FeatureSyntax>();
         var forms = new List<FormSyntax>();
         var contributions = new List<ContributionSyntax>();
+        var behaviors = new List<BehaviorSyntax>();
+        var usedBehaviors = new List<UsesBehaviorSyntax>();
 
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -341,6 +373,12 @@ internal static partial class ScreenplayParser
             {
                 case "description":
                     description = DescriptionParser.Parse(context, child, description, $"Module '{name}'");
+                    break;
+                case "on":
+                case "uses":
+                    // Attached here, a behavior covers every screen in the module - the level a confirm on
+                    // every destructive action belongs at.
+                    InteractionParser.ParseAttachment(context, child, behaviors, usedBehaviors);
                     break;
                 case "screen":
                     screenTemplates.Add(LayoutParser.ParseScreenTemplate(context, child));
@@ -358,13 +396,17 @@ internal static partial class ScreenplayParser
                     features.Add(ParseFeature(context, child));
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownModuleDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected description, screen template, dialog template, form, contribute or feature", child.Location);
+                    context.Error(DiagnosticCodes.UnknownModuleDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected description, screen template, dialog template, form, contribute, feature, 'on <trigger>' or 'uses <Behavior>'", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
         }
 
-        return new(name, screenTemplates, features, line.Location, description, forms, contributions, dialogTemplates);
+        return new(name, screenTemplates, features, line.Location, description, forms, contributions, dialogTemplates)
+        {
+            Behaviors = behaviors,
+            UsedBehaviors = usedBehaviors
+        };
     }
 
     static void AddForm(ParserContext context, FormSyntax form, List<FormSyntax> forms)
@@ -391,6 +433,8 @@ internal static partial class ScreenplayParser
         var features = new List<FeatureSyntax>();
         var slices = new List<SliceSyntax>();
         var contributions = new List<ContributionSyntax>();
+        var behaviors = new List<BehaviorSyntax>();
+        var usedBehaviors = new List<UsesBehaviorSyntax>();
 
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -399,6 +443,10 @@ internal static partial class ScreenplayParser
             {
                 case "description":
                     description = DescriptionParser.Parse(context, child, description, $"Feature '{name}'");
+                    break;
+                case "on":
+                case "uses":
+                    InteractionParser.ParseAttachment(context, child, behaviors, usedBehaviors);
                     break;
                 case "feature":
                     features.Add(ParseFeature(context, child));
@@ -410,13 +458,17 @@ internal static partial class ScreenplayParser
                     contributions.Add(ContributionParser.Parse(context, child));
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownFeatureDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in feature body - expected description, feature, slice or contribute", child.Location);
+                    context.Error(DiagnosticCodes.UnknownFeatureDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in feature body - expected description, feature, slice, contribute, 'on <trigger>' or 'uses <Behavior>'", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
         }
 
-        return new(name, features, slices, line.Location, description, contributions);
+        return new(name, features, slices, line.Location, description, contributions)
+        {
+            Behaviors = behaviors,
+            UsedBehaviors = usedBehaviors
+        };
     }
 
     [GeneratedRegex(@"^domain\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]

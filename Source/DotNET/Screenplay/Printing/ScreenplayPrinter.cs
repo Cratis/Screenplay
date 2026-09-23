@@ -124,6 +124,12 @@ public sealed partial class ScreenplayPrinter :
             WriteTrigger(writer, trigger);
         }
 
+        foreach (var behavior in application.Behaviors)
+        {
+            writer.Blank();
+            WriteBehavior(writer, behavior);
+        }
+
         foreach (var layout in application.Layouts ?? [])
         {
             writer.Blank();
@@ -388,6 +394,7 @@ public sealed partial class ScreenplayPrinter :
         using (writer.Indent())
         {
             WriteDescription(writer, module.Description);
+            WriteAttachments(writer, module.Behaviors, module.UsedBehaviors);
 
             foreach (var screenTemplate in module.ScreenTemplates)
             {
@@ -462,6 +469,8 @@ public sealed partial class ScreenplayPrinter :
             {
                 writer.Line($"on submit {WriteScreenNavigate(form.OnSubmit)}");
             }
+
+            WriteAttachments(writer, form.Behaviors, form.UsedBehaviors);
         }
     }
 
@@ -501,6 +510,7 @@ public sealed partial class ScreenplayPrinter :
         {
             WriteSlots(writer, layout.Slots);
             WriteArrangement(writer, layout.Arrangement);
+            WriteAttachments(writer, layout.Behaviors, layout.UsedBehaviors);
         }
     }
 
@@ -517,6 +527,7 @@ public sealed partial class ScreenplayPrinter :
 
             WriteSlots(writer, template.Slots);
             WriteArrangement(writer, template.Arrangement);
+            WriteAttachments(writer, template.Behaviors, template.UsedBehaviors);
         }
     }
 
@@ -527,6 +538,7 @@ public sealed partial class ScreenplayPrinter :
         {
             WriteSlots(writer, template.Slots);
             WriteArrangement(writer, template.Arrangement);
+            WriteAttachments(writer, template.Behaviors, template.UsedBehaviors);
         }
     }
 
@@ -704,6 +716,7 @@ public sealed partial class ScreenplayPrinter :
         using (writer.Indent())
         {
             WriteDescription(writer, feature.Description);
+            WriteAttachments(writer, feature.Behaviors, feature.UsedBehaviors);
 
             foreach (var nested in feature.Features)
             {

@@ -54,6 +54,8 @@
   href: triggers.md
 - name: Screens
   href: screens.md
+- name: Interactions
+  href: interactions.md
 - name: Layouts and templates
   href: templates.md
 - name: Layout arrangement

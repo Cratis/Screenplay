@@ -24,7 +24,19 @@ public record ModuleSyntax(
     string? Description = null,
     IEnumerable<FormSyntax>? Forms = null,
     IEnumerable<ContributionSyntax>? Contributions = null,
-    IEnumerable<DialogTemplateSyntax>? DialogTemplates = null) : SyntaxNode(Location);
+    IEnumerable<DialogTemplateSyntax>? DialogTemplates = null) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the behaviors attached inline to the module. Every screen beneath it inherits them, additively
+    /// with whatever is attached closer in.
+    /// </summary>
+    public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the named behaviors attached to the module with <c>uses</c>.
+    /// </summary>
+    public IEnumerable<UsesBehaviorSyntax> UsedBehaviors { get; init; } = [];
+}
 
 /// <summary>
 /// Represents a <c>feature</c> declaration - a grouping of slices, optionally nested in sub features.
@@ -41,4 +53,16 @@ public record FeatureSyntax(
     IEnumerable<SliceSyntax> Slices,
     SourceLocation Location,
     string? Description = null,
-    IEnumerable<ContributionSyntax>? Contributions = null) : SyntaxNode(Location);
+    IEnumerable<ContributionSyntax>? Contributions = null) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the behaviors attached inline to the feature. Every screen beneath it inherits them, additively
+    /// with whatever is attached closer in.
+    /// </summary>
+    public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the named behaviors attached to the feature with <c>uses</c>.
+    /// </summary>
+    public IEnumerable<UsesBehaviorSyntax> UsedBehaviors { get; init; } = [];
+}

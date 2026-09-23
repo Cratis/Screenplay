@@ -36,7 +36,7 @@ internal static partial class LayoutParser
 
         var name = match.Success ? match.Groups[1].Value : LineText.FirstWord(header.Content["layout".Length..].Trim());
         var body = ArrangementParser.ParseBody(context, header, "layout", name, allowsFitsSlot: false);
-        return new(name, body.Slots, header.Location, body.Arrangement);
+        return new(name, body.Slots, header.Location, body.Arrangement) { Behaviors = body.Behaviors, UsedBehaviors = body.UsedBehaviors };
     }
 
     /// <summary>
@@ -55,7 +55,7 @@ internal static partial class LayoutParser
 
         var name = match.Success ? match.Groups[1].Value : string.Empty;
         var body = ArrangementParser.ParseBody(context, header, "screen template", name, allowsFitsSlot: true);
-        return new(name, body.Slots, header.Location, body.FitsSlot, body.Arrangement);
+        return new(name, body.Slots, header.Location, body.FitsSlot, body.Arrangement) { Behaviors = body.Behaviors, UsedBehaviors = body.UsedBehaviors };
     }
 
     /// <summary>
@@ -74,7 +74,7 @@ internal static partial class LayoutParser
 
         var name = match.Success ? match.Groups[1].Value : string.Empty;
         var body = ArrangementParser.ParseBody(context, header, "dialog template", name, allowsFitsSlot: false);
-        return new(name, body.Slots, header.Location, body.Arrangement);
+        return new(name, body.Slots, header.Location, body.Arrangement) { Behaviors = body.Behaviors, UsedBehaviors = body.UsedBehaviors };
     }
 
     [GeneratedRegex(@"^layout\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]

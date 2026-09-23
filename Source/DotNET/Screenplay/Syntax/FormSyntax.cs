@@ -26,7 +26,19 @@ public record FormSyntax(
     FormPopulateSource? Populate,
     IEnumerable<FormFieldSyntax> Fields,
     ScreenNavigateSyntax? OnSubmit,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the behaviors attached inline to the form. Every screen beneath it inherits them, additively
+    /// with whatever is attached closer in.
+    /// </summary>
+    public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the named behaviors attached to the form with <c>uses</c>.
+    /// </summary>
+    public IEnumerable<UsesBehaviorSyntax> UsedBehaviors { get; init; } = [];
+}
 
 /// <summary>
 /// Represents the base of a form's <c>populate</c> declaration - where its initial values come from.

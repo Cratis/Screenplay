@@ -36,13 +36,29 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Capture** — a declaration, written in CDL, that turns polled or pushed external data into events.
 - **Constraint** — a server-side invariant (such as uniqueness) enforced in the Chronicle kernel before an event is committed.
 - **Reaction** — behavior that runs when something happens, producing side effects: notifications, follow-up events, or commands. Chronicle's *reactor* is one thing that can perform one.
-- **Trigger** — something that can cause a reaction to run: an event, the clock, a declared trigger, or one a consumer registered.
-- **Trigger data** — the values one occurrence of a trigger hands the reaction.
+- **Application trigger** — a declared top-level signal with a payload shape, consumed by `reaction ... when`. `Startup` and `Shutdown` are built in. Written `trigger <Name>`; the bare word *trigger* in a backend context means this one. Not to be confused with an **interaction trigger** below.
+- **Trigger data** — the values one occurrence of an application trigger hands the reaction.
 - **Screen** — an instance: a UI declaration inside a `StateView` slice that names the template it fills and provides the content, expressible at three levels from pure intent to inline React.
 - **Layout** — the application's base navigational look: the shell with its top bar, navigation, content and footer. An application has one, declared at the top level and selected by a `ui profile`.
-- **Screen template** — a reusable shape with named slots that goes inside the shell, declared at module level and referenced by screens. An application has many; `fits slot` says which slot of its parent each one fills.
+- **Screen template** — a reusable shape with named slots that goes inside the shell, declared at module level and referenced by screens. An application has many; `fits slot` says which slot of its parent each one fills — matched by slot name, to any depth.
 - **Dialog template** — a screen template for content that opens over the application. It declares no `fits slot`, because it occupies no slot.
+- **Slot** — a named region a layout or template declares. One parent fills it, or it opens to many by declaring `contributes <ContributionPoint>`.
 - **Arrangement** — how a layout or template positions the slots it declares: responsive `flow` or pixel-precise `freeform`.
+- **Contribution point** — a named many-to-one extension point declared on a slot. `Navigation` is the first user of the mechanism.
+- **Contribution** — one piece of content targeting a contribution point, declared with `contribute to`. It attaches to the nearest enclosing structure declaring a matching point.
+- **UI profile** — a build's selections: `target platform`, `target size`, `layout`, `theme`, `packages`, `blueprint` and `start screen`. Names artifacts; does not contain them.
+- **Package** — a named set of components a profile draws from, in override-priority order. `core` is the final fallback.
+- **Blueprint** — a shipped bundle selected by a `ui profile`: layouts, shell chrome, a template set and theme tokens. Selected by name, like a theme; never declared in the document.
+- **Size class** — `compact`, `regular` or `expanded`, on the width and height axes. A class, not a pixel breakpoint.
+
+### Interaction
+
+- **Interaction trigger** — what starts an interaction: the `on <thing>` clause of a behavior binding — `on click`, `on submit`, `on enter`, `on event <Event>`, `on interval <duration>`, or `on <ApplicationTrigger>`. Never declared, and never a top-level construct; it exists only inside a behavior. The counterpart to an **application trigger**, which is declared.
+- **Action** — one declarative effect: `execute`, `navigate to`, `navigate back`, `open dialog`, `close dialog`, `refresh`, `set`, `notify`, `confirm`, `raise`. Every operand is a model reference, so an action that names nothing real is a diagnostic rather than a dead control.
+- **Continuation** — the `on success` / `on failure` / `on result` block of an action, holding the actions that run after it. Only actions that can fail carry one.
+- **Behavior** — a bundle of interaction-trigger-to-action bindings, attachable to an element, form, screen, template, layout, module or feature. Written inline as an anonymous `on` block, or declared as `behavior <Name>` with `parameter`s and attached with `uses`. Attachments are additive: a template's behavior and an element's both run.
+- **Route** — the concrete address a renderer gives a screen. The document says `navigate to <Screen>`; the renderer decides that means `/invoicing/invoices`. Parameters come from the screen's `accepts` declarations.
+- **Screen state** — a screen's declared values. `accepts` is route-backed, so it is shareable and reload-safe; `state` is transient and screen-local. Both are writable by `set`; nothing undeclared exists.
 
 ## Sub-languages
 

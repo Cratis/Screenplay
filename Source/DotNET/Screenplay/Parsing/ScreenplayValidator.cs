@@ -15,6 +15,10 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal static class ScreenplayValidator
 {
+    // What an inline behavior has: only a named behavior declares parameters, so an operand inside an inline
+    // one is always a reference to something declared rather than to a parameter.
+    static readonly IReadOnlySet<string> _noParameters = new HashSet<string>(StringComparer.Ordinal);
+
     /// <summary>
     /// Validates an application and reports warnings for unknown references.
     /// </summary>
@@ -121,6 +125,17 @@ internal static class ScreenplayValidator
         }
 
         ValidateScreenReferences(scopedSlices, knownQueries, knownCommandDeclarations, knownScreenDeclarations, context);
+        ValidateInteractions(
+            application,
+            scopedSlices,
+            new(
+                knownCommandDeclarations,
+                knownScreenDeclarations,
+                knownQueries,
+                application.Modules.SelectMany(module => module.DialogTemplates ?? []).Select(template => template.Name).ToHashSet(StringComparer.Ordinal),
+                knownEvents,
+                (application.Triggers ?? []).Select(trigger => trigger.Name).ToHashSet(StringComparer.Ordinal)),
+            context);
         ValidateFormReferences(application, commandsByDeclaration, knownQueries, knownCommandDeclarations, knownScreenDeclarations, context);
         ValidateContributions(application, knownScreenDeclarations, context);
         ValidateThemes(application, context);
@@ -655,6 +670,235 @@ internal static class ScreenplayValidator
                         break;
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Validates that every operand an interaction names resolves - the command an action executes, the screen
+    /// it navigates to, the query it refreshes, the dialog it opens, the trigger it raises or observes, and the
+    /// behavior a <c>uses</c> clause attaches, along with that behavior's parameters.
+    /// </summary>
+    /// <param name="application">The <see cref="ApplicationSyntax"/> to validate.</param>
+    /// <param name="scoped">Every slice with the scope it sits in.</param>
+    /// <param name="references">The declarations an action operand can resolve against.</param>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <remarks>
+    /// This is what makes an action a modeled reference rather than a string: an operand naming nothing is
+    /// reported here, at compile time, instead of becoming a control that does nothing when clicked.
+    /// </remarks>
+    static void ValidateInteractions(
+        ApplicationSyntax application,
+        IReadOnlyList<(SliceSyntax Slice, DeclarationScope Scope)> scoped,
+        InteractionReferences references,
+        ParserContext context)
+    {
+        var behaviors = application.Behaviors.ToDictionary(behavior => behavior.Name ?? string.Empty, StringComparer.Ordinal);
+        var root = new DeclarationScope([]);
+
+        // A named behavior is declared at the top level, so it resolves against the document as a whole.
+        foreach (var behavior in application.Behaviors)
+        {
+            ValidateBindings(behavior.Bindings, root, references, behavior.Parameters.Select(parameter => parameter.Name).ToHashSet(StringComparer.Ordinal), context);
+        }
+
+        // Structural attachments - a layout, a template, a module, a feature, a form. Each resolves from the
+        // scope it sits in, the same as a screen's own attachment does.
+        foreach (var layout in application.Layouts ?? [])
+        {
+            ValidateAttachments(layout.Behaviors, layout.UsedBehaviors, root, references, behaviors, context);
+        }
+
+        foreach (var module in application.Modules)
+        {
+            var moduleScope = new DeclarationScope([module.Name]);
+            ValidateAttachments(module.Behaviors, module.UsedBehaviors, moduleScope, references, behaviors, context);
+
+            foreach (var template in module.ScreenTemplates)
+            {
+                ValidateAttachments(template.Behaviors, template.UsedBehaviors, moduleScope, references, behaviors, context);
+            }
+
+            foreach (var template in module.DialogTemplates ?? [])
+            {
+                ValidateAttachments(template.Behaviors, template.UsedBehaviors, moduleScope, references, behaviors, context);
+            }
+
+            foreach (var form in module.Forms ?? [])
+            {
+                ValidateAttachments(form.Behaviors, form.UsedBehaviors, moduleScope, references, behaviors, context);
+            }
+
+            // Scoped from the module down, so a feature's attachment resolves the way a slice inside it does.
+            foreach (var (feature, scope) in AllFeaturesScoped(module.Features, [module.Name]))
+            {
+                ValidateAttachments(feature.Behaviors, feature.UsedBehaviors, scope, references, behaviors, context);
+            }
+        }
+
+        foreach (var (slice, scope) in scoped)
+        {
+            foreach (var directive in slice.Screens.SelectMany(screen => AllDirectives(screen.Directives)))
+            {
+                switch (directive)
+                {
+                    case ScreenBehaviorSyntax attached:
+                        ValidateBindings(attached.Behavior.Bindings, scope, references, _noParameters, context);
+                        break;
+                    case ScreenUsesBehaviorSyntax uses:
+                        ValidateUses(uses.Uses, behaviors, context);
+                        break;
+                    case ScreenTableSyntax table:
+                        foreach (var behavior in table.Behaviors)
+                        {
+                            ValidateBindings(behavior.Bindings, scope, references, _noParameters, context);
+                        }
+
+                        foreach (var uses in table.UsedBehaviors)
+                        {
+                            ValidateUses(uses, behaviors, context);
+                        }
+
+                        break;
+                }
+            }
+        }
+    }
+
+    static void ValidateAttachments(
+        IEnumerable<BehaviorSyntax> attached,
+        IEnumerable<UsesBehaviorSyntax> used,
+        DeclarationScope scope,
+        InteractionReferences references,
+        Dictionary<string, BehaviorSyntax> behaviors,
+        ParserContext context)
+    {
+        foreach (var behavior in attached)
+        {
+            ValidateBindings(behavior.Bindings, scope, references, _noParameters, context);
+        }
+
+        foreach (var uses in used)
+        {
+            ValidateUses(uses, behaviors, context);
+        }
+    }
+
+    static void ValidateUses(UsesBehaviorSyntax uses, Dictionary<string, BehaviorSyntax> behaviors, ParserContext context)
+    {
+        if (!behaviors.TryGetValue(uses.Behavior, out var behavior))
+        {
+            context.Warning(
+                DiagnosticCodes.UnknownUsedBehavior,
+                $"Unknown behavior '{uses.Behavior}' - nothing in the document declares it",
+                uses.Location);
+            return;
+        }
+
+        var declared = behavior.Parameters.Select(parameter => parameter.Name).ToHashSet(StringComparer.Ordinal);
+        var supplied = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var argument in uses.Arguments)
+        {
+            supplied.Add(argument.Name);
+            if (!declared.Contains(argument.Name))
+            {
+                context.Error(
+                    DiagnosticCodes.UnknownBehaviorArgument,
+                    $"Behavior '{behavior.Name}' declares no parameter '{argument.Name}'",
+                    argument.Location);
+            }
+        }
+
+        foreach (var missing in declared.Where(parameter => !supplied.Contains(parameter)).Order(StringComparer.Ordinal))
+        {
+            context.Error(
+                DiagnosticCodes.MissingBehaviorArgument,
+                $"Behavior '{behavior.Name}' declares a parameter '{missing}' this attachment supplies no value for",
+                uses.Location);
+        }
+    }
+
+    static void ValidateBindings(
+        IEnumerable<InteractionBindingSyntax> bindings,
+        DeclarationScope scope,
+        InteractionReferences references,
+        IReadOnlySet<string> parameters,
+        ParserContext context)
+    {
+        foreach (var binding in bindings)
+        {
+            switch (binding.Trigger)
+            {
+                case EventInteractionTriggerSyntax @event when !references.Events.Contains(@event.EventName):
+                    context.Warning(
+                        DiagnosticCodes.UnknownInteractionEvent,
+                        $"Unknown event '{@event.EventName}' - nothing in scope declares it",
+                        @event.Location);
+                    break;
+                case ApplicationTriggerInteractionTriggerSyntax trigger when !references.Triggers.Contains(trigger.TriggerName):
+                    context.Warning(
+                        DiagnosticCodes.UnknownActionTrigger,
+                        $"Unknown trigger '{trigger.TriggerName}' - nothing in the document declares it, and it is not a built-in interaction kind",
+                        trigger.Location);
+                    break;
+            }
+
+            ValidateActions(binding.Actions, scope, references, parameters, context);
+        }
+    }
+
+    static void ValidateActions(
+        IEnumerable<InteractionActionSyntax> actions,
+        DeclarationScope scope,
+        InteractionReferences references,
+        IReadOnlySet<string> parameters,
+        ParserContext context)
+    {
+        var ordered = actions.ToList();
+        for (var index = 0; index < ordered.Count; index++)
+        {
+            var action = ordered[index];
+
+            // An operand may be the name of a parameter the attachment supplies rather than a declaration -
+            // a behavior exists precisely so the same actions can point at different commands.
+            switch (action)
+            {
+                case ExecuteCommandActionSyntax execute when !parameters.Contains(execute.Command):
+                    Report(execute.Command, scope, references.Commands, DiagnosticCodes.UnknownActionCommand, "command", execute.Location, context);
+                    break;
+                case NavigateActionSyntax navigate when !parameters.Contains(navigate.Screen):
+                    Report(navigate.Screen, scope, references.Screens, DiagnosticCodes.UnknownActionScreen, "screen", navigate.Location, context);
+                    break;
+                case RefreshQueryActionSyntax refresh when !parameters.Contains(refresh.Query):
+                    Report(refresh.Query, scope, references.Queries, DiagnosticCodes.UnknownActionQuery, "query", refresh.Location, context);
+                    break;
+                case OpenDialogActionSyntax open when !parameters.Contains(open.DialogTemplate) && !references.DialogTemplates.Contains(open.DialogTemplate):
+                    context.Warning(
+                        DiagnosticCodes.UnknownActionDialogTemplate,
+                        $"Unknown dialog template '{open.DialogTemplate}' - no module in the document declares it",
+                        open.Location);
+                    break;
+                case RaiseTriggerActionSyntax raise when !parameters.Contains(raise.Trigger) && !references.Triggers.Contains(raise.Trigger):
+                    context.Warning(
+                        DiagnosticCodes.UnknownActionTrigger,
+                        $"Unknown trigger '{raise.Trigger}' - nothing in the document declares it",
+                        raise.Location);
+                    break;
+            }
+
+            // Navigating replaces the screen the interaction was running on, so whatever was written after it
+            // never runs. Reported rather than accepted, because the author expects those actions to happen.
+            if (action is NavigateActionSyntax or NavigateBackActionSyntax && index < ordered.Count - 1)
+            {
+                context.Warning(
+                    DiagnosticCodes.UnreachableInteractionContinuation,
+                    "Actions after an unconditional navigation never run - the screen they were written for is already gone",
+                    ordered[index + 1].Location);
+            }
+
+            ValidateActions(action.OnSuccess, scope, references, parameters, context);
+            ValidateActions(action.OnFailure, scope, references, parameters, context);
+            ValidateActions(action.OnResult, scope, references, parameters, context);
         }
     }
 

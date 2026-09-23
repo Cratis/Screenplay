@@ -32,6 +32,8 @@ internal static partial class ArrangementParser
     public static Body ParseBody(ParserContext context, SourceLine header, string keyword, string name, bool allowsFitsSlot)
     {
         var slots = new List<SlotSyntax>();
+        var behaviors = new List<BehaviorSyntax>();
+        var usedBehaviors = new List<UsesBehaviorSyntax>();
         ArrangementSyntax? arrangement = null;
         string? fitsSlot = null;
 
@@ -53,13 +55,19 @@ internal static partial class ArrangementParser
                 case "fits":
                     ParseFitsSlot(context, child, keyword, allowsFitsSlot, ref fitsSlot);
                     break;
+                case "on":
+                case "uses":
+                    // A behavior here applies to every screen using this structure, which is how a template
+                    // says 'always refresh on enter' once instead of on each of its screens.
+                    InteractionParser.ParseAttachment(context, child, behaviors, usedBehaviors);
+                    break;
                 default:
                     AddSlot(context, child, slots);
                     break;
             }
         }
 
-        return new(slots, arrangement, fitsSlot);
+        return new(slots, arrangement, fitsSlot, behaviors, usedBehaviors);
     }
 
     static void ParseFitsSlot(ParserContext context, SourceLine line, string keyword, bool allowsFitsSlot, ref string? fitsSlot)
@@ -428,5 +436,10 @@ internal static partial class ArrangementParser
     /// <param name="Slots">The slots declared, in declaration order.</param>
     /// <param name="Arrangement">The <c>arrangement</c> block, or <c>null</c> when the body only names slots.</param>
     /// <param name="FitsSlot">The slot named by <c>fits slot</c>, or <c>null</c> when the body does not say.</param>
-    internal sealed record Body(IReadOnlyList<SlotSyntax> Slots, ArrangementSyntax? Arrangement, string? FitsSlot);
+    internal sealed record Body(
+        IReadOnlyList<SlotSyntax> Slots,
+        ArrangementSyntax? Arrangement,
+        string? FitsSlot,
+        IReadOnlyList<BehaviorSyntax> Behaviors,
+        IReadOnlyList<UsesBehaviorSyntax> UsedBehaviors);
 }

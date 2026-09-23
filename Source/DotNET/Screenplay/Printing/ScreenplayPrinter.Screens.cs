@@ -58,6 +58,12 @@ public partial class ScreenplayPrinter
             case ScreenCodeSyntax code:
                 WriteCodeBlock(writer, code.Code);
                 break;
+            case ScreenBehaviorSyntax behavior:
+                WriteAttachedBehavior(writer, behavior.Behavior);
+                break;
+            case ScreenUsesBehaviorSyntax uses:
+                WriteUsesBehavior(writer, uses.Uses);
+                break;
         }
     }
 
@@ -141,6 +147,16 @@ public partial class ScreenplayPrinter
             if (table.RowClick is not null)
             {
                 writer.Line($"on row-click {WriteScreenNavigate(table.RowClick)}");
+            }
+
+            foreach (var behavior in table.Behaviors)
+            {
+                WriteAttachedBehavior(writer, behavior);
+            }
+
+            foreach (var uses in table.UsedBehaviors)
+            {
+                WriteUsesBehavior(writer, uses);
             }
         }
     }

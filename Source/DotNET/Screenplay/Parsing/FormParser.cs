@@ -33,6 +33,8 @@ internal static partial class FormParser
         var forCommand = match.Groups[2].Value;
         FormPopulateSource? populate = null;
         var fields = new List<FormFieldSyntax>();
+        var behaviors = new List<BehaviorSyntax>();
+        var usedBehaviors = new List<UsesBehaviorSyntax>();
         ScreenNavigateSyntax? onSubmit = null;
         var hasPopulate = false;
         var hasSubmit = false;
@@ -60,6 +62,15 @@ internal static partial class FormParser
 
                     break;
                 case "on":
+                    // 'on submit navigate to <Screen>' is the existing one line sugar and keeps its meaning.
+                    // Any other 'on' is an interaction binding attached to the form - including a multi line
+                    // 'on submit' that runs actions rather than only navigating.
+                    if (!SubmitNavigationRegex().IsMatch(line.Content))
+                    {
+                        InteractionParser.ParseAttachment(context, line, behaviors, usedBehaviors);
+                        break;
+                    }
+
                     if (hasSubmit)
                     {
                         context.Error(DiagnosticCodes.DuplicateFormSubmit, $"Form '{name}' already declares 'on submit' - at most one is allowed", line.Location);
@@ -69,14 +80,21 @@ internal static partial class FormParser
                     hasSubmit = true;
                     onSubmit = ParseSubmit(context, line);
                     break;
+                case "uses":
+                    InteractionParser.ParseAttachment(context, line, behaviors, usedBehaviors);
+                    break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownFormDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in form body - expected populate, field or on submit", line.Location);
+                    context.Error(DiagnosticCodes.UnknownFormDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in form body - expected populate, field, 'on submit', 'on <trigger>' or 'uses <Behavior>'", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
         }
 
-        return new(name, forCommand, populate, fields, onSubmit, header.Location);
+        return new(name, forCommand, populate, fields, onSubmit, header.Location)
+        {
+            Behaviors = behaviors,
+            UsedBehaviors = usedBehaviors
+        };
     }
 
     static FormPopulateSource? ParsePopulate(ParserContext context, SourceLine line)
@@ -138,6 +156,9 @@ internal static partial class FormParser
 
     [GeneratedRegex(@"^form\s+([A-Za-z_]\w*)\s+for\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
+
+    [GeneratedRegex(@"^on\s+submit\s+navigate\b", RegexOptions.None, 1000)]
+    private static partial Regex SubmitNavigationRegex();
 
     [GeneratedRegex(@"^populate\s+via\s+query\s+(\w+(?:\.\w+)*)(?:\s+by\s+(\w+))?$", RegexOptions.None, 1000)]
     private static partial Regex PopulateViaQueryRegex();

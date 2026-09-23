@@ -606,6 +606,54 @@ The complete Program v1 disposition of current syntax is maintained as a deliver
 
 Source-authoring acceptance and executable readiness are separate verdicts. An authoring proposal validates the complete `.play` application and identity continuity without claiming that every language construct is supported by the executable backend profile. Executable-only workspace transactions remain strict.
 
+### Interaction
+
+The interaction model - behaviors, the `on` clauses that start them, the actions they run and the continuations those actions branch into. The fifty codes from `PLAY0300` upwards are reserved for this band as a whole, so a later addition lands beside its siblings rather than wherever there happened to be room.
+
+A behavior is *deferred* from the backend ESM v1 profile in the same way every other UI construct is - see `PLAY0269`. Deferred does not mean droppable: the syntax tree, the printer and the semantic model carry every interaction construct in full, and a target that cannot realize one reports it rather than dropping it.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0300` | Error | A behavior declaration is not of the form `behavior <Name>`. |
+| `PLAY0301` | Error | A behavior name is declared more than once. |
+| `PLAY0302` | Error | A line in a behavior body is neither `description`, `parameter`, `order` nor an `on` binding. |
+| `PLAY0303` | Error | A behavior parameter declaration is not of the form `parameter <name> [<Type>]`. |
+| `PLAY0304` | Error | A behavior declares the same parameter name more than once. |
+| `PLAY0305` | Error | A behavior `order` is not an integer. |
+| `PLAY0306` | Warning | A behavior declares no bindings, so nothing it is attached to can run anything. |
+| `PLAY0307` | Error | An `on` clause names neither a built-in interaction kind, an `event`, an `interval`, nor a declared application trigger. |
+| `PLAY0308` | Error | An interaction binding declares no actions. |
+| `PLAY0309` | Error | An interaction binding declares `where` more than once. |
+| `PLAY0310` | Error | A line where an action was expected does not name one of the action kinds. |
+| `PLAY0311` | Error | An `execute` action is not of the form `execute <Command>`. |
+| `PLAY0312` | Error | A `navigate` action is neither `navigate to <Screen>` nor `navigate back`. |
+| `PLAY0313` | Error | An `open dialog` action does not name a dialog template, or a `close` action is not `close dialog`. |
+| `PLAY0314` | Error | A `refresh` action does not name a query. |
+| `PLAY0315` | Error | A `set` action is not of the form `set <target> to <value>`. |
+| `PLAY0316` | Error | A `notify` action is not of the form `notify <info\|warning\|error> "<text>"`. |
+| `PLAY0317` | Error | A `confirm` action carries no message. |
+| `PLAY0318` | Error | A `raise` action does not name an application trigger. |
+| `PLAY0319` | Error | An action argument is not of the form `with <name> from <binding>`. |
+| `PLAY0320` | Error | A continuation is attached to an action that cannot fail, so it could never run. `navigate`, `notify`, `set` and `close dialog` have no outcome to branch on. |
+| `PLAY0321` | Error | An `on result` continuation is attached to something other than `open dialog`. |
+| `PLAY0322` | Error | A `uses` clause is not of the form `uses <Behavior>`. |
+| `PLAY0323` | Error | An argument at a `uses` site is not of the form `<parameter> <value>`. |
+| `PLAY0324` | Error | Interaction nesting went deeper than the compiler admits. Extract the inner actions into a named behavior. |
+| `PLAY0325` | Warning | An `interval` trigger is below the floor a client can usefully honour. |
+| `PLAY0326` | Error | An application trigger is declared with a name reserved as a built-in interaction kind. `on <Name>` would mean the interaction and never the trigger, so the declaration would be unreachable. |
+| `PLAY0330` | Error | An action names a command the document does not declare. |
+| `PLAY0331` | Error | A `navigate to` action names a screen the document does not declare. |
+| `PLAY0332` | Error | A `refresh` action names a query the document does not declare. |
+| `PLAY0333` | Error | An `open dialog` action names a dialog template the document does not declare. |
+| `PLAY0334` | Error | A `raise` action or an `on` clause names an application trigger the document does not declare. |
+| `PLAY0335` | Error | An `on event` clause names an event the document does not declare. |
+| `PLAY0336` | Error | A `uses` clause names a behavior the document does not declare. |
+| `PLAY0337` | Error | A `uses` site supplies an argument the behavior declares no parameter for. |
+| `PLAY0338` | Error | A `uses` site leaves a behavior parameter without an argument. |
+| `PLAY0339` | Warning | Actions follow an unconditional navigation, so they could never run. |
+
+An inline `on` block is an anonymous behavior, so it has no name to report against. Diagnostics inside one cite the position and the trigger instead.
+
 ## Retired codes
 
 None yet. When a code is retired it is listed here with the release it went in, and its number stays out of use forever.

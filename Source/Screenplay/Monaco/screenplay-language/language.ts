@@ -47,6 +47,7 @@ export const constructKeywords = [
     'constraint',
     'specification',
     'seed',
+    'behavior',
 ];
 
 export const clauseKeywords = [
@@ -121,6 +122,34 @@ export const clauseKeywords = [
     'starts',
     'with',
     'provider',
+    // Interaction: the words a behavior body uses. The built-in interaction kinds ('click', 'submit', and
+    // friends) are only reserved inside an `on` clause, so they are clause words rather than constructs -
+    // an identifier of the same name elsewhere in a document remains an identifier.
+    'uses',
+    'parameter',
+    'order',
+    'execute',
+    'open',
+    'close',
+    'refresh',
+    'set',
+    'notify',
+    'confirm',
+    'raise',
+    'interval',
+    'success',
+    'failure',
+    'click',
+    'double',
+    'select',
+    'submit',
+    'change',
+    'load',
+    'unload',
+    'enter',
+    'leave',
+    'info',
+    'warning',
 ];
 
 export const codeBlockTags = ['csharp', 'typescript', 'react', 'html', 'sql'];

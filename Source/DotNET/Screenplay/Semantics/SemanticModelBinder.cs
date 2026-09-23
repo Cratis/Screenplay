@@ -135,6 +135,13 @@ public sealed class SemanticModelBinder : ISemanticModelBinder
             {
                 Information(DiagnosticCodes.DeferredSemanticSyntax, $"Layout '{layout.Name}' is explicitly deferred from the backend ESM v1 profile.", layout.Location);
             }
+
+            // A behavior is UI behavior: the backend profile does not run it, the way it does not run a screen.
+            // Deferred is not dropped - the syntax tree, the printer and the UI consumers carry it in full.
+            foreach (var behavior in syntax.Behaviors)
+            {
+                Information(DiagnosticCodes.DeferredSemanticSyntax, $"Behavior '{behavior.Name}' is explicitly deferred from the backend ESM v1 profile.", behavior.Location);
+            }
         }
 
         void RegisterTypeDeclarations()
