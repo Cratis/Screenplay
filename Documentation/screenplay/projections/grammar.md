@@ -171,8 +171,10 @@ Expr            = Template
                 | Path ;
 
 DollarExpr      = "$eventSourceId"
-                | "$eventContext", ".", Ident
-                | "$causedBy", ".", Ident ;
+                | "$eventContext", ".", EventContextPath
+                | "$causedBy", [ ".", Ident ] ;
+
+EventContextPath = Ident, { ".", Ident }, [ "()" ] ;   (* checked against the event context catalog *)
 
 Path            = Ident, { ".", Ident } ;
 
@@ -436,7 +438,10 @@ Expr = Template
      | Path ;
 
 DollarExpr = "$eventSourceId"
-           | "$eventContext", ".", Ident ;
+           | "$eventContext", ".", EventContextPath
+           | "$causedBy", [ ".", Ident ] ;
+
+EventContextPath = Ident, { ".", Ident }, [ "()" ] ;
 
 Path = Ident, { ".", Ident } ;
 
@@ -447,6 +452,12 @@ Literal = BoolLiteral
         | NumberLiteral
         | NullLiteral ;
 ```
+
+**Note:** `EventContextPath` is a dotted path into the event's metadata, such as `$eventContext.eventType.id` or `$eventContext.causedBy.subject`. Every segment is checked against the [event context catalog](event-context.md#available-properties): an unlisted member is a warning, a path below the collections `causation` and `tags` is an error. The trailing `()` is only meaningful on the derived function `Week` (`$eventContext.occurred.Week()`).
+
+`$causedBy` on its own, or followed by `subject`, `name` or `userName`, is the short form of `$eventContext.causedBy`. It parses, but Chronicle cannot yet evaluate it when the projection runs ([Cratis/Chronicle#4119](https://github.com/Cratis/Chronicle/issues/4119)) - write `$eventContext.causedBy.<property>` instead.
+
+`$eventSourceId` and `$eventContext.eventSourceId` are distinct expressions that resolve to the same value; see [Event Context](event-context.md#eventsourceid-and-eventcontexteventsourceid).
 
 ## Indentation Rules
 
