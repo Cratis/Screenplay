@@ -295,10 +295,12 @@ Still rejected, and why:
 | --- | --- |
 | any comparison on `Date` or `DateTime`, and `today` | ESM v1 has no runtime date value — a date is text in a fixed format — so it has nothing to compare against. |
 | `matches` | It awaits a portable pattern definition: whether `email` is a named pattern or a regular expression, and in which dialect, is undecided. |
-| `require` | A requirement is decision-consistency semantics, which waits on a consistent snapshot of what the command reads. |
+| `require` over a read-model path | A consistent decision snapshot of declared reads is not yet available (#129). |
 | `rule <Name>` with a `file` or inline body, and `validate csharp` | Code validation requires a constrained implementation attachment. |
 | a bare `rule <Name>` | Its logic lives outside the document, so it has no portable meaning. |
 | a rule on a nested path such as `lines.quantity` | ESM v1 validates command properties; put the rule on the nested value's [concept](concepts.md#validation) instead. |
+
+Command `require` conditions over command properties and constants are admitted in ESM v1: equality on scalar text, enumeration, number or Boolean; ordering on numbers only. Both property operands must be command properties with compatible types. Requirements run after property validation and before production; a false requirement rejects with its message (or a default message). Concept `require` is not admitted: declare a concept validation rule instead.
 
 ## Authorization
 
@@ -344,7 +346,7 @@ produces InvoiceRegistered
 
 ### Tags
 
-`tag` lines before the mappings attach [tags](events.md#tags) to the event appended by this specific production:
+`tag` lines before the mappings attach [tags](events.md#tags) to the event appended by this specific production. ESM v1 carries literal tags as ordered append metadata, not event payload; `$context` tag values require v2 (#226):
 
 ```screenplay
 produces InvoiceRegistered
@@ -407,7 +409,7 @@ produces InvoiceRunningTotalUpdated
 
 ### Conditional produces
 
-`produces when <condition>` emits the indented event only when the condition holds. Conditions compare command properties, constants, and environment variables with `==`, `!=`, `>`, `>=`, `<`, `<=`, combined with `and`/`or`:
+`produces when <condition>` emits the indented event only when the condition holds. In ESM v1, comparisons use declared command properties and constants with `==`, `!=`, `>`, `>=`, `<`, `<=`, combined with `and`/`or` (`and` binds tighter; parentheses group). Ordering is numeric; equality admits scalar text, enumeration, number and Boolean. `$env` conditions remain syntax-only because environment values vary across realizations. `$context` waits on v2 (#226), and paths into reads wait on #129:
 
 ```screenplay
 produces when isProForma == true
@@ -425,7 +427,7 @@ produces when $env.WELCOME_EMAILS_ENABLED == "true"
     customerId  = customerId
 ```
 
-Multiple `produces when` blocks form mutually exclusive or overlapping branches — each condition is evaluated independently.
+Multiple `produces when` blocks form mutually exclusive or overlapping branches — each condition is evaluated independently. When all conditions are false, execution accepts the command and appends no facts. ESM v1 also rejects arithmetic in mappings: Chronicle's projection language has no binary operators (Decision 0001).
 
 ## The `handler` block
 

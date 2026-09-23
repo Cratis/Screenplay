@@ -117,6 +117,9 @@ public static partial class canonical_serialization_golden_vectors
                 new(eventLabel, "Label", SemanticTypeReference.ForConcept(textConcept), false),
                 new(eventDetails, "Details", SemanticTypeReference.ForCompositeType(detailsType), false)
             ]);
+
+        // #210 conditions: append-time tags are separate from payload and ordered event then production.
+        createdContract = createdContract with { Tags = ["billing"] };
         var optionalContract = new SemanticEventContract(
             optionalEvent,
             EventContractId.CreateLegacy(applicationIdentity, "EntityMaybeSelected"),
@@ -156,7 +159,18 @@ public static partial class canonical_serialization_golden_vectors
                     new(eventNote, SemanticExpression.FromValue(SemanticValue.Null)),
                     new(eventDetails, SemanticExpression.Property(SemanticExpressionRootKind.Command, commandDetails))
                 ]),
-                new(optionalEvent, null, null, [])]);
+                new SemanticProducedEvent(optionalEvent, null, null, [])
+                {
+                    When = new SemanticComparison(
+                        new(commandEnabled, null), SemanticComparisonOperator.Equal, new(default, SemanticValue.Boolean(true))),
+                    Tags = ["conditional"]
+                }])
+        {
+            // #210 conditions: the same tree is used by command-wide requirements.
+            Requirements = [new(new SemanticComparison(
+                new(commandAmount, null), SemanticComparisonOperator.GreaterThan, new(default, SemanticValue.Number(0))),
+                "Amount must be positive")]
+        };
 
         var entitySummary = new SemanticReadModel(
             readModel,

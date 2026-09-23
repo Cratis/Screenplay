@@ -260,6 +260,7 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract($"Event contract identity '{eventContract.ContractId}' is duplicated.");
             }
 
+            ValidateTags(eventContract.Tags);
             _events.Add(eventContract.Id, eventContract);
             RegisterProperties(eventContract.Properties, $"event contract '{eventContract.Name}'");
         }
@@ -336,6 +337,13 @@ internal static partial class SemanticModelValidator
 
             ValidateProperties(command.Properties);
             var properties = Properties(command.Properties);
+            if (command.Requirements.IsDefault) throw new InvalidSemanticContract("Command requirements cannot be default.");
+            foreach (var requirement in command.Requirements)
+            {
+                if (requirement is null || requirement.Message?.Length == 0) throw new InvalidSemanticContract("A requirement or its message is invalid.");
+                ValidateCondition(requirement.Condition, properties);
+            }
+
             foreach (var validation in command.Validations)
             {
                 if (!properties.TryGetValue(validation.Property, out var property))
@@ -460,6 +468,8 @@ internal static partial class SemanticModelValidator
             }
 
             var sources = Properties(command.Properties);
+            ValidateTags(produced.Tags);
+            if (produced.When is not null) ValidateCondition(produced.When, Properties(command.Properties));
             if (produced.Condition is not null)
             {
                 var conditionType = ResolveExpression(produced.Condition, SemanticExpressionRootKind.Command, sources);

@@ -41,7 +41,7 @@ public sealed partial class SemanticModelBinder
 
                 foreach (var requirement in declarative.Requirements ?? [])
                 {
-                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' requirement conditions await decision consistency (#129).", requirement.Location);
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' require is not admitted: requirements guard commands, not concept values; declare a concept validation rule instead.", requirement.Location);
                 }
 
                 var subject = ConceptValidationSubject(concept);

@@ -134,6 +134,11 @@ public sealed record SemanticFact(
     /// When present, <see cref="SemanticEventContext.EventSource"/> must agree with <see cref="Destination"/>.
     /// </remarks>
     public SemanticEventContext? Context { get; init; }
+
+    /// <summary>
+    /// Gets append metadata from the event declaration followed by production-specific tags.
+    /// </summary>
+    public ImmutableArray<string> Tags { get; init; } = [];
 }
 
 /// <summary>

@@ -52,12 +52,18 @@ public sealed partial class SemanticModelBinder
             var properties = command.Properties.Select(property => BindProperty(address, property, property.IsIdentifier)).ToImmutableArray();
             var propertiesByName = properties.ToDictionary(_ => _.Name, StringComparer.Ordinal);
             var validations = BindValidations(command, propertiesByName);
+            var requirements = command.Validations.OfType<DeclarativeValidateSyntax>()
+                .SelectMany(_ => _.Requirements ?? [])
+                .Select(requirement => (requirement, condition: BindCondition(requirement.Condition, propertiesByName)))
+                .Where(_ => _.condition is not null)
+                .Select(_ => new SemanticRequirement(_.condition!, _.requirement.Message))
+                .ToImmutableArray();
             var produced = command.Produces
                 .Select(value => BindProducedEvent(command, value, propertiesByName, events))
                 .Where(_ => _ is not null)
                 .Select(_ => _!)
                 .ToImmutableArray();
-            return new(id, command.Name, properties, validations, produced);
+            return new(id, command.Name, properties, validations, produced) { Requirements = requirements };
         }
 
         ImmutableArray<SemanticValidationRule> BindValidations(
@@ -71,11 +77,6 @@ public sealed partial class SemanticModelBinder
                 {
                     Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' code validation requires a constrained implementation attachment (#139).", validation.Location);
                     continue;
-                }
-
-                foreach (var requirement in declarative.Requirements ?? [])
-                {
-                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' requirement conditions await decision consistency (#129).", requirement.Location);
                 }
 
                 foreach (var rule in declarative.Rules)
@@ -114,15 +115,8 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            if (produced.When is not null)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Conditional production of '{produced.Event}' is not admitted by the first ESM v1 vertical.", produced.When.Location);
-            }
-
-            if ((produced.Tags ?? []).Any())
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Produced event '{produced.Event}' tags are not admitted by ESM v1.", produced.Location);
-            }
+            var when = produced.When is null ? null : BindCondition(produced.When, commandProperties);
+            var tags = BindTags(produced.Tags);
 
             var destination = produced.For is null
                 ? null
@@ -142,7 +136,7 @@ public sealed partial class SemanticModelBinder
                 }
             }
 
-            return new(@event.Contract.Id, null, destination, mappings.ToImmutable());
+            return new(@event.Contract.Id, null, destination, mappings.ToImmutable()) { When = when, Tags = tags };
         }
     }
 }

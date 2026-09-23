@@ -200,7 +200,16 @@ public sealed record SemanticEventContract(
     EventContractId ContractId,
     EventContractRevision Revision,
     string Name,
-    ImmutableArray<SemanticProperty> Properties);
+    ImmutableArray<SemanticProperty> Properties)
+{
+    /// <summary>
+    /// Gets literal tags appended with every occurrence of this event.
+    /// </summary>
+    /// <remarks>
+    /// Chronicle's IEventSequence.Append accepts tags and stores them as EventContext.Tags (Decision: 0001).
+    /// </remarks>
+    public ImmutableArray<string> Tags { get; init; } = [];
+}
 
 /// <summary>
 /// Represents one event a command can produce.
@@ -213,7 +222,21 @@ public sealed record SemanticProducedEvent(
     SemanticId EventContract,
     SemanticExpression? Condition,
     SemanticExpression? Destination,
-    ImmutableArray<SemanticPropertyMapping> Mappings);
+    ImmutableArray<SemanticPropertyMapping> Mappings)
+{
+    /// <summary>
+    /// Gets the portable command-input condition. The legacy expression condition remains untouched.
+    /// </summary>
+    /// <remarks>
+    /// Command-handler semantics have no Chronicle projection counterpart (Decision: 0001).
+    /// </remarks>
+    public SemanticCondition? When { get; init; }
+
+    /// <summary>
+    /// Gets literal tags appended only with this production.
+    /// </summary>
+    public ImmutableArray<string> Tags { get; init; } = [];
+}
 
 /// <summary>
 /// Represents the typed default state-change destination of a command.
@@ -251,6 +274,11 @@ public sealed record SemanticCommand(
     /// A produced event's own destination remains an optional per-occurrence override.
     /// </remarks>
     public SemanticStateChangeDestination? Destination { get; init; }
+
+    /// <summary>
+    /// Gets command-wide requirements evaluated before any facts are produced.
+    /// </summary>
+    public ImmutableArray<SemanticRequirement> Requirements { get; init; } = [];
 }
 
 /// <summary>
