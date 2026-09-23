@@ -10,6 +10,8 @@ public class with_invalid_mappings : given.a_scoped_projection_model
 {
     Exception _nullSet;
     Exception _unknownContextPath;
+    Exception _nonCanonicalContextPath;
+    Exception _collectionContextPath;
     Exception _arithmeticOnText;
     Exception _clearOfARequiredTarget;
     Exception _everyReadingAnEventProperty;
@@ -23,6 +25,8 @@ public class with_invalid_mappings : given.a_scoped_projection_model
 
         _nullSet = ValidateOrders(WithPlacedMapping(Map(SemanticProjectionOperation.Set, SemanticProjectionValue.Literal(SemanticValue.Null), ReadModelProperty("LastSeen"))));
         _unknownContextPath = ValidateOrders(WithPlacedMapping(Map(SemanticProjectionOperation.Set, SemanticProjectionValue.EventContext("causationId"), ReadModelProperty("LastSeen"))));
+        _nonCanonicalContextPath = ValidateOrders(WithPlacedMapping(Map(SemanticProjectionOperation.Set, SemanticProjectionValue.EventContext("Occurred"), ReadModelProperty("LastSeen"))));
+        _collectionContextPath = ValidateOrders(WithPlacedMapping(Map(SemanticProjectionOperation.Set, SemanticProjectionValue.EventContext("tags"), ReadModelProperty("LastSeen"))));
         _arithmeticOnText = ValidateOrders(WithPlacedMapping(Map(SemanticProjectionOperation.Increment, null, ReadModelProperty("CustomerName"))));
         _clearOfARequiredTarget = ValidateOrders(WithPlacedMapping(Map(SemanticProjectionOperation.Clear, null, ReadModelProperty("OrderId"))));
         _everyReadingAnEventProperty = ValidateOrders(OrdersScope with
@@ -34,6 +38,8 @@ public class with_invalid_mappings : given.a_scoped_projection_model
 
     [Fact] void should_reject_a_null_set_because_it_is_a_clear() => _nullSet.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_a_path_chronicles_event_context_does_not_have() => _unknownContextPath.ShouldBeOfExactType<InvalidSemanticContract>();
+    [Fact] void should_reject_a_path_not_spelled_canonically() => _nonCanonicalContextPath.ShouldBeOfExactType<InvalidSemanticContract>();
+    [Fact] void should_reject_a_path_naming_a_collection() => _collectionContextPath.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_arithmetic_on_a_text_target() => _arithmeticOnText.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_clearing_a_required_target() => _clearOfARequiredTarget.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_an_every_mapping_that_reads_an_event_property() => _everyReadingAnEventProperty.ShouldBeOfExactType<InvalidSemanticContract>();

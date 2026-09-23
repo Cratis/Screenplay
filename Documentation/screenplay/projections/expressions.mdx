@@ -27,7 +27,7 @@ from UserRegistered
 
 ### Event Context
 
-Access event metadata using `$eventContext.{property}`:
+Access event metadata using `$eventContext.{path}`, a dotted path into the event context:
 
 ```pdl
 $eventContext.occurred
@@ -36,11 +36,14 @@ $eventContext.correlationId
 $eventContext.eventSourceId
 ```
 
-**Available Properties:**
+**Commonly used properties:**
 - `occurred` - When the event occurred (timestamp)
-- `sequenceNumber` - Sequence number in the event stream
+- `sequenceNumber` - Position of the event in its event sequence
 - `correlationId` - Correlation ID for tracking related operations
 - `eventSourceId` - The event source identifier
+- `causedBy.subject`, `causedBy.name`, `causedBy.userName` - The identity that caused the event
+
+The full list, and the paths the compiler checks against, is in [Event Context](event-context.md#available-properties).
 
 **Examples:**
 
@@ -53,7 +56,7 @@ from OrderPlaced
 
 See [Event Context](event-context.md) for more details.
 
-### Event Source ID Shorthand
+### Event Source ID
 
 Quick access to the event source identifier:
 
@@ -61,7 +64,7 @@ Quick access to the event source identifier:
 $eventSourceId
 ```
 
-This is equivalent to `$eventContext.eventSourceId`.
+It resolves the same value as `$eventContext.eventSourceId`, but it is its own expression, not a shorthand for that path - see [Event Context](event-context.md#eventsourceid-and-eventcontexteventsourceid).
 
 **Example:**
 
@@ -73,31 +76,34 @@ from UserAssignedToGroup
 
 ### Identity (Caused By)
 
-Access the identity that caused the event using `$causedBy`:
+Access the identity that caused the event using `$eventContext.causedBy`:
 
 ```pdl
-$causedBy.subject
-$causedBy.name
-$causedBy.userName
+$eventContext.causedBy.subject
+$eventContext.causedBy.name
+$eventContext.causedBy.userName
 ```
 
 **Available Properties:**
 - `subject` - The identifier of the identity (unique ID)
 - `name` - Display name of the identity
 - `userName` - Username of the identity
+- `onBehalfOf` - The identity this one acted on behalf of, with the same members
 
 **Examples:**
 
 ```pdl
 from OrderPlaced
-  CreatedBySubject = $causedBy.subject
-  CreatedByName = $causedBy.name
-  CreatedByUser = $causedBy.userName
+  CreatedBySubject = $eventContext.causedBy.subject
+  CreatedByName = $eventContext.causedBy.name
+  CreatedByUser = $eventContext.causedBy.userName
 
 from DocumentUpdated
-  UpdatedBy = `${$causedBy.name} (${$causedBy.userName})`
-  UpdatedById = $causedBy.subject
+  UpdatedBy = `${$eventContext.causedBy.name} (${$eventContext.causedBy.userName})`
+  UpdatedById = $eventContext.causedBy.subject
 ```
+
+The short form `$causedBy.subject` also parses, and Chronicle compiles it, but Chronicle cannot yet evaluate it when the projection runs ([Cratis/Chronicle#4119](https://github.com/Cratis/Chronicle/issues/4119)). Write `$eventContext.causedBy.<property>` until that is fixed.
 
 ### Literals
 

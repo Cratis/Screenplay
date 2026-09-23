@@ -239,7 +239,7 @@ export class HoverProvider implements languages.HoverProvider {
     private getExpressionInfo(word: string): string | null {
         const expressions: Record<string, string> = {
             '$eventSourceId': '**$eventSourceId**\n\nThe identifier of the event source (aggregate/entity) that generated the event.',
-            '$causedBy': '**$causedBy**\n\nThe identity that caused the event - `subject`, `name` or `userName`.\n\nChronicle cannot yet evaluate this short form (Cratis/Chronicle#4119); prefer **$eventContext.causedBy**.*property*.',
+            '$causedBy': '**$causedBy**\n\nThe identity that caused the event - `subject`, `name`, `userName` or `onBehalfOf`, itself an identity.\n\nChronicle cannot yet evaluate this short form (Cratis/Chronicle#4119); prefer **$eventContext.causedBy**.*property*.',
             '$eventContext': describeEventContext(),
         };
 

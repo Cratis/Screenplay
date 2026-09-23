@@ -18,9 +18,6 @@ interface CompletionContext {
 // partial segment under the cursor.
 const EVENT_CONTEXT_PATH = /\$eventContext\.((?:\w+\.)*)(\w*)$/;
 
-// The members the parser accepts after the $causedBy short form.
-const CAUSED_BY_SHORT_FORM: readonly string[] = ['subject', 'name', 'userName'];
-
 export class CompletionProvider implements languages.CompletionItemProvider {
     private readModels: ReadModelInfo[] = [];
     private eventSchemas: Record<string, JsonSchema> = {};
@@ -551,9 +548,11 @@ export class CompletionProvider implements languages.CompletionItemProvider {
 
         const [, objectName, partialProp] = match;
 
-        // $causedBy reads the identity that caused the event - the members the parser accepts on the short form
-        if (objectName === '$causedBy') {
-            this.addEventContextMemberCompletions(suggestions, context, ['causedBy'], partialProp, CAUSED_BY_SHORT_FORM);
+        // $causedBy is the short form of $eventContext.causedBy, at any depth
+        const causedByMatch = context.textBeforeCursor.match(/\$causedBy\.((?:\w+\.)*)(\w*)$/);
+        if (causedByMatch) {
+            const segments = causedByMatch[1].split('.').filter((segment) => segment.length > 0);
+            this.addEventContextMemberCompletions(suggestions, context, ['causedBy', ...segments], causedByMatch[2]);
             return;
         }
 
@@ -579,12 +578,10 @@ export class CompletionProvider implements languages.CompletionItemProvider {
         suggestions: languages.CompletionItem[],
         context: CompletionContext,
         segments: readonly string[],
-        partial: string,
-        only?: readonly string[]
+        partial: string
     ): void {
         const members = eventContextMembersAfter(segments) ?? [];
         members
-            .filter((member) => !only || only.includes(member.name))
             .filter((member) => !partial || member.name.startsWith(partial))
             .forEach((member) => {
                 suggestions.push({

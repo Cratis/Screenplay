@@ -198,9 +198,10 @@ internal static partial class SemanticModelValidator
                     untyped = true;
                     return null;
                 case SemanticProjectionEventContextValue context when value.Kind == SemanticProjectionValueKind.EventContext:
-                    return SemanticEventContextPaths.TryGetPrimitive(context.Path ?? string.Empty, out var primitive)
-                        ? SemanticTypeReference.ForPrimitive(primitive)
-                        : throw new InvalidSemanticContract($"Event-context path '{context.Path}' is not an admitted path on Chronicle's event context.");
+                    return SemanticEventContextScalars.Resolve(context.Path ?? string.Empty) is { Kind: SemanticEventContextScalarKind.Scalar } scalar &&
+                        scalar.Path == context.Path
+                        ? SemanticTypeReference.ForPrimitive(scalar.Primitive)
+                        : throw new InvalidSemanticContract($"Event-context path '{context.Path}' is not an admitted canonical scalar path on Chronicle's event context.");
                 default:
                     throw new InvalidSemanticContract("A projection value variant is malformed or unknown.");
             }

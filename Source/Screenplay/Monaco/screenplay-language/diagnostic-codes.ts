@@ -22,6 +22,11 @@ export const diagnosticCodes = {
     unknownEvent: 'PLAY0166',
     unknownPolicy: 'PLAY0167',
     duplicateDeclaration: 'PLAY0168',
+    unknownEventContextMember: 'PLAY0295',
+    unknownEventContextPath: 'PLAY0296',
+    eventContextPathBelowCollection: 'PLAY0297',
+    missingEventContextPath: 'PLAY0298',
+    unresolvedDynamicKeySource: 'PLAY0299',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];

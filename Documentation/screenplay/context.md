@@ -62,7 +62,7 @@ These live in `Cratis.Screenplay.Contexts`. A runtime such as Stage supplies the
 | `TenantId` | The tenant identifier. `TenantId.Default` for a single-tenant application. |
 | `Identity` | `Id`, `Name`, `UserName`, `IsAuthenticated`, `Roles`, `Claims` — who the caller is and what they can prove. |
 | `Claim` | `Name` and `Value`. A caller may carry the same claim name more than once, so claims are a sequence rather than a dictionary. |
-| `CausedBy` | `Subject`, `Name`, `UserName` — the same three values a projection reads through `$causedBy`. |
+| `CausedBy` | `Subject`, `Name`, `UserName` — the same three values a projection reads through `$eventContext.causedBy`. |
 | `Causation` | `Type` (`Command`, `Reactor`, `Schedule`, …), `Occurred`, and free-form `Properties`. |
 
 `Identity` and `CausedBy` describe the same caller from two sides. `Identity` is the **decision** view — what a policy is allowed to inspect. `CausedBy` is the **audit** view — the three values that travel with an appended event. `Identity.Id` and `CausedBy.Subject` are the same value.

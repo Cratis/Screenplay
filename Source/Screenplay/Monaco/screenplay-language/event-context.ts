@@ -56,6 +56,45 @@ export function eventContextMemberAt(segments: readonly string[]): EventContextM
     return members?.find((member) => namesEventContextMember(member, segments[segments.length - 1]));
 }
 
+/** The outcome of resolving a path against the catalog. Mirrors EventContextPathStatus in the compiler. */
+export type EventContextPathStatus = 'known' | 'missing' | 'unknownMember' | 'unknownSubPath' | 'belowCollection';
+
+/** A path resolved against the catalog. Mirrors EventContextPathResolution in the compiler. */
+export interface EventContextPathResolution {
+    readonly status: EventContextPathStatus;
+    readonly member?: EventContextMember;
+    readonly segment?: string;
+    readonly expected: readonly EventContextMember[];
+}
+
+/**
+ * Resolves a path, as written after `$eventContext.`, the way EventContextCatalog.Resolve in the compiler does, so the
+ * editor reports what the compiler reports.
+ */
+export function resolveEventContextPath(path: string): EventContextPathResolution {
+    let current: EventContextMember | undefined;
+    let expected = eventContextMembers;
+    for (const segment of path.split('.')) {
+        if (segment.length === 0) {
+            return { status: 'missing', member: current, expected };
+        }
+
+        if (current?.kind === 'collection') {
+            return { status: 'belowCollection', member: current, segment, expected: [] };
+        }
+
+        const next = expected.find((member) => namesEventContextMember(member, segment));
+        if (!next) {
+            return { status: current ? 'unknownSubPath' : 'unknownMember', member: current, segment, expected };
+        }
+
+        current = next;
+        expected = next.kind === 'function' ? [] : eventContextTypes[next.type] ?? [];
+    }
+
+    return { status: 'known', member: current, expected: [] };
+}
+
 /** Markdown describing $eventContext and its members, for hovers. */
 export function describeEventContext(): string {
     return [

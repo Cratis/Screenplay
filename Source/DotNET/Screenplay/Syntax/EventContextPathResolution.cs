@@ -17,6 +17,16 @@ public record EventContextPathResolution(string Path, EventContextPathStatus Sta
     public EventContextMember? Member { get; init; }
 
     /// <summary>
+    /// Gets the member each segment names, in path order, when <see cref="Status"/> is <see cref="EventContextPathStatus.Known"/>;
+    /// otherwise empty.
+    /// </summary>
+    /// <remarks>
+    /// The names are the catalog's own, so joining them gives the canonical camelCase spelling of a path written with a
+    /// first letter uppercased or a function written with parentheses.
+    /// </remarks>
+    public IReadOnlyList<EventContextMember> Members { get; init; } = [];
+
+    /// <summary>
     /// Gets the segment that did not resolve, or <c>null</c> when the path is <see cref="EventContextPathStatus.Known"/>.
     /// </summary>
     public string? Segment { get; init; }
