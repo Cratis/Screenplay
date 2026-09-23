@@ -58,8 +58,8 @@ public sealed record ExecutableSemanticModel
         SemanticVersion semanticVersion,
         SemanticApplication application)
     {
-        EsmSchemaV1Support.EnsureSupported(languageVersion, semanticVersion);
-        SemanticModelValidator.Validate(application);
+        EsmSchemaV2Support.EnsureSupported(languageVersion, semanticVersion);
+        SemanticModelValidator.Validate(application, semanticVersion);
         var withoutRevision = SemanticModelCanonicalJson.SerializeWithoutRevision(languageVersion, semanticVersion, application);
         var revision = SemanticRevision.Compute(withoutRevision);
         return new(languageVersion, semanticVersion, revision, application);
@@ -68,14 +68,14 @@ public sealed record ExecutableSemanticModel
 
 internal static partial class SemanticModelValidator
 {
-    public static void Validate(SemanticApplication application)
+    public static void Validate(SemanticApplication application, SemanticVersion semanticVersion = default)
     {
         if (application is null)
         {
             throw new InvalidSemanticContract("The semantic application cannot be null.");
         }
 
-        var context = new ValidationContext();
+        var context = new ValidationContext(semanticVersion == default ? SemanticVersion.V1 : semanticVersion);
         context.RegisterApplication(application);
         context.ValidateReferences(application);
     }
@@ -92,7 +92,13 @@ internal static partial class SemanticModelValidator
         readonly Dictionary<SemanticId, SemanticKeyedQuery> _queries = [];
         readonly SemanticValueValidator _valueValidator;
 
-        public ValidationContext() => _valueValidator = new(_concepts, _types);
+        readonly SemanticVersion _semanticVersion;
+
+        public ValidationContext(SemanticVersion semanticVersion)
+        {
+            _semanticVersion = semanticVersion;
+            _valueValidator = new(_concepts, _types);
+        }
 
         public void RegisterApplication(SemanticApplication application)
         {
@@ -332,7 +338,19 @@ internal static partial class SemanticModelValidator
         {
             if (command.Destination is not null)
             {
-                throw new InvalidSemanticContract("A command state-change destination requires ESM v2.");
+                if (_semanticVersion != SemanticVersion.V2)
+                {
+                    throw new InvalidSemanticContract("A command state-change destination requires ESM v2.");
+                }
+
+                var identity = command.Destination.Value is SemanticResolvedExpression resolved
+                    ? command.Properties.SingleOrDefault(property => property.Id == resolved.Target && resolved.Root == SemanticExpressionRootKind.Command)
+                    : null;
+                if (identity is not { IsIdentifier: true, Type.IsCollection: false, Type.IsOptional: false } ||
+                    identity.Type != command.Destination.Type)
+                {
+                    throw new InvalidSemanticContract("A command destination must reference a required scalar command identifier with the same type.");
+                }
             }
 
             ValidateProperties(command.Properties);
@@ -596,7 +614,8 @@ internal static partial class SemanticModelValidator
 
                 if (specification.When.EventSource is not null)
                 {
-                    throw new InvalidSemanticContract("A specification command event source requires ESM v2.");
+                    if (_semanticVersion != SemanticVersion.V2) throw new InvalidSemanticContract("A specification command event source requires ESM v2.");
+                    ValidateEventSource(specification.When.EventSource, command.Destination?.Type);
                 }
 
                 ValidatePropertyValues(specification.When.Values, command.Properties, true);
@@ -663,7 +682,7 @@ internal static partial class SemanticModelValidator
 
         void ValidateSpecificationEvent(SemanticSpecificationEvent value)
         {
-            if (value.EventSource is not null)
+            if (value.EventSource is not null && _semanticVersion != SemanticVersion.V2)
             {
                 throw new InvalidSemanticContract("A specification event source requires ESM v2.");
             }
@@ -674,6 +693,17 @@ internal static partial class SemanticModelValidator
             }
 
             ValidatePropertyValues(value.Values, eventContract.Properties, true);
+            if (value.EventSource is not null) ValidateEventSource(value.EventSource, null);
+        }
+
+        void ValidateEventSource(SemanticEventSourceIdentity source, SemanticTypeReference? requiredType)
+        {
+            if (source.Type.IsCollection || source.Type.IsOptional || (requiredType is not null && source.Type != requiredType))
+            {
+                throw new InvalidSemanticContract("A specification event source must have the required scalar destination type.");
+            }
+
+            ValidateValue(source.Value, source.Type, "specification event source");
         }
 
         void ValidateSpecificationReadModel(SemanticSpecificationReadModel state, bool requireExact, bool requireIdentifier)

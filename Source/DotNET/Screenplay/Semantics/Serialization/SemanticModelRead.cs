@@ -268,6 +268,7 @@ internal static partial class SemanticModelRead
         ImmutableArray<SemanticValidationRule> validations = default;
         ImmutableArray<SemanticProducedEvent> produces = default;
         ImmutableArray<SemanticRequirement> requirements = [];
+        SemanticStateChangeDestination? destination = null;
         while (NextProperty(ref reader, seen, "command") is { } property)
         {
             switch (property)
@@ -278,12 +279,13 @@ internal static partial class SemanticModelRead
                 case "validations": validations = Array(ref reader, Validation, property); break;
                 case "produces": produces = Array(ref reader, ProducedEvent, property); break;
                 case "requirements": requirements = Array(ref reader, Requirement, property); break;
+                case "destination": Object(ref reader, property); destination = StateChangeDestination(ref reader); break;
                 default: throw Unknown(property, "command");
             }
         }
 
         Required(id.IsSet && name is not null && !properties.IsDefault && !validations.IsDefault && !produces.IsDefault, "command");
-        return new(id, name!, properties, validations, produces) { Requirements = requirements };
+        return new(id, name!, properties, validations, produces) { Requirements = requirements, Destination = destination };
     }
 
     internal static SemanticProducedEvent ProducedEvent(ref Utf8JsonReader reader)
@@ -504,18 +506,20 @@ internal static partial class SemanticModelRead
         var seen = NewSeen();
         SemanticId eventContract = default;
         ImmutableArray<SemanticPropertyValue> values = default;
+        SemanticEventSourceIdentity? eventSource = null;
         while (NextProperty(ref reader, seen, "specification event") is { } property)
         {
             switch (property)
             {
                 case "eventContract": eventContract = SemanticId.Parse(String(ref reader, property)); break;
                 case "values": values = Array(ref reader, PropertyValue, property); break;
+                case "eventSource": Object(ref reader, property); eventSource = EventSource(ref reader); break;
                 default: throw Unknown(property, "specification event");
             }
         }
 
         Required(eventContract.IsSet && !values.IsDefault, "specification event");
-        return new(eventContract, values);
+        return new(eventContract, values) { EventSource = eventSource };
     }
 
     internal static SemanticSpecificationCommand SpecificationCommand(ref Utf8JsonReader reader)
@@ -523,18 +527,20 @@ internal static partial class SemanticModelRead
         var seen = NewSeen();
         SemanticId command = default;
         ImmutableArray<SemanticPropertyValue> values = default;
+        SemanticEventSourceIdentity? eventSource = null;
         while (NextProperty(ref reader, seen, "specification command") is { } property)
         {
             switch (property)
             {
                 case "command": command = SemanticId.Parse(String(ref reader, property)); break;
                 case "values": values = Array(ref reader, PropertyValue, property); break;
+                case "eventSource": Object(ref reader, property); eventSource = EventSource(ref reader); break;
                 default: throw Unknown(property, "specification command");
             }
         }
 
         Required(command.IsSet && !values.IsDefault, "specification command");
-        return new(command, values);
+        return new(command, values) { EventSource = eventSource };
     }
 
     internal static SemanticSpecificationReadModel SpecificationReadModel(ref Utf8JsonReader reader)
