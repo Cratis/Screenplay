@@ -8,6 +8,11 @@ namespace Cratis.Screenplay.Semantics;
 /// <summary>
 /// Defines declarative validation behavior in ESM v1.
 /// </summary>
+/// <remarks>
+/// Every rule except <see cref="NotEmpty"/> is satisfied by an absent value of an optional property -
+/// presence is stated by <see cref="NotEmpty"/> alone. Text length counts UTF-16 code units of the
+/// normalized text, the length .NET and JavaScript targets both report.
+/// </remarks>
 public enum SemanticValidationRuleKind
 {
     /// <summary>
@@ -21,22 +26,24 @@ public enum SemanticValidationRuleKind
     NotEmpty = 0,
 
     /// <summary>
-    /// The value must be no greater than the operand.
+    /// The value must be no greater than the operand. The meaning follows the property type: a text value's
+    /// length must be at most the whole-number operand, and a number must be at most the operand.
     /// </summary>
     Maximum = 1,
 
     /// <summary>
-    /// The value must be no less than the operand.
+    /// The value must be no less than the operand. The meaning follows the property type: a text value's
+    /// length must be at least the whole-number operand, and a number must be at least the operand.
     /// </summary>
     Minimum = 2,
 
     /// <summary>
-    /// The value must equal the operand.
+    /// The value must equal the operand. Admitted for text, enumeration members, numbers and booleans.
     /// </summary>
     Equal = 3,
 
     /// <summary>
-    /// The value must not equal the operand.
+    /// The value must not equal the operand. Admitted for text, enumeration members, numbers and booleans.
     /// </summary>
     NotEqual = 4
 }

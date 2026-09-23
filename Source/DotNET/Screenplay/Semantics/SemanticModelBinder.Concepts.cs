@@ -35,25 +35,28 @@ public sealed partial class SemanticModelBinder
             {
                 if (validation is not DeclarativeValidateSyntax declarative)
                 {
-                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' code validation requires a constrained implementation attachment.", validation.Location);
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' code validation requires a constrained implementation attachment (#139).", validation.Location);
                     continue;
                 }
 
                 foreach (var requirement in declarative.Requirements ?? [])
                 {
-                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' requirement conditions are not admitted by the first ESM v1 vertical.", requirement.Location);
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' requirement conditions await decision consistency (#129).", requirement.Location);
                 }
 
+                var subject = ConceptValidationSubject(concept);
                 foreach (var rule in declarative.Rules)
                 {
-                    if (rule.Property != ValidationRuleSyntax.ConceptValue || rule.Rule != ValidationRuleKind.NotEmpty ||
-                        rule.Value is not null || rule.File is not null || rule.Code is not null)
+                    if (rule.Property != ValidationRuleSyntax.ConceptValue)
                     {
-                        Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept validation rule '{rule.Rule}' is not admitted by the first ESM v1 vertical.", rule.Location);
+                        Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' validation rule must constrain the concept's own value, not '{rule.Property}'.", rule.Location);
                         continue;
                     }
 
-                    validations.Add(new(default, SemanticValidationRuleKind.NotEmpty, null, rule.Message));
+                    if (BindValidationRule(rule, default, subject) is { } bound)
+                    {
+                        validations.Add(bound);
+                    }
                 }
             }
 

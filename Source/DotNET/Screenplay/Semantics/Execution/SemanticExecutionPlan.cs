@@ -133,7 +133,7 @@ public sealed class SemanticExecutionPlan
         var slices = AllSlices(model.Application).ToArray();
         foreach (var concept in model.Application.Concepts)
         {
-            foreach (var validation in concept.Validations.Where(_ => _.Kind != SemanticValidationRuleKind.NotEmpty))
+            foreach (var validation in concept.Validations.Where(_ => !SemanticValidationRules.Evaluates(_.Kind)))
             {
                 issues.Add(new(concept.Id, SemanticPlanIssueKind.UnsupportedValidation, $"Concept validation '{validation.Kind}' is not admitted by the minimum evaluator."));
             }
@@ -141,7 +141,7 @@ public sealed class SemanticExecutionPlan
 
         foreach (var command in slices.SelectMany(_ => _.Commands))
         {
-            foreach (var validation in command.Validations.Where(_ => _.Kind != SemanticValidationRuleKind.NotEmpty))
+            foreach (var validation in command.Validations.Where(_ => !SemanticValidationRules.Evaluates(_.Kind)))
             {
                 issues.Add(new(command.Id, SemanticPlanIssueKind.UnsupportedValidation, $"Validation '{validation.Kind}' is not admitted by the minimum evaluator."));
             }
