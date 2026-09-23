@@ -66,7 +66,7 @@ public sealed record ExecutableSemanticModel
     }
 }
 
-static class SemanticModelValidator
+internal static partial class SemanticModelValidator
 {
     public static void Validate(SemanticApplication application)
     {
@@ -80,7 +80,7 @@ static class SemanticModelValidator
         context.ValidateReferences(application);
     }
 
-    sealed class ValidationContext
+    private sealed partial class ValidationContext
     {
         readonly HashSet<SemanticId> _ids = [];
         readonly Dictionary<SemanticId, SemanticConcept> _concepts = [];
@@ -459,6 +459,12 @@ static class SemanticModelValidator
             if (!_readModels.TryGetValue(projection.ReadModel, out var readModel))
             {
                 throw new InvalidSemanticContract($"Projection read model '{projection.ReadModel}' is unresolved.");
+            }
+
+            if (projection.Scope is not null)
+            {
+                ValidateProjectionScope(projection, readModel);
+                return;
             }
 
             var targets = Properties(readModel.Properties);

@@ -239,12 +239,30 @@ public sealed record SemanticProjectionTransition(
 /// <param name="Id">The stable semantic identity.</param>
 /// <param name="Name">The display name.</param>
 /// <param name="ReadModel">The target read model identity.</param>
-/// <param name="Transitions">The transitions in behavior order.</param>
+/// <param name="Transitions">The flat transitions in behavior order; empty when <see cref="Scope"/> carries the behavior.</param>
+/// <remarks>
+/// A projection has two shapes. The flat shape - <see cref="Transitions"/> with no <see cref="Scope"/> - is the original ESM v1
+/// vertical: one transition per event, keyed by one event property, setting read-model properties directly. The scoped shape -
+/// <see cref="Scope"/> with empty <see cref="Transitions"/> - carries everything Chronicle's projection definition can express:
+/// children, nested objects, joins, removals, <c>every</c>/<c>all</c>, event-source and composite keys and every mapping kind.
+/// A flat transition <c>(E, (One, event property k), [p := s])</c> is the scoped transition
+/// <c>From(E, Value(EventProperty([k])), null, [Set([p], s)])</c>. The binder writes the flat shape whenever it can express the
+/// projection, so existing consumers keep reading it unchanged, and the scoped shape otherwise.
+/// </remarks>
 public sealed record SemanticProjection(
     SemanticId Id,
     string Name,
     SemanticId ReadModel,
-    ImmutableArray<SemanticProjectionTransition> Transitions);
+    ImmutableArray<SemanticProjectionTransition> Transitions)
+{
+    /// <summary>
+    /// Gets the recursive projection behavior, or <see langword="null"/> for the flat shape.
+    /// </summary>
+    /// <remarks>
+    /// This is an init-only property to preserve the public positional constructor and deconstruction shape.
+    /// </remarks>
+    public SemanticProjectionScope? Scope { get; init; }
+}
 
 /// <summary>
 /// Represents a deterministic keyed query.
