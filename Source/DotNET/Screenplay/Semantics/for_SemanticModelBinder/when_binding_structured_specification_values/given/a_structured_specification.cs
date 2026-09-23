@@ -19,6 +19,7 @@ public class a_structured_specification : for_SemanticModelBinder.given.a_semant
                 id Uuid identifier
                 lines Line[]
                 produces Placed
+                  for id
                   id = id
                   lines = lines
               event Placed
