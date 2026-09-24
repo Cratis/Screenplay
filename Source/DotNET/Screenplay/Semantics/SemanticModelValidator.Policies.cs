@@ -16,17 +16,18 @@ internal static partial class SemanticModelValidator
             _ => []
         };
 
-        static void ValidatePolicyCondition(SemanticPolicyCondition? condition)
+        static void ValidatePolicyCondition(SemanticPolicyCondition? condition, bool allowOpaque = true)
         {
             switch (condition)
             {
-                case SemanticOpaquePolicyCondition or SemanticAuthenticatedCondition: break;
+                case SemanticOpaquePolicyCondition when allowOpaque: break;
+                case SemanticAuthenticatedCondition: break;
                 case SemanticRoleCondition { Role: { } }: break;
                 case SemanticClaimCondition { Claim: { }, TargetKind: SemanticClaimTargetKind.Subject, Value: null }: break;
                 case SemanticClaimCondition { Claim: { }, TargetKind: SemanticClaimTargetKind.Literal or SemanticClaimTargetKind.Artifact, Value: { } }: break;
                 case SemanticLogicalPolicyCondition logical when logical.Operator is SemanticLogicalOperator.And or SemanticLogicalOperator.Or:
-                    ValidatePolicyCondition(logical.Left);
-                    ValidatePolicyCondition(logical.Right);
+                    ValidatePolicyCondition(logical.Left, false);
+                    ValidatePolicyCondition(logical.Right, false);
                     break;
                 default: throw new InvalidSemanticContract("Invalid policy condition.");
             }

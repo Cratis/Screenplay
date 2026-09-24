@@ -10,6 +10,18 @@ namespace Cratis.Screenplay.Semantics.Serialization.for_CanonicalSemanticModelSe
 public class when_reading_malformed_policy_predicates : Specification
 {
     [Fact]
+    void should_reject_a_nested_opaque_policy()
+    {
+        var canonical = Encoding.UTF8.GetString(canonical_serialization_golden_vectors.SemanticModelV3Bytes);
+        var malformed = canonical.Replace(
+            "\"name\":\"RequiresTargetPolicy\",\"condition\":{\"kind\":\"opaque\"}",
+            "\"name\":\"RequiresTargetPolicy\",\"condition\":{\"kind\":\"logical\",\"operator\":\"and\",\"left\":{\"kind\":\"opaque\"},\"right\":{\"kind\":\"authenticated\"}}",
+            StringComparison.Ordinal);
+        malformed.ShouldNotEqual(canonical);
+        Catch.Exception(() => SemanticModelSerializer.Deserialize(Encoding.UTF8.GetBytes(malformed))).ShouldBeOfExactType<InvalidSemanticContract>();
+    }
+
+    [Fact]
     void should_reject_noncanonical_policy_shapes()
     {
         var canonical = Encoding.UTF8.GetString(canonical_serialization_golden_vectors.SemanticModelV3Bytes);

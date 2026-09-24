@@ -23,6 +23,12 @@ public sealed partial class SemanticModelBinder
 
         ImmutableArray<SemanticPolicy> BindPolicies() => [.. syntax.Policies.Select(policy =>
         {
+            if (policy.Condition is not null && (policy.Code is not null || policy.File is not null))
+            {
+                Error(DiagnosticCodes.MixedPolicyImplementation, $"Policy '{policy.Name}' cannot combine 'require' with a file or inline code block", policy.Location);
+                return null;
+            }
+
             if (policy.Code is not null || policy.File is not null)
             {
                 var requirement = RequireImplementation(SemanticImplementationRole.PolicyPredicate, SemanticAddress.ForApplication(_applicationIdentity), policy.File, policy.Code, policy.Name);

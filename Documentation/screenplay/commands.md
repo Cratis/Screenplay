@@ -349,7 +349,7 @@ authorize (IsAccountant or IsFinance) and OwnsInvoice   ← one of the first two
 
 Those two admit different callers, and the parentheses are the only thing that distinguishes them. Printing writes them back wherever the grouping is not the one precedence gives, so a document always says which one it means.
 
-Policies are declared at the top of the file — see [Policies](policies.md). Declarative policies bind to ESM v1 and are evaluated before validation using an explicitly supplied caller; a failed gate returns the typed `Unauthorized` rejection without producing events. Module and feature gates are composed with the command's gate by AND. Inline `csharp` policies remain unsupported pending #139.
+Policies are declared at the top of the file — see [Policies](policies.md). Declarative policies bind to ESM v1 and are evaluated before validation using an explicitly supplied caller; a failed gate returns the typed `Unauthorized` rejection without producing events. Module and feature gates are composed with the command's gate by AND. Inline `csharp` and file policies bind as opaque ESM v3 predicates: the reference evaluator reports `SemanticUnsupported` if evaluation reaches one, and a target provider must supply its implementation.
 
 ## The `produces` block
 

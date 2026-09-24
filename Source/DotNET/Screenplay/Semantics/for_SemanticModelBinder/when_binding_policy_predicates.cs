@@ -117,9 +117,9 @@ public class when_binding_policy_predicates : given.a_semantic_binder
         foreach (var (expression, expected) in new[]
         {
             ("ManagersOnly and CustomAccess", SemanticPolicyOutcome.Deny),
-            ("CustomAccess and ManagersOnly", SemanticPolicyOutcome.Deny),
+            ("CustomAccess and ManagersOnly", SemanticPolicyOutcome.Unsupported),
             ("AlwaysAllowed or CustomAccess", SemanticPolicyOutcome.Allow),
-            ("CustomAccess or AlwaysAllowed", SemanticPolicyOutcome.Allow),
+            ("CustomAccess or AlwaysAllowed", SemanticPolicyOutcome.Unsupported),
             ("AlwaysAllowed and CustomAccess", SemanticPolicyOutcome.Unsupported),
             ("CustomAccess or ManagersOnly", SemanticPolicyOutcome.Unsupported)
         })
@@ -155,6 +155,27 @@ public class when_binding_policy_predicates : given.a_semantic_binder
                     break;
             }
         }
+    }
+
+    [Fact] void should_evaluate_enclosing_gates_in_module_feature_construct_order()
+    {
+        var source = Source.Replace("module Portal\n  feature Reports", "module Portal\n  authorize CustomAccess\n  feature Reports\n    authorize ManagersOnly", StringComparison.Ordinal)
+            .Replace("authorize CustomAccess\n", "authorize AlwaysAllowed\n", StringComparison.Ordinal);
+
+        // Keep the opaque module gate first, followed by a portable feature denial.
+        source = source.Replace("module Portal\n  authorize AlwaysAllowed", "module Portal\n  authorize CustomAccess", StringComparison.Ordinal);
+        var compilation = Bind(source);
+        compilation.Diagnostics.ShouldBeEmpty();
+        var plan = SemanticExecutionPlan.Compile(compilation.Value!.Model).Plan!;
+        var command = plan.Commands.Values.Single();
+        var decision = SemanticPolicyEvaluation.Evaluate(
+            command.Authorization,
+            plan,
+            new(true, [], []),
+            new Dictionary<string, SemanticValue>(),
+            null,
+            command.Properties);
+        decision.Outcome.ShouldEqual(SemanticPolicyOutcome.Unsupported);
     }
 
     void AssertUnsupported(string name)

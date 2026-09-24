@@ -53,19 +53,16 @@ internal static class SemanticPolicyEvaluation
 
         var left = EvaluateAuthorization(logical.Left, plan, caller, artifact, subject, properties);
 
-        // A definitive left operand preserves the authored short circuit. Otherwise evaluate the
-        // right operand: false AND unknown is false; true OR unknown is true, regardless of order.
+        // Preserve authored order: an opaque left operand cannot be skipped to evaluate the right.
         if ((logical.Operator == SemanticLogicalOperator.And && left.Outcome == SemanticPolicyOutcome.Deny) ||
             (logical.Operator == SemanticLogicalOperator.Or && left.Outcome == SemanticPolicyOutcome.Allow))
         {
             return left;
         }
 
-        var right = EvaluateAuthorization(logical.Right, plan, caller, artifact, subject, properties);
-        if (logical.Operator == SemanticLogicalOperator.And && right.Outcome == SemanticPolicyOutcome.Deny) return right;
-        if (logical.Operator == SemanticLogicalOperator.Or && right.Outcome == SemanticPolicyOutcome.Allow) return right;
+        if (left.Outcome == SemanticPolicyOutcome.Unsupported) return left;
 
-        return left.Outcome == SemanticPolicyOutcome.Unsupported ? left : right;
+        return EvaluateAuthorization(logical.Right, plan, caller, artifact, subject, properties);
     }
 
     static bool EvaluateCondition(

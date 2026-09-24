@@ -1973,6 +1973,9 @@ public static class DiagnosticCodes
     /// </summary>
     public const string ReadsAliasConflictsWithProperty = "PLAY0412";
 
+    /// <summary>A policy combines a require condition with a file or inline code implementation.</summary>
+    public const string MixedPolicyImplementation = "PLAY0440";
+
     /// <summary>An implementation file path is absolute, escapes the root, or is not portable.</summary>
     public const string AttachmentPathRefused = "PLAY0430";
 

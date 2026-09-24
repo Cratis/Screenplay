@@ -81,6 +81,11 @@ internal static partial class PolicyParser
             }
         }
 
+        if (condition is not null && (code is not null || file is not null))
+        {
+            context.Error(DiagnosticCodes.MixedPolicyImplementation, $"Policy '{name.Groups[1].Value}' cannot combine 'require' with a file or inline code block", header.Location);
+        }
+
         if (condition is null && code is null && file is null)
         {
             context.Error(DiagnosticCodes.PolicyWithoutRequirement, $"Policy '{name.Groups[1].Value}' must declare a 'require' condition, a file reference or an inline code block", header.Location);
