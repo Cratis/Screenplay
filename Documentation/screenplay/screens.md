@@ -81,8 +81,7 @@ screen InvoiceDashboard
     header
       section title
         data InvoiceSummaryReadModel via query GetInvoiceSummary
-        react
-          ```
+        ```react
           export default ({ data }: Props) => (
             <header className="dashboard-header">
               <h1>Invoice Dashboard</h1>

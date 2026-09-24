@@ -82,9 +82,9 @@ internal static partial class ReducerParser
             {
                 file = FileReferenceParser.Parse(context, body);
             }
-            else if (context.Languages.InlineLanguages.Contains(body.Content))
+            else if (CodeBlockParser.IsCodeLine(context, body))
             {
-                code = CodeBlockParser.Parse(context, body.Content, body);
+                code = CodeBlockParser.Parse(context, body);
             }
             else
             {

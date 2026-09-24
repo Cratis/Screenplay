@@ -53,7 +53,7 @@ public record PolicyContext(
     DateTimeOffset Occurred);
 ```
 
-These live in `Cratis.Screenplay.Contexts`. A runtime such as Stage supplies the instance; inline `csharp` blocks and imported files compile against it, in scope as `context`.
+These live in `Cratis.Screenplay.Contexts`. A runtime such as Stage supplies the instance; inline `csharp` blocks and imported files compile against it, in scope as `context`. Reducer rules receive a `ReducerContext` with `State` (null before the first event) and `Event`; they have `StateAs<T>()` and `EventAs<T>()` too.
 
 ## The values they carry
 
@@ -145,8 +145,7 @@ Inside a `handler` or `performer` block, `context` is the corresponding record:
 ````screenplay
 query GetOverdueInvoices => OverdueInvoicesReadModel[]
   performer
-    csharp
-      ```
+    ```csharp
       return readModels
           .Where(invoice => invoice.Status == InvoiceStatus.Overdue)
           .Where(invoice => invoice.TenantId == context.Tenant)
@@ -159,14 +158,23 @@ Inside a named `rule` body, `context` is the `RuleContext` and the block answers
 ````screenplay
 validate
   orgNumber rule BeAValidOrganizationNumber message "Must be a valid organization number"
-    csharp
-      ```
-      string orgNumber = context.Value;
+    ```csharp
+      string orgNumber = context.ValueAs<string>();
       return orgNumber.Length == 9 && orgNumber.All(char.IsDigit);
       ```
 ````
 
-`Artifact`, `Value` and the command itself are `dynamic`, so they carry whatever shape the document declares rather than a type the language would have to invent. Extension methods do not bind on a `dynamic` value — assign it to a typed local first, as above, and LINQ works normally from there.
+Use the typed accessor for code that calls extension methods such as LINQ. For example, a rule whose value is a collection of integers can use `context.ValueAs<IEnumerable<int>>().Sum()`. The accessor returns the existing payload as `T`, so extension methods bind statically; it does not deserialize an `ExpandoObject` into a new type. The realization must supply the payload as a compatible `T`. If it does not, the accessor throws `ContextPayloadTypeMismatch` with the member name and both types (or `null`).
+
+| Context | Typed accessor beside the dynamic member |
+| --- | --- |
+| `CommandContext` | `CommandAs<T>()` |
+| `QueryContext` | `ArgumentsAs<T>()` |
+| `RuleContext` | `ArtifactAs<T>()`, `ValueAs<T>()` |
+| `PolicyContext` | `ArtifactAs<T>()` |
+| `ReducerContext` | `StateAs<T>()`, `EventAs<T>()` |
+
+`StateAs<T>()` returns null for the first event if `T` permits null (a reference or nullable value type); it throws `ContextPayloadTypeMismatch` for a non-nullable value type. Check `context.IsFirst` before reading a non-nullable state. The original `dynamic` members remain available, including for existing code that assigns one to a static local before using LINQ. These accessors require the caller to name `T`; they do not infer the shape from the Screenplay declaration.
 
 Inside a `policy` block, `context` is the `PolicyContext` and the block answers with a `bool` — the same answer a `require` condition gives, so the two forms compose identically. See [Policies](policies.md#custom-logic).
 

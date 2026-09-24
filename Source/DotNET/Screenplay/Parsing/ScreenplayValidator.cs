@@ -35,6 +35,14 @@ internal static class ScreenplayValidator
             .Concat(application.Imports.Select(import => import.Name))
             .ToHashSet();
         var knownPolicies = application.Policies.Select(policy => policy.Name).ToHashSet();
+        foreach (var module in application.Modules)
+        {
+            ValidateAuthorize(module.Authorize, knownPolicies, context);
+            foreach (var feature in module.Features.SelectMany(AllFeatures))
+            {
+                ValidateAuthorize(feature.Authorize, knownPolicies, context);
+            }
+        }
 
         // A read model is whatever a builder names with '=>', plus anything declared on its own. A
         // projection with variants produces no read model of its own name - each variant is its own,
@@ -341,6 +349,19 @@ internal static class ScreenplayValidator
                     $"Unknown event '{rule.Event}' - declare it with 'event {rule.Event}'",
                     rule.Location);
             }
+        }
+    }
+
+    static void ValidateAuthorize(AuthorizeSyntax? authorize, HashSet<string> knownPolicies, ParserContext context)
+    {
+        if (authorize is null)
+        {
+            return;
+        }
+
+        foreach (var policy in authorize.References().Where(policy => !knownPolicies.Contains(policy.Name)))
+        {
+            context.Warning(DiagnosticCodes.UnknownPolicy, $"Unknown policy '{policy.Name}' - declare it with 'policy {policy.Name}'", policy.Location);
         }
     }
 
@@ -1226,13 +1247,9 @@ internal static class ScreenplayValidator
         }
 
         foreach (var authorize in slice.Commands.Select(command => command.Authorize)
-            .Concat(slice.Queries.Select(query => query.Authorize))
-            .OfType<AuthorizeSyntax>())
+            .Concat(slice.Queries.Select(query => query.Authorize)))
         {
-            foreach (var policy in authorize.References().Where(policy => !knownPolicies.Contains(policy.Name)))
-            {
-                context.Warning(DiagnosticCodes.UnknownPolicy, $"Unknown policy '{policy.Name}' - declare it with 'policy {policy.Name}'", policy.Location);
-            }
+            ValidateAuthorize(authorize, knownPolicies, context);
         }
 
         foreach (var produces in slice.Commands.SelectMany(command => command.Produces)

@@ -19,6 +19,35 @@ public static class RegisterProjectCorpus
     /// </summary>
     public static CanonicalCorpusVector LegacyV1 { get; } = LoadLegacyV1();
 
+    /// <summary>
+    /// Gets the RegisterProject corpus with typed state-change destination and an explicit specification event source.
+    /// </summary>
+    public static CanonicalCorpusVector V2 { get; } = LoadV2();
+
+    /// <summary>
+    /// Gets a source that parses but cannot be bound to portable ESM, with no publishable artifacts.
+    /// </summary>
+    public static CanonicalCorpusRejectionVector UnsupportedSequence { get; } = new()
+    {
+        Name = "register-project/unsupported-sequence",
+        ApplicationName = "Projects",
+        ApplicationIdentity = ApplicationIdentity.Parse("app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"),
+        SourceForm = new CanonicalCorpusSourceForm
+        {
+            Name = "single",
+            Documents = [Document("register-project-vector", "RegisterProject.play", "Cratis.Screenplay.CanonicalCorpus.Corpus.RegisterProject.unsupported_sequence.source.RegisterProject.play")],
+            IdentityCatalogBytes = Resource($"{ResourcePrefix}.identity.catalog-v1.json")
+        },
+        Diagnostics =
+        [
+            new CanonicalCorpusDiagnosticExpectation
+            {
+                Code = "PLAY0268",
+                Message = "Projection 'ProjectSummaryProjection' sequence is not portable ESM v1 behavior: which event sequence a projection observes is a realization concern."
+            }
+        ]
+    };
+
     static CanonicalCorpusVector LoadLegacyV1()
     {
         var single = Document(
@@ -38,6 +67,24 @@ public static class RegisterProjectCorpus
             ],
             IdentityCatalogBytes = Resource($"{ResourcePrefix}.identity.folder-catalog-v1.json")
         };
+        var reordered = new CanonicalCorpusSourceForm
+        {
+            Name = "reordered",
+            Documents = [.. folder.Documents.Reverse().Select(document => Document(
+                document.StableKey,
+                document.DisplayPath,
+                $"{ResourcePrefix}.source.reordered.{document.DisplayPath.Replace('/', '.')}"))],
+            IdentityCatalogBytes = folder.IdentityCatalogBytes
+        };
+        var relocated = new CanonicalCorpusSourceForm
+        {
+            Name = "relocated",
+            Documents = [.. folder.Documents.Reverse().Select(document => Document(
+                document.StableKey,
+                $"Archive/{document.DisplayPath}",
+                $"{ResourcePrefix}.source.relocated.Archive.{document.DisplayPath.Replace('/', '.')}"))],
+            IdentityCatalogBytes = folder.IdentityCatalogBytes
+        };
         var revision = System.Text.Encoding.UTF8.GetString(Resource($"{ResourcePrefix}.expected.semantic-revision.txt").AsSpan()).Trim();
         return new CanonicalCorpusVector
         {
@@ -53,7 +100,9 @@ public static class RegisterProjectCorpus
                     Documents = [single],
                     IdentityCatalogBytes = Resource($"{ResourcePrefix}.identity.catalog-v1.json")
                 },
-                folder
+                folder,
+                reordered,
+                relocated
             ],
             SpecificationExpectations =
             [
@@ -75,6 +124,41 @@ public static class RegisterProjectCorpus
             SemanticRevision = SemanticRevision.Parse(revision)
         };
     }
+
+    static CanonicalCorpusVector LoadV2() => new()
+    {
+        Name = "register-project/v2",
+        ApplicationName = "Projects",
+        ApplicationIdentity = ApplicationIdentity.Parse("app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"),
+        RuntimeStreamId = "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        SourceForms =
+        [
+            new CanonicalCorpusSourceForm
+            {
+                Name = "single",
+                Documents = [Document("register-project-vector", "RegisterProject.play", "Cratis.Screenplay.CanonicalCorpus.Corpus.RegisterProject.v2.source.RegisterProject.play")],
+                IdentityCatalogBytes = Resource($"{ResourcePrefix}.identity.catalog-v1.json")
+            }
+        ],
+        SpecificationExpectations =
+        [
+            new CanonicalCorpusSpecificationExpectation
+            {
+                Specification = SemanticId.Parse("sem1:951a1e8506741ec7552de6a3cd3ef5814c0b3c8d9600ab00fd1c3a3255664ae0"),
+                Name = "RejectingAnEmptyProjectName",
+                Outcome = SemanticExecutionOutcomeKind.Rejected,
+                RejectionMessage = "Project name is required"
+            },
+            new CanonicalCorpusSpecificationExpectation
+            {
+                Specification = SemanticId.Parse("sem1:a65de3ac412b245dc9649944e9940214ee53f8e9b354941ea33a0f4bca62cf62"),
+                Name = "RegisteringAProject",
+                Outcome = SemanticExecutionOutcomeKind.Accepted
+            }
+        ],
+        EsmBytes = Resource("Cratis.Screenplay.CanonicalCorpus.Corpus.RegisterProject.v2.expected.esm-v2.json"),
+        SemanticRevision = SemanticRevision.Parse("rev1:53baac263c39c8e03e8318b09ac29e0882b2f0809ac538ecf72f9867b0877473")
+    };
 
     static CanonicalCorpusDocument Document(string stableKey, string path, string resource) => new()
     {

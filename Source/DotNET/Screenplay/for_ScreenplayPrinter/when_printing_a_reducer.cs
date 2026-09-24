@@ -26,8 +26,7 @@ public class when_printing_a_reducer : given.a_printer
 
               reducer Balance => AccountBalance
                 on AmountDeposited
-                  csharp
-                    ```
+                  ```csharp
                     return context.State is null
                         ? new(context.Event.amount, 1)
                         : context.State with { balance = context.State.balance + context.Event.amount };

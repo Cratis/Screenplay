@@ -1,0 +1,16 @@
+module Projects
+
+  feature Registration
+
+    slice StateView ProjectLookup
+
+      query ProjectById => ProjectSummary?
+        by projectId ProjectId
+
+      readmodel ProjectSummary
+        projectId ProjectId
+        name ProjectName
+
+      projection ProjectSummaryProjection => ProjectSummary
+        from ProjectRegistered key projectId
+          name = name

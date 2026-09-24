@@ -38,4 +38,28 @@ public record ReducerContext(
     /// <see cref="State"/> has to be built rather than changed.
     /// </summary>
     public bool IsFirst => State is null;
+
+    /// <summary>
+    /// Gets the state as a statically typed payload, or null for the first event when <typeparamref name="T"/> is nullable.
+    /// </summary>
+    /// <typeparam name="T">The type supplied by the realization for the state.</typeparam>
+    /// <returns>The state as <typeparamref name="T"/>, or null for the first event when the type permits null.</returns>
+    /// <exception cref="ContextPayloadTypeMismatch">The state is not a <typeparamref name="T"/>, including null for a non-nullable value type.</exception>
+    public T? StateAs<T>()
+    {
+        if (State is null && default(T) is null)
+        {
+            return default;
+        }
+
+        return ContextPayload.As<T>((object?)State, nameof(State));
+    }
+
+    /// <summary>
+    /// Gets the event as a statically typed payload without dynamic dispatch.
+    /// </summary>
+    /// <typeparam name="T">The type supplied by the realization for the event.</typeparam>
+    /// <returns>The event as <typeparamref name="T"/>.</returns>
+    /// <exception cref="ContextPayloadTypeMismatch">The event is not a <typeparamref name="T"/>.</exception>
+    public T EventAs<T>() => ContextPayload.As<T>((object?)Event, nameof(Event));
 }

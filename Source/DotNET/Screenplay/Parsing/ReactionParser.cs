@@ -163,9 +163,9 @@ internal static partial class ReactionParser
                     continue;
             }
 
-            if (context.Languages.InlineLanguages.Contains(body.Content))
+            if (CodeBlockParser.IsCodeLine(context, body))
             {
-                code = CodeBlockParser.Parse(context, body.Content, body);
+                code = CodeBlockParser.Parse(context, body);
                 continue;
             }
 

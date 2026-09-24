@@ -7,7 +7,7 @@ The full EBNF grammar of the Screenplay DSL. `INDENT`/`DEDENT` are synthesized b
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { TypeDecl }, { PolicyDecl }, { PersonaDecl }, [ AuthenticationDecl ], { TriggerDecl }, { ThemeDecl }, { LayoutDecl }, { UiProfileDecl }, { Module }, { SeedDecl } ;
+Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { TypeDecl }, { PolicyDecl }, { PersonaDecl }, [ AuthenticationDecl ], { TriggerDecl }, { ThemeDecl }, { LayoutDecl }, { UiProfileDecl }, { BehaviorDecl }, { Module }, { SeedDecl } ;
 
 (* -------------------------------------------------------------- *)
 (* Domain                                                          *)
@@ -34,8 +34,7 @@ ConceptDecl    = "concept", Ident, ":", PrimitiveType, { Attribute }, NL,
 AttributeReason = AttributeName, "reason", StringLiteral, NL ;
 
 ConceptValidate = "validate", NL,
-                   INDENT, { ConceptRule }, DEDENT
-               | "validate", "csharp", NL, InlineBlock ;
+                   INDENT, ( { ConceptRule } | InlineBlock ), DEDENT ;
 
 ConceptRule    = RuleOp, [ "severity", ValidationSeverity ], [ "message", LocalizableString ], NL,
                    [ INDENT, RuleImplementation, DEDENT ] ;
@@ -172,12 +171,40 @@ PackageName    = Ident, { ".", Ident } ;
 Module         = "module", Ident, NL,
                  INDENT,
                    { DescriptionDecl
+                   | AuthorizeDecl
                    | ScreenTemplateDecl
                    | DialogTemplateDecl
                    | FormDecl
                    | ContributionDecl
+                   | InteractionBinding
+                   | UsesBehaviorDecl
                    | Feature },
                  DEDENT ;
+
+(* A module or feature may attach an inline interaction with "on" or a
+   named behavior with "uses". These bindings reach its descendant screens. *)
+
+(* -------------------------------------------------------------- *)
+(* Interactions                                                    *)
+(* -------------------------------------------------------------- *)
+
+BehaviorDecl   = "behavior", Ident, NL,
+                 [ INDENT, [ DescriptionDecl ], [ FileDirective ],
+                   { "parameter", Ident, [ TypeRef ], NL | "order", SignedInteger, NL | InteractionBinding }, DEDENT ] ;
+
+InteractionBinding = "on", InteractionTrigger, NL,
+                 INDENT, { "where", Condition, NL | InteractionAction }, DEDENT ;
+
+UsesBehaviorDecl = "uses", Ident, NL,
+                 [ INDENT, { Ident, BehaviorArgument, NL }, DEDENT ] ;
+BehaviorArgument = ? nonempty argument text (literal, binding or parameter) ? ;
+SignedInteger  = [ "-" ], Integer ;
+
+(* Interaction triggers, actions and continuations are described in
+   interactions.md; the same attachments also occur in layouts, templates,
+   forms and screens. *)
+InteractionTrigger = ? built-in kind or declared application trigger ? ;
+InteractionAction = ? interaction action with optional continuation ? ;
 
 (* -------------------------------------------------------------- *)
 (* Forms and contributions                                         *)
@@ -280,9 +307,12 @@ ArrangementSizeClass = "compact" | "regular" ;
 Feature        = "feature", Ident, NL,
                  INDENT,
                    { DescriptionDecl
+                   | AuthorizeDecl
                    | Feature
                    | SliceDecl
-                   | ContributionDecl },
+                   | ContributionDecl
+                   | InteractionBinding
+                   | UsesBehaviorDecl },
                  DEDENT ;
 
 (* -------------------------------------------------------------- *)
@@ -401,8 +431,7 @@ PolicyRef      = Ident ;
    line at deeper indentation.                                              *)
 
 ValidateDecl   = "validate", NL,
-                   INDENT, { ValidationRule | RequireRule }, DEDENT
-               | "validate", "csharp", NL, InlineBlock ;
+                   INDENT, ( { ValidationRule | RequireRule } | InlineBlock ), DEDENT ;
 
 ValidationRule = Path, RuleOp, [ "severity", ValidationSeverity ], [ "message", LocalizableString ], NL,
                    [ INDENT, RuleImplementation, DEDENT ] ;
@@ -447,7 +476,7 @@ RuleOp         = "not empty"
 RuleImplementation = FileDirective
                     | InlineBlock ;
 
-(* A RuleImplementation and a "validate csharp" InlineBlock both compile against
+(* A RuleImplementation and a "validate" InlineBlock both compile against
    RuleContext. The rule implementation answers with a bool; the "validate csharp"
    block yields the message of every rule the artifact breaks -
    see Documentation/screenplay/context.md.                                  *)
@@ -668,7 +697,8 @@ ConstraintBody = { ConstraintOption }, UniquePropertyRule,
                    { UniquePropertyRule | ConstraintOption }
                | { ConstraintOption }, UniqueEventRule,
                    { UniqueEventRule | ConstraintOption }
-               | FileDirective ;
+               | FileDirective ;  (* file <Path>: Chronicle IConstraint, uniqueness only;
+                                     PLAY0396 warns; ESM rejects with PLAY0268 *)
 UniquePropertyRule = "unique", Ident, { ",", Ident }, "on", Ident, NL ;
 UniqueEventRule = "unique", "event", Ident, NL ;
 ConstraintOption = "released", "by", Ident, NL
@@ -806,7 +836,9 @@ FilePath       = (* repository relative path, never absolute *) ;
    file relationships is meant. On a construct that HAS an implementation - a
    handler, a performer, a reducer rule, a reaction trigger, a rule predicate,
    a constraint, a screen - it stands in for the inline body: the implementation
-   lives there. On a pure declaration - concept, type, event, readmodel,
+   lives there. A constraint file names a Chronicle IConstraint class, which can
+   declare only uniqueness; prefer the portable unique forms instead. On a pure
+   declaration - concept, type, event, readmodel,
    projection, slice, specification, trigger - there is no body to delegate, so
    it can only say which file realizes the declaration. Those are different
    relationships, but the construct already decides which one, so a second
@@ -827,7 +859,12 @@ FilePath       = (* repository relative path, never absolute *) ;
    word outright, as it always has, so a trigger value named after it is written
    "@file".                                                                  *)
 
-InlineBlock    = LanguageTag, NL, "```", NL, { AnyLine }, "```", NL ;
+InlineBlock    = "```", LanguageTag, NL, { AnyLine }, "```", NL ;
+
+(* The fence's info string is the one place a block names its language. The
+   earlier forms - "validate csharp" on the keyword line, and a language tag on
+   its own line above a bare fence - still parse, with a deprecation warning
+   (PLAY0397), and print back in the form above.                            *)
 LanguageTag    = "csharp" | "typescript" | "react" | "html" | "sql"
                | (* any language registered with the compiler *) ;
 

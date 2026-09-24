@@ -75,9 +75,9 @@ internal static partial class ScreenParser
                     ? new ScreenUsesBehaviorSyntax(uses, line.Location)
                     : null;
             default:
-                if (context.Languages.InlineLanguages.Contains(line.Content))
+                if (CodeBlockParser.IsCodeLine(context, line))
                 {
-                    var code = CodeBlockParser.Parse(context, line.Content, line);
+                    var code = CodeBlockParser.Parse(context, line);
                     return code is null ? null : new ScreenCodeSyntax(code, line.Location);
                 }
 

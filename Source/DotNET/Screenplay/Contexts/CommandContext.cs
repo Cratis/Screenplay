@@ -27,4 +27,13 @@ public record CommandContext(
     Identity Identity,
     CausedBy CausedBy,
     Causation Causation,
-    DateTimeOffset Occurred);
+    DateTimeOffset Occurred)
+{
+    /// <summary>
+    /// Gets the command as a statically typed payload without dynamic dispatch.
+    /// </summary>
+    /// <typeparam name="T">The type supplied by the realization for the command.</typeparam>
+    /// <returns>The command as <typeparamref name="T"/>.</returns>
+    /// <exception cref="ContextPayloadTypeMismatch">The command is not a <typeparamref name="T"/>.</exception>
+    public T CommandAs<T>() => ContextPayload.As<T>((object?)Command, nameof(Command));
+}

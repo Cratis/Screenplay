@@ -14,10 +14,9 @@ public class and_it_names_only_inline_code : given.a_printer
         """
                 validate
                   orgNumber rule BeUnique
-                    csharp
-                      ```
-                      return !string.IsNullOrEmpty(value);
-                      ```
+                    ```csharp
+                    return !string.IsNullOrEmpty(value);
+                    ```
         """;
 
     RoundTripResult _roundtrip;

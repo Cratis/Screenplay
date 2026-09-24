@@ -9,7 +9,7 @@ export interface CompletionEntry {
     documentation: string;
 }
 
-const fenced = (tag: string) => `${tag}\n\`\`\`\n\${1}\n\`\`\``;
+const fenced = (tag: string) => `\`\`\`${tag}\n\${1}\n\`\`\``;
 
 export const topLevelItems: CompletionEntry[] = [
     { label: 'import', insertText: 'import ${1:Module}.${2:Type}', documentation: 'Imports a type from another module by its qualified name.' },
@@ -64,7 +64,7 @@ export const commandItems: CompletionEntry[] = [
     { label: 'identifier property', insertText: '${1:property} ${2:Type} identifier', documentation: 'Marks the property a runtime resolves the event source id from. At most one per command.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'References the policies that must pass for the command to execute.' },
     { label: 'validate', insertText: 'validate\n    ${1:property} not empty message "${2:message}"', documentation: 'Declarative validation rules with messages.' },
-    { label: 'validate csharp', insertText: `validate ${fenced('csharp')}`, documentation: 'Imperative validation in C#, yielding the message of every rule the artifact breaks.' },
+    { label: 'validate csharp', insertText: `validate\n    ${fenced('csharp')}`, documentation: 'Imperative validation in C#, yielding the message of every rule the artifact breaks.' },
     { label: 'produces', insertText: 'produces ${1:EventType}\n    ${2:property} = ${3:source}', documentation: 'Declares the event the command emits, with property mappings.' },
     { label: 'produces when', insertText: 'produces when ${1:condition}\n    ${2:EventType}\n        ${3:property} = ${4:source}', documentation: 'Conditionally emits an event when the condition holds.' },
     { label: 'handler', insertText: 'handler\n    ', documentation: 'Fully imperative command implementation — file reference or inline C#, instead of produces.' },

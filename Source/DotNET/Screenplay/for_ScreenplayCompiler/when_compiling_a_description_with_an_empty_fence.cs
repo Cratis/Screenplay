@@ -11,7 +11,7 @@ public class when_compiling_a_description_with_an_empty_fence : given.a_compiler
         """
         module Invoicing
           description
-            ```
+            ```text
             ```
         """;
 

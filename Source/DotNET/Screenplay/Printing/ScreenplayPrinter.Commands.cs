@@ -320,7 +320,7 @@ public partial class ScreenplayPrinter
 
                 break;
             case CodeValidateSyntax code:
-                writer.Line("validate csharp");
+                writer.Line("validate");
                 using (writer.Indent())
                 {
                     WriteFencedCode(writer, code.Code);

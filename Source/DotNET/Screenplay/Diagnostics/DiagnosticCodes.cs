@@ -1914,4 +1914,19 @@ public static class DiagnosticCodes
     /// Ignoring casing is only meaningful for unique property values, not unique event occurrences.
     /// </summary>
     public const string InvalidConstraintCasing = "PLAY0393";
+
+    /// <summary>
+    /// Another file repeats an identical authorization gate on the same module or feature.
+    /// </summary>
+    public const string DuplicateAuthorizationAcrossFiles = "PLAY0394";
+
+    /// <summary>
+    /// A file-backed Chronicle constraint can only declare uniqueness; use portable unique syntax instead.
+    /// </summary>
+    public const string FileConstraintOnlySupportsUniqueness = "PLAY0396";
+
+    /// <summary>
+    /// An inline code block uses a legacy language line, or a description uses a bare fence.
+    /// </summary>
+    public const string LegacyInlineCodeFence = "PLAY0397";
 }
