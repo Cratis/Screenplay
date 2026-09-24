@@ -44,7 +44,7 @@ internal static partial class RequirementParser
             context.Reader.TakeSignificant();
             if (MessageRegex().Match(child.Content) is { Success: true } text)
             {
-                message = StringLiteral.Unescape(text.Groups[1].Value);
+                message = text.Groups[1].Success ? StringLiteral.Unescape(text.Groups[1].Value) : text.Groups[2].Value;
                 continue;
             }
 
@@ -75,7 +75,7 @@ internal static partial class RequirementParser
 
             context.Error(
                 DiagnosticCodes.UnknownRequirementDirective,
-                $"Unexpected '{child.Content}' in requirement body - expected 'message \"<text>\"'",
+                $"Unexpected '{child.Content}' in requirement body - expected 'message \"<text>\"' or 'message $strings.<key>'",
                 child.Location);
             context.SkipBlock(child.Indent);
         }
@@ -86,6 +86,6 @@ internal static partial class RequirementParser
     [GeneratedRegex(@"^require\s+(\S.*)$", RegexOptions.None, 1000)]
     private static partial Regex RequireRegex();
 
-    [GeneratedRegex("^message\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^message\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\S*))$", RegexOptions.None, 1000)]
     private static partial Regex MessageRegex();
 }

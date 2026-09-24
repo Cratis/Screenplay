@@ -20,7 +20,7 @@ command <Name>
     <rule> [severity information|warning|error] [message "<message>"]
     require <condition>              ← a rule about the command as a whole
       [severity information|warning|error]
-      [message "<message>"]
+      [message "<message>"|$strings.<key>]
     ...]
 
   [validate csharp
@@ -169,7 +169,7 @@ validate
     message "The month cannot be started yet"
 ```
 
-The message and optional severity go in the body rather than on the end of the line. A condition is as long as the rule it states, and metadata pushed out past it is the part nobody reads. Write `severity warning` or `severity information` as a sibling of `message` (in either order); omitting severity means `error`:
+The message and optional severity go in the body rather than on the end of the line. A condition is as long as the rule it states, and metadata pushed out past it is the part nobody reads. Use a quoted literal or an unquoted `$strings.<key>` for the message. Write `severity warning` or `severity information` as a sibling of `message` (in either order); omitting severity means `error`:
 
 ```screenplay
 command ConfirmOrder
@@ -177,7 +177,7 @@ command ConfirmOrder
   validate
     require total > 0
       severity warning
-      message "Total must be positive"
+      message $strings.orders.totalMustBePositive
 ```
 
 Every failed rule and requirement **rejects** the command, even at warning or information severity. A rejection carries each failed rule's message and severity for UI presentation; severity is not a pass/fail threshold.
