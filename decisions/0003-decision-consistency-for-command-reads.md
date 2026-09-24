@@ -18,6 +18,8 @@ applies-to:
   - Source/Screenplay/VSCodeExtension/**
 ---
 
+> **2026-09-24 — precondition check.** Checked against Chronicle v19.4.7 and Arc v22.23.0: the precondition below is only partially met. An append can carry a scope on an event source the command does not append to, and Chronicle validates that scope. The .NET client does not return a read model's sequence number with its instance. An absent materialized instance answers `Unavailable` whether it was never created or was removed, so the rule "an absent view maps to expects no matching event" is unsafe after a removal. The runtime mapping waits on [Cratis/Chronicle#4138](https://github.com/Cratis/Chronicle/issues/4138); a superseding record will replace the absence rule once that issue is resolved. The alias grammar is implemented, but the decision as a whole is not (`stage: none`).
+
 ## Context
 
 [#129](https://github.com/Cratis/Screenplay/issues/129) promises that a decision commits only while every state input it decided from is still current. It names three open choices: what a `reads` dependency maps to at runtime, how existing `reads` and `concurrency` migrate, and how to alias two reads of the same view. `require` over declared reads in [#209](https://github.com/Cratis/Screenplay/issues/209) waits on the first and third. Today it fails binding with "read-model paths require decision-consistent reads (#129)" ([`SemanticModelBinder.Conditions.cs:31`](../Source/DotNET/Screenplay/Semantics/SemanticModelBinder.Conditions.cs)).

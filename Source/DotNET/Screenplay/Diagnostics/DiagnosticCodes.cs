@@ -947,12 +947,12 @@ public static class DiagnosticCodes
     // What a command reads to decide.
 
     /// <summary>
-    /// A <c>reads</c> line is not <c>reads &lt;ReadModel&gt;</c> or <c>reads &lt;ReadModel&gt; by &lt;property&gt;</c>.
+    /// A <c>reads</c> line is not <c>reads &lt;ReadModel&gt; [as &lt;alias&gt;] [by &lt;property&gt;]</c>, or uses a reserved alias.
     /// </summary>
     public const string InvalidReadsDeclaration = "PLAY0175";
 
     /// <summary>
-    /// A command declares that it reads the same read model more than once.
+    /// No longer reported. Repeated reads without aliases are reported as <c>PLAY0410</c>. Retained for compatibility.
     /// </summary>
     public const string DuplicateReads = "PLAY0176";
 
@@ -1947,4 +1947,19 @@ public static class DiagnosticCodes
     /// An inline code block uses a legacy language line, or a description uses a bare fence.
     /// </summary>
     public const string LegacyInlineCodeFence = "PLAY0397";
+
+    /// <summary>
+    /// Multiple reads of one view require an alias on every instance.
+    /// </summary>
+    public const string MissingReadsAlias = "PLAY0410";
+
+    /// <summary>
+    /// Two reads in one command use the same alias.
+    /// </summary>
+    public const string DuplicateReadsAlias = "PLAY0411";
+
+    /// <summary>
+    /// A reads alias has the same name as a command property.
+    /// </summary>
+    public const string ReadsAliasConflictsWithProperty = "PLAY0412";
 }

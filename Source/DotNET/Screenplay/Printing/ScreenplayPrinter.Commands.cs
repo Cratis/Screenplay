@@ -24,7 +24,9 @@ public partial class ScreenplayPrinter
             // stated against state both read as though the read model were already in scope, because it is.
             foreach (var reads in command.Reads ?? [])
             {
-                writer.Line(reads.By is null ? $"reads {reads.ReadModel}" : $"reads {reads.ReadModel} by {reads.By}", reads);
+                var alias = reads.Alias is null ? string.Empty : $" as {reads.Alias}";
+                var by = reads.By is null ? string.Empty : $" by {reads.By}";
+                writer.Line($"reads {reads.ReadModel}{alias}{by}", reads);
             }
 
             if (command.Authorize is not null)
