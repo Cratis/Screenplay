@@ -2,6 +2,7 @@
     <PropertyGroup>
         <AssemblyName>Cratis.Screenplay</AssemblyName>
         <RootNamespace>Cratis.Screenplay</RootNamespace>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <IsPackable>true</IsPackable>
         <Description>Compiler for the Cratis Screenplay language - parsing, syntax tree and visitor contracts</Description>
         <PackageTags>cratis;event-sourcing;event-modeling;cqrs;screenplay;dsl;compiler</PackageTags>

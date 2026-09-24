@@ -127,8 +127,7 @@ implementation requirement envelopes by role, owner address, optional member, la
 file, `RequirementId`, context/result contract versions, `RequiredCapability`,
 `AttachmentResolution`, content hash, semantic/document ID and source line/column.
 The MCP server loads implementation attachments from its trusted physical root for content hashing (#244), with warnings for refused files (`PLAY0430`–`PLAY0434`). It refreshes contents on each workspace operation, including when only the attachment changes; neither attachment text nor diagnostics enter persisted identity state or workspace revisions. For a file attachment whose contents could not be supplied, the content hash is empty;
-bodied reducers no longer block binding. The page cursor and
-`expectedRevision` pin one immutable snapshot; rejected compilations still expose
+bodied reducers no longer block binding. Page offsets and `expectedRevision` pin the authored documents and identity catalog, not the physical attachment contents: attachment hashes may change between pages without changing the revision. Re-read the view if a stable attachment snapshot is required. Rejected compilations still expose
 attachments without admitting an executable model. Document results contain root handles. `read-ast` returns
 original occurrences, names, child counts and existing identities. Its `children`
 view selects a parent document/path. Typed content is opt-in.

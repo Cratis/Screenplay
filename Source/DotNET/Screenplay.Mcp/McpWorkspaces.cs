@@ -118,7 +118,7 @@ internal sealed partial class McpWorkspaces(McpRoot root)
 
     object Store(IMcpProposal proposal, JsonElement arguments)
     {
-        _ = Current();
+        proposal = RefreshProposal(proposal);
         var candidate = proposal.Workspace;
         McpRoot.CheckDocuments(candidate.Documents);
         foreach (var document in candidate.Documents)
@@ -165,7 +165,39 @@ internal sealed partial class McpWorkspaces(McpRoot root)
     IMcpProposal Proposal(JsonElement arguments)
     {
         var id = McpJson.RequiredString(arguments, "proposalId");
-        return _proposals.TryGetValue(id, out var proposal) ? proposal : throw new McpFailure("UnknownProposal: only an outstanding proposal from this connection can be used.");
+        if (!_proposals.TryGetValue(id, out var proposal))
+        {
+            throw new McpFailure("UnknownProposal: only an outstanding proposal from this connection can be used.");
+        }
+
+        var refreshed = RefreshProposal(proposal);
+        if (!ReferenceEquals(proposal, refreshed))
+        {
+            if (_statePlans.TryGetValue(proposal, out var plan))
+            {
+                _statePlans.Add(refreshed, plan);
+            }
+
+            _proposals[id] = refreshed;
+        }
+
+        return refreshed;
+    }
+
+    IMcpProposal RefreshProposal(IMcpProposal proposal)
+    {
+        var refreshed = McpAttachmentContents.Refresh(root, proposal.Workspace);
+        if (ReferenceEquals(refreshed, proposal.Workspace))
+        {
+            return proposal;
+        }
+
+        return proposal switch
+        {
+            McpProposal strict => strict with { Transaction = strict.Transaction with { Workspace = refreshed } },
+            McpAuthoringProposal authored => authored with { Result = authored.Result with { Workspace = refreshed, ExecutableReady = refreshed.Compilation.Success, ExecutableDiagnostics = [.. refreshed.Compilation.Diagnostics] } },
+            _ => proposal
+        };
     }
 
     ScreenplayWorkspace CheckedCurrent(JsonElement arguments)
@@ -195,14 +227,11 @@ internal sealed partial class McpWorkspaces(McpRoot root)
         var workspace = _workspace ?? throw new McpFailure("Open a workspace first.");
         new McpManagedFiles(root).Verify(McpState.FileName, _stateBytes);
         var refreshed = McpAttachmentContents.Refresh(root, workspace);
-        if (workspace.AttachmentContents.Count != refreshed.AttachmentContents.Count ||
-            workspace.AttachmentContents.Any(entry => !refreshed.AttachmentContents.TryGetValue(entry.Key, out var text) || text != entry.Value))
+        if (!ReferenceEquals(workspace, refreshed))
         {
-            _proposals.Clear();
-            _statePlans.Clear();
+            _workspace = refreshed;
         }
 
-        _workspace = refreshed;
         return refreshed;
     }
 }

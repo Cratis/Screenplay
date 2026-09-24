@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using System.Runtime.InteropServices;
 using System.Text;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
@@ -9,19 +10,14 @@ using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Files;
 
-/// <summary>Contents and warnings for implementation attachments loaded from a physical root.</summary>
-/// <param name="Contents">Text keyed by normalized repository-relative path.</param>
-/// <param name="Diagnostics">Warnings for attachments that could not be loaded.</param>
-public sealed record AttachmentFileResult(ImmutableDictionary<string, string> Contents, ImmutableArray<Diagnostic> Diagnostics);
-
 /// <summary>Reads referenced implementation files without following links or escaping the supplied root.</summary>
-public static class AttachmentFiles
+public static partial class AttachmentFiles
 {
     /// <summary>Maximum bytes in one attachment, matching the MCP source-file limit.</summary>
-    public const int MaximumFileBytes = 2 * 1024 * 1024;
+    public static readonly int MaximumFileBytes = 2 * 1024 * 1024;
 
     /// <summary>Maximum bytes across attachments, matching the MCP source-set limit.</summary>
-    public const int MaximumBytes = 8 * 1024 * 1024;
+    public static readonly int MaximumBytes = 8 * 1024 * 1024;
 
     /// <summary>
     /// Loads implementation references from exact semantic source documents. Declaration-only file references are not read.
@@ -58,9 +54,17 @@ public static class AttachmentFiles
                     continue;
                 }
 
-                if (File.GetAttributes(fullRoot).HasFlag(FileAttributes.ReparsePoint))
+                try
                 {
-                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentLinkRefused, $"File attachment '{reference.Path}' has a symbolic-link or reparse-point model root.", reference.Location));
+                    if (File.GetAttributes(fullRoot).HasFlag(FileAttributes.ReparsePoint))
+                    {
+                        diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentLinkRefused, $"File attachment '{reference.Path}' has a symbolic-link or reparse-point model root.", reference.Location));
+                        continue;
+                    }
+                }
+                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+                {
+                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' cannot be inspected.", reference.Location));
                     continue;
                 }
 
@@ -110,6 +114,13 @@ public static class AttachmentFiles
                     continue;
                 }
 
+                path = Path.GetFullPath(path);
+                if (!path.StartsWith(fullRoot.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                {
+                    diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentPathRefused, $"File attachment '{reference.Path}' is outside the model root.", reference.Location));
+                    continue;
+                }
+
                 try
                 {
                     var attributes = File.GetAttributes(path);
@@ -119,7 +130,19 @@ public static class AttachmentFiles
                         continue;
                     }
 
+                    if (attributes.HasFlag(FileAttributes.Device) || attributes.HasFlag(FileAttributes.ReparsePoint) || !IsRegularFile(path))
+                    {
+                        diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' is not a regular file.", reference.Location));
+                        continue;
+                    }
+
                     using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    if (!stream.CanSeek)
+                    {
+                        diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' is not seekable.", reference.Location));
+                        continue;
+                    }
+
                     if (stream.Length > MaximumFileBytes || stream.Length > MaximumBytes - total)
                     {
                         diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentTooLarge, $"File attachment '{reference.Path}' exceeds the per-file or total byte limit.", reference.Location));
@@ -138,14 +161,14 @@ public static class AttachmentFiles
                     contents.Add(key, text);
                     total += bytes.Length;
                 }
-                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or DecoderFallbackException)
+                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or DecoderFallbackException or NotSupportedException)
                 {
                     diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' cannot be read as UTF-8 text.", reference.Location));
                 }
             }
         }
 
-        return new(contents.ToImmutable(), diagnostics.ToImmutable());
+        return new() { Contents = contents.ToImmutable(), Diagnostics = diagnostics.ToImmutable() };
     }
 
     /// <summary>Normalizes an authored path for host keys and binder lookup, without accessing the file system.</summary>
@@ -183,7 +206,7 @@ public static class AttachmentFiles
 
                 segments.RemoveAt(segments.Count - 1);
             }
-            else if (segment.Contains(':') || segment.Any(char.IsControl))
+            else if (segment.Contains(':') || segment.Any(char.IsControl) || IsReservedDeviceName(segment))
             {
                 reason = "not a portable path";
                 return false;
@@ -203,6 +226,51 @@ public static class AttachmentFiles
         normalized = string.Join('/', segments);
         return true;
     }
+
+    static bool IsReservedDeviceName(string segment)
+    {
+        var stem = segment.Split('.')[0].TrimEnd(' ');
+        return stem.Equals("CON", StringComparison.OrdinalIgnoreCase) || stem.Equals("PRN", StringComparison.OrdinalIgnoreCase) ||
+            stem.Equals("AUX", StringComparison.OrdinalIgnoreCase) || stem.Equals("NUL", StringComparison.OrdinalIgnoreCase) ||
+            (stem.Length == 4 && stem[3] is >= '1' and <= '9' &&
+             (stem.StartsWith("COM", StringComparison.OrdinalIgnoreCase) || stem.StartsWith("LPT", StringComparison.OrdinalIgnoreCase)));
+    }
+
+    // lstat checks the file type without opening it: opening a FIFO for reading can block indefinitely.
+    // Unsupported Unix ABIs are refused rather than guessed; links are checked separately on every component.
+    static bool IsRegularFile(string path)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return true;
+        }
+
+        var modeOffset = -1;
+        if (OperatingSystem.IsMacOS())
+        {
+            modeOffset = 4;
+        }
+        else if (OperatingSystem.IsLinux())
+        {
+            modeOffset = RuntimeInformation.ProcessArchitecture switch
+            {
+                Architecture.X64 => 24,
+                Architecture.Arm64 => 16,
+                _ => -1
+            };
+        }
+        if (modeOffset < 0)
+        {
+            return false;
+        }
+
+        var status = new byte[512];
+        return LStat(path, status) == 0 && (BitConverter.ToUInt16(status, modeOffset) & 0xf000) == 0x8000;
+    }
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("libc", EntryPoint = "lstat", StringMarshalling = StringMarshalling.Utf8)]
+    private static partial int LStat(string path, [Out] byte[] status);
 
     static bool HasLink(string root, string key)
     {

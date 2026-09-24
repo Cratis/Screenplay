@@ -180,8 +180,7 @@ sealed class WorkspaceTransaction(ScreenplayWorkspace workspace)
             ordered,
             migratedCatalog,
             compilation,
-            _workspace.AttachmentContents,
-            _workspace.AttachmentDiagnostics);
+            _workspace.AttachmentContents);
         if (mappingOperations.Length == 1 && ProducedEventMappingPatch.Verify(mappingOperations[0], _workspace, candidate) is { } mappingConflict)
         {
             return WorkspaceTransactionOperations.Failure(mappingConflict);
@@ -196,12 +195,9 @@ sealed class WorkspaceTransaction(ScreenplayWorkspace workspace)
         ImmutableArray<WorkspaceDocument> documents,
         SemanticIdentityCatalog identityCatalog)
     {
-        var compilation = new SemanticModelCompiler().Compile(
+        return new SemanticModelCompiler().Compile(
             _workspace.ApplicationName,
             ScreenplayWorkspace.CreateDocumentSet(documents, identityCatalog, _workspace.AttachmentContents));
-        return _workspace.AttachmentDiagnostics.IsDefaultOrEmpty
-            ? compilation
-            : compilation with { Diagnostics = [.. compilation.Diagnostics, .. _workspace.AttachmentDiagnostics] };
     }
 
     WorkspaceTransactionResult Success(

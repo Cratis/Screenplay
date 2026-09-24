@@ -114,8 +114,9 @@ public sealed class ScreenplayWorkspace
     /// <returns>A new immutable workspace with derived compilation.</returns>
     public ScreenplayWorkspace WithAttachmentContents(ImmutableDictionary<string, string> contents, ImmutableArray<Diagnostic> diagnostics)
     {
-        var compilation = Documents.IsEmpty ? EmptyCompilation() : Compile(ApplicationName, Documents, IdentityCatalog, contents, diagnostics);
-        return CreateValidated(ApplicationName, Documents, IdentityCatalog, compilation, contents, diagnostics);
+        var normalized = SemanticDocumentSet.NormalizeAttachments(contents);
+        var compilation = Documents.IsEmpty ? EmptyCompilation() : Compile(ApplicationName, Documents, IdentityCatalog, normalized, diagnostics);
+        return CreateValidated(ApplicationName, Documents, IdentityCatalog, compilation, normalized, diagnostics);
     }
 
     /// <summary>

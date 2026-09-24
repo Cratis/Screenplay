@@ -16,6 +16,13 @@ static class McpAttachmentContents
         var documents = workspace.Documents.Select(document => SemanticSourceDocument.Create(
             document.Id, document.StableKey, document.Path.Value, document.Text)).ToImmutableArray();
         var loaded = AttachmentFiles.Load(root.DirectoryPath, documents);
+        if (workspace.AttachmentContents.Count == loaded.Contents.Count &&
+            workspace.AttachmentContents.All(entry => loaded.Contents.TryGetValue(entry.Key, out var value) && value == entry.Value) &&
+            workspace.AttachmentDiagnostics.SequenceEqual(loaded.Diagnostics))
+        {
+            return workspace;
+        }
+
         return workspace.WithAttachmentContents(loaded.Contents, loaded.Diagnostics);
     }
 }
