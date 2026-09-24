@@ -14,6 +14,7 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
         new Dictionary<string, (string, string)>(StringComparer.Ordinal)
         {
             ["authentication"] = ("AuthenticationDecl", "authentication.md"),
+            ["authorize"] = ("AuthorizeDecl", "policies.md"),
             ["behavior"] = ("BehaviorDecl", "interactions.md"),
             ["capture"] = ("CaptureDecl", "captures.md"),
             ["command"] = ("CommandDecl", "commands.md"),
