@@ -18,6 +18,11 @@ public class when_a_specification_needs_a_reducer : Specification
                   accountId = accountId
               event AmountDeposited
                 accountId AccountId
+              specification DepositOnlyAppends
+                when Deposit
+                  accountId = "00000000-0000-0000-0000-000000000101"
+                then AmountDeposited
+                  accountId = "00000000-0000-0000-0000-000000000101"
               specification DepositChangesBalance
                 when Deposit
                   accountId = "00000000-0000-0000-0000-000000000101"
@@ -36,6 +41,8 @@ public class when_a_specification_needs_a_reducer : Specification
         """;
 
     SemanticExecutionPlanCompilation _result;
+    SemanticSpecificationRun _dependent = null!;
+    SemanticSpecificationRun _unrelated = null!;
 
     void Because()
     {
@@ -43,9 +50,15 @@ public class when_a_specification_needs_a_reducer : Specification
         var document = SemanticSourceDocument.Create(catalog.ResolveDocument("accounts"), "accounts", "Accounts.play", Source);
         var compilation = new SemanticModelCompiler().Compile("Accounts", SemanticDocumentSet.Create([document], catalog));
         _result = SemanticExecutionPlan.Compile(compilation.Value!.Model);
+        var runner = new SemanticSpecificationRunner();
+        var specifications = _result.Plan!.Specifications.Values;
+        _dependent = runner.Run(_result.Plan, specifications.Single(value => value.Name == "DepositChangesBalance").Id);
+        _unrelated = runner.Run(_result.Plan, specifications.Single(value => value.Name == "DepositOnlyAppends").Id);
     }
 
-    [Fact] void should_refuse_to_create_a_reference_plan() => _result.Plan.ShouldBeNull();
-    [Fact] void should_require_a_target_to_compute_the_state() => _result.Issues.Single().Kind.ShouldEqual(SemanticPlanIssueKind.RequiresTargetReducer);
-    [Fact] void should_name_the_read_model_needing_a_target() => _result.Issues.Single().Details.ShouldContain("requires a target provider");
+    [Fact] void should_compile_the_reference_plan() => _result.Success.ShouldBeTrue();
+    [Fact] void should_report_the_dependent_specification_as_unsupported() => (_dependent.Execution is SemanticUnsupported).ShouldBeTrue();
+    [Fact] void should_name_the_reducer() => ((SemanticUnsupported)_dependent.Execution).Details.ShouldContain("BalanceReducer");
+    [Fact] void should_not_count_the_unsupported_specification_as_passed() => _dependent.Passed.ShouldBeFalse();
+    [Fact] void should_run_an_unrelated_specification() => _unrelated.Passed.ShouldBeTrue();
 }

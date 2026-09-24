@@ -169,14 +169,6 @@ public sealed class SemanticExecutionPlan
             }
         }
 
-        foreach (var reducer in slices.SelectMany(_ => _.Reducers))
-        {
-            issues.Add(new(
-                reducer.ReadModel,
-                SemanticPlanIssueKind.RequiresTargetReducer,
-                $"Reducer '{reducer.Name}' has opaque transitions and requires a target provider to compute read-model state."));
-        }
-
         foreach (var projection in slices.SelectMany(_ => _.Projections))
         {
             foreach (var transition in projection.Transitions.Where(_ => _.AffectedInstance.Cardinality != AffectedInstanceCardinality.One))

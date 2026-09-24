@@ -46,7 +46,7 @@ public class with_a_body : given.a_semantic_binder
     [Fact] void should_reference_each_requirement() => Reducer.Transitions.Select(value => value.RequirementId).ShouldEqual(_result.ImplementationRequirements.Select(value => value.RequirementId));
     [Fact] void should_name_each_consumed_event() => Reducer.Transitions.Select(value => value.EventContract).ShouldEqual(_result.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single().Events.Select(value => value.Id));
     [Fact] void should_require_pure_capability() => _result.ImplementationRequirements.All(value => value.RequiredCapability == "pure").ShouldBeTrue();
-    [Fact] void should_block_reference_execution_with_a_typed_target_requirement() => Execution.SemanticExecutionPlan.Compile(_result.Value!.Model).Issues.Single().Kind.ShouldEqual(Execution.SemanticPlanIssueKind.RequiresTargetReducer);
+    [Fact] void should_compile_a_reference_plan_for_specifications_not_using_the_reducer() => Execution.SemanticExecutionPlan.Compile(_result.Value!.Model).Success.ShouldBeTrue();
     [Fact] void should_list_each_transition_body() => _result.ImplementationRequirements.Select(value => value.Role).ShouldEqual([SemanticImplementationRole.ReducerTransition, SemanticImplementationRole.ReducerTransition]);
     [Fact] void should_preserve_the_inline_language_and_file_path() => _result.ImplementationRequirements.Select(value => (value.Language, value.File)).ShouldEqual([("csharp", null), (null, "Reducers/Withdrawn.cs")]);
 
