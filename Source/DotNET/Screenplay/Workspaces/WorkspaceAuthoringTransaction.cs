@@ -150,7 +150,9 @@ sealed class WorkspaceAuthoringTransaction(ScreenplayWorkspace workspace, IReadO
         _diagnostics.AddRange(merged.Diagnostics);
         if (!merged.Success || merged.Value is null)
         {
-            return Failure(WorkspaceConflictKind.CompilationFailed, "The final document set is not valid full-language Screenplay source.");
+            var failed = Failure(WorkspaceConflictKind.CompilationFailed, "The final document set is not valid full-language Screenplay source.");
+            var ownership = WorkspaceTransactionOperations.OwnershipConflict(merged.Diagnostics, ordered);
+            return ownership is null ? failed : failed with { Conflicts = [ownership] };
         }
 
         var catalog = WorkspaceAuthoringIdentity.Migrate(workspace, request, ordered, merged.Value, documentRenames.ToImmutable(), retiredDocuments.ToImmutable());

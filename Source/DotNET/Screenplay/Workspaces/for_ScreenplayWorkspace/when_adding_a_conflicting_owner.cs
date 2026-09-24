@@ -22,7 +22,10 @@ public class when_adding_a_conflicting_owner : given.a_valid_workspace
     }));
 
     [Fact] void should_reject_the_complete_transaction() => _result.Success.ShouldBeFalse();
-    [Fact] void should_report_compilation_failure() => _result.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.CompilationFailed);
+    [Fact] void should_report_the_typed_owner_conflict() => _result.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.ConflictingOwner);
+    [Fact] void should_name_the_new_owner() => _result.Conflicts.Single().Path!.Value.ShouldEqual("DuplicateProjects.play");
+    [Fact] void should_name_the_previous_owner() => _result.Conflicts.Single().OtherPath!.Value.ShouldEqual(Registration.Path.Value);
+    [Fact] void should_not_offer_a_write_plan() => _result.WritePlan.ShouldBeNull();
     [Fact] void should_surface_the_duplicate_owner_diagnostic() => _result.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && diagnostic.Message.Contains("slice", StringComparison.OrdinalIgnoreCase)).ShouldBeTrue();
     [Fact] void should_keep_the_original_document_count() => Workspace.Documents.Length.ShouldEqual(2);
 }
