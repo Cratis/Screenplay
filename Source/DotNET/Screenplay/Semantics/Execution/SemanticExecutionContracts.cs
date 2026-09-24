@@ -85,7 +85,12 @@ public enum SemanticExecutionCapability
     /// <summary>
     /// Specification dispatch for the requested semantic identity.
     /// </summary>
-    Specification = 4
+    Specification = 4,
+
+    /// <summary>
+    /// Authorization depends on a policy predicate that requires a target provider.
+    /// </summary>
+    Authorization = 5
 }
 
 /// <summary>

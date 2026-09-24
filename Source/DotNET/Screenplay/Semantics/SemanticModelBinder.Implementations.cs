@@ -65,7 +65,7 @@ public sealed partial class SemanticModelBinder
                 ContextVersion = 1,
                 ResultVersion = 1,
                 RequiredCapability = role is SemanticImplementationRole.ReducerTransition or SemanticImplementationRole.RulePredicate or
-                    SemanticImplementationRole.CommandValidation or SemanticImplementationRole.ConceptValidation ? "pure" : "provider-defined",
+                    SemanticImplementationRole.CommandValidation or SemanticImplementationRole.ConceptValidation or SemanticImplementationRole.PolicyPredicate ? "pure" : "provider-defined",
                 AttachmentResolution = resolved ? SemanticAttachmentResolution.Resolved : SemanticAttachmentResolution.UnresolvedFile
             };
             _implementationRequirements.Add(requirement);

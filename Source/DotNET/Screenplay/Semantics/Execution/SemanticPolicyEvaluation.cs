@@ -3,36 +3,70 @@
 
 namespace Cratis.Screenplay.Semantics.Execution;
 
+internal enum SemanticPolicyOutcome
+{
+    Allow,
+    Deny,
+    Unsupported
+}
+
+internal readonly record struct SemanticPolicyDecision(SemanticPolicyOutcome Outcome, string? Policy = null);
+
 internal static class SemanticPolicyEvaluation
 {
-    internal static bool Allows(
+    internal static SemanticPolicyDecision Evaluate(
         SemanticAuthorization? authorization,
         SemanticExecutionPlan plan,
         SemanticCaller? caller,
         IReadOnlyDictionary<string, SemanticValue> artifact,
         SemanticValue? subject,
-        IEnumerable<SemanticProperty> properties) => authorization is null ||
-        (caller is { Roles.IsDefault: false, Claims.IsDefault: false } &&
-            EvaluateAuthorization(authorization, plan, caller, artifact, subject, properties));
+        IEnumerable<SemanticProperty> properties)
+    {
+        if (authorization is null) return new(SemanticPolicyOutcome.Allow);
+        if (caller is not { Roles.IsDefault: false, Claims.IsDefault: false }) return new(SemanticPolicyOutcome.Deny);
 
-    static bool EvaluateAuthorization(
+        return EvaluateAuthorization(authorization, plan, caller, artifact, subject, properties);
+    }
+
+    static SemanticPolicyDecision EvaluateAuthorization(
         SemanticAuthorization authorization,
         SemanticExecutionPlan plan,
         SemanticCaller caller,
         IReadOnlyDictionary<string, SemanticValue> artifact,
         SemanticValue? subject,
-        IEnumerable<SemanticProperty> properties) => authorization switch
+        IEnumerable<SemanticProperty> properties)
     {
-        SemanticPolicyReference reference => EvaluateCondition(
-            plan.Model.Application.Policies.Single(policy => policy.Name == reference.Name).Condition, plan, caller, artifact, subject, properties),
-        SemanticLogicalAuthorization { Operator: SemanticLogicalOperator.And } logical =>
-            EvaluateAuthorization(logical.Left, plan, caller, artifact, subject, properties) &&
-            EvaluateAuthorization(logical.Right, plan, caller, artifact, subject, properties),
-        SemanticLogicalAuthorization { Operator: SemanticLogicalOperator.Or } logical =>
-            EvaluateAuthorization(logical.Left, plan, caller, artifact, subject, properties) ||
-            EvaluateAuthorization(logical.Right, plan, caller, artifact, subject, properties),
-        _ => throw new InvalidSemanticContract("Unknown authorization node or operator.")
-    };
+        if (authorization is SemanticPolicyReference reference)
+        {
+            var condition = plan.Model.Application.Policies.Single(policy => policy.Name == reference.Name).Condition;
+            return condition is SemanticOpaquePolicyCondition
+                ? new(SemanticPolicyOutcome.Unsupported, reference.Name)
+                : new(EvaluateCondition(condition, plan, caller, artifact, subject, properties)
+                    ? SemanticPolicyOutcome.Allow : SemanticPolicyOutcome.Deny);
+        }
+
+        if (authorization is not SemanticLogicalAuthorization logical ||
+            logical.Operator is not (SemanticLogicalOperator.And or SemanticLogicalOperator.Or))
+        {
+            throw new InvalidSemanticContract("Unknown authorization node or operator.");
+        }
+
+        var left = EvaluateAuthorization(logical.Left, plan, caller, artifact, subject, properties);
+
+        // A definitive left operand preserves the authored short circuit. Otherwise evaluate the
+        // right operand: false AND unknown is false; true OR unknown is true, regardless of order.
+        if ((logical.Operator == SemanticLogicalOperator.And && left.Outcome == SemanticPolicyOutcome.Deny) ||
+            (logical.Operator == SemanticLogicalOperator.Or && left.Outcome == SemanticPolicyOutcome.Allow))
+        {
+            return left;
+        }
+
+        var right = EvaluateAuthorization(logical.Right, plan, caller, artifact, subject, properties);
+        if (logical.Operator == SemanticLogicalOperator.And && right.Outcome == SemanticPolicyOutcome.Deny) return right;
+        if (logical.Operator == SemanticLogicalOperator.Or && right.Outcome == SemanticPolicyOutcome.Allow) return right;
+
+        return left.Outcome == SemanticPolicyOutcome.Unsupported ? left : right;
+    }
 
     static bool EvaluateCondition(
         SemanticPolicyCondition condition,

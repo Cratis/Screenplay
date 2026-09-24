@@ -44,7 +44,15 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         var subject = command.Properties.Where(property => property.IsIdentifier)
             .Select(property => authorizationValues.FirstOrDefault(value => value.TargetProperty == property.Id)?.Value)
             .FirstOrDefault(value => value is not null);
-        if (!SemanticPolicyEvaluation.Allows(command.Authorization, plan, request.Caller, artifact, subject, command.Properties))
+        var authorization = SemanticPolicyEvaluation.Evaluate(command.Authorization, plan, request.Caller, artifact, subject, command.Properties);
+        if (authorization.Outcome == SemanticPolicyOutcome.Unsupported)
+        {
+            return new SemanticUnsupported(
+                world,
+                SemanticExecutionCapability.Authorization,
+                $"Policy '{authorization.Policy}' has an opaque predicate and requires a target provider.");
+        }
+        if (authorization.Outcome == SemanticPolicyOutcome.Deny)
         {
             return new SemanticRejected(world, SemanticRejectionCategory.Unauthorized, null, "Caller is not authorized.");
         }
@@ -238,13 +246,21 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                     $"Reducer '{reducer.Name}' has opaque transitions and requires a target provider to compute read-model state.");
             }
 
-            if (!SemanticPolicyEvaluation.Allows(
+            var authorization = SemanticPolicyEvaluation.Evaluate(
                 query.Authorization,
                 plan,
                 caller,
                 new Dictionary<string, SemanticValue>(StringComparer.Ordinal) { [query.Argument.Name] = queryRequest.Key },
                 queryRequest.Key,
-                [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)]))
+                [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)]);
+            if (authorization.Outcome == SemanticPolicyOutcome.Unsupported)
+            {
+                return new SemanticUnsupported(
+                    original,
+                    SemanticExecutionCapability.Authorization,
+                    $"Policy '{authorization.Policy}' has an opaque predicate and requires a target provider.");
+            }
+            if (authorization.Outcome == SemanticPolicyOutcome.Deny)
             {
                 return new SemanticRejected(original, SemanticRejectionCategory.Unauthorized, null, "Caller is not authorized.");
             }

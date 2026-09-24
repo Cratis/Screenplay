@@ -1,8 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Cratis.Screenplay.Diagnostics;
-
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder;
 
 public class when_binding_an_inline_csharp_policy : given.a_semantic_binder
@@ -22,5 +20,6 @@ public class when_binding_an_inline_csharp_policy : given.a_semantic_binder
                 authorize Access
         """);
 
-    [Fact] void should_block_implementation_until_139() => _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("#139", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_bind_as_an_opaque_v3_predicate() => _result.Value!.Model.Application.Policies.Single().Condition.ShouldBeOfExactType<SemanticOpaquePolicyCondition>();
+    [Fact] void should_require_a_pure_predicate() => _result.ImplementationRequirements.Single().RequiredCapability.ShouldEqual("pure");
 }

@@ -53,17 +53,19 @@ internal static partial class SemanticModelRead
         var seen = NewSeen();
         string? name = null;
         SemanticPolicyCondition? condition = null;
+        string? requirementId = null;
         while (NextProperty(ref reader, seen, "policy") is { } property)
         {
             switch (property)
             {
                 case "name": name = String(ref reader, property); break;
                 case "condition": RequiredToken(ref reader, JsonTokenType.StartObject, property); condition = PolicyCondition(ref reader); break;
+                case "requirementId": requirementId = String(ref reader, property); break;
                 default: throw Unknown(property, "policy");
             }
         }
-        Required(name is not null && condition is not null, "policy");
-        return new(name!, condition!);
+        Required(name is not null && condition is not null && (condition is SemanticOpaquePolicyCondition) == (requirementId is not null), "policy");
+        return new(name!, condition is SemanticOpaquePolicyCondition ? new SemanticOpaquePolicyCondition(requirementId!) : condition!);
     }
 
     internal static SemanticPolicyCondition PolicyCondition(ref Utf8JsonReader reader)
@@ -89,6 +91,7 @@ internal static partial class SemanticModelRead
         }
         return kind switch
         {
+            "opaque" when role is null && claim is null && targetKind is null && value is null && op is null && left is null && right is null => new SemanticOpaquePolicyCondition(string.Empty),
             "authenticated" when role is null && claim is null && targetKind is null && value is null && op is null && left is null && right is null => new SemanticAuthenticatedCondition(),
             "role" when role is not null && claim is null && targetKind is null && value is null && op is null && left is null && right is null => new SemanticRoleCondition(role),
             "claim" when claim is not null && role is null && op is null && left is null && right is null &&

@@ -20,7 +20,7 @@ internal static partial class SemanticModelValidator
         {
             switch (condition)
             {
-                case SemanticAuthenticatedCondition: break;
+                case SemanticOpaquePolicyCondition or SemanticAuthenticatedCondition: break;
                 case SemanticRoleCondition { Role: { } }: break;
                 case SemanticClaimCondition { Claim: { }, TargetKind: SemanticClaimTargetKind.Subject, Value: null }: break;
                 case SemanticClaimCondition { Claim: { }, TargetKind: SemanticClaimTargetKind.Literal or SemanticClaimTargetKind.Artifact, Value: { } }: break;
@@ -78,7 +78,23 @@ internal static partial class SemanticModelValidator
         {
             RequireObjects(application.Policies, nameof(application.Policies), "policy");
             RejectDuplicateNames(application.Policies.Select(policy => policy.Name), "policy");
-            foreach (var policy in application.Policies) ValidatePolicyCondition(policy.Condition);
+            foreach (var policy in application.Policies)
+            {
+                ValidatePolicyCondition(policy.Condition);
+                if (policy.Condition is SemanticOpaquePolicyCondition opaque &&
+                    (_semanticVersion != SemanticVersion.V3 || string.IsNullOrWhiteSpace(opaque.RequirementId)))
+                {
+                    throw new InvalidSemanticContract($"Policy '{policy.Name}' requires ESM v3 and a requirement identity.");
+                }
+            }
+            var policyRequirements = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var policy in application.Policies)
+            {
+                if (policy.Condition is SemanticOpaquePolicyCondition opaque && !policyRequirements.Add(opaque.RequirementId))
+                {
+                    throw new InvalidSemanticContract("Policies have duplicate requirement identities.");
+                }
+            }
             foreach (var slice in AllSlices(application))
             {
                 foreach (var command in slice.Commands) ValidateAuthorization(command.Authorization, application.Policies, command.Properties);
