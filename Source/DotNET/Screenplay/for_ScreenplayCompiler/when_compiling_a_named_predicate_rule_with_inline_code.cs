@@ -17,8 +17,7 @@ public class when_compiling_a_named_predicate_rule_with_inline_code : given.a_co
 
                 validate
                   orgNumber rule BeAValidOrganizationNumber message "Must be a valid organization number"
-                    csharp
-                      ```
+                    ```csharp
                       string orgNumber = context.Value;
                       return orgNumber.Length == 9 && orgNumber.All(char.IsDigit);
                       ```

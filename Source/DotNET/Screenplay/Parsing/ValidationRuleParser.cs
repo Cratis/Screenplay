@@ -200,9 +200,9 @@ internal static partial class ValidationRuleParser
             return (FileReferenceParser.Parse(context, body), null);
         }
 
-        if (context.Languages.InlineLanguages.Contains(body.Content))
+        if (CodeBlockParser.IsCodeLine(context, body))
         {
-            return (null, CodeBlockParser.Parse(context, body.Content, body));
+            return (null, CodeBlockParser.Parse(context, body));
         }
 
         context.Error(DiagnosticCodes.UnknownRuleImplementationDirective, $"Unexpected '{body.Content}' in rule implementation - expected 'file <path>' or an inline code block", body.Location);

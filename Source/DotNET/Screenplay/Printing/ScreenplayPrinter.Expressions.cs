@@ -12,18 +12,14 @@ public partial class ScreenplayPrinter
 {
     void WriteCodeBlock(ScreenplayWriter writer, CodeBlockSyntax code)
     {
-        writer.Line(code.Language);
-        using (writer.Indent())
-        {
-            WriteFencedCode(writer, code);
-        }
+        WriteFencedCode(writer, code);
     }
 
-    void WriteFencedCode(ScreenplayWriter writer, CodeBlockSyntax code) => WriteFencedText(writer, code.Code);
+    void WriteFencedCode(ScreenplayWriter writer, CodeBlockSyntax code) => WriteFencedText(writer, code.Code, code.Language);
 
-    void WriteFencedText(ScreenplayWriter writer, string text)
+    void WriteFencedText(ScreenplayWriter writer, string text, string language = "text")
     {
-        writer.Line("```");
+        writer.Line($"```{language}");
         foreach (var line in text.Split('\n'))
         {
             writer.Line(line);

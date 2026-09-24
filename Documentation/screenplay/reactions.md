@@ -183,8 +183,7 @@ Inline C#:
 ````screenplay
 reaction OverdueInvoiceDetector
   when InvoiceStatusChanged
-    csharp
-      ```
+    ```csharp
       if (@event.Status != InvoiceStatus.Paid &&
           @event.ChangedAt < DateTimeOffset.UtcNow.AddDays(-30))
       {

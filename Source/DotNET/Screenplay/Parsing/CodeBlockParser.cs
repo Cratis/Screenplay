@@ -7,22 +7,44 @@ using Cratis.Screenplay.Syntax;
 namespace Cratis.Screenplay.Parsing;
 
 /// <summary>
-/// Parses fenced inline code blocks - a language tag line followed by code between <c>```</c> fences.
+/// Parses fenced inline code blocks with the language on the opening fence.
 /// </summary>
 internal static class CodeBlockParser
 {
     /// <summary>
-    /// Parses the fenced code following an already consumed language tag line.
+    /// Parses fenced code from a consumed opening fence or legacy language line.
     /// </summary>
     /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
-    /// <param name="language">The language of the block.</param>
-    /// <param name="tagLine">The consumed <see cref="SourceLine"/> holding the language tag.</param>
+    /// <param name="tagLine">The consumed opening fence or legacy language line.</param>
     /// <returns>The parsed <see cref="CodeBlockSyntax"/>, or <c>null</c> when the fence is malformed.</returns>
-    public static CodeBlockSyntax? Parse(ParserContext context, string language, SourceLine tagLine)
+    public static CodeBlockSyntax? Parse(ParserContext context, SourceLine tagLine)
     {
+        var language = tagLine.Content.StartsWith("```", StringComparison.Ordinal)
+            ? tagLine.Content[3..]
+            : tagLine.Content;
+        if (!context.Languages.InlineLanguages.Contains(language))
+        {
+            context.Error(DiagnosticCodes.ExpectedCodeFence, $"Expected a registered language on the opening fence, not '{tagLine.Content}'", tagLine.Location);
+            return null;
+        }
+
+        if (!tagLine.Content.StartsWith("```", StringComparison.Ordinal))
+        {
+            context.Warning(DiagnosticCodes.LegacyInlineCodeFence, $"'{language}' on its own line is deprecated - use '```{language}' instead", tagLine.Location);
+        }
+
         var code = ParseFencedText(context, language, tagLine);
         return code is null ? null : new CodeBlockSyntax(language, code, tagLine.Location);
     }
+
+    /// <summary>
+    /// Whether this line opens an inline code block, including legacy language lines.
+    /// </summary>
+    /// <param name="context">The parser context with the registered languages.</param>
+    /// <param name="line">The candidate line.</param>
+    /// <returns>Whether it is a code-block directive.</returns>
+    public static bool IsCodeLine(ParserContext context, SourceLine line) =>
+        line.Content.StartsWith("```", StringComparison.Ordinal) || context.Languages.InlineLanguages.Contains(line.Content);
 
     /// <summary>
     /// Parses the fenced text following an already consumed tag line, dedented to the opening fence.
@@ -33,14 +55,24 @@ internal static class CodeBlockParser
     /// <returns>The fenced lines joined with newlines, or <c>null</c> when the opening fence is missing.</returns>
     public static string? ParseFencedText(ParserContext context, string opener, SourceLine tagLine)
     {
-        var open = context.Reader.PeekSignificant();
-        if (open is null || open.Content != "```" || open.Indent <= tagLine.Indent)
+        var open = tagLine.Content.StartsWith("```", StringComparison.Ordinal) ? tagLine : context.Reader.PeekSignificant();
+        var expectedFence = opener == "description" ? "```text" : $"```{opener}";
+        if (open is null || (open != tagLine && open.Indent <= tagLine.Indent) ||
+            (open.Content != expectedFence && !(open.Content == "```" && open != tagLine)))
         {
-            context.Error(DiagnosticCodes.ExpectedCodeFence, $"Expected an opening ``` fence after '{opener}'", tagLine.Location);
+            context.Error(DiagnosticCodes.ExpectedCodeFence, $"Expected an opening ```{(opener == "description" ? "text" : opener)} fence after '{opener}'", tagLine.Location);
             return null;
         }
 
-        context.Reader.TakeSignificant();
+        if (open != tagLine)
+        {
+            context.Reader.TakeSignificant();
+        }
+
+        if (opener == "description" && open.Content == "```")
+        {
+            context.Warning(DiagnosticCodes.LegacyInlineCodeFence, "A bare description fence is deprecated - use '```text' instead", open.Location);
+        }
 
         var code = new List<string>();
         while (true)

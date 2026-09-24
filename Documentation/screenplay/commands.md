@@ -23,8 +23,8 @@ command <Name>
       [message "<message>"|$strings.<key>]
     ...]
 
-  [validate csharp
-    ```
+  [validate
+    ```csharp
     <C# yielding the message of every broken rule>
     ```]
 
@@ -32,8 +32,7 @@ command <Name>
 
   [handler                        ← imperative fallback — instead of produces
     file <Path>
-    | csharp
-        ```
+    | ```csharp
         <C# returning the events to append>
         ```]
 
@@ -59,7 +58,7 @@ When one line is not enough, use a fenced block — the same ``` convention as i
 ````screenplay
 command RegisterInvoice
   description
-    ```
+    ```text
     Registers a new invoice with its lines and payment terms.
     The invoice starts out as a draft.
     ```
@@ -230,20 +229,19 @@ validate
 ````screenplay
 validate
   orgNumber rule BeAValidOrganizationNumber message "Must be a valid organization number"
-    csharp
-      ```
+    ```csharp
       string orgNumber = context.Value;
       return orgNumber.Length == 9 && orgNumber.All(char.IsDigit);
       ```
 ````
 
-Both forms are optional and mutually exclusive with each other — a rule with neither stays the bare, undetermined-location form from above. The `file`/`csharp` shapes and their compiled representation (`FileReferenceSyntax` / `CodeBlockSyntax`) are exactly the ones used by [`handler`](#the-handler-block) and [reactions](reactions.md), so a reader who knows one already knows the other. The same body is available on a concept's own `rule <Name>` (see [Concepts](concepts.md#validation)) — the implementation travels with the value everywhere it appears.
+Both forms are optional and mutually exclusive with each other — a rule with neither stays the bare, undetermined-location form from above. The `file`/fenced-code shapes and their compiled representation (`FileReferenceSyntax` / `CodeBlockSyntax`) are exactly the ones used by [`handler`](#the-handler-block) and [reactions](reactions.md), so a reader who knows one already knows the other. The same body is available on a concept's own `rule <Name>` (see [Concepts](concepts.md#validation)) — the implementation travels with the value everywhere it appears.
 
 Cross-field or complex rules drop into C#. The block yields the message of every rule the command breaks, and yields nothing when the command is valid:
 
 ````screenplay
-validate csharp
-  ```
+validate
+  ```csharp
   if (context.Artifact.paymentTerms == "immediate" && context.Artifact.total > 1_000_000)
   {
       yield return "Invoices over 1,000,000 cannot require immediate payment";
@@ -251,16 +249,16 @@ validate csharp
   ```
 ````
 
-Both `validate` and `validate csharp` can coexist on the same command.
+Declarative `validate` and fenced `validate` can coexist on the same command.
 
 ### What a rule can see
 
-Inside a `rule` body and inside a `validate csharp` block, `context` is the `RuleContext`:
+Inside a `rule` body and inside a `validate` block with a ` ```csharp ` fence, `context` is the `RuleContext`:
 
 | Member | Value |
 | --- | --- |
 | `context.Artifact` | The whole thing under validation — the command here, the concept's own value on a concept rule. |
-| `context.Value` | The value the rule is declared on. Equal to `Artifact` for a `validate csharp` block. |
+| `context.Value` | The value the rule is declared on. Equal to `Artifact` for a fenced `validate` block. |
 | `context.Property` | Where that value sits in the artifact — `orgNumber` above, empty for a whole-command block. |
 | `context.Tenant` | The tenant the command is executing for. |
 | `context.CausedBy` | The identity that caused the command, so a rule such as "you may not approve your own request" is expressible. |
@@ -310,7 +308,7 @@ Still rejected, and why:
 | any comparison on `Date` or `DateTime`, and `today` | ESM v1 has no runtime date value — a date is text in a fixed format — so it has nothing to compare against. |
 | a named `matches` pattern other than `email` | Only `email` has a portable definition; other names are rejected (`PLAY0366`). Invalid quoted ECMAScript patterns are rejected (`PLAY0367`). |
 | `require` over a read-model path | A consistent decision snapshot of declared reads is not yet available (#129). |
-| `rule <Name>` with a `file` or inline body, and `validate csharp` | Code validation requires a constrained implementation attachment. |
+| `rule <Name>` with a `file` or inline body, and fenced `validate` | Code validation requires a constrained implementation attachment. |
 | a bare `rule <Name>` | Its logic lives outside the document, so it has no portable meaning. |
 | a rule on a nested path such as `lines.quantity` | ESM v1 validates command properties; put the rule on the nested value's [concept](concepts.md#validation) instead. |
 
@@ -458,8 +456,7 @@ Inline C#:
 
 ````screenplay
 handler
-  csharp
-    ```
+  ```csharp
     var events = new List<object>();
     events.Add(new InvoiceBatchProcessingStarted(
         BatchId: BatchId,

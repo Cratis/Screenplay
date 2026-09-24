@@ -11,10 +11,9 @@ public class when_compiling_with_a_registered_inline_language : Specification
     const string Source =
         """
         policy CanApprove
-          python
-            ```
-            return context.identity.id == "approver"
-            ```
+          ```python
+          return context.identity.id == "approver"
+          ```
         """;
 
     ScreenplayCompiler _registered;
