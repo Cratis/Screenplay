@@ -15,6 +15,7 @@ public class when_resolving_a_file_attachment : given.a_semantic_binder
     SemanticImplementationRequirement _moved;
     SemanticImplementationRequirement _changed;
     SemanticImplementationRequirement _unresolved;
+    SemanticImplementationRequirement _multiline;
 
     void Because()
     {
@@ -22,6 +23,7 @@ public class when_resolving_a_file_attachment : given.a_semantic_binder
         _moved = BindFile("Handlers/Moved.cs", "return 1;", "new/application.play");
         _changed = BindFile("Handlers/Register.cs", "return 2;", "old/application.play");
         _unresolved = BindFile("Handlers/Register.cs", null, "old/application.play");
+        _multiline = BindFile("Handlers/Register.cs", "a\r\nb", "old/application.play");
     }
 
     [Fact] void should_keep_the_requirement_identity_across_document_and_attachment_moves() => _first.RequirementId.ShouldEqual(_moved.RequirementId);
@@ -31,6 +33,18 @@ public class when_resolving_a_file_attachment : given.a_semantic_binder
     [Fact] void should_not_hash_a_path_when_contents_are_missing() => _unresolved.ContentHash.ShouldBeEmpty();
     [Fact] void should_type_the_missing_attachment() => _unresolved.AttachmentResolution.ShouldEqual(SemanticAttachmentResolution.UnresolvedFile);
     [Fact] void should_type_the_resolved_attachment() => _first.AttachmentResolution.ShouldEqual(SemanticAttachmentResolution.Resolved);
+    [Fact] void should_map_the_resolved_file_from_its_first_character() => _first.BodySpan!.Value.ShouldEqual(new(0, "return 1;".Length, 1, 1, 1, 10));
+    [Fact] void should_not_claim_a_span_for_an_unresolved_file() => _unresolved.BodySpan.HasValue.ShouldBeFalse();
+    [Fact] void should_not_rebase_file_lines_on_the_play_document() => _first.BodyLines.IsEmpty.ShouldBeTrue();
+    [Fact] void should_map_crlf_in_a_resolved_file() => _multiline.BodySpan!.Value.ShouldEqual(new(0, 4, 1, 1, 2, 2));
+    [Fact] void should_skip_the_utf8_bom_in_the_editor_span_but_not_in_the_content_hash()
+    {
+        const string supplied = "\uFEFFa\r\nb";
+        var requirement = BindFile("Handlers/Register.cs", supplied, "old/application.play");
+        requirement.BodySpan!.Value.ShouldEqual(new(0, 4, 1, 1, 2, 2));
+        requirement.ContentHash.ShouldEqual(Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(supplied))).ToLowerInvariant());
+        requirement.ContentHash.ShouldNotEqual(_multiline.ContentHash);
+    }
 
     SemanticImplementationRequirement BindFile(string path, string? content, string displayPath)
     {

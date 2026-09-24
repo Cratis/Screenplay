@@ -1,6 +1,10 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
+using System.Runtime.InteropServices;
+using Cratis.Screenplay.Syntax;
+
 namespace Cratis.Screenplay.Semantics;
 
 /// <summary>
@@ -46,6 +50,16 @@ public enum SemanticAttachmentResolution
     UnresolvedFile
 }
 
+/// <summary>An end-exclusive, zero-based UTF-16 range and one-based coordinates in the attachment's own source.</summary>
+/// <param name="Start">The start offset.</param>
+/// <param name="End">The end-exclusive offset.</param>
+/// <param name="StartLine">The start line.</param>
+/// <param name="StartColumn">The start column.</param>
+/// <param name="EndLine">The end line.</param>
+/// <param name="EndColumn">The end-exclusive column.</param>
+[StructLayout(LayoutKind.Auto)]
+public readonly record struct SemanticImplementationBodySpan(int Start, int End, int StartLine, int StartColumn, int EndLine, int EndColumn);
+
 /// <summary>
 /// Describes an authored implementation attachment without interpreting its code.
 /// </summary>
@@ -79,4 +93,45 @@ public sealed record SemanticImplementationRequirement(
 
     /// <summary>Whether the attachment's content was available for hashing.</summary>
     public SemanticAttachmentResolution AttachmentResolution { get; init; } = SemanticAttachmentResolution.Resolved;
+
+    /// <summary>The exact body range in the Screenplay document for inline code, or in the attached file when resolved; null for an unresolved file.</summary>
+    public SemanticImplementationBodySpan? BodySpan { get; init; }
+
+    /// <summary>Original line and dedented starting column for each inline body line; empty for file attachments.</summary>
+    public ImmutableArray<CodeBlockSourceLine> BodyLines { get; init; } = [];
+
+    /// <inheritdoc />
+    public bool Equals(SemanticImplementationRequirement? other) => other is not null &&
+        Role == other.Role && EqualityComparer<SemanticAddress>.Default.Equals(Owner, other.Owner) &&
+        Member == other.Member && Language == other.Language && File == other.File &&
+        ContentHash == other.ContentHash && EqualityComparer<SemanticSourceMapEntry>.Default.Equals(Source, other.Source) &&
+        RequirementId == other.RequirementId && ContextVersion == other.ContextVersion && ResultVersion == other.ResultVersion &&
+        RequiredCapability == other.RequiredCapability && AttachmentResolution == other.AttachmentResolution &&
+        BodySpan == other.BodySpan && BodyLines.SequenceEqual(other.BodyLines);
+
+    /// <inheritdoc />
+    public override int GetHashCode()
+    {
+        var hash = default(HashCode);
+        hash.Add(typeof(SemanticImplementationRequirement));
+        hash.Add(Role);
+        hash.Add(Owner);
+        hash.Add(Member);
+        hash.Add(Language);
+        hash.Add(File);
+        hash.Add(ContentHash);
+        hash.Add(Source);
+        hash.Add(RequirementId);
+        hash.Add(ContextVersion);
+        hash.Add(ResultVersion);
+        hash.Add(RequiredCapability);
+        hash.Add(AttachmentResolution);
+        hash.Add(BodySpan);
+        foreach (var line in BodyLines)
+        {
+            hash.Add(line);
+        }
+
+        return hash.ToHashCode();
+    }
 }

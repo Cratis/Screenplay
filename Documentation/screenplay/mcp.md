@@ -126,6 +126,18 @@ executable-diagnostics and implementation-requirements. The last view pages
 implementation requirement envelopes by role, owner address, optional member, language or
 file, `RequirementId`, context/result contract versions, `RequiredCapability`,
 `AttachmentResolution`, content hash, semantic/document ID and source line/column.
+Each item also carries `bodySpan` (start/end-exclusive UTF-16 offsets and one-based
+start/end line/column) and `bodyLines` (run-length-encoded `{line, column, count}`
+entries: each run starts at the one-based original `line` and dedented starting
+`column`, and covers `count` consecutive lines with that column; adjacent lines
+with different columns start new runs). The existing `line`/`column` identify the directive,
+not the code body. For inline code the offsets refer to the `.play` document; for
+a resolved `file` they refer to the attached file, beginning at offset 0, line 1,
+column 1, and `bodyLines` is empty. An inline block without parser positions
+has `bodySpan: null` and an empty line map. An unresolved file has `bodySpan: null` and an
+empty line map. Columns count UTF-16 code units; a tab is one column, and CRLF
+occupies two offsets but one line break. Pagination remains by requirement, with
+the usual response-size limit rather than a truncated body map.
 The MCP server loads implementation attachments from its trusted physical root for content hashing (#244), with warnings for refused files (`PLAY0430`–`PLAY0434`). It refreshes contents on each workspace operation, including when only the attachment changes; neither attachment text nor diagnostics enter persisted identity state or workspace revisions. For a file attachment whose contents could not be supplied, the content hash is empty;
 bodied reducers no longer block binding. Page offsets and `expectedRevision` pin the authored documents and identity catalog, not the physical attachment contents: attachment hashes may change between pages without changing the revision. Re-read the view if a stable attachment snapshot is required. Rejected compilations still expose
 attachments without admitting an executable model. Document results contain root handles. `read-ast` returns

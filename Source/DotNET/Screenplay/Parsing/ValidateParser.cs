@@ -70,8 +70,7 @@ internal static class ValidateParser
         if (line.Content == "validate csharp")
         {
             context.Warning(DiagnosticCodes.LegacyInlineCodeFence, "'validate csharp' is deprecated - use 'validate' followed by '```csharp' instead", line.Location);
-            var code = CodeBlockParser.ParseFencedText(context, "csharp", line);
-            var implementation = code is null ? null : new CodeBlockSyntax("csharp", code, line.Location);
+            var implementation = CodeBlockParser.ParseFencedBody(context, "csharp", line);
             return implementation is null ? null : new CodeValidateSyntax(implementation, line.Location);
         }
 

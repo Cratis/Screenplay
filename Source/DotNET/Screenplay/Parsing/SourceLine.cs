@@ -30,6 +30,9 @@ internal sealed record SourceLine(int Number, string Raw, int Indent, string Con
     /// </summary>
     public SourceLocation Start => new(Number, 1, Path);
 
+    /// <summary>The zero-based UTF-16 offset of the beginning of this line.</summary>
+    public int StartOffset { get; init; }
+
     /// <summary>
     /// Gets the <see cref="SourceLocation"/> at an offset into the line content.
     /// </summary>

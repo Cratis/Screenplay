@@ -25,6 +25,38 @@ public sealed partial class SemanticModelBinder
         static string Hash(string content) =>
             Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(content))).ToLowerInvariant();
 
+        static SemanticImplementationBodySpan FileBodySpan(string content)
+        {
+            // Keep hashing the supplied content, but map a UTF-8 BOM to the editor's BOM-less text.
+            var text = content.AsSpan(content.StartsWith('\uFEFF') ? 1 : 0);
+            var line = 1;
+            var column = 1;
+            for (var index = 0; index < text.Length; index++)
+            {
+                if (text[index] == '\r')
+                {
+                    if (index + 1 < text.Length && text[index + 1] == '\n')
+                    {
+                        index++;
+                    }
+
+                    line++;
+                    column = 1;
+                }
+                else if (text[index] == '\n')
+                {
+                    line++;
+                    column = 1;
+                }
+                else
+                {
+                    column++;
+                }
+            }
+
+            return new(0, text.Length, 1, 1, line, column);
+        }
+
         SemanticImplementationRequirement? RequireImplementation(
             SemanticImplementationRole role,
             SemanticAddress owner,
@@ -52,6 +84,15 @@ public sealed partial class SemanticModelBinder
             var content = code?.Code ?? (key is not null && documents.AttachmentContents.TryGetValue(key, out var supplied) ? supplied : null);
             var resolved = content is not null;
             var hash = resolved ? Hash(content!) : string.Empty;
+            SemanticImplementationBodySpan? bodySpan = null;
+            if (code?.BodyStart is { } bodyStart && code.BodyEnd is { } bodyEnd)
+            {
+                bodySpan = new(code.BodyStartOffset, code.BodyEndOffset, bodyStart.Line, bodyStart.Column, bodyEnd.Line, bodyEnd.Column);
+            }
+            else if (code is null && resolved)
+            {
+                bodySpan = FileBodySpan(content!);
+            }
 
             // Distinct named members are order-independent; repeated identical members have no semantic
             // discriminator, so only those repetitions receive an ordinal among identical attachments.
@@ -66,7 +107,9 @@ public sealed partial class SemanticModelBinder
                 ResultVersion = 1,
                 RequiredCapability = role is SemanticImplementationRole.ReducerTransition or SemanticImplementationRole.RulePredicate or
                     SemanticImplementationRole.CommandValidation or SemanticImplementationRole.ConceptValidation or SemanticImplementationRole.PolicyPredicate ? "pure" : "provider-defined",
-                AttachmentResolution = resolved ? SemanticAttachmentResolution.Resolved : SemanticAttachmentResolution.UnresolvedFile
+                AttachmentResolution = resolved ? SemanticAttachmentResolution.Resolved : SemanticAttachmentResolution.UnresolvedFile,
+                BodySpan = bodySpan,
+                BodyLines = code is not null && bodySpan.HasValue ? code.BodyLines : []
             };
             _implementationRequirements.Add(requirement);
             return requirement;

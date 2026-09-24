@@ -13,7 +13,7 @@ public class when_paging_implementation_requirements : given.a_connection
 
     void Because()
     {
-        File.WriteAllText(Path.Combine(RootPath, "application.play"), Source.Replace("        produces ProjectRegistered\n          for projectId\n          projectId = projectId\n          name = name", "        handler\n          file Handlers/RegisterProject.cs\n        validate csharp\n          ```\n          return true;\n          ```", StringComparison.Ordinal));
+        File.WriteAllText(Path.Combine(RootPath, "application.play"), Source.Replace("        produces ProjectRegistered\n          for projectId\n          projectId = projectId\n          name = name", "        handler\n          file Handlers/RegisterProject.cs\n        validate csharp\n          ```\n          return true;\n          return false;\n\n          return true;\n          ```", StringComparison.Ordinal));
         Initialize();
         var opened = Call("open-workspace", new { applicationName = "Projects" });
         if (!opened.TryGetProperty("result", out var response)) throw new McpFailure(opened.GetRawText());
@@ -33,6 +33,28 @@ public class when_paging_implementation_requirements : given.a_connection
     [Fact] void should_not_claim_to_have_hashed_the_file() => _first.GetProperty("items")[0].GetProperty("contentHash").GetString().ShouldBeEmpty();
     [Fact] void should_report_unresolved_file_content() => _first.GetProperty("items")[0].GetProperty("attachmentResolution").GetString().ShouldEqual("UnresolvedFile");
     [Fact] void should_page_the_validation_role() => _second.GetProperty("items")[0].GetProperty("role").GetString().ShouldEqual("CommandValidation");
+    [Fact] void should_map_the_inline_body_in_the_second_page()
+    {
+        var item = _second.GetProperty("items")[0];
+        item.GetProperty("bodyLines")[0].GetProperty("line").GetInt32().ShouldEqual(14);
+        item.GetProperty("bodyLines")[0].GetProperty("column").GetInt32().ShouldEqual(11);
+        item.GetProperty("bodySpan").GetProperty("startLine").GetInt32().ShouldEqual(14);
+    }
+    [Fact] void should_encode_only_consecutive_lines_with_the_same_column_in_one_run()
+    {
+        var lines = _second.GetProperty("items")[0].GetProperty("bodyLines");
+        lines.GetArrayLength().ShouldEqual(3);
+        lines[0].GetProperty("line").GetInt32().ShouldEqual(14);
+        lines[0].GetProperty("column").GetInt32().ShouldEqual(11);
+        lines[0].GetProperty("count").GetInt32().ShouldEqual(2);
+        lines[1].GetProperty("line").GetInt32().ShouldEqual(16);
+        lines[1].GetProperty("column").GetInt32().ShouldEqual(1);
+        lines[1].GetProperty("count").GetInt32().ShouldEqual(1);
+        lines[2].GetProperty("line").GetInt32().ShouldEqual(17);
+        lines[2].GetProperty("column").GetInt32().ShouldEqual(11);
+        lines[2].GetProperty("count").GetInt32().ShouldEqual(1);
+    }
+    [Fact] void should_not_claim_a_line_map_for_a_file() => _first.GetProperty("items")[0].GetProperty("bodyLines").GetArrayLength().ShouldEqual(0);
     [Fact] void should_return_the_owner_address() => _first.GetProperty("items")[0].GetProperty("owner").ValueKind.ShouldEqual(JsonValueKind.Object);
     [Fact] void should_reject_stale_revisions() => _stale.GetProperty("isError").GetBoolean().ShouldBeTrue();
 }
