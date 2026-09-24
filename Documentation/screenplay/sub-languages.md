@@ -22,6 +22,17 @@ The executable semantic compiler does not run inline code or file-backed impleme
 
 Use the MCP `read-workspace` view `implementation-requirements` to page these gaps at a pinned revision. This is an inventory for tooling, not an implementation contract or an indication that the reference executor can run the code. See [MCP](mcp.md) for the read arguments.
 
+A host editor can put the dedented inline body into a virtual document. For each
+zero-based body line index, `bodyLines[index]` gives the original one-based line
+and the column of its first character; add the virtual column (in UTF-16 code
+units) to that column when mapping completion, hover, diagnostics or edits back
+to the authored document. Check the result against `bodySpan` before applying
+edits, particularly across lines or near fences. Tabs count as one column, not a
+visual tab stop; CRLF takes two source offsets but one line break. A file
+attachment instead maps to its entire file from line 1, column 1 and has no
+per-line dedent map. Unresolved files have no known body span. Screenplay emits
+this mapping data; the host owns the virtual document and language service.
+
 ## Plugging a new sub-language into the editor
 
 An editor extension registers a construct keyword together with its token rules, completions and hover documentation, so highlighting and IntelliSense compose cleanly.
