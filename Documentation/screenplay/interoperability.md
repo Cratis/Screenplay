@@ -101,6 +101,14 @@ The planner owns target admission and realization. It returns a complete determi
 
 A target must fail closed when it cannot realize reachable semantics. It must not emit guessed defaults, thinner behavior, placeholders, or `to-do` blocks.
 
+### Canonical conformance corpus
+
+`Cratis.Screenplay.CanonicalCorpus` provides source-backed vectors for consumers that compile Screenplay independently of their rendering pipeline. `RegisterProjectCorpus.LegacyV1` contains single-file, folder, reverse-ordered, and relocated forms of the same application. Each form carries exact UTF-8 bytes, stable document keys, portable display paths, and identity-catalog bytes; all compile to the pinned semantic revision, canonical ESM bytes, and normalized specification outcomes. A relocated path changes the workspace transport revision, **not** the semantic revision.
+
+`RegisterProjectCorpus.V2` pins a separate schema-v2 ESM byte stream and semantic revision for a typed state-change destination and an explicit specification event-source `for`. Consumers pinned to v1 must reject it. The checked-in `Semantics/Serialization/Golden/full-esm-v2.json` exercises a different, wider serializer model; it is not the RegisterProject source-backed vector.
+
+`RegisterProjectCorpus.UnsupportedSequence` is a `CanonicalCorpusRejectionVector`: compilation returns no ESM, its expected `PLAY0268` diagnostic is explicit, and `ArtifactPaths` is empty. Treat failed binding as zero publishable artifacts; an empty manifest alone is not evidence that a renderer ran. These vectors are conformance inputs, not renderer plans or a CLI activation policy.
+
 For profiles, admission, deterministic planning, scope behavior, publication boundaries, and verification, follow the canonical [Stage renderer target guide](/screenplay/stage/guides/build-renderer-target/).
 
 ## Ownership boundaries

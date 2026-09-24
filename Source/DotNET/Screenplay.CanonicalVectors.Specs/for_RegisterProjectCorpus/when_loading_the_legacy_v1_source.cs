@@ -42,7 +42,11 @@ public class when_loading_the_legacy_v1_source : Specification
     [Fact] void should_keep_the_corpus_identity() => _corpus.Name.ShouldEqual("register-project/v1-legacy");
     [Fact] void should_keep_the_fixed_application_identity() => _corpus.ApplicationIdentity.ToString().ShouldEqual("app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994");
     [Fact] void should_keep_the_fixed_runtime_stream_identity() => _corpus.RuntimeStreamId.ShouldEqual("3fa85f64-5717-4562-b3fc-2c963f66afa6");
-    [Fact] void should_expose_single_and_folder_source_forms() => _corpus.SourceForms.Select(form => form.Name).ShouldEqual("single", "folder");
+    [Fact] void should_expose_all_source_forms() => _corpus.SourceForms.Select(form => form.Name).ShouldEqual("single", "folder", "reordered", "relocated");
+    [Fact] void should_reverse_document_order_in_the_reordered_form() => _corpus.SourceForms[2].Documents.Select(document => document.StableKey).ShouldEqual(_corpus.SourceForms[1].Documents.Reverse().Select(document => document.StableKey));
+    [Fact] void should_relocate_every_document_in_the_relocated_form() => _corpus.SourceForms[3].Documents.All(document => document.DisplayPath.StartsWith("Archive/", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_preserve_document_bytes_across_folder_forms() => _corpus.SourceForms.Skip(2).All(form => form.Documents.All(document => _corpus.SourceForms[1].Documents.Single(original => original.StableKey == document.StableKey).Bytes.SequenceEqual(document.Bytes))).ShouldBeTrue();
+    [Fact] void should_preserve_identity_catalog_bytes_across_folder_forms() => _corpus.SourceForms.Skip(2).All(form => form.IdentityCatalogBytes.SequenceEqual(_corpus.SourceForms[1].IdentityCatalogBytes)).ShouldBeTrue();
     [Fact] void should_keep_the_single_stable_document_key() => _corpus.SourceForms[0].Documents.Single().StableKey.ShouldEqual("register-project-vector");
     [Fact] void should_keep_the_single_portable_display_path() => _corpus.SourceForms[0].Documents.Single().DisplayPath.ShouldEqual("RegisterProject.play");
     [Fact] void should_bind_the_expected_application_name() => _results.All(result => result.Model.Application.Name == "Projects").ShouldBeTrue();
@@ -53,6 +57,7 @@ public class when_loading_the_legacy_v1_source : Specification
     [Fact] void should_pin_rejected_then_accepted_outcomes() => _corpus.SpecificationExpectations.Select(expectation => expectation.Outcome.ToString()).ShouldEqual("Rejected", "Accepted");
     [Fact] void should_execute_every_pinned_specification_successfully() => _runs.All(run => run.Passed && run.Failures.IsEmpty).ShouldBeTrue();
     [Fact] void should_match_every_pinned_outcome() => _runs.Select(run => run.Execution.Kind).ShouldEqual(_corpus.SpecificationExpectations.Select(expectation => expectation.Outcome));
+    [Fact] void should_match_pinned_outcomes_in_every_form() => _results.All(result => _corpus.SpecificationExpectations.All(expectation => new SemanticSpecificationRunner().Run(SemanticExecutionPlan.Compile(result.Model).Plan!, expectation.Specification).Execution.Kind == expectation.Outcome)).ShouldBeTrue();
     [Fact] void should_make_all_source_forms_semantically_identical() => _results.All(result => result.Model.Revision == _corpus.SemanticRevision).ShouldBeTrue();
     [Fact] void should_match_the_checked_in_canonical_esm() => _results.All(result => SemanticModelSerializer.Serialize(result.Model).SequenceEqual(_corpus.EsmBytes)).ShouldBeTrue();
     [Fact] void should_keep_distinct_document_catalogs_for_distinct_physical_forms() => _corpus.SourceForms[0].IdentityCatalogBytes.SequenceEqual(_corpus.SourceForms[1].IdentityCatalogBytes).ShouldBeFalse();

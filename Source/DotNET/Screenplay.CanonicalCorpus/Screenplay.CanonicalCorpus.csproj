@@ -5,7 +5,8 @@
         <Description>Canonical Screenplay conformance corpora shared by authoring, rendering, publication, and recovery hosts</Description>
         <IsPackable>true</IsPackable>
         <IsTestProject>false</IsTestProject>
-        <EnablePackageValidation>false</EnablePackageValidation>
+        <!-- CanonicalCorpus was first published at 4.7.0; the shared 4.0.0 baseline does not exist for this package. -->
+        <PackageValidationBaselineVersion>4.7.0</PackageValidationBaselineVersion>
     </PropertyGroup>
 
     <ItemGroup>

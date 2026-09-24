@@ -1,0 +1,25 @@
+concept ProjectId : Uuid
+concept ProjectName : String
+module Projects
+  feature Registration
+    slice StateChange RegisterProject
+      command RegisterProject
+        projectId ProjectId identifier
+        name ProjectName
+        produces ProjectRegistered
+          for projectId
+          projectId = projectId
+          name = name
+      event ProjectRegistered
+        projectId ProjectId
+        name ProjectName
+    slice StateView ProjectLookup
+      readmodel ProjectSummary
+        projectId ProjectId
+        name ProjectName
+      query ProjectById => ProjectSummary?
+        by projectId ProjectId
+      projection ProjectSummaryProjection => ProjectSummary
+        sequence audit
+        from ProjectRegistered key projectId
+          name = name
