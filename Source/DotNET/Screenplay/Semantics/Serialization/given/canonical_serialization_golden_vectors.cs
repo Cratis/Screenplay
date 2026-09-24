@@ -443,6 +443,79 @@ public static partial class canonical_serialization_golden_vectors
         var validation = new SemanticSlice(Id(2092), "Validation", SemanticSliceKind.StateChange, [], [validationCommand], [], [], [], []);
 
         // end #209 validation
+
+        // #142 policies: grouped conditions, repeated claims, authorized command and keyed query.
+        var policies = ImmutableArray.Create(
+            new SemanticPolicy("CanValidate", new SemanticLogicalPolicyCondition(
+                new SemanticRoleCondition("Reviewer"),
+                SemanticLogicalOperator.Or,
+                new SemanticLogicalPolicyCondition(
+                    new SemanticAuthenticatedCondition(),
+                    SemanticLogicalOperator.And,
+                    new SemanticClaimCondition("department", SemanticClaimTargetKind.Artifact, "Reference")))),
+            new SemanticPolicy("CanLookUp", new SemanticClaimCondition("scope", SemanticClaimTargetKind.Literal, "read")),
+            new SemanticPolicy("OwnsEntity", new SemanticClaimCondition("entity", SemanticClaimTargetKind.Subject, null)));
+        validation = validation with
+        {
+            Commands = [validationCommand with { Authorization = new SemanticPolicyReference("CanValidate") }],
+            Specifications =
+            [
+                new SemanticSpecification(
+                    Id(1422),
+                    "denies caller without role or department",
+                    [],
+                    [],
+                    new(
+                        validationCommand.Id,
+                        [
+                            new(validationWeights, SemanticValue.Array([])),
+                            new(validationReference, SemanticValue.Text("Reference1")),
+                            new(validationEnabled, SemanticValue.Boolean(true))
+                        ]),
+                    [],
+                    [],
+                    [],
+                    [])
+                {
+                    GivenCaller = new(true, ["Guest"], [new("DEPARTMENT", "Engineering"), new("department", "Sales")]),
+                    ThenDenied = true
+                }
+            ]
+        };
+        stateView = stateView with
+        {
+            Specifications = stateView.Specifications.Add(new SemanticSpecification(
+                Id(1423),
+                "denies an unauthorized query",
+                [],
+                [],
+                null,
+                [],
+                [],
+                [new(Id(1420), SemanticValue.Text("00000000-0000-0000-0000-000000000001"), [])],
+                [])
+            {
+                GivenCaller = new(true, [], [new("scope", "read"), new("entity", "other")]),
+                ThenDenied = true
+            }),
+            Queries = stateView.Queries.Add(new SemanticKeyedQuery(
+                Id(1420),
+                "SecuredEntityById",
+                new(Id(1421), "Id", SemanticTypeReference.ForConcept(uuidConcept)),
+                readModel,
+                readModelId,
+                SemanticQueryCardinality.ZeroOrOne,
+                SemanticQueryDelivery.Snapshot)
+            {
+                Authorization = new SemanticLogicalAuthorization(
+                    new SemanticPolicyReference("CanLookUp"),
+                    SemanticLogicalOperator.And,
+                    new SemanticPolicyReference("OwnsEntity"))
+            })
+        };
+
+        // end #142 policies
+
         // #211 projection blocks: the scoped projection shape lives in its own slice and composite types.
         var projectionBlocks = CreateProjectionBlocks(applicationIdentity, uuidConcept, textConcept, decimalNumberConcept);
 
@@ -454,7 +527,10 @@ public static partial class canonical_serialization_golden_vectors
             "Canonical Golden Application",
             concepts,
             types.AddRange(projectionBlocks.Types),
-            [new(Id(30), "Operations", [new(Id(31), "Entities", [nestedFeature], [])])]);
+            [new(Id(30), "Operations", [new(Id(31), "Entities", [nestedFeature], [])])])
+        {
+            Policies = policies
+        };
 
         return ExecutableSemanticModel.Create(LanguageVersion.V1, SemanticVersion.V1, application);
     }

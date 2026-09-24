@@ -77,7 +77,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
                     : ImmutableDictionary<SemanticId, SemanticValue>.Empty.Add(expected.When.Command, expected.When.EventSource.Value),
                 AllocatedEventSourceType = expected.When.EventSource?.Type
             };
-        var execution = evaluator.Execute(plan, world, request);
+        var execution = evaluator.Execute(plan, world, request with { Caller = expected.GivenCaller });
         var failures = Compare(expected, execution);
         return new(specification, failures.IsEmpty, execution, failures);
     }
@@ -120,6 +120,16 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         SemanticExecutionResult execution)
     {
         var failures = ImmutableArray.CreateBuilder<string>();
+        if (expected.ThenDenied)
+        {
+            if (execution is not SemanticRejected { Category: SemanticRejectionCategory.Unauthorized })
+            {
+                failures.Add($"Expected Unauthorized, got {execution.Kind}{(execution is SemanticRejected rejected ? $" ({rejected.Category})" : string.Empty)}.");
+            }
+
+            return failures.ToImmutable();
+        }
+
         if (expected.ThenErrors.Length > 0)
         {
             CompareRejection(expected, execution, failures);
@@ -147,7 +157,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         SemanticExecutionResult execution,
         ImmutableArray<string>.Builder failures)
     {
-        if (execution is not SemanticRejected rejected)
+        if (execution is not SemanticRejected rejected || rejected.Category == SemanticRejectionCategory.Unauthorized)
         {
             failures.Add($"Expected Rejected, got {execution.Kind}.");
             return;

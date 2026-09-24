@@ -20,8 +20,8 @@ namespace Cratis.Screenplay.Contexts;
 /// <see cref="CausedBy.Subject"/> are the same value seen from the two sides.
 /// </para>
 /// <para>
-/// Roles and claim names are matched with ordinal, case sensitive comparison - the values come from a token
-/// and mean exactly what they say.
+/// Roles and claim values use ordinal, case-sensitive comparison. Claim types use ordinal, case-insensitive
+/// comparison, matching the authorization runtime.
 /// </para>
 /// </remarks>
 public record Identity(
@@ -69,5 +69,5 @@ public record Identity(
     /// <returns>The values of every claim with the name, empty when the caller does not carry it.</returns>
     public IEnumerable<string> ClaimValues(string name) => ClaimsNamed(name).Select(claim => claim.Value);
 
-    IEnumerable<Claim> ClaimsNamed(string name) => Claims.Where(claim => string.Equals(claim.Name, name, StringComparison.Ordinal));
+    IEnumerable<Claim> ClaimsNamed(string name) => Claims.Where(claim => string.Equals(claim.Name, name, StringComparison.OrdinalIgnoreCase));
 }

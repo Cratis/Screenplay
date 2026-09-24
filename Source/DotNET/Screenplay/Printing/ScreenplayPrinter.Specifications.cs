@@ -20,6 +20,17 @@ public partial class ScreenplayPrinter
         {
             WriteFile(writer, specification.File);
 
+            if (specification.GivenCaller is { } caller)
+            {
+                writer.Line("given caller", caller);
+                using (writer.Indent())
+                {
+                    if (caller.Authenticated) writer.Line("authenticated");
+                    foreach (var role in caller.Roles) writer.Line($"role {StringLiteral.Quote(role)}");
+                    foreach (var claim in caller.Claims) writer.Line($"claim {StringLiteral.Quote(claim.Type)} = {StringLiteral.Quote(claim.Value)}", claim);
+                }
+            }
+
             foreach (var given in specification.Given)
             {
                 WriteSpecificationEvent(writer, "given", given);
@@ -54,6 +65,8 @@ public partial class ScreenplayPrinter
             {
                 WriteSpecificationQuery(writer, then);
             }
+
+            if (specification.ThenDenied is { } denied) writer.Line("then denied", denied);
 
             foreach (var error in specification.ThenErrors)
             {

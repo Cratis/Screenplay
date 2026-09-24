@@ -94,6 +94,7 @@ internal static partial class SemanticModelCanonicalJson
         WriteArray(writer, "concepts", application.Concepts.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteConcept);
         WriteArray(writer, "types", application.Types.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteCompositeType);
         WriteArray(writer, "modules", application.Modules.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteModule);
+        if (!application.Policies.IsDefaultOrEmpty) WriteArray(writer, "policies", application.Policies.OrderBy(_ => _.Name, StringComparer.Ordinal), WritePolicy);
         writer.WriteEndObject();
     }
 
@@ -215,6 +216,11 @@ internal static partial class SemanticModelCanonicalJson
         WriteArray(writer, "validations", command.Validations, WriteValidation);
         WriteArray(writer, "produces", command.Produces, WriteProducedEvent);
         if (!command.Requirements.IsDefaultOrEmpty) WriteArray(writer, "requirements", command.Requirements, WriteRequirement);
+        if (command.Authorization is not null)
+        {
+            writer.WritePropertyName("authorization");
+            WriteAuthorization(writer, command.Authorization);
+        }
         if (command.Destination is not null)
         {
             writer.WritePropertyName("destination");
@@ -303,6 +309,11 @@ internal static partial class SemanticModelCanonicalJson
         writer.WriteString("keyProperty", query.KeyProperty.ToString());
         writer.WriteString("cardinality", QueryCardinality(query.Cardinality));
         writer.WriteString("delivery", QueryDelivery(query.Delivery));
+        if (query.Authorization is not null)
+        {
+            writer.WritePropertyName("authorization");
+            WriteAuthorization(writer, query.Authorization);
+        }
         writer.WriteEndObject();
     }
 
@@ -313,6 +324,11 @@ internal static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", specification.Name);
         WriteArray(writer, "givenEvents", specification.GivenEvents, WriteSpecificationEvent);
         WriteArray(writer, "givenReadModels", specification.GivenReadModels, WriteSpecificationReadModel);
+        if (specification.GivenCaller is not null)
+        {
+            writer.WritePropertyName("givenCaller");
+            WriteCaller(writer, specification.GivenCaller);
+        }
         if (specification.When is not null)
         {
             writer.WritePropertyName("when");
@@ -322,6 +338,7 @@ internal static partial class SemanticModelCanonicalJson
         WriteArray(writer, "thenReadModels", specification.ThenReadModels, WriteSpecificationReadModel);
         WriteArray(writer, "thenQueries", specification.ThenQueries, WriteSpecificationQuery);
         WriteArray(writer, "thenErrors", specification.ThenErrors, WriteSpecificationError);
+        if (specification.ThenDenied) writer.WriteBoolean("thenDenied", true);
         writer.WriteEndObject();
     }
 

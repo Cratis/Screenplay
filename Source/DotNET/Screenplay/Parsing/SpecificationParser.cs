@@ -72,6 +72,8 @@ internal static partial class SpecificationParser
         var thenReadModels = new List<SpecificationReadModelSyntax>();
         var thenQueries = new List<SpecificationQuerySyntax>();
         var thenErrors = new List<SpecificationErrorSyntax>();
+        SpecificationCallerSyntax? caller = null;
+        SpecificationDeniedSyntax? denied = null;
         FileReferenceSyntax? file = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
@@ -86,7 +88,19 @@ internal static partial class SpecificationParser
             switch (LineText.FirstWord(line.Content))
             {
                 case "given":
-                    if (ReadModelPrefixRegex().IsMatch(line.Content))
+                    if (line.Content.StartsWith("given caller", StringComparison.Ordinal))
+                    {
+                        if (caller is not null)
+                        {
+                            context.Error(DiagnosticCodes.DuplicateSpecificationCallerOrDenied, "A specification has at most one 'given caller' block.", line.Location);
+                            context.SkipBlock(line.Indent);
+                        }
+                        else
+                        {
+                            caller = ParseCaller(context, line);
+                        }
+                    }
+                    else if (ReadModelPrefixRegex().IsMatch(line.Content))
                     {
                         if (ParseReadModel(context, line, GivenReadModelRegex(), "given") is { } givenReadModel)
                         {
@@ -110,7 +124,26 @@ internal static partial class SpecificationParser
                     when = ParseWhen(context, line);
                     break;
                 case "then":
-                    ParseThen(context, line, thenEvents, thenReadModels, thenQueries, thenErrors);
+                    if (line.Content.StartsWith("then denied", StringComparison.Ordinal))
+                    {
+                        if (line.Content != "then denied")
+                        {
+                            context.Error(DiagnosticCodes.InvalidSpecificationDenied, "Expected exactly 'then denied'.", line.Location);
+                            context.SkipBlock(line.Indent);
+                        }
+                        else if (denied is not null)
+                        {
+                            context.Error(DiagnosticCodes.DuplicateSpecificationCallerOrDenied, "A specification has at most one 'then denied' outcome.", line.Location);
+                        }
+                        else
+                        {
+                            denied = new(line.Location);
+                        }
+                    }
+                    else
+                    {
+                        ParseThen(context, line, thenEvents, thenReadModels, thenQueries, thenErrors);
+                    }
                     break;
                 default:
                     context.Error(DiagnosticCodes.UnknownSpecificationDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in specification body", line.Location);
@@ -122,8 +155,52 @@ internal static partial class SpecificationParser
         return new(name, given, when, thenEvents, thenErrors, header.Location, givenReadModels, thenReadModels)
         {
             File = file,
-            ThenQueries = thenQueries
+            ThenQueries = thenQueries,
+            GivenCaller = caller,
+            ThenDenied = denied
         };
+    }
+
+    static SpecificationCallerSyntax? ParseCaller(ParserContext context, SourceLine line)
+    {
+        if (line.Content != "given caller")
+        {
+            context.Error(DiagnosticCodes.InvalidSpecificationCaller, "Expected exactly 'given caller'.", line.Location);
+            context.SkipBlock(line.Indent);
+            return null;
+        }
+
+        var authenticated = false;
+        var seenAuthenticated = false;
+        var roles = new List<string>();
+        var claims = new List<SpecificationCallerClaimSyntax>();
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            if (child.Content == "authenticated" && !seenAuthenticated)
+            {
+                authenticated = seenAuthenticated = true;
+                continue;
+            }
+
+            var role = CallerRoleRegex().Match(child.Content);
+            if (role.Success)
+            {
+                roles.Add(StringLiteral.Unescape(role.Groups[1].Value));
+                continue;
+            }
+
+            var claim = CallerClaimRegex().Match(child.Content);
+            if (claim.Success)
+            {
+                claims.Add(new(StringLiteral.Unescape(claim.Groups[1].Value), StringLiteral.Unescape(claim.Groups[2].Value), child.Location));
+                continue;
+            }
+
+            context.Error(DiagnosticCodes.InvalidSpecificationCaller, $"Invalid caller fixture '{child.Content}' - expected authenticated, role \"...\", or claim \"...\" = \"...\".", child.Location);
+        }
+
+        return new(authenticated, roles, claims, line.Location);
     }
 
     static SpecificationCommandSyntax? ParseWhen(ParserContext context, SourceLine line)
@@ -333,6 +410,12 @@ internal static partial class SpecificationParser
 
         return values;
     }
+
+    [GeneratedRegex("^role\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
+    private static partial Regex CallerRoleRegex();
+
+    [GeneratedRegex("^claim\\s+\"(" + StringLiteral.BodyPattern + ")\"\\s*=\\s*\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
+    private static partial Regex CallerClaimRegex();
 
     [GeneratedRegex(@"^specification\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
