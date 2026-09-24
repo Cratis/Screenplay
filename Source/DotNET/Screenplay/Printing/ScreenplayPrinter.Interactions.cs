@@ -14,6 +14,7 @@ public partial class ScreenplayPrinter
     /// <param name="behavior">The <see cref="BehaviorSyntax"/> to write.</param>
     void WriteBehavior(ScreenplayWriter writer, BehaviorSyntax behavior)
     {
+        using var anchor = writer.Anchor(behavior);
         writer.Line($"behavior {behavior.Name}");
 
         using (writer.Indent())
@@ -23,9 +24,11 @@ public partial class ScreenplayPrinter
 
             foreach (var parameter in behavior.Parameters)
             {
-                writer.Line(parameter.Type is null
-                    ? $"parameter {parameter.Name}"
-                    : $"parameter {parameter.Name} {ScreenplaySyntaxText.TypeRef(parameter.Type)}");
+                writer.Line(
+                    parameter.Type is null
+                        ? $"parameter {parameter.Name}"
+                        : $"parameter {parameter.Name} {ScreenplaySyntaxText.TypeRef(parameter.Type)}",
+                    parameter);
             }
 
             if (behavior.Order is { } order)
@@ -65,6 +68,7 @@ public partial class ScreenplayPrinter
     /// <param name="uses">The <see cref="UsesBehaviorSyntax"/> to write.</param>
     void WriteUsesBehavior(ScreenplayWriter writer, UsesBehaviorSyntax uses)
     {
+        using var anchor = writer.Anchor(uses);
         writer.Line($"uses {uses.Behavior}");
 
         if (!uses.Arguments.Any())
@@ -76,7 +80,7 @@ public partial class ScreenplayPrinter
         {
             foreach (var argument in uses.Arguments)
             {
-                writer.Line($"{argument.Name} {argument.Value}");
+                writer.Line($"{argument.Name} {argument.Value}", argument);
             }
         }
     }
@@ -110,6 +114,7 @@ public partial class ScreenplayPrinter
 
     void WriteInteractionBinding(ScreenplayWriter writer, InteractionBindingSyntax binding)
     {
+        using var anchor = writer.Anchor(binding);
         writer.Line($"on {ScreenplaySyntaxText.InteractionTrigger(binding.Trigger)}");
 
         using (writer.Indent())
@@ -128,6 +133,7 @@ public partial class ScreenplayPrinter
 
     void WriteInteractionAction(ScreenplayWriter writer, InteractionActionSyntax action)
     {
+        using var anchor = writer.Anchor(action);
         writer.Line(ScreenplaySyntaxText.InteractionAction(action));
 
         var hasBody = action.Arguments.Any() || action.OnSuccess.Any() || action.OnFailure.Any() || action.OnResult.Any();
@@ -140,7 +146,7 @@ public partial class ScreenplayPrinter
         {
             foreach (var argument in action.Arguments)
             {
-                writer.Line($"with {argument.Name} from {argument.Binding}");
+                writer.Line($"with {argument.Name} from {argument.Binding}", argument);
             }
 
             WriteContinuation(writer, "success", action.OnSuccess);

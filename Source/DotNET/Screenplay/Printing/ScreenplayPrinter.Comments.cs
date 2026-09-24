@@ -9,87 +9,50 @@ namespace Cratis.Screenplay.Printing;
 
 public sealed partial class ScreenplayPrinter
 {
-    // Comments are bound to syntax owners, not to document offsets. The latter are no longer meaningful
-    // after a declaration moves to its own file or another declaration is canonically printed.
-    static string PrintComments(SyntaxNode root, string text)
+    // The writer records the actual instance as it writes each declaration. Source text is never used
+    // to identify an owner: equal-looking siblings may move independently after an AST edit.
+    static string PrintComments(SyntaxNode root, ScreenplayWriter writer)
     {
         var comments = new List<(SyntaxNode Owner, SourceComment Comment)>();
         Collect(root, comments);
         if (comments.Count == 0)
         {
-            return text;
+            return writer.ToString();
         }
 
-        var lines = text.TrimEnd('\n').Split('\n').ToList();
+        var lines = writer.ToString().TrimEnd('\n').Split('\n');
         var before = new Dictionary<int, List<string>>();
         var after = new Dictionary<int, List<string>>();
         var trailing = new Dictionary<int, List<string>>();
-        var claimed = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (var group in comments.GroupBy(entry => (entry.Owner, entry.Comment.Anchor, entry.Comment.Placement))
-                     .OrderBy(group => group.Min(entry => entry.Comment.Line)))
+        var parents = new Dictionary<SyntaxNode, SyntaxNode>(ReferenceEqualityComparer.Instance);
+        CollectParents(root, parents);
+        foreach (var (owner, comment) in comments.OrderBy(entry => entry.Comment.Line))
         {
-            var (owner, anchor, placement) = group.Key;
-            List<int> matches = [.. Enumerable.Range(0, lines.Count)
-                .Where(index => lines[index].TrimStart() == anchor)];
-            if (matches.Count == 0)
+            var printedOwner = owner;
+            while (!writer.Anchors.ContainsKey(printedOwner) && parents.TryGetValue(printedOwner, out var parent))
             {
-                matches = [.. Enumerable.Range(0, lines.Count)
-                    .Where(index => Matches(lines[index].TrimStart(), anchor))];
+                printedOwner = parent;
             }
 
-            var ownerAnchor = group.First().Comment.OwnerAnchor;
-            if (owner != root && ownerAnchor.Length > 0)
+            if (!writer.Anchors.TryGetValue(printedOwner, out var span))
             {
-                var headers = Enumerable.Range(0, lines.Count)
-                    .Where(index => lines[index].TrimStart() == ownerAnchor)
-                    .OrderBy(index => Math.Abs(Indentation(lines[index]) - owner.Location.Column + 1))
-                    .ToList();
-                if (headers.Count > 0)
-                {
-                    var header = headers[0];
-                    var depth = Indentation(lines[header]);
-                    var boundary = header + 1;
-                    while (boundary < lines.Count && (lines[boundary].Length == 0 || Indentation(lines[boundary]) > depth))
-                    {
-                        boundary++;
-                    }
-
-                    var inOwner = matches.Where(index => index >= header && index < boundary).ToList();
-                    if (inOwner.Count > 0)
-                    {
-                        matches = inOwner;
-                    }
-                }
-            }
-            var key = $"{owner.Location.Path}:{anchor}:{placement}";
-            var occurrence = claimed.GetValueOrDefault(key);
-            claimed[key] = occurrence + 1;
-            var position = matches.Count > 0 ? matches[Math.Min(occurrence, matches.Count - 1)] : -1;
-            if (position < 0)
-            {
-                // A typed edit may have changed the anchor's content. Use the owning declaration's
-                // header before falling back to the document boundary; never silently lose the comment.
-                position = lines.FindIndex(line => line.TrimStart().StartsWith(anchor.Split('=')[0].TrimEnd(), StringComparison.Ordinal));
-                if (position < 0)
-                {
-                    position = Math.Max(0, lines.Count - 1);
-                }
+                continue;
             }
 
+            var position = comment.Placement == SourceCommentPlacement.End ? span.Last : span.First;
+            if (comment.Placement == SourceCommentPlacement.Trailing && owner.Location.Line > 0 && comment.Line > owner.Location.Line)
+            {
+                position = Math.Min(span.Last, span.First + comment.Line - owner.Location.Line);
+            }
+
+            position = Math.Clamp(position, 0, lines.Length - 1);
             var indent = lines[position].Length - lines[position].TrimStart().Length;
-            if (placement == SourceCommentPlacement.End)
+            if (comment.Placement == SourceCommentPlacement.End && owner != root)
             {
-                var end = position;
-                while (end + 1 < lines.Count && (lines[end + 1].Length == 0 || lines[end + 1].TakeWhile(char.IsWhiteSpace).Count() > indent))
-                {
-                    end++;
-                }
-
-                position = end;
-                indent += owner == root ? 0 : 2;
+                indent = lines[span.First].Length - lines[span.First].TrimStart().Length + 2;
             }
 
-            var destination = placement switch
+            var destination = comment.Placement switch
             {
                 SourceCommentPlacement.Leading => before,
                 SourceCommentPlacement.Trailing => trailing,
@@ -100,12 +63,11 @@ public sealed partial class ScreenplayPrinter
                 destination[position] = output = [];
             }
 
-            output.AddRange(group.OrderBy(entry => entry.Comment.Line).Select(entry =>
-                placement == SourceCommentPlacement.Trailing ? entry.Comment.Text : new string(' ', indent) + entry.Comment.Text));
+            output.Add(comment.Placement == SourceCommentPlacement.Trailing ? comment.Text : new string(' ', indent) + comment.Text);
         }
 
         var result = new List<string>();
-        for (var index = 0; index < lines.Count; index++)
+        for (var index = 0; index < lines.Length; index++)
         {
             if (before.TryGetValue(index, out var preceding))
             {
@@ -122,11 +84,30 @@ public sealed partial class ScreenplayPrinter
         return string.Join('\n', result) + '\n';
     }
 
-    static int Indentation(string line) => line.Length - line.TrimStart().Length;
-
-    static bool Matches(string printed, string source) =>
-        printed == source || (source.Contains(" = ", StringComparison.Ordinal) &&
-            printed.StartsWith(source[..source.IndexOf(" = ", StringComparison.Ordinal)] + " = ", StringComparison.Ordinal));
+    static void CollectParents(SyntaxNode node, Dictionary<SyntaxNode, SyntaxNode> parents)
+    {
+        var descriptor = SyntaxKinds.All.Single(kind => kind.Type == node.GetType());
+        foreach (var member in descriptor.Members)
+        {
+            var value = member.Property.GetValue(node);
+            if (value is SyntaxNode child)
+            {
+                parents[child] = node;
+                CollectParents(child, parents);
+            }
+            else if (value is IEnumerable children and not string)
+            {
+                foreach (var item in children)
+                {
+                    if (item is SyntaxNode nested)
+                    {
+                        parents[nested] = node;
+                        CollectParents(nested, parents);
+                    }
+                }
+            }
+        }
+    }
 
     static void Collect(SyntaxNode node, List<(SyntaxNode Owner, SourceComment Comment)> comments)
     {

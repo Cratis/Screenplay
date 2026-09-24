@@ -14,6 +14,7 @@ public partial class ScreenplayPrinter
 {
     void WriteSpecification(ScreenplayWriter writer, SpecificationSyntax specification)
     {
+        using var anchor = writer.Anchor(specification);
         writer.Line($"specification {specification.Name}");
         using (writer.Indent())
         {
@@ -31,7 +32,7 @@ public partial class ScreenplayPrinter
 
             if (specification.When is not null)
             {
-                writer.Line($"when {specification.When.CommandType}");
+                writer.Line($"when {specification.When.CommandType}", specification.When);
                 using (writer.Indent())
                 {
                     WriteSpecificationEventSource(writer, specification.When.For);
@@ -56,13 +57,14 @@ public partial class ScreenplayPrinter
 
             foreach (var error in specification.ThenErrors)
             {
-                writer.Line(error.Name is null ? "then error" : $"then error {StringLiteral.Quote(error.Name)}");
+                writer.Line(error.Name is null ? "then error" : $"then error {StringLiteral.Quote(error.Name)}", error);
             }
         }
     }
 
     void WriteSpecificationEvent(ScreenplayWriter writer, string keyword, SpecificationEventSyntax @event)
     {
+        using var anchor = writer.Anchor(@event);
         writer.Line($"{keyword} {@event.EventType}");
         using (writer.Indent())
         {
@@ -73,6 +75,7 @@ public partial class ScreenplayPrinter
 
     void WriteSpecificationReadModel(ScreenplayWriter writer, string keyword, SpecificationReadModelSyntax readModel)
     {
+        using var anchor = writer.Anchor(readModel);
         writer.Line($"{keyword} readmodel {readModel.Name}");
         using (writer.Indent())
         {
@@ -82,6 +85,7 @@ public partial class ScreenplayPrinter
 
     void WriteSpecificationQuery(ScreenplayWriter writer, SpecificationQuerySyntax query)
     {
+        using var anchor = writer.Anchor(query);
         writer.Line($"then query {query.Query}");
         using (writer.Indent())
         {
@@ -96,7 +100,7 @@ public partial class ScreenplayPrinter
 
             foreach (var result in query.Results)
             {
-                writer.Line("result");
+                writer.Line("result", result);
                 using (writer.Indent())
                 {
                     WriteSpecificationValues(writer, result.Properties);
@@ -117,7 +121,7 @@ public partial class ScreenplayPrinter
     {
         foreach (var value in values)
         {
-            writer.Line($"{value.Property} = {ScreenplaySyntaxText.Expression(value.Source)}");
+            writer.Line($"{value.Property} = {ScreenplaySyntaxText.Expression(value.Source)}", value);
         }
     }
 }

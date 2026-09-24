@@ -13,6 +13,7 @@ public partial class ScreenplayPrinter
 {
     void WriteProjection(ScreenplayWriter writer, ProjectionSyntax projection)
     {
+        using var anchor = writer.Anchor(projection);
         var header = projection.ReadModel is null
             ? $"projection {projection.Name}"
             : $"projection {projection.Name} => {projection.ReadModel}";
@@ -43,6 +44,7 @@ public partial class ScreenplayPrinter
 
     void WriteProjectionBlock(ScreenplayWriter writer, ProjectionBlockSyntax block)
     {
+        using var anchor = writer.Anchor(block);
         switch (block)
         {
             case FromSyntax from:
@@ -108,14 +110,17 @@ public partial class ScreenplayPrinter
 
     void WriteProjectionVariant(ScreenplayWriter writer, ProjectionVariantSyntax variant)
     {
+        using var anchor = writer.Anchor(variant);
         writer.Line($"variant {variant.Name}");
         using (writer.Indent())
         {
             foreach (var entersOn in variant.EntersOn)
             {
-                writer.Line(entersOn.Key is null
-                    ? $"enters on {entersOn.Event}"
-                    : $"enters on {entersOn.Event} key {ScreenplaySyntaxText.Expression(entersOn.Key)}");
+                writer.Line(
+                    entersOn.Key is null
+                        ? $"enters on {entersOn.Event}"
+                        : $"enters on {entersOn.Event} key {ScreenplaySyntaxText.Expression(entersOn.Key)}",
+                    entersOn);
             }
 
             foreach (var block in variant.Blocks)
@@ -127,6 +132,7 @@ public partial class ScreenplayPrinter
 
     void WriteFrom(ScreenplayWriter writer, FromSyntax from)
     {
+        using var anchor = writer.Anchor(from);
         var events = from.Events.Select(spec => spec.Key is null
             ? spec.Event
             : $"{spec.Event} key {ScreenplaySyntaxText.Expression(spec.Key)}");
@@ -150,6 +156,7 @@ public partial class ScreenplayPrinter
 
     void WriteEvery(ScreenplayWriter writer, EverySyntax every)
     {
+        using var anchor = writer.Anchor(every);
         writer.Line("every");
         using (writer.Indent())
         {
@@ -165,12 +172,13 @@ public partial class ScreenplayPrinter
 
     void WriteJoin(ScreenplayWriter writer, JoinSyntax join)
     {
+        using var anchor = writer.Anchor(join);
         writer.Line($"join {join.Property} on {join.On}");
         using (writer.Indent())
         {
             foreach (var joined in join.Events)
             {
-                writer.Line($"with {joined.Event}");
+                writer.Line($"with {joined.Event}", joined);
                 using (writer.Indent())
                 {
                     WriteAutoMap(writer, joined.AutoMap);
@@ -182,6 +190,7 @@ public partial class ScreenplayPrinter
 
     void WriteRemoveWith(ScreenplayWriter writer, RemoveWithSyntax remove)
     {
+        using var anchor = writer.Anchor(remove);
         writer.Line(remove.Key is null
             ? $"remove with {remove.Event}"
             : $"remove with {remove.Event} key {ScreenplaySyntaxText.Expression(remove.Key)}");
@@ -199,6 +208,7 @@ public partial class ScreenplayPrinter
 
     void WriteKey(ScreenplayWriter writer, KeySyntax key)
     {
+        using var anchor = writer.Anchor(key);
         switch (key)
         {
             case ExpressionKeySyntax expression:
@@ -210,7 +220,7 @@ public partial class ScreenplayPrinter
                 {
                     foreach (var part in composite.Parts)
                     {
-                        writer.Line($"{part.Property} = {ScreenplaySyntaxText.Expression(part.Expression)}");
+                        writer.Line($"{part.Property} = {ScreenplaySyntaxText.Expression(part.Expression)}", part);
                     }
                 }
 
@@ -241,17 +251,19 @@ public partial class ScreenplayPrinter
     {
         foreach (var mapping in mappings)
         {
-            writer.Line(mapping switch
-            {
-                SetMappingSyntax set => $"{ReservedWords.Escape(set.Property, reserved)} = {ScreenplaySyntaxText.Expression(set.Source)}",
-                ClearMappingSyntax clear => $"clear {ReservedWords.Escape(clear.Property, ReservedWords.ClearMapping)}",
-                IncrementMappingSyntax increment => $"increment {increment.Property}",
-                DecrementMappingSyntax decrement => $"decrement {decrement.Property}",
-                CountMappingSyntax count => $"count {count.Property}",
-                AddMappingSyntax add => $"add {add.Property} by {ScreenplaySyntaxText.Expression(add.Value)}",
-                SubtractMappingSyntax subtract => $"subtract {subtract.Property} by {ScreenplaySyntaxText.Expression(subtract.Value)}",
-                _ => throw new UnsupportedSyntaxForPrinting("projection mapping", mapping.GetType().Name)
-            });
+            writer.Line(
+                mapping switch
+                {
+                    SetMappingSyntax set => $"{ReservedWords.Escape(set.Property, reserved)} = {ScreenplaySyntaxText.Expression(set.Source)}",
+                    ClearMappingSyntax clear => $"clear {ReservedWords.Escape(clear.Property, ReservedWords.ClearMapping)}",
+                    IncrementMappingSyntax increment => $"increment {increment.Property}",
+                    DecrementMappingSyntax decrement => $"decrement {decrement.Property}",
+                    CountMappingSyntax count => $"count {count.Property}",
+                    AddMappingSyntax add => $"add {add.Property} by {ScreenplaySyntaxText.Expression(add.Value)}",
+                    SubtractMappingSyntax subtract => $"subtract {subtract.Property} by {ScreenplaySyntaxText.Expression(subtract.Value)}",
+                    _ => throw new UnsupportedSyntaxForPrinting("projection mapping", mapping.GetType().Name)
+                },
+                mapping);
         }
     }
 }
