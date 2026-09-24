@@ -19,8 +19,7 @@ public class when_reviewing_dropped_comments : given.an_order_model_with_comment
     }
 
     [Fact] void should_disclose_canonicalization() => _proposal.GetProperty("canonicalizedSource").GetBoolean().ShouldBeTrue();
-    [Fact] void should_count_the_dropped_comments() => _proposal.GetProperty("droppedCommentCount").GetInt32().ShouldEqual(2);
-    [Fact] void should_list_each_dropped_comment() => _dropped.Select(comment => comment.GetProperty("text").GetString()).ShouldContainOnly("// @public command PlaceOrder", "// @owner sales");
-    [Fact] void should_name_the_path_and_line() => _dropped.Select(comment => $"{comment.GetProperty("path").GetString()}:{comment.GetProperty("line").GetInt32()}").ShouldContainOnly("Shop/Orders/PlaceOrder/PlaceOrder.play:4", "Shop/Orders/PlaceOrder/PlaceOrder.play:18");
+    [Fact] void should_count_no_dropped_comments() => _proposal.GetProperty("droppedCommentCount").GetInt32().ShouldEqual(0);
+    [Fact] void should_list_no_dropped_comments() => _dropped.ShouldBeEmpty();
     [Fact] void should_leave_disk_unchanged_before_apply() => _unchangedBeforeApply.ShouldBeTrue();
 }

@@ -1557,7 +1557,25 @@ public static class DiagnosticCodes
     /// </summary>
     public const string RedundantImport = "PLAY0290";
 
-    // PLAY0291-PLAY0294 is left free deliberately.
+    /// <summary>
+    /// An inline JSON-shaped value is malformed.
+    /// </summary>
+    public const string InvalidStructuredValue = "PLAY0291";
+
+    /// <summary>
+    /// A structured value names no property in its declared composite target.
+    /// </summary>
+    public const string UnknownStructuredValueMember = "PLAY0292";
+
+    /// <summary>
+    /// A structured value has the wrong shape for its declared target.
+    /// </summary>
+    public const string IncompatibleStructuredValue = "PLAY0293";
+
+    /// <summary>
+    /// An inline object declares the same property name more than once.
+    /// </summary>
+    public const string DuplicateStructuredValueMember = "PLAY0294";
 
     // Event context paths, checked against Syntax.EventContextCatalog.
 
@@ -1783,6 +1801,56 @@ public static class DiagnosticCodes
     public const string DuplicateBehaviorAttachment = "PLAY0340";
 
     /// <summary>
+    /// A command or event specification value uses null instead of modeling an optional fact as a separate event.
+    /// </summary>
+    public const string NullSpecificationFact = "PLAY0350";
+
+    /// <summary>
+    /// A read model state does not state its identifier property.
+    /// </summary>
+    public const string MissingSpecificationReadModelIdentifier = "PLAY0351";
+
+    /// <summary>
+    /// A specification without a command has an incompatible or missing outcome.
+    /// </summary>
+    public const string InvalidWhenlessSpecification = "PLAY0352";
+
+    /// <summary>
+    /// A specification value is null where its declared type or role disallows null.
+    /// </summary>
+    public const string InvalidSpecificationNull = "PLAY0353";
+
+    /// <summary>
+    /// A specification composite value omits a required declared property.
+    /// </summary>
+    public const string MissingStructuredValueMember = "PLAY0354";
+
+    /// <summary>
+    /// The declared composite target of a specification value could not be resolved.
+    /// </summary>
+    public const string UnresolvedStructuredValueType = "PLAY0355";
+
+    /// <summary>
+    /// A specification composite value declares the same member more than once in typed syntax.
+    /// </summary>
+    public const string DuplicateSemanticValueMember = "PLAY0356";
+
+    /// <summary>
+    /// A localized semantic message does not name a valid dotted string key.
+    /// </summary>
+    public const string InvalidSemanticStringKey = "PLAY0357";
+
+    /// <summary>
+    /// A named match pattern has no portable definition.
+    /// </summary>
+    public const string UnknownMatchPattern = "PLAY0366";
+
+    /// <summary>
+    /// A quoted match pattern is not a valid ECMAScript regular expression.
+    /// </summary>
+    public const string InvalidMatchPattern = "PLAY0367";
+
+    /// <summary>
     /// A projection construct binds, but Chronicle's projection lowering drops part of it: <c>all</c> inside a
     /// <c>children</c> or <c>nested</c> block loses its subscription to every event type, and an auto-map setting on a
     /// joined event is replaced by the level's.
@@ -1811,4 +1879,9 @@ public static class DiagnosticCodes
     /// across the whole application.
     /// </summary>
     public const string DuplicateConstraintName = "PLAY0392";
+
+    /// <summary>
+    /// Ignoring casing is only meaningful for unique property values, not unique event occurrences.
+    /// </summary>
+    public const string InvalidConstraintCasing = "PLAY0393";
 }

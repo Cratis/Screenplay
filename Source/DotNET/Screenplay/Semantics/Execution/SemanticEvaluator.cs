@@ -16,6 +16,16 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         SemanticWorld world,
         SemanticExecutionRequest request)
     {
+        if (request.IsReadOnly)
+        {
+            if (request.Command.IsSet || !request.Values.IsEmpty || !request.AllocatedIdentities.IsEmpty)
+            {
+                return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A read-only request cannot carry command values or allocated identities.");
+            }
+
+            return ExecuteQueries(plan, world, world, [], request.Queries);
+        }
+
         if (!plan.Commands.TryGetValue(request.Command, out var command))
         {
             return new SemanticUnsupported(world, SemanticExecutionCapability.Command, $"Command '{request.Command}' is not in the execution plan.");
@@ -33,13 +43,27 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
 
         if (ValidateRules(plan, command, request.Values) is { } validationRejection)
         {
-            return new SemanticRejected(world, SemanticRejectionCategory.Validation, null, validationRejection);
+            return RejectWithMessage(world, SemanticRejectionCategory.Validation, null, validationRejection);
         }
 
         var commandValues = request.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
+        foreach (var requirement in command.Requirements)
+        {
+            if (!SemanticConditionEvaluation.Evaluate(requirement.Condition, commandValues))
+            {
+                return RejectWithMessage(world, SemanticRejectionCategory.Validation, null, requirement.Message ?? "Command requirement was not met.");
+            }
+        }
+
         var facts = ImmutableArray.CreateBuilder<SemanticFact>();
         foreach (var produced in command.Produces)
         {
+            if ((produced.When is not null && !SemanticConditionEvaluation.Evaluate(produced.When, commandValues)) ||
+                (produced.Condition is not null && Evaluate(produced.Condition, SemanticExpressionRootKind.Command, commandValues) is SemanticBooleanValue { Value: false }))
+            {
+                continue;
+            }
+
             var destination = produced.Destination is null
                 ? request.AllocatedIdentities.GetValueOrDefault(command.Id)
                 : Evaluate(produced.Destination, SemanticExpressionRootKind.Command, commandValues);
@@ -56,13 +80,16 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                     mapping.TargetProperty,
                     Evaluate(mapping.Source, SemanticExpressionRootKind.Command, commandValues)))
                 .ToImmutableArray();
-            facts.Add(new(produced.EventContract, destination, values));
+            facts.Add(new SemanticFact(produced.EventContract, destination, values)
+            {
+                Tags = plan.Events[produced.EventContract].Tags.AddRange(produced.Tags)
+            });
         }
 
         // A violation is an outcome, not a failure: the command is rejected and the world is unchanged.
         if (SemanticConstraintEnforcement.FindViolation(plan, world, facts.ToImmutable()) is { } violated)
         {
-            return new SemanticRejected(world, SemanticRejectionCategory.Constraint, violated.Name, SemanticConstraintEnforcement.MessageFor(violated));
+            return RejectWithMessage(world, SemanticRejectionCategory.Constraint, violated.Name, SemanticConstraintEnforcement.MessageFor(violated));
         }
 
         if (!TryProject(plan, world.Facts, world.ReadModels, facts.ToImmutable(), out var readModels, out var projectionFailure))
@@ -71,28 +98,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         }
 
         var tentative = world.Commit(facts.ToImmutable(), readModels);
-        var queryResults = ImmutableArray.CreateBuilder<SemanticQueryResult>();
-        foreach (var queryRequest in request.Queries)
-        {
-            if (!plan.Queries.TryGetValue(queryRequest.Query, out var query))
-            {
-                return new SemanticUnsupported(world, SemanticExecutionCapability.Query, $"Query '{queryRequest.Query}' is not in the execution plan.");
-            }
-
-            if (ValidateQueryKey(plan, query, queryRequest.Key) is { } queryRejection)
-            {
-                return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, queryRejection);
-            }
-
-            var results = tentative.ReadModels
-                .Where(instance => instance.ReadModel == query.ReadModel)
-                .Where(instance => instance.Values.Any(value =>
-                    value.TargetProperty == query.KeyProperty && SemanticValueRules.AreEqual(value.Value, queryRequest.Key)))
-                .ToImmutableArray();
-            queryResults.Add(new(query.Id, queryRequest.Key, results));
-        }
-
-        return new SemanticAccepted(tentative, facts.ToImmutable(), queryResults.ToImmutable());
+        return ExecuteQueries(plan, world, tentative, facts.ToImmutable(), request.Queries);
     }
 
     internal static bool Establish(
@@ -112,6 +118,45 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         SemanticNumberValue or SemanticBooleanValue or SemanticCompositeValue => false,
         _ => throw SemanticValueRules.Malformed()
     };
+
+    static SemanticRejected RejectWithMessage(SemanticWorld world, SemanticRejectionCategory category, string? code, string message) =>
+        new(world, category, code, message) { MessageIsStringKey = message.StartsWith("$strings.", StringComparison.Ordinal) };
+
+    static SemanticExecutionResult ExecuteQueries(
+        SemanticExecutionPlan plan,
+        SemanticWorld original,
+        SemanticWorld tentative,
+        ImmutableArray<SemanticFact> facts,
+        ImmutableArray<SemanticQueryRequest> queries)
+    {
+        if (queries.IsDefault)
+        {
+            return new SemanticRejected(original, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default.");
+        }
+
+        var queryResults = ImmutableArray.CreateBuilder<SemanticQueryResult>();
+        foreach (var queryRequest in queries)
+        {
+            if (!plan.Queries.TryGetValue(queryRequest.Query, out var query))
+            {
+                return new SemanticUnsupported(original, SemanticExecutionCapability.Query, $"Query '{queryRequest.Query}' is not in the execution plan.");
+            }
+
+            if (ValidateQueryKey(plan, query, queryRequest.Key) is { } queryRejection)
+            {
+                return new SemanticRejected(original, SemanticRejectionCategory.Contract, null, queryRejection);
+            }
+
+            var results = tentative.ReadModels
+                .Where(instance => instance.ReadModel == query.ReadModel)
+                .Where(instance => instance.Values.Any(value =>
+                    value.TargetProperty == query.KeyProperty && SemanticValueRules.AreEqual(value.Value, queryRequest.Key)))
+                .ToImmutableArray();
+            queryResults.Add(new(query.Id, queryRequest.Key, results));
+        }
+
+        return new SemanticAccepted(tentative, facts, queryResults.ToImmutable());
+    }
 
     static string? ValidateRequest(
         SemanticExecutionPlan plan,

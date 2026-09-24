@@ -25,6 +25,7 @@ internal static class EventFieldConsistencyValidator
             foreach (var producer in producers)
             {
                 ValidateAssignments(producer.Event, producer.Mappings, scope, declarations, context);
+                SpecificationValueConsistencyValidator.ValidateStructuredMappings(producer.Mappings, declarations.Event(producer.Event, scope)?.Properties, declarations, context);
             }
 
             foreach (var append in slice.Captures.SelectMany(capture => capture.Appends
@@ -32,6 +33,7 @@ internal static class EventFieldConsistencyValidator
                 .Concat(capture.Nested.SelectMany(nested => nested.Appends))))
             {
                 ValidateAssignments(append.Event, append.Mappings, scope, declarations, context);
+                SpecificationValueConsistencyValidator.ValidateStructuredMappings(append.Mappings, declarations.Event(append.Event, scope)?.Properties, declarations, context);
             }
 
             foreach (var step in slice.Specifications.SelectMany(specification => specification.Given.Concat(specification.ThenEvents)))

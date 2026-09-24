@@ -30,7 +30,7 @@ public class and_the_subject_is_a_concept : given.a_printer
     [Fact] void should_preserve_the_implied_subject() => Rule.Property.ShouldEqual(ValidationRuleSyntax.ConceptValue);
     [Fact] void should_preserve_the_rule_kind() => Rule.Rule.ShouldEqual(ValidationRuleKind.NotEmpty);
     [Fact] void should_reparse_without_the_file() => Rule.File.ShouldBeNull();
-    [Fact] void should_have_nothing_left_to_note_on_a_second_pass() => _roundtrip.PrintedAgain.ShouldNotContain("// TODO:");
+    [Fact] void should_keep_the_printed_note_on_a_second_pass() => _roundtrip.PrintedAgain.ShouldContain("// TODO:");
 
     ValidationRuleSyntax Rule => given.a_hand_built_application.ConceptRule(_roundtrip.Reparsed);
 }

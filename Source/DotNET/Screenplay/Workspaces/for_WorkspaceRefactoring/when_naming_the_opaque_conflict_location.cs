@@ -7,7 +7,7 @@ public class when_naming_the_opaque_conflict_location : given.a_workspace_with_a
 {
     WorkspaceAuthoringResult _result = null!;
 
-    void Establish() => CreateWith("[{\"sku\":\"Channel\",\"quantity\":2}]");
+    void Establish() => CreateWith("calculate(Channel)");
 
     void Because() => _result = RenameChannel();
 

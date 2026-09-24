@@ -23,6 +23,11 @@ internal sealed partial class WorkspaceAstEdits
             _sourceLocations[replacement] = location;
         }
 
+        if (_sourceComments.TryGetValue(original, out var comments))
+        {
+            _sourceComments[replacement] = comments;
+        }
+
         if (original is JsonObject oldObject && replacement is JsonObject newObject)
         {
             foreach (var (name, child) in newObject)
@@ -83,6 +88,11 @@ internal sealed partial class WorkspaceAstEdits
         {
             // The codec has already admitted the node. Set only server-owned metadata on that decoded tree.
             typeof(SyntaxNode).GetProperty(nameof(SyntaxNode.Location))!.SetValue(node, location);
+        }
+
+        if (_sourceComments.TryGetValue(json, out var comments))
+        {
+            typeof(SyntaxNode).GetProperty(nameof(SyntaxNode.SourceComments))!.SetValue(node, comments);
         }
 
         var descriptor = SyntaxKinds.All.Single(kind => kind.Type == node.GetType());

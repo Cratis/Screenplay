@@ -35,7 +35,7 @@ public class when_reviewing_exact_unicode_proposal_pages : given.an_authoring_co
         var replacement = new ScreenplayCompiler().Parse(FullSource.Replace("Registers café projects 🚀", "Registers naïve projects 🌍", StringComparison.Ordinal)).Value;
 
         // The authoring path restores source positions from the original document after typed JSON admission.
-        _expected = [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes(new ScreenplayPrinter().Print(replacement))];
+        _expected = [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes(new ScreenplayPrinter().Print(new ScreenplayCompiler().Parse(FullSource.Replace("Registers café projects 🚀", "Registers naïve projects 🌍", StringComparison.Ordinal) + "\n// Preserve exact review bytes: café 🚀\n").Value!))];
         _proposal = Result("propose-ast", new
         {
             expectedRevision = opened.GetProperty("revision").GetString(),

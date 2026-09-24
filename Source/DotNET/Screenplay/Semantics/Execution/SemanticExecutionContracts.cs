@@ -134,6 +134,11 @@ public sealed record SemanticFact(
     /// When present, <see cref="SemanticEventContext.EventSource"/> must agree with <see cref="Destination"/>.
     /// </remarks>
     public SemanticEventContext? Context { get; init; }
+
+    /// <summary>
+    /// Gets append metadata from the event declaration followed by production-specific tags.
+    /// </summary>
+    public ImmutableArray<string> Tags { get; init; } = [];
 }
 
 /// <summary>
@@ -179,6 +184,19 @@ public sealed record SemanticExecutionRequest(
     ImmutableDictionary<SemanticId, SemanticValue> AllocatedIdentities)
 {
     /// <summary>
+    /// Gets a value indicating that the request runs queries without a command.
+    /// </summary>
+    public bool IsReadOnly { get; init; }
+
+    /// <summary>
+    /// Creates a request that only queries established world state.
+    /// </summary>
+    /// <param name="queries">Queries to execute.</param>
+    /// <returns>The read-only request.</returns>
+    public static SemanticExecutionRequest ForQueries(ImmutableArray<SemanticQueryRequest> queries) =>
+        new(default, [], queries, EmptyAllocatedIdentities()) { IsReadOnly = true };
+
+    /// <summary>
     /// Creates a request with no generated identity requirements.
     /// </summary>
     /// <param name="command">The command semantic identity.</param>
@@ -219,12 +237,22 @@ public sealed record SemanticAccepted(
 /// <param name="World">The unchanged world.</param>
 /// <param name="Category">The rejection category.</param>
 /// <param name="Code">The optional stable rejection code.</param>
-/// <param name="Details">Human-readable rejection details.</param>
+/// <param name="Details">Rejection details, or a symbolic string key when <see cref="MessageIsStringKey"/> is true.</param>
 public sealed record SemanticRejected(
     SemanticWorld World,
     SemanticRejectionCategory Category,
     string? Code,
-    string Details) : SemanticExecutionResult(SemanticExecutionOutcomeKind.Rejected, World);
+    string Details) : SemanticExecutionResult(SemanticExecutionOutcomeKind.Rejected, World)
+{
+    /// <summary>
+    /// Gets whether <see cref="Details"/> is a string key rather than text for display.
+    /// </summary>
+    /// <remarks>
+    /// A key beginning with <c>$strings.</c> must be resolved by the realization against the active
+    /// locale's paired <c>.strings</c> file (see internationalization.md); it is never display text.
+    /// </remarks>
+    public bool MessageIsStringKey { get; init; }
+}
 
 /// <summary>
 /// Represents a decision conflict requiring reconsideration.

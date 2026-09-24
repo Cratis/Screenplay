@@ -23,7 +23,8 @@ internal static class syntax_examples
         var parameters = constructor.GetParameters();
         var node = (SyntaxNode)constructor.Invoke([.. parameters.Select(parameter => Value(parameter.ParameterType, depth + 1))]);
         foreach (var property in type.GetProperties().Where(property => property.SetMethod?.IsPublic == true &&
-            !parameters.Any(parameter => parameter.Name == property.Name) && property.Name is not "DescriptionLocation" and not "DescriptionRawLength"))
+            !parameters.Any(parameter => parameter.Name == property.Name) && property.Name is not "DescriptionLocation" and not "DescriptionRawLength" &&
+            !property.IsDefined(typeof(SourceSpanMetadataAttribute), true)))
         {
             property.SetValue(node, Value(property.PropertyType, depth + 1));
         }

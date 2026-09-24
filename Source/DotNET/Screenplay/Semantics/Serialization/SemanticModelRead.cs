@@ -239,6 +239,7 @@ internal static partial class SemanticModelRead
         EventContractRevision revision = default;
         string? name = null;
         ImmutableArray<SemanticProperty> properties = default;
+        ImmutableArray<string> tags = [];
         while (NextProperty(ref reader, seen, "event contract") is { } property)
         {
             switch (property)
@@ -248,12 +249,13 @@ internal static partial class SemanticModelRead
                 case "contractRevision": revision = new(UInt32(ref reader, property)); break;
                 case "name": name = String(ref reader, property); break;
                 case "properties": properties = Array(ref reader, Property, property); break;
+                case "tags": tags = StringArray(ref reader, property); break;
                 default: throw Unknown(property, "event contract");
             }
         }
 
         Required(id.IsSet && contractId.IsSet && revision.IsValid && name is not null && !properties.IsDefault, "event contract");
-        return new(id, contractId, revision, name!, properties);
+        return new(id, contractId, revision, name!, properties) { Tags = tags };
     }
 
     internal static SemanticCommand Command(ref Utf8JsonReader reader)
@@ -265,6 +267,7 @@ internal static partial class SemanticModelRead
         ImmutableArray<SemanticProperty> properties = default;
         ImmutableArray<SemanticValidationRule> validations = default;
         ImmutableArray<SemanticProducedEvent> produces = default;
+        ImmutableArray<SemanticRequirement> requirements = [];
         while (NextProperty(ref reader, seen, "command") is { } property)
         {
             switch (property)
@@ -274,12 +277,13 @@ internal static partial class SemanticModelRead
                 case "properties": properties = Array(ref reader, Property, property); break;
                 case "validations": validations = Array(ref reader, Validation, property); break;
                 case "produces": produces = Array(ref reader, ProducedEvent, property); break;
+                case "requirements": requirements = Array(ref reader, Requirement, property); break;
                 default: throw Unknown(property, "command");
             }
         }
 
         Required(id.IsSet && name is not null && !properties.IsDefault && !validations.IsDefault && !produces.IsDefault, "command");
-        return new(id, name!, properties, validations, produces);
+        return new(id, name!, properties, validations, produces) { Requirements = requirements };
     }
 
     internal static SemanticProducedEvent ProducedEvent(ref Utf8JsonReader reader)
@@ -292,6 +296,8 @@ internal static partial class SemanticModelRead
         SemanticExpression? destination = null;
         var destinationRead = false;
         ImmutableArray<SemanticPropertyMapping> mappings = default;
+        SemanticCondition? when = null;
+        ImmutableArray<string> tags = [];
         while (NextProperty(ref reader, seen, "produced event") is { } property)
         {
             switch (property)
@@ -300,12 +306,14 @@ internal static partial class SemanticModelRead
                 case "condition": conditionRead = true; condition = NullableExpression(ref reader, property); break;
                 case "destination": destinationRead = true; destination = NullableExpression(ref reader, property); break;
                 case "mappings": mappings = Array(ref reader, Mapping, property); break;
+                case "when": RequiredToken(ref reader, JsonTokenType.StartObject, property); when = Condition(ref reader); break;
+                case "tags": tags = StringArray(ref reader, property); break;
                 default: throw Unknown(property, "produced event");
             }
         }
 
         Required(eventContract.IsSet && conditionRead && destinationRead && !mappings.IsDefault, "produced event");
-        return new(eventContract, condition, destination, mappings);
+        return new(eventContract, condition, destination, mappings) { When = when, Tags = tags };
     }
 
     internal static SemanticPropertyMapping Mapping(ref Utf8JsonReader reader)
@@ -484,10 +492,10 @@ internal static partial class SemanticModelRead
         }
 
         Required(
-            id.IsSet && name is not null && !givenEvents.IsDefault && !givenReadModels.IsDefault && when is not null &&
+            id.IsSet && name is not null && !givenEvents.IsDefault && !givenReadModels.IsDefault &&
             !thenEvents.IsDefault && !thenReadModels.IsDefault && !thenQueries.IsDefault && !thenErrors.IsDefault,
             "specification");
-        return new(id, name!, givenEvents, givenReadModels, when!, thenEvents, thenReadModels, thenQueries, thenErrors);
+        return new(id, name!, givenEvents, givenReadModels, when, thenEvents, thenReadModels, thenQueries, thenErrors);
     }
 
     internal static SemanticSpecificationEvent SpecificationEvent(ref Utf8JsonReader reader)
@@ -995,6 +1003,7 @@ internal static partial class SemanticModelRead
         "length" => SemanticValidationRuleKind.Length,
         "allGreaterThan" => SemanticValidationRuleKind.AllGreaterThan,
         "allGreaterThanOrEqual" => SemanticValidationRuleKind.AllGreaterThanOrEqual,
+        "matches" => SemanticValidationRuleKind.Matches,
         _ => throw DiscriminatorError(value, "validation kind")
     };
 

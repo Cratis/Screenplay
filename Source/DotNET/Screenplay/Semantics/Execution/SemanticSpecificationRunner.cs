@@ -67,10 +67,10 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             return new(specification, false, unsupported, [unsupported.Details]);
         }
 
-        var request = SemanticExecutionRequest.Create(
-            expected.When.Command,
-            expected.When.Values,
-            [.. expected.ThenQueries.Select(value => new SemanticQueryRequest(value.Query, value.Key))]);
+        var queries = expected.ThenQueries.Select(value => new SemanticQueryRequest(value.Query, value.Key)).ToImmutableArray();
+        var request = expected.When is null
+            ? SemanticExecutionRequest.ForQueries(queries)
+            : SemanticExecutionRequest.Create(expected.When.Command, expected.When.Values, queries);
         var execution = evaluator.Execute(plan, world, request);
         var failures = Compare(expected, execution);
         return new(specification, failures.IsEmpty, execution, failures);
@@ -146,9 +146,11 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             failures.Add($"Expected rejection code '{error.Code}', got '{rejected.Code}'.");
         }
 
-        if (error.Message is not null && error.Message != rejected.Details)
+        if (error.Message is not null &&
+            (error.Message != rejected.Details ||
+             error.Message.StartsWith("$strings.", StringComparison.Ordinal) != rejected.MessageIsStringKey))
         {
-            failures.Add($"Expected rejection message '{error.Message}', got '{rejected.Details}'.");
+            failures.Add($"Expected rejection message '{error.Message}', got '{rejected.Details}' (string key: {rejected.MessageIsStringKey}).");
         }
     }
 
@@ -182,7 +184,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         {
             var match = actual.SingleOrDefault(value =>
                 value.ReadModel == state.ReadModel && SemanticValueRules.AreEqual(value.Key, state.Key));
-            if (match is null || !ValuesEqual(state.Values, match.Values))
+            if (match is null || !ValuesContain(state.Values, match.Values))
             {
                 failures.Add($"Expected {description} '{state.ReadModel}' with key '{state.Key}' was not found with matching values.");
             }
@@ -215,6 +217,14 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             }
         }
     }
+
+    // A missing property is not null: only a present SemanticNullValue matches an asserted null.
+    static bool ValuesContain(
+        ImmutableArray<SemanticPropertyValue> expected,
+        ImmutableArray<SemanticPropertyValue> actual) =>
+        expected.All(value =>
+            actual.SingleOrDefault(candidate => candidate.TargetProperty == value.TargetProperty) is { } candidate &&
+            SemanticValueRules.AreEqual(value.Value, candidate.Value));
 
     static bool ValuesEqual(
         ImmutableArray<SemanticPropertyValue> expected,

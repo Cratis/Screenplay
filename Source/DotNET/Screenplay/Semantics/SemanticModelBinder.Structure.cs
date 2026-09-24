@@ -114,10 +114,7 @@ public sealed partial class SemanticModelBinder
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Event '{@event.Name}' file reference is realization provenance.", @event.File.Location);
             }
 
-            if ((@event.Tags ?? []).Any())
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Event '{@event.Name}' tags are not admitted by ESM v1.", @event.Location);
-            }
+            var tags = BindTags(@event.Tags);
 
             var address = SemanticAddress.ForEventContract(slice, @event.Name);
             var semanticAssignment = documents.IdentityCatalog.ResolveSemanticAssignment(address);
@@ -131,7 +128,7 @@ public sealed partial class SemanticModelBinder
                     contractAssignment.Id,
                     contractAssignment.Revision,
                     @event.Name,
-                    properties),
+                    properties) { Tags = tags },
                 properties.ToDictionary(_ => _.Name, StringComparer.Ordinal));
         }
     }

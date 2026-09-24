@@ -288,7 +288,7 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0132` | Error | A `constraint` line is not `constraint <Name>`. |
 | `PLAY0133` | Error | A constraint states nothing it holds the application to. |
 | `PLAY0134` | Error | A line in a constraint body is not one the language can read. |
-| `PLAY0135` | Error | A constraint states more than one rule, and a constraint states one. |
+| `PLAY0135` | Error | A constraint mixes unique event and unique property rules, combines a file rule with another rule, repeats a singular option, or repeats a target, release, or property. An event cannot both claim and release the same constraint. Several distinct unique rules of the same kind are allowed. |
 
 ### Reactions
 
@@ -558,7 +558,7 @@ itself what an unresolvable one means.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0268` | Error | Source syntax carries portable behavior ESM v1 cannot represent, including a specification `for <value>` event-source assertion reserved for ESM v2 and a validation rule ESM v1 does not admit - a comparison on a date, `matches`, `require` or code validation (see [Commands](commands.md#what-the-executable-model-admits)). |
+| `PLAY0268` | Error | Source syntax carries portable behavior ESM v1 cannot represent, including a specification `for <value>` event-source assertion reserved for ESM v2 (#226), an unsupported validation rule, concept `require`, command `require` or production conditions over read-model paths (#129), date/`today` conditions, non-deterministic `$env` conditions, `$context` tag values (#226), and code validation (see [Commands](commands.md#what-the-executable-model-admits)). |
 | `PLAY0269` | Information | Source syntax is explicitly deferred from the current backend semantic profile. |
 | `PLAY0270` | Information | Source syntax is realization or operational metadata rather than portable behavior. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly. |
@@ -596,6 +596,10 @@ These errors are reported by ordinary compilation, including compilation of a fo
 | `PLAY0286` | Error | A specification value is not a member of the enum declared by that specific command, event, read-model field or query parameter. Bare members, qualified members and quoted member names are accepted. |
 | `PLAY0287` | Error | A command or reaction producer, a capture append mapping, or a specification's `given`/`then` event step, assigns a field absent from the referenced event's declaration. Dotted paths follow the same rule as `PLAY0282`: `title.missing` is reported when `title` is a primitive, concept or enum, `detail.missing` when `Detail` is a declared `type` without that field. A collection or optional composite field is addressed element-wise. |
 | `PLAY0290` | Warning | An `import` names an event, command, read model, concept or type the application declares itself. The declaration is what every reference resolves to and what these checks see, so the import has no effect - remove it. |
+| `PLAY0291` | Error | A mapping value starts with `{` or `[` but is not a valid single-line JSON object or list (keys must be quoted). |
+| `PLAY0292` | Error | An object key does not name a property of the target's declared composite `type`. Unknown or imported types remain undecided. |
+| `PLAY0293` | Error | A statically known value has the wrong shape for its target: a collection expects a list, a declared composite expects an object, and a scalar cannot accept a list or object. |
+| `PLAY0294` | Error | An inline JSON object repeats a key (including inside a nested object or list); each property may be stated once. |
 
 An `import` never changes what these checks see: a name the application declares resolves to that declaration whether or not it is also imported, and an imported name nothing here declares keeps an unknown shape.
 
@@ -607,7 +611,7 @@ For executable-model dispositions, see `PLAY0268`–`PLAY0271` above, [projectio
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0288` | Warning | An accepted AST authoring operation canonically prints a touched document. The message states how many comments that document loses and on which lines; whitespace and declaration order are normalized, and untouched documents retain their exact bytes. |
+| `PLAY0288` | Warning | An accepted AST authoring operation canonically prints a touched document. The message states how many comments could not be retained and on which lines; attached comments follow their syntax owners, whitespace is normalized, and untouched documents retain their exact bytes. |
 | `PLAY0289` | Error | An empty authoring workspace has no source documents to compile to an executable model. You can still propose its first typed document. |
 
 Source-authoring acceptance and executable readiness are separate verdicts. An authoring proposal validates the complete `.play` application and identity continuity without claiming that every language construct is supported by the executable backend profile. Executable-only workspace transactions remain strict.
@@ -623,6 +627,19 @@ Every `$eventContext.<path>` - in a projection expression or in a dynamic dictio
 | `PLAY0297` | Error | An `$eventContext.<path>` continues below `causation` or `tags`. They are collections with no addressing grammar, so a path below them never resolves. |
 | `PLAY0298` | Error | An `$eventContext` reference names no member, as in `$eventContext.` or a dynamic key ending in `.$eventContext`, or has an empty segment. |
 | `PLAY0299` | Warning | A dynamic dictionary key names a `$` source other than `$eventContext`, such as `byUser.$causedBy.subject`. Only `$eventContext.<path>` is resolved; any other source becomes the literal key. Write `byUser.$eventContext.causedBy.subject`. |
+
+### Specification semantics
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0350` | Error | A command or event specification value is `null`; in Chronicle an optional fact is a separate event. Optional read-model values may be null. |
+| `PLAY0351` | Error | A `given readmodel` or `then readmodel` block does not state the identifier inferred from its keyed query. A `then query … result` block may derive it from the argument. |
+| `PLAY0352` | Error | A specification without `when` asserts an event or error, or has no `then query` or `then readmodel` outcome. |
+| `PLAY0353` | Error | A specification value is null for a required property, or a nested command/event property is null; only optional read-model properties admit null. |
+| `PLAY0354` | Error | A structured specification object omits a required property of its declared composite type. |
+| `PLAY0355` | Error | The composite type declared for a structured specification value cannot be resolved. |
+| `PLAY0356` | Error | A typed structured specification object repeats a member; inline JSON duplicates are caught earlier by `PLAY0294`. |
+| `PLAY0357` | Error | An ESM message beginning with `$strings.` has no valid dotted key. Keys follow `.strings` assignments: an ASCII letter or underscore first, then word characters; subsequent segments contain one or more word characters. |
 
 ### Interaction
 
@@ -673,6 +690,13 @@ A behavior is *deferred* from the backend ESM v1 profile in the same way every o
 
 An inline `on` block is an anonymous behavior, so it has no name to report against. Diagnostics inside one cite the position and the trigger instead.
 
+### Match validation binding
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0366` | Error | A bare named `matches` pattern is not defined; only `email` is defined. Use a quoted ECMAScript pattern for custom matching. |
+| `PLAY0367` | Error | A quoted `matches` operand is not a valid ECMAScript regular expression. |
+
 ### Projection binding
 
 | Code | Severity | Reported when |
@@ -689,6 +713,7 @@ These errors are reported when a `unique` [constraint](constraints.md) is bound 
 | `PLAY0390` | Error | A `unique` constraint names an event the application does not declare. |
 | `PLAY0391` | Error | A `unique <property> on <Event>` constraint names a property the event does not declare. |
 | `PLAY0392` | Error | Two constraints in the application share a name. The name is a constraint's identity in the event store - it keys the constraint's index and its violations - so it is unique across the whole application, not just its slice. |
+| `PLAY0393` | Error | `ignore casing` is declared on a `unique event` constraint; it applies only to unique property values. |
 
 ## Retired codes
 

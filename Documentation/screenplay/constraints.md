@@ -6,10 +6,17 @@ Constraints are server-side rules enforced in the Chronicle kernel **before even
 
 ```screenplay
 constraint <Name>
-  unique <property> on <EventType>         ← unique property constraint
+  unique <property>[, <property>...] on <EventType>   ← unique property constraint
 
 constraint <Name>
   unique event <EventType>                 ← unique event type constraint
+
+constraint <Name>
+  unique <property> on <EventType>
+  unique <property> on <OtherEventType>
+  released by <ReleaseEventType>           ← repeatable
+  ignore casing                            ← property constraints only
+  message "<text>"
 
 constraint <Name>
   file <Path>                              ← implementation in a file
@@ -17,8 +24,11 @@ constraint <Name>
 
 | Form | Meaning |
 | --- | --- |
-| `unique <property> on <EventType>` | No two event sources may hold the same value for the property on the event type. |
+| `unique <property>[, <property>...] on <EventType>` | No two event sources may hold the same value (or composite value) for those properties. Repeat the line for other event types that share the claim. |
 | `unique event <EventType>` | The event type may occur at most once per event source. |
+| `released by <EventType>` | Release the claim when this event occurs on the claiming event source. Repeat for independent release events. |
+| `ignore casing` | Compare property values without regard to casing. Not valid for unique events (`PLAY0393`). |
+| `message "<text>"` | Use this exact violation message; a `$strings.*` key is kept as written, not resolved. |
 | `file <Path>` | The constraint is implemented in C# in the referenced file. |
 
 ## Examples
@@ -55,14 +65,15 @@ A constraint applies to the whole event sequence, across every event source. Not
 
 - **A value belongs to an event source.** The event source that holds a value may append the event with the same value again — re-claiming its own value is never a violation.
 - **An event source holds one value per constraint.** When it appends the event with a different value, the new value replaces the old one, and the old value becomes available to others.
-- **A null value is skipped.** When the property has no value, the event is neither checked nor does it claim anything. Two event sources may both leave the property empty.
-- **Values are compared exactly,** including their casing.
+- **A null value is skipped.** When all constrained properties have no value, the event is neither checked nor does it claim anything. Two event sources may both leave the property empty.
+- **Composite keys preserve property order.** `unique year, code on InvoiceRegistered` compares the combination, not either value alone.
+- **Values are compared exactly,** including their casing, unless you declare `ignore casing`.
 
 The property must be one the event declares directly (`PLAY0391`), and the event must be one the application declares (`PLAY0390`). A nested path such as `address.street` is not supported yet.
 
 ### Unique events
 
-`unique event <EventType>` means an event source may have the event at most once. A second occurrence for the same event source is a violation; the same event for a different event source is not.
+`unique event <EventType>` means an event source may have the event at most once. A second occurrence for the same event source is a violation; the same event for a different event source is not. Several `unique event` lines under one name are mutually exclusive: once any listed event occurs, another listed event violates the rule until a `released by` event ends the cycle. Do not mix event and property rules under one name.
 
 ## When a constraint is violated
 
@@ -73,7 +84,9 @@ A violation is an outcome, not an error in the system. The command that would ha
 | `unique <property> on <EventType>` | `Constraint '<Name>' is violated: another event source already holds the constrained value.` |
 | `unique event <EventType>` | `Constraint '<Name>' is violated: the event source already has the constrained event.` |
 
-The message never contains the value that collided. A value can be personal data, and a rejection travels further than the event store does.
+The reference executor compares composite constraint values component-wise; Chronicle currently joins components with `-` before hashing, so values containing `-` can collide there until [Cratis/Chronicle#4131](https://github.com/Cratis/Chronicle/issues/4131) is fixed.
+
+The default message never contains the value that collided. A value can be personal data, and a rejection travels further than the event store does. If you declare `message`, its text is returned instead; do not include a sensitive value in that text.
 
 A constraint is checked against what the command would append, together with everything already in the event sequence — including events the same command appends before the one being checked.
 
@@ -109,14 +122,7 @@ For the same reason, a specification can show that an event source may re-claim 
 
 ## What cannot be said yet
 
-Chronicle can enforce more than the language can declare. The semantic model already has room for each of these, so adding them is a language change, not a change to the model:
-
-- **Composite keys.** Uniqueness over a combination of properties, such as a code within a year.
-- **Release.** An event that frees a claim, so a value or an event can be used again — for example, a reversal that allows a payment to be recorded again. Without it, a claim lasts forever.
-- **Several events under one constraint.** One name covering more than one event type, so they share one index.
-- **Messages.** A message of your own in place of the default one.
-- **Ignoring casing.** Treating values that differ only in casing as the same value.
-- **Narrower scope.** Limiting a constraint to an event source type, an event stream type or an event stream.
+Chronicle can enforce more than the language can declare. The language cannot yet express **narrower scope**: limiting a constraint to an event source type, an event stream type or an event stream. The default remains the event sequence within a namespace.
 
 A `file <Path>` constraint is not part of the semantic model: binding it reports that it requires a constrained implementation attachment, the same way every other code attachment is reported.
 

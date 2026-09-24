@@ -18,10 +18,11 @@ enum WorkspaceReferenceDomain
     Query,
     Screen,
     Policy,
-    Trigger
+    Trigger,
+    Property
 }
 
-sealed record WorkspaceReferenceMember(WorkspaceSyntaxEntry Entry, string Member, int? Index, string Text, WorkspaceReferenceDomain Domain)
+sealed record WorkspaceReferenceMember(WorkspaceSyntaxEntry Entry, string Member, int? Index, string Text, WorkspaceReferenceDomain Domain, string? Owner = null)
 {
     internal string Path => $"{Entry.Handle.Path}/{Member}{(Index is { } index ? $"/{index}" : string.Empty)}";
     internal string Key => $"{Entry.Handle.Document}:{Path}";
@@ -39,7 +40,11 @@ static class WorkspaceReferenceMembers
                 var value = property.GetValue(entry.Node);
                 if (value is string text && text.Length > 0)
                 {
-                    yield return new(entry, member, null, text, domain);
+                    var owner = domain == WorkspaceReferenceDomain.Property ? WorkspaceStructuredReferences.Owner(entry, index) : null;
+                    if (domain != WorkspaceReferenceDomain.Property || owner is not null)
+                    {
+                        yield return new(entry, member, null, text, domain, owner);
+                    }
                 }
                 else if (value is IEnumerable values and not string)
                 {
@@ -60,6 +65,7 @@ static class WorkspaceReferenceMembers
 
     internal static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> Members(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index) => entry.Node switch
     {
+        ObjectMemberSyntax => [("name", WorkspaceReferenceDomain.Property)],
         TypeRefSyntax => [("name", entry.Parent is { } parent && index.Find(parent)?.Node is QuerySyntax or ScreenDataSyntax
             ? WorkspaceReferenceDomain.View : WorkspaceReferenceDomain.Type)],
         CompositeKeySyntax => [("type", WorkspaceReferenceDomain.Type)],

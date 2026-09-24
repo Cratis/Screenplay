@@ -38,7 +38,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     {
         var lines = SourceLineSplitter.Split(source);
         var context = new ParserContext(new(lines), languages: languages);
-        var application = ScreenplayParser.Parse(context, lines);
+        var application = SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines), lines);
         ScreenplayValidator.Validate(application, context);
         return new(application, context.Diagnostics);
     }
@@ -57,7 +57,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     {
         var lines = SourceLineSplitter.Split(source, path: path);
         var context = new ParserContext(new(lines), path, languages);
-        return new(ScreenplayParser.Parse(context, lines), context.Diagnostics);
+        return new(SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines), lines), context.Diagnostics);
     }
 
     /// <inheritdoc/>
@@ -66,7 +66,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
         var lines = SourceLineSplitter.Split(source, hashComments: true);
         var context = new ParserContext(new(lines), languages: languages);
         var projections = ProjectionParser.ParseDocument(context);
-        return new(projections.Count > 0 ? projections[0] : null, context.Diagnostics);
+        return new(projections.Count > 0 ? SourceCommentCapture.Attach(projections[0], lines, hashComments: true) : null, context.Diagnostics);
     }
 
     /// <inheritdoc/>
@@ -84,7 +84,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
         var lines = SourceLineSplitter.Split(source, hashComments: true);
         var context = new ParserContext(new(lines), languages: languages);
         var specifications = SpecificationParser.ParseDocument(context);
-        return new(specifications.Count > 0 ? specifications[0] : null, context.Diagnostics);
+        return new(specifications.Count > 0 ? SourceCommentCapture.Attach(specifications[0], lines, hashComments: true) : null, context.Diagnostics);
     }
 
     /// <inheritdoc/>
@@ -102,7 +102,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
         var lines = SourceLineSplitter.Split(source, hashComments: true);
         var context = new ParserContext(new(lines), languages: languages);
         var captures = CaptureParser.ParseDocument(context);
-        return new(captures.Count > 0 ? captures[0] : null, context.Diagnostics);
+        return new(captures.Count > 0 ? SourceCommentCapture.Attach(captures[0], lines, hashComments: true) : null, context.Diagnostics);
     }
 
     /// <inheritdoc/>

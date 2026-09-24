@@ -43,6 +43,18 @@ event InvoiceRegistered
   lines     InvoiceLine[]
 ```
 
+## Structured values in specifications
+
+A property declared as `InvoiceLine[]` accepts an inline list of objects. Quote each key and keep the entire value on one line:
+
+```screenplay
+type InvoiceLine
+  sku String
+  quantity Int
+```
+
+A specification value for a `lines InvoiceLine[]` field can then be `lines = [{"sku":"A-1","quantity":2}]` or `lines = []`. The compiler checks each key against `InvoiceLine`, including nested declared types and enum members. A missing declaration or an imported type is not guessed; a key absent from a known shape is an error.
+
 ## Types compose
 
 A type may reference another type, which is how a nested shape is expressed — by reference rather than by nesting the declaration:

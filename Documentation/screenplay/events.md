@@ -46,7 +46,7 @@ event InvoiceRegistered
   invoiceId InvoiceId
 ```
 
-Tags can also be declared per production site — on a [`produces` block](commands.md#the-produces-block) and on a capture [`append` block](captures.md) — where they apply to that specific append rather than every occurrence of the event type.
+Tags can also be declared per production site — on a [`produces` block](commands.md#the-produces-block) and on a capture [`append` block](captures.md) — where they apply to that specific append rather than every occurrence of the event type. ESM v1 admits literal event-level and production-level tags as append metadata, in that order. Chronicle's `IEventSequence.Append` accepts tags and persists them in `EventContext.Tags` (Decision 0001); tags do not change the event payload. `$context`-computed tags remain syntax-only until ESM v2 (#226).
 
 ## Guidance
 

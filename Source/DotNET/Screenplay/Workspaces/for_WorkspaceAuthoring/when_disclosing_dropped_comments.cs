@@ -26,8 +26,7 @@ public class when_disclosing_dropped_comments : given.a_document_with_literal_va
     }
 
     [Fact] void should_accept_the_canonical_edit() => Result.Accepted.ShouldBeTrue();
-    [Fact] void should_list_every_dropped_comment() => _dropped.Select(comment => comment.Line).ShouldContainOnly(1, 7, 26, 30);
-    [Fact] void should_keep_the_exact_comment_text() => _dropped[1].Text.ShouldEqual("// @public command PlaceOrder");
-    [Fact] void should_name_the_original_path() => _dropped.All(comment => comment.Path == Order.Path).ShouldBeTrue();
-    [Fact] void should_state_the_count_in_the_normalization_warning() => Result.AuthoringDiagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.AuthoringSourceNormalization).Message.Contains("dropped 4 comments (lines 1, 7, 26, 30)", StringComparison.Ordinal).ShouldBeTrue();
+    [Fact] void should_report_no_dropped_comments() => _dropped.ShouldBeEmpty();
+    [Fact] void should_retain_every_comment_in_the_printed_document() => Result.WritePlan!.Entries.Single().After!.Text.ShouldContain("// @public command PlaceOrder");
+    [Fact] void should_state_zero_dropped_comments_in_the_normalization_warning() => Result.AuthoringDiagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.AuthoringSourceNormalization).Message.ShouldContain("dropped no comments");
 }

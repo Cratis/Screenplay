@@ -7,10 +7,10 @@ public class without_a_whole_identifier_match : given.a_workspace_with_a_structu
 {
     WorkspaceAuthoringResult _result = null!;
 
-    void Establish() => CreateWith("[{\"sku\":\"ChannelSuffix\",\"quantity\":2}]");
+    void Establish() => CreateWith("calculate(ChannelSuffix)");
 
     void Because() => _result = RenameChannel();
 
     [Fact] void should_accept_the_rename() => _result.Accepted.ShouldBeTrue();
-    [Fact] void should_keep_the_longer_identifier() => _result.Workspace!.Documents.Single(document => document.Id == Order.Id).Text.Contains("\"sku\":\"ChannelSuffix\"", StringComparison.Ordinal).ShouldBeTrue();
+    [Fact] void should_keep_the_longer_identifier() => _result.Workspace!.Documents.Single(document => document.Id == Order.Id).Text.Contains("calculate(ChannelSuffix)", StringComparison.Ordinal).ShouldBeTrue();
 }

@@ -119,11 +119,13 @@ name capture, opaque impact and unsupported spans. Do not treat a refusal as
 permission to perform a global text replacement. Use explicit typed operations
 and migrations only after resolving the uncertainty.
 
-Opaque text only blocks a rename that it could affect. A structured value such as
-`lines = [{"sku":"A-1","quantity":2}]` does not stop you renaming an unrelated
-`Channel` concept; a value, code block or import whose text contains `Channel` or
-the new name as a whole identifier, including inside a string or an object key,
-does. The conflict message gives the file, line and column, for example
+A structured value such as `lines = [{"sku":"A-1","quantity":2}]` has typed
+object keys. You can rename the declared composite `type` property `sku`; the
+planner rewrites only matching keys bound to that type, preserving other keys,
+string values and source trivia. Other property declarations are not automatic
+rename targets. Opaque expressions, code blocks and imports still block a rename
+only if their text contains the old or new name as a whole identifier, including
+inside a string or key. The conflict message gives the file, line and column, for example
 `'Shop/Orders/PlaceOrder/PlaceOrder.play(22,11)'`, and the name it matched.
 
 ## Coordinate changes across files
@@ -160,12 +162,13 @@ To change a specification value or a `produces` mapping without touching anythin
 else, `replace` its `PropertyMappingSyntax` with `formatting: "PreserveTrivia"`.
 Changing `channel = "web"` to `"store"` rewrites only `"web"`; every comment,
 blank line and declaration stays where it was. `CanonicalizeTouchedDocuments`
-reprints the whole document instead: comments are dropped and blank lines are
-normalized. Existing members from the same parsed document retain their authored
+reprints the whole document instead: attached comments stay with their syntax owners,
+while blank lines are normalized. Existing members from the same parsed document retain their authored
 order, including when an edited member is replaced through typed JSON. Newly authored
 members without comparable source positions follow the canonical insertion rule;
 see [Printing and generating](printing.md#what-printing-does-not-keep). The
-`dropped-comments` view lists exactly which comments are lost.
+`dropped-comments` view lists only comments that cannot be placed. An edit that
+keeps all comments reports zero dropped comments.
 
 1. Call `read-proposal` with its ID and `view: "changes"`. Check the proposal's
    `droppedCommentCount`; when it is not zero, call `read-proposal` with
@@ -201,6 +204,9 @@ Call `recommend-layout` for advice, then `expand-layout` with `layout` set to
 formatting consent. For full-language models, set `validation: "Authoring"`.
 
 Review and apply the resulting proposal exactly like a node edit. Reorganization
-normalizes source formatting and checks structural equivalence; it does not copy
-module forms or contributions into scaffolding. The read tools continue to see
+normalizes source formatting and checks structural equivalence; it keeps annotations
+such as `// @public` beside the declaration they describe, even when a declaration
+moves to a new document. The `dropped-comments` view compares comments across the
+whole plan, not just documents changed in place. Expansion does not copy module
+forms or contributions into scaffolding. The read tools continue to see
 one logical application regardless of the chosen layout.

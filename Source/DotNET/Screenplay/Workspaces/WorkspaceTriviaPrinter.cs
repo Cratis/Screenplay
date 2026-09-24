@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using System.Text;
+using System.Text.Json;
 using Cratis.Screenplay.Printing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
@@ -64,6 +65,18 @@ static class WorkspaceTriviaPrinter
         var owner = entries.Where(entry => change.Path.StartsWith($"{entry.Handle.Path}/", StringComparison.Ordinal))
             .MaxBy(entry => entry.Handle.Path.Length)!;
         var member = change.Path[(owner.Handle.Path.Length + 1)..];
+        if (owner.Node is ObjectMemberSyntax { RawLocation: { } keyStart, RawLength: { } keyLength } && member == "name")
+        {
+            var range = WorkspaceSourceRanges.Bytes(tokens, keyStart, keyLength) ?? throw Unsupported(original, change.Path);
+            var authored = Encoding.UTF8.GetString(original.Bytes.AsSpan(range.Offset, range.Length));
+            if (JsonSerializer.Deserialize<string>(authored) != change.Before)
+            {
+                throw Unsupported(original, change.Path);
+            }
+
+            return (range.Offset, range.Length, Encoding.UTF8.GetBytes(JsonSerializer.Serialize(change.After)));
+        }
+
         var token = tokens.SingleOrDefault(candidate => candidate.Kind == WorkspaceSourceTokenKind.Text && candidate.Span.Line == owner.Location.Line);
         if (token is null || !WorkspaceIdentifierSpans.Supports(owner.Node, member, token.Text))
         {

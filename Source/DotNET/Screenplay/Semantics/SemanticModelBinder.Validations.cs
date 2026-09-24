@@ -50,6 +50,8 @@ public sealed partial class SemanticModelBinder
                 "ordering compares one whole or decimal number",
             SemanticValidationRuleKind.Length when subject.IsCollection || !subject.IsText =>
                 "a length measures one text value that is not an enumeration",
+            SemanticValidationRuleKind.Matches when subject.IsCollection || !subject.IsText =>
+                "matches requires one text value that is not an enumeration",
             SemanticValidationRuleKind.AllGreaterThan or SemanticValidationRuleKind.AllGreaterThanOrEqual when !subject.IsCollection || !subject.IsNumber =>
                 "'all' quantifies over a collection of whole or decimal numbers",
             _ => null
@@ -101,6 +103,7 @@ public sealed partial class SemanticModelBinder
             ValidationRuleKind.LessThan => SemanticValidationRuleKind.LessThan,
             ValidationRuleKind.LessThanOrEqual => SemanticValidationRuleKind.LessThanOrEqual,
             ValidationRuleKind.Length => SemanticValidationRuleKind.Length,
+            ValidationRuleKind.Matches => SemanticValidationRuleKind.Matches,
             ValidationRuleKind.AllGreaterThan => SemanticValidationRuleKind.AllGreaterThan,
             ValidationRuleKind.AllGreaterThanOrEqual => SemanticValidationRuleKind.AllGreaterThanOrEqual,
             _ => SemanticValidationRuleKind.Unknown
@@ -162,6 +165,7 @@ public sealed partial class SemanticModelBinder
         /// </remarks>
         SemanticValidationRule? BindValidationRule(ValidationRuleSyntax rule, SemanticId property, ValidationSubject subject)
         {
+            ValidateStringKey(rule.Message, rule.Location);
             var spelling = Spelling(rule.Rule);
             if (rule.Rule == ValidationRuleKind.Rule)
             {
@@ -172,12 +176,6 @@ public sealed partial class SemanticModelBinder
                         ? $"Validation rule '{name}' on {subject.Description} has an implementation body; code validation requires a constrained implementation attachment (#139)."
                         : $"Named validation rule '{name}' on {subject.Description} has no portable meaning - its logic lives outside the document.",
                     rule.Location);
-                return null;
-            }
-
-            if (rule.Rule == ValidationRuleKind.Matches)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Validation rule 'matches' on {subject.Description} awaits a portable pattern definition (#209).", rule.Location);
                 return null;
             }
 
@@ -194,6 +192,38 @@ public sealed partial class SemanticModelBinder
             if (kind == SemanticValidationRuleKind.NotEmpty)
             {
                 return new(property, kind, null, rule.Message);
+            }
+
+            if (kind == SemanticValidationRuleKind.Matches)
+            {
+                string pattern;
+                switch (rule.Value)
+                {
+                    case LiteralExpressionSyntax { Value: string text }:
+                        pattern = text;
+                        break;
+                    case PathExpressionSyntax { Path: "email" }:
+                        pattern = SemanticMatchPattern.Email;
+                        break;
+                    case PathExpressionSyntax path:
+                        Error(DiagnosticCodes.UnknownMatchPattern, $"Named match pattern '{path.Path}' on {subject.Description} is not defined; use 'email' or a quoted ECMAScript regular expression.", rule.Location);
+                        return null;
+                    default:
+                        Error(DiagnosticCodes.InvalidSemanticBinding, $"The 'matches' operand on {subject.Description} must be a quoted ECMAScript regular expression or the named pattern 'email'.", rule.Location);
+                        return null;
+                }
+
+                try
+                {
+                    _ = SemanticMatchPattern.Create(pattern);
+                }
+                catch (ArgumentException exception)
+                {
+                    Error(DiagnosticCodes.InvalidMatchPattern, $"Invalid ECMAScript regular expression on {subject.Description}: {exception.Message}", rule.Location);
+                    return null;
+                }
+
+                return new(property, kind, SemanticValue.Text(pattern), rule.Message);
             }
 
             var operand = BindValidationOperand(rule, kind, subject, spelling);

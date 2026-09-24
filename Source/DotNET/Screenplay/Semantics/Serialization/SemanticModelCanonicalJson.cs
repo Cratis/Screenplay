@@ -201,6 +201,7 @@ internal static partial class SemanticModelCanonicalJson
         writer.WriteNumber("contractRevision", eventContract.Revision.Value);
         CanonicalJson.WriteString(writer, "name", eventContract.Name);
         WriteArray(writer, "properties", eventContract.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProperty);
+        if (!eventContract.Tags.IsDefaultOrEmpty) WriteStringArray(writer, "tags", eventContract.Tags);
         writer.WriteEndObject();
     }
 
@@ -212,6 +213,7 @@ internal static partial class SemanticModelCanonicalJson
         WriteArray(writer, "properties", command.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProperty);
         WriteArray(writer, "validations", command.Validations, WriteValidation);
         WriteArray(writer, "produces", command.Produces, WriteProducedEvent);
+        if (!command.Requirements.IsDefaultOrEmpty) WriteArray(writer, "requirements", command.Requirements, WriteRequirement);
         writer.WriteEndObject();
     }
 
@@ -222,6 +224,13 @@ internal static partial class SemanticModelCanonicalJson
         WriteOptionalExpression(writer, "condition", produced.Condition);
         WriteOptionalExpression(writer, "destination", produced.Destination);
         WriteArray(writer, "mappings", produced.Mappings, WriteMapping);
+        if (produced.When is not null)
+        {
+            writer.WritePropertyName("when");
+            WriteCondition(writer, produced.When);
+        }
+
+        if (!produced.Tags.IsDefaultOrEmpty) WriteStringArray(writer, "tags", produced.Tags);
         writer.WriteEndObject();
     }
 
@@ -294,8 +303,11 @@ internal static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", specification.Name);
         WriteArray(writer, "givenEvents", specification.GivenEvents, WriteSpecificationEvent);
         WriteArray(writer, "givenReadModels", specification.GivenReadModels, WriteSpecificationReadModel);
-        writer.WritePropertyName("when");
-        WriteSpecificationCommand(writer, specification.When);
+        if (specification.When is not null)
+        {
+            writer.WritePropertyName("when");
+            WriteSpecificationCommand(writer, specification.When);
+        }
         WriteArray(writer, "thenEvents", specification.ThenEvents, WriteSpecificationEvent);
         WriteArray(writer, "thenReadModels", specification.ThenReadModels, WriteSpecificationReadModel);
         WriteArray(writer, "thenQueries", specification.ThenQueries, WriteSpecificationQuery);
@@ -541,6 +553,7 @@ internal static partial class SemanticModelCanonicalJson
         SemanticValidationRuleKind.Length => "length",
         SemanticValidationRuleKind.AllGreaterThan => "allGreaterThan",
         SemanticValidationRuleKind.AllGreaterThanOrEqual => "allGreaterThanOrEqual",
+        SemanticValidationRuleKind.Matches => "matches",
         _ => throw Unknown(nameof(SemanticValidationRuleKind), value)
     };
 

@@ -1,6 +1,6 @@
 # Specifications
 
-Specifications express Given/When/Then test scenarios directly against a slice's own command and events — executable documentation for the behavior a slice implements. A `specification` block lives inside a `slice`, alongside its `command`, `event`, `projection` and other constructs, and is compiled by the Screenplay compiler like every other sub-language.
+Specifications express Given/When/Then scenarios against a slice's behavior, or read-only Given/Then scenarios against established state — executable documentation for the behavior a slice implements. A `specification` block lives inside a `slice`, alongside its `command`, `event`, `projection` and other constructs, and is compiled by the Screenplay compiler like every other sub-language.
 
 ## Syntax
 
@@ -30,7 +30,7 @@ specification <Name>
 
 - `given <EventType>` — zero or more. Establishes prior state by replaying events onto the slice's event source before the command runs.
 - `given readmodel <ReadModelType>` — zero or more. Establishes prior read model state directly, for scenarios where expressing the state as events would be noise.
-- `when <CommandType>` — zero or one. The command being exercised. A specification can declare at most one `when`; declaring a second is a compile error.
+- `when <CommandType>` — zero or one. The command being exercised. Without `when`, provide at least one `then readmodel` or `then query`; `then` events and errors require a command (`PLAY0352`).
 - `then <EventType>` — zero or more. An event expected to be produced by the command.
 - `then readmodel <ReadModelType>` — zero or more. The read model state expected after the command has run and its events have been projected.
 - `then query <Query>` — zero or more. Executes the named query with the authored `arguments` and compares its ordered `result` blocks. No `result` blocks means the query is expected to return nothing.
@@ -38,9 +38,13 @@ specification <Name>
 - `file <path>` — zero or one. The repository relative file the specification is realized by. See [File references](file-references.md).
 - `for <event-source-value>` — zero or one inside an event `given`, the command `when`, or an event `then`. It identifies occurrence context rather than an event payload property.
 
-> **ESM v2 reservation:** the parser, printer, and syntax tree preserve `for <event-source-value>`, but ESM v1 semantic binding reports blocking diagnostic `PLAY0268`. It cannot execute or render silently until the typed event-context semantics are admitted by ESM v2.
+> **ESM v2 reservation (#226):** the parser, printer, and syntax tree preserve `for <event-source-value>`, but ESM v1 semantic binding reports blocking diagnostic `PLAY0268`. It cannot execute or render silently until ESM v2.
 
-Property values (`<property> = <value>`) accept the same expressions as `produces` and `capture` mappings — string, number and boolean literals, and `$context.*`/`$env.*` expressions.
+Property values (`<property> = <value>`) accept literals (including `null`), single-line JSON-shaped objects and lists with quoted keys, and the same mapping expressions as `produces` and `capture`. For example, `lines = [{"sku":"A-1","quantity":2}]` and `tags = []` are typed values, not opaque expressions. Keys must name properties of the target's declared composite `type`; list items are checked against the element type. Unknown or imported shapes remain undecided. A value with the wrong object/list shape is an error.
+
+Executable specification values must be concrete: literals, inline objects and lists. The ESM binds object members to the declared composite properties and list items to the element type, preserving authored list order. An empty list `[]` is valid for any collection property. Objects must supply every required member; optional members may be omitted. `null` is valid only for an optional read-model property (including nested properties). `null` in command or event values, even nested ones, is rejected (`PLAY0350`): in Chronicle, an optional fact is a separate event. Non-literal mapping expressions other than typed objects and lists are not portable specification values in ESM v1.
+
+For example, if `OrderView` declares `lines Line[]`, `tags String[]`, and `note String?`, and `Line` declares `sku String`, you can seed `lines = [{"sku":"A-1"}]`, `tags = []`, and `note = null` in a `given readmodel` block. A `then readmodel` may assert just the identifier and `lines`; the list must match in order.
 
 ## Rejections
 
@@ -65,6 +69,8 @@ specification RejectingAnInvoiceWhoseNumberIsAlreadyTaken
     invoiceNumber = "INV-000123"
   then error
 ```
+
+To assert a localized rule's rejection, quote the key in the specification: `then error "$strings.invoices.validation.reasonRequired"`. Unlike a validation rule's `message` operand, the `then error` grammar accepts only quoted messages (or a bare `then error`), not `then error $strings.invoices.validation.reasonRequired`. The reference runner compares the symbolic key and requires the rejection's `MessageIsStringKey` marker; it never loads translated text. A realization resolves the key against the active locale's paired `.strings` file before displaying it. See [Internationalization](internationalization.md#executable-semantic-model-and-rejections).
 
 Write the bare form rather than `then error ""`. An empty string reads as a reason someone left blank; the bare form says one was never stated. Both forms may appear in the same specification, and both round-trip through the [printer](printing.md) unchanged — which is what keeps generated documents diffable.
 
@@ -97,7 +103,7 @@ specification NotFindingAnUnknownProject
       projectId = "00000000-0000-0000-0000-000000000000"
 ```
 
-The query declaration already states its return read model, so a `result` block contains only expected properties. Program v1 compares exact results in authored order. Explicit subset and unordered comparison remain additive future qualifiers rather than implicit behavior.
+The query declaration already states its return read model. A `result` block asserts only the properties it states; the key can be omitted when the query `arguments` supply it. Result row count and order remain exact. A missing asserted property does **not** match an asserted `null`: `null` matches only an explicitly present null value.
 
 ## Example
 
@@ -144,10 +150,27 @@ When a scenario is really about derived state rather than events, `given readmod
     then InvoiceSent
       invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
     then readmodel InvoiceListReadModel
+      invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
       status = "sent"
 ```
 
-Both forms combine freely with `given`/`then` events in the same specification — establish state with events or read models, and assert on events, read models and errors as the scenario requires.
+`given readmodel` seeds a complete instance and must include the identifier property. `then readmodel` also must include the identifier to select the instance, but asserts only its stated properties. The identifier is inferred from the read model's keyed query (see [Read models](readmodels.md)); omitting it produces `PLAY0351` at that block. Additional properties in actual state do not fail a subset assertion. A missing asserted property is different from a present property with a `null` value.
+
+You can omit `when` to check established state without running a command:
+
+```screenplay
+specification LookingUpAnExistingInvoice
+  given readmodel InvoiceSummary
+    invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+    status = "draft"
+  then query InvoiceById
+    arguments
+      invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+    result
+      status = "draft"
+```
+
+The reference runner establishes `given` events, projects them, applies complete `given readmodel` states, then queries and compares. A when-less specification may also assert `then readmodel`, but not events or errors. With a `when`, event, read-model and query assertions can be combined as needed.
 
 ## Reference execution
 
@@ -162,7 +185,7 @@ flowchart LR
     Trace --> Compare["compare specification outcomes"]
 ```
 
-The minimum evaluator currently admits the RegisterProject-style vertical: declarative validation rules on command properties and concepts (`not empty`, `max`/`min`, the ordering and equality comparisons, `length ==`, and `all >`/`all >=` — see [what the executable model admits](commands.md#what-the-executable-model-admits)), unconditional event production, optional snapshot lookup, and exact ordered specification results. A failed rule rejects the command with the rule's message. Projections run with the reference semantics of Chronicle's projection engine - children, nested objects, update-only joins, `every` and `all`, removals and every mapping kind; see [Projections in the semantic model](projections/semantic-model.md). Unsupported reachable capabilities block plan creation rather than producing a partial or stubbed execution.
+The minimum evaluator currently admits the RegisterProject-style vertical: declarative validation rules on command properties and concepts (`not empty`, `max`/`min`, the ordering and equality comparisons, `length ==`, and `all >`/`all >=` — see [what the executable model admits](commands.md#what-the-executable-model-admits)), unconditional and command-property-conditional event production, command-property `require` guards, literal append tags, optional snapshot lookup, and ordered query rows with subset property assertions. A failed rule rejects the command with the rule's message. Projections run with the reference semantics of Chronicle's projection engine - children, nested objects, update-only joins, `every` and `all`, removals and every mapping kind; see [Projections in the semantic model](projections/semantic-model.md). Unsupported reachable capabilities block plan creation rather than producing a partial or stubbed execution.
 
 ```csharp
 var semanticCompilation = semanticCompiler.Compile("Projects", documents);
@@ -171,7 +194,7 @@ var specificationId = planCompilation.Plan!.Specifications.Keys.First();
 var run = new SemanticSpecificationRunner().Run(planCompilation.Plan, specificationId);
 ```
 
-A rejected execution returns the unchanged world. An accepted execution commits its facts and projected state once, then evaluates the requested queries against that tentative committed state. The same normalized specification run is the conformance input for Stage and generated applications.
+Tags are append metadata: `then` event assertions compare payload properties and ignore tags unless explicitly asserted by a future tag-aware assertion contract. A command with all production conditions false is accepted with zero facts. A rejected execution returns the unchanged world. An accepted execution commits its facts and projected state once, then evaluates the requested queries against that tentative committed state. The same normalized specification run is the conformance input for Stage and generated applications.
 
 ## The specification vocabulary at a glance
 

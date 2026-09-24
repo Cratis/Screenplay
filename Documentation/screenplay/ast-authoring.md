@@ -51,12 +51,13 @@ incorrect child types, invalid enums and illegal nulls are rejected.
   to avoid colliding with the discriminator.
 - Missing collections initialize empty; optional null collections normalize to
   empty arrays. Required scalar values must be supplied according to the schema.
-- Source locations and description offsets are server-owned, not editable data.
+- Source locations, description offsets and parsed comments are server-owned, not editable data.
 - Ordinary JSON numbers decode as finite `Double` literals, matching the parser.
   Other admitted numeric CLR literal types use typed `literalType`/`value`
   envelopes to retain precision and type.
-- Existing code blocks and raw expressions remain language constructs. They are
-  not a general escape hatch for untyped AST subtrees and are not executed.
+- Inline JSON-shaped objects and lists have typed value nodes and individually
+  addressable keys. Existing code blocks and raw expressions remain language
+  constructs, not an escape hatch for structured data or untyped AST subtrees.
 
 Being a well-typed AST does not guarantee that every hand-built combination can
 be expressed in `.play`. Authoring rejects a print/parse round-trip that loses
@@ -122,23 +123,24 @@ rename across source files. Supply both expected revisions, a declaration handle
 `ExpectedName`, and `NewName`. It derives the required assigned-identity migrations
 rather than asking callers to rebuild them by hand.
 
-Supported declaration domains include concepts, types, commands, events, read
-models, queries, modules, features and slices. Module/feature fragments change
+Supported declaration domains include concepts, types, **properties of declared
+composite types**, commands, events, read models, queries, modules, features and
+slices. Other property declarations are not automatic rename targets. Module/feature fragments change
 together. Proven typed references and qualified descendant references are repaired;
 read-model output aliases remain distinct from projection builder identities.
 
 The planner rechecks bindings after the change. Name collisions, ambiguous
 references, capture, affected opaque realizations/imports, unsupported spans and
 resolver disagreement reject rather than guess. It is not a global text replace
-or a general property-schema refactor. Low-level typed operations remain available
+or a general property-schema refactor beyond composite-type properties. Low-level typed operations remain available
 for explicit coordinated edits outside the automatic planner's supported cases.
 
-Opaque syntax (raw expressions such as structured specification values, code
-blocks, imports, file references, capture sources and template triggers, and form
-`compose using` callbacks) refuses a rename only when its text contains the
-current or the new name as a whole identifier. The scan includes string literals
-and object keys, so `"Channel"` inside a JSON value refuses a rename of `Channel`,
-while `ChannelCode` does not. The conflict names the document path, line and
+Opaque syntax (freeform raw expressions, code blocks, imports, file references,
+capture sources and template triggers, and form `compose using` callbacks)
+refuses a rename only when its text contains the current or new name as a whole
+identifier. The scan includes strings and keys inside *opaque* text, but valid
+JSON-shaped mapping values are typed: renaming a composite-type property rewrites
+only its bound object keys, not string values or keys of another type. The conflict names the document path, line and
 column, the syntax pointer, and the matched name.
 
 The default rename formatting is `PreserveTrivia`: verified byte patches retain
@@ -167,7 +169,8 @@ operation. Neither path guesses identity continuity.
 ## Source and persistence
 
 `WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments` explicitly permits
-canonical printing and comment/trivia loss in changed documents. Untouched
+canonical printing and whitespace normalization in changed documents. Parsed comments
+stay with their syntax owners, including after a typed-JSON replacement. Untouched
 source stays byte-identical; touched documents preserve their UTF-8 BOM policy.
 `PreserveExactSource` rejects syntax changes requiring printing. `PreserveTrivia`
 applies only byte patches whose result reparses to the complete intended AST;
@@ -187,12 +190,12 @@ unsupported changes reject without a canonicalization fallback.
 Adding, removing or reordering nodes is structural and still requires
 `CanonicalizeTouchedDocuments`.
 
-Canonical printing does not keep comments and normalizes blank lines. It preserves
+Canonical printing retains attached comments and normalizes blank lines. It preserves
 parsed member order within a document; new members follow the insertion rule in
 [Printing and generating](printing.md#what-printing-does-not-keep). Before applying such a result, call
-`WorkspaceDroppedComments.In(result.WritePlan)` to list every comment a changed
-document loses, with its path, line, column and text. The `PLAY0288` warning for
-each canonically printed document states the same count and lines.
+`WorkspaceDroppedComments.In(result.WritePlan)` to list any comment that could not be
+placed, with its path, line, column and text. The `PLAY0288` warning for each
+canonically printed document states the count and lines of comments actually lost.
 
 Successful results provide the candidate workspace and exact `WorkspaceWritePlan`
 before/after documents. The destination adapter owns file application and failure

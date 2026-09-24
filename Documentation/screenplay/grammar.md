@@ -431,6 +431,10 @@ RuleOp         = "not empty"
                | "all", ">=", Value
                | "rule", Ident ;
 
+(* "email" is the one defined named match pattern. StringLiteral here holds an
+   ECMAScript regular expression, not another named pattern; see Commands for
+   its definition and substring-matching semantics.                         *)
+
 (* RuleImplementation is only meaningful after "rule", Ident - the other RuleOp
    forms are already fully declarative and take no implementation body. *)
 RuleImplementation = FileDirective
@@ -491,8 +495,19 @@ MappingSource  = Ident                         (* command property   *)
                | "$strings.", Path
                | StringLiteral
                | Number
-               | "true" | "false"
+               | "true" | "false" | "null"
+               | StructuredValue
                | Expression ;
+
+StructuredValue = "[", [ JSONValue, { ",", JSONValue } ], "]"
+                | "{", [ JSONString, ":", JSONValue,
+                         { ",", JSONString, ":", JSONValue } ], "}" ;
+JSONValue       = StructuredValue | JSONString | Number | "true" | "false" | "null" ;
+JSONString      = (* double-quoted JSON string, including escaped characters *) ;
+
+(* Structured values are single-line JSON-shaped data with quoted object keys.
+   They are typed syntax in mapping sources; projection expressions keep their
+   existing expression grammar.                                        *)
 
 (* The context paths mirror the members of CommandContext / QueryContext -
    see Documentation/screenplay/context.md. Everything after
@@ -642,9 +657,16 @@ SeedEvent      = Ident, NL,
 ConstraintDecl = "constraint", Ident, NL,
                  INDENT, ConstraintBody, DEDENT ;
 
-ConstraintBody = "unique", Ident, "on", Ident, NL   (* unique property  *)
-               | "unique", "event", Ident, NL         (* unique event     *)
-               | FileDirective ;                       (* custom C#        *)
+ConstraintBody = { ConstraintOption }, UniquePropertyRule,
+                   { UniquePropertyRule | ConstraintOption }
+               | { ConstraintOption }, UniqueEventRule,
+                   { UniqueEventRule | ConstraintOption }
+               | FileDirective ;
+UniquePropertyRule = "unique", Ident, { ",", Ident }, "on", Ident, NL ;
+UniqueEventRule = "unique", "event", Ident, NL ;
+ConstraintOption = "released", "by", Ident, NL
+                 | "message", String, NL
+                 | "ignore", "casing", NL ;  (* property rules only *)
 
 (* -------------------------------------------------------------- *)
 (* Reactions and triggers                                          *)

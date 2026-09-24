@@ -62,6 +62,10 @@ public sealed record SemanticSpecificationQueryResult(
 /// </summary>
 /// <param name="Code">The stable rejection code, or <see langword="null"/> when only rejection is asserted.</param>
 /// <param name="Message">The expected message, or <see langword="null"/> when it is not asserted.</param>
+/// <remarks>
+/// A value beginning with <c>$strings.</c> is a string-key reference, never display text. The realization
+/// resolves it against the active locale's paired <c>.strings</c> file (see internationalization.md).
+/// </remarks>
 public sealed record SemanticSpecificationError(string? Code, string? Message);
 
 /// <summary>
@@ -71,7 +75,7 @@ public sealed record SemanticSpecificationError(string? Code, string? Message);
 /// <param name="Name">The display name.</param>
 /// <param name="GivenEvents">The events establishing prior state, in occurrence order.</param>
 /// <param name="GivenReadModels">The read model states establishing prior state, in authored order with unique read-model/key pairs.</param>
-/// <param name="When">The command being exercised.</param>
+/// <param name="When">The command being exercised, or <see langword="null"/> for a read-only specification.</param>
 /// <param name="ThenEvents">The expected events in authored append order.</param>
 /// <param name="ThenReadModels">The expected read model states, in authored order with unique read-model/key pairs.</param>
 /// <param name="ThenQueries">The expected keyed query results, in authored order with unique query/key pairs.</param>
@@ -81,7 +85,7 @@ public sealed record SemanticSpecification(
     string Name,
     ImmutableArray<SemanticSpecificationEvent> GivenEvents,
     ImmutableArray<SemanticSpecificationReadModel> GivenReadModels,
-    SemanticSpecificationCommand When,
+    SemanticSpecificationCommand? When,
     ImmutableArray<SemanticSpecificationEvent> ThenEvents,
     ImmutableArray<SemanticSpecificationReadModel> ThenReadModels,
     ImmutableArray<SemanticSpecificationQueryResult> ThenQueries,

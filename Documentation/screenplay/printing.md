@@ -44,7 +44,7 @@ var printed = printer.Print(tree);
 var reprinted = printer.Print(compiler.Compile(printed).Value!);
 ```
 
-Because the two directions agree, you can read a `.play` file, adjust the syntax tree - rename a slice, add an event, change a mapping - and print it back out with the rest of the document meaning exactly what it did. Comments and layout are a different matter - see [what printing does not keep](#what-printing-does-not-keep).
+Because the two directions agree, you can read a `.play` file, adjust the syntax tree - rename a slice, add an event, change a mapping - and print it back out with the rest of the document meaning exactly what it did. Comments from parsed source stay with their declarations; layout is normalized - see [what printing does not keep](#what-printing-does-not-keep).
 
 Two details make the guarantee hold for values you did not type yourself:
 
@@ -57,8 +57,10 @@ Two details make the guarantee hold for values you did not type yourself:
 The printer is faithful to the syntax tree, and the tree does not hold everything
 a file does:
 
-- **Comments are dropped.** The parser does not attach comments to syntax nodes,
-  so a printed document has none.
+- **Comments are kept, not their surrounding whitespace.** Leading comments stay with the
+  declaration or member they annotate, trailing comments follow the printed line, and
+  comments at the end of a block stay in that block. The printer uses canonical two-space
+  indentation. A tree created entirely from typed JSON has no authored comments to keep.
 - **Order across files cannot be recovered.** Parsed members of a slice, feature or
   module keep their authored order when they share a source file. A folder merge may
   combine members from different files; their line numbers cannot be compared, so
@@ -69,11 +71,11 @@ a file does:
   inherit their original position, even though typed JSON omits source positions.
 - **Blank lines are normalized.** The printer separates members with its own blank lines.
 
-Round-tripping preserves meaning, not layout. To change a document without losing
-its comments, edit it through the [authoring workspace](ast-authoring.md) with
-`PreserveTrivia`, which patches only the changed text. Folder expansion writes
-files with this printer too, so it drops comments; each slice file retains its
-within-slice authored order.
+Round-tripping preserves comments and meaning, not blank lines or every authored
+space. Use [authoring workspace](ast-authoring.md) `PreserveTrivia` when even the
+unchanged source bytes must survive. Folder expansion keeps comments with their
+declarations, including module header comments in the module file; each slice
+file retains its within-slice authored order.
 
 ## Generating from a model
 

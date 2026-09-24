@@ -7,7 +7,7 @@ public class with_the_name_inside_a_string_literal : given.a_workspace_with_a_st
 {
     WorkspaceAuthoringResult _result = null!;
 
-    void Establish() => CreateWith("""[{"sku":"Channel","quantity":2}]""");
+    void Establish() => CreateWith("""calculate("Channel")""");
 
     void Because() => _result = RenameChannel();
 

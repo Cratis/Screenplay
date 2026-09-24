@@ -30,7 +30,7 @@ public sealed partial class ScreenplayPrinter :
     {
         var writer = new ScreenplayWriter();
         WriteApplication(writer, application);
-        return writer.ToString();
+        return PrintComments(application, writer.ToString());
     }
 
     /// <inheritdoc/>
@@ -38,7 +38,7 @@ public sealed partial class ScreenplayPrinter :
     {
         var writer = new ScreenplayWriter();
         WriteProjection(writer, projection);
-        return writer.ToString();
+        return PrintComments(projection, writer.ToString());
     }
 
     /// <inheritdoc/>
@@ -46,7 +46,7 @@ public sealed partial class ScreenplayPrinter :
     {
         var writer = new ScreenplayWriter();
         WriteSpecification(writer, specification);
-        return writer.ToString();
+        return PrintComments(specification, writer.ToString());
     }
 
     /// <inheritdoc/>
@@ -54,7 +54,7 @@ public sealed partial class ScreenplayPrinter :
     {
         var writer = new ScreenplayWriter();
         WriteCapture(writer, capture);
-        return writer.ToString();
+        return PrintComments(capture, writer.ToString());
     }
 
     /// <inheritdoc/>

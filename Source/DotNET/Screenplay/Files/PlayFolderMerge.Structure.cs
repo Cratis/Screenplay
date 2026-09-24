@@ -32,6 +32,7 @@ internal static partial class PlayFolderMerge
 
         return parts[0] with
         {
+            SourceComments = [.. parts.SelectMany(part => part.SourceComments).Distinct()],
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"module '{group.Key}'", context),
             ScreenTemplates = DeclaredInOneFile(
                 parts.SelectMany(part => part.ScreenTemplates),
@@ -74,6 +75,7 @@ internal static partial class PlayFolderMerge
 
         return parts[0] with
         {
+            SourceComments = [.. parts.SelectMany(part => part.SourceComments).Distinct()],
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"feature '{group.Key}'", context),
             Contributions = [.. parts.SelectMany(part => part.Contributions ?? [])],
             Behaviors = InlineBehaviorsOnce(parts.SelectMany(part => part.Behaviors), $"feature '{group.Key}'", context),

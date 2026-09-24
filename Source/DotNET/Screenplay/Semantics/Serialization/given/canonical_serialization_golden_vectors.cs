@@ -117,6 +117,9 @@ public static partial class canonical_serialization_golden_vectors
                 new(eventLabel, "Label", SemanticTypeReference.ForConcept(textConcept), false),
                 new(eventDetails, "Details", SemanticTypeReference.ForCompositeType(detailsType), false)
             ]);
+
+        // #210 conditions: append-time tags are separate from payload and ordered event then production.
+        createdContract = createdContract with { Tags = ["billing"] };
         var optionalContract = new SemanticEventContract(
             optionalEvent,
             EventContractId.CreateLegacy(applicationIdentity, "EntityMaybeSelected"),
@@ -142,7 +145,14 @@ public static partial class canonical_serialization_golden_vectors
                 new(commandEnabled, "Enabled", SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Boolean), false),
                 new(commandDetails, "Details", SemanticTypeReference.ForCompositeType(detailsType), false)
             ],
-            [new(commandTitle, SemanticValidationRuleKind.NotEmpty, null, "Title is required")],
+            [
+                new(commandTitle, SemanticValidationRuleKind.NotEmpty, null, "Title is required"),
+
+                // #209 matches
+                new(commandNote, SemanticValidationRuleKind.Matches, SemanticValue.Text(SemanticMatchPattern.Email), "Note must be an email address")
+
+                // End #209 matches
+            ],
             [new(
                 createdEvent,
                 SemanticExpression.Property(SemanticExpressionRootKind.Command, commandEnabled),
@@ -156,7 +166,18 @@ public static partial class canonical_serialization_golden_vectors
                     new(eventNote, SemanticExpression.FromValue(SemanticValue.Null)),
                     new(eventDetails, SemanticExpression.Property(SemanticExpressionRootKind.Command, commandDetails))
                 ]),
-                new(optionalEvent, null, null, [])]);
+                new SemanticProducedEvent(optionalEvent, null, null, [])
+                {
+                    When = new SemanticComparison(
+                        new(commandEnabled, null), SemanticComparisonOperator.Equal, new(default, SemanticValue.Boolean(true))),
+                    Tags = ["conditional"]
+                }])
+        {
+            // #210 conditions: the same tree is used by command-wide requirements.
+            Requirements = [new(new SemanticComparison(
+                new(commandAmount, null), SemanticComparisonOperator.GreaterThan, new(default, SemanticValue.Number(0))),
+                "Amount must be positive")]
+        };
 
         var entitySummary = new SemanticReadModel(
             readModel,
@@ -338,6 +359,41 @@ public static partial class canonical_serialization_golden_vectors
             [entityProjection],
             queries,
             []);
+
+        // #207 when-less specifications
+        stateView = stateView with
+        {
+            Specifications =
+            [
+                new(
+                    Id(2070),
+                    "looks up established state without a command",
+                    [],
+                    [readModelState],
+                    null,
+                    [],
+                    [new(readModel, idValue, [new(readModelId, idValue)])],
+                    [new(byId, idValue, [new(readModel, idValue, [new(readModelLabel, titleValue)])])],
+                    [])
+            ]
+        };
+
+        // #207 structured specification values: a nested object with an ordered list, empty list, and optional null.
+        stateView = stateView with
+        {
+            Specifications = stateView.Specifications.Add(new SemanticSpecification(
+                Id(2071),
+                "asserts a structured read model subset",
+                [],
+                [readModelState],
+                null,
+                [],
+                [new(readModel, idValue, [new(readModelId, idValue), new(readModelDetails, detailsValue), new(readModelNote, SemanticValue.Null)])],
+                [],
+                []))
+        };
+
+        // end #207 when-less specifications
 
         // #209 validation
         var referenceConcept = new SemanticConcept(

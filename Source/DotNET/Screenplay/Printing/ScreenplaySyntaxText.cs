@@ -3,6 +3,8 @@
 
 using System.Globalization;
 using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
@@ -21,6 +23,8 @@ namespace Cratis.Screenplay.Printing;
 /// </remarks>
 internal static partial class ScreenplaySyntaxText
 {
+    static readonly JsonSerializerOptions _structuredValueOptions = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+
     /// <summary>
     /// Renders an <see cref="ExpressionSyntax"/> to its surface form.
     /// </summary>
@@ -29,6 +33,8 @@ internal static partial class ScreenplaySyntaxText
     public static string Expression(ExpressionSyntax expression) => expression switch
     {
         LiteralExpressionSyntax literal => Literal(literal.Value),
+        ListExpressionSyntax list => $"[{string.Join(',', list.Items.Select(StructuredValue))}]",
+        ObjectExpressionSyntax obj => $"{{{string.Join(',', obj.Members.Select(member => $"{JsonSerializer.Serialize(member.Name, _structuredValueOptions)}:{StructuredValue(member.Value)}"))}}}",
         PathExpressionSyntax path => path.Path,
         ContextExpressionSyntax context => $"$context.{context.Path}",
         EnvironmentExpressionSyntax environment => $"$env.{environment.Name}",
@@ -238,6 +244,10 @@ internal static partial class ScreenplaySyntaxText
         };
     }
 
+    static string StructuredValue(ExpressionSyntax expression) => expression is LiteralExpressionSyntax { Value: string text }
+        ? JsonSerializer.Serialize(text, _structuredValueOptions)
+        : Expression(expression);
+
     static string Literal(object? value) => value switch
     {
         null => "null",
@@ -249,7 +259,7 @@ internal static partial class ScreenplaySyntaxText
     };
 
     static string Number(double number) =>
-        number == Math.Floor(number) && !double.IsInfinity(number)
+        number == Math.Floor(number) && number >= long.MinValue && number < 9223372036854775808d
             ? ((long)number).ToString(CultureInfo.InvariantCulture)
             : number.ToString(CultureInfo.InvariantCulture);
 
