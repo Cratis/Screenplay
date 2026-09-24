@@ -39,9 +39,6 @@ public class when_binding_the_invoicing_sample : given.a_semantic_binder
 
         // Code attachments (#139).
         (Unsupported, "Policy 'IsAdultCustomer' uses csharp"),
-        (Unsupported, "Validation rule 'BeFromAnAllowedDomain' on concept 'EmailAddress' has an implementation body"),
-        (Unsupported, "Validation rule 'BeUnusedInvoiceNumber' on 'invoiceNumber' has an implementation body"),
-        (Unsupported, "Command 'RegisterInvoice' code validation"),
         (Unsupported, "Command 'ProcessInvoiceBatch' handler"),
         (Unsupported, "Command 'ArchiveOldInvoices' handler"),
         (Unsupported, "Constraint 'InvoiceStatusTransition' file implementation"),
