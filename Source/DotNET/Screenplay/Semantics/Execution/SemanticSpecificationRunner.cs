@@ -73,7 +73,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             : SemanticExecutionRequest.Create(expected.When.Command, expected.When.Values, queries) with
             {
                 AllocatedIdentities = expected.When.EventSource is null
-                    ? []
+                    ? ImmutableDictionary.Create<SemanticId, SemanticValue>()
                     : ImmutableDictionary<SemanticId, SemanticValue>.Empty.Add(expected.When.Command, expected.When.EventSource.Value),
                 AllocatedEventSourceType = expected.When.EventSource?.Type
             };

@@ -372,7 +372,7 @@ produces InvoiceRegistered
 | Numeric constant | `= 0` | Literal number |
 | Expression | `= lines.sum(l => l.quantity * l.unitPrice)` | Computed value |
 
-Every `$context.` path names a member of the `CommandContext` an inline handler compiles against — see [Contexts](context.md). The ESM v2 `produces` subset is narrower: occurrence time and the three audit identity fields (`identity.id`/`causedBy.subject`, `name`, `userName`). Other entries above remain syntax-only for portable produces mappings and report `PLAY0268`. Explicit `for <command-identifier>` binds a typed state-change destination separately from event properties. It selects ESM v2, and produced facts carry that identity in event context even when the event payload has no ID.
+Every `$context.` path names a member of the `CommandContext` an inline handler compiles against — see [Contexts](context.md). The ESM v2 `produces` subset is narrower: occurrence time and the three audit identity fields (`identity.id`/`causedBy.subject`, `name`, `userName`). Other entries above remain syntax-only for portable produces mappings and report `PLAY0268`. Explicit `for <command-identifier>` binds a typed state-change destination separately from event properties. When the event does not duplicate that identifier as a payload property, it selects ESM v2; historical v1 models that copy it into both places retain their canonical v1 bytes. Produced v2 facts carry the identity in event context even when the payload has no ID.
 
 ### Where an event lands
 

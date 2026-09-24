@@ -63,9 +63,13 @@ public sealed partial class SemanticModelBinder
                 .Where(_ => _ is not null)
                 .Select(_ => _!)
                 .ToImmutableArray();
-            var defaultDestination = produced.Select(value => value.Destination).OfType<SemanticResolvedExpression>()
-                .Select(value => properties.Single(property => property.Id == value.Target))
-                .FirstOrDefault();
+            var typedDestination = command.Produces.Any(value => value.For is PathExpressionSyntax source &&
+                events.TryGetValue(value.Event, out var @event) && !@event.Properties.ContainsKey(source.Path));
+            if (typedDestination) UsesV2 = true;
+            var defaultDestination = typedDestination || UsesV2
+                ? produced.Select(value => value.Destination).OfType<SemanticResolvedExpression>()
+                    .Select(value => properties.Single(property => property.Id == value.Target)).FirstOrDefault()
+                : null;
             return new(id, command.Name, properties, validations, produced)
             {
                 Requirements = requirements,
@@ -128,7 +132,6 @@ public sealed partial class SemanticModelBinder
             var destination = produced.For is null
                 ? null
                 : BindPropertyExpression(produced.For, commandProperties, "produced event destination");
-            if (destination is not null) UsesV2 = true;
             var mappings = ImmutableArray.CreateBuilder<SemanticPropertyMapping>();
             foreach (var mapping in produced.Mappings)
             {

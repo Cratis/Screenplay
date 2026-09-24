@@ -41,6 +41,13 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, contractRejection);
         }
 
+        if (plan.Model.SemanticVersion == SemanticVersion.V2 && command.Destination is null &&
+            request.AllocatedEventSourceType is { } suppliedType &&
+            command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type is { } identityType && suppliedType != identityType)
+        {
+            return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Allocated event source type differs from the command identifier type.");
+        }
+
         if (ValidateRules(plan, command, request.Values) is { } validationRejection)
         {
             return RejectWithMessage(world, SemanticRejectionCategory.Validation, null, validationRejection);

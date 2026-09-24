@@ -627,7 +627,9 @@ internal static partial class SemanticModelValidator
                 if (specification.When.EventSource is not null)
                 {
                     if (_semanticVersion != SemanticVersion.V2) throw new InvalidSemanticContract("A specification command event source requires ESM v2.");
-                    ValidateEventSource(specification.When.EventSource, command.Destination?.Type);
+                    ValidateEventSource(
+                        specification.When.EventSource,
+                        command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type);
                 }
 
                 ValidatePropertyValues(specification.When.Values, command.Properties, true);
@@ -705,7 +707,19 @@ internal static partial class SemanticModelValidator
             }
 
             ValidatePropertyValues(value.Values, eventContract.Properties, true);
-            if (value.EventSource is not null) ValidateEventSource(value.EventSource, null);
+            if (value.EventSource is not null)
+            {
+                var producerTypes = _commands.Values.SelectMany(command => command.Produces
+                    .Where(produced => produced.EventContract == value.EventContract)
+                    .Select(_ => command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type))
+                    .OfType<SemanticTypeReference>().Distinct().ToArray();
+                if (producerTypes.Length != 1)
+                {
+                    throw new InvalidSemanticContract("A specification event source needs one unambiguous declared producer destination type.");
+                }
+
+                ValidateEventSource(value.EventSource, producerTypes[0]);
+            }
         }
 
         void ValidateEventSource(SemanticEventSourceIdentity source, SemanticTypeReference? requiredType)

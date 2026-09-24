@@ -78,11 +78,35 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var concepts = syntax.Concepts.Select(BindConcept).ToImmutableArray();
             var types = (syntax.Types ?? []).Select(BindType).ToImmutableArray();
             var modules = syntax.Modules.Select(BindModule).ToImmutableArray();
-            return new(applicationId, applicationName, concepts, types, modules);
+            return new(
+                applicationId,
+                applicationName,
+                concepts,
+                types,
+                UsesV2 ? [.. modules.Select(PromoteV2Destinations)] : modules);
         }
 
         internal void Error(string code, string message, SourceLocation location) =>
             _diagnostics.Add(Diagnostic.Error(code, message, location));
+
+        static SemanticModule PromoteV2Destinations(SemanticModule module) =>
+            module with { Features = [.. module.Features.Select(PromoteV2Destinations)] };
+
+        static SemanticFeature PromoteV2Destinations(SemanticFeature feature) => feature with
+        {
+            Features = [.. feature.Features.Select(PromoteV2Destinations)],
+            Slices = [.. feature.Slices.Select(slice => slice with
+            {
+                Commands = [.. slice.Commands.Select(command =>
+                {
+                    var source = command.Produces.Select(produced => produced.Destination)
+                        .OfType<SemanticResolvedExpression>().FirstOrDefault();
+                    if (command.Destination is not null || source is null) return command;
+                    var property = command.Properties.Single(value => value.Id == source.Target);
+                    return command with { Destination = new(property.Type, source) };
+                })]
+            })]
+        };
 
         void Information(string code, string message, SourceLocation location) =>
             _diagnostics.Add(new(DiagnosticSeverity.Information, code, message, location));
