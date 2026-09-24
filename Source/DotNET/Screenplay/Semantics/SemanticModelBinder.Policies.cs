@@ -127,7 +127,7 @@ public sealed partial class SemanticModelBinder
             if (parts.Any(part => part.Length == 0) || !properties.TryGetValue(parts[0], out var property)) return false;
             foreach (var name in parts.Skip(1))
             {
-                if (property.Type.Kind != SemanticTypeReferenceKind.CompositeType) return false;
+                if (property.Type.Kind != SemanticTypeReferenceKind.CompositeType || property.Type.IsCollection) return false;
                 var declaration = (syntax.Types ?? []).SingleOrDefault(type =>
                     _types.TryGetValue(type.Name, out var registered) && registered.Id == property.Type.Target);
                 var member = declaration?.Properties.SingleOrDefault(candidate => candidate.Name == name);

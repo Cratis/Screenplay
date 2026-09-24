@@ -62,7 +62,7 @@ internal static partial class SemanticModelValidator
             if (property is null) return false;
             foreach (var name in parts.Skip(1))
             {
-                if (property.Type.Kind != SemanticTypeReferenceKind.CompositeType ||
+                if (property.Type.Kind != SemanticTypeReferenceKind.CompositeType || property.Type.IsCollection ||
                     !_types.TryGetValue(property.Type.Target, out var composite))
                 {
                     return false;
