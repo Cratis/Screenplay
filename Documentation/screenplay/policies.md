@@ -4,19 +4,23 @@ Policies are named authorization rules. Modules, features, commands, and queries
 
 ## Syntax
 
+```screenplay
+policy <Name>
+  require <condition>
+```
+
+Write one `require` line. Its `<condition>` can be `authenticated`, `role "<role>"`, `claim "<claim>" matches <subject|"value"|expression>`, or a combination such as `role "<role>" or (role "<role>" and claim "<claim>" matches "<value>")`. Continue a condition at deeper indentation rather than starting another `require` line; a second line reports `PLAY0441`.
+
+Alternatively, implement the policy in an inline block:
+
 ````screenplay
 policy <Name>
-  require authenticated
-  require role "<role>"
-  require claim "<claim>" matches <subject|"value"|expression>
-  require role "<role>" or role "<role>"
-  require role "<role>" or (role "<role>" and claim "<claim>" matches "<value>")
   ```csharp
     <C# returning bool>
     ```
 ````
 
-Instead of the inline `csharp` block, a policy can name its implementation with `file <path>`. A policy may have a `require` condition or one implementation (`file` or inline code), but cannot name both a file and an inline block.
+Instead of the inline `csharp` block, a policy can name its implementation with `file <path>`. A policy may have a `require` condition or one implementation (`file` or inline code), never both. Mixing `require` with an implementation reports `PLAY0440`.
 
 ## Authorization scopes
 
@@ -42,9 +46,9 @@ module Portal
           authorize CanManageOrders
 ```
 
-`RequestReturn` requires `HasPortalAccess` **and** (`CanManageOrders` **or** `IsRegionalManager`) **and** `CanManageOrders`. A feature without its own gate still inherits its ancestors' gates. When a folder declares the same module or feature gate in different files, distinct gates accumulate with AND; identical repeated gates are reported and kept once. The printer keeps a gate where it was declared rather than copying inherited gates onto each command or query.
+`RequestReturn` requires `HasPortalAccess` **and** (`CanManageOrders` **or** `IsRegionalManager`) **and** `CanManageOrders`. A feature without its own gate still inherits its ancestors' gates. When a folder declares the same module or feature gate in different files, distinct gates accumulate with AND; identical repeated gates are reported and kept once. Repeated `authorize` lines on a command or query combine with AND in authored order; printing writes them as one `authorize A and B` line. The printer keeps a gate where it was declared rather than copying inherited gates onto each command or query.
 
-The source compiler resolves policy names at all four positions and warns about unknown names. ESM v1 does **not** admit authorization yet: binding a module or feature gate reports `PLAY0268` (“authorization requires portable policy semantics and is not admitted by ESM v1”), just as command and query authorization is not admitted. Policy execution waits for portable policy semantics.
+The source compiler resolves policy names at all four positions and warns about unknown names. Portable conditions bind to the ESM and run in the reference evaluator. A custom implementation binds as an opaque ESM v3 policy predicate; it requires a target provider to evaluate it.
 
 ## Conditions
 
@@ -92,7 +96,9 @@ policy CanManageInvoice
 
 ## Portable evaluation
 
-Declarative policies execute in the portable ESM v1 reference evaluator. Inline `csharp` and `file` policy implementations remain blocking binding diagnostics until implementation attachments are defined (#139). The execution request must supply a caller explicitly when an authorized command or query runs. A missing caller cannot satisfy authorization. An authenticated condition checks the caller's authentication flag; a role compares the caller's roles by ordinal, case-sensitive text. Claim **types** compare ordinal-ignore-case, while claim **values** compare ordinal, case-sensitively. If a caller carries several values for the same claim type, **any** matching value satisfies that condition. Missing claims, a null artifact value, and an unresolved subject deny; `and` and `or` short-circuit according to the parsed grouping.
+Declarative policies execute in the portable ESM v1 reference evaluator. Inline `csharp` and `file` policy predicates bind to ESM v3 with a stable requirement id, context/result contract version 1, and the required capability `pure`. The reference evaluator cannot execute their bodies. An authorization that depends on one returns `SemanticUnsupported` with the Authorization capability and the policy name; it never guesses allow or deny. A specification asserting `then denied` does not pass on this unsupported outcome. A provider must admit and evaluate the implementation before it can decide authorization.
+
+For a mixed gate, evaluation follows authored order: a portable denial on the left of `and` denies without evaluating the right, and a portable allowance on the left of `or` allows without evaluating the right. If an opaque operand is reached first, the reference evaluator returns unsupported; a later portable operand cannot decide the result. Enclosing gates combine in module → feature → construct order. This matches Stage's generated C# `&&`/`||` expression (`SemanticPolicyArtifactRenderer.Authorization`) and Arc's ordered, short-circuiting policy loops (`ArcAuthorizationPolicyRuntime.IsAuthorized` and `AspNetAuthorizationPolicyRuntime.IsAuthorized`), following the runtime-authority boundary in [decision 0001](../../decisions/0001-chronicle-runtime-semantic-authority.md). An absent caller still denies authorization. The execution request must supply a caller explicitly when an authorized command or query runs. A missing caller cannot satisfy authorization. An authenticated condition checks the caller's authentication flag; a role compares the caller's roles by ordinal, case-sensitive text. Claim **types** compare ordinal-ignore-case, while claim **values** compare ordinal, case-sensitively. If a caller carries several values for the same claim type, **any** matching value satisfies that condition. Missing claims, a null artifact value, and an unresolved subject deny; `and` and `or` short-circuit according to the parsed grouping.
 
 In the portable ESM v1 profile, an artifact path must resolve from a command property (including declared composite members) or the keyed query argument. An absent or null nested value denies. `$`-rooted expressions remain valid authoring syntax but do not bind to this portable profile. A `subject` comes from a command's identifier property or a keyed query's argument; if no identifier is available, it cannot match. A failed effective authorization yields `Unauthorized` before command validation or query lookup and never changes the world. For the caller fixture and denial assertion, see [Specifications](specifications.md#rejections).
 
@@ -104,7 +110,9 @@ When the declarative conditions cannot express the rule, drop into C#. The block
 policy IsAdultCustomer
   ```csharp
     var dateOfBirth = context.Identity.ClaimValue("dateOfBirth");
-    return dateOfBirth is not null && DateTime.Parse(dateOfBirth) <= DateTime.UtcNow.AddYears(-18);
+    return dateOfBirth is not null && DateTime.TryParse(dateOfBirth, System.Globalization.CultureInfo.InvariantCulture,
+      System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
+      out var born) && born <= context.Occurred.UtcDateTime.AddYears(-18);
     ```
 ````
 

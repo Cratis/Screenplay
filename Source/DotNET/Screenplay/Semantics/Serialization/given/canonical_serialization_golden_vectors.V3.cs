@@ -48,7 +48,8 @@ public static partial class canonical_serialization_golden_vectors
             }).ToImmutableArray();
         var application = model.Application with
         {
-            Modules = [module with { Features = [root with { Features = [feature with { Slices = slices }] }] }]
+            Modules = [module with { Features = [root with { Features = [feature with { Slices = slices }] }] }],
+            Policies = model.Application.Policies.Add(new("RequiresTargetPolicy", new SemanticOpaquePolicyCondition(new string('e', 64))))
         };
         return ExecutableSemanticModel.Create(LanguageVersion.V3, SemanticVersion.V3, application);
     }

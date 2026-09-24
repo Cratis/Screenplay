@@ -262,6 +262,8 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0121` | Error | A claim match states nothing to match the claim to. |
 | `PLAY0122` | Error | An `authorize` clause names no policy. |
 | `PLAY0123` | Error | A policy is referred to by something that is not a policy name. |
+| `PLAY0440` | Error | A policy combines `require` with an inline code block or a file implementation. Choose one form. |
+| `PLAY0441` | Error | A policy has more than one `require` line; combine the conditions with `and`/`or` in one `require`. |
 
 ### Authentication
 
@@ -559,7 +561,7 @@ itself what an unresolvable one means.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0268` | Error | Source syntax carries portable behavior ESM v1 cannot represent, including unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` or production conditions over read-model paths (#129), date/`today` conditions, non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules and command/concept code validation bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
+| `PLAY0268` | Error | Source syntax carries portable behavior ESM v1 cannot represent, including unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` or production conditions over read-model paths (#129), date/`today` conditions, non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules, command/concept code validation, and inline/file policy predicates bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
 | `PLAY0269` | Information | Source syntax is explicitly deferred from the current backend semantic profile. |
 | `PLAY0270` | Information | Source syntax is realization or operational metadata rather than portable behavior. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly. |

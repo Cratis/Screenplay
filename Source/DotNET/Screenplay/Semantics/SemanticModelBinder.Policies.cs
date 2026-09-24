@@ -23,11 +23,20 @@ public sealed partial class SemanticModelBinder
 
         ImmutableArray<SemanticPolicy> BindPolicies() => [.. syntax.Policies.Select(policy =>
         {
+            if (policy.Condition is not null && (policy.Code is not null || policy.File is not null))
+            {
+                Error(DiagnosticCodes.MixedPolicyImplementation, $"Policy '{policy.Name}' cannot combine 'require' with a file or inline code block", policy.Location);
+                return null;
+            }
+
             if (policy.Code is not null || policy.File is not null)
             {
-                RequireImplementation(SemanticImplementationRole.PolicyPredicate, SemanticAddress.ForApplication(_applicationIdentity), policy.File, policy.Code, policy.Name);
-                var attachment = policy.File is not null ? "file" : "csharp";
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Policy '{policy.Name}' uses {attachment}; portable implementation attachments are deferred to #139.", policy.File?.Location ?? policy.Code!.Location);
+                var requirement = RequireImplementation(SemanticImplementationRole.PolicyPredicate, SemanticAddress.ForApplication(_applicationIdentity), policy.File, policy.Code, policy.Name);
+                if (requirement is not null)
+                {
+                    UsesV3 = true;
+                    return new SemanticPolicy(policy.Name, new SemanticOpaquePolicyCondition(requirement.RequirementId));
+                }
             }
 
             var condition = policy.Condition is null ? null : BindPolicyCondition(policy.Condition);

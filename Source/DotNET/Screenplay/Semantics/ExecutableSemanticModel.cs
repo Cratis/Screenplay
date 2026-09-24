@@ -88,7 +88,8 @@ internal static partial class SemanticModelValidator
             throw new InvalidSemanticContract("An ESM v2 model must contain a typed destination, a specification event source, or an occurrence context mapping.");
         }
 
-        if (semanticVersion == SemanticVersion.V3 && !application.Concepts.Any(concept => concept.Validations.Any(validation => validation.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation)) &&
+        if (semanticVersion == SemanticVersion.V3 && !application.Policies.Any(policy => policy.Condition is SemanticOpaquePolicyCondition) &&
+            !application.Concepts.Any(concept => concept.Validations.Any(validation => validation.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation)) &&
             application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices).All(slice => slice.Reducers.IsEmpty &&
                 slice.Commands.All(command => command.CodeValidations.IsEmpty && command.Validations.All(validation => validation.Kind != SemanticValidationRuleKind.RulePredicate))))
         {

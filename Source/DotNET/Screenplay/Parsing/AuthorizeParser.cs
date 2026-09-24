@@ -50,6 +50,13 @@ internal static partial class AuthorizeParser
         return requirement is null ? null : new AuthorizeSyntax(requirement, line.Location);
     }
 
+    internal static AuthorizeSyntax? Combine(AuthorizeSyntax? first, AuthorizeSyntax? next) => (first, next) switch
+    {
+        (null, _) => next,
+        (_, null) => first,
+        _ => new AuthorizeSyntax(new LogicalPolicyRequirementSyntax(first.Requirement, LogicalOperator.And, next.Requirement, first.Location), first.Location)
+    };
+
     static PolicyRequirementSyntax? ParseReference(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
     {
         if (position >= tokens.Count)

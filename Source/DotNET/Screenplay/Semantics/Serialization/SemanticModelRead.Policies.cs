@@ -53,20 +53,22 @@ internal static partial class SemanticModelRead
         var seen = NewSeen();
         string? name = null;
         SemanticPolicyCondition? condition = null;
+        string? requirementId = null;
         while (NextProperty(ref reader, seen, "policy") is { } property)
         {
             switch (property)
             {
                 case "name": name = String(ref reader, property); break;
                 case "condition": RequiredToken(ref reader, JsonTokenType.StartObject, property); condition = PolicyCondition(ref reader); break;
+                case "requirementId": requirementId = String(ref reader, property); break;
                 default: throw Unknown(property, "policy");
             }
         }
-        Required(name is not null && condition is not null, "policy");
-        return new(name!, condition!);
+        Required(name is not null && condition is not null && (condition is SemanticOpaquePolicyCondition) == (requirementId is not null), "policy");
+        return new(name!, condition is SemanticOpaquePolicyCondition ? new SemanticOpaquePolicyCondition(requirementId!) : condition!);
     }
 
-    internal static SemanticPolicyCondition PolicyCondition(ref Utf8JsonReader reader)
+    internal static SemanticPolicyCondition PolicyCondition(ref Utf8JsonReader reader, bool allowOpaque = true)
     {
         Object(ref reader, "policy condition");
         var seen = NewSeen();
@@ -82,13 +84,14 @@ internal static partial class SemanticModelRead
                 case "targetKind": targetKind = String(ref reader, property); break;
                 case "value": value = String(ref reader, property); break;
                 case "operator": op = String(ref reader, property); break;
-                case "left": RequiredToken(ref reader, JsonTokenType.StartObject, property); left = PolicyCondition(ref reader); break;
-                case "right": RequiredToken(ref reader, JsonTokenType.StartObject, property); right = PolicyCondition(ref reader); break;
+                case "left": RequiredToken(ref reader, JsonTokenType.StartObject, property); left = PolicyCondition(ref reader, false); break;
+                case "right": RequiredToken(ref reader, JsonTokenType.StartObject, property); right = PolicyCondition(ref reader, false); break;
                 default: throw Unknown(property, "policy condition");
             }
         }
         return kind switch
         {
+            "opaque" when allowOpaque && role is null && claim is null && targetKind is null && value is null && op is null && left is null && right is null => new SemanticOpaquePolicyCondition(string.Empty),
             "authenticated" when role is null && claim is null && targetKind is null && value is null && op is null && left is null && right is null => new SemanticAuthenticatedCondition(),
             "role" when role is not null && claim is null && targetKind is null && value is null && op is null && left is null && right is null => new SemanticRoleCondition(role),
             "claim" when claim is not null && role is null && op is null && left is null && right is null &&

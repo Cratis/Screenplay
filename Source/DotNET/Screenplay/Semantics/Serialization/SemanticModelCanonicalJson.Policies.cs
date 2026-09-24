@@ -28,6 +28,10 @@ internal static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", policy.Name);
         writer.WritePropertyName("condition");
         WritePolicyCondition(writer, policy.Condition);
+        if (policy.Condition is SemanticOpaquePolicyCondition opaque)
+        {
+            CanonicalJson.WriteString(writer, "requirementId", opaque.RequirementId);
+        }
         writer.WriteEndObject();
     }
 
@@ -36,6 +40,9 @@ internal static partial class SemanticModelCanonicalJson
         writer.WriteStartObject();
         switch (condition)
         {
+            case SemanticOpaquePolicyCondition:
+                writer.WriteString("kind", "opaque");
+                break;
             case SemanticAuthenticatedCondition:
                 writer.WriteString("kind", "authenticated");
                 break;

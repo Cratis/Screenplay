@@ -1987,4 +1987,10 @@ public static class DiagnosticCodes
 
     /// <summary>An implementation file cannot safely be read as UTF-8 text.</summary>
     public const string AttachmentUnreadable = "PLAY0434";
+
+    /// <summary>A policy combines a require condition with a file or inline code implementation.</summary>
+    public const string MixedPolicyImplementation = "PLAY0440";
+
+    /// <summary>A policy declares more than one require line.</summary>
+    public const string RepeatedPolicyRequirement = "PLAY0441";
 }

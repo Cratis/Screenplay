@@ -84,6 +84,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var concepts = syntax.Concepts.Select(BindConcept).ToImmutableArray();
             var types = (syntax.Types ?? []).Select(BindType).ToImmutableArray();
             var modules = syntax.Modules.Select(BindModule).ToImmutableArray();
+            var policies = BindPolicies();
             return new(
                 applicationId,
                 applicationName,
@@ -91,7 +92,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 types,
                 UsesV2 || UsesV3 ? [.. modules.Select(PromoteV2Destinations)] : modules)
             {
-                Policies = BindPolicies()
+                Policies = policies
             };
         }
 

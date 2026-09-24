@@ -38,7 +38,6 @@ public class when_binding_the_invoicing_sample : given.a_semantic_binder
         (Unsupported, "Concept 'EmailAddress' compliance attributes"),
 
         // Code attachments (#139).
-        (Unsupported, "Policy 'IsAdultCustomer' uses csharp"),
         (Unsupported, "Command 'ProcessInvoiceBatch' handler"),
         (Unsupported, "Command 'ArchiveOldInvoices' handler"),
         (Unsupported, "Constraint 'InvoiceStatusTransition' file implementation"),

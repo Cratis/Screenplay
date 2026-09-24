@@ -54,7 +54,7 @@ internal static partial class CommandParser
                     description = DescriptionParser.Parse(context, line, description, $"Command '{name.Groups[1].Value}'");
                     break;
                 case "authorize":
-                    authorize = AuthorizeParser.Parse(context, line);
+                    authorize = AuthorizeParser.Combine(authorize, AuthorizeParser.Parse(context, line));
                     break;
                 case "concurrency":
                     concurrency = ParseConcurrency(context, line, concurrency, name.Groups[1].Value);

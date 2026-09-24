@@ -23,8 +23,12 @@ public enum SemanticClaimTargetKind
 /// <param name="Condition">The condition that must hold.</param>
 public sealed record SemanticPolicy(string Name, SemanticPolicyCondition Condition);
 
-/// <summary>Represents a portable authorization condition.</summary>
+/// <summary>Represents a portable authorization condition or an opaque implementation attachment.</summary>
 public abstract record SemanticPolicyCondition;
+
+/// <summary>Represents a policy predicate supplied by a target provider rather than the reference executor.</summary>
+/// <param name="RequirementId">The stable identity of the policy implementation requirement.</param>
+public sealed record SemanticOpaquePolicyCondition(string RequirementId) : SemanticPolicyCondition;
 
 /// <summary>Requires an authenticated caller.</summary>
 public sealed record SemanticAuthenticatedCondition : SemanticPolicyCondition;

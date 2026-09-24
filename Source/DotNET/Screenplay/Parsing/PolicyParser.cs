@@ -33,6 +33,7 @@ internal static partial class PolicyParser
         }
 
         PolicyConditionSyntax? condition = null;
+        var hasRequire = false;
         CodeBlockSyntax? code = null;
         FileReferenceSyntax? file = null;
 
@@ -48,7 +49,16 @@ internal static partial class PolicyParser
                     text += $" {continuation.Content}";
                 }
 
-                condition = ParseCondition(context, text, line.Location);
+                var parsed = ParseCondition(context, text, line.Location);
+                if (hasRequire)
+                {
+                    context.Error(DiagnosticCodes.RepeatedPolicyRequirement, $"Policy '{name.Groups[1].Value}' has more than one require line; combine the conditions with and/or in one require", line.Location);
+                }
+                else
+                {
+                    condition = parsed;
+                    hasRequire = true;
+                }
             }
             else if (FileReferenceParser.IsDirective(line))
             {
@@ -79,6 +89,11 @@ internal static partial class PolicyParser
                 context.Error(DiagnosticCodes.UnknownPolicyDirective, $"Unexpected '{line.Content}' in policy body - expected 'require ...', 'file <path>' or an inline code block", line.Location);
                 context.SkipBlock(line.Indent);
             }
+        }
+
+        if (condition is not null && (code is not null || file is not null))
+        {
+            context.Error(DiagnosticCodes.MixedPolicyImplementation, $"Policy '{name.Groups[1].Value}' cannot combine 'require' with a file or inline code block", header.Location);
         }
 
         if (condition is null && code is null && file is null)

@@ -16,17 +16,18 @@ internal static partial class SemanticModelValidator
             _ => []
         };
 
-        static void ValidatePolicyCondition(SemanticPolicyCondition? condition)
+        static void ValidatePolicyCondition(SemanticPolicyCondition? condition, bool allowOpaque = true)
         {
             switch (condition)
             {
+                case SemanticOpaquePolicyCondition when allowOpaque: break;
                 case SemanticAuthenticatedCondition: break;
                 case SemanticRoleCondition { Role: { } }: break;
                 case SemanticClaimCondition { Claim: { }, TargetKind: SemanticClaimTargetKind.Subject, Value: null }: break;
                 case SemanticClaimCondition { Claim: { }, TargetKind: SemanticClaimTargetKind.Literal or SemanticClaimTargetKind.Artifact, Value: { } }: break;
                 case SemanticLogicalPolicyCondition logical when logical.Operator is SemanticLogicalOperator.And or SemanticLogicalOperator.Or:
-                    ValidatePolicyCondition(logical.Left);
-                    ValidatePolicyCondition(logical.Right);
+                    ValidatePolicyCondition(logical.Left, false);
+                    ValidatePolicyCondition(logical.Right, false);
                     break;
                 default: throw new InvalidSemanticContract("Invalid policy condition.");
             }
@@ -78,7 +79,23 @@ internal static partial class SemanticModelValidator
         {
             RequireObjects(application.Policies, nameof(application.Policies), "policy");
             RejectDuplicateNames(application.Policies.Select(policy => policy.Name), "policy");
-            foreach (var policy in application.Policies) ValidatePolicyCondition(policy.Condition);
+            foreach (var policy in application.Policies)
+            {
+                ValidatePolicyCondition(policy.Condition);
+                if (policy.Condition is SemanticOpaquePolicyCondition opaque &&
+                    (_semanticVersion != SemanticVersion.V3 || string.IsNullOrWhiteSpace(opaque.RequirementId)))
+                {
+                    throw new InvalidSemanticContract($"Policy '{policy.Name}' requires ESM v3 and a requirement identity.");
+                }
+            }
+            var policyRequirements = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var policy in application.Policies)
+            {
+                if (policy.Condition is SemanticOpaquePolicyCondition opaque && !policyRequirements.Add(opaque.RequirementId))
+                {
+                    throw new InvalidSemanticContract("Policies have duplicate requirement identities.");
+                }
+            }
             foreach (var slice in AllSlices(application))
             {
                 foreach (var command in slice.Commands) ValidateAuthorization(command.Authorization, application.Policies, command.Properties);

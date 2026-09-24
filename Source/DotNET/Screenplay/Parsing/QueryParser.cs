@@ -57,7 +57,7 @@ internal static partial class QueryParser
 
                     break;
                 case "authorize":
-                    authorize = AuthorizeParser.Parse(context, line);
+                    authorize = AuthorizeParser.Combine(authorize, AuthorizeParser.Parse(context, line));
                     break;
                 case "performer":
                     performer = ParsePerformer(context, line, performer, name);
