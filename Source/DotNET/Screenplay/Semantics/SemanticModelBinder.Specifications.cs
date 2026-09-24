@@ -164,10 +164,18 @@ public sealed partial class SemanticModelBinder
         {
             var bound = BindPropertyValues(values, readModel.Properties, "specification read model");
             var identifier = readModel.Model.Properties.SingleOrDefault(_ => _.IsIdentifier);
-            var key = identifier is null ? null : bound.SingleOrDefault(_ => _.TargetProperty == identifier.Id)?.Value ?? inferredKey;
+
+            // A read model without an identifier has already been reported where it, or its keyed query, is declared.
+            // Asking every block that uses it for an identifier nobody can name would only repeat that error.
+            if (identifier is null)
+            {
+                return null;
+            }
+
+            var key = bound.SingleOrDefault(_ => _.TargetProperty == identifier.Id)?.Value ?? inferredKey;
             if (key is null)
             {
-                Error(DiagnosticCodes.MissingSpecificationReadModelIdentifier, $"Specification read model '{readModel.Model.Name}' must state its identifier property '{identifier?.Name}' in this block.", location);
+                Error(DiagnosticCodes.MissingSpecificationReadModelIdentifier, $"Specification read model '{readModel.Model.Name}' must state its identifier property '{identifier.Name}' in this block.", location);
                 return null;
             }
 

@@ -77,6 +77,27 @@ type BillingContact
   name  PersonName
   email EmailAddress
 
+// The read side has shapes of its own. A line as the details view shows it is
+// not the line a caller registers: it carries running totals the projection
+// keeps, and none of the registration-only values.
+type InvoiceLineItem
+  description "A line of an invoice as the details view shows it"
+  lineNumber Int
+  quantity   Quantity
+  unitPrice  Money
+  subtotal   Money?
+  itemCount  Int?
+
+type Shipment
+  description "How an invoice travels to the customer"
+  carrier String
+
+// A composite key names the values that together identify one instance.
+type InvoiceLineKey
+  description "One line of one invoice"
+  invoiceId  InvoiceId
+  lineNumber Int
+
 policy IsAuthenticated
   require authenticated
 
@@ -314,7 +335,13 @@ module Invoicing
       constraint OneRegistrationPerInvoice
         unique event InvoiceRegistered
 
+      // A command behind a policy is only specified for a stated caller - the
+      // runner never assumes who is asking.
       specification RegisteringADraftInvoice
+        given caller
+          authenticated
+          role "InvoiceManager"
+          claim "dateOfBirth" = "1980-01-01"
         given CustomerRegistered
           customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
           name       = "Acme Corp"
@@ -330,6 +357,10 @@ module Invoicing
           currency      = "USD"
 
       specification RejectingAnInvoiceWithNoLines
+        given caller
+          authenticated
+          role "InvoiceManager"
+          claim "dateOfBirth" = "1980-01-01"
         when RegisterInvoice
           invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
         then error "An invoice must have at least one line"
@@ -337,6 +368,10 @@ module Invoicing
       // A bare 'then error' says the command is rejected without naming a reason —
       // the reason this specification carries in its name, not in an assertion.
       specification RejectingAnInvoiceWhoseNumberIsAlreadyTaken
+        given caller
+          authenticated
+          role "InvoiceManager"
+          claim "dateOfBirth" = "1980-01-01"
         given InvoiceRegistered
           invoiceNumber = "INV-000123"
         when RegisterInvoice
@@ -442,6 +477,9 @@ module Invoicing
         file Constraints/InvoiceStatusTransitionConstraint.cs
 
       specification SendingADraftInvoice
+        given caller
+          authenticated
+          role "Accountant"
         given readmodel InvoiceListReadModel
           invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
           status    = "draft"
@@ -644,7 +682,52 @@ module Invoicing
               invoiceId = $.id
               email     = $.email
 
+      // What the capture appends are facts of this application like any other, so
+      // they are declared here, where they enter it.
+      event InvoicePaidFromSent
+        invoiceId InvoiceId
+        paidAt    DateTime
+
+      event InvoiceNeedsAttention
+        invoiceId InvoiceId
+
+      event InvoiceFullyApproved
+        invoiceId InvoiceId
+
+      event InvoiceFlagged
+        invoiceId InvoiceId
+
+      event InvoiceLineItemAdded
+        invoiceId  InvoiceId
+        lineNumber Int
+        quantity   Quantity
+        unitPrice  Money
+
+      event InvoiceLineItemRemoved
+        invoiceId  InvoiceId
+        lineNumber Int
+
+      event BillingContactUpdated
+        invoiceId InvoiceId
+        email     EmailAddress
+
     slice StateView InvoiceList
+
+      // A read model declares the shape a view holds. The projection below says
+      // how it is built; the arrow always points from builder to read model.
+      readmodel InvoiceListReadModel
+        description "One row per invoice in the invoice list"
+        id             InvoiceId
+        invoiceId      InvoiceId
+        customerId     CustomerId
+        invoiceNumber  InvoiceNumber
+        currency       CurrencyCode
+        status         InvoiceStatus
+        lineCount      Int
+        dueDate        Date
+        channel        String
+        touched        Bool?
+        lastActivityAt DateTime?
 
       // A query says what it is for, where each parameter comes from, and — when it
       // needs one — how it is performed. 'from' fills a parameter from the query
@@ -668,7 +751,11 @@ module Invoicing
           lineCount     = 0
           dueDate       = dueDate
           channel       = "portal"
-        from InvoiceSent, InvoicePaid
+        from InvoiceSent
+          status  = "sent"
+          touched = true
+        from InvoicePaid
+          status  = "paid"
           touched = true
         from InvoiceMarkedOverdue
           status = "overdue"
@@ -697,7 +784,31 @@ module Invoicing
 
     slice StateView InvoiceDetails
 
-      query GetInvoice => InvoiceDetailsReadModel
+      readmodel InvoiceDetailsReadModel
+        description "One invoice with its lines, customer and shipping status"
+        invoiceId            InvoiceId
+        customerId           CustomerId
+        invoiceNumber        InvoiceNumber
+        currency             CurrencyCode
+        paymentTerms         PaymentTerms
+        status               InvoiceStatus
+        dueDate              Date
+        registeredAt         DateTime
+        registeredBy         String
+        registeredByUser     String
+        registeredForSubject String
+        displayLabel         String
+        sentAt               DateTime?
+        paidAt               DateTime?
+        overdueAt            DateTime?
+        customerName         String?
+        lineItems            InvoiceLineItem[]
+        shipping             Shipment?
+        lastUpdatedAt        DateTime?
+
+      // A query for one instance returns it optionally - the invoice asked for
+      // may not exist.
+      query GetInvoice => InvoiceDetailsReadModel?
         description "One invoice with its lines, customer and shipping status"
         by invoiceId InvoiceId
         authorize OwnsInvoice or IsAuthenticated
@@ -775,6 +886,12 @@ module Invoicing
 
     slice StateView InvoiceLineReport
 
+      readmodel InvoiceLineReportReadModel
+        invoiceId  InvoiceId
+        lineNumber Int
+        quantity   Quantity
+        unitPrice  Money
+
       // The performer is the query's escape hatch, mirroring a command's handler —
       // an inline block in a top level language, or a 'file' reference.
       query ListLineItems => InvoiceLineReportReadModel[]
@@ -804,6 +921,13 @@ module Invoicing
     slice StateView CancelledInvoices
       description "Archive of cancelled invoices - every property auto-maps from the event"
 
+      readmodel CancelledInvoiceReadModel
+        invoiceId    InvoiceId
+        reason       String
+        cancelledAt  DateTime
+        cancelledBy  String
+        cancelledVia String
+
       query ListCancelledInvoices => CancelledInvoiceReadModel[]
         description "Cancelled invoices, kept for audit"
         authorize IsAccountant
@@ -814,6 +938,25 @@ module Invoicing
         from InvoiceCancelled
 
     slice StateView InvoiceDashboard
+
+      readmodel InvoiceSummaryReadModel
+        totalCount       Int
+        draftCount       Int
+        sentCount        Int?
+        paidCount        Int?
+        overdueCount     Int?
+        touches          Int
+        writeOffTotal    Money?
+        outstandingTotal Money?
+
+      // Nothing in the document builds this one - its performer composes it from
+      // stored invoices - so it declares its shape and no builder points at it.
+      readmodel OverdueInvoicesReadModel
+        invoiceId     InvoiceId
+        tenantId      TenantId
+        invoiceNumber InvoiceNumber
+        status        InvoiceStatus
+        dueDate       Date
 
       query GetInvoiceSummary  => InvoiceSummaryReadModel
         description "The counters behind the dashboard header"
@@ -905,6 +1048,10 @@ module Invoicing
 
     slice StateView SystemActivity
       description "Counts every event in the system for the activity ticker"
+
+      readmodel SystemActivityReadModel
+        totalEvents  Int
+        lastOccurred DateTime?
 
       query GetSystemActivity => SystemActivityReadModel
         authorize IsAccountant
