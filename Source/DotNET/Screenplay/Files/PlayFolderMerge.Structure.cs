@@ -34,6 +34,7 @@ internal static partial class PlayFolderMerge
         {
             SourceComments = [.. parts.SelectMany(part => part.SourceComments).Distinct()],
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"module '{group.Key}'", context),
+            Authorize = CombineAuthorization(parts.Select(part => part.Authorize), $"module '{group.Key}'", context),
             ScreenTemplates = DeclaredInOneFile(
                 parts.SelectMany(part => part.ScreenTemplates),
                 template => template.Name,
@@ -77,6 +78,7 @@ internal static partial class PlayFolderMerge
         {
             SourceComments = [.. parts.SelectMany(part => part.SourceComments).Distinct()],
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"feature '{group.Key}'", context),
+            Authorize = CombineAuthorization(parts.Select(part => part.Authorize), $"feature '{group.Key}'", context),
             Contributions = [.. parts.SelectMany(part => part.Contributions ?? [])],
             Behaviors = InlineBehaviorsOnce(parts.SelectMany(part => part.Behaviors), $"feature '{group.Key}'", context),
             UsedBehaviors = UsedBehaviorsOnce(parts.SelectMany(part => part.UsedBehaviors), $"feature '{group.Key}'", context),
@@ -89,6 +91,43 @@ internal static partial class PlayFolderMerge
                 context,
                 $"feature '{group.Key}'")
         };
+    }
+
+    /// <summary>
+    /// Combines distinct authorization gates across files without ever weakening an earlier gate.
+    /// </summary>
+    static AuthorizeSyntax? CombineAuthorization(IEnumerable<AuthorizeSyntax?> declarations, string owner, ParserContext context)
+    {
+        var kept = new List<AuthorizeSyntax>();
+        foreach (var authorization in declarations.OfType<AuthorizeSyntax>())
+        {
+            var first = kept.Find(earlier =>
+                !string.Equals(earlier.Location.Path, authorization.Location.Path, StringComparison.Ordinal) &&
+                SyntaxJson.StructurallyEqual(earlier, authorization));
+            if (first is not null)
+            {
+                context.Warning(
+                    DiagnosticCodes.DuplicateAuthorizationAcrossFiles,
+                    $"An identical authorization is already declared on the {owner} in '{Describe(first.Location.Path)}' - this repeated gate is ignored",
+                    authorization.Location);
+                continue;
+            }
+
+            kept.Add(authorization);
+        }
+
+        if (kept.Count == 0)
+        {
+            return null;
+        }
+
+        var requirement = kept[0].Requirement;
+        foreach (var next in kept.Skip(1))
+        {
+            requirement = new LogicalPolicyRequirementSyntax(requirement, LogicalOperator.And, next.Requirement, requirement.Location);
+        }
+
+        return new AuthorizeSyntax(requirement, kept[0].Location);
     }
 
     /// <summary>

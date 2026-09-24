@@ -72,6 +72,7 @@ internal static class PlayFileDocument
         Description = null,
         Behaviors = [],
         UsedBehaviors = [],
+        Authorize = null,
         SourceComments = []
     };
 
@@ -83,6 +84,7 @@ internal static class PlayFileDocument
         Description = null,
         Behaviors = [],
         UsedBehaviors = [],
+        Authorize = null,
         SourceComments = []
     };
 }

@@ -408,13 +408,18 @@ public sealed partial class ScreenplayPrinter :
         {
             WriteDescription(writer, module.Description);
             var members = new List<PrintableMember>();
-            AddMembers(members, module.Behaviors, 0, behavior => WriteAttachedBehavior(writer, behavior));
-            AddMembers(members, module.UsedBehaviors, 1, uses => WriteUsesBehavior(writer, uses));
-            AddSeparatedMembers(members, writer, module.ScreenTemplates, 2, WriteScreenTemplate);
-            AddSeparatedMembers(members, writer, module.DialogTemplates ?? [], 3, WriteDialogTemplate);
-            AddSeparatedMembers(members, writer, module.Forms ?? [], 4, WriteForm);
-            AddSeparatedMembers(members, writer, module.Contributions ?? [], 5, WriteContribution);
-            AddSeparatedMembers(members, writer, module.Features, 6, WriteFeature);
+            if (module.Authorize is not null)
+            {
+                AddMembers(members, [module.Authorize], 0, authorize => WriteAuthorize(writer, authorize));
+            }
+
+            AddMembers(members, module.Behaviors, 1, behavior => WriteAttachedBehavior(writer, behavior));
+            AddMembers(members, module.UsedBehaviors, 2, uses => WriteUsesBehavior(writer, uses));
+            AddSeparatedMembers(members, writer, module.ScreenTemplates, 3, WriteScreenTemplate);
+            AddSeparatedMembers(members, writer, module.DialogTemplates ?? [], 4, WriteDialogTemplate);
+            AddSeparatedMembers(members, writer, module.Forms ?? [], 5, WriteForm);
+            AddSeparatedMembers(members, writer, module.Contributions ?? [], 6, WriteContribution);
+            AddSeparatedMembers(members, writer, module.Features, 7, WriteFeature);
             WriteMembers(members);
         }
     }
@@ -721,11 +726,16 @@ public sealed partial class ScreenplayPrinter :
         {
             WriteDescription(writer, feature.Description);
             var members = new List<PrintableMember>();
-            AddMembers(members, feature.Behaviors, 0, behavior => WriteAttachedBehavior(writer, behavior));
-            AddMembers(members, feature.UsedBehaviors, 1, uses => WriteUsesBehavior(writer, uses));
-            AddSeparatedMembers(members, writer, feature.Features, 2, WriteFeature);
-            AddSeparatedMembers(members, writer, feature.Slices, 3, WriteSlice);
-            AddSeparatedMembers(members, writer, feature.Contributions ?? [], 4, WriteContribution);
+            if (feature.Authorize is not null)
+            {
+                AddMembers(members, [feature.Authorize], 0, authorize => WriteAuthorize(writer, authorize));
+            }
+
+            AddMembers(members, feature.Behaviors, 1, behavior => WriteAttachedBehavior(writer, behavior));
+            AddMembers(members, feature.UsedBehaviors, 2, uses => WriteUsesBehavior(writer, uses));
+            AddSeparatedMembers(members, writer, feature.Features, 3, WriteFeature);
+            AddSeparatedMembers(members, writer, feature.Slices, 4, WriteSlice);
+            AddSeparatedMembers(members, writer, feature.Contributions ?? [], 5, WriteContribution);
             WriteMembers(members);
         }
     }

@@ -365,6 +365,7 @@ internal static partial class ScreenplayParser
         var contributions = new List<ContributionSyntax>();
         var behaviors = new List<BehaviorSyntax>();
         var usedBehaviors = new List<UsesBehaviorSyntax>();
+        AuthorizeSyntax? authorize = null;
 
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -373,6 +374,9 @@ internal static partial class ScreenplayParser
             {
                 case "description":
                     description = DescriptionParser.Parse(context, child, description, $"Module '{name}'");
+                    break;
+                case "authorize":
+                    authorize = CombineAuthorize(authorize, AuthorizeParser.Parse(context, child));
                     break;
                 case "on":
                 case "uses":
@@ -396,7 +400,7 @@ internal static partial class ScreenplayParser
                     features.Add(ParseFeature(context, child));
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownModuleDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected description, screen template, dialog template, form, contribute, feature, 'on <trigger>' or 'uses <Behavior>'", child.Location);
+                    context.Error(DiagnosticCodes.UnknownModuleDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected description, authorize, screen template, dialog template, form, contribute, feature, 'on <trigger>' or 'uses <Behavior>'", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
@@ -405,7 +409,8 @@ internal static partial class ScreenplayParser
         return new(name, screenTemplates, features, line.Location, description, forms, contributions, dialogTemplates)
         {
             Behaviors = behaviors,
-            UsedBehaviors = usedBehaviors
+            UsedBehaviors = usedBehaviors,
+            Authorize = authorize
         };
     }
 
@@ -435,6 +440,7 @@ internal static partial class ScreenplayParser
         var contributions = new List<ContributionSyntax>();
         var behaviors = new List<BehaviorSyntax>();
         var usedBehaviors = new List<UsesBehaviorSyntax>();
+        AuthorizeSyntax? authorize = null;
 
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -443,6 +449,9 @@ internal static partial class ScreenplayParser
             {
                 case "description":
                     description = DescriptionParser.Parse(context, child, description, $"Feature '{name}'");
+                    break;
+                case "authorize":
+                    authorize = CombineAuthorize(authorize, AuthorizeParser.Parse(context, child));
                     break;
                 case "on":
                 case "uses":
@@ -458,7 +467,7 @@ internal static partial class ScreenplayParser
                     contributions.Add(ContributionParser.Parse(context, child));
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownFeatureDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in feature body - expected description, feature, slice, contribute, 'on <trigger>' or 'uses <Behavior>'", child.Location);
+                    context.Error(DiagnosticCodes.UnknownFeatureDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in feature body - expected description, authorize, feature, slice, contribute, 'on <trigger>' or 'uses <Behavior>'", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
@@ -467,9 +476,17 @@ internal static partial class ScreenplayParser
         return new(name, features, slices, line.Location, description, contributions)
         {
             Behaviors = behaviors,
-            UsedBehaviors = usedBehaviors
+            UsedBehaviors = usedBehaviors,
+            Authorize = authorize
         };
     }
+
+    static AuthorizeSyntax? CombineAuthorize(AuthorizeSyntax? first, AuthorizeSyntax? next) => (first, next) switch
+    {
+        (null, _) => next,
+        (_, null) => first,
+        _ => new AuthorizeSyntax(new LogicalPolicyRequirementSyntax(first.Requirement, LogicalOperator.And, next.Requirement, first.Location), first.Location)
+    };
 
     [GeneratedRegex(@"^domain\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]
     private static partial Regex DomainRegex();

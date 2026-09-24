@@ -1,6 +1,6 @@
 # Policies
 
-Policies are named authorization rules. Commands and queries reference them by name with `authorize`. Multiple policies on a single construct must all pass (AND semantics). Policies support role-based, claim-based, and fully custom logic.
+Policies are named authorization rules. Modules, features, commands, and queries reference them by name with `authorize`. Policies support role-based, claim-based, and fully custom logic. Authorization gates on enclosing scopes narrow access; they never replace a gate closer to a command or query.
 
 ## Syntax
 
@@ -16,6 +16,34 @@ policy <Name>
     <C# returning bool>
     ```
 ````
+
+## Authorization scopes
+
+Declare `authorize <policy expression>` directly in a module or feature body, or on a command or query. Each gate can use policy names joined by `and` and `or`, with parentheses for grouping. Names written next to one another mean `and`. Every gate along the path to a command or query must pass: its own gate **and** every enclosing feature's gate (including nested features) **and** the module's gate. This is the same AND rule used for several policies on one construct. An `or` inside a gate does not bypass any enclosing gate.
+
+```screenplay
+policy HasPortalAccess
+  require authenticated
+
+policy CanManageOrders
+  require role "OrderManager"
+
+policy IsRegionalManager
+  require role "RegionalManager"
+
+module Portal
+  authorize HasPortalAccess
+  feature Orders
+    authorize CanManageOrders or IsRegionalManager
+    feature Returns
+      slice StateChange ReturnOrder
+        command RequestReturn
+          authorize CanManageOrders
+```
+
+`RequestReturn` requires `HasPortalAccess` **and** (`CanManageOrders` **or** `IsRegionalManager`) **and** `CanManageOrders`. A feature without its own gate still inherits its ancestors' gates. When a folder declares the same module or feature gate in different files, distinct gates accumulate with AND; identical repeated gates are reported and kept once. The printer keeps a gate where it was declared rather than copying inherited gates onto each command or query.
+
+The source compiler resolves policy names at all four positions and warns about unknown names. ESM v1 does **not** admit authorization yet: binding a module or feature gate reports `PLAY0268` (“authorization requires portable policy semantics and is not admitted by ESM v1”), just as command and query authorization is not admitted. Policy execution waits for portable policy semantics.
 
 ## Conditions
 

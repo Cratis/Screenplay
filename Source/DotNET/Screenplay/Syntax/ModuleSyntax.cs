@@ -36,6 +36,12 @@ public record ModuleSyntax(
     /// Gets the named behaviors attached to the module with <c>uses</c>.
     /// </summary>
     public IEnumerable<UsesBehaviorSyntax> UsedBehaviors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the authorization required by every command and query in this module, in addition to their own
+    /// and their enclosing features' requirements. This init member preserves the 4.0.0 positional contract.
+    /// </summary>
+    public AuthorizeSyntax? Authorize { get; init; }
 }
 
 /// <summary>
@@ -65,4 +71,10 @@ public record FeatureSyntax(
     /// Gets the named behaviors attached to the feature with <c>uses</c>.
     /// </summary>
     public IEnumerable<UsesBehaviorSyntax> UsedBehaviors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the authorization required by every command and query beneath this feature, including nested
+    /// features, in addition to the enclosing requirements.
+    /// </summary>
+    public AuthorizeSyntax? Authorize { get; init; }
 }
