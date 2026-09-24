@@ -13,6 +13,11 @@ public sealed partial class SemanticModelBinder
     {
         SemanticModule BindModule(ModuleSyntax module)
         {
+            if (module.Authorize is not null)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Module '{module.Name}' authorization requires portable policy semantics and is not admitted by ESM v1.", module.Authorize.Location);
+            }
+
             if (module.Description is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Module '{module.Name}' description is authoring metadata.", module.Location);
@@ -46,6 +51,11 @@ public sealed partial class SemanticModelBinder
 
         SemanticFeature BindFeature(string module, ImmutableArray<string> parentPath, FeatureSyntax feature)
         {
+            if (feature.Authorize is not null)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Feature '{feature.Name}' authorization requires portable policy semantics and is not admitted by ESM v1.", feature.Authorize.Location);
+            }
+
             if (feature.Description is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Feature '{feature.Name}' description is authoring metadata.", feature.Location);

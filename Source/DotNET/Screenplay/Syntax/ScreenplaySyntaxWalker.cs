@@ -169,6 +169,11 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
 
+        if (syntax.Authorize is not null)
+        {
+            VisitAuthorize(syntax.Authorize);
+        }
+
         foreach (var screenTemplate in syntax.ScreenTemplates)
         {
             VisitScreenTemplate(screenTemplate);
@@ -418,6 +423,11 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitFeature(FeatureSyntax syntax)
     {
         VisitNode(syntax);
+
+        if (syntax.Authorize is not null)
+        {
+            VisitAuthorize(syntax.Authorize);
+        }
 
         foreach (var feature in syntax.Features)
         {
