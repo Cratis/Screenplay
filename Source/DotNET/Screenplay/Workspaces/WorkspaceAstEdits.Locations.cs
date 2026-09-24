@@ -76,6 +76,49 @@ internal sealed partial class WorkspaceAstEdits
         }
     }
 
+    // The typed replacement still holds its original child instances. They are the only way to distinguish
+    // equal JSON siblings after a reorder; positional JSON matching must not overwrite their metadata.
+    void CarryReplacementMetadata(SyntaxNode node, JsonNode json)
+    {
+        if (node.SourceComments.Length > 0)
+        {
+            _sourceComments[json] = node.SourceComments;
+        }
+
+        if (node.Location.Line > 1)
+        {
+            _sourceLocations[json] = node.Location;
+        }
+
+        var descriptor = SyntaxKinds.All.Single(kind => kind.Type == node.GetType());
+        foreach (var member in descriptor.Members)
+        {
+            if (json[member.Name] is not { } childJson)
+            {
+                continue;
+            }
+
+            var value = member.Property.GetValue(node);
+            if (value is SyntaxNode child)
+            {
+                CarryReplacementMetadata(child, childJson);
+            }
+            else if (value is IEnumerable children and not string && childJson is JsonArray array)
+            {
+                var position = 0;
+                foreach (var item in children)
+                {
+                    if (item is SyntaxNode nested && array[position] is { } element)
+                    {
+                        CarryReplacementMetadata(nested, element);
+                    }
+
+                    position++;
+                }
+            }
+        }
+    }
+
     ApplicationSyntax RestoreSourceLocations(JsonNode json, ApplicationSyntax syntax)
     {
         Restore(json, syntax);

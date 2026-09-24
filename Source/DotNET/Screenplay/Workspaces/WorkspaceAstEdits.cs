@@ -59,7 +59,7 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
 
         foreach (var edit in _edits.Where(edit => edit.Target is not null))
         {
-            Replace(edit.Target!, edit.Original!, edit.Destination is null && edit.Value is not null ? ToJson(edit.Value) : null);
+            Replace(edit.Target!, edit.Original!, edit.Destination is null && edit.Value is not null ? ToJson(edit.Value) : null, edit.Value);
         }
 
         foreach (var edit in _edits.Where(edit => edit.Destination is not null))
@@ -243,11 +243,15 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
         return current;
     }
 
-    void Replace(WorkspaceSyntaxEntry target, JsonNode original, JsonNode? replacement)
+    void Replace(WorkspaceSyntaxEntry target, JsonNode original, JsonNode? replacement, SyntaxNode? value)
     {
         if (replacement is not null)
         {
             CarrySourceLocations(original, replacement);
+            if (value is not null)
+            {
+                CarryReplacementMetadata(value, replacement);
+            }
         }
 
         if (target.Parent is null)
