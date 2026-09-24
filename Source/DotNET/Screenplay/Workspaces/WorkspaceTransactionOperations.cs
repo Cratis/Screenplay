@@ -68,16 +68,41 @@ static class WorkspaceTransactionOperations
         return null;
     }
 
-    internal static WorkspaceTransactionResult CompilationFailure(IEnumerable<Diagnostic> diagnostics) => new()
+    internal static WorkspaceTransactionResult CompilationFailure(IEnumerable<Diagnostic> diagnostics)
     {
-        Conflicts =
-        [
-            Conflict(
-                WorkspaceConflictKind.CompilationFailed,
-                "The candidate workspace did not compile as one coherent Screenplay application.")
-        ],
-        Diagnostics = [.. diagnostics]
-    };
+        var reported = diagnostics.ToImmutableArray();
+        var owner = reported.FirstOrDefault(diagnostic =>
+            diagnostic.Severity == DiagnosticSeverity.Error &&
+            (string.Equals(diagnostic.Code, DiagnosticCodes.RepeatedDeclarationAcrossFiles, StringComparison.Ordinal) ||
+             string.Equals(diagnostic.Code, DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles, StringComparison.Ordinal)));
+        WorkspaceConflict? conflict = null;
+        if (owner is not null && PortablePlayPath.TryParse(owner.Location.Path, out var path))
+        {
+            // The folder merge's diagnostic names the first claimant; its location names the second.
+            var start = owner.Message.LastIndexOf(" in '", StringComparison.Ordinal);
+            if (start >= 0)
+            {
+                start += 5;
+                var end = owner.Message.IndexOf('\'', start);
+                if (end > start && PortablePlayPath.TryParse(owner.Message[start..end], out var otherPath))
+                {
+                    conflict = new WorkspaceConflict
+                    {
+                        Kind = WorkspaceConflictKind.ConflictingOwner,
+                        Message = owner.Message,
+                        Path = path,
+                        OtherPath = otherPath
+                    };
+                }
+            }
+        }
+
+        return new()
+        {
+            Conflicts = [conflict ?? Conflict(WorkspaceConflictKind.CompilationFailed, "The candidate workspace did not compile as one coherent Screenplay application.")],
+            Diagnostics = reported
+        };
+    }
 
     internal static WorkspaceTransactionResult Failure(
         WorkspaceConflictKind kind,

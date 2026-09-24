@@ -138,10 +138,8 @@ internal static partial class PlayFolderMerge
     /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
     /// <returns>The first description given, or <c>null</c> when no file gives one.</returns>
     /// <remarks>
-    /// Only the file that owns the module or feature folder is expected to describe it; the files below it
-    /// name it without saying anything about it. A second, different description is a genuine disagreement
-    /// between two files, so it is reported rather than silently dropped - but it stays a warning, because the
-    /// application it describes is still perfectly well defined.
+    /// A restated module or feature header does not own a description. A second file describing it claims
+    /// the same member even if the text matches, so the folder cannot establish a unique owner.
     /// </remarks>
     static string? FirstDescription(
         IEnumerable<(string? Description, SourceLocation Location)> parts,
@@ -154,13 +152,13 @@ internal static partial class PlayFolderMerge
             return null;
         }
 
-        foreach (var disagreeing in described.Skip(1)
-            .Where(part => !string.Equals(part.Description, described[0].Description, StringComparison.Ordinal)))
+        foreach (var duplicate in described.Skip(1).Where(part =>
+            !string.Equals(part.Location.Path, described[0].Location.Path, StringComparison.Ordinal)))
         {
-            context.Warning(
-                DiagnosticCodes.ConflictingDescriptionAcrossFiles,
-                $"The {owner} is already described in '{Describe(described[0].Location.Path)}' - keeping that description",
-                disagreeing.Location);
+            context.Error(
+                DiagnosticCodes.RepeatedDeclarationAcrossFiles,
+                $"Duplicate description on {owner} - already declared in '{Describe(described[0].Location.Path)}'",
+                duplicate.Location);
         }
 
         return described[0].Description;

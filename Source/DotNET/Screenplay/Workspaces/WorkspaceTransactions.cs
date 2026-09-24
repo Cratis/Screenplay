@@ -220,6 +220,11 @@ public sealed record WorkspaceConflict
     /// Gets the affected portable path, when one is known.
     /// </summary>
     public PortablePlayPath? Path { get; init; }
+
+    /// <summary>
+    /// Gets the other owner's portable path, when two files claim the same declaration.
+    /// </summary>
+    public PortablePlayPath? OtherPath { get; init; }
 }
 
 /// <summary>
