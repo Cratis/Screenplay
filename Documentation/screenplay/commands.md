@@ -331,7 +331,7 @@ Command `require` conditions over command properties and constants are admitted 
 authorize <requirement>
 ```
 
-Two policies written next to each other mean both must pass, and `and` says the same thing out loud. `or` makes them alternatives. A requirement may continue on the next line at deeper indentation:
+Two policies written next to each other mean both must pass, and `and` says the same thing out loud. `or` makes them alternatives. Repeated `authorize` lines on a command or query combine with AND in authored order; printing writes them as one `authorize A and B` line. A requirement may continue on the next line at deeper indentation:
 
 ```screenplay
 authorize CanManageInvoice IsAdultCustomer

@@ -100,7 +100,9 @@ policy IsAdultCustomer
   csharp
     ```
     var dateOfBirth = context.Identity.ClaimValue("dateOfBirth");
-    return dateOfBirth is not null && DateTime.Parse(dateOfBirth) <= DateTime.UtcNow.AddYears(-18);
+    return dateOfBirth is not null && DateTime.TryParse(dateOfBirth, System.Globalization.CultureInfo.InvariantCulture,
+      System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
+      out var born) && born <= context.Occurred.UtcDateTime.AddYears(-18);
     ```
 
 persona Accountant

@@ -42,7 +42,7 @@ module Portal
           authorize CanManageOrders
 ```
 
-`RequestReturn` requires `HasPortalAccess` **and** (`CanManageOrders` **or** `IsRegionalManager`) **and** `CanManageOrders`. A feature without its own gate still inherits its ancestors' gates. When a folder declares the same module or feature gate in different files, distinct gates accumulate with AND; identical repeated gates are reported and kept once. The printer keeps a gate where it was declared rather than copying inherited gates onto each command or query.
+`RequestReturn` requires `HasPortalAccess` **and** (`CanManageOrders` **or** `IsRegionalManager`) **and** `CanManageOrders`. A feature without its own gate still inherits its ancestors' gates. When a folder declares the same module or feature gate in different files, distinct gates accumulate with AND; identical repeated gates are reported and kept once. Repeated `authorize` lines on a command or query combine with AND in authored order; printing writes them as one `authorize A and B` line. The printer keeps a gate where it was declared rather than copying inherited gates onto each command or query.
 
 The source compiler resolves policy names at all four positions and warns about unknown names. Portable conditions bind to the ESM and run in the reference evaluator. A custom implementation binds as an opaque ESM v3 policy predicate; it requires a target provider to evaluate it.
 

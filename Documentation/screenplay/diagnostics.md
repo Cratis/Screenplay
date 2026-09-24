@@ -262,6 +262,7 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0121` | Error | A claim match states nothing to match the claim to. |
 | `PLAY0122` | Error | An `authorize` clause names no policy. |
 | `PLAY0123` | Error | A policy is referred to by something that is not a policy name. |
+| `PLAY0440` | Error | A policy combines `require` with an inline code block or a file implementation. Choose one form. |
 
 ### Authentication
 
@@ -752,7 +753,6 @@ These warnings are returned by `AttachmentFiles.Load` for implementation files t
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0440` | Error | A policy combines `require` with an inline code block or a file implementation. Choose one form. |
 | `PLAY0430` | Warning | An attachment path is absolute, drive-qualified, escapes the model root, or is not portable. |
 | `PLAY0431` | Warning | An attachment or a directory on its path is a symbolic link or reparse point. |
 | `PLAY0432` | Warning | An attachment or a directory on its path is missing. |
