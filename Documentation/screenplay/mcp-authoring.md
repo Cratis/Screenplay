@@ -162,12 +162,13 @@ To change a specification value or a `produces` mapping without touching anythin
 else, `replace` its `PropertyMappingSyntax` with `formatting: "PreserveTrivia"`.
 Changing `channel = "web"` to `"store"` rewrites only `"web"`; every comment,
 blank line and declaration stays where it was. `CanonicalizeTouchedDocuments`
-reprints the whole document instead: comments are dropped and blank lines are
-normalized. Existing members from the same parsed document retain their authored
+reprints the whole document instead: attached comments stay with their syntax owners,
+while blank lines are normalized. Existing members from the same parsed document retain their authored
 order, including when an edited member is replaced through typed JSON. Newly authored
 members without comparable source positions follow the canonical insertion rule;
 see [Printing and generating](printing.md#what-printing-does-not-keep). The
-`dropped-comments` view lists exactly which comments are lost.
+`dropped-comments` view lists only comments that cannot be placed. An edit that
+keeps all comments reports zero dropped comments.
 
 1. Call `read-proposal` with its ID and `view: "changes"`. Check the proposal's
    `droppedCommentCount`; when it is not zero, call `read-proposal` with
@@ -203,6 +204,9 @@ Call `recommend-layout` for advice, then `expand-layout` with `layout` set to
 formatting consent. For full-language models, set `validation: "Authoring"`.
 
 Review and apply the resulting proposal exactly like a node edit. Reorganization
-normalizes source formatting and checks structural equivalence; it does not copy
-module forms or contributions into scaffolding. The read tools continue to see
+normalizes source formatting and checks structural equivalence; it keeps annotations
+such as `// @public` beside the declaration they describe, even when a declaration
+moves to a new document. The `dropped-comments` view compares comments across the
+whole plan, not just documents changed in place. Expansion does not copy module
+forms or contributions into scaffolding. The read tools continue to see
 one logical application regardless of the chosen layout.

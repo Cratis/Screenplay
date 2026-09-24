@@ -13,15 +13,27 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal static class SourceCommentCapture
 {
-    internal static T Attach<T>(T root, IReadOnlyList<SourceLine> lines)
+    internal static T Attach<T>(T root, IReadOnlyList<SourceLine> lines, bool hashComments = false)
         where T : SyntaxNode
     {
         var nodes = new List<SyntaxNode>();
         Visit(root, nodes);
         var comments = new Dictionary<SyntaxNode, ImmutableArray<SourceComment>.Builder>(ReferenceEqualityComparer.Instance);
+        var inFence = false;
         foreach (var line in lines)
         {
-            var start = SourceLineSplitter.CommentStart(line.Raw[line.Indent..]);
+            if (line.Content.StartsWith("```", StringComparison.Ordinal))
+            {
+                inFence = !inFence;
+                continue;
+            }
+
+            if (inFence)
+            {
+                continue;
+            }
+
+            var start = SourceLineSplitter.CommentStart(line.Raw[line.Indent..], hashComments);
             if (start < 0)
             {
                 continue;
@@ -30,10 +42,7 @@ internal static class SourceCommentCapture
             var text = line.Raw[(line.Indent + start)..];
             var trailing = line.Content.Length > 0;
             var next = lines.Skip(line.Number).FirstOrDefault(candidate => candidate.Content.Length > 0);
-            var leading = !trailing && next is not null &&
-                lines.Skip(line.Number).Take(next.Number - line.Number - 1).All(candidate => candidate.Content.Length == 0 &&
-                    SourceLineSplitter.CommentStart(candidate.Raw[candidate.Indent..]) >= 0) &&
-                line.Indent >= next.Indent;
+            var leading = !trailing && next is not null && line.Indent <= next.Indent;
             SourceLine? anchor = null;
             if (trailing)
             {
@@ -45,7 +54,7 @@ internal static class SourceCommentCapture
             }
 
             var owner = anchor is null ? Enclosing(nodes, line.Number, line.Indent, root) :
-                nodes.FirstOrDefault(node => node.Location.Line == anchor.Number && node.Location.Column == anchor.Indent + 1)
+                nodes.Find(node => node.Location.Line == anchor.Number && node.Location.Column == anchor.Indent + 1)
                     ?? Enclosing(nodes, anchor.Number, anchor.Indent, root);
             if (!comments.TryGetValue(owner, out var list))
             {
@@ -66,7 +75,10 @@ internal static class SourceCommentCapture
                 line.Number,
                 anchor?.Content ?? lines.ElementAtOrDefault(owner.Location.Line - 1)?.Content ?? string.Empty,
                 text,
-                placement));
+                placement)
+            {
+                OwnerAnchor = lines.ElementAtOrDefault(owner.Location.Line - 1)?.Content ?? string.Empty
+            });
         }
 
         foreach (var (node, list) in comments)

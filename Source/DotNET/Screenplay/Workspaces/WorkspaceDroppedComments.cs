@@ -41,18 +41,45 @@ public sealed record WorkspaceDroppedComment
 /// Finds authored comments that a proposed change drops, so a reviewer can see them before applying it.
 /// </summary>
 /// <remarks>
-/// Comments are compared by exact text, as a multiset: a comment that survives anywhere in the changed document,
-/// even on another line, is not reported. A document created, removed, or unchanged by a plan drops nothing.
+/// Comments are compared by exact text, as a multiset: a comment that survives in any output document,
+/// including one created by a layout change, is not reported.
 /// </remarks>
 public static class WorkspaceDroppedComments
 {
     /// <summary>
-    /// Finds every comment dropped by the documents a write plan changes in place.
+    /// Finds every comment dropped by the complete write plan, including moved or removed documents.
     /// </summary>
     /// <param name="plan">The <see cref="WorkspaceWritePlan"/> to review.</param>
     /// <returns>The dropped comments, in document and source order.</returns>
-    public static ImmutableArray<WorkspaceDroppedComment> In(WorkspaceWritePlan plan) =>
-        [.. plan.Entries.Where(entry => entry.Before is not null && entry.After is not null).SelectMany(entry => Between(entry.Before!, entry.After!))];
+    public static ImmutableArray<WorkspaceDroppedComment> In(WorkspaceWritePlan plan)
+    {
+        var remaining = plan.Entries.Where(entry => entry.After is not null)
+            .SelectMany(entry => Comments(entry.After!)).GroupBy(comment => comment.Text, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
+        var dropped = ImmutableArray.CreateBuilder<WorkspaceDroppedComment>();
+        foreach (var document in plan.Entries.Select(entry => entry.Before).OfType<WorkspaceDocument>())
+        {
+            foreach (var comment in Comments(document))
+            {
+                if (remaining.TryGetValue(comment.Text, out var count) && count > 0)
+                {
+                    remaining[comment.Text] = count - 1;
+                    continue;
+                }
+
+                dropped.Add(new()
+                {
+                    Document = document.Id,
+                    Path = document.Path,
+                    Line = comment.Span.Line,
+                    Column = comment.Span.Column,
+                    Text = comment.Text
+                });
+            }
+        }
+
+        return dropped.ToImmutable();
+    }
 
     /// <summary>
     /// Finds every comment of one document that its replacement no longer contains.

@@ -66,7 +66,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
         var lines = SourceLineSplitter.Split(source, hashComments: true);
         var context = new ParserContext(new(lines), languages: languages);
         var projections = ProjectionParser.ParseDocument(context);
-        return new(projections.Count > 0 ? SourceCommentCapture.Attach(projections[0], lines) : null, context.Diagnostics);
+        return new(projections.Count > 0 ? SourceCommentCapture.Attach(projections[0], lines, hashComments: true) : null, context.Diagnostics);
     }
 
     /// <inheritdoc/>
@@ -84,7 +84,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
         var lines = SourceLineSplitter.Split(source, hashComments: true);
         var context = new ParserContext(new(lines), languages: languages);
         var specifications = SpecificationParser.ParseDocument(context);
-        return new(specifications.Count > 0 ? SourceCommentCapture.Attach(specifications[0], lines) : null, context.Diagnostics);
+        return new(specifications.Count > 0 ? SourceCommentCapture.Attach(specifications[0], lines, hashComments: true) : null, context.Diagnostics);
     }
 
     /// <inheritdoc/>
@@ -102,7 +102,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
         var lines = SourceLineSplitter.Split(source, hashComments: true);
         var context = new ParserContext(new(lines), languages: languages);
         var captures = CaptureParser.ParseDocument(context);
-        return new(captures.Count > 0 ? SourceCommentCapture.Attach(captures[0], lines) : null, context.Diagnostics);
+        return new(captures.Count > 0 ? SourceCommentCapture.Attach(captures[0], lines, hashComments: true) : null, context.Diagnostics);
     }
 
     /// <inheritdoc/>

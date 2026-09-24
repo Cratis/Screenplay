@@ -35,7 +35,7 @@ public enum WorkspaceAuthoringFormatting
     PreserveExactSource,
 
     /// <summary>
-    /// Canonicalize touched documents, discarding comments and trivia while preserving their UTF-8 BOM policy.
+    /// Canonicalize touched documents, keeping attached comments while normalizing whitespace and preserving their UTF-8 BOM policy.
     /// </summary>
     CanonicalizeTouchedDocuments,
 

@@ -25,4 +25,10 @@ public enum SourceCommentPlacement
 /// <param name="Anchor">The significant source line beside or following the comment.</param>
 /// <param name="Text">The comment, including its marker.</param>
 /// <param name="Placement">Where to print the comment relative to its anchor.</param>
-public sealed record SourceComment(int Line, string Anchor, string Text, SourceCommentPlacement Placement);
+public sealed record SourceComment(int Line, string Anchor, string Text, SourceCommentPlacement Placement)
+{
+    /// <summary>
+    /// Gets the source line that introduces the syntax owner of this comment.
+    /// </summary>
+    public string OwnerAnchor { get; init; } = string.Empty;
+}

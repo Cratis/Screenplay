@@ -30,6 +30,7 @@ public class when_printing_comments_throughout_a_slice : given.a_printer
     void Because() => _roundtrip = RoundTrip(Source);
 
     [Fact] void should_keep_every_comment() => _roundtrip.PrintedAgain.ShouldEqual(_roundtrip.Printed);
+    [Fact] void should_keep_each_comment_once() => _roundtrip.Printed.Split("//", StringSplitOptions.None).Length.ShouldEqual(9);
     [Fact] void should_keep_annotations() => _roundtrip.Printed.ShouldContain("// @public");
     [Fact] void should_keep_trailing_comments() => _roundtrip.Printed.ShouldContain("id = \"web\" // source annotation");
     [Fact] void should_keep_block_end_comments() => _roundtrip.Printed.ShouldContain("// at the end of the slice");

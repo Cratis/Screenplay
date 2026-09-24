@@ -29,8 +29,38 @@ public sealed partial class ScreenplayPrinter
                      .OrderBy(group => group.Min(entry => entry.Comment.Line)))
         {
             var (owner, anchor, placement) = group.Key;
-            var matches = Enumerable.Range(0, lines.Count)
-                .Where(index => Matches(lines[index].TrimStart(), anchor)).ToList();
+            List<int> matches = [.. Enumerable.Range(0, lines.Count)
+                .Where(index => lines[index].TrimStart() == anchor)];
+            if (matches.Count == 0)
+            {
+                matches = [.. Enumerable.Range(0, lines.Count)
+                    .Where(index => Matches(lines[index].TrimStart(), anchor))];
+            }
+
+            var ownerAnchor = group.First().Comment.OwnerAnchor;
+            if (owner != root && ownerAnchor.Length > 0)
+            {
+                var headers = Enumerable.Range(0, lines.Count)
+                    .Where(index => lines[index].TrimStart() == ownerAnchor)
+                    .OrderBy(index => Math.Abs(Indentation(lines[index]) - owner.Location.Column + 1))
+                    .ToList();
+                if (headers.Count > 0)
+                {
+                    var header = headers[0];
+                    var depth = Indentation(lines[header]);
+                    var boundary = header + 1;
+                    while (boundary < lines.Count && (lines[boundary].Length == 0 || Indentation(lines[boundary]) > depth))
+                    {
+                        boundary++;
+                    }
+
+                    var inOwner = matches.Where(index => index >= header && index < boundary).ToList();
+                    if (inOwner.Count > 0)
+                    {
+                        matches = inOwner;
+                    }
+                }
+            }
             var key = $"{owner.Location.Path}:{anchor}:{placement}";
             var occurrence = claimed.GetValueOrDefault(key);
             claimed[key] = occurrence + 1;
@@ -91,6 +121,8 @@ public sealed partial class ScreenplayPrinter
 
         return string.Join('\n', result) + '\n';
     }
+
+    static int Indentation(string line) => line.Length - line.TrimStart().Length;
 
     static bool Matches(string printed, string source) =>
         printed == source || (source.Contains(" = ", StringComparison.Ordinal) &&
