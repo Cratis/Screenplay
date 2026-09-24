@@ -34,11 +34,14 @@ public class when_binding_an_appended_specification_event : given.a_semantic_bin
 
     CompilationResult<SemanticCompilation> _result;
     CompilationResult<SemanticCompilation> _implicit;
+    Execution.SemanticSpecificationRun _v2Run;
 
     void Because()
     {
         _result = Bind(Source);
         _implicit = Bind(Source.Replace("for \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"", string.Empty, StringComparison.Ordinal));
+        var plan = Execution.SemanticExecutionPlan.Compile(_result.Value!.Model).Plan!;
+        _v2Run = new Execution.SemanticSpecificationRunner().Run(plan, Specifications.Single(spec => spec.Name == "AppendingWithSource").Id);
     }
 
     [Fact] void should_bind_both_actions() => _result.Success.ShouldBeTrue();
@@ -47,6 +50,7 @@ public class when_binding_an_appended_specification_event : given.a_semantic_bin
     [Fact] void should_retain_the_typed_event_source() => Specifications.Single(spec => spec.Name == "AppendingWithSource").WhenAppended!.EventSource.ShouldNotBeNull();
     [Fact] void should_omit_the_source_on_the_other_action() => Specifications.Single(spec => spec.Name == "AppendingWithoutSource").WhenAppended!.EventSource.ShouldBeNull();
     [Fact] void should_not_invent_a_command_action() => Specifications.All(spec => spec.When is null).ShouldBeTrue();
+    [Fact] void should_execute_the_v2_occurrence_and_compare_its_source() => _v2Run.Passed.ShouldBeTrue();
 
     SemanticSpecification[] Specifications => [.. _result.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single().Specifications.OrderBy(spec => spec.Name)];
 }
