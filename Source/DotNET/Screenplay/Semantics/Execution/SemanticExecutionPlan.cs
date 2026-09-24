@@ -43,7 +43,12 @@ public enum SemanticPlanIssueKind
     /// <summary>
     /// A projection reads an event-context value the reference evaluator has no occurrence context for.
     /// </summary>
-    UnsupportedEventContext = 5
+    UnsupportedEventContext = 5,
+
+    /// <summary>
+    /// An opaque reducer transition requires a target provider; the reference evaluator cannot compute it.
+    /// </summary>
+    RequiresTargetReducer = 6
 }
 
 /// <summary>
@@ -162,6 +167,14 @@ public sealed class SemanticExecutionPlan
             {
                 issues.Add(new(command.Id, SemanticPlanIssueKind.UnsupportedValidation, $"Validation '{validation.Kind}' is not admitted by the minimum evaluator."));
             }
+        }
+
+        foreach (var reducer in slices.SelectMany(_ => _.Reducers))
+        {
+            issues.Add(new(
+                reducer.ReadModel,
+                SemanticPlanIssueKind.RequiresTargetReducer,
+                $"Reducer '{reducer.Name}' has opaque transitions and requires a target provider to compute read-model state."));
         }
 
         foreach (var projection in slices.SelectMany(_ => _.Projections))

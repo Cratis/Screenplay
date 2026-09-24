@@ -125,4 +125,7 @@ public sealed record SemanticSlice(
     /// Gets the append-time constraints the slice declares.
     /// </summary>
     public ImmutableArray<SemanticConstraint> Constraints { get; init; } = [];
+
+    /// <summary>Gets opaque reducer contracts; empty for models without reducer bodies.</summary>
+    public ImmutableArray<SemanticReducer> Reducers { get; init; } = [];
 }

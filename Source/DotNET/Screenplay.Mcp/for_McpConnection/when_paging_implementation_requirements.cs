@@ -27,6 +27,11 @@ public class when_paging_implementation_requirements : given.a_connection
     [Fact] void should_page_one_requirement_at_a_time() => _first.GetProperty("items").GetArrayLength().ShouldEqual(1);
     [Fact] void should_list_the_handler_role() => _first.GetProperty("items")[0].GetProperty("role").GetString().ShouldEqual("CommandHandler");
     [Fact] void should_list_the_authored_file() => _first.GetProperty("items")[0].GetProperty("file").GetString().ShouldEqual("Handlers/RegisterProject.cs");
+    [Fact] void should_name_the_stable_requirement() => _first.GetProperty("items")[0].GetProperty("requirementId").GetString()!.Length.ShouldEqual(64);
+    [Fact] void should_expose_the_role_contract_versions() => _first.GetProperty("items")[0].GetProperty("contextVersion").GetUInt32().ShouldEqual(1u);
+    [Fact] void should_expose_the_required_capability() => _first.GetProperty("items")[0].GetProperty("requiredCapability").GetString().ShouldEqual("provider-defined");
+    [Fact] void should_not_claim_to_have_hashed_the_file() => _first.GetProperty("items")[0].GetProperty("contentHash").GetString().ShouldBeEmpty();
+    [Fact] void should_report_unresolved_file_content() => _first.GetProperty("items")[0].GetProperty("attachmentResolution").GetString().ShouldEqual("UnresolvedFile");
     [Fact] void should_page_the_validation_role() => _second.GetProperty("items")[0].GetProperty("role").GetString().ShouldEqual("CommandValidation");
     [Fact] void should_return_the_owner_address() => _first.GetProperty("items")[0].GetProperty("owner").ValueKind.ShouldEqual(JsonValueKind.Object);
     [Fact] void should_reject_stale_revisions() => _stale.GetProperty("isError").GetBoolean().ShouldBeTrue();

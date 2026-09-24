@@ -1947,4 +1947,9 @@ public static class DiagnosticCodes
     /// An inline code block uses a legacy language line, or a description uses a bare fence.
     /// </summary>
     public const string LegacyInlineCodeFence = "PLAY0397";
+
+    /// <summary>
+    /// A reducer contains both implemented and unimplemented event transitions.
+    /// </summary>
+    public const string IncompleteReducerTransitions = "PLAY0398";
 }

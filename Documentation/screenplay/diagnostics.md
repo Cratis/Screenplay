@@ -736,6 +736,7 @@ Use an opening fence with an info string, such as ` ```csharp ` (without the spa
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0397` | Warning | An inline code block uses a separate language line, `validate csharp`, or a multiline description uses a bare fence. The message names the tagged-fence replacement. |
+| `PLAY0398` | Error | A reducer has some `on` rules with transition bodies and others without them. Give every rule an inline or file body. |
 
 ## Retired codes
 

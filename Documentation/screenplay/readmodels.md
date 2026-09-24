@@ -61,10 +61,10 @@ reducer Balance => AccountBalance
 ````
 
 - `reducer <Name> => <ReadModel>` — reads the same way `projection <Name> => <ReadModel>` does, on purpose.
-- `on <EventType>` — one rule per event the reducer folds in. A rule with no body is a complete statement that the reducer observes the event, which is the part a reader needs; the reduction itself is code by definition, since it is what a projection could not say.
+- `on <EventType>` — one rule per event the reducer folds in. Every rule needs an inline or file body to bind to the executable semantic model. A reducer with no bodies is rejected with a projection hint; mixing body-less and bodied rules is an error (`PLAY0398`).
 - The reduction lives inline in a fenced block, or in a `file` — the same choice every other construct that needs exact detail offers.
 
-Prefer a projection where one will do. A reducer is code, and code is the part of a document a reader cannot check at a glance.
+Prefer a projection where one will do. A reducer is code, and code is the part of a document a reader cannot check at a glance. The executable semantic model records each observed event and an opaque implementation requirement, not the C# transition. Inline and file bodies bind the same routing contract. The key is always the event source id; state starts at null, and returning null deletes the instance. The reference evaluator cannot run opaque transitions: specifications needing reducer-built state require a target provider, rather than silently succeeding. A target must check the `pure` capability and supply the transition implementation before it can run or render the model.
 
 ## What a reduction is given
 

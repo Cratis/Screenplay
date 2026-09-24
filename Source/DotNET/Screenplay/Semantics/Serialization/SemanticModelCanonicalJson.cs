@@ -66,7 +66,7 @@ internal static partial class SemanticModelCanonicalJson
             using var writer = new Utf8JsonWriter(buffer, CanonicalJson.WriterOptions);
             writer.WriteStartObject();
             writer.WriteString("schema", Schema);
-            writer.WriteNumber("schemaVersion", languageVersion == LanguageVersion.V2 ? 2u : SchemaVersion);
+            writer.WriteNumber("schemaVersion", languageVersion.Major);
             writer.WriteString("languageVersion", languageVersion.ToString());
             writer.WriteString("semanticVersion", semanticVersion.ToString());
             if (revision is not null)
@@ -147,9 +147,28 @@ internal static partial class SemanticModelCanonicalJson
         WriteArray(writer, "commands", slice.Commands.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteCommand);
         WriteArray(writer, "readModels", slice.ReadModels.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteReadModel);
         WriteArray(writer, "projections", slice.Projections.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProjection);
+        if (!slice.Reducers.IsEmpty) WriteArray(writer, "reducers", slice.Reducers.OrderBy(_ => _.Name, StringComparer.Ordinal), WriteReducer);
         WriteArray(writer, "queries", slice.Queries.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteQuery);
         WriteArray(writer, "specifications", slice.Specifications.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteSpecification);
         WriteConstraints(writer, slice.Constraints);
+        writer.WriteEndObject();
+    }
+
+    static void WriteReducer(Utf8JsonWriter writer, SemanticReducer reducer)
+    {
+        writer.WriteStartObject();
+        CanonicalJson.WriteString(writer, "name", reducer.Name);
+        writer.WriteString("readModel", reducer.ReadModel.ToString());
+        writer.WriteString("key", "eventSourceId");
+        writer.WriteNull("initialState");
+        writer.WriteString("result", "stateOrDelete");
+        WriteArray(writer, "transitions", reducer.Transitions, (output, transition) =>
+        {
+            output.WriteStartObject();
+            output.WriteString("eventContract", transition.EventContract.ToString());
+            CanonicalJson.WriteString(output, "requirementId", transition.RequirementId);
+            output.WriteEndObject();
+        });
         writer.WriteEndObject();
     }
 

@@ -127,6 +127,7 @@ internal static partial class SemanticModelRead
         ImmutableArray<SemanticCommand> commands = default;
         ImmutableArray<SemanticReadModel> readModels = default;
         ImmutableArray<SemanticProjection> projections = default;
+        ImmutableArray<SemanticReducer> reducers = [];
         ImmutableArray<SemanticKeyedQuery> queries = default;
         ImmutableArray<SemanticSpecification> specifications = default;
         ImmutableArray<SemanticConstraint> constraints = [];
@@ -141,6 +142,7 @@ internal static partial class SemanticModelRead
                 case "commands": commands = Array(ref reader, Command, property); break;
                 case "readModels": readModels = Array(ref reader, ReadModel, property); break;
                 case "projections": projections = Array(ref reader, Projection, property); break;
+                case "reducers": reducers = Array(ref reader, Reducer, property); break;
                 case "queries": queries = Array(ref reader, Query, property); break;
                 case "specifications": specifications = Array(ref reader, Specification, property); break;
                 case "constraints": constraints = Array(ref reader, Constraint, property); break;
@@ -152,7 +154,55 @@ internal static partial class SemanticModelRead
             id.IsSet && name is not null && kind is not null && !events.IsDefault && !commands.IsDefault &&
             !readModels.IsDefault && !projections.IsDefault && !queries.IsDefault && !specifications.IsDefault,
             "slice");
-        return new(id, name!, kind!.Value, events, commands, readModels, projections, queries, specifications) { Constraints = constraints };
+        return new(id, name!, kind!.Value, events, commands, readModels, projections, queries, specifications) { Constraints = constraints, Reducers = reducers };
+    }
+
+    internal static SemanticReducer Reducer(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "reducer");
+        var seen = NewSeen();
+        string? name = null;
+        SemanticId readModel = default;
+        string? key = null;
+        string? result = null;
+        var initialStateRead = false;
+        ImmutableArray<SemanticReducerTransition> transitions = default;
+        while (NextProperty(ref reader, seen, "reducer") is { } property)
+        {
+            switch (property)
+            {
+                case "name": name = String(ref reader, property); break;
+                case "readModel": readModel = SemanticId.Parse(String(ref reader, property)); break;
+                case "key": key = String(ref reader, property); break;
+                case "initialState": RequiredToken(ref reader, JsonTokenType.Null, property); initialStateRead = true; break;
+                case "result": result = String(ref reader, property); break;
+                case "transitions": transitions = Array(ref reader, ReducerTransition, property); break;
+                default: throw Unknown(property, "reducer");
+            }
+        }
+
+        Required(name is not null && readModel.IsSet && key == "eventSourceId" && initialStateRead && result == "stateOrDelete" && !transitions.IsDefault, "reducer");
+        return new(name!, readModel, transitions);
+    }
+
+    internal static SemanticReducerTransition ReducerTransition(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "reducer transition");
+        var seen = NewSeen();
+        SemanticId eventContract = default;
+        string? requirementId = null;
+        while (NextProperty(ref reader, seen, "reducer transition") is { } property)
+        {
+            switch (property)
+            {
+                case "eventContract": eventContract = SemanticId.Parse(String(ref reader, property)); break;
+                case "requirementId": requirementId = String(ref reader, property); break;
+                default: throw Unknown(property, "reducer transition");
+            }
+        }
+
+        Required(eventContract.IsSet && requirementId is not null, "reducer transition");
+        return new(eventContract, requirementId!);
     }
 
     internal static SemanticProperty Property(ref Utf8JsonReader reader)

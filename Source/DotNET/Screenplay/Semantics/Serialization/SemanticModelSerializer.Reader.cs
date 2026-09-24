@@ -45,7 +45,7 @@ public static partial class SemanticModelSerializer
                 }
             }
 
-            if (schema != SemanticModelCanonicalJson.Schema || schemaVersion != (languageVersion == LanguageVersion.V2 ? 2u : SemanticModelCanonicalJson.SchemaVersion) ||
+            if (schema != SemanticModelCanonicalJson.Schema || schemaVersion != languageVersion?.Major ||
                 languageVersion is null || semanticVersion is null || revision is null || application is null)
             {
                 throw new InvalidSemanticContract("The ESM root is missing a required field or uses an unsupported schema.");

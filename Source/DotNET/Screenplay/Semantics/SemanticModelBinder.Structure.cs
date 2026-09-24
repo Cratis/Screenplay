@@ -97,6 +97,7 @@ public sealed partial class SemanticModelBinder
             }).ToImmutableArray();
             var readModels = (slice.ReadModels ?? []).Select(value => _readModelDeclarations[value].Model).ToImmutableArray();
             var projections = slice.Projections.SelectMany(value => BindProjections(address, value)).ToImmutableArray();
+            var reducers = BindReducers(address, slice);
             var queries = slice.Queries.Select(value => _queryDeclarations.GetValueOrDefault(value) is { } query
                 ? query with { Authorization = EffectiveAuthorization(
                     value.Authorize, [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)], module, featurePath) }
@@ -111,7 +112,8 @@ public sealed partial class SemanticModelBinder
             ReportUnsupportedSliceMembers(address, slice);
             return new(id, slice.Name, kind, [.. events.Select(_ => _.Contract)], commands, readModels, projections, queries, specifications)
             {
-                Constraints = BindConstraints(address, slice)
+                Constraints = BindConstraints(address, slice),
+                Reducers = reducers
             };
         }
 
