@@ -119,7 +119,7 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_parse_the_then_readmodel_of_the_status_specification() => StatusSpecification.ThenReadModels!.Single().Name.ShouldEqual("InvoiceListReadModel");
     [Fact] void should_parse_the_then_readmodel_properties() => StatusSpecification.ThenReadModels!.Single().Properties.Single().Property.ShouldEqual("status");
     [Fact] void should_parse_the_unnamed_rejection() => ThirdSpecification.ThenErrors.Single().Name.ShouldBeNull();
-    [Fact] void should_parse_both_composite_types() => _result.Value!.Types!.Select(_ => _.Name).ShouldContainOnly("InvoiceLine", "BillingContact");
+    [Fact] void should_parse_every_composite_type() => _result.Value!.Types!.Select(_ => _.Name).ShouldContainOnly("InvoiceLine", "BillingContact", "InvoiceLineItem", "Shipment", "InvoiceLineKey");
     [Fact] void should_parse_the_composite_type_description() => InvoiceLineType.Description.ShouldEqual("A single billed line of an invoice");
     [Fact] void should_parse_the_composite_type_properties() => InvoiceLineType.Properties.Select(_ => _.Name).ShouldContainOnly("lineNumber", "productName", "quantity", "unitPrice", "discount");
     [Fact] void should_parse_the_optional_composite_type_property() => InvoiceLineType.Properties.Single(_ => _.Name == "discount").Type.IsOptional.ShouldBeTrue();

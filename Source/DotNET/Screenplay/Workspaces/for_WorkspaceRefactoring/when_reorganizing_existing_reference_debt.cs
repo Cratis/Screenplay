@@ -9,6 +9,14 @@ namespace Cratis.Screenplay.Workspaces.for_WorkspaceRefactoring;
 
 public class when_reorganizing_existing_reference_debt
 {
+    const string UndeclaredEvent =
+        """
+              event InvoicePaidFromSent
+                invoiceId InvoiceId
+                paidAt    DateTime
+
+        """;
+
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
@@ -16,7 +24,9 @@ public class when_reorganizing_existing_reference_debt
     [InlineData(3)]
     public void should_preserve_bindings_and_debt_across_each_layout(int depth)
     {
-        var source = for_ScreenplayCompiler.given.Samples.Invoicing;
+        // The sample declares everything it uses, so the debt is made here: one event the capture appends is left undeclared.
+        var source = for_ScreenplayCompiler.given.Samples.Invoicing.Replace(UndeclaredEvent, string.Empty, StringComparison.Ordinal);
+        source.ShouldNotEqual(for_ScreenplayCompiler.given.Samples.Invoicing);
         var document = WorkspaceDocument.Create("original", PortablePlayPath.Parse("original.play"), Encoding.UTF8.GetBytes(source));
         var before = ScreenplayWorkspace.Create("Sales", [document], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Sales")));
         var syntax = new ScreenplayCompiler().Compile(source).Value!;
