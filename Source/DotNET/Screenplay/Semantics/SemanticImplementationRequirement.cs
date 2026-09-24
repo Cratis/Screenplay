@@ -99,4 +99,39 @@ public sealed record SemanticImplementationRequirement(
 
     /// <summary>Original line and dedented starting column for each inline body line; empty for file attachments.</summary>
     public ImmutableArray<CodeBlockSourceLine> BodyLines { get; init; } = [];
+
+    /// <inheritdoc />
+    public bool Equals(SemanticImplementationRequirement? other) => other is not null &&
+        Role == other.Role && EqualityComparer<SemanticAddress>.Default.Equals(Owner, other.Owner) &&
+        Member == other.Member && Language == other.Language && File == other.File &&
+        ContentHash == other.ContentHash && EqualityComparer<SemanticSourceMapEntry>.Default.Equals(Source, other.Source) &&
+        RequirementId == other.RequirementId && ContextVersion == other.ContextVersion && ResultVersion == other.ResultVersion &&
+        RequiredCapability == other.RequiredCapability && AttachmentResolution == other.AttachmentResolution &&
+        BodySpan == other.BodySpan && BodyLines.SequenceEqual(other.BodyLines);
+
+    /// <inheritdoc />
+    public override int GetHashCode()
+    {
+        var hash = default(HashCode);
+        hash.Add(typeof(SemanticImplementationRequirement));
+        hash.Add(Role);
+        hash.Add(Owner);
+        hash.Add(Member);
+        hash.Add(Language);
+        hash.Add(File);
+        hash.Add(ContentHash);
+        hash.Add(Source);
+        hash.Add(RequirementId);
+        hash.Add(ContextVersion);
+        hash.Add(ResultVersion);
+        hash.Add(RequiredCapability);
+        hash.Add(AttachmentResolution);
+        hash.Add(BodySpan);
+        foreach (var line in BodyLines)
+        {
+            hash.Add(line);
+        }
+
+        return hash.ToHashCode();
+    }
 }

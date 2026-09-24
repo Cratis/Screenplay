@@ -27,13 +27,15 @@ public sealed partial class SemanticModelBinder
 
         static SemanticImplementationBodySpan FileBodySpan(string content)
         {
+            // Keep hashing the supplied content, but map a UTF-8 BOM to the editor's BOM-less text.
+            var text = content.AsSpan(content.StartsWith('\uFEFF') ? 1 : 0);
             var line = 1;
             var column = 1;
-            for (var index = 0; index < content.Length; index++)
+            for (var index = 0; index < text.Length; index++)
             {
-                if (content[index] == '\r')
+                if (text[index] == '\r')
                 {
-                    if (index + 1 < content.Length && content[index + 1] == '\n')
+                    if (index + 1 < text.Length && text[index + 1] == '\n')
                     {
                         index++;
                     }
@@ -41,7 +43,7 @@ public sealed partial class SemanticModelBinder
                     line++;
                     column = 1;
                 }
-                else if (content[index] == '\n')
+                else if (text[index] == '\n')
                 {
                     line++;
                     column = 1;
@@ -52,7 +54,7 @@ public sealed partial class SemanticModelBinder
                 }
             }
 
-            return new(0, content.Length, 1, 1, line, column);
+            return new(0, text.Length, 1, 1, line, column);
         }
 
         SemanticImplementationRequirement? RequireImplementation(
@@ -87,7 +89,7 @@ public sealed partial class SemanticModelBinder
             {
                 bodySpan = new(code.BodyStartOffset, code.BodyEndOffset, bodyStart.Line, bodyStart.Column, bodyEnd.Line, bodyEnd.Column);
             }
-            else if (resolved)
+            else if (code is null && resolved)
             {
                 bodySpan = FileBodySpan(content!);
             }
@@ -107,7 +109,7 @@ public sealed partial class SemanticModelBinder
                     SemanticImplementationRole.CommandValidation or SemanticImplementationRole.ConceptValidation or SemanticImplementationRole.PolicyPredicate ? "pure" : "provider-defined",
                 AttachmentResolution = resolved ? SemanticAttachmentResolution.Resolved : SemanticAttachmentResolution.UnresolvedFile,
                 BodySpan = bodySpan,
-                BodyLines = code?.BodyLines ?? []
+                BodyLines = code is not null && bodySpan.HasValue ? code.BodyLines : []
             };
             _implementationRequirements.Add(requirement);
             return requirement;

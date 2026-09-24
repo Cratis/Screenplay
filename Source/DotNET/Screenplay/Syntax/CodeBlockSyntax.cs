@@ -39,6 +39,33 @@ public record CodeBlockSyntax(string Language, string Code, SourceLocation Locat
     /// <summary>One original source position for each line of <see cref="Code"/>. Columns count UTF-16 code units, including tabs as one unit.</summary>
     [SourceSpanMetadata]
     public ImmutableArray<CodeBlockSourceLine> BodyLines { get; init; } = [];
+
+    /// <inheritdoc />
+    public virtual bool Equals(CodeBlockSyntax? other) => other is not null && base.Equals(other) &&
+        Language == other.Language && Code == other.Code &&
+        BodyStartOffset == other.BodyStartOffset && BodyEndOffset == other.BodyEndOffset &&
+        EqualityComparer<SourceLocation?>.Default.Equals(BodyStart, other.BodyStart) &&
+        EqualityComparer<SourceLocation?>.Default.Equals(BodyEnd, other.BodyEnd) &&
+        BodyLines.SequenceEqual(other.BodyLines);
+
+    /// <inheritdoc />
+    public override int GetHashCode()
+    {
+        var hash = default(HashCode);
+        hash.Add(base.GetHashCode());
+        hash.Add(Language);
+        hash.Add(Code);
+        hash.Add(BodyStartOffset);
+        hash.Add(BodyEndOffset);
+        hash.Add(BodyStart);
+        hash.Add(BodyEnd);
+        foreach (var line in BodyLines)
+        {
+            hash.Add(line);
+        }
+
+        return hash.ToHashCode();
+    }
 }
 
 /// <summary>

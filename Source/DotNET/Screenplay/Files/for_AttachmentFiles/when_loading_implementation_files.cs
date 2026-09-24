@@ -36,6 +36,16 @@ public class when_loading_implementation_files : Specification
     }
 
     [Fact]
+    void should_map_a_bom_attachment_without_counting_the_marker_but_hash_all_supplied_bytes()
+    {
+        const string text = "\uFEFFa\r\nb";
+        File.WriteAllBytes(Path.Combine(_root, "bom.cs"), Encoding.UTF8.GetBytes(text));
+        var requirement = Bind("bom.cs").Requirement;
+        requirement.BodySpan!.Value.ShouldEqual(new(0, 4, 1, 1, 2, 2));
+        requirement.ContentHash.ShouldEqual(Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text))).ToLowerInvariant());
+    }
+
+    [Fact]
     void should_normalize_current_directory_and_backslash()
     {
         Write("X.cs", "same");

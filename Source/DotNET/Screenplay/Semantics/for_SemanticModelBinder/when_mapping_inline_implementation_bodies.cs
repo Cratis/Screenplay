@@ -70,6 +70,36 @@ public class when_mapping_inline_implementation_bodies : given.a_semantic_binder
         requirement.BodySpan!.Value.End.ShouldEqual(requirement.BodySpan.Value.Start);
     }
 
+    [Fact] void should_not_invent_a_file_span_for_inline_code_without_parser_positions()
+    {
+        const string source = Prefix + Info;
+        var parsed = new ScreenplayCompiler().Parse(source).Value!;
+        var restored = (ApplicationSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(parsed));
+        var catalog = SemanticIdentityCatalog.Empty(_applicationIdentity);
+        var document = SemanticSourceDocument.Create(catalog.ResolveDocument("application-document"), "application-document", "application.play", source);
+        var requirement = _binder.Bind("Projects", restored, SemanticDocumentSet.Create([document], catalog)).ImplementationRequirements.Single();
+        requirement.AttachmentResolution.ShouldEqual(SemanticAttachmentResolution.Resolved);
+        requirement.BodySpan.HasValue.ShouldBeFalse();
+        requirement.BodyLines.IsEmpty.ShouldBeTrue();
+    }
+
+    [Fact] void should_parse_identical_code_blocks_and_requirements_with_value_equality()
+    {
+        const string source = Prefix + Info;
+        var first = new ScreenplayCompiler().Parse(source).Value!.Modules.Single().Features.Single().Slices.Single().Commands.Single().Handler!.Code!;
+        var second = new ScreenplayCompiler().Parse(source).Value!.Modules.Single().Features.Single().Slices.Single().Commands.Single().Handler!.Code!;
+        (first == second).ShouldBeTrue();
+        first.GetHashCode().ShouldEqual(second.GetHashCode());
+        (first == second with { Code = "different" }).ShouldBeFalse();
+        (first == second with { BodyLines = [new CodeBlockSourceLine(99, 1)] }).ShouldBeFalse();
+        var firstRequirement = Bind(source).ImplementationRequirements.Single();
+        var secondRequirement = Bind(source).ImplementationRequirements.Single();
+        (firstRequirement == secondRequirement).ShouldBeTrue();
+        firstRequirement.GetHashCode().ShouldEqual(secondRequirement.GetHashCode());
+        (firstRequirement == secondRequirement with { RequirementId = "different" }).ShouldBeFalse();
+        (firstRequirement == secondRequirement with { BodyLines = [new CodeBlockSourceLine(99, 1)] }).ShouldBeFalse();
+    }
+
     [Fact] void should_keep_positions_out_of_structural_syntax_json()
     {
         const string source = Prefix + Info;

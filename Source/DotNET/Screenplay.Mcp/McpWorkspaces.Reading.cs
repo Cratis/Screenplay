@@ -1,8 +1,10 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using System.Text.Json;
 using Cratis.Screenplay.Semantics;
+using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
@@ -176,12 +178,28 @@ internal sealed partial class McpWorkspaces
         requirement.File,
         requirement.ContentHash,
         bodySpan = requirement.BodySpan,
-        bodyLines = requirement.BodyLines.Select(position => new { line = position.Line, column = position.Column }),
+        bodyLines = DescribeBodyLines(requirement.BodyLines),
         semanticId = requirement.Source.SemanticId.ToString(),
         documentId = requirement.Source.Span.Document.ToString(),
         line = requirement.Source.Span.StartLine,
         column = requirement.Source.Span.StartColumn
     };
+
+    static IEnumerable<object> DescribeBodyLines(ImmutableArray<CodeBlockSourceLine> lines)
+    {
+        for (var index = 0; index < lines.Length;)
+        {
+            var first = lines[index];
+            var count = 1;
+            while (index + count < lines.Length && lines[index + count].Column == first.Column && lines[index + count].Line == first.Line + count)
+            {
+                count++;
+            }
+
+            yield return new { line = first.Line, column = first.Column, count };
+            index += count;
+        }
+    }
 
     static object ProposalBytes(IMcpProposal proposal, JsonElement arguments, string view)
     {

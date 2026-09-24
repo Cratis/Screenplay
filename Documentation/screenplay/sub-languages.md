@@ -22,11 +22,13 @@ The executable semantic compiler does not run inline code or file-backed impleme
 
 Use the MCP `read-workspace` view `implementation-requirements` to page these gaps at a pinned revision. This is an inventory for tooling, not an implementation contract or an indication that the reference executor can run the code. See [MCP](mcp.md) for the read arguments.
 
-A host editor can put the dedented inline body into a virtual document. For each
-zero-based body line index, `bodyLines[index]` gives the original one-based line
-and the column of its first character; add the virtual column (in UTF-16 code
-units) to that column when mapping completion, hover, diagnostics or edits back
-to the authored document. Check the result against `bodySpan` before applying
+A host editor can put the dedented inline body into a virtual document. In the
+C# `BodyLines` API, each zero-based body line index gives the original one-based
+line and the column of its first character; add the zero-based UTF-16 character
+offset within the virtual line to `bodyLines[i].column` when mapping completion,
+hover, diagnostics or edits back to the authored document. The MCP view encodes
+consecutive lines sharing a column as runs; expand each `{line, column, count}`
+entry before using a body line index. Check the result against `bodySpan` before applying
 edits, particularly across lines or near fences. Tabs count as one column, not a
 visual tab stop; CRLF takes two source offsets but one line break. A file
 attachment instead maps to its entire file from line 1, column 1 and has no

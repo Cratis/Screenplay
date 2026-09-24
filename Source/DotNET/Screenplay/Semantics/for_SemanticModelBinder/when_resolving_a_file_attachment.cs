@@ -37,6 +37,14 @@ public class when_resolving_a_file_attachment : given.a_semantic_binder
     [Fact] void should_not_claim_a_span_for_an_unresolved_file() => _unresolved.BodySpan.HasValue.ShouldBeFalse();
     [Fact] void should_not_rebase_file_lines_on_the_play_document() => _first.BodyLines.IsEmpty.ShouldBeTrue();
     [Fact] void should_map_crlf_in_a_resolved_file() => _multiline.BodySpan!.Value.ShouldEqual(new(0, 4, 1, 1, 2, 2));
+    [Fact] void should_skip_the_utf8_bom_in_the_editor_span_but_not_in_the_content_hash()
+    {
+        const string supplied = "\uFEFFa\r\nb";
+        var requirement = BindFile("Handlers/Register.cs", supplied, "old/application.play");
+        requirement.BodySpan!.Value.ShouldEqual(new(0, 4, 1, 1, 2, 2));
+        requirement.ContentHash.ShouldEqual(Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(supplied))).ToLowerInvariant());
+        requirement.ContentHash.ShouldNotEqual(_multiline.ContentHash);
+    }
 
     SemanticImplementationRequirement BindFile(string path, string? content, string displayPath)
     {
