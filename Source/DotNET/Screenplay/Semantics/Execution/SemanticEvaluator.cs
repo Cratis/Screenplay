@@ -36,12 +36,15 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default.");
         }
 
-        if (!SemanticPolicyEvaluation.Allows(
-            command.Authorization, plan, request.Caller,
-            request.Values.IsDefault ? new Dictionary<string, SemanticValue>() : request.Values
-                .Where(value => command.Properties.Any(property => property.Id == value.TargetProperty))
-                .ToDictionary(value => command.Properties.Single(property => property.Id == value.TargetProperty).Name, value => value.Value),
-            request.Values.IsDefault ? null : request.Values.FirstOrDefault(value => command.Properties.Any(property => property.IsIdentifier && property.Id == value.TargetProperty))?.Value))
+        var authorizationValues = request.Values.IsDefault ? [] : request.Values.Where(value => value is not null).ToArray();
+        var artifact = command.Properties
+            .Select(property => (property, value: authorizationValues.FirstOrDefault(value => value.TargetProperty == property.Id)?.Value))
+            .Where(pair => pair.value is not null)
+            .ToDictionary(pair => pair.property.Name, pair => pair.value!, StringComparer.Ordinal);
+        var subject = command.Properties.Where(property => property.IsIdentifier)
+            .Select(property => authorizationValues.FirstOrDefault(value => value.TargetProperty == property.Id)?.Value)
+            .FirstOrDefault(value => value is not null);
+        if (!SemanticPolicyEvaluation.Allows(command.Authorization, plan, request.Caller, artifact, subject))
         {
             return new SemanticRejected(world, SemanticRejectionCategory.Unauthorized, null, "Caller is not authorized.");
         }
@@ -196,8 +199,12 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                 return new SemanticUnsupported(original, SemanticExecutionCapability.Query, $"Query '{queryRequest.Query}' is not in the execution plan.");
             }
 
-            if (!SemanticPolicyEvaluation.Allows(query.Authorization, plan, caller,
-                new Dictionary<string, SemanticValue>(StringComparer.Ordinal) { [query.Argument.Name] = queryRequest.Key }, queryRequest.Key))
+            if (!SemanticPolicyEvaluation.Allows(
+                query.Authorization,
+                plan,
+                caller,
+                new Dictionary<string, SemanticValue>(StringComparer.Ordinal) { [query.Argument.Name] = queryRequest.Key },
+                queryRequest.Key))
             {
                 return new SemanticRejected(original, SemanticRejectionCategory.Unauthorized, null, "Caller is not authorized.");
             }

@@ -92,9 +92,9 @@ internal static partial class SemanticModelRead
             "authenticated" when role is null && claim is null && targetKind is null && value is null && op is null && left is null && right is null => new SemanticAuthenticatedCondition(),
             "role" when role is not null && claim is null && targetKind is null && value is null && op is null && left is null && right is null => new SemanticRoleCondition(role),
             "claim" when claim is not null && role is null && op is null && left is null && right is null &&
-                (targetKind == "subject" && value is null || (targetKind is "artifact" or "literal") && value is not null) =>
+                ((targetKind == "subject" && value is null) || ((targetKind == "artifact" || targetKind == "literal") && value is not null)) =>
                 new SemanticClaimCondition(claim, targetKind switch { "subject" => SemanticClaimTargetKind.Subject, "artifact" => SemanticClaimTargetKind.Artifact, _ => SemanticClaimTargetKind.Literal }, value),
-            "logical" when (op is "and" or "or") && left is not null && right is not null && role is null && claim is null && targetKind is null && value is null =>
+            "logical" when (op == "and" || op == "or") && left is not null && right is not null && role is null && claim is null && targetKind is null && value is null =>
                 new SemanticLogicalPolicyCondition(left, op == "and" ? SemanticLogicalOperator.And : SemanticLogicalOperator.Or, right),
             _ => throw Malformed("policy condition", "one exact policy condition variant")
         };
@@ -121,7 +121,7 @@ internal static partial class SemanticModelRead
         return kind switch
         {
             "policy" when name is not null && op is null && left is null && right is null => new SemanticPolicyReference(name),
-            "logical" when name is null && (op is "and" or "or") && left is not null && right is not null =>
+            "logical" when name is null && (op == "and" || op == "or") && left is not null && right is not null =>
                 new SemanticLogicalAuthorization(left, op == "and" ? SemanticLogicalOperator.And : SemanticLogicalOperator.Or, right),
             _ => throw Malformed("authorization", "a policy reference or logical authorization")
         };

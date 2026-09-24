@@ -4,7 +4,7 @@ Commands are input definitions — imperative intents. A command declares its pr
 
 ## Syntax
 
-```screenplay
+````screenplay
 command <Name>
   [description "<text>"]
 
@@ -23,18 +23,13 @@ command <Name>
       [message "<message>"|$strings.<key>]
     ...]
 
-  [validate
-    ```csharp
-    <C# yielding the message of every broken rule>
-    ```]
+  [validate <inline csharp block yielding messages for broken rules>]
 
   [produces ...]                  ← declarative — repeatable
 
   [handler                        ← imperative fallback — instead of produces
     file <Path>
-    | ```csharp
-        <C# returning the events to append>
-        ```]
+    | <inline csharp block returning events to append>]
 
   [concurrency                    ← optional concurrency scope
     [eventSource]
@@ -42,7 +37,7 @@ command <Name>
     [streamType <Name>]
     [streamId <Name>]
     [events <EventType>[, <EventType>]*]]
-```
+````
 
 ## Description
 
@@ -338,7 +333,7 @@ authorize (IsAccountant or IsFinance) and OwnsInvoice   ← one of the first two
 
 Those two admit different callers, and the parentheses are the only thing that distinguishes them. Printing writes them back wherever the grouping is not the one precedence gives, so a document always says which one it means.
 
-Policies are declared at the top of the file — see [Policies](policies.md).
+Policies are declared at the top of the file — see [Policies](policies.md). Declarative policies bind to ESM v1 and are evaluated before validation using an explicitly supplied caller; a failed gate returns the typed `Unauthorized` rejection without producing events. Module and feature gates are composed with the command's gate by AND. Inline `csharp` policies remain unsupported pending #139.
 
 ## The `produces` block
 

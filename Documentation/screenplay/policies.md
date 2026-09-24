@@ -88,6 +88,12 @@ policy CanManageInvoice
 
 `IsFinanceDepartment` compares against the literal text `Finance`. `CanManageInvoice` compares against whatever `invoice.department` resolves to, and its parentheses are load bearing - without them the condition would mean `(role "InvoiceManager" or role "Accountant") and claim "department" matches invoice.department`, which lets an `InvoiceManager` through only when their department also matches.
 
+## Portable evaluation
+
+Declarative policies execute in the portable ESM v1 reference evaluator. Inline `csharp` policy bodies remain a blocking binding diagnostic until implementation attachments are defined (#139). The execution request must supply a caller explicitly when an authorized command or query runs. A missing caller cannot satisfy authorization. An authenticated condition checks the caller's authentication flag; a role compares the caller's roles by ordinal, case-sensitive text. Claim **types** compare ordinal-ignore-case, while claim **values** compare ordinal, case-sensitively. If a caller carries several values for the same claim type, **any** matching value satisfies that condition. Missing claims, a null artifact value, and an unresolved subject deny; `and` and `or` short-circuit according to the parsed grouping.
+
+In the portable ESM v1 profile, an artifact path must resolve to a top-level command property or the keyed query argument. Other paths and `$`-rooted expressions remain valid authoring syntax but do not bind to this portable profile. A `subject` comes from a command's identifier property or a keyed query's argument; if no identifier is available, it cannot match. A failed effective authorization yields `Unauthorized` before command validation or query lookup and never changes the world. For the caller fixture and denial assertion, see [Specifications](specifications.md#rejections).
+
 ## Custom logic
 
 When the declarative conditions cannot express the rule, drop into C#. The block answers with a `bool` — the same answer `require authenticated` gives, so a policy written in code and a policy written in conditions mean the same kind of thing and compose the same way:

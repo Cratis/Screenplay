@@ -709,6 +709,10 @@ An inline `on` block is an anonymous behavior, so it has no name to report again
 | `PLAY0383` | Error | A projection-level shared handler maps a property absent from a variant's known read-model shape. Unknown shapes remain undecided. |
 | `PLAY0384` | Error | Two variants in one projection have the same name. |
 | `PLAY0385` | Error | An entering event is claimed more than once in one projection. |
+| `PLAY0386` | Error | A `given caller` line is not `authenticated`, `role "<name>"`, or `claim "<type>" = "<value>"`. |
+| `PLAY0387` | Error | A specification declares more than one `given caller` block or `then denied` outcome. |
+| `PLAY0388` | Error | `then denied` contains extra text or is mixed with another outcome. |
+| `PLAY0389` | Error | A specification exercises an authorized command or query without an explicit `given caller` fixture. |
 
 ### Constraints in the semantic model
 

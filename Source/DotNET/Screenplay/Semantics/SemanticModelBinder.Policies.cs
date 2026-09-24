@@ -11,7 +11,17 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
-        ImmutableArray<SemanticPolicy> BindPolicies() => syntax.Policies.Select(policy =>
+        static SemanticLogicalOperator PolicyOperator(LogicalOperator op) => op == LogicalOperator.And
+            ? SemanticLogicalOperator.And : SemanticLogicalOperator.Or;
+
+        static IEnumerable<string> PolicyPaths(PolicyConditionSyntax? condition) => condition switch
+        {
+            ClaimConditionSyntax { Matches: PathExpressionSyntax path } => [path.Path],
+            LogicalPolicyConditionSyntax logical => PolicyPaths(logical.Left).Concat(PolicyPaths(logical.Right)),
+            _ => []
+        };
+
+        ImmutableArray<SemanticPolicy> BindPolicies() => [.. syntax.Policies.Select(policy =>
         {
             if (policy.Code is not null)
             {
@@ -20,7 +30,7 @@ public sealed partial class SemanticModelBinder
 
             var condition = policy.Condition is null ? null : BindPolicyCondition(policy.Condition);
             return condition is null ? null : new SemanticPolicy(policy.Name, condition);
-        }).Where(policy => policy is not null).Select(policy => policy!).ToImmutableArray();
+        }).Where(policy => policy is not null).Select(policy => policy!)];
 
         SemanticPolicyCondition? BindPolicyCondition(PolicyConditionSyntax syntaxCondition) => syntaxCondition switch
         {
@@ -35,7 +45,7 @@ public sealed partial class SemanticModelBinder
             _ => UnsupportedPolicyCondition(syntaxCondition)
         };
 
-        SemanticPolicyCondition? BindLogicalPolicy(LogicalPolicyConditionSyntax logical)
+        SemanticLogicalPolicyCondition? BindLogicalPolicy(LogicalPolicyConditionSyntax logical)
         {
             var left = BindPolicyCondition(logical.Left);
             var right = BindPolicyCondition(logical.Right);
@@ -48,9 +58,6 @@ public sealed partial class SemanticModelBinder
             Error(DiagnosticCodes.UnsupportedSemanticSyntax, "Policy claim target is not a portable literal, subject, or artifact path.", condition.Location);
             return null;
         }
-
-        static SemanticLogicalOperator PolicyOperator(LogicalOperator op) => op == LogicalOperator.And
-            ? SemanticLogicalOperator.And : SemanticLogicalOperator.Or;
 
         SemanticAuthorization? EffectiveAuthorization(AuthorizeSyntax? own, IEnumerable<string> artifactProperties, string moduleName, ImmutableArray<string> featurePath)
         {
@@ -96,7 +103,7 @@ public sealed partial class SemanticModelBinder
             }
 
             if (requirement is not PolicyReferenceSyntax reference) return null;
-            var policy = syntax.Policies.SingleOrDefault(policy => policy.Name == reference.Name);
+            var policy = syntax.Policies.FirstOrDefault(policy => policy.Name == reference.Name);
             if (policy is null)
             {
                 Error(DiagnosticCodes.InvalidSemanticBinding, $"Authorization policy '{reference.Name}' is unresolved.", reference.Location);
@@ -114,11 +121,5 @@ public sealed partial class SemanticModelBinder
             return new SemanticPolicyReference(reference.Name);
         }
 
-        static IEnumerable<string> PolicyPaths(PolicyConditionSyntax? condition) => condition switch
-        {
-            ClaimConditionSyntax { Matches: PathExpressionSyntax path } => [path.Path],
-            LogicalPolicyConditionSyntax logical => PolicyPaths(logical.Left).Concat(PolicyPaths(logical.Right)),
-            _ => []
-        };
     }
 }

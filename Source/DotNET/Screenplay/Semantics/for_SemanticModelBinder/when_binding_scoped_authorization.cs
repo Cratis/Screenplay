@@ -9,6 +9,12 @@ public class when_binding_scoped_authorization : given.a_semantic_binder
 {
     const string Source =
         """
+        policy Access
+          require authenticated
+        policy Staff
+          require role "Staff"
+        policy Extra
+          require claim "department" matches "Returns"
         module Portal
           authorize Access
           feature Orders
@@ -33,10 +39,7 @@ public class when_binding_scoped_authorization : given.a_semantic_binder
             """);
     }
 
-    [Fact] void should_reject_scope_level_authorization() => _result.Success.ShouldBeFalse();
-    [Fact] void should_report_every_scope_without_silently_dropping_it() => _result.Diagnostics.Where(_ => _.Code == DiagnosticCodes.UnsupportedSemanticSyntax).Select(_ => _.Message).ShouldContainOnly(
-        "Module 'Portal' authorization requires portable policy semantics and is not admitted by ESM v1.",
-        "Feature 'Orders' authorization requires portable policy semantics and is not admitted by ESM v1.",
-        "Feature 'Returns' authorization requires portable policy semantics and is not admitted by ESM v1.");
+    [Fact] void should_bind_scope_level_authorization() => _result.Success.ShouldBeTrue();
+    [Fact] void should_require_every_enclosing_scope() => _result.Value!.Model.Application.Modules.Single().Features.Single().Features.Single().Slices.Single().Commands.Single().Authorization.ShouldBeOfExactType<SemanticLogicalAuthorization>();
     [Fact] void should_allow_the_unguarded_structure() => _unguarded.Diagnostics.Any(_ => _.Code == DiagnosticCodes.UnsupportedSemanticSyntax).ShouldBeFalse();
 }

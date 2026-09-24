@@ -5,6 +5,19 @@ using System.Collections.Immutable;
 
 namespace Cratis.Screenplay.Semantics;
 
+/// <summary>Specifies the source against which a claim is matched.</summary>
+public enum SemanticClaimTargetKind
+{
+    /// <summary>The caller's artifact.</summary>
+    Artifact = 0,
+
+    /// <summary>A literal value.</summary>
+    Literal = 1,
+
+    /// <summary>The acted-on subject.</summary>
+    Subject = 2
+}
+
 /// <summary>Represents a named, declarative authorization rule.</summary>
 /// <param name="Name">The referenced name.</param>
 /// <param name="Condition">The condition that must hold.</param>
@@ -19,17 +32,6 @@ public sealed record SemanticAuthenticatedCondition : SemanticPolicyCondition;
 /// <summary>Requires a caller role.</summary>
 /// <param name="Role">The ordinal, case-sensitive role name.</param>
 public sealed record SemanticRoleCondition(string Role) : SemanticPolicyCondition;
-
-/// <summary>Specifies the source against which a claim is matched.</summary>
-public enum SemanticClaimTargetKind
-{
-    /// <summary>The caller's artifact.</summary>
-    Artifact = 0,
-    /// <summary>A literal value.</summary>
-    Literal = 1,
-    /// <summary>The acted-on subject.</summary>
-    Subject = 2
-}
 
 /// <summary>Requires at least one claim value to match the target.</summary>
 /// <param name="Claim">The ordinal-ignore-case claim type.</param>

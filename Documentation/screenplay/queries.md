@@ -67,7 +67,7 @@ The marker qualifies only *how* the result arrives, so everything else about the
 
 ## What the caller sees
 
-`authorize` says *who may call* a query. It says nothing about *what they get back* — and in a real application those are different questions. `All` and `Mine` may admit exactly the same callers and return entirely different rows, and that difference is the access model a reader needs.
+`authorize` says *who may call* a query. In ESM v1, declarative gates on optional keyed snapshot queries run before the lookup and compare a supplied caller against the keyed query argument. A missing caller or failed gate yields `Unauthorized`; module and feature gates also apply by AND. Other query shapes (live, filtered, scoped, or performer-backed) are not yet admitted into the reference evaluator. It says nothing about *what they get back* — and in a real application those are different questions. `All` and `Mine` may admit exactly the same callers and return entirely different rows, and that difference is the access model a reader needs.
 
 `scoped to` states it:
 
