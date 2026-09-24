@@ -43,7 +43,7 @@ internal static partial class ValidationRuleParser
         }
 
         var (file, code) = kind == ValidationRuleKind.Rule ? ParseImplementation(context, line) : (null, null);
-        return new(property, kind.Value, value, message, line.Location, file, code) { Severity = severity }; 
+        return new(property, kind.Value, value, message, line.Location, file, code) { Severity = severity };
     }
 
     /// <summary>
@@ -68,7 +68,7 @@ internal static partial class ValidationRuleParser
         }
 
         var (file, code) = kind == ValidationRuleKind.Rule ? ParseImplementation(context, line) : (null, null);
-        return new(ValidationRuleSyntax.ConceptValue, kind.Value, value, message, line.Location, file, code) { Severity = severity }; 
+        return new(ValidationRuleSyntax.ConceptValue, kind.Value, value, message, line.Location, file, code) { Severity = severity };
     }
 
     static (string Content, string? Message) SplitMessage(string content)

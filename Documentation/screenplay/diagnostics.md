@@ -696,6 +696,8 @@ An inline `on` block is an anonymous behavior, so it has no name to report again
 |---|---|---|
 | `PLAY0366` | Error | A bare named `matches` pattern is not defined; only `email` is defined. Use a quoted ECMAScript pattern for custom matching. |
 | `PLAY0367` | Error | A quoted `matches` operand is not a valid ECMAScript regular expression. |
+| `PLAY0368` | Error | A validation rule names a severity other than `information`, `warning` or `error`. |
+| `PLAY0369` | Error | A `require` body has an invalid or repeated `severity` directive. |
 
 ### Projection binding
 

@@ -17,8 +17,9 @@ command <Name>
   [authorize <PolicyName> [<PolicyName>]*]
 
   [validate
-    <rule> message "<message>"
+    <rule> [severity information|warning|error] [message "<message>"]
     require <condition>              ← a rule about the command as a whole
+      [severity information|warning|error]
       [message "<message>"]
     ...]
 
@@ -135,12 +136,12 @@ Declarative validation covers the common cases without code:
 
 `matches "<regex>"` uses ECMAScript regular expression syntax. Like JavaScript `RegExp.test`, it succeeds if **any part** of the text matches; use `^` and `$` to require a whole-value match. Patterns are checked at binding, and an execution timeout rejects rather than accepting the value. It applies only to a single text value (not an enum or collection). `matches email` expands to `^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$`: exactly one `@`, a non-empty local part without whitespace or `@`, and a domain with at least two non-empty dot-separated parts without whitespace or `@`. This is a conservative pattern, **not** RFC 5322 email validation. Other bare names have no definition and are rejected; quote a pattern to use a custom regular expression.
 
-Every rule carries a `message` shown when it fails:
+A rule may have a `message` shown when it fails. Add `severity information`, `severity warning` or `severity error` before the optional end-of-line `message`. The default is `error`; the printer omits it. Message remains last so its quoted text or `$strings` key is unambiguous:
 
 ```screenplay
 validate
   invoiceNumber not empty                  message "Invoice number is required"
-  invoiceNumber matches "^INV-[0-9]{6}$"  message "Invoice number must match INV-000000"
+  invoiceNumber matches "^INV-[0-9]{6}$"  severity warning message "Invoice number must match INV-000000"
   dueDate > today                          message "Due date must be in the future"
 ```
 
@@ -168,7 +169,18 @@ validate
     message "The month cannot be started yet"
 ```
 
-The message goes in the body rather than on the end of the line. A condition is as long as the rule it states, and a message pushed out past it is the part nobody reads.
+The message and optional severity go in the body rather than on the end of the line. A condition is as long as the rule it states, and metadata pushed out past it is the part nobody reads. Write `severity warning` or `severity information` as a sibling of `message` (in either order); omitting severity means `error`:
+
+```screenplay
+command ConfirmOrder
+  total Decimal
+  validate
+    require total > 0
+      severity warning
+      message "Total must be positive"
+```
+
+Every failed rule and requirement **rejects** the command, even at warning or information severity. A rejection carries each failed rule's message and severity for UI presentation; severity is not a pass/fail threshold.
 
 An operand is either a property of the command or a path into state the command declares it reads. Anything else is a warning — a requirement a reader cannot resolve says less than it appears to. A rule whose logic is not a comparison at all still belongs in a named `rule` or an inline block, as below; `require` is for the rules that *can* be stated.
 
@@ -289,7 +301,7 @@ The meaning is fixed so every target agrees:
 - An absent value of an optional property satisfies every rule except `not empty` — presence is what `not empty` states. An empty collection satisfies `all >` and `all >=`.
 - Text length counts UTF-16 code units, the length .NET and JavaScript both report.
 - An operand is a literal. A property reference is not admitted, and an operand that does not fit the property's type — `quantity min 1.5` on an `Int`, `status == "pending"` on an enum without that member — is a binding error (`PLAY0273`) on the rule.
-- A failed rule rejects the command with its `message`; a rule without one gets a generated description.
+- A failed rule rejects the command at every severity, with its `message` (or a generated description) and its severity.
 
 Still rejected, and why:
 

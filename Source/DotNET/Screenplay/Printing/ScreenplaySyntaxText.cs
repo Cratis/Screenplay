@@ -173,14 +173,6 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="value">The value to render.</param>
     /// <returns>The rendered operand text.</returns>
-    internal static string Severity(ValidationSeverity severity) => severity switch
-    {
-        ValidationSeverity.Error => string.Empty,
-        ValidationSeverity.Warning => " severity warning",
-        ValidationSeverity.Information => " severity information",
-        _ => throw new UnsupportedSyntaxForPrinting("validation severity", severity.ToString())
-    };
-
     public static string LocalizableString(string value) =>
         value.StartsWith("$strings.", StringComparison.Ordinal) ? value : StringLiteral.Quote(value);
 
@@ -251,6 +243,14 @@ internal static partial class ScreenplaySyntaxText
             _ => throw new UnsupportedSyntaxForPrinting("capture trigger kind", when.Kind.ToString())
         };
     }
+
+    internal static string Severity(ValidationSeverity severity) => severity switch
+    {
+        ValidationSeverity.Error => string.Empty,
+        ValidationSeverity.Warning => " severity warning",
+        ValidationSeverity.Information => " severity information",
+        _ => throw new UnsupportedSyntaxForPrinting("validation severity", severity.ToString())
+    };
 
     static string StructuredValue(ExpressionSyntax expression) => expression is LiteralExpressionSyntax { Value: string text }
         ? JsonSerializer.Serialize(text, _structuredValueOptions)
