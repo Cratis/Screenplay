@@ -39,6 +39,7 @@ public sealed partial class SemanticModelBinder
 
             if (command.Handler is not null)
             {
+                RequireImplementation(SemanticImplementationRole.CommandHandler, SemanticAddress.ForCommand(slice, command.Name), command.Handler.File, command.Handler.Code);
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' handler requires a constrained implementation attachment.", command.Handler.Location);
             }
 
@@ -46,7 +47,7 @@ public sealed partial class SemanticModelBinder
             var id = Resolve(address, command.Location);
             var properties = command.Properties.Select(property => BindProperty(address, property, property.IsIdentifier)).ToImmutableArray();
             var propertiesByName = properties.ToDictionary(_ => _.Name, StringComparer.Ordinal);
-            var validations = BindValidations(command, propertiesByName);
+            var validations = BindValidations(address, command, propertiesByName);
             var requirements = command.Validations.OfType<DeclarativeValidateSyntax>()
                 .SelectMany(_ => _.Requirements ?? [])
                 .Select(requirement => (requirement, condition: BindCondition(requirement.Condition, propertiesByName), validMessage: ValidateStringKey(requirement.Message, requirement.Location)))
@@ -73,6 +74,7 @@ public sealed partial class SemanticModelBinder
         }
 
         ImmutableArray<SemanticValidationRule> BindValidations(
+            SemanticAddress address,
             CommandSyntax command,
             Dictionary<string, SemanticProperty> properties)
         {
@@ -81,12 +83,22 @@ public sealed partial class SemanticModelBinder
             {
                 if (validation is not DeclarativeValidateSyntax declarative)
                 {
+                    if (validation is CodeValidateSyntax code)
+                    {
+                        RequireImplementation(SemanticImplementationRole.CommandValidation, address, null, code.Code);
+                    }
+
                     Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' code validation requires a constrained implementation attachment (#139).", validation.Location);
                     continue;
                 }
 
                 foreach (var rule in declarative.Rules)
                 {
+                    if (rule.Rule == ValidationRuleKind.Rule)
+                    {
+                        RequireImplementation(SemanticImplementationRole.RulePredicate, address, rule.File, rule.Code, (rule.Value as PathExpressionSyntax)?.Path);
+                    }
+
                     if (rule.Property.Contains('.', StringComparison.Ordinal))
                     {
                         Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Validation rule on '{rule.Property}' is not admitted: ESM v1 validates command properties, not nested paths - declare the rule on the nested value's concept instead.", rule.Location);

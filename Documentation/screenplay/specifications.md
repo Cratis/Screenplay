@@ -19,12 +19,16 @@ specification <Name>
   when <CommandType>
     [for <event-source-value>]
     <property> = <value>
+  when append <EventType>
+    [for <event-source-value>]
+    <property> = <value>
+  then events in any order
   then <EventType>
     [for <event-source-value>]
     <property> = <value>
-  then readmodel <ReadModelType>
+  then readmodel <ReadModelType> [exactly]
     <property> = <value>
-  then query <Query>
+  then query <Query> [exactly]
     arguments
       <argument> = <value>
     result
@@ -36,16 +40,17 @@ specification <Name>
 - `given <EventType>` — zero or more. Establishes prior state by replaying events onto the slice's event source before the command runs.
 - `given readmodel <ReadModelType>` — zero or more. Establishes prior read model state directly, for scenarios where expressing the state as events would be noise.
 - `given caller` — zero or one. Explicit authentication, roles, and repeatable claim values for authorization. No fixture is inferred for an authorized scenario (`PLAY0389`).
-- `when <CommandType>` — zero or one. The command being exercised. Without `when`, provide at least one `then readmodel` or `then query`; `then` events and errors require a command (`PLAY0352`).
-- `then <EventType>` — zero or more. An event expected to be produced by the command.
-- `then readmodel <ReadModelType>` — zero or more. The read model state expected after the command has run and its events have been projected.
-- `then query <Query>` — zero or more. Executes the named query with the authored `arguments` and compares its ordered `result` blocks. No `result` blocks means the query is expected to return nothing.
+- `when <CommandType>` or `when append <EventType>` — at most one action. Append directly establishes an event occurrence, checks append-time constraints, projects it, then checks read models and queries; it does not run a command. Without `when`, provide at least one `then readmodel` or `then query`; `then` events and errors require an action (`PLAY0352`).
+- `then <EventType>` — zero or more. Compares the complete set of new facts, in authored order by default. For `when append`, if any `then` events are asserted, they must match exactly the appended fact (no extra facts); omit them to check only projected state or queries.
+- `then events in any order` — once per specification. Compares all asserted events by event type, payload, and optional source without regard to order, still requiring the exact number of new facts. Without it, order matters.
+- `then readmodel <ReadModelType> [exactly]` — zero or more. The read model state after projection. By default, only asserted properties need match; `exactly` also disallows unasserted properties.
+- `then query <Query> [exactly]` — zero or more. Executes the named query with the authored `arguments` and compares its ordered `result` blocks. By default, rows match asserted properties as a subset; `exactly` requires all properties to match. Row count and order are always exact. No `result` blocks means the query is expected to return nothing.
 - `then denied` — zero or one. Expects the typed `Unauthorized` rejection, not a validation or constraint error. For a read-only query, declare one `then query` with arguments and no `result`, followed by `then denied`; for a command, do not combine it with any success or error outcome.
 - `then error ["<message>"]` — zero or more. An expected rejection. See [Rejections](#rejections).
 - `file <path>` — zero or one. The repository relative file the specification is realized by. See [File references](file-references.md).
-- `for <event-source-value>` — zero or one inside an event `given`, the command `when`, or an event `then`. It identifies occurrence context rather than an event payload property.
+- `for <event-source-value>` — zero or one inside an event `given`, the command `when`, an event `then`, or an event `when append`. It identifies occurrence context rather than an event payload property.
 
-A `for` assertion selects ESM v2 (language and semantics `2.0`, canonical JSON `schemaVersion: 2`). `given` establishes a fact on that event source; `then` checks both the event payload and its event source. `when for` asserts the command's destination and supplies a deterministic identity when allocation is needed. The value must be a concrete scalar of the command's unambiguous destination type. This lets a constraint specification establish a claim on one source and attempt the same value on another. A consumer pinned to ESM v1 must explicitly opt in to v2 before accepting such a model.
+A `for` assertion selects ESM v2 (language and semantics `2.0`, canonical JSON `schemaVersion: 2`). `given` establishes a fact on that event source; `then` checks both the event payload and its event source. `when for` asserts the command's destination and supplies a deterministic identity when allocation is needed; `when append` with `for` supplies the occurrence source and selects v2 under the same rule. The value must be a concrete scalar of the command's unambiguous destination type. This lets a constraint specification establish a claim on one source and attempt the same value on another. A consumer pinned to ESM v1 must explicitly opt in to v2 before accepting such a model.
 
 Property values (`<property> = <value>`) accept literals (including `null`), single-line JSON-shaped objects and lists with quoted keys, and the same mapping expressions as `produces` and `capture`. For example, `lines = [{"sku":"A-1","quantity":2}]` and `tags = []` are typed values, not opaque expressions. Keys must name properties of the target's declared composite `type`; list items are checked against the element type. Unknown or imported shapes remain undecided. A value with the wrong object/list shape is an error.
 
@@ -181,7 +186,7 @@ specification LookingUpAnExistingInvoice
       status = "draft"
 ```
 
-The reference runner establishes `given` events, projects them, applies complete `given readmodel` states, then queries and compares. A when-less specification may also assert `then readmodel`, but not events or errors. With a `when`, event, read-model and query assertions can be combined as needed.
+The reference runner establishes `given` events, projects them, applies complete `given readmodel` states, then queries and compares. A when-less specification may also assert `then readmodel`, but not events or errors. With a `when`, event, read-model and query assertions can be combined as needed. An appended event can also be rejected by an append-time constraint using `then error`. Reactions triggered by the appended event are **not** executed: reactions are not part of the ESM.
 
 ## Reference execution
 
@@ -215,7 +220,10 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `given readmodel <ReadModelType>` | Prior read model state, established directly. |
 | `given caller` | Explicit identity, roles, and repeated claims. |
 | `when <CommandType>` | The command under test, with its property values. |
-| `then <EventType>` | An event expected to be produced by the command. |
+| `when append <EventType>` | Append an event occurrence, enforce constraints and project it; no reactions run. |
+| `then events in any order` | Ignore order, but still require the exact set of new facts. |
+| `exactly` on read model or query | Compare every property rather than the default subset. |
+| `then <EventType>` | An expected new fact; if asserted, the full new fact set must match. |
 | `then readmodel <ReadModelType>` | The read model state expected after the command. |
 | `then query <Query>` | Ordered query results for explicit arguments; no `result` means empty. |
 | `arguments` | The values supplied to the query. |

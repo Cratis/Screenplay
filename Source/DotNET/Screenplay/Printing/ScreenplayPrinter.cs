@@ -378,7 +378,15 @@ public sealed partial class ScreenplayPrinter :
                 writer.Line($"require {ScreenplaySyntaxText.PolicyCondition(policy.Condition)}");
             }
 
-            if (policy.Code is not null)
+            if (policy.File is not null)
+            {
+                WriteFile(writer, policy.File);
+                if (policy.Code is not null)
+                {
+                    WriteOmittedCode(writer, policy.Code, ReadsOneImplementation("a policy"));
+                }
+            }
+            else if (policy.Code is not null)
             {
                 WriteCodeBlock(writer, policy.Code);
             }

@@ -39,6 +39,8 @@ public class with_a_body : given.a_semantic_binder
     [Fact] void should_reject_the_reducer() => Reducer.Severity.ShouldEqual(DiagnosticSeverity.Error);
     [Fact] void should_keep_the_unsupported_semantic_syntax_code() => Reducer.Code.ShouldEqual(DiagnosticCodes.UnsupportedSemanticSyntax);
     [Fact] void should_say_it_requires_a_portable_reducer_contract() => Reducer.Message.ShouldEqual("Reducer 'Balance' requires a portable reducer contract.");
+    [Fact] void should_list_each_transition_body() => _result.ImplementationRequirements.Select(value => value.Role).ShouldEqual([SemanticImplementationRole.ReducerTransition, SemanticImplementationRole.ReducerTransition]);
+    [Fact] void should_preserve_the_inline_language_and_file_path() => _result.ImplementationRequirements.Select(value => (value.Language, value.File)).ShouldEqual([("csharp", null), (null, "Reducers/Withdrawn.cs")]);
 
     Diagnostic Reducer => _result.Diagnostics.Single(_ => _.Message.StartsWith("Reducer 'Balance'", StringComparison.Ordinal));
 }

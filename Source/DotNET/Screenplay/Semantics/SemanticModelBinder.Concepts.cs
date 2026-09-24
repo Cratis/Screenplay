@@ -35,6 +35,11 @@ public sealed partial class SemanticModelBinder
             {
                 if (validation is not DeclarativeValidateSyntax declarative)
                 {
+                    if (validation is CodeValidateSyntax code)
+                    {
+                        RequireImplementation(SemanticImplementationRole.ConceptValidation, SemanticAddress.ForConcept(_applicationIdentity, concept.Name), null, code.Code);
+                    }
+
                     Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' code validation requires a constrained implementation attachment (#139).", validation.Location);
                     continue;
                 }
@@ -47,6 +52,11 @@ public sealed partial class SemanticModelBinder
                 var subject = ConceptValidationSubject(concept);
                 foreach (var rule in declarative.Rules)
                 {
+                    if (rule.Rule == ValidationRuleKind.Rule)
+                    {
+                        RequireImplementation(SemanticImplementationRole.RulePredicate, SemanticAddress.ForConcept(_applicationIdentity, concept.Name), rule.File, rule.Code, (rule.Value as PathExpressionSyntax)?.Path);
+                    }
+
                     if (rule.Property != ValidationRuleSyntax.ConceptValue)
                     {
                         Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' validation rule must constrain the concept's own value, not '{rule.Property}'.", rule.Location);

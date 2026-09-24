@@ -32,7 +32,13 @@ public record PolicySyntax(
     string Name,
     PolicyConditionSyntax? Condition,
     CodeBlockSyntax? Code,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// The file implementing the policy instead of an inline code block, if any.
+    /// </summary>
+    public FileReferenceSyntax? File { get; init; }
+}
 
 /// <summary>
 /// Represents the base of every policy condition.

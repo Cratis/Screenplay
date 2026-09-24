@@ -60,10 +60,11 @@ PolicyDecl     = "policy", Ident, NL,
                  INDENT, PolicyBody, DEDENT ;
 
 PolicyBody     = PolicyExpr
-               | InlineBlock ;
+               | InlineBlock
+               | FileDirective ;
 
-(* An InlineBlock policy body compiles against PolicyContext and answers with
-   a bool, exactly like the PolicyExpr it stands in for -
+(* An InlineBlock or FileDirective policy body implements the same bool answer
+   against PolicyContext as the PolicyExpr it stands in for -
    see Documentation/screenplay/policies.md.                                  *)
 
 PolicyExpr     = "require", PolicyCondition ;
@@ -639,15 +640,16 @@ SpecificationGiven = "given", "caller", NL,
                | "given", Ident, NL,
                  [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ] ;
 
-SpecificationWhen = "when", Ident, NL,
+SpecificationWhen = "when", ( Ident | "append", Ident ), NL,
                  [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ] ;
 
-SpecificationThen = "then", "readmodel", Ident, NL,
+SpecificationThen = "then", "readmodel", Ident, [ "exactly" ], NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
-               | "then", "query", QualifiedName, NL,
+               | "then", "query", QualifiedName, [ "exactly" ], NL,
                  [ INDENT, { SpecificationQueryDirective }, DEDENT ]
                | "then", "error", [ StringLiteral ], NL
                | "then", "denied", NL
+               | "then", "events", "in", "any", "order", NL
                | "then", Ident, NL,
                  [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ] ;
 
@@ -657,6 +659,12 @@ SpecificationQueryDirective = "arguments", NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
                | "result", NL,
                  [ INDENT, { PropertyMapping }, DEDENT ] ;
+
+(* By default read-model and query-result property comparison is subset;
+   "exactly" requires all properties. Event assertions are ordered and exact
+   by default; "then events in any order" retains exact count and payload
+   comparison while ignoring their order. Append actions are event occurrences,
+   not commands; optional "for" asserts the typed event source (ESM v2). *)
 
 (* Repeat "result" to assert several results in authored comparison order. A
    "then query" with no result blocks asserts an empty result. The query

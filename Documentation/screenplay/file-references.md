@@ -13,7 +13,7 @@ command RegisterInvoice
     file Invoicing/RegisterInvoice/RegisterInvoiceHandler.cs
 ```
 
-The constructs that carry it in this sense are a command's [`handler`](commands.md) and its [validation rule predicates](commands.md), a query's [`performer`](queries.md), a [reducer](readmodels.md) rule, a [reaction](reactions.md) trigger, a [`constraint`](constraints.md) and a [`screen`](screens.md).
+The constructs that carry it in this sense are a command's [`handler`](commands.md) and its [validation rule predicates](commands.md), a query's [`performer`](queries.md), a [reducer](readmodels.md) rule, a [reaction](reactions.md) trigger, a [`constraint`](constraints.md), a [`screen`](screens.md) and a [`policy`](policies.md). A policy's file implements the same `bool` decision against `PolicyContext` as its inline `csharp` block; the two cannot appear together.
 
 **On a pure declaration** there is no body to delegate — a concept *is* its primitive, an event *is* its properties — so the same word can only say one other thing: *this is the file that realizes the declaration*.
 
@@ -97,7 +97,7 @@ trigger LedgerFileArrived
 
 Every one of these is a `FileReferenceSyntax` on the node that declares it, reached through [`ScreenplaySyntaxWalker.VisitFileReference`](visitors.md). Override that one method and you see every file a document names, whichever construct named it.
 
-On a construct that has an implementation the reference is a constructor parameter, as it always was. On a declaration it is an `init` property named `File`, so a tool constructing one of those nodes sets it in an object initializer or a `with` expression rather than positionally - which is how every syntax node grows from here, for the reason [syntax tree compatibility](ast-compatibility.md) gives.
+On most constructs that have an implementation the reference is a constructor parameter; a policy uses an additive `init` property named `File` to preserve its positional record contract. On a declaration it is also an `init` property named `File`, so a tool constructing one of those nodes sets it in an object initializer or a `with` expression rather than positionally - which is how every syntax node grows from here, for the reason [syntax tree compatibility](ast-compatibility.md) gives.
 
 ## See also
 
