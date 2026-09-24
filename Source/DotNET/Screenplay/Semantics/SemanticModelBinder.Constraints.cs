@@ -33,7 +33,7 @@ public sealed partial class SemanticModelBinder
             {
                 Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
-                    $"Constraint '{file.Name}' file implementation requires a constrained implementation attachment.",
+                    $"Constraint '{file.Name}' file implementation is not admitted by the executable model: Chronicle file constraints can only declare uniqueness. Declare it with 'unique ...' for portability; put other rules in command validation or a 'require' condition.",
                     file.Location);
                 return null;
             }

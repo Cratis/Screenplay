@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
 
@@ -35,7 +36,7 @@ public class when_round_tripping_the_invoicing_sample_through_a_folder : Specifi
     }
 
     [Fact] void should_compile_the_folder_back() => _recompiled.Result.Success.ShouldBeTrue();
-    [Fact] void should_resolve_every_reference_across_the_folder() => _recompiled.Result.Diagnostics.ShouldBeEmpty();
+    [Fact] void should_resolve_every_reference_across_the_folder() => _recompiled.Result.Diagnostics.Select(_ => _.Code).ShouldContainOnly(DiagnosticCodes.FileConstraintOnlySupportsUniqueness);
     [Fact] void should_discover_every_file_it_wrote() => _recompiled.Sources.Count().ShouldEqual(_written.Count());
     [Fact] void should_write_a_file_per_module_feature_slice_and_one_for_the_application() => _written.Count().ShouldEqual(1 + Modules + Features + Slices);
     [Fact] void should_give_back_an_equivalent_application() => SyntaxJson.StructurallyEqual(_recompiled.Result.Value!, InPathOrder(_original)).ShouldBeTrue();

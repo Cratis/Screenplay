@@ -1,6 +1,6 @@
 # Constraints
 
-Constraints are server-side rules enforced in the Chronicle kernel **before events are committed**. They protect invariants that must hold under concurrency — uniqueness being the canonical case. Two built-in forms cover the common cases; the third refers to an implementation in a file.
+Chronicle checks unique constraints before an append commits. The two declarative `unique` forms describe the constraints Chronicle can enforce. A `file` form names a hand-written Chronicle `IConstraint` class, but it cannot add an arbitrary append-time rule.
 
 ## Syntax
 
@@ -19,7 +19,7 @@ constraint <Name>
   message "<text>"
 
 constraint <Name>
-  file <Path>                              ← implementation in a file
+  file <Path>                              ← hand-written Chronicle IConstraint
 ```
 
 | Form | Meaning |
@@ -29,7 +29,7 @@ constraint <Name>
 | `released by <EventType>` | Release the claim when this event occurs on the claiming event source. Repeat for independent release events. |
 | `ignore casing` | Compare property values without regard to casing. Not valid for unique events (`PLAY0393`). |
 | `message "<text>"` | Use this exact violation message; a `$strings.*` key is kept as written, not resolved. |
-| `file <Path>` | The constraint is implemented in C# in the referenced file. |
+| `file <Path>` | Names a hand-written Chronicle `IConstraint` class in a repository-relative file. Chronicle's builder supports only unique property and unique event-type constraints; the parser warns with `PLAY0396`, and the executable semantic model rejects this form (`PLAY0268`). Prefer a declarative `unique` rule. |
 
 ## Examples
 
@@ -39,9 +39,6 @@ constraint UniqueInvoiceNumber
 
 constraint OneRegistrationPerInvoice
   unique event InvoiceRegistered
-
-constraint InvoiceStatusTransition
-  file Constraints/InvoiceStatusTransitionConstraint.cs
 ```
 
 ## What a constraint means
@@ -124,10 +121,12 @@ For the same reason, a specification can show that an event source may re-claim 
 
 Chronicle can enforce more than the language can declare. The language cannot yet express **narrower scope**: limiting a constraint to an event source type, an event stream type or an event stream. The default remains the event sequence within a namespace.
 
-A `file <Path>` constraint is not part of the semantic model: binding it reports that it requires a constrained implementation attachment, the same way every other code attachment is reported.
+A `file <Path>` constraint names a hand-written Chronicle `IConstraint` class, not a general C# predicate. The Chronicle builder can only declare unique property or unique event-type constraints. Keep existing files parseable, but new declarations should use `unique` so they are portable (`PLAY0396`). The executable semantic model rejects `file` constraints (`PLAY0268`) rather than silently treating them as enforceable rules.
+
+A state-transition rule is not uniqueness. Express it with command validation or a `require` condition over command properties. Conditions over read-model state need decision-consistent reads, which are deferred until [#129](https://github.com/Cratis/Screenplay/issues/129); do not use a `file` constraint as a substitute.
 
 ## Guidance
 
 - Constraints belong in the `StateChange` slice whose events they guard.
-- Use a constraint — not command validation — for any rule that must hold under concurrent writers; validation happens before the append, constraints are enforced atomically at the event store.
+- Use `unique` for supported uniqueness rules. Chronicle checks uniqueness before the append commits, but updates the index used by later checks **after** the commit; index update failures are logged, not rolled back ([Cratis/Chronicle#4123](https://github.com/Cratis/Chronicle/issues/4123)). Do not describe this as an atomic index-and-append guarantee.
 - Choose the name as carefully as an event name. It is the constraint's identity, and renaming it starts a new, empty index.

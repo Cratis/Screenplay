@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
@@ -20,7 +21,7 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     }
 
     [Fact] void should_succeed() => _result.Success.ShouldBeTrue();
-    [Fact] void should_have_no_diagnostics() => _result.Diagnostics.ShouldBeEmpty();
+    [Fact] void should_warn_only_about_the_legacy_file_constraint() => _result.Diagnostics.Select(_ => _.Code).ShouldContainOnly(DiagnosticCodes.FileConstraintOnlySupportsUniqueness);
     [Fact] void should_have_the_domain() => _result.Value!.Domain!.Name.ShouldEqual("Sales");
     [Fact] void should_have_all_imports() => _result.Value!.Imports.Count().ShouldEqual(4);
     [Fact] void should_have_the_customer_import() => _result.Value!.Imports.Select(_ => _.Name).ShouldContain("CustomerRegistered");

@@ -668,7 +668,8 @@ ConstraintBody = { ConstraintOption }, UniquePropertyRule,
                    { UniquePropertyRule | ConstraintOption }
                | { ConstraintOption }, UniqueEventRule,
                    { UniqueEventRule | ConstraintOption }
-               | FileDirective ;
+               | FileDirective ;  (* file <Path>: Chronicle IConstraint, uniqueness only;
+                                     PLAY0396 warns; ESM rejects with PLAY0268 *)
 UniquePropertyRule = "unique", Ident, { ",", Ident }, "on", Ident, NL ;
 UniqueEventRule = "unique", "event", Ident, NL ;
 ConstraintOption = "released", "by", Ident, NL
@@ -806,7 +807,9 @@ FilePath       = (* repository relative path, never absolute *) ;
    file relationships is meant. On a construct that HAS an implementation - a
    handler, a performer, a reducer rule, a reaction trigger, a rule predicate,
    a constraint, a screen - it stands in for the inline body: the implementation
-   lives there. On a pure declaration - concept, type, event, readmodel,
+   lives there. A constraint file names a Chronicle IConstraint class, which can
+   declare only uniqueness; prefer the portable unique forms instead. On a pure
+   declaration - concept, type, event, readmodel,
    projection, slice, specification, trigger - there is no body to delegate, so
    it can only say which file realizes the declaration. Those are different
    relationships, but the construct already decides which one, so a second
