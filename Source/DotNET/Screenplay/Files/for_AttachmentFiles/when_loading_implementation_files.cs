@@ -67,6 +67,30 @@ public class when_loading_implementation_files : Specification
     }
 
     [Fact]
+    void should_recognize_a_regular_file_on_the_current_platform()
+    {
+        Write("regular.cs", "regular contents");
+        var result = Bind("regular.cs");
+        result.Requirement.AttachmentResolution.ShouldEqual(SemanticAttachmentResolution.Resolved);
+        result.Diagnostics.ShouldBeEmpty();
+    }
+
+    [Fact]
+    void should_refuse_when_the_platform_cannot_verify_the_file_type()
+    {
+        Write("unverified.cs", "contents");
+        var source = Source("unverified.cs");
+        var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Projects"));
+        var document = SemanticSourceDocument.Create(catalog.ResolveDocument("source"), "source", "application.play", source);
+        var loaded = AttachmentFiles.Load(_root, [document], _ => null);
+        loaded.Contents.ShouldBeEmpty();
+        var warning = loaded.Diagnostics.Single();
+        warning.Code.ShouldEqual(DiagnosticCodes.AttachmentUnreadable);
+        warning.Severity.ShouldEqual(DiagnosticSeverity.Warning);
+        warning.Message.ShouldContain("cannot verify the file type on this platform");
+    }
+
+    [Fact]
     async Task should_refuse_a_fifo_without_blocking()
     {
         if (OperatingSystem.IsWindows())

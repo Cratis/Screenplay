@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Buffers.Binary;
 using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -25,7 +26,66 @@ public static partial class AttachmentFiles
     /// <param name="root">The trusted physical model root.</param>
     /// <param name="documents">The source documents to inspect.</param>
     /// <returns>Contents and warnings; a refused reference is omitted from contents.</returns>
-    public static AttachmentFileResult Load(string root, ImmutableArray<SemanticSourceDocument> documents)
+    public static AttachmentFileResult Load(string root, ImmutableArray<SemanticSourceDocument> documents) => Load(root, documents, IsRegularFile);
+
+    /// <summary>Normalizes an authored path for host keys and binder lookup, without accessing the file system.</summary>
+    /// <param name="path">The authored file path.</param>
+    /// <param name="normalized">The normalized repository-relative key, if valid.</param>
+    /// <param name="reason">The reason for refusal, if invalid.</param>
+    /// <returns>Whether the path stays within the root.</returns>
+    public static bool TryNormalize(string path, out string normalized, out string reason)
+    {
+        normalized = string.Empty;
+        reason = string.Empty;
+        var portable = path.Replace('\\', '/');
+        if (portable.StartsWith('/') || portable.StartsWith("~/", StringComparison.Ordinal) ||
+            (portable.Length >= 2 && char.IsAsciiLetter(portable[0]) && portable[1] == ':'))
+        {
+            reason = "absolute or drive-qualified";
+            return false;
+        }
+
+        var segments = new List<string>();
+        foreach (var segment in portable.Split('/'))
+        {
+            if (segment.Length == 0 || string.Equals(segment, ".", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (segment == "..")
+            {
+                if (segments.Count == 0)
+                {
+                    reason = "outside the model root";
+                    return false;
+                }
+
+                segments.RemoveAt(segments.Count - 1);
+            }
+            else if (segment.Contains(':') || segment.Any(char.IsControl) || IsReservedDeviceName(segment))
+            {
+                reason = "not a portable path";
+                return false;
+            }
+            else
+            {
+                segments.Add(segment);
+            }
+        }
+
+        if (segments.Count == 0)
+        {
+            reason = "not a file path";
+            return false;
+        }
+
+        normalized = string.Join('/', segments);
+        return true;
+    }
+
+    // A null result means the platform could not establish the file type; never open the attachment in that case.
+    internal static AttachmentFileResult Load(string root, ImmutableArray<SemanticSourceDocument> documents, Func<string, bool?> verifyRegularFile)
     {
         var contents = ImmutableDictionary.CreateBuilder<string, string>(StringComparer.Ordinal);
         var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
@@ -130,7 +190,20 @@ public static partial class AttachmentFiles
                         continue;
                     }
 
-                    if (attributes.HasFlag(FileAttributes.Device) || attributes.HasFlag(FileAttributes.ReparsePoint) || !IsRegularFile(path))
+                    if (attributes.HasFlag(FileAttributes.Device) || attributes.HasFlag(FileAttributes.ReparsePoint))
+                    {
+                        diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' is not a regular file.", reference.Location));
+                        continue;
+                    }
+
+                    var isRegular = verifyRegularFile(path);
+                    if (isRegular is null)
+                    {
+                        diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' cannot verify the file type on this platform.", reference.Location));
+                        continue;
+                    }
+
+                    if (!isRegular.Value)
                     {
                         diagnostics.Add(Diagnostic.Warning(DiagnosticCodes.AttachmentUnreadable, $"File attachment '{reference.Path}' is not a regular file.", reference.Location));
                         continue;
@@ -171,62 +244,6 @@ public static partial class AttachmentFiles
         return new() { Contents = contents.ToImmutable(), Diagnostics = diagnostics.ToImmutable() };
     }
 
-    /// <summary>Normalizes an authored path for host keys and binder lookup, without accessing the file system.</summary>
-    /// <param name="path">The authored file path.</param>
-    /// <param name="normalized">The normalized repository-relative key, if valid.</param>
-    /// <param name="reason">The reason for refusal, if invalid.</param>
-    /// <returns>Whether the path stays within the root.</returns>
-    public static bool TryNormalize(string path, out string normalized, out string reason)
-    {
-        normalized = string.Empty;
-        reason = string.Empty;
-        var portable = path.Replace('\\', '/');
-        if (portable.StartsWith('/') || portable.StartsWith("~/", StringComparison.Ordinal) ||
-            (portable.Length >= 2 && char.IsAsciiLetter(portable[0]) && portable[1] == ':'))
-        {
-            reason = "absolute or drive-qualified";
-            return false;
-        }
-
-        var segments = new List<string>();
-        foreach (var segment in portable.Split('/'))
-        {
-            if (segment.Length == 0 || string.Equals(segment, ".", StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            if (segment == "..")
-            {
-                if (segments.Count == 0)
-                {
-                    reason = "outside the model root";
-                    return false;
-                }
-
-                segments.RemoveAt(segments.Count - 1);
-            }
-            else if (segment.Contains(':') || segment.Any(char.IsControl) || IsReservedDeviceName(segment))
-            {
-                reason = "not a portable path";
-                return false;
-            }
-            else
-            {
-                segments.Add(segment);
-            }
-        }
-
-        if (segments.Count == 0)
-        {
-            reason = "not a file path";
-            return false;
-        }
-
-        normalized = string.Join('/', segments);
-        return true;
-    }
-
     static bool IsReservedDeviceName(string segment)
     {
         var stem = segment.Split('.')[0].TrimEnd(' ');
@@ -237,22 +254,25 @@ public static partial class AttachmentFiles
     }
 
     // lstat checks the file type without opening it: opening a FIFO for reading can block indefinitely.
-    // Unsupported Unix ABIs are refused rather than guessed; links are checked separately on every component.
-    static bool IsRegularFile(string path)
+    // Darwin's 64-bit-inode stat has mode_t (16 bits) at offset 4; on x64 its symbol is lstat$INODE64.
+    // Linux x64/arm64 have a 32-bit mode_t at offsets 24/16; the low 16 bits contain S_IFMT.
+    // Unsupported ABIs and unavailable libc symbols are refused rather than guessed.
+    static bool? IsRegularFile(string path)
     {
         if (OperatingSystem.IsWindows())
         {
             return true;
         }
 
+        var architecture = RuntimeInformation.ProcessArchitecture;
         var modeOffset = -1;
-        if (OperatingSystem.IsMacOS())
+        if (OperatingSystem.IsMacOS() && architecture is Architecture.X64 or Architecture.Arm64)
         {
             modeOffset = 4;
         }
         else if (OperatingSystem.IsLinux())
         {
-            modeOffset = RuntimeInformation.ProcessArchitecture switch
+            modeOffset = architecture switch
             {
                 Architecture.X64 => 24,
                 Architecture.Arm64 => 16,
@@ -261,16 +281,29 @@ public static partial class AttachmentFiles
         }
         if (modeOffset < 0)
         {
-            return false;
+            return null;
         }
 
+        // Large enough for every supported struct stat ABI; native lstat writes the whole structure.
         var status = new byte[512];
-        return LStat(path, status) == 0 && (BitConverter.ToUInt16(status, modeOffset) & 0xf000) == 0x8000;
+        try
+        {
+            var result = OperatingSystem.IsMacOS() && architecture == Architecture.X64 ? LStatMacX64(path, status) : LStat(path, status);
+            return result == 0 ? (BinaryPrimitives.ReadUInt16LittleEndian(status.AsSpan(modeOffset)) & 0xf000) == 0x8000 : null;
+        }
+        catch (Exception exception) when (exception is DllNotFoundException or EntryPointNotFoundException or BadImageFormatException)
+        {
+            return null;
+        }
     }
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [LibraryImport("libc", EntryPoint = "lstat", StringMarshalling = StringMarshalling.Utf8)]
     private static partial int LStat(string path, [Out] byte[] status);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [LibraryImport("libc", EntryPoint = "lstat$INODE64", StringMarshalling = StringMarshalling.Utf8)]
+    private static partial int LStatMacX64(string path, [Out] byte[] status);
 
     static bool HasLink(string root, string key)
     {
