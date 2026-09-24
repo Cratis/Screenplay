@@ -16,6 +16,8 @@ policy <Name>
     ```
 ````
 
+Instead of the inline `csharp` block, a policy can name its implementation with `file <path>`. A policy may have a `require` condition or one implementation (`file` or inline code), but cannot name both a file and an inline block.
+
 ## Authorization scopes
 
 Declare `authorize <policy expression>` directly in a module or feature body, or on a command or query. Each gate can use policy names joined by `and` and `or`, with parentheses for grouping. Names written next to one another mean `and`. Every gate along the path to a command or query must pass: its own gate **and** every enclosing feature's gate (including nested features) **and** the module's gate. This is the same AND rule used for several policies on one construct. An `or` inside a gate does not bypass any enclosing gate.
@@ -90,7 +92,7 @@ policy CanManageInvoice
 
 ## Portable evaluation
 
-Declarative policies execute in the portable ESM v1 reference evaluator. Inline `csharp` policy bodies remain a blocking binding diagnostic until implementation attachments are defined (#139). The execution request must supply a caller explicitly when an authorized command or query runs. A missing caller cannot satisfy authorization. An authenticated condition checks the caller's authentication flag; a role compares the caller's roles by ordinal, case-sensitive text. Claim **types** compare ordinal-ignore-case, while claim **values** compare ordinal, case-sensitively. If a caller carries several values for the same claim type, **any** matching value satisfies that condition. Missing claims, a null artifact value, and an unresolved subject deny; `and` and `or` short-circuit according to the parsed grouping.
+Declarative policies execute in the portable ESM v1 reference evaluator. Inline `csharp` and `file` policy implementations remain blocking binding diagnostics until implementation attachments are defined (#139). The execution request must supply a caller explicitly when an authorized command or query runs. A missing caller cannot satisfy authorization. An authenticated condition checks the caller's authentication flag; a role compares the caller's roles by ordinal, case-sensitive text. Claim **types** compare ordinal-ignore-case, while claim **values** compare ordinal, case-sensitively. If a caller carries several values for the same claim type, **any** matching value satisfies that condition. Missing claims, a null artifact value, and an unresolved subject deny; `and` and `or` short-circuit according to the parsed grouping.
 
 In the portable ESM v1 profile, an artifact path must resolve from a command property (including declared composite members) or the keyed query argument. An absent or null nested value denies. `$`-rooted expressions remain valid authoring syntax but do not bind to this portable profile. A `subject` comes from a command's identifier property or a keyed query's argument; if no identifier is available, it cannot match. A failed effective authorization yields `Unauthorized` before command validation or query lookup and never changes the world. For the caller fixture and denial assertion, see [Specifications](specifications.md#rejections).
 
@@ -105,6 +107,15 @@ policy IsAdultCustomer
     return dateOfBirth is not null && DateTime.Parse(dateOfBirth) <= DateTime.UtcNow.AddYears(-18);
     ```
 ````
+
+The same custom logic can live in a repository-relative file instead of an inline block:
+
+```screenplay
+policy IsAdultCustomer
+  file Policies/IsAdultCustomer.cs
+```
+
+`file` is the *implemented by* alternative: the file provides the same `PolicyContext` and `bool` answer as the inline block, not a location for generating a declaration. The compiler does not resolve the path; an absolute path warns with `PLAY0264`.
 
 There is deliberately no result type carrying a denial reason. The declarative half has no way to say *why* a `require` failed either, and adding one only to the code half would split the language into two kinds of policy — one that can explain itself and one that cannot. A policy answers whether the caller may act; the message a user sees is a runtime's concern, and `validate` is where the language attaches messages to rejections.
 
