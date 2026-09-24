@@ -15,7 +15,7 @@ export function fenceMap(lines: string[]): boolean[] {
     const map: boolean[] = new Array(lines.length).fill(false);
     let open = false;
     for (let index = 0; index < lines.length; index++) {
-        if (/^\s*```\s*$/.test(lines[index])) {
+        if (/^\s*```(?:[a-z]+)?\s*$/.test(lines[index]) && (!open || /^\s*```\s*$/.test(lines[index]))) {
             map[index] = true;
             open = !open;
             continue;

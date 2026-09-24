@@ -11,8 +11,7 @@ policy <Name>
   require claim "<claim>" matches <subject|"value"|expression>
   require role "<role>" or role "<role>"
   require role "<role>" or (role "<role>" and claim "<claim>" matches "<value>")
-  csharp
-    ```
+  ```csharp
     <C# returning bool>
     ```
 ````
@@ -95,8 +94,7 @@ When the declarative conditions cannot express the rule, drop into C#. The block
 
 ````screenplay
 policy IsAdultCustomer
-  csharp
-    ```
+  ```csharp
     var dateOfBirth = context.Identity.ClaimValue("dateOfBirth");
     return dateOfBirth is not null && DateTime.Parse(dateOfBirth) <= DateTime.UtcNow.AddYears(-18);
     ```

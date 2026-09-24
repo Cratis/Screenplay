@@ -1924,4 +1924,9 @@ public static class DiagnosticCodes
     /// A file-backed Chronicle constraint can only declare uniqueness; use portable unique syntax instead.
     /// </summary>
     public const string FileConstraintOnlySupportsUniqueness = "PLAY0396";
+
+    /// <summary>
+    /// An inline code block uses a legacy language line, or a description uses a bare fence.
+    /// </summary>
+    public const string LegacyInlineCodeFence = "PLAY0397";
 }

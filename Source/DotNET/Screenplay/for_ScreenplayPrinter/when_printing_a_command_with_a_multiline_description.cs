@@ -14,7 +14,7 @@ public class when_printing_a_command_with_a_multiline_description : given.a_prin
             slice StateChange RegisterInvoice
               command RegisterInvoice
                 description
-                  ```
+                  ```text
                   Registers a new invoice.
                   The invoice starts out as a draft.
                   ```
@@ -37,7 +37,7 @@ public class when_printing_a_command_with_a_multiline_description : given.a_prin
     [Fact] void should_reparse_successfully() => _reparsed.Success.ShouldBeTrue();
     [Fact] void should_reparse_without_diagnostics() => _reparsed.Diagnostics.ShouldBeEmpty();
     [Fact] void should_print_the_same_text_on_a_second_pass() => _printedAgain.ShouldEqual(_printed);
-    [Fact] void should_print_the_fenced_form() => _printed.Contains("        description\n          ```\n          Registers a new invoice.\n          The invoice starts out as a draft.\n          ```\n", StringComparison.Ordinal).ShouldBeTrue();
+    [Fact] void should_print_the_fenced_form() => _printed.Contains("        description\n          ```text\n          Registers a new invoice.\n          The invoice starts out as a draft.\n          ```\n", StringComparison.Ordinal).ShouldBeTrue();
     [Fact] void should_preserve_the_command_description() => Command(_reparsed).Description.ShouldEqual(Command(_original).Description);
 
     static CommandSyntax Command(CompilationResult<ApplicationSyntax> result) =>

@@ -13,8 +13,8 @@ public class when_compiling_a_concept_with_validation : given.a_compiler
           validate
             not empty          message "Email is required"
             matches "^.+@.+$"  message "Must be a valid email address"
-          validate csharp
-            ```
+          validate
+            ```csharp
             string email = context.Value;
             if (email.EndsWith("@example.com", StringComparison.OrdinalIgnoreCase))
             {

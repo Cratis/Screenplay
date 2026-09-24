@@ -271,9 +271,9 @@ internal static partial class CommandParser
             return new(FileReferenceParser.Parse(context, body), null, line.Location);
         }
 
-        if (context.Languages.InlineLanguages.Contains(body.Content))
+        if (CodeBlockParser.IsCodeLine(context, body))
         {
-            var code = CodeBlockParser.Parse(context, body.Content, body);
+            var code = CodeBlockParser.Parse(context, body);
             return code is null ? null : new HandlerSyntax(null, code, line.Location);
         }
 

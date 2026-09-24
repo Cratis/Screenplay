@@ -53,6 +53,13 @@ export const commonTokenRules: MonarchTokenRules = [
 export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMonarchLanguage {
     const tokenizer: Record<string, MonarchTokenRules> = {
         root: [
+            // A tagged opening fence carries the embedded language; legacy tag lines still highlight.
+            ...codeBlockTags.map(
+                (tag): MonarchTokenRules[number] => [
+                    new RegExp(`^\\s*\\x60\\x60\\x60${tag}\\s*$`),
+                    { token: 'string.quote', next: `@codeBlock.${embeddedLanguages[tag]}`, nextEmbedded: embeddedLanguages[tag] },
+                ],
+            ),
             // Inline code block tags at end of line open an embedded code block.
             ...codeBlockTags.map(
                 (tag): MonarchTokenRules[number] => [
@@ -115,7 +122,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
 
         // After a bare description, the only thing allowed before the opening fence is whitespace.
         descriptionBlockPending: [
-            [/^\s*```\s*$/, { token: 'string.quote', switchTo: '@descriptionBlock' }],
+            [/^\s*```(?:text)?\s*$/, { token: 'string.quote', switchTo: '@descriptionBlock' }],
             [/^\s*[^\s`].*$/, { token: '@rematch', next: '@pop' }],
             [/\s+/, 'white'],
         ],

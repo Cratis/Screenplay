@@ -49,9 +49,9 @@ internal static partial class PolicyParser
 
                 condition = ParseCondition(context, text, line.Location);
             }
-            else if (context.Languages.InlineLanguages.Contains(line.Content))
+            else if (CodeBlockParser.IsCodeLine(context, line))
             {
-                code = CodeBlockParser.Parse(context, line.Content, line);
+                code = CodeBlockParser.Parse(context, line);
             }
             else
             {

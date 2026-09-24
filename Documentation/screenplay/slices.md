@@ -59,7 +59,7 @@ When one line is not enough, use a fenced block — the same ``` convention as i
 ````screenplay
 module Invoicing
   description
-    ```
+    ```text
     Everything related to invoicing customers.
     Registration, lifecycle and payment tracking of invoices.
     ```

@@ -303,7 +303,7 @@ conditions are reported without a code until the compiler checks them too.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0140` | Error | A `validate` line is neither `validate` nor `validate csharp`. |
+| `PLAY0140` | Error | A `validate` line is neither `validate` nor the deprecated `validate csharp` form. |
 | `PLAY0141` | Error | A validation rule is not one the language can read. |
 | `PLAY0142` | Error | A validation rule names a rule the language does not have. |
 | `PLAY0143` | Error | A `rule` line does not name the rule with an identifier. |
@@ -722,6 +722,14 @@ These diagnostics cover [constraint](constraints.md) binding and the parser warn
 | `PLAY0393` | Error | `ignore casing` is declared on a `unique event` constraint; it applies only to unique property values. |
 | `PLAY0394` | Warning | Another file declares an identical `authorize` gate on the same module or feature. The first is kept and the repeated gate is ignored; distinct gates accumulate with AND. |
 | `PLAY0396` | Warning | A `file <Path>` constraint names a Chronicle `IConstraint` class, which can only declare uniqueness. Use `unique ...` for portable uniqueness; put other rules in command validation or a `require` condition. |
+
+### Inline code migration
+
+Use an opening fence with an info string, such as ` ```csharp ` (without the spaces), for every inline implementation. Use ` ```text ` for multiline descriptions. The old language-line form, `validate csharp`, and bare description fences still parse during the deprecation window; printing a document converts them to the new form.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0397` | Warning | An inline code block uses a separate language line, `validate csharp`, or a multiline description uses a bare fence. The message names the tagged-fence replacement. |
 
 ## Retired codes
 

@@ -12,7 +12,7 @@ describe('when scanning a document with a file line inside a code fence', () => 
     beforeEach(() => {
         result = fileReferences([
             'handler',
-            '    ```',
+            '    ```csharp',
             '    file static class Helpers/NotAPath.cs',
             '    ```',
             '    file Handlers/Real.cs',

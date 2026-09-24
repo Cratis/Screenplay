@@ -24,6 +24,19 @@ internal static class ValidateParser
     {
         if (line.Content == "validate")
         {
+            if (context.TryPeekChild(line.Indent, out var fence) && fence.Content.StartsWith("```", StringComparison.Ordinal))
+            {
+                context.Reader.TakeSignificant();
+                if (fence.Content != "```csharp")
+                {
+                    context.Error(DiagnosticCodes.ExpectedCodeFence, "Expected '```csharp' after 'validate'", fence.Location);
+                    return null;
+                }
+
+                var implementation = CodeBlockParser.Parse(context, fence);
+                return implementation is null ? null : new CodeValidateSyntax(implementation, line.Location);
+            }
+
             var rules = new List<ValidationRuleSyntax>();
             var requirements = new List<RequirementSyntax>();
             while (context.TryPeekChild(line.Indent, out var child))
@@ -56,8 +69,10 @@ internal static class ValidateParser
 
         if (line.Content == "validate csharp")
         {
-            var code = CodeBlockParser.Parse(context, "csharp", line);
-            return code is null ? null : new CodeValidateSyntax(code, line.Location);
+            context.Warning(DiagnosticCodes.LegacyInlineCodeFence, "'validate csharp' is deprecated - use 'validate' followed by '```csharp' instead", line.Location);
+            var code = CodeBlockParser.ParseFencedText(context, "csharp", line);
+            var implementation = code is null ? null : new CodeBlockSyntax("csharp", code, line.Location);
+            return implementation is null ? null : new CodeValidateSyntax(implementation, line.Location);
         }
 
         context.Error(DiagnosticCodes.InvalidValidateDeclaration, $"Invalid validate declaration '{line.Content}' - expected 'validate' or 'validate csharp'", line.Location);
