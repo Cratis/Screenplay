@@ -15,10 +15,12 @@ public class when_two_files_describe_the_same_module : Specification
         var compiler = new ScreenplayCompiler();
         _result = PlayFolderMerge.Merge([
             compiler.Parse("module Sales\n  description \"Sales\"", "first.play"),
-            compiler.Parse("module Sales\n  description \"Sales\"", "second.play")]);
+            compiler.Parse("module Sales\n  description \"Other sales\"", "second.play")]);
     }
 
-    [Fact] void should_reject_a_second_owner_even_with_identical_text() => _result.Success.ShouldBeFalse();
-    [Fact] void should_name_the_first_owner() => _result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.RepeatedDeclarationAcrossFiles).Message.ShouldContain("first.play");
-    [Fact] void should_locate_the_second_owner() => _result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.RepeatedDeclarationAcrossFiles).Location.Path.ShouldEqual("second.play");
+    [Fact] void should_accept_the_folder() => _result.Success.ShouldBeTrue();
+    [Fact] void should_warn_about_the_different_description() => _result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.ConflictingDescriptionAcrossFiles).Severity.ShouldEqual(DiagnosticSeverity.Warning);
+    [Fact] void should_name_the_first_file() => _result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.ConflictingDescriptionAcrossFiles).Message.ShouldContain("first.play");
+    [Fact] void should_locate_the_second_file() => _result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.ConflictingDescriptionAcrossFiles).Location.Path.ShouldEqual("second.play");
+    [Fact] void should_keep_the_first_description() => _result.Value!.Modules.Single().Description.ShouldEqual("Sales");
 }

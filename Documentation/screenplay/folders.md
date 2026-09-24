@@ -381,7 +381,7 @@ Merging follows a single rule: **the documents of a folder are one document**. F
 | `domain`, `authentication` | At most one for the whole folder. A second file declaring one is an error. |
 | `import` | Merged and de-duplicated. An import declared anywhere applies to the whole application, exactly as it does within a single document. |
 | `seed` | Accumulated, the same way multiple `seed` blocks accumulate within one document. |
-| `description` on a module or feature | Exactly one file declares it. A second file describing the same owner, even identically, is an error; restated headers own no description. |
+| `description` on a module or feature | The first one given wins. A second, different one is a warning - only the file that owns the folder is expected to describe it. |
 
 A duplicate is reported **only when the same name is declared in more than one file**, and it always names both ends - the file the name was already claimed in, and the location of the file that tried to claim it again:
 
@@ -391,7 +391,7 @@ second.play(3,5): error PLAY0173: Duplicate slice 'Register' in feature 'Invoice
 second.play(1,1): error PLAY0172: The folder already declares a domain in 'first.play' - a folder compiles to one application, which can have at most one
 ```
 
-Duplicates *within* one file are left to the single document compiler, which already has its own rules for them. Compiling one document behaves exactly as it always has. Ownership is attached to the file declaring a member, never to a module or feature header restated to place a child. A workspace transaction that encounters a cross-file declaration error returns `ConflictingOwner`, with `Path` for the second claimant and `OtherPath` for the first; it offers no write plan. Other parse, binding and validation failures remain `CompilationFailed`. An external disk edit since proposal is rejected before the first write; reopen the workspace rather than applying a stale plan.
+Duplicates *within* one file are left to the single document compiler, which already has its own rules for them. Compiling one document behaves exactly as it always has. Ownership is attached to the file declaring a member, never to a module or feature header restated to place a child; descriptions are not declarations and keep their warning behavior. A workspace transaction that encounters a cross-file declaration error returns `ConflictingOwner`, with `Path` for the second claimant and `OtherPath` for the first; it offers no write plan. Other parse, binding and validation failures remain `CompilationFailed`. An external disk edit since proposal is rejected before the first write; reopen the workspace rather than applying a stale plan.
 
 ### Why `import` still means what it meant
 
