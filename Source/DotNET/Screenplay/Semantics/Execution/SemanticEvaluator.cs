@@ -41,18 +41,20 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, contractRejection);
         }
 
-        if (ValidateRules(plan, command, request.Values) is { } validationRejection)
-        {
-            return RejectWithMessage(world, SemanticRejectionCategory.Validation, null, validationRejection);
-        }
-
+        var failures = ValidateRules(plan, command, request.Values).ToBuilder();
         var commandValues = request.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
         foreach (var requirement in command.Requirements)
         {
             if (!SemanticConditionEvaluation.Evaluate(requirement.Condition, commandValues))
             {
-                return RejectWithMessage(world, SemanticRejectionCategory.Validation, null, requirement.Message ?? "Command requirement was not met.");
+                failures.Add(new(requirement.Message ?? "Command requirement was not met.", requirement.Severity));
             }
+        }
+
+        if (failures.Count > 0)
+        {
+            var message = failures[0].Message;
+            return RejectWithMessage(world, SemanticRejectionCategory.Validation, null, message) with { ValidationFailures = failures.ToImmutable() };
         }
 
         var facts = ImmutableArray.CreateBuilder<SemanticFact>();
@@ -193,18 +195,19 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         return null;
     }
 
-    static string? ValidateRules(
+    static ImmutableArray<SemanticValidationFailure> ValidateRules(
         SemanticExecutionPlan plan,
         SemanticCommand command,
         ImmutableArray<SemanticPropertyValue> values)
     {
         var valuesByTarget = values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
+        var failures = ImmutableArray.CreateBuilder<SemanticValidationFailure>();
         foreach (var validation in command.Validations)
         {
             var value = valuesByTarget[validation.Property];
             if (!SemanticValidationRules.Satisfies(validation, value))
             {
-                return validation.Message ?? SemanticValidationRules.DefaultMessage(validation, value, "A required value is empty.");
+                failures.Add(new(validation.Message ?? SemanticValidationRules.DefaultMessage(validation, value, "A required value is empty."), validation.Severity));
             }
         }
 
@@ -212,43 +215,55 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         var types = plan.Model.Application.Types.ToDictionary(_ => _.Id);
         foreach (var property in command.Properties)
         {
-            if (ValidateConceptValues(concepts, types, property.Type, valuesByTarget[property.Id]) is { } rejection)
-            {
-                return rejection;
-            }
+            ValidateConceptValues(concepts, types, property.Type, valuesByTarget[property.Id], failures);
         }
 
-        return null;
+        return failures.ToImmutable();
     }
 
     // A concept's rules constrain every value of the concept - directly, as each element of a collection and
     // inside composite values - so they are applied wherever the command carries one.
-    static string? ValidateConceptValues(
+    static void ValidateConceptValues(
         Dictionary<SemanticId, SemanticConcept> concepts,
         Dictionary<SemanticId, SemanticCompositeType> types,
         SemanticTypeReference type,
-        SemanticValue value)
+        SemanticValue value,
+        ImmutableArray<SemanticValidationFailure>.Builder failures)
     {
         if (type.IsCollection)
         {
-            var elementType = type with { IsCollection = false, IsOptional = false };
-            return value is SemanticArrayValue array
-                ? array.Values.Select(element => ValidateConceptValues(concepts, types, elementType, element)).FirstOrDefault(_ => _ is not null)
-                : null;
+            if (value is SemanticArrayValue array)
+            {
+                var elementType = type with { IsCollection = false, IsOptional = false };
+                foreach (var element in array.Values)
+                {
+                    ValidateConceptValues(concepts, types, elementType, element, failures);
+                }
+            }
+
+            return;
         }
 
         switch (type.Kind)
         {
             case SemanticTypeReferenceKind.Concept:
-                var failed = concepts[type.Target].Validations.FirstOrDefault(validation => !SemanticValidationRules.Satisfies(validation, value));
-                return failed is null ? null : failed.Message ?? SemanticValidationRules.DefaultMessage(failed, value, "A required concept value is empty.");
+                foreach (var validation in concepts[type.Target].Validations)
+                {
+                    if (!SemanticValidationRules.Satisfies(validation, value))
+                    {
+                        failures.Add(new(validation.Message ?? SemanticValidationRules.DefaultMessage(validation, value, "A required concept value is empty."), validation.Severity));
+                    }
+                }
+
+                break;
             case SemanticTypeReferenceKind.CompositeType when value is SemanticCompositeValue composite:
                 var properties = types[type.Target].Properties.ToDictionary(_ => _.Id);
-                return composite.Properties
-                    .Select(property => ValidateConceptValues(concepts, types, properties[property.TargetProperty].Type, property.Value))
-                    .FirstOrDefault(_ => _ is not null);
-            default:
-                return null;
+                foreach (var property in composite.Properties)
+                {
+                    ValidateConceptValues(concepts, types, properties[property.TargetProperty].Type, property.Value, failures);
+                }
+
+                break;
         }
     }
 

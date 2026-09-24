@@ -109,6 +109,14 @@ public sealed partial class SemanticModelBinder
             _ => SemanticValidationRuleKind.Unknown
         };
 
+        static SemanticValidationSeverity Severity(ValidationSeverity severity) => severity switch
+        {
+            ValidationSeverity.Error => SemanticValidationSeverity.Error,
+            ValidationSeverity.Information => SemanticValidationSeverity.Information,
+            ValidationSeverity.Warning => SemanticValidationSeverity.Warning,
+            _ => throw new InvalidSemanticContract($"Unknown validation severity '{severity}'.")
+        };
+
         static string Spelling(ValidationRuleKind kind) => kind switch
         {
             ValidationRuleKind.NotEmpty => "not empty",
@@ -191,7 +199,7 @@ public sealed partial class SemanticModelBinder
 
             if (kind == SemanticValidationRuleKind.NotEmpty)
             {
-                return new(property, kind, null, rule.Message);
+                return new(property, kind, null, rule.Message) { Severity = Severity(rule.Severity) };
             }
 
             if (kind == SemanticValidationRuleKind.Matches)
@@ -223,11 +231,11 @@ public sealed partial class SemanticModelBinder
                     return null;
                 }
 
-                return new(property, kind, SemanticValue.Text(pattern), rule.Message);
+                return new(property, kind, SemanticValue.Text(pattern), rule.Message) { Severity = Severity(rule.Severity) };
             }
 
             var operand = BindValidationOperand(rule, kind, subject, spelling);
-            return operand is null ? null : new(property, kind, operand, rule.Message);
+            return operand is null ? null : new(property, kind, operand, rule.Message) { Severity = Severity(rule.Severity) };
         }
 
         SemanticValue? BindValidationOperand(

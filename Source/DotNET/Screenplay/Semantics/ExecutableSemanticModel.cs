@@ -341,6 +341,7 @@ internal static partial class SemanticModelValidator
             foreach (var requirement in command.Requirements)
             {
                 if (requirement is null || requirement.Message?.Length == 0) throw new InvalidSemanticContract("A requirement or its message is invalid.");
+                ValidateEnum(requirement.Severity, (SemanticValidationSeverity)(-1), "requirement severity");
                 ValidateCondition(requirement.Condition, properties);
             }
 
@@ -392,6 +393,7 @@ internal static partial class SemanticModelValidator
         {
             RejectNull(validation, "validation rule");
             ValidateEnum(validation.Kind, SemanticValidationRuleKind.Unknown, "validation rule kind");
+            ValidateEnum(validation.Severity, (SemanticValidationSeverity)(-1), "validation severity");
             if (isConcept && validation.Property.IsSet)
             {
                 throw new InvalidSemanticContract("A concept validation must use the implicit concept value.");

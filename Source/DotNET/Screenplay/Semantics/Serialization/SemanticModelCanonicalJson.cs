@@ -190,6 +190,7 @@ internal static partial class SemanticModelCanonicalJson
         writer.WriteString("kind", ValidationKind(validation.Kind));
         WriteOptionalValue(writer, "operand", validation.Operand);
         WriteOptionalString(writer, "message", validation.Message);
+        WriteSeverity(writer, validation.Severity);
         writer.WriteEndObject();
     }
 
@@ -538,6 +539,17 @@ internal static partial class SemanticModelCanonicalJson
         SemanticTypeReferenceKind.CompositeType => "compositeType",
         _ => throw Unknown(nameof(SemanticTypeReferenceKind), value)
     };
+
+    static void WriteSeverity(Utf8JsonWriter writer, SemanticValidationSeverity severity)
+    {
+        switch (severity)
+        {
+            case SemanticValidationSeverity.Error: break;
+            case SemanticValidationSeverity.Warning: writer.WriteString("severity", "warning"); break;
+            case SemanticValidationSeverity.Information: writer.WriteString("severity", "information"); break;
+            default: throw Unknown(nameof(SemanticValidationSeverity), severity);
+        }
+    }
 
     static string ValidationKind(SemanticValidationRuleKind value) => value switch
     {
