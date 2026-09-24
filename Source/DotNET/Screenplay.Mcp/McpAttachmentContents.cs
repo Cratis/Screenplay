@@ -13,9 +13,7 @@ static class McpAttachmentContents
 {
     internal static ScreenplayWorkspace Refresh(McpRoot root, ScreenplayWorkspace workspace)
     {
-        var documents = workspace.Documents.Select(document => SemanticSourceDocument.Create(
-            document.Id, document.StableKey, document.Path.Value, document.Text)).ToImmutableArray();
-        var loaded = AttachmentFiles.Load(root.DirectoryPath, documents);
+        var loaded = Load(root, workspace.Documents);
         if (workspace.AttachmentContents.Count == loaded.Contents.Count &&
             workspace.AttachmentContents.All(entry => loaded.Contents.TryGetValue(entry.Key, out var value) && value == entry.Value) &&
             workspace.AttachmentDiagnostics.SequenceEqual(loaded.Diagnostics))
@@ -24,5 +22,12 @@ static class McpAttachmentContents
         }
 
         return workspace.WithAttachmentContents(loaded.Contents, loaded.Diagnostics);
+    }
+
+    internal static AttachmentFileResult Load(McpRoot root, ImmutableArray<WorkspaceDocument> source)
+    {
+        var documents = source.Select(document => SemanticSourceDocument.Create(
+            document.Id, document.StableKey, document.Path.Value, document.Text)).ToImmutableArray();
+        return AttachmentFiles.Load(root.DirectoryPath, documents);
     }
 }

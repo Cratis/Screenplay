@@ -94,6 +94,23 @@ public sealed class ScreenplayWorkspace
         SemanticIdentityCatalog identityCatalog) =>
         CreateCore(applicationName, applicationIdentity, documents, identityCatalog);
 
+    /// <summary>Creates a workspace with already loaded host attachment inputs without a second compilation.</summary>
+    /// <param name="applicationIdentity">The stable application identity.</param>
+    /// <param name="applicationName">The friendly application name.</param>
+    /// <param name="documents">The complete exact document set.</param>
+    /// <param name="identityCatalog">The authoritative identity catalog.</param>
+    /// <param name="contents">Host-supplied attachment contents.</param>
+    /// <param name="diagnostics">Attachment loading warnings.</param>
+    /// <returns>The admitted workspace and its derived compilation.</returns>
+    public static ScreenplayWorkspace Create(
+        ApplicationIdentity applicationIdentity,
+        string applicationName,
+        ImmutableArray<WorkspaceDocument> documents,
+        SemanticIdentityCatalog identityCatalog,
+        ImmutableDictionary<string, string> contents,
+        ImmutableArray<Diagnostic> diagnostics) =>
+        CreateCore(applicationName, applicationIdentity, documents, identityCatalog, SemanticDocumentSet.NormalizeAttachments(contents), diagnostics);
+
     /// <summary>
     /// Creates an empty authoring workspace for bootstrapping a new application's first typed documents.
     /// Empty source is not executable and does not relax ordinary workspace admission or strict transactions.
@@ -221,7 +238,9 @@ public sealed class ScreenplayWorkspace
         string applicationName,
         ApplicationIdentity? explicitApplicationIdentity,
         ImmutableArray<WorkspaceDocument> documents,
-        SemanticIdentityCatalog identityCatalog)
+        SemanticIdentityCatalog identityCatalog,
+        ImmutableDictionary<string, string>? attachmentContents = null,
+        ImmutableArray<Diagnostic> attachmentDiagnostics = default)
     {
         try
         {
@@ -234,14 +253,14 @@ public sealed class ScreenplayWorkspace
             }
 
             var ordered = AdmitDocuments(documents);
-            var compilation = Compile(normalizedName, ordered, identityCatalog);
+            var compilation = Compile(normalizedName, ordered, identityCatalog, attachmentContents, attachmentDiagnostics);
             if (compilation.Success)
             {
                 identityCatalog = MaterializeCatalog(ordered, identityCatalog, compilation.Value!);
-                compilation = Compile(normalizedName, ordered, identityCatalog);
+                compilation = Compile(normalizedName, ordered, identityCatalog, attachmentContents, attachmentDiagnostics);
             }
 
-            return CreateValidated(normalizedName, ordered, identityCatalog, compilation);
+            return CreateValidated(normalizedName, ordered, identityCatalog, compilation, attachmentContents, attachmentDiagnostics);
         }
         catch (InvalidScreenplayWorkspace)
         {

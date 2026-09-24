@@ -235,6 +235,8 @@ public class when_loading_implementation_files : Specification
         var before = ScreenplayWorkspaceSerializer.Serialize(workspace);
         var loaded = AttachmentFiles.Load(_root, [SemanticSourceDocument.Create(document.Id, document.StableKey, document.Path.Value, source)]);
         var supplied = workspace.WithAttachmentContents(loaded.Contents, loaded.Diagnostics);
+        var direct = ScreenplayWorkspace.Create(workspace.IdentityCatalog.Application, "Projects", [document], workspace.IdentityCatalog, loaded.Contents, loaded.Diagnostics);
+        direct.Compilation.ImplementationRequirements.Single().ContentHash.ShouldEqual(supplied.Compilation.ImplementationRequirements.Single().ContentHash);
         workspace.Compilation.ImplementationRequirements.Single().AttachmentResolution.ShouldEqual(SemanticAttachmentResolution.UnresolvedFile);
         supplied.Compilation.ImplementationRequirements.Single().AttachmentResolution.ShouldEqual(SemanticAttachmentResolution.Resolved);
         supplied.Revision.ShouldEqual(workspace.Revision);

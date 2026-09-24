@@ -85,7 +85,7 @@ sealed record McpState(string ApplicationName, SemanticIdentityCatalog Catalog, 
         {
             workspace = documents.IsEmpty
                 ? ScreenplayWorkspace.CreateEmpty(Catalog.Application, ApplicationName)
-                : ScreenplayWorkspace.Create(Catalog.Application, ApplicationName, documents, Catalog);
+                : CreateWithAttachments(root, documents);
         }
         catch (Exception exception) when (exception is InvalidScreenplayWorkspace or InvalidSemanticContract)
         {
@@ -137,5 +137,11 @@ sealed record McpState(string ApplicationName, SemanticIdentityCatalog Catalog, 
         }
 
         return buffer.WrittenSpan.ToArray();
+    }
+
+    ScreenplayWorkspace CreateWithAttachments(McpRoot root, ImmutableArray<WorkspaceDocument> documents)
+    {
+        var loaded = McpAttachmentContents.Load(root, documents);
+        return ScreenplayWorkspace.Create(Catalog.Application, ApplicationName, documents, Catalog, loaded.Contents, loaded.Diagnostics);
     }
 }

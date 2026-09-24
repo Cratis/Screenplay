@@ -28,9 +28,9 @@ internal sealed partial class McpWorkspaces(McpRoot root)
             throw new McpFailure("IdentityStateConflict: applicationName differs from the persisted application. Reopen without overriding its name.");
         }
 
-        var candidate = McpAttachmentContents.Refresh(
-            root,
-            serialized is null ? state?.Open(root) ?? OpenFromDisk(name) : McpWorkspaceTransport.Restore(serialized));
+        var candidate = serialized is null
+            ? state?.Open(root) ?? OpenFromDisk(name)
+            : McpAttachmentContents.Refresh(root, McpWorkspaceTransport.Restore(serialized));
         if (persisted is not null && !McpManagedFiles.Equal(persisted, McpState.Serialize(candidate)))
         {
             throw new McpFailure("IdentityImportConflict: workspaceJson cannot replace a different persisted identity catalog or document mapping.");
@@ -216,9 +216,13 @@ internal sealed partial class McpWorkspaces(McpRoot root)
     {
         var documents = root.Read(allowEmpty: true);
         var identity = ApplicationIdentity.Create(name);
-        return documents.IsEmpty
-            ? ScreenplayWorkspace.CreateEmpty(identity, name)
-            : ScreenplayWorkspace.Create(name, documents, SemanticIdentityCatalog.Empty(identity));
+        if (documents.IsEmpty)
+        {
+            return ScreenplayWorkspace.CreateEmpty(identity, name);
+        }
+
+        var loaded = McpAttachmentContents.Load(root, documents);
+        return ScreenplayWorkspace.Create(identity, name, documents, SemanticIdentityCatalog.Empty(identity), loaded.Contents, loaded.Diagnostics);
     }
 
     ScreenplayWorkspace Current()
