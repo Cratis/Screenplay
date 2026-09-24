@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text;
+using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Printing;
 
@@ -18,7 +19,12 @@ internal sealed class ScreenplayWriter
     const string IndentUnit = "  ";
 
     readonly StringBuilder _builder = new();
+    readonly Dictionary<SyntaxNode, (int First, int Last)> _anchors = new(ReferenceEqualityComparer.Instance);
     int _depth;
+    int _line;
+
+    /// <summary>Gets the lines written for each syntax owner, keyed by reference identity.</summary>
+    internal IReadOnlyDictionary<SyntaxNode, (int First, int Last)> Anchors => _anchors;
 
     /// <summary>
     /// Writes a line of text at the current indentation depth.
@@ -29,6 +35,7 @@ internal sealed class ScreenplayWriter
         if (text.Length == 0)
         {
             _builder.Append('\n');
+            _line++;
             return;
         }
 
@@ -38,6 +45,7 @@ internal sealed class ScreenplayWriter
         }
 
         _builder.Append(text).Append('\n');
+        _line++;
     }
 
     /// <summary>
@@ -56,6 +64,7 @@ internal sealed class ScreenplayWriter
         }
 
         _builder.Append('\n');
+        _line++;
     }
 
     /// <summary>
@@ -70,6 +79,30 @@ internal sealed class ScreenplayWriter
 
     /// <inheritdoc/>
     public override string ToString() => _builder.ToString().TrimStart('\n').TrimEnd('\n') + '\n';
+
+    /// <summary>Tracks a declaration's first line and the end of its printed children.</summary>
+    internal NodeScope Anchor(SyntaxNode node) => new(this, node, _line);
+
+    /// <summary>Writes one line and associates it with its exact syntax node.</summary>
+    internal void Line(string text, SyntaxNode node)
+    {
+        var first = _line;
+        Line(text);
+        _anchors[node] = (first, first);
+    }
+
+    /// <summary>Tracks a syntax owner's printed extent.</summary>
+    internal readonly struct NodeScope(ScreenplayWriter writer, SyntaxNode node, int first) : IDisposable
+    {
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            if (writer._line > first)
+            {
+                writer._anchors[node] = (first, writer._line - 1);
+            }
+        }
+    }
 
     /// <summary>
     /// Represents an indentation scope that restores the previous depth when disposed.

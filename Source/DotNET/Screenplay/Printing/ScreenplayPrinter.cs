@@ -30,7 +30,7 @@ public sealed partial class ScreenplayPrinter :
     {
         var writer = new ScreenplayWriter();
         WriteApplication(writer, application);
-        return PrintComments(application, writer.ToString());
+        return PrintComments(application, writer);
     }
 
     /// <inheritdoc/>
@@ -38,7 +38,7 @@ public sealed partial class ScreenplayPrinter :
     {
         var writer = new ScreenplayWriter();
         WriteProjection(writer, projection);
-        return PrintComments(projection, writer.ToString());
+        return PrintComments(projection, writer);
     }
 
     /// <inheritdoc/>
@@ -46,7 +46,7 @@ public sealed partial class ScreenplayPrinter :
     {
         var writer = new ScreenplayWriter();
         WriteSpecification(writer, specification);
-        return PrintComments(specification, writer.ToString());
+        return PrintComments(specification, writer);
     }
 
     /// <inheritdoc/>
@@ -54,7 +54,7 @@ public sealed partial class ScreenplayPrinter :
     {
         var writer = new ScreenplayWriter();
         WriteCapture(writer, capture);
-        return PrintComments(capture, writer.ToString());
+        return PrintComments(capture, writer);
     }
 
     /// <inheritdoc/>
@@ -71,15 +71,16 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteApplication(ScreenplayWriter writer, ApplicationSyntax application)
     {
+        using var anchor = writer.Anchor(application);
         if (application.Domain is not null)
         {
-            writer.Line($"domain {application.Domain.Name}");
+            writer.Line($"domain {application.Domain.Name}", application.Domain);
             writer.Blank();
         }
 
         foreach (var import in application.Imports)
         {
-            writer.Line($"import {import.QualifiedName}");
+            writer.Line($"import {import.QualifiedName}", import);
         }
 
         foreach (var concept in application.Concepts)
@@ -157,18 +158,20 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteAuthentication(ScreenplayWriter writer, AuthenticationSyntax authentication)
     {
+        using var anchor = writer.Anchor(authentication);
         writer.Line("authentication");
         using (writer.Indent())
         {
             foreach (var provider in authentication.Providers)
             {
-                writer.Line(provider.Alias is null ? $"provider {provider.Name}" : $"provider {provider.Name} name {provider.Alias}");
+                writer.Line(provider.Alias is null ? $"provider {provider.Name}" : $"provider {provider.Name} name {provider.Alias}", provider);
             }
         }
     }
 
     void WriteUiProfile(ScreenplayWriter writer, UiProfileSyntax uiProfile)
     {
+        using var anchor = writer.Anchor(uiProfile);
         writer.Line($"ui profile {uiProfile.Name}");
         using (writer.Indent())
         {
@@ -216,6 +219,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteTheme(ScreenplayWriter writer, ThemeSyntax theme)
     {
+        using var anchor = writer.Anchor(theme);
         writer.Line($"theme {theme.Name}");
         using (writer.Indent())
         {
@@ -228,6 +232,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteTrigger(ScreenplayWriter writer, TriggerSyntax trigger)
     {
+        using var anchor = writer.Anchor(trigger);
         writer.Line($"trigger {trigger.Name}");
         using (writer.Indent())
         {
@@ -237,13 +242,14 @@ public sealed partial class ScreenplayPrinter :
             foreach (var datum in trigger.Data)
             {
                 var name = ReservedWords.Escape(datum.Name, ReservedWords.TriggerBody);
-                writer.Line(datum.Type is null ? name : $"{name} {ScreenplaySyntaxText.TypeRef(datum.Type)}");
+                writer.Line(datum.Type is null ? name : $"{name} {ScreenplaySyntaxText.TypeRef(datum.Type)}", datum);
             }
         }
     }
 
     void WriteReadModel(ScreenplayWriter writer, ReadModelSyntax readModel)
     {
+        using var anchor = writer.Anchor(readModel);
         writer.Line($"readmodel {readModel.Name}");
         using (writer.Indent())
         {
@@ -255,6 +261,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteReducer(ScreenplayWriter writer, ReducerSyntax reducer)
     {
+        using var anchor = writer.Anchor(reducer);
         writer.Line($"reducer {reducer.Name} => {reducer.ReadModel}");
         using (writer.Indent())
         {
@@ -262,7 +269,7 @@ public sealed partial class ScreenplayPrinter :
 
             foreach (var rule in reducer.Rules)
             {
-                writer.Line($"on {rule.Event}");
+                writer.Line($"on {rule.Event}", rule);
 
                 // A rule that only names its event is complete on its own, as a reaction trigger is.
                 if (rule is { Description: null, File: null, Code: null })
@@ -290,17 +297,18 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteSeed(ScreenplayWriter writer, SeedSyntax seed)
     {
+        using var anchor = writer.Anchor(seed);
         writer.Line("seed");
         using (writer.Indent())
         {
             foreach (var group in seed.Groups)
             {
-                writer.Line($"for {StringLiteral.Quote(group.EventSourceId)}");
+                writer.Line($"for {StringLiteral.Quote(group.EventSourceId)}", group);
                 using (writer.Indent())
                 {
                     foreach (var @event in group.Events)
                     {
-                        writer.Line(@event.Event);
+                        writer.Line(@event.Event, @event);
                         using (writer.Indent())
                         {
                             WriteMappings(writer, @event.Properties, ReservedWords.None);
@@ -313,6 +321,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteConcept(ScreenplayWriter writer, ConceptSyntax concept)
     {
+        using var anchor = writer.Anchor(concept);
         var attributes = concept.Attributes.ToList();
         writer.Line($"concept {concept.Name} : {concept.Type}{string.Concat(attributes.Select(attribute => $" @{attribute.Name}"))}");
         var validations = concept.Validations?.ToList() ?? [];
@@ -348,6 +357,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteType(ScreenplayWriter writer, TypeSyntax type)
     {
+        using var anchor = writer.Anchor(type);
         writer.Line($"type {type.Name}");
         using (writer.Indent())
         {
@@ -359,6 +369,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WritePolicy(ScreenplayWriter writer, PolicySyntax policy)
     {
+        using var anchor = writer.Anchor(policy);
         writer.Line($"policy {policy.Name}");
         using (writer.Indent())
         {
@@ -376,6 +387,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WritePersona(ScreenplayWriter writer, PersonaSyntax persona)
     {
+        using var anchor = writer.Anchor(persona);
         writer.Line($"persona {persona.Name}");
         using (writer.Indent())
         {
@@ -390,6 +402,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteModule(ScreenplayWriter writer, ModuleSyntax module)
     {
+        using var anchor = writer.Anchor(module);
         writer.Line($"module {module.Name}");
         using (writer.Indent())
         {
@@ -408,6 +421,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteContribution(ScreenplayWriter writer, ContributionSyntax contribution)
     {
+        using var anchor = writer.Anchor(contribution);
         writer.Line($"contribute to {contribution.ContributionPoint}");
         using (writer.Indent())
         {
@@ -430,6 +444,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteForm(ScreenplayWriter writer, FormSyntax form)
     {
+        using var anchor = writer.Anchor(form);
         writer.Line($"form {form.Name} for {form.For}");
         using (writer.Indent())
         {
@@ -440,7 +455,7 @@ public sealed partial class ScreenplayPrinter :
 
             foreach (var field in form.Fields)
             {
-                writer.Line(WriteFormField(field));
+                writer.Line(WriteFormField(field), field);
             }
 
             if (form.OnSubmit is not null)
@@ -483,6 +498,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteLayout(ScreenplayWriter writer, LayoutSyntax layout)
     {
+        using var anchor = writer.Anchor(layout);
         writer.Line($"layout {layout.Name}");
         using (writer.Indent())
         {
@@ -494,6 +510,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteScreenTemplate(ScreenplayWriter writer, ScreenTemplateSyntax template)
     {
+        using var anchor = writer.Anchor(template);
         writer.Line($"screen template {template.Name}");
         using (writer.Indent())
         {
@@ -511,6 +528,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteDialogTemplate(ScreenplayWriter writer, DialogTemplateSyntax template)
     {
+        using var anchor = writer.Anchor(template);
         writer.Line($"dialog template {template.Name}");
         using (writer.Indent())
         {
@@ -533,7 +551,7 @@ public sealed partial class ScreenplayPrinter :
     {
         foreach (var slot in slots)
         {
-            writer.Line(slot.Contributes is null ? slot.Name : $"{slot.Name} contributes {slot.Contributes}");
+            writer.Line(slot.Contributes is null ? slot.Name : $"{slot.Name} contributes {slot.Contributes}", slot);
         }
     }
 
@@ -543,6 +561,8 @@ public sealed partial class ScreenplayPrinter :
         {
             return;
         }
+
+        using var anchor = writer.Anchor(arrangement);
 
         writer.Blank();
         writer.Line(arrangement.Mode == ArrangementMode.Freeform ? "arrangement freeform" : "arrangement flow");
@@ -595,6 +615,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteArrangementNode(ScreenplayWriter writer, ArrangementNodeSyntax node)
     {
+        using var anchor = writer.Anchor(node);
         switch (node)
         {
             case ArrangementSlotSyntax slot:
@@ -625,6 +646,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteArrangementOverride(ScreenplayWriter writer, ArrangementOverrideSyntax arrangementOverride)
     {
+        using var anchor = writer.Anchor(arrangementOverride);
         writer.Line($"when {WriteOverrideCondition(arrangementOverride)}");
         using (writer.Indent())
         {
@@ -634,12 +656,13 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteVariant(ScreenplayWriter writer, VariantSyntax variant)
     {
+        using var anchor = writer.Anchor(variant);
         writer.Line($"variant width {variant.Width}, height {variant.Height}");
         using (writer.Indent())
         {
             foreach (var place in variant.Places)
             {
-                writer.Line(WritePlaceLine(place));
+                writer.Line(WritePlaceLine(place), place);
             }
         }
     }
@@ -692,6 +715,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteFeature(ScreenplayWriter writer, FeatureSyntax feature)
     {
+        using var anchor = writer.Anchor(feature);
         writer.Line($"feature {feature.Name}");
         using (writer.Indent())
         {
@@ -708,6 +732,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteSlice(ScreenplayWriter writer, SliceSyntax slice)
     {
+        using var anchor = writer.Anchor(slice);
         writer.Line($"slice {slice.Type} {slice.Name}");
         using (writer.Indent())
         {

@@ -13,6 +13,7 @@ public partial class ScreenplayPrinter
 {
     void WriteCapture(ScreenplayWriter writer, CaptureSyntax capture)
     {
+        using var anchor = writer.Anchor(capture);
         writer.Line($"capture {capture.Name}");
         using (writer.Indent())
         {
@@ -47,12 +48,13 @@ public partial class ScreenplayPrinter
 
     void WriteCaptureSource(ScreenplayWriter writer, CaptureSourceSyntax source)
     {
+        using var anchor = writer.Anchor(source);
         writer.Line($"source {source.Kind}");
         using (writer.Indent())
         {
             foreach (var setting in source.Settings)
             {
-                writer.Line(setting.Value.Length == 0 ? setting.Name : $"{setting.Name} {setting.Value}");
+                writer.Line(setting.Value.Length == 0 ? setting.Name : $"{setting.Name} {setting.Value}", setting);
             }
         }
     }
@@ -77,6 +79,7 @@ public partial class ScreenplayPrinter
 
     void WriteCaptureMapOperation(ScreenplayWriter writer, CaptureMapOperationSyntax operation)
     {
+        using var anchor = writer.Anchor(operation);
         switch (operation)
         {
             case CaptureMapEntrySyntax entry:
@@ -87,7 +90,7 @@ public partial class ScreenplayPrinter
                 {
                     foreach (var translation in translations)
                     {
-                        writer.Line($"{StringLiteral.Quote(translation.From)} => {translation.To}");
+                        writer.Line($"{StringLiteral.Quote(translation.From)} => {translation.To}", translation);
                     }
                 }
 
@@ -110,6 +113,7 @@ public partial class ScreenplayPrinter
 
     void WriteCaptureAppend(ScreenplayWriter writer, CaptureAppendSyntax append)
     {
+        using var anchor = writer.Anchor(append);
         writer.Line($"append {append.Event}");
         using (writer.Indent())
         {
@@ -131,6 +135,7 @@ public partial class ScreenplayPrinter
 
     void WriteCaptureChildren(ScreenplayWriter writer, CaptureChildrenSyntax children)
     {
+        using var anchor = writer.Anchor(children);
         writer.Line($"children {children.Property} identified by {children.IdentifiedBy}");
         using (writer.Indent())
         {
@@ -144,6 +149,7 @@ public partial class ScreenplayPrinter
 
     void WriteCaptureNested(ScreenplayWriter writer, CaptureNestedSyntax nested)
     {
+        using var anchor = writer.Anchor(nested);
         writer.Line($"nested {nested.Property}");
         using (writer.Indent())
         {
