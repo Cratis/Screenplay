@@ -376,7 +376,7 @@ internal static partial class ScreenplayParser
                     description = DescriptionParser.Parse(context, child, description, $"Module '{name}'");
                     break;
                 case "authorize":
-                    authorize = CombineAuthorize(authorize, AuthorizeParser.Parse(context, child));
+                    authorize = AuthorizeParser.Combine(authorize, AuthorizeParser.Parse(context, child));
                     break;
                 case "on":
                 case "uses":
@@ -451,7 +451,7 @@ internal static partial class ScreenplayParser
                     description = DescriptionParser.Parse(context, child, description, $"Feature '{name}'");
                     break;
                 case "authorize":
-                    authorize = CombineAuthorize(authorize, AuthorizeParser.Parse(context, child));
+                    authorize = AuthorizeParser.Combine(authorize, AuthorizeParser.Parse(context, child));
                     break;
                 case "on":
                 case "uses":
@@ -480,13 +480,6 @@ internal static partial class ScreenplayParser
             Authorize = authorize
         };
     }
-
-    static AuthorizeSyntax? CombineAuthorize(AuthorizeSyntax? first, AuthorizeSyntax? next) => (first, next) switch
-    {
-        (null, _) => next,
-        (_, null) => first,
-        _ => new AuthorizeSyntax(new LogicalPolicyRequirementSyntax(first.Requirement, LogicalOperator.And, next.Requirement, first.Location), first.Location)
-    };
 
     [GeneratedRegex(@"^domain\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]
     private static partial Regex DomainRegex();
