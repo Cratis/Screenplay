@@ -39,6 +39,7 @@ internal sealed partial class McpWorkspaces
             }),
             "diagnostics" => McpWorkspaceAnalysis.For(workspace).Source.Compilation.Diagnostics,
             "executable-diagnostics" => workspace.Compilation.Diagnostics,
+            "implementation-requirements" => workspace.Compilation.ImplementationRequirements.Select(DescribeRequirement),
             _ => throw new McpFailure("Unknown workspace view.", -32602)
         };
         return McpJson.ToolResult(new
@@ -125,6 +126,7 @@ internal sealed partial class McpWorkspaces
                 proposal.Workspace.Revision.ToString()),
             "diagnostics" => McpPaging.Page(proposal is McpAuthoringProposal authoring ? authoring.Result.AuthoringDiagnostics : [], arguments, proposal.Workspace.Revision.ToString()),
             "executable-diagnostics" => McpPaging.Page(proposal.Workspace.Compilation.Diagnostics, arguments, proposal.Workspace.Revision.ToString()),
+            "implementation-requirements" => McpPaging.Page(proposal.Workspace.Compilation.ImplementationRequirements, DescribeRequirement, arguments, proposal.Workspace.Revision.ToString()),
             "dropped-comments" => McpPaging.Page(
                 WorkspaceDroppedComments.In(proposal.WritePlan).Select(comment => new
                 {
@@ -159,6 +161,20 @@ internal sealed partial class McpWorkspaces
         _proposals.Remove(McpJson.RequiredString(arguments, "proposalId"));
         return McpJson.ToolResult(new { discarded = true, remainingCount = _proposals.Count });
     }
+
+    static object DescribeRequirement(SemanticImplementationRequirement requirement) => new
+    {
+        role = requirement.Role.ToString(),
+        owner = McpSemanticAddresses.Describe(requirement.Owner),
+        requirement.Member,
+        requirement.Language,
+        requirement.File,
+        requirement.ContentHash,
+        semanticId = requirement.Source.SemanticId.ToString(),
+        documentId = requirement.Source.Span.Document.ToString(),
+        line = requirement.Source.Span.StartLine,
+        column = requirement.Source.Span.StartColumn
+    };
 
     static object ProposalBytes(IMcpProposal proposal, JsonElement arguments, string view)
     {

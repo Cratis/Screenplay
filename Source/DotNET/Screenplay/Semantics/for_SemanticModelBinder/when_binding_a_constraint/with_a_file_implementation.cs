@@ -27,5 +27,8 @@ public class with_a_file_implementation : given.a_semantic_binder
     [Fact] void should_keep_the_unsupported_semantic_syntax_code() => Rejection.Code.ShouldEqual(DiagnosticCodes.UnsupportedSemanticSyntax);
     [Fact] void should_explain_the_portable_alternative() => Rejection.Message.ShouldEqual("Constraint 'InvoiceStatusTransition' file implementation is not admitted by the executable model: Chronicle file constraints can only declare uniqueness. Declare it with 'unique ...' for portability; put other rules in command validation or a 'require' condition.");
 
+    [Fact] void should_list_the_constraint_file() => _result.ImplementationRequirements.Single().File.ShouldEqual("Constraints/InvoiceStatusTransitionConstraint.cs");
+    [Fact] void should_type_the_constraint_role() => _result.ImplementationRequirements.Single().Role.ShouldEqual(SemanticImplementationRole.ConstraintPredicate);
+
     Diagnostic Rejection => _result.Diagnostics.Single(_ => _.Message.StartsWith("Constraint 'InvoiceStatusTransition'", StringComparison.Ordinal));
 }

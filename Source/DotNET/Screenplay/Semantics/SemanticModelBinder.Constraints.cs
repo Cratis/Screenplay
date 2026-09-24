@@ -14,12 +14,17 @@ public sealed partial class SemanticModelBinder
         // The name is the constraint's identity in the event store, so it is claimed across every slice.
         readonly HashSet<string> _constraintNames = new(StringComparer.Ordinal);
 
-        ImmutableArray<SemanticConstraint> BindConstraints(SliceSyntax slice) =>
-            [.. slice.Constraints.Select(BindConstraint).Where(_ => _ is not null).Select(_ => _!)];
+        ImmutableArray<SemanticConstraint> BindConstraints(SemanticAddress owner, SliceSyntax slice) =>
+            [.. slice.Constraints.Select(constraint => BindConstraint(owner, constraint)).Where(_ => _ is not null).Select(_ => _!)];
 
-        SemanticConstraint? BindConstraint(ConstraintSyntax constraint)
+        SemanticConstraint? BindConstraint(SemanticAddress owner, ConstraintSyntax constraint)
         {
             ValidateStringKey(constraint.Message, constraint.Location);
+            if (constraint is FileConstraintSyntax attachment)
+            {
+                RequireImplementation(SemanticImplementationRole.ConstraintPredicate, owner, attachment.File, null, attachment.Name);
+            }
+
             if (!_constraintNames.Add(constraint.Name))
             {
                 Error(

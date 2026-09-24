@@ -105,13 +105,13 @@ is canonicalized.
 | Tool | Required arguments | Optional arguments |
 | --- | --- | --- |
 | `open-workspace` | None | `applicationName`, `workspaceJson`, `includeContent` |
-| `read-workspace` | `expectedRevision` | view, offset, limit |
+| `read-workspace` | `expectedRevision` | view (`implementation-requirements` for blocking code attachments), offset, limit |
 | `read-ast` | `expectedRevision` | documentId, path, kind, name, semanticId, view, includeContent, offset, limit |
 | `propose` | Expected workspace/catalog revisions, operations | Explicit migrations/retirements, includeContent; legacy single-operation form supported |
 | `propose-ast` | Expected revisions, formatting | operations, documents, validation, referencePolicy, migrations/retirements, includeContent |
 | `propose-rename` | Expected revisions, target handle, expectedName, newName | formatting, validation, includeContent |
 | `expand-layout` | Expected revisions | layout, validation, formatting, referencePolicy, includeContent |
-| `read-proposal` | proposalId | view, documentId, offset, limit |
+| `read-proposal` | proposalId | view (`implementation-requirements` for proposed attachments), documentId, offset, limit |
 | `export-workspace` | expectedRevision | proposalId, offset, limit |
 | `workspace-state` | None | view, proposalId, expectedStateRevision, offset, limit |
 | `discard-proposal` | proposalId | None |
@@ -121,8 +121,12 @@ is canonicalized.
 `tools/list` supplies nested argument schemas. Revisions, IDs and handles come
 from the server; do not infer them from names or line numbers.
 
-`read-workspace` views: documents, semantics, eventContracts, diagnostics and
-executable-diagnostics. Document results contain root handles. `read-ast` returns
+`read-workspace` views: documents, semantics, eventContracts, diagnostics,
+executable-diagnostics and implementation-requirements. The last view pages
+blocking code attachments by role, owner address, optional member, language or
+file, hash, semantic/document ID and source line/column. The page cursor and
+`expectedRevision` pin one immutable snapshot; rejected compilations still expose
+attachments without admitting an executable model. Document results contain root handles. `read-ast` returns
 original occurrences, names, child counts and existing identities. Its `children`
 view selects a parent document/path. Typed content is opt-in.
 

@@ -10,15 +10,25 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
-        void ReportUnsupportedSliceMembers(SliceSyntax slice)
+        void ReportUnsupportedSliceMembers(SemanticAddress owner, SliceSyntax slice)
         {
             foreach (var reducer in slice.Reducers ?? [])
             {
+                foreach (var rule in reducer.Rules)
+                {
+                    RequireImplementation(SemanticImplementationRole.ReducerTransition, owner, rule.File, rule.Code, $"{reducer.Name}/on {rule.Event}");
+                }
+
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, UnsupportedReducerMessage(reducer), reducer.Location);
             }
 
             foreach (var reaction in slice.Reactions)
             {
+                foreach (var trigger in reaction.Triggers)
+                {
+                    RequireImplementation(SemanticImplementationRole.ReactionEffect, owner, trigger.File, trigger.Code, reaction.Name);
+                }
+
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Reaction '{reaction.Name}' requires portable occurrence and effect semantics.", reaction.Location);
             }
 

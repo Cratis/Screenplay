@@ -1,7 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Semantics;
 
 namespace Cratis.Screenplay;
 
@@ -13,6 +15,11 @@ namespace Cratis.Screenplay;
 /// <param name="Diagnostics">The <see cref="Diagnostic">diagnostics</see> produced during compilation.</param>
 public record CompilationResult<TResult>(TResult? Value, IEnumerable<Diagnostic> Diagnostics)
 {
+    /// <summary>
+    /// Gets the code attachments blocking executable admission, even when <see cref="Value"/> is absent.
+    /// </summary>
+    public ImmutableArray<SemanticImplementationRequirement> ImplementationRequirements { get; init; } = [];
+
     /// <summary>
     /// Gets a value indicating whether the compilation succeeded without errors.
     /// </summary>

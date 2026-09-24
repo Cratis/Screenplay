@@ -16,6 +16,12 @@ A registered block parses, carries its language tag, and holds its text in the s
 
 **Construct keywords are not open.** The words that introduce a construct inside a slice — `projection`, `capture`, `command`, and the rest — are fixed in the compiler. PDL and CDL are built in rather than registered, and a third construct keyword means changing the compiler. The editor is a different story, and the rest of this page is about that.
 
+## Code the model needs
+
+The executable semantic compiler does not run inline code or file-backed implementations. If you attach code to a command handler, command or concept validation, named rule, policy, reducer transition, query performer, file constraint, or reaction trigger, the compilation fails with `PLAY0268`. The failed compilation result still lists each attachment in `ImplementationRequirements`: its typed role, owning semantic address (and nested member when applicable), inline language or authored file path, SHA-256 content hash, and source-map location. It does not store executable code or admit a partial model. A file path is hashed as authored; the compiler does not resolve or read the file.
+
+Use the MCP `read-workspace` view `implementation-requirements` to page these gaps at a pinned revision. This is an inventory for tooling, not an implementation contract or an indication that the reference executor can run the code. See [MCP](mcp.md) for the read arguments.
+
 ## Plugging a new sub-language into the editor
 
 An editor extension registers a construct keyword together with its token rules, completions and hover documentation, so highlighting and IntelliSense compose cleanly.

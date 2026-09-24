@@ -24,7 +24,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var application = context.BindApplication();
             if (context.HasErrors)
             {
-                return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics);
+                return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with { ImplementationRequirements = context.ImplementationRequirements };
             }
 
             var version = context.UsesV2;
@@ -34,12 +34,12 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 application);
             var sourceMap = SemanticSourceMap.Create(context.SourceMapEntries, documents.Documents);
             var compilation = SemanticCompilation.Create(model, documents, sourceMap);
-            return new(compilation, context.Diagnostics);
+            return new CompilationResult<SemanticCompilation>(compilation, context.Diagnostics) { ImplementationRequirements = context.ImplementationRequirements };
         }
         catch (InvalidSemanticContract exception)
         {
             context.Error(DiagnosticCodes.InvalidSemanticBinding, exception.Message, syntax.Location);
-            return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics);
+            return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with { ImplementationRequirements = context.ImplementationRequirements };
         }
     }
 
