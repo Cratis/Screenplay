@@ -1,8 +1,10 @@
 ---
 id: 0005
 title: "Policy predicates as an implementation attachment role, composed in authored order"
-status: proposed
-stage: none
+status: accepted
+stage: implemented
+decided: 2026-09-24
+decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
 applies-to:
@@ -76,3 +78,7 @@ Models with code policies reach the ESM, and their unrelated specifications run.
 ## Related issues
 
 Screenplay: [#139](https://github.com/Cratis/Screenplay/issues/139). Decisions: [0001](0001-chronicle-runtime-semantic-authority.md), [0002](0002-implementation-attachments-envelope-and-reducer-role.md), [0004](0004-admission-and-governance-of-portable-executable-semantics.md).
+
+## Status notes
+
+**2026-09-24 — accepted and implemented.** Accepted as written; the decision text is unchanged. The references above to what decision 0004 "proposes" now point at an accepted record. `feature/policy-predicate-role` merged as [#251](https://github.com/Cratis/Screenplay/pull/251) and shipped in v4.29.0, with the specs named under *Verification* in the tree. It is not yet `verified`.

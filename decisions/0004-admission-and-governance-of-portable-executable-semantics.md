@@ -1,8 +1,10 @@
 ---
 id: 0004
 title: Admission and governance of portable executable semantics
-status: proposed
+status: accepted
 stage: none
+decided: 2026-09-24
+decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
 applies-to:
@@ -82,3 +84,7 @@ Adding a construct costs more: vectors, an unsupported path and a record when a 
 ## Related issues
 
 Screenplay: [#128](https://github.com/Cratis/Screenplay/issues/128), [#135](https://github.com/Cratis/Screenplay/issues/135), [#136](https://github.com/Cratis/Screenplay/issues/136), [#139](https://github.com/Cratis/Screenplay/issues/139), [#167](https://github.com/Cratis/Screenplay/issues/167), [#218](https://github.com/Cratis/Screenplay/issues/218). Chronicle: [#4130](https://github.com/Cratis/Chronicle/issues/4130).
+
+## Status notes
+
+**2026-09-24 — accepted.** Accepted as written, including the two rules this record inferred from v2 and v3 rather than from #128: a construct that previously failed binding may join the highest existing ESM version when no model that bound before changes bytes, and each release that adds an ESM version opens a tracking issue in Stage, CLI, Studio and Generation. The decision text is unchanged. It stays at `stage: none` because its *Done when* is not met: ESM v3 has no source-backed `Cratis.Screenplay.CanonicalCorpus` vector yet.
