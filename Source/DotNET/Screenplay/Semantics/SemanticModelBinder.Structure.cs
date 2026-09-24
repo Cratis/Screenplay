@@ -92,7 +92,7 @@ public sealed partial class SemanticModelBinder
             var events = slice.Events.Select(value => _eventDeclarations[value]).ToArray();
             var commands = slice.Commands.Select(value => BindCommand(address, value, _events)).ToImmutableArray();
             var readModels = (slice.ReadModels ?? []).Select(value => _readModelDeclarations[value].Model).ToImmutableArray();
-            var projections = slice.Projections.Select(value => BindProjection(address, value)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
+            var projections = slice.Projections.SelectMany(value => BindProjections(address, value)).ToImmutableArray();
             var queries = slice.Queries.Select(value => _queryDeclarations.GetValueOrDefault(value)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             var commandsByName = commands.ToDictionary(_ => _.Name, StringComparer.Ordinal);
             var specifications = slice.Specifications

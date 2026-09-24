@@ -144,7 +144,7 @@ internal sealed partial class SemanticScopedProjection(
     // A join matches every existing instance whose joined property equals the joined event's source identity and never creates one.
     void ApplyJoin(SemanticProjectionJoin join, SemanticProjectionScope scope, Level level)
     {
-        if (EventSource() is not { } value)
+        if ((join.Key is null ? EventSource() : Key(join.Key)) is not { } value)
         {
             return;
         }
@@ -175,11 +175,25 @@ internal sealed partial class SemanticScopedProjection(
                 continue;
             }
 
-            var joined = observed.LastOrDefault(_ => _.EventContract == join.EventContract && SemanticValueRules.AreEqual(_.Destination, on));
+            var joined = observed.LastOrDefault(candidate => candidate.EventContract == join.EventContract && MatchesJoinKey(join, candidate, on));
             if (joined is not null)
             {
                 Apply(target, join.Mappings, level.Targets, joined);
             }
+        }
+    }
+
+    bool MatchesJoinKey(SemanticProjectionJoin join, SemanticFact candidate, SemanticValue on)
+    {
+        var current = _fact;
+        try
+        {
+            _fact = candidate;
+            return (join.Key is null ? EventSource() : Key(join.Key)) is { } key && SemanticValueRules.AreEqual(key, on);
+        }
+        finally
+        {
+            _fact = current;
         }
     }
 

@@ -21,5 +21,5 @@ public class and_the_variant_declares_no_enters_on_event : given.a_compiler
     void Because() => _result = _compiler.CompileProjection(Source);
 
     [Fact] void should_report_the_variant_without_an_entering_event() =>
-        _result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.ProjectionVariantWithoutEntersOn);
+        _result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.VariantRequiresEnteringEvent);
 }

@@ -67,6 +67,11 @@ internal static partial class SemanticModelCanonicalJson
         writer.WriteString("eventContract", join.EventContract.ToString());
         writer.WriteString("on", join.On.ToString());
         WriteArray(writer, "mappings", Require(join.Mappings), WriteProjectionMapping);
+        if (join.Key is not null)
+        {
+            writer.WritePropertyName("key");
+            WriteKey(writer, join.Key);
+        }
         writer.WriteEndObject();
     }
 

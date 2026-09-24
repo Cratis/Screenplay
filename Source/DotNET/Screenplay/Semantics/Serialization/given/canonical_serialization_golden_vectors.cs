@@ -445,7 +445,10 @@ public static partial class canonical_serialization_golden_vectors
         // end #209 validation
         // #211 projection blocks: the scoped projection shape lives in its own slice and composite types.
         var projectionBlocks = CreateProjectionBlocks(applicationIdentity, uuidConcept, textConcept, decimalNumberConcept);
-        var nestedFeature = new SemanticFeature(Id(32), "Nested", [], [stateView, stateChange, validation, projectionBlocks.Slice]);
+
+        // #185 variants
+        var variants = CreateVariants(applicationIdentity, uuidConcept, textConcept);
+        var nestedFeature = new SemanticFeature(Id(32), "Nested", [], [stateView, stateChange, validation, projectionBlocks.Slice, variants]);
         var application = new SemanticApplication(
             Id(1),
             "Canonical Golden Application",
