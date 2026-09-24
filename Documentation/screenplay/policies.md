@@ -4,13 +4,17 @@ Policies are named authorization rules. Modules, features, commands, and queries
 
 ## Syntax
 
+```screenplay
+policy <Name>
+  require <condition>
+```
+
+Write one `require` line. Its `<condition>` can be `authenticated`, `role "<role>"`, `claim "<claim>" matches <subject|"value"|expression>`, or a combination such as `role "<role>" or (role "<role>" and claim "<claim>" matches "<value>")`. Continue a condition at deeper indentation rather than starting another `require` line; a second line reports `PLAY0441`.
+
+Alternatively, implement the policy in an inline block:
+
 ````screenplay
 policy <Name>
-  require authenticated
-  require role "<role>"
-  require claim "<claim>" matches <subject|"value"|expression>
-  require role "<role>" or role "<role>"
-  require role "<role>" or (role "<role>" and claim "<claim>" matches "<value>")
   ```csharp
     <C# returning bool>
     ```

@@ -263,6 +263,7 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0122` | Error | An `authorize` clause names no policy. |
 | `PLAY0123` | Error | A policy is referred to by something that is not a policy name. |
 | `PLAY0440` | Error | A policy combines `require` with an inline code block or a file implementation. Choose one form. |
+| `PLAY0441` | Error | A policy has more than one `require` line; combine the conditions with `and`/`or` in one `require`. |
 
 ### Authentication
 

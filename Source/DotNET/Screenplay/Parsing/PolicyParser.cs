@@ -33,6 +33,7 @@ internal static partial class PolicyParser
         }
 
         PolicyConditionSyntax? condition = null;
+        var hasRequire = false;
         CodeBlockSyntax? code = null;
         FileReferenceSyntax? file = null;
 
@@ -48,7 +49,16 @@ internal static partial class PolicyParser
                     text += $" {continuation.Content}";
                 }
 
-                condition = ParseCondition(context, text, line.Location);
+                var parsed = ParseCondition(context, text, line.Location);
+                if (hasRequire)
+                {
+                    context.Error(DiagnosticCodes.RepeatedPolicyRequirement, $"Policy '{name.Groups[1].Value}' has more than one require line; combine the conditions with and/or in one require", line.Location);
+                }
+                else
+                {
+                    condition = parsed;
+                    hasRequire = true;
+                }
             }
             else if (FileReferenceParser.IsDirective(line))
             {
