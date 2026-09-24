@@ -78,7 +78,19 @@ internal static partial class SemanticModelValidator
         var context = new ValidationContext(semanticVersion == default ? SemanticVersion.V1 : semanticVersion);
         context.RegisterApplication(application);
         context.ValidateReferences(application);
+        if (semanticVersion == SemanticVersion.V2 && !application.Modules.SelectMany(module => module.Features)
+            .SelectMany(AllSlices).Any(slice => slice.Commands.Any(command => command.Destination is not null ||
+                command.Produces.Any(produced => produced.Mappings.Any(mapping => mapping.Source is SemanticEventContextExpression))) ||
+                slice.Specifications.Any(specification => specification.When?.EventSource is not null ||
+                    specification.GivenEvents.Any(value => value.EventSource is not null) ||
+                    specification.ThenEvents.Any(value => value.EventSource is not null))))
+        {
+            throw new InvalidSemanticContract("An ESM v2 model must contain a typed destination, a specification event source, or an occurrence context mapping.");
+        }
     }
+
+    static IEnumerable<SemanticSlice> AllSlices(SemanticFeature feature) =>
+        feature.Slices.Concat(feature.Features.SelectMany(AllSlices));
 
     private sealed partial class ValidationContext
     {

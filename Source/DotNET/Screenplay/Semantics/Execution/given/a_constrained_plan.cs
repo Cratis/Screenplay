@@ -28,6 +28,16 @@ public class a_constrained_plan : Specification
                 code String?
               constraint ProjectCodeIsUnique
                 unique code on ProjectRegistered
+              specification CodeCollidesAcrossEventSources
+                given ProjectRegistered
+                  for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                  projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                  code = "ALPHA"
+                when RegisterProject
+                  for "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                  projectId = "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                  code = "ALPHA"
+                then error "Constraint 'ProjectCodeIsUnique' is violated: another event source already holds the constrained value."
               specification ReclaimingItsOwnCode
                 given ProjectRegistered
                   projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"

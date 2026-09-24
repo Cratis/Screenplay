@@ -339,7 +339,7 @@ Declares what events a command emits. Supports single, multiple, and conditional
 ```screenplay
 produces InvoiceRegistered
   invoiceId     = invoiceId              // from command property
-  registeredAt  = $context.occurred      // from event context
+  registeredAt  = $context.occurred      // event occurrence time
   registeredBy  = $context.identity.id  // caller identity
   source        = $env.SERVICE_NAME      // environment variable
   status        = "draft"                // string constant
@@ -348,7 +348,7 @@ produces InvoiceRegistered
 
 ### Tags
 
-`tag` lines before the mappings attach [tags](events.md#tags) to the event appended by this specific production. ESM v1 carries literal tags as ordered append metadata, not event payload; `$context` tag values require v2 (#226):
+`tag` lines before the mappings attach [tags](events.md#tags) to the event appended by this specific production. ESM carries literal tags as ordered append metadata, not event payload; computed `$context` tag values are not yet admitted:
 
 ```screenplay
 produces InvoiceRegistered
@@ -372,7 +372,7 @@ produces InvoiceRegistered
 | Numeric constant | `= 0` | Literal number |
 | Expression | `= lines.sum(l => l.quantity * l.unitPrice)` | Computed value |
 
-Every `$context.` path names a member of the `CommandContext` an inline handler compiles against — see [Contexts](context.md).
+Every `$context.` path names a member of the `CommandContext` an inline handler compiles against — see [Contexts](context.md). The ESM v2 `produces` subset is narrower: occurrence time and the three audit identity fields (`identity.id`/`causedBy.subject`, `name`, `userName`). Other entries above remain syntax-only for portable produces mappings and report `PLAY0268`. Explicit `for <command-identifier>` binds a typed state-change destination separately from event properties. It selects ESM v2, and produced facts carry that identity in event context even when the event payload has no ID.
 
 ### Where an event lands
 
@@ -411,7 +411,7 @@ produces InvoiceRunningTotalUpdated
 
 ### Conditional produces
 
-`produces when <condition>` emits the indented event only when the condition holds. In ESM v1, comparisons use declared command properties and constants with `==`, `!=`, `>`, `>=`, `<`, `<=`, combined with `and`/`or` (`and` binds tighter; parentheses group). Ordering is numeric; equality admits scalar text, enumeration, number and Boolean. `$env` conditions remain syntax-only because environment values vary across realizations. `$context` waits on v2 (#226), and paths into reads wait on #129:
+`produces when <condition>` emits the indented event only when the condition holds. In ESM v1, comparisons use declared command properties and constants with `==`, `!=`, `>`, `>=`, `<`, `<=`, combined with `and`/`or` (`and` binds tighter; parentheses group). Ordering is numeric; equality admits scalar text, enumeration, number and Boolean. `$env` conditions remain syntax-only because environment values vary across realizations. the supported scalar `$context` mappings select v2 (#226), and paths into reads wait on #129:
 
 ```screenplay
 produces when isProForma == true

@@ -110,6 +110,7 @@ internal sealed partial class SemanticScopedProjection
             case SemanticProjectionLiteral literal:
                 return literal.Value;
             case SemanticProjectionEventSourceIdentity:
+            case SemanticProjectionEventContextValue { Path: "eventSourceId" }:
                 return fact.Context?.EventSource.Value ?? fact.Destination;
             case SemanticProjectionEventProperty property:
                 var values = fact.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value);

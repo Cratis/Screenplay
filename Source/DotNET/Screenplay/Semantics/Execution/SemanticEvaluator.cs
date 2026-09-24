@@ -81,11 +81,36 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                     $"Command '{command.Name}' requires one deterministic allocated destination.");
             }
 
+            if (plan.Model.SemanticVersion == SemanticVersion.V2 && destinationExpression is null &&
+                command.Destination is null && request.AllocatedEventSourceType is null)
+            {
+                return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A v2 allocated event source requires its declared scalar identity type.");
+            }
+
             var values = produced.Mappings
                 .Select(mapping => new SemanticPropertyValue(
                     mapping.TargetProperty,
                     Evaluate(mapping.Source, SemanticExpressionRootKind.Command, commandValues, request.Occurrence)))
                 .ToImmutableArray();
+            if (produced.Mappings.Any(mapping => mapping.Source is SemanticEventContextExpression))
+            {
+                var validator = new SemanticValueValidator(
+                    plan.Model.Application.Concepts.ToDictionary(concept => concept.Id),
+                    plan.Model.Application.Types.ToDictionary(type => type.Id));
+                var properties = plan.Events[produced.EventContract].Properties.ToDictionary(property => property.Id);
+                foreach (var mapped in produced.Mappings.Zip(values).Where(pair => pair.First.Source is SemanticEventContextExpression))
+                {
+                    try
+                    {
+                        validator.Validate(mapped.Second.Value, properties[mapped.Second.TargetProperty].Type, "event occurrence mapping");
+                    }
+                    catch (InvalidSemanticContract exception)
+                    {
+                        return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, exception.Message);
+                    }
+                }
+            }
+
             facts.Add(new SemanticFact(produced.EventContract, destination, values)
             {
                 Context = plan.Model.SemanticVersion == SemanticVersion.V2
@@ -392,7 +417,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
     {
         SemanticEventContextExpression context when occurrence is not null => context.Value switch
         {
-            SemanticEventContextValueKind.Occurred => SemanticValue.Text(occurrence.Occurred.ToUniversalTime().ToString("O", System.Globalization.CultureInfo.InvariantCulture)),
+            SemanticEventContextValueKind.Occurred => SemanticValue.Text(occurrence.Occurred.UtcDateTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture)),
             SemanticEventContextValueKind.CausedBySubject => SemanticValue.Text(occurrence.Subject),
             SemanticEventContextValueKind.CausedByName => SemanticValue.Text(occurrence.Name),
             SemanticEventContextValueKind.CausedByUserName => SemanticValue.Text(occurrence.UserName),

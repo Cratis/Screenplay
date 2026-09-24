@@ -50,7 +50,7 @@ static class SemanticScopedProjectionIssues
             yield return Block(projection, "A join, children block or 'remove via join' inside a nested object is not wired by Chronicle's engine (ProjectionFactory.cs:415-470).");
         }
 
-        if (Mappings(scope).Any(_ => _.Source is SemanticProjectionEventContextValue) ||
+        if (Mappings(scope).Any(_ => UnsupportedContext(_.Source)) ||
             scope.From.Any(_ => UsesEventContext(_.Key) || UsesEventContext(_.ParentKey)) ||
             scope.Removals.Any(_ => UsesEventContext(_.Key) || UsesEventContext(_.ParentKey)) ||
             scope.JoinRemovals.Any(_ => UsesEventContext(_.Key)))
@@ -74,10 +74,13 @@ static class SemanticScopedProjectionIssues
 
     static bool UsesEventContext(SemanticProjectionKey? key) => key switch
     {
-        SemanticProjectionValueKey value => value.Value is SemanticProjectionEventContextValue,
-        SemanticProjectionCompositeKey composite => composite.Parts.Any(_ => _.Value is SemanticProjectionEventContextValue),
+        SemanticProjectionValueKey value => UnsupportedContext(value.Value),
+        SemanticProjectionCompositeKey composite => composite.Parts.Any(_ => UnsupportedContext(_.Value)),
         _ => false
     };
+
+    static bool UnsupportedContext(SemanticProjectionValue? value) =>
+        value is SemanticProjectionEventContextValue { Path: not "eventSourceId" };
 
     static SemanticPlanIssue Block(SemanticProjection projection, string details) =>
         new(projection.Id, SemanticPlanIssueKind.UnsupportedProjectionBlock, $"Projection '{projection.Name}': {details}");
