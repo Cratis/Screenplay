@@ -32,6 +32,15 @@ public class when_inspecting_event_context_semantic_contracts : Specification
     [Fact] void should_append_the_event_context_expression_kind() => ((int)SemanticExpressionKind.EventContext).ShouldEqual(2);
     [Fact] void should_define_unknown_context_values_as_minus_one() => ((int)SemanticEventContextValueKind.Unknown).ShouldEqual(-1);
     [Fact] void should_define_event_source_identity_as_the_first_context_value() => ((int)SemanticEventContextValueKind.EventSourceIdentity).ShouldEqual(0);
+    [Fact] void should_append_occurrence_values_without_renumbering_event_source_identity() =>
+        new[] { (int)SemanticEventContextValueKind.Occurred, (int)SemanticEventContextValueKind.CausedBySubject, (int)SemanticEventContextValueKind.CausedByName, (int)SemanticEventContextValueKind.CausedByUserName }
+            .ShouldEqual(1, 2, 3, 4);
+    [Fact] void should_keep_execution_request_constructor_unchanged() => Parameters<SemanticExecutionRequest>().ShouldEqual(
+        typeof(SemanticId),
+        typeof(ImmutableArray<SemanticPropertyValue>),
+        typeof(ImmutableArray<SemanticQueryRequest>),
+        typeof(ImmutableDictionary<SemanticId, SemanticValue>));
+    [Fact] void should_add_occurrence_as_an_init_property() => typeof(SemanticExecutionRequest).GetProperty(nameof(SemanticExecutionRequest.Occurrence)).ShouldNotBeNull();
 
     static Type[] Parameters<T>() => [.. typeof(T).GetConstructors().Single().GetParameters().Select(parameter => parameter.ParameterType)];
 }
