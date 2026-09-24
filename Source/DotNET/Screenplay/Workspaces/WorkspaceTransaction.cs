@@ -125,7 +125,7 @@ sealed class WorkspaceTransaction(ScreenplayWorkspace workspace)
 
         if (!provisionalCompilation.Success)
         {
-            return WorkspaceTransactionOperations.CompilationFailure(provisionalCompilation.Diagnostics);
+            return WorkspaceTransactionOperations.CompilationFailure(provisionalCompilation.Diagnostics, ordered);
         }
 
         SemanticIdentityCatalog migratedCatalog;
@@ -172,7 +172,7 @@ sealed class WorkspaceTransaction(ScreenplayWorkspace workspace)
 
         if (!compilation.Success)
         {
-            return WorkspaceTransactionOperations.CompilationFailure(compilation.Diagnostics);
+            return WorkspaceTransactionOperations.CompilationFailure(compilation.Diagnostics, ordered);
         }
 
         var candidate = ScreenplayWorkspace.CreateValidated(

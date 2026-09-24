@@ -68,40 +68,41 @@ static class WorkspaceTransactionOperations
         return null;
     }
 
-    internal static WorkspaceTransactionResult CompilationFailure(IEnumerable<Diagnostic> diagnostics)
+    internal static WorkspaceTransactionResult CompilationFailure(IEnumerable<Diagnostic> diagnostics, IEnumerable<WorkspaceDocument> documents)
     {
         var reported = diagnostics.ToImmutableArray();
-        var owner = reported.FirstOrDefault(diagnostic =>
+        return new()
+        {
+            Conflicts = [OwnershipConflict(reported, documents) ?? Conflict(WorkspaceConflictKind.CompilationFailed, "The candidate workspace did not compile as one coherent Screenplay application.")],
+            Diagnostics = reported
+        };
+    }
+
+    internal static WorkspaceConflict? OwnershipConflict(IEnumerable<Diagnostic> diagnostics, IEnumerable<WorkspaceDocument> documents)
+    {
+        var paths = documents.Select(document => document.Path).ToArray();
+        foreach (var diagnostic in diagnostics.Where(diagnostic =>
             diagnostic.Severity == DiagnosticSeverity.Error &&
             (string.Equals(diagnostic.Code, DiagnosticCodes.RepeatedDeclarationAcrossFiles, StringComparison.Ordinal) ||
-             string.Equals(diagnostic.Code, DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles, StringComparison.Ordinal)));
-        WorkspaceConflict? conflict = null;
-        if (owner is not null && PortablePlayPath.TryParse(owner.Location.Path, out var path))
+             string.Equals(diagnostic.Code, DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles, StringComparison.Ordinal))))
         {
-            // The folder merge's diagnostic names the first claimant; its location names the second.
-            var start = owner.Message.LastIndexOf(" in '", StringComparison.Ordinal);
-            if (start >= 0)
+            // Merge diagnostics name the first claimant and locate the second. Match actual document paths
+            // rather than parsing quoted text: apostrophes are legal in portable paths.
+            var second = paths.FirstOrDefault(path => string.Equals(path.Value, diagnostic.Location.Path, StringComparison.Ordinal));
+            var first = paths.FirstOrDefault(path => path != second && diagnostic.Message.Contains($"'{path.Value}'", StringComparison.Ordinal));
+            if (first is not null && second is not null)
             {
-                start += 5;
-                var end = owner.Message.IndexOf('\'', start);
-                if (end > start && PortablePlayPath.TryParse(owner.Message[start..end], out var otherPath))
+                return new WorkspaceConflict
                 {
-                    conflict = new WorkspaceConflict
-                    {
-                        Kind = WorkspaceConflictKind.ConflictingOwner,
-                        Message = owner.Message,
-                        Path = path,
-                        OtherPath = otherPath
-                    };
-                }
+                    Kind = WorkspaceConflictKind.ConflictingOwner,
+                    Message = diagnostic.Message,
+                    Path = second,
+                    OtherPath = first
+                };
             }
         }
 
-        return new()
-        {
-            Conflicts = [conflict ?? Conflict(WorkspaceConflictKind.CompilationFailed, "The candidate workspace did not compile as one coherent Screenplay application.")],
-            Diagnostics = reported
-        };
+        return null;
     }
 
     internal static WorkspaceTransactionResult Failure(
