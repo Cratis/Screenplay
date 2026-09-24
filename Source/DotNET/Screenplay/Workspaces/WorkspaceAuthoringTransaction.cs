@@ -158,7 +158,7 @@ sealed class WorkspaceAuthoringTransaction(ScreenplayWorkspace workspace, IReadO
         var catalog = WorkspaceAuthoringIdentity.Migrate(workspace, request, ordered, merged.Value, documentRenames.ToImmutable(), retiredDocuments.ToImmutable());
         var compilation = ordered.IsEmpty
             ? ScreenplayWorkspace.EmptyCompilation()
-            : new SemanticModelCompiler().Compile(workspace.ApplicationName, ScreenplayWorkspace.CreateDocumentSet(ordered, catalog));
+            : new SemanticModelCompiler().Compile(workspace.ApplicationName, ScreenplayWorkspace.CreateDocumentSet(ordered, catalog, workspace.AttachmentContents));
         if (request.Validation == WorkspaceAuthoringValidation.Executable && !compilation.Success)
         {
             return Failure(WorkspaceConflictKind.CompilationFailed, "The final source is authorable but is not executable by the semantic backend.") with
@@ -167,7 +167,7 @@ sealed class WorkspaceAuthoringTransaction(ScreenplayWorkspace workspace, IReadO
             };
         }
 
-        var candidate = ScreenplayWorkspace.CreateValidated(workspace.ApplicationName, ordered, catalog, compilation);
+        var candidate = ScreenplayWorkspace.CreateValidated(workspace.ApplicationName, ordered, catalog, compilation, workspace.AttachmentContents);
         WorkspaceAuthoringReferences.Validate(workspace, candidate, request, _diagnostics, referenceRenames);
         return new()
         {

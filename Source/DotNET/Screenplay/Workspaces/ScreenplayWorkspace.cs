@@ -20,13 +20,17 @@ public sealed class ScreenplayWorkspace
         ImmutableArray<WorkspaceDocument> documents,
         SemanticIdentityCatalog identityCatalog,
         CompilationResult<SemanticCompilation> compilation,
-        WorkspaceRevision revision)
+        WorkspaceRevision revision,
+        ImmutableDictionary<string, string> attachmentContents,
+        ImmutableArray<Diagnostic> attachmentDiagnostics)
     {
         ApplicationName = applicationName;
         Documents = documents;
         IdentityCatalog = identityCatalog;
         Compilation = compilation;
         Revision = revision;
+        AttachmentContents = attachmentContents;
+        AttachmentDiagnostics = attachmentDiagnostics;
     }
 
     /// <summary>
@@ -53,6 +57,12 @@ public sealed class ScreenplayWorkspace
     /// Gets the deterministic revision of exact documents and identity assignments.
     /// </summary>
     public WorkspaceRevision Revision { get; }
+
+    /// <summary>Gets host-supplied attachment text, which is never serialized or included in the workspace revision.</summary>
+    public ImmutableDictionary<string, string> AttachmentContents { get; }
+
+    /// <summary>Gets host-supplied attachment loading warnings, which are not persisted.</summary>
+    public ImmutableArray<Diagnostic> AttachmentDiagnostics { get; }
 
     /// <summary>
     /// Creates an immutable workspace without discarding authored source when semantic compilation fails.
@@ -84,6 +94,23 @@ public sealed class ScreenplayWorkspace
         SemanticIdentityCatalog identityCatalog) =>
         CreateCore(applicationName, applicationIdentity, documents, identityCatalog);
 
+    /// <summary>Creates a workspace with already loaded host attachment inputs without a second compilation.</summary>
+    /// <param name="applicationIdentity">The stable application identity.</param>
+    /// <param name="applicationName">The friendly application name.</param>
+    /// <param name="documents">The complete exact document set.</param>
+    /// <param name="identityCatalog">The authoritative identity catalog.</param>
+    /// <param name="contents">Host-supplied attachment contents.</param>
+    /// <param name="diagnostics">Attachment loading warnings.</param>
+    /// <returns>The admitted workspace and its derived compilation.</returns>
+    public static ScreenplayWorkspace Create(
+        ApplicationIdentity applicationIdentity,
+        string applicationName,
+        ImmutableArray<WorkspaceDocument> documents,
+        SemanticIdentityCatalog identityCatalog,
+        ImmutableDictionary<string, string> contents,
+        ImmutableArray<Diagnostic> diagnostics) =>
+        CreateCore(applicationName, applicationIdentity, documents, identityCatalog, SemanticDocumentSet.NormalizeAttachments(contents), diagnostics);
+
     /// <summary>
     /// Creates an empty authoring workspace for bootstrapping a new application's first typed documents.
     /// Empty source is not executable and does not relax ordinary workspace admission or strict transactions.
@@ -94,6 +121,20 @@ public sealed class ScreenplayWorkspace
     /// <exception cref="InvalidSemanticContract">The application identity or name is invalid.</exception>
     public static ScreenplayWorkspace CreateEmpty(ApplicationIdentity applicationIdentity, string applicationName) =>
         CreateEmpty(applicationIdentity, applicationName, SemanticIdentityCatalog.Empty(applicationIdentity));
+
+    /// <summary>
+    /// Recompiles with immutable host-supplied contents and warnings, without changing source, identities, or revision.
+    /// Neither the serializer nor transactions read the file system; callers must refresh these inputs themselves.
+    /// </summary>
+    /// <param name="contents">Normalized repository-relative paths and their contents.</param>
+    /// <param name="diagnostics">Attachment loading warnings.</param>
+    /// <returns>A new immutable workspace with derived compilation.</returns>
+    public ScreenplayWorkspace WithAttachmentContents(ImmutableDictionary<string, string> contents, ImmutableArray<Diagnostic> diagnostics)
+    {
+        var normalized = SemanticDocumentSet.NormalizeAttachments(contents);
+        var compilation = Documents.IsEmpty ? EmptyCompilation() : Compile(ApplicationName, Documents, IdentityCatalog, normalized, diagnostics);
+        return CreateValidated(ApplicationName, Documents, IdentityCatalog, compilation, normalized, diagnostics);
+    }
 
     /// <summary>
     /// Proposes one pure revision-bound transaction without mutating this workspace or touching a destination.
@@ -140,13 +181,17 @@ public sealed class ScreenplayWorkspace
         string applicationName,
         ImmutableArray<WorkspaceDocument> documents,
         SemanticIdentityCatalog identityCatalog,
-        CompilationResult<SemanticCompilation> compilation) =>
+        CompilationResult<SemanticCompilation> compilation,
+        ImmutableDictionary<string, string>? attachmentContents = null,
+        ImmutableArray<Diagnostic> attachmentDiagnostics = default) =>
         new(
             applicationName,
             documents,
             identityCatalog,
             compilation,
-            WorkspaceCanonicalRevision.Compute(applicationName, documents, identityCatalog));
+            WorkspaceCanonicalRevision.Compute(applicationName, documents, identityCatalog),
+            attachmentContents ?? ImmutableDictionary.Create<string, string>(StringComparer.Ordinal),
+            attachmentDiagnostics.IsDefault ? [] : attachmentDiagnostics);
 
     internal static ImmutableArray<WorkspaceDocument> AdmitDocuments(ImmutableArray<WorkspaceDocument> documents)
     {
@@ -176,7 +221,8 @@ public sealed class ScreenplayWorkspace
 
     internal static SemanticDocumentSet CreateDocumentSet(
         ImmutableArray<WorkspaceDocument> documents,
-        SemanticIdentityCatalog identityCatalog) =>
+        SemanticIdentityCatalog identityCatalog,
+        ImmutableDictionary<string, string>? attachmentContents = null) =>
         SemanticDocumentSet.Create(
         [
             .. documents.Select(document => SemanticSourceDocument.Create(
@@ -185,13 +231,16 @@ public sealed class ScreenplayWorkspace
                 document.Path.Value,
                 document.Text))
         ],
-        identityCatalog);
+        identityCatalog,
+        attachmentContents);
 
     static ScreenplayWorkspace CreateCore(
         string applicationName,
         ApplicationIdentity? explicitApplicationIdentity,
         ImmutableArray<WorkspaceDocument> documents,
-        SemanticIdentityCatalog identityCatalog)
+        SemanticIdentityCatalog identityCatalog,
+        ImmutableDictionary<string, string>? attachmentContents = null,
+        ImmutableArray<Diagnostic> attachmentDiagnostics = default)
     {
         try
         {
@@ -204,14 +253,14 @@ public sealed class ScreenplayWorkspace
             }
 
             var ordered = AdmitDocuments(documents);
-            var compilation = Compile(normalizedName, ordered, identityCatalog);
+            var compilation = Compile(normalizedName, ordered, identityCatalog, attachmentContents, attachmentDiagnostics);
             if (compilation.Success)
             {
                 identityCatalog = MaterializeCatalog(ordered, identityCatalog, compilation.Value!);
-                compilation = Compile(normalizedName, ordered, identityCatalog);
+                compilation = Compile(normalizedName, ordered, identityCatalog, attachmentContents, attachmentDiagnostics);
             }
 
-            return CreateValidated(normalizedName, ordered, identityCatalog, compilation);
+            return CreateValidated(normalizedName, ordered, identityCatalog, compilation, attachmentContents, attachmentDiagnostics);
         }
         catch (InvalidScreenplayWorkspace)
         {
@@ -226,8 +275,13 @@ public sealed class ScreenplayWorkspace
     static CompilationResult<SemanticCompilation> Compile(
         string applicationName,
         ImmutableArray<WorkspaceDocument> documents,
-        SemanticIdentityCatalog identityCatalog) =>
-        new SemanticModelCompiler().Compile(applicationName, CreateDocumentSet(documents, identityCatalog));
+        SemanticIdentityCatalog identityCatalog,
+        ImmutableDictionary<string, string>? attachmentContents = null,
+        ImmutableArray<Diagnostic> attachmentDiagnostics = default)
+    {
+        var result = new SemanticModelCompiler().Compile(applicationName, CreateDocumentSet(documents, identityCatalog, attachmentContents));
+        return attachmentDiagnostics.IsDefaultOrEmpty ? result : result with { Diagnostics = [.. result.Diagnostics, .. attachmentDiagnostics] };
+    }
 
     static SemanticIdentityCatalog MaterializeCatalog(
         ImmutableArray<WorkspaceDocument> documents,

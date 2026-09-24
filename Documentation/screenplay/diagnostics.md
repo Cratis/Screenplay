@@ -746,6 +746,18 @@ Use an opening fence with an info string, such as ` ```csharp ` (without the spa
 | `PLAY0411` | Error | Two reads in a command use the same alias. |
 | `PLAY0412` | Error | A reads alias collides with one of the command's property names. |
 
+### Implementation attachment loading (host-supplied)
+
+These warnings are returned by `AttachmentFiles.Load` for implementation files that remain `UnresolvedFile`. Syntax compilation alone does not read files.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0430` | Warning | An attachment path is absolute, drive-qualified, escapes the model root, or is not portable. |
+| `PLAY0431` | Warning | An attachment or a directory on its path is a symbolic link or reparse point. |
+| `PLAY0432` | Warning | An attachment or a directory on its path is missing. |
+| `PLAY0433` | Warning | An attachment exceeds 2 MiB or the attachment set exceeds 8 MiB. |
+| `PLAY0434` | Warning | An attachment cannot safely be read as UTF-8 text. |
+
 ## Retired codes
 
 A retired code stays out of use forever.

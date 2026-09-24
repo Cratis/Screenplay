@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Security.Cryptography;
 using System.Text;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Semantics;
@@ -47,8 +48,9 @@ public sealed partial class SemanticModelBinder
             var offset = OffsetAt(document.Text, location);
             var span = SemanticSourceSpan.Create(document.Id, offset, 0, location.Line, location.Column, location.Line, location.Column);
             var source = new SemanticSourceMapEntry(assignment.Id, span, assignment.Origin);
-            var resolved = code is not null || (file is not null && documents.AttachmentContents.ContainsKey(file.Path));
-            var content = code?.Code ?? (file is not null && documents.AttachmentContents.TryGetValue(file.Path, out var supplied) ? supplied : null);
+            var key = file is not null && AttachmentFiles.TryNormalize(file.Path, out var normalized, out _) ? normalized : null;
+            var content = code?.Code ?? (key is not null && documents.AttachmentContents.TryGetValue(key, out var supplied) ? supplied : null);
+            var resolved = content is not null;
             var hash = resolved ? Hash(content!) : string.Empty;
 
             // Distinct named members are order-independent; repeated identical members have no semantic

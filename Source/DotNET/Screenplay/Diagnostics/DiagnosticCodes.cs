@@ -1972,4 +1972,19 @@ public static class DiagnosticCodes
     /// A reads alias has the same name as a command property.
     /// </summary>
     public const string ReadsAliasConflictsWithProperty = "PLAY0412";
+
+    /// <summary>An implementation file path is absolute, escapes the root, or is not portable.</summary>
+    public const string AttachmentPathRefused = "PLAY0430";
+
+    /// <summary>An implementation file or one of its parent directories is a symbolic link or reparse point.</summary>
+    public const string AttachmentLinkRefused = "PLAY0431";
+
+    /// <summary>An implementation file does not exist beneath the root.</summary>
+    public const string AttachmentMissing = "PLAY0432";
+
+    /// <summary>An implementation file exceeds the per-file or aggregate size limit.</summary>
+    public const string AttachmentTooLarge = "PLAY0433";
+
+    /// <summary>An implementation file cannot safely be read as UTF-8 text.</summary>
+    public const string AttachmentUnreadable = "PLAY0434";
 }

@@ -28,7 +28,9 @@ internal sealed partial class McpWorkspaces(McpRoot root)
             throw new McpFailure("IdentityStateConflict: applicationName differs from the persisted application. Reopen without overriding its name.");
         }
 
-        var candidate = serialized is null ? state?.Open(root) ?? OpenFromDisk(name) : McpWorkspaceTransport.Restore(serialized);
+        var candidate = serialized is null
+            ? state?.Open(root) ?? OpenFromDisk(name)
+            : McpAttachmentContents.Refresh(root, McpWorkspaceTransport.Restore(serialized));
         if (persisted is not null && !McpManagedFiles.Equal(persisted, McpState.Serialize(candidate)))
         {
             throw new McpFailure("IdentityImportConflict: workspaceJson cannot replace a different persisted identity catalog or document mapping.");
@@ -94,7 +96,7 @@ internal sealed partial class McpWorkspaces(McpRoot root)
         var result = new McpDisk(root).Apply(proposal, statePlan);
         if (result.Success)
         {
-            _workspace = proposal.Workspace;
+            _workspace = McpAttachmentContents.Refresh(root, proposal.Workspace);
             _stateBytes = statePlan.After;
             _proposals.Clear();
             _statePlans.Clear();
@@ -116,7 +118,7 @@ internal sealed partial class McpWorkspaces(McpRoot root)
 
     object Store(IMcpProposal proposal, JsonElement arguments)
     {
-        _ = Current();
+        proposal = RefreshProposal(proposal);
         var candidate = proposal.Workspace;
         McpRoot.CheckDocuments(candidate.Documents);
         foreach (var document in candidate.Documents)
@@ -163,7 +165,39 @@ internal sealed partial class McpWorkspaces(McpRoot root)
     IMcpProposal Proposal(JsonElement arguments)
     {
         var id = McpJson.RequiredString(arguments, "proposalId");
-        return _proposals.TryGetValue(id, out var proposal) ? proposal : throw new McpFailure("UnknownProposal: only an outstanding proposal from this connection can be used.");
+        if (!_proposals.TryGetValue(id, out var proposal))
+        {
+            throw new McpFailure("UnknownProposal: only an outstanding proposal from this connection can be used.");
+        }
+
+        var refreshed = RefreshProposal(proposal);
+        if (!ReferenceEquals(proposal, refreshed))
+        {
+            if (_statePlans.TryGetValue(proposal, out var plan))
+            {
+                _statePlans.Add(refreshed, plan);
+            }
+
+            _proposals[id] = refreshed;
+        }
+
+        return refreshed;
+    }
+
+    IMcpProposal RefreshProposal(IMcpProposal proposal)
+    {
+        var refreshed = McpAttachmentContents.Refresh(root, proposal.Workspace);
+        if (ReferenceEquals(refreshed, proposal.Workspace))
+        {
+            return proposal;
+        }
+
+        return proposal switch
+        {
+            McpProposal strict => strict with { Transaction = strict.Transaction with { Workspace = refreshed } },
+            McpAuthoringProposal authored => authored with { Result = authored.Result with { Workspace = refreshed, ExecutableReady = refreshed.Compilation.Success, ExecutableDiagnostics = [.. refreshed.Compilation.Diagnostics] } },
+            _ => proposal
+        };
     }
 
     ScreenplayWorkspace CheckedCurrent(JsonElement arguments)
@@ -182,9 +216,13 @@ internal sealed partial class McpWorkspaces(McpRoot root)
     {
         var documents = root.Read(allowEmpty: true);
         var identity = ApplicationIdentity.Create(name);
-        return documents.IsEmpty
-            ? ScreenplayWorkspace.CreateEmpty(identity, name)
-            : ScreenplayWorkspace.Create(name, documents, SemanticIdentityCatalog.Empty(identity));
+        if (documents.IsEmpty)
+        {
+            return ScreenplayWorkspace.CreateEmpty(identity, name);
+        }
+
+        var loaded = McpAttachmentContents.Load(root, documents);
+        return ScreenplayWorkspace.Create(identity, name, documents, SemanticIdentityCatalog.Empty(identity), loaded.Contents, loaded.Diagnostics);
     }
 
     ScreenplayWorkspace Current()
@@ -192,6 +230,12 @@ internal sealed partial class McpWorkspaces(McpRoot root)
         McpRecoveryJournal.RefusePending(root);
         var workspace = _workspace ?? throw new McpFailure("Open a workspace first.");
         new McpManagedFiles(root).Verify(McpState.FileName, _stateBytes);
-        return workspace;
+        var refreshed = McpAttachmentContents.Refresh(root, workspace);
+        if (!ReferenceEquals(workspace, refreshed))
+        {
+            _workspace = refreshed;
+        }
+
+        return refreshed;
     }
 }
