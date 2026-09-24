@@ -201,7 +201,7 @@ internal static partial class ScreenplayParser
         var inFence = false;
         foreach (var line in lines)
         {
-            if (line.Raw.Trim() == "```")
+            if (line.Raw.TrimStart().StartsWith("```", StringComparison.Ordinal))
             {
                 inFence = !inFence;
                 continue;
