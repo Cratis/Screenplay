@@ -18,6 +18,9 @@ public class when_binding_a_policy_file : given.a_semantic_binder
 
     [Fact] void should_block_a_file_attachment() => _attached.Success.ShouldBeFalse();
     [Fact] void should_explain_the_attachment() => _attached.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("Policy 'Access' uses file; portable implementation attachments are deferred to #139.", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_list_the_file_attachment() => _attached.ImplementationRequirements.Single().File.ShouldEqual("Policies/Access.cs");
+    [Fact] void should_type_the_policy_role() => _attached.ImplementationRequirements.Single().Role.ShouldEqual(SemanticImplementationRole.PolicyPredicate);
+    [Fact] void should_not_list_the_declarative_alternative() => _declarative.ImplementationRequirements.ShouldBeEmpty();
     [Fact] void should_bind_the_declarative_alternative() => _declarative.Success.ShouldBeTrue();
     [Fact] void should_keep_the_declarative_policy() => _declarative.Value!.Model.Application.Policies.Single().Name.ShouldEqual("Access");
 }

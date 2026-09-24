@@ -94,6 +94,11 @@ public sealed partial class SemanticModelBinder
 
                 foreach (var rule in declarative.Rules)
                 {
+                    if (rule.Rule == ValidationRuleKind.Rule)
+                    {
+                        RequireImplementation(SemanticImplementationRole.RulePredicate, address, rule.File, rule.Code, (rule.Value as PathExpressionSyntax)?.Path);
+                    }
+
                     if (rule.Property.Contains('.', StringComparison.Ordinal))
                     {
                         Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Validation rule on '{rule.Property}' is not admitted: ESM v1 validates command properties, not nested paths - declare the rule on the nested value's concept instead.", rule.Location);
@@ -106,7 +111,7 @@ public sealed partial class SemanticModelBinder
                         continue;
                     }
 
-                    if (BindValidationRule(rule, property.Id, CommandValidationSubject(rule.Property, property.Type), address) is { } bound)
+                    if (BindValidationRule(rule, property.Id, CommandValidationSubject(rule.Property, property.Type)) is { } bound)
                     {
                         validations.Add(bound);
                     }

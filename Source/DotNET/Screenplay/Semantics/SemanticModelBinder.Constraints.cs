@@ -20,6 +20,11 @@ public sealed partial class SemanticModelBinder
         SemanticConstraint? BindConstraint(SemanticAddress owner, ConstraintSyntax constraint)
         {
             ValidateStringKey(constraint.Message, constraint.Location);
+            if (constraint is FileConstraintSyntax attachment)
+            {
+                RequireImplementation(SemanticImplementationRole.ConstraintPredicate, owner, attachment.File, null, attachment.Name);
+            }
+
             if (!_constraintNames.Add(constraint.Name))
             {
                 Error(
@@ -31,7 +36,6 @@ public sealed partial class SemanticModelBinder
 
             if (constraint is FileConstraintSyntax file)
             {
-                RequireImplementation(SemanticImplementationRole.ConstraintPredicate, owner, file.File, null, file.Name);
                 Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
                     $"Constraint '{file.Name}' file implementation is not admitted by the executable model: Chronicle file constraints can only declare uniqueness. Declare it with 'unique ...' for portability; put other rules in command validation or a 'require' condition.",

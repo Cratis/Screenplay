@@ -11,16 +11,14 @@ public class when_paging_implementation_requirements : given.a_connection
     JsonElement _second;
     JsonElement _stale;
 
-    void Establish()
-    {
-        File.WriteAllText(Path.Combine(RootPath, "application.play"), Source.Replace("                produces ProjectRegistered", "                handler\n                  file Handlers/RegisterProject.cs\n                validate csharp\n                  ```\n                  return true;\n                  ```\n                produces ProjectRegistered", StringComparison.Ordinal));
-        Initialize();
-    }
-
     void Because()
     {
-        var opened = Call("open-workspace", new { applicationName = "Projects" }).GetProperty("result").GetProperty("structuredContent");
-        var revision = opened.GetProperty("revision").GetString();
+        File.WriteAllText(Path.Combine(RootPath, "application.play"), Source.Replace("        produces ProjectRegistered\n          for projectId\n          projectId = projectId\n          name = name", "        handler\n          file Handlers/RegisterProject.cs\n        validate csharp\n          ```\n          return true;\n          ```", StringComparison.Ordinal));
+        Initialize();
+        var opened = Call("open-workspace", new { applicationName = "Projects" });
+        if (!opened.TryGetProperty("result", out var response)) throw new McpFailure(opened.GetRawText());
+        var content = response.GetProperty("structuredContent");
+        var revision = content.GetProperty("revision").GetString();
         _first = Call("read-workspace", new { expectedRevision = revision, view = "implementation-requirements", limit = 1 }).GetProperty("result").GetProperty("structuredContent").GetProperty("page");
         _second = Call("read-workspace", new { expectedRevision = revision, view = "implementation-requirements", offset = 1, limit = 1 }).GetProperty("result").GetProperty("structuredContent").GetProperty("page");
         _stale = Call("read-workspace", new { expectedRevision = "stale", view = "implementation-requirements" }).GetProperty("result");

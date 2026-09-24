@@ -52,13 +52,18 @@ public sealed partial class SemanticModelBinder
                 var subject = ConceptValidationSubject(concept);
                 foreach (var rule in declarative.Rules)
                 {
+                    if (rule.Rule == ValidationRuleKind.Rule)
+                    {
+                        RequireImplementation(SemanticImplementationRole.RulePredicate, SemanticAddress.ForConcept(_applicationIdentity, concept.Name), rule.File, rule.Code, (rule.Value as PathExpressionSyntax)?.Path);
+                    }
+
                     if (rule.Property != ValidationRuleSyntax.ConceptValue)
                     {
                         Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' validation rule must constrain the concept's own value, not '{rule.Property}'.", rule.Location);
                         continue;
                     }
 
-                    if (BindValidationRule(rule, default, subject, SemanticAddress.ForConcept(_applicationIdentity, concept.Name)) is { } bound)
+                    if (BindValidationRule(rule, default, subject) is { } bound)
                     {
                         validations.Add(bound);
                     }
