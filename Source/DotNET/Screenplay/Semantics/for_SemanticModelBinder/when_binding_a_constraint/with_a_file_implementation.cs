@@ -5,7 +5,7 @@ using Cratis.Screenplay.Diagnostics;
 
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_a_constraint;
 
-// A file constraint is code. It stays rejected with the wording every other code attachment uses until #139 lands.
+// A file constraint cannot express anything beyond uniqueness in Chronicle, and ESM cannot admit the attachment.
 public class with_a_file_implementation : given.a_semantic_binder
 {
     const string Source =
@@ -25,7 +25,7 @@ public class with_a_file_implementation : given.a_semantic_binder
 
     [Fact] void should_fail() => _result.Success.ShouldBeFalse();
     [Fact] void should_keep_the_unsupported_semantic_syntax_code() => Rejection.Code.ShouldEqual(DiagnosticCodes.UnsupportedSemanticSyntax);
-    [Fact] void should_say_it_requires_a_constrained_implementation_attachment() => Rejection.Message.ShouldEqual("Constraint 'InvoiceStatusTransition' file implementation requires a constrained implementation attachment.");
+    [Fact] void should_explain_the_portable_alternative() => Rejection.Message.ShouldEqual("Constraint 'InvoiceStatusTransition' file implementation is not admitted by the executable model: Chronicle file constraints can only declare uniqueness. Declare it with 'unique ...' for portability; put other rules in command validation or a 'require' condition.");
 
     Diagnostic Rejection => _result.Diagnostics.Single(_ => _.Message.StartsWith("Constraint 'InvoiceStatusTransition'", StringComparison.Ordinal));
 }

@@ -1914,4 +1914,9 @@ public static class DiagnosticCodes
     /// Ignoring casing is only meaningful for unique property values, not unique event occurrences.
     /// </summary>
     public const string InvalidConstraintCasing = "PLAY0393";
+
+    /// <summary>
+    /// A file-backed Chronicle constraint can only declare uniqueness; use portable unique syntax instead.
+    /// </summary>
+    public const string FileConstraintOnlySupportsUniqueness = "PLAY0396";
 }

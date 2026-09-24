@@ -712,7 +712,7 @@ An inline `on` block is an anonymous behavior, so it has no name to report again
 
 ### Constraints in the semantic model
 
-These errors are reported when a `unique` [constraint](constraints.md) is bound into the semantic model.
+These diagnostics cover [constraint](constraints.md) binding and the parser warning for file-backed constraints.
 
 | Code | Severity | Reported when |
 |---|---|---|
@@ -720,6 +720,7 @@ These errors are reported when a `unique` [constraint](constraints.md) is bound 
 | `PLAY0391` | Error | A `unique <property> on <Event>` constraint names a property the event does not declare. |
 | `PLAY0392` | Error | Two constraints in the application share a name. The name is a constraint's identity in the event store - it keys the constraint's index and its violations - so it is unique across the whole application, not just its slice. |
 | `PLAY0393` | Error | `ignore casing` is declared on a `unique event` constraint; it applies only to unique property values. |
+| `PLAY0396` | Warning | A `file <Path>` constraint names a Chronicle `IConstraint` class, which can only declare uniqueness. Use `unique ...` for portable uniqueness; put other rules in command validation or a `require` condition. |
 
 ## Retired codes
 
