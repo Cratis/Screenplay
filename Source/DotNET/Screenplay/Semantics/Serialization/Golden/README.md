@@ -6,7 +6,7 @@ These files are the checked-in canonical bytes of the ESM serialization contract
 | --- | --- |
 | `full-esm-v1.json` | `canonical_serialization_golden_vectors.CreateSemanticModel()` |
 | `full-esm-v2.json` | `canonical_serialization_golden_vectors.CreateSemanticModelV2()` — typed destination, explicit specification event sources, and an audit identity occurrence mapping |
-| `full-esm-v3.json` | `canonical_serialization_golden_vectors.CreateSemanticModelV3()` — the full v2 model plus a reducer-built read model with an opaque event transition |
+| `full-esm-v3.json` | `canonical_serialization_golden_vectors.CreateSemanticModelV3()` — the full v2 model plus a reducer-built read model with opaque transitions, a rule predicate, and command code validation |
 | `full-expressions-v1.json` | `canonical_serialization_golden_vectors.CreateExpressions()` |
 | `full-identity-catalog-v1.json` | `canonical_serialization_golden_vectors.CreateIdentityCatalog()` |
 

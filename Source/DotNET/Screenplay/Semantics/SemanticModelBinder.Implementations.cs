@@ -24,7 +24,7 @@ public sealed partial class SemanticModelBinder
         static string Hash(string content) =>
             Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(content))).ToLowerInvariant();
 
-        void RequireImplementation(
+        SemanticImplementationRequirement? RequireImplementation(
             SemanticImplementationRole role,
             SemanticAddress owner,
             FileReferenceSyntax? file,
@@ -33,14 +33,14 @@ public sealed partial class SemanticModelBinder
         {
             if (file is null && code is null)
             {
-                return;
+                return null;
             }
 
             var location = code?.Location ?? file!.Location;
             var document = DocumentAt(location);
             if (document is null)
             {
-                return;
+                return null;
             }
 
             var assignment = documents.IdentityCatalog.ResolveSemanticAssignment(owner);
@@ -57,14 +57,17 @@ public sealed partial class SemanticModelBinder
                 (value.Member == member || value.Member?.StartsWith($"{member}#", StringComparison.Ordinal) == true));
             var distinctMember = repeated == 0 ? member : $"{member}#{repeated}";
             var identity = Hash($"{assignment.Id}|{role}|{distinctMember?.Length ?? 0}:{distinctMember}");
-            _implementationRequirements.Add(new(role, owner, distinctMember, code?.Language, file?.Path, hash, source)
+            var requirement = new SemanticImplementationRequirement(role, owner, distinctMember, code?.Language, file?.Path, hash, source)
             {
                 RequirementId = identity,
                 ContextVersion = 1,
                 ResultVersion = 1,
-                RequiredCapability = role == SemanticImplementationRole.ReducerTransition ? "pure" : "provider-defined",
+                RequiredCapability = role is SemanticImplementationRole.ReducerTransition or SemanticImplementationRole.RulePredicate or
+                    SemanticImplementationRole.CommandValidation or SemanticImplementationRole.ConceptValidation ? "pure" : "provider-defined",
                 AttachmentResolution = resolved ? SemanticAttachmentResolution.Resolved : SemanticAttachmentResolution.UnresolvedFile
-            });
+            };
+            _implementationRequirements.Add(requirement);
+            return requirement;
         }
     }
 }

@@ -33,7 +33,19 @@ public static partial class canonical_serialization_golden_vectors
             [new(otherEvent, new string('b', 64)), new(eventContract, new string('a', 64))]);
         var slices = feature.Slices.Select(slice => slice.Name == "EntitySummaries"
             ? slice with { ReadModels = slice.ReadModels.Add(readModel), Reducers = [reducer] }
-            : slice).ToImmutableArray();
+            : slice with
+            {
+                Commands = [.. slice.Commands.Select(command => command with
+                {
+                    CodeValidations = [new(new string('c', 64))],
+                    Validations = command.Validations.Add(new(command.Properties[0].Id, SemanticValidationRuleKind.RulePredicate, null, "$strings.validation.predicate")
+                    {
+                        Name = "CheckValue",
+                        RequirementId = new string('d', 64),
+                        Severity = SemanticValidationSeverity.Warning
+                    })
+                })]
+            }).ToImmutableArray();
         var application = model.Application with
         {
             Modules = [module with { Features = [root with { Features = [feature with { Slices = slices }] }] }]

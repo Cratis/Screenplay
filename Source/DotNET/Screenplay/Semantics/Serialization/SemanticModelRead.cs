@@ -267,6 +267,8 @@ internal static partial class SemanticModelRead
         string? message = null;
         var messageRead = false;
         var severity = SemanticValidationSeverity.Error;
+        string? predicateName = null;
+        string? requirementId = null;
         while (NextProperty(ref reader, seen, "validation") is { } property)
         {
             switch (property)
@@ -276,12 +278,14 @@ internal static partial class SemanticModelRead
                 case "operand": operandRead = true; operand = NullableValue(ref reader, property); break;
                 case "message": messageRead = true; message = NullableString(ref reader, property); break;
                 case "severity": severity = ParseSeverity(String(ref reader, property)); break;
+                case "name": predicateName = String(ref reader, property); break;
+                case "requirementId": requirementId = String(ref reader, property); break;
                 default: throw Unknown(property, "validation");
             }
         }
 
         Required(propertyRead && kind is not null && operandRead && messageRead, "validation");
-        return new(propertyId, kind!.Value, operand, message) { Severity = severity };
+        return new(propertyId, kind!.Value, operand, message) { Severity = severity, Name = predicateName, RequirementId = requirementId };
     }
 
     internal static SemanticEventContract Event(ref Utf8JsonReader reader)
@@ -320,6 +324,7 @@ internal static partial class SemanticModelRead
         string? name = null;
         ImmutableArray<SemanticProperty> properties = default;
         ImmutableArray<SemanticValidationRule> validations = default;
+        ImmutableArray<SemanticCodeValidation> codeValidations = [];
         ImmutableArray<SemanticProducedEvent> produces = default;
         ImmutableArray<SemanticRequirement> requirements = [];
         SemanticStateChangeDestination? destination = null;
@@ -332,6 +337,7 @@ internal static partial class SemanticModelRead
                 case "name": name = String(ref reader, property); break;
                 case "properties": properties = Array(ref reader, Property, property); break;
                 case "validations": validations = Array(ref reader, Validation, property); break;
+                case "codeValidations": codeValidations = Array(ref reader, CodeValidation, property); break;
                 case "produces": produces = Array(ref reader, ProducedEvent, property); break;
                 case "requirements": requirements = Array(ref reader, Requirement, property); break;
                 case "authorization": RequiredToken(ref reader, JsonTokenType.StartObject, property); authorization = Authorization(ref reader); break;
@@ -341,7 +347,22 @@ internal static partial class SemanticModelRead
         }
 
         Required(id.IsSet && name is not null && !properties.IsDefault && !validations.IsDefault && !produces.IsDefault, "command");
-        return new(id, name!, properties, validations, produces) { Requirements = requirements, Destination = destination, Authorization = authorization };
+        return new(id, name!, properties, validations, produces) { CodeValidations = codeValidations, Requirements = requirements, Destination = destination, Authorization = authorization };
+    }
+
+    internal static SemanticCodeValidation CodeValidation(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "code validation");
+        var seen = NewSeen();
+        string? requirementId = null;
+        while (NextProperty(ref reader, seen, "code validation") is { } property)
+        {
+            if (property != "requirementId") throw Unknown(property, "code validation");
+            requirementId = String(ref reader, property);
+        }
+
+        Required(requirementId is not null, "code validation");
+        return new(requirementId!);
     }
 
     internal static SemanticProducedEvent ProducedEvent(ref Utf8JsonReader reader)
@@ -1091,6 +1112,8 @@ internal static partial class SemanticModelRead
         "allGreaterThan" => SemanticValidationRuleKind.AllGreaterThan,
         "allGreaterThanOrEqual" => SemanticValidationRuleKind.AllGreaterThanOrEqual,
         "matches" => SemanticValidationRuleKind.Matches,
+        "rulePredicate" => SemanticValidationRuleKind.RulePredicate,
+        "codeValidation" => SemanticValidationRuleKind.CodeValidation,
         _ => throw DiscriminatorError(value, "validation kind")
     };
 

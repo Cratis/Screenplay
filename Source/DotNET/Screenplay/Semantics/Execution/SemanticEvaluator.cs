@@ -49,12 +49,22 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return new SemanticRejected(world, SemanticRejectionCategory.Unauthorized, null, "Caller is not authorized.");
         }
 
+        // Ordering between generated declarative validators and attached code is not portable.
+        // Refuse to infer a validation outcome after authorization, before evaluating any validators.
+        if (UnsupportedValidation(plan, command) is { } rule)
+        {
+            return new SemanticUnsupported(
+                world,
+                SemanticExecutionCapability.Command,
+                $"{rule} has an opaque validation predicate and requires a target provider.");
+        }
+
         if (ValidateRequest(plan, command, request.Values) is { } contractRejection)
         {
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, contractRejection);
         }
 
-        if (plan.Model.SemanticVersion == SemanticVersion.V2 && command.Destination is null &&
+        if (plan.Model.SemanticVersion != SemanticVersion.V1 && command.Destination is null &&
             request.AllocatedEventSourceType is { } suppliedType &&
             command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type is { } identityType && suppliedType != identityType)
         {
@@ -103,7 +113,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                     $"Command '{command.Name}' requires one deterministic allocated destination.");
             }
 
-            if (plan.Model.SemanticVersion == SemanticVersion.V2 && destinationExpression is null &&
+            if (plan.Model.SemanticVersion != SemanticVersion.V1 && destinationExpression is null &&
                 command.Destination is null && request.AllocatedEventSourceType is null)
             {
                 return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A v2 allocated event source requires its declared scalar identity type.");
@@ -135,7 +145,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
 
             facts.Add(new SemanticFact(produced.EventContract, destination, values)
             {
-                Context = plan.Model.SemanticVersion == SemanticVersion.V2
+                Context = plan.Model.SemanticVersion != SemanticVersion.V1
                     ? new(new(DestinationType(command, destinationExpression, request.AllocatedEventSourceType), destination))
                     : null,
                 Tags = plan.Events[produced.EventContract].Tags.AddRange(produced.Tags)
@@ -302,6 +312,62 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             catch (InvalidSemanticContract exception)
             {
                 return exception.Message;
+            }
+        }
+
+        return null;
+    }
+
+    static string? UnsupportedValidation(SemanticExecutionPlan plan, SemanticCommand command)
+    {
+        if (!command.CodeValidations.IsEmpty)
+        {
+            return $"Command '{command.Name}' code validation 0";
+        }
+
+        if (command.Validations.FirstOrDefault(rule => rule.Kind == SemanticValidationRuleKind.RulePredicate) is { } predicate)
+        {
+            var property = command.Properties.Single(value => value.Id == predicate.Property);
+            return $"Rule '{predicate.Name}' on command '{command.Name}' property '{property.Name}'";
+        }
+
+        var concepts = plan.Model.Application.Concepts.ToDictionary(concept => concept.Id);
+        var types = plan.Model.Application.Types.ToDictionary(type => type.Id);
+        foreach (var property in command.Properties)
+        {
+            if (PredicateInType(property.Type, concepts, types, []) is { } name)
+            {
+                return name;
+            }
+        }
+
+        return null;
+    }
+
+    static string? PredicateInType(
+        SemanticTypeReference type,
+        Dictionary<SemanticId, SemanticConcept> concepts,
+        Dictionary<SemanticId, SemanticCompositeType> types,
+        HashSet<SemanticId> visited)
+    {
+        if (type.Kind == SemanticTypeReferenceKind.Concept)
+        {
+            var concept = concepts[type.Target];
+            if (concept.Validations.FirstOrDefault(rule => rule.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) is { } rule)
+            {
+                return rule.Kind == SemanticValidationRuleKind.CodeValidation
+                    ? $"Concept '{concept.Name}' code validation {concept.Validations.Take(concept.Validations.IndexOf(rule)).Count(validation => validation.Kind == SemanticValidationRuleKind.CodeValidation)}"
+                    : $"Rule '{rule.Name}' on concept '{concept.Name}'";
+            }
+
+            return null;
+        }
+
+        if (type.Kind == SemanticTypeReferenceKind.CompositeType && visited.Add(type.Target))
+        {
+            foreach (var property in types[type.Target].Properties)
+            {
+                if (PredicateInType(property.Type, concepts, types, visited) is { } name) return name;
             }
         }
 

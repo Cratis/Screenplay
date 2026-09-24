@@ -1,11 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Cratis.Screenplay.Diagnostics;
-
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_validation_rules;
 
-// Code validation stays rejected until a constrained implementation attachment exists (#139).
+// Whole-command code validation binds as an opaque v3 attachment.
 public class and_the_validation_is_code : given.a_semantic_binder
 {
     const string Source =
@@ -26,7 +24,7 @@ public class and_the_validation_is_code : given.a_semantic_binder
 
     void Because() => _result = Bind(Source);
 
-    [Fact] void should_not_bind() => _result.Success.ShouldBeFalse();
-    [Fact] void should_report_unsupported_syntax() => _result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.UnsupportedSemanticSyntax);
-    [Fact] void should_say_it_requires_an_implementation_attachment() => _result.Diagnostics.Single().Message.ShouldEqual("Command 'PlaceOrder' code validation requires a constrained implementation attachment (#139).");
+    [Fact] void should_bind_v3() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V3);
+    [Fact] void should_reference_the_attachment() => _result.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single().Commands.Single().CodeValidations.Single().RequirementId.ShouldEqual(_result.ImplementationRequirements.Single().RequirementId);
+    [Fact] void should_require_pure_capability() => _result.ImplementationRequirements.Single().RequiredCapability.ShouldEqual("pure");
 }

@@ -85,7 +85,13 @@ public enum SemanticValidationRuleKind
     /// <summary>
     /// A scalar text value must contain a match for the ECMAScript regular expression in the text operand.
     /// </summary>
-    Matches = 12
+    Matches = 12,
+
+    /// <summary>An opaque named or concept rule predicate; the reference evaluator cannot execute it.</summary>
+    RulePredicate = 13,
+
+    /// <summary>An opaque concept code validation block yielding zero or more rejection messages.</summary>
+    CodeValidation = 14
 }
 
 /// <summary>
@@ -162,7 +168,7 @@ public enum SemanticQueryDelivery
 }
 
 /// <summary>
-/// Represents one declarative validation rule.
+/// Represents a declarative validation rule or an opaque v3 validation attachment.
 /// </summary>
 /// <remarks>
 /// Concept value rules are enforced on command input wherever the concept occurs, including collection elements
@@ -182,6 +188,12 @@ public sealed record SemanticValidationRule(
     SemanticValue? Operand,
     string? Message)
 {
+    /// <summary>The authored predicate name, when this is an opaque rule predicate.</summary>
+    public string? Name { get; init; }
+
+    /// <summary>The stable requirement identity for an opaque rule predicate.</summary>
+    public string? RequirementId { get; init; }
+
     /// <summary>Gets the presentation severity; failures still reject at every level.</summary>
     public SemanticValidationSeverity Severity { get; init; } = SemanticValidationSeverity.Error;
 }
@@ -279,6 +291,9 @@ public sealed record SemanticCommand(
     ImmutableArray<SemanticValidationRule> Validations,
     ImmutableArray<SemanticProducedEvent> Produces)
 {
+    /// <summary>Opaque whole-command code validation attachments in authored order; each yields zero or more rejection messages.</summary>
+    public ImmutableArray<SemanticCodeValidation> CodeValidations { get; init; } = [];
+
     /// <summary>
     /// Gets the typed default event-source destination changed by this command.
     /// </summary>
