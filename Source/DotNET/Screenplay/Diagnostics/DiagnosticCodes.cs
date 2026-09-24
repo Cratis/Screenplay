@@ -1840,6 +1840,12 @@ public static class DiagnosticCodes
     /// </summary>
     public const string InvalidSemanticStringKey = "PLAY0357";
 
+    /// <summary>A specification declares more than one action.</summary>
+    public const string ConflictingSpecificationActions = "PLAY0358";
+
+    /// <summary>An event-order comparison qualifier is malformed or repeated.</summary>
+    public const string InvalidSpecificationEventOrder = "PLAY0359";
+
     /// <summary>
     /// A named match pattern has no portable definition.
     /// </summary>

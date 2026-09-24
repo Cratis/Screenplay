@@ -29,9 +29,9 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            var deniedQuery = specification.ThenDenied is not null && specification.When is null &&
+            var deniedQuery = specification.ThenDenied is not null && specification.When is null && specification.WhenAppended is null &&
                 specification.ThenQueries.Count() == 1 && !specification.ThenQueries.Single().Results.Any();
-            if (specification.When is null && (specification.ThenEvents.Any() || specification.ThenErrors.Any() ||
+            if (specification.When is null && specification.WhenAppended is null && (specification.ThenEvents.Any() || specification.ThenErrors.Any() ||
                 (specification.ThenDenied is not null && !deniedQuery) ||
                 (!(specification.ThenReadModels?.Any() ?? false) && !specification.ThenQueries.Any())))
             {
@@ -54,7 +54,7 @@ public sealed partial class SemanticModelBinder
             var id = Resolve(address, specification.Location);
             var givenEvents = specification.Given.Select(value => BindSpecificationEvent(value, commands)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             var givenReadModels = (specification.GivenReadModels ?? [])
-                .Select(value => BindReadModelState(value.Name, value.Properties, value.Location))
+                .Select(value => BindReadModelState(value.Name, value.Properties, value.Location, value.Exactly))
                 .Where(_ => _ is not null)
                 .Select(_ => _!)
                 .ToImmutableArray();
@@ -66,7 +66,7 @@ public sealed partial class SemanticModelBinder
             };
             var thenEvents = specification.ThenEvents.Select(value => BindSpecificationEvent(value, commands)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             var thenReadModels = (specification.ThenReadModels ?? [])
-                .Select(value => BindReadModelState(value.Name, value.Properties, value.Location))
+                .Select(value => BindReadModelState(value.Name, value.Properties, value.Location, value.Exactly))
                 .Where(_ => _ is not null)
                 .Select(_ => _!)
                 .ToImmutableArray();
@@ -91,8 +91,16 @@ public sealed partial class SemanticModelBinder
                     specification.GivenCaller.Authenticated,
                     [.. specification.GivenCaller.Roles],
                     [.. specification.GivenCaller.Claims.Select(claim => new SemanticCallerClaim(claim.Type, claim.Value))]),
-                ThenDenied = specification.ThenDenied is not null
+                ThenDenied = specification.ThenDenied is not null,
+                WhenAppended = specification.WhenAppended is null ? null : BindSpecificationAppend(specification.WhenAppended, commands),
+                ThenEventsInAnyOrder = specification.ThenEventsInAnyOrder
             };
+        }
+
+        SemanticSpecificationAppend? BindSpecificationAppend(SpecificationEventSyntax value, Dictionary<string, SemanticCommand> commands)
+        {
+            var bound = BindSpecificationEvent(value, commands);
+            return bound is null ? null : new(bound.EventContract, bound.Values) { EventSource = bound.EventSource };
         }
 
         SemanticSpecificationEvent? BindSpecificationEvent(SpecificationEventSyntax value, Dictionary<string, SemanticCommand> commands)
@@ -136,7 +144,8 @@ public sealed partial class SemanticModelBinder
         SemanticSpecificationReadModel? BindReadModelState(
             string name,
             IEnumerable<PropertyMappingSyntax> values,
-            SourceLocation location)
+            SourceLocation location,
+            bool exactly)
         {
             if (!_readModels.TryGetValue(ShortName(name), out var readModel))
             {
@@ -144,7 +153,7 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            return BindReadModelState(readModel, values, location, null);
+            return BindReadModelState(readModel, values, location, null) is { } state ? state with { Exactly = exactly } : null;
         }
 
         SemanticSpecificationReadModel? BindReadModelState(
@@ -186,7 +195,7 @@ public sealed partial class SemanticModelBinder
                 .Where(_ => _ is not null)
                 .Select(_ => _!)
                 .ToImmutableArray();
-            return new(query.Id, key, results);
+            return new(query.Id, key, results) { Exactly = value.Exactly };
         }
 
         ImmutableArray<SemanticPropertyValue> BindPropertyValues(

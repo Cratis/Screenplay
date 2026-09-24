@@ -44,6 +44,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitSpecificationCommand(syntax.When);
         }
 
+        if (syntax.WhenAppended is not null)
+        {
+            VisitSpecificationEvent(syntax.WhenAppended);
+        }
+
         foreach (var @event in syntax.ThenEvents)
         {
             VisitSpecificationEvent(@event);

@@ -21,6 +21,17 @@ public sealed record SemanticSpecificationEvent(
 }
 
 /// <summary>
+/// Represents the event occurrence appended by a semantic specification.
+/// </summary>
+/// <param name="EventContract">The event contract identity.</param>
+/// <param name="Values">The concrete event payload.</param>
+public sealed record SemanticSpecificationAppend(SemanticId EventContract, ImmutableArray<SemanticPropertyValue> Values)
+{
+    /// <summary>Gets the typed source for the occurrence, when explicitly asserted.</summary>
+    public SemanticEventSourceIdentity? EventSource { get; init; }
+}
+
+/// <summary>
 /// Represents the command exercised by a semantic specification.
 /// </summary>
 /// <param name="Command">The command semantic identity.</param>
@@ -44,7 +55,11 @@ public sealed record SemanticSpecificationCommand(
 public sealed record SemanticSpecificationReadModel(
     SemanticId ReadModel,
     SemanticValue Key,
-    ImmutableArray<SemanticPropertyValue> Values);
+    ImmutableArray<SemanticPropertyValue> Values)
+{
+    /// <summary>Gets whether actual properties must exactly match the authored properties.</summary>
+    public bool Exactly { get; init; }
+}
 
 /// <summary>
 /// Represents an expected keyed query result.
@@ -55,7 +70,11 @@ public sealed record SemanticSpecificationReadModel(
 public sealed record SemanticSpecificationQueryResult(
     SemanticId Query,
     SemanticValue Key,
-    ImmutableArray<SemanticSpecificationReadModel> Results);
+    ImmutableArray<SemanticSpecificationReadModel> Results)
+{
+    /// <summary>Gets whether every result row must have exactly the authored properties.</summary>
+    public bool Exactly { get; init; }
+}
 
 /// <summary>
 /// Represents an expected validation rejection.
@@ -96,4 +115,10 @@ public sealed record SemanticSpecification(
 
     /// <summary>Gets whether an authorization denial, rather than a validation error, is asserted.</summary>
     public bool ThenDenied { get; init; }
+
+    /// <summary>Gets the appended event action, mutually exclusive with <see cref="When"/>.</summary>
+    public SemanticSpecificationAppend? WhenAppended { get; init; }
+
+    /// <summary>Gets whether then-events are compared without regard to occurrence order.</summary>
+    public bool ThenEventsInAnyOrder { get; init; }
 }

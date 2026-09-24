@@ -81,7 +81,7 @@ internal static partial class SemanticModelValidator
         if (semanticVersion == SemanticVersion.V2 && !application.Modules.SelectMany(module => module.Features)
             .SelectMany(AllSlices).Any(slice => slice.Commands.Any(command => command.Destination is not null ||
                 command.Produces.Any(produced => produced.Mappings.Any(mapping => mapping.Source is SemanticEventContextExpression))) ||
-                slice.Specifications.Any(specification => specification.When?.EventSource is not null ||
+                slice.Specifications.Any(specification => specification.When?.EventSource is not null || specification.WhenAppended?.EventSource is not null ||
                     specification.GivenEvents.Any(value => value.EventSource is not null) ||
                     specification.ThenEvents.Any(value => value.EventSource is not null))))
         {
@@ -639,6 +639,23 @@ internal static partial class SemanticModelValidator
                 ValidatePropertyValues(specification.When.Values, command.Properties, true);
             }
 
+            if (specification.WhenAppended is { } appended)
+            {
+                if (specification.When is not null) throw new InvalidSemanticContract("A specification cannot state both command and append actions.");
+                if (!_events.TryGetValue(appended.EventContract, out var eventContract)) throw new InvalidSemanticContract("An appended specification event is unresolved.");
+                ValidatePropertyValues(appended.Values, eventContract.Properties, true);
+                if (appended.EventSource is not null)
+                {
+                    if (_semanticVersion != SemanticVersion.V2) throw new InvalidSemanticContract("An appended event source requires ESM v2.");
+                    var destinationTypes = _commands.Values.SelectMany(value => value.Produces
+                        .Where(produced => produced.EventContract == appended.EventContract)
+                        .Select(_ => value.Destination?.Type ?? value.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type))
+                        .OfType<SemanticTypeReference>().Distinct().ToArray();
+                    if (destinationTypes.Length != 1) throw new InvalidSemanticContract("An appended event source requires one unambiguous scalar destination type.");
+                    ValidateEventSource(appended.EventSource, destinationTypes[0]);
+                }
+            }
+
             var producedEvents = command?.Produces.Select(_ => _.EventContract).ToHashSet();
             foreach (var value in specification.GivenEvents)
             {
@@ -647,7 +664,7 @@ internal static partial class SemanticModelValidator
 
             foreach (var value in specification.ThenEvents)
             {
-                if (producedEvents?.Contains(value.EventContract) != true)
+                if (producedEvents?.Contains(value.EventContract) != true && specification.WhenAppended?.EventContract != value.EventContract)
                 {
                     throw new InvalidSemanticContract("A specification expects an event the command does not produce.");
                 }
@@ -685,7 +702,7 @@ internal static partial class SemanticModelValidator
                 RequireObjects(caller.Claims, nameof(caller.Claims), "caller claim");
             }
 
-            var deniedQuery = specification.ThenDenied && specification.When is null &&
+            var deniedQuery = specification.ThenDenied && specification.When is null && specification.WhenAppended is null &&
                 specification.ThenQueries.Length == 1 && specification.ThenQueries[0].Results.IsEmpty;
             var hasRejection = specification.ThenErrors.Length > 0 || specification.ThenDenied;
             var hasSuccessOutcome = specification.ThenEvents.Length > 0 || specification.ThenReadModels.Length > 0 ||
@@ -695,7 +712,7 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract("A rejection specification must contain exactly one rejection and no success outcomes.");
             }
 
-            if (specification.When is null && (specification.ThenErrors.Length > 0 || specification.ThenEvents.Length > 0 ||
+            if (specification.When is null && specification.WhenAppended is null && (specification.ThenErrors.Length > 0 || specification.ThenEvents.Length > 0 ||
                 (specification.ThenDenied && !deniedQuery) ||
                 (specification.ThenReadModels.Length == 0 && specification.ThenQueries.Length == 0)))
             {
@@ -1047,6 +1064,7 @@ internal static partial class SemanticModelValidator
             {
                 RequireObjects(specification.When.Values, nameof(specification.When.Values), "property value");
             }
+            if (specification.WhenAppended is not null) RequireObjects(specification.WhenAppended.Values, nameof(specification.WhenAppended.Values), "property value");
             RequireObjects(specification.ThenEvents, nameof(specification.ThenEvents), "specification event");
             RequireObjects(specification.ThenReadModels, nameof(specification.ThenReadModels), "specification read model");
             RequireObjects(specification.ThenQueries, nameof(specification.ThenQueries), "specification query result");

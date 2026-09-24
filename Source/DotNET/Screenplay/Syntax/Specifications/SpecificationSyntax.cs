@@ -55,6 +55,12 @@ public record SpecificationSyntax(
 
     /// <summary>Gets whether this scenario explicitly expects an authorization denial.</summary>
     public SpecificationDeniedSyntax? ThenDenied { get; init; }
+
+    /// <summary>Gets the event occurrence appended instead of executing a command.</summary>
+    public SpecificationEventSyntax? WhenAppended { get; init; }
+
+    /// <summary>Gets whether the expected events can occur in any order; the default is authored order.</summary>
+    public bool ThenEventsInAnyOrder { get; init; }
 }
 
 /// <summary>
@@ -110,7 +116,11 @@ public record SpecificationCommandSyntax(
 public record SpecificationReadModelSyntax(
     string Name,
     IEnumerable<PropertyMappingSyntax> Properties,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>Gets whether every actual property must be asserted; the default is subset matching.</summary>
+    public bool Exactly { get; init; }
+}
 
 /// <summary>
 /// Represents an expected query result declared with <c>then query &lt;Query&gt;</c>.
@@ -123,7 +133,11 @@ public record SpecificationQuerySyntax(
     string Query,
     IEnumerable<PropertyMappingSyntax> Arguments,
     IEnumerable<SpecificationQueryResultSyntax> Results,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>Gets whether every actual result property must be asserted; the default is subset matching.</summary>
+    public bool Exactly { get; init; }
+}
 
 /// <summary>
 /// Represents one expected result inside a <see cref="SpecificationQuerySyntax"/>.
