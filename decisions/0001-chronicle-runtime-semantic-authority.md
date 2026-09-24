@@ -2,7 +2,7 @@
 id: 0001
 title: Use Chronicle's runtime meaning for portable executable semantics
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-09-24
 decider: Sindre Alstad Wilting
 class: contract
@@ -50,3 +50,7 @@ ESM changes cite Chronicle source; divergences become issues on the side whose b
 ## Related issues
 
 Screenplay: [#218](https://github.com/Cratis/Screenplay/issues/218), [#128](https://github.com/Cratis/Screenplay/issues/128), [#211](https://github.com/Cratis/Screenplay/issues/211), [#212](https://github.com/Cratis/Screenplay/issues/212), [#217](https://github.com/Cratis/Screenplay/issues/217). Chronicle: [#4109](https://github.com/Cratis/Chronicle/issues/4109), [#4116](https://github.com/Cratis/Chronicle/issues/4116), [#4117](https://github.com/Cratis/Chronicle/issues/4117), [#4118](https://github.com/Cratis/Chronicle/issues/4118), [#4119](https://github.com/Cratis/Chronicle/issues/4119), [#4122](https://github.com/Cratis/Chronicle/issues/4122), [#4123](https://github.com/Cratis/Chronicle/issues/4123), [#4124](https://github.com/Cratis/Chronicle/issues/4124), [#4125](https://github.com/Cratis/Chronicle/issues/4125).
+
+## Status notes
+
+**2026-09-24 — implemented.** The executable semantic model mirrors Chronicle's lowering for projections, keys, constraints, event context and variants, with specs that cite the Chronicle source (Screenplay v4.18.0–v4.24.0). It is not yet `verified`: the corpus-driven conformance test named under *Verification* is tracked in [Cratis/Chronicle#4130](https://github.com/Cratis/Chronicle/issues/4130).
