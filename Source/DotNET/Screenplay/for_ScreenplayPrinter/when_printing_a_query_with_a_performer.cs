@@ -20,10 +20,9 @@ public class when_printing_a_query_with_a_performer : given.a_printer
                 filter status   InvoiceStatus?
                 filter tenantId TenantId from $context.tenant
                 performer
-                  sql
-                    ```
-                    select * from Invoices where TenantId = @tenantId
-                    ```
+                  ```sql
+                  select * from Invoices where TenantId = @tenantId
+                  ```
         """;
 
     RoundTripResult _roundtrip;

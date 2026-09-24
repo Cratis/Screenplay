@@ -21,10 +21,9 @@ public class when_compiling_a_query_with_a_performer : given.a_compiler
                 filter status   InvoiceStatus?
                 filter tenantId TenantId from $context.tenant
                 performer
-                  sql
-                    ```
-                    select * from Invoices where TenantId = @tenantId
-                    ```
+                  ```sql
+                  select * from Invoices where TenantId = @tenantId
+                  ```
 
               query GetInvoice => InvoiceDetailsReadModel
                 by invoiceId InvoiceId

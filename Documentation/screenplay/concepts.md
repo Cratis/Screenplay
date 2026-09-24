@@ -75,15 +75,15 @@ concept PaymentTerms : Enum
 
 ## Validation
 
-A concept can declare validation rules in an optional indented body — business rules that travel with the value everywhere it appears. The rules use the same shapes as command validation (see [Commands](commands.md)): declarative `validate` blocks and imperative `validate csharp` blocks. The one difference is that the rules omit the property subject — the concept's own value is implied.
+A concept can declare validation rules in an optional indented body — business rules that travel with the value everywhere it appears. The rules use the same shapes as command validation (see [Commands](commands.md)): declarative `validate` blocks and imperative `validate` blocks with a ` ```csharp ` fence. The one difference is that the rules omit the property subject — the concept's own value is implied.
 
 ````screenplay
 concept EmailAddress : String @pii
   validate
     not empty          message "Email is required"
     matches email      severity warning message "Must be a valid email address"
-  validate csharp
-    ```
+  validate
+    ```csharp
     string email = context.Value;
     if (email.EndsWith("@example.com", StringComparison.OrdinalIgnoreCase))
     {

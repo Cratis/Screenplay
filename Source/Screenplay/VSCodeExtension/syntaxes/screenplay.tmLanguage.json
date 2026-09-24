@@ -7,6 +7,11 @@
     ],
     "patterns": [
         { "include": "#comment" },
+        { "include": "#fenced-csharp" },
+        { "include": "#fenced-react" },
+        { "include": "#fenced-typescript" },
+        { "include": "#fenced-html" },
+        { "include": "#fenced-sql" },
         { "include": "#code-block-csharp" },
         { "include": "#code-block-react" },
         { "include": "#code-block-typescript" },
@@ -94,6 +99,38 @@
                     "name": "variable.other.screenplay"
                 }
             ]
+        },
+        "fenced-csharp": {
+            "begin": "^[ ]*(```)(csharp)[ ]*$",
+            "beginCaptures": { "1": { "name": "punctuation.definition.fence.screenplay" }, "2": { "name": "entity.name.tag.code-language.screenplay" } },
+            "end": "^[ ]*(```)[ ]*$",
+            "endCaptures": { "1": { "name": "punctuation.definition.fence.screenplay" } },
+            "contentName": "meta.embedded.block.csharp",
+            "patterns": [{ "include": "source.cs" }]
+        },
+        "fenced-react": {
+            "begin": "^[ ]*(```)(react)[ ]*$",
+            "end": "^[ ]*(```)[ ]*$",
+            "contentName": "meta.embedded.block.typescriptreact",
+            "patterns": [{ "include": "source.tsx" }]
+        },
+        "fenced-typescript": {
+            "begin": "^[ ]*(```)(typescript)[ ]*$",
+            "end": "^[ ]*(```)[ ]*$",
+            "contentName": "meta.embedded.block.typescript",
+            "patterns": [{ "include": "source.ts" }]
+        },
+        "fenced-html": {
+            "begin": "^[ ]*(```)(html)[ ]*$",
+            "end": "^[ ]*(```)[ ]*$",
+            "contentName": "meta.embedded.block.html",
+            "patterns": [{ "include": "text.html.basic" }]
+        },
+        "fenced-sql": {
+            "begin": "^[ ]*(```)(sql)[ ]*$",
+            "end": "^[ ]*(```)[ ]*$",
+            "contentName": "meta.embedded.block.sql",
+            "patterns": [{ "include": "source.sql" }]
         },
         "code-block-csharp": {
             "begin": "^([ ]*)((?:validate|produces)[ ]+)?(csharp)[ ]*$",
@@ -219,7 +256,7 @@
             "while": "^(?=\\1[ ]+\\S|[ ]*$)",
             "patterns": [
                 {
-                    "begin": "^[ ]*(```)[ ]*$",
+                    "begin": "^[ ]*(```)(?:text)?[ ]*$",
                     "beginCaptures": {
                         "1": { "name": "punctuation.definition.fence.screenplay" }
                     },

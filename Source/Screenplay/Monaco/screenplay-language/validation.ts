@@ -310,7 +310,7 @@ export function validateLines(lines: string[]): ValidationIssue[] {
 
     const fenceLines = lines
         .map((line, index) => ({ line, index }))
-        .filter(({ line }) => /^\s*```\s*$/.test(line));
+        .filter(({ line }) => /^\s*```(?:[a-z]+)?\s*$/.test(line));
     if (fenceLines.length % 2 === 1) {
         const last = fenceLines[fenceLines.length - 1];
         issues.push(

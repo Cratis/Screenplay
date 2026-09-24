@@ -13,12 +13,10 @@ query <Name> => [observable] <ReturnType>[[]?]
   [authorize <PolicyName> [or <PolicyName>]*]
   [performer
     file <Path>
-    | csharp
-        ```
+    | ```csharp
         <C# returning the result>
         ```
-    | sql
-        ```
+    | ```sql
         <SQL returning the result>
         ```]
 ```
@@ -156,8 +154,7 @@ Inline, in a top-level language:
 query GetOverdueInvoices => OverdueInvoicesReadModel[]
   description "Invoices past their due date, oldest first"
   performer
-    csharp
-      ```
+    ```csharp
       return readModels
           .Where(invoice => invoice.Status == InvoiceStatus.Overdue)
           .Where(invoice => invoice.TenantId == context.Tenant)
@@ -172,8 +169,7 @@ query ListLineItems => InvoiceLineReportReadModel[]
   description "Every invoice line, priced, for the accounting line report"
   filter tenantId TenantId from $context.tenant
   performer
-    sql
-      ```
+    ```sql
       select   InvoiceId, LineNumber, Quantity, UnitPrice
       from     InvoiceLineReport
       where    TenantId = @tenantId

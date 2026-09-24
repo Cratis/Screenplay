@@ -12,8 +12,7 @@ public class when_printing_a_named_predicate_rule_implementation : given.a_print
         concept OrganizationNumber : String
           validate
             rule BeAValidOrganizationNumber message "Must be a valid organization number"
-              csharp
-                ```
+              ```csharp
                 return Value.Length == 9 && Value.All(char.IsDigit);
                 ```
 

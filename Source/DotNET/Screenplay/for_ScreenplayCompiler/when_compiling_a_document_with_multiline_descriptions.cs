@@ -11,7 +11,7 @@ public class when_compiling_a_document_with_multiline_descriptions : given.a_com
         """
         module Invoicing
           description
-            ```
+            ```text
             Everything related to invoicing customers.
             Registration and lifecycle of invoices.
             ```
@@ -20,7 +20,7 @@ public class when_compiling_a_document_with_multiline_descriptions : given.a_com
             slice StateChange RegisterInvoice
               command RegisterInvoice
                 description
-                  ```
+                  ```text
                   Registers a new invoice.
                   The invoice starts out as a draft.
                   ```

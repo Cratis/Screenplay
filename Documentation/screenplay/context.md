@@ -145,8 +145,7 @@ Inside a `handler` or `performer` block, `context` is the corresponding record:
 ````screenplay
 query GetOverdueInvoices => OverdueInvoicesReadModel[]
   performer
-    csharp
-      ```
+    ```csharp
       return readModels
           .Where(invoice => invoice.Status == InvoiceStatus.Overdue)
           .Where(invoice => invoice.TenantId == context.Tenant)
@@ -159,8 +158,7 @@ Inside a named `rule` body, `context` is the `RuleContext` and the block answers
 ````screenplay
 validate
   orgNumber rule BeAValidOrganizationNumber message "Must be a valid organization number"
-    csharp
-      ```
+    ```csharp
       string orgNumber = context.Value;
       return orgNumber.Length == 9 && orgNumber.All(char.IsDigit);
       ```
