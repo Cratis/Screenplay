@@ -153,7 +153,7 @@ public record CommandSyntax(
     IEnumerable<ReadsSyntax>? Reads = null) : SyntaxNode(Location);
 
 /// <summary>
-/// Represents a <c>reads &lt;ReadModel&gt; [by &lt;property&gt;]</c> declaration on a command.
+/// Represents a <c>reads &lt;ReadModel&gt; [as &lt;alias&gt;] [by &lt;property&gt;]</c> declaration on a command.
 /// </summary>
 /// <param name="ReadModel">The name of the read model the command reads to decide.</param>
 /// <param name="By">The command property the read model is looked up by, when it is looked up by one.</param>
@@ -167,7 +167,14 @@ public record CommandSyntax(
 /// shares rather than one instance per identifier.
 /// </para>
 /// </remarks>
-public record ReadsSyntax(string ReadModel, string? By, SourceLocation Location) : SyntaxNode(Location);
+public record ReadsSyntax(string ReadModel, string? By, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the optional name distinguishing this instance of a view from other reads of the same view.
+    /// An init member preserves the published positional constructor and deconstruction contract.
+    /// </summary>
+    public string? Alias { get; init; }
+}
 
 /// <summary>
 /// Represents an <c>authorize</c> declaration referencing one or more policies.

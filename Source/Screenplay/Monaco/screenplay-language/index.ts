@@ -96,6 +96,7 @@ export type {
     NamedSymbol,
     PolicySymbol,
     PropertySymbol,
+    ReadSymbol,
     QuerySymbol,
     TypeSymbol,
 } from './symbols';

@@ -15,10 +15,7 @@ namespace Cratis.Screenplay.Diagnostics.for_DiagnosticCodes;
 /// </summary>
 public partial class when_holding_the_catalogue_against_the_documentation : Specification
 {
-    // Retired codes stay listed on the page after they stop being reported, so the section that records them
-    // is not part of the comparison in either direction.
-    const string RetiredHeading = "## Retired codes";
-
+    // Retired constants remain public API and must stay documented alongside the live codes.
     List<string> _declared;
     List<string> _documented;
 
@@ -33,16 +30,13 @@ public partial class when_holding_the_catalogue_against_the_documentation : Spec
         ];
 
         var catalogue = File.ReadAllText(Path.Combine(DocumentationExamples.Root(), "screenplay", "diagnostics.md"));
-        var retired = catalogue.IndexOf(RetiredHeading, StringComparison.Ordinal);
-        var current = retired < 0 ? catalogue : catalogue[..retired];
-
-        _documented = [.. CodeRegex().Matches(current).Select(match => match.Groups[1].Value).Distinct(StringComparer.Ordinal)];
+        _documented = [.. CodeRegex().Matches(catalogue).Select(match => match.Groups[1].Value).Distinct(StringComparer.Ordinal)];
     }
 
-    [Fact] void should_document_every_code_the_compiler_can_report() =>
+    [Fact] void should_document_every_declared_code() =>
         Report("declared but absent from the catalogue", _declared.Except(_documented, StringComparer.Ordinal)).ShouldEqual(string.Empty);
 
-    [Fact] void should_not_list_a_code_the_compiler_cannot_report() =>
+    [Fact] void should_not_list_a_code_that_is_not_declared() =>
         Report("listed in the catalogue but declared nowhere", _documented.Except(_declared, StringComparer.Ordinal)).ShouldEqual(string.Empty);
 
     static string Report(string what, IEnumerable<string> codes)

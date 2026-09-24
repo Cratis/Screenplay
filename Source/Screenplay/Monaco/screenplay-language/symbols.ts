@@ -40,6 +40,14 @@ export interface EventSymbol {
 
 export interface CommandSymbol extends NamedSymbol {
     properties: PropertySymbol[];
+    reads?: ReadSymbol[];
+}
+
+export interface ReadSymbol {
+    view: string;
+    alias?: string;
+    by?: string;
+    line: number;
 }
 
 export interface NamedSymbol {
@@ -73,6 +81,7 @@ export interface DocumentSymbols {
 const conceptPattern = /^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@\w+)*)\s*$/;
 const propertyPattern = /^\s*(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?\??)(\s+identifier)?\s*$/;
 const attributeReasonPattern = /^([a-z_]\w*)\s+reason\s+"((?:[^"\\]|\\.)*)"\s*$/;
+const readPattern = /^\s*reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?\s*$/;
 const queryParameterPattern =
     /^\s*(?:by|filter)\s+([a-z_]\w*)\s+([\w.]+(?:\[\])?\??)(?:\s+from\s+.+)?\s*$/;
 
@@ -85,7 +94,7 @@ function propertiesIn(lines: string[], body: number[]): PropertySymbol[] {
     return body
         .map((index) => ({ index, match: lines[index].match(propertyPattern) }))
         .filter((entry): entry is { index: number; match: RegExpMatchArray } => entry.match !== null)
-        .filter(({ match }) => match[1].startsWith('@') || !clauseKeywords.includes(match[1]))
+        .filter(({ match }) => match[1].startsWith('@') || match[1] === 'as' || !clauseKeywords.includes(match[1]))
         .map(({ index, match }) => ({
             name: match[1].replace(/^@/, ''),
             type: match[2],
@@ -193,9 +202,19 @@ export function scanDocument(lines: string[]): DocumentSymbols {
 
         const commandMatch = trimmed.match(/^command\s+(\w+)\s*$/);
         if (commandMatch) {
+            const body = collectBody(lines, fences, index, indent);
             symbols.commands.push({
                 name: commandMatch[1],
-                properties: propertiesIn(lines, collectBody(lines, fences, index, indent)),
+                properties: propertiesIn(lines, body),
+                reads: body.filter((line) => !fences[line])
+                    .map((line) => ({ line, match: lines[line].match(readPattern) }))
+                    .filter((entry): entry is { line: number; match: RegExpMatchArray } => entry.match !== null)
+                    .map(({ line, match }) => ({
+                        view: match[1],
+                        ...(match[2] ? { alias: match[2] } : {}),
+                        ...(match[3] ? { by: match[3] } : {}),
+                        line,
+                    })),
                 line: index,
             });
             continue;

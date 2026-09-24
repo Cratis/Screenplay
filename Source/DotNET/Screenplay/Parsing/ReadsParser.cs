@@ -25,15 +25,28 @@ internal static partial class ReadsParser
         {
             context.Error(
                 DiagnosticCodes.InvalidReadsDeclaration,
-                $"Invalid reads declaration '{line.Content}' - expected 'reads <ReadModel>' or 'reads <ReadModel> by <property>'",
+                $"Invalid reads declaration '{line.Content}' - expected 'reads <ReadModel> [as <alias>] [by <property>]'",
                 line.Location);
             return null;
         }
 
-        var by = match.Groups[2];
-        return new(match.Groups[1].Value, by.Success ? by.Value : null, line.Location);
+        var alias = match.Groups[2];
+        if (alias.Success && (alias.Value == "as" || alias.Value == "by" || alias.Value == "reads"))
+        {
+            context.Error(
+                DiagnosticCodes.InvalidReadsDeclaration,
+                $"Invalid reads declaration '{line.Content}' - '{alias.Value}' cannot be used as a reads alias",
+                line.Location);
+            return null;
+        }
+
+        var by = match.Groups[3];
+        return new(match.Groups[1].Value, by.Success ? by.Value : null, line.Location)
+        {
+            Alias = alias.Success ? alias.Value : null
+        };
     }
 
-    [GeneratedRegex(@"^reads\s+([A-Z]\w*)(?:\s+by\s+([a-z_]\w*))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?$", RegexOptions.None, 1000)]
     private static partial Regex ReadsRegex();
 }
