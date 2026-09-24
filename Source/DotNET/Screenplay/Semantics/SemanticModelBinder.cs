@@ -83,7 +83,10 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 applicationName,
                 concepts,
                 types,
-                UsesV2 ? [.. modules.Select(PromoteV2Destinations)] : modules);
+                UsesV2 ? [.. modules.Select(PromoteV2Destinations)] : modules)
+            {
+                Policies = BindPolicies()
+            }; 
         }
 
         internal void Error(string code, string message, SourceLocation location) =>
@@ -121,11 +124,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             foreach (var import in syntax.Imports)
             {
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Import '{import.QualifiedName}' is not supported by ESM v1 binding.", import.Location);
-            }
-
-            foreach (var policy in syntax.Policies)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Policy '{policy.Name}' is deferred until portable policy semantics are admitted.", policy.Location);
             }
 
             foreach (var persona in syntax.Personas ?? [])

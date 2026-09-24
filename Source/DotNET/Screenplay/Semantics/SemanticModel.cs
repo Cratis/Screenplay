@@ -71,7 +71,11 @@ public sealed record SemanticApplication(
     string Name,
     ImmutableArray<SemanticConcept> Concepts,
     ImmutableArray<SemanticCompositeType> Types,
-    ImmutableArray<SemanticModule> Modules);
+    ImmutableArray<SemanticModule> Modules)
+{
+    /// <summary>Gets the named declarative policies of the application.</summary>
+    public ImmutableArray<SemanticPolicy> Policies { get; init; } = [];
+}
 
 /// <summary>
 /// Represents a bounded semantic module.

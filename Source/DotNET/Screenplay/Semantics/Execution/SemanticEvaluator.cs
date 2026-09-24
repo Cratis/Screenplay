@@ -23,7 +23,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                 return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A read-only request cannot carry command values or allocated identities.");
             }
 
-            return ExecuteQueries(plan, world, world, [], request.Queries);
+            return ExecuteQueries(plan, world, world, [], request.Queries, request.Caller);
         }
 
         if (!plan.Commands.TryGetValue(request.Command, out var command))
@@ -34,6 +34,16 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         if (request.Queries.IsDefault)
         {
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default.");
+        }
+
+        if (!SemanticPolicyEvaluation.Allows(
+            command.Authorization, plan, request.Caller,
+            request.Values.IsDefault ? new Dictionary<string, SemanticValue>() : request.Values
+                .Where(value => command.Properties.Any(property => property.Id == value.TargetProperty))
+                .ToDictionary(value => command.Properties.Single(property => property.Id == value.TargetProperty).Name, value => value.Value),
+            request.Values.IsDefault ? null : request.Values.FirstOrDefault(value => command.Properties.Any(property => property.IsIdentifier && property.Id == value.TargetProperty))?.Value))
+        {
+            return new SemanticRejected(world, SemanticRejectionCategory.Unauthorized, null, "Caller is not authorized.");
         }
 
         if (ValidateRequest(plan, command, request.Values) is { } contractRejection)
@@ -141,7 +151,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         }
 
         var tentative = world.Commit(facts.ToImmutable(), readModels);
-        return ExecuteQueries(plan, world, tentative, facts.ToImmutable(), request.Queries);
+        return ExecuteQueries(plan, world, tentative, facts.ToImmutable(), request.Queries, request.Caller);
     }
 
     internal static bool Establish(
@@ -170,7 +180,8 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         SemanticWorld original,
         SemanticWorld tentative,
         ImmutableArray<SemanticFact> facts,
-        ImmutableArray<SemanticQueryRequest> queries)
+        ImmutableArray<SemanticQueryRequest> queries,
+        SemanticCaller? caller)
     {
         if (queries.IsDefault)
         {
@@ -183,6 +194,12 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             if (!plan.Queries.TryGetValue(queryRequest.Query, out var query))
             {
                 return new SemanticUnsupported(original, SemanticExecutionCapability.Query, $"Query '{queryRequest.Query}' is not in the execution plan.");
+            }
+
+            if (!SemanticPolicyEvaluation.Allows(query.Authorization, plan, caller,
+                new Dictionary<string, SemanticValue>(StringComparer.Ordinal) { [query.Argument.Name] = queryRequest.Key }, queryRequest.Key))
+            {
+                return new SemanticRejected(original, SemanticRejectionCategory.Unauthorized, null, "Caller is not authorized.");
             }
 
             if (ValidateQueryKey(plan, query, queryRequest.Key) is { } queryRejection)

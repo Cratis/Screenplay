@@ -55,9 +55,9 @@ public sealed partial class SemanticModelBinder
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Query '{query.Name}' description is authoring metadata.", query.Location);
             }
 
-            if (query.IsObservable || query.Filters.Any() || query.Scope is not null || query.Authorize is not null || query.Performer is not null)
+            if (query.IsObservable || query.Filters.Any() || query.Scope is not null || query.Performer is not null)
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query '{query.Name}' uses delivery, filtering, scope, authorization, or implementation behavior outside the first ESM v1 vertical.", query.Location);
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query '{query.Name}' uses delivery, filtering, scope, or implementation behavior outside the first ESM v1 vertical.", query.Location);
             }
 
             if (query.By is null || query.By.Source is not null)
@@ -90,7 +90,10 @@ public sealed partial class SemanticModelBinder
                 readModel.Model.Id,
                 keyProperty.Id,
                 SemanticQueryCardinality.ZeroOrOne,
-                SemanticQueryDelivery.Snapshot);
+                SemanticQueryDelivery.Snapshot)
+            {
+                Authorization = BindAuthorization(query.Authorize, [argument.Name])
+            };
         }
     }
 }

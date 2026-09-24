@@ -21,11 +21,6 @@ public sealed partial class SemanticModelBinder
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Command '{command.Name}' description is authoring metadata.", command.Location);
             }
 
-            if (command.Authorize is not null)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' authorization requires portable policy semantics.", command.Authorize.Location);
-            }
-
             foreach (var reads in command.Reads ?? [])
             {
                 Error(
@@ -73,6 +68,7 @@ public sealed partial class SemanticModelBinder
             return new(id, command.Name, properties, validations, produced)
             {
                 Requirements = requirements,
+                Authorization = BindAuthorization(command.Authorize, propertiesByName.Keys),
                 Destination = defaultDestination is null ? null : new(defaultDestination.Type, SemanticExpression.Property(SemanticExpressionRootKind.Command, defaultDestination.Id))
             };
         }
