@@ -28,7 +28,7 @@ internal static class ProjectionVariantValidator
                 foreach (var variant in projection.Blocks.OfType<ProjectionVariantSyntax>())
                 {
                     var properties = declarations.ViewProperties(variant.Name, scope);
-                    foreach (var mapping in projection.Blocks.OfType<FromSyntax>().SelectMany(from => from.Mappings))
+                    foreach (var mapping in SharedMappings(projection.Blocks))
                     {
                         declarations.Property(properties, mapping.Property, out var missing);
                         if (missing)
@@ -40,4 +40,14 @@ internal static class ProjectionVariantValidator
             }
         }
     }
+
+    static IEnumerable<MappingSyntax> SharedMappings(IEnumerable<ProjectionBlockSyntax> blocks) =>
+        blocks.SelectMany(block => block switch
+        {
+            FromSyntax source => source.Mappings,
+            EverySyntax every => every.Mappings,
+            AllSyntax all => all.Mappings,
+            JoinSyntax join => join.Events.SelectMany(@event => @event.Mappings),
+            _ => []
+        });
 }
