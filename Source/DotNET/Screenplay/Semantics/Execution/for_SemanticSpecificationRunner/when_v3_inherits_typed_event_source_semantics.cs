@@ -74,6 +74,33 @@ public class when_v3_inherits_typed_event_source_semantics : Specification
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
+    void should_reject_a_mismatched_typed_when_event_source_in_v3(bool withReducer)
+    {
+        var model = Compile(withReducer).Model;
+        var module = model.Application.Modules.Single();
+        var feature = module.Features.Single();
+        var slice = feature.Slices.Single(value => value.Name == "Register");
+        var specification = slice.Specifications.Single();
+        var mismatched = specification with
+        {
+            When = specification.When! with
+            {
+                EventSource = specification.When.EventSource! with { Type = SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text) }
+            }
+        };
+        var application = model.Application with
+        {
+            Modules = [module with { Features = [feature with { Slices = [.. feature.Slices.Select(value => value == slice ? slice with { Specifications = [mismatched] } : value)] }] }]
+        };
+
+        var error = Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V3, SemanticVersion.V3, application));
+        error.ShouldBeOfExactType<InvalidSemanticContract>();
+        error.Message.ShouldEqual("A specification event source must have the required scalar destination type.");
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
     void should_reject_a_mismatched_allocated_event_source_type_in_v3(bool withReducer)
     {
         var plan = Compile(withReducer);

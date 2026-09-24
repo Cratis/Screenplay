@@ -38,8 +38,9 @@ public sealed partial class SemanticModelBinder
                 {
                     if (validation is CodeValidateSyntax code)
                     {
-                        var name = $"code validation {codeValidationOrdinal++}";
-                        var requirement = RequireImplementation(SemanticImplementationRole.ConceptValidation, SemanticAddress.ForConcept(_applicationIdentity, concept.Name), null, code.Code, name);
+                        var member = $"code validation {codeValidationOrdinal++}";
+                        var name = $"Concept '{concept.Name}' {member}";
+                        var requirement = RequireImplementation(SemanticImplementationRole.ConceptValidation, SemanticAddress.ForConcept(_applicationIdentity, concept.Name), null, code.Code, member);
                         if (requirement is not null)
                         {
                             UsesV3 = true;

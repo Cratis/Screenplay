@@ -36,16 +36,6 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default.");
         }
 
-        // Ordering between generated declarative validators and attached code is not portable.
-        // Refuse to infer a rejection or acceptance for any execution of this command.
-        if (UnsupportedValidation(plan, command) is { } rule)
-        {
-            return new SemanticUnsupported(
-                world,
-                SemanticExecutionCapability.Command,
-                $"Rule '{rule}' has an opaque validation predicate and requires a target provider.");
-        }
-
         var authorizationValues = request.Values.IsDefault ? [] : request.Values.Where(value => value is not null).ToArray();
         var artifact = command.Properties
             .Select(property => (property, value: authorizationValues.FirstOrDefault(value => value.TargetProperty == property.Id)?.Value))
@@ -57,6 +47,16 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         if (!SemanticPolicyEvaluation.Allows(command.Authorization, plan, request.Caller, artifact, subject, command.Properties))
         {
             return new SemanticRejected(world, SemanticRejectionCategory.Unauthorized, null, "Caller is not authorized.");
+        }
+
+        // Ordering between generated declarative validators and attached code is not portable.
+        // Refuse to infer a validation outcome after authorization, before evaluating any validators.
+        if (UnsupportedValidation(plan, command) is { } rule)
+        {
+            return new SemanticUnsupported(
+                world,
+                SemanticExecutionCapability.Command,
+                $"{rule} has an opaque validation predicate and requires a target provider.");
         }
 
         if (ValidateRequest(plan, command, request.Values) is { } contractRejection)
@@ -322,12 +322,13 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
     {
         if (!command.CodeValidations.IsEmpty)
         {
-            return $"code validation {command.CodeValidations[0].RequirementId}";
+            return $"Command '{command.Name}' code validation 0";
         }
 
         if (command.Validations.FirstOrDefault(rule => rule.Kind == SemanticValidationRuleKind.RulePredicate) is { } predicate)
         {
-            return predicate.Name;
+            var property = command.Properties.Single(value => value.Id == predicate.Property);
+            return $"Rule '{predicate.Name}' on command '{command.Name}' property '{property.Name}'";
         }
 
         var concepts = plan.Model.Application.Concepts.ToDictionary(concept => concept.Id);
@@ -351,7 +352,15 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
     {
         if (type.Kind == SemanticTypeReferenceKind.Concept)
         {
-            return concepts[type.Target].Validations.FirstOrDefault(rule => rule.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation)?.Name;
+            var concept = concepts[type.Target];
+            if (concept.Validations.FirstOrDefault(rule => rule.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) is { } rule)
+            {
+                return rule.Kind == SemanticValidationRuleKind.CodeValidation
+                    ? $"Concept '{concept.Name}' code validation {concept.Validations.Take(concept.Validations.IndexOf(rule)).Count(validation => validation.Kind == SemanticValidationRuleKind.CodeValidation)}"
+                    : $"Rule '{rule.Name}' on concept '{concept.Name}'";
+            }
+
+            return null;
         }
 
         if (type.Kind == SemanticTypeReferenceKind.CompositeType && visited.Add(type.Target))

@@ -51,4 +51,25 @@ public class when_running_a_denied_specification : Specification
     [Fact] void should_reject_before_validation() => ((SemanticRejected)_denied.Execution).Category.ShouldEqual(SemanticRejectionCategory.Unauthorized);
     [Fact] void should_match_a_separate_validation_error() => _validation.Passed.ShouldBeTrue();
     [Fact] void should_not_conflate_validation_with_denial() => ((SemanticRejected)_validation.Execution).Category.ShouldEqual(SemanticRejectionCategory.Validation);
+
+    [Fact] void should_match_a_denial_before_opaque_code_validation()
+    {
+        var source = Source.Replace(
+            "        validate\n          require quantity > 0",
+            "        validate\n          require quantity > 0\n        validate\n          ```csharp\n          yield return \"Invalid order\";\n          ```",
+            StringComparison.Ordinal);
+        var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Orders"));
+        const string key = "denied-code-validation";
+        var document = SemanticSourceDocument.Create(catalog.ResolveDocument(key), key, "Orders.play", source);
+        var compilation = new SemanticModelCompiler().Compile("Orders", SemanticDocumentSet.Create([document], catalog));
+        compilation.Diagnostics.ShouldBeEmpty();
+        var plan = SemanticExecutionPlan.Compile(compilation.Value!.Model).Plan!;
+        var runner = new SemanticSpecificationRunner();
+        var denied = runner.Run(plan, plan.Specifications.Values.Single(value => value.Name == "GuestIsDenied").Id);
+        var validation = runner.Run(plan, plan.Specifications.Values.Single(value => value.Name == "EditorFailsValidation").Id);
+
+        denied.Passed.ShouldBeTrue();
+        ((SemanticRejected)denied.Execution).Category.ShouldEqual(SemanticRejectionCategory.Unauthorized);
+        ((SemanticUnsupported)validation.Execution).Details.ShouldEqual("Command 'PlaceOrder' code validation 0 has an opaque validation predicate and requires a target provider.");
+    }
 }

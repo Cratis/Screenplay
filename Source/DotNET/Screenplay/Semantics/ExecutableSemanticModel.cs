@@ -96,6 +96,18 @@ internal static partial class SemanticModelValidator
         }
     }
 
+    static void RejectDuplicateRequirementIds(IEnumerable<string?> requirementIds, string owner)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var requirementId in requirementIds.Where(id => id is not null))
+        {
+            if (!seen.Add(requirementId!))
+            {
+                throw new InvalidSemanticContract($"{owner} has duplicate validation requirement identities.");
+            }
+        }
+    }
+
     static IEnumerable<SemanticSlice> AllSlices(SemanticFeature feature) =>
         feature.Slices.Concat(feature.Features.SelectMany(AllSlices));
 
@@ -160,6 +172,8 @@ internal static partial class SemanticModelValidator
                 {
                     ValidateValidation(validation, true, conceptType);
                 }
+
+                RejectDuplicateRequirementIds(concept.Validations.Select(validation => validation.RequirementId), $"Concept '{concept.Name}'");
             }
 
             foreach (var type in application.Types)
@@ -406,6 +420,10 @@ internal static partial class SemanticModelValidator
 
                 ValidateValidation(validation, false, property.Type);
             }
+
+            RejectDuplicateRequirementIds(
+                command.CodeValidations.Select(block => block.RequirementId).Concat(command.Validations.Select(validation => validation.RequirementId)),
+                $"Command '{command.Name}'");
 
             foreach (var produced in command.Produces)
             {

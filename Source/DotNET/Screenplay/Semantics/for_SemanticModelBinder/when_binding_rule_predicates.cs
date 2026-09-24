@@ -76,7 +76,20 @@ public class when_binding_rule_predicates : given.a_semantic_binder
     }
 
     [Fact] void should_bind_three_pure_attachments() => _result.ImplementationRequirements.All(requirement => requirement.RequiredCapability == "pure").ShouldBeTrue();
-    [Fact] void should_report_unsupported_even_if_a_declarative_rule_rejects() => (Run("ARejectedOrder").Execution is SemanticUnsupported unsupported && unsupported.Details.Contains("code validation", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_report_unsupported_even_if_a_declarative_rule_rejects() => ((SemanticUnsupported)Run("ARejectedOrder").Execution).Details.ShouldEqual("Command 'PlaceOrder' code validation 0 has an opaque validation predicate and requires a target provider.");
+    [Fact] void should_name_the_command_property_and_predicate_without_a_code_block()
+    {
+        var source = Source.Replace(
+            "        validate\n          ```csharp\n          yield return \"Invalid order\";\n          ```",
+            string.Empty,
+            StringComparison.Ordinal);
+        var compilation = Bind(source);
+        compilation.Diagnostics.ShouldBeEmpty();
+        var plan = SemanticExecutionPlan.Compile(compilation.Value!.Model).Plan!;
+        var specification = plan.Specifications.Values.Single(value => value.Name == "ARejectedOrder");
+        var result = new SemanticSpecificationRunner().Run(plan, specification.Id);
+        ((SemanticUnsupported)result.Execution).Details.ShouldEqual("Rule 'CheckCommand' on command 'PlaceOrder' property 'label' has an opaque validation predicate and requires a target provider.");
+    }
     [Fact] void should_not_pass_a_specification_that_cannot_execute() => Run("ARejectedOrder").Passed.ShouldBeFalse();
     [Fact] void should_leave_an_unrelated_specification_executable() => Run("AnOtherOrder").Passed.ShouldBeTrue();
     [Fact] void should_fail_closed_on_a_nested_collection_concept()
@@ -94,7 +107,7 @@ public class when_binding_rule_predicates : given.a_semantic_binder
              new(command.Properties.Single(value => value.Name == "label").Id, SemanticValue.Text("valid"))],
             []);
         var result = new SemanticEvaluator().Execute(plan, SemanticWorld.Empty, request);
-        ((SemanticUnsupported)result).Details.ShouldEqual("Rule 'CheckLabel' has an opaque validation predicate and requires a target provider.");
+        ((SemanticUnsupported)result).Details.ShouldEqual("Rule 'CheckLabel' on concept 'Label' has an opaque validation predicate and requires a target provider.");
     }
 
     SemanticCommand Command => _result.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single().Commands.Single(command => command.Name == "PlaceOrder");
