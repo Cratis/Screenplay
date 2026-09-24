@@ -23,10 +23,11 @@ public sealed partial class SemanticModelBinder
 
         ImmutableArray<SemanticPolicy> BindPolicies() => [.. syntax.Policies.Select(policy =>
         {
-            if (policy.Code is not null)
+            if (policy.Code is not null || policy.File is not null)
             {
-                RequireImplementation(SemanticImplementationRole.PolicyPredicate, SemanticAddress.ForApplication(_applicationIdentity), null, policy.Code, policy.Name);
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Policy '{policy.Name}' uses csharp; portable implementation attachments are deferred to #139.", policy.Code.Location);
+                RequireImplementation(SemanticImplementationRole.PolicyPredicate, SemanticAddress.ForApplication(_applicationIdentity), policy.File, policy.Code, policy.Name);
+                var attachment = policy.File is not null ? "file" : "csharp";
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Policy '{policy.Name}' uses {attachment}; portable implementation attachments are deferred to #139.", policy.File?.Location ?? policy.Code!.Location);
             }
 
             var condition = policy.Condition is null ? null : BindPolicyCondition(policy.Condition);

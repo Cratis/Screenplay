@@ -16,6 +16,11 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
 
+        if (syntax.File is not null)
+        {
+            VisitFileReference(syntax.File);
+        }
+
         if (syntax.Condition is not null)
         {
             VisitPolicyCondition(syntax.Condition);
