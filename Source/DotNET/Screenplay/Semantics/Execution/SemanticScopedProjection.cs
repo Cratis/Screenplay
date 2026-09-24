@@ -144,7 +144,7 @@ internal sealed partial class SemanticScopedProjection(
     // A join matches every existing instance whose joined property equals the joined event's source identity and never creates one.
     void ApplyJoin(SemanticProjectionJoin join, SemanticProjectionScope scope, Level level)
     {
-        if (EventSource() is not { } value)
+        if ((join.Key is null ? EventSource() : Key(join.Key)) is not { } value)
         {
             return;
         }

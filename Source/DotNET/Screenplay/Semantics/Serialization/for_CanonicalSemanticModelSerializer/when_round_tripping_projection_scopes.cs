@@ -30,7 +30,7 @@ public class when_round_tripping_projection_scopes : Specification
             {
                 Features = [.. module.Features.Select(feature => feature with
                 {
-                    Features = [.. feature.Features.Select(nested => nested with { Slices = [.. nested.Slices.Where(_ => _.Name != "ProjectionBlocks")] })]
+                    Features = [.. feature.Features.Select(nested => nested with { Slices = [.. nested.Slices.Where(_ => _.Name is not ("ProjectionBlocks" or "Variants"))] })]
                 })]
             })],
             Types = [.. _model.Application.Types.Where(_ => !_projectionBlockTypes.Contains(_.Name))]

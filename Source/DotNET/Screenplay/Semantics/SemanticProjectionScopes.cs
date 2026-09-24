@@ -68,7 +68,17 @@ public sealed record SemanticProjectionFrom(
 public sealed record SemanticProjectionJoin(
     SemanticId EventContract,
     SemanticId On,
-    ImmutableArray<SemanticProjectionMapping> Mappings);
+    ImmutableArray<SemanticProjectionMapping> Mappings)
+{
+    /// <summary>
+    /// Gets the optional event-side correlation key; absent uses the event source identity.
+    /// </summary>
+    /// <remarks>
+    /// VariantReclassifier.cs:35-48 carries the old From key to a self-referential Join on the variant's
+    /// key member. It is update-only, including when the key is explicit (Decision: 0001).
+    /// </remarks>
+    public SemanticProjectionKey? Key { get; init; }
+}
 
 /// <summary>
 /// Represents a child collection projected by identity.

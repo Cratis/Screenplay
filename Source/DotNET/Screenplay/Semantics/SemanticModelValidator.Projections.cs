@@ -63,6 +63,11 @@ internal static partial class SemanticModelValidator
                     throw new InvalidSemanticContract($"Projection join property '{join.On}' must be one scalar property of its level.");
                 }
 
+                if (join.Key is not null)
+                {
+                    ValidateProjectionKey(join.Key, on.Type, sources, "join key");
+                }
+
                 ValidateProjectionMappings(join.Mappings, level.Targets, sources);
             }
 
