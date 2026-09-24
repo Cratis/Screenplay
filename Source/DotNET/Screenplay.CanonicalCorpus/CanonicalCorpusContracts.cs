@@ -47,7 +47,7 @@ public sealed record CanonicalCorpusSourceForm
     public required string Name { get; init; }
 
     /// <summary>
-    /// Gets source documents in canonical path order.
+    /// Gets source documents in this form's declared input order.
     /// </summary>
     public ImmutableArray<CanonicalCorpusDocument> Documents { get; init; } = [];
 
