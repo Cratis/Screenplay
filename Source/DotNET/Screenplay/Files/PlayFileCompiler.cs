@@ -10,6 +10,12 @@ namespace Cratis.Screenplay.Files;
 /// </summary>
 /// <param name="playFiles">The <see cref="IPlayFiles"/> used to discover and read files.</param>
 /// <param name="compiler">The <see cref="IScreenplayCompiler"/> used to compile each file.</param>
+/// <remarks>
+/// Folder compilation shares <see cref="PlayFolderMerge"/> with workspace semantic compilation. The legacy
+/// result still returns the full syntax tree, original source strings, and diagnostics even for failed input;
+/// a workspace instead admits portable UTF-8 documents and derives an executable semantic projection. Opening
+/// a workspace here would reject valid legacy paths/encodings and cannot reconstruct the original syntax result.
+/// </remarks>
 public class PlayFileCompiler(IPlayFiles playFiles, IScreenplayCompiler compiler) : IPlayFileCompiler
 {
     /// <summary>

@@ -68,16 +68,42 @@ static class WorkspaceTransactionOperations
         return null;
     }
 
-    internal static WorkspaceTransactionResult CompilationFailure(IEnumerable<Diagnostic> diagnostics) => new()
+    internal static WorkspaceTransactionResult CompilationFailure(IEnumerable<Diagnostic> diagnostics, IEnumerable<WorkspaceDocument> documents)
     {
-        Conflicts =
-        [
-            Conflict(
-                WorkspaceConflictKind.CompilationFailed,
-                "The candidate workspace did not compile as one coherent Screenplay application.")
-        ],
-        Diagnostics = [.. diagnostics]
-    };
+        var reported = diagnostics.ToImmutableArray();
+        return new()
+        {
+            Conflicts = [OwnershipConflict(reported, documents) ?? Conflict(WorkspaceConflictKind.CompilationFailed, "The candidate workspace did not compile as one coherent Screenplay application.")],
+            Diagnostics = reported
+        };
+    }
+
+    internal static WorkspaceConflict? OwnershipConflict(IEnumerable<Diagnostic> diagnostics, IEnumerable<WorkspaceDocument> documents)
+    {
+        var paths = documents.Select(document => document.Path).ToArray();
+        foreach (var diagnostic in diagnostics.Where(diagnostic =>
+            diagnostic.Severity == DiagnosticSeverity.Error &&
+            (string.Equals(diagnostic.Code, DiagnosticCodes.RepeatedDeclarationAcrossFiles, StringComparison.Ordinal) ||
+             string.Equals(diagnostic.Code, DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles, StringComparison.Ordinal))))
+        {
+            // Merge diagnostics name the first claimant and locate the second. Match actual document paths
+            // rather than parsing quoted text: apostrophes are legal in portable paths.
+            var second = paths.FirstOrDefault(path => string.Equals(path.Value, diagnostic.Location.Path, StringComparison.Ordinal));
+            var first = paths.FirstOrDefault(path => path != second && diagnostic.Message.Contains($"'{path.Value}'", StringComparison.Ordinal));
+            if (first is not null && second is not null)
+            {
+                return new WorkspaceConflict
+                {
+                    Kind = WorkspaceConflictKind.ConflictingOwner,
+                    Message = diagnostic.Message,
+                    Path = second,
+                    OtherPath = first
+                };
+            }
+        }
+
+        return null;
+    }
 
     internal static WorkspaceTransactionResult Failure(
         WorkspaceConflictKind kind,

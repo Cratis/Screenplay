@@ -391,7 +391,7 @@ second.play(3,5): error PLAY0173: Duplicate slice 'Register' in feature 'Invoice
 second.play(1,1): error PLAY0172: The folder already declares a domain in 'first.play' - a folder compiles to one application, which can have at most one
 ```
 
-Duplicates *within* one file are left to the single document compiler, which already has its own rules for them. Compiling one document behaves exactly as it always has.
+Duplicates *within* one file are left to the single document compiler, which already has its own rules for them. Compiling one document behaves exactly as it always has. Ownership is attached to the file declaring a member, never to a module or feature header restated to place a child; descriptions are not declarations and keep their warning behavior. A workspace transaction that encounters a cross-file declaration error returns `ConflictingOwner`, with `Path` for the second claimant and `OtherPath` for the first; it offers no write plan. Other parse, binding and validation failures remain `CompilationFailed`. An external disk edit since proposal is rejected before the first write; reopen the workspace rather than applying a stale plan.
 
 ### Why `import` still means what it meant
 
@@ -402,6 +402,8 @@ application.play(2,1): warning PLAY0290: Import 'Catalog.ItemView' names 'ItemVi
 ```
 
 ## Round-tripping
+
+`PlayFileWriter.Expand` uses the same folder-layout projection as workspace layout changes. `WriteTo` still creates directories and overwrites files directly for existing callers; unlike a workspace write plan it has no prior revision, hashes or managed-file inventory to check. `PlayFileCompiler.CompileFolder` shares the folder merge used by workspace semantic compilation, but retains its syntax result, source strings, caller-supplied compiler/file discovery, and diagnostics even on invalid input. It cannot open an exact-byte workspace without changing legacy path/encoding admission and failure behavior. Use workspace proposals and the destination's drift checks when a save must reject stale files.
 
 Writing a folder and compiling it back gives an equivalent application. The invoicing sample exercises the broad round-trip: it expands to twenty-one files, compiles back with no diagnostics, and expanding the result again produces exactly the same twenty-one files, byte for byte. A separate fixture covers module forms, behavior attachments on modules and features, and contributions on modules, features, and nested features, including when the owner's file sorts after its descendants.
 

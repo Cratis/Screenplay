@@ -63,7 +63,12 @@ public enum WorkspaceConflictKind
     /// More than one operation in the same transaction claims the same owning document, at least one of which
     /// is a semantic patch.
     /// </summary>
-    MultiOwnerSemanticEdit = 9
+    MultiOwnerSemanticEdit = 9,
+
+    /// <summary>
+    /// Two source files declare the same single-owner artifact.
+    /// </summary>
+    ConflictingOwner = 10
 }
 
 /// <summary>
