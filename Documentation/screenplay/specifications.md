@@ -59,6 +59,8 @@ specification RejectingAnInvoiceWithNoLines
   then error "An invoice must have at least one line"
 ```
 
+Neither `then error` form asserts a validation severity. A bare `then error` matches any rejection, and `then error "<message>"` matches the message regardless of whether the failed rule was marked `information`, `warning` or `error`. The specification grammar has no severity assertion; inspect the reference execution rejection's `ValidationFailures` when testing presentation metadata directly.
+
 A bare `then error` says **rejected, for a reason this specification does not name**. Most specifications are this kind — the reason lives in the specification's name, not in an assertion, and there is nothing in the behavior under test that names it:
 
 ```screenplay

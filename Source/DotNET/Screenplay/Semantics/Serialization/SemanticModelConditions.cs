@@ -64,6 +64,7 @@ internal static partial class SemanticModelCanonicalJson
         writer.WritePropertyName("condition");
         WriteCondition(writer, requirement.Condition);
         WriteOptionalString(writer, "message", requirement.Message);
+        WriteSeverity(writer, requirement.Severity);
         writer.WriteEndObject();
     }
 }
@@ -148,17 +149,19 @@ internal static partial class SemanticModelRead
         SemanticCondition? condition = null;
         string? message = null;
         var messageRead = false;
+        var severity = SemanticValidationSeverity.Error;
         while (NextProperty(ref reader, seen, "requirement") is { } property)
         {
             switch (property)
             {
                 case "condition": RequiredToken(ref reader, JsonTokenType.StartObject, property); condition = Condition(ref reader); break;
                 case "message": messageRead = true; message = NullableString(ref reader, property); break;
+                case "severity": severity = ParseSeverity(String(ref reader, property)); break;
                 default: throw Unknown(property, "requirement");
             }
         }
 
         Required(condition is not null && messageRead, "requirement");
-        return new(condition!, message);
+        return new(condition!, message) { Severity = severity };
     }
 }

@@ -214,6 +214,7 @@ internal static partial class SemanticModelRead
         var operandRead = false;
         string? message = null;
         var messageRead = false;
+        var severity = SemanticValidationSeverity.Error;
         while (NextProperty(ref reader, seen, "validation") is { } property)
         {
             switch (property)
@@ -222,12 +223,13 @@ internal static partial class SemanticModelRead
                 case "kind": kind = ParseValidationKind(String(ref reader, property)); break;
                 case "operand": operandRead = true; operand = NullableValue(ref reader, property); break;
                 case "message": messageRead = true; message = NullableString(ref reader, property); break;
+                case "severity": severity = ParseSeverity(String(ref reader, property)); break;
                 default: throw Unknown(property, "validation");
             }
         }
 
         Required(propertyRead && kind is not null && operandRead && messageRead, "validation");
-        return new(propertyId, kind!.Value, operand, message);
+        return new(propertyId, kind!.Value, operand, message) { Severity = severity };
     }
 
     internal static SemanticEventContract Event(ref Utf8JsonReader reader)

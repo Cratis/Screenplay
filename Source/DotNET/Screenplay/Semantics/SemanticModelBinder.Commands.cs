@@ -56,7 +56,7 @@ public sealed partial class SemanticModelBinder
                 .SelectMany(_ => _.Requirements ?? [])
                 .Select(requirement => (requirement, condition: BindCondition(requirement.Condition, propertiesByName), validMessage: ValidateStringKey(requirement.Message, requirement.Location)))
                 .Where(_ => _.condition is not null)
-                .Select(_ => new SemanticRequirement(_.condition!, _.requirement.Message))
+                .Select(_ => new SemanticRequirement(_.condition!, _.requirement.Message) { Severity = Severity(_.requirement.Severity) })
                 .ToImmutableArray();
             var produced = command.Produces
                 .Select(value => BindProducedEvent(command, value, propertiesByName, events))

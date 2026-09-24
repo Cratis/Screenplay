@@ -92,4 +92,8 @@ public sealed record SemanticConditionOperand(SemanticId Property, SemanticValue
 /// A value beginning with <c>$strings.</c> is a string-key reference, never display text. The realization
 /// resolves it against the active locale's paired <c>.strings</c> file (see internationalization.md).
 /// </remarks>
-public sealed record SemanticRequirement(SemanticCondition Condition, string? Message);
+public sealed record SemanticRequirement(SemanticCondition Condition, string? Message)
+{
+    /// <summary>Gets the presentation severity; failures still reject at every level.</summary>
+    public SemanticValidationSeverity Severity { get; init; } = SemanticValidationSeverity.Error;
+}

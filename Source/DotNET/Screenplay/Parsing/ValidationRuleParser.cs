@@ -21,7 +21,12 @@ internal static partial class ValidationRuleParser
     /// <returns>The parsed <see cref="ValidationRuleSyntax"/>, or <c>null</c> when the rule is malformed.</returns>
     public static ValidationRuleSyntax? Parse(ParserContext context, SourceLine line)
     {
-        var (content, message) = SplitMessage(line.Content);
+        var (withSeverity, message) = SplitMessage(line.Content);
+        if (!TrySplitSeverity(context, line, withSeverity, out var content, out var severity))
+        {
+            return null;
+        }
+
         var match = RuleRegex().Match(content);
         if (!match.Success)
         {
@@ -38,7 +43,7 @@ internal static partial class ValidationRuleParser
         }
 
         var (file, code) = kind == ValidationRuleKind.Rule ? ParseImplementation(context, line) : (null, null);
-        return new(property, kind.Value, value, message, line.Location, file, code);
+        return new(property, kind.Value, value, message, line.Location, file, code) { Severity = severity };
     }
 
     /// <summary>
@@ -50,7 +55,12 @@ internal static partial class ValidationRuleParser
     /// <returns>The parsed <see cref="ValidationRuleSyntax"/>, or <c>null</c> when the rule is malformed.</returns>
     public static ValidationRuleSyntax? ParseImpliedSubject(ParserContext context, SourceLine line)
     {
-        var (content, message) = SplitMessage(line.Content);
+        var (withSeverity, message) = SplitMessage(line.Content);
+        if (!TrySplitSeverity(context, line, withSeverity, out var content, out var severity))
+        {
+            return null;
+        }
+
         var (kind, value) = ParseRule(context, content, line);
         if (kind is null)
         {
@@ -58,7 +68,7 @@ internal static partial class ValidationRuleParser
         }
 
         var (file, code) = kind == ValidationRuleKind.Rule ? ParseImplementation(context, line) : (null, null);
-        return new(ValidationRuleSyntax.ConceptValue, kind.Value, value, message, line.Location, file, code);
+        return new(ValidationRuleSyntax.ConceptValue, kind.Value, value, message, line.Location, file, code) { Severity = severity };
     }
 
     static (string Content, string? Message) SplitMessage(string content)
@@ -71,6 +81,33 @@ internal static partial class ValidationRuleParser
 
         var message = match.Groups[1].Success ? StringLiteral.Unescape(match.Groups[1].Value) : match.Groups[2].Value;
         return (content[..match.Index].TrimEnd(), message);
+    }
+
+    static bool TrySplitSeverity(ParserContext context, SourceLine line, string text, out string content, out ValidationSeverity severity)
+    {
+        content = text;
+        severity = ValidationSeverity.Error;
+        var match = SeverityRegex().Match(text);
+        if (!match.Success)
+        {
+            return true;
+        }
+
+        content = text[..match.Index].TrimEnd();
+        severity = match.Groups[1].Value switch
+        {
+            "information" => ValidationSeverity.Information,
+            "warning" => ValidationSeverity.Warning,
+            "error" => ValidationSeverity.Error,
+            _ => (ValidationSeverity)(-1)
+        };
+        if (severity != (ValidationSeverity)(-1))
+        {
+            return true;
+        }
+
+        context.Error(DiagnosticCodes.InvalidValidationSeverity, $"Unknown validation severity '{match.Groups[1].Value}' - expected information, warning or error", line.Location);
+        return false;
     }
 
     static (ValidationRuleKind? Kind, ExpressionSyntax? Value) ParseRule(ParserContext context, string rule, SourceLine line)
@@ -172,6 +209,9 @@ internal static partial class ValidationRuleParser
         context.SkipBlock(body.Indent);
         return (null, null);
     }
+
+    [GeneratedRegex(@"\bseverity\s+(\S+)$", RegexOptions.None, 1000)]
+    private static partial Regex SeverityRegex();
 
     [GeneratedRegex("\\bmessage\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\S*))$", RegexOptions.None, 1000)]
     private static partial Regex MessageRegex();

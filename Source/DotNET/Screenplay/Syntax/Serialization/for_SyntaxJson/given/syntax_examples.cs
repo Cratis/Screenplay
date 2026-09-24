@@ -81,6 +81,11 @@ internal static class syntax_examples
             return new TimeOnly(12, 34, 56);
         }
 
+        if (type == typeof(ValidationSeverity))
+        {
+            return ValidationSeverity.Warning;
+        }
+
         if (type.IsEnum)
         {
             return Enum.GetValues(type).GetValue(0);

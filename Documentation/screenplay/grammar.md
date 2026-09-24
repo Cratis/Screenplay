@@ -37,7 +37,7 @@ ConceptValidate = "validate", NL,
                    INDENT, { ConceptRule }, DEDENT
                | "validate", "csharp", NL, InlineBlock ;
 
-ConceptRule    = RuleOp, [ "message", LocalizableString ], NL,
+ConceptRule    = RuleOp, [ "severity", ValidationSeverity ], [ "message", LocalizableString ], NL,
                    [ INDENT, RuleImplementation, DEDENT ] ;
 
 PrimitiveType  = "Uuid" | "String" | "Int" | "Decimal" | "Bool"
@@ -404,11 +404,18 @@ ValidateDecl   = "validate", NL,
                    INDENT, { ValidationRule | RequireRule }, DEDENT
                | "validate", "csharp", NL, InlineBlock ;
 
-ValidationRule = Path, RuleOp, [ "message", LocalizableString ], NL,
+ValidationRule = Path, RuleOp, [ "severity", ValidationSeverity ], [ "message", LocalizableString ], NL,
                    [ INDENT, RuleImplementation, DEDENT ] ;
 
 RequireRule    = "require", Condition, NL,
-                   [ INDENT, "message", LocalizableString, NL, DEDENT ] ;
+                   [ INDENT, [ "severity", ValidationSeverity, NL ],
+                     [ "message", LocalizableString, NL ], DEDENT ] ;
+
+ValidationSeverity = "information" | "warning" | "error" ;
+
+(* Severity defaults to error and affects presentation, not whether a failure rejects.
+   A validation rule puts severity before the end-of-line message; require keeps
+   both directives in its body so a condition is never confused with metadata. *)
 
 (* A rule about the whole artifact rather than one of its properties, and where
    a rule that guards the domain lands - "the month is not already started".
@@ -624,7 +631,7 @@ SpecificationQueryDirective = "arguments", NL,
    declaration supplies the result read-model type, so it is not repeated. *)
 
 (* A bare "then error" states a rejection whose reason the specification does
-   not name; the quoted form names it. Both may appear in one specification.  *)
+   not name; the quoted form names it. Both match regardless of validation severity. *)
 
 (* -------------------------------------------------------------- *)
 (* Event seeding                                                   *)

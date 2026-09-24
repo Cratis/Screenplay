@@ -69,8 +69,12 @@ public static partial class canonical_serialization_golden_vectors
                 SemanticPrimitiveType.DecimalNumber,
                 [],
                 [
-                    new(default, SemanticValidationRuleKind.Minimum, SemanticValue.Number(-999.5000m), "Amount is too small"),
-                    new(default, SemanticValidationRuleKind.Maximum, SemanticValue.Number(999.5000m), "Amount is too large")
+
+                    // #227 severities: all three levels, with error omitted from canonical JSON.
+                    new(default, SemanticValidationRuleKind.Minimum, SemanticValue.Number(-999.5000m), "Amount is too small") { Severity = SemanticValidationSeverity.Information },
+                    new(default, SemanticValidationRuleKind.Maximum, SemanticValue.Number(999.5000m), "Amount is too large") { Severity = SemanticValidationSeverity.Warning }
+
+                    // End #227 severities
                 ]),
             new SemanticConcept(
                 textConcept,
@@ -173,10 +177,10 @@ public static partial class canonical_serialization_golden_vectors
                     Tags = ["conditional"]
                 }])
         {
-            // #210 conditions: the same tree is used by command-wide requirements.
+            // #210 conditions / #227 severities: requirements serialize non-default levels as well.
             Requirements = [new(new SemanticComparison(
                 new(commandAmount, null), SemanticComparisonOperator.GreaterThan, new(default, SemanticValue.Number(0))),
-                "Amount must be positive")]
+                "Amount must be positive") { Severity = SemanticValidationSeverity.Warning }]
         };
 
         var entitySummary = new SemanticReadModel(

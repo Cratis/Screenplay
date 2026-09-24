@@ -258,7 +258,11 @@ public record DeclarativeValidateSyntax(
 /// It carries a <see cref="ConditionSyntax"/>, the same condition every other construct in the language
 /// carries, so <c>and</c> and <c>or</c> mean here exactly what they mean in a policy.
 /// </remarks>
-public record RequirementSyntax(ConditionSyntax Condition, string? Message, SourceLocation Location) : SyntaxNode(Location);
+public record RequirementSyntax(ConditionSyntax Condition, string? Message, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>Gets the presentation severity of a failed requirement.</summary>
+    public ValidationSeverity Severity { get; init; } = ValidationSeverity.Error;
+}
 
 /// <summary>
 /// Represents a <c>validate csharp</c> block holding inline code.
@@ -291,6 +295,9 @@ public record ValidationRuleSyntax(
     /// own value is implied and no property appears in the source text.
     /// </summary>
     public const string ConceptValue = "value";
+
+    /// <summary>Gets the presentation severity of a failed rule.</summary>
+    public ValidationSeverity Severity { get; init; } = ValidationSeverity.Error;
 }
 
 /// <summary>

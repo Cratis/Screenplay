@@ -180,7 +180,11 @@ public sealed record SemanticValidationRule(
     SemanticId Property,
     SemanticValidationRuleKind Kind,
     SemanticValue? Operand,
-    string? Message);
+    string? Message)
+{
+    /// <summary>Gets the presentation severity; failures still reject at every level.</summary>
+    public SemanticValidationSeverity Severity { get; init; } = SemanticValidationSeverity.Error;
+}
 
 /// <summary>
 /// Represents a resolved property mapping.
