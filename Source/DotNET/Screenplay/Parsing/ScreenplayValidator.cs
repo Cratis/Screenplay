@@ -532,9 +532,13 @@ internal static class ScreenplayValidator
                 var source = operand[..separator];
                 if (!reads.Contains(source))
                 {
+                    var aliases = declarations.Where(read => read.ReadModel == source).Select(read => read.Alias).OfType<string>().ToList();
+                    var repeated = declarations.Count(read => read.ReadModel == source) > 1;
                     context.Warning(
                         DiagnosticCodes.UnknownRequirementOperandSource,
-                        $"Command '{command.Name}' requires '{operand}', but does not declare 'reads {source}'",
+                        repeated
+                            ? $"Command '{command.Name}' requires '{operand}', but reads '{source}' more than once; qualify the path with one of its aliases ({string.Join(", ", aliases)})."
+                            : $"Command '{command.Name}' requires '{operand}', but does not declare 'reads {source}'",
                         requirement.Location);
                 }
             }

@@ -947,12 +947,12 @@ public static class DiagnosticCodes
     // What a command reads to decide.
 
     /// <summary>
-    /// A <c>reads</c> line is not <c>reads &lt;ReadModel&gt;</c> or <c>reads &lt;ReadModel&gt; by &lt;property&gt;</c>.
+    /// A <c>reads</c> line is not <c>reads &lt;ReadModel&gt; [as &lt;alias&gt;] [by &lt;property&gt;]</c>, or uses a reserved alias.
     /// </summary>
     public const string InvalidReadsDeclaration = "PLAY0175";
 
     /// <summary>
-    /// Legacy diagnostic for duplicate reads before aliases were admitted. Retained for binary compatibility.
+    /// No longer reported. Repeated reads without aliases are reported as <c>PLAY0410</c>. Retained for compatibility.
     /// </summary>
     public const string DuplicateReads = "PLAY0176";
 

@@ -31,6 +31,15 @@ internal static partial class ReadsParser
         }
 
         var alias = match.Groups[2];
+        if (alias.Success && (alias.Value == "as" || alias.Value == "by" || alias.Value == "reads"))
+        {
+            context.Error(
+                DiagnosticCodes.InvalidReadsDeclaration,
+                $"Invalid reads declaration '{line.Content}' - '{alias.Value}' cannot be used as a reads alias",
+                line.Location);
+            return null;
+        }
+
         var by = match.Groups[3];
         return new(match.Groups[1].Value, by.Success ? by.Value : null, line.Location)
         {

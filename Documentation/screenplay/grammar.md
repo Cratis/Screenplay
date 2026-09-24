@@ -395,7 +395,7 @@ CommandDecl    = "command", Ident, NL,
                    [ ConcurrencyDecl ],
                  DEDENT ;
 
-ReadsDecl      = "reads", Ident, [ "as", Ident ], [ "by", Ident ], NL ;
+ReadsDecl      = "reads", Ident, [ "as", LowerIdent ], [ "by", LowerIdent ], NL ;
 
 (* The read model a command consults before it decides. Declaring it puts the
    read model in scope for the rest of the command body, so a produces mapping
@@ -404,8 +404,9 @@ ReadsDecl      = "reads", Ident, [ "as", Ident ], [ "by", Ident ], NL ;
    the read model is looked up by, and is absent for a read model that is not
    looked up by a key. An alias is required for every instance when the same
    read model is read twice by one command. Aliases must be unique in that
-   command and must not match a command property. An unambiguous view name
-   and an alias may qualify paths in a require condition.                  *)
+   command and must not match a command property or the keywords "as", "by",
+   or "reads". An unambiguous view name and an alias may qualify paths in a
+   require condition.                                                       *)
 
 ConcurrencyDecl = "concurrency", NL,
                  INDENT, { ConcurrencyDim }, DEDENT ;
@@ -894,6 +895,7 @@ Escape         = "\", ( '"' | "\" | "n" | "r" | "t" ) ;
 Number         = [ "-" ], Digit, { Digit }, [ ".", Digit, { Digit } ] ;
 Integer        = Digit, { Digit } ;
 Ident          = Letter, { Letter | Digit | "_" } ;
+LowerIdent     = ( "a".."z" | "_" ), { Letter | Digit | "_" } ;
 Letter         = "A".."Z" | "a".."z" ;
 Digit          = "0".."9" ;
 

@@ -99,8 +99,8 @@ command StartMonth
 This is the read-model-to-command arrow of Event Modeling — one of the four the method is built on, and the only one a document could not draw. Without it, a command that decides against state shows its inputs and its events but not what it consulted in between, and the mapping fed from that state has nowhere to come from.
 
 - `<ReadModel>` names a read model some [projection](projections/index.md) produces. Reading something no projection produces is a warning — the document says it depends on state nothing in it explains.
-- `by <property>` names the command property the read model is looked up by, and must be one of the command's own properties. Leave it out for a read model that is not looked up by a key — a single view the whole application shares rather than one instance per identifier.
-- `as <alias>` distinguishes instances of the same view. If a command reads a view more than once, **every** instance needs an alias. Aliases must be unique in the command and must not match any of its property names. A single read may also be named by an alias.
+- `by <property>` names the command property the read model is looked up by, and must be one of the command's own properties. Leave it out for a read model that is not looked up by a key — a single view the whole application shares rather than one instance per identifier. The name starts with a lower-case letter or underscore, followed by letters, digits or underscores.
+- `as <alias>` distinguishes instances of the same view. If a command reads a view more than once, **every** instance needs an alias. Aliases start with a lower-case letter or underscore, followed by letters, digits or underscores; `as`, `by` and `reads` are reserved. Aliases must be unique in the command and must not match any of its property names. A single read may also be named by an alias.
 
 For example, a transfer can name both accounts without conflating their state:
 
@@ -117,7 +117,7 @@ command TransferFunds
 
 The view name still qualifies a `require` path when only one instance of that view is read. An alias qualifies the path when present; with repeated reads, use the alias instead of the ambiguous view name. With the read model in scope, its properties are also addressable in produces mappings, as above.
 
-This change adds **syntax and validation only**. The executable semantic model still rejects command `reads` and read-model paths in requirements until decision-consistent reads have a confirmed runtime mapping (#129).
+The executable semantic model does not yet bind command `reads` or read-model paths in requirements (#129).
 
 ## Validation rules
 

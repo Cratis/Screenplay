@@ -373,8 +373,7 @@ conditions are reported without a code until the compiler checks them too.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0175` | Error | A `reads` line is not `reads <ReadModel> [as <alias>] [by <property>]`. |
-| `PLAY0176` | Error | Legacy duplicate-read diagnostic, retained for compatibility; repeated reads now use `PLAY0410` when an alias is missing. |
+| `PLAY0175` | Error | A `reads` line is not `reads <ReadModel> [as <alias>] [by <property>]`, or uses `as`, `by`, or `reads` as an alias. |
 | `PLAY0177` | Warning | A command reads a read model no projection in the document produces. |
 | `PLAY0178` | Warning | The `by` of a `reads` declaration does not name a property of the command. |
 
@@ -747,4 +746,8 @@ Use an opening fence with an info string, such as ` ```csharp ` (without the spa
 
 ## Retired codes
 
-None yet. When a code is retired it is listed here with the release it went in, and its number stays out of use forever.
+A retired code stays out of use forever.
+
+| Code | Retired in | Replacement |
+|---|---|---|
+| `PLAY0176` | v4.25.0 | Repeated reads without aliases are reported as `PLAY0410`. |
