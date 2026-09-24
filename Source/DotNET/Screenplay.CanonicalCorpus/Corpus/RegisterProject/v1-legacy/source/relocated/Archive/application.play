@@ -1,0 +1,3 @@
+concept ProjectId : Uuid
+
+concept ProjectName : String

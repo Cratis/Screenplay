@@ -38,6 +38,24 @@ public static class RegisterProjectCorpus
             ],
             IdentityCatalogBytes = Resource($"{ResourcePrefix}.identity.folder-catalog-v1.json")
         };
+        var reordered = new CanonicalCorpusSourceForm
+        {
+            Name = "reordered",
+            Documents = [.. folder.Documents.Reverse().Select(document => Document(
+                document.StableKey,
+                document.DisplayPath,
+                $"{ResourcePrefix}.source.reordered.{document.DisplayPath.Replace('/', '.')}"))],
+            IdentityCatalogBytes = folder.IdentityCatalogBytes
+        };
+        var relocated = new CanonicalCorpusSourceForm
+        {
+            Name = "relocated",
+            Documents = [.. folder.Documents.Reverse().Select(document => Document(
+                document.StableKey,
+                $"Archive/{document.DisplayPath}",
+                $"{ResourcePrefix}.source.relocated.Archive.{document.DisplayPath.Replace('/', '.')}"))],
+            IdentityCatalogBytes = folder.IdentityCatalogBytes
+        };
         var revision = System.Text.Encoding.UTF8.GetString(Resource($"{ResourcePrefix}.expected.semantic-revision.txt").AsSpan()).Trim();
         return new CanonicalCorpusVector
         {
@@ -53,7 +71,9 @@ public static class RegisterProjectCorpus
                     Documents = [single],
                     IdentityCatalogBytes = Resource($"{ResourcePrefix}.identity.catalog-v1.json")
                 },
-                folder
+                folder,
+                reordered,
+                relocated
             ],
             SpecificationExpectations =
             [
