@@ -292,6 +292,9 @@ public sealed record SemanticCommand(
     /// Gets command-wide requirements evaluated before any facts are produced.
     /// </summary>
     public ImmutableArray<SemanticRequirement> Requirements { get; init; } = [];
+
+    /// <summary>Gets the effective authorization, or null for unrestricted commands.</summary>
+    public SemanticAuthorization? Authorization { get; init; }
 }
 
 /// <summary>
@@ -368,7 +371,11 @@ public sealed record SemanticKeyedQuery(
     SemanticId ReadModel,
     SemanticId KeyProperty,
     SemanticQueryCardinality Cardinality,
-    SemanticQueryDelivery Delivery);
+    SemanticQueryDelivery Delivery)
+{
+    /// <summary>Gets the effective authorization, or null for unrestricted queries.</summary>
+    public SemanticAuthorization? Authorization { get; init; }
+}
 
 /// <summary>
 /// Represents a typed keyed-query argument.

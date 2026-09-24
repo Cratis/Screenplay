@@ -112,7 +112,10 @@ public enum SemanticRejectionCategory
     /// An append-time constraint rejected the facts the command would append. The rejection code is the
     /// constraint name.
     /// </summary>
-    Constraint = 2
+    Constraint = 2,
+
+    /// <summary>The explicit caller does not satisfy authorization.</summary>
+    Unauthorized = 3
 }
 
 /// <summary>
@@ -197,6 +200,9 @@ public sealed record SemanticExecutionRequest(
     /// Gets the typed identity of a caller-allocated event source.
     /// </summary>
     public SemanticTypeReference? AllocatedEventSourceType { get; init; }
+
+    /// <summary>Gets the explicitly supplied caller; null means no identity context was provided.</summary>
+    public SemanticCaller? Caller { get; init; }
 
     /// <summary>
     /// Creates a request that only queries established world state.

@@ -89,4 +89,11 @@ public sealed record SemanticSpecification(
     ImmutableArray<SemanticSpecificationEvent> ThenEvents,
     ImmutableArray<SemanticSpecificationReadModel> ThenReadModels,
     ImmutableArray<SemanticSpecificationQueryResult> ThenQueries,
-    ImmutableArray<SemanticSpecificationError> ThenErrors);
+    ImmutableArray<SemanticSpecificationError> ThenErrors)
+{
+    /// <summary>Gets the explicit caller fixture, or null when no identity context was given.</summary>
+    public SemanticCaller? GivenCaller { get; init; }
+
+    /// <summary>Gets whether an authorization denial, rather than a validation error, is asserted.</summary>
+    public bool ThenDenied { get; init; }
+}

@@ -12,6 +12,10 @@ specification <Name>
     <property> = <value>
   given readmodel <ReadModelType>
     <property> = <value>
+  given caller
+    authenticated
+    role "<role>"
+    claim "<type>" = "<value>"
   when <CommandType>
     [for <event-source-value>]
     <property> = <value>
@@ -26,14 +30,17 @@ specification <Name>
     result
       <property> = <value>
   then error ["<message>"]
+  then denied
 ```
 
 - `given <EventType>` — zero or more. Establishes prior state by replaying events onto the slice's event source before the command runs.
 - `given readmodel <ReadModelType>` — zero or more. Establishes prior read model state directly, for scenarios where expressing the state as events would be noise.
+- `given caller` — zero or one. Explicit authentication, roles, and repeatable claim values for authorization. No fixture is inferred for an authorized scenario (`PLAY0389`).
 - `when <CommandType>` — zero or one. The command being exercised. Without `when`, provide at least one `then readmodel` or `then query`; `then` events and errors require a command (`PLAY0352`).
 - `then <EventType>` — zero or more. An event expected to be produced by the command.
 - `then readmodel <ReadModelType>` — zero or more. The read model state expected after the command has run and its events have been projected.
 - `then query <Query>` — zero or more. Executes the named query with the authored `arguments` and compares its ordered `result` blocks. No `result` blocks means the query is expected to return nothing.
+- `then denied` — zero or one. Expects the typed `Unauthorized` rejection, not a validation or constraint error. For a read-only query, declare one `then query` with arguments and no `result`, followed by `then denied`; for a command, do not combine it with any success or error outcome.
 - `then error ["<message>"]` — zero or more. An expected rejection. See [Rejections](#rejections).
 - `file <path>` — zero or one. The repository relative file the specification is realized by. See [File references](file-references.md).
 - `for <event-source-value>` — zero or one inside an event `given`, the command `when`, or an event `then`. It identifies occurrence context rather than an event payload property.
@@ -61,7 +68,7 @@ specification RejectingAnInvoiceWithNoLines
 
 Neither `then error` form asserts a validation severity. A bare `then error` matches any rejection, and `then error "<message>"` matches the message regardless of whether the failed rule was marked `information`, `warning` or `error`. The specification grammar has no severity assertion; inspect the reference execution rejection's `ValidationFailures` when testing presentation metadata directly.
 
-A bare `then error` says **rejected, for a reason this specification does not name**. Most specifications are this kind — the reason lives in the specification's name, not in an assertion, and there is nothing in the behavior under test that names it:
+A bare `then error` says **rejected for a validation or constraint reason this specification does not name**. It never matches the `Unauthorized` category; use `then denied` for that. Most specifications are this kind — the reason lives in the specification's name, not in an assertion, and there is nothing in the behavior under test that names it:
 
 ```screenplay
 specification RejectingAnInvoiceWhoseNumberIsAlreadyTaken
@@ -71,6 +78,8 @@ specification RejectingAnInvoiceWhoseNumberIsAlreadyTaken
     invoiceNumber = "INV-000123"
   then error
 ```
+
+An authorized scenario must declare an explicit `given caller` block. A read-only query scenario can assert denial by writing `then query <Query>` with its `arguments`, no `result` block, and `then denied`. The query declaration names the operation and `then denied` names its outcome. For example, a policy requiring role `Reviewer` can be checked with `given caller` containing `authenticated`, `role "Reviewer"`, and repeated `claim "department" = "Finance"` lines, followed by `then denied` when the role or claim does not satisfy the policy. The runner does not invent a caller if the block is absent: binding fails with `PLAY0389`. An unauthenticated caller may be stated explicitly with an empty `given caller` block.
 
 To assert a localized rule's rejection, quote the key in the specification: `then error "$strings.invoices.validation.reasonRequired"`. Unlike a validation rule's `message` operand, the `then error` grammar accepts only quoted messages (or a bare `then error`), not `then error $strings.invoices.validation.reasonRequired`. The reference runner compares the symbolic key and requires the rejection's `MessageIsStringKey` marker; it never loads translated text. A realization resolves the key against the active locale's paired `.strings` file before displaying it. See [Internationalization](internationalization.md#executable-semantic-model-and-rejections).
 
@@ -204,6 +213,7 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | --- | --- |
 | `given <EventType>` | Prior state, established by one or more events before the command runs. |
 | `given readmodel <ReadModelType>` | Prior read model state, established directly. |
+| `given caller` | Explicit identity, roles, and repeated claims. |
 | `when <CommandType>` | The command under test, with its property values. |
 | `then <EventType>` | An event expected to be produced by the command. |
 | `then readmodel <ReadModelType>` | The read model state expected after the command. |
@@ -211,7 +221,8 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `arguments` | The values supplied to the query. |
 | `result` | One expected query result; repeat for many. |
 | `then error "<message>"` | A rejection, for the named reason. |
-| `then error` | A rejection, for a reason the specification does not name. |
+| `then error` | A validation or constraint rejection without a named reason. |
+| `then denied` | A typed authorization denial (`Unauthorized`). |
 | `<property> = <value>` | A property value, using the same expression grammar as `produces`/`capture` mappings. |
 
 ## Compiling specifications

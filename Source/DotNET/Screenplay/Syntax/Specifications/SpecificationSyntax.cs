@@ -49,6 +49,12 @@ public record SpecificationSyntax(
     /// for <see cref="ThenReadModels"/>.
     /// </remarks>
     public IEnumerable<SpecificationQuerySyntax> ThenQueries { get; init; } = [];
+
+    /// <summary>Gets the explicit caller fixture, or null when no identity context was authored.</summary>
+    public SpecificationCallerSyntax? GivenCaller { get; init; }
+
+    /// <summary>Gets whether this scenario explicitly expects an authorization denial.</summary>
+    public SpecificationDeniedSyntax? ThenDenied { get; init; }
 }
 
 /// <summary>
