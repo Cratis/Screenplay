@@ -59,6 +59,14 @@ public class when_listing_code_the_model_needs : given.a_semantic_binder
         SemanticImplementationRole.CommandValidation,
         SemanticImplementationRole.QueryPerformer
     ]);
-    [Fact] void should_map_each_attachment_to_a_real_document() => _result.ImplementationRequirements.All(value => value.Source.Span.Document.IsSet && value.ContentHash.Length == 64).ShouldBeTrue();
+    [Fact] void should_map_each_attachment_to_a_real_document() => _result.ImplementationRequirements.All(value => value.Source.Span.Document.IsSet).ShouldBeTrue();
+    [Fact] void should_hash_inline_content_but_not_file_paths() => _result.ImplementationRequirements.Select(value => (value.File is null, value.ContentHash.Length, value.AttachmentResolution)).ShouldEqual([
+        (true, 64, SemanticAttachmentResolution.Resolved),
+        (true, 64, SemanticAttachmentResolution.Resolved),
+        (false, 0, SemanticAttachmentResolution.UnresolvedFile),
+        (true, 64, SemanticAttachmentResolution.Resolved),
+        (false, 0, SemanticAttachmentResolution.UnresolvedFile)
+    ]);
+    [Fact] void should_name_role_contracts_and_capabilities() => _result.ImplementationRequirements.All(value => value.RequirementId.Length == 64 && value.ContextVersion == 1 && value.ResultVersion == 1 && value.RequiredCapability == "provider-defined").ShouldBeTrue();
     [Fact] void should_not_list_code_on_a_portable_model() => Bind("module Orders\n  feature Ordering\n    slice StateChange PlaceOrder\n      command PlaceOrder").ImplementationRequirements.ShouldBeEmpty();
 }
