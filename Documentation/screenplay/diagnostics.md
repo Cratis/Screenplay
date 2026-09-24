@@ -640,6 +640,8 @@ Every `$eventContext.<path>` - in a projection expression or in a dynamic dictio
 | `PLAY0355` | Error | The composite type declared for a structured specification value cannot be resolved. |
 | `PLAY0356` | Error | A typed structured specification object repeats a member; inline JSON duplicates are caught earlier by `PLAY0294`. |
 | `PLAY0357` | Error | An ESM message beginning with `$strings.` has no valid dotted key. Keys follow `.strings` assignments: an ASCII letter or underscore first, then word characters; subsequent segments contain one or more word characters. |
+| `PLAY0358` | Error | A specification declares more than one `when` action (command or appended event). |
+| `PLAY0359` | Error | `then events in any order` is malformed or repeated. |
 
 ### Interaction
 

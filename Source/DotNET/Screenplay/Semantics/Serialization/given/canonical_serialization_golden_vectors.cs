@@ -328,6 +328,27 @@ public static partial class canonical_serialization_golden_vectors
             [],
             [messageOnlyRejection, rejection, success, bareRejection]);
 
+        // #87 spec actions
+        stateChange = stateChange with
+        {
+            Specifications = stateChange.Specifications.Add(new SemanticSpecification(
+                Id(8700),
+                "appends an event with explicit comparisons",
+                [],
+                [],
+                null,
+                [new(createdEvent, eventValues)],
+                [],
+                [],
+                [])
+            {
+                WhenAppended = new(createdEvent, eventValues),
+                ThenEventsInAnyOrder = true
+            })
+        };
+
+        // end #87 spec actions
+
         // #212 constraints
         stateChange = stateChange with
         {
@@ -398,6 +419,23 @@ public static partial class canonical_serialization_golden_vectors
         };
 
         // end #207 when-less specifications
+
+        // #87 spec actions: explicit property equality for read-model and query assertions.
+        stateView = stateView with
+        {
+            Specifications = stateView.Specifications.Add(new SemanticSpecification(
+                Id(8701),
+                "compares established state exactly",
+                [],
+                [readModelState],
+                null,
+                [],
+                [readModelState with { Exactly = true }],
+                [new SemanticSpecificationQueryResult(byId, idValue, [readModelState]) { Exactly = true }],
+                []))
+        };
+
+        // end #87 spec actions
 
         // #209 validation
         var referenceConcept = new SemanticConcept(
