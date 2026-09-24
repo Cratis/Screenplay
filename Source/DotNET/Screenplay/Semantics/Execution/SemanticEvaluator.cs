@@ -64,7 +64,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, contractRejection);
         }
 
-        if (plan.Model.SemanticVersion == SemanticVersion.V2 && command.Destination is null &&
+        if (plan.Model.SemanticVersion != SemanticVersion.V1 && command.Destination is null &&
             request.AllocatedEventSourceType is { } suppliedType &&
             command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type is { } identityType && suppliedType != identityType)
         {
@@ -113,7 +113,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                     $"Command '{command.Name}' requires one deterministic allocated destination.");
             }
 
-            if (plan.Model.SemanticVersion == SemanticVersion.V2 && destinationExpression is null &&
+            if (plan.Model.SemanticVersion != SemanticVersion.V1 && destinationExpression is null &&
                 command.Destination is null && request.AllocatedEventSourceType is null)
             {
                 return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A v2 allocated event source requires its declared scalar identity type.");
@@ -145,7 +145,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
 
             facts.Add(new SemanticFact(produced.EventContract, destination, values)
             {
-                Context = plan.Model.SemanticVersion == SemanticVersion.V2
+                Context = plan.Model.SemanticVersion != SemanticVersion.V1
                     ? new(new(DestinationType(command, destinationExpression, request.AllocatedEventSourceType), destination))
                     : null,
                 Tags = plan.Events[produced.EventContract].Tags.AddRange(produced.Tags)
