@@ -34,6 +34,7 @@ internal static partial class PolicyParser
 
         PolicyConditionSyntax? condition = null;
         CodeBlockSyntax? code = null;
+        FileReferenceSyntax? file = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -49,23 +50,43 @@ internal static partial class PolicyParser
 
                 condition = ParseCondition(context, text, line.Location);
             }
+            else if (FileReferenceParser.IsDirective(line))
+            {
+                var parsed = FileReferenceParser.Parse(context, line);
+                if (code is not null || file is not null)
+                {
+                    context.Error(DiagnosticCodes.UnknownPolicyDirective, $"Policy '{name.Groups[1].Value}' must have only one implementation - a file reference or an inline code block, not both", line.Location);
+                }
+                else
+                {
+                    file = parsed;
+                }
+            }
             else if (CodeBlockParser.IsCodeLine(context, line))
             {
-                code = CodeBlockParser.Parse(context, line);
+                var parsed = CodeBlockParser.Parse(context, line);
+                if (file is not null || code is not null)
+                {
+                    context.Error(DiagnosticCodes.UnknownPolicyDirective, $"Policy '{name.Groups[1].Value}' must have only one implementation - a file reference or an inline code block, not both", line.Location);
+                }
+                else
+                {
+                    code = parsed;
+                }
             }
             else
             {
-                context.Error(DiagnosticCodes.UnknownPolicyDirective, $"Unexpected '{line.Content}' in policy body - expected 'require ...' or an inline code block", line.Location);
+                context.Error(DiagnosticCodes.UnknownPolicyDirective, $"Unexpected '{line.Content}' in policy body - expected 'require ...', 'file <path>' or an inline code block", line.Location);
                 context.SkipBlock(line.Indent);
             }
         }
 
-        if (condition is null && code is null)
+        if (condition is null && code is null && file is null)
         {
-            context.Error(DiagnosticCodes.PolicyWithoutRequirement, $"Policy '{name.Groups[1].Value}' must declare a 'require' condition or an inline code block", header.Location);
+            context.Error(DiagnosticCodes.PolicyWithoutRequirement, $"Policy '{name.Groups[1].Value}' must declare a 'require' condition, a file reference or an inline code block", header.Location);
         }
 
-        return new(name.Groups[1].Value, condition, code, header.Location);
+        return new(name.Groups[1].Value, condition, code, header.Location) { File = file };
     }
 
     static PolicyConditionSyntax? ParseCondition(ParserContext context, string text, SourceLocation location) =>

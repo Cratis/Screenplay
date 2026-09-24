@@ -60,10 +60,11 @@ PolicyDecl     = "policy", Ident, NL,
                  INDENT, PolicyBody, DEDENT ;
 
 PolicyBody     = PolicyExpr
-               | InlineBlock ;
+               | InlineBlock
+               | FileDirective ;
 
-(* An InlineBlock policy body compiles against PolicyContext and answers with
-   a bool, exactly like the PolicyExpr it stands in for -
+(* An InlineBlock or FileDirective policy body implements the same bool answer
+   against PolicyContext as the PolicyExpr it stands in for -
    see Documentation/screenplay/policies.md.                                  *)
 
 PolicyExpr     = "require", PolicyCondition ;
