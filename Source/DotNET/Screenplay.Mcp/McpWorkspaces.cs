@@ -28,7 +28,9 @@ internal sealed partial class McpWorkspaces(McpRoot root)
             throw new McpFailure("IdentityStateConflict: applicationName differs from the persisted application. Reopen without overriding its name.");
         }
 
-        var candidate = serialized is null ? state?.Open(root) ?? OpenFromDisk(name) : McpWorkspaceTransport.Restore(serialized);
+        var candidate = McpAttachmentContents.Refresh(
+            root,
+            serialized is null ? state?.Open(root) ?? OpenFromDisk(name) : McpWorkspaceTransport.Restore(serialized));
         if (persisted is not null && !McpManagedFiles.Equal(persisted, McpState.Serialize(candidate)))
         {
             throw new McpFailure("IdentityImportConflict: workspaceJson cannot replace a different persisted identity catalog or document mapping.");
@@ -94,7 +96,7 @@ internal sealed partial class McpWorkspaces(McpRoot root)
         var result = new McpDisk(root).Apply(proposal, statePlan);
         if (result.Success)
         {
-            _workspace = proposal.Workspace;
+            _workspace = McpAttachmentContents.Refresh(root, proposal.Workspace);
             _stateBytes = statePlan.After;
             _proposals.Clear();
             _statePlans.Clear();
@@ -192,6 +194,15 @@ internal sealed partial class McpWorkspaces(McpRoot root)
         McpRecoveryJournal.RefusePending(root);
         var workspace = _workspace ?? throw new McpFailure("Open a workspace first.");
         new McpManagedFiles(root).Verify(McpState.FileName, _stateBytes);
-        return workspace;
+        var refreshed = McpAttachmentContents.Refresh(root, workspace);
+        if (workspace.AttachmentContents.Count != refreshed.AttachmentContents.Count ||
+            workspace.AttachmentContents.Any(entry => !refreshed.AttachmentContents.TryGetValue(entry.Key, out var text) || text != entry.Value))
+        {
+            _proposals.Clear();
+            _statePlans.Clear();
+        }
+
+        _workspace = refreshed;
+        return refreshed;
     }
 }

@@ -126,7 +126,7 @@ executable-diagnostics and implementation-requirements. The last view pages
 implementation requirement envelopes by role, owner address, optional member, language or
 file, `RequirementId`, context/result contract versions, `RequiredCapability`,
 `AttachmentResolution`, content hash, semantic/document ID and source line/column.
-For a file attachment whose contents were not supplied, the content hash is empty (#244);
+The MCP server loads implementation attachments from its trusted physical root for content hashing (#244), with warnings for refused files (`PLAY0430`–`PLAY0434`). It refreshes contents on each workspace operation, including when only the attachment changes; neither attachment text nor diagnostics enter persisted identity state or workspace revisions. For a file attachment whose contents could not be supplied, the content hash is empty;
 bodied reducers no longer block binding. The page cursor and
 `expectedRevision` pin one immutable snapshot; rejected compilations still expose
 attachments without admitting an executable model. Document results contain root handles. `read-ast` returns

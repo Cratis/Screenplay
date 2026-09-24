@@ -100,7 +100,7 @@ static class ProducedEventMappingSourcePatch
         // Printing is proof only. The candidate retains the authored bytes and the original document partition.
         var canonical = new SemanticModelCompiler().Compile(
             candidate.ApplicationName,
-            SemanticDocumentSet.Create(documents.ToImmutable(), candidate.IdentityCatalog));
+            SemanticDocumentSet.Create(documents.ToImmutable(), candidate.IdentityCatalog, candidate.AttachmentContents));
         if (!canonical.Success || !ProducedEventMappingPatch.Equivalent(candidate.Compilation.Value!.Model, canonical.Value!.Model))
         {
             return Unsupported("Canonical print/recompile does not preserve the complete candidate semantics.");

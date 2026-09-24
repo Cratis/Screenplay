@@ -22,7 +22,7 @@ static class WorkspaceAuthoringIdentity
         var provisionalCatalog = SemanticIdentityCatalog.Create(workspace.IdentityCatalog.Application, documentAssignments, [], []);
         var provisional = documents.IsEmpty
             ? ScreenplayWorkspace.EmptyCompilation()
-            : new SemanticModelBinder().Bind(workspace.ApplicationName, syntax, ScreenplayWorkspace.CreateDocumentSet(documents, provisionalCatalog));
+            : new SemanticModelBinder().Bind(workspace.ApplicationName, syntax, ScreenplayWorkspace.CreateDocumentSet(documents, provisionalCatalog, workspace.AttachmentContents));
 
         ImmutableArray<SemanticAddress> addresses;
         ImmutableArray<SemanticAddress> events;
