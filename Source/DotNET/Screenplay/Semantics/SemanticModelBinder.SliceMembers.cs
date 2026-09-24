@@ -17,9 +17,24 @@ public sealed partial class SemanticModelBinder
             foreach (var reducer in slice.Reducers ?? [])
             {
                 var rules = reducer.Rules.ToArray();
+                var seenEvents = new HashSet<SemanticId>();
+                var resolvedRules = new List<(ReducerRuleSyntax Rule, SemanticId EventId)>();
                 foreach (var rule in rules)
                 {
-                    RequireImplementation(SemanticImplementationRole.ReducerTransition, owner, rule.File, rule.Code, $"{reducer.Name}/on {rule.Event}");
+                    if (!_events.TryGetValue(ShortName(rule.Event), out var @event))
+                    {
+                        Error(DiagnosticCodes.InvalidSemanticBinding, $"Reducer '{reducer.Name}' event '{rule.Event}' is unresolved.", rule.Location);
+                        continue;
+                    }
+
+                    if (!seenEvents.Add(@event.Contract.Id))
+                    {
+                        Error(DiagnosticCodes.DuplicateReducerEvent, $"Reducer '{reducer.Name}' observes event '{rule.Event}' more than once.", rule.Location);
+                        continue;
+                    }
+
+                    resolvedRules.Add((rule, @event.Contract.Id));
+                    RequireImplementation(SemanticImplementationRole.ReducerTransition, owner, rule.File, rule.Code, $"{reducer.Name}/on {@event.Contract.Id}");
                 }
 
                 if (rules.All(rule => rule.File is null && rule.Code is null))
@@ -41,19 +56,13 @@ public sealed partial class SemanticModelBinder
                 }
 
                 var transitions = ImmutableArray.CreateBuilder<SemanticReducerTransition>();
-                foreach (var rule in rules)
+                foreach (var (rule, eventId) in resolvedRules)
                 {
-                    if (!_events.TryGetValue(ShortName(rule.Event), out var @event))
-                    {
-                        Error(DiagnosticCodes.InvalidSemanticBinding, $"Reducer '{reducer.Name}' event '{rule.Event}' is unresolved.", rule.Location);
-                        continue;
-                    }
-
-                    var member = $"{reducer.Name}/on {rule.Event}";
-                    var requirement = _implementationRequirements.LastOrDefault(value => value.Role == SemanticImplementationRole.ReducerTransition && Equals(value.Owner, owner) && value.Member == member);
+                    var member = $"{reducer.Name}/on {eventId}";
+                    var requirement = _implementationRequirements.SingleOrDefault(value => value.Role == SemanticImplementationRole.ReducerTransition && Equals(value.Owner, owner) && value.Member == member);
                     if (requirement is not null)
                     {
-                        transitions.Add(new(@event.Contract.Id, requirement.RequirementId));
+                        transitions.Add(new(eventId, requirement.RequirementId));
                     }
                 }
 
@@ -70,7 +79,14 @@ public sealed partial class SemanticModelBinder
             {
                 foreach (var trigger in reaction.Triggers)
                 {
-                    RequireImplementation(SemanticImplementationRole.ReactionEffect, owner, trigger.File, trigger.Code, reaction.Name);
+                    var source = trigger.Source switch
+                    {
+                        NamedTriggerSourceSyntax named => $"when {named.Name}",
+                        IntervalTriggerSourceSyntax interval => $"every {interval.Amount} {interval.Unit}",
+                        ScheduleTriggerSourceSyntax schedule => $"at {schedule.Time:HH:mm}/{schedule.DayOfWeek}/{schedule.DayOfMonth}",
+                        _ => throw new InvalidSemanticContract("An unknown reaction trigger source cannot identify an implementation.")
+                    };
+                    RequireImplementation(SemanticImplementationRole.ReactionEffect, owner, trigger.File, trigger.Code, $"{reaction.Name}/{source}");
                 }
 
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Reaction '{reaction.Name}' requires portable occurrence and effect semantics.", reaction.Location);

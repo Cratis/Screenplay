@@ -50,8 +50,14 @@ public sealed partial class SemanticModelBinder
             var resolved = code is not null || (file is not null && documents.AttachmentContents.ContainsKey(file.Path));
             var content = code?.Code ?? (file is not null && documents.AttachmentContents.TryGetValue(file.Path, out var supplied) ? supplied : null);
             var hash = resolved ? Hash(content!) : string.Empty;
-            var identity = Hash($"{assignment.Id}|{role}|{member?.Length ?? 0}:{member}");
-            _implementationRequirements.Add(new(role, owner, member, code?.Language, file?.Path, hash, source)
+
+            // Distinct named members are order-independent; repeated identical members have no semantic
+            // discriminator, so only those repetitions receive an ordinal among identical attachments.
+            var repeated = _implementationRequirements.Count(value => value.Role == role && Equals(value.Owner, owner) &&
+                (value.Member == member || value.Member?.StartsWith($"{member}#", StringComparison.Ordinal) == true));
+            var distinctMember = repeated == 0 ? member : $"{member}#{repeated}";
+            var identity = Hash($"{assignment.Id}|{role}|{distinctMember?.Length ?? 0}:{distinctMember}");
+            _implementationRequirements.Add(new(role, owner, distinctMember, code?.Language, file?.Path, hash, source)
             {
                 RequirementId = identity,
                 ContextVersion = 1,

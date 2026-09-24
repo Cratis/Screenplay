@@ -47,11 +47,11 @@ public enum SemanticAttachmentResolution
 }
 
 /// <summary>
-/// Describes an authored implementation that blocks executable admission without interpreting its code.
+/// Describes an authored implementation attachment without interpreting its code.
 /// </summary>
 /// <param name="Role">The attachment's role.</param>
 /// <param name="Owner">The address of its owning declaration, or the nearest addressable parent.</param>
-/// <param name="Member">The name of the nested rule or trigger, if any.</param>
+/// <param name="Member">A stable discriminator for the nested rule or trigger, if any. Code validations use their ordinal among code validations of the owner; reordering those blocks changes their ids. Repeated identical members use an occurrence suffix.</param>
 /// <param name="Language">The inline language, or null for a file attachment.</param>
 /// <param name="File">The authored file path, or null for inline code.</param>
 /// <param name="ContentHash">SHA-256 of inline or host-supplied file content, or empty when unresolved.</param>

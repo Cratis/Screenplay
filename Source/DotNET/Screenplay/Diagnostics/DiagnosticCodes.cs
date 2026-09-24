@@ -1952,4 +1952,9 @@ public static class DiagnosticCodes
     /// A reducer contains both implemented and unimplemented event transitions.
     /// </summary>
     public const string IncompleteReducerTransitions = "PLAY0398";
+
+    /// <summary>
+    /// A reducer observes the same resolved event more than once.
+    /// </summary>
+    public const string DuplicateReducerEvent = "PLAY0399";
 }

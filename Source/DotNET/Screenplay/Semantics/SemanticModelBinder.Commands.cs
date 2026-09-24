@@ -79,13 +79,14 @@ public sealed partial class SemanticModelBinder
             Dictionary<string, SemanticProperty> properties)
         {
             var validations = ImmutableArray.CreateBuilder<SemanticValidationRule>();
+            var codeValidationOrdinal = 0;
             foreach (var validation in command.Validations)
             {
                 if (validation is not DeclarativeValidateSyntax declarative)
                 {
                     if (validation is CodeValidateSyntax code)
                     {
-                        RequireImplementation(SemanticImplementationRole.CommandValidation, address, null, code.Code);
+                        RequireImplementation(SemanticImplementationRole.CommandValidation, address, null, code.Code, $"code validation {codeValidationOrdinal++}");
                     }
 
                     Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' code validation requires a constrained implementation attachment (#139).", validation.Location);
@@ -96,7 +97,7 @@ public sealed partial class SemanticModelBinder
                 {
                     if (rule.Rule == ValidationRuleKind.Rule)
                     {
-                        RequireImplementation(SemanticImplementationRole.RulePredicate, address, rule.File, rule.Code, (rule.Value as PathExpressionSyntax)?.Path);
+                        RequireImplementation(SemanticImplementationRole.RulePredicate, address, rule.File, rule.Code, $"{rule.Property}/{(rule.Value as PathExpressionSyntax)?.Path}");
                     }
 
                     if (rule.Property.Contains('.', StringComparison.Ordinal))
