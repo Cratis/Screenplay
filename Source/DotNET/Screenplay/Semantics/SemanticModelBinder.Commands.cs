@@ -47,7 +47,7 @@ public sealed partial class SemanticModelBinder
             var id = Resolve(address, command.Location);
             var properties = command.Properties.Select(property => BindProperty(address, property, property.IsIdentifier)).ToImmutableArray();
             var propertiesByName = properties.ToDictionary(_ => _.Name, StringComparer.Ordinal);
-            var validations = BindValidations(address, command, propertiesByName);
+            var validations = BindValidations(address, command, propertiesByName, out var codeValidations);
             var requirements = command.Validations.OfType<DeclarativeValidateSyntax>()
                 .SelectMany(_ => _.Requirements ?? [])
                 .Select(requirement => (requirement, condition: BindCondition(requirement.Condition, propertiesByName), validMessage: ValidateStringKey(requirement.Message, requirement.Location)))
@@ -68,6 +68,7 @@ public sealed partial class SemanticModelBinder
                 : null;
             return new(id, command.Name, properties, validations, produced)
             {
+                CodeValidations = codeValidations,
                 Requirements = requirements,
                 Destination = defaultDestination is null ? null : new(defaultDestination.Type, SemanticExpression.Property(SemanticExpressionRootKind.Command, defaultDestination.Id))
             };
@@ -76,9 +77,11 @@ public sealed partial class SemanticModelBinder
         ImmutableArray<SemanticValidationRule> BindValidations(
             SemanticAddress address,
             CommandSyntax command,
-            Dictionary<string, SemanticProperty> properties)
+            Dictionary<string, SemanticProperty> properties,
+            out ImmutableArray<SemanticCodeValidation> codeValidations)
         {
             var validations = ImmutableArray.CreateBuilder<SemanticValidationRule>();
+            var blocks = ImmutableArray.CreateBuilder<SemanticCodeValidation>();
             var codeValidationOrdinal = 0;
             foreach (var validation in command.Validations)
             {
@@ -86,19 +89,22 @@ public sealed partial class SemanticModelBinder
                 {
                     if (validation is CodeValidateSyntax code)
                     {
-                        RequireImplementation(SemanticImplementationRole.CommandValidation, address, null, code.Code, $"code validation {codeValidationOrdinal++}");
+                        var requirement = RequireImplementation(SemanticImplementationRole.CommandValidation, address, null, code.Code, $"code validation {codeValidationOrdinal++}");
+                        if (requirement is not null)
+                        {
+                            UsesV3 = true;
+                            blocks.Add(new(requirement.RequirementId));
+                        }
                     }
 
-                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Command '{command.Name}' code validation requires a constrained implementation attachment (#139).", validation.Location);
                     continue;
                 }
 
                 foreach (var rule in declarative.Rules)
                 {
-                    if (rule.Rule == ValidationRuleKind.Rule)
-                    {
-                        RequireImplementation(SemanticImplementationRole.RulePredicate, address, rule.File, rule.Code, $"{rule.Property}/{(rule.Value as PathExpressionSyntax)?.Path}");
-                    }
+                    var requirement = rule.Rule == ValidationRuleKind.Rule
+                        ? RequireImplementation(SemanticImplementationRole.RulePredicate, address, rule.File, rule.Code, $"{rule.Property}/{(rule.Value as PathExpressionSyntax)?.Path}")
+                        : null;
 
                     if (rule.Property.Contains('.', StringComparison.Ordinal))
                     {
@@ -112,13 +118,14 @@ public sealed partial class SemanticModelBinder
                         continue;
                     }
 
-                    if (BindValidationRule(rule, property.Id, CommandValidationSubject(rule.Property, property.Type)) is { } bound)
+                    if (BindValidationRule(rule, property.Id, CommandValidationSubject(rule.Property, property.Type), requirement?.RequirementId) is { } bound)
                     {
                         validations.Add(bound);
                     }
                 }
             }
 
+            codeValidations = blocks.ToImmutable();
             return validations.ToImmutable();
         }
 

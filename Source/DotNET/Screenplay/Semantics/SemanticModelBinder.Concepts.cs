@@ -38,10 +38,19 @@ public sealed partial class SemanticModelBinder
                 {
                     if (validation is CodeValidateSyntax code)
                     {
-                        RequireImplementation(SemanticImplementationRole.ConceptValidation, SemanticAddress.ForConcept(_applicationIdentity, concept.Name), null, code.Code, $"code validation {codeValidationOrdinal++}");
+                        var name = $"code validation {codeValidationOrdinal++}";
+                        var requirement = RequireImplementation(SemanticImplementationRole.ConceptValidation, SemanticAddress.ForConcept(_applicationIdentity, concept.Name), null, code.Code, name);
+                        if (requirement is not null)
+                        {
+                            UsesV3 = true;
+                            validations.Add(new(default, SemanticValidationRuleKind.CodeValidation, null, null)
+                            {
+                                Name = name,
+                                RequirementId = requirement.RequirementId
+                            });
+                        }
                     }
 
-                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' code validation requires a constrained implementation attachment (#139).", validation.Location);
                     continue;
                 }
 
@@ -53,10 +62,9 @@ public sealed partial class SemanticModelBinder
                 var subject = ConceptValidationSubject(concept);
                 foreach (var rule in declarative.Rules)
                 {
-                    if (rule.Rule == ValidationRuleKind.Rule)
-                    {
-                        RequireImplementation(SemanticImplementationRole.RulePredicate, SemanticAddress.ForConcept(_applicationIdentity, concept.Name), rule.File, rule.Code, $"{rule.Property}/{(rule.Value as PathExpressionSyntax)?.Path}");
-                    }
+                    var requirement = rule.Rule == ValidationRuleKind.Rule
+                        ? RequireImplementation(SemanticImplementationRole.RulePredicate, SemanticAddress.ForConcept(_applicationIdentity, concept.Name), rule.File, rule.Code, $"{rule.Property}/{(rule.Value as PathExpressionSyntax)?.Path}")
+                        : null;
 
                     if (rule.Property != ValidationRuleSyntax.ConceptValue)
                     {
@@ -64,7 +72,7 @@ public sealed partial class SemanticModelBinder
                         continue;
                     }
 
-                    if (BindValidationRule(rule, default, subject) is { } bound)
+                    if (BindValidationRule(rule, default, subject, requirement?.RequirementId) is { } bound)
                     {
                         validations.Add(bound);
                     }

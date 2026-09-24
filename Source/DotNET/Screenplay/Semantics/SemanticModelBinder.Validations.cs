@@ -171,18 +171,27 @@ public sealed partial class SemanticModelBinder
         /// application-layer concern, so ESM defines their meaning itself. Operands are concrete literals typed
         /// against the subject; a bound on text constrains its length and takes a whole-number operand.
         /// </remarks>
-        SemanticValidationRule? BindValidationRule(ValidationRuleSyntax rule, SemanticId property, ValidationSubject subject)
+        SemanticValidationRule? BindValidationRule(ValidationRuleSyntax rule, SemanticId property, ValidationSubject subject, string? requirementId = null)
         {
             ValidateStringKey(rule.Message, rule.Location);
             var spelling = Spelling(rule.Rule);
             if (rule.Rule == ValidationRuleKind.Rule)
             {
                 var name = (rule.Value as PathExpressionSyntax)?.Path ?? string.Empty;
+                if (requirementId is not null)
+                {
+                    UsesV3 = true;
+                    return new(property, SemanticValidationRuleKind.RulePredicate, null, rule.Message)
+                    {
+                        Name = name,
+                        RequirementId = requirementId,
+                        Severity = Severity(rule.Severity)
+                    };
+                }
+
                 Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
-                    rule.File is not null || rule.Code is not null
-                        ? $"Validation rule '{name}' on {subject.Description} has an implementation body; code validation requires a constrained implementation attachment (#139)."
-                        : $"Named validation rule '{name}' on {subject.Description} has no portable meaning - its logic lives outside the document.",
+                    $"Named validation rule '{name}' on {subject.Description} has no portable meaning - its logic lives outside the document.",
                     rule.Location);
                 return null;
             }

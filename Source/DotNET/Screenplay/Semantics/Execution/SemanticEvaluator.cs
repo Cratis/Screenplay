@@ -36,6 +36,16 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default.");
         }
 
+        // Ordering between generated declarative validators and attached code is not portable.
+        // Refuse to infer a rejection or acceptance for any execution of this command.
+        if (UnsupportedValidation(plan, command) is { } rule)
+        {
+            return new SemanticUnsupported(
+                world,
+                SemanticExecutionCapability.Command,
+                $"Rule '{rule}' has an opaque validation predicate and requires a target provider.");
+        }
+
         var authorizationValues = request.Values.IsDefault ? [] : request.Values.Where(value => value is not null).ToArray();
         var artifact = command.Properties
             .Select(property => (property, value: authorizationValues.FirstOrDefault(value => value.TargetProperty == property.Id)?.Value))
@@ -302,6 +312,53 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             catch (InvalidSemanticContract exception)
             {
                 return exception.Message;
+            }
+        }
+
+        return null;
+    }
+
+    static string? UnsupportedValidation(SemanticExecutionPlan plan, SemanticCommand command)
+    {
+        if (!command.CodeValidations.IsEmpty)
+        {
+            return $"code validation {command.CodeValidations[0].RequirementId}";
+        }
+
+        if (command.Validations.FirstOrDefault(rule => rule.Kind == SemanticValidationRuleKind.RulePredicate) is { } predicate)
+        {
+            return predicate.Name;
+        }
+
+        var concepts = plan.Model.Application.Concepts.ToDictionary(concept => concept.Id);
+        var types = plan.Model.Application.Types.ToDictionary(type => type.Id);
+        foreach (var property in command.Properties)
+        {
+            if (PredicateInType(property.Type, concepts, types, []) is { } name)
+            {
+                return name;
+            }
+        }
+
+        return null;
+    }
+
+    static string? PredicateInType(
+        SemanticTypeReference type,
+        Dictionary<SemanticId, SemanticConcept> concepts,
+        Dictionary<SemanticId, SemanticCompositeType> types,
+        HashSet<SemanticId> visited)
+    {
+        if (type.Kind == SemanticTypeReferenceKind.Concept)
+        {
+            return concepts[type.Target].Validations.FirstOrDefault(rule => rule.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation)?.Name;
+        }
+
+        if (type.Kind == SemanticTypeReferenceKind.CompositeType && visited.Add(type.Target))
+        {
+            foreach (var property in types[type.Target].Properties)
+            {
+                if (PredicateInType(property.Type, concepts, types, visited) is { } name) return name;
             }
         }
 

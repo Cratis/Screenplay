@@ -88,10 +88,11 @@ internal static partial class SemanticModelValidator
             throw new InvalidSemanticContract("An ESM v2 model must contain a typed destination, a specification event source, or an occurrence context mapping.");
         }
 
-        if (semanticVersion == SemanticVersion.V3 && application.Modules.SelectMany(module => module.Features)
-            .SelectMany(AllSlices).All(slice => slice.Reducers.IsEmpty))
+        if (semanticVersion == SemanticVersion.V3 && !application.Concepts.Any(concept => concept.Validations.Any(validation => validation.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation)) &&
+            application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices).All(slice => slice.Reducers.IsEmpty &&
+                slice.Commands.All(command => command.CodeValidations.IsEmpty && command.Validations.All(validation => validation.Kind != SemanticValidationRuleKind.RulePredicate))))
         {
-            throw new InvalidSemanticContract("An ESM v3 model must contain a reducer with transition bodies.");
+            throw new InvalidSemanticContract("An ESM v3 model must contain implementation attachments.");
         }
     }
 
@@ -390,6 +391,12 @@ internal static partial class SemanticModelValidator
                 ValidateCondition(requirement.Condition, properties);
             }
 
+            if (command.CodeValidations.IsDefault || command.CodeValidations.Any(block => block is null || string.IsNullOrWhiteSpace(block.RequirementId)) ||
+                (command.CodeValidations.Length > 0 && _semanticVersion != SemanticVersion.V3))
+            {
+                throw new InvalidSemanticContract("Command code validation requires ESM v3 and a requirement identity.");
+            }
+
             foreach (var validation in command.Validations)
             {
                 if (!properties.TryGetValue(validation.Property, out var property))
@@ -447,6 +454,23 @@ internal static partial class SemanticModelValidator
             if (validation.Message?.Length == 0)
             {
                 throw new InvalidSemanticContract("A validation message cannot be empty.");
+            }
+
+            if (validation.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation)
+            {
+                if (_semanticVersion != SemanticVersion.V3 || validation.Operand is not null ||
+                    (validation.Kind == SemanticValidationRuleKind.CodeValidation && !isConcept) ||
+                    string.IsNullOrWhiteSpace(validation.Name) || string.IsNullOrWhiteSpace(validation.RequirementId))
+                {
+                    throw new InvalidSemanticContract("A rule predicate requires ESM v3, a name and a requirement identity, but no operand.");
+                }
+
+                return;
+            }
+
+            if (validation.Name is not null || validation.RequirementId is not null)
+            {
+                throw new InvalidSemanticContract("A declarative rule cannot carry a predicate attachment.");
             }
 
             var requiresOperand = validation.Kind != SemanticValidationRuleKind.NotEmpty;

@@ -278,7 +278,7 @@ A rule can see **who** is calling but not **what they are allowed to do** — th
 
 ### What the executable model admits
 
-Every rule above parses, prints and round-trips. The executable semantic model (ESM v1) — what the [reference execution](specifications.md#reference-execution) runs and what Stage renders — admits the rules that have one portable meaning, and reports blocking diagnostic `PLAY0268` for the rest, with a message that says why.
+Every rule above parses, prints and round-trips. The executable semantic model (ESM) — what the [reference execution](specifications.md#reference-execution) runs and what Stage renders — admits the rules that have one portable meaning in v1, and binds code validation as opaque implementation attachments in v3. It reports blocking diagnostic `PLAY0268` for rules it still cannot represent, with a message that says why.
 
 | Rule | Admitted on | Operand |
 | --- | --- | --- |
@@ -318,9 +318,10 @@ Still rejected, and why:
 | any comparison on `Date` or `DateTime`, and `today` | ESM v1 has no runtime date value — a date is text in a fixed format — so it has nothing to compare against. |
 | a named `matches` pattern other than `email` | Only `email` has a portable definition; other names are rejected (`PLAY0366`). Invalid quoted ECMAScript patterns are rejected (`PLAY0367`). |
 | `require` over a read-model path | A consistent decision snapshot of declared reads is not yet available (#129). |
-| `rule <Name>` with a `file` or inline body, and fenced `validate` | Code validation requires a constrained implementation attachment. |
 | a bare `rule <Name>` | Its logic lives outside the document, so it has no portable meaning. |
 | a rule on a nested path such as `lines.quantity` | ESM v1 validates command properties; put the rule on the nested value's [concept](concepts.md#validation) instead. |
+
+A bodied `rule <Name>` on a command property or concept value carries its name, property (or concept value), message, severity and stable implementation requirement id in ESM v3. Fenced `validate` blocks on commands and concepts also bind: both yield zero or more rejection messages, with the concept's own value guarded by a concept block. Each yielded message rejects at error severity. A rule predicate receives the guarded value (with the command as its artifact for a command rule) and returns accept or reject. The context follows the documented `RuleContext` above; Screenplay neither executes the C# nor enforces a provider's API allowlist. Requirements use context/result contract version 1 and capability `pure`. Files need host-supplied contents to acquire a content hash; the path is never a code revision. The reference executor reports `SemanticUnsupported` naming the opaque rule for any command carrying it, including concept values nested in a composite or collection. It cannot establish a portable ordering with other validation rules, so it never treats an earlier declarative rejection as proof that the predicate was run. Other commands and read-only specifications remain executable.
 
 Command `require` conditions over command properties and constants are admitted in ESM v1: equality on scalar text, enumeration, number or Boolean; ordering on numbers only. Both property operands must be command properties with compatible types. Requirements run after property validation and before production; a false requirement rejects with its message (or a default message). Concept `require` is not admitted: declare a concept validation rule instead.
 

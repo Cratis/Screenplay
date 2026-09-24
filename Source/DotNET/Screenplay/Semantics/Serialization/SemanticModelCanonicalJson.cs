@@ -211,6 +211,11 @@ internal static partial class SemanticModelCanonicalJson
         WriteOptionalValue(writer, "operand", validation.Operand);
         WriteOptionalString(writer, "message", validation.Message);
         WriteSeverity(writer, validation.Severity);
+        if (validation.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation)
+        {
+            CanonicalJson.WriteString(writer, "name", validation.Name!);
+            CanonicalJson.WriteString(writer, "requirementId", validation.RequirementId!);
+        }
         writer.WriteEndObject();
     }
 
@@ -233,6 +238,15 @@ internal static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", command.Name);
         WriteArray(writer, "properties", command.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProperty);
         WriteArray(writer, "validations", command.Validations, WriteValidation);
+        if (!command.CodeValidations.IsEmpty)
+        {
+            WriteArray(writer, "codeValidations", command.CodeValidations, (output, block) =>
+            {
+                output.WriteStartObject();
+                CanonicalJson.WriteString(output, "requirementId", block.RequirementId);
+                output.WriteEndObject();
+            });
+        }
         WriteArray(writer, "produces", command.Produces, WriteProducedEvent);
         if (!command.Requirements.IsDefaultOrEmpty) WriteArray(writer, "requirements", command.Requirements, WriteRequirement);
         if (command.Authorization is not null)
@@ -646,6 +660,8 @@ internal static partial class SemanticModelCanonicalJson
         SemanticValidationRuleKind.AllGreaterThan => "allGreaterThan",
         SemanticValidationRuleKind.AllGreaterThanOrEqual => "allGreaterThanOrEqual",
         SemanticValidationRuleKind.Matches => "matches",
+        SemanticValidationRuleKind.RulePredicate => "rulePredicate",
+        SemanticValidationRuleKind.CodeValidation => "codeValidation",
         _ => throw Unknown(nameof(SemanticValidationRuleKind), value)
     };
 
