@@ -25,7 +25,8 @@ silently discards it and derives replacement identities from source names.
 
 `open-workspace` loads persistent identity mappings automatically. Moves and
 identity-preserving renames survive a fresh server session without requiring a
-client to save a workspace export first.
+client to save a workspace export first. Case-only moves preserve the document
+identity and install the requested filename casing even on case-insensitive disks.
 
 Content edits outside MCP can be reopened when they do not change identity
 assignments. Externally moved/deleted mapped files or identity-changing source
