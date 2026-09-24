@@ -164,6 +164,8 @@ internal static partial class SemanticModelValidator
             {
                 ValidateSlice(slice);
             }
+
+            ValidatePolicies(application);
         }
 
         void RegisterConcept(SemanticConcept concept)
@@ -677,9 +679,15 @@ internal static partial class SemanticModelValidator
                 ValidateSpecificationError(error);
             }
 
-            var hasRejection = specification.ThenErrors.Length > 0;
+            if (specification.GivenCaller is { } caller)
+            {
+                RequireObjects(caller.Roles, nameof(caller.Roles), "caller role");
+                RequireObjects(caller.Claims, nameof(caller.Claims), "caller claim");
+            }
+
+            var hasRejection = specification.ThenErrors.Length > 0 || specification.ThenDenied;
             var hasSuccessOutcome = specification.ThenEvents.Length > 0 || specification.ThenReadModels.Length > 0 || specification.ThenQueries.Length > 0;
-            if (hasRejection && (specification.ThenErrors.Length != 1 || hasSuccessOutcome))
+            if (hasRejection && (specification.ThenErrors.Length + (specification.ThenDenied ? 1 : 0) != 1 || hasSuccessOutcome))
             {
                 throw new InvalidSemanticContract("A rejection specification must contain exactly one rejection and no success outcomes.");
             }

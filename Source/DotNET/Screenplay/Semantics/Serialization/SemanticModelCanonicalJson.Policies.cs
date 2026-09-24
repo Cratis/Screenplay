@@ -7,6 +7,21 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 
 internal static partial class SemanticModelCanonicalJson
 {
+    static void WriteCaller(Utf8JsonWriter writer, SemanticCaller caller)
+    {
+        writer.WriteStartObject();
+        writer.WriteBoolean("authenticated", caller.Authenticated);
+        WriteStringArray(writer, "roles", caller.Roles);
+        WriteArray(writer, "claims", caller.Claims, (json, claim) =>
+        {
+            json.WriteStartObject();
+            CanonicalJson.WriteString(json, "type", claim.Type);
+            CanonicalJson.WriteString(json, "value", claim.Value);
+            json.WriteEndObject();
+        });
+        writer.WriteEndObject();
+    }
+
     static void WritePolicy(Utf8JsonWriter writer, SemanticPolicy policy)
     {
         writer.WriteStartObject();

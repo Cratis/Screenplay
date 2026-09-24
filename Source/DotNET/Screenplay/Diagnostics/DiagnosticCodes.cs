@@ -1892,6 +1892,18 @@ public static class DiagnosticCodes
     /// </summary>
     public const string DuplicateVariantEnteringEvent = "PLAY0385";
 
+    /// <summary>A given caller fixture line is malformed.</summary>
+    public const string InvalidSpecificationCaller = "PLAY0386";
+
+    /// <summary>A specification declares more than one caller or denied outcome.</summary>
+    public const string DuplicateSpecificationCallerOrDenied = "PLAY0387";
+
+    /// <summary>A denied outcome has an invalid shape or conflicts with another outcome.</summary>
+    public const string InvalidSpecificationDenied = "PLAY0388";
+
+    /// <summary>An authorized specification has no explicitly supplied caller fixture.</summary>
+    public const string MissingSpecificationCaller = "PLAY0389";
+
     // Constraints in the semantic model.
 
     /// <summary>

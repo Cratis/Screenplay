@@ -52,6 +52,32 @@ public sealed partial class SemanticModelBinder
         static SemanticLogicalOperator PolicyOperator(LogicalOperator op) => op == LogicalOperator.And
             ? SemanticLogicalOperator.And : SemanticLogicalOperator.Or;
 
+        SemanticAuthorization? EffectiveAuthorization(AuthorizeSyntax? own, IEnumerable<string> artifactProperties, string moduleName, ImmutableArray<string> featurePath)
+        {
+            var module = syntax.Modules.Single(value => value.Name == moduleName);
+            var scopes = new List<AuthorizeSyntax?> { module.Authorize };
+            var features = module.Features;
+            foreach (var name in featurePath)
+            {
+                var feature = features.Single(value => value.Name == name);
+                scopes.Add(feature.Authorize);
+                features = feature.Features;
+            }
+
+            scopes.Add(own);
+            SemanticAuthorization? result = null;
+            foreach (var scope in scopes)
+            {
+                var bound = BindAuthorization(scope, artifactProperties);
+                if (bound is not null)
+                {
+                    result = result is null ? bound : new SemanticLogicalAuthorization(result, SemanticLogicalOperator.And, bound);
+                }
+            }
+
+            return result;
+        }
+
         SemanticAuthorization? BindAuthorization(AuthorizeSyntax? authorize, IEnumerable<string> artifactProperties)
         {
             if (authorize is null) return null;

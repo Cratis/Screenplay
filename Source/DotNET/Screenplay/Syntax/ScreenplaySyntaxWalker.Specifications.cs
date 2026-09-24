@@ -27,6 +27,8 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitFileReference(syntax.File);
         }
 
+        if (syntax.GivenCaller is not null) VisitSpecificationCaller(syntax.GivenCaller);
+
         foreach (var @event in syntax.Given)
         {
             VisitSpecificationEvent(@event);
@@ -57,11 +59,29 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitSpecificationQuery(query);
         }
 
+        if (syntax.ThenDenied is not null) VisitSpecificationDenied(syntax.ThenDenied);
+
         foreach (var error in syntax.ThenErrors)
         {
             VisitSpecificationError(error);
         }
     }
+
+    /// <summary>Visits a caller fixture and its claims.</summary>
+    /// <param name="syntax">The caller fixture.</param>
+    public virtual void VisitSpecificationCaller(SpecificationCallerSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var claim in syntax.Claims) VisitSpecificationCallerClaim(claim);
+    }
+
+    /// <summary>Visits a caller claim.</summary>
+    /// <param name="syntax">The claim.</param>
+    public virtual void VisitSpecificationCallerClaim(SpecificationCallerClaimSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>Visits a denial assertion.</summary>
+    /// <param name="syntax">The assertion.</param>
+    public virtual void VisitSpecificationDenied(SpecificationDeniedSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="SpecificationEventSyntax"/> node and its children.

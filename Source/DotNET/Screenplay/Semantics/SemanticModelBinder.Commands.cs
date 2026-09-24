@@ -68,7 +68,6 @@ public sealed partial class SemanticModelBinder
             return new(id, command.Name, properties, validations, produced)
             {
                 Requirements = requirements,
-                Authorization = BindAuthorization(command.Authorize, propertiesByName.Keys),
                 Destination = defaultDestination is null ? null : new(defaultDestination.Type, SemanticExpression.Property(SemanticExpressionRootKind.Command, defaultDestination.Id))
             };
         }

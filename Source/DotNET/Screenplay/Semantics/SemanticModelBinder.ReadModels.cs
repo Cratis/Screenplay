@@ -90,10 +90,7 @@ public sealed partial class SemanticModelBinder
                 readModel.Model.Id,
                 keyProperty.Id,
                 SemanticQueryCardinality.ZeroOrOne,
-                SemanticQueryDelivery.Snapshot)
-            {
-                Authorization = BindAuthorization(query.Authorize, [argument.Name])
-            };
+                SemanticQueryDelivery.Snapshot);
         }
     }
 }

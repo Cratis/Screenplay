@@ -13,11 +13,6 @@ public sealed partial class SemanticModelBinder
     {
         SemanticModule BindModule(ModuleSyntax module)
         {
-            if (module.Authorize is not null)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Module '{module.Name}' authorization requires portable policy semantics and is not admitted by ESM v1.", module.Authorize.Location);
-            }
-
             if (module.Description is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Module '{module.Name}' description is authoring metadata.", module.Location);
@@ -51,11 +46,6 @@ public sealed partial class SemanticModelBinder
 
         SemanticFeature BindFeature(string module, ImmutableArray<string> parentPath, FeatureSyntax feature)
         {
-            if (feature.Authorize is not null)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Feature '{feature.Name}' authorization requires portable policy semantics and is not admitted by ESM v1.", feature.Authorize.Location);
-            }
-
             if (feature.Description is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Feature '{feature.Name}' description is authoring metadata.", feature.Location);
@@ -100,10 +90,16 @@ public sealed partial class SemanticModelBinder
             var address = SemanticAddress.ForSlice(_applicationIdentity, module, featurePath, slice.Name);
             var id = ResolveSlice(address, slice.Location, slice.DescriptionLocation, slice.DescriptionRawLength);
             var events = slice.Events.Select(value => _eventDeclarations[value]).ToArray();
-            var commands = slice.Commands.Select(value => BindCommand(address, value, _events)).ToImmutableArray();
+            var commands = slice.Commands.Select(value => BindCommand(address, value, _events) with
+            {
+                Authorization = EffectiveAuthorization(value.Authorize, value.Properties.Select(property => property.Name), module, featurePath)
+            }).ToImmutableArray();
             var readModels = (slice.ReadModels ?? []).Select(value => _readModelDeclarations[value].Model).ToImmutableArray();
             var projections = slice.Projections.SelectMany(value => BindProjections(address, value)).ToImmutableArray();
-            var queries = slice.Queries.Select(value => _queryDeclarations.GetValueOrDefault(value)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
+            var queries = slice.Queries.Select(value => _queryDeclarations.GetValueOrDefault(value) is { } query
+                ? query with { Authorization = EffectiveAuthorization(value.Authorize, [query.Argument.Name], module, featurePath) }
+                : null).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
+            foreach (var query in queries) _queries[query.Name] = query;
             var commandsByName = commands.ToDictionary(_ => _.Name, StringComparer.Ordinal);
             var specifications = slice.Specifications
                 .Select(value => BindSpecification(address, value, commandsByName))
