@@ -157,6 +157,27 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         return ExecuteQueries(plan, world, tentative, facts.ToImmutable(), request.Queries, request.Caller);
     }
 
+    internal static SemanticExecutionResult Append(
+        SemanticExecutionPlan plan,
+        SemanticWorld world,
+        SemanticFact fact,
+        ImmutableArray<SemanticQueryRequest> queries,
+        SemanticCaller? caller)
+    {
+        var facts = ImmutableArray.Create(fact);
+        if (SemanticConstraintEnforcement.FindViolation(plan, world, facts) is { } violated)
+        {
+            return RejectWithMessage(world, SemanticRejectionCategory.Constraint, violated.Name, SemanticConstraintEnforcement.MessageFor(violated));
+        }
+
+        if (!TryProject(plan, world.Facts, world.ReadModels, facts, out var readModels, out var failure))
+        {
+            return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, failure!);
+        }
+
+        return ExecuteQueries(plan, world, world.Commit(facts, readModels), facts, queries, caller);
+    }
+
     internal static bool Establish(
         SemanticExecutionPlan plan,
         ImmutableArray<SemanticReadModelInstance> current,

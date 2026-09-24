@@ -334,11 +334,26 @@ internal static partial class SemanticModelCanonicalJson
             writer.WritePropertyName("when");
             WriteSpecificationCommand(writer, specification.When);
         }
+        if (specification.WhenAppended is not null)
+        {
+            writer.WritePropertyName("whenAppended");
+            WriteSpecificationAppend(writer, specification.WhenAppended);
+        }
         WriteArray(writer, "thenEvents", specification.ThenEvents, WriteSpecificationEvent);
+        if (specification.ThenEventsInAnyOrder) writer.WriteBoolean("thenEventsInAnyOrder", true);
         WriteArray(writer, "thenReadModels", specification.ThenReadModels, WriteSpecificationReadModel);
         WriteArray(writer, "thenQueries", specification.ThenQueries, WriteSpecificationQuery);
         WriteArray(writer, "thenErrors", specification.ThenErrors, WriteSpecificationError);
         if (specification.ThenDenied) writer.WriteBoolean("thenDenied", true);
+        writer.WriteEndObject();
+    }
+
+    static void WriteSpecificationAppend(Utf8JsonWriter writer, SemanticSpecificationAppend value)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("eventContract", value.EventContract.ToString());
+        WriteArray(writer, "values", value.Values.OrderBy(_ => _.TargetProperty.ToString(), StringComparer.Ordinal), WritePropertyValue);
+        if (value.EventSource is not null) WriteEventSource(writer, value.EventSource);
         writer.WriteEndObject();
     }
 
@@ -378,6 +393,7 @@ internal static partial class SemanticModelCanonicalJson
         writer.WritePropertyName("key");
         WriteValue(writer, value.Key);
         WriteArray(writer, "values", value.Values.OrderBy(_ => _.TargetProperty.ToString(), StringComparer.Ordinal), WritePropertyValue);
+        if (value.Exactly) writer.WriteBoolean("exactly", true);
         writer.WriteEndObject();
     }
 
@@ -388,6 +404,7 @@ internal static partial class SemanticModelCanonicalJson
         writer.WritePropertyName("key");
         WriteValue(writer, value.Key);
         WriteArray(writer, "results", value.Results, WriteSpecificationReadModel);
+        if (value.Exactly) writer.WriteBoolean("exactly", true);
         writer.WriteEndObject();
     }
 

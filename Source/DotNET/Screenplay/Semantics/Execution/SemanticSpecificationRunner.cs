@@ -77,7 +77,23 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
                     : ImmutableDictionary<SemanticId, SemanticValue>.Empty.Add(expected.When.Command, expected.When.EventSource.Value),
                 AllocatedEventSourceType = expected.When.EventSource?.Type
             };
-        var execution = evaluator.Execute(plan, world, request with { Caller = expected.GivenCaller });
+
+        // An append is an occurrence, not a command: enforce append constraints, project, then query.
+        // Reactions are not part of the ESM and are deliberately not executed here.
+        var execution = expected.WhenAppended is { } appended
+            ? SemanticEvaluator.Append(
+                plan,
+                world,
+                new SemanticFact(
+                appended.EventContract,
+                appended.EventSource?.Value ?? SemanticValue.Null,
+                appended.Values)
+            {
+                Context = appended.EventSource is null ? null : new(appended.EventSource)
+            },
+                queries,
+                expected.GivenCaller)
+            : evaluator.Execute(plan, world, request with { Caller = expected.GivenCaller });
         var failures = Compare(expected, execution);
         return new(specification, failures.IsEmpty, execution, failures);
     }
@@ -142,7 +158,10 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             return failures.ToImmutable();
         }
 
-        CompareFacts(expected.ThenEvents, accepted.Facts, failures);
+        if (expected.WhenAppended is null || expected.ThenEvents.Length > 0)
+        {
+            CompareFacts(expected.ThenEvents, accepted.Facts, failures, expected.ThenEventsInAnyOrder);
+        }
         if (expected.When?.EventSource is { } commandSource && accepted.Facts.Any(fact => !SemanticValueRules.AreEqual(fact.Destination, commandSource.Value)))
         {
             failures.Add("Produced fact destination does not match the specification command event source.");
@@ -180,7 +199,8 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
     static void CompareFacts(
         ImmutableArray<SemanticSpecificationEvent> expected,
         ImmutableArray<SemanticFact> actual,
-        ImmutableArray<string>.Builder failures)
+        ImmutableArray<string>.Builder failures,
+        bool inAnyOrder)
     {
         if (expected.Length != actual.Length)
         {
@@ -188,33 +208,37 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             return;
         }
 
+        var remaining = actual.ToList();
         for (var index = 0; index < expected.Length; index++)
         {
-            if (expected[index].EventContract != actual[index].EventContract || !ValuesEqual(expected[index].Values, actual[index].Values))
+            var matched = inAnyOrder ? remaining.FindIndex(fact => FactMatches(expected[index], fact)) : index;
+            if (matched < 0 || !FactMatches(expected[index], inAnyOrder ? remaining[matched] : actual[index]))
             {
                 failures.Add($"Fact at index {index} does not match the expected event contract and values.");
             }
 
-            if (expected[index].EventSource is { } source &&
-                (actual[index].Context?.EventSource.Type != source.Type ||
-                 !SemanticValueRules.AreEqual(actual[index].Destination, source.Value)))
-            {
-                failures.Add($"Fact at index {index} does not match the expected event source.");
-            }
+            if (inAnyOrder && matched >= 0) remaining.RemoveAt(matched);
         }
     }
+
+    static bool FactMatches(SemanticSpecificationEvent expected, SemanticFact actual) =>
+        expected.EventContract == actual.EventContract && ValuesEqual(expected.Values, actual.Values) &&
+        (expected.EventSource is null ||
+         (actual.Context?.EventSource.Type == expected.EventSource.Type &&
+          SemanticValueRules.AreEqual(actual.Destination, expected.EventSource.Value)));
 
     static void CompareReadModels(
         ImmutableArray<SemanticSpecificationReadModel> expected,
         ImmutableArray<SemanticReadModelInstance> actual,
         ImmutableArray<string>.Builder failures,
-        string description)
+        string description,
+        bool exactly = false)
     {
         foreach (var state in expected)
         {
             var match = actual.SingleOrDefault(value =>
                 value.ReadModel == state.ReadModel && SemanticValueRules.AreEqual(value.Key, state.Key));
-            if (match is null || !ValuesContain(state.Values, match.Values))
+            if (match is null || !(exactly || state.Exactly ? ValuesEqual(state.Values, match.Values) : ValuesContain(state.Values, match.Values)))
             {
                 failures.Add($"Expected {description} '{state.ReadModel}' with key '{state.Key}' was not found with matching values.");
             }
@@ -240,7 +264,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
                 continue;
             }
 
-            CompareReadModels(expected[index].Results, actual[index].Results, failures, $"query result at index {index}");
+            CompareReadModels(expected[index].Results, actual[index].Results, failures, $"query result at index {index}", expected[index].Exactly);
             if (expected[index].Results.Length != actual[index].Results.Length)
             {
                 failures.Add($"Query result at index {index} expected {expected[index].Results.Length} row(s), got {actual[index].Results.Length}.");

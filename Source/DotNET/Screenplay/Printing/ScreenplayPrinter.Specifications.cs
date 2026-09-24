@@ -51,6 +51,13 @@ public partial class ScreenplayPrinter
                 }
             }
 
+            if (specification.WhenAppended is { } appended)
+            {
+                WriteSpecificationEvent(writer, "when append", appended);
+            }
+
+            if (specification.ThenEventsInAnyOrder) writer.Line("then events in any order");
+
             foreach (var then in specification.ThenEvents)
             {
                 WriteSpecificationEvent(writer, "then", then);
@@ -89,7 +96,7 @@ public partial class ScreenplayPrinter
     void WriteSpecificationReadModel(ScreenplayWriter writer, string keyword, SpecificationReadModelSyntax readModel)
     {
         using var anchor = writer.Anchor(readModel);
-        writer.Line($"{keyword} readmodel {readModel.Name}");
+        writer.Line($"{keyword} readmodel {readModel.Name}{(readModel.Exactly ? " exactly" : string.Empty)}");
         using (writer.Indent())
         {
             WriteSpecificationValues(writer, readModel.Properties);
@@ -99,7 +106,7 @@ public partial class ScreenplayPrinter
     void WriteSpecificationQuery(ScreenplayWriter writer, SpecificationQuerySyntax query)
     {
         using var anchor = writer.Anchor(query);
-        writer.Line($"then query {query.Query}");
+        writer.Line($"then query {query.Query}{(query.Exactly ? " exactly" : string.Empty)}");
         using (writer.Indent())
         {
             if (query.Arguments.Any())

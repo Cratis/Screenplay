@@ -32,11 +32,22 @@ public static partial class canonical_serialization_golden_vectors
                 })]
             }).ToImmutableArray();
             var identity = new SemanticEventSourceIdentity(destination.Type, SemanticValue.Text("00000000-0000-0000-0000-000000000123"));
-            var specifications = slice.Specifications.Select(specification => specification.Name != "creates an entity from existing state" ? specification : specification with
+
+            // #87 spec actions: an appended event with an explicit source is an ESM v2 occurrence.
+            var specifications = slice.Specifications.Select(specification => specification.Name switch
+            {
+                "appends an event with explicit comparisons" => specification with
+                {
+                    WhenAppended = specification.WhenAppended! with { EventSource = identity },
+                    ThenEvents = [.. specification.ThenEvents.Select(value => value with { EventSource = identity })]
+                },
+                "creates an entity from existing state" => specification with
             {
                 When = specification.When! with { EventSource = identity },
                 GivenEvents = [.. specification.GivenEvents.Select(value => value with { EventSource = identity })],
                 ThenEvents = [.. specification.ThenEvents.Select(value => value with { EventSource = identity })]
+                },
+                _ => specification
             }).ToImmutableArray();
             return slice with
             {

@@ -68,6 +68,9 @@ internal static partial class SpecificationParser
         var given = new List<SpecificationEventSyntax>();
         var givenReadModels = new List<SpecificationReadModelSyntax>();
         SpecificationCommandSyntax? when = null;
+        SpecificationEventSyntax? whenAppended = null;
+        var whenDeclared = false;
+        var eventsInAnyOrder = false;
         var thenEvents = new List<SpecificationEventSyntax>();
         var thenReadModels = new List<SpecificationReadModelSyntax>();
         var thenQueries = new List<SpecificationQuerySyntax>();
@@ -114,17 +117,41 @@ internal static partial class SpecificationParser
 
                     break;
                 case "when":
-                    if (when is not null)
+                    if (whenDeclared)
                     {
-                        context.Error(DiagnosticCodes.DuplicateSpecificationWhen, $"Specification '{name}' already declares a 'when' - a specification can have at most one", line.Location);
+                        context.Error(
+                            whenAppended is not null || line.Content.StartsWith("when append", StringComparison.Ordinal)
+                                ? DiagnosticCodes.ConflictingSpecificationActions : DiagnosticCodes.DuplicateSpecificationWhen,
+                            $"Specification '{name}' already declares a 'when' - a specification can have at most one",
+                            line.Location);
                         context.SkipBlock(line.Indent);
                         break;
                     }
 
-                    when = ParseWhen(context, line);
+                    whenDeclared = true;
+                    if (line.Content.StartsWith("when append", StringComparison.Ordinal))
+                    {
+                        whenAppended = ParseEventReference(context, line, WhenAppendRegex(), "when append");
+                    }
+                    else
+                    {
+                        when = ParseWhen(context, line);
+                    }
                     break;
                 case "then":
-                    if (line.Content.StartsWith("then denied", StringComparison.Ordinal))
+                    if (line.Content.StartsWith("then events", StringComparison.Ordinal))
+                    {
+                        if (line.Content != "then events in any order" || eventsInAnyOrder)
+                        {
+                            context.Error(DiagnosticCodes.InvalidSpecificationEventOrder, "Expected one 'then events in any order' directive.", line.Location);
+                        }
+                        else
+                        {
+                            eventsInAnyOrder = true;
+                        }
+                        context.SkipBlock(line.Indent);
+                    }
+                    else if (line.Content.StartsWith("then denied", StringComparison.Ordinal))
                     {
                         if (line.Content != "then denied")
                         {
@@ -157,7 +184,9 @@ internal static partial class SpecificationParser
             File = file,
             ThenQueries = thenQueries,
             GivenCaller = caller,
-            ThenDenied = denied
+            ThenDenied = denied,
+            WhenAppended = whenAppended,
+            ThenEventsInAnyOrder = eventsInAnyOrder
         };
     }
 
@@ -208,7 +237,7 @@ internal static partial class SpecificationParser
         var match = WhenRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error(DiagnosticCodes.InvalidSpecificationWhen, $"Invalid 'when' declaration '{line.Content}' - expected 'when <CommandType>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidSpecificationWhen, $"Invalid 'when' declaration '{line.Content}' - expected 'when <CommandType>' or 'when append <EventType>'", line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }
@@ -281,7 +310,7 @@ internal static partial class SpecificationParser
         var match = ThenQueryRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error(DiagnosticCodes.InvalidSpecificationQuery, $"Invalid 'then query' declaration '{line.Content}' - expected 'then query <Query>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidSpecificationQuery, $"Invalid 'then query' declaration '{line.Content}' - expected 'then query <Query> [exactly]'", line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }
@@ -318,7 +347,7 @@ internal static partial class SpecificationParser
             }
         }
 
-        return new(match.Groups[1].Value, arguments, results, line.Location);
+        return new(match.Groups[1].Value, arguments, results, line.Location) { Exactly = match.Groups[2].Success };
     }
 
     static SpecificationReadModelSyntax? ParseReadModel(ParserContext context, SourceLine line, Regex regex, string keyword)
@@ -331,7 +360,7 @@ internal static partial class SpecificationParser
             return null;
         }
 
-        return new(match.Groups[1].Value, ParseValues(context, line), line.Location);
+        return new(match.Groups[1].Value, ParseValues(context, line), line.Location) { Exactly = keyword == "then" && match.Groups[2].Success };
     }
 
     static SpecificationEventSyntax? ParseEventReference(ParserContext context, SourceLine line, Regex regex, string keyword)
@@ -423,6 +452,9 @@ internal static partial class SpecificationParser
     [GeneratedRegex(@"^given\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex GivenRegex();
 
+    [GeneratedRegex(@"^when\s+append\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex WhenAppendRegex();
+
     [GeneratedRegex(@"^when\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex WhenRegex();
 
@@ -432,7 +464,7 @@ internal static partial class SpecificationParser
     [GeneratedRegex(@"^then\s+query\b", RegexOptions.None, 1000)]
     private static partial Regex ThenQueryPrefixRegex();
 
-    [GeneratedRegex(@"^then\s+query\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^then\s+query\s+([A-Za-z_]\w*(?:\.\w+)*)(\s+exactly)?$", RegexOptions.None, 1000)]
     private static partial Regex ThenQueryRegex();
 
     [GeneratedRegex(@"^(?:given|then)\s+readmodel\b", RegexOptions.None, 1000)]
@@ -441,7 +473,7 @@ internal static partial class SpecificationParser
     [GeneratedRegex(@"^given\s+readmodel\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex GivenReadModelRegex();
 
-    [GeneratedRegex(@"^then\s+readmodel\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^then\s+readmodel\s+([A-Z]\w*)(\s+exactly)?$", RegexOptions.None, 1000)]
     private static partial Regex ThenReadModelRegex();
 
     [GeneratedRegex("^then\\s+error\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
