@@ -26,7 +26,7 @@ projection ProjectSummaryProjection => ProjectSummary
     name = name
 ```
 
-Anything more - children, nested objects, joins, removals, `every` and `all`, event-source, literal and composite keys, and every mapping kind - binds to a *scoped* shape. A scope holds one level's transitions, joins, child collections, nested objects, `every` mappings, removals and join removals, and a child collection or nested object carries a scope of its own:
+Anything more - children, nested objects, joins, removals, `every` and `all`, variants, event-source, literal and composite keys, and every mapping kind - binds to a *scoped* shape. A scope holds one level's transitions, joins, child collections, nested objects, `every` mappings, removals and join removals, and a child collection or nested object carries a scope of its own:
 
 ```screenplay
 projection OrderDetails => OrderView
@@ -54,6 +54,10 @@ projection OrderDetails => OrderView
 
 What a block means depends on the level it sits in. `remove with` deletes the instance at the top, removes one child inside `children`, and clears a nested object back to null inside `nested`. Keys inside `children` identify the child, and `parent` identifies the parent - the event source when it is left out. Inside `nested`, keys keep addressing the enclosing instance, because a nested object lives in the same document.
 
+## Variants
+
+A [variant group](variants.md) binds as one independent scoped projection per variant read model. Only the variant's `enters on` events can create an instance. Shared projection-level handlers merge before reclassification: all other `from` handlers become update-only joins correlated on the variant's identifier using the handler's event key (or event source identity). Sibling entering events remove the variant's instance by event source identity. The projection's ESM name/address is length-prefixed (`8:WorkItem:BacklogItem`) to keep each variant's semantic identity distinct; the read model is simply `BacklogItem`. This mirrors Chronicle's client SDK reclassifier. Chronicle's textual declaration-language visitor does not yet lower variants ([Cratis/Chronicle#4109](https://github.com/Cratis/Chronicle/issues/4109)).
+
 ## Joins, `every` and `all`
 
 A join never creates an instance. When a joined event arrives, every existing instance whose `on` property equals the joined event's source is updated. When a `from` event sets that property, the latest joined event is read again, so a customer registered before the order still names it. The identifier written directly after `join` is not part of the definition - Chronicle's lowering discards it.
@@ -73,7 +77,6 @@ Each of these is reported with a precise message rather than bound and ignored:
 | `parent` outside `children` | Chronicle never reads it there. |
 | A second `every` or `all` on one level | Chronicle keeps only the last at the top and merges them below; the semantic model admits one. |
 | `sequence` | Which event sequence a projection observes is a realization concern, not portable behavior. |
-| `variant` | Chronicle's lowering has no variants yet. |
 | Dynamic dictionary keys such as `counts.$eventContext.eventType.id` | The semantic model has no dictionary-keyed target. |
 
 Everything that binds is either executed by the reference evaluator or blocks its execution plan - it is never bound and then skipped. The evaluator does not execute a `remove via join` on a projection's own level (Chronicle's engine wires it as a child removal although these pages promise a delete), a join, child collection or `remove via join` inside a nested object (Chronicle's engine does not wire them), `all` beside removals or child levels, or event-context values other than the event source, which ESM v1 facts carry no occurrence context for. Specification events carry no event source in ESM v1 either, so a specification that builds an event-source-keyed projection from `given` events fails instead of guessing an identity.

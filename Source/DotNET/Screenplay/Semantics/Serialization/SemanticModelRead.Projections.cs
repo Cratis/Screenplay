@@ -72,6 +72,7 @@ internal static partial class SemanticModelRead
         var seen = NewSeen();
         SemanticId eventContract = default;
         SemanticId on = default;
+        SemanticProjectionKey? key = null;
         ImmutableArray<SemanticProjectionMapping> mappings = default;
         while (NextProperty(ref reader, seen, "projection join") is { } property)
         {
@@ -80,12 +81,13 @@ internal static partial class SemanticModelRead
                 case "eventContract": eventContract = SemanticId.Parse(String(ref reader, property)); break;
                 case "on": on = SemanticId.Parse(String(ref reader, property)); break;
                 case "mappings": mappings = Array(ref reader, ProjectionMapping, property); break;
+                case "key": RequiredToken(ref reader, JsonTokenType.StartObject, property); key = ProjectionKey(ref reader); break;
                 default: throw Unknown(property, "projection join");
             }
         }
 
         Required(eventContract.IsSet && on.IsSet && !mappings.IsDefault, "projection join");
-        return new(eventContract, on, mappings);
+        return new(eventContract, on, mappings) { Key = key };
     }
 
     static SemanticProjectionChildren ProjectionChildren(ref Utf8JsonReader reader)

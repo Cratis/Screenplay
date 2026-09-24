@@ -558,12 +558,12 @@ itself what an unresolvable one means.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0268` | Error | Source syntax carries portable behavior ESM v1 cannot represent, including a specification `for <value>` event-source assertion reserved for ESM v2 (#226), an unsupported validation rule, concept `require`, command `require` or production conditions over read-model paths (#129), date/`today` conditions, non-deterministic `$env` conditions, `$context` tag values (#226), and code validation (see [Commands](commands.md#what-the-executable-model-admits)). |
+| `PLAY0268` | Error | Source syntax carries portable behavior ESM v1 cannot represent, including unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` or production conditions over read-model paths (#129), date/`today` conditions, non-deterministic `$env` conditions, `$context` tag values, and code validation (see [Commands](commands.md#what-the-executable-model-admits)). |
 | `PLAY0269` | Information | Source syntax is explicitly deferred from the current backend semantic profile. |
 | `PLAY0270` | Information | Source syntax is realization or operational metadata rather than portable behavior. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly. |
 | `PLAY0272` | Error | Source syntax requires an explicit reviewed semantic migration before binding. |
-| `PLAY0273` | Error | Syntax and identity information cannot produce a coherent semantic compilation. |
+| `PLAY0273` | Error | Syntax and identity information cannot produce a coherent semantic compilation, including an event-source `for` assertion without one unambiguous required scalar command destination type. |
 | `PLAY0274` | Error | A syntax location cannot be mapped to a supplied semantic source document. |
 
 ### Specification event-source assertions
@@ -696,6 +696,8 @@ An inline `on` block is an anonymous behavior, so it has no name to report again
 |---|---|---|
 | `PLAY0366` | Error | A bare named `matches` pattern is not defined; only `email` is defined. Use a quoted ECMAScript pattern for custom matching. |
 | `PLAY0367` | Error | A quoted `matches` operand is not a valid ECMAScript regular expression. |
+| `PLAY0368` | Error | A validation rule names a severity other than `information`, `warning` or `error`. |
+| `PLAY0369` | Error | A `require` body has an invalid or repeated `severity` directive. |
 
 ### Projection binding
 
@@ -703,6 +705,10 @@ An inline `on` block is an anonymous behavior, so it has no name to report again
 |---|---|---|
 | `PLAY0380` | Warning | A projection construct binds, but Chronicle's projection lowering drops part of it: `all` inside a `children` or `nested` block loses its subscription to every event type and behaves as `every`, and an `automap` or `no automap` on a joined event is replaced by the auto-map of the level the join sits in. |
 | `PLAY0381` | Warning | A projection-level `key` is parsed but does not route events in Chronicle or the executable semantic model. Declare keys on each `from` (or its events). |
+| `PLAY0382` | Error | A variant declares no `enters on` event. |
+| `PLAY0383` | Error | A projection-level shared handler maps a property absent from a variant's known read-model shape. Unknown shapes remain undecided. |
+| `PLAY0384` | Error | Two variants in one projection have the same name. |
+| `PLAY0385` | Error | An entering event is claimed more than once in one projection. |
 
 ### Constraints in the semantic model
 

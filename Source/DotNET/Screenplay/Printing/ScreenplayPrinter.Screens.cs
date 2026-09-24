@@ -12,6 +12,7 @@ public partial class ScreenplayPrinter
 {
     void WriteScreen(ScreenplayWriter writer, ScreenSyntax screen)
     {
+        using var anchor = writer.Anchor(screen);
         writer.Line($"screen {screen.Name}");
         using (writer.Indent())
         {
@@ -29,6 +30,7 @@ public partial class ScreenplayPrinter
 
     void WriteScreenDirective(ScreenplayWriter writer, ScreenDirectiveSyntax directive)
     {
+        using var anchor = writer.Anchor(directive);
         switch (directive)
         {
             case ScreenDataSyntax data:
@@ -83,6 +85,7 @@ public partial class ScreenplayPrinter
 
     void WriteScreenAction(ScreenplayWriter writer, ScreenActionSyntax action)
     {
+        using var anchor = writer.Anchor(action);
         writer.Line($"action {action.Command}");
         if (action.Label is null && action.Navigate is null)
         {
@@ -105,12 +108,13 @@ public partial class ScreenplayPrinter
 
     void WriteScreenTemplateReference(ScreenplayWriter writer, ScreenTemplateReferenceSyntax template)
     {
+        using var anchor = writer.Anchor(template);
         writer.Line($"template {template.Name}");
         using (writer.Indent())
         {
             foreach (var slot in template.Slots)
             {
-                writer.Line(slot.Name);
+                writer.Line(slot.Name, slot);
                 using (writer.Indent())
                 {
                     foreach (var directive in slot.Directives)
@@ -124,6 +128,7 @@ public partial class ScreenplayPrinter
 
     void WriteScreenSection(ScreenplayWriter writer, ScreenSectionSyntax section)
     {
+        using var anchor = writer.Anchor(section);
         writer.Line($"section {section.Name}");
         using (writer.Indent())
         {
@@ -136,14 +141,17 @@ public partial class ScreenplayPrinter
 
     void WriteScreenTable(ScreenplayWriter writer, ScreenTableSyntax table)
     {
+        using var anchor = writer.Anchor(table);
         writer.Line($"table {table.Target}");
         using (writer.Indent())
         {
             foreach (var column in table.Columns)
             {
-                writer.Line(column.Label is null
-                    ? $"column {column.Property}"
-                    : $"column {column.Property} label {ScreenplaySyntaxText.LocalizableString(column.Label)}");
+                writer.Line(
+                    column.Label is null
+                        ? $"column {column.Property}"
+                        : $"column {column.Property} label {ScreenplaySyntaxText.LocalizableString(column.Label)}",
+                    column);
             }
 
             if (table.RowClick is not null)
@@ -165,12 +173,13 @@ public partial class ScreenplayPrinter
 
     void WriteScreenSummary(ScreenplayWriter writer, ScreenSummarySyntax summary)
     {
+        using var anchor = writer.Anchor(summary);
         writer.Line($"summary {summary.Target}");
         using (writer.Indent())
         {
             foreach (var field in summary.Fields)
             {
-                writer.Line($"field {field.Property} label {ScreenplaySyntaxText.LocalizableString(field.Label)}");
+                writer.Line($"field {field.Property} label {ScreenplaySyntaxText.LocalizableString(field.Label)}", field);
             }
         }
     }

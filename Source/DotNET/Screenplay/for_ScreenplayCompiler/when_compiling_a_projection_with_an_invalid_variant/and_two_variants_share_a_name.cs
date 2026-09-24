@@ -23,5 +23,5 @@ public class and_two_variants_share_a_name : given.a_compiler
     void Because() => _result = _compiler.CompileProjection(Source);
 
     [Fact] void should_report_the_duplicate_variant_name() =>
-        _result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.DuplicateProjectionVariantName);
+        _result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.DuplicateProjectionVariant);
 }

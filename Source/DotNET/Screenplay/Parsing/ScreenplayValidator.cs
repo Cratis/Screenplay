@@ -107,6 +107,7 @@ internal static class ScreenplayValidator
         CommandConsistencyValidator.Validate(declarations, context);
         EventFieldConsistencyValidator.Validate(declarations, context);
         ProjectionCompletenessValidator.Validate(declarations, context);
+        ProjectionVariantValidator.Validate(declarations, context);
         SpecificationValueConsistencyValidator.Validate(declarations, context);
         SpecificationOutcomeConsistencyValidator.Validate(declarations, context);
         var knownQueries = scopedSlices.SelectMany(entry => entry.Slice.Queries.Select(query => new Declaration(query.Name, entry.Scope))).ToList();

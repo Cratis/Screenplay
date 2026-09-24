@@ -69,8 +69,12 @@ public static partial class canonical_serialization_golden_vectors
                 SemanticPrimitiveType.DecimalNumber,
                 [],
                 [
-                    new(default, SemanticValidationRuleKind.Minimum, SemanticValue.Number(-999.5000m), "Amount is too small"),
-                    new(default, SemanticValidationRuleKind.Maximum, SemanticValue.Number(999.5000m), "Amount is too large")
+
+                    // #227 severities: all three levels, with error omitted from canonical JSON.
+                    new(default, SemanticValidationRuleKind.Minimum, SemanticValue.Number(-999.5000m), "Amount is too small") { Severity = SemanticValidationSeverity.Information },
+                    new(default, SemanticValidationRuleKind.Maximum, SemanticValue.Number(999.5000m), "Amount is too large") { Severity = SemanticValidationSeverity.Warning }
+
+                    // End #227 severities
                 ]),
             new SemanticConcept(
                 textConcept,
@@ -173,10 +177,10 @@ public static partial class canonical_serialization_golden_vectors
                     Tags = ["conditional"]
                 }])
         {
-            // #210 conditions: the same tree is used by command-wide requirements.
+            // #210 conditions / #227 severities: requirements serialize non-default levels as well.
             Requirements = [new(new SemanticComparison(
                 new(commandAmount, null), SemanticComparisonOperator.GreaterThan, new(default, SemanticValue.Number(0))),
-                "Amount must be positive")]
+                "Amount must be positive") { Severity = SemanticValidationSeverity.Warning }]
         };
 
         var entitySummary = new SemanticReadModel(
@@ -441,7 +445,10 @@ public static partial class canonical_serialization_golden_vectors
         // end #209 validation
         // #211 projection blocks: the scoped projection shape lives in its own slice and composite types.
         var projectionBlocks = CreateProjectionBlocks(applicationIdentity, uuidConcept, textConcept, decimalNumberConcept);
-        var nestedFeature = new SemanticFeature(Id(32), "Nested", [], [stateView, stateChange, validation, projectionBlocks.Slice]);
+
+        // #185 variants
+        var variants = CreateVariants(applicationIdentity, uuidConcept, textConcept);
+        var nestedFeature = new SemanticFeature(Id(32), "Nested", [], [stateView, stateChange, validation, projectionBlocks.Slice, variants]);
         var application = new SemanticApplication(
             Id(1),
             "Canonical Golden Application",

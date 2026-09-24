@@ -17,9 +17,10 @@ command <Name>
   [authorize <PolicyName> [<PolicyName>]*]
 
   [validate
-    <rule> message "<message>"
+    <rule> [severity information|warning|error] [message "<message>"]
     require <condition>              ← a rule about the command as a whole
-      [message "<message>"]
+      [severity information|warning|error]
+      [message "<message>"|$strings.<key>]
     ...]
 
   [validate csharp
@@ -135,12 +136,12 @@ Declarative validation covers the common cases without code:
 
 `matches "<regex>"` uses ECMAScript regular expression syntax. Like JavaScript `RegExp.test`, it succeeds if **any part** of the text matches; use `^` and `$` to require a whole-value match. Patterns are checked at binding, and an execution timeout rejects rather than accepting the value. It applies only to a single text value (not an enum or collection). `matches email` expands to `^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$`: exactly one `@`, a non-empty local part without whitespace or `@`, and a domain with at least two non-empty dot-separated parts without whitespace or `@`. This is a conservative pattern, **not** RFC 5322 email validation. Other bare names have no definition and are rejected; quote a pattern to use a custom regular expression.
 
-Every rule carries a `message` shown when it fails:
+A rule may have a `message` shown when it fails. Add `severity information`, `severity warning` or `severity error` before the optional end-of-line `message`. The default is `error`; the printer omits it. Message remains last so its quoted text or `$strings` key is unambiguous:
 
 ```screenplay
 validate
   invoiceNumber not empty                  message "Invoice number is required"
-  invoiceNumber matches "^INV-[0-9]{6}$"  message "Invoice number must match INV-000000"
+  invoiceNumber matches "^INV-[0-9]{6}$"  severity warning message "Invoice number must match INV-000000"
   dueDate > today                          message "Due date must be in the future"
 ```
 
@@ -168,7 +169,18 @@ validate
     message "The month cannot be started yet"
 ```
 
-The message goes in the body rather than on the end of the line. A condition is as long as the rule it states, and a message pushed out past it is the part nobody reads.
+The message and optional severity go in the body rather than on the end of the line. A condition is as long as the rule it states, and metadata pushed out past it is the part nobody reads. Use a quoted literal or an unquoted `$strings.<key>` for the message. Write `severity warning` or `severity information` as a sibling of `message` (in either order); omitting severity means `error`:
+
+```screenplay
+command ConfirmOrder
+  total Decimal
+  validate
+    require total > 0
+      severity warning
+      message $strings.orders.totalMustBePositive
+```
+
+Every failed rule and requirement **rejects** the command, even at warning or information severity. A rejection carries each failed rule's message and severity for UI presentation; severity is not a pass/fail threshold.
 
 An operand is either a property of the command or a path into state the command declares it reads. Anything else is a warning — a requirement a reader cannot resolve says less than it appears to. A rule whose logic is not a comparison at all still belongs in a named `rule` or an inline block, as below; `require` is for the rules that *can* be stated.
 
@@ -289,7 +301,7 @@ The meaning is fixed so every target agrees:
 - An absent value of an optional property satisfies every rule except `not empty` — presence is what `not empty` states. An empty collection satisfies `all >` and `all >=`.
 - Text length counts UTF-16 code units, the length .NET and JavaScript both report.
 - An operand is a literal. A property reference is not admitted, and an operand that does not fit the property's type — `quantity min 1.5` on an `Int`, `status == "pending"` on an enum without that member — is a binding error (`PLAY0273`) on the rule.
-- A failed rule rejects the command with its `message`; a rule without one gets a generated description.
+- A failed rule rejects the command at every severity, with its `message` (or a generated description) and its severity.
 
 Still rejected, and why:
 
@@ -339,7 +351,7 @@ Declares what events a command emits. Supports single, multiple, and conditional
 ```screenplay
 produces InvoiceRegistered
   invoiceId     = invoiceId              // from command property
-  registeredAt  = $context.occurred      // from event context
+  registeredAt  = $context.occurred      // event occurrence time
   registeredBy  = $context.identity.id  // caller identity
   source        = $env.SERVICE_NAME      // environment variable
   status        = "draft"                // string constant
@@ -348,7 +360,7 @@ produces InvoiceRegistered
 
 ### Tags
 
-`tag` lines before the mappings attach [tags](events.md#tags) to the event appended by this specific production. ESM v1 carries literal tags as ordered append metadata, not event payload; `$context` tag values require v2 (#226):
+`tag` lines before the mappings attach [tags](events.md#tags) to the event appended by this specific production. ESM carries literal tags as ordered append metadata, not event payload; computed `$context` tag values are not yet admitted:
 
 ```screenplay
 produces InvoiceRegistered
@@ -372,7 +384,7 @@ produces InvoiceRegistered
 | Numeric constant | `= 0` | Literal number |
 | Expression | `= lines.sum(l => l.quantity * l.unitPrice)` | Computed value |
 
-Every `$context.` path names a member of the `CommandContext` an inline handler compiles against — see [Contexts](context.md).
+Every `$context.` path names a member of the `CommandContext` an inline handler compiles against — see [Contexts](context.md). The ESM v2 `produces` subset is narrower: occurrence time and the three audit identity fields (`identity.id`/`causedBy.subject`, `name`, `userName`). Other entries above remain syntax-only for portable produces mappings and report `PLAY0268`. Explicit `for <command-identifier>` binds a typed state-change destination separately from event properties. When the event does not duplicate that identifier as a payload property, it selects ESM v2; historical v1 models that copy it into both places retain their canonical v1 bytes. Produced v2 facts carry the identity in event context even when the payload has no ID.
 
 ### Where an event lands
 
@@ -411,7 +423,7 @@ produces InvoiceRunningTotalUpdated
 
 ### Conditional produces
 
-`produces when <condition>` emits the indented event only when the condition holds. In ESM v1, comparisons use declared command properties and constants with `==`, `!=`, `>`, `>=`, `<`, `<=`, combined with `and`/`or` (`and` binds tighter; parentheses group). Ordering is numeric; equality admits scalar text, enumeration, number and Boolean. `$env` conditions remain syntax-only because environment values vary across realizations. `$context` waits on v2 (#226), and paths into reads wait on #129:
+`produces when <condition>` emits the indented event only when the condition holds. In ESM v1, comparisons use declared command properties and constants with `==`, `!=`, `>`, `>=`, `<`, `<=`, combined with `and`/`or` (`and` binds tighter; parentheses group). Ordering is numeric; equality admits scalar text, enumeration, number and Boolean. `$env` conditions remain syntax-only because environment values vary across realizations. the supported scalar `$context` mappings select v2 (#226), and paths into reads wait on #129:
 
 ```screenplay
 produces when isProForma == true

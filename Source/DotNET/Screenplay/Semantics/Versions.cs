@@ -209,7 +209,7 @@ static class VersionParser
     {
         if (!TryParse(value, out LanguageVersion version))
         {
-            throw new InvalidSemanticContract($"'{value}' is not a canonical language version supported by ESM schema v1.");
+            throw new InvalidSemanticContract($"'{value}' is not a canonical language version supported by ESM schema v1 or v2.");
         }
 
         return version;
@@ -219,7 +219,7 @@ static class VersionParser
     {
         if (!TryParse(value, out SemanticVersion version))
         {
-            throw new InvalidSemanticContract($"'{value}' is not a canonical semantic version supported by ESM schema v1.");
+            throw new InvalidSemanticContract($"'{value}' is not a canonical semantic version supported by ESM schema v1 or v2.");
         }
 
         return version;
@@ -229,7 +229,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV1Support.Supports(version))
+        if (success && !EsmSchemaV2Support.Supports(version))
         {
             version = default;
             return false;
@@ -242,7 +242,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV1Support.Supports(version))
+        if (success && !EsmSchemaV2Support.Supports(version))
         {
             version = default;
             return false;

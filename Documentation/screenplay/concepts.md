@@ -81,7 +81,7 @@ A concept can declare validation rules in an optional indented body — business
 concept EmailAddress : String @pii
   validate
     not empty          message "Email is required"
-    matches email      message "Must be a valid email address"
+    matches email      severity warning message "Must be a valid email address"
   validate csharp
     ```
     string email = context.Value;
@@ -91,6 +91,8 @@ concept EmailAddress : String @pii
     }
     ```
 ````
+
+The optional severity (`information`, `warning` or `error`) comes before a rule's message and defaults to `error`. A failing concept rule rejects a command even if its severity is `warning` or `information`; the level only controls how the failure is presented. The printer omits the default.
 
 The named `email` pattern has the fixed ECMAScript definition documented under [command validation](commands.md#validation-rules); it is not RFC 5322 validation. A quoted ECMAScript pattern is also allowed. Both forms apply only to a text concept, and a match without anchors can match a substring.
 

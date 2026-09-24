@@ -1,8 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Cratis.Screenplay.Diagnostics;
-
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder;
 
 public class when_binding_specification_event_source_syntax : given.a_semantic_binder
@@ -32,11 +30,11 @@ public class when_binding_specification_event_source_syntax : given.a_semantic_b
 
     void Because() => _result = Bind(Source);
 
-    [Fact] void should_fail_closed() => _result.Success.ShouldBeFalse();
-    [Fact] void should_report_every_event_source_assertion() => UnsupportedDiagnostics.Length.ShouldEqual(3);
-    [Fact] void should_report_the_exact_assertion_lines() => UnsupportedDiagnostics.Select(diagnostic => diagnostic.Location.Line).Order().ShouldEqual(12, 14, 17);
-    [Fact] void should_report_real_source_columns() => UnsupportedDiagnostics.All(diagnostic => diagnostic.Location.Column > 0).ShouldBeTrue();
-    [Fact] void should_name_the_v2_reservation_and_issue() => UnsupportedDiagnostics.All(diagnostic => diagnostic.Message.Contains("reserved for ESM v2 (issue #226)", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_bind_the_explicit_sources() => _result.Success.ShouldBeTrue();
+    [Fact] void should_choose_the_v2_pair() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V2);
+    [Fact] void should_bind_the_given_source() => Specification.GivenEvents.Single().EventSource.ShouldNotBeNull();
+    [Fact] void should_bind_the_command_source() => Specification.When!.EventSource.ShouldNotBeNull();
+    [Fact] void should_bind_the_expected_source() => Specification.ThenEvents.Single().EventSource.ShouldNotBeNull();
 
-    Diagnostic[] UnsupportedDiagnostics => [.. _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax)];
+    SemanticSpecification Specification => _result.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single().Specifications.Single();
 }

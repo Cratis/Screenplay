@@ -56,14 +56,25 @@ public sealed partial class SemanticModelBinder
                 .SelectMany(_ => _.Requirements ?? [])
                 .Select(requirement => (requirement, condition: BindCondition(requirement.Condition, propertiesByName), validMessage: ValidateStringKey(requirement.Message, requirement.Location)))
                 .Where(_ => _.condition is not null)
-                .Select(_ => new SemanticRequirement(_.condition!, _.requirement.Message))
+                .Select(_ => new SemanticRequirement(_.condition!, _.requirement.Message) { Severity = Severity(_.requirement.Severity) })
                 .ToImmutableArray();
             var produced = command.Produces
                 .Select(value => BindProducedEvent(command, value, propertiesByName, events))
                 .Where(_ => _ is not null)
                 .Select(_ => _!)
                 .ToImmutableArray();
-            return new(id, command.Name, properties, validations, produced) { Requirements = requirements };
+            var typedDestination = command.Produces.Any(value => value.For is PathExpressionSyntax source &&
+                events.TryGetValue(value.Event, out var @event) && !@event.Properties.ContainsKey(source.Path));
+            if (typedDestination) UsesV2 = true;
+            var defaultDestination = typedDestination || UsesV2
+                ? produced.Select(value => value.Destination).OfType<SemanticResolvedExpression>()
+                    .Select(value => properties.Single(property => property.Id == value.Target)).FirstOrDefault()
+                : null;
+            return new(id, command.Name, properties, validations, produced)
+            {
+                Requirements = requirements,
+                Destination = defaultDestination is null ? null : new(defaultDestination.Type, SemanticExpression.Property(SemanticExpressionRootKind.Command, defaultDestination.Id))
+            };
         }
 
         ImmutableArray<SemanticValidationRule> BindValidations(
@@ -130,13 +141,37 @@ public sealed partial class SemanticModelBinder
                     continue;
                 }
 
-                if (BindExpression(mapping.Source, commandProperties, SemanticExpressionRootKind.Command, "produced event mapping") is { } source)
+                var source = mapping.Source is ContextExpressionSyntax context
+                    ? BindOccurrence(context, target.Type)
+                    : BindExpression(mapping.Source, commandProperties, SemanticExpressionRootKind.Command, "produced event mapping");
+                if (source is not null)
                 {
                     mappings.Add(new(target.Id, source));
                 }
             }
 
             return new(@event.Contract.Id, null, destination, mappings.ToImmutable()) { When = when, Tags = tags };
+        }
+
+        SemanticEventContextExpression? BindOccurrence(ContextExpressionSyntax context, SemanticTypeReference target)
+        {
+            // Decision: 0001. Chronicle EventContext carries Occurred and CausedBy, not command tenant or claims.
+            var kind = context.Path switch
+            {
+                "occurred" => SemanticEventContextValueKind.Occurred,
+                "identity.id" or "causedBy.subject" => SemanticEventContextValueKind.CausedBySubject,
+                "identity.name" or "causedBy.name" => SemanticEventContextValueKind.CausedByName,
+                "identity.userName" or "causedBy.userName" => SemanticEventContextValueKind.CausedByUserName,
+                _ => SemanticEventContextValueKind.Unknown
+            };
+            if (kind == SemanticEventContextValueKind.Unknown)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"$context.{context.Path} has no scalar counterpart on Chronicle EventContext (tenant is not namespace; causation, roles and claims are collections or unbounded).", context.Location);
+                return null;
+            }
+
+            UsesV2 = true;
+            return new SemanticEventContextExpression(kind, target);
         }
     }
 }

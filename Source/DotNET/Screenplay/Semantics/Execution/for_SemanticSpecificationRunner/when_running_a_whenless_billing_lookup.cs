@@ -31,8 +31,8 @@ public class when_running_a_whenless_billing_lookup : given.a_bound_register_pro
         };
         var changed = slice with { Specifications = [.. slice.Specifications.Select(_ => _.Id == original.Id ? readOnly : _)] };
         var model = ExecutableSemanticModel.Create(
-            LanguageVersion.V1,
-            SemanticVersion.V1,
+            _plan.Model.LanguageVersion,
+            _plan.Model.SemanticVersion,
             application with { Modules = [module with { Features = [feature with { Slices = [.. feature.Slices.Select(_ => _.Id == slice.Id ? changed : _)] }] }] });
         _result = new SemanticSpecificationRunner().Run(SemanticExecutionPlan.Compile(model).Plan!, readOnly.Id);
     }

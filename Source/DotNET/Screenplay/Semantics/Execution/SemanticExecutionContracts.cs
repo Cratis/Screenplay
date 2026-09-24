@@ -189,6 +189,16 @@ public sealed record SemanticExecutionRequest(
     public bool IsReadOnly { get; init; }
 
     /// <summary>
+    /// Gets the command occurrence context supplied by the caller for v2 execution.
+    /// </summary>
+    public SemanticCommandOccurrence? Occurrence { get; init; }
+
+    /// <summary>
+    /// Gets the typed identity of a caller-allocated event source.
+    /// </summary>
+    public SemanticTypeReference? AllocatedEventSourceType { get; init; }
+
+    /// <summary>
     /// Creates a request that only queries established world state.
     /// </summary>
     /// <param name="queries">Queries to execute.</param>
@@ -232,6 +242,13 @@ public sealed record SemanticAccepted(
     ImmutableArray<SemanticQueryResult> Queries) : SemanticExecutionResult(SemanticExecutionOutcomeKind.Accepted, World);
 
 /// <summary>
+/// Describes one failed validation rule or requirement, including its presentation severity.
+/// </summary>
+/// <param name="Message">The authored or generated message.</param>
+/// <param name="Severity">The presentation severity; every level still rejects.</param>
+public sealed record SemanticValidationFailure(string Message, SemanticValidationSeverity Severity);
+
+/// <summary>
 /// Represents a rejected command.
 /// </summary>
 /// <param name="World">The unchanged world.</param>
@@ -252,6 +269,9 @@ public sealed record SemanticRejected(
     /// locale's paired <c>.strings</c> file (see internationalization.md); it is never display text.
     /// </remarks>
     public bool MessageIsStringKey { get; init; }
+
+    /// <summary>Gets all failed validation rules and requirements in evaluation order.</summary>
+    public ImmutableArray<SemanticValidationFailure> ValidationFailures { get; init; } = [];
 }
 
 /// <summary>

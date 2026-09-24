@@ -1851,6 +1851,16 @@ public static class DiagnosticCodes
     public const string InvalidMatchPattern = "PLAY0367";
 
     /// <summary>
+    /// A validation rule names a severity other than information, warning or error.
+    /// </summary>
+    public const string InvalidValidationSeverity = "PLAY0368";
+
+    /// <summary>
+    /// A command requirement has an invalid or repeated severity directive.
+    /// </summary>
+    public const string InvalidRequirementSeverity = "PLAY0369";
+
+    /// <summary>
     /// A projection construct binds, but Chronicle's projection lowering drops part of it: <c>all</c> inside a
     /// <c>children</c> or <c>nested</c> block loses its subscription to every event type, and an auto-map setting on a
     /// joined event is replaced by the level's.
@@ -1861,6 +1871,26 @@ public static class DiagnosticCodes
     /// A projection-level key is accepted by the parser but is not used to route events by Chronicle.
     /// </summary>
     public const string UnusedProjectionKey = "PLAY0381";
+
+    /// <summary>
+    /// A projection variant has no entering event.
+    /// </summary>
+    public const string VariantRequiresEnteringEvent = "PLAY0382";
+
+    /// <summary>
+    /// A shared projection handler maps a member absent from a known variant shape.
+    /// </summary>
+    public const string GlobalHandlerPropertyNotOnVariant = "PLAY0383";
+
+    /// <summary>
+    /// Two variants of the same projection use the same name.
+    /// </summary>
+    public const string DuplicateProjectionVariant = "PLAY0384";
+
+    /// <summary>
+    /// An entering event activates more than one variant of the same projection.
+    /// </summary>
+    public const string DuplicateVariantEnteringEvent = "PLAY0385";
 
     // Constraints in the semantic model.
 

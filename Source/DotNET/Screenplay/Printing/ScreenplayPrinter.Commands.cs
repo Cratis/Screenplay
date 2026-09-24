@@ -13,6 +13,7 @@ public partial class ScreenplayPrinter
 {
     void WriteCommand(ScreenplayWriter writer, CommandSyntax command)
     {
+        using var anchor = writer.Anchor(command);
         writer.Line($"command {command.Name}");
         using (writer.Indent())
         {
@@ -23,7 +24,7 @@ public partial class ScreenplayPrinter
             // stated against state both read as though the read model were already in scope, because it is.
             foreach (var reads in command.Reads ?? [])
             {
-                writer.Line(reads.By is null ? $"reads {reads.ReadModel}" : $"reads {reads.ReadModel} by {reads.By}");
+                writer.Line(reads.By is null ? $"reads {reads.ReadModel}" : $"reads {reads.ReadModel} by {reads.By}", reads);
             }
 
             if (command.Authorize is not null)
@@ -55,6 +56,7 @@ public partial class ScreenplayPrinter
 
     void WriteConcurrency(ScreenplayWriter writer, ConcurrencySyntax concurrency)
     {
+        using var anchor = writer.Anchor(concurrency);
         writer.Line("concurrency");
         using (writer.Indent())
         {
@@ -88,6 +90,7 @@ public partial class ScreenplayPrinter
 
     void WriteEvent(ScreenplayWriter writer, EventSyntax @event)
     {
+        using var anchor = writer.Anchor(@event);
         writer.Line($"event {@event.Name}");
         using (writer.Indent())
         {
@@ -99,6 +102,7 @@ public partial class ScreenplayPrinter
 
     void WriteQuery(ScreenplayWriter writer, QuerySyntax query)
     {
+        using var anchor = writer.Anchor(query);
         writer.Line($"query {query.Name} => {ScreenplaySyntaxText.QueryReturnType(query)}");
         using (writer.Indent())
         {
@@ -111,7 +115,7 @@ public partial class ScreenplayPrinter
 
             foreach (var filter in query.Filters)
             {
-                writer.Line($"filter {ScreenplaySyntaxText.QueryParameter(filter)}");
+                writer.Line($"filter {ScreenplaySyntaxText.QueryParameter(filter)}", filter);
             }
 
             // What the results are narrowed to comes before who may ask for them - the shape of the answer
@@ -135,6 +139,7 @@ public partial class ScreenplayPrinter
 
     void WritePerformer(ScreenplayWriter writer, PerformerSyntax performer)
     {
+        using var anchor = writer.Anchor(performer);
         writer.Line("performer");
         using (writer.Indent())
         {
@@ -158,6 +163,7 @@ public partial class ScreenplayPrinter
 
     void WriteConstraint(ScreenplayWriter writer, ConstraintSyntax constraint)
     {
+        using var anchor = writer.Anchor(constraint);
         writer.Line($"constraint {constraint.Name}");
         using (writer.Indent())
         {
@@ -198,6 +204,7 @@ public partial class ScreenplayPrinter
 
     void WriteReaction(ScreenplayWriter writer, ReactionSyntax reaction)
     {
+        using var anchor = writer.Anchor(reaction);
         writer.Line($"reaction {reaction.Name}");
         using (writer.Indent())
         {
@@ -217,6 +224,7 @@ public partial class ScreenplayPrinter
 
     void WriteReactionTrigger(ScreenplayWriter writer, ReactionTriggerSyntax trigger)
     {
+        using var anchor = writer.Anchor(trigger);
         writer.Line(ScreenplaySyntaxText.TriggerSource(trigger.Source));
 
         // A trigger with nothing but what sets it off is complete on its own, so it prints as a single line
@@ -244,7 +252,7 @@ public partial class ScreenplayPrinter
 
             foreach (var invokes in trigger.Invokes ?? [])
             {
-                writer.Line($"invokes {invokes.Command}");
+                writer.Line($"invokes {invokes.Command}", invokes);
                 using (writer.Indent())
                 {
                     WriteMappings(writer, invokes.Mappings, ReservedWords.MappingBlock);
@@ -268,12 +276,12 @@ public partial class ScreenplayPrinter
         foreach (var property in properties)
         {
             var modifier = property.IsIdentifier ? $" {PropertySyntax.IdentifierModifier}" : string.Empty;
-            writer.Line($"{ReservedWords.Escape(property.Name, reserved)} {ScreenplaySyntaxText.TypeRef(property.Type)}{modifier}");
+            writer.Line($"{ReservedWords.Escape(property.Name, reserved)} {ScreenplaySyntaxText.TypeRef(property.Type)}{modifier}", property);
         }
     }
 
     void WriteAuthorize(ScreenplayWriter writer, AuthorizeSyntax authorize) =>
-        writer.Line($"authorize {ScreenplaySyntaxText.PolicyRequirement(authorize.Requirement)}");
+        writer.Line($"authorize {ScreenplaySyntaxText.PolicyRequirement(authorize.Requirement)}", authorize);
 
     void WriteValidate(ScreenplayWriter writer, ValidateSyntax validate, bool impliedSubject = false)
     {
@@ -292,11 +300,19 @@ public partial class ScreenplayPrinter
                     foreach (var requirement in declarative.Requirements ?? [])
                     {
                         writer.Line($"require {ScreenplaySyntaxText.Condition(requirement.Condition)}");
-                        if (requirement.Message is not null)
+                        if (requirement.Message is not null || requirement.Severity != ValidationSeverity.Error)
                         {
                             using (writer.Indent())
                             {
-                                writer.Line($"message {StringLiteral.Quote(requirement.Message)}");
+                                if (requirement.Severity != ValidationSeverity.Error)
+                                {
+                                    writer.Line(ScreenplaySyntaxText.Severity(requirement.Severity).TrimStart());
+                                }
+
+                                if (requirement.Message is not null)
+                                {
+                                    writer.Line($"message {ScreenplaySyntaxText.LocalizableString(requirement.Message)}");
+                                }
                             }
                         }
                     }
@@ -360,6 +376,7 @@ public partial class ScreenplayPrinter
 
     void WriteProduces(ScreenplayWriter writer, ProducesSyntax produces)
     {
+        using var anchor = writer.Anchor(produces);
         if (produces.When is null)
         {
             writer.Line($"produces {produces.Event}");
@@ -397,6 +414,7 @@ public partial class ScreenplayPrinter
 
     void WriteHandler(ScreenplayWriter writer, HandlerSyntax handler)
     {
+        using var anchor = writer.Anchor(handler);
         writer.Line("handler");
         using (writer.Indent())
         {
@@ -422,7 +440,7 @@ public partial class ScreenplayPrinter
     {
         foreach (var mapping in mappings)
         {
-            writer.Line($"{ReservedWords.Escape(mapping.Property, reserved)} = {ScreenplaySyntaxText.Expression(mapping.Source)}");
+            writer.Line($"{ReservedWords.Escape(mapping.Property, reserved)} = {ScreenplaySyntaxText.Expression(mapping.Source)}", mapping);
         }
     }
 
@@ -430,7 +448,7 @@ public partial class ScreenplayPrinter
     {
         foreach (var tag in tags ?? [])
         {
-            writer.Line($"tag {ScreenplaySyntaxText.Tag(tag)}");
+            writer.Line($"tag {ScreenplaySyntaxText.Tag(tag)}", tag);
         }
     }
 }

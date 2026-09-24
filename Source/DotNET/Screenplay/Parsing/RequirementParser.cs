@@ -34,6 +34,8 @@ internal static partial class RequirementParser
 
         var condition = ConditionParser.Parse(context, match.Groups[1].Value, line.Location);
         string? message = null;
+        var severity = ValidationSeverity.Error;
+        var hasSeverity = false;
 
         // The message goes in the body rather than on the end of the line - a condition is as long as the
         // rule it states, and a message pushed out past it is the part nobody reads.
@@ -42,23 +44,48 @@ internal static partial class RequirementParser
             context.Reader.TakeSignificant();
             if (MessageRegex().Match(child.Content) is { Success: true } text)
             {
-                message = StringLiteral.Unescape(text.Groups[1].Value);
+                message = text.Groups[1].Success ? StringLiteral.Unescape(text.Groups[1].Value) : text.Groups[2].Value;
+                continue;
+            }
+
+            if (child.Content.StartsWith("severity", StringComparison.Ordinal))
+            {
+                if (hasSeverity)
+                {
+                    context.Error(DiagnosticCodes.InvalidRequirementSeverity, "A requirement can specify severity only once", child.Location);
+                    continue;
+                }
+
+                hasSeverity = true;
+                severity = child.Content switch
+                {
+                    "severity information" => ValidationSeverity.Information,
+                    "severity warning" => ValidationSeverity.Warning,
+                    "severity error" => ValidationSeverity.Error,
+                    _ => (ValidationSeverity)(-1)
+                };
+                if (severity == (ValidationSeverity)(-1))
+                {
+                    context.Error(DiagnosticCodes.InvalidRequirementSeverity, $"Invalid requirement severity '{child.Content}' - expected severity information, warning or error", child.Location);
+                    severity = ValidationSeverity.Error;
+                }
+
                 continue;
             }
 
             context.Error(
                 DiagnosticCodes.UnknownRequirementDirective,
-                $"Unexpected '{child.Content}' in requirement body - expected 'message \"<text>\"'",
+                $"Unexpected '{child.Content}' in requirement body - expected 'message \"<text>\"' or 'message $strings.<key>'",
                 child.Location);
             context.SkipBlock(child.Indent);
         }
 
-        return condition is null ? null : new RequirementSyntax(condition, message, line.Location);
+        return condition is null ? null : new RequirementSyntax(condition, message, line.Location) { Severity = severity };
     }
 
     [GeneratedRegex(@"^require\s+(\S.*)$", RegexOptions.None, 1000)]
     private static partial Regex RequireRegex();
 
-    [GeneratedRegex("^message\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^message\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\S*))$", RegexOptions.None, 1000)]
     private static partial Regex MessageRegex();
 }

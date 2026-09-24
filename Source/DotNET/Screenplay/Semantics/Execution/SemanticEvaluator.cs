@@ -41,18 +41,32 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, contractRejection);
         }
 
-        if (ValidateRules(plan, command, request.Values) is { } validationRejection)
+        if (plan.Model.SemanticVersion == SemanticVersion.V2 && command.Destination is null &&
+            request.AllocatedEventSourceType is { } suppliedType &&
+            command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type is { } identityType && suppliedType != identityType)
         {
-            return RejectWithMessage(world, SemanticRejectionCategory.Validation, null, validationRejection);
+            return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Allocated event source type differs from the command identifier type.");
         }
 
+        var failures = ValidateRules(plan, command, request.Values).ToBuilder();
         var commandValues = request.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
         foreach (var requirement in command.Requirements)
         {
             if (!SemanticConditionEvaluation.Evaluate(requirement.Condition, commandValues))
             {
-                return RejectWithMessage(world, SemanticRejectionCategory.Validation, null, requirement.Message ?? "Command requirement was not met.");
+                failures.Add(new(requirement.Message ?? "Command requirement was not met.", requirement.Severity));
             }
+        }
+
+        if (failures.Count > 0)
+        {
+            var message = failures[0].Message;
+            return RejectWithMessage(world, SemanticRejectionCategory.Validation, null, message) with { ValidationFailures = failures.ToImmutable() };
+        }
+
+        if (command.Produces.Any(produced => produced.Mappings.Any(mapping => mapping.Source is SemanticEventContextExpression)) && request.Occurrence is null)
+        {
+            return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A v2 command using $context needs an occurrence supplied by the execution request.");
         }
 
         var facts = ImmutableArray.CreateBuilder<SemanticFact>();
@@ -64,9 +78,10 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                 continue;
             }
 
-            var destination = produced.Destination is null
+            var destinationExpression = produced.Destination ?? command.Destination?.Value;
+            var destination = destinationExpression is null
                 ? request.AllocatedIdentities.GetValueOrDefault(command.Id)
-                : Evaluate(produced.Destination, SemanticExpressionRootKind.Command, commandValues);
+                : Evaluate(destinationExpression, SemanticExpressionRootKind.Command, commandValues);
             if (destination is null)
             {
                 return new SemanticUnsupported(
@@ -75,13 +90,41 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                     $"Command '{command.Name}' requires one deterministic allocated destination.");
             }
 
+            if (plan.Model.SemanticVersion == SemanticVersion.V2 && destinationExpression is null &&
+                command.Destination is null && request.AllocatedEventSourceType is null)
+            {
+                return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A v2 allocated event source requires its declared scalar identity type.");
+            }
+
             var values = produced.Mappings
                 .Select(mapping => new SemanticPropertyValue(
                     mapping.TargetProperty,
-                    Evaluate(mapping.Source, SemanticExpressionRootKind.Command, commandValues)))
+                    Evaluate(mapping.Source, SemanticExpressionRootKind.Command, commandValues, request.Occurrence)))
                 .ToImmutableArray();
+            if (produced.Mappings.Any(mapping => mapping.Source is SemanticEventContextExpression))
+            {
+                var validator = new SemanticValueValidator(
+                    plan.Model.Application.Concepts.ToDictionary(concept => concept.Id),
+                    plan.Model.Application.Types.ToDictionary(type => type.Id));
+                var properties = plan.Events[produced.EventContract].Properties.ToDictionary(property => property.Id);
+                foreach (var mapped in produced.Mappings.Zip(values).Where(pair => pair.First.Source is SemanticEventContextExpression))
+                {
+                    try
+                    {
+                        validator.Validate(mapped.Second.Value, properties[mapped.Second.TargetProperty].Type, "event occurrence mapping");
+                    }
+                    catch (InvalidSemanticContract exception)
+                    {
+                        return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, exception.Message);
+                    }
+                }
+            }
+
             facts.Add(new SemanticFact(produced.EventContract, destination, values)
             {
+                Context = plan.Model.SemanticVersion == SemanticVersion.V2
+                    ? new(new(DestinationType(command, destinationExpression, request.AllocatedEventSourceType), destination))
+                    : null,
                 Tags = plan.Events[produced.EventContract].Tags.AddRange(produced.Tags)
             });
         }
@@ -193,18 +236,19 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         return null;
     }
 
-    static string? ValidateRules(
+    static ImmutableArray<SemanticValidationFailure> ValidateRules(
         SemanticExecutionPlan plan,
         SemanticCommand command,
         ImmutableArray<SemanticPropertyValue> values)
     {
         var valuesByTarget = values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
+        var failures = ImmutableArray.CreateBuilder<SemanticValidationFailure>();
         foreach (var validation in command.Validations)
         {
             var value = valuesByTarget[validation.Property];
             if (!SemanticValidationRules.Satisfies(validation, value))
             {
-                return validation.Message ?? SemanticValidationRules.DefaultMessage(validation, value, "A required value is empty.");
+                failures.Add(new(validation.Message ?? SemanticValidationRules.DefaultMessage(validation, value, "A required value is empty."), validation.Severity));
             }
         }
 
@@ -212,43 +256,55 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         var types = plan.Model.Application.Types.ToDictionary(_ => _.Id);
         foreach (var property in command.Properties)
         {
-            if (ValidateConceptValues(concepts, types, property.Type, valuesByTarget[property.Id]) is { } rejection)
-            {
-                return rejection;
-            }
+            ValidateConceptValues(concepts, types, property.Type, valuesByTarget[property.Id], failures);
         }
 
-        return null;
+        return failures.ToImmutable();
     }
 
     // A concept's rules constrain every value of the concept - directly, as each element of a collection and
     // inside composite values - so they are applied wherever the command carries one.
-    static string? ValidateConceptValues(
+    static void ValidateConceptValues(
         Dictionary<SemanticId, SemanticConcept> concepts,
         Dictionary<SemanticId, SemanticCompositeType> types,
         SemanticTypeReference type,
-        SemanticValue value)
+        SemanticValue value,
+        ImmutableArray<SemanticValidationFailure>.Builder failures)
     {
         if (type.IsCollection)
         {
-            var elementType = type with { IsCollection = false, IsOptional = false };
-            return value is SemanticArrayValue array
-                ? array.Values.Select(element => ValidateConceptValues(concepts, types, elementType, element)).FirstOrDefault(_ => _ is not null)
-                : null;
+            if (value is SemanticArrayValue array)
+            {
+                var elementType = type with { IsCollection = false, IsOptional = false };
+                foreach (var element in array.Values)
+                {
+                    ValidateConceptValues(concepts, types, elementType, element, failures);
+                }
+            }
+
+            return;
         }
 
         switch (type.Kind)
         {
             case SemanticTypeReferenceKind.Concept:
-                var failed = concepts[type.Target].Validations.FirstOrDefault(validation => !SemanticValidationRules.Satisfies(validation, value));
-                return failed is null ? null : failed.Message ?? SemanticValidationRules.DefaultMessage(failed, value, "A required concept value is empty.");
+                foreach (var validation in concepts[type.Target].Validations)
+                {
+                    if (!SemanticValidationRules.Satisfies(validation, value))
+                    {
+                        failures.Add(new(validation.Message ?? SemanticValidationRules.DefaultMessage(validation, value, "A required concept value is empty."), validation.Severity));
+                    }
+                }
+
+                break;
             case SemanticTypeReferenceKind.CompositeType when value is SemanticCompositeValue composite:
                 var properties = types[type.Target].Properties.ToDictionary(_ => _.Id);
-                return composite.Properties
-                    .Select(property => ValidateConceptValues(concepts, types, properties[property.TargetProperty].Type, property.Value))
-                    .FirstOrDefault(_ => _ is not null);
-            default:
-                return null;
+                foreach (var property in composite.Properties)
+                {
+                    ValidateConceptValues(concepts, types, properties[property.TargetProperty].Type, property.Value, failures);
+                }
+
+                break;
         }
     }
 
@@ -369,11 +425,26 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         return true;
     }
 
+    static SemanticTypeReference DestinationType(SemanticCommand command, SemanticExpression? expression, SemanticTypeReference? allocatedType) =>
+        expression is SemanticResolvedExpression resolved
+            ? command.Properties.Single(property => property.Id == resolved.Target).Type
+            : command.Destination?.Type ?? allocatedType ??
+                throw new InvalidSemanticContract("A v2 fact requires a typed state-change destination.");
+
     static SemanticValue Evaluate(
         SemanticExpression expression,
         SemanticExpressionRootKind expectedRoot,
-        Dictionary<SemanticId, SemanticValue> values) => expression switch
+        Dictionary<SemanticId, SemanticValue> values,
+        SemanticCommandOccurrence? occurrence = null) => expression switch
     {
+        SemanticEventContextExpression context when occurrence is not null => context.Value switch
+        {
+            SemanticEventContextValueKind.Occurred => SemanticValue.Text(occurrence.Occurred.UtcDateTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture)),
+            SemanticEventContextValueKind.CausedBySubject => SemanticValue.Text(occurrence.Subject),
+            SemanticEventContextValueKind.CausedByName => SemanticValue.Text(occurrence.Name),
+            SemanticEventContextValueKind.CausedByUserName => SemanticValue.Text(occurrence.UserName),
+            _ => throw new InvalidSemanticContract("An occurrence field is unsupported.")
+        },
         SemanticValueExpression literal => literal.Value,
         SemanticResolvedExpression resolved when resolved.Root == expectedRoot && resolved.Source == SemanticExpressionSourceKind.Property && values.TryGetValue(resolved.Target, out var value) => value,
         _ => throw new InvalidSemanticContract("An execution expression is unresolved in its declared root scope.")

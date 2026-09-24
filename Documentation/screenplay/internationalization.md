@@ -31,7 +31,7 @@ Wherever a value expression is accepted — `produces` mappings, [authentication
 
 In addition, the operands that carry user-facing text accept an unquoted `$strings.<key>` token as an alternative to a string literal:
 
-- the `message` operand of validation rules,
+- the `message` operand of validation rules and command `require` guards,
 - the `label` operand of screen actions, table columns and summary fields,
 - the `title` operand of screens and sections,
 - the `label` operand of a [contribution](contributions.md)'s `contribute to` block,
