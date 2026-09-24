@@ -1872,6 +1872,26 @@ public static class DiagnosticCodes
     /// </summary>
     public const string UnusedProjectionKey = "PLAY0381";
 
+    /// <summary>
+    /// A projection variant has no entering event.
+    /// </summary>
+    public const string VariantRequiresEnteringEvent = "PLAY0382";
+
+    /// <summary>
+    /// A shared projection handler maps a member absent from a known variant shape.
+    /// </summary>
+    public const string GlobalHandlerPropertyNotOnVariant = "PLAY0383";
+
+    /// <summary>
+    /// Two variants of the same projection use the same name.
+    /// </summary>
+    public const string DuplicateProjectionVariant = "PLAY0384";
+
+    /// <summary>
+    /// An entering event activates more than one variant of the same projection.
+    /// </summary>
+    public const string DuplicateVariantEnteringEvent = "PLAY0385";
+
     // Constraints in the semantic model.
 
     /// <summary>

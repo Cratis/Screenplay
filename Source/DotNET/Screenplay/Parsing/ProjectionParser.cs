@@ -115,7 +115,16 @@ internal static partial class ProjectionParser
             .Where(group => group.Count() > 1)
             .SelectMany(group => group.Skip(1)))
         {
-            context.Error(DiagnosticCodes.DuplicateProjectionVariantName, $"Duplicate variant '{duplicate.Name}' - a variant name is declared once", duplicate.Location);
+            context.Error(DiagnosticCodes.DuplicateProjectionVariant, $"Duplicate variant '{duplicate.Name}' - a variant name is declared once", duplicate.Location);
+        }
+
+        var entering = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var entry in blocks.OfType<ProjectionVariantSyntax>().SelectMany(variant => variant.EntersOn))
+        {
+            if (!string.IsNullOrEmpty(entry.Event) && !entering.Add(entry.Event))
+            {
+                context.Error(DiagnosticCodes.DuplicateVariantEnteringEvent, $"Entering event '{entry.Event}' is claimed more than once in projection '{name}'", entry.Location);
+            }
         }
 
         if (blocks.Count == 0)
@@ -407,7 +416,7 @@ internal static partial class ProjectionParser
 
         if (entersOn.Count == 0)
         {
-            context.Error(DiagnosticCodes.ProjectionVariantWithoutEntersOn, $"Variant '{name}' must declare at least one 'enters on' event", line.Location);
+            context.Error(DiagnosticCodes.VariantRequiresEnteringEvent, $"Variant '{name}' must declare at least one 'enters on' event", line.Location);
         }
 
         return new(name, entersOn, blocks, line.Location);
