@@ -52,7 +52,9 @@ public class when_merging_scoped_authorization : when_compiling_a_folder.given.a
     }
 
     [Fact] void should_compose_distinct_module_gates() => _module.Authorize!.References().Select(_ => _.Name).ShouldContainOnly("Access", "Finance");
+    [Fact] void should_require_both_module_gates() => ((LogicalPolicyRequirementSyntax)_module.Authorize!.Requirement).Operator.ShouldEqual(LogicalOperator.And);
     [Fact] void should_compose_distinct_feature_gates() => _module.Features.Single().Authorize!.References().Select(_ => _.Name).ShouldContainOnly("Staff", "Finance");
+    [Fact] void should_require_both_feature_gates() => ((LogicalPolicyRequirementSyntax)_module.Features.Single().Authorize!.Requirement).Operator.ShouldEqual(LogicalOperator.And);
     [Fact] void should_keep_the_nested_gate() => _module.Features.Single().Features.Single().Authorize!.References().Single().Name.ShouldEqual("Extra");
     [Fact] void should_report_both_duplicates() => _compilation.Result.Diagnostics.Select(_ => _.Code).ShouldContainOnly(DiagnosticCodes.DuplicateAuthorizationAcrossFiles, DiagnosticCodes.DuplicateAuthorizationAcrossFiles);
     [Fact] void should_report_warnings() => _compilation.Result.Diagnostics.All(_ => _.Severity == DiagnosticSeverity.Warning).ShouldBeTrue();
