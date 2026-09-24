@@ -84,6 +84,58 @@ public sealed record CanonicalCorpusSpecificationExpectation
 }
 
 /// <summary>
+/// Represents a diagnostic expected from a source that cannot be bound to portable ESM.
+/// </summary>
+public sealed record CanonicalCorpusDiagnosticExpectation
+{
+    /// <summary>
+    /// Gets the stable diagnostic code.
+    /// </summary>
+    public required string Code { get; init; }
+
+    /// <summary>
+    /// Gets the exact diagnostic message.
+    /// </summary>
+    public required string Message { get; init; }
+}
+
+/// <summary>
+/// Represents a rejected corpus source with no publishable artifacts.
+/// </summary>
+public sealed record CanonicalCorpusRejectionVector
+{
+    /// <summary>
+    /// Gets the corpus identity.
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
+    /// Gets the application name.
+    /// </summary>
+    public required string ApplicationName { get; init; }
+
+    /// <summary>
+    /// Gets the fixed application identity.
+    /// </summary>
+    public required ApplicationIdentity ApplicationIdentity { get; init; }
+
+    /// <summary>
+    /// Gets the rejected physical source form.
+    /// </summary>
+    public required CanonicalCorpusSourceForm SourceForm { get; init; }
+
+    /// <summary>
+    /// Gets the expected binding diagnostics in emission order.
+    /// </summary>
+    public ImmutableArray<CanonicalCorpusDiagnosticExpectation> Diagnostics { get; init; } = [];
+
+    /// <summary>
+    /// Gets the expected publishable artifact paths, empty when compilation fails closed.
+    /// </summary>
+    public ImmutableArray<string> ArtifactPaths { get; init; } = [];
+}
+
+/// <summary>
 /// Represents one versioned canonical semantic conformance corpus.
 /// </summary>
 public sealed record CanonicalCorpusVector

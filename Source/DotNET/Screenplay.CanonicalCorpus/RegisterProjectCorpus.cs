@@ -24,6 +24,30 @@ public static class RegisterProjectCorpus
     /// </summary>
     public static CanonicalCorpusVector V2 { get; } = LoadV2();
 
+    /// <summary>
+    /// Gets a source that parses but cannot be bound to portable ESM, with no publishable artifacts.
+    /// </summary>
+    public static CanonicalCorpusRejectionVector UnsupportedSequence { get; } = new()
+    {
+        Name = "register-project/unsupported-sequence",
+        ApplicationName = "Projects",
+        ApplicationIdentity = ApplicationIdentity.Parse("app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"),
+        SourceForm = new CanonicalCorpusSourceForm
+        {
+            Name = "single",
+            Documents = [Document("register-project-vector", "RegisterProject.play", "Cratis.Screenplay.CanonicalCorpus.Corpus.RegisterProject.unsupported_sequence.source.RegisterProject.play")],
+            IdentityCatalogBytes = Resource($"{ResourcePrefix}.identity.catalog-v1.json")
+        },
+        Diagnostics =
+        [
+            new CanonicalCorpusDiagnosticExpectation
+            {
+                Code = "PLAY0268",
+                Message = "Projection 'ProjectSummaryProjection' sequence is not portable ESM v1 behavior: which event sequence a projection observes is a realization concern."
+            }
+        ]
+    };
+
     static CanonicalCorpusVector LoadLegacyV1()
     {
         var single = Document(
