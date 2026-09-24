@@ -47,4 +47,20 @@ public record RuleContext(
     /// properties, which is the case for a <c>validate csharp</c> block.
     /// </summary>
     public bool IsWholeArtifact => Property.Length == 0;
+
+    /// <summary>
+    /// Gets the artifact as a statically typed payload without dynamic dispatch.
+    /// </summary>
+    /// <typeparam name="T">The type supplied by the realization for the artifact.</typeparam>
+    /// <returns>The artifact as <typeparamref name="T"/>.</returns>
+    /// <exception cref="ContextPayloadTypeMismatch">The artifact is not a <typeparamref name="T"/>.</exception>
+    public T ArtifactAs<T>() => ContextPayload.As<T>((object?)Artifact, nameof(Artifact));
+
+    /// <summary>
+    /// Gets the rule value as a statically typed payload without dynamic dispatch.
+    /// </summary>
+    /// <typeparam name="T">The type supplied by the realization for the value.</typeparam>
+    /// <returns>The value as <typeparamref name="T"/>.</returns>
+    /// <exception cref="ContextPayloadTypeMismatch">The value is not a <typeparamref name="T"/>.</exception>
+    public T ValueAs<T>() => ContextPayload.As<T>((object?)Value, nameof(Value));
 }

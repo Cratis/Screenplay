@@ -28,4 +28,13 @@ public record QueryContext(
     Identity Identity,
     CausedBy CausedBy,
     Causation Causation,
-    DateTimeOffset Occurred);
+    DateTimeOffset Occurred)
+{
+    /// <summary>
+    /// Gets the arguments as a statically typed payload without dynamic dispatch.
+    /// </summary>
+    /// <typeparam name="T">The type supplied by the realization for the arguments.</typeparam>
+    /// <returns>The arguments as <typeparamref name="T"/>.</returns>
+    /// <exception cref="ContextPayloadTypeMismatch">The arguments are not a <typeparamref name="T"/>.</exception>
+    public T ArgumentsAs<T>() => ContextPayload.As<T>((object?)Arguments, nameof(Arguments));
+}

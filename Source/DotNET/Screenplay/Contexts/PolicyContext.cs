@@ -34,4 +34,13 @@ public record PolicyContext(
     string Subject,
     Identity Identity,
     TenantId Tenant,
-    DateTimeOffset Occurred);
+    DateTimeOffset Occurred)
+{
+    /// <summary>
+    /// Gets the artifact as a statically typed payload without dynamic dispatch.
+    /// </summary>
+    /// <typeparam name="T">The type supplied by the realization for the artifact.</typeparam>
+    /// <returns>The artifact as <typeparamref name="T"/>.</returns>
+    /// <exception cref="ContextPayloadTypeMismatch">The artifact is not a <typeparamref name="T"/>.</exception>
+    public T ArtifactAs<T>() => ContextPayload.As<T>((object?)Artifact, nameof(Artifact));
+}
