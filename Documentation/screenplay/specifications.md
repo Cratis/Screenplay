@@ -40,7 +40,7 @@ specification <Name>
 - `then <EventType>` — zero or more. An event expected to be produced by the command.
 - `then readmodel <ReadModelType>` — zero or more. The read model state expected after the command has run and its events have been projected.
 - `then query <Query>` — zero or more. Executes the named query with the authored `arguments` and compares its ordered `result` blocks. No `result` blocks means the query is expected to return nothing.
-- `then denied` — zero or one. Expects the typed `Unauthorized` rejection, not a validation or constraint error. Cannot be combined with another outcome.
+- `then denied` — zero or one. Expects the typed `Unauthorized` rejection, not a validation or constraint error. For a read-only query, declare one `then query` with arguments and no `result`, followed by `then denied`; for a command, do not combine it with any success or error outcome.
 - `then error ["<message>"]` — zero or more. An expected rejection. See [Rejections](#rejections).
 - `file <path>` — zero or one. The repository relative file the specification is realized by. See [File references](file-references.md).
 - `for <event-source-value>` — zero or one inside an event `given`, the command `when`, or an event `then`. It identifies occurrence context rather than an event payload property.
@@ -79,7 +79,7 @@ specification RejectingAnInvoiceWhoseNumberIsAlreadyTaken
   then error
 ```
 
-An authorized scenario must declare an explicit `given caller` block. For example, a policy requiring role `Reviewer` can be checked with `given caller` containing `authenticated`, `role "Reviewer"`, and repeated `claim "department" = "Finance"` lines, followed by `then denied` when the role or claim does not satisfy the policy. The runner does not invent a caller if the block is absent: binding fails with `PLAY0389`. An unauthenticated caller may be stated explicitly with an empty `given caller` block.
+An authorized scenario must declare an explicit `given caller` block. A read-only query scenario can assert denial by writing `then query <Query>` with its `arguments`, no `result` block, and `then denied`. The query declaration names the operation and `then denied` names its outcome. For example, a policy requiring role `Reviewer` can be checked with `given caller` containing `authenticated`, `role "Reviewer"`, and repeated `claim "department" = "Finance"` lines, followed by `then denied` when the role or claim does not satisfy the policy. The runner does not invent a caller if the block is absent: binding fails with `PLAY0389`. An unauthenticated caller may be stated explicitly with an empty `given caller` block.
 
 To assert a localized rule's rejection, quote the key in the specification: `then error "$strings.invoices.validation.reasonRequired"`. Unlike a validation rule's `message` operand, the `then error` grammar accepts only quoted messages (or a bare `then error`), not `then error $strings.invoices.validation.reasonRequired`. The reference runner compares the symbolic key and requires the rejection's `MessageIsStringKey` marker; it never loads translated text. A realization resolves the key against the active locale's paired `.strings` file before displaying it. See [Internationalization](internationalization.md#executable-semantic-model-and-rejections).
 

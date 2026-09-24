@@ -484,6 +484,20 @@ public static partial class canonical_serialization_golden_vectors
         };
         stateView = stateView with
         {
+            Specifications = stateView.Specifications.Add(new SemanticSpecification(
+                Id(1423),
+                "denies an unauthorized query",
+                [],
+                [],
+                null,
+                [],
+                [],
+                [new(Id(1420), SemanticValue.Text("00000000-0000-0000-0000-000000000001"), [])],
+                [])
+            {
+                GivenCaller = new(true, [], [new("scope", "read"), new("entity", "other")]),
+                ThenDenied = true
+            }),
             Queries = stateView.Queries.Add(new SemanticKeyedQuery(
                 Id(1420),
                 "SecuredEntityById",
@@ -499,6 +513,7 @@ public static partial class canonical_serialization_golden_vectors
                     new SemanticPolicyReference("OwnsEntity"))
             })
         };
+
         // end #142 policies
 
         // #211 projection blocks: the scoped projection shape lives in its own slice and composite types.

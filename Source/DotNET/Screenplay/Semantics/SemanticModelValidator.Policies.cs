@@ -9,27 +9,6 @@ internal static partial class SemanticModelValidator
 {
     private sealed partial class ValidationContext
     {
-        static void ValidateAuthorization(SemanticAuthorization? authorization, ImmutableArray<SemanticPolicy> policies, IEnumerable<string> properties)
-        {
-            switch (authorization)
-            {
-                case null: return;
-                case SemanticPolicyReference reference:
-                    var policy = policies.SingleOrDefault(value => value.Name == reference.Name) ??
-                        throw new InvalidSemanticContract($"Authorization policy '{reference.Name}' is unresolved.");
-                    foreach (var path in ArtifactPaths(policy.Condition))
-                    {
-                        if (!properties.Contains(path, StringComparer.Ordinal)) throw new InvalidSemanticContract($"Policy '{policy.Name}' artifact path '{path}' is unresolved.");
-                    }
-                    break;
-                case SemanticLogicalAuthorization logical when logical.Operator is SemanticLogicalOperator.And or SemanticLogicalOperator.Or:
-                    ValidateAuthorization(logical.Left, policies, properties);
-                    ValidateAuthorization(logical.Right, policies, properties);
-                    break;
-                default: throw new InvalidSemanticContract("Invalid authorization expression.");
-            }
-        }
-
         static IEnumerable<string> ArtifactPaths(SemanticPolicyCondition condition) => condition switch
         {
             SemanticClaimCondition { TargetKind: SemanticClaimTargetKind.Artifact, Value: { } path } => [path],
@@ -53,6 +32,48 @@ internal static partial class SemanticModelValidator
             }
         }
 
+        void ValidateAuthorization(SemanticAuthorization? authorization, ImmutableArray<SemanticPolicy> policies, IEnumerable<SemanticProperty> properties)
+        {
+            switch (authorization)
+            {
+                case null: return;
+                case SemanticPolicyReference reference:
+                    var policy = policies.SingleOrDefault(value => value.Name == reference.Name) ??
+                        throw new InvalidSemanticContract($"Authorization policy '{reference.Name}' is unresolved.");
+                    foreach (var path in ArtifactPaths(policy.Condition))
+                    {
+                        if (!ResolvesPolicyPath(path, properties)) throw new InvalidSemanticContract($"Policy '{policy.Name}' artifact path '{path}' is unresolved.");
+                    }
+
+                    break;
+                case SemanticLogicalAuthorization logical when logical.Operator is SemanticLogicalOperator.And or SemanticLogicalOperator.Or:
+                    ValidateAuthorization(logical.Left, policies, properties);
+                    ValidateAuthorization(logical.Right, policies, properties);
+                    break;
+                default: throw new InvalidSemanticContract("Invalid authorization expression.");
+            }
+        }
+
+        bool ResolvesPolicyPath(string path, IEnumerable<SemanticProperty> properties)
+        {
+            var parts = path.Split('.');
+            if (parts.Any(part => part.Length == 0)) return false;
+            var property = properties.SingleOrDefault(value => value.Name == parts[0]);
+            if (property is null) return false;
+            foreach (var name in parts.Skip(1))
+            {
+                if (property.Type.Kind != SemanticTypeReferenceKind.CompositeType ||
+                    !_types.TryGetValue(property.Type.Target, out var composite))
+                {
+                    return false;
+                }
+                property = composite.Properties.SingleOrDefault(value => value.Name == name);
+                if (property is null) return false;
+            }
+
+            return true;
+        }
+
         void ValidatePolicies(SemanticApplication application)
         {
             RequireObjects(application.Policies, nameof(application.Policies), "policy");
@@ -60,8 +81,8 @@ internal static partial class SemanticModelValidator
             foreach (var policy in application.Policies) ValidatePolicyCondition(policy.Condition);
             foreach (var slice in AllSlices(application))
             {
-                foreach (var command in slice.Commands) ValidateAuthorization(command.Authorization, application.Policies, command.Properties.Select(property => property.Name));
-                foreach (var query in slice.Queries) ValidateAuthorization(query.Authorization, application.Policies, [query.Argument.Name]);
+                foreach (var command in slice.Commands) ValidateAuthorization(command.Authorization, application.Policies, command.Properties);
+                foreach (var query in slice.Queries) ValidateAuthorization(query.Authorization, application.Policies, [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)]);
                 foreach (var specification in slice.Specifications)
                 {
                     var authorizedCommand = specification.When is not null && slice.Commands.Any(command => command.Id == specification.When.Command && command.Authorization is not null);

@@ -86,7 +86,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 UsesV2 ? [.. modules.Select(PromoteV2Destinations)] : modules)
             {
                 Policies = BindPolicies()
-            }; 
+            };
         }
 
         internal void Error(string code, string message, SourceLocation location) =>

@@ -29,14 +29,17 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            if (specification.When is null && (specification.ThenEvents.Any() || specification.ThenErrors.Any() || specification.ThenDenied is not null ||
+            var deniedQuery = specification.ThenDenied is not null && specification.When is null &&
+                specification.ThenQueries.Count() == 1 && !specification.ThenQueries.Single().Results.Any();
+            if (specification.When is null && (specification.ThenEvents.Any() || specification.ThenErrors.Any() ||
+                (specification.ThenDenied is not null && !deniedQuery) ||
                 (!(specification.ThenReadModels?.Any() ?? false) && !specification.ThenQueries.Any())))
             {
-                Error(DiagnosticCodes.InvalidWhenlessSpecification, "A specification without 'when' requires at least one 'then readmodel' or 'then query' and cannot assert 'then' events or errors.", specification.Location);
+                Error(DiagnosticCodes.InvalidWhenlessSpecification, "A specification without 'when' requires 'then readmodel' or 'then query'; denial requires one query with arguments and no results.", specification.Location);
             }
 
             if (specification.ThenDenied is not null && (specification.ThenErrors.Any() || specification.ThenEvents.Any() ||
-                (specification.ThenReadModels?.Any() ?? false) || specification.ThenQueries.Any()))
+                (specification.ThenReadModels?.Any() ?? false) || (specification.ThenQueries.Any() && !deniedQuery)))
             {
                 Error(DiagnosticCodes.InvalidSpecificationDenied, "'then denied' cannot be combined with success or error outcomes.", specification.ThenDenied.Location);
             }

@@ -37,17 +37,22 @@ public class when_evaluating_portable_authorization : a_valid_semantic_model
             Policies =
             [
                 new("CanRegister", new SemanticLogicalPolicyCondition(
-                    new SemanticRoleCondition("Admin"), SemanticLogicalOperator.Or,
-                    new SemanticLogicalPolicyCondition(new SemanticAuthenticatedCondition(), SemanticLogicalOperator.And,
+                    new SemanticRoleCondition("Admin"),
+                    SemanticLogicalOperator.Or,
+                    new SemanticLogicalPolicyCondition(
+                        new SemanticAuthenticatedCondition(),
+                        SemanticLogicalOperator.And,
                         new SemanticClaimCondition("department", SemanticClaimTargetKind.Literal, "Finance")))),
                 new("OwnsProject", new SemanticClaimCondition("project", SemanticClaimTargetKind.Subject, null))
             ]
         };
         var plan = SemanticExecutionPlan.Compile(ExecutableSemanticModel.Create(LanguageVersion.V1, SemanticVersion.V1, application)).Plan!;
         var evaluator = new SemanticEvaluator();
-        var valid = SemanticExecutionRequest.Create(_commandId,
+        var valid = SemanticExecutionRequest.Create(
+            _commandId,
             [new(_commandProjectIdPropertyId, SemanticValue.Text("00000000-0000-0000-0000-000000000001")),
-             new(_commandNamePropertyId, SemanticValue.Text("Screenplay"))], []);
+             new(_commandNamePropertyId, SemanticValue.Text("Screenplay"))],
+            []);
         var invalid = valid with { Values = [new(_commandProjectIdPropertyId, SemanticValue.Text("00000000-0000-0000-0000-000000000001")), new(_commandNamePropertyId, SemanticValue.Text(string.Empty))] };
         var matched = new SemanticCaller(true, [], [new("DEPARTMENT", "Engineering"), new("department", "Finance")]);
         var mismatch = new SemanticCaller(true, [], [new("department", "finance")]);

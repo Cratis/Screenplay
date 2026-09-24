@@ -34,7 +34,7 @@ internal static partial class SemanticModelRead
         }
 
         Required(id.IsSet && name is not null && !concepts.IsDefault && !types.IsDefault && !modules.IsDefault, "application");
-        return new(id, name!, concepts, types, modules) { Policies = policies }; 
+        return new(id, name!, concepts, types, modules) { Policies = policies };
     }
 
     internal static SemanticConcept Concept(ref Utf8JsonReader reader)
@@ -291,7 +291,7 @@ internal static partial class SemanticModelRead
         }
 
         Required(id.IsSet && name is not null && !properties.IsDefault && !validations.IsDefault && !produces.IsDefault, "command");
-        return new(id, name!, properties, validations, produces) { Requirements = requirements, Destination = destination, Authorization = authorization }; 
+        return new(id, name!, properties, validations, produces) { Requirements = requirements, Destination = destination, Authorization = authorization };
     }
 
     internal static SemanticProducedEvent ProducedEvent(ref Utf8JsonReader reader)

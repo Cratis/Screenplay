@@ -59,7 +59,7 @@ public sealed partial class SemanticModelBinder
             return null;
         }
 
-        SemanticAuthorization? EffectiveAuthorization(AuthorizeSyntax? own, IEnumerable<string> artifactProperties, string moduleName, ImmutableArray<string> featurePath)
+        SemanticAuthorization? EffectiveAuthorization(AuthorizeSyntax? own, IEnumerable<SemanticProperty> artifactProperties, string moduleName, ImmutableArray<string> featurePath)
         {
             var module = syntax.Modules.Single(value => value.Name == moduleName);
             var scopes = new List<AuthorizeSyntax?> { module.Authorize };
@@ -85,14 +85,14 @@ public sealed partial class SemanticModelBinder
             return result;
         }
 
-        SemanticAuthorization? BindAuthorization(AuthorizeSyntax? authorize, IEnumerable<string> artifactProperties)
+        SemanticAuthorization? BindAuthorization(AuthorizeSyntax? authorize, IEnumerable<SemanticProperty> artifactProperties)
         {
             if (authorize is null) return null;
-            var names = artifactProperties.ToHashSet(StringComparer.Ordinal);
-            return BindAuthorizationNode(authorize.Requirement, names);
+            var properties = artifactProperties.ToDictionary(property => property.Name, StringComparer.Ordinal);
+            return BindAuthorizationNode(authorize.Requirement, properties);
         }
 
-        SemanticAuthorization? BindAuthorizationNode(PolicyRequirementSyntax requirement, HashSet<string> properties)
+        SemanticAuthorization? BindAuthorizationNode(PolicyRequirementSyntax requirement, Dictionary<string, SemanticProperty> properties)
         {
             if (requirement is LogicalPolicyRequirementSyntax logical)
             {
@@ -112,7 +112,7 @@ public sealed partial class SemanticModelBinder
 
             foreach (var path in PolicyPaths(policy.Condition))
             {
-                if (!properties.Contains(path))
+                if (!ResolvesPolicyPath(path, properties))
                 {
                     Error(DiagnosticCodes.InvalidSemanticBinding, $"Policy '{policy.Name}' artifact path '{path}' does not resolve against the authorized command properties or query arguments.", reference.Location);
                 }
@@ -121,5 +121,21 @@ public sealed partial class SemanticModelBinder
             return new SemanticPolicyReference(reference.Name);
         }
 
+        bool ResolvesPolicyPath(string path, Dictionary<string, SemanticProperty> properties)
+        {
+            var parts = path.Split('.');
+            if (parts.Any(part => part.Length == 0) || !properties.TryGetValue(parts[0], out var property)) return false;
+            foreach (var name in parts.Skip(1))
+            {
+                if (property.Type.Kind != SemanticTypeReferenceKind.CompositeType) return false;
+                var declaration = (syntax.Types ?? []).SingleOrDefault(type =>
+                    _types.TryGetValue(type.Name, out var registered) && registered.Id == property.Type.Target);
+                var member = declaration?.Properties.SingleOrDefault(candidate => candidate.Name == name);
+                if (member is null) return false;
+                property = new(default, member.Name, BindTypeReference(member.Type), false);
+            }
+
+            return true;
+        }
     }
 }

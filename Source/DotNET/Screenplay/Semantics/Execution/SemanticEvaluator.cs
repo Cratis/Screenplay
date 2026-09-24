@@ -44,7 +44,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         var subject = command.Properties.Where(property => property.IsIdentifier)
             .Select(property => authorizationValues.FirstOrDefault(value => value.TargetProperty == property.Id)?.Value)
             .FirstOrDefault(value => value is not null);
-        if (!SemanticPolicyEvaluation.Allows(command.Authorization, plan, request.Caller, artifact, subject))
+        if (!SemanticPolicyEvaluation.Allows(command.Authorization, plan, request.Caller, artifact, subject, command.Properties))
         {
             return new SemanticRejected(world, SemanticRejectionCategory.Unauthorized, null, "Caller is not authorized.");
         }
@@ -204,7 +204,8 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                 plan,
                 caller,
                 new Dictionary<string, SemanticValue>(StringComparer.Ordinal) { [query.Argument.Name] = queryRequest.Key },
-                queryRequest.Key))
+                queryRequest.Key,
+                [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)]))
             {
                 return new SemanticRejected(original, SemanticRejectionCategory.Unauthorized, null, "Caller is not authorized.");
             }

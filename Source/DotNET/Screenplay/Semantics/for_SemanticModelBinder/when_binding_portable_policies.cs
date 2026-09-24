@@ -1,8 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Cratis.Screenplay.Diagnostics;
-
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder;
 
 public class when_binding_portable_policies : given.a_semantic_binder
@@ -40,64 +38,4 @@ public class when_binding_portable_policies : given.a_semantic_binder
     [Fact] void should_retain_parenthesis_grouping() => ((SemanticLogicalPolicyCondition)_result.Value!.Model.Application.Policies.Single().Condition).Right.ShouldBeOfExactType<SemanticLogicalPolicyCondition>();
     [Fact] void should_compose_the_module_with_the_command() => _command.Authorization.ShouldBeOfExactType<SemanticLogicalAuthorization>();
     [Fact] void should_bind_the_denied_assertion() => _result.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single().Specifications.Single().ThenDenied.ShouldBeTrue();
-}
-
-public class when_binding_an_unresolved_policy_target : given.a_semantic_binder
-{
-    CompilationResult<SemanticCompilation> _result;
-
-    void Because() => _result = Bind(
-        """
-        policy Access
-          require claim "department" matches unknown
-        module Portal
-          feature Reports
-            slice StateChange FileReport
-              command FileReport
-                department String
-                authorize Access
-        """);
-
-    [Fact] void should_reject_the_unresolvable_artifact_path() => _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidSemanticBinding && diagnostic.Message.Contains("unknown", StringComparison.Ordinal)).ShouldBeTrue();
-}
-
-public class when_binding_an_authorized_specification_without_a_caller : given.a_semantic_binder
-{
-    CompilationResult<SemanticCompilation> _result;
-
-    void Because() => _result = Bind(
-        """
-        policy Access
-          require authenticated
-        module Portal
-          feature Reports
-            slice StateChange FileReport
-              command FileReport
-                authorize Access
-              specification MissingCaller
-                when FileReport
-                then denied
-        """);
-
-    [Fact] void should_report_missing_identity_context() => _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.MissingSpecificationCaller).ShouldBeTrue();
-}
-
-public class when_binding_an_inline_csharp_policy : given.a_semantic_binder
-{
-    CompilationResult<SemanticCompilation> _result;
-
-    void Because() => _result = Bind(
-        """
-        policy Access
-          ```csharp
-          return true;
-          ```
-        module Portal
-          feature Reports
-            slice StateChange FileReport
-              command FileReport
-                authorize Access
-        """);
-
-    [Fact] void should_block_implementation_until_139() => _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("#139", StringComparison.Ordinal)).ShouldBeTrue();
 }

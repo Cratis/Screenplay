@@ -90,14 +90,16 @@ public sealed partial class SemanticModelBinder
             var address = SemanticAddress.ForSlice(_applicationIdentity, module, featurePath, slice.Name);
             var id = ResolveSlice(address, slice.Location, slice.DescriptionLocation, slice.DescriptionRawLength);
             var events = slice.Events.Select(value => _eventDeclarations[value]).ToArray();
-            var commands = slice.Commands.Select(value => BindCommand(address, value, _events) with
+            var commands = slice.Commands.Select(value =>
             {
-                Authorization = EffectiveAuthorization(value.Authorize, value.Properties.Select(property => property.Name), module, featurePath)
+                var bound = BindCommand(address, value, _events);
+                return bound with { Authorization = EffectiveAuthorization(value.Authorize, bound.Properties, module, featurePath) };
             }).ToImmutableArray();
             var readModels = (slice.ReadModels ?? []).Select(value => _readModelDeclarations[value].Model).ToImmutableArray();
             var projections = slice.Projections.SelectMany(value => BindProjections(address, value)).ToImmutableArray();
             var queries = slice.Queries.Select(value => _queryDeclarations.GetValueOrDefault(value) is { } query
-                ? query with { Authorization = EffectiveAuthorization(value.Authorize, [query.Argument.Name], module, featurePath) }
+                ? query with { Authorization = EffectiveAuthorization(
+                    value.Authorize, [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)], module, featurePath) }
                 : null).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             foreach (var query in queries) _queries[query.Name] = query;
             var commandsByName = commands.ToDictionary(_ => _.Name, StringComparer.Ordinal);
