@@ -45,7 +45,7 @@ public sealed partial class SemanticModelBinder
             var span = SemanticSourceSpan.Create(document.Id, offset, 0, location.Line, location.Column, location.Line, location.Column);
             var source = new SemanticSourceMapEntry(assignment.Id, span, assignment.Origin);
             var content = code?.Code ?? file!.Path;
-            var hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(content)));
+            var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(content))).ToLowerInvariant();
             _implementationRequirements.Add(new(role, owner, member, code?.Language, file?.Path, hash, source));
         }
     }
