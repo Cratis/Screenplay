@@ -55,6 +55,11 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             }
         }
 
+        if (command.Produces.Any(produced => produced.Mappings.Any(mapping => mapping.Source is SemanticEventContextExpression)) && request.Occurrence is null)
+        {
+            return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A v2 command using $context needs an occurrence supplied by the execution request.");
+        }
+
         var facts = ImmutableArray.CreateBuilder<SemanticFact>();
         foreach (var produced in command.Produces)
         {
@@ -64,9 +69,10 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                 continue;
             }
 
-            var destination = produced.Destination is null
+            var destinationExpression = produced.Destination ?? command.Destination?.Value;
+            var destination = destinationExpression is null
                 ? request.AllocatedIdentities.GetValueOrDefault(command.Id)
-                : Evaluate(produced.Destination, SemanticExpressionRootKind.Command, commandValues);
+                : Evaluate(destinationExpression, SemanticExpressionRootKind.Command, commandValues);
             if (destination is null)
             {
                 return new SemanticUnsupported(
@@ -78,10 +84,13 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             var values = produced.Mappings
                 .Select(mapping => new SemanticPropertyValue(
                     mapping.TargetProperty,
-                    Evaluate(mapping.Source, SemanticExpressionRootKind.Command, commandValues)))
+                    Evaluate(mapping.Source, SemanticExpressionRootKind.Command, commandValues, request.Occurrence)))
                 .ToImmutableArray();
             facts.Add(new SemanticFact(produced.EventContract, destination, values)
             {
+                Context = plan.Model.SemanticVersion == SemanticVersion.V2
+                    ? new(new(DestinationType(command, destinationExpression, request.AllocatedEventSourceType), destination))
+                    : null,
                 Tags = plan.Events[produced.EventContract].Tags.AddRange(produced.Tags)
             });
         }
@@ -369,11 +378,26 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         return true;
     }
 
+    static SemanticTypeReference DestinationType(SemanticCommand command, SemanticExpression? expression, SemanticTypeReference? allocatedType) =>
+        expression is SemanticResolvedExpression resolved
+            ? command.Properties.Single(property => property.Id == resolved.Target).Type
+            : command.Destination?.Type ?? allocatedType ??
+                throw new InvalidSemanticContract("A v2 fact requires a typed state-change destination.");
+
     static SemanticValue Evaluate(
         SemanticExpression expression,
         SemanticExpressionRootKind expectedRoot,
-        Dictionary<SemanticId, SemanticValue> values) => expression switch
+        Dictionary<SemanticId, SemanticValue> values,
+        SemanticCommandOccurrence? occurrence = null) => expression switch
     {
+        SemanticEventContextExpression context when occurrence is not null => context.Value switch
+        {
+            SemanticEventContextValueKind.Occurred => SemanticValue.Text(occurrence.Occurred.ToUniversalTime().ToString("O", System.Globalization.CultureInfo.InvariantCulture)),
+            SemanticEventContextValueKind.CausedBySubject => SemanticValue.Text(occurrence.Subject),
+            SemanticEventContextValueKind.CausedByName => SemanticValue.Text(occurrence.Name),
+            SemanticEventContextValueKind.CausedByUserName => SemanticValue.Text(occurrence.UserName),
+            _ => throw new InvalidSemanticContract("An occurrence field is unsupported.")
+        },
         SemanticValueExpression literal => literal.Value,
         SemanticResolvedExpression resolved when resolved.Root == expectedRoot && resolved.Source == SemanticExpressionSourceKind.Property && values.TryGetValue(resolved.Target, out var value) => value,
         _ => throw new InvalidSemanticContract("An execution expression is unresolved in its declared root scope.")

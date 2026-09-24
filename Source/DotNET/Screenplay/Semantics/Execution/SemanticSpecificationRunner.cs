@@ -70,7 +70,13 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         var queries = expected.ThenQueries.Select(value => new SemanticQueryRequest(value.Query, value.Key)).ToImmutableArray();
         var request = expected.When is null
             ? SemanticExecutionRequest.ForQueries(queries)
-            : SemanticExecutionRequest.Create(expected.When.Command, expected.When.Values, queries);
+            : SemanticExecutionRequest.Create(expected.When.Command, expected.When.Values, queries) with
+            {
+                AllocatedIdentities = expected.When.EventSource is null
+                    ? []
+                    : ImmutableDictionary<SemanticId, SemanticValue>.Empty.Add(expected.When.Command, expected.When.EventSource.Value),
+                AllocatedEventSourceType = expected.When.EventSource?.Type
+            };
         var execution = evaluator.Execute(plan, world, request);
         var failures = Compare(expected, execution);
         return new(specification, failures.IsEmpty, execution, failures);
@@ -82,7 +88,10 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         out string? failure)
     {
         var facts = specification.GivenEvents
-            .Select(value => new SemanticFact(value.EventContract, SemanticValue.Null, value.Values))
+            .Select(value => new SemanticFact(value.EventContract, value.EventSource?.Value ?? SemanticValue.Null, value.Values)
+            {
+                Context = value.EventSource is null ? null : new(value.EventSource)
+            })
             .ToImmutableArray();
         if (!SemanticEvaluator.Establish(plan, [], facts, out var projected, out failure))
         {
@@ -124,6 +133,10 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         }
 
         CompareFacts(expected.ThenEvents, accepted.Facts, failures);
+        if (expected.When?.EventSource is { } commandSource && accepted.Facts.Any(fact => !SemanticValueRules.AreEqual(fact.Destination, commandSource.Value)))
+        {
+            failures.Add("Produced fact destination does not match the specification command event source.");
+        }
         CompareReadModels(expected.ThenReadModels, accepted.World.ReadModels, failures, "read model");
         CompareQueries(expected.ThenQueries, accepted.Queries, failures);
         return failures.ToImmutable();
@@ -170,6 +183,13 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             if (expected[index].EventContract != actual[index].EventContract || !ValuesEqual(expected[index].Values, actual[index].Values))
             {
                 failures.Add($"Fact at index {index} does not match the expected event contract and values.");
+            }
+
+            if (expected[index].EventSource is { } source &&
+                (actual[index].Context?.EventSource.Type != source.Type ||
+                 !SemanticValueRules.AreEqual(actual[index].Destination, source.Value)))
+            {
+                failures.Add($"Fact at index {index} does not match the expected event source.");
             }
         }
     }

@@ -20,8 +20,8 @@ public class when_parsing_versions : Specification
 
     [Fact] void should_parse_supported_language_version() => _languageVersion.ShouldEqual(LanguageVersion.V1);
     [Fact] void should_parse_supported_semantic_version() => _semanticVersion.ShouldEqual(SemanticVersion.V1);
-    [Fact] void should_keep_the_general_language_parser_on_v1() => _generalLanguageParserAcceptedV2.ShouldBeFalse();
-    [Fact] void should_keep_the_general_semantic_parser_on_v1() => _generalSemanticParserAcceptedV2.ShouldBeFalse();
+    [Fact] void should_parse_v2_language() => _generalLanguageParserAcceptedV2.ShouldBeTrue();
+    [Fact] void should_parse_v2_semantics() => _generalSemanticParserAcceptedV2.ShouldBeTrue();
     [Fact] void should_expose_one_supported_language_version() => EsmSchemaV1Support.LanguageVersions.ShouldContainOnly(LanguageVersion.V1);
     [Fact] void should_expose_one_supported_semantic_version() => EsmSchemaV1Support.SemanticVersions.ShouldContainOnly(SemanticVersion.V1);
     [Fact] void should_expose_known_v2_language_versions() => EsmSchemaV2Support.LanguageVersions.ShouldContainOnly(LanguageVersion.V1, LanguageVersion.V2);

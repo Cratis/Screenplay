@@ -63,7 +63,14 @@ public sealed partial class SemanticModelBinder
                 .Where(_ => _ is not null)
                 .Select(_ => _!)
                 .ToImmutableArray();
-            return new(id, command.Name, properties, validations, produced) { Requirements = requirements };
+            var defaultDestination = produced.Select(value => value.Destination).OfType<SemanticResolvedExpression>()
+                .Select(value => properties.Single(property => property.Id == value.Target))
+                .FirstOrDefault();
+            return new(id, command.Name, properties, validations, produced)
+            {
+                Requirements = requirements,
+                Destination = defaultDestination is null ? null : new(defaultDestination.Type, SemanticExpression.Property(SemanticExpressionRootKind.Command, defaultDestination.Id))
+            };
         }
 
         ImmutableArray<SemanticValidationRule> BindValidations(
@@ -121,6 +128,7 @@ public sealed partial class SemanticModelBinder
             var destination = produced.For is null
                 ? null
                 : BindPropertyExpression(produced.For, commandProperties, "produced event destination");
+            if (destination is not null) UsesV2 = true;
             var mappings = ImmutableArray.CreateBuilder<SemanticPropertyMapping>();
             foreach (var mapping in produced.Mappings)
             {
@@ -130,13 +138,37 @@ public sealed partial class SemanticModelBinder
                     continue;
                 }
 
-                if (BindExpression(mapping.Source, commandProperties, SemanticExpressionRootKind.Command, "produced event mapping") is { } source)
+                var source = mapping.Source is ContextExpressionSyntax context
+                    ? BindOccurrence(context, target.Type)
+                    : BindExpression(mapping.Source, commandProperties, SemanticExpressionRootKind.Command, "produced event mapping");
+                if (source is not null)
                 {
                     mappings.Add(new(target.Id, source));
                 }
             }
 
             return new(@event.Contract.Id, null, destination, mappings.ToImmutable()) { When = when, Tags = tags };
+        }
+
+        SemanticEventContextExpression? BindOccurrence(ContextExpressionSyntax context, SemanticTypeReference target)
+        {
+            // Decision: 0001. Chronicle EventContext carries Occurred and CausedBy, not command tenant or claims.
+            var kind = context.Path switch
+            {
+                "occurred" => SemanticEventContextValueKind.Occurred,
+                "identity.id" or "causedBy.subject" => SemanticEventContextValueKind.CausedBySubject,
+                "identity.name" or "causedBy.name" => SemanticEventContextValueKind.CausedByName,
+                "identity.userName" or "causedBy.userName" => SemanticEventContextValueKind.CausedByUserName,
+                _ => SemanticEventContextValueKind.Unknown
+            };
+            if (kind == SemanticEventContextValueKind.Unknown)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"$context.{context.Path} has no scalar counterpart on Chronicle EventContext (tenant is not namespace; causation, roles and claims are collections or unbounded).", context.Location);
+                return null;
+            }
+
+            UsesV2 = true;
+            return new SemanticEventContextExpression(kind, target);
         }
     }
 }

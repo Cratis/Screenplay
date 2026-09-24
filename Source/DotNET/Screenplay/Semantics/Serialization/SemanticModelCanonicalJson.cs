@@ -400,6 +400,11 @@ internal static partial class SemanticModelCanonicalJson
                 writer.WritePropertyName("value");
                 WriteValue(writer, value.Value);
                 break;
+            case SemanticEventContextExpression context:
+                writer.WriteString("contextValue", ContextValue(context.Value));
+                writer.WritePropertyName("type");
+                WriteTypeReference(writer, context.Type);
+                break;
             case SemanticResolvedExpression resolved:
                 writer.WriteString("root", ExpressionRoot(resolved.Root));
                 writer.WriteString("source", ExpressionSource(resolved.Source));
@@ -579,10 +584,21 @@ internal static partial class SemanticModelCanonicalJson
         _ => throw Unknown(nameof(SemanticValidationRuleKind), value)
     };
 
+    static string ContextValue(SemanticEventContextValueKind kind) => kind switch
+    {
+        SemanticEventContextValueKind.EventSourceIdentity => "eventSourceIdentity",
+        SemanticEventContextValueKind.Occurred => "occurred",
+        SemanticEventContextValueKind.CausedBySubject => "causedBySubject",
+        SemanticEventContextValueKind.CausedByName => "causedByName",
+        SemanticEventContextValueKind.CausedByUserName => "causedByUserName",
+        _ => throw Unknown(nameof(SemanticEventContextValueKind), kind)
+    };
+
     static string ExpressionKind(SemanticExpressionKind value) => value switch
     {
         SemanticExpressionKind.Value => "value",
         SemanticExpressionKind.Resolved => "resolved",
+        SemanticExpressionKind.EventContext => "eventContext",
         _ => throw Unknown(nameof(SemanticExpressionKind), value)
     };
 

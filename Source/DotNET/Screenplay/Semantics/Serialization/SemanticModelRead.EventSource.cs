@@ -7,6 +7,16 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 
 internal static partial class SemanticModelRead
 {
+    internal static SemanticEventContextValueKind ParseContextValue(string value) => value switch
+    {
+        "eventSourceIdentity" => SemanticEventContextValueKind.EventSourceIdentity,
+        "occurred" => SemanticEventContextValueKind.Occurred,
+        "causedBySubject" => SemanticEventContextValueKind.CausedBySubject,
+        "causedByName" => SemanticEventContextValueKind.CausedByName,
+        "causedByUserName" => SemanticEventContextValueKind.CausedByUserName,
+        _ => throw Malformed("event context value", "a known scalar occurrence field")
+    };
+
     internal static SemanticStateChangeDestination StateChangeDestination(ref Utf8JsonReader reader)
     {
         var seen = NewSeen();
@@ -17,7 +27,7 @@ internal static partial class SemanticModelRead
         {
             switch (property)
             {
-                case "type": Object(ref reader, property); type = TypeReference(ref reader); break;
+                case "type": RequiredToken(ref reader, JsonTokenType.StartObject, property); type = TypeReference(ref reader); break;
                 case "value": valueRead = true; value = NullableExpression(ref reader, property); break;
                 default: throw Unknown(property, "state change destination");
             }
@@ -36,8 +46,8 @@ internal static partial class SemanticModelRead
         {
             switch (property)
             {
-                case "type": Object(ref reader, property); type = TypeReference(ref reader); break;
-                case "value": Object(ref reader, property); value = Value(ref reader); break;
+                case "type": RequiredToken(ref reader, JsonTokenType.StartObject, property); type = TypeReference(ref reader); break;
+                case "value": RequiredToken(ref reader, JsonTokenType.StartObject, property); value = Value(ref reader); break;
                 default: throw Unknown(property, "event source");
             }
         }

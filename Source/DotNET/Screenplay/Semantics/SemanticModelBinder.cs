@@ -27,7 +27,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics);
             }
 
-            var model = ExecutableSemanticModel.Create(LanguageVersion.V1, SemanticVersion.V1, application);
+            var version = context.UsesV2;
+            var model = ExecutableSemanticModel.Create(
+                version ? LanguageVersion.V2 : LanguageVersion.V1,
+                version ? SemanticVersion.V2 : SemanticVersion.V1,
+                application);
             var sourceMap = SemanticSourceMap.Create(context.SourceMapEntries, documents.Documents);
             var compilation = SemanticCompilation.Create(model, documents, sourceMap);
             return new(compilation, context.Diagnostics);
@@ -56,6 +60,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         internal IEnumerable<Diagnostic> Diagnostics => _diagnostics;
 
         internal bool HasErrors => _diagnostics.Exists(_ => _.Severity == DiagnosticSeverity.Error);
+
+        internal bool UsesV2 { get; set; }
 
         internal ImmutableArray<SemanticSourceMapEntry> SourceMapEntries => [.. _sourceMapEntries];
 

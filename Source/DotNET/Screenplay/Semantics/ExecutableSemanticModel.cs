@@ -856,6 +856,25 @@ internal static partial class SemanticModelValidator
                     RejectNull(value.Value, "semantic value");
                     ValidateValueVariant(value.Value);
                     return TypeOf(value.Value);
+                case SemanticEventContextExpression context when expression.Kind == SemanticExpressionKind.EventContext:
+                    if (_semanticVersion != SemanticVersion.V2 || expectedRoot != SemanticExpressionRootKind.Command ||
+                        context.Value is not (SemanticEventContextValueKind.Occurred or SemanticEventContextValueKind.CausedBySubject or
+                            SemanticEventContextValueKind.CausedByName or SemanticEventContextValueKind.CausedByUserName) ||
+                        context.Type.IsCollection || context.Type.IsOptional)
+                    {
+                        throw new InvalidSemanticContract("Only scalar command occurrence fields are admitted in ESM v2 produces mappings.");
+                    }
+
+                    var primitive = context.Type.Kind == SemanticTypeReferenceKind.Concept
+                        ? _concepts[context.Type.Target].Primitive : context.Type.Primitive;
+                    if (context.Value == SemanticEventContextValueKind.Occurred
+                        ? primitive != SemanticPrimitiveType.DateTime
+                        : primitive is not (SemanticPrimitiveType.Text or SemanticPrimitiveType.Uuid))
+                    {
+                        throw new InvalidSemanticContract("The occurrence context field and mapping target have incompatible types.");
+                    }
+
+                    return context.Type;
                 case SemanticResolvedExpression resolved when expression.Kind == SemanticExpressionKind.Resolved:
                     ValidateEnum(resolved.Root, SemanticExpressionRootKind.Unknown, "expression root");
                     ValidateEnum(resolved.Source, SemanticExpressionSourceKind.Unknown, "expression source");
