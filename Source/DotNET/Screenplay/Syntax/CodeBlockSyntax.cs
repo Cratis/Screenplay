@@ -1,9 +1,18 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
+using System.Runtime.InteropServices;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Syntax;
+
+/// <summary>The source position of the first character of a dedented body line.</summary>
+/// <param name="Line">The one-based original source line.</param>
+/// <param name="Column">The one-based original source column in UTF-16 code units.</param>
+[StructLayout(LayoutKind.Auto)]
+public readonly record struct CodeBlockSourceLine(int Line, int Column);
 
 /// <summary>
 /// Represents an inline fenced code block in a specific language, such as <c>csharp</c> or <c>react</c>.
@@ -11,7 +20,26 @@ namespace Cratis.Screenplay.Syntax;
 /// <param name="Language">The language tag of the block.</param>
 /// <param name="Code">The verbatim code inside the fence.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record CodeBlockSyntax(string Language, string Code, SourceLocation Location) : SyntaxNode(Location);
+public record CodeBlockSyntax(string Language, string Code, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>The zero-based UTF-16 start offset of the dedented body in the original document.</summary>
+    [SourceSpanMetadata]
+    public int BodyStartOffset { get; init; }
+
+    /// <summary>The zero-based UTF-16 end-exclusive offset of the body in the original document.</summary>
+    [SourceSpanMetadata]
+    public int BodyEndOffset { get; init; }
+
+    /// <summary>The location at <see cref="BodyStartOffset"/>.</summary>
+    public SourceLocation? BodyStart { get; init; }
+
+    /// <summary>The location at <see cref="BodyEndOffset"/>.</summary>
+    public SourceLocation? BodyEnd { get; init; }
+
+    /// <summary>One original source position for each line of <see cref="Code"/>. Columns count UTF-16 code units, including tabs as one unit.</summary>
+    [SourceSpanMetadata]
+    public ImmutableArray<CodeBlockSourceLine> BodyLines { get; init; } = [];
+}
 
 /// <summary>
 /// Represents a <c>file</c> directive referencing an external file by repository relative path.

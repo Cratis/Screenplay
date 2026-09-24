@@ -19,6 +19,7 @@ internal static class SourceLineSplitter
     {
         var result = new List<SourceLine>();
         var number = 0;
+        var offset = 0;
 
         foreach (var raw in source.Split('\n'))
         {
@@ -26,7 +27,8 @@ internal static class SourceLineSplitter
             var line = raw.TrimEnd('\r');
             var indent = line.Length - line.TrimStart().Length;
             var content = StripComments(line[indent..], hashComments).TrimEnd();
-            result.Add(new(number, line, indent, content, path));
+            result.Add(new(number, line, indent, content, path) { StartOffset = offset });
+            offset += raw.Length + 1;
         }
 
         return result;

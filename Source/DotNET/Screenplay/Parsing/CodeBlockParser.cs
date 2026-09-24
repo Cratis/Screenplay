@@ -33,8 +33,7 @@ internal static class CodeBlockParser
             context.Warning(DiagnosticCodes.LegacyInlineCodeFence, $"'{language}' on its own line is deprecated - use '```{language}' instead", tagLine.Location);
         }
 
-        var code = ParseFencedText(context, language, tagLine);
-        return code is null ? null : new CodeBlockSyntax(language, code, tagLine.Location);
+        return ParseFencedBody(context, language, tagLine);
     }
 
     /// <summary>
@@ -53,7 +52,15 @@ internal static class CodeBlockParser
     /// <param name="opener">The keyword that opened the block, used in diagnostics.</param>
     /// <param name="tagLine">The consumed <see cref="SourceLine"/> holding the opening keyword.</param>
     /// <returns>The fenced lines joined with newlines, or <c>null</c> when the opening fence is missing.</returns>
-    public static string? ParseFencedText(ParserContext context, string opener, SourceLine tagLine)
+    public static string? ParseFencedText(ParserContext context, string opener, SourceLine tagLine) =>
+        ParseFencedBody(context, opener, tagLine)?.Code;
+
+    /// <summary>Parses fenced text and preserves its exact original body positions.</summary>
+    /// <param name="context">The parser context.</param>
+    /// <param name="opener">The opening keyword or language.</param>
+    /// <param name="tagLine">The consumed opening line.</param>
+    /// <returns>The code block, or null when the opening fence is missing.</returns>
+    public static CodeBlockSyntax? ParseFencedBody(ParserContext context, string opener, SourceLine tagLine)
     {
         var open = tagLine.Content.StartsWith("```", StringComparison.Ordinal) ? tagLine : context.Reader.PeekSignificant();
         var expectedFence = opener == "description" ? "```text" : $"```{opener}";
@@ -75,6 +82,10 @@ internal static class CodeBlockParser
         }
 
         var code = new List<string>();
+        var positions = new List<CodeBlockSourceLine>();
+        SourceLine? first = null;
+        SourceLine? last = null;
+        SourceLine? closing = null;
         while (true)
         {
             var line = context.Reader.TakeRaw();
@@ -86,16 +97,41 @@ internal static class CodeBlockParser
 
             if (line.Raw.Trim() == "```")
             {
+                closing = line;
                 break;
             }
 
-            code.Add(Dedent(line.Raw, open.Indent));
+            first ??= line;
+            var stripped = StripCount(line.Raw, open.Indent);
+            code.Add(line.Raw[stripped..]);
+            positions.Add(new(line.Number, stripped + 1));
+            last = line;
         }
 
-        return string.Join('\n', code);
+        var start = first?.Number ?? closing?.Number ?? open.Number;
+        var startColumn = 1;
+        var startOffset = closing?.StartOffset ?? (open.StartOffset + open.Raw.Length);
+        if (first is not null)
+        {
+            startColumn = positions[0].Column;
+            startOffset = first.StartOffset + startColumn - 1;
+        }
+        else if (closing is null)
+        {
+            startColumn = open.Raw.Length + 1;
+        }
+
+        return new CodeBlockSyntax(opener, string.Join('\n', code), tagLine.Location)
+        {
+            BodyStartOffset = startOffset,
+            BodyEndOffset = last is null ? startOffset : last.StartOffset + last.Raw.Length,
+            BodyStart = new(start, startColumn, tagLine.Path),
+            BodyEnd = last is null ? new(start, startColumn, tagLine.Path) : new(last.Number, last.Raw.Length + 1, tagLine.Path),
+            BodyLines = [.. positions]
+        };
     }
 
-    static string Dedent(string raw, int indent)
+    static int StripCount(string raw, int indent)
     {
         var strip = 0;
         while (strip < indent && strip < raw.Length && raw[strip] == ' ')
@@ -103,6 +139,6 @@ internal static class CodeBlockParser
             strip++;
         }
 
-        return raw[strip..];
+        return strip;
     }
 }

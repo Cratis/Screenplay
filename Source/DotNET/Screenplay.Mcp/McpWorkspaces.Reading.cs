@@ -175,6 +175,8 @@ internal sealed partial class McpWorkspaces
         requirement.Language,
         requirement.File,
         requirement.ContentHash,
+        bodySpan = requirement.BodySpan,
+        bodyLines = requirement.BodyLines.Select(position => new { line = position.Line, column = position.Column }),
         semanticId = requirement.Source.SemanticId.ToString(),
         documentId = requirement.Source.Span.Document.ToString(),
         line = requirement.Source.Span.StartLine,
