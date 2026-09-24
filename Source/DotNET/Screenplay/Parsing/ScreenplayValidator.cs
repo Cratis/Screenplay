@@ -436,10 +436,43 @@ internal static class ScreenplayValidator
     /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
     static void ValidateReads(CommandSyntax command, HashSet<string> knownReadModels, ParserContext context)
     {
-        var properties = command.Properties.Select(property => property.Name).ToHashSet();
+        var properties = command.Properties.Select(property => property.Name).ToHashSet(StringComparer.Ordinal);
+        var declarations = (command.Reads ?? []).ToList();
+        var repeatedViews = declarations.GroupBy(read => read.ReadModel, StringComparer.Ordinal)
+            .Where(group => group.Count() > 1)
+            .Select(group => group.Key)
+            .ToHashSet(StringComparer.Ordinal);
+        var aliases = new HashSet<string>(StringComparer.Ordinal);
 
-        foreach (var reads in command.Reads ?? [])
+        foreach (var reads in declarations)
         {
+            if (repeatedViews.Contains(reads.ReadModel) && reads.Alias is null)
+            {
+                context.Error(
+                    DiagnosticCodes.MissingReadsAlias,
+                    $"Command '{command.Name}' reads '{reads.ReadModel}' more than once; each read needs an alias",
+                    reads.Location);
+            }
+
+            if (reads.Alias is { } alias)
+            {
+                if (!aliases.Add(alias))
+                {
+                    context.Error(
+                        DiagnosticCodes.DuplicateReadsAlias,
+                        $"Command '{command.Name}' already uses reads alias '{alias}'",
+                        reads.Location);
+                }
+
+                if (properties.Contains(alias))
+                {
+                    context.Error(
+                        DiagnosticCodes.ReadsAliasConflictsWithProperty,
+                        $"Reads alias '{alias}' conflicts with a property of command '{command.Name}'",
+                        reads.Location);
+                }
+            }
+
             if (!knownReadModels.Contains(reads.ReadModel))
             {
                 context.Warning(
@@ -471,7 +504,11 @@ internal static class ScreenplayValidator
     static void ValidateRequirements(CommandSyntax command, ParserContext context)
     {
         var properties = command.Properties.Select(property => property.Name).ToHashSet();
-        var reads = (command.Reads ?? []).Select(read => read.ReadModel).ToHashSet();
+        var declarations = (command.Reads ?? []).ToList();
+        var reads = declarations.Where(read => declarations.Count(other => other.ReadModel == read.ReadModel) == 1)
+            .Select(read => read.ReadModel)
+            .Concat(declarations.Select(read => read.Alias).OfType<string>())
+            .ToHashSet(StringComparer.Ordinal);
 
         foreach (var requirement in command.Validations.OfType<DeclarativeValidateSyntax>()
             .SelectMany(validate => validate.Requirements ?? []))

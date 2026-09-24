@@ -373,8 +373,8 @@ conditions are reported without a code until the compiler checks them too.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0175` | Error | A `reads` line is not `reads <ReadModel>` or `reads <ReadModel> by <property>`. |
-| `PLAY0176` | Error | A command declares that it reads the same read model more than once. |
+| `PLAY0175` | Error | A `reads` line is not `reads <ReadModel> [as <alias>] [by <property>]`. |
+| `PLAY0176` | Error | Legacy duplicate-read diagnostic, retained for compatibility; repeated reads now use `PLAY0410` when an alias is missing. |
 | `PLAY0177` | Warning | A command reads a read model no projection in the document produces. |
 | `PLAY0178` | Warning | The `by` of a `reads` declaration does not name a property of the command. |
 
@@ -736,6 +736,14 @@ Use an opening fence with an info string, such as ` ```csharp ` (without the spa
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0397` | Warning | An inline code block uses a separate language line, `validate csharp`, or a multiline description uses a bare fence. The message names the tagged-fence replacement. |
+
+### Repeated command reads
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0410` | Error | A command reads the same view more than once without an alias on every instance. |
+| `PLAY0411` | Error | Two reads in a command use the same alias. |
+| `PLAY0412` | Error | A reads alias collides with one of the command's property names. |
 
 ## Retired codes
 

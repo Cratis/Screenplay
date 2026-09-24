@@ -62,6 +62,8 @@ export const clauseKeywords = [
     'authorize',
     'validate',
     'produces',
+    'reads',
+    'as',
     'handler',
     'performer',
     'observable',

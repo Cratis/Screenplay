@@ -63,6 +63,8 @@ export const sliceItems: CompletionEntry[] = [
 export const commandItems: CompletionEntry[] = [
     { label: 'identifier property', insertText: '${1:property} ${2:Type} identifier', documentation: 'Marks the property a runtime resolves the event source id from. At most one per command.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'References the policies that must pass for the command to execute.' },
+    { label: 'reads', insertText: 'reads ${1:View} by ${2:property}', documentation: 'Declares a view the command consults. Executable binding is not yet supported.' },
+    { label: 'reads as', insertText: 'reads ${1:View} as ${2:alias} by ${3:property}', documentation: 'Names one instance of a view; every instance needs a unique alias when reading the same view more than once.' },
     { label: 'validate', insertText: 'validate\n    ${1:property} not empty message "${2:message}"', documentation: 'Declarative validation rules with messages.' },
     { label: 'validate csharp', insertText: `validate\n    ${fenced('csharp')}`, documentation: 'Imperative validation in C#, yielding the message of every rule the artifact breaks.' },
     { label: 'produces', insertText: 'produces ${1:EventType}\n    ${2:property} = ${3:source}', documentation: 'Declares the event the command emits, with property mappings.' },

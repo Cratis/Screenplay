@@ -11,7 +11,7 @@ command <Name>
   <property> <Type>[?] [identifier]
   ...
 
-  [reads <ReadModel> [by <property>]]   ← state the command decides against
+  [reads <ReadModel> [as <alias>] [by <property>]]   ← state the command decides against
   ...
 
   [authorize <PolicyName> [<PolicyName>]*]
@@ -100,9 +100,24 @@ This is the read-model-to-command arrow of Event Modeling — one of the four th
 
 - `<ReadModel>` names a read model some [projection](projections/index.md) produces. Reading something no projection produces is a warning — the document says it depends on state nothing in it explains.
 - `by <property>` names the command property the read model is looked up by, and must be one of the command's own properties. Leave it out for a read model that is not looked up by a key — a single view the whole application shares rather than one instance per identifier.
-- A command may read more than one read model, but only once each; reading the same one twice says nothing the first declaration did not.
+- `as <alias>` distinguishes instances of the same view. If a command reads a view more than once, **every** instance needs an alias. Aliases must be unique in the command and must not match any of its property names. A single read may also be named by an alias.
 
-With the read model in scope, its properties are addressable for the rest of the command body — in a produces mapping, as above, and in the validation rules below.
+For example, a transfer can name both accounts without conflating their state:
+
+```screenplay
+command TransferFunds
+  sourceId Uuid
+  destinationId Uuid
+  reads Account as source by sourceId
+  reads Account as destination by destinationId
+  validate
+    require source.balance > 0
+      message "Source account must have funds"
+```
+
+The view name still qualifies a `require` path when only one instance of that view is read. An alias qualifies the path when present; with repeated reads, use the alias instead of the ambiguous view name. With the read model in scope, its properties are also addressable in produces mappings, as above.
+
+This change adds **syntax and validation only**. The executable semantic model still rejects command `reads` and read-model paths in requirements until decision-consistent reads have a confirmed runtime mapping (#129).
 
 ## Validation rules
 
@@ -176,7 +191,7 @@ command ConfirmOrder
 
 Every failed rule and requirement **rejects** the command, even at warning or information severity. A rejection carries each failed rule's message and severity for UI presentation; severity is not a pass/fail threshold.
 
-An operand is either a property of the command or a path into state the command declares it reads. Anything else is a warning — a requirement a reader cannot resolve says less than it appears to. A rule whose logic is not a comparison at all still belongs in a named `rule` or an inline block, as below; `require` is for the rules that *can* be stated.
+An operand is either a property of the command or a path into state the command declares it reads (qualified by its alias, or by its view name if unambiguous). Anything else is a warning — a requirement a reader cannot resolve says less than it appears to. A rule whose logic is not a comparison at all still belongs in a named `rule` or an inline block, as below; `require` is for the rules that *can* be stated.
 
 #### A rule that only applies sometimes
 

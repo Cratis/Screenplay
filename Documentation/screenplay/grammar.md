@@ -395,14 +395,17 @@ CommandDecl    = "command", Ident, NL,
                    [ ConcurrencyDecl ],
                  DEDENT ;
 
-ReadsDecl      = "reads", Ident, [ "by", Ident ], NL ;
+ReadsDecl      = "reads", Ident, [ "as", Ident ], [ "by", Ident ], NL ;
 
 (* The read model a command consults before it decides. Declaring it puts the
    read model in scope for the rest of the command body, so a produces mapping
    can be fed from state - "consultantId = EngagementScope.consultantId" - and
    a validation rule can be stated against it. "by" names the command property
    the read model is looked up by, and is absent for a read model that is not
-   looked up by a key.                                                       *)
+   looked up by a key. An alias is required for every instance when the same
+   read model is read twice by one command. Aliases must be unique in that
+   command and must not match a command property. An unambiguous view name
+   and an alias may qualify paths in a require condition.                  *)
 
 ConcurrencyDecl = "concurrency", NL,
                  INDENT, { ConcurrencyDim }, DEDENT ;
