@@ -22,7 +22,7 @@ When a deliberate contract change alters the canonical bytes, change the source 
 SCREENPLAY_REGENERATE_GOLDEN=1 dotnet test Source/DotNET/Screenplay/Screenplay.csproj -c Debug
 ```
 
-For a v3-only regeneration, use `SCREENPLAY_REGENERATE_GOLDEN=3` with the same command. The `1` setting rewrites the original four files; both modes fail on purpose with
+For a v3-only regeneration, use `SCREENPLAY_REGENERATE_GOLDEN=3` with the same command. The `1` setting rewrites all five files; both modes fail on purpose with
 `GoldenVectorsRegenerated`, so it can never pass silently in CI. Review the diff, then rebuild and rerun
 without the variable - the bytes are embedded at build time.
 

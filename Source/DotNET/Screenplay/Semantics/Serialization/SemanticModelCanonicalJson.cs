@@ -162,7 +162,7 @@ internal static partial class SemanticModelCanonicalJson
         writer.WriteString("key", "eventSourceId");
         writer.WriteNull("initialState");
         writer.WriteString("result", "stateOrDelete");
-        WriteArray(writer, "transitions", reducer.Transitions, (output, transition) =>
+        WriteArray(writer, "transitions", reducer.Transitions.OrderBy(_ => _.EventContract.ToString(), StringComparer.Ordinal), (output, transition) =>
         {
             output.WriteStartObject();
             output.WriteString("eventContract", transition.EventContract.ToString());

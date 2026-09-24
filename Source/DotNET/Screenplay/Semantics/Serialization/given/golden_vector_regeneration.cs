@@ -53,6 +53,7 @@ public static class golden_vector_regeneration
         {
             Write(directory, "full-esm-v1.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModel())),
             Write(directory, "full-esm-v2.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV2())),
+            Write(directory, "full-esm-v3.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV3())),
             Write(directory, "full-expressions-v1.json", SemanticModelCanonicalJson.SerializeExpressionVector(canonical_serialization_golden_vectors.CreateExpressions())),
             Write(directory, "full-identity-catalog-v1.json", SemanticIdentityCatalogSerializer.Serialize(canonical_serialization_golden_vectors.CreateIdentityCatalog()))
         };

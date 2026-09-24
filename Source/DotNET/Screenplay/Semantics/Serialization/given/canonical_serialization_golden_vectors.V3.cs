@@ -18,7 +18,9 @@ public static partial class canonical_serialization_golden_vectors
         var module = model.Application.Modules.Single();
         var root = module.Features.Single();
         var feature = root.Features.Single();
-        var eventContract = feature.Slices.Single(slice => slice.Name == "Creation").Events.Single(value => value.Name == "EntityCreated").Id;
+        var events = feature.Slices.Single(slice => slice.Name == "Creation").Events;
+        var eventContract = events.Single(value => value.Name == "EntityCreated").Id;
+        var otherEvent = events.Single(value => value.Name == "EntityMaybeSelected").Id;
         var readModel = new SemanticReadModel(
             Id(3000),
             "EntityCount",
@@ -28,7 +30,7 @@ public static partial class canonical_serialization_golden_vectors
         var reducer = new SemanticReducer(
             "EntityCountReducer",
             readModel.Id,
-            [new(eventContract, new string('a', 64))]);
+            [new(otherEvent, new string('b', 64)), new(eventContract, new string('a', 64))]);
         var slices = feature.Slices.Select(slice => slice.Name == "EntitySummaries"
             ? slice with { ReadModels = slice.ReadModels.Add(readModel), Reducers = [reducer] }
             : slice).ToImmutableArray();

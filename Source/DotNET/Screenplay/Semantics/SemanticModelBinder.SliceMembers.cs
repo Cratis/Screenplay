@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using System.Globalization;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
@@ -82,8 +83,8 @@ public sealed partial class SemanticModelBinder
                     var source = trigger.Source switch
                     {
                         NamedTriggerSourceSyntax named => $"when {named.Name}",
-                        IntervalTriggerSourceSyntax interval => $"every {interval.Amount} {interval.Unit}",
-                        ScheduleTriggerSourceSyntax schedule => $"at {schedule.Time:HH:mm}/{schedule.DayOfWeek}/{schedule.DayOfMonth}",
+                        IntervalTriggerSourceSyntax interval => $"every {interval.Amount.ToString(CultureInfo.InvariantCulture)} {interval.Unit}",
+                        ScheduleTriggerSourceSyntax schedule => $"at {schedule.Time.ToString("HH':'mm", CultureInfo.InvariantCulture)}/{schedule.DayOfWeek}/{schedule.DayOfMonth?.ToString(CultureInfo.InvariantCulture)}",
                         _ => throw new InvalidSemanticContract("An unknown reaction trigger source cannot identify an implementation.")
                     };
                     RequireImplementation(SemanticImplementationRole.ReactionEffect, owner, trigger.File, trigger.Code, $"{reaction.Name}/{source}");

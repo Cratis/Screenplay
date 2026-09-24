@@ -220,6 +220,14 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                 return new SemanticUnsupported(original, SemanticExecutionCapability.Query, $"Query '{queryRequest.Query}' is not in the execution plan.");
             }
 
+            if (ReducerFor(plan, query.ReadModel) is { } reducer)
+            {
+                return new SemanticUnsupported(
+                    original,
+                    SemanticExecutionCapability.Query,
+                    $"Reducer '{reducer.Name}' has opaque transitions and requires a target provider to compute read-model state.");
+            }
+
             if (!SemanticPolicyEvaluation.Allows(
                 query.Authorization,
                 plan,
@@ -244,8 +252,26 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             queryResults.Add(new(query.Id, queryRequest.Key, results));
         }
 
+        foreach (var instance in tentative.ReadModels)
+        {
+            if (ReducerFor(plan, instance.ReadModel) is { } reducer)
+            {
+                return new SemanticUnsupported(
+                    original,
+                    SemanticExecutionCapability.Projection,
+                    $"Reducer '{reducer.Name}' has opaque transitions and requires a target provider to compute read-model state.");
+            }
+        }
+
         return new SemanticAccepted(tentative, facts, queryResults.ToImmutable());
     }
+
+    static SemanticReducer? ReducerFor(SemanticExecutionPlan plan, SemanticId readModel) =>
+        plan.Model.Application.Modules.SelectMany(module => Reducers(module.Features))
+            .FirstOrDefault(reducer => reducer.ReadModel == readModel);
+
+    static IEnumerable<SemanticReducer> Reducers(ImmutableArray<SemanticFeature> features) =>
+        features.SelectMany(feature => feature.Slices.SelectMany(slice => slice.Reducers).Concat(Reducers(feature.Features)));
 
     static string? ValidateRequest(
         SemanticExecutionPlan plan,

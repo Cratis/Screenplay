@@ -43,12 +43,7 @@ public enum SemanticPlanIssueKind
     /// <summary>
     /// A projection reads an event-context value the reference evaluator has no occurrence context for.
     /// </summary>
-    UnsupportedEventContext = 5,
-
-    /// <summary>
-    /// An opaque reducer transition requires a target provider; the reference evaluator cannot compute it.
-    /// </summary>
-    RequiresTargetReducer = 6
+    UnsupportedEventContext = 5
 }
 
 /// <summary>
