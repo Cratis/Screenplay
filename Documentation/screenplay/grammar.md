@@ -172,6 +172,7 @@ PackageName    = Ident, { ".", Ident } ;
 Module         = "module", Ident, NL,
                  INDENT,
                    { DescriptionDecl
+                   | AuthorizeDecl
                    | ScreenTemplateDecl
                    | DialogTemplateDecl
                    | FormDecl
@@ -280,6 +281,7 @@ ArrangementSizeClass = "compact" | "regular" ;
 Feature        = "feature", Ident, NL,
                  INDENT,
                    { DescriptionDecl
+                   | AuthorizeDecl
                    | Feature
                    | SliceDecl
                    | ContributionDecl },

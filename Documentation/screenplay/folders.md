@@ -349,8 +349,8 @@ Invoicing/
 | File | Holds |
 |---|---|
 | `application.play` | Everything that belongs to the application as a whole rather than to any one module: `domain`, `import`, `concept`, `type`, `policy`, `persona`, `authentication` and `seed`. There is one, always, at the root. |
-| `<Module>/<Module>.play` | The module's own `description`, `screen template`, `dialog template`, `form`, and `contribute` declarations - not its features. |
-| `<Module>/…/<Feature>/<Feature>.play` | The feature's own `description` and `contribute` declarations - not its slices or sub features. |
+| `<Module>/<Module>.play` | The module's own `description`, `authorize`, `screen template`, `dialog template`, `form`, and `contribute` declarations - not its features. |
+| `<Module>/…/<Feature>/<Feature>.play` | The feature's own `description`, `authorize` and `contribute` declarations - not its slices or sub features. |
 | `<Module>/…/<Feature>/<Slice>/<Slice>.play` | One slice, whole. |
 
 Every one of those is a complete `.play` document. A slice file restates the module and feature it belongs to, because that is what the language needs in order to place a slice:
@@ -363,7 +363,7 @@ module Invoicing
         invoiceId InvoiceId
 ```
 
-Nothing is written twice. The restated `module Invoicing` in a slice file carries no description, templates, forms, contributions, behavior attachments, or module-header comments - those live in the module's own file. Restated features likewise carry no description, contributions, behavior attachments or header comments, including when they are ancestors of a nested feature. Comments inside a slice stay in its slice file.
+Nothing is written twice. The restated `module Invoicing` in a slice file carries no description, authorization, templates, forms, contributions, behavior attachments, or module-header comments - those live in the module's own file. Restated features likewise carry no description, authorization, contributions, behavior attachments or header comments, including when they are ancestors of a nested feature. Comments inside a slice stay in its slice file.
 
 ## How the files become one application
 
@@ -374,6 +374,7 @@ Merging follows a single rule: **the documents of a folder are one document**. F
 | `module`, `feature` | **Combined by name.** Every file naming `module Invoicing` is talking about the same module. This is what lets a slice live in its own file and still belong to its feature. |
 | `slice`, `screen template`, `dialog template`, `form` | Accumulated. A second file declaring one that already exists in the same owner is an error. |
 | `contribute` on a module or feature | Accumulated under that owner. Several contributions may target the same contribution point. |
+| `authorize` on a module or feature | Distinct gates in different files accumulate with AND in file-path order; no file can silently override another's gate. An identical gate repeated in another file is kept once with a `PLAY0394` warning. Expansion writes the gate only in its owner's file and strips it from restated headers. Command and query authorization is additionally AND-composed with every enclosing feature and module gate. |
 | `on` on a module or feature | Accumulated under that owner, in file-path order. Inline behaviors are additive, so distinct `on` blocks from different files all run. A block identical to one another file already attaches is ignored with a `PLAY0340` warning, so it runs once. Expansion writes them only in the owner's own file. |
 | `uses` on a module or feature | Accumulated under that owner, in file-path order. Attaching the same behavior with the same arguments from a second file is ignored with a `PLAY0340` warning, so it runs once; the same behavior with different arguments is two distinct attachments, and both are kept. Expansion writes them only in the owner's own file. |
 | `concept`, `type`, `policy`, `persona` | Accumulated. Concepts and types share one namespace, so a `type` cannot take a `concept`'s name. A second file declaring one that already exists is an error. |

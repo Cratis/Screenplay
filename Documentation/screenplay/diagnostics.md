@@ -720,6 +720,7 @@ These diagnostics cover [constraint](constraints.md) binding and the parser warn
 | `PLAY0391` | Error | A `unique <property> on <Event>` constraint names a property the event does not declare. |
 | `PLAY0392` | Error | Two constraints in the application share a name. The name is a constraint's identity in the event store - it keys the constraint's index and its violations - so it is unique across the whole application, not just its slice. |
 | `PLAY0393` | Error | `ignore casing` is declared on a `unique event` constraint; it applies only to unique property values. |
+| `PLAY0394` | Warning | Another file declares an identical `authorize` gate on the same module or feature. The first is kept and the repeated gate is ignored; distinct gates accumulate with AND. |
 | `PLAY0396` | Warning | A `file <Path>` constraint names a Chronicle `IConstraint` class, which can only declare uniqueness. Use `unique ...` for portable uniqueness; put other rules in command validation or a `require` condition. |
 
 ## Retired codes
