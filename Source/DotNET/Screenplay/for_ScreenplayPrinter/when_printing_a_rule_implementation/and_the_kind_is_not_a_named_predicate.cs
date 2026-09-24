@@ -31,7 +31,7 @@ public class and_the_kind_is_not_a_named_predicate : given.a_printer
     [Fact] void should_preserve_the_rule_kind() => Rule.Rule.ShouldEqual(ValidationRuleKind.NotEmpty);
     [Fact] void should_preserve_the_message() => Rule.Message.ShouldEqual("A reason is required");
     [Fact] void should_reparse_without_the_file() => Rule.File.ShouldBeNull();
-    [Fact] void should_have_nothing_left_to_note_on_a_second_pass() => _roundtrip.PrintedAgain.ShouldNotContain("// TODO:");
+    [Fact] void should_keep_the_printed_note_on_a_second_pass() => _roundtrip.PrintedAgain.ShouldContain("// TODO:");
 
     ValidationRuleSyntax Rule => given.a_hand_built_application.CommandRule(_roundtrip.Reparsed);
 }

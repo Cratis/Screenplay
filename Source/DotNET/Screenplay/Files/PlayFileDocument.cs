@@ -71,7 +71,8 @@ internal static class PlayFileDocument
         Features = [],
         Description = null,
         Behaviors = [],
-        UsedBehaviors = []
+        UsedBehaviors = [],
+        SourceComments = []
     };
 
     static FeatureSyntax Bare(FeatureSyntax feature) => feature with
@@ -81,6 +82,7 @@ internal static class PlayFileDocument
         Contributions = [],
         Description = null,
         Behaviors = [],
-        UsedBehaviors = []
+        UsedBehaviors = [],
+        SourceComments = []
     };
 }

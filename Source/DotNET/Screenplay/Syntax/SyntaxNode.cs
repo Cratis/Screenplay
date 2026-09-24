@@ -1,7 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Syntax;
 
@@ -9,4 +11,11 @@ namespace Cratis.Screenplay.Syntax;
 /// Represents the base of every node in the Screenplay syntax tree.
 /// </summary>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public abstract record SyntaxNode(SourceLocation Location);
+public abstract record SyntaxNode(SourceLocation Location)
+{
+    /// <summary>
+    /// Gets comments owned by this node. These are server-owned source metadata, not typed syntax.
+    /// </summary>
+    [SourceSpanMetadata]
+    public ImmutableArray<SourceComment> SourceComments { get; init; } = [];
+}

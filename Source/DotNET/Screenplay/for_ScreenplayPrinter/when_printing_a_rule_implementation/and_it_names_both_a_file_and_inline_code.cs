@@ -34,7 +34,7 @@ public class and_it_names_both_a_file_and_inline_code : given.a_printer
     [Fact] void should_reparse_without_diagnostics() => _roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
     [Fact] void should_preserve_the_file() => Rule.File!.Path.ShouldEqual(Path);
     [Fact] void should_reparse_without_the_code() => Rule.Code.ShouldBeNull();
-    [Fact] void should_have_nothing_left_to_note_on_a_second_pass() => _roundtrip.PrintedAgain.ShouldNotContain("// TODO:");
+    [Fact] void should_keep_the_printed_note_on_a_second_pass() => _roundtrip.PrintedAgain.ShouldContain("// TODO:");
 
     ValidationRuleSyntax Rule => given.a_hand_built_application.CommandRule(_roundtrip.Reparsed);
 }

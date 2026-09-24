@@ -611,7 +611,7 @@ For executable-model dispositions, see `PLAY0268`–`PLAY0271` above, [projectio
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0288` | Warning | An accepted AST authoring operation canonically prints a touched document. The message states how many comments that document loses and on which lines; whitespace and declaration order are normalized, and untouched documents retain their exact bytes. |
+| `PLAY0288` | Warning | An accepted AST authoring operation canonically prints a touched document. The message states how many comments could not be retained and on which lines; attached comments follow their syntax owners, whitespace is normalized, and untouched documents retain their exact bytes. |
 | `PLAY0289` | Error | An empty authoring workspace has no source documents to compile to an executable model. You can still propose its first typed document. |
 
 Source-authoring acceptance and executable readiness are separate verdicts. An authoring proposal validates the complete `.play` application and identity continuity without claiming that every language construct is supported by the executable backend profile. Executable-only workspace transactions remain strict.

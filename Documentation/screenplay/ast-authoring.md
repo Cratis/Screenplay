@@ -51,7 +51,7 @@ incorrect child types, invalid enums and illegal nulls are rejected.
   to avoid colliding with the discriminator.
 - Missing collections initialize empty; optional null collections normalize to
   empty arrays. Required scalar values must be supplied according to the schema.
-- Source locations and description offsets are server-owned, not editable data.
+- Source locations, description offsets and parsed comments are server-owned, not editable data.
 - Ordinary JSON numbers decode as finite `Double` literals, matching the parser.
   Other admitted numeric CLR literal types use typed `literalType`/`value`
   envelopes to retain precision and type.
@@ -169,7 +169,8 @@ operation. Neither path guesses identity continuity.
 ## Source and persistence
 
 `WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments` explicitly permits
-canonical printing and comment/trivia loss in changed documents. Untouched
+canonical printing and whitespace normalization in changed documents. Parsed comments
+stay with their syntax owners, including after a typed-JSON replacement. Untouched
 source stays byte-identical; touched documents preserve their UTF-8 BOM policy.
 `PreserveExactSource` rejects syntax changes requiring printing. `PreserveTrivia`
 applies only byte patches whose result reparses to the complete intended AST;
@@ -189,12 +190,12 @@ unsupported changes reject without a canonicalization fallback.
 Adding, removing or reordering nodes is structural and still requires
 `CanonicalizeTouchedDocuments`.
 
-Canonical printing does not keep comments and normalizes blank lines. It preserves
+Canonical printing retains attached comments and normalizes blank lines. It preserves
 parsed member order within a document; new members follow the insertion rule in
 [Printing and generating](printing.md#what-printing-does-not-keep). Before applying such a result, call
-`WorkspaceDroppedComments.In(result.WritePlan)` to list every comment a changed
-document loses, with its path, line, column and text. The `PLAY0288` warning for
-each canonically printed document states the same count and lines.
+`WorkspaceDroppedComments.In(result.WritePlan)` to list any comment that could not be
+placed, with its path, line, column and text. The `PLAY0288` warning for each
+canonically printed document states the count and lines of comments actually lost.
 
 Successful results provide the candidate workspace and exact `WorkspaceWritePlan`
 before/after documents. The destination adapter owns file application and failure
