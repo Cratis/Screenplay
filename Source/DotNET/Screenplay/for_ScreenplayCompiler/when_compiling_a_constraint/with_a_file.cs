@@ -25,5 +25,6 @@ public class with_a_file : given.a_compiler
     [Fact] void should_compile_despite_the_warning() => _result.Success.ShouldBeTrue();
     [Fact] void should_warn_that_only_uniqueness_is_supported() => _result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.FileConstraintOnlySupportsUniqueness);
     [Fact] void should_report_a_warning() => _result.Diagnostics.Single().Severity.ShouldEqual(DiagnosticSeverity.Warning);
+    [Fact] void should_explain_what_to_use_instead() => _result.Diagnostics.Single().Message.ShouldEqual("A file constraint can only declare unique constraints in Chronicle - declare them with 'unique ...' so they are portable; a rule that is not uniqueness belongs in command validation or a 'require' condition");
     [Fact] void should_point_to_the_file_directive() => _result.Diagnostics.Single().Location.Line.ShouldEqual(5);
 }
