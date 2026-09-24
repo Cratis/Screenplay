@@ -303,7 +303,7 @@ public partial class ScreenplayPrinter
 
                                 if (requirement.Message is not null)
                                 {
-                                    writer.Line($"message {StringLiteral.Quote(requirement.Message)}");
+                                    writer.Line($"message {ScreenplaySyntaxText.LocalizableString(requirement.Message)}");
                                 }
                             }
                         }
