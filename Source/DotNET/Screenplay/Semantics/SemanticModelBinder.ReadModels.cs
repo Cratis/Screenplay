@@ -55,6 +55,11 @@ public sealed partial class SemanticModelBinder
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Query '{query.Name}' description is authoring metadata.", query.Location);
             }
 
+            if (query.Performer is not null)
+            {
+                RequireImplementation(SemanticImplementationRole.QueryPerformer, SemanticAddress.ForQuery(slice, query.Name), query.Performer.File, query.Performer.Code);
+            }
+
             if (query.IsObservable || query.Filters.Any() || query.Scope is not null || query.Performer is not null)
             {
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query '{query.Name}' uses delivery, filtering, scope, or implementation behavior outside the first ESM v1 vertical.", query.Location);

@@ -25,6 +25,7 @@ public sealed partial class SemanticModelBinder
         {
             if (policy.Code is not null)
             {
+                RequireImplementation(SemanticImplementationRole.PolicyPredicate, SemanticAddress.ForApplication(_applicationIdentity), null, policy.Code, policy.Name);
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Policy '{policy.Name}' uses csharp; portable implementation attachments are deferred to #139.", policy.Code.Location);
             }
 

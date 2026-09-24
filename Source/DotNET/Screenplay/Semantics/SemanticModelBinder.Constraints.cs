@@ -14,10 +14,10 @@ public sealed partial class SemanticModelBinder
         // The name is the constraint's identity in the event store, so it is claimed across every slice.
         readonly HashSet<string> _constraintNames = new(StringComparer.Ordinal);
 
-        ImmutableArray<SemanticConstraint> BindConstraints(SliceSyntax slice) =>
-            [.. slice.Constraints.Select(BindConstraint).Where(_ => _ is not null).Select(_ => _!)];
+        ImmutableArray<SemanticConstraint> BindConstraints(SemanticAddress owner, SliceSyntax slice) =>
+            [.. slice.Constraints.Select(constraint => BindConstraint(owner, constraint)).Where(_ => _ is not null).Select(_ => _!)];
 
-        SemanticConstraint? BindConstraint(ConstraintSyntax constraint)
+        SemanticConstraint? BindConstraint(SemanticAddress owner, ConstraintSyntax constraint)
         {
             ValidateStringKey(constraint.Message, constraint.Location);
             if (!_constraintNames.Add(constraint.Name))
@@ -31,6 +31,7 @@ public sealed partial class SemanticModelBinder
 
             if (constraint is FileConstraintSyntax file)
             {
+                RequireImplementation(SemanticImplementationRole.ConstraintPredicate, owner, file.File, null, file.Name);
                 Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
                     $"Constraint '{file.Name}' file implementation is not admitted by the executable model: Chronicle file constraints can only declare uniqueness. Declare it with 'unique ...' for portability; put other rules in command validation or a 'require' condition.",

@@ -108,10 +108,10 @@ public sealed partial class SemanticModelBinder
                 .Where(_ => _ is not null)
                 .Select(_ => _!)
                 .ToImmutableArray();
-            ReportUnsupportedSliceMembers(slice);
+            ReportUnsupportedSliceMembers(address, slice);
             return new(id, slice.Name, kind, [.. events.Select(_ => _.Contract)], commands, readModels, projections, queries, specifications)
             {
-                Constraints = BindConstraints(slice)
+                Constraints = BindConstraints(address, slice)
             };
         }
 

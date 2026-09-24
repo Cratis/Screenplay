@@ -35,6 +35,11 @@ public sealed partial class SemanticModelBinder
             {
                 if (validation is not DeclarativeValidateSyntax declarative)
                 {
+                    if (validation is CodeValidateSyntax code)
+                    {
+                        RequireImplementation(SemanticImplementationRole.ConceptValidation, SemanticAddress.ForConcept(_applicationIdentity, concept.Name), null, code.Code);
+                    }
+
                     Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' code validation requires a constrained implementation attachment (#139).", validation.Location);
                     continue;
                 }
@@ -53,7 +58,7 @@ public sealed partial class SemanticModelBinder
                         continue;
                     }
 
-                    if (BindValidationRule(rule, default, subject) is { } bound)
+                    if (BindValidationRule(rule, default, subject, SemanticAddress.ForConcept(_applicationIdentity, concept.Name)) is { } bound)
                     {
                         validations.Add(bound);
                     }

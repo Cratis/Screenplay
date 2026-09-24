@@ -165,19 +165,21 @@ public sealed partial class SemanticModelBinder
         /// <param name="rule">The rule syntax.</param>
         /// <param name="property">The constrained property, or a default identity for a concept's own value.</param>
         /// <param name="subject">What the rule constrains.</param>
+        /// <param name="owner">The owning command or concept address.</param>
         /// <returns>The bound rule, or <c>null</c> after reporting a diagnostic.</returns>
         /// <remarks>
         /// Chronicle carries no comparison, length or pattern rule algebra - these rules are a Screenplay and
         /// application-layer concern, so ESM defines their meaning itself. Operands are concrete literals typed
         /// against the subject; a bound on text constrains its length and takes a whole-number operand.
         /// </remarks>
-        SemanticValidationRule? BindValidationRule(ValidationRuleSyntax rule, SemanticId property, ValidationSubject subject)
+        SemanticValidationRule? BindValidationRule(ValidationRuleSyntax rule, SemanticId property, ValidationSubject subject, SemanticAddress owner)
         {
             ValidateStringKey(rule.Message, rule.Location);
             var spelling = Spelling(rule.Rule);
             if (rule.Rule == ValidationRuleKind.Rule)
             {
                 var name = (rule.Value as PathExpressionSyntax)?.Path ?? string.Empty;
+                RequireImplementation(SemanticImplementationRole.RulePredicate, owner, rule.File, rule.Code, name);
                 Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
                     rule.File is not null || rule.Code is not null
