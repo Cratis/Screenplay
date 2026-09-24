@@ -367,7 +367,7 @@ conditions are reported without a code until the compiler checks them too.
 |---|---|---|
 | `PLAY0172` | Error | Two files of a folder each declare something the application has at most one of. |
 | `PLAY0173` | Error | Two files of a folder declare the same name. |
-| `PLAY0174` | Warning | Two files of a folder describe the same thing differently, and the first description is kept. |
+| `PLAY0174` | Warning | Historical conflicting-description warning (retained for code compatibility; cross-file descriptions now report `PLAY0173` as an ownership error, even when identical). |
 
 ### What a command reads to decide
 
