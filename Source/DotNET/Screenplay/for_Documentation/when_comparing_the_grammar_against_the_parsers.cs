@@ -57,10 +57,10 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
         var document = File.ReadAllText(Path.Combine(parsing, "ScreenplayParser.cs"));
         var slices = File.ReadAllText(Path.Combine(parsing, "SliceParser.cs"));
         _dispatched = [];
-        AddCases(document, "switch (LineText.FirstWord(line.Content))", "static void AddLayout", _dispatched);
-        AddCases(document, "static ModuleSyntax ParseModule", "static void AddForm", _dispatched);
-        AddCases(document, "static FeatureSyntax ParseFeature", "[GeneratedRegex", _dispatched);
-        AddCases(slices, "switch (LineText.FirstWord(line.Content))", "return new(type, name", _dispatched);
+        AddCases(document, "switch (LineText.FirstWord(line.Content))", "static void AddLayout", "document", _dispatched);
+        AddCases(document, "static ModuleSyntax ParseModule", "static void AddForm", "module", _dispatched);
+        AddCases(document, "static FeatureSyntax ParseFeature", "[GeneratedRegex", "feature", _dispatched);
+        AddCases(slices, "switch (LineText.FirstWord(line.Content))", "return new(type, name", "slice", _dispatched);
     }
 
     void Because()
@@ -68,31 +68,38 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
         var root = Path.Combine(DocumentationExamples.Root(), "screenplay");
         var grammar = File.ReadAllText(Path.Combine(root, "grammar.md"));
         _missing = [];
-        foreach (var keyword in _dispatched.Order(StringComparer.Ordinal))
+        foreach (var dispatch in _dispatched.Order(StringComparer.Ordinal))
         {
+            var keyword = dispatch[(dispatch.IndexOf(':') + 1)..];
             if (!_references.TryGetValue(keyword, out var reference))
             {
-                _missing.Add($"{keyword}: no reference mapping");
+                _missing.Add($"{dispatch}: no reference mapping");
                 continue;
+            }
+
+            // "screen" means a template in a module but a concrete screen in a slice.
+            if (dispatch == "module:screen")
+            {
+                reference = ("ScreenTemplateDecl", "templates.md");
             }
 
             if (!Regex.IsMatch(grammar, $"^{Regex.Escape(reference.Production)}\\s*=", RegexOptions.Multiline, TimeSpan.FromSeconds(1)))
             {
-                _missing.Add($"{keyword}: missing {reference.Production} production in grammar.md");
+                _missing.Add($"{dispatch}: missing {reference.Production} production in grammar.md");
             }
 
             var path = Path.Combine(root, reference.Page);
             if (!File.Exists(path) || !Regex.IsMatch(File.ReadAllText(path), $@"(?<![\w]){Regex.Escape(keyword)}(?![\w])", RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1)))
             {
-                _missing.Add($"{keyword}: missing reference in {reference.Page}");
+                _missing.Add($"{dispatch}: missing reference in {reference.Page}");
             }
         }
     }
 
-    [Fact] void should_find_dispatched_constructs() => _dispatched.Count.ShouldBeGreaterThan(30);
+    [Fact] void should_find_dispatched_constructs() => _dispatched.Count.ShouldBeGreaterThan(38);
     [Fact] void should_document_every_dispatched_construct() => string.Join('\n', _missing).ShouldEqual(string.Empty);
 
-    static void AddCases(string source, string start, string end, HashSet<string> keywords)
+    static void AddCases(string source, string start, string end, string scope, HashSet<string> keywords)
     {
         var first = source.IndexOf(start, StringComparison.Ordinal);
         var last = source.IndexOf(end, first + start.Length, StringComparison.Ordinal);
@@ -103,7 +110,7 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
 
         foreach (Match match in CaseLabelRegex().Matches(source[first..last]))
         {
-            keywords.Add(match.Groups[1].Value);
+            keywords.Add($"{scope}:{match.Groups[1].Value}");
         }
     }
 
