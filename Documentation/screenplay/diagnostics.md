@@ -412,6 +412,8 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0190` | Error | The body of a reducer rule holds something other than a description, a file or inline code. |
 | `PLAY0191` | Error | More than one projection or reducer builds the same read model. |
 | `PLAY0192` | Error | A document declares the same read model more than once. |
+| `PLAY0398` | Error | A reducer has some `on` rules with transition bodies and others without them. Give every rule an inline or file body. |
+| `PLAY0399` | Error | A reducer observes the same resolved event in more than one `on` rule. |
 
 ### Where a produced event lands, and what a reaction sets off
 

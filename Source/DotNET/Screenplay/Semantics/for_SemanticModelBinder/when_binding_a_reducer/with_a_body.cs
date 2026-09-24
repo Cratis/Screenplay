@@ -1,11 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Cratis.Screenplay.Diagnostics;
-
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_a_reducer;
 
-// A reducer with a body is real reduction code. It stays rejected until a portable reducer contract exists (#139).
+// A reducer with a body binds an opaque transition contract, not an executable transition.
 public class with_a_body : given.a_semantic_binder
 {
     const string Source =
@@ -21,6 +19,10 @@ public class with_a_body : given.a_semantic_binder
 
               readmodel AccountBalance
                 balance Decimal
+                id Uuid
+
+              query BalanceById => AccountBalance?
+                by id Uuid
 
               reducer Balance => AccountBalance
                 on AmountDeposited
@@ -36,11 +38,17 @@ public class with_a_body : given.a_semantic_binder
 
     void Because() => _result = Bind(Source);
 
-    [Fact] void should_reject_the_reducer() => Reducer.Severity.ShouldEqual(DiagnosticSeverity.Error);
-    [Fact] void should_keep_the_unsupported_semantic_syntax_code() => Reducer.Code.ShouldEqual(DiagnosticCodes.UnsupportedSemanticSyntax);
-    [Fact] void should_say_it_requires_a_portable_reducer_contract() => Reducer.Message.ShouldEqual("Reducer 'Balance' requires a portable reducer contract.");
+    [Fact] void should_bind_the_reducer() => _result.Diagnostics.ShouldBeEmpty();
+    [Fact] void should_activate_v3() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V3);
+    [Fact] void should_key_by_event_source() => Reducer.Key.ShouldEqual(SemanticReducerKey.EventSourceId);
+    [Fact] void should_start_with_null_state() => Reducer.InitialState.ShouldBeNull();
+    [Fact] void should_treat_null_result_as_deletion() => Reducer.Result.ShouldEqual(SemanticReducerResult.StateOrDelete);
+    [Fact] void should_reference_each_requirement() => Reducer.Transitions.Select(value => value.RequirementId).ShouldEqual(_result.ImplementationRequirements.Select(value => value.RequirementId));
+    [Fact] void should_name_each_consumed_event() => Reducer.Transitions.Select(value => value.EventContract).ShouldEqual(_result.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single().Events.Select(value => value.Id));
+    [Fact] void should_require_pure_capability() => _result.ImplementationRequirements.All(value => value.RequiredCapability == "pure").ShouldBeTrue();
+    [Fact] void should_compile_a_reference_plan_for_specifications_not_using_the_reducer() => Execution.SemanticExecutionPlan.Compile(_result.Value!.Model).Success.ShouldBeTrue();
     [Fact] void should_list_each_transition_body() => _result.ImplementationRequirements.Select(value => value.Role).ShouldEqual([SemanticImplementationRole.ReducerTransition, SemanticImplementationRole.ReducerTransition]);
     [Fact] void should_preserve_the_inline_language_and_file_path() => _result.ImplementationRequirements.Select(value => (value.Language, value.File)).ShouldEqual([("csharp", null), (null, "Reducers/Withdrawn.cs")]);
 
-    Diagnostic Reducer => _result.Diagnostics.Single(_ => _.Message.StartsWith("Reducer 'Balance'", StringComparison.Ordinal));
+    SemanticReducer Reducer => _result.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single().Reducers.Single();
 }

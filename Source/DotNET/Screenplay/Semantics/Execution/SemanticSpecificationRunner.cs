@@ -58,6 +58,21 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             return new(specification, false, unsupported, [unsupported.Details]);
         }
 
+        var reducer = plan.Model.Application.Modules.SelectMany(module => AllSlices(module.Features))
+            .SelectMany(slice => slice.Reducers)
+            .FirstOrDefault(candidate =>
+                expected.GivenReadModels.Any(state => state.ReadModel == candidate.ReadModel) ||
+                expected.ThenReadModels.Any(state => state.ReadModel == candidate.ReadModel) ||
+                expected.ThenQueries.Any(query => plan.Queries.TryGetValue(query.Query, out var target) && target.ReadModel == candidate.ReadModel));
+        if (reducer is not null)
+        {
+            var unsupported = new SemanticUnsupported(
+                SemanticWorld.Empty,
+                SemanticExecutionCapability.Projection,
+                $"Reducer '{reducer.Name}' has opaque transitions and requires a target provider to compute read-model state.");
+            return new(specification, false, unsupported, [unsupported.Details]);
+        }
+
         if (EstablishWorld(plan, expected, out var establishmentFailure) is not { } world)
         {
             var unsupported = new SemanticUnsupported(
@@ -97,6 +112,9 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         var failures = Compare(expected, execution);
         return new(specification, failures.IsEmpty, execution, failures);
     }
+
+    static IEnumerable<SemanticSlice> AllSlices(ImmutableArray<SemanticFeature> features) =>
+        features.SelectMany(feature => feature.Slices.Concat(AllSlices(feature.Features)));
 
     static SemanticWorld? EstablishWorld(
         SemanticExecutionPlan plan,

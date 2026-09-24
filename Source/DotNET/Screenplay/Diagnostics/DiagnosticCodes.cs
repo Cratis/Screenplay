@@ -1949,6 +1949,16 @@ public static class DiagnosticCodes
     public const string LegacyInlineCodeFence = "PLAY0397";
 
     /// <summary>
+    /// A reducer contains both implemented and unimplemented event transitions.
+    /// </summary>
+    public const string IncompleteReducerTransitions = "PLAY0398";
+
+    /// <summary>
+    /// A reducer observes the same resolved event more than once.
+    /// </summary>
+    public const string DuplicateReducerEvent = "PLAY0399";
+
+    /// <summary>
     /// Multiple reads of one view require an alias on every instance.
     /// </summary>
     public const string MissingReadsAlias = "PLAY0410";

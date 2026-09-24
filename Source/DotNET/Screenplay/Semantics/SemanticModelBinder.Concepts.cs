@@ -31,13 +31,14 @@ public sealed partial class SemanticModelBinder
         ImmutableArray<SemanticValidationRule> BindConceptValidations(ConceptSyntax concept)
         {
             var validations = ImmutableArray.CreateBuilder<SemanticValidationRule>();
+            var codeValidationOrdinal = 0;
             foreach (var validation in concept.Validations ?? [])
             {
                 if (validation is not DeclarativeValidateSyntax declarative)
                 {
                     if (validation is CodeValidateSyntax code)
                     {
-                        RequireImplementation(SemanticImplementationRole.ConceptValidation, SemanticAddress.ForConcept(_applicationIdentity, concept.Name), null, code.Code);
+                        RequireImplementation(SemanticImplementationRole.ConceptValidation, SemanticAddress.ForConcept(_applicationIdentity, concept.Name), null, code.Code, $"code validation {codeValidationOrdinal++}");
                     }
 
                     Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' code validation requires a constrained implementation attachment (#139).", validation.Location);
@@ -54,7 +55,7 @@ public sealed partial class SemanticModelBinder
                 {
                     if (rule.Rule == ValidationRuleKind.Rule)
                     {
-                        RequireImplementation(SemanticImplementationRole.RulePredicate, SemanticAddress.ForConcept(_applicationIdentity, concept.Name), rule.File, rule.Code, (rule.Value as PathExpressionSyntax)?.Path);
+                        RequireImplementation(SemanticImplementationRole.RulePredicate, SemanticAddress.ForConcept(_applicationIdentity, concept.Name), rule.File, rule.Code, $"{rule.Property}/{(rule.Value as PathExpressionSyntax)?.Path}");
                     }
 
                     if (rule.Property != ValidationRuleSyntax.ConceptValue)

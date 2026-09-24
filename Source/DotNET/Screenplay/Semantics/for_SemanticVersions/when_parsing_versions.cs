@@ -30,4 +30,8 @@ public class when_parsing_versions : Specification
     [Fact] void should_admit_the_v2_pair_in_schema_v2() => EsmSchemaV2Support.Supports(LanguageVersion.V2, SemanticVersion.V2).ShouldBeTrue();
     [Fact] void should_reject_a_v1_language_with_v2_semantics() => EsmSchemaV2Support.Supports(LanguageVersion.V1, SemanticVersion.V2).ShouldBeFalse();
     [Fact] void should_reject_a_v2_language_with_v1_semantics() => EsmSchemaV2Support.Supports(LanguageVersion.V2, SemanticVersion.V1).ShouldBeFalse();
+    [Fact] void should_admit_v3_for_bodied_reducers() => EsmSchemaV3Support.Supports(LanguageVersion.V3, SemanticVersion.V3).ShouldBeTrue();
+    [Fact] void should_reject_v3_with_v2_semantics() => EsmSchemaV3Support.Supports(LanguageVersion.V3, SemanticVersion.V2).ShouldBeFalse();
+    [Fact] void should_parse_v3_language() => LanguageVersion.Parse("3.0").ShouldEqual(LanguageVersion.V3);
+    [Fact] void should_parse_v3_semantics() => SemanticVersion.Parse("3.0").ShouldEqual(SemanticVersion.V3);
 }

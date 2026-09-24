@@ -165,6 +165,11 @@ internal sealed partial class McpWorkspaces
     static object DescribeRequirement(SemanticImplementationRequirement requirement) => new
     {
         role = requirement.Role.ToString(),
+        requirement.RequirementId,
+        requirement.ContextVersion,
+        requirement.ResultVersion,
+        requirement.RequiredCapability,
+        attachmentResolution = requirement.AttachmentResolution.ToString(),
         owner = McpSemanticAddresses.Describe(requirement.Owner),
         requirement.Member,
         requirement.Language,

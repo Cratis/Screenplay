@@ -105,7 +105,7 @@ is canonicalized.
 | Tool | Required arguments | Optional arguments |
 | --- | --- | --- |
 | `open-workspace` | None | `applicationName`, `workspaceJson`, `includeContent` |
-| `read-workspace` | `expectedRevision` | view (`implementation-requirements` for blocking code attachments), offset, limit |
+| `read-workspace` | `expectedRevision` | view (`implementation-requirements` for code attachment requirements), offset, limit |
 | `read-ast` | `expectedRevision` | documentId, path, kind, name, semanticId, view, includeContent, offset, limit |
 | `propose` | Expected workspace/catalog revisions, operations | Explicit migrations/retirements, includeContent; legacy single-operation form supported |
 | `propose-ast` | Expected revisions, formatting | operations, documents, validation, referencePolicy, migrations/retirements, includeContent |
@@ -123,8 +123,11 @@ from the server; do not infer them from names or line numbers.
 
 `read-workspace` views: documents, semantics, eventContracts, diagnostics,
 executable-diagnostics and implementation-requirements. The last view pages
-blocking code attachments by role, owner address, optional member, language or
-file, hash, semantic/document ID and source line/column. The page cursor and
+implementation requirement envelopes by role, owner address, optional member, language or
+file, `RequirementId`, context/result contract versions, `RequiredCapability`,
+`AttachmentResolution`, content hash, semantic/document ID and source line/column.
+For a file attachment whose contents were not supplied, the content hash is empty (#244);
+bodied reducers no longer block binding. The page cursor and
 `expectedRevision` pin one immutable snapshot; rejected compilations still expose
 attachments without admitting an executable model. Document results contain root handles. `read-ast` returns
 original occurrences, names, child counts and existing identities. Its `children`

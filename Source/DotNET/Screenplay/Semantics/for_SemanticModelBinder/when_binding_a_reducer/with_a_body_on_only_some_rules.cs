@@ -32,8 +32,9 @@ public class with_a_body_on_only_some_rules : given.a_semantic_binder
 
     void Because() => _result = Bind(Source);
 
-    [Fact] void should_keep_the_unsupported_semantic_syntax_code() => Reducer.Code.ShouldEqual(DiagnosticCodes.UnsupportedSemanticSyntax);
-    [Fact] void should_say_it_requires_a_portable_reducer_contract() => Reducer.Message.ShouldEqual("Reducer 'Balance' requires a portable reducer contract.");
+    [Fact] void should_report_incomplete_transitions() => Reducer.Code.ShouldEqual(DiagnosticCodes.IncompleteReducerTransitions);
+    [Fact] void should_point_out_the_missing_body() => Reducer.Message.ShouldContain("mixes rules with and without transition bodies");
+    [Fact] void should_not_admit_a_partial_reducer() => _result.Value.ShouldBeNull();
 
     Diagnostic Reducer => _result.Diagnostics.Single(_ => _.Message.StartsWith("Reducer 'Balance'", StringComparison.Ordinal));
 }

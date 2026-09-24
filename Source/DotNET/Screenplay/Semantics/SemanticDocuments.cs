@@ -172,10 +172,11 @@ public sealed class SemanticSourceMap
 /// </summary>
 public sealed class SemanticDocumentSet
 {
-    SemanticDocumentSet(ImmutableArray<SemanticSourceDocument> documents, SemanticIdentityCatalog identityCatalog)
+    SemanticDocumentSet(ImmutableArray<SemanticSourceDocument> documents, SemanticIdentityCatalog identityCatalog, ImmutableDictionary<string, string> attachmentContents)
     {
         Documents = documents;
         IdentityCatalog = identityCatalog;
+        AttachmentContents = attachmentContents;
     }
 
     /// <summary>Gets the documents in deterministic document identity order.</summary>
@@ -184,6 +185,9 @@ public sealed class SemanticDocumentSet
     /// <summary>Gets the authoritative persisted identity assignments.</summary>
     public SemanticIdentityCatalog IdentityCatalog { get; }
 
+    /// <summary>Gets optional file attachment contents supplied by the host, keyed by repository-relative authored paths normalized by the host.</summary>
+    public ImmutableDictionary<string, string> AttachmentContents { get; }
+
     /// <summary>
     /// Creates a validated document set.
     /// </summary>
@@ -191,9 +195,21 @@ public sealed class SemanticDocumentSet
     /// <param name="identityCatalog">The authoritative identity catalog.</param>
     /// <returns>The deterministic document set.</returns>
     /// <exception cref="InvalidSemanticContract">A document is duplicated or does not match its catalog resolution.</exception>
+    public static SemanticDocumentSet Create(ImmutableArray<SemanticSourceDocument> documents, SemanticIdentityCatalog identityCatalog) =>
+        Create(documents, identityCatalog, null);
+
+    /// <summary>
+    /// Creates a validated document set with host-supplied attachment contents.
+    /// </summary>
+    /// <param name="documents">The source documents.</param>
+    /// <param name="identityCatalog">The authoritative identity catalog.</param>
+    /// <param name="attachmentContents">Optional contents keyed by repository-relative authored paths, normalized by the host; the binder never opens paths.</param>
+    /// <returns>The deterministic document set.</returns>
+    /// <exception cref="InvalidSemanticContract">A document is duplicated or does not match its catalog resolution.</exception>
     public static SemanticDocumentSet Create(
         ImmutableArray<SemanticSourceDocument> documents,
-        SemanticIdentityCatalog identityCatalog)
+        SemanticIdentityCatalog identityCatalog,
+        ImmutableDictionary<string, string>? attachmentContents)
     {
         if (documents.IsDefault || documents.IsEmpty || identityCatalog is null)
         {
@@ -216,7 +232,18 @@ public sealed class SemanticDocumentSet
             }
         }
 
-        return new([.. documents.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal)], identityCatalog);
+        var contents = attachmentContents ?? ImmutableDictionary.Create<string, string>(StringComparer.Ordinal);
+        foreach (var (path, content) in contents)
+        {
+            if (string.IsNullOrWhiteSpace(path) || content is null)
+            {
+                throw new InvalidSemanticContract("Attachment content requires a non-empty path and non-null text.");
+            }
+
+            SemanticDocumentText.RequireWellFormedUnicode(content, "attachment content");
+        }
+
+        return new([.. documents.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal)], identityCatalog, contents);
     }
 }
 

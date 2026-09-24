@@ -25,6 +25,9 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     /// </summary>
     public static readonly LanguageVersion V2 = new(2, 0);
 
+    /// <summary>The language version for opaque reducer transition contracts.</summary>
+    public static readonly LanguageVersion V3 = new(3, 0);
+
     /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
@@ -72,6 +75,9 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// Gets the semantic version reserved for typed state-change destinations and event occurrence context.
     /// </summary>
     public static readonly SemanticVersion V2 = new(2, 0);
+
+    /// <summary>The semantic version for opaque reducer transition contracts.</summary>
+    public static readonly SemanticVersion V3 = new(3, 0);
 
     /// <summary>
     /// Parses a canonical, supported semantic version.
@@ -203,13 +209,37 @@ public static class EsmSchemaV2Support
     }
 }
 
+/// <summary>Defines version pairs admitted by ESM schema v3.</summary>
+public static class EsmSchemaV3Support
+{
+    /// <summary>Gets the supported language versions.</summary>
+    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [LanguageVersion.V1, LanguageVersion.V2, LanguageVersion.V3];
+
+    /// <summary>Gets the supported semantic versions.</summary>
+    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [SemanticVersion.V1, SemanticVersion.V2, SemanticVersion.V3];
+
+    /// <summary>Determines whether a version pair has defined meaning.</summary>
+    public static bool Supports(LanguageVersion languageVersion, SemanticVersion semanticVersion) =>
+        EsmSchemaV2Support.Supports(languageVersion, semanticVersion) ||
+        (languageVersion == LanguageVersion.V3 && semanticVersion == SemanticVersion.V3);
+
+    /// <summary>Rejects unsupported version pairs.</summary>
+    public static void EnsureSupported(LanguageVersion languageVersion, SemanticVersion semanticVersion)
+    {
+        if (!Supports(languageVersion, semanticVersion))
+        {
+            throw new InvalidSemanticContract($"The ESM schema-v3 contract does not declare language version '{languageVersion}' and semantic version '{semanticVersion}'.");
+        }
+    }
+}
+
 static class VersionParser
 {
     internal static LanguageVersion ParseLanguage(string value)
     {
         if (!TryParse(value, out LanguageVersion version))
         {
-            throw new InvalidSemanticContract($"'{value}' is not a canonical language version supported by ESM schema v1 or v2.");
+            throw new InvalidSemanticContract($"'{value}' is not a canonical language version supported by ESM schema v1, v2 or v3.");
         }
 
         return version;
@@ -219,7 +249,7 @@ static class VersionParser
     {
         if (!TryParse(value, out SemanticVersion version))
         {
-            throw new InvalidSemanticContract($"'{value}' is not a canonical semantic version supported by ESM schema v1 or v2.");
+            throw new InvalidSemanticContract($"'{value}' is not a canonical semantic version supported by ESM schema v1, v2 or v3.");
         }
 
         return version;
@@ -229,7 +259,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV2Support.Supports(version))
+        if (success && !EsmSchemaV3Support.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -242,7 +272,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV2Support.Supports(version))
+        if (success && !EsmSchemaV3Support.SemanticVersions.Contains(version))
         {
             version = default;
             return false;

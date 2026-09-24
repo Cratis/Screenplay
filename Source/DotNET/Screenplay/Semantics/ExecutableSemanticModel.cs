@@ -58,7 +58,7 @@ public sealed record ExecutableSemanticModel
         SemanticVersion semanticVersion,
         SemanticApplication application)
     {
-        EsmSchemaV2Support.EnsureSupported(languageVersion, semanticVersion);
+        EsmSchemaV3Support.EnsureSupported(languageVersion, semanticVersion);
         SemanticModelValidator.Validate(application, semanticVersion);
         var withoutRevision = SemanticModelCanonicalJson.SerializeWithoutRevision(languageVersion, semanticVersion, application);
         var revision = SemanticRevision.Compute(withoutRevision);
@@ -86,6 +86,12 @@ internal static partial class SemanticModelValidator
                     specification.ThenEvents.Any(value => value.EventSource is not null))))
         {
             throw new InvalidSemanticContract("An ESM v2 model must contain a typed destination, a specification event source, or an occurrence context mapping.");
+        }
+
+        if (semanticVersion == SemanticVersion.V3 && application.Modules.SelectMany(module => module.Features)
+            .SelectMany(AllSlices).All(slice => slice.Reducers.IsEmpty))
+        {
+            throw new InvalidSemanticContract("An ESM v3 model must contain a reducer with transition bodies.");
         }
     }
 
@@ -220,6 +226,8 @@ internal static partial class SemanticModelValidator
             RequireObjects(slice.Commands, nameof(slice.Commands), "command");
             RequireObjects(slice.ReadModels, nameof(slice.ReadModels), "read model");
             RequireObjects(slice.Projections, nameof(slice.Projections), "projection");
+            RequireObjects(slice.Reducers, nameof(slice.Reducers), "reducer");
+            RejectDuplicateNames(slice.Reducers.Select(_ => _.Name), $"reducer in slice '{slice.Name}'");
             RequireObjects(slice.Queries, nameof(slice.Queries), "query");
             RequireObjects(slice.Specifications, nameof(slice.Specifications), "specification");
             RejectDuplicateNames(slice.Events.Select(_ => _.Name), $"event in slice '{slice.Name}'");
@@ -335,6 +343,11 @@ internal static partial class SemanticModelValidator
                 ValidateProjection(projection);
             }
 
+            foreach (var reducer in slice.Reducers)
+            {
+                ValidateReducer(reducer);
+            }
+
             foreach (var query in slice.Queries)
             {
                 ValidateQuery(query);
@@ -352,7 +365,7 @@ internal static partial class SemanticModelValidator
         {
             if (command.Destination is not null)
             {
-                if (_semanticVersion != SemanticVersion.V2)
+                if (_semanticVersion == SemanticVersion.V1)
                 {
                     throw new InvalidSemanticContract("A command state-change destination requires ESM v2.");
                 }
@@ -592,6 +605,27 @@ internal static partial class SemanticModelValidator
             }
         }
 
+        void ValidateReducer(SemanticReducer reducer)
+        {
+            if (_semanticVersion != SemanticVersion.V3 || string.IsNullOrWhiteSpace(reducer.Name) ||
+                !_readModels.ContainsKey(reducer.ReadModel) || reducer.Transitions.IsDefaultOrEmpty)
+            {
+                throw new InvalidSemanticContract($"Reducer '{reducer.Name}' requires ESM v3, a read model, and transitions.");
+            }
+
+            var events = new HashSet<SemanticId>();
+            var requirements = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var transition in reducer.Transitions)
+            {
+                if (transition is null || !_events.ContainsKey(transition.EventContract) ||
+                    string.IsNullOrWhiteSpace(transition.RequirementId) ||
+                    !events.Add(transition.EventContract) || !requirements.Add(transition.RequirementId))
+                {
+                    throw new InvalidSemanticContract($"Reducer '{reducer.Name}' has an unresolved or duplicate transition.");
+                }
+            }
+        }
+
         void ValidateQuery(SemanticKeyedQuery query)
         {
             if (!_readModels.TryGetValue(query.ReadModel, out var readModel))
@@ -630,7 +664,7 @@ internal static partial class SemanticModelValidator
 
                 if (specification.When.EventSource is not null)
                 {
-                    if (_semanticVersion != SemanticVersion.V2) throw new InvalidSemanticContract("A specification command event source requires ESM v2.");
+                    if (_semanticVersion == SemanticVersion.V1) throw new InvalidSemanticContract("A specification command event source requires ESM v2.");
                     ValidateEventSource(
                         specification.When.EventSource,
                         command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type);
@@ -646,7 +680,7 @@ internal static partial class SemanticModelValidator
                 ValidatePropertyValues(appended.Values, eventContract.Properties, true);
                 if (appended.EventSource is not null)
                 {
-                    if (_semanticVersion != SemanticVersion.V2) throw new InvalidSemanticContract("An appended event source requires ESM v2.");
+                    if (_semanticVersion == SemanticVersion.V1) throw new InvalidSemanticContract("An appended event source requires ESM v2.");
                     var destinationTypes = _commands.Values.SelectMany(value => value.Produces
                         .Where(produced => produced.EventContract == appended.EventContract)
                         .Select(_ => value.Destination?.Type ?? value.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type))
@@ -727,7 +761,7 @@ internal static partial class SemanticModelValidator
 
         void ValidateSpecificationEvent(SemanticSpecificationEvent value)
         {
-            if (value.EventSource is not null && _semanticVersion != SemanticVersion.V2)
+            if (value.EventSource is not null && _semanticVersion == SemanticVersion.V1)
             {
                 throw new InvalidSemanticContract("A specification event source requires ESM v2.");
             }
@@ -914,7 +948,7 @@ internal static partial class SemanticModelValidator
                     ValidateValueVariant(value.Value);
                     return TypeOf(value.Value);
                 case SemanticEventContextExpression context when expression.Kind == SemanticExpressionKind.EventContext:
-                    if (_semanticVersion != SemanticVersion.V2 || expectedRoot != SemanticExpressionRootKind.Command ||
+                    if (_semanticVersion == SemanticVersion.V1 || expectedRoot != SemanticExpressionRootKind.Command ||
                         context.Value is not (SemanticEventContextValueKind.Occurred or SemanticEventContextValueKind.CausedBySubject or
                             SemanticEventContextValueKind.CausedByName or SemanticEventContextValueKind.CausedByUserName) ||
                         context.Type.IsCollection || context.Type.IsOptional)

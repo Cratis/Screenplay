@@ -13,5 +13,5 @@ public class and_the_named_rule_has_a_body : given.a_validated_command
     [Fact] void should_report_unsupported_syntax() => Diagnostic.Code.ShouldEqual(DiagnosticCodes.UnsupportedSemanticSyntax);
     [Fact] void should_say_it_requires_an_implementation_attachment() => Diagnostic.Message.ShouldEqual("Validation rule 'BeUnique' on 'name' has an implementation body; code validation requires a constrained implementation attachment (#139).");
     [Fact] void should_list_the_named_rule() => _result.ImplementationRequirements.Single().Role.ShouldEqual(SemanticImplementationRole.RulePredicate);
-    [Fact] void should_address_the_named_rule() => _result.ImplementationRequirements.Single().Member.ShouldEqual("BeUnique");
+    [Fact] void should_address_the_named_rule() => _result.ImplementationRequirements.Single().Member.ShouldEqual("name/BeUnique");
 }

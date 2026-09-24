@@ -27,11 +27,15 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with { ImplementationRequirements = context.ImplementationRequirements };
             }
 
-            var version = context.UsesV2;
-            var model = ExecutableSemanticModel.Create(
-                version ? LanguageVersion.V2 : LanguageVersion.V1,
-                version ? SemanticVersion.V2 : SemanticVersion.V1,
-                application);
+            var languageVersion = context.UsesV3 ? LanguageVersion.V3 : LanguageVersion.V1;
+            var semanticVersion = context.UsesV3 ? SemanticVersion.V3 : SemanticVersion.V1;
+            if (context.UsesV2 && !context.UsesV3)
+            {
+                languageVersion = LanguageVersion.V2;
+                semanticVersion = SemanticVersion.V2;
+            }
+
+            var model = ExecutableSemanticModel.Create(languageVersion, semanticVersion, application);
             var sourceMap = SemanticSourceMap.Create(context.SourceMapEntries, documents.Documents);
             var compilation = SemanticCompilation.Create(model, documents, sourceMap);
             return new CompilationResult<SemanticCompilation>(compilation, context.Diagnostics) { ImplementationRequirements = context.ImplementationRequirements };
@@ -63,6 +67,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
         internal bool UsesV2 { get; set; }
 
+        internal bool UsesV3 { get; set; }
+
         internal ImmutableArray<SemanticSourceMapEntry> SourceMapEntries => [.. _sourceMapEntries];
 
         internal SemanticApplication BindApplication()
@@ -83,7 +89,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 applicationName,
                 concepts,
                 types,
-                UsesV2 ? [.. modules.Select(PromoteV2Destinations)] : modules)
+                UsesV2 || UsesV3 ? [.. modules.Select(PromoteV2Destinations)] : modules)
             {
                 Policies = BindPolicies()
             };

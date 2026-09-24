@@ -36,15 +36,25 @@ public enum SemanticImplementationRole
     ReactionEffect
 }
 
+/// <summary>Whether an attachment's content revision is known.</summary>
+public enum SemanticAttachmentResolution
+{
+    /// <summary>The inline code or host-supplied file content was hashed.</summary>
+    Resolved,
+
+    /// <summary>The host has not supplied the file content; its path is not a revision.</summary>
+    UnresolvedFile
+}
+
 /// <summary>
-/// Describes an authored implementation that blocks executable admission without interpreting its code.
+/// Describes an authored implementation attachment without interpreting its code.
 /// </summary>
 /// <param name="Role">The attachment's role.</param>
 /// <param name="Owner">The address of its owning declaration, or the nearest addressable parent.</param>
-/// <param name="Member">The name of the nested rule or trigger, if any.</param>
+/// <param name="Member">A stable discriminator for the nested rule or trigger, if any. Code validations use their ordinal among code validations of the owner; reordering those blocks changes their ids. Repeated identical members use an occurrence suffix.</param>
 /// <param name="Language">The inline language, or null for a file attachment.</param>
 /// <param name="File">The authored file path, or null for inline code.</param>
-/// <param name="ContentHash">SHA-256 of the inline code or the authored path, in lowercase hex.</param>
+/// <param name="ContentHash">SHA-256 of inline or host-supplied file content, or empty when unresolved.</param>
 /// <param name="Source">The attachment location mapped to the owner's semantic identity.</param>
 public sealed record SemanticImplementationRequirement(
     SemanticImplementationRole Role,
@@ -53,4 +63,20 @@ public sealed record SemanticImplementationRequirement(
     string? Language,
     string? File,
     string ContentHash,
-    SemanticSourceMapEntry Source);
+    SemanticSourceMapEntry Source)
+{
+    /// <summary>Stable identity derived from the owner's semantic identity, role and member, never the file path.</summary>
+    public string RequirementId { get; init; } = string.Empty;
+
+    /// <summary>The version of the role's context contract.</summary>
+    public uint ContextVersion { get; init; } = 1;
+
+    /// <summary>The version of the role's result contract.</summary>
+    public uint ResultVersion { get; init; } = 1;
+
+    /// <summary>The capability the target provider must admit; Screenplay does not enforce provider allowlists.</summary>
+    public string RequiredCapability { get; init; } = string.Empty;
+
+    /// <summary>Whether the attachment's content was available for hashing.</summary>
+    public SemanticAttachmentResolution AttachmentResolution { get; init; } = SemanticAttachmentResolution.Resolved;
+}

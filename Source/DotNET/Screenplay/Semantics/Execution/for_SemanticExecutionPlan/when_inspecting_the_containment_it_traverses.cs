@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace Cratis.Screenplay.Semantics.Execution.for_SemanticExecutionPlan;
 
-// The plan walks modules -> features (nested) -> slices and indexes seven slice members, constraints by name. A containment level or a
+// The plan walks modules -> features (nested) -> slices and indexes slice members, constraints by name. A containment level or a
 // slice member added to ESM without teaching the plan would be skipped silently and never executed or rejected,
 // so the ESM shape is held against exactly what SemanticExecutionPlan.Compile traverses. A scoped projection nests further
 // levels - children and nested objects, to any depth - which SemanticScopedProjection and SemanticScopedProjectionIssues walk,
@@ -49,7 +49,7 @@ public class when_inspecting_the_containment_it_traverses : Specification
             .ShouldEqual(NullabilityState.Nullable);
 
     [Fact] void should_only_carry_the_slice_members_the_plan_indexes() =>
-        _sliceMembers.ShouldContainOnly(["Events", "Commands", "ReadModels", "Projections", "Queries", "Specifications", "Constraints"]);
+        _sliceMembers.ShouldContainOnly(["Events", "Commands", "ReadModels", "Projections", "Queries", "Specifications", "Constraints", "Reducers"]);
 
     [Fact] void should_only_nest_the_projection_levels_the_executor_walks() =>
         _projectionContainment.ShouldContainOnly(["SemanticProjection.Scope", "SemanticProjectionScope.Children", "SemanticProjectionScope.Nested", "SemanticProjectionChildren.Scope", "SemanticProjectionNested.Scope"]);

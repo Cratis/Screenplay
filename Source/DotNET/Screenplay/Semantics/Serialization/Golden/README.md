@@ -6,6 +6,7 @@ These files are the checked-in canonical bytes of the ESM serialization contract
 | --- | --- |
 | `full-esm-v1.json` | `canonical_serialization_golden_vectors.CreateSemanticModel()` |
 | `full-esm-v2.json` | `canonical_serialization_golden_vectors.CreateSemanticModelV2()` — typed destination, explicit specification event sources, and an audit identity occurrence mapping |
+| `full-esm-v3.json` | `canonical_serialization_golden_vectors.CreateSemanticModelV3()` — the full v2 model plus a reducer-built read model with an opaque event transition |
 | `full-expressions-v1.json` | `canonical_serialization_golden_vectors.CreateExpressions()` |
 | `full-identity-catalog-v1.json` | `canonical_serialization_golden_vectors.CreateIdentityCatalog()` |
 
@@ -21,7 +22,7 @@ When a deliberate contract change alters the canonical bytes, change the source 
 SCREENPLAY_REGENERATE_GOLDEN=1 dotnet test Source/DotNET/Screenplay/Screenplay.csproj -c Debug
 ```
 
-The run rewrites all four files from their source models and then fails on purpose with
+For a v3-only regeneration, use `SCREENPLAY_REGENERATE_GOLDEN=3` with the same command. The `1` setting rewrites all five files; both modes fail on purpose with
 `GoldenVectorsRegenerated`, so it can never pass silently in CI. Review the diff, then rebuild and rerun
 without the variable - the bytes are embedded at build time.
 
