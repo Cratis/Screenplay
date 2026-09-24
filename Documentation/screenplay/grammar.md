@@ -7,7 +7,7 @@ The full EBNF grammar of the Screenplay DSL. `INDENT`/`DEDENT` are synthesized b
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { TypeDecl }, { PolicyDecl }, { PersonaDecl }, [ AuthenticationDecl ], { TriggerDecl }, { ThemeDecl }, { LayoutDecl }, { UiProfileDecl }, { Module }, { SeedDecl } ;
+Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { TypeDecl }, { PolicyDecl }, { PersonaDecl }, [ AuthenticationDecl ], { TriggerDecl }, { ThemeDecl }, { LayoutDecl }, { UiProfileDecl }, { BehaviorDecl }, { Module }, { SeedDecl } ;
 
 (* -------------------------------------------------------------- *)
 (* Domain                                                          *)
@@ -176,8 +176,35 @@ Module         = "module", Ident, NL,
                    | DialogTemplateDecl
                    | FormDecl
                    | ContributionDecl
+                   | InteractionBinding
+                   | UsesBehaviorDecl
                    | Feature },
                  DEDENT ;
+
+(* A module or feature may attach an inline interaction with "on" or a
+   named behavior with "uses". These bindings reach its descendant screens. *)
+
+(* -------------------------------------------------------------- *)
+(* Interactions                                                    *)
+(* -------------------------------------------------------------- *)
+
+BehaviorDecl   = "behavior", Ident, NL,
+                 [ INDENT, [ DescriptionDecl ], [ FileDirective ],
+                   { "parameter", Ident, [ TypeRef ], NL | "order", SignedInteger, NL | InteractionBinding }, DEDENT ] ;
+
+InteractionBinding = "on", InteractionTrigger, NL,
+                 INDENT, { "where", Condition, NL | InteractionAction }, DEDENT ;
+
+UsesBehaviorDecl = "uses", Ident, NL,
+                 [ INDENT, { Ident, BehaviorArgument, NL }, DEDENT ] ;
+BehaviorArgument = ? nonempty argument text (literal, binding or parameter) ? ;
+SignedInteger  = [ "-" ], Integer ;
+
+(* Interaction triggers, actions and continuations are described in
+   interactions.md; the same attachments also occur in layouts, templates,
+   forms and screens. *)
+InteractionTrigger = ? built-in kind or declared application trigger ? ;
+InteractionAction = ? interaction action with optional continuation ? ;
 
 (* -------------------------------------------------------------- *)
 (* Forms and contributions                                         *)
@@ -282,7 +309,9 @@ Feature        = "feature", Ident, NL,
                    { DescriptionDecl
                    | Feature
                    | SliceDecl
-                   | ContributionDecl },
+                   | ContributionDecl
+                   | InteractionBinding
+                   | UsesBehaviorDecl },
                  DEDENT ;
 
 (* -------------------------------------------------------------- *)
