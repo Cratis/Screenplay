@@ -34,8 +34,7 @@ ConceptDecl    = "concept", Ident, ":", PrimitiveType, { Attribute }, NL,
 AttributeReason = AttributeName, "reason", StringLiteral, NL ;
 
 ConceptValidate = "validate", NL,
-                   INDENT, { ConceptRule }, DEDENT
-               | "validate", "csharp", NL, InlineBlock ;
+                   INDENT, ( { ConceptRule } | InlineBlock ), DEDENT ;
 
 ConceptRule    = RuleOp, [ "severity", ValidationSeverity ], [ "message", LocalizableString ], NL,
                    [ INDENT, RuleImplementation, DEDENT ] ;
@@ -432,8 +431,7 @@ PolicyRef      = Ident ;
    line at deeper indentation.                                              *)
 
 ValidateDecl   = "validate", NL,
-                   INDENT, { ValidationRule | RequireRule }, DEDENT
-               | "validate", "csharp", NL, InlineBlock ;
+                   INDENT, ( { ValidationRule | RequireRule } | InlineBlock ), DEDENT ;
 
 ValidationRule = Path, RuleOp, [ "severity", ValidationSeverity ], [ "message", LocalizableString ], NL,
                    [ INDENT, RuleImplementation, DEDENT ] ;
@@ -478,7 +476,7 @@ RuleOp         = "not empty"
 RuleImplementation = FileDirective
                     | InlineBlock ;
 
-(* A RuleImplementation and a "validate csharp" InlineBlock both compile against
+(* A RuleImplementation and a "validate" InlineBlock both compile against
    RuleContext. The rule implementation answers with a bool; the "validate csharp"
    block yields the message of every rule the artifact breaks -
    see Documentation/screenplay/context.md.                                  *)
@@ -861,7 +859,12 @@ FilePath       = (* repository relative path, never absolute *) ;
    word outright, as it always has, so a trigger value named after it is written
    "@file".                                                                  *)
 
-InlineBlock    = LanguageTag, NL, "```", NL, { AnyLine }, "```", NL ;
+InlineBlock    = "```", LanguageTag, NL, { AnyLine }, "```", NL ;
+
+(* The fence's info string is the one place a block names its language. The
+   earlier forms - "validate csharp" on the keyword line, and a language tag on
+   its own line above a bare fence - still parse, with a deprecation warning
+   (PLAY0397), and print back in the form above.                            *)
 LanguageTag    = "csharp" | "typescript" | "react" | "html" | "sql"
                | (* any language registered with the compiler *) ;
 

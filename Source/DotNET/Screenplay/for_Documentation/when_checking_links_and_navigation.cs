@@ -20,18 +20,12 @@ public partial class when_checking_links_and_navigation : Specification
             .Where(path => path.EndsWith(".md", StringComparison.OrdinalIgnoreCase) || path.EndsWith(".mdx", StringComparison.OrdinalIgnoreCase)))
         {
             _pages++;
-            var fence = false;
+            string? fence = null;
             var lines = File.ReadAllLines(page);
             for (var line = 0; line < lines.Length; line++)
             {
                 var text = lines[line];
-                if (FenceRegex().IsMatch(text))
-                {
-                    fence = !fence;
-                    continue;
-                }
-
-                if (fence)
+                if (IsFenceBoundary(text, ref fence) || fence is not null)
                 {
                     continue;
                 }
@@ -97,16 +91,15 @@ public partial class when_checking_links_and_navigation : Specification
     {
         var anchors = new HashSet<string>(StringComparer.Ordinal);
         var counts = new Dictionary<string, int>(StringComparer.Ordinal);
-        var fence = false;
+        string? fence = null;
         foreach (var text in File.ReadLines(page))
         {
-            if (FenceRegex().IsMatch(text))
+            if (IsFenceBoundary(text, ref fence))
             {
-                fence = !fence;
                 continue;
             }
 
-            var heading = fence ? Match.Empty : HeadingRegex().Match(text);
+            var heading = fence is not null ? Match.Empty : HeadingRegex().Match(text);
             if (!heading.Success)
             {
                 continue;
@@ -161,7 +154,34 @@ public partial class when_checking_links_and_navigation : Specification
         }
     }
 
-    [GeneratedRegex(@"^\s*(`{3,}|~{3,})", RegexOptions.None, 1000)]
+    // CommonMark: a fence opens with three or more backticks or tildes and closes only on a line of the same
+    // character, at least as long, with nothing after it - so a nested ```csharp inside a ````screenplay block
+    // is content, not a boundary.
+    static bool IsFenceBoundary(string text, ref string? fence)
+    {
+        var match = FenceRegex().Match(text);
+        if (!match.Success)
+        {
+            return false;
+        }
+
+        var marker = match.Groups[1].Value;
+        if (fence is null)
+        {
+            fence = marker;
+            return true;
+        }
+
+        if (marker[0] == fence[0] && marker.Length >= fence.Length && match.Groups[2].Value.Trim().Length == 0)
+        {
+            fence = null;
+            return true;
+        }
+
+        return false;
+    }
+
+    [GeneratedRegex(@"^\s*(`{3,}|~{3,})(.*)$", RegexOptions.None, 1000)]
     private static partial Regex FenceRegex();
 
     [GeneratedRegex(@"!?\[[^\]\n]*\]\(<?([^\s)>]+)>?(?:\s+[^)]*)?\)", RegexOptions.None, 1000)]

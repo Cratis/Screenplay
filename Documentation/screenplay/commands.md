@@ -4,7 +4,7 @@ Commands are input definitions — imperative intents. A command declares its pr
 
 ## Syntax
 
-```screenplay
+````screenplay
 command <Name>
   [description "<text>"]
 
@@ -42,7 +42,7 @@ command <Name>
     [streamType <Name>]
     [streamId <Name>]
     [events <EventType>[, <EventType>]*]]
-```
+````
 
 ## Description
 
