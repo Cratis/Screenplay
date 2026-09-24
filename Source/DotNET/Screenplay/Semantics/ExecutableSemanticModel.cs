@@ -58,8 +58,8 @@ public sealed record ExecutableSemanticModel
         SemanticVersion semanticVersion,
         SemanticApplication application)
     {
-        EsmSchemaV1Support.EnsureSupported(languageVersion, semanticVersion);
-        SemanticModelValidator.Validate(application);
+        EsmSchemaV2Support.EnsureSupported(languageVersion, semanticVersion);
+        SemanticModelValidator.Validate(application, semanticVersion);
         var withoutRevision = SemanticModelCanonicalJson.SerializeWithoutRevision(languageVersion, semanticVersion, application);
         var revision = SemanticRevision.Compute(withoutRevision);
         return new(languageVersion, semanticVersion, revision, application);
@@ -68,17 +68,29 @@ public sealed record ExecutableSemanticModel
 
 internal static partial class SemanticModelValidator
 {
-    public static void Validate(SemanticApplication application)
+    public static void Validate(SemanticApplication application, SemanticVersion semanticVersion = default)
     {
         if (application is null)
         {
             throw new InvalidSemanticContract("The semantic application cannot be null.");
         }
 
-        var context = new ValidationContext();
+        var context = new ValidationContext(semanticVersion == default ? SemanticVersion.V1 : semanticVersion);
         context.RegisterApplication(application);
         context.ValidateReferences(application);
+        if (semanticVersion == SemanticVersion.V2 && !application.Modules.SelectMany(module => module.Features)
+            .SelectMany(AllSlices).Any(slice => slice.Commands.Any(command => command.Destination is not null ||
+                command.Produces.Any(produced => produced.Mappings.Any(mapping => mapping.Source is SemanticEventContextExpression))) ||
+                slice.Specifications.Any(specification => specification.When?.EventSource is not null ||
+                    specification.GivenEvents.Any(value => value.EventSource is not null) ||
+                    specification.ThenEvents.Any(value => value.EventSource is not null))))
+        {
+            throw new InvalidSemanticContract("An ESM v2 model must contain a typed destination, a specification event source, or an occurrence context mapping.");
+        }
     }
+
+    static IEnumerable<SemanticSlice> AllSlices(SemanticFeature feature) =>
+        feature.Slices.Concat(feature.Features.SelectMany(AllSlices));
 
     private sealed partial class ValidationContext
     {
@@ -92,7 +104,13 @@ internal static partial class SemanticModelValidator
         readonly Dictionary<SemanticId, SemanticKeyedQuery> _queries = [];
         readonly SemanticValueValidator _valueValidator;
 
-        public ValidationContext() => _valueValidator = new(_concepts, _types);
+        readonly SemanticVersion _semanticVersion;
+
+        public ValidationContext(SemanticVersion semanticVersion)
+        {
+            _semanticVersion = semanticVersion;
+            _valueValidator = new(_concepts, _types);
+        }
 
         public void RegisterApplication(SemanticApplication application)
         {
@@ -332,7 +350,19 @@ internal static partial class SemanticModelValidator
         {
             if (command.Destination is not null)
             {
-                throw new InvalidSemanticContract("A command state-change destination requires ESM v2.");
+                if (_semanticVersion != SemanticVersion.V2)
+                {
+                    throw new InvalidSemanticContract("A command state-change destination requires ESM v2.");
+                }
+
+                var identity = command.Destination.Value is SemanticResolvedExpression resolved
+                    ? command.Properties.SingleOrDefault(property => property.Id == resolved.Target && resolved.Root == SemanticExpressionRootKind.Command)
+                    : null;
+                if (identity is not { IsIdentifier: true, Type.IsCollection: false, Type.IsOptional: false } ||
+                    identity.Type != command.Destination.Type)
+                {
+                    throw new InvalidSemanticContract("A command destination must reference a required scalar command identifier with the same type.");
+                }
             }
 
             ValidateProperties(command.Properties);
@@ -598,7 +628,10 @@ internal static partial class SemanticModelValidator
 
                 if (specification.When.EventSource is not null)
                 {
-                    throw new InvalidSemanticContract("A specification command event source requires ESM v2.");
+                    if (_semanticVersion != SemanticVersion.V2) throw new InvalidSemanticContract("A specification command event source requires ESM v2.");
+                    ValidateEventSource(
+                        specification.When.EventSource,
+                        command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type);
                 }
 
                 ValidatePropertyValues(specification.When.Values, command.Properties, true);
@@ -665,7 +698,7 @@ internal static partial class SemanticModelValidator
 
         void ValidateSpecificationEvent(SemanticSpecificationEvent value)
         {
-            if (value.EventSource is not null)
+            if (value.EventSource is not null && _semanticVersion != SemanticVersion.V2)
             {
                 throw new InvalidSemanticContract("A specification event source requires ESM v2.");
             }
@@ -676,6 +709,29 @@ internal static partial class SemanticModelValidator
             }
 
             ValidatePropertyValues(value.Values, eventContract.Properties, true);
+            if (value.EventSource is not null)
+            {
+                var producerTypes = _commands.Values.SelectMany(command => command.Produces
+                    .Where(produced => produced.EventContract == value.EventContract)
+                    .Select(_ => command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type))
+                    .OfType<SemanticTypeReference>().Distinct().ToArray();
+                if (producerTypes.Length != 1)
+                {
+                    throw new InvalidSemanticContract("A specification event source needs one unambiguous declared producer destination type.");
+                }
+
+                ValidateEventSource(value.EventSource, producerTypes[0]);
+            }
+        }
+
+        void ValidateEventSource(SemanticEventSourceIdentity source, SemanticTypeReference? requiredType)
+        {
+            if (source.Type.IsCollection || source.Type.IsOptional || (requiredType is not null && source.Type != requiredType))
+            {
+                throw new InvalidSemanticContract("A specification event source must have the required scalar destination type.");
+            }
+
+            ValidateValue(source.Value, source.Type, "specification event source");
         }
 
         void ValidateSpecificationReadModel(SemanticSpecificationReadModel state, bool requireExact, bool requireIdentifier)
@@ -828,6 +884,25 @@ internal static partial class SemanticModelValidator
                     RejectNull(value.Value, "semantic value");
                     ValidateValueVariant(value.Value);
                     return TypeOf(value.Value);
+                case SemanticEventContextExpression context when expression.Kind == SemanticExpressionKind.EventContext:
+                    if (_semanticVersion != SemanticVersion.V2 || expectedRoot != SemanticExpressionRootKind.Command ||
+                        context.Value is not (SemanticEventContextValueKind.Occurred or SemanticEventContextValueKind.CausedBySubject or
+                            SemanticEventContextValueKind.CausedByName or SemanticEventContextValueKind.CausedByUserName) ||
+                        context.Type.IsCollection || context.Type.IsOptional)
+                    {
+                        throw new InvalidSemanticContract("Only scalar command occurrence fields are admitted in ESM v2 produces mappings.");
+                    }
+
+                    var primitive = context.Type.Kind == SemanticTypeReferenceKind.Concept
+                        ? _concepts[context.Type.Target].Primitive : context.Type.Primitive;
+                    if (context.Value == SemanticEventContextValueKind.Occurred
+                        ? primitive != SemanticPrimitiveType.DateTime
+                        : primitive is not (SemanticPrimitiveType.Text or SemanticPrimitiveType.Uuid))
+                    {
+                        throw new InvalidSemanticContract("The occurrence context field and mapping target have incompatible types.");
+                    }
+
+                    return context.Type;
                 case SemanticResolvedExpression resolved when expression.Kind == SemanticExpressionKind.Resolved:
                     ValidateEnum(resolved.Root, SemanticExpressionRootKind.Unknown, "expression root");
                     ValidateEnum(resolved.Source, SemanticExpressionSourceKind.Unknown, "expression source");

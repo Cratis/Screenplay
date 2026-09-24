@@ -189,6 +189,16 @@ public sealed record SemanticExecutionRequest(
     public bool IsReadOnly { get; init; }
 
     /// <summary>
+    /// Gets the command occurrence context supplied by the caller for v2 execution.
+    /// </summary>
+    public SemanticCommandOccurrence? Occurrence { get; init; }
+
+    /// <summary>
+    /// Gets the typed identity of a caller-allocated event source.
+    /// </summary>
+    public SemanticTypeReference? AllocatedEventSourceType { get; init; }
+
+    /// <summary>
     /// Creates a request that only queries established world state.
     /// </summary>
     /// <param name="queries">Queries to execute.</param>

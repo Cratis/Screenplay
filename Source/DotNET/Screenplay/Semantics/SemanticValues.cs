@@ -157,7 +157,19 @@ public enum SemanticEventContextValueKind
     /// <summary>
     /// The typed identity of the event source carrying the occurrence.
     /// </summary>
-    EventSourceIdentity = 0
+    EventSourceIdentity = 0,
+
+    /// <summary>The time the event occurred.</summary>
+    Occurred = 1,
+
+    /// <summary>The subject of the identity that caused the event.</summary>
+    CausedBySubject = 2,
+
+    /// <summary>The name of the identity that caused the event.</summary>
+    CausedByName = 3,
+
+    /// <summary>The user name of the identity that caused the event.</summary>
+    CausedByUserName = 4
 }
 
 /// <summary>

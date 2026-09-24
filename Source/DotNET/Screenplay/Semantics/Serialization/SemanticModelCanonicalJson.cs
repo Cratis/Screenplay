@@ -14,7 +14,7 @@ internal static partial class SemanticModelCanonicalJson
 
     internal static byte[] Serialize(ExecutableSemanticModel model)
     {
-        SemanticModelValidator.Validate(model.Application);
+        SemanticModelValidator.Validate(model.Application, model.SemanticVersion);
         var expected = SemanticRevision.Compute(SerializeWithoutRevision(model.LanguageVersion, model.SemanticVersion, model.Application));
         if (model.Revision != expected)
         {
@@ -66,7 +66,7 @@ internal static partial class SemanticModelCanonicalJson
             using var writer = new Utf8JsonWriter(buffer, CanonicalJson.WriterOptions);
             writer.WriteStartObject();
             writer.WriteString("schema", Schema);
-            writer.WriteNumber("schemaVersion", SchemaVersion);
+            writer.WriteNumber("schemaVersion", languageVersion == LanguageVersion.V2 ? 2u : SchemaVersion);
             writer.WriteString("languageVersion", languageVersion.ToString());
             writer.WriteString("semanticVersion", semanticVersion.ToString());
             if (revision is not null)
@@ -215,6 +215,15 @@ internal static partial class SemanticModelCanonicalJson
         WriteArray(writer, "validations", command.Validations, WriteValidation);
         WriteArray(writer, "produces", command.Produces, WriteProducedEvent);
         if (!command.Requirements.IsDefaultOrEmpty) WriteArray(writer, "requirements", command.Requirements, WriteRequirement);
+        if (command.Destination is not null)
+        {
+            writer.WritePropertyName("destination");
+            writer.WriteStartObject();
+            writer.WritePropertyName("type");
+            WriteTypeReference(writer, command.Destination.Type);
+            WriteOptionalExpression(writer, "value", command.Destination.Value);
+            writer.WriteEndObject();
+        }
         writer.WriteEndObject();
     }
 
@@ -321,6 +330,18 @@ internal static partial class SemanticModelCanonicalJson
         writer.WriteStartObject();
         writer.WriteString("eventContract", value.EventContract.ToString());
         WriteArray(writer, "values", value.Values.OrderBy(_ => _.TargetProperty.ToString(), StringComparer.Ordinal), WritePropertyValue);
+        if (value.EventSource is not null) WriteEventSource(writer, value.EventSource);
+        writer.WriteEndObject();
+    }
+
+    static void WriteEventSource(Utf8JsonWriter writer, SemanticEventSourceIdentity source)
+    {
+        writer.WritePropertyName("eventSource");
+        writer.WriteStartObject();
+        writer.WritePropertyName("type");
+        WriteTypeReference(writer, source.Type);
+        writer.WritePropertyName("value");
+        WriteValue(writer, source.Value);
         writer.WriteEndObject();
     }
 
@@ -329,6 +350,7 @@ internal static partial class SemanticModelCanonicalJson
         writer.WriteStartObject();
         writer.WriteString("command", value.Command.ToString());
         WriteArray(writer, "values", value.Values.OrderBy(_ => _.TargetProperty.ToString(), StringComparer.Ordinal), WritePropertyValue);
+        if (value.EventSource is not null) WriteEventSource(writer, value.EventSource);
         writer.WriteEndObject();
     }
 
@@ -378,6 +400,11 @@ internal static partial class SemanticModelCanonicalJson
             case SemanticValueExpression value:
                 writer.WritePropertyName("value");
                 WriteValue(writer, value.Value);
+                break;
+            case SemanticEventContextExpression context:
+                writer.WriteString("contextValue", ContextValue(context.Value));
+                writer.WritePropertyName("type");
+                WriteTypeReference(writer, context.Type);
                 break;
             case SemanticResolvedExpression resolved:
                 writer.WriteString("root", ExpressionRoot(resolved.Root));
@@ -569,10 +596,21 @@ internal static partial class SemanticModelCanonicalJson
         _ => throw Unknown(nameof(SemanticValidationRuleKind), value)
     };
 
+    static string ContextValue(SemanticEventContextValueKind kind) => kind switch
+    {
+        SemanticEventContextValueKind.EventSourceIdentity => "eventSourceIdentity",
+        SemanticEventContextValueKind.Occurred => "occurred",
+        SemanticEventContextValueKind.CausedBySubject => "causedBySubject",
+        SemanticEventContextValueKind.CausedByName => "causedByName",
+        SemanticEventContextValueKind.CausedByUserName => "causedByUserName",
+        _ => throw Unknown(nameof(SemanticEventContextValueKind), kind)
+    };
+
     static string ExpressionKind(SemanticExpressionKind value) => value switch
     {
         SemanticExpressionKind.Value => "value",
         SemanticExpressionKind.Resolved => "resolved",
+        SemanticExpressionKind.EventContext => "eventContext",
         _ => throw Unknown(nameof(SemanticExpressionKind), value)
     };
 

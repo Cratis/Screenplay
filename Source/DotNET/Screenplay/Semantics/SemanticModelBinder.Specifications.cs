@@ -29,14 +29,6 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            if (specification.When?.For is not null)
-            {
-                Error(
-                    DiagnosticCodes.UnsupportedSemanticSyntax,
-                    $"Specification command destination assertion 'for' on '{specification.When.CommandType}' is reserved for ESM v2 (issue #226).",
-                    specification.When.For.Location);
-            }
-
             if (specification.When is null && (specification.ThenEvents.Any() || specification.ThenErrors.Any() ||
                 (!(specification.ThenReadModels?.Any() ?? false) && !specification.ThenQueries.Any())))
             {
@@ -45,7 +37,7 @@ public sealed partial class SemanticModelBinder
 
             var address = SemanticAddress.ForSpecification(slice, specification.Name);
             var id = Resolve(address, specification.Location);
-            var givenEvents = specification.Given.Select(BindSpecificationEvent).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
+            var givenEvents = specification.Given.Select(value => BindSpecificationEvent(value, commands)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             var givenReadModels = (specification.GivenReadModels ?? [])
                 .Select(value => BindReadModelState(value.Name, value.Properties, value.Location))
                 .Where(_ => _ is not null)
@@ -53,8 +45,11 @@ public sealed partial class SemanticModelBinder
                 .ToImmutableArray();
             var when = specification.When is null ? null : new SemanticSpecificationCommand(
                 command!.Id,
-                BindPropertyValues(specification.When.Values, command.Properties.ToDictionary(_ => _.Name, StringComparer.Ordinal), "specification command"));
-            var thenEvents = specification.ThenEvents.Select(BindSpecificationEvent).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
+                BindPropertyValues(specification.When.Values, command.Properties.ToDictionary(_ => _.Name, StringComparer.Ordinal), "specification command"))
+            {
+                EventSource = specification.When.For is null ? null : BindEventSource(specification.When.For, command.Destination?.Type ?? command.Properties.SingleOrDefault(_ => _.IsIdentifier)?.Type)
+            };
+            var thenEvents = specification.ThenEvents.Select(value => BindSpecificationEvent(value, commands)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             var thenReadModels = (specification.ThenReadModels ?? [])
                 .Select(value => BindReadModelState(value.Name, value.Properties, value.Location))
                 .Where(_ => _ is not null)
@@ -78,25 +73,42 @@ public sealed partial class SemanticModelBinder
                 thenErrors);
         }
 
-        SemanticSpecificationEvent? BindSpecificationEvent(SpecificationEventSyntax value)
+        SemanticSpecificationEvent? BindSpecificationEvent(SpecificationEventSyntax value, Dictionary<string, SemanticCommand> commands)
         {
-            if (value.For is not null)
-            {
-                Error(
-                    DiagnosticCodes.UnsupportedSemanticSyntax,
-                    $"Specification event-source assertion 'for' on '{value.EventType}' is reserved for ESM v2 (issue #226).",
-                    value.For.Location);
-            }
-
             if (!_events.TryGetValue(ShortName(value.EventType), out var @event))
             {
                 Error(DiagnosticCodes.InvalidSemanticBinding, $"Specification event '{value.EventType}' is unresolved.", value.Location);
                 return null;
             }
 
+            var types = commands.Values.SelectMany(command => command.Produces
+                .Where(produced => produced.EventContract == @event.Contract.Id)
+                .Select(_ => command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type))
+                .OfType<SemanticTypeReference>().Distinct().ToArray();
+            var type = types.Length == 1 ? types[0] : null;
             return new(
                 @event.Contract.Id,
-                BindPropertyValues(value.Values, @event.Properties, "specification event"));
+                BindPropertyValues(value.Values, @event.Properties, "specification event"))
+            {
+                EventSource = value.For is null ? null : BindEventSource(value.For, type)
+            };
+        }
+
+        SemanticEventSourceIdentity? BindEventSource(ExpressionSyntax expression, SemanticTypeReference? type)
+        {
+            if (type is null or { IsCollection: true } or { IsOptional: true })
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, "An event-source assertion needs one unambiguous required scalar command destination type.", expression.Location);
+                return null;
+            }
+
+            if (BindConcreteValue(expression, type, "specification event source", false) is not { } value)
+            {
+                return null;
+            }
+
+            UsesV2 = true;
+            return new(type, value);
         }
 
         SemanticSpecificationReadModel? BindReadModelState(

@@ -93,13 +93,14 @@ internal sealed partial class SemanticScopedProjection
 
     SemanticValue? EventSource()
     {
-        if (_fact.Destination is SemanticNullValue)
+        var source = _fact.Context?.EventSource.Value ?? _fact.Destination;
+        if (source is SemanticNullValue)
         {
-            Fail($"Projection '{projection.Name}' keys on the event source identity, which this fact does not carry; ESM v1 specification events have no event source.");
+            Fail($"Projection '{projection.Name}' keys on the event source identity, which this fact does not carry.");
             return null;
         }
 
-        return _fact.Destination;
+        return source;
     }
 
     SemanticValue? Evaluate(SemanticProjectionValue value, SemanticFact fact)
@@ -109,7 +110,8 @@ internal sealed partial class SemanticScopedProjection
             case SemanticProjectionLiteral literal:
                 return literal.Value;
             case SemanticProjectionEventSourceIdentity:
-                return fact.Destination;
+            case SemanticProjectionEventContextValue { Path: "eventSourceId" }:
+                return fact.Context?.EventSource.Value ?? fact.Destination;
             case SemanticProjectionEventProperty property:
                 var values = fact.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
                 var current = values.GetValueOrDefault(property.Path[0], SemanticValue.Null);

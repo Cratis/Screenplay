@@ -27,6 +27,10 @@
                           Link="Golden/full-esm-v1.json"
                           WithCulture="false"
                           LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v1.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v2.json"
+                          Link="Golden/full-esm-v2.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v2.json" />
         <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-identity-catalog-v1.json"
                           Link="Golden/full-identity-catalog-v1.json"
                           WithCulture="false"

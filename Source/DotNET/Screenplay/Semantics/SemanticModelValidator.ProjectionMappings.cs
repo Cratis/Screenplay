@@ -157,7 +157,9 @@ internal static partial class SemanticModelValidator
                 case SemanticProjectionLiteral literal:
                     ValidateValue(literal.Value, target, "projection mapping");
                     return;
-                case SemanticProjectionEventContextValue when target.IsCollection || UnderlyingPrimitive(target) != type!.Primitive:
+                case SemanticProjectionEventContextValue when untyped && target.IsCollection:
+                    throw new InvalidSemanticContract("An event source identity cannot set a collection property.");
+                case SemanticProjectionEventContextValue when !untyped && (target.IsCollection || UnderlyingPrimitive(target) != type!.Primitive):
                     throw new InvalidSemanticContract("A projection event-context source and target have incompatible types.");
                 case SemanticProjectionEventContextValue:
                     return;
@@ -198,8 +200,14 @@ internal static partial class SemanticModelValidator
                     untyped = true;
                     return null;
                 case SemanticProjectionEventContextValue context when value.Kind == SemanticProjectionValueKind.EventContext:
-                    return SemanticEventContextScalars.Resolve(context.Path ?? string.Empty) is { Kind: SemanticEventContextScalarKind.Scalar } scalar &&
-                        scalar.Path == context.Path
+                    var scalar = SemanticEventContextScalars.Resolve(context.Path ?? string.Empty);
+                    if (scalar.Kind == SemanticEventContextScalarKind.EventSource && scalar.Path == context.Path)
+                    {
+                        untyped = true;
+                        return null;
+                    }
+
+                    return scalar.Kind == SemanticEventContextScalarKind.Scalar && scalar.Path == context.Path
                         ? SemanticTypeReference.ForPrimitive(scalar.Primitive)
                         : throw new InvalidSemanticContract($"Event-context path '{context.Path}' is not an admitted canonical scalar path on Chronicle's event context.");
                 default:

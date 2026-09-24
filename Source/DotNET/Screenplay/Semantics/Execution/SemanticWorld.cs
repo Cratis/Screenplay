@@ -45,7 +45,10 @@ public sealed class SemanticWorld
         ImmutableArray<SemanticReadModelInstance> readModels)
     {
         if (facts.IsDefault || readModels.IsDefault ||
-            facts.Any(fact => fact is not { EventContract.IsSet: true, Destination: not null } || !ValidValues(fact.Values)) ||
+            facts.Any(fact => fact is not { EventContract.IsSet: true, Destination: not null } || !ValidValues(fact.Values) ||
+                (fact.Context is { } context &&
+                    (context.EventSource.Type.IsCollection || context.EventSource.Type.IsOptional ||
+                     !SemanticValueRules.AreEqual(context.EventSource.Value, fact.Destination)))) ||
             readModels.Any(readModel => readModel is not { ReadModel.IsSet: true, Key: not null } || !ValidValues(readModel.Values)))
         {
             throw new InvalidSemanticContract("Semantic world state is malformed.");

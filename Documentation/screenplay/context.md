@@ -118,7 +118,9 @@ produces InvoiceRegistered
   department    = $context.identity.claims.department
 ```
 
-A path outside this set is a **warning** — it can never resolve against the context the language defines, though a runtime is free to expose more than the language names. Everything after `$context.identity.claims.` is a claim name, so it is never checked; every other segment is.
+In ESM v2 `produces` mappings, the portable subset is `$context.occurred`, `$context.identity.id` / `.name` / `.userName`, and the equivalent `$context.causedBy.subject` / `.name` / `.userName`. The execution request supplies the occurrence time and audit identity; `occurred` is the event occurrence time, not a guaranteed append timestamp. `identity.id` maps to the event context's `causedBy.subject`. This is separate from `$eventSourceId`, which is supplied by the fact's typed event-source context. The target property must have the matching scalar type (`DateTime` for `occurred`, `String` or `Uuid` for audit identity). Without request occurrence data, reference execution rejects a command that reads these paths.
+
+Other paths may still be available to code and to other language surfaces, but cannot bind as a portable `produces` mapping. `identity.roles` and `identity.claims.<name>` are collections or unbounded; `causation.<anything>` is not addressable on Chronicle's collection-valued causation. `$context.tenant` is a tenant ID, not Chronicle's event namespace, and the language does not name a `$context.correlation` value. These cases report `PLAY0268` rather than guessing a mapping. A path outside the documented language catalog remains a syntax-level **warning**; admission to ESM is a separate decision.
 
 `$context.` reaches the command and query contexts only. It is a separate namespace from [`$eventContext.`](projections/event-context.md), which reads the metadata of the event a projection is processing: neither falls back to the other, and each is checked against its own catalog. A rule and a policy have no declarative half — a `rule` names a predicate and a `policy` states conditions, and those *are* the declarative form.
 
