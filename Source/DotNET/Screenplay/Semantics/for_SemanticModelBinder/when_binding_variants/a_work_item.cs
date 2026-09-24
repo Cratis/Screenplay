@@ -6,7 +6,7 @@ namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_varia
 // Chronicle VariantReclassifier.cs:28-72 and ModelBoundProjectionBuilder.cs:144-166 (Decision: 0001).
 public class a_work_item : given.a_semantic_binder
 {
-    const string Source =
+    protected const string Source =
         """
         concept WorkItemId : Uuid
         module Work

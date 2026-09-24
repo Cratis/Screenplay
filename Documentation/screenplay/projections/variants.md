@@ -53,7 +53,7 @@ If `BuildCompleted` arrives for an issue that never had a pull request created, 
 
 ## Shared handlers
 
-A block declared at the **projection level**, outside every `variant`, is a shared handler applied to every variant that has the property it maps. There is no separate keyword for "shared" — being outside a `variant` block is what makes it one:
+A block declared at the **projection level**, outside every `variant`, is a shared handler applied to every variant. Every variant with a known read-model shape must declare the mapped property; otherwise compilation reports `PLAY0383`. An unknown or imported shape stays undecided. There is no separate keyword for "shared" — being outside a `variant` block is what makes it one:
 
 ```pdl
 projection WorkItem
@@ -96,6 +96,14 @@ projection WorkItem
 - `IssueStarted` moves it to `DevelopmentItem`, removing it from `BacklogItem`.
 - `PullRequestCreated` moves it to `PullRequestItem`, removing it from `DevelopmentItem`.
 - `BuildCompleted` updates `buildStatus` on `PullRequestItem` only, and never resurrects the item into that variant on its own.
+
+## Validation and executable semantics
+
+`PLAY0382` rejects a variant without an `enters on` event. `PLAY0384` rejects repeated variant names, and `PLAY0385` rejects an entering event claimed by more than one variant of the same projection. `PLAY0383` reports a projection-level shared mapping whose target is absent from a known variant read-model shape. These diagnostics are produced by Screenplay's parsing and validation layer, so Chronicle's hosted compiler also receives them.
+
+In the executable semantic model (ESM), `WorkItem` is a group, not a read model or a standalone projection. Each variant produces one independent projection on its own read model. Its entering events are create-or-update `from` transitions. Its other `from` blocks, including shared blocks merged first, become update-only joins on that variant's identifier using the original event key (or the event source). A join can match multiple existing instances but never creates one. Each sibling's entering event adds a removal keyed by event source identity. This mirrors Chronicle's client-side variant reclassification; Chronicle's declaration-language lowering is tracked separately in [Cratis/Chronicle#4109](https://github.com/Cratis/Chronicle/issues/4109).
+
+The ESM projection name and semantic address use `<length of group name>:<group name>:<variant name>` (for example `8:WorkItem:BacklogItem`), avoiding collisions between groups and variants even when names contain separators. The ESM read-model name remains `BacklogItem`. A read model must have an unambiguous keyed query for its identifier, just as it does for an ordinary projection. A projection's `sequence` remains unsupported in the portable ESM.
 
 ## Best Practices
 
