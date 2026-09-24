@@ -74,12 +74,17 @@ sealed class McpDisk(McpRoot root, Action<string, string>? move = null)
 
     void CheckDestinations(IMcpProposal proposal)
     {
+        var originals = proposal.Before.Documents.ToDictionary(document => document.Id);
         var before = proposal.Before.Documents.Select(document => document.Path.Value).ToHashSet(StringComparer.Ordinal);
         foreach (var document in proposal.Workspace.Documents)
         {
             var path = root.PathFor(document.Path);
             McpManagedFiles.CheckExisting(path);
-            if (!before.Contains(document.Path.Value) && (File.Exists(path) || Directory.Exists(path)))
+            if (!before.Contains(document.Path.Value) && (File.Exists(path) || Directory.Exists(path)) &&
+                !(originals.TryGetValue(document.Id, out var original) &&
+                  original.Path != document.Path &&
+                  original.Path.Value.Equals(document.Path.Value, StringComparison.OrdinalIgnoreCase) &&
+                  McpDiskPaths.SameEntry(root, root.PathFor(original.Path), path)))
             {
                 throw new McpFailure($"DestinationOccupied: '{document.Path}' is not owned by this workspace.");
             }
@@ -121,6 +126,7 @@ sealed class McpDisk(McpRoot root, Action<string, string>? move = null)
                 McpFileAccess.Preserve(change.Backup, change.Stage!);
             }
 
+            // Backup vacated the original name first; the stage is a separate entry even for a case-only rename.
             _move(change.Stage!, path);
             change.Installed = true;
         }

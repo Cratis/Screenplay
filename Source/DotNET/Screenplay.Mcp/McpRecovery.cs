@@ -32,9 +32,11 @@ sealed class McpRecovery(McpRoot root, McpRecoveryJournal journal)
             var before = Document(journal.Before, path);
             var after = Document(journal.After, path);
             var destination = root.PathFor(PortablePlayPath.Parse(path));
-            var actual = ReadKnown(destination, before, after);
-            if (actual is not null && !McpManagedFiles.Equal(actual, before))
+            var alias = CaseOnlyAlias(path);
+            var actual = ReadKnown(destination, before ?? alias?.Before, after ?? alias?.After);
+            if (actual is not null && (alias is not null || !McpManagedFiles.Equal(actual, before)))
             {
+                // Recreate the original name even when the bytes did not change.
                 File.Delete(destination);
             }
         }
@@ -114,7 +116,8 @@ sealed class McpRecovery(McpRoot root, McpRecoveryJournal journal)
         var affected = journal.Changes.SelectMany(change => new[] { change.Entry.Before?.Path.Value, change.Entry.After?.Path.Value }).OfType<string>().ToHashSet(StringComparer.Ordinal);
         foreach (var path in paths)
         {
-            var content = ReadKnown(root.PathFor(PortablePlayPath.Parse(path)), Document(journal.Before, path), Document(journal.After, path));
+            var alias = CaseOnlyAlias(path);
+            var content = ReadKnown(root.PathFor(PortablePlayPath.Parse(path)), Document(journal.Before, path) ?? alias?.Before, Document(journal.After, path) ?? alias?.After);
             if (content is null && !affected.Contains(path))
             {
                 throw new McpFailure($"RecoveryConflict: unchanged source '{path}' disappeared outside this transaction.");
@@ -171,6 +174,23 @@ sealed class McpRecovery(McpRoot root, McpRecoveryJournal journal)
         }
 
         McpRecoveryJournal.DeleteKnown(StateRestoreStage(), journal.Record.BeforeState);
+    }
+
+    (byte[] Before, byte[] After)? CaseOnlyAlias(string path)
+    {
+        foreach (var before in journal.Before.Documents)
+        {
+            var after = journal.After.Documents.SingleOrDefault(document => document.Id == before.Id);
+            if (after is not null && before.Path != after.Path &&
+                before.Path.Value.Equals(after.Path.Value, StringComparison.OrdinalIgnoreCase) &&
+                (path == before.Path.Value || path == after.Path.Value) &&
+                McpDiskPaths.SameEntry(root, root.PathFor(before.Path), root.PathFor(after.Path)))
+            {
+                return (before.Bytes.ToArray(), after.Bytes.ToArray());
+            }
+        }
+
+        return null;
     }
 
     string RestoreStage(int index) => _files.PathFor($"{journal.Record.OperationId}-{index}.rollback");
