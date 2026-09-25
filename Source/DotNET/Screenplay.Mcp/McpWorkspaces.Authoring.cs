@@ -38,13 +38,12 @@ internal sealed partial class McpWorkspaces
             .Where(diagnostic => diagnostic.Code == code)
             .SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(index, expectedRevision, diagnostic))
             .Where(repair => repair.Subject == subject).ToArray();
-        if (repairs.Length != 1 || formatting != WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments)
+        if (repairs.Length != 1)
         {
-            throw new McpFailure("UnknownRepair: no unambiguous repair for this code and subject with canonical formatting consent.", -32602);
+            throw new McpFailure("UnknownRepair: no unambiguous repair for this code and subject.", -32602);
         }
 
-        request = request with { Operations = repairs[0].Operations };
-        var result = workspace.ProposeAuthoring(request);
+        var result = WorkspaceDiagnosticRepairs.ProposeRepair(workspace, repairs[0], request);
         return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation, request.ReferencePolicy), arguments) : Rejected(result);
     }
 

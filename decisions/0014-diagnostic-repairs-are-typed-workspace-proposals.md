@@ -2,7 +2,7 @@
 id: 0014
 title: Diagnostic repairs are typed workspace proposals
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-09-24
 decider: Sindre Alstad Wilting
 class: contract
@@ -59,7 +59,7 @@ Repairs are safe by construction: they can go stale only detectably, and humans 
 
 ## Status notes
 
-**2026-09-24 — implemented.** `PLAY0397` on `validate csharp` produces a
+**2026-09-25 — implemented.** `PLAY0397` on `validate csharp` produces a
 revision-bound typed AST repair, previewed through workspace authoring and
 exposed through MCP without auto-apply. Adding a node with an unresolved
 reference is refused under the safe policy; this is the `link` criterion in

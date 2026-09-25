@@ -42,6 +42,7 @@ internal sealed partial class McpWorkspaces
             });
         }
 
+        var syntax = view == "repairs" ? McpWorkspaceAnalysis.For(workspace).Syntax : null;
         var items = view switch
         {
             "documents" => workspace.Documents.Select(document => (object)new
@@ -67,20 +68,14 @@ internal sealed partial class McpWorkspaces
                 assignment.Origin
             }),
             "diagnostics" => McpWorkspaceAnalysis.For(workspace).Source.Compilation.Diagnostics,
-            "repairs" => McpWorkspaceAnalysis.For(workspace).Syntax.Diagnostics
-                .Where(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyInlineCodeFence)
-                .SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(McpWorkspaceAnalysis.For(workspace).Syntax, workspace.Revision, diagnostic)
-                    .Select(repair => (object)new
-                    {
-                        repair.DiagnosticCode,
-                        diagnostic.Location,
-                        subject = McpAstHandles.Describe(repair.Subject),
-                        operations = repair.Operations.Select(operation => operation switch
-                        {
-                            ReplaceWorkspaceNode replace => new { operation = "replace", target = McpAstHandles.Describe(replace.Target) },
-                            _ => throw new McpFailure("Unsupported repair operation.")
-                        })
-                    })),
+            "repairs" => syntax!.Diagnostics.SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(syntax, workspace.Revision, diagnostic)
+                .Select(repair => (object)new
+                {
+                    repair.DiagnosticCode,
+                    diagnostic.Location,
+                    subject = McpAstHandles.Describe(repair.Subject),
+                    operations = repair.Operations.Select(McpAstOperations.Describe)
+                })),
             "executable-diagnostics" => workspace.Compilation.Diagnostics,
             "implementation-requirements" => workspace.Compilation.ImplementationRequirements.Select(DescribeRequirement),
             _ => throw new McpFailure("Unknown workspace view.", -32602)

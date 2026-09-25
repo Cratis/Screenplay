@@ -12,6 +12,15 @@ namespace Cratis.Screenplay.Mcp;
 
 static class McpAstOperations
 {
+    internal static object Describe(WorkspaceAstOperation operation) => operation switch
+    {
+        AddWorkspaceNode add => new { operation = "add", parent = McpAstHandles.Describe(add.Parent), add.Member, add.Index },
+        ReplaceWorkspaceNode replace => new { operation = "replace", target = McpAstHandles.Describe(replace.Target) },
+        RemoveWorkspaceNode remove => new { operation = "remove", target = McpAstHandles.Describe(remove.Target) },
+        MoveWorkspaceNode move => new { operation = "move", target = McpAstHandles.Describe(move.Target), parent = McpAstHandles.Describe(move.Parent), move.Member, move.Index },
+        _ => throw new McpFailure("Unsupported repair operation.")
+    };
+
     internal static ImmutableArray<WorkspaceAstOperation> Read(JsonElement arguments, WorkspaceSyntaxIndex index) =>
         [.. Values(arguments, "operations").Select(value => ReadOperation(value, index))];
 

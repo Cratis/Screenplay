@@ -68,7 +68,17 @@ public enum WorkspaceConflictKind
     /// <summary>
     /// Two source files declare the same single-owner artifact.
     /// </summary>
-    ConflictingOwner = 10
+    ConflictingOwner = 10,
+
+    /// <summary>
+    /// A diagnostic repair would remove at least one authored comment.
+    /// </summary>
+    RepairWouldDropComments = 11,
+
+    /// <summary>
+    /// A diagnostic repair requires explicit canonical formatting consent.
+    /// </summary>
+    FormattingConsentRequired = 12
 }
 
 /// <summary>

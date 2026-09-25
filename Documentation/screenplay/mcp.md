@@ -170,10 +170,16 @@ Each item includes `diagnosticCode`, diagnostic `location`, a revision-bound
 `propose-repair` with both current revisions and explicit
 `formatting: "CanonicalizeTouchedDocuments"`. The server regenerates the repair
 from the current compiler diagnostics, never from a message string or supplied
-text edit. Unknown, ambiguous and unsupported repairs fail closed; stale
-workspace/catalog revisions return typed conflicts. A successful response retains
-the same proposal as `propose-ast`: use `read-proposal` to inspect exact before/after
-bytes and dropped comments, then call `apply` explicitly. Neither discovery nor
+text edit. The `validate csharp` repair is an identity replacement: canonical
+printing performs the migration by reprinting the **whole touched document**.
+Whitespace and other legacy forms in the file can also change. A repair that
+would drop a comment anywhere in that document is refused with a typed
+`RepairWouldDropComments` conflict. Missing formatting consent fails with
+`FormattingConsentRequired`; `PreserveTrivia` cannot perform the migration.
+Unknown, ambiguous and unsupported repairs fail closed; stale workspace/catalog
+revisions return typed conflicts. A successful response retains the same proposal
+as `propose-ast`: use `read-proposal` to inspect exact before/after bytes,
+then call `apply` explicitly. Neither discovery nor
 proposal writes. Only the deterministic `PLAY0397` `validate csharp` migration
 is currently offered. Other diagnostics, including repairs requiring a choice,
 have no compiler-authored repair.

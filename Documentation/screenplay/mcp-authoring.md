@@ -152,6 +152,17 @@ Use explicit retirement addresses when removing assigned declarations. If edits
 overlap, replace their common containing subtree instead of sending conflicting
 parent/child operations. See [the authoring contract](ast-authoring.md).
 
+## Fix a diagnostic
+
+Call `read-workspace` with `view: "repairs"` at the current revision. For a
+`PLAY0397` `validate csharp` repair, pass its `diagnosticCode` and `subject` to
+`propose-repair` with both current revisions and
+`formatting: "CanonicalizeTouchedDocuments"`. Its identity replacement reprints
+the entire file canonically, so whitespace and other legacy fences can change;
+a proposal that would drop any comment is refused. No file is written until you
+review the `before`/`after` bytes with `read-proposal` and explicitly call `apply`.
+Other `PLAY0397` forms have no individual repair.
+
 ## Review and apply
 
 An accepted proposal returns a `proposalId`, before/after revisions, changed-file
