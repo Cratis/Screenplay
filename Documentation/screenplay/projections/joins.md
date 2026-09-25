@@ -121,7 +121,7 @@ projection Order => OrderReadModel
 
 ## Joins in Children
 
-Joins can be used within children blocks. The join label does not populate a child or nested field; `with` mappings (or compatible fields supplied by the level's auto-map) do. Name the join for the related concept, not after a field to satisfy a completeness warning:
+Joins can be used within `children` blocks. The join label does not populate a child field; `with` mappings (or compatible fields supplied by the level's auto-map) do. An event field consumed by an explicit join mapping is not auto-mapped to another child field. Name the join for the related concept, not after a field to satisfy a completeness warning:
 
 ```pdl
 projection Group => GroupReadModel
@@ -141,6 +141,8 @@ projection Group => GroupReadModel
         UserName = name
         UserEmail = email
 ```
+
+Chronicle does not currently apply joins inside `nested` blocks, even when a join is declared there (current Chronicle runtime limitation, [Cratis/Chronicle#4125](https://github.com/Cratis/Chronicle/issues/4125)). A nested field populated only by such a join is reported as unpopulated by PLAY0284. Joins inside `children` blocks are supported.
 
 ## Examples
 

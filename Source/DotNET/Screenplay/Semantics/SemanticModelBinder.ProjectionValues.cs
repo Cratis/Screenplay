@@ -152,9 +152,7 @@ public sealed partial class SemanticModelBinder
             }
 
             var mapped = mappings.Select(_ => _.Property.Split('.')[^1]).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var sources = isJoin
-                ? mappings.OfType<SetMappingSyntax>().Select(_ => _.Source).OfType<PathExpressionSyntax>().Select(_ => _.Path).ToHashSet(StringComparer.OrdinalIgnoreCase)
-                : [];
+            var sources = isJoin ? JoinAutoMapSources.ExplicitlyMapped(mappings) : [];
             foreach (var source in @event.Contract.Properties)
             {
                 var target = level.Targets.Values.FirstOrDefault(_ => string.Equals(_.Name, source.Name, StringComparison.OrdinalIgnoreCase));

@@ -46,15 +46,15 @@ internal static class ProjectionCompletenessValidator
             switch (block)
             {
                 case ChildrenSyntax children:
-                    ValidateElement(children.Property, [.. children.Blocks], children.IdentifiedBy, Enabled(children.AutoMap, autoMap), children.Location);
+                    ValidateElement(children.Property, [.. children.Blocks], children.IdentifiedBy, Enabled(children.AutoMap, autoMap), children.Location, false);
                     break;
                 case NestedSyntax nested:
-                    ValidateElement(nested.Property, [.. nested.Blocks], null, Enabled(nested.AutoMap, autoMap), nested.Location);
+                    ValidateElement(nested.Property, [.. nested.Blocks], null, Enabled(nested.AutoMap, autoMap), nested.Location, true);
                     break;
             }
         }
 
-        void ValidateElement(string path, IReadOnlyList<ProjectionBlockSyntax> childBlocks, ExpressionSyntax? identity, bool childAutoMap, SourceLocation location)
+        void ValidateElement(string path, IReadOnlyList<ProjectionBlockSyntax> childBlocks, ExpressionSyntax? identity, bool childAutoMap, SourceLocation location, bool isNested)
         {
             var property = declarations.Property(properties, path, out _);
             var element = property is null ? null : declarations.TypeProperties(property.Type.Name)?.ToList();
@@ -63,7 +63,7 @@ internal static class ProjectionCompletenessValidator
                 return;
             }
 
-            var mapped = Covered(childBlocks, element, childAutoMap, cascading, scope, declarations);
+            var mapped = Covered(childBlocks, element, childAutoMap, cascading, scope, declarations, isNested);
             if (mapped is not null)
             {
                 if (identity is PathExpressionSyntax identifier)
@@ -71,11 +71,14 @@ internal static class ProjectionCompletenessValidator
                     mapped.Add(Root(identifier.Path));
                 }
 
+                var nestedJoinNote = isNested && childBlocks.Any(block => block is JoinSyntax)
+                    ? " (Chronicle does not currently apply joins inside 'nested' blocks; Cratis/Chronicle#4125)"
+                    : string.Empty;
                 foreach (var missing in element.Where(field => !mapped.Contains(field.Name)))
                 {
                     context.Error(
                         DiagnosticCodes.UnpopulatedProjectionField,
-                        $"Projection block '{path}' never populates field '{missing.Name}' of element type '{property!.Type.Name}'",
+                        $"Projection block '{path}' never populates field '{missing.Name}' of element type '{property!.Type.Name}'{nestedJoinNote}",
                         location);
                 }
             }
@@ -84,7 +87,7 @@ internal static class ProjectionCompletenessValidator
         }
     }
 
-    static HashSet<string>? Covered(IReadOnlyList<ProjectionBlockSyntax> blocks, IReadOnlyList<PropertySyntax> properties, bool autoMap, IReadOnlyList<EverySyntax> inherited, DeclarationScope scope, ConsistencyDeclarations declarations)
+    static HashSet<string>? Covered(IReadOnlyList<ProjectionBlockSyntax> blocks, IReadOnlyList<PropertySyntax> properties, bool autoMap, IReadOnlyList<EverySyntax> inherited, DeclarationScope scope, ConsistencyDeclarations declarations, bool isNested)
     {
         var mapped = new HashSet<string>(StringComparer.Ordinal);
         var every = inherited.Concat(blocks.OfType<EverySyntax>()).ToList();
@@ -134,7 +137,7 @@ internal static class ProjectionCompletenessValidator
                     }
 
                     break;
-                case JoinSyntax join:
+                case JoinSyntax join when !isNested:
                     foreach (var joined in join.Events)
                     {
                         foreach (var mapping in joined.Mappings)
@@ -150,8 +153,10 @@ internal static class ProjectionCompletenessValidator
                                 return null;
                             }
 
-                            foreach (var field in properties.Where(field => eventType.Properties.Any(sourceField =>
-                                sourceField.Name == field.Name && declarations.Compatible(sourceField.Type, field.Type) != false)))
+                            var mappedTargets = joined.Mappings.Select(mapping => mapping.Property.Split('.')[^1]).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                            var usedSources = JoinAutoMapSources.ExplicitlyMapped(joined.Mappings);
+                            foreach (var field in properties.Where(field => !mappedTargets.Contains(field.Name) && eventType.Properties.Any(sourceField =>
+                                sourceField.Name == field.Name && !usedSources.Contains(sourceField.Name) && declarations.Compatible(sourceField.Type, field.Type) != false)))
                             {
                                 mapped.Add(field.Name);
                             }
