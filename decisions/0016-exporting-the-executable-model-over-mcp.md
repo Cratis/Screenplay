@@ -2,7 +2,7 @@
 id: 0016
 title: Exporting the executable model over MCP
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-09-25
 decider: Sindre Alstad Wilting
 class: contract
@@ -32,7 +32,7 @@ MCP exports the exact canonical ESM bytes in pinned pages, next to a revision th
 1. **View.** `read-workspace` gains an `executable-model` view. It returns metadata (schema identifier, `schemaVersion`, `languageVersion`, `semanticVersion`, `modelRevision`, `attachmentManifestRevision`, `totalBytes`) and one bounded base64 page of the bytes `SemanticModelSerializer.Serialize` produces for the compiled model, paged by `McpPaging.Bytes`.
 2. **Only a compiled model.** The view is available only when compilation succeeded. Otherwise it returns `available: false` and points at `executable-diagnostics`, as `source-map` does. It never returns a last-good model. Compilation success does not mean a target can realize the model.
 3. **Pinned pages.** A continuation page requires `expectedModelRevision` in addition to the workspace `expectedRevision`. A changed model is refused as stale, with no page. The model revision pins the ESM bytes.
-4. **Attachment snapshot.** `attachmentManifestRevision` is a deterministic revision over every implementation requirement's id, content hash and resolution state. A continuation page also requires `expectedAttachmentManifestRevision` and is refused as stale when it changed. The `implementation-requirements` view exposes the same revision and checks it on continuation pages. The canonical ESM does not change for this.
+4. **Attachment snapshot.** `attachmentManifestRevision` is a deterministic revision over every implementation requirement's id, content hash and resolution state. A continuation page also requires `expectedAttachmentManifestRevision` and is refused as stale when it changed. The `implementation-requirements` view exposes the same revision and checks it when the client supplies `expectedAttachmentManifestRevision` (including on continuation pages); legacy unpinned continuations remain valid for compatibility. The canonical ESM does not change for this.
 5. **Exact bytes.** Pages are base64 so reassembly needs no reparsing. The reassembled bytes pass the strict ESM reader, which checks the revision and the exact canonical bytes ([`SemanticModelSerializer.Reader.cs:59-69`](../Source/DotNET/Screenplay/Semantics/Serialization/SemanticModelSerializer.Reader.cs)).
 6. **Limits.** The `read-workspace` `limit` becomes view-dependent: bytes for `executable-model`, items for the others. A page stays within the 1 MiB structured-content cap.
 7. **Read-only.** The export is a transport. The typed focused views remain the surface agents reason over. The export is never a path to edit the ESM around the proposal contract of [decision 0014](0014-diagnostic-repairs-are-typed-workspace-proposals.md).
@@ -61,7 +61,7 @@ Out of scope: exporting ESM from proposals; attachment bodies in the export; cha
 
 ## Verification
 
-**Done when:** The `executable-model` view on a compiled workspace returns the metadata and pages whose reassembled bytes equal `SemanticModelSerializer.Serialize` output and pass the strict reader. A failed compilation returns `available: false` with the diagnostics pointer and no bytes. A continuation with a stale workspace revision, model revision or attachment manifest revision is refused with no page. An attachment content change between pages is refused even though both other revisions are unchanged. `implementation-requirements` reports and checks the same attachment manifest revision. The largest page fits the 1 MiB cap.
+**Done when:** The `executable-model` view on a compiled workspace returns the metadata and pages whose reassembled bytes equal `SemanticModelSerializer.Serialize` output and pass the strict reader. A failed compilation returns `available: false` with the diagnostics pointer and no bytes. A continuation with a stale workspace revision, model revision or attachment manifest revision is refused with no page. An attachment content change between pages is refused even though both other revisions are unchanged. `implementation-requirements` reports the same attachment manifest revision and checks it when the client pins. The largest page fits the 1 MiB cap.
 
 **Verify by:** MCP protocol specs for success and failure, first page and continuation, stale workspace and model revisions, an attachment-content change between pages in both views, a strict-reader round trip of reassembled pages for v1, v2 and v3 models, and the view-dependent `limit` at its bounds against the response cap. Check the `Decision: 0016` trailer.
 
@@ -76,3 +76,5 @@ Screenplay: [#128](https://github.com/Cratis/Screenplay/issues/128), [#139](http
 ## Status notes
 
 **2026-09-25 — accepted.** Sindre Alstad Wilting delegated this choice to the orchestrating agent. The option was chosen under that delegation after an independent review of the Screenplay (v4.33.0) and Chronicle source.
+
+**2026-09-25 — implemented.** `read-workspace` exports the compiled canonical ESM in base64 byte pages, guarded by workspace, model and attachment-manifest revisions. The same manifest pins implementation-requirements continuations when the client supplies it; legacy unpinned continuations remain valid (an additive change for compatibility). MCP specs cover availability, stale pages, attachment-only changes, v1–v3 strict-reader round trips and maximum page size. Shipped in v4.36.0. It is not yet `verified`: downstream release and issue acceptance remain open.

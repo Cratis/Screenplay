@@ -19,8 +19,10 @@ public class when_paging_implementation_requirements : given.a_connection
         if (!opened.TryGetProperty("result", out var response)) throw new McpFailure(opened.GetRawText());
         var content = response.GetProperty("structuredContent");
         var revision = content.GetProperty("revision").GetString();
-        _first = Call("read-workspace", new { expectedRevision = revision, view = "implementation-requirements", limit = 1 }).GetProperty("result").GetProperty("structuredContent").GetProperty("page");
-        _second = Call("read-workspace", new { expectedRevision = revision, view = "implementation-requirements", offset = 1, limit = 1 }).GetProperty("result").GetProperty("structuredContent").GetProperty("page");
+        var first = Call("read-workspace", new { expectedRevision = revision, view = "implementation-requirements", limit = 1 }).GetProperty("result").GetProperty("structuredContent");
+        _first = first.GetProperty("page");
+        var manifestRevision = first.GetProperty("attachmentManifestRevision").GetString();
+        _second = Call("read-workspace", new { expectedRevision = revision, view = "implementation-requirements", offset = 1, limit = 1, expectedAttachmentManifestRevision = manifestRevision }).GetProperty("result").GetProperty("structuredContent").GetProperty("page");
         _stale = Call("read-workspace", new { expectedRevision = "stale", view = "implementation-requirements" }).GetProperty("result");
     }
 

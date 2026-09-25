@@ -111,7 +111,7 @@ is canonicalized.
 | Tool | Required arguments | Optional arguments |
 | --- | --- | --- |
 | `open-workspace` | None | `applicationName`, `workspaceJson`, `includeContent` |
-| `read-workspace` | `expectedRevision` | view (`source-map` for compiler source locations; `repairs` for typed diagnostic repairs; `implementation-requirements` for code attachment requirements), offset, limit |
+| `read-workspace` | `expectedRevision` | view (`source-map` for compiler source locations; `repairs` for typed diagnostic repairs; `implementation-requirements` for code attachment requirements; `executable-model` for canonical ESM bytes), offset, limit, `expectedModelRevision`, `expectedAttachmentManifestRevision` |
 | `read-ast` | `expectedRevision` | documentId, path, kind, name, semanticId, view, includeContent, offset, limit |
 | `propose` | Expected workspace/catalog revisions, operations | Explicit migrations/retirements, includeContent; legacy single-operation form supported |
 | `propose-ast` | Expected revisions, formatting | operations, documents, validation, referencePolicy, migrations/retirements, includeContent |
@@ -129,7 +129,7 @@ is canonicalized.
 from the server; do not infer them from names or line numbers.
 
 `read-workspace` views: documents, semantics, eventContracts, diagnostics,
-executable-diagnostics, source-map, repairs and implementation-requirements. The `source-map`
+executable-diagnostics, source-map, repairs, implementation-requirements and executable-model. The `source-map`
 view pages the compiler's semantic entries ordered by semantic ID: `semanticId`,
 `role` (Declaration or Description), identity `origin`, `documentId`, `path`,
 and exact `span` (zero-based UTF-16 start/length and one-based start/end
@@ -157,10 +157,37 @@ empty line map. Columns count UTF-16 code units; a tab is one column, and CRLF
 occupies two offsets but one line break. Pagination remains by requirement, with
 the usual response-size limit rather than a truncated body map.
 The MCP server loads implementation attachments from its trusted physical root for content hashing (#244), with warnings for refused files (`PLAY0430`–`PLAY0434`). It refreshes contents on each workspace operation, including when only the attachment changes; neither attachment text nor diagnostics enter persisted identity state or workspace revisions. For a file attachment whose contents could not be supplied, the content hash is empty;
-bodied reducers no longer block binding. Page offsets and `expectedRevision` pin the authored documents and identity catalog, not the physical attachment contents: attachment hashes may change between pages without changing the revision. Re-read the view if a stable attachment snapshot is required. Rejected compilations still expose
+bodied reducers no longer block binding. The `implementation-requirements` response includes `attachmentManifestRevision`, a deterministic hash of all requirement IDs, content hashes and resolution states. Legacy continuations (`offset > 0`) without `expectedAttachmentManifestRevision` remain valid but unpinned to attachment content. Clients can pin continuations by passing the response's revision as `expectedAttachmentManifestRevision`; when supplied, a changed manifest refuses the page with `StaleRevision`, even when `expectedRevision` is unchanged. Start again at offset zero after any refusal. Rejected compilations still expose
 attachments without admitting an executable model. Document results contain root handles. `read-ast` returns
 original occurrences, names, child counts and existing identities. Its `children`
 view selects a parent document/path. Typed content is opt-in.
+
+## Canonical executable model export
+
+Call `read-workspace` with `view: "executable-model"` and the current
+`expectedRevision`. When compilation succeeds, the response has `available: true`,
+`schema` (`cratis.screenplay.esm`), `schemaVersion`, `languageVersion`,
+`semanticVersion`, `modelRevision`, `attachmentManifestRevision`, `totalBytes`,
+and `page` (`revision`, `totalBytes`, decoded-byte `offset`, `byteCount`,
+`bytesBase64`, `nextOffset`). `limit` is decoded bytes, 1–196608 (default 49152)
+for this view; other workspace views use 1–200 items (default 50).
+`expectedModelRevision` applies only to `executable-model`; `expectedAttachmentManifestRevision` applies only to `executable-model` and `implementation-requirements`. Other views ignore these arguments, and `implementation-requirements` ignores `expectedModelRevision`.
+Decode each `bytesBase64` page and concatenate in offset order until `nextOffset`
+is null. For every subsequent page pass `expectedRevision`,
+`expectedModelRevision` and `expectedAttachmentManifestRevision` from the first
+response with `offset` set to the prior `nextOffset`. A changed revision refuses
+continuation without bytes; restart at offset zero. The result is precisely the
+canonical UTF-8 bytes from `SemanticModelSerializer.Serialize` and may be read
+with its strict `Deserialize` reader. The 1 MiB structured-content response cap
+still applies; the maximum byte page fits the cap.
+
+If compilation failed, `available: false` points to `executable-diagnostics`
+and contains no model bytes or last-good result. Successful compilation does not
+promise any target can realize the model. The exported ESM alone is neither an
+equivalence proof under [decision 0013](../../decisions/0013-equivalence-for-screenplay-code-round-trips.md)
+(which also compares attachment hashes) nor a runnable attachment bundle: attachment
+bodies are absent. The view is read-only, not a way to edit the ESM; use typed
+workspace proposals for changes.
 
 ## Diagnostic repair workflow
 

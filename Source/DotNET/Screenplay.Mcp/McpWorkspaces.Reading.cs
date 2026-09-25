@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Text.Json;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
+using Cratis.Screenplay.Semantics.Serialization;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
 
@@ -16,6 +17,61 @@ internal sealed partial class McpWorkspaces
     {
         var workspace = CheckedCurrent(arguments);
         var view = McpJson.OptionalString(arguments, "view") ?? "documents";
+        if (view == "executable-model")
+        {
+            var model = workspace.Compilation.Success ? workspace.Compilation.Value!.Model : null;
+            var manifestRevision = McpAttachmentManifest.Revision(workspace.Compilation.ImplementationRequirements);
+            CheckContinuation(arguments, "expectedAttachmentManifestRevision", manifestRevision);
+            if (model is null)
+            {
+                if (McpJson.Integer(arguments, "offset", 0, 0, int.MaxValue) > 0 || McpJson.OptionalString(arguments, "expectedModelRevision") is not null)
+                {
+                    throw new McpFailure("StaleRevision: executable model is no longer available.");
+                }
+
+                return McpJson.ToolResult(new
+                {
+                    workspace = McpWorkspaceTransport.Describe(workspace),
+                    view,
+                    available = false,
+                    executableDiagnosticsCount = workspace.Compilation.Diagnostics.Count(),
+                    executableDiagnosticsView = "executable-diagnostics"
+                });
+            }
+
+            CheckContinuation(arguments, "expectedModelRevision", model.Revision.ToString());
+            var bytes = SemanticModelSerializer.Serialize(model);
+            return McpJson.ToolResult(new
+            {
+                workspace = McpWorkspaceTransport.Describe(workspace),
+                view,
+                available = true,
+                executableDiagnosticsCount = workspace.Compilation.Diagnostics.Count(),
+                executableDiagnosticsView = "executable-diagnostics",
+                schema = SemanticModelCanonicalJson.Schema,
+                schemaVersion = model.LanguageVersion.Major,
+                languageVersion = model.LanguageVersion.ToString(),
+                semanticVersion = model.SemanticVersion.ToString(),
+                modelRevision = model.Revision.ToString(),
+                attachmentManifestRevision = manifestRevision,
+                totalBytes = bytes.Length,
+                page = McpPaging.Bytes(bytes, arguments, workspace.Revision.ToString())
+            });
+        }
+
+        if (view == "implementation-requirements")
+        {
+            var manifestRevision = McpAttachmentManifest.Revision(workspace.Compilation.ImplementationRequirements);
+            CheckContinuation(arguments, "expectedAttachmentManifestRevision", manifestRevision, requireOnContinuation: false);
+            return McpJson.ToolResult(new
+            {
+                workspace = McpWorkspaceTransport.Describe(workspace),
+                view,
+                attachmentManifestRevision = manifestRevision,
+                page = McpPaging.Page(workspace.Compilation.ImplementationRequirements, DescribeRequirement, arguments, workspace.Revision.ToString())
+            });
+        }
+
         if (view == "source-map")
         {
             var available = workspace.Compilation.Success;
@@ -77,7 +133,6 @@ internal sealed partial class McpWorkspaces
                     operations = repair.Operations.Select(McpAstOperations.Describe)
                 })),
             "executable-diagnostics" => workspace.Compilation.Diagnostics,
-            "implementation-requirements" => workspace.Compilation.ImplementationRequirements.Select(DescribeRequirement),
             _ => throw new McpFailure("Unknown workspace view.", -32602)
         };
         return McpJson.ToolResult(new
@@ -198,6 +253,20 @@ internal sealed partial class McpWorkspaces
         _ = Proposal(arguments);
         _proposals.Remove(McpJson.RequiredString(arguments, "proposalId"));
         return McpJson.ToolResult(new { discarded = true, remainingCount = _proposals.Count });
+    }
+
+    static void CheckContinuation(JsonElement arguments, string name, string revision, bool requireOnContinuation = true)
+    {
+        var supplied = McpJson.OptionalString(arguments, name);
+        if (requireOnContinuation && McpJson.Integer(arguments, "offset", 0, 0, int.MaxValue) > 0 && supplied is null)
+        {
+            throw new McpFailure($"'{name}' is required for continuation.", -32602);
+        }
+
+        if (supplied is not null && supplied != revision)
+        {
+            throw new McpFailure($"StaleRevision: {name} changed between pages.");
+        }
     }
 
     static object DescribeRequirement(SemanticImplementationRequirement requirement) => new

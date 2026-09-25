@@ -7,9 +7,9 @@ using System.Text.Json;
 
 namespace Cratis.Screenplay.Semantics.Serialization;
 
-internal static partial class SemanticModelCanonicalJson
+public static partial class SemanticModelCanonicalJson
 {
-    internal const string Schema = "cratis.screenplay.esm";
+    public const string Schema = "cratis.screenplay.esm";
     internal const uint SchemaVersion = 1;
 
     internal static byte[] Serialize(ExecutableSemanticModel model)
