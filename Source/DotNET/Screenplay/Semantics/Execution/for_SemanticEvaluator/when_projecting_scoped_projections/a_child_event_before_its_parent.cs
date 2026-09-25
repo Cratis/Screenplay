@@ -5,38 +5,26 @@ using System.Collections.Immutable;
 
 namespace Cratis.Screenplay.Semantics.Execution.for_SemanticEvaluator.when_projecting_scoped_projections;
 
-// Chronicle stores parentless child events as futures and retries them in insertion order after each event
-// (KeyResolvers.cs:768-784; ProjectionPipelineManager.cs:76-86; ResolveFutures.cs:33-200; ProjectionFutures.cs:27).
+// Chronicle stores parentless children as futures (KeyResolvers.cs:768-784; ResolveFutures.cs),
+// but resolving a first-level child's root-parent future in live processing is not yet confirmed.
+// The reference evaluator fails closed rather than implementing unverified deferral.
 public class a_child_event_before_its_parent : given.a_scoped_projection_plan
 {
     const string Body =
-        "from OrderShipped\n  label = carrier\nchildren lines identified by lineNumber\n  from LineAdded key lineNumber\n    parent orderId\n    subtotal = amount\n    count quantity";
+        "from OrderShipped\n  label = carrier\nchildren lines identified by lineNumber\n  from LineAdded key lineNumber\n    parent orderId\n    subtotal = amount";
 
-    string? _missingFailure;
-    ImmutableArray<SemanticReadModelInstance> _missing;
-    SemanticExecutionResult _when;
+    string? _failureWithoutParent;
+    ImmutableArray<SemanticReadModelInstance> _unchanged;
 
     void Establish() => Plan(Body);
 
     void Because()
     {
-        var first = Fact("LineAdded", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(1)), ("amount", Number(10)));
-        var second = Fact("LineAdded", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(1)), ("amount", Number(5)));
-        SemanticEvaluator.Establish(_compilation.Plan!, [], [first], out _missing, out _missingFailure);
-        Project(first, second, Fact("OrderShipped", FirstOrder, ("carrier", Text("post"))));
-        _when = SemanticEvaluator.Append(
-            _compilation.Plan!,
-            SemanticWorld.Create([first], _missing),
-            Fact("OrderShipped", FirstOrder, ("carrier", Text("post"))),
-            [],
-            null);
+        var child = Fact("LineAdded", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(1)), ("amount", Number(10)));
+        SemanticEvaluator.Establish(_compilation.Plan!, [], [child], out _unchanged, out _failureWithoutParent);
     }
 
-    [Fact] void should_not_fail_when_the_parent_never_appears() => _missingFailure.ShouldBeNull();
-    [Fact] void should_leave_the_world_unchanged_without_a_parent() => _missing.ShouldBeEmpty();
-    [Fact] void should_resolve_when_the_parent_appears() => _failure.ShouldBeNull();
-    [Fact] void should_carry_pending_children_from_given_into_when() =>
-        ((SemanticArrayValue)_when.World.ReadModels.Single().Values.Single(_ => _.TargetProperty == ReadModelProperty("OrderView", "lines")).Value).Values.Length.ShouldEqual(1);
-    [Fact] void should_replay_several_pending_children_in_order() =>
-        SemanticValueRules.AreEqual(Member(((SemanticArrayValue)Value(FirstOrder, "lines")).Values.Single(), "OrderLine", "subtotal"), Number(5)).ShouldBeTrue();
+    [Fact] void should_fail_closed_when_the_parent_does_not_exist() =>
+        _failureWithoutParent.ShouldEqual("Projection 'Orders' has no parent for a child event; Chronicle defers it until the parent exists, which the reference evaluator does not model.");
+    [Fact] void should_leave_read_models_unchanged() => _unchanged.ShouldBeEmpty();
 }

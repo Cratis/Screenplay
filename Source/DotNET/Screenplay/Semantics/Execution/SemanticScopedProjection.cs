@@ -14,8 +14,8 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// <param name="observed">The facts observed before the current one, used to back-fill joins.</param>
 /// <remarks>
 /// Instance removal deletes the instance; a child is upserted by identity (Chronicle <c>ProjectionEventContextExtensions.cs:180-202</c>);
-/// a nested object is created on first touch, merged and cleared to null; a join updates every existing instance whose joined
-/// property equals the joined event's source identity and never creates one, and a from event re-reads the latest joined event
+/// a nested object is created on first touch, merged and cleared to null; a root join matches its joined property while a child join
+/// matches the child's identity, and neither creates an instance; a from event re-reads the latest joined event
 /// (<c>ProjectionEventContextExtensions.cs:89-125</c>); <c>every</c> mappings run with the level's from and join events
 /// (<c>ProjectionFactory.cs:589-701</c>). Constructs outside this are plan issues (<see cref="SemanticScopedProjectionIssues"/>).
 /// </remarks>
@@ -31,13 +31,8 @@ internal sealed partial class SemanticScopedProjection(
         .Concat(plan.Model.Application.Types.SelectMany(_ => _.Properties))
         .ToDictionary(_ => _.Id);
     readonly List<Document> _documents = [];
-    readonly List<ImmutableArray<SemanticId>> _pendingChildPaths = [];
     SemanticFact _fact = null!;
     string? _failure;
-    ImmutableArray<SemanticId>? _retryPath;
-
-    /// <summary>The child paths waiting for a parent after this fact.</summary>
-    internal IReadOnlyList<ImmutableArray<SemanticId>> PendingChildPaths => _pendingChildPaths;
 
     /// <summary>
     /// Projects one fact.
@@ -45,19 +40,9 @@ internal sealed partial class SemanticScopedProjection(
     /// <param name="instances">The world's read-model instances, updated in place when the fact projects.</param>
     /// <param name="fact">The fact.</param>
     /// <returns>The failure, or <see langword="null"/> when the fact projected.</returns>
-    internal string? Apply(List<SemanticReadModelInstance> instances, SemanticFact fact) => ApplyCore(instances, fact);
-
-    /// <summary>Retries only the child path that was deferred, not other handlers for the same fact.</summary>
-    internal string? ApplyPending(List<SemanticReadModelInstance> instances, SemanticFact fact, ImmutableArray<SemanticId> path)
-    {
-        _retryPath = path;
-        return ApplyCore(instances, fact);
-    }
-
-    string? ApplyCore(List<SemanticReadModelInstance> instances, SemanticFact fact)
+    internal string? Apply(List<SemanticReadModelInstance> instances, SemanticFact fact)
     {
         _fact = fact;
-        _pendingChildPaths.Clear();
         _documents.AddRange(instances
             .Where(_ => _.ReadModel == _readModel.Id)
             .Select(_ => new Document(_.Key, _.Values.ToDictionary(value => value.TargetProperty, value => value.Value))));
@@ -95,33 +80,31 @@ internal sealed partial class SemanticScopedProjection(
     bool Process(SemanticProjectionScope scope, Level level)
     {
         var handled = false;
-        var atRetryPath = _retryPath is null || level.Address.Select(_ => _.Property).SequenceEqual(_retryPath.Value);
-        foreach (var from in scope.From.Where(_ => atRetryPath && _.EventContract == _fact.EventContract))
+        foreach (var from in scope.From.Where(_ => _.EventContract == _fact.EventContract))
         {
             handled = true;
             ApplyFrom(from, scope, level);
         }
 
-        foreach (var join in scope.Joins.Where(_ => atRetryPath && _.EventContract == _fact.EventContract))
+        foreach (var join in scope.Joins.Where(_ => _.EventContract == _fact.EventContract))
         {
             handled = true;
             ApplyJoin(join, scope, level);
         }
 
-        foreach (var removal in scope.Removals.Where(_ => atRetryPath && _.EventContract == _fact.EventContract))
+        foreach (var removal in scope.Removals.Where(_ => _.EventContract == _fact.EventContract))
         {
             handled = true;
             ApplyRemoval(removal, level);
         }
 
-        foreach (var removal in scope.JoinRemovals.Where(_ => atRetryPath && _.EventContract == _fact.EventContract))
+        foreach (var removal in scope.JoinRemovals.Where(_ => _.EventContract == _fact.EventContract))
         {
             handled = true;
             ApplyJoinRemoval(removal, level);
         }
 
-        foreach (var children in scope.Children.Where(_ => _retryPath is null ||
-            level.Address.Select(step => step.Property).Append(_.Property).SequenceEqual(_retryPath.Value.Take(level.Address.Length + 1))))
+        foreach (var children in scope.Children)
         {
             var element = _types[level.Targets[children.Property].Type.Target];
             var elementProperties = Properties(element.Properties);
@@ -131,7 +114,7 @@ internal sealed partial class SemanticScopedProjection(
             handled |= Process(children.Scope, new([.. level.Address, new(children.Property, identity)], [], elementProperties));
         }
 
-        foreach (var nested in scope.Nested.Where(_ => _retryPath is null))
+        foreach (var nested in scope.Nested)
         {
             var composite = _types[level.Targets[nested.Property].Type.Target];
             handled |= Process(nested.Scope, level with { Nested = [.. level.Nested, nested.Property], Targets = Properties(composite.Properties) });
@@ -158,7 +141,7 @@ internal sealed partial class SemanticScopedProjection(
         });
     }
 
-    // A join matches every existing instance whose joined property equals the joined event's source identity and never creates one.
+    // A root join matches its joined property; a child join matches the child's identity. Neither creates an instance.
     void ApplyJoin(SemanticProjectionJoin join, SemanticProjectionScope scope, Level level)
     {
         if ((join.Key is null ? EventSource() : Key(join.Key)) is not { } value)
@@ -282,15 +265,10 @@ internal sealed partial class SemanticScopedProjection(
             : [.. Elements(parentAddress).Where(_ => SemanticValueRules.AreEqual(_.Steps[^1].Identity, parentIdentity))];
         if (parents.Length != 1)
         {
-            // Chronicle stores an unresolved child as a future (KeyResolvers.cs:768-784).
-            if (parents.Length == 0)
-            {
-                _pendingChildPaths.Add([.. level.Address.Select(_ => _.Property)]);
-            }
-            else
-            {
-                Fail($"Projection '{projection.Name}' parent identity is ambiguous for a child event.");
-            }
+            // Chronicle stores parentless children as futures (KeyResolvers.cs:768-784; ResolveFutures.cs); the reference evaluator has no deferral.
+            Fail(parents.Length == 0
+                ? $"Projection '{projection.Name}' has no parent for a child event; Chronicle defers it until the parent exists, which the reference evaluator does not model."
+                : $"Projection '{projection.Name}' parent identity is ambiguous for a child event.");
             return null;
         }
 

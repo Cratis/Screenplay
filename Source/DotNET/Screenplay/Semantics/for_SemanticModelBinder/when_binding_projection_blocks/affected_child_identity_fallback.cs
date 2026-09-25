@@ -3,7 +3,10 @@
 
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder.when_binding_projection_blocks;
 
-// ProjectionFactory.CreateProjectionStructure (ProjectionFactory.cs:485-500) falls back to the key property for an unset child identity.
+// Chronicle's ProjectionFactory.CreateProjectionStructure (ProjectionFactory.cs:485-500) falls back to the root
+// schema's id/Id key property (JsonSchemaExtensions.cs:30-42). Screenplay uses the property named like
+// the ESM read-model identifier; the binder always supplies identified by, so only hand-built/deserialized
+// ESM can reach this fallback.
 public class affected_child_identity_fallback : given.a_projection_block_binder
 {
     SemanticAffectedProjectionInstance _join;

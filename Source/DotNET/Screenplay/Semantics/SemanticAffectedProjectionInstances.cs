@@ -40,6 +40,8 @@ public enum SemanticAffectedProjectionMatch
     ManyChildrenByKey,
 
     /// <summary>The runtime does not establish an affected-instance relationship for this block.</summary>
+    /// <remarks>Used for a root <c>remove via join</c>, and for a child join or join removal with no
+    /// resolved identity when no application schema is available.</remarks>
     Unverified
 }
 
@@ -58,6 +60,8 @@ public sealed record SemanticAffectedProjectionInstance
     public required SemanticAffectedProjectionMatch Match { get; init; }
 
     /// <summary>Properties traversed from the read-model root through child collections or nested objects.</summary>
+    /// <remarks><see cref="ImmutableArray{T}"/> compares by reference in record equality; two records with
+    /// separately constructed paths containing the same IDs need not compare equal.</remarks>
     public required ImmutableArray<SemanticId> Path { get; init; }
 
     /// <summary>The key for scoped blocks, if one is used.</summary>
@@ -84,6 +88,7 @@ public static class SemanticAffectedProjectionInstances
     }
 
     /// <summary>Returns relationships with fallback child identities resolved against the read-model schema.</summary>
+    /// <exception cref="ArgumentException">The projection's read model is not present in <paramref name="application"/>.</exception>
     public static ImmutableArray<SemanticAffectedProjectionInstance> GetAffectedInstances(this SemanticProjection projection, SemanticApplication application)
     {
         ArgumentNullException.ThrowIfNull(projection);
@@ -94,6 +99,12 @@ public static class SemanticAffectedProjectionInstances
     static ImmutableArray<SemanticAffectedProjectionInstance> CollectAffected(SemanticProjection projection, SemanticApplication? application)
     {
         var result = ImmutableArray.CreateBuilder<SemanticAffectedProjectionInstance>();
+        var readModel = application?.Modules.SelectMany(module => module.Features).SelectMany(AllSlices)
+            .SelectMany(slice => slice.ReadModels).SingleOrDefault(_ => _.Id == projection.ReadModel);
+        if (application is not null && readModel is null)
+        {
+            throw new ArgumentException($"Projection '{projection.Name}' read model '{projection.ReadModel}' is not present in the application.", nameof(application));
+        }
         if (projection.Scope is null)
         {
             foreach (var transition in projection.Transitions)
@@ -107,8 +118,6 @@ public static class SemanticAffectedProjectionInstances
         }
         else
         {
-            var readModel = application?.Modules.SelectMany(module => module.Features).SelectMany(AllSlices)
-                .SelectMany(slice => slice.ReadModels).SingleOrDefault(_ => _.Id == projection.ReadModel);
             var identifierName = readModel?.Properties.Single(_ => _.IsIdentifier).Name;
             Collect(projection.Scope, [], null, false, result, application, readModel?.Properties, identifierName);
         }
@@ -198,8 +207,6 @@ public static class SemanticAffectedProjectionInstances
             });
         }
 
-        // Children under nested objects are not subscribed by SetupNestedSubscriptions/CollectNestedEventTypes.
-        // The caller skips them rather than reporting relationships Chronicle never executes.
         foreach (var children in scope.Children)
         {
             var elementType = properties?.Single(_ => _.Id == children.Property).Type.Target;
@@ -226,7 +233,8 @@ public static class SemanticAffectedProjectionInstances
         ImmutableArray<SemanticId> path,
         ImmutableArray<SemanticAffectedProjectionInstance>.Builder result)
     {
-        // Only from, removals and further nested objects are subscribed in Chronicle's nested scope.
+        // Children under nested objects are not subscribed by SetupNestedSubscriptions/CollectNestedEventTypes.
+        // Only from, removals and further nested objects are reported in Chronicle's nested scope.
         foreach (var from in scope.From)
         {
             result.Add(new()
