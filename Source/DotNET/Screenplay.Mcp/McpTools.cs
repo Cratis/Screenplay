@@ -37,6 +37,7 @@ sealed class McpTools
                 "read-ast" => _workspaces.ReadAst(arguments),
                 "propose" => _workspaces.Propose(arguments, false),
                 "propose-ast" => _workspaces.ProposeAst(arguments),
+                "propose-repair" => _workspaces.ProposeRepair(arguments),
                 "expand-layout" => McpJson.OptionalString(arguments, "validation") == "Authoring" ? _workspaces.ProposeAst(arguments, true) : _workspaces.Propose(arguments, true),
                 "read-proposal" => _workspaces.ReadProposal(arguments),
                 "export-workspace" => _workspaces.ExportWorkspace(arguments),

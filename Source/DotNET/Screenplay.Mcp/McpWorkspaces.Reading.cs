@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using System.Text.Json;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
@@ -41,6 +42,7 @@ internal sealed partial class McpWorkspaces
             });
         }
 
+        var syntax = view == "repairs" ? McpWorkspaceAnalysis.For(workspace).Syntax : null;
         var items = view switch
         {
             "documents" => workspace.Documents.Select(document => (object)new
@@ -66,6 +68,14 @@ internal sealed partial class McpWorkspaces
                 assignment.Origin
             }),
             "diagnostics" => McpWorkspaceAnalysis.For(workspace).Source.Compilation.Diagnostics,
+            "repairs" => syntax!.Diagnostics.SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(syntax, workspace.Revision, diagnostic)
+                .Select(repair => (object)new
+                {
+                    repair.DiagnosticCode,
+                    diagnostic.Location,
+                    subject = McpAstHandles.Describe(repair.Subject),
+                    operations = repair.Operations.Select(McpAstOperations.Describe)
+                })),
             "executable-diagnostics" => workspace.Compilation.Diagnostics,
             "implementation-requirements" => workspace.Compilation.ImplementationRequirements.Select(DescribeRequirement),
             _ => throw new McpFailure("Unknown workspace view.", -32602)

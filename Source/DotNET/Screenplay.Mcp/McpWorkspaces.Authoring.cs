@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using System.Text.Json;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
@@ -11,6 +12,41 @@ namespace Cratis.Screenplay.Mcp;
 
 internal sealed partial class McpWorkspaces
 {
+    internal object ProposeRepair(JsonElement arguments)
+    {
+        var workspace = Current();
+        var expectedRevision = WorkspaceRevision.Parse(McpJson.RequiredString(arguments, "expectedRevision"));
+        var expectedCatalogRevision = CatalogRevision.Parse(McpJson.RequiredString(arguments, "expectedCatalogRevision"));
+        var formatting = McpJson.Enumeration(arguments, "formatting", WorkspaceAuthoringFormatting.PreserveExactSource);
+        var request = new WorkspaceAuthoringRequest
+        {
+            ExpectedRevision = expectedRevision,
+            ExpectedCatalogRevision = expectedCatalogRevision,
+            Validation = WorkspaceAuthoringValidation.Authoring,
+            Formatting = formatting
+        };
+        if (expectedRevision != workspace.Revision || expectedCatalogRevision != workspace.IdentityCatalog.Revision)
+        {
+            return Rejected(workspace.ProposeAuthoring(request));
+        }
+
+        root.Verify(workspace);
+        var code = McpJson.RequiredString(arguments, "diagnosticCode");
+        var subject = McpAstHandles.Read(arguments.GetProperty("subject"));
+        var index = McpWorkspaceAnalysis.For(workspace).Syntax;
+        var repairs = index.Diagnostics
+            .Where(diagnostic => diagnostic.Code == code)
+            .SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(index, expectedRevision, diagnostic))
+            .Where(repair => repair.Subject == subject).ToArray();
+        if (repairs.Length != 1)
+        {
+            throw new McpFailure("UnknownRepair: no unambiguous repair for this code and subject.", -32602);
+        }
+
+        var result = WorkspaceDiagnosticRepairs.ProposeRepair(workspace, repairs[0], request);
+        return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation, request.ReferencePolicy), arguments) : Rejected(result);
+    }
+
     internal object ProposeAst(JsonElement arguments, bool layout = false)
     {
         var workspace = Current();

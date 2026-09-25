@@ -116,6 +116,38 @@ new authoring workspace without relaxing ordinary nonempty workspace admission.
 Its first transaction can create one or several typed documents. An empty
 workspace is not executable.
 
+## Diagnostic repairs
+
+`WorkspaceDiagnosticRepairs.Find(workspace, revision, diagnostic)` (or the overload
+accepting an existing `WorkspaceSyntaxIndex`) discovers compiler-authored
+`WorkspaceDiagnosticRepair` values (diagnostic code, original-revision subject
+`WorkspaceNodeHandle`, and one or more typed `WorkspaceAstOperation`s). An unknown,
+stale or ambiguous diagnostic yields no repair. Repairs never contain text edits and
+never write files. Build a `WorkspaceAuthoringRequest` with the current workspace
+and catalog revisions, `Authoring` validation and the repair's `RequiredFormatting`
+(`CanonicalizeTouchedDocuments`). Preview with
+`WorkspaceDiagnosticRepairs.ProposeRepair(workspace, repair, request)`, not a direct
+`ProposeAuthoring` call: it rejects `PreserveTrivia` and `PreserveExactSource` with
+`FormattingConsentRequired`, and rejects any comment loss anywhere in the touched
+document with `RepairWouldDropComments`. Review the candidate and `WritePlan`,
+then explicitly accept the plan through the usual destination adapter.
+Stale requests return typed stale conflicts with no partial candidate.
+
+The first repair handles only `PLAY0397` on a `validate csharp` header. Its parsed
+subject has the unique warning location. The operation is an **identity replacement**:
+it replaces the node with its own original syntax, and canonical printing performs
+the migration to `validate` followed by a `` ```csharp `` fence. This reprints the
+**whole touched document**, normalizing whitespace and migrating other legacy
+forms in that file too. Bare description fences and standalone language lines
+are not offered as individual repairs, but can change as part of this print. Cases requiring a choice, such as selecting an alias for a
+repeated read, are never presented as one automatic repair.
+
+A “link” is a reference in an added typed node, not a separate edit operation.
+With the default `Safe` reference policy, adding a node with an unresolved
+reference is rejected when the candidate is compiled; `Draft` must be explicitly
+requested to admit new reference debt. Neither policy silently retargets an
+existing binding.
+
 ## Model-aware rename
 
 `ScreenplayWorkspace.ProposeRename(WorkspaceRenameRequest)` plans one logical

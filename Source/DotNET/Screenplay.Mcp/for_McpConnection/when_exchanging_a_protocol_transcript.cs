@@ -38,7 +38,7 @@ public class when_exchanging_a_protocol_transcript : given.a_connection
     void should_list_all_public_tools() => _responses[2].GetProperty("result").GetProperty("tools").EnumerateArray().Select(tool => tool.GetProperty("name").GetString()).ShouldContainOnly(
         ["describe-application", "find-declaration", "search-declarations", "declaration-details", "dependencies", "find-references",
         "find-fixtures", "find-assertion-gaps", "merged-document", "read-document", "diagnostics", "recommend-layout", "syntax-schema",
-        "open-workspace", "workspace-state", "recover-workspace", "propose-rename", "read-workspace", "read-ast", "propose", "propose-ast",
+        "open-workspace", "workspace-state", "recover-workspace", "propose-rename", "read-workspace", "read-ast", "propose", "propose-repair", "propose-ast",
         "expand-layout", "read-proposal", "export-workspace", "discard-proposal", "apply"]);
     [Fact] void should_return_unknown_method_error() => _responses[4].GetProperty("error").GetProperty("code").GetInt32().ShouldEqual(-32601);
     [Fact] void should_return_parse_error() => _responses[5].GetProperty("error").GetProperty("code").GetInt32().ShouldEqual(-32700);
