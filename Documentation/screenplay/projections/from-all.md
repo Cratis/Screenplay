@@ -20,7 +20,7 @@ projection EventCounter => EventCounterReadModel
     lastOccurred = $eventContext.occurred
 ```
 
-The projection above receives **all events in the system** — even event types not listed in any `from` block — and increments `totalEvents` for each one.
+The projection above receives **all events in the system** — even event types not listed in any `from` block — and increments `totalEvents` on the read-model instance keyed by each event's source. It does not maintain one global total across event sources.
 
 ## Combining `all` with `from` Blocks
 
@@ -36,7 +36,7 @@ projection ActivityFeed => ActivityFeedModel
     recentUsers = name
 ```
 
-Here, `totalSystemEvents` increments for every event in the system, while `recentUsers` is only set when a `UserRegistered` event arrives.
+Here, `totalSystemEvents` increments for every event on the instance selected by its source. `recentUsers` is only set when a `UserRegistered` event arrives.
 
 ## Difference Between `all` and `every`
 
@@ -44,7 +44,7 @@ Here, `totalSystemEvents` increments for every event in the system, while `recen
 |---------|--------|---------|
 | Event scope | **All event types in the system** | Only types listed in `from` blocks |
 | Subscription mechanism | Implicit, system-wide | Explicit per-type subscription |
-| Typical use | System-wide audit logs, global counters | Common fields across explicitly subscribed events |
+| Typical use | Per-event-source activity across all event types | Common fields across explicitly subscribed events |
 
 ### Example contrast
 
@@ -73,9 +73,9 @@ projection SystemAuditLog => AuditLogModel
 
 **Use `all` when:**
 
-- Building system-wide audit logs or metrics
-- Tracking total event counts across all types
-- Updating timestamps based on any activity in the system
+- Tracking per-event-source activity across all event types
+- Counting events per event source (not across all event sources)
+- Updating each source's timestamp based on its activity
 
 **Use `every` instead when:**
 

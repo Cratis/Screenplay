@@ -144,6 +144,12 @@ public sealed partial class SemanticModelBinder
             var when = produced.When is null ? null : BindCondition(produced.When, commandProperties);
             var tags = BindTags(produced.Tags);
 
+            if (produced.For is PathExpressionSyntax path && commandProperties.TryGetValue(path.Path, out var targetProperty) &&
+                (!targetProperty.IsIdentifier || targetProperty.Type.IsCollection || targetProperty.Type.IsOptional))
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"Produced event destination '{path.Path}' must be the command's required scalar identifier; fan-out to another source is not admitted.", produced.For.Location);
+            }
+
             var destination = produced.For is null
                 ? null
                 : BindPropertyExpression(produced.For, commandProperties, "produced event destination");

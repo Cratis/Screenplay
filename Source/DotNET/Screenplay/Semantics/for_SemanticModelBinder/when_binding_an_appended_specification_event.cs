@@ -30,6 +30,14 @@ public class when_binding_an_appended_specification_event : given.a_semantic_bin
                   projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
                 then ProjectRegistered
                   projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+            slice StateView BrowseProjects
+              specification AppendingInView
+                when append ProjectRegistered
+                  for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                  projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                then ProjectRegistered
+                  for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                  projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
         """;
 
     CompilationResult<SemanticCompilation> _result;
@@ -51,6 +59,9 @@ public class when_binding_an_appended_specification_event : given.a_semantic_bin
     [Fact] void should_omit_the_source_on_the_other_action() => Specifications.Single(spec => spec.Name == "AppendingWithoutSource").WhenAppended!.EventSource.ShouldBeNull();
     [Fact] void should_not_invent_a_command_action() => Specifications.All(spec => spec.When is null).ShouldBeTrue();
     [Fact] void should_execute_the_v2_occurrence_and_compare_its_source() => _v2Run.Passed.ShouldBeTrue();
+    [Fact] void should_bind_an_append_in_a_state_view_slice() => ViewSpecification.WhenAppended!.EventSource.ShouldNotBeNull();
+    [Fact] void should_execute_the_append_in_a_state_view_slice() => new Execution.SemanticSpecificationRunner().Run(Execution.SemanticExecutionPlan.Compile(_result.Value!.Model).Plan!, ViewSpecification.Id).Passed.ShouldBeTrue();
 
-    SemanticSpecification[] Specifications => [.. _result.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single().Specifications.OrderBy(spec => spec.Name)];
+    SemanticSpecification ViewSpecification => _result.Value!.Model.Application.Modules.Single().Features.Single().Slices[1].Specifications.Single();
+    SemanticSpecification[] Specifications => [.. _result.Value!.Model.Application.Modules.Single().Features.Single().Slices[0].Specifications.OrderBy(spec => spec.Name)];
 }

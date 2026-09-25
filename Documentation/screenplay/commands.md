@@ -397,7 +397,7 @@ Every `$context.` path names a member of the `CommandContext` an inline handler 
 
 ### Where an event lands
 
-By default a produced event is appended to the command's own event source — the common case, and it stays unstated. When the decision affects something else, `for` says so on an indented line:
+By default a produced event is appended to the command's own event source — the common case, and it stays unstated. An explicit `for` can name the command's required scalar identifier on an indented line:
 
 ```screenplay
 command Activate
@@ -408,11 +408,11 @@ command Activate
     requestId = requestId
 
   produces ContractPolicyActivated
-    for contractId
+    for requestId
     contractId = contractId
 ```
 
-One decision, two event sources. A command that fans out to several is several `produces`, each saying where it goes — which is what the handler doing it already looks like.
+Both facts address the command's `requestId` event source; the contract ID remains an event payload property. The executable model cannot bind `for contractId` here: explicit destinations must resolve to the command's required scalar identifier. Use an imperative handler for fan-out to other event sources.
 
 `for` is an indented line rather than an argument on the header, so the target sits beside the mappings that fill the event instead of out past the end of the line. Only one `for` per `produces`: an event is appended to one event source.
 
