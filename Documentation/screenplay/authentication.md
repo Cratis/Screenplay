@@ -44,4 +44,19 @@ That is not an omission. Authority URLs, client ids and the credentials that go 
 
 Configuration lines under a provider are therefore a compile error rather than something quietly ignored — a document that states them is saying something the language does not express, and hiding that would be worse than reporting it.
 
-A runtime such as Stage resolves the configuration itself, looking each provider up by name through the [compiler's visitors](visitors.md) when it runs or renders the application. How it stores that configuration — a JSON file holding encrypted values, a secret store, environment variables — is its own business, and the language stays out of it.
+A runtime such as Stage resolves the configuration itself. Provider identities are realization metadata, not part of the executable semantic model (ESM). A renderer can get them from a successful syntax compilation result:
+
+```csharp
+var parsed = new ScreenplayCompiler().Compile(source);
+if (parsed.Success)
+{
+    var providers = parsed.Value!.Authentication?.Providers;
+    // Use each provider's Name, Alias, or Identity to select host configuration.
+}
+else
+{
+    // Report parsed.Diagnostics; do not render an invalid document.
+}
+```
+
+Each `AuthenticationProviderSyntax` has `Name`, optional `Alias`, and `Identity` (alias if present, otherwise name). The [compiler's visitors](visitors.md) can traverse the same syntax. `SemanticModelCompiler.Compile(...)` returns a `SemanticCompilation` with `Model`, `Documents`, and `SourceMap`, but **no typed provider companion view**: a renderer receiving only that result must parse its source documents separately to obtain provider declarations. There is currently no lossless, provider-typed semantic compilation companion API; do not infer provider identities from ESM. How the runtime stores provider configuration — a secret store, environment variables, or another host mechanism — is its own business.

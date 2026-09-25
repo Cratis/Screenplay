@@ -27,12 +27,13 @@ internal static partial class PlayFolderMerge
     /// Merges parsed documents into one application and resolves its cross references.
     /// </summary>
     /// <param name="documents">The <see cref="CompilationResult{TResult}">parsed documents</see>, in path order.</param>
+    /// <param name="allowUnresolvedPersonaPolicies">Whether draft authoring may retain unresolved persona references as warnings.</param>
     /// <returns>The <see cref="CompilationResult{TResult}"/> of the folder as a whole.</returns>
-    public static CompilationResult<ApplicationSyntax> Merge(IReadOnlyList<CompilationResult<ApplicationSyntax>> documents)
+    public static CompilationResult<ApplicationSyntax> Merge(IReadOnlyList<CompilationResult<ApplicationSyntax>> documents, bool allowUnresolvedPersonaPolicies = false)
     {
         var context = ParserContext.ForDiagnostics();
         var application = MergeApplications([.. documents.Select(document => document.Value).OfType<ApplicationSyntax>()], context);
-        ScreenplayValidator.Validate(application, context);
+        ScreenplayValidator.Validate(application, context, allowUnresolvedPersonaPolicies);
 
         return new(application, [.. documents.SelectMany(document => document.Diagnostics), .. context.Diagnostics]);
     }

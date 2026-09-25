@@ -20,6 +20,7 @@ internal static partial class ReadsParser
     /// <returns>The parsed <see cref="ReadsSyntax"/>, or <c>null</c> when the line is malformed.</returns>
     public static ReadsSyntax? Parse(ParserContext context, SourceLine line)
     {
+        RejectChildren(context, line);
         var match = ReadsRegex().Match(line.Content);
         if (!match.Success)
         {
@@ -45,6 +46,15 @@ internal static partial class ReadsParser
         {
             Alias = alias.Success ? alias.Value : null
         };
+    }
+
+    internal static void RejectChildren(ParserContext context, SourceLine line)
+    {
+        if (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Error(DiagnosticCodes.ReadsWithChildren, "A reads line takes no child lines", child.Location);
+            context.SkipBlock(line.Indent);
+        }
     }
 
     [GeneratedRegex(@"^reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?$", RegexOptions.None, 1000)]

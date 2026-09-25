@@ -30,8 +30,6 @@ public class when_binding_the_invoicing_sample : given.a_semantic_binder
         (DiagnosticCodes.InvalidSemanticBinding, "Event type 'InvoiceShippingCleared' not found"),
 
         // Identity, personas, compliance and occurrences outside the executable model.
-        (Unsupported, "Persona 'Accountant'"),
-        (Unsupported, "Persona 'InvoiceManager'"),
         (Unsupported, "Trigger 'DirectoryChanged'"),
         (Unsupported, "Concept 'PersonName' compliance attributes"),
         (Unsupported, "Concept 'BankAccount' compliance attributes"),
@@ -103,6 +101,7 @@ public class when_binding_the_invoicing_sample : given.a_semantic_binder
     [Fact] void should_leave_only_imported_names_unresolved() =>
         _errors.Where(_ => _.Code == DiagnosticCodes.InvalidSemanticBinding && !_importedNames.Any(name => _.Message.Contains($"'{name}'", StringComparison.Ordinal))).Select(Describe).ShouldBeEmpty();
     [Fact] void should_report_no_warnings() => Bind(Samples.Invoicing).Diagnostics.Where(_ => _.Severity == DiagnosticSeverity.Warning).Select(Describe).ShouldBeEmpty();
+    [Fact] void should_report_personas_as_information() => Bind(Samples.Invoicing).Diagnostics.Where(_ => _.Message.StartsWith("Persona '", StringComparison.Ordinal)).Select(_ => _.Severity).ShouldContainOnly(DiagnosticSeverity.Information, DiagnosticSeverity.Information);
 
     static bool Matches(Diagnostic error, (string Code, string Fragment) disposition) =>
         error.Code == disposition.Code && error.Message.Contains(disposition.Fragment, StringComparison.Ordinal);

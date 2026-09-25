@@ -20,11 +20,12 @@ internal static class ScreenplayValidator
     static readonly IReadOnlySet<string> _noParameters = new HashSet<string>(StringComparer.Ordinal);
 
     /// <summary>
-    /// Validates an application and reports warnings for unknown references.
+    /// Validates an application and reports diagnostics for unknown references.
     /// </summary>
     /// <param name="application">The <see cref="ApplicationSyntax"/> to validate.</param>
     /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
-    public static void Validate(ApplicationSyntax application, ParserContext context)
+    /// <param name="allowUnresolvedPersonaPolicies">Whether draft authoring may retain unresolved persona references as warnings.</param>
+    public static void Validate(ApplicationSyntax application, ParserContext context, bool allowUnresolvedPersonaPolicies = false)
     {
         var slices = application.Modules
             .SelectMany(module => module.Features.SelectMany(AllFeatures))
@@ -67,7 +68,14 @@ internal static class ScreenplayValidator
         {
             foreach (var policy in persona.Policies.Where(policy => !knownPolicies.Contains(policy)))
             {
-                context.Warning(DiagnosticCodes.UnknownPolicy, $"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
+                if (allowUnresolvedPersonaPolicies)
+                {
+                    context.Warning(DiagnosticCodes.UnknownPolicy, $"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
+                }
+                else
+                {
+                    context.Error(DiagnosticCodes.UnknownPolicy, $"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
+                }
             }
         }
 
@@ -637,6 +645,11 @@ internal static class ScreenplayValidator
             ValidateReactionReads(trigger, knownReadModels, context);
             if (trigger.Source is not NamedTriggerSourceSyntax named)
             {
+                foreach (var datum in trigger.Data)
+                {
+                    context.Error(DiagnosticCodes.ClockTriggerValue, $"Clock triggers take no values; remove '{datum.Name}'", datum.Location);
+                }
+
                 continue;
             }
 

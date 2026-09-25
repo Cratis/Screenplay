@@ -65,6 +65,18 @@ public class when_compiling_reaction_trigger_reads : given.a_compiler
         diagnostic.Severity.ShouldEqual(DiagnosticSeverity.Error);
     }
 
+    [Theory]
+    [InlineData("every 15 minutes")]
+    [InlineData("at 08:00")]
+    void should_reject_values_under_a_clock_trigger(string source)
+    {
+        var result = CompileTrigger($"        {source}\n          key");
+        var diagnostic = result.Diagnostics.Single(d => d.Code == DiagnosticCodes.ClockTriggerValue);
+        diagnostic.Severity.ShouldEqual(DiagnosticSeverity.Error);
+        diagnostic.Message.ShouldContain("Clock triggers take no values");
+        result.Success.ShouldBeFalse();
+    }
+
     [Fact] void should_report_an_unknown_trigger_value()
     {
         var diagnostic = CompileTrigger("        when Signal\n          key\n          reads Status by missing").Diagnostics

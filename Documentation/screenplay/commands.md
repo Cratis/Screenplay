@@ -99,6 +99,7 @@ command StartMonth
 This is the read-model-to-command arrow of Event Modeling — one of the four the method is built on, and the only one a document could not draw. Without it, a command that decides against state shows its inputs and its events but not what it consulted in between, and the mapping fed from that state has nowhere to come from.
 
 - `<ReadModel>` names a read model some [projection](projections/index.md) produces. Reading something no projection produces is a warning — the document says it depends on state nothing in it explains.
+- A `reads` declaration is one line and takes no indented children. A child line is an error and is not interpreted as a command property.
 - `by <property>` names the command property the read model is looked up by, and must be one of the command's own properties. Leave it out for a read model that is not looked up by a key — a single view the whole application shares rather than one instance per identifier. The name starts with a lower-case letter or underscore, followed by letters, digits or underscores.
 - `as <alias>` distinguishes instances of the same view. If a command reads a view more than once, **every** instance needs an alias. Aliases start with a lower-case letter or underscore, followed by letters, digits or underscores; `as`, `by` and `reads` are reserved. Aliases must be unique in the command and must not match any of its property names. A single read may also be named by an alias.
 

@@ -170,9 +170,15 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Import '{import.QualifiedName}' is not supported by ESM v1 binding.", import.Location);
             }
 
+            var knownPolicies = syntax.Policies.Select(policy => policy.Name).ToHashSet(StringComparer.Ordinal);
             foreach (var persona in syntax.Personas ?? [])
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Persona '{persona.Name}' is deferred from ESM v1.", persona.Location);
+                foreach (var policy in persona.Policies.Where(policy => !knownPolicies.Contains(policy)))
+                {
+                    Error(DiagnosticCodes.UnknownPolicy, $"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
+                }
+
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Persona '{persona.Name}' is authoring metadata and is not part of ESM v1 behavior.", persona.Location);
             }
 
             if (syntax.Authentication is not null)

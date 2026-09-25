@@ -151,6 +151,7 @@ internal static partial class ReactionParser
                 case "reads":
                     if (body.Content == "reads")
                     {
+                        ReadsParser.RejectChildren(context, body);
                         context.Error(
                             DiagnosticCodes.InvalidReadsDeclaration,
                             "Invalid reads declaration 'reads' - expected 'reads <ReadModel> [as <alias>] [by <value>]'; for a trigger value named 'reads', write '@reads'",
