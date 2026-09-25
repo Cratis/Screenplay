@@ -2,7 +2,7 @@
 id: 0006
 title: Reaction triggers declare the views they decide from with reads
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-09-24
 decider: Sindre Alstad Wilting
 class: contract
@@ -67,6 +67,10 @@ Out of scope: a view-driven trigger (`for each <View>`); business due time (`due
 ## Consequences
 
 An automation's inputs become visible to readers, Studio and renderers, using the same word and shape as commands. Protection for reactions comes for free through invoked commands and is never weaker than decision 0003 for direct `produces`. Documents that used a trigger value named `reads` need the `@reads` escape. Due time, terminal facts and a view-driven trigger remain open, and `for each` is kept free for them.
+
+## Status notes
+
+**2026-09-25 — implemented.** Reaction trigger reads now parse, validate, print, walk and appear in editor grammars and guidance. Reactions remain unbound in the ESM; protection for direct `produces` waits for binding. Release version: TBD.
 
 ## Related issues
 

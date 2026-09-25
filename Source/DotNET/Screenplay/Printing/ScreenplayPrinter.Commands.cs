@@ -232,7 +232,7 @@ public partial class ScreenplayPrinter
         // A trigger with nothing but what sets it off is complete on its own, so it prints as a single line
         // rather than an empty indented block.
         if (trigger is { Description: null, File: null, Code: null } &&
-            !trigger.Data.Any() && !(trigger.Produces ?? []).Any() && !(trigger.Invokes ?? []).Any())
+            !trigger.Data.Any() && !(trigger.Reads ?? []).Any() && !(trigger.Produces ?? []).Any() && !(trigger.Invokes ?? []).Any())
         {
             return;
         }
@@ -245,6 +245,13 @@ public partial class ScreenplayPrinter
             {
                 var name = ReservedWords.Escape(datum.Name, ReservedWords.TriggerBody);
                 writer.Line(datum.Type is null ? name : $"{name} {ScreenplaySyntaxText.TypeRef(datum.Type)}");
+            }
+
+            foreach (var reads in trigger.Reads ?? [])
+            {
+                var alias = reads.Alias is null ? string.Empty : $" as {reads.Alias}";
+                var by = reads.By is null ? string.Empty : $" by {reads.By}";
+                writer.Line($"reads {reads.ReadModel}{alias}{by}", reads);
             }
 
             foreach (var produces in trigger.Produces ?? [])

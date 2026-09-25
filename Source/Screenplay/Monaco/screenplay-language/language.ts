@@ -62,7 +62,7 @@ export const clauseKeywords = [
     'authorize',
     'validate',
     'produces',
-    'reads',
+    'reads', // A clause in command bodies and reaction trigger bodies; @reads remains a value.
     'as',
     'handler',
     'performer',

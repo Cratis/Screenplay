@@ -264,6 +264,8 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0123` | Error | A policy is referred to by something that is not a policy name. |
 | `PLAY0440` | Error | A policy combines `require` with an inline code block or a file implementation. Choose one form. |
 | `PLAY0441` | Error | A policy has more than one `require` line; combine the conditions with `and`/`or` in one `require`. |
+| `PLAY0442` | Warning | A reaction trigger reads by a value it does not take. |
+| `PLAY0443` | Error | A clock trigger reads by a value, but clock triggers take no values. |
 
 ### Authentication
 
@@ -376,7 +378,7 @@ conditions are reported without a code until the compiler checks them too.
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0175` | Error | A `reads` line is not `reads <ReadModel> [as <alias>] [by <property>]`, or uses `as`, `by`, or `reads` as an alias. |
-| `PLAY0177` | Warning | A command reads a read model no projection in the document produces. |
+| `PLAY0177` | Warning | A command or reaction trigger reads a read model no projection in the document produces. |
 | `PLAY0178` | Warning | The `by` of a `reads` declaration does not name a property of the command. |
 
 ### Rules about the whole artifact
@@ -740,12 +742,12 @@ Use an opening fence with an info string, such as ` ```csharp ` (without the spa
 |---|---|---|
 | `PLAY0397` | Warning | An inline code block uses a separate language line, `validate csharp`, or a multiline description uses a bare fence. The message names the tagged-fence replacement. |
 
-### Repeated command reads
+### Repeated command or reaction-trigger reads
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0410` | Error | A command reads the same view more than once without an alias on every instance. |
-| `PLAY0411` | Error | Two reads in a command use the same alias. |
+| `PLAY0410` | Error | A command or reaction trigger reads the same view more than once without an alias on every instance. |
+| `PLAY0411` | Error | Two reads in a command or reaction trigger use the same alias. |
 | `PLAY0412` | Error | A reads alias collides with one of the command's property names. |
 
 ### Implementation attachment loading (host-supplied)

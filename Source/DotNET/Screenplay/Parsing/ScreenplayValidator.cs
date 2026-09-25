@@ -106,7 +106,7 @@ internal static class ScreenplayValidator
         {
             ValidateSlice(slice, knownEvents, knownPolicies, knownTypes, knownReadModels, context);
             ValidateReactionConsequences(slice, knownEvents, knownCommands, context);
-            ValidateReactionTriggers(slice, knownEvents, declaredTriggers, eventsByName, context);
+            ValidateReactionTriggers(slice, knownEvents, knownReadModels, declaredTriggers, eventsByName, context);
         }
 
         var scopedSlices = ScopedSlices(application).ToList();
@@ -583,12 +583,14 @@ internal static class ScreenplayValidator
     static void ValidateReactionTriggers(
         SliceSyntax slice,
         HashSet<string> knownEvents,
+        HashSet<string> knownReadModels,
         Dictionary<string, TriggerSyntax> declaredTriggers,
         Dictionary<string, EventSyntax> eventsByName,
         ParserContext context)
     {
         foreach (var trigger in slice.Reactions.SelectMany(reaction => reaction.Triggers))
         {
+            ValidateReactionReads(trigger, knownReadModels, context);
             if (trigger.Source is not NamedTriggerSourceSyntax named)
             {
                 continue;
@@ -627,6 +629,59 @@ internal static class ScreenplayValidator
             if (eventsByName.TryGetValue(named.Name, out var @event))
             {
                 ValidateTriggerData(trigger, @event.Properties.Select(property => property.Name), named.Name, context);
+            }
+        }
+    }
+
+    static void ValidateReactionReads(ReactionTriggerSyntax trigger, HashSet<string> knownReadModels, ParserContext context)
+    {
+        var reads = (trigger.Reads ?? []).ToList();
+        var repeated = reads.GroupBy(read => read.ReadModel, StringComparer.Ordinal)
+            .Where(group => group.Count() > 1).Select(group => group.Key).ToHashSet(StringComparer.Ordinal);
+        var aliases = new HashSet<string>(StringComparer.Ordinal);
+        var values = trigger.Data.Select(datum => datum.Name).ToHashSet(StringComparer.Ordinal);
+        foreach (var read in reads)
+        {
+            if (repeated.Contains(read.ReadModel) && read.Alias is null)
+            {
+                context.Error(
+                    DiagnosticCodes.MissingReadsAlias,
+                    $"Reaction trigger reads '{read.ReadModel}' more than once; each read needs an alias",
+                    read.Location);
+            }
+
+            if (read.Alias is { } alias && !aliases.Add(alias))
+            {
+                context.Error(
+                    DiagnosticCodes.DuplicateReadsAlias,
+                    $"Reaction trigger already uses reads alias '{alias}'",
+                    read.Location);
+            }
+
+            if (!knownReadModels.Contains(read.ReadModel))
+            {
+                context.Warning(
+                    DiagnosticCodes.UnknownReadModel,
+                    $"Unknown read model '{read.ReadModel}' - no projection in the document produces it",
+                    read.Location);
+            }
+
+            if (read.By is { } by)
+            {
+                if (trigger.Source is not NamedTriggerSourceSyntax)
+                {
+                    context.Error(
+                        DiagnosticCodes.ClockTriggerReadsKey,
+                        $"Clock trigger reads '{read.ReadModel}' by '{by}', but clock triggers take no values",
+                        read.Location);
+                }
+                else if (!values.Contains(by))
+                {
+                    context.Warning(
+                        DiagnosticCodes.UnknownReactionReadsKey,
+                        $"Reaction trigger reads '{read.ReadModel}' by '{by}', which is not one of its values",
+                        read.Location);
+                }
             }
         }
     }

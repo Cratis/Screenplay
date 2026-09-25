@@ -957,7 +957,7 @@ public static class DiagnosticCodes
     public const string DuplicateReads = "PLAY0176";
 
     /// <summary>
-    /// A command reads a read model no projection in the document produces.
+    /// A command or reaction trigger reads a read model no projection in the document produces.
     /// </summary>
     public const string UnknownReadModel = "PLAY0177";
 
@@ -1993,4 +1993,14 @@ public static class DiagnosticCodes
 
     /// <summary>A policy declares more than one require line.</summary>
     public const string RepeatedPolicyRequirement = "PLAY0441";
+
+    /// <summary>
+    /// A reaction reads by a value its trigger does not take.
+    /// </summary>
+    public const string UnknownReactionReadsKey = "PLAY0442";
+
+    /// <summary>
+    /// A clock trigger reads by a value, but clock triggers take no values.
+    /// </summary>
+    public const string ClockTriggerReadsKey = "PLAY0443";
 }

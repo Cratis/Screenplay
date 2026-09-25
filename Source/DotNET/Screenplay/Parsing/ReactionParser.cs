@@ -133,6 +133,7 @@ internal static partial class ReactionParser
         CodeBlockSyntax? code = null;
         string? description = null;
         var data = new List<TriggerDataSyntax>();
+        var reads = new List<ReadsSyntax>();
         var produces = new List<ProducesSyntax>();
         var invokes = new List<InvokesSyntax>();
 
@@ -146,6 +147,13 @@ internal static partial class ReactionParser
                     continue;
                 case FileReferenceParser.Keyword:
                     file = FileReferenceParser.Parse(context, body);
+                    continue;
+                case "reads":
+                    if (ReadsParser.Parse(context, body) is { } read)
+                    {
+                        reads.Add(read);
+                    }
+
                     continue;
                 case "produces":
                     if (ProducesParser.Parse(context, body) is { } produced)
@@ -178,7 +186,7 @@ internal static partial class ReactionParser
             }
         }
 
-        return new(source, data, file, code, line.Location, description, produces, invokes);
+        return new(source, data, file, code, line.Location, description, produces, invokes) { Reads = reads };
     }
 
     /// <summary>

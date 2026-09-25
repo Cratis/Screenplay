@@ -111,6 +111,7 @@ export const reactionItems: CompletionEntry[] = [
 ];
 
 export const reactionTriggerItems: CompletionEntry[] = [
+    { label: 'reads', insertText: 'reads ${1:View}', documentation: 'The view this trigger consults. Optionally use `as <alias> by <trigger value>`; clock triggers take no values and cannot use `by`.' },
     { label: 'description', insertText: 'description "${1:what this reaction does}"', documentation: 'What this particular reaction does — enough on its own, with no file to point at.' },
     { label: 'produces', insertText: 'produces ${1:EventType}', documentation: 'An event the reaction appends.' },
     { label: 'invokes', insertText: 'invokes ${1:Command}', documentation: 'A command the reaction hands on. A command is asked for, not produced — it may still be rejected.' },

@@ -105,6 +105,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitTriggerData(datum);
         }
 
+        foreach (var reads in syntax.Reads ?? [])
+        {
+            VisitReads(reads);
+        }
+
         foreach (var produces in syntax.Produces ?? [])
         {
             VisitProduces(produces);

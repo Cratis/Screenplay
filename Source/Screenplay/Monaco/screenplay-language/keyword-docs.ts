@@ -39,7 +39,7 @@ export const keywordDocs: Record<string, string> = {
     authorize: 'References the policies that must all pass for the construct to execute.',
     validate: 'Declarative validation rules, or `validate` followed by ```csharp for imperative rules — on commands and concepts.',
     produces: 'Declares the events a command emits — single, multiple, or conditional.',
-    reads: 'Declares a command dependency: `reads <View> [as <alias>] [by <property>]`. Reading a view more than once requires a unique alias on each read. Runtime binding is not yet supported.',
+    reads: 'Declares a view consulted by a command or reaction trigger: `reads <View> [as <alias>] [by <value>]`. A reaction `by` names a value taken by its trigger; clock triggers cannot use `by`. Repeated views require unique aliases. Reaction runtime binding is not yet supported.',
     as: 'Names an instance of a view in a command reads declaration, for example `reads Account as source by sourceId`.',
     handler: 'A fully imperative command implementation — a `file <Path>` reference or an inline `csharp` block, instead of `produces`.',
     when: 'Guards a produced event or a capture append with a condition.',
