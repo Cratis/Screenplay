@@ -42,7 +42,7 @@ public class when_paging_protocol_diagnostic_severities : given.a_connection
         _executable = Content("read-workspace", new { expectedRevision = revision, view = "executable-diagnostics" });
     }
 
-    [Fact] void should_page_alias_collisions_as_errors() => _diagnostics.GetProperty("page").GetProperty("items")[0].GetProperty("severity").GetString().ShouldEqual("Error");
+    [Fact] void should_page_an_error_severity() => _diagnostics.GetProperty("page").GetProperty("items")[0].GetProperty("severity").GetString().ShouldEqual("Error");
     [Fact] void should_keep_full_diagnostic_totals_when_paging()
     {
         var summary = _diagnostics.GetProperty("summary");

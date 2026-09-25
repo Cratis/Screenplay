@@ -84,7 +84,10 @@ field-name lookup. Assertion presence is not runtime coverage; no tool executes
 specifications. Compact specification summaries include `thenDenied` independently of
 error counts and `whenAppendedEvent` independently of the `when` command. Appended
 event references and dependencies carry the `whenAppendedEvent` role, not
-`thenEvent`.
+`thenEvent`. Fixture roles are `givenEvent`, `whenAppendedEvent`, `thenEvent`,
+`whenCommand`, `givenReadModel`, `thenReadModel`, `queryArguments`, and
+`queryResult`; each role also has a `…Destination` form for explicit `for`
+destinations.
 
 ## Paging and snapshots
 
@@ -126,12 +129,16 @@ from the server; do not infer them from names or line numbers.
 
 `read-workspace` views: documents, semantics, eventContracts, diagnostics,
 executable-diagnostics, source-map and implementation-requirements. The `source-map`
-view pages the compiler's semantic entries: `semanticId`, `role` (Declaration or
-Description), identity `origin`, `documentId`, `path`, and exact `span` (zero-based
-UTF-16 start/length and one-based start/end line/column). It reports
-`available: false` with `executableDiagnostics` if compilation has no value;
-an empty page alone is not evidence of successful compilation. Continuations
-require the current `expectedRevision` as usual. The
+view pages the compiler's semantic entries ordered by semantic ID: `semanticId`,
+`role` (Declaration or Description), identity `origin`, `documentId`, `path`,
+and exact `span` (zero-based UTF-16 start/length and one-based start/end
+line/column). `available` is true only when compilation succeeded; otherwise
+entries are empty. `executableDiagnosticsCount` and `executableDiagnosticsView`
+(`executable-diagnostics`) are always present, including when the map is available;
+read that paged view for errors and warnings. An empty page alone is not evidence
+of successful compilation. Continuations require the current `expectedRevision`
+as usual. Attachment changes can alter compilation availability between pages
+without changing the workspace revision. The
 `implementation-requirements` view pages implementation requirement envelopes
 by role, owner address, optional member, language or
 file, `RequirementId`, context/result contract versions, `RequiredCapability`,

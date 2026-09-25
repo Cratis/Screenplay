@@ -12,8 +12,16 @@ static class McpFixtureOccurrences
     {
         if (node is SpecificationEventSyntax)
         {
-            if (specification.Given.Any(item => ReferenceEquals(item, node))) return "givenEvent";
-            if (ReferenceEquals(specification.WhenAppended, node)) return "whenAppendedEvent";
+            if (specification.Given.Any(item => ReferenceEquals(item, node)))
+            {
+                return "givenEvent";
+            }
+
+            if (ReferenceEquals(specification.WhenAppended, node))
+            {
+                return "whenAppendedEvent";
+            }
+
             return "thenEvent";
         }
 

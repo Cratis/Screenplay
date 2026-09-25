@@ -17,15 +17,16 @@ internal sealed partial class McpWorkspaces
         var view = McpJson.OptionalString(arguments, "view") ?? "documents";
         if (view == "source-map")
         {
-            var compilation = workspace.Compilation.Value;
+            var available = workspace.Compilation.Success;
             return McpJson.ToolResult(new
             {
                 workspace = McpWorkspaceTransport.Describe(workspace),
                 view,
-                available = compilation is not null,
-                executableDiagnostics = compilation is null ? workspace.Compilation.Diagnostics : [],
+                available,
+                executableDiagnosticsCount = workspace.Compilation.Diagnostics.Count(),
+                executableDiagnosticsView = "executable-diagnostics",
                 page = McpPaging.Page(
-                    compilation?.SourceMap.Entries ?? [],
+                    available ? workspace.Compilation.Value!.SourceMap.Entries : [],
                     entry => new
                     {
                         semanticId = entry.SemanticId.ToString(),
@@ -33,7 +34,7 @@ internal sealed partial class McpWorkspaces
                         origin = entry.Origin.ToString(),
                         documentId = entry.Span.Document.ToString(),
                         path = workspace.Documents.Single(document => document.Id == entry.Span.Document).Path.Value,
-                        span = entry.Span
+                        span = new { entry.Span.Start, entry.Span.Length, entry.Span.StartLine, entry.Span.StartColumn, entry.Span.EndLine, entry.Span.EndColumn }
                     },
                     arguments,
                     workspace.Revision.ToString())
