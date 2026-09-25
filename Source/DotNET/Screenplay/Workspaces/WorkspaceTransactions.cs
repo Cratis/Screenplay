@@ -186,6 +186,12 @@ public sealed record WorkspaceTransactionRequest
     public ImmutableArray<EventContractIdentityRename> EventRenames { get; init; } = [];
 
     /// <summary>
+    /// Gets explicit forward-only event revision advancements, checked against the expected catalog revision.
+    /// Newly introduced events receive their declared revision without an explicit advancement.
+    /// </summary>
+    public ImmutableArray<EventContractRevisionAdvancement> EventRevisionAdvancements { get; init; } = [];
+
+    /// <summary>
     /// Gets semantic addresses explicitly retired by this transaction.
     /// </summary>
     public ImmutableArray<SemanticAddress> RetiredSemanticAddresses { get; init; } = [];

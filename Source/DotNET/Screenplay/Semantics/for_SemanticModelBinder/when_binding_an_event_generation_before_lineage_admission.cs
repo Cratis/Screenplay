@@ -83,8 +83,30 @@ public class when_binding_an_event_generation_before_lineage_admission : given.a
     {
         var result = Bind(Source + "      command RegisterProject\n        projectId Uuid identifier\n        produces ProjectRegistered\n          projectId = projectId\n");
         result.Success.ShouldBeFalse();
-        var diagnostic = result.Diagnostics.Single(value => value.Code == DiagnosticCodes.UnsupportedEventGenerationSemantics);
+        var diagnostic = result.Diagnostics.Single(value => value.Code == DiagnosticCodes.InvalidSemanticBinding);
         diagnostic.Message.ShouldContain("ProjectRegistered");
         diagnostic.Message.ShouldContain("revision 1");
+    }
+
+    [Fact] void should_reject_a_then_expectation_against_the_old_shape()
+    {
+        var result = Bind(Source + "      command RegisterProject\n        name String\n        produces ProjectRegistered\n          name = name\n      specification ExpectsRegistration\n        when RegisterProject\n          name = \"A\"\n        then ProjectRegistered\n          projectId = \"00000000-0000-0000-0000-000000000123\"\n");
+        result.Success.ShouldBeFalse();
+        result.Diagnostics.Any(value => value.Code == DiagnosticCodes.InvalidSemanticBinding && value.Message.Contains("revision 1", StringComparison.Ordinal)).ShouldBeTrue();
+    }
+
+    [Fact] void should_refuse_a_later_revision_without_catalog_advancement()
+    {
+        var address = SemanticAddress.ForEventContract(
+            SemanticAddress.ForSlice(_applicationIdentity, "Projects", "Registration", "RegisterProject"), "ProjectRegistered");
+        var catalog = SemanticIdentityCatalog.Create(
+            _applicationIdentity,
+            [],
+            [],
+            [new(address, EventContractId.CreateLegacy(_applicationIdentity, address.Name), new(1), SemanticIdentityOrigin.Persisted)]);
+        var document = SemanticSourceDocument.Create(catalog.ResolveDocument("application-document"), "application-document", "application.play", Source);
+        var result = _binder.Bind("Projects", new ScreenplayCompiler().Parse(Source).Value!, SemanticDocumentSet.Create([document], catalog));
+        result.Success.ShouldBeFalse();
+        result.Diagnostics.Any(value => value.Code == DiagnosticCodes.UnsupportedEventGenerationSemantics && value.Message.Contains("revision 1", StringComparison.Ordinal)).ShouldBeTrue();
     }
 }

@@ -52,7 +52,7 @@ public sealed partial class SemanticModelBinder
 
             var address = SemanticAddress.ForSpecification(slice, specification.Name);
             var id = Resolve(address, specification.Location);
-            var givenEvents = specification.Given.Select(value => BindSpecificationEvent(value, commands)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
+            var givenEvents = specification.Given.Select(value => BindSpecificationEvent(value, commands, historicalFact: true)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             var givenReadModels = (specification.GivenReadModels ?? [])
                 .Select(value => BindReadModelState(value.Name, value.Properties, value.Location, value.Exactly))
                 .Where(_ => _ is not null)
@@ -99,11 +99,11 @@ public sealed partial class SemanticModelBinder
 
         SemanticSpecificationAppend? BindSpecificationAppend(SpecificationEventSyntax value, Dictionary<string, SemanticCommand> commands)
         {
-            var bound = BindSpecificationEvent(value, commands);
+            var bound = BindSpecificationEvent(value, commands, historicalFact: false);
             return bound is null ? null : new(bound.EventContract, bound.Values) { EventSource = bound.EventSource };
         }
 
-        SemanticSpecificationEvent? BindSpecificationEvent(SpecificationEventSyntax value, Dictionary<string, SemanticCommand> commands)
+        SemanticSpecificationEvent? BindSpecificationEvent(SpecificationEventSyntax value, Dictionary<string, SemanticCommand> commands, bool historicalFact = false)
         {
             if (!_events.TryGetValue(ShortName(value.EventType), out var @event))
             {
@@ -117,8 +117,10 @@ public sealed partial class SemanticModelBinder
                 var prior = @event.Contract.PriorRevisions.LastOrDefault(revision => revision.Properties.Any(property => property.Name == entry.Property));
                 if (prior is null) continue;
                 Error(
-                    DiagnosticCodes.UnsupportedEventGenerationSemantics,
-                    $"Event '{@event.Syntax.Name}' revision {prior.Revision.Value} has property '{entry.Property}', but historical-shape references are unsupported; current revision {@event.Contract.Revision.Value} does not declare it.",
+                    historicalFact ? DiagnosticCodes.UnsupportedEventGenerationSemantics : DiagnosticCodes.InvalidSemanticBinding,
+                    historicalFact
+                        ? $"Event '{@event.Syntax.Name}' revision {prior.Revision.Value} has property '{entry.Property}', but historical-shape references are unsupported; current revision {@event.Contract.Revision.Value} does not declare it."
+                        : $"Specification event property '{entry.Property}' is unresolved on current revision {@event.Contract.Revision.Value} of '{@event.Syntax.Name}' (last declared in revision {prior.Revision.Value}).",
                     entry.Location);
                 return null;
             }

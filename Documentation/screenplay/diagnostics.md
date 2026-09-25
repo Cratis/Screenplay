@@ -572,7 +572,7 @@ itself what an unresolvable one means.
 | `PLAY0270` | Information | Source syntax is realization or operational metadata rather than portable behavior. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly. |
 | `PLAY0272` | Error | Source syntax requires an explicit reviewed semantic migration before binding. |
-| `PLAY0273` | Error | Syntax and identity information cannot produce a coherent semantic compilation, including an event-source `for` assertion without one unambiguous required scalar command destination type or a current event mapping naming a property not on the current revision. |
+| `PLAY0273` | Error | Syntax and identity information cannot produce a coherent semantic compilation, including an event-source `for` assertion without one unambiguous required scalar command destination type or a `produces` mapping or `then` event expectation naming a property not on the current revision. |
 | `PLAY0274` | Error | A syntax location cannot be mapped to a supplied semantic source document. |
 
 ### Specification event-source assertions
@@ -779,7 +779,7 @@ These warnings are returned by `AttachmentFiles.Load` for implementation files t
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0445` | Warning | A v1–v3 flat executable-model projection transition carries deprecated `ZeroOrOne` or `Many` affected-instance cardinality. Chronicle routes one key per transition; use a join for structural many. Returned by `ExecutableSemanticModel.DeprecationDiagnostics` for constructed or deserialized ESM, with a model-level location because ESM does not retain source positions. The source binder produces only `One`; query cardinality is unaffected. |
-| `PLAY0449` | Error | A reference needs a historical event shape (message names the event and revision), which Screenplay does not consume yet; or an event's source revision disagrees with its persisted catalog revision and requires explicit forward advancement. There is no fallback from current to historical properties. |
+| `PLAY0449` | Error | A `given` fact needs a historical event shape (message names the event and revision), which Screenplay does not consume yet; or an event's source revision disagrees with its persisted catalog revision and requires explicit forward advancement. There is no fallback from current to historical properties. |
 
 ## Retired codes
 

@@ -300,6 +300,8 @@ internal static partial class SemanticModelRead
         ImmutableArray<string> tags = [];
         EventContractRevision? predecessor = null;
         ImmutableArray<SemanticEventRevision> priorRevisions = [];
+        var predecessorRead = false;
+        var priorRevisionsRead = false;
         while (NextProperty(ref reader, seen, "event contract") is { } property)
         {
             switch (property)
@@ -310,13 +312,16 @@ internal static partial class SemanticModelRead
                 case "name": name = String(ref reader, property); break;
                 case "properties": properties = Array(ref reader, Property, property); break;
                 case "tags": tags = StringArray(ref reader, property); break;
-                case "predecessor": predecessor = new(UInt32(ref reader, property)); break;
-                case "priorRevisions": priorRevisions = Array(ref reader, EventRevision, property); break;
+                case "predecessor": predecessorRead = true; predecessor = new(UInt32(ref reader, property)); break;
+                case "priorRevisions": priorRevisionsRead = true; priorRevisions = Array(ref reader, EventRevision, property); break;
                 default: throw Unknown(property, "event contract");
             }
         }
 
-        Required(id.IsSet && contractId.IsSet && revision.IsValid && name is not null && !properties.IsDefault, "event contract");
+        Required(
+            id.IsSet && contractId.IsSet && revision.IsValid && name is not null && !properties.IsDefault &&
+            (predecessorRead == priorRevisionsRead) && (!priorRevisionsRead || !priorRevisions.IsEmpty),
+            "event contract");
         return new(id, contractId, revision, name!, properties) { Tags = tags, Predecessor = predecessor, PriorRevisions = priorRevisions };
     }
 

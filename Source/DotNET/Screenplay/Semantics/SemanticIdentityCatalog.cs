@@ -247,7 +247,8 @@ public sealed class SemanticIdentityCatalog
 
         var renames = previous.Semantics.Where(assignment => assignment.Address.Kind == SemanticKind.Property &&
                 assignment.Address.OwnerKind == SemanticKind.EventContract &&
-                assignment.Address.Parts[^3].Kind != SemanticAddressPartKind.Generation)
+                assignment.Address.Parts[^3].Kind != SemanticAddressPartKind.Generation &&
+                advancements.Any(advancement => assignment.Address.Parts[..^2].SequenceEqual(advancement.Address.Parts)))
             .Select(assignment =>
             {
                 var address = assignment.Address;

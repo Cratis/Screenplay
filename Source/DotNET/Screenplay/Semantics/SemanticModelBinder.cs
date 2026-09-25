@@ -49,6 +49,9 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var compiledDocuments = documents;
             if (context.UsesV4)
             {
+                // New v4 event addresses need their declared revision before compilation verifies identity
+                // coherence. Existing persisted revisions are never advanced here: an explicit revision-bound
+                // catalog plan is required. Legacy and lone-generation-1 events already resolve to revision 1.
                 var index = SemanticCompilationIndex.Create(application, documents.IdentityCatalog.Application);
                 var missing = index.Events
                     .Where(entry => entry.Value.Revision.Value > 1 &&

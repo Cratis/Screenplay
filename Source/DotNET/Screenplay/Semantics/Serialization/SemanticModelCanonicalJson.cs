@@ -80,9 +80,9 @@ public static partial class SemanticModelCanonicalJson
             writer.Flush();
             return buffer.WrittenSpan.ToArray();
         }
-        catch (InvalidOperationException)
+        catch (InvalidOperationException exception)
         {
-            throw new InvalidSemanticContract($"The semantic model exceeds the canonical maximum depth of {CanonicalJson.MaximumDepth}.");
+            throw new InvalidSemanticContract($"The semantic model could not be serialized: {exception.Message}");
         }
     }
 
@@ -228,7 +228,7 @@ public static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", eventContract.Name);
         WriteArray(writer, "properties", eventContract.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProperty);
         if (!eventContract.Tags.IsDefaultOrEmpty) WriteStringArray(writer, "tags", eventContract.Tags);
-        if (version == SemanticVersion.V4)
+        if (version == SemanticVersion.V4 && !eventContract.PriorRevisions.IsDefaultOrEmpty)
         {
             writer.WriteNumber("predecessor", eventContract.Predecessor!.Value.Value);
             WriteArray(writer, "priorRevisions", eventContract.PriorRevisions, (output, prior) =>

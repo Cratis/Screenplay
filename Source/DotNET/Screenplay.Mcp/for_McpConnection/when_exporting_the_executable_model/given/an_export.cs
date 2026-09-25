@@ -34,6 +34,7 @@ public class an_export : for_McpConnection.given.a_connection
             1 => "module Projects\n  feature Registration\n    slice StateChange RegisterProject\n      command RegisterProject",
             2 => Source + "\n      specification RegistersProject\n        when RegisterProject\n          projectId = \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n          name = \"Screenplay\"\n        then ProjectRegistered\n          for \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n          projectId = \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\n          name = \"Screenplay\"",
             3 => Source.Replace("        produces ProjectRegistered", "        validate csharp\n          ```\n          return true;\n          ```\n        produces ProjectRegistered", StringComparison.Ordinal),
+            4 => "module Projects\n  feature Registration\n    slice StateChange RegisterProject\n      event Registered\n        old String\n      event Registered generation 2\n        current String\n",
             _ => throw new ArgumentOutOfRangeException(nameof(version))
         };
         File.WriteAllText(Path.Combine(RootPath, "application.play"), source);

@@ -156,8 +156,8 @@ public sealed partial class SemanticModelBinder
                     {
                         var revision = @event.Contract.PriorRevisions.Last(value => value.Properties.Any(property => property.Name == mapping.Property));
                         Error(
-                            DiagnosticCodes.UnsupportedEventGenerationSemantics,
-                            $"Event '{@event.Syntax.Name}' revision {revision.Revision.Value} has property '{mapping.Property}', but historical-shape references are unsupported; current revision {@event.Contract.Revision.Value} does not declare it.",
+                            DiagnosticCodes.InvalidSemanticBinding,
+                            $"Produced event mapping target '{mapping.Property}' is unresolved on current revision {@event.Contract.Revision.Value} of '{@event.Syntax.Name}' (last declared in revision {revision.Revision.Value}).",
                             mapping.Location);
                     }
                     else

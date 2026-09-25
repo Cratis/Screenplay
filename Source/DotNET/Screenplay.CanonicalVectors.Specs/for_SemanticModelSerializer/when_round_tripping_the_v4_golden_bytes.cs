@@ -16,11 +16,11 @@ public class when_round_tripping_the_v4_golden_bytes : Specification
     void Because() => _actual = SemanticModelSerializer.Serialize(SemanticModelSerializer.Deserialize(_expected));
 
     [Fact] void should_preserve_the_exact_v4_bytes() => _actual.SequenceEqual(_expected).ShouldBeTrue();
-    [Fact] void should_pin_the_reviewed_golden_revision() => SemanticModelSerializer.Deserialize(_expected).Revision.ToString().ShouldEqual("rev1:4a2ece0cc913cc55e984036a81dfdf49ce88359b73f7f0cbe0653085226de840");
+    [Fact] void should_pin_the_reviewed_golden_revision() => SemanticModelSerializer.Deserialize(_expected).Revision.ToString().ShouldEqual("rev1:8e7c31552c528d080a8617d1fe44b6a1dff4a636d98a00709baa93ba985283b2");
     [Fact] void should_allow_v2_and_v3_constructs_in_v4()
     {
         var model = SemanticModelSerializer.Deserialize(_expected);
-        model.Application.Modules.Single().Features.Single().Slices.SelectMany(slice => slice.Commands)
+        model.Application.Modules.Single().Features.Single().Features.Single().Slices.SelectMany(slice => slice.Commands)
             .Any(command => command.Destination is not null).ShouldBeTrue();
         var application = model.Application with
         {
@@ -34,10 +34,11 @@ public class when_round_tripping_the_v4_golden_bytes : Specification
     {
         var model = SemanticModelSerializer.Deserialize(_expected);
         var module = model.Application.Modules.Single();
-        var feature = module.Features.Single();
+        var root = module.Features.Single();
+        var feature = root.Features.Single();
         var app = model.Application with
         {
-            Modules = [module with { Features = [feature with
+            Modules = [module with { Features = [root with { Features = [feature with
             {
                 Slices = [.. feature.Slices.Select(slice => slice with
                 {
@@ -48,7 +49,7 @@ public class when_round_tripping_the_v4_golden_bytes : Specification
                         PriorRevisions = []
                     })]
                 })]
-            }] }]
+            }] }] }]
         };
         Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V4, SemanticVersion.V4, app))
             .ShouldBeOfExactType<InvalidSemanticContract>();
@@ -78,8 +79,9 @@ public class when_round_tripping_the_v4_golden_bytes : Specification
     {
         var model = SemanticModelSerializer.Deserialize(_expected);
         var module = model.Application.Modules.Single();
-        var feature = module.Features.Single();
-        var projectionSlice = feature.Slices.Single(slice => !slice.Projections.IsEmpty);
+        var root = module.Features.Single();
+        var feature = root.Features.Single();
+        var projectionSlice = feature.Slices.Single(slice => slice.Projections.Any(value => !value.Transitions.IsEmpty));
         var projection = projectionSlice.Projections.Single(value => !value.Transitions.IsEmpty);
         var transition = projection.Transitions.Single() with
         {
@@ -87,13 +89,13 @@ public class when_round_tripping_the_v4_golden_bytes : Specification
         };
         var changed = model.Application with
         {
-            Modules = [module with { Features = [feature with
+            Modules = [module with { Features = [root with { Features = [feature with
             {
                 Slices = [.. feature.Slices.Select(slice => slice == projectionSlice ? slice with
                 {
                     Projections = [projection with { Scope = null, Transitions = [transition] }]
                 } : slice)]
-            }] }]
+            }] }] }]
         };
         var error = Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V4, SemanticVersion.V4, changed));
         error.ShouldBeOfExactType<InvalidSemanticContract>();

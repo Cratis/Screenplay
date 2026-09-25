@@ -114,7 +114,7 @@ internal static partial class SemanticModelValidator
         }
 
         var evolved = application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices)
-            .SelectMany(slice => slice.Events).Any(@event => !@event.PriorRevisions.IsEmpty);
+            .SelectMany(slice => slice.Events).Any(@event => !@event.PriorRevisions.IsDefaultOrEmpty);
         if (semanticVersion == SemanticVersion.V4 && !evolved)
         {
             throw new InvalidSemanticContract("An ESM v4 model must contain a multi-generation event contract.");
