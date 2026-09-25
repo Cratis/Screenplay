@@ -70,6 +70,12 @@ A join never creates an instance. At the root, when a joined event arrives, ever
 
 `every` mappings run with each `from` and `join` event of their level. `all` does the same and additionally reaches event types no block names, keyed by the event source. Only a projection's own level can subscribe to every event type: Chronicle drops that flag below it, so `all` inside `children` or `nested` binds as `every` and reports warning `PLAY0380`. The same warning reports an `automap` or `no automap` written on a joined event, which Chronicle replaces with the auto-map of the level the join sits in.
 
+## Establishing a reference world from facts
+
+`new SemanticEvaluator().EstablishWorld(plan, facts)` takes a capability-admitted `SemanticExecutionPlan` and an ordered `ImmutableArray<SemanticFact>`. It validates the entire fact history against the plan's event contracts before projecting it, then returns a `SemanticAccepted` whose `World.Facts` preserves occurrence order and whose `World.ReadModels` contains derived keyed instances in deterministic semantic-identity/key order. The accepted result carries the supplied facts and no query results. An empty array establishes an empty world. A default array, unknown event, malformed occurrence or payload returns `SemanticRejected` with category `Contract` and an unchanged empty world. A projection failure or an event observed by a reducer returns `SemanticUnsupported` with capability `Projection`; reducer transitions are opaque and cannot be replayed by the reference evaluator. Authored `given` events in specification runs use the same establishment operation before any explicit given read-model overrides are applied.
+
+This is **reference semantics**, not Chronicle replay. Chronicle's lowering, validation and engine decide runtime meaning (decision 0001); use Chronicle when rebuilding runtime state. This operation does not append facts to an existing world or execute reactions.
+
 ## What stays out of the semantic model
 
 Each of these is reported with a precise message rather than bound and ignored:

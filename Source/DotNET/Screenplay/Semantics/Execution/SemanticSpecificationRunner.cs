@@ -73,13 +73,16 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             return new(specification, false, unsupported, [unsupported.Details]);
         }
 
-        if (EstablishWorld(plan, expected, out var establishmentFailure) is not { } world)
+        var establishment = EstablishWorld(plan, expected, out var world);
+        if (establishment is not SemanticAccepted)
         {
-            var unsupported = new SemanticUnsupported(
-                SemanticWorld.Empty,
-                SemanticExecutionCapability.Projection,
-                establishmentFailure!);
-            return new(specification, false, unsupported, [unsupported.Details]);
+            var details = establishment switch
+            {
+                SemanticUnsupported unsupported => unsupported.Details,
+                SemanticRejected rejected => rejected.Details,
+                _ => "World establishment did not complete."
+            };
+            return new(specification, false, establishment, [details]);
         }
 
         var queries = expected.ThenQueries.Select(value => new SemanticQueryRequest(value.Query, value.Key)).ToImmutableArray();
@@ -116,10 +119,10 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
     static IEnumerable<SemanticSlice> AllSlices(ImmutableArray<SemanticFeature> features) =>
         features.SelectMany(feature => feature.Slices.Concat(AllSlices(feature.Features)));
 
-    static SemanticWorld? EstablishWorld(
+    static SemanticExecutionResult EstablishWorld(
         SemanticExecutionPlan plan,
         SemanticSpecification specification,
-        out string? failure)
+        out SemanticWorld world)
     {
         var facts = specification.GivenEvents
             .Select(value => new SemanticFact(value.EventContract, value.EventSource?.Value ?? SemanticValue.Null, value.Values)
@@ -127,12 +130,14 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
                 Context = value.EventSource is null ? null : new(value.EventSource)
             })
             .ToImmutableArray();
-        if (!SemanticEvaluator.Establish(plan, [], facts, out var projected, out failure))
+        var establishment = new SemanticEvaluator().EstablishWorld(plan, facts);
+        if (establishment is not SemanticAccepted accepted)
         {
-            return null;
+            world = SemanticWorld.Empty;
+            return establishment;
         }
 
-        var readModels = projected.ToList();
+        var readModels = accepted.World.ReadModels.ToList();
         foreach (var state in specification.GivenReadModels)
         {
             var existing = readModels.SingleOrDefault(value =>
@@ -145,8 +150,16 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             readModels.Add(new(state.ReadModel, state.Key, state.Values));
         }
 
-        failure = null;
-        return SemanticWorld.Create(facts, [.. readModels]);
+        try
+        {
+            world = SemanticWorld.Create(facts, [.. readModels]);
+            return accepted;
+        }
+        catch (InvalidSemanticContract exception)
+        {
+            world = SemanticWorld.Empty;
+            return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, exception.Message);
+        }
     }
 
     static ImmutableArray<string> Compare(
