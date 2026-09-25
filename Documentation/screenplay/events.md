@@ -5,11 +5,22 @@ Events are immutable, past-tense facts — the record of something that happened
 ## Syntax
 
 ```screenplay
-event <Name>
+event <Name> [generation <N>]
   [file <path>]
   [tag <value>]*
   <property> <Type>
   ...
+```
+
+Without `generation`, an event is generation 1 and prints exactly as before. To show an evolved event, declare **each full shape** with its own number, beginning at 1 and continuing without gaps or duplicates. Declarations with the same name in the same owning slice (module, feature path and slice) identify one event contract: its address and `EventContractId` do not include the generation number. A same-named event in another slice has a different address, not another generation of this contract. The current ESM binder treats same-named events across slices as ambiguous, and the identity catalog rejects colliding legacy IDs; do not use cross-slice declarations to express lineage. Generations use numbers from 1 through 4294967294; Chronicle reserves 4294967295 for an unspecified generation. The previous generation of N is always N−1. The executable model currently rejects marked declarations until revision lineage and transformation behaviour are admitted; historical events are not silently interpreted as current events.
+
+```screenplay
+event ProjectRegistered generation 1
+  projectId Uuid
+  name String
+
+event ProjectRegistered generation 2
+  name String
 ```
 
 The optional `file` line names the repository relative file this declaration is realized by, so a document can be navigated back to the code it describes. It is additive - it never stands in for any part of the declaration. See [File references](file-references.md).

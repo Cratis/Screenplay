@@ -361,8 +361,14 @@ ReducerRule    = "on", Ident, NL,
 (* Events                                                          *)
 (* -------------------------------------------------------------- *)
 
-EventDecl      = "event", Ident, NL,
+EventDecl      = "event", Ident, [ "generation", PositiveUInt32 ], NL,
                  INDENT, [ FileDirective ], { TagDecl }, { PropertyLine }, DEDENT ;
+
+(* Without a marker the generation is 1. Declarations of the same event name in
+   the same slice are complete, distinct revisions and must be numbered from 1
+   consecutively. A different slice owns a different event contract.          *)
+
+PositiveUInt32 = Digit, { Digit } ;              (* value 1..4294967294; 4294967295 is Chronicle's unspecified sentinel *)
 
 TagDecl        = "tag", TagValue, NL ;
 

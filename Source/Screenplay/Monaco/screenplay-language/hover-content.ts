@@ -64,12 +64,14 @@ export function hoverContent(
         return `\`\`\`screenplay\npolicy ${policy.name}\n${body}\n\`\`\``;
     }
 
-    const event = symbols.events.find((candidate) => candidate.name === word);
+    const event = symbols.events.find((candidate) => candidate.name === word && candidate.line === lineIndex) ??
+        symbols.events.filter((candidate) => candidate.name === word)
+            .sort((left, right) => (right.generation ?? 1) - (left.generation ?? 1))[0];
     if (event) {
         const properties = event.properties
             .map((property) => `${property.name} ${property.type}`)
             .join('\n');
-        return `\`\`\`screenplay\nevent ${event.name}\n${properties}\n\`\`\``;
+        return `\`\`\`screenplay\nevent ${event.name}${event.generation !== undefined ? ` generation ${event.generation}` : ''}\n${properties}\n\`\`\``;
     }
 
     const command = symbols.commands.find((candidate) => candidate.name === word);

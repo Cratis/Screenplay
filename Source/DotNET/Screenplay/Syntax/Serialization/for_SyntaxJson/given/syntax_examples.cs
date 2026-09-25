@@ -76,6 +76,11 @@ internal static class syntax_examples
             return 42;
         }
 
+        if (type == typeof(uint))
+        {
+            return 2u;
+        }
+
         if (type == typeof(TimeOnly))
         {
             return new TimeOnly(12, 34, 56);

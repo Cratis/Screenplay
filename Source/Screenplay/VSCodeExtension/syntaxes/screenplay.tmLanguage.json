@@ -41,7 +41,7 @@
                     "name": "keyword.other.screenplay"
                 },
                 {
-                    "match": "\\b(authorize|validate|produces|reads|as|handler|performer|observable|identifier|reason|from|require|when|given|then|arguments|result|error|template|data|action|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|released|ignore|casing|file|rule|message|severity|information|warning|matches|all|max|min|length|today|not|empty|and|or|authenticated|role|claim|subject|event|query|layout|translate|key|description|concurrency|eventSource|sourceType|streamType|streamId|tag|for|readmodel|provider|nested|exclude|literal|automap)\\b",
+                    "match": "\\b(authorize|validate|produces|reads|as|handler|performer|observable|identifier|reason|from|require|when|given|then|arguments|result|error|template|data|action|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|released|ignore|casing|file|rule|message|severity|information|warning|matches|all|max|min|length|today|not|empty|and|or|authenticated|role|claim|subject|event|generation|query|layout|translate|key|description|concurrency|eventSource|sourceType|streamType|streamId|tag|for|readmodel|provider|nested|exclude|literal|automap)\\b",
                     "name": "keyword.other.screenplay"
                 }
             ]

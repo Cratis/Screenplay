@@ -34,6 +34,7 @@ export interface PolicySymbol {
 
 export interface EventSymbol {
     name: string;
+    generation?: number;
     properties: PropertySymbol[];
     line: number;
 }
@@ -190,10 +191,11 @@ export function scanDocument(lines: string[]): DocumentSymbols {
             continue;
         }
 
-        const eventMatch = trimmed.match(/^event\s+(\w+)\s*$/);
+        const eventMatch = trimmed.match(/^event\s+(\w+)(?:\s+generation\s+(\d+))?\s*$/);
         if (eventMatch) {
             symbols.events.push({
                 name: eventMatch[1],
+                ...(eventMatch[2] ? { generation: Number(eventMatch[2]) } : {}),
                 properties: propertiesIn(lines, collectBody(lines, fences, index, indent)),
                 line: index,
             });

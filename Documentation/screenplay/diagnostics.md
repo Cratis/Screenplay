@@ -768,6 +768,10 @@ These warnings are returned by `AttachmentFiles.Load` for implementation files t
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0445` | Warning | A flat executable-model projection transition carries deprecated `ZeroOrOne` or `Many` affected-instance cardinality. Chronicle routes one key per transition; use a join for structural many. Returned by `ExecutableSemanticModel.DeprecationDiagnostics` for constructed or deserialized ESM, with a model-level location because ESM does not retain source positions. The source binder produces only `One`; query cardinality is unaffected. |
+| `PLAY0446` | Error | An event generation is zero, exceeds the 32-bit generation range, or uses Chronicle's reserved unspecified value (4294967295). |
+| `PLAY0447` | Error | The same event in one slice declares a generation twice. |
+| `PLAY0448` | Error | An event in one slice omits a generation between 1 and its latest generation. |
+| `PLAY0449` | Error | A marked event generation cannot bind: generation lineage in the executable model is not yet available. One error is returned for the model, rather than silently binding only its latest shape. |
 
 ## Retired codes
 

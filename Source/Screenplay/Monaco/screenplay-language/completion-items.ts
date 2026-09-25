@@ -50,6 +50,7 @@ export const featureItems: CompletionEntry[] = [
 export const sliceItems: CompletionEntry[] = [
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the repository relative file this declaration is realized by, so the document can be navigated back to the code.' },
     { label: 'event', insertText: 'event ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares an event type — an immutable, past-tense fact.' },
+    { label: 'event generation', insertText: 'event ${1:Name} generation ${2:2}\n    ${3:property} ${4:Type}', documentation: 'Declares a complete numbered event generation; start at 1 and do not skip a number.' },
     { label: 'command', insertText: 'command ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares a command — an imperative intent that produces events.' },
     { label: 'query', insertText: 'query ${1:Name} => ${2:ReadModel}', documentation: 'Declares a read-side entry point mapping to a return type.' },
     { label: 'query observable', insertText: 'query ${1:Name} => observable ${2:ReadModel}', documentation: 'Declares a live read — the query keeps pushing as the read model changes, instead of answering once.' },

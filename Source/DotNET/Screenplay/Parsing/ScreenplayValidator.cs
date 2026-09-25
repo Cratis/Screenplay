@@ -104,6 +104,7 @@ internal static class ScreenplayValidator
 
         foreach (var slice in slices)
         {
+            ValidateEventGenerations(slice, context);
             ValidateSlice(slice, knownEvents, knownPolicies, knownTypes, knownReadModels, context);
             ValidateReactionConsequences(slice, knownEvents, knownCommands, context);
             ValidateReactionTriggers(slice, knownEvents, knownReadModels, declaredTriggers, eventsByName, context);
@@ -165,6 +166,35 @@ internal static class ScreenplayValidator
     /// build-time concern - it depends on which templates a profile's screens actually resolve to, which the
     /// Screenplay compiler does not know. That check belongs to Stage's build pipeline, not here.
     /// </remarks>
+    static void ValidateEventGenerations(SliceSyntax slice, ParserContext context)
+    {
+        // The same event name denotes one contract only within one owning slice.
+        foreach (var group in slice.Events.GroupBy(@event => @event.Name, StringComparer.Ordinal))
+        {
+            foreach (var duplicate in group.GroupBy(@event => @event.Generation).SelectMany(generation => generation.Skip(1)))
+            {
+                context.Error(
+                    DiagnosticCodes.DuplicateEventGeneration,
+                    $"Event '{group.Key}' declares generation {duplicate.Generation} more than once in slice '{slice.Name}'",
+                    duplicate.Location);
+            }
+
+            var previous = 0u;
+            foreach (var @event in group.OrderBy(@event => @event.Generation))
+            {
+                if (@event.Generation > previous && @event.Generation != previous + 1)
+                {
+                    context.Error(
+                        DiagnosticCodes.MissingEventGeneration,
+                        $"Event '{group.Key}' in slice '{slice.Name}' is missing generation {previous + 1} before generation {@event.Generation}",
+                        @event.Location);
+                }
+
+                previous = @event.Generation;
+            }
+        }
+    }
+
     static void ValidateArrangements(ApplicationSyntax application, ParserContext context)
     {
         foreach (var (kind, name, arrangement) in Arrangements(application))

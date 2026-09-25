@@ -26,6 +26,14 @@ internal static partial class EventParser
             context.Error(DiagnosticCodes.InvalidEventDeclaration, $"Invalid event declaration '{header.Content}' - expected 'event <Name>'", header.Location);
         }
 
+        var hasGenerationMarker = name.Groups[2].Success;
+        var generation = 1u;
+        if (hasGenerationMarker && (!uint.TryParse(name.Groups[2].Value, out generation) || generation == 0 || generation == uint.MaxValue))
+        {
+            context.Error(DiagnosticCodes.InvalidEventGeneration, $"Event '{name.Groups[1].Value}' must declare a generation between 1 and {uint.MaxValue - 1}", header.Location);
+            generation = 1;
+        }
+
         var properties = new List<PropertySyntax>();
         var tags = new List<TagSyntax>();
         FileReferenceSyntax? file = null;
@@ -60,7 +68,7 @@ internal static partial class EventParser
             }
         }
 
-        return new(name.Groups[1].Value, properties, header.Location, tags) { File = file };
+        return new(name.Groups[1].Value, properties, header.Location, tags) { File = file, Generation = generation, HasGenerationMarker = hasGenerationMarker };
     }
 
     /// <summary>
@@ -87,7 +95,7 @@ internal static partial class EventParser
             line.Location);
     }
 
-    [GeneratedRegex(@"^event\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^event\s+([A-Za-z_]\w*)(?:\s+generation\s+([0-9]+))?$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
 
     [GeneratedRegex(@"^[A-Z]\w*(?:\[\])?\??$", RegexOptions.None, 1000)]

@@ -2011,4 +2011,16 @@ public static class DiagnosticCodes
 
     /// <summary>A flat ESM projection transition uses a deprecated optional or many affected-instance cardinality.</summary>
     public const string DeprecatedProjectionTransitionCardinality = "PLAY0445";
+
+    /// <summary>An event generation is zero, out of range, or uses Chronicle's reserved unspecified value.</summary>
+    public const string InvalidEventGeneration = "PLAY0446";
+
+    /// <summary>An event declares the same generation twice in one slice.</summary>
+    public const string DuplicateEventGeneration = "PLAY0447";
+
+    /// <summary>An event does not declare every generation from 1 to its current generation in one slice.</summary>
+    public const string MissingEventGeneration = "PLAY0448";
+
+    /// <summary>The executable model does not yet admit event generations without migration semantics.</summary>
+    public const string UnsupportedEventGenerationSemantics = "PLAY0449";
 }

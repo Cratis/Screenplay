@@ -68,6 +68,7 @@ export const clauseKeywords = [
     'performer',
     'observable',
     'identifier',
+    'generation',
     'reason',
     'from',
     'when',

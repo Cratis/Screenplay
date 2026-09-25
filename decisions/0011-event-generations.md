@@ -74,3 +74,9 @@ Evolution becomes visible and checkable in the document, and matches what a Chro
 ## Related issues
 
 Screenplay: [#71](https://github.com/Cratis/Screenplay/issues/71), [#168](https://github.com/Cratis/Screenplay/issues/168), [#167](https://github.com/Cratis/Screenplay/issues/167), [#128](https://github.com/Cratis/Screenplay/issues/128).
+
+## Status notes
+
+**2026-09-25 — partially implemented. Release version: TBD.** Grammar shipped: The optional marker, full prior declarations, and consecutive-number validation are implemented; unmarked declarations remain unchanged. X is matched by name within its owning module, feature path and slice. The event-contract address (and therefore its catalog identity assignment) has no generation component, so those declarations resolve to the same `EventContractId`; a matching name in another slice is not another generation. The legacy ID derived from application and event name collides across slices, and the current ESM binder also rejects same-named cross-slice references as ambiguous.
+
+ESM predecessor lineage and #168's v2 vector are pending. The ESM representation of prior revisions awaits a maintainer decision; models using marked generations currently fail binding with `PLAY0449` rather than dropping historical shapes. `stage: none` remains until the *Done when* criteria are met. It is not yet `verified`.

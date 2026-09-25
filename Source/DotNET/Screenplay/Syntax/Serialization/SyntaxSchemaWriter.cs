@@ -78,6 +78,11 @@ internal static class SyntaxSchemaWriter
             return new Dictionary<string, object?> { ["type"] = "integer", ["minimum"] = int.MinValue, ["maximum"] = int.MaxValue };
         }
 
+        if (type == typeof(uint))
+        {
+            return new Dictionary<string, object?> { ["type"] = "integer", ["minimum"] = 0, ["maximum"] = uint.MaxValue };
+        }
+
         if (type == typeof(object))
         {
             return SyntaxLiterals.Schema();
