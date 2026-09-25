@@ -11,5 +11,5 @@ public class with_a_removed_event_property : given.a_semantic_binder
 
     void Because() => _result = Bind("module Projects\n  feature Registration\n    slice StateChange RegisterProject\n      event Registered\n        old String\n      event Registered generation 2\n        current String\n      constraint UniqueOld\n        unique old on Registered\n");
 
-    [Fact] void should_name_the_historical_event_revision() => _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedEventGenerationSemantics && diagnostic.Message.Contains("Registered", StringComparison.Ordinal) && diagnostic.Message.Contains("revision 1", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_name_the_historical_event_revision() => _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidSemanticBinding && diagnostic.Message.Contains("Registered", StringComparison.Ordinal) && diagnostic.Message.Contains("revision 1", StringComparison.Ordinal)).ShouldBeTrue();
 }

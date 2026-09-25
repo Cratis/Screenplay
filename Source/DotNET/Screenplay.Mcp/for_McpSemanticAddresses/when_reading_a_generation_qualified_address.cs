@@ -22,6 +22,13 @@ public class when_reading_a_generation_qualified_address : Specification
     }
 
     [Fact] void should_preserve_the_generation() => _actual.ShouldEqual(_expected);
+    [Fact] void should_refuse_a_noncanonical_generation()
+    {
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(McpSemanticAddresses.Describe(_expected), McpJson.Options);
+        using var document = JsonDocument.Parse(System.Text.Encoding.UTF8.GetString(bytes).Replace("\"key\":\"2\"", "\"key\":\"02\"", StringComparison.Ordinal));
+        Catch.Exception(() => McpSemanticAddresses.Read(document.RootElement)).ShouldBeOfExactType<McpFailure>();
+    }
+
     [Fact] void should_refuse_an_invalid_generation()
     {
         var bytes = JsonSerializer.SerializeToUtf8Bytes(McpSemanticAddresses.Describe(_expected), McpJson.Options);

@@ -131,7 +131,7 @@ public sealed partial class SemanticModelBinder
                     if (historical is not null)
                     {
                         Error(
-                            DiagnosticCodes.UnsupportedEventGenerationSemantics,
+                            DiagnosticCodes.InvalidSemanticBinding,
                             $"Constraint '{constraint.Name}' references property '{name}' of event '{eventName}' revision {historical.Revision.Value}; current revision {@event.Contract.Revision.Value} does not declare it.",
                             constraint.Location);
                         return null;

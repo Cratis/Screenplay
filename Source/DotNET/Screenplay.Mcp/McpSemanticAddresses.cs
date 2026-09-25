@@ -59,7 +59,7 @@ static class McpSemanticAddresses
                     throw new McpFailure("A generation-qualified address requires an event property and valid revision.", -32602);
                 }
 
-                if (generation is 0 or uint.MaxValue)
+                if (generation is 0 or uint.MaxValue || generation.ToString(CultureInfo.InvariantCulture) != parts[^3].Key)
                 {
                     throw new McpFailure("A generation-qualified address requires an event property and valid revision.", -32602);
                 }

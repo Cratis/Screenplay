@@ -42,9 +42,18 @@ public class when_reading_invalid_event_lineage : Specification
         {
             var document = JsonNode.Parse(bytes)!.AsObject();
             var @event = Event(document);
-            @event["predecessor"] = null;
-            @event["priorRevisions"] = new JsonArray();
-            Reject(document);
+            @event["contractRevision"] = 2;
+            @event["predecessor"] = 1;
+            var prior = new JsonObject
+            {
+                ["contractRevision"] = 1,
+                ["predecessor"] = null,
+                ["properties"] = new JsonArray(),
+                ["tags"] = new JsonArray()
+            };
+            @event["priorRevisions"] = new JsonArray(prior);
+            Catch.Exception(() => SemanticModelSerializer.Deserialize(System.Text.Encoding.UTF8.GetBytes(document.ToJsonString())))
+                .Message.ShouldContain("Event contract lineage requires ESM v4.");
         }
     }
 

@@ -188,7 +188,7 @@ public sealed partial class SemanticModelBinder
                     if (historical is not null)
                     {
                         Error(
-                            DiagnosticCodes.UnsupportedEventGenerationSemantics,
+                            DiagnosticCodes.InvalidSemanticBinding,
                             $"Event '{@event.Contract.Name}' revision {historical.Revision.Value} declares property '{path.Path}', but current revision {@event.Contract.Revision.Value} does not; historical-shape references are unsupported.",
                             expression.Location);
                         return null;

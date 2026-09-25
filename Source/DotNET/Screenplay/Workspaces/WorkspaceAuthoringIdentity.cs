@@ -34,7 +34,8 @@ static class WorkspaceAuthoringIdentity
             events = [.. index.Events.Keys.Order(WorkspaceSemanticAddressComparer.Instance)];
             newGenerations = [.. index.Events
                 .Where(entry => entry.Value.Revision.Value > 1 &&
-                    !workspace.IdentityCatalog.EventContracts.Any(assignment => assignment.Address.Equals(entry.Key)))
+                    !workspace.IdentityCatalog.EventContracts.Any(assignment => assignment.Address.Equals(entry.Key)) &&
+                    !request.EventRenames.Any(rename => rename.CurrentAddress.Equals(entry.Key)))
                 .Select(entry => new EventContractRevisionAdvancement(entry.Key, entry.Value.Revision))];
         }
         else

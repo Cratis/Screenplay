@@ -67,9 +67,7 @@ public sealed class SemanticCompilation
         foreach (var eventContract in index.Events)
         {
             var assignment = documents.IdentityCatalog.ResolveEventContract(eventContract.Key);
-            if (assignment.Id != eventContract.Value.ContractId ||
-                (assignment.Revision != eventContract.Value.Revision &&
-                 documents.IdentityCatalog.EventContracts.Any(value => value.Address.Equals(eventContract.Key))))
+            if (assignment.Id != eventContract.Value.ContractId || assignment.Revision != eventContract.Value.Revision)
             {
                 throw new InvalidSemanticContract($"Event contract '{eventContract.Value.Id}' disagrees with its identity catalog assignment.");
             }

@@ -572,7 +572,7 @@ itself what an unresolvable one means.
 | `PLAY0270` | Information | Source syntax is realization or operational metadata rather than portable behavior. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly. |
 | `PLAY0272` | Error | Source syntax requires an explicit reviewed semantic migration before binding. |
-| `PLAY0273` | Error | Syntax and identity information cannot produce a coherent semantic compilation, including an event-source `for` assertion without one unambiguous required scalar command destination type or a `produces` mapping or `then` event expectation naming a property not on the current revision. |
+| `PLAY0273` | Error | Syntax and identity information cannot produce a coherent semantic compilation, including an event-source `for` assertion without one unambiguous required scalar command destination type or a `produces` mapping, `then` event expectation, projection mapping, or constraint naming a property absent from the current event revision. |
 | `PLAY0274` | Error | A syntax location cannot be mapped to a supplied semantic source document. |
 
 ### Specification event-source assertions

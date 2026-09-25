@@ -11,6 +11,7 @@ public class when_advancing_a_persisted_event_revision : Specification
     WorkspaceTransactionResult _withoutAdvancement = null!;
     WorkspaceTransactionResult _withAdvancement = null!;
     EventContractId _original;
+    SemanticId _firstProperty;
 
     void Because()
     {
@@ -20,6 +21,7 @@ public class when_advancing_a_persisted_event_revision : Specification
         var workspace = ScreenplayWorkspace.Create("Projects", [document], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Projects")));
         var assignment = workspace.IdentityCatalog.EventContracts.Single();
         _original = assignment.Id;
+        _firstProperty = workspace.IdentityCatalog.Semantics.Single(value => value.Address.Kind == SemanticKind.Property).Id;
         var request = new WorkspaceTransactionRequest
         {
             ExpectedRevision = workspace.Revision,
@@ -34,6 +36,8 @@ public class when_advancing_a_persisted_event_revision : Specification
     }
 
     [Fact] void should_refuse_implicit_advancement() => _withoutAdvancement.Success.ShouldBeFalse();
+    [Fact] void should_report_the_generation_diagnostic() => _withoutAdvancement.Diagnostics.Any(value => value.Code == Cratis.Screenplay.Diagnostics.DiagnosticCodes.UnsupportedEventGenerationSemantics).ShouldBeTrue();
+    [Fact] void should_carry_the_generation_one_property_identity() => _withAdvancement.Workspace!.IdentityCatalog.Semantics.Single(value => value.Address.Kind == SemanticKind.Property && value.Address.Parts[^3].Key == "1").Id.ShouldEqual(_firstProperty);
     [Fact] void should_keep_the_persisted_identity() => _withAdvancement.Workspace!.IdentityCatalog.EventContracts.Single().Id.ShouldEqual(_original);
     [Fact] void should_record_the_declared_revision() => _withAdvancement.Workspace!.IdentityCatalog.EventContracts.Single().Revision.Value.ShouldEqual(2u);
     [Fact] void should_compile_after_explicit_advancement() => Assert.True(_withAdvancement.Success, string.Join("; ", _withAdvancement.Conflicts.Select(value => value.Message)));
