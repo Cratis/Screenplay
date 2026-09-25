@@ -58,6 +58,7 @@ public partial class ScreenplayPrinter
             return;
         }
 
+        using var anchor = writer.Anchor(behavior);
         WriteInteractionBindings(writer, behavior.Bindings);
     }
 
