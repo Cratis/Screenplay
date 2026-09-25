@@ -22,14 +22,14 @@ public class affected_instances : given.a_projection_block_binder
           from LineAdded key lineNumber
             parent orderId
             count quantity
-          join lineNumber on lineNumber
-            with LineRemoved
+          join product on productId
+            with ProductUpdated
               count quantity
           remove via join on LineRemoved key lineNumber
         """;
 
     SemanticAffectedProjectionInstance[] _affected;
-    Exception? _rootJoinRemoval;
+    SemanticAffectedProjectionInstance _rootJoinRemoval;
 
     void Because()
     {
@@ -40,8 +40,8 @@ public class affected_instances : given.a_projection_block_binder
         }
 
         var rootRemoval = BindProjection("projection Unverified => OrderView", "remove via join on CustomerClosed");
-        _rootJoinRemoval = Catch.Exception(() => rootRemoval.Value!.Model.Application.Modules.Single().Features.Single()
-            .Slices.SelectMany(_ => _.Projections).Single().GetAffectedInstances());
+        _rootJoinRemoval = rootRemoval.Value!.Model.Application.Modules.Single().Features.Single()
+            .Slices.SelectMany(_ => _.Projections).Single().GetAffectedInstances().Single();
     }
 
     [Fact] void should_bind() => _result.Success.ShouldBeTrue();
@@ -68,11 +68,18 @@ public class affected_instances : given.a_projection_block_binder
         join.Match.ShouldEqual(SemanticAffectedProjectionMatch.ManyChildrenByKey);
         join.Path.Single().ShouldEqual(ReadModelProperty("OrderView", "lines"));
         join.Property.ShouldEqual(TypeProperty("OrderLine", "lineNumber"));
+        join.Property.ShouldNotEqual(TypeProperty("OrderLine", "productId"));
+        join.EventContract.ShouldEqual(EventId("ProductUpdated"));
     }
-    [Fact] void should_bind_remove_via_join_as_many_across_parents() =>
-        _affected.Single(_ => _.Block == SemanticAffectedProjectionBlock.JoinRemoval).Match.ShouldEqual(SemanticAffectedProjectionMatch.ManyChildrenByKey);
-    [Fact] void should_fail_closed_for_unverified_root_join_removal() =>
-        _rootJoinRemoval.ShouldBeOfExactType<InvalidSemanticContract>();
+    [Fact] void should_bind_remove_via_join_as_many_across_parents()
+    {
+        var removal = _affected.Single(_ => _.Block == SemanticAffectedProjectionBlock.JoinRemoval);
+        removal.Match.ShouldEqual(SemanticAffectedProjectionMatch.ManyChildrenByKey);
+        removal.Property.ShouldEqual(TypeProperty("OrderLine", "lineNumber"));
+        removal.EventContract.ShouldEqual(EventId("LineRemoved"));
+    }
+    [Fact] void should_report_unverified_root_join_removal_without_throwing() =>
+        _rootJoinRemoval.Match.ShouldEqual(SemanticAffectedProjectionMatch.Unverified);
     [Fact] void should_not_warn_about_unexpressed_transition_cardinalities() =>
         _result.Diagnostics.Any(_ => _.Code == DiagnosticCodes.DeprecatedProjectionTransitionCardinality).ShouldBeFalse();
 }

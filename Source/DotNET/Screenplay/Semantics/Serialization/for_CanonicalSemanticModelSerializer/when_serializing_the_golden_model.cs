@@ -41,6 +41,12 @@ public class when_serializing_the_golden_model : Specification
                 (DiagnosticCodes.DeprecatedProjectionTransitionCardinality, DiagnosticSeverity.Warning),
                 (DiagnosticCodes.DeprecatedProjectionTransitionCardinality, DiagnosticSeverity.Warning)
             ]);
+    [Fact] void should_include_the_event_contract_in_each_deprecation_diagnostic() =>
+        _model.DeprecationDiagnostics.All(diagnostic => _model.Application.Modules.SelectMany(module => module.Features)
+            .SelectMany(feature => feature.Features).SelectMany(feature => feature.Slices).SelectMany(slice => slice.Projections)
+            .SelectMany(projection => projection.Transitions).Any(transition => diagnostic.Message.Contains(transition.EventContract.ToString(), StringComparison.Ordinal))).ShouldBeTrue();
+    [Fact] void should_cache_the_deprecation_diagnostics() =>
+        _model.DeprecationDiagnostics.ShouldEqual(_model.DeprecationDiagnostics);
     [Fact] void should_preserve_the_deprecation_diagnostic_after_round_trip() =>
         _roundTripped.DeprecationDiagnostics.Length.ShouldEqual(2);
     [Fact] void should_derive_flat_transition_instances_by_key() =>

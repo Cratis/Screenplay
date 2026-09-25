@@ -494,6 +494,29 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         var types = plan.Model.Application.Types.ToDictionary(_ => _.Id);
         var validator = new SemanticValueValidator(concepts, types);
         var observed = history.ToList();
+
+        // Futures are scoped to a projection, not to a single fact. Reconstruct those still pending
+        // from the immutable history when a given world enters the when phase (or a world is appended to).
+        var pending = plan.Projections.Values.Where(_ => _.Scope is not null)
+            .ToDictionary(_ => _.Id, _ => new List<(SemanticFact Fact, ImmutableArray<SemanticId> Path)>());
+        if (!history.IsEmpty)
+        {
+            var replay = new List<SemanticReadModelInstance>();
+            var preceding = new List<SemanticFact>();
+            foreach (var historical in history)
+            {
+                foreach (var projection in plan.Projections.Values.Where(_ => _.Scope is not null).OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal))
+                {
+                    if (ProjectScoped(projection, historical, replay, plan, validator, preceding, pending[projection.Id]) is { } replayFailure)
+                    {
+                        failure = replayFailure;
+                        readModels = current;
+                        return false;
+                    }
+                }
+                preceding.Add(historical);
+            }
+        }
         foreach (var fact in facts)
         {
             foreach (var projection in plan.Projections.Values.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal))
@@ -501,7 +524,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                 // A scoped projection runs through the reference semantics of every Chronicle projection block.
                 if (projection.Scope is not null)
                 {
-                    if (new SemanticScopedProjection(plan, projection, validator, observed).Apply(instances, fact) is { } scopedFailure)
+                    if (ProjectScoped(projection, fact, instances, plan, validator, observed, pending[projection.Id]) is { } scopedFailure)
                     {
                         failure = scopedFailure;
                         readModels = current;
@@ -577,6 +600,54 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         failure = null;
         readModels = [.. instances];
         return true;
+    }
+
+    static string? ProjectScoped(
+        SemanticProjection projection,
+        SemanticFact fact,
+        List<SemanticReadModelInstance> instances,
+        SemanticExecutionPlan plan,
+        SemanticValueValidator validator,
+        IReadOnlyList<SemanticFact> observed,
+        List<(SemanticFact Fact, ImmutableArray<SemanticId> Path)> pending)
+    {
+        var scoped = new SemanticScopedProjection(plan, projection, validator, observed);
+        if (scoped.Apply(instances, fact) is { } failure)
+        {
+            return failure;
+        }
+        foreach (var path in scoped.PendingChildPaths.DistinctBy(_ => string.Join('/', _.Select(id => id.ToString()))))
+        {
+            pending.Add((fact, path));
+        }
+
+        // Chronicle ResolveFutures repeats its insertion-ordered scan until nothing more resolves.
+        bool resolved;
+        do
+        {
+            resolved = false;
+            for (var index = 0; index < pending.Count;)
+            {
+                var future = new SemanticScopedProjection(plan, projection, validator, observed);
+                var child = pending[index];
+                if (future.ApplyPending(instances, child.Fact, child.Path) is { } pendingFailure)
+                {
+                    return pendingFailure;
+                }
+                if (future.PendingChildPaths.Count > 0)
+                {
+                    index++;
+                }
+                else
+                {
+                    pending.RemoveAt(index);
+                    resolved = true;
+                }
+            }
+        }
+        while (resolved && pending.Count > 0);
+
+        return null;
     }
 
     static SemanticTypeReference DestinationType(SemanticCommand command, SemanticExpression? expression, SemanticTypeReference? allocatedType) =>

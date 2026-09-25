@@ -713,7 +713,6 @@ An inline `on` block is an anonymous behavior, so it has no name to report again
 |---|---|---|
 | `PLAY0380` | Warning | A projection construct binds, but Chronicle's projection lowering drops part of it: `all` inside a `children` or `nested` block loses its subscription to every event type and behaves as `every`, and an `automap` or `no automap` on a joined event is replaced by the auto-map of the level the join sits in. |
 | `PLAY0381` | Warning | A projection-level `key` is parsed but does not route events in Chronicle or the executable semantic model. Declare keys on each `from` (or its events). |
-| `PLAY0445` | Warning | A flat executable-model projection transition carries deprecated `ZeroOrOne` or `Many` affected-instance cardinality. Chronicle routes one key per transition; use a join for structural many. Returned by `ExecutableSemanticModel.DeprecationDiagnostics` for constructed or deserialized ESM, with a model-level location because ESM does not retain source positions. The source binder produces only `One`; query cardinality is unaffected. |
 | `PLAY0382` | Error | A variant declares no `enters on` event. |
 | `PLAY0383` | Error | A projection-level shared handler maps a property absent from a variant's known read-model shape. Unknown shapes remain undecided. |
 | `PLAY0384` | Error | Two variants in one projection have the same name. |
@@ -763,6 +762,12 @@ These warnings are returned by `AttachmentFiles.Load` for implementation files t
 | `PLAY0432` | Warning | An attachment or a directory on its path is missing. |
 | `PLAY0433` | Warning | An attachment exceeds 2 MiB or the attachment set exceeds 8 MiB. |
 | `PLAY0434` | Warning | An attachment cannot safely be read as UTF-8 text. |
+
+### Executable semantic model
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0445` | Warning | A flat executable-model projection transition carries deprecated `ZeroOrOne` or `Many` affected-instance cardinality. Chronicle routes one key per transition; use a join for structural many. Returned by `ExecutableSemanticModel.DeprecationDiagnostics` for constructed or deserialized ESM, with a model-level location because ESM does not retain source positions. The source binder produces only `One`; query cardinality is unaffected. |
 
 ## Retired codes
 

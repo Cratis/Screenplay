@@ -12,12 +12,19 @@ public class a_projection_block_binder : for_SemanticModelBinder.given.a_semanti
         """
         concept OrderId : Uuid
         concept CustomerId : Uuid
-        type OrderLine
+        type OrderPart
           lineNumber Int
+          quantity Int?
+        type OrderLine
+          parts OrderPart[]
+          orderId OrderId?
+          lineNumber Int
+          productId String?
           quantity Int
           subtotal Decimal?
           discontinued Bool?
         type Shipping
+          lines OrderLine[]?
           carrier String
           note String?
         type Quantity
@@ -41,6 +48,8 @@ public class a_projection_block_binder : for_SemanticModelBinder.given.a_semanti
               event LineRemoved
                 orderId OrderId
                 lineNumber Int
+              event ProductUpdated
+                productId String
               event OrderShipped
                 carrier String
               event ShippingCleared

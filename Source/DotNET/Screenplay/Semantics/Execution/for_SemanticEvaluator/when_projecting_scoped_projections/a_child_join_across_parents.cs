@@ -5,14 +5,15 @@ using System.Collections.Immutable;
 
 namespace Cratis.Screenplay.Semantics.Execution.for_SemanticEvaluator.when_projecting_scoped_projections;
 
-// Chronicle's child join matches existing children across parents (ProjectionFactory.SetupJoinsForChildren,
-// ProjectionFactory.cs:509-522); one occurrence must reach both matching children, without creating a parent.
+// Chronicle's child join matches existing children across parents (KeyResolvers.ForJoin, KeyResolvers.cs:84-115;
+// ChangesetConverter.CreateJoinFilterTarget/PerformJoined, ChangesetConverter.cs:99-121,355-401).
 public class a_child_join_across_parents : Specification
 {
     const string Source =
         """
         type Line
           lineId String
+          productId String?
           updates Int?
         module Orders
           feature Ordering
@@ -22,6 +23,7 @@ public class a_child_join_across_parents : Specification
               event LineAdded
                 orderId String
                 lineId String
+                productId String
               event LineUpdated
                 lineId String
             slice StateView Lookup
@@ -35,8 +37,9 @@ public class a_child_join_across_parents : Specification
                 children lines identified by lineId
                   from LineAdded key lineId
                     parent orderId
+                    productId = productId
                     count updates
-                  join lineId on lineId
+                  join product on productId
                     with LineUpdated
                       count updates
         """;
@@ -68,8 +71,8 @@ public class a_child_join_across_parents : Specification
             [
                 Fact("OrderPlaced", "first", ("orderId", "first")),
                 Fact("OrderPlaced", "second", ("orderId", "second")),
-                Fact("LineAdded", "line", ("orderId", "first"), ("lineId", "line")),
-                Fact("LineAdded", "line", ("orderId", "second"), ("lineId", "line")),
+                Fact("LineAdded", "line", ("orderId", "first"), ("lineId", "line"), ("productId", "different")),
+                Fact("LineAdded", "line", ("orderId", "second"), ("lineId", "line"), ("productId", "different")),
                 Fact("LineUpdated", "line", ("lineId", "line"))
             ],
             out _instances,

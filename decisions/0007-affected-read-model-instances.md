@@ -3,7 +3,7 @@ id: 0007
 title: Which read-model instances an event affects follows Chronicle's keys and joins
 status: accepted
 stage: none
-decided: 2026-09-24
+decided: 2026-09-25
 decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
@@ -43,7 +43,7 @@ Affected instances mirror Chronicle. No new syntax is added.
 
 - **Chronicle, root join key.** A root join resolves its key as the event source id and ignores the join's key expression ([`ProjectionFactory.cs:969-981`](https://github.com/Cratis/Chronicle/blob/main/Source/Kernel/Core/Projections/Engine/ProjectionFactory.cs)), although the .NET client's variant support sets one. Tracked in [Cratis/Chronicle#4165](https://github.com/Cratis/Chronicle/issues/4165).
 - **Chronicle, in-memory sink.** It applies a root join to the one document it resolved ([`InMemorySink.cs:430-432`](https://github.com/Cratis/Chronicle/blob/main/Source/Kernel/Storage.InMemory/Sinks/InMemorySink.cs)) instead of fanning out as the MongoDB and SQL sinks do. Tracked in Chronicle#4165.
-- **Reference evaluator.** It matches Chronicle's join fan-out ([`SemanticScopedProjection.cs:144-163`](../Source/DotNET/Screenplay/Semantics/Execution/SemanticScopedProjection.cs)) with two exceptions: it honors the key of a variant join ([`SemanticModelBinder.Variants.cs:108-110`](../Source/DotNET/Screenplay/Semantics/SemanticModelBinder.Variants.cs)) where Chronicle uses the event source id, and it fails a child event with no parent ([`SemanticScopedProjection.cs:265-271`](../Source/DotNET/Screenplay/Semantics/Execution/SemanticScopedProjection.cs)) where Chronicle defers it.
+- **Reference evaluator.** It matches Chronicle's join fan-out ([`SemanticScopedProjection.cs:144-163`](../Source/DotNET/Screenplay/Semantics/Execution/SemanticScopedProjection.cs)) except that it honors the key of a variant join ([`SemanticModelBinder.Variants.cs:108-110`](../Source/DotNET/Screenplay/Semantics/SemanticModelBinder.Variants.cs)) where Chronicle uses the event source id. The affected-instance view reports a root `remove via join` as `Unverified`: Chronicle wires a child pull with an empty collection path, not a root deletion. Without an application schema, the projection-only view reports an unset child identity as `Unverified`; the application-aware overload resolves the fallback.
 
 Neither Chronicle difference was reproduced at runtime; both come from reading the code.
 
@@ -70,11 +70,11 @@ Out of scope: new projection syntax; Chronicle runtime changes (owned by Chronic
 
 **Done when:** A model whose transition carries `ZeroOrOne` or `Many` gets a deprecation diagnostic, and the next ESM version's golden vectors no longer contain them on transitions. The derived view returns the four shapes above for a model with `from`, `all`, a root join, a child join and a remove-via-join. A spec shows one child-join event updating children under two parents.
 
-**Verify by:** Validator and binder specs for the diagnostic; specs for the derived view per shape; the child-join spec against `SemanticScopedProjection`; golden-vector diff on the version bump, with a `Decision: 0004` and `Decision: 0007` trailer.
+**Verify by:** `ExecutableSemanticModel.DeprecationDiagnostics` specs for the model-level diagnostic (the binder cannot author legacy cardinalities); specs for the derived view per shape; the child-join spec against `SemanticScopedProjection`; golden-vector diff on the version bump, with a `Decision: 0004` and `Decision: 0007` trailer.
 
 ## Consequences
 
-The ESM says only what Chronicle can do, and "many" is visible through the derived view without new syntax. Authors who expect a key list must model a join. The byte removal costs a version bump. The known differences remain open until Chronicle#4165 and the evaluator's deferral gap are resolved.
+The ESM says only what Chronicle can do, and "many" is visible through the derived view without new syntax. Authors who expect a key list must model a join. The byte removal costs a version bump. The variant join difference remains open until Chronicle#4165 is resolved.
 
 ## Related issues
 
@@ -82,4 +82,4 @@ Screenplay: [#132](https://github.com/Cratis/Screenplay/issues/132), [#128](http
 
 ## Status notes
 
-**2026-09-24 — partially implemented.** Shipped in vTBD. The model-level deprecation warning and read-only projection affected-instance view ship first. The source binder cannot express `ZeroOrOne` or `Many` transition cardinality, so source compilation has no such warning; ESM created or read from canonical bytes reports it. Canonical bytes and golden vectors remain unchanged. `stage: none` remains until the next ESM version removes legacy cardinality bytes and the *Done when* criteria are satisfied. Chronicle's variant join-key discrepancy remains tracked in Chronicle#4165; reference child-event deferral remains outstanding.
+**2026-09-25 — partially implemented.** Release version: TBD. The model-level deprecation warning and read-only projection affected-instance view ship first. The source binder cannot express `ZeroOrOne` or `Many` transition cardinality, so source compilation has no such warning; ESM created or read from canonical bytes reports it. Canonical bytes and golden vectors remain unchanged. `stage: none` remains until the next ESM version removes legacy cardinality bytes and the *Done when* criteria are satisfied. Chronicle's variant join-key discrepancy remains tracked in Chronicle#4165; reference child-event deferral is modeled with a per-projection pending queue reconstructed from given history before the when phase. A root remove-via-join remains unverified as a root deletion.
