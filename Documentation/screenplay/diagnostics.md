@@ -371,13 +371,16 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0173` | Error | Two files of a folder declare the same name. |
 | `PLAY0174` | Warning | Two files of a folder describe the same thing differently, and the first description is kept. |
 
-### What a command reads to decide
+### What a command or reaction trigger reads to decide
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0175` | Error | A `reads` line is not `reads <ReadModel> [as <alias>] [by <property>]`, or uses `as`, `by`, or `reads` as an alias. |
-| `PLAY0177` | Warning | A command reads a read model no projection in the document produces. |
-| `PLAY0178` | Warning | The `by` of a `reads` declaration does not name a property of the command. |
+| `PLAY0175` | Error | A `reads` line is not `reads <ReadModel> [as <alias>] [by <value>]`, or uses `as`, `by`, or `reads` as an alias. Under a reaction trigger, a bare `reads` line suggests `@reads` for a value named `reads`. |
+| `PLAY0177` | Warning | A command or reaction trigger reads a read model no projection in the document produces. |
+| `PLAY0178` | Warning | The `by` of a command's `reads` declaration does not name a property of the command. |
+| `PLAY0442` | Warning | A reaction trigger reads by a value it does not take. |
+| `PLAY0443` | Error | A clock trigger reads by a value, but clock triggers take no values. |
+| `PLAY0444` | Warning | A reaction trigger reads a primitive type name as a view; use `@reads <PrimitiveType>` if `reads` is a trigger value. |
 
 ### Rules about the whole artifact
 
@@ -740,13 +743,13 @@ Use an opening fence with an info string, such as ` ```csharp ` (without the spa
 |---|---|---|
 | `PLAY0397` | Warning | An inline code block uses a separate language line, `validate csharp`, or a multiline description uses a bare fence. The message names the tagged-fence replacement. |
 
-### Repeated command reads
+### Repeated command or reaction-trigger reads
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0410` | Error | A command reads the same view more than once without an alias on every instance. |
-| `PLAY0411` | Error | Two reads in a command use the same alias. |
-| `PLAY0412` | Error | A reads alias collides with one of the command's property names. |
+| `PLAY0410` | Error | A command or reaction trigger reads the same view more than once without an alias on every instance. |
+| `PLAY0411` | Error | Two reads in a command or reaction trigger use the same alias. |
+| `PLAY0412` | Error | A reads alias collides with a command property or reaction trigger value. |
 
 ### Implementation attachment loading (host-supplied)
 

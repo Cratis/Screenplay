@@ -133,6 +133,7 @@ internal static partial class ReactionParser
         CodeBlockSyntax? code = null;
         string? description = null;
         var data = new List<TriggerDataSyntax>();
+        var reads = new List<ReadsSyntax>();
         var produces = new List<ProducesSyntax>();
         var invokes = new List<InvokesSyntax>();
 
@@ -146,6 +147,22 @@ internal static partial class ReactionParser
                     continue;
                 case FileReferenceParser.Keyword:
                     file = FileReferenceParser.Parse(context, body);
+                    continue;
+                case "reads":
+                    if (body.Content == "reads")
+                    {
+                        context.Error(
+                            DiagnosticCodes.InvalidReadsDeclaration,
+                            "Invalid reads declaration 'reads' - expected 'reads <ReadModel> [as <alias>] [by <value>]'; for a trigger value named 'reads', write '@reads'",
+                            body.Location);
+                        continue;
+                    }
+
+                    if (ReadsParser.Parse(context, body) is { } read)
+                    {
+                        reads.Add(read);
+                    }
+
                     continue;
                 case "produces":
                     if (ProducesParser.Parse(context, body) is { } produced)
@@ -170,7 +187,7 @@ internal static partial class ReactionParser
             }
 
             // Anything left with the shape of a name is a value the reaction takes from the occurrence. The
-            // directives above are checked first, so a trigger value named after one is written '@file' and
+            // directives above are checked first, so a trigger value named after one is written '@file' or '@reads' and
             // the escape is undone on the way in, the same as every other block in the language.
             if (TriggerParser.ParseData(context, body) is { } datum)
             {
@@ -178,7 +195,7 @@ internal static partial class ReactionParser
             }
         }
 
-        return new(source, data, file, code, line.Location, description, produces, invokes);
+        return new(source, data, file, code, line.Location, description, produces, invokes) { Reads = reads };
     }
 
     /// <summary>

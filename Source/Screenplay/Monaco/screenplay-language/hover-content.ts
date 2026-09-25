@@ -91,6 +91,10 @@ export function hoverContent(
         if (doc) return doc;
     }
 
+    if (word === 'reads' && (chain[0] === 'every' || chain[0] === 'at') && chain.includes('reaction')) {
+        return '**reads** — Declares a whole view this clock trigger consults: `reads <View>`. Clock triggers take no values, so `by` is unavailable.';
+    }
+
     const keywordDoc = keywordDocs[word];
     if (keywordDoc) return `**${word}** — ${keywordDoc}`;
 

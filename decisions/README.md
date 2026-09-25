@@ -7,7 +7,7 @@
 | [0003](0003-decision-consistency-for-command-reads.md) | Decision consistency for command reads | accepted | none | 2026-09-24 | Sindre Alstad Wilting |
 | [0004](0004-admission-and-governance-of-portable-executable-semantics.md) | Admission and governance of portable executable semantics | accepted | none | 2026-09-24 | Sindre Alstad Wilting |
 | [0005](0005-policy-predicates-as-an-implementation-attachment-role.md) | Policy predicates as an implementation attachment role, composed in authored order | accepted | implemented | 2026-09-24 | Sindre Alstad Wilting |
-| [0006](0006-reaction-triggers-declare-reads.md) | Reaction triggers declare the views they decide from with reads | accepted | none | 2026-09-24 | Sindre Alstad Wilting |
+| [0006](0006-reaction-triggers-declare-reads.md) | Reaction triggers declare the views they decide from with reads | accepted | implemented | 2026-09-24 | Sindre Alstad Wilting |
 | [0007](0007-affected-read-model-instances.md) | Which read-model instances an event affects follows Chronicle's keys and joins | accepted | none | 2026-09-24 | Sindre Alstad Wilting |
 | [0008](0008-one-data-subject-per-event.md) | Personal data in an event belongs to one subject | accepted | none | 2026-09-24 | Sindre Alstad Wilting |
 | [0009](0009-external-event-origin-and-translation-slices.md) | External events declare their origin; translating them is a Translate slice | accepted | none | 2026-09-24 | Sindre Alstad Wilting |

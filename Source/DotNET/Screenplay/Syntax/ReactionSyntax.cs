@@ -49,7 +49,13 @@ public record ReactionTriggerSyntax(
     SourceLocation Location,
     string? Description = null,
     IEnumerable<ProducesSyntax>? Produces = null,
-    IEnumerable<InvokesSyntax>? Invokes = null) : SyntaxNode(Location);
+    IEnumerable<InvokesSyntax>? Invokes = null) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// The views this trigger consults when deciding what to do.
+    /// </summary>
+    public IEnumerable<ReadsSyntax>? Reads { get; init; }
+}
 
 /// <summary>
 /// Represents an <c>invokes &lt;Command&gt;</c> declaration - a command a reaction dispatches.

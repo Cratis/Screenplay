@@ -739,6 +739,7 @@ TriggerClause  = TriggerSource, NL,
                  [ INDENT,
                      [ DescriptionDecl ],
                      { TriggerValue },
+                     { ReadsDecl },
                      { ProducesDecl },
                      { InvokesDecl },
                      [ FileDirective | InlineBlock ],
@@ -761,7 +762,14 @@ Time           = Digit, Digit, ":", Digit, Digit ;   (* 24 hour, HH:mm *)
 (* A bare name selects a value the occurrence carries, so it is written without a
    type - the shape belongs to the event or the trigger declaration.          *)
 
-TriggerValue   = Ident, [ TypeRef ], NL ;
+TriggerValue   = [ "@" ], Ident, [ TypeRef ], NL ;
+
+(* Under a reaction trigger, ReadsDecl's "by" names one of its selected
+   TriggerValues. Clock sources take no values, so they cannot use "by".
+   Repeated views require distinct aliases, which must not match trigger values.
+   "@reads" selects a trigger value
+   named reads; "for each <View>" is reserved, not admitted here. Reactions
+   do not yet bind in the executable semantic model. *)
 
 WhereDecl      = "where", Condition, NL ;
 
@@ -919,7 +927,7 @@ Screenplay's workflow is *author the document first, then Stage performs it*. Th
 | `command` | `produces` with mappings and conditions | `handler` |
 | `query` | `=>` return type with optional `observable`, `by`/`filter`, `description` | `performer` |
 | `policy` | `require` conditions | inline `csharp` |
-| `reaction` | `description` on the reaction and on each trigger, plus `produces` / `invokes` / `where` | `file` / inline block |
+| `reaction` | `description` on the reaction and on each trigger, plus trigger `reads`, `produces` / `invokes` / `where` | `file` / inline block |
 | `screen` | title, sections, tables, `data`, `action`, `navigate`, `template` | `file` |
 | `constraint` | `unique …` forms | `file` |
 | `projection` / `capture` | fully declarative (PDL / CDL) | — |
@@ -1001,6 +1009,7 @@ The escape works wherever a name of your choosing meets a reserved first word - 
 |---|---|
 | `command` body | `authorize`, `produces` (`description`, `validate`, `handler` and `concurrency` resolve by shape) |
 | `event` body | `tag` |
+| reaction trigger body | `description`, `file`, `produces`, `invokes`, `reads` (use `@reads` for a value named `reads`) |
 | mapping block | `tag` |
 | projection `from` block | `key`, `parent` |
 | projection `clear` mapping target | `with` |

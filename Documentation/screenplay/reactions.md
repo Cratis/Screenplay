@@ -12,6 +12,7 @@ reaction <Name>
   <trigger>
     [description "<text>"]
     [<value> ...]
+    [reads <View> [as <alias>] [by <trigger value>] ...]
     [produces <EventType> ...]
     [invokes <Command> ...]
     [file <Path>]
@@ -83,7 +84,34 @@ reaction HandleOrder
 
 This is a selection, not a declaration — the shape belongs to the event or the trigger, and the reaction
 states which parts of it matter. Taking a value the occurrence does not carry is reported, because the
-document already knows what an event and a declared trigger provide.
+document already knows what an event and a declared trigger provide. A value named `reads` must be
+written `@reads` under a reaction trigger; the escape keeps it distinct from a view read.
+
+## Views a reaction decides from
+
+A trigger can declare the views it consults before acting:
+
+```screenplay
+event OrderPlaced
+  orderId Uuid
+
+readmodel OrderStatus
+  status String
+
+reaction HandleOrder
+  when OrderPlaced
+    orderId
+    reads OrderStatus as current by orderId
+```
+
+`reads <View> [as <alias>] [by <trigger value>]` names a view the trigger reads. If a trigger reads
+the same view more than once, every read needs a distinct alias; aliases must be unique within the
+trigger and must not match a trigger value. `by` must name a value taken by that trigger. Clock triggers (`every` and `at`) take no values,
+so they can use `reads <View>` but not `by`. An unknown view is reported. A reaction that invokes a
+command leaves the command's decision to that command and its own reads. Reactions are not yet bound
+in the executable semantic model; these declarations do not currently provide runtime protection.
+
+`for each <View>` is reserved for a future view-driven trigger, not part of this grammar.
 
 ## Narrowing which occurrences run it
 

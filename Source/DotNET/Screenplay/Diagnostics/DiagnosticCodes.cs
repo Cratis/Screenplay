@@ -944,10 +944,10 @@ public static class DiagnosticCodes
     /// </summary>
     public const string ConflictingDescriptionAcrossFiles = "PLAY0174";
 
-    // What a command reads to decide.
+    // What a command or reaction trigger reads to decide.
 
     /// <summary>
-    /// A <c>reads</c> line is not <c>reads &lt;ReadModel&gt; [as &lt;alias&gt;] [by &lt;property&gt;]</c>, or uses a reserved alias.
+    /// A <c>reads</c> line is not <c>reads &lt;ReadModel&gt; [as &lt;alias&gt;] [by &lt;value&gt;]</c>, or uses a reserved alias.
     /// </summary>
     public const string InvalidReadsDeclaration = "PLAY0175";
 
@@ -957,7 +957,7 @@ public static class DiagnosticCodes
     public const string DuplicateReads = "PLAY0176";
 
     /// <summary>
-    /// A command reads a read model no projection in the document produces.
+    /// A command or reaction trigger reads a read model no projection in the document produces.
     /// </summary>
     public const string UnknownReadModel = "PLAY0177";
 
@@ -1964,12 +1964,12 @@ public static class DiagnosticCodes
     public const string MissingReadsAlias = "PLAY0410";
 
     /// <summary>
-    /// Two reads in one command use the same alias.
+    /// Two reads in one command or reaction trigger use the same alias.
     /// </summary>
     public const string DuplicateReadsAlias = "PLAY0411";
 
     /// <summary>
-    /// A reads alias has the same name as a command property.
+    /// A reads alias has the same name as a command property or reaction trigger value.
     /// </summary>
     public const string ReadsAliasConflictsWithProperty = "PLAY0412";
 
@@ -1993,4 +1993,19 @@ public static class DiagnosticCodes
 
     /// <summary>A policy declares more than one require line.</summary>
     public const string RepeatedPolicyRequirement = "PLAY0441";
+
+    /// <summary>
+    /// A reaction reads by a value its trigger does not take.
+    /// </summary>
+    public const string UnknownReactionReadsKey = "PLAY0442";
+
+    /// <summary>
+    /// A clock trigger reads by a value, but clock triggers take no values.
+    /// </summary>
+    public const string ClockTriggerReadsKey = "PLAY0443";
+
+    /// <summary>
+    /// A trigger read uses a primitive type name that could be a trigger value named <c>reads</c>.
+    /// </summary>
+    public const string AmbiguousReactionReadsValue = "PLAY0444";
 }

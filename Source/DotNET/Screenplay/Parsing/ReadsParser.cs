@@ -8,7 +8,7 @@ using Cratis.Screenplay.Syntax;
 namespace Cratis.Screenplay.Parsing;
 
 /// <summary>
-/// Parses the <c>reads</c> declaration naming a read model a command consults before it decides.
+/// Parses the <c>reads</c> declaration naming a view a command or reaction trigger consults before it decides.
 /// </summary>
 internal static partial class ReadsParser
 {
@@ -25,7 +25,7 @@ internal static partial class ReadsParser
         {
             context.Error(
                 DiagnosticCodes.InvalidReadsDeclaration,
-                $"Invalid reads declaration '{line.Content}' - expected 'reads <ReadModel> [as <alias>] [by <property>]'",
+                $"Invalid reads declaration '{line.Content}' - expected 'reads <ReadModel> [as <alias>] [by <value>]'",
                 line.Location);
             return null;
         }
