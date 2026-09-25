@@ -18,6 +18,8 @@ applies-to:
   - Documentation/screenplay/events.md
 ---
 
+> **2026-09-25 — refined.** [Decision 0015](0015-event-generations-in-the-executable-model.md) settles how point 4 is represented in the executable model: one aggregate per event contract with prior revisions beneath the current one, revision-scoped property identities, current-generation references, explicit catalog advancement, and ESM v4. The initial-revision guard cited below is now at `ExecutableSemanticModel.cs:322-325`.
+
 ## Context
 
 [#71](https://github.com/Cratis/Screenplay/issues/71) asks for portable event evolution: immutable generations, predecessor lineage and deterministic transformation. Identity already survives renames and moves, but nothing links a revision to its predecessor. The executable semantic model (ESM) rejects any event contract revision other than the initial one ([`ExecutableSemanticModel.cs:297-300`](../Source/DotNET/Screenplay/Semantics/ExecutableSemanticModel.cs), [`SemanticIdentityCatalog.cs:594-598`](../Source/DotNET/Screenplay/Semantics/SemanticIdentityCatalog.cs)).
