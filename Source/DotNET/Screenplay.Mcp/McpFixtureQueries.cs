@@ -31,7 +31,7 @@ static class McpFixtureQueries
         snapshot.Compilation.Success,
         snapshot.SourceRevision,
         snapshot.Compilation.Diagnostics,
-        coverage = "Authored assertions only: then events, errors, read models or queries. A gap is not proof of missing runtime test coverage.",
+        coverage = "Authored assertions only: then denied, events, errors, read models or queries. A gap is not proof of missing runtime test coverage.",
         page = McpReadPage<McpFixtureAssertionGap>.Create(
             snapshot.Index.Declarations
             .Where(declaration => declaration.Syntax is SliceSyntax)
@@ -50,7 +50,7 @@ static class McpFixtureQueries
         return new(declaration.Owner, specifications.Length, specifications.Count(HasAssertions));
     }
 
-    static bool HasAssertions(SpecificationSyntax specification) => specification.ThenEvents.Any() || specification.ThenErrors.Any() ||
+    static bool HasAssertions(SpecificationSyntax specification) => specification.ThenDenied is not null || specification.ThenEvents.Any() || specification.ThenErrors.Any() ||
         (specification.ThenReadModels?.Any() ?? false) || specification.ThenQueries.Any();
 
     static IEnumerable<McpFixtureValue> Values(McpSyntaxIndex index, McpFixtureOccurrence occurrence)

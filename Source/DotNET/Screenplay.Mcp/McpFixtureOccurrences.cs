@@ -8,12 +8,30 @@ namespace Cratis.Screenplay.Mcp;
 
 static class McpFixtureOccurrences
 {
-    internal static string Role(SpecificationSyntax specification, SyntaxNode node, string fallback) => node switch
+    internal static string Role(SpecificationSyntax specification, SyntaxNode node, string fallback)
     {
-        SpecificationEventSyntax => specification.Given.Any(item => ReferenceEquals(item, node)) ? "givenEvent" : "thenEvent",
-        SpecificationReadModelSyntax => (specification.GivenReadModels ?? []).Any(item => ReferenceEquals(item, node)) ? "givenReadModel" : "thenReadModel",
-        _ => fallback
-    };
+        if (node is SpecificationEventSyntax)
+        {
+            if (specification.Given.Any(item => ReferenceEquals(item, node)))
+            {
+                return "givenEvent";
+            }
+
+            if (ReferenceEquals(specification.WhenAppended, node))
+            {
+                return "whenAppendedEvent";
+            }
+
+            return "thenEvent";
+        }
+
+        if (node is SpecificationReadModelSyntax)
+        {
+            return (specification.GivenReadModels ?? []).Any(item => ReferenceEquals(item, node)) ? "givenReadModel" : "thenReadModel";
+        }
+
+        return fallback;
+    }
 
     internal static IEnumerable<McpFixtureOccurrence> All(McpSyntaxIndex index) => index.Declarations
         .Where(declaration => declaration.Syntax is SpecificationSyntax)
@@ -23,9 +41,19 @@ static class McpFixtureOccurrences
     {
         var specification = (SpecificationSyntax)declaration.Syntax;
         var ordinal = 0;
-        foreach (var item in specification.Given.Concat(specification.ThenEvents))
+        foreach (var item in specification.Given)
         {
-            yield return Occurrence(item.EventType, "Event", Role(specification, item, string.Empty), item, item.Values, item.For);
+            yield return Occurrence(item.EventType, "Event", "givenEvent", item, item.Values, item.For);
+        }
+
+        if (specification.WhenAppended is { } appended)
+        {
+            yield return Occurrence(appended.EventType, "Event", "whenAppendedEvent", appended, appended.Values, appended.For);
+        }
+
+        foreach (var item in specification.ThenEvents)
+        {
+            yield return Occurrence(item.EventType, "Event", "thenEvent", item, item.Values, item.For);
         }
 
         if (specification.When is { } when)

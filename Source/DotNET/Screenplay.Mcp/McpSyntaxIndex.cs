@@ -93,6 +93,8 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
                 {
                     given = value.Given.Select(item => item.EventType),
                     when = value.When?.CommandType,
+                    whenAppendedEvent = value.WhenAppended?.EventType,
+                    thenDenied = value.ThenDenied is not null,
                     then = value.ThenEvents.Select(item => item.EventType),
                     errors = value.ThenErrors.Select(item => item.Name),
                     queries = value.ThenQueries.Select(item => item.Query)
