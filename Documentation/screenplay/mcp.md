@@ -184,7 +184,7 @@ still applies; the maximum byte page fits the cap.
 If compilation failed, `available: false` points to `executable-diagnostics`
 and contains no model bytes or last-good result. Successful compilation does not
 promise any target can realize the model. The exported ESM alone is neither an
-equivalence proof under [decision 0013](../../decisions/0013-equivalence-for-screenplay-code-round-trips.md)
+equivalence proof under [decision 0013](https://github.com/Cratis/Screenplay/blob/main/decisions/0013-equivalence-for-screenplay-code-round-trips.md)
 (which also compares attachment hashes) nor a runnable attachment bundle: attachment
 bodies are absent. The view is read-only, not a way to edit the ESM; use typed
 workspace proposals for changes.
