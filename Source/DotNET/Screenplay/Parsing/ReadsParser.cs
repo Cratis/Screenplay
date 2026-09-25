@@ -25,7 +25,7 @@ internal static partial class ReadsParser
         {
             context.Error(
                 DiagnosticCodes.InvalidReadsDeclaration,
-                $"Invalid reads declaration '{line.Content}' - expected 'reads <ReadModel> [as <alias>] [by <property>]'",
+                $"Invalid reads declaration '{line.Content}' - expected 'reads <ReadModel> [as <alias>] [by <value>]'",
                 line.Location);
             return null;
         }

@@ -106,7 +106,7 @@ reaction HandleOrder
 
 `reads <View> [as <alias>] [by <trigger value>]` names a view the trigger reads. If a trigger reads
 the same view more than once, every read needs a distinct alias; aliases must be unique within the
-trigger. `by` must name a value taken by that trigger. Clock triggers (`every` and `at`) take no values,
+trigger and must not match a trigger value. `by` must name a value taken by that trigger. Clock triggers (`every` and `at`) take no values,
 so they can use `reads <View>` but not `by`. An unknown view is reported. A reaction that invokes a
 command leaves the command's decision to that command and its own reads. Reactions are not yet bound
 in the executable semantic model; these declarations do not currently provide runtime protection.

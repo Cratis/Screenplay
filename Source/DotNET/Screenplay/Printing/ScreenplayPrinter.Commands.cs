@@ -24,9 +24,7 @@ public partial class ScreenplayPrinter
             // stated against state both read as though the read model were already in scope, because it is.
             foreach (var reads in command.Reads ?? [])
             {
-                var alias = reads.Alias is null ? string.Empty : $" as {reads.Alias}";
-                var by = reads.By is null ? string.Empty : $" by {reads.By}";
-                writer.Line($"reads {reads.ReadModel}{alias}{by}", reads);
+                WriteReads(writer, reads);
             }
 
             if (command.Authorize is not null)
@@ -249,9 +247,7 @@ public partial class ScreenplayPrinter
 
             foreach (var reads in trigger.Reads ?? [])
             {
-                var alias = reads.Alias is null ? string.Empty : $" as {reads.Alias}";
-                var by = reads.By is null ? string.Empty : $" by {reads.By}";
-                writer.Line($"reads {reads.ReadModel}{alias}{by}", reads);
+                WriteReads(writer, reads);
             }
 
             foreach (var produces in trigger.Produces ?? [])
@@ -278,6 +274,13 @@ public partial class ScreenplayPrinter
                 WriteCodeBlock(writer, trigger.Code);
             }
         }
+    }
+
+    void WriteReads(ScreenplayWriter writer, ReadsSyntax reads)
+    {
+        var alias = reads.Alias is null ? string.Empty : $" as {reads.Alias}";
+        var by = reads.By is null ? string.Empty : $" by {reads.By}";
+        writer.Line($"reads {reads.ReadModel}{alias}{by}", reads);
     }
 
     void WriteProperties(ScreenplayWriter writer, IEnumerable<PropertySyntax> properties, IReadOnlySet<string> reserved)

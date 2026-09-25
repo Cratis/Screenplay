@@ -650,15 +650,33 @@ internal static class ScreenplayValidator
                     read.Location);
             }
 
-            if (read.Alias is { } alias && !aliases.Add(alias))
+            if (read.Alias is { } alias)
             {
-                context.Error(
-                    DiagnosticCodes.DuplicateReadsAlias,
-                    $"Reaction trigger already uses reads alias '{alias}'",
-                    read.Location);
+                if (!aliases.Add(alias))
+                {
+                    context.Error(
+                        DiagnosticCodes.DuplicateReadsAlias,
+                        $"Reaction trigger already uses reads alias '{alias}'",
+                        read.Location);
+                }
+
+                if (values.Contains(alias))
+                {
+                    context.Error(
+                        DiagnosticCodes.ReadsAliasConflictsWithProperty,
+                        $"Reads alias '{alias}' conflicts with a value of reaction trigger",
+                        read.Location);
+                }
             }
 
-            if (!knownReadModels.Contains(read.ReadModel))
+            if (ConceptSyntax.PrimitiveTypes.Contains(read.ReadModel))
+            {
+                context.Warning(
+                    DiagnosticCodes.AmbiguousReactionReadsValue,
+                    $"Reaction trigger reads '{read.ReadModel}' as a view; for a trigger value named 'reads', write '@reads {read.ReadModel}'",
+                    read.Location);
+            }
+            else if (!knownReadModels.Contains(read.ReadModel))
             {
                 context.Warning(
                     DiagnosticCodes.UnknownReadModel,

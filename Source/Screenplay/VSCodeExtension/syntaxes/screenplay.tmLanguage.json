@@ -20,15 +20,10 @@
         { "include": "#description-block" },
         { "include": "#projection-block" },
         { "include": "#capture-block" },
-        { "include": "#escaped-name" },
         { "include": "#keywords" },
         { "include": "#common" }
     ],
     "repository": {
-        "escaped-name": {
-            "match": "^\\s*@[a-z_]\\w*",
-            "name": "variable.other.screenplay"
-        },
         "comment": {
             "match": "//.*",
             "name": "comment.line.double-slash.screenplay"
