@@ -2,7 +2,7 @@
 id: 0016
 title: Exporting the executable model over MCP
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-09-25
 decider: Sindre Alstad Wilting
 class: contract
@@ -76,3 +76,5 @@ Screenplay: [#128](https://github.com/Cratis/Screenplay/issues/128), [#139](http
 ## Status notes
 
 **2026-09-25 — accepted.** Sindre Alstad Wilting delegated this choice to the orchestrating agent. The option was chosen under that delegation after an independent review of the Screenplay (v4.33.0) and Chronicle source.
+
+**2026-09-25 — implemented.** `read-workspace` exports the compiled canonical ESM in base64 byte pages, guarded by workspace, model and attachment-manifest revisions. The same manifest pins implementation-requirements continuations. MCP specs cover availability, stale pages, attachment-only changes, v1–v3 strict-reader round trips and maximum page size. Release version: TBD. It is not yet `verified`: downstream release and issue acceptance remain open.

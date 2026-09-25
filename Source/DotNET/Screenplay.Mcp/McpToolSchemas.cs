@@ -30,6 +30,13 @@ static class McpToolSchemas
             schema["then"] = new JsonObject { ["required"] = new JsonArray("formatting") };
         }
 
+        if (tool.Name == "read-workspace")
+        {
+            schema["if"] = new JsonObject { ["properties"] = new JsonObject { ["view"] = new JsonObject { ["const"] = "executable-model" } }, ["required"] = new JsonArray("view") };
+            schema["then"] = new JsonObject { ["properties"] = new JsonObject { ["limit"] = Limit(192 * 1024) } };
+            schema["else"] = new JsonObject { ["properties"] = new JsonObject { ["limit"] = Limit(200) } };
+        }
+
         if (tool.Name == "read-proposal")
         {
             schema["if"] = new JsonObject { ["properties"] = new JsonObject { ["view"] = McpAstSchemas.Choice("before", "after") }, ["required"] = new JsonArray("view") };
@@ -45,7 +52,7 @@ static class McpToolSchemas
         "includeContent" => new() { ["type"] = "boolean", ["default"] = false },
         "descendants" => new() { ["type"] = "boolean", ["default"] = tool != "dependencies" },
         "offset" => McpAstSchemas.Integer(),
-        "limit" => Limit(tool == "export-workspace" || tool == "read-proposal" || tool == "read-document" || tool == "merged-document" || tool == "workspace-state" ? 192 * 1024 : 200),
+        "limit" => Limit(tool == "export-workspace" || tool == "read-proposal" || tool == "read-document" || tool == "merged-document" || tool == "workspace-state" || tool == "read-workspace" ? 192 * 1024 : 200),
         "operations" when tool == "propose-ast" => McpAstSchemas.Array(McpAstSchemas.Operations()),
         "operations" => McpAstSchemas.Array(JsonNode.Parse(McpWorkspaceOperations.Schema.GetRawText())!),
         "documents" => McpAstSchemas.Array(McpAstSchemas.Documents()),
@@ -63,7 +70,7 @@ static class McpToolSchemas
         "view" when tool == "describe-application" => McpAstSchemas.Choice("summary", "children", "declarations"),
         "view" when tool == "declaration-details" => McpAstSchemas.Choice("summary", "properties", "occurrences", "commands", "specifications", "produces", "values", "syntax"),
         "view" when tool == "merged-document" => McpAstSchemas.Choice("source", "syntax", "both"),
-        "view" when tool == "read-workspace" => McpAstSchemas.Choice("documents", "semantics", "eventContracts", "diagnostics", "executable-diagnostics", "implementation-requirements", "source-map", "repairs"),
+        "view" when tool == "read-workspace" => McpAstSchemas.Choice("documents", "semantics", "eventContracts", "diagnostics", "executable-diagnostics", "implementation-requirements", "source-map", "repairs", "executable-model"),
         "view" when tool == "read-proposal" => McpAstSchemas.Choice("changes", "before", "after", "diagnostics", "executable-diagnostics", "implementation-requirements", "dropped-comments"),
         "view" when tool == "read-ast" => McpAstSchemas.Choice("nodes", "children"),
         _ => McpAstSchemas.String()
