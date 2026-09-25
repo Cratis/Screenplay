@@ -28,6 +28,7 @@ sealed class WorkspaceTransaction(ScreenplayWorkspace workspace)
         }
 
         if (request.Operations.IsDefault || request.SemanticRenames.IsDefault || request.EventRenames.IsDefault ||
+            request.EventRevisionAdvancements.IsDefault ||
             request.RetiredSemanticAddresses.IsDefault || request.RetiredEventAddresses.IsDefault)
         {
             return WorkspaceTransactionOperations.Failure(
@@ -36,7 +37,7 @@ sealed class WorkspaceTransaction(ScreenplayWorkspace workspace)
         }
 
         if (request.Operations.IsEmpty && request.SemanticRenames.IsEmpty && request.EventRenames.IsEmpty &&
-            request.RetiredSemanticAddresses.IsEmpty && request.RetiredEventAddresses.IsEmpty)
+            request.EventRevisionAdvancements.IsEmpty && request.RetiredSemanticAddresses.IsEmpty && request.RetiredEventAddresses.IsEmpty)
         {
             if (!_workspace.Compilation.Success)
             {
@@ -53,7 +54,7 @@ sealed class WorkspaceTransaction(ScreenplayWorkspace workspace)
 
         var mappingOperations = request.Operations.OfType<UpdateProducedEventMappingSource>().ToArray();
         if (mappingOperations.Length > 0 && (request.Operations.Length != 1 ||
-            !request.SemanticRenames.IsEmpty || !request.EventRenames.IsEmpty ||
+            !request.SemanticRenames.IsEmpty || !request.EventRenames.IsEmpty || !request.EventRevisionAdvancements.IsEmpty ||
             !request.RetiredSemanticAddresses.IsEmpty || !request.RetiredEventAddresses.IsEmpty))
         {
             return WorkspaceTransactionOperations.Failure(
@@ -134,22 +135,81 @@ sealed class WorkspaceTransaction(ScreenplayWorkspace workspace)
             var index = SemanticCompilationIndex.Create(
                 provisionalCompilation.Value!.Model.Application,
                 _workspace.IdentityCatalog.Application);
+            var addresses = index.Declarations.Keys.Order(WorkspaceSemanticAddressComparer.Instance).ToImmutableArray();
+            var events = index.Events.Keys.Order(WorkspaceSemanticAddressComparer.Instance).ToImmutableArray();
+            var declaredAdvancements = index.Events
+                .Where(entry => entry.Value.Revision.Value > 1 &&
+                    !_workspace.IdentityCatalog.EventContracts.Any(assignment => assignment.Address.Equals(entry.Key)) &&
+                    !request.EventRenames.Any(rename => rename.CurrentAddress.Equals(entry.Key)))
+                .Select(entry => new EventContractRevisionAdvancement(entry.Key, entry.Value.Revision)).ToImmutableArray();
+            foreach (var advancement in request.EventRevisionAdvancements)
+            {
+                if (advancement is null || !index.Events.TryGetValue(advancement.Address, out var declaration) ||
+                    declaration.Revision != advancement.Revision ||
+                    (!_workspace.IdentityCatalog.EventContracts.Any(assignment => assignment.Address.Equals(advancement.Address)) &&
+                     !request.EventRenames.Any(rename => rename.CurrentAddress.Equals(advancement.Address) &&
+                         _workspace.IdentityCatalog.EventContracts.Any(assignment => assignment.Address.Equals(rename.PreviousAddress)))))
+                {
+                    throw new InvalidSemanticContract("An event revision advancement must match a persisted event and its declared revision.");
+                }
+            }
+
+            if (index.Events.Any(entry => _workspace.IdentityCatalog.EventContracts.Any(assignment =>
+                    assignment.Address.Equals(entry.Key) && assignment.Revision != entry.Value.Revision) &&
+                !request.EventRevisionAdvancements.Any(advancement => advancement.Address.Equals(entry.Key))))
+            {
+                var refused = Compile(ordered, _workspace.IdentityCatalog);
+                if (!refused.Success)
+                {
+                    return WorkspaceTransactionOperations.CompilationFailure(refused.Diagnostics, ordered);
+                }
+            }
+
+            var movedProperties = _workspace.IdentityCatalog.Semantics
+                .Where(assignment => assignment.Address.Kind == SemanticKind.Property &&
+                    assignment.Address.OwnerKind == SemanticKind.EventContract &&
+                    assignment.Address.Parts[^3].Kind != SemanticAddressPartKind.Generation &&
+                    request.EventRevisionAdvancements.Any(advancement =>
+                        assignment.Address.Parts[..^2].SequenceEqual(advancement.Address.Parts) ||
+                        request.EventRenames.Any(rename => rename.PreviousAddress.Parts.SequenceEqual(assignment.Address.Parts[..^2]) &&
+                            rename.CurrentAddress.Equals(advancement.Address))))
+                .Select(assignment =>
+                {
+                    var owner = SemanticAddress.FromCanonical(SemanticKind.EventContract, assignment.Address.Parts[..^2]);
+                    var renamedOwner = request.EventRenames.FirstOrDefault(rename => rename.PreviousAddress.Equals(owner))?.CurrentAddress ?? owner;
+                    return new SemanticIdentityRename(
+                        assignment.Address,
+                        SemanticAddress.ForEventProperty(renamedOwner, EventContractRevision.Initial, assignment.Address.Name));
+                })
+                .Where(rename => addresses.Contains(rename.CurrentAddress) &&
+                    !request.SemanticRenames.Any(explicitRename => explicitRename.PreviousAddress.Equals(rename.PreviousAddress))).ToImmutableArray();
             migratedCatalog = SemanticIdentityCatalog.PlanMigration(
                 _workspace.IdentityCatalog,
                 request.ExpectedCatalogRevision,
                 [.. ordered.Select(document => document.StableKey)],
-                [.. index.Declarations.Keys.Order(WorkspaceSemanticAddressComparer.Instance)],
-                [.. index.Events.Keys.Order(WorkspaceSemanticAddressComparer.Instance)],
+                addresses,
+                events,
                 [
                     .. documentRenames
                         .OrderBy(rename => rename.PreviousKey, StringComparer.Ordinal)
                         .ThenBy(rename => rename.CurrentKey, StringComparer.Ordinal)
                 ],
-                request.SemanticRenames,
+                [.. request.SemanticRenames, .. movedProperties],
                 request.EventRenames,
                 [.. retiredDocumentKeys.Order(StringComparer.Ordinal)],
                 request.RetiredSemanticAddresses,
                 request.RetiredEventAddresses).Catalog;
+            var advancements = declaredAdvancements.AddRange(request.EventRevisionAdvancements);
+            if (!advancements.IsEmpty)
+            {
+                migratedCatalog = SemanticIdentityCatalog.PlanEventRevisionAdvancement(
+                    migratedCatalog,
+                    migratedCatalog.Revision,
+                    [.. ordered.Select(document => document.StableKey)],
+                    addresses,
+                    events,
+                    advancements).Catalog;
+            }
         }
         catch (InvalidSemanticContract exception)
         {

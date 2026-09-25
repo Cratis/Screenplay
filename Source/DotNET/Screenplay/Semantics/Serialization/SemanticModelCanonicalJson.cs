@@ -75,25 +75,25 @@ public static partial class SemanticModelCanonicalJson
             }
 
             writer.WritePropertyName("application");
-            WriteApplication(writer, application);
+            WriteApplication(writer, application, semanticVersion);
             writer.WriteEndObject();
             writer.Flush();
             return buffer.WrittenSpan.ToArray();
         }
-        catch (InvalidOperationException)
+        catch (InvalidOperationException exception)
         {
-            throw new InvalidSemanticContract($"The semantic model exceeds the canonical maximum depth of {CanonicalJson.MaximumDepth}.");
+            throw new InvalidSemanticContract($"The semantic model could not be serialized: {exception.Message}");
         }
     }
 
-    static void WriteApplication(Utf8JsonWriter writer, SemanticApplication application)
+    static void WriteApplication(Utf8JsonWriter writer, SemanticApplication application, SemanticVersion version)
     {
         writer.WriteStartObject();
         WriteId(writer, application.Id);
         CanonicalJson.WriteString(writer, "name", application.Name);
         WriteArray(writer, "concepts", application.Concepts.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteConcept);
         WriteArray(writer, "types", application.Types.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteCompositeType);
-        WriteArray(writer, "modules", application.Modules.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteModule);
+        WriteArray(writer, "modules", application.Modules.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, module) => WriteModule(output, module, version));
         if (!application.Policies.IsDefaultOrEmpty) WriteArray(writer, "policies", application.Policies.OrderBy(_ => _.Name, StringComparer.Ordinal), WritePolicy);
         writer.WriteEndObject();
     }
@@ -118,35 +118,35 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
-    static void WriteModule(Utf8JsonWriter writer, SemanticModule module)
+    static void WriteModule(Utf8JsonWriter writer, SemanticModule module, SemanticVersion version)
     {
         writer.WriteStartObject();
         WriteId(writer, module.Id);
         CanonicalJson.WriteString(writer, "name", module.Name);
-        WriteArray(writer, "features", module.Features.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteFeature);
+        WriteArray(writer, "features", module.Features.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, feature) => WriteFeature(output, feature, version));
         writer.WriteEndObject();
     }
 
-    static void WriteFeature(Utf8JsonWriter writer, SemanticFeature feature)
+    static void WriteFeature(Utf8JsonWriter writer, SemanticFeature feature, SemanticVersion version)
     {
         writer.WriteStartObject();
         WriteId(writer, feature.Id);
         CanonicalJson.WriteString(writer, "name", feature.Name);
-        WriteArray(writer, "features", feature.Features.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteFeature);
-        WriteArray(writer, "slices", feature.Slices.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteSlice);
+        WriteArray(writer, "features", feature.Features.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, nested) => WriteFeature(output, nested, version));
+        WriteArray(writer, "slices", feature.Slices.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, slice) => WriteSlice(output, slice, version));
         writer.WriteEndObject();
     }
 
-    static void WriteSlice(Utf8JsonWriter writer, SemanticSlice slice)
+    static void WriteSlice(Utf8JsonWriter writer, SemanticSlice slice, SemanticVersion version)
     {
         writer.WriteStartObject();
         WriteId(writer, slice.Id);
         CanonicalJson.WriteString(writer, "name", slice.Name);
         writer.WriteString("kind", SliceKind(slice.Kind));
-        WriteArray(writer, "events", slice.Events.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteEvent);
+        WriteArray(writer, "events", slice.Events.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, @event) => WriteEvent(output, @event, version));
         WriteArray(writer, "commands", slice.Commands.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteCommand);
         WriteArray(writer, "readModels", slice.ReadModels.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteReadModel);
-        WriteArray(writer, "projections", slice.Projections.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProjection);
+        WriteArray(writer, "projections", slice.Projections.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, projection) => WriteProjection(output, projection, version));
         if (!slice.Reducers.IsEmpty) WriteArray(writer, "reducers", slice.Reducers.OrderBy(_ => _.Name, StringComparer.Ordinal), WriteReducer);
         WriteArray(writer, "queries", slice.Queries.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteQuery);
         WriteArray(writer, "specifications", slice.Specifications.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteSpecification);
@@ -219,7 +219,7 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
-    static void WriteEvent(Utf8JsonWriter writer, SemanticEventContract eventContract)
+    static void WriteEvent(Utf8JsonWriter writer, SemanticEventContract eventContract, SemanticVersion version)
     {
         writer.WriteStartObject();
         WriteId(writer, eventContract.Id);
@@ -228,6 +228,20 @@ public static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", eventContract.Name);
         WriteArray(writer, "properties", eventContract.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProperty);
         if (!eventContract.Tags.IsDefaultOrEmpty) WriteStringArray(writer, "tags", eventContract.Tags);
+        if (version == SemanticVersion.V4 && !eventContract.PriorRevisions.IsDefaultOrEmpty)
+        {
+            writer.WriteNumber("predecessor", eventContract.Predecessor!.Value.Value);
+            WriteArray(writer, "priorRevisions", eventContract.PriorRevisions, (output, prior) =>
+            {
+                output.WriteStartObject();
+                output.WriteNumber("contractRevision", prior.Revision.Value);
+                if (prior.Predecessor is { } predecessor) output.WriteNumber("predecessor", predecessor.Value);
+                else output.WriteNull("predecessor");
+                WriteArray(output, "properties", prior.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProperty);
+                if (!prior.Tags.IsDefaultOrEmpty) WriteStringArray(output, "tags", prior.Tags);
+                output.WriteEndObject();
+            });
+        }
         writer.WriteEndObject();
     }
 
@@ -301,24 +315,24 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
-    static void WriteProjection(Utf8JsonWriter writer, SemanticProjection projection)
+    static void WriteProjection(Utf8JsonWriter writer, SemanticProjection projection, SemanticVersion version)
     {
         writer.WriteStartObject();
         WriteId(writer, projection.Id);
         CanonicalJson.WriteString(writer, "name", projection.Name);
         writer.WriteString("readModel", projection.ReadModel.ToString());
-        WriteArray(writer, "transitions", projection.Transitions, WriteTransition);
+        WriteArray(writer, "transitions", projection.Transitions, (output, transition) => WriteTransition(output, transition, version));
         WriteProjectionScope(writer, projection.Scope);
         writer.WriteEndObject();
     }
 
-    static void WriteTransition(Utf8JsonWriter writer, SemanticProjectionTransition transition)
+    static void WriteTransition(Utf8JsonWriter writer, SemanticProjectionTransition transition, SemanticVersion version)
     {
         writer.WriteStartObject();
         writer.WriteString("eventContract", transition.EventContract.ToString());
         writer.WritePropertyName("affectedInstance");
         writer.WriteStartObject();
-        writer.WriteString("cardinality", AffectedCardinality(transition.AffectedInstance.Cardinality));
+        if (version != SemanticVersion.V4) writer.WriteString("cardinality", AffectedCardinality(transition.AffectedInstance.Cardinality));
         writer.WritePropertyName("key");
         WriteExpression(writer, transition.AffectedInstance.Key);
         writer.WriteEndObject();

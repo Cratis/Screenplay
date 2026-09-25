@@ -2,7 +2,7 @@
 id: 0011
 title: Event generations are declared in full, each succeeding the one before
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-09-24
 decider: Sindre Alstad Wilting
 class: contract
@@ -18,7 +18,7 @@ applies-to:
   - Documentation/screenplay/events.md
 ---
 
-> **2026-09-25 — refined.** [Decision 0015](0015-event-generations-in-the-executable-model.md) settles how point 4 is represented in the executable model: one aggregate per event contract with prior revisions beneath the current one, revision-scoped property identities, current-generation references, explicit catalog advancement, and ESM v4. The initial-revision guard cited below is now at `ExecutableSemanticModel.cs:322-325`.
+> **2026-09-25 — refined.** [Decision 0015](0015-event-generations-in-the-executable-model.md) settles how point 4 is represented in the executable model: one aggregate per event contract with prior revisions beneath the current one, revision-scoped property identities, current-generation references, explicit catalog advancement, and ESM v4. The initial-revision guard cited below was replaced by lineage validation in decision 0015.
 
 ## Context
 
@@ -79,4 +79,6 @@ Screenplay: [#71](https://github.com/Cratis/Screenplay/issues/71), [#168](https:
 
 **2026-09-25 — partially implemented. Shipped in v4.34.0.** Grammar implemented: The optional marker, full prior declarations, and consecutive-number validation are implemented; unmarked declarations remain unchanged. X is matched by name within its owning module, feature path and slice. The event-contract address (and therefore its catalog identity assignment) has no generation component, so those declarations resolve to the same `EventContractId`; a matching name in another slice is not another generation. The legacy ID derived from application and event name collides across slices, and the current ESM binder also rejects same-named cross-slice references as ambiguous.
 
-ESM predecessor lineage and #168's v2 vector are pending. The ESM representation of prior revisions awaits a maintainer decision; models using marked generations currently fail binding with `PLAY0449` rather than dropping historical shapes. `stage: none` remains until the *Done when* criteria are met. It is not yet `verified`.
+At this grammar-only milestone, ESM predecessor lineage and #168's v2 vector were pending. Models using marked generations then failed binding with `PLAY0449` rather than dropping historical shapes; decision 0015 subsequently replaced that guard. This was the shipped grammar increment, not ESM lineage; it was not yet `verified` at that time.
+
+**2026-09-25 — implemented, not verified. Shipped in v4.37.0.** Decision 0015 completes the ESM lineage and the corrected #168 v2 corpus at ESM v4. `PLAY0449` now guards historical-shape references and catalog revision mismatches rather than rejecting every marked event. Cross-target migration and replay conformance remain open under #71.

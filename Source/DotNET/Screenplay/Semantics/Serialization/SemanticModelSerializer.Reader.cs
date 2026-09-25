@@ -8,7 +8,7 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 public static partial class SemanticModelSerializer
 {
     /// <summary>
-    /// Reads strict canonical ESM v1 UTF-8 JSON and verifies its revision.
+    /// Reads strict canonical ESM v1–v4 UTF-8 JSON and verifies its revision.
     /// </summary>
     /// <param name="json">The canonical UTF-8 JSON bytes.</param>
     /// <returns>The verified executable semantic model.</returns>
@@ -40,7 +40,7 @@ public static partial class SemanticModelSerializer
                     case "languageVersion": languageVersion = LanguageVersion.Parse(SemanticModelRead.String(ref reader, property)); break;
                     case "semanticVersion": semanticVersion = SemanticVersion.Parse(SemanticModelRead.String(ref reader, property)); break;
                     case "revision": revision = SemanticRevision.Parse(SemanticModelRead.String(ref reader, property)); break;
-                    case "application": SemanticModelRead.RequiredToken(ref reader, JsonTokenType.StartObject, property); application = SemanticModelRead.Application(ref reader); break;
+                    case "application": SemanticModelRead.RequiredToken(ref reader, JsonTokenType.StartObject, property); application = SemanticModelRead.Application(ref reader, schemaVersion ?? 0); break;
                     default: throw SemanticModelRead.Unknown(property, "ESM root");
                 }
             }

@@ -80,6 +80,14 @@ sealed class WorkspaceReferenceBindings
 
         foreach (var entry in index.Entries)
         {
+            // One logical event contract has several source generations but only one current reference target.
+            if (entry.Node is EventSyntax historical && index.Entries.Any(other =>
+                other.Node is EventSyntax candidate && other.Address?.Equals(entry.Address) == true &&
+                candidate.Generation > historical.Generation))
+            {
+                continue;
+            }
+
             WorkspaceReferenceDomain? domain = entry.Node switch
             {
                 ConceptSyntax or TypeSyntax => WorkspaceReferenceDomain.Type,

@@ -175,7 +175,20 @@ sealed class SemanticCompilationIndex
         {
             var eventAddress = SemanticAddress.ForEventContract(sliceAddress, eventContract.Name);
             Register(eventAddress, eventContract.Id);
-            RegisterProperties(eventAddress, eventContract.Properties);
+            if (eventContract.PriorRevisions.IsEmpty)
+            {
+                RegisterProperties(eventAddress, eventContract.Properties);
+            }
+            else
+            {
+                foreach (var prior in eventContract.PriorRevisions)
+                {
+                    RegisterEventProperties(eventAddress, prior.Revision, prior.Properties);
+                }
+
+                RegisterEventProperties(eventAddress, eventContract.Revision, eventContract.Properties);
+            }
+
             _events.Add(eventAddress, eventContract);
         }
 
@@ -208,6 +221,14 @@ sealed class SemanticCompilationIndex
         foreach (var specification in slice.Specifications)
         {
             Register(SemanticAddress.ForSpecification(sliceAddress, specification.Name), specification.Id);
+        }
+    }
+
+    void RegisterEventProperties(SemanticAddress owner, EventContractRevision revision, ImmutableArray<SemanticProperty> properties)
+    {
+        foreach (var property in properties)
+        {
+            Register(SemanticAddress.ForEventProperty(owner, revision, property.Name), property.Id);
         }
     }
 

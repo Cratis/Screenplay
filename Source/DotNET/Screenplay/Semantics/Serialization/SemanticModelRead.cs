@@ -6,11 +6,12 @@ using System.Text.Json;
 
 namespace Cratis.Screenplay.Semantics.Serialization;
 
+#pragma warning disable IDE0350 // Explicit ref reader parameters keep version-aware parsing delegates clear.
 internal static partial class SemanticModelRead
 {
     internal delegate T ValueReader<T>(ref Utf8JsonReader reader);
 
-    internal static SemanticApplication Application(ref Utf8JsonReader reader)
+    internal static SemanticApplication Application(ref Utf8JsonReader reader, uint schemaVersion)
     {
         var seen = NewSeen();
         SemanticId id = default;
@@ -27,7 +28,7 @@ internal static partial class SemanticModelRead
                 case "name": name = String(ref reader, property); break;
                 case "concepts": concepts = Array(ref reader, Concept, property); break;
                 case "types": types = Array(ref reader, CompositeType, property); break;
-                case "modules": modules = Array(ref reader, Module, property); break;
+                case "modules": modules = Array(ref reader, (ref Utf8JsonReader item) => Module(ref item, schemaVersion), property); break;
                 case "policies": policies = Array(ref reader, Policy, property); break;
                 default: throw Unknown(property, "application");
             }
@@ -70,7 +71,7 @@ internal static partial class SemanticModelRead
         return new(id, name, properties);
     }
 
-    internal static SemanticModule Module(ref Utf8JsonReader reader)
+    internal static SemanticModule Module(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "module");
         var seen = NewSeen();
@@ -83,7 +84,7 @@ internal static partial class SemanticModelRead
             {
                 case "id": id = SemanticId.Parse(String(ref reader, property)); break;
                 case "name": name = String(ref reader, property); break;
-                case "features": features = Array(ref reader, Feature, property); break;
+                case "features": features = Array(ref reader, (ref Utf8JsonReader item) => Feature(ref item, schemaVersion), property); break;
                 default: throw Unknown(property, "module");
             }
         }
@@ -92,7 +93,7 @@ internal static partial class SemanticModelRead
         return new(id, name!, features);
     }
 
-    internal static SemanticFeature Feature(ref Utf8JsonReader reader)
+    internal static SemanticFeature Feature(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "feature");
         var seen = NewSeen();
@@ -106,8 +107,8 @@ internal static partial class SemanticModelRead
             {
                 case "id": id = SemanticId.Parse(String(ref reader, property)); break;
                 case "name": name = String(ref reader, property); break;
-                case "features": features = Array(ref reader, Feature, property); break;
-                case "slices": slices = Array(ref reader, Slice, property); break;
+                case "features": features = Array(ref reader, (ref Utf8JsonReader item) => Feature(ref item, schemaVersion), property); break;
+                case "slices": slices = Array(ref reader, (ref Utf8JsonReader item) => Slice(ref item, schemaVersion), property); break;
                 default: throw Unknown(property, "feature");
             }
         }
@@ -116,7 +117,7 @@ internal static partial class SemanticModelRead
         return new(id, name!, features, slices);
     }
 
-    internal static SemanticSlice Slice(ref Utf8JsonReader reader)
+    internal static SemanticSlice Slice(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "slice");
         var seen = NewSeen();
@@ -141,7 +142,7 @@ internal static partial class SemanticModelRead
                 case "events": events = Array(ref reader, Event, property); break;
                 case "commands": commands = Array(ref reader, Command, property); break;
                 case "readModels": readModels = Array(ref reader, ReadModel, property); break;
-                case "projections": projections = Array(ref reader, Projection, property); break;
+                case "projections": projections = Array(ref reader, (ref Utf8JsonReader item) => Projection(ref item, schemaVersion), property); break;
                 case "reducers": reducers = Array(ref reader, Reducer, property); break;
                 case "queries": queries = Array(ref reader, Query, property); break;
                 case "specifications": specifications = Array(ref reader, Specification, property); break;
@@ -298,6 +299,10 @@ internal static partial class SemanticModelRead
         string? name = null;
         ImmutableArray<SemanticProperty> properties = default;
         ImmutableArray<string> tags = [];
+        EventContractRevision? predecessor = null;
+        ImmutableArray<SemanticEventRevision> priorRevisions = [];
+        var predecessorRead = false;
+        var priorRevisionsRead = false;
         while (NextProperty(ref reader, seen, "event contract") is { } property)
         {
             switch (property)
@@ -308,12 +313,54 @@ internal static partial class SemanticModelRead
                 case "name": name = String(ref reader, property); break;
                 case "properties": properties = Array(ref reader, Property, property); break;
                 case "tags": tags = StringArray(ref reader, property); break;
+                case "predecessor": predecessorRead = true; predecessor = new(UInt32(ref reader, property)); break;
+                case "priorRevisions": priorRevisionsRead = true; priorRevisions = Array(ref reader, EventRevision, property); break;
                 default: throw Unknown(property, "event contract");
             }
         }
 
-        Required(id.IsSet && contractId.IsSet && revision.IsValid && name is not null && !properties.IsDefault, "event contract");
-        return new(id, contractId, revision, name!, properties) { Tags = tags };
+        Required(
+            id.IsSet && contractId.IsSet && revision.IsValid && name is not null && !properties.IsDefault &&
+            (predecessorRead == priorRevisionsRead) && (!priorRevisionsRead || !priorRevisions.IsEmpty),
+            "event contract");
+        return new(id, contractId, revision, name!, properties) { Tags = tags, Predecessor = predecessor, PriorRevisions = priorRevisions };
+    }
+
+    internal static SemanticEventRevision EventRevision(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "event revision");
+        var seen = NewSeen();
+        EventContractRevision revision = default;
+        EventContractRevision? predecessor = null;
+        var predecessorRead = false;
+        ImmutableArray<SemanticProperty> properties = default;
+        ImmutableArray<string> tags = [];
+        while (NextProperty(ref reader, seen, "event revision") is { } property)
+        {
+            switch (property)
+            {
+                case "contractRevision": revision = new(UInt32(ref reader, property)); break;
+                case "predecessor": predecessorRead = true; predecessor = NullableUInt32Revision(ref reader, property); break;
+                case "properties": properties = Array(ref reader, Property, property); break;
+                case "tags": tags = StringArray(ref reader, property); break;
+                default: throw Unknown(property, "event revision");
+            }
+        }
+
+        Required(revision.IsValid && predecessorRead && !properties.IsDefault, "event revision");
+        return new(revision, predecessor, properties) { Tags = tags };
+    }
+
+    internal static EventContractRevision? NullableUInt32Revision(ref Utf8JsonReader reader, string property)
+    {
+        RequiredRead(ref reader, property);
+        if (reader.TokenType == JsonTokenType.Null) return null;
+        if (reader.TokenType != JsonTokenType.Number || !reader.TryGetUInt32(out var value))
+        {
+            throw Malformed(property, "an unsigned 32-bit integer or null");
+        }
+
+        return new(value);
     }
 
     internal static SemanticCommand Command(ref Utf8JsonReader reader)
@@ -422,7 +469,7 @@ internal static partial class SemanticModelRead
         return new(id, name, properties);
     }
 
-    internal static SemanticProjection Projection(ref Utf8JsonReader reader)
+    internal static SemanticProjection Projection(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "projection");
         var seen = NewSeen();
@@ -438,7 +485,7 @@ internal static partial class SemanticModelRead
                 case "id": id = SemanticId.Parse(String(ref reader, property)); break;
                 case "name": name = String(ref reader, property); break;
                 case "readModel": readModel = SemanticId.Parse(String(ref reader, property)); break;
-                case "transitions": transitions = Array(ref reader, Transition, property); break;
+                case "transitions": transitions = Array(ref reader, (ref Utf8JsonReader item) => Transition(ref item, schemaVersion), property); break;
                 case "scope": RequiredToken(ref reader, JsonTokenType.StartObject, property); scope = ProjectionScope(ref reader); break;
                 default: throw Unknown(property, "projection");
             }
@@ -448,7 +495,7 @@ internal static partial class SemanticModelRead
         return new(id, name!, readModel, transitions) { Scope = scope };
     }
 
-    internal static SemanticProjectionTransition Transition(ref Utf8JsonReader reader)
+    internal static SemanticProjectionTransition Transition(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "projection transition");
         var seen = NewSeen();
@@ -460,7 +507,7 @@ internal static partial class SemanticModelRead
             switch (property)
             {
                 case "eventContract": eventContract = SemanticId.Parse(String(ref reader, property)); break;
-                case "affectedInstance": RequiredToken(ref reader, JsonTokenType.StartObject, property); affected = AffectedInstance(ref reader); break;
+                case "affectedInstance": RequiredToken(ref reader, JsonTokenType.StartObject, property); affected = AffectedInstance(ref reader, schemaVersion); break;
                 case "mappings": mappings = Array(ref reader, Mapping, property); break;
                 default: throw Unknown(property, "projection transition");
             }
@@ -470,7 +517,7 @@ internal static partial class SemanticModelRead
         return new(eventContract, affected!, mappings);
     }
 
-    internal static SemanticAffectedInstance AffectedInstance(ref Utf8JsonReader reader)
+    internal static SemanticAffectedInstance AffectedInstance(ref Utf8JsonReader reader, uint schemaVersion)
     {
         var seen = NewSeen();
         AffectedInstanceCardinality? cardinality = null;
@@ -485,8 +532,13 @@ internal static partial class SemanticModelRead
             }
         }
 
-        Required(cardinality is not null && key is not null, "affected instance");
-        return new(cardinality!.Value, key!);
+        if (schemaVersion is >= 1 and <= 3 && cardinality is null)
+        {
+            throw new InvalidSemanticContract($"An ESM v{schemaVersion} affected instance requires 'cardinality'.");
+        }
+
+        Required(key is not null, "affected instance");
+        return new(cardinality ?? AffectedInstanceCardinality.One, key!);
     }
 
     internal static SemanticKeyedQuery Query(ref Utf8JsonReader reader)

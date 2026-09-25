@@ -289,15 +289,24 @@ public sealed class ScreenplayWorkspace
         SemanticCompilation compilation)
     {
         var index = SemanticCompilationIndex.Create(compilation.Model.Application, identityCatalog.Application);
-        return SemanticIdentityCatalog.PlanMigration(
+        var keys = documents.Select(document => document.StableKey).ToImmutableArray();
+        var addresses = index.Declarations.Keys.Order(WorkspaceSemanticAddressComparer.Instance).ToImmutableArray();
+        var events = index.Events.Keys.Order(WorkspaceSemanticAddressComparer.Instance).ToImmutableArray();
+        var catalog = SemanticIdentityCatalog.PlanMigration(
             identityCatalog,
             identityCatalog.Revision,
-            [.. documents.Select(document => document.StableKey)],
-            [.. index.Declarations.Keys.Order(WorkspaceSemanticAddressComparer.Instance)],
-            [.. index.Events.Keys.Order(WorkspaceSemanticAddressComparer.Instance)],
+            keys,
+            addresses,
+            events,
             [],
             [],
             []).Catalog;
+        var newGenerations = index.Events
+            .Where(entry => entry.Value.Revision.Value > 1 &&
+                !identityCatalog.EventContracts.Any(assignment => assignment.Address.Equals(entry.Key)))
+            .Select(entry => new EventContractRevisionAdvancement(entry.Key, entry.Value.Revision)).ToImmutableArray();
+        return newGenerations.IsEmpty ? catalog : SemanticIdentityCatalog.PlanEventRevisionAdvancement(
+            catalog, catalog.Revision, keys, addresses, events, newGenerations).Catalog;
     }
 }
 

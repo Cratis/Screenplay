@@ -8,7 +8,7 @@ using Cratis.Screenplay.Syntax;
 namespace Cratis.Screenplay.Semantics;
 
 /// <summary>
-/// Binds compatible source syntax to ESM v1 and reports every non-bound construct explicitly.
+/// Binds compatible source syntax to the selected ESM version and reports every non-bound construct explicitly.
 /// </summary>
 public sealed partial class SemanticModelBinder : ISemanticModelBinder
 {
@@ -19,11 +19,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         SemanticDocumentSet documents)
     {
         var context = new BindingContext(applicationName, syntax, documents);
-        if (context.RejectEventGenerations())
-        {
-            return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics);
-        }
-
         try
         {
             var application = context.BindApplication();
@@ -32,17 +27,52 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with { ImplementationRequirements = context.ImplementationRequirements };
             }
 
-            var languageVersion = context.UsesV3 ? LanguageVersion.V3 : LanguageVersion.V1;
-            var semanticVersion = context.UsesV3 ? SemanticVersion.V3 : SemanticVersion.V1;
-            if (context.UsesV2 && !context.UsesV3)
+            var languageVersion = LanguageVersion.V1;
+            var semanticVersion = SemanticVersion.V1;
+            if (context.UsesV4)
+            {
+                languageVersion = LanguageVersion.V4;
+                semanticVersion = SemanticVersion.V4;
+            }
+            else if (context.UsesV3)
+            {
+                languageVersion = LanguageVersion.V3;
+                semanticVersion = SemanticVersion.V3;
+            }
+            else if (context.UsesV2)
             {
                 languageVersion = LanguageVersion.V2;
                 semanticVersion = SemanticVersion.V2;
             }
 
             var model = ExecutableSemanticModel.Create(languageVersion, semanticVersion, application);
-            var sourceMap = SemanticSourceMap.Create(context.SourceMapEntries, documents.Documents);
-            var compilation = SemanticCompilation.Create(model, documents, sourceMap);
+            var compiledDocuments = documents;
+            if (context.UsesV4)
+            {
+                // New v4 event addresses need their declared revision before compilation verifies identity
+                // coherence. Existing persisted revisions are never advanced here: an explicit revision-bound
+                // catalog plan is required. Legacy and lone-generation-1 events already resolve to revision 1.
+                var index = SemanticCompilationIndex.Create(application, documents.IdentityCatalog.Application);
+                var missing = index.Events
+                    .Where(entry => entry.Value.Revision.Value > 1 &&
+                        !documents.IdentityCatalog.EventContracts.Any(assignment => assignment.Address.Equals(entry.Key)))
+                    .Select(entry => new EventContractRevisionAdvancement(entry.Key, entry.Value.Revision))
+                    .ToImmutableArray();
+                if (!missing.IsEmpty)
+                {
+                    var catalog = SemanticIdentityCatalog.PlanEventRevisionAdvancement(
+                        documents.IdentityCatalog,
+                        documents.IdentityCatalog.Revision,
+                        [.. documents.Documents.Select(value => value.StableKey)],
+                        [.. index.Declarations.Keys],
+                        [.. index.Events.Keys],
+                        missing).Catalog;
+                    compiledDocuments = SemanticDocumentSet.Create(documents.Documents, catalog, documents.AttachmentContents);
+                }
+            }
+
+            var sourceMap = SemanticSourceMap.Create(context.SourceMapEntries, compiledDocuments.Documents);
+            var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap);
             return new CompilationResult<SemanticCompilation>(compilation, context.Diagnostics) { ImplementationRequirements = context.ImplementationRequirements };
         }
         catch (InvalidSemanticContract exception)
@@ -74,6 +104,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
         internal bool UsesV3 { get; set; }
 
+        internal bool UsesV4 { get; set; }
+
         internal ImmutableArray<SemanticSourceMapEntry> SourceMapEntries => [.. _sourceMapEntries];
 
         internal SemanticApplication BindApplication()
@@ -95,7 +127,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 applicationName,
                 concepts,
                 types,
-                UsesV2 || UsesV3 ? [.. modules.Select(PromoteV2Destinations)] : modules)
+                UsesV2 || UsesV3 || UsesV4 ? [.. modules.Select(PromoteV2Destinations)] : modules)
             {
                 Policies = policies
             };
@@ -103,23 +135,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
         internal void Error(string code, string message, SourceLocation location) =>
             _diagnostics.Add(Diagnostic.Error(code, message, location));
-
-        internal bool RejectEventGenerations()
-        {
-            foreach (var (_, _, slice) in AllSlices())
-            {
-                var unsupported = slice.Events.FirstOrDefault(@event => @event.HasGenerationMarker || @event.Generation != 1);
-                if (unsupported is null) continue;
-
-                Error(
-                    DiagnosticCodes.UnsupportedEventGenerationSemantics,
-                    $"Event '{unsupported.Name}' cannot bind: generation lineage in the executable model is not yet available",
-                    unsupported.Location);
-                return true;
-            }
-
-            return false;
-        }
 
         static SemanticModule PromoteV2Destinations(SemanticModule module) =>
             module with { Features = [.. module.Features.Select(PromoteV2Destinations)] };
@@ -218,13 +233,14 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             foreach (var (module, featurePath, slice) in AllSlices())
             {
                 var sliceAddress = SemanticAddress.ForSlice(_applicationIdentity, module, featurePath, slice.Name);
-                foreach (var @event in slice.Events)
+                foreach (var group in slice.Events.GroupBy(@event => @event.Name, StringComparer.Ordinal))
                 {
-                    var bound = BindEvent(sliceAddress, @event);
-                    _eventDeclarations.Add(@event, bound);
-                    if (!_events.TryAdd(@event.Name, bound))
+                    var declarations = group.OrderBy(@event => @event.Generation).ToArray();
+                    var bound = BindEvent(sliceAddress, declarations);
+                    foreach (var declaration in declarations) _eventDeclarations.Add(declaration, bound);
+                    if (!_events.TryAdd(group.Key, bound))
                     {
-                        Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Event reference '{@event.Name}' is ambiguous across slices in the current ESM v1 binder.", @event.Location);
+                        Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Event reference '{group.Key}' is ambiguous across slices in the current ESM v1 binder.", declarations[^1].Location);
                     }
                 }
             }

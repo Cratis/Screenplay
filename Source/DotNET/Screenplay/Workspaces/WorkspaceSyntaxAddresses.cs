@@ -59,6 +59,13 @@ static class WorkspaceSyntaxAddresses
 
         if (node is PropertySyntax property && member == "properties" && owner?.Kind is SemanticKind.CompositeType or SemanticKind.Command or SemanticKind.EventContract or SemanticKind.ReadModel)
         {
+            if (owner.Kind == SemanticKind.EventContract && parent?.Node is EventSyntax eventSyntax &&
+                ancestors.Length >= 2 && ancestors[^2].Node is SliceSyntax eventSlice &&
+                eventSlice.Events.Count(candidate => candidate.Name == eventSyntax.Name) > 1)
+            {
+                return SemanticAddress.ForEventProperty(owner, new(eventSyntax.Generation), property.Name);
+            }
+
             return SemanticAddress.ForProperty(owner, property.Name);
         }
 
@@ -74,17 +81,14 @@ static class WorkspaceSyntaxAddresses
     {
         var entries = WorkspaceSyntaxIndex.ForSyntax(syntax, catalog);
 
-        // Historical event shapes share a contract address. Only the current shape claims its
-        // property addresses, just as the identity catalog addresses the current contract.
+        // Historical event shapes share a contract address, but their generation-qualified
+        // properties each claim their own address.
         var currentEvents = entries.Where(entry => entry.Node is EventSyntax && entry.Address is not null)
             .GroupBy(entry => entry.Address!)
             .Select(group => group.OrderByDescending(entry => ((EventSyntax)entry.Node).Generation).First().Handle)
             .ToHashSet();
-        var historicalEvents = entries.Where(entry => entry.Node is EventSyntax && !currentEvents.Contains(entry.Handle))
-            .Select(entry => entry.Handle).ToHashSet();
         var groups = entries.Where(entry => entry.Address is not null &&
-                (entry.Node is not EventSyntax || currentEvents.Contains(entry.Handle)) &&
-                (entry.Parent is not { } parent || !historicalEvents.Contains(parent)))
+                (entry.Node is not EventSyntax || currentEvents.Contains(entry.Handle)))
             .GroupBy(entry => entry.Address!);
         foreach (var group in groups.Where(group => group.Count() > 1 && group.Key.Kind is not (SemanticKind.Application or SemanticKind.Module or SemanticKind.Feature)))
         {

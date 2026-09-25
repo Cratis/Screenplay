@@ -17,6 +17,12 @@ public sealed partial class SemanticModelBinder
             return new(id, property.Name, BindTypeReference(property.Type), isIdentifier);
         }
 
+        SemanticProperty BindEventProperty(SemanticAddress owner, EventContractRevision revision, PropertySyntax property)
+        {
+            var address = SemanticAddress.ForEventProperty(owner, revision, property.Name);
+            return new(Resolve(address, property.Location), property.Name, BindTypeReference(property.Type), false);
+        }
+
         SemanticTypeReference BindTypeReference(TypeRefSyntax type) => type.Name switch
         {
             "Uuid" => SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Uuid, type.IsCollection, type.IsOptional),

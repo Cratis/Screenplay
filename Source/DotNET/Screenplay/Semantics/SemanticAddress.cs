@@ -135,7 +135,10 @@ public enum SemanticAddressPartKind
     /// <summary>
     /// The semantic kind of a member's owner.
     /// </summary>
-    OwnerKind = 7
+    OwnerKind = 7,
+
+    /// <summary>An event-contract generation, scoped to one property owner.</summary>
+    Generation = 8
 }
 
 /// <summary>
@@ -356,6 +359,17 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
         return Build(SemanticKind.Property, [.. owner.Parts, OwnerKindPart(owner.Kind), Part(SemanticAddressPartKind.Member, name)]);
     }
 
+    /// <summary>Creates a revision-scoped property address for a multi-generation event.</summary>
+    public static SemanticAddress ForEventProperty(SemanticAddress owner, EventContractRevision revision, string name)
+    {
+        if (owner is null || owner.Kind != SemanticKind.EventContract || !revision.IsValid || revision.Value == uint.MaxValue)
+        {
+            throw new InvalidSemanticContract("A revision-scoped property requires an event owner and valid revision.");
+        }
+
+        return Build(SemanticKind.Property, [.. owner.Parts, Part(SemanticAddressPartKind.Generation, revision.Value.ToString(CultureInfo.InvariantCulture)), OwnerKindPart(owner.Kind), Part(SemanticAddressPartKind.Member, name)]);
+    }
+
     /// <inheritdoc/>
     public bool Equals(SemanticAddress? other) => other is not null && Kind == other.Kind && Parts.SequenceEqual(other.Parts);
 
@@ -474,6 +488,17 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
         }
 
         var ownerParts = parts[..^2];
+        if (ownerKind == SemanticKind.EventContract && ownerParts.Length > 0 && ownerParts[^1].Kind == SemanticAddressPartKind.Generation)
+        {
+            if (!uint.TryParse(ownerParts[^1].Key, NumberStyles.None, CultureInfo.InvariantCulture, out var generation) ||
+                generation is 0 or uint.MaxValue || generation.ToString(CultureInfo.InvariantCulture) != ownerParts[^1].Key)
+            {
+                return false;
+            }
+
+            ownerParts = ownerParts[..^1];
+        }
+
         return ownerKind switch
         {
             SemanticKind.CompositeType => Matches(ownerParts, SemanticAddressPartKind.Application, SemanticAddressPartKind.Declaration),

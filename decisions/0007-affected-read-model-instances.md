@@ -2,7 +2,7 @@
 id: 0007
 title: Which read-model instances an event affects follows Chronicle's keys and joins
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-09-24
 decider: Sindre Alstad Wilting
 class: contract
@@ -83,3 +83,5 @@ Screenplay: [#132](https://github.com/Cratis/Screenplay/issues/132), [#128](http
 ## Status notes
 
 **2026-09-25 — partially implemented.** Shipped in v4.33.0. The model-level deprecation warning and read-only projection affected-instance view ship first. The source binder cannot express `ZeroOrOne` or `Many` transition cardinality, so source compilation has no such warning; ESM created or read from canonical bytes reports it. Canonical bytes and golden vectors remain unchanged. `stage: none` remains until the next ESM version removes legacy cardinality bytes and the *Done when* criteria are satisfied. Chronicle's variant join-key discrepancy remains tracked in Chronicle#4165; child-event deferral remains unmodeled pending confirmation of root-parent futures in live Chronicle processing. A root remove-via-join remains unverified as a root deletion.
+
+**2026-09-25 — implemented, not verified. Shipped in v4.37.0.** The *Done when* deprecation clause applies to pre-v4 models; ESM v4 under decision 0015 removes the transition cardinality field from new canonical bytes and rejects `ZeroOrOne`/`Many` on creation or reading; query cardinality and v1–v3 bytes are unchanged. The derived-view coverage already shipped. Live Chronicle variant join and root-remove semantics still require independent conformance, so this record is not `verified`.

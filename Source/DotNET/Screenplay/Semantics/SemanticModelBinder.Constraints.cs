@@ -126,6 +126,17 @@ public sealed partial class SemanticModelBinder
 
                 if (!@event.Properties.TryGetValue(name, out var property))
                 {
+                    var historical = @event.Contract.PriorRevisions.LastOrDefault(revision =>
+                        revision.Properties.Any(prior => prior.Name == name));
+                    if (historical is not null)
+                    {
+                        Error(
+                            DiagnosticCodes.InvalidSemanticBinding,
+                            $"Constraint '{constraint.Name}' references property '{name}' of event '{eventName}' revision {historical.Revision.Value}; current revision {@event.Contract.Revision.Value} does not declare it.",
+                            constraint.Location);
+                        return null;
+                    }
+
                     Error(
                         DiagnosticCodes.UnknownConstraintProperty,
                         $"Constraint '{constraint.Name}' names property '{name}', which event '{eventName}' does not declare.",

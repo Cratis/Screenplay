@@ -10,10 +10,11 @@ module Projects
           name not empty message "Project name is required"
         produces ProjectRegistered
           for projectId
-          projectId = projectId
           name = name
-      event ProjectRegistered
+      event ProjectRegistered generation 1
         projectId ProjectId
+        name ProjectName
+      event ProjectRegistered generation 2
         name ProjectName
       specification RegisteringAProject
         when RegisterProject
@@ -21,7 +22,6 @@ module Projects
           name = "Screenplay"
         then ProjectRegistered
           for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-          projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
           name = "Screenplay"
         then readmodel ProjectSummary
           projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
@@ -44,5 +44,5 @@ module Projects
       query ProjectById => ProjectSummary?
         by projectId ProjectId
       projection ProjectSummaryProjection => ProjectSummary
-        from ProjectRegistered key projectId
+        from ProjectRegistered
           name = name

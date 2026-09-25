@@ -125,7 +125,23 @@ public static class RegisterProjectCorpus
         };
     }
 
-    static CanonicalCorpusVector LoadV2() => new()
+    static CanonicalCorpusVector LoadV2()
+    {
+        const string v2 = "Cratis.Screenplay.CanonicalCorpus.Corpus.RegisterProject.v2";
+        var folder = new CanonicalCorpusSourceForm
+        {
+            Name = "folder",
+            Documents =
+            [
+                Document("application", "application.play", $"{v2}.source.folder.application.play"),
+                Document("projects-module", "Projects/Projects.play", $"{v2}.source.folder.Projects.Projects.play"),
+                Document("projects-registration-feature", "Projects/Registration/Registration.play", $"{v2}.source.folder.Projects.Registration.Registration.play"),
+                Document("register-project-slice", "Projects/Registration/RegisterProject/RegisterProject.play", $"{v2}.source.folder.Projects.Registration.RegisterProject.RegisterProject.play"),
+                Document("project-lookup-slice", "Projects/Registration/ProjectLookup/ProjectLookup.play", $"{v2}.source.folder.Projects.Registration.ProjectLookup.ProjectLookup.play")
+            ],
+            IdentityCatalogBytes = Resource($"{v2}.identity.folder-catalog-v4.json")
+        };
+        return new()
     {
         Name = "register-project/v2",
         ApplicationName = "Projects",
@@ -137,7 +153,25 @@ public static class RegisterProjectCorpus
             {
                 Name = "single",
                 Documents = [Document("register-project-vector", "RegisterProject.play", "Cratis.Screenplay.CanonicalCorpus.Corpus.RegisterProject.v2.source.RegisterProject.play")],
-                IdentityCatalogBytes = Resource($"{ResourcePrefix}.identity.catalog-v1.json")
+                IdentityCatalogBytes = Resource($"{v2}.identity.catalog-v4.json")
+            },
+            folder,
+            new CanonicalCorpusSourceForm
+            {
+                Name = "reordered",
+                Documents = [.. folder.Documents.Reverse()],
+                IdentityCatalogBytes = folder.IdentityCatalogBytes
+            },
+            new CanonicalCorpusSourceForm
+            {
+                Name = "relocated",
+                Documents = [.. folder.Documents.Reverse().Select(document => new CanonicalCorpusDocument
+                {
+                    StableKey = document.StableKey,
+                    DisplayPath = $"Archive/{document.DisplayPath}",
+                    Bytes = document.Bytes
+                })],
+                IdentityCatalogBytes = folder.IdentityCatalogBytes
             }
         ],
         SpecificationExpectations =
@@ -156,9 +190,10 @@ public static class RegisterProjectCorpus
                 Outcome = SemanticExecutionOutcomeKind.Accepted
             }
         ],
-        EsmBytes = Resource("Cratis.Screenplay.CanonicalCorpus.Corpus.RegisterProject.v2.expected.esm-v2.json"),
-        SemanticRevision = SemanticRevision.Parse("rev1:53baac263c39c8e03e8318b09ac29e0882b2f0809ac538ecf72f9867b0877473")
+        EsmBytes = Resource("Cratis.Screenplay.CanonicalCorpus.Corpus.RegisterProject.v2.expected.esm-v4.json"),
+        SemanticRevision = SemanticRevision.Parse("rev1:c2bef8cf2ba598b564f67d9dc96a5555f4246ac33c6937cb83409b71acc2b3dd")
     };
+    }
 
     static CanonicalCorpusDocument Document(string stableKey, string path, string resource) => new()
     {

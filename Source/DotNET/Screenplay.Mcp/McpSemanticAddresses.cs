@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using System.Globalization;
 using System.Text.Json;
 using Cratis.Screenplay.Semantics;
 
@@ -48,6 +49,22 @@ static class McpSemanticAddresses
                 !Enum.TryParse<SemanticKind>(parts[^2].Key, out var ownerKind) || !Enum.IsDefined(ownerKind))
             {
                 throw new McpFailure("A member address requires a valid owner kind.", -32602);
+            }
+
+            if (parts.Length >= 4 && parts[^3].Kind == SemanticAddressPartKind.Generation)
+            {
+                if (kind != SemanticKind.Property || ownerKind != SemanticKind.EventContract ||
+                    !uint.TryParse(parts[^3].Key, NumberStyles.None, CultureInfo.InvariantCulture, out var generation))
+                {
+                    throw new McpFailure("A generation-qualified address requires an event property and valid revision.", -32602);
+                }
+
+                if (generation is 0 or uint.MaxValue || generation.ToString(CultureInfo.InvariantCulture) != parts[^3].Key)
+                {
+                    throw new McpFailure("A generation-qualified address requires an event property and valid revision.", -32602);
+                }
+
+                return SemanticAddress.ForEventProperty(Build(ownerKind, parts[..^3]), new(generation), parts[^1].Key);
             }
 
             var owner = Build(ownerKind, parts[..^2]);
