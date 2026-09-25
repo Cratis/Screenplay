@@ -360,7 +360,7 @@ conditions are reported without a code until the compiler checks them too.
 |---|---|---|
 | `PLAY0165` | Warning | A property names a type nothing in the document or its imports declares. |
 | `PLAY0166` | Warning | An event is referred to that nothing in the document or its imports declares. |
-| `PLAY0167` | Warning or error | A policy is referred to that nothing in the document declares. A persona's unknown policy is an error (including during semantic binding); other unresolved policy references are warnings. |
+| `PLAY0167` | Warning or error | A policy is referred to that nothing in the document declares. A persona's unknown policy is an error during compilation, Safe authoring, and executable binding. Draft authoring retains it as a warning with explicit unresolved-reference debt; other unresolved policy references are warnings. |
 | `PLAY0168` | Error | A concept and a type, or two of either, are declared under one name. |
 | `PLAY0169` | Error | An authentication block declares two providers under one name. |
 | `PLAY0170` | Error | A seed block seeds nothing. |

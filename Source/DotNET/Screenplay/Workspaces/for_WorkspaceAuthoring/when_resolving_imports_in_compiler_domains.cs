@@ -33,17 +33,34 @@ public class when_resolving_imports_in_compiler_domains
         result.Conflicts.Single().Message.Contains("unresolved", StringComparison.Ordinal).ShouldBeTrue();
     }
 
-    [Theory]
-    [InlineData(WorkspaceAuthoringReferencePolicy.Safe)]
-    [InlineData(WorkspaceAuthoringReferencePolicy.Draft)]
-    public void should_reject_a_persona_with_an_unknown_policy(WorkspaceAuthoringReferencePolicy policy)
+    [Fact]
+    public void should_reject_an_unknown_persona_policy_with_safe_authoring()
     {
-        var result = Propose("persona User\n  policy Missing", policy);
+        var result = Propose("persona User\n  policy Missing", WorkspaceAuthoringReferencePolicy.Safe);
         result.Accepted.ShouldBeFalse();
         result.AuthoringDiagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownPolicy && diagnostic.Severity == DiagnosticSeverity.Error).ShouldBeTrue();
     }
 
-    static WorkspaceAuthoringResult Propose(string addition, WorkspaceAuthoringReferencePolicy policy)
+    [Fact]
+    public void should_admit_a_draft_policy_with_explicit_reference_debt()
+    {
+        var result = Propose("persona User\n  policy Missing", WorkspaceAuthoringReferencePolicy.Draft);
+        result.Accepted.ShouldBeTrue();
+        result.ExecutableReady.ShouldBeFalse();
+        result.AuthoringDiagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownPolicy).ShouldBeTrue();
+        result.AuthoringDiagnostics.Any(diagnostic => diagnostic.Message.Contains("Reference debt: unresolved Policy", StringComparison.Ordinal)).ShouldBeTrue();
+        result.ExecutableDiagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownPolicy && diagnostic.Severity == DiagnosticSeverity.Error).ShouldBeTrue();
+    }
+
+    [Fact]
+    public void should_reject_executable_validation_even_with_draft_references()
+    {
+        var result = Propose("persona User\n  policy Missing", WorkspaceAuthoringReferencePolicy.Draft, WorkspaceAuthoringValidation.Executable);
+        result.Accepted.ShouldBeFalse();
+        result.AuthoringDiagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownPolicy && diagnostic.Severity == DiagnosticSeverity.Error).ShouldBeTrue();
+    }
+
+    static WorkspaceAuthoringResult Propose(string addition, WorkspaceAuthoringReferencePolicy policy, WorkspaceAuthoringValidation validation = WorkspaceAuthoringValidation.Authoring)
     {
         const string source = "import External.Missing";
         var document = WorkspaceDocument.Create("model", PortablePlayPath.Parse("model.play"), Encoding.UTF8.GetBytes(source));
@@ -54,7 +71,7 @@ public class when_resolving_imports_in_compiler_domains
             ExpectedRevision = workspace.Revision,
             ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
             Formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments,
-            Validation = WorkspaceAuthoringValidation.Authoring,
+            Validation = validation,
             ReferencePolicy = policy,
             Documents = [new ReplaceWorkspaceSyntaxDocument(document.Id, syntax)]
         });

@@ -32,7 +32,7 @@ persona InvoiceManager
 ## Rules
 
 - Personas are top-level declarations, alongside policies and modules.
-- Each `policy` line references a declared policy — an unknown policy is an error, so an unresolved persona cannot be mistaken for anonymous access.
+- Each `policy` line references a declared policy — an unknown policy is an error in compilation and executable binding, so an unresolved persona cannot be mistaken for anonymous access. A Draft authoring workspace may retain it as reported reference debt, but is not executable until the policy resolves.
 - The description, when present, is the first body line and appears at most once — a quoted single line or a fenced multi-line block (see [Descriptions](slices.md#descriptions)).
 
 Personas are report-only authoring metadata in the current executable semantic model (ESM). A valid persona no longer blocks binding, but neither its name nor its policies are added to the ESM or enforced by its evaluator. Consumers that need the declaration must use the parsed syntax; an ESM-only renderer cannot recover it.

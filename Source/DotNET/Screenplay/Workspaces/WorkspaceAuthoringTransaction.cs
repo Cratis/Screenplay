@@ -146,7 +146,10 @@ sealed class WorkspaceAuthoringTransaction(ScreenplayWorkspace workspace, IReadO
         }
 
         var compiler = new ScreenplayCompiler();
-        var merged = PlayFolderMerge.Merge([.. ordered.OrderBy(document => document.Path.Value, StringComparer.Ordinal).Select(document => compiler.Parse(document.Text, document.Path.Value))]);
+        var draftAuthoring = request.Validation == WorkspaceAuthoringValidation.Authoring && request.ReferencePolicy == WorkspaceAuthoringReferencePolicy.Draft;
+        var merged = PlayFolderMerge.Merge(
+            [.. ordered.OrderBy(document => document.Path.Value, StringComparer.Ordinal).Select(document => compiler.Parse(document.Text, document.Path.Value))],
+            allowUnresolvedPersonaPolicies: draftAuthoring);
         _diagnostics.AddRange(merged.Diagnostics);
         if (!merged.Success || merged.Value is null)
         {
