@@ -80,7 +80,7 @@ internal sealed partial class McpWorkspaces
                 workspace = McpWorkspaceTransport.Describe(workspace),
                 view,
                 descriptorContractRevision = SemanticTypedContextDescriptor.ContractRevision,
-                available = !workspace.Compilation.TypedContextDescriptors.IsEmpty,
+                available = workspace.Compilation.TypedContextDescriptors.Any(value => value.IsWrapperReady),
                 page = McpPaging.Page(workspace.Compilation.TypedContextDescriptors, DescribeDescriptor, arguments, workspace.Revision.ToString())
             });
         }
@@ -289,7 +289,7 @@ internal sealed partial class McpWorkspaces
         return new
         {
             descriptorContractRevision = SemanticTypedContextDescriptor.ContractRevision,
-            available = !proposal.Workspace.Compilation.TypedContextDescriptors.IsEmpty,
+            available = proposal.Workspace.Compilation.TypedContextDescriptors.Any(value => value.IsWrapperReady),
             page = McpPaging.Page(proposal.Workspace.Compilation.TypedContextDescriptors, DescribeDescriptor, arguments, proposal.Workspace.Revision.ToString())
         };
     }
@@ -300,6 +300,15 @@ internal sealed partial class McpWorkspaces
         role = descriptor.Role.ToString(),
         descriptor.ContextVersion,
         modelRevision = descriptor.ModelRevision?.ToString(),
+        descriptor.IsWrapperReady,
+        types = descriptor.Types.Select(type => new
+        {
+            id = type.Id.ToString(),
+            type.Name,
+            kind = type.Kind.ToString(),
+            primitive = type.Primitive.ToString(),
+            properties = type.Properties.Select(property => new { property.Name, id = property.Id.ToString(), type = DescribeModelType(property.Type) })
+        }),
         operationId = descriptor.OperationId?.ToString(),
         members = descriptor.Members.Select(member => new
         {
@@ -319,7 +328,7 @@ internal sealed partial class McpWorkspaces
             },
             member.IsNullable,
             member.IsDerived,
-            source = new { member.Source.Kind, semanticId = member.Source.SemanticId?.ToString(), member.Source.Path }
+            source = new { member.Source.Kind, semanticId = member.Source.SemanticId?.ToString(), member.Source.Path, member.Source.ConstantValue, eventRevision = member.Source.EventRevision?.ToString() }
         })
     };
 
@@ -336,8 +345,11 @@ internal sealed partial class McpWorkspaces
     {
         role = requirement.Role.ToString(),
         requirement.RequirementId,
-        typedContext = descriptors.Where(value => value.RequirementId == requirement.RequirementId).Take(2).Count() == 1
-            ? DescribeDescriptor(descriptors.Single(value => value.RequirementId == requirement.RequirementId)) : null,
+        typedContext = new
+        {
+            count = descriptors.Count(value => value.RequirementId == requirement.RequirementId),
+            operationIds = descriptors.Where(value => value.RequirementId == requirement.RequirementId).Select(value => value.OperationId?.ToString())
+        },
         requirement.ContextVersion,
         requirement.ResultVersion,
         requirement.RequiredCapability,

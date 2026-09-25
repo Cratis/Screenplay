@@ -2,9 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Globalization;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
 using Cratis.Screenplay.Contexts;
 using Cratis.Screenplay.Semantics.Serialization;
 
@@ -80,8 +77,17 @@ public class when_describing_typed_contexts : given.a_semantic_binder
     }
     [Fact] void should_pin_member_types_identities_sources_and_context_versions()
     {
-        var bytes = Encoding.UTF8.GetBytes(Vector(_result));
-        Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant().ShouldEqual("72c947430bfb7e0c59c7a368b45b53288a11f40e77d14c7ba91b05b362343e7c");
+        var bytes = SemanticTypedContextSerializer.Serialize(_result.TypedContextDescriptors);
+        if (Environment.GetEnvironmentVariable("SCREENPLAY_WRITE_CONTEXT_VECTOR") is { } destination) File.WriteAllBytes(destination, bytes);
+        using var stream = typeof(when_describing_typed_contexts).Assembly.GetManifestResourceStream("Cratis.Screenplay.Semantics.Serialization.Golden.typed-contexts-v1.json")!;
+        using var buffer = new MemoryStream();
+        stream.CopyTo(buffer);
+        bytes.SequenceEqual(buffer.ToArray()).ShouldBeTrue();
+    }
+    [Fact] void should_pin_model_revision_separately()
+    {
+        _result.Value!.Model.Revision.ToString().ShouldEqual("rev1:698456642dc55f915530936e98aa4777d3158cb8ee759e3af7de0d0e39044cf9");
+        _result.TypedContextDescriptors.All(value => value.ModelRevision == _result.Value.Model.Revision).ShouldBeTrue();
     }
     [Fact] void should_hold_the_runtime_context_data_surfaces_to_the_vector()
     {
@@ -92,9 +98,7 @@ public class when_describing_typed_contexts : given.a_semantic_binder
             (typeof(ReducerContext), SemanticImplementationRole.ReducerTransition)
         })
         {
-            var actual = type.GetProperties().Select(property => property.Name);
-            var expected = _result.TypedContextDescriptors.First(value => value.Role == role).Members.Select(member => member.Name);
-            actual.ShouldContainOnly(expected);
+            given.context_contract_surface.AssertMatches(type, _result.TypedContextDescriptors.First(value => value.Role == role));
         }
     }
     [Fact] void should_pair_policy_use_sites_without_describing_unreferenced_policy()
@@ -144,37 +148,7 @@ public class when_describing_typed_contexts : given.a_semantic_binder
             CultureInfo.CurrentCulture = previous;
         }
     }
-    static string Vector(CompilationResult<SemanticCompilation> compilation) => JsonSerializer.Serialize(compilation.TypedContextDescriptors.Select(descriptor => new
-    {
-        descriptor.RequirementId,
-        descriptor.Role,
-        descriptor.ContextVersion,
-        OperationId = descriptor.OperationId?.ToString(),
-        ModelRevision = descriptor.ModelRevision?.ToString(),
-        Members = descriptor.Members.Select(member => new
-        {
-            member.Name,
-            member.IsNullable,
-            member.IsDerived,
-            member.Type.Kind,
-            ModelType = Type(member.Type.ModelType),
-            Shape = member.Type.Shape?.ToString(),
-            member.Type.RuntimeToken,
-            Properties = member.Type.Properties.Select(property => new { property.Name, Id = property.Id.ToString(), Type = Type(property.Type) }),
-            SourceKind = member.Source.Kind,
-            SemanticId = member.Source.SemanticId?.ToString(),
-            member.Source.Path
-        })
-    }));
-
-    static object? Type(SemanticTypeReference? type) => type is null ? null : new
-    {
-        type.Kind,
-        type.Primitive,
-        Target = type.Target.ToString(),
-        type.IsOptional,
-        type.IsCollection
-    };
+    static string Vector(CompilationResult<SemanticCompilation> compilation) => Convert.ToHexString(SemanticTypedContextSerializer.Serialize(compilation.TypedContextDescriptors));
 
     [Fact] void should_leave_v4_canonical_bytes_and_revision_untouched_by_the_sidecar()
     {

@@ -30,7 +30,14 @@ public class when_paging_implementation_requirements : given.a_connection
     [Fact] void should_list_the_handler_role() => _first.GetProperty("items")[0].GetProperty("role").GetString().ShouldEqual("CommandHandler");
     [Fact] void should_list_the_authored_file() => _first.GetProperty("items")[0].GetProperty("file").GetString().ShouldEqual("Handlers/RegisterProject.cs");
     [Fact] void should_name_the_stable_requirement() => _first.GetProperty("items")[0].GetProperty("requirementId").GetString()!.Length.ShouldEqual(64);
-    [Fact] void should_pair_a_single_valued_context_with_the_handler_requirement() => _first.GetProperty("items")[0].GetProperty("typedContext").GetProperty("members")[0].GetProperty("name").GetString().ShouldEqual("Command");
+    [Fact] void should_reference_the_handler_context_without_embedding_members()
+    {
+        var reference = _first.GetProperty("items")[0].GetProperty("typedContext");
+        reference.GetProperty("count").GetInt32().ShouldEqual(1);
+        reference.GetProperty("operationIds").GetArrayLength().ShouldEqual(1);
+        reference.TryGetProperty("members", out _).ShouldBeFalse();
+    }
+    [Fact] void should_report_no_validation_context_on_failed_compilation() => _second.GetProperty("items")[0].GetProperty("typedContext").GetProperty("count").GetInt32().ShouldEqual(0);
     [Fact] void should_expose_the_role_contract_versions() => _first.GetProperty("items")[0].GetProperty("contextVersion").GetUInt32().ShouldEqual(1u);
     [Fact] void should_expose_the_required_capability() => _first.GetProperty("items")[0].GetProperty("requiredCapability").GetString().ShouldEqual("provider-defined");
     [Fact] void should_not_claim_to_have_hashed_the_file() => _first.GetProperty("items")[0].GetProperty("contentHash").GetString().ShouldBeEmpty();

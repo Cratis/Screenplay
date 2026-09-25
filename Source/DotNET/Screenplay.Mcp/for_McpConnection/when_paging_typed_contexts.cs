@@ -8,7 +8,6 @@ namespace Cratis.Screenplay.Mcp.for_McpConnection;
 public class when_paging_typed_contexts : given.a_connection
 {
     JsonElement _first;
-    JsonElement _second;
     JsonElement _stale;
 
     void Because()
@@ -18,7 +17,6 @@ public class when_paging_typed_contexts : given.a_connection
         var opened = Call("open-workspace", new { applicationName = "Projects" }).GetProperty("result").GetProperty("structuredContent");
         var revision = opened.GetProperty("revision").GetString();
         _first = Call("read-workspace", new { expectedRevision = revision, view = "typed-contexts", limit = 1 }).GetProperty("result").GetProperty("structuredContent");
-        _second = Call("read-workspace", new { expectedRevision = revision, view = "typed-contexts", offset = 1, limit = 1, expectedDescriptorContractRevision = "1" }).GetProperty("result").GetProperty("structuredContent");
         _stale = Call("read-workspace", new { expectedRevision = revision, view = "typed-contexts", offset = 1, expectedDescriptorContractRevision = "2" }).GetProperty("result");
     }
 
@@ -33,7 +31,10 @@ public class when_paging_typed_contexts : given.a_connection
         item.GetProperty("members")[0].GetProperty("source").GetProperty("semanticId").GetString().ShouldNotBeEmpty();
         item.GetProperty("modelRevision").ValueKind.ShouldEqual(JsonValueKind.Null);
     }
-    [Fact] void should_page_validation_separately() => _second.GetProperty("page").GetProperty("items")[0].GetProperty("role").GetString().ShouldEqual("CommandValidation");
+    [Fact] void should_report_partial_handlers_as_unavailable() => _first.GetProperty("available").GetBoolean().ShouldBeFalse();
+    [Fact] void should_report_the_handler_as_not_wrapper_ready() => _first.GetProperty("page").GetProperty("items")[0].GetProperty("isWrapperReady").GetBoolean().ShouldBeFalse();
+    [Fact] void should_publish_the_referenced_concept_definition() => _first.GetProperty("page").GetProperty("items")[0].GetProperty("types")[0].GetProperty("kind").GetString().ShouldEqual("Concept");
+    [Fact] void should_publish_only_handler_descriptors() => _first.GetProperty("page").GetProperty("totalCount").GetInt32().ShouldEqual(1);
     [Fact] void should_pin_its_own_contract_revision() => _first.GetProperty("descriptorContractRevision").GetUInt32().ShouldEqual(1u);
     [Fact] void should_refuse_a_stale_contract_revision() => _stale.GetProperty("isError").GetBoolean().ShouldBeTrue();
 }

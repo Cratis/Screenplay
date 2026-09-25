@@ -13,8 +13,8 @@ internal static class SemanticTypedContextCatalog
         ImmutableArray<SemanticImplementationRequirement> requirements,
         bool strict) => Build(application, requirements, strict);
 
-    static SemanticContextType Runtime(string token) => new("runtime", null, null, token);
-    static SemanticContextType Shape(SemanticId id) => new("shape", null, id, null);
+    static SemanticContextType Runtime(string token) => new(SemanticContextTypeKinds.Runtime, null, null, token);
+    static SemanticContextType Shape(SemanticId id) => new(SemanticContextTypeKinds.Shape, null, id, null);
     static SemanticContextType Model(SemanticTypeReference type)
     {
         if (type.Kind == SemanticTypeReferenceKind.Unknown ||
@@ -24,20 +24,20 @@ internal static class SemanticTypedContextCatalog
             throw new InvalidSemanticContract("Typed context has an unresolved model type.");
         }
 
-        return new("model", type, null, null);
+        return new(SemanticContextTypeKinds.Model, type, null, null);
     }
 
     static SemanticTypedContextMember Fixed(string name, string token) =>
-        new(name, Runtime(token), false, false, new("context-contract", null, name));
+        new(name, Runtime(token), false, false, new(SemanticContextSourceKinds.ContextContract, null, name));
 
     static SemanticTypedContextMember Derived(string name, string token, string from) =>
-        new(name, Runtime(token), false, true, new("derived", null, from));
+        new(name, Runtime(token), false, true, new(SemanticContextSourceKinds.Derived, null, from));
 
     static SemanticTypedContextMember Shaped(string name, SemanticId id, string kind, IEnumerable<SemanticProperty> properties, bool nullable = false) =>
         new(name, Shape(id) with { Properties = [.. properties.Select(value => new SemanticContextProperty(value.Name, value.Id, Model(value.Type).ModelType!))] }, nullable, false, new(kind, id, name));
 
     static SemanticTypedContextMember Typed(string name, SemanticTypeReference type, SemanticId id, string path) =>
-        new(name, Model(type), type.IsOptional, false, new("model-property", id, path));
+        new(name, Model(type), type.IsOptional, false, new(SemanticContextSourceKinds.ModelProperty, id, path));
 
     static SemanticTypedContextDescriptor Descriptor(SemanticImplementationRequirement requirement, SemanticId? operation, params SemanticTypedContextMember[] members) =>
         new(requirement.RequirementId, requirement.Role, requirement.ContextVersion, operation, [.. members]);
@@ -53,6 +53,9 @@ internal static class SemanticTypedContextCatalog
         var events = slices.SelectMany(slice => slice.Events).ToArray();
         var readModels = slices.SelectMany(slice => slice.ReadModels).ToArray();
         var result = ImmutableArray.CreateBuilder<SemanticTypedContextDescriptor>();
+
+        // A failed bind never publishes bound-role descriptors, even if some declarations were resolved.
+        if (!strict) requirements = [.. requirements.Where(value => value.Role == SemanticImplementationRole.CommandHandler)];
         foreach (var requirement in requirements)
         {
             var matches = new List<SemanticTypedContextDescriptor>();
@@ -64,12 +67,12 @@ internal static class SemanticTypedContextCatalog
                         matches.Add(Descriptor(
                             requirement,
                             command.Id,
-                            Shaped("Command", command.Id, "command", command.Properties),
-                            Fixed("Tenant", "TenantId"),
-                            Fixed("Identity", "Identity"),
-                            Fixed("CausedBy", "CausedBy"),
-                            Fixed("Causation", "Causation"),
-                            Fixed("Occurred", "DateTimeOffset")));
+                            Shaped("Command", command.Id, SemanticContextSourceKinds.Command, command.Properties),
+                            Fixed("Tenant", SemanticContextRuntimeTokens.TenantId),
+                            Fixed("Identity", SemanticContextRuntimeTokens.Identity),
+                            Fixed("CausedBy", SemanticContextRuntimeTokens.CausedBy),
+                            Fixed("Causation", SemanticContextRuntimeTokens.Causation),
+                            Fixed("Occurred", SemanticContextRuntimeTokens.DateTime)));
                     }
                     break;
                 case SemanticImplementationRole.CommandValidation:
@@ -81,14 +84,14 @@ internal static class SemanticTypedContextCatalog
                         var whole = command.CodeValidations.Any(value => value.RequirementId == requirement.RequirementId);
                         if (whole)
                         {
-                            matches.Add(Rule(requirement, Shaped("Artifact", command.Id, "command", command.Properties), Shaped("Value", command.Id, "command", command.Properties), string.Empty));
+                            matches.Add(Rule(requirement, Shaped("Artifact", command.Id, SemanticContextSourceKinds.Command, command.Properties), Shaped("Value", command.Id, SemanticContextSourceKinds.Command, command.Properties), null, string.Empty));
                         }
                         foreach (var rule in rules)
                         {
                             var property = command.Properties.SingleOrDefault(value => value.Id == rule.Property);
                             if (property is not null)
                             {
-                                matches.Add(Rule(requirement, Shaped("Artifact", command.Id, "command", command.Properties), Typed("Value", property.Type, property.Id, property.Name), property.Name));
+                                matches.Add(Rule(requirement, Shaped("Artifact", command.Id, SemanticContextSourceKinds.Command, command.Properties), Typed("Value", property.Type, property.Id, property.Name), property.Id, property.Name));
                             }
                         }
                     }
@@ -96,11 +99,12 @@ internal static class SemanticTypedContextCatalog
                     {
                         if (concept.Validations.Any(value => value.RequirementId == requirement.RequirementId))
                         {
-                            var type = SemanticTypeReference.ForConcept(concept.Id);
+                            var type = Model(SemanticTypeReference.ForConcept(concept.Id));
                             matches.Add(Rule(
                                 requirement,
-                                Typed("Artifact", type, concept.Id, "value"),
-                                Typed("Value", type, concept.Id, "value"),
+                                new("Artifact", type, false, false, new(SemanticContextSourceKinds.ConceptValue, concept.Id, "value")),
+                                new("Value", type, false, false, new(SemanticContextSourceKinds.ConceptValue, concept.Id, "value")),
+                                null,
                                 string.Empty));
                         }
                     }
@@ -116,25 +120,26 @@ internal static class SemanticTypedContextCatalog
                             matches.Add(Descriptor(
                                 requirement,
                                 reducer.ReadModel,
-                                Shaped("State", state.Id, "read-model", state.Properties, true),
-                                Shaped("Event", @event.Id, "current-event", @event.Properties),
-                                new("Key", Runtime("string"), false, false, new("event-source-id", @event.Id, "eventSourceId")),
-                                Fixed("Tenant", "TenantId"),
-                                Fixed("Occurred", "DateTimeOffset"),
-                                Fixed("SequenceNumber", "long"),
-                                Derived("IsFirst", "bool", "State")));
+                                Shaped("State", state.Id, SemanticContextSourceKinds.ReadModel, state.Properties, true),
+                                Shaped("Event", @event.Id, SemanticContextSourceKinds.CurrentEvent, @event.Properties) with { Source = new(SemanticContextSourceKinds.CurrentEvent, @event.Id, "Event") { EventRevision = @event.Revision } },
+                                new("Key", Runtime(SemanticContextRuntimeTokens.Text), false, false, new(SemanticContextSourceKinds.EventSourceId, @event.Id, "eventSourceId")),
+                                Fixed("Tenant", SemanticContextRuntimeTokens.TenantId),
+                                Fixed("Occurred", SemanticContextRuntimeTokens.DateTime),
+                                Fixed("SequenceNumber", SemanticContextRuntimeTokens.WholeNumber),
+                                Derived("IsFirst", SemanticContextRuntimeTokens.Boolean, "State")));
                         }
                     }
                     break;
                 case SemanticImplementationRole.PolicyPredicate:
+                    // Policy references in the ESM are name-only; use-site joins necessarily use the declared name.
                     var policyNames = application.Policies.Where(value => value.Condition is SemanticOpaquePolicyCondition opaque && opaque.RequirementId == requirement.RequirementId)
                         .Select(value => value.Name).ToHashSet(StringComparer.Ordinal);
                     foreach (var command in commands.Where(value => References(value.Authorization, policyNames)))
                     {
-                        var identifier = command.Properties.SingleOrDefault(value => value.IsIdentifier);
+                        var identifier = command.Properties.FirstOrDefault(value => value.IsIdentifier);
                         var subject = identifier is null
-                            ? new SemanticContextSource("context-contract", null, "Subject")
-                            : new SemanticContextSource("command-identifier", identifier.Id, identifier.Name);
+                            ? new SemanticContextSource(SemanticContextSourceKinds.Unavailable, null, string.Empty)
+                            : new SemanticContextSource(SemanticContextSourceKinds.CommandIdentifier, identifier.Id, identifier.Name);
                         matches.Add(Policy(requirement, command.Id, command.Properties, subject));
                     }
                     foreach (var query in queries.Where(value => References(value.Authorization, policyNames)))
@@ -143,7 +148,7 @@ internal static class SemanticTypedContextCatalog
                             requirement,
                             query.Id,
                             [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)],
-                            new SemanticContextSource("query-key", query.Argument.Id, query.Argument.Name)));
+                            new SemanticContextSource(SemanticContextSourceKinds.QueryKey, query.Argument.Id, query.Argument.Name)));
                     }
                     break;
             }
@@ -157,9 +162,53 @@ internal static class SemanticTypedContextCatalog
             {
                 throw new InvalidSemanticContract($"Typed context source for requirement '{requirement.RequirementId}' is ambiguous.");
             }
-            result.AddRange(matches);
+            foreach (var descriptor in matches)
+            {
+                try
+                {
+                    result.Add(descriptor with { Types = TypeClosure(application, descriptor), HasResolvedTypes = true });
+                }
+                catch (InvalidSemanticContract) when (!strict)
+                {
+                    // No ESM exists to resolve a missing definition; this descriptor is not renderable.
+                    result.Add(descriptor);
+                }
+            }
         }
         return result.ToImmutable();
+    }
+
+    static ImmutableArray<SemanticContextTypeDefinition> TypeClosure(SemanticApplication application, SemanticTypedContextDescriptor descriptor)
+    {
+        var definitions = ImmutableArray.CreateBuilder<SemanticContextTypeDefinition>();
+        var visited = new HashSet<SemanticId>();
+        void Visit(SemanticTypeReference type)
+        {
+            if (type.Kind == SemanticTypeReferenceKind.Primitive) return;
+            if (type.Kind is not (SemanticTypeReferenceKind.Concept or SemanticTypeReferenceKind.CompositeType) || type.Target == default)
+                throw new InvalidSemanticContract("Typed context has an unresolved model type.");
+            if (!visited.Add(type.Target)) return;
+            if (type.Kind == SemanticTypeReferenceKind.Concept)
+            {
+                var concept = application.Concepts.SingleOrDefault(value => value.Id == type.Target)
+                    ?? throw new InvalidSemanticContract($"Typed context concept '{type.Target}' is unresolved.");
+                definitions.Add(new(concept.Id, concept.Name, type.Kind, concept.Primitive, []));
+            }
+            else
+            {
+                var composite = application.Types.SingleOrDefault(value => value.Id == type.Target)
+                    ?? throw new InvalidSemanticContract($"Typed context composite type '{type.Target}' is unresolved.");
+                var properties = composite.Properties.Select(value => new SemanticContextProperty(value.Name, value.Id, Model(value.Type).ModelType!)).ToImmutableArray();
+                definitions.Add(new(composite.Id, composite.Name, type.Kind, SemanticPrimitiveType.Unknown, properties));
+                foreach (var property in properties) Visit(property.Type);
+            }
+        }
+        foreach (var member in descriptor.Members)
+        {
+            if (member.Type.ModelType is { } type) Visit(type);
+            foreach (var property in member.Type.Properties) Visit(property.Type);
+        }
+        return definitions.ToImmutable();
     }
 
     static IEnumerable<SemanticSlice> AllSlices(SemanticModule module) => module.Features.SelectMany(AllSlices);
@@ -176,21 +225,21 @@ internal static class SemanticTypedContextCatalog
         Descriptor(
             requirement,
             operation,
-            Shaped("Artifact", operation, "authorized-operation", properties),
-            new("Subject", Runtime("string"), false, false, subject),
-            Fixed("Identity", "Identity"),
-            Fixed("Tenant", "TenantId"),
-            Fixed("Occurred", "DateTimeOffset"));
+            Shaped("Artifact", operation, SemanticContextSourceKinds.AuthorizedOperation, properties),
+            new("Subject", Runtime(SemanticContextRuntimeTokens.Text), false, false, subject),
+            Fixed("Identity", SemanticContextRuntimeTokens.Identity),
+            Fixed("Tenant", SemanticContextRuntimeTokens.TenantId),
+            Fixed("Occurred", SemanticContextRuntimeTokens.DateTime));
 
-    static SemanticTypedContextDescriptor Rule(SemanticImplementationRequirement requirement, SemanticTypedContextMember artifact, SemanticTypedContextMember value, string path) =>
+    static SemanticTypedContextDescriptor Rule(SemanticImplementationRequirement requirement, SemanticTypedContextMember artifact, SemanticTypedContextMember value, SemanticId? propertyId, string path) =>
         Descriptor(
             requirement,
             requirement.Source.SemanticId,
             artifact,
             value,
-            new("Property", Runtime("string"), false, false, new("context-contract", null, path)),
-            Fixed("Tenant", "TenantId"),
-            Fixed("CausedBy", "CausedBy"),
-            Fixed("Occurred", "DateTimeOffset"),
-            Derived("IsWholeArtifact", "bool", "Property"));
+            new("Property", Runtime(SemanticContextRuntimeTokens.Text), false, false, new(propertyId is null ? SemanticContextSourceKinds.ValidatedArtifact : SemanticContextSourceKinds.ValidatedProperty, propertyId ?? requirement.Source.SemanticId, string.Empty) { ConstantValue = path }),
+            Fixed("Tenant", SemanticContextRuntimeTokens.TenantId),
+            Fixed("CausedBy", SemanticContextRuntimeTokens.CausedBy),
+            Fixed("Occurred", SemanticContextRuntimeTokens.DateTime),
+            Derived("IsWholeArtifact", SemanticContextRuntimeTokens.Boolean, "Property"));
 }

@@ -1,0 +1,1282 @@
+{
+  "contractRevision": 1,
+  "typeKinds": [
+    "runtime",
+    "shape",
+    "model"
+  ],
+  "sourceKinds": [
+    "context-contract",
+    "derived",
+    "command",
+    "read-model",
+    "current-event",
+    "event-source-id",
+    "model-property",
+    "concept-value",
+    "validated-property",
+    "validated-artifact",
+    "authorized-operation",
+    "command-identifier",
+    "query-key",
+    "unavailable"
+  ],
+  "runtimeTokens": [
+    "Text",
+    "WholeNumber",
+    "Boolean",
+    "DateTime",
+    "TenantId",
+    "Identity",
+    "CausedBy",
+    "Causation"
+  ],
+  "descriptors": [
+    {
+      "RequirementId": "3e494fe8c0d9e01c9e1ba660f26be5f7771fc7fc09a59d52cd11544f032c20c4",
+      "role": "RulePredicate",
+      "ContextVersion": 1,
+      "operationId": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+      "IsWrapperReady": true,
+      "types": [
+        {
+          "id": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+          "Name": "Code",
+          "kind": "Concept",
+          "primitive": "Text",
+          "properties": []
+        }
+      ],
+      "members": [
+        {
+          "Name": "Artifact",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "model",
+            "modelType": {
+              "kind": "Concept",
+              "primitive": "Unknown",
+              "target": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+              "IsCollection": false,
+              "IsOptional": false
+            },
+            "shape": null,
+            "RuntimeToken": null,
+            "properties": []
+          },
+          "source": {
+            "Kind": "concept-value",
+            "semanticId": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+            "Path": "value",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Value",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "model",
+            "modelType": {
+              "kind": "Concept",
+              "primitive": "Unknown",
+              "target": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+              "IsCollection": false,
+              "IsOptional": false
+            },
+            "shape": null,
+            "RuntimeToken": null,
+            "properties": []
+          },
+          "source": {
+            "Kind": "concept-value",
+            "semanticId": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+            "Path": "value",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Property",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "Text",
+            "properties": []
+          },
+          "source": {
+            "Kind": "validated-artifact",
+            "semanticId": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+            "Path": "",
+            "ConstantValue": "",
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Tenant",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "TenantId",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "Tenant",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "CausedBy",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "CausedBy",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "CausedBy",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Occurred",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "DateTime",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "Occurred",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "IsWholeArtifact",
+          "IsNullable": false,
+          "IsDerived": true,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "Boolean",
+            "properties": []
+          },
+          "source": {
+            "Kind": "derived",
+            "semanticId": null,
+            "Path": "Property",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        }
+      ]
+    },
+    {
+      "RequirementId": "dc74af228bd650d305267e7f0d605eac4ed238fb23676445b70761fea6613855",
+      "role": "ConceptValidation",
+      "ContextVersion": 1,
+      "operationId": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+      "IsWrapperReady": true,
+      "types": [
+        {
+          "id": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+          "Name": "Code",
+          "kind": "Concept",
+          "primitive": "Text",
+          "properties": []
+        }
+      ],
+      "members": [
+        {
+          "Name": "Artifact",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "model",
+            "modelType": {
+              "kind": "Concept",
+              "primitive": "Unknown",
+              "target": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+              "IsCollection": false,
+              "IsOptional": false
+            },
+            "shape": null,
+            "RuntimeToken": null,
+            "properties": []
+          },
+          "source": {
+            "Kind": "concept-value",
+            "semanticId": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+            "Path": "value",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Value",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "model",
+            "modelType": {
+              "kind": "Concept",
+              "primitive": "Unknown",
+              "target": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+              "IsCollection": false,
+              "IsOptional": false
+            },
+            "shape": null,
+            "RuntimeToken": null,
+            "properties": []
+          },
+          "source": {
+            "Kind": "concept-value",
+            "semanticId": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+            "Path": "value",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Property",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "Text",
+            "properties": []
+          },
+          "source": {
+            "Kind": "validated-artifact",
+            "semanticId": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+            "Path": "",
+            "ConstantValue": "",
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Tenant",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "TenantId",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "Tenant",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "CausedBy",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "CausedBy",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "CausedBy",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Occurred",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "DateTime",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "Occurred",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "IsWholeArtifact",
+          "IsNullable": false,
+          "IsDerived": true,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "Boolean",
+            "properties": []
+          },
+          "source": {
+            "Kind": "derived",
+            "semanticId": null,
+            "Path": "Property",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        }
+      ]
+    },
+    {
+      "RequirementId": "4c87b68d5fb0f6f757e1007d2641ce7a8c78dcd3c93a299f3ecf86ef83710e3e",
+      "role": "PolicyPredicate",
+      "ContextVersion": 1,
+      "operationId": "sem1:eae9043627db369cc1fa591ecbe6c7967124303aa33627eb7b66a9613cb4196a",
+      "IsWrapperReady": true,
+      "types": [
+        {
+          "id": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+          "Name": "Code",
+          "kind": "Concept",
+          "primitive": "Text",
+          "properties": []
+        }
+      ],
+      "members": [
+        {
+          "Name": "Artifact",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "shape",
+            "modelType": null,
+            "shape": "sem1:eae9043627db369cc1fa591ecbe6c7967124303aa33627eb7b66a9613cb4196a",
+            "RuntimeToken": null,
+            "properties": [
+              {
+                "Name": "code",
+                "id": "sem1:9c3463e9dcd0e20b2b27eb798c16157d6513f5a3ff67707d1cf37618c74d4bc0",
+                "type": {
+                  "kind": "Concept",
+                  "primitive": "Unknown",
+                  "target": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+                  "IsCollection": false,
+                  "IsOptional": false
+                }
+              }
+            ]
+          },
+          "source": {
+            "Kind": "authorized-operation",
+            "semanticId": "sem1:eae9043627db369cc1fa591ecbe6c7967124303aa33627eb7b66a9613cb4196a",
+            "Path": "Artifact",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Subject",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "Text",
+            "properties": []
+          },
+          "source": {
+            "Kind": "unavailable",
+            "semanticId": null,
+            "Path": "",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Identity",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "Identity",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "Identity",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Tenant",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "TenantId",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "Tenant",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Occurred",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "DateTime",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "Occurred",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        }
+      ]
+    },
+    {
+      "RequirementId": "4c87b68d5fb0f6f757e1007d2641ce7a8c78dcd3c93a299f3ecf86ef83710e3e",
+      "role": "PolicyPredicate",
+      "ContextVersion": 1,
+      "operationId": "sem1:eecdf2e84737e0eb5f078073b7ba9d06bd575a037f57f7a2e1ededaf471eeb78",
+      "IsWrapperReady": true,
+      "types": [],
+      "members": [
+        {
+          "Name": "Artifact",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "shape",
+            "modelType": null,
+            "shape": "sem1:eecdf2e84737e0eb5f078073b7ba9d06bd575a037f57f7a2e1ededaf471eeb78",
+            "RuntimeToken": null,
+            "properties": [
+              {
+                "Name": "id",
+                "id": "sem1:bfa61b80ab6adaddccdf437f89044421e616270f179ccb3520b20e6097775372",
+                "type": {
+                  "kind": "Primitive",
+                  "primitive": "Uuid",
+                  "target": null,
+                  "IsCollection": false,
+                  "IsOptional": false
+                }
+              }
+            ]
+          },
+          "source": {
+            "Kind": "authorized-operation",
+            "semanticId": "sem1:eecdf2e84737e0eb5f078073b7ba9d06bd575a037f57f7a2e1ededaf471eeb78",
+            "Path": "Artifact",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Subject",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "Text",
+            "properties": []
+          },
+          "source": {
+            "Kind": "query-key",
+            "semanticId": "sem1:bfa61b80ab6adaddccdf437f89044421e616270f179ccb3520b20e6097775372",
+            "Path": "id",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Identity",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "Identity",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "Identity",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Tenant",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "TenantId",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "Tenant",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Occurred",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "DateTime",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "Occurred",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        }
+      ]
+    },
+    {
+      "RequirementId": "30d31b6137c6251135e889e13cfb6653d04b942c08747720f7da0863d085ee66",
+      "role": "ReducerTransition",
+      "ContextVersion": 1,
+      "operationId": "sem1:4a48e3dd3082d53c447e1d07476990a6ab49b9fd74b1e3723ebe62bf4ceb6f18",
+      "IsWrapperReady": true,
+      "types": [],
+      "members": [
+        {
+          "Name": "State",
+          "IsNullable": true,
+          "IsDerived": false,
+          "type": {
+            "Kind": "shape",
+            "modelType": null,
+            "shape": "sem1:4a48e3dd3082d53c447e1d07476990a6ab49b9fd74b1e3723ebe62bf4ceb6f18",
+            "RuntimeToken": null,
+            "properties": [
+              {
+                "Name": "id",
+                "id": "sem1:e8520f0d38b6195ff1bce103ac26dc56b8ef44e04dc02b86c8304325983cd422",
+                "type": {
+                  "kind": "Primitive",
+                  "primitive": "Uuid",
+                  "target": null,
+                  "IsCollection": false,
+                  "IsOptional": false
+                }
+              }
+            ]
+          },
+          "source": {
+            "Kind": "read-model",
+            "semanticId": "sem1:4a48e3dd3082d53c447e1d07476990a6ab49b9fd74b1e3723ebe62bf4ceb6f18",
+            "Path": "State",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Event",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "shape",
+            "modelType": null,
+            "shape": "sem1:563db205a96ee8a82681ef86e17adcf76569bc849dbe585e51852f72e0087f38",
+            "RuntimeToken": null,
+            "properties": [
+              {
+                "Name": "current",
+                "id": "sem1:a24e034c10b4bc3419b2b842e0ab255f18a56018bf8e96200b404c231d6363dc",
+                "type": {
+                  "kind": "Primitive",
+                  "primitive": "Text",
+                  "target": null,
+                  "IsCollection": false,
+                  "IsOptional": false
+                }
+              }
+            ]
+          },
+          "source": {
+            "Kind": "current-event",
+            "semanticId": "sem1:563db205a96ee8a82681ef86e17adcf76569bc849dbe585e51852f72e0087f38",
+            "Path": "Event",
+            "ConstantValue": null,
+            "eventRevision": "EventContractRevision { Value = 2, IsValid = True }"
+          }
+        },
+        {
+          "Name": "Key",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "Text",
+            "properties": []
+          },
+          "source": {
+            "Kind": "event-source-id",
+            "semanticId": "sem1:563db205a96ee8a82681ef86e17adcf76569bc849dbe585e51852f72e0087f38",
+            "Path": "eventSourceId",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Tenant",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "TenantId",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "Tenant",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Occurred",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "DateTime",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "Occurred",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "SequenceNumber",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "WholeNumber",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "SequenceNumber",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "IsFirst",
+          "IsNullable": false,
+          "IsDerived": true,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "Boolean",
+            "properties": []
+          },
+          "source": {
+            "Kind": "derived",
+            "semanticId": null,
+            "Path": "State",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        }
+      ]
+    },
+    {
+      "RequirementId": "aea35ced6f39e44f0c0cf50885cea609254dcdfa2922f054f8ab173551d3343f",
+      "role": "ReducerTransition",
+      "ContextVersion": 1,
+      "operationId": "sem1:4a48e3dd3082d53c447e1d07476990a6ab49b9fd74b1e3723ebe62bf4ceb6f18",
+      "IsWrapperReady": true,
+      "types": [],
+      "members": [
+        {
+          "Name": "State",
+          "IsNullable": true,
+          "IsDerived": false,
+          "type": {
+            "Kind": "shape",
+            "modelType": null,
+            "shape": "sem1:4a48e3dd3082d53c447e1d07476990a6ab49b9fd74b1e3723ebe62bf4ceb6f18",
+            "RuntimeToken": null,
+            "properties": [
+              {
+                "Name": "id",
+                "id": "sem1:e8520f0d38b6195ff1bce103ac26dc56b8ef44e04dc02b86c8304325983cd422",
+                "type": {
+                  "kind": "Primitive",
+                  "primitive": "Uuid",
+                  "target": null,
+                  "IsCollection": false,
+                  "IsOptional": false
+                }
+              }
+            ]
+          },
+          "source": {
+            "Kind": "read-model",
+            "semanticId": "sem1:4a48e3dd3082d53c447e1d07476990a6ab49b9fd74b1e3723ebe62bf4ceb6f18",
+            "Path": "State",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Event",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "shape",
+            "modelType": null,
+            "shape": "sem1:16f16ea6a73459c2bd61b8f18741c1ce6e301fdd9eab7b5fcce357b8b1fd0285",
+            "RuntimeToken": null,
+            "properties": [
+              {
+                "Name": "reason",
+                "id": "sem1:7891496cb1a8bb23715c33abe455a624e9f3179532a2c794aa66f08de6902e05",
+                "type": {
+                  "kind": "Primitive",
+                  "primitive": "Text",
+                  "target": null,
+                  "IsCollection": false,
+                  "IsOptional": false
+                }
+              }
+            ]
+          },
+          "source": {
+            "Kind": "current-event",
+            "semanticId": "sem1:16f16ea6a73459c2bd61b8f18741c1ce6e301fdd9eab7b5fcce357b8b1fd0285",
+            "Path": "Event",
+            "ConstantValue": null,
+            "eventRevision": "EventContractRevision { Value = 1, IsValid = True }"
+          }
+        },
+        {
+          "Name": "Key",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "Text",
+            "properties": []
+          },
+          "source": {
+            "Kind": "event-source-id",
+            "semanticId": "sem1:16f16ea6a73459c2bd61b8f18741c1ce6e301fdd9eab7b5fcce357b8b1fd0285",
+            "Path": "eventSourceId",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Tenant",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "TenantId",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "Tenant",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Occurred",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "DateTime",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "Occurred",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "SequenceNumber",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "WholeNumber",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "SequenceNumber",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "IsFirst",
+          "IsNullable": false,
+          "IsDerived": true,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "Boolean",
+            "properties": []
+          },
+          "source": {
+            "Kind": "derived",
+            "semanticId": null,
+            "Path": "State",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        }
+      ]
+    },
+    {
+      "RequirementId": "93b152ddca60b3d78cf7b063ddf7bbc307ee96993fbd991398cd169e270deecf",
+      "role": "CommandValidation",
+      "ContextVersion": 1,
+      "operationId": "sem1:eae9043627db369cc1fa591ecbe6c7967124303aa33627eb7b66a9613cb4196a",
+      "IsWrapperReady": true,
+      "types": [
+        {
+          "id": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+          "Name": "Code",
+          "kind": "Concept",
+          "primitive": "Text",
+          "properties": []
+        }
+      ],
+      "members": [
+        {
+          "Name": "Artifact",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "shape",
+            "modelType": null,
+            "shape": "sem1:eae9043627db369cc1fa591ecbe6c7967124303aa33627eb7b66a9613cb4196a",
+            "RuntimeToken": null,
+            "properties": [
+              {
+                "Name": "code",
+                "id": "sem1:9c3463e9dcd0e20b2b27eb798c16157d6513f5a3ff67707d1cf37618c74d4bc0",
+                "type": {
+                  "kind": "Concept",
+                  "primitive": "Unknown",
+                  "target": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+                  "IsCollection": false,
+                  "IsOptional": false
+                }
+              }
+            ]
+          },
+          "source": {
+            "Kind": "command",
+            "semanticId": "sem1:eae9043627db369cc1fa591ecbe6c7967124303aa33627eb7b66a9613cb4196a",
+            "Path": "Artifact",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Value",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "shape",
+            "modelType": null,
+            "shape": "sem1:eae9043627db369cc1fa591ecbe6c7967124303aa33627eb7b66a9613cb4196a",
+            "RuntimeToken": null,
+            "properties": [
+              {
+                "Name": "code",
+                "id": "sem1:9c3463e9dcd0e20b2b27eb798c16157d6513f5a3ff67707d1cf37618c74d4bc0",
+                "type": {
+                  "kind": "Concept",
+                  "primitive": "Unknown",
+                  "target": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+                  "IsCollection": false,
+                  "IsOptional": false
+                }
+              }
+            ]
+          },
+          "source": {
+            "Kind": "command",
+            "semanticId": "sem1:eae9043627db369cc1fa591ecbe6c7967124303aa33627eb7b66a9613cb4196a",
+            "Path": "Value",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Property",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "Text",
+            "properties": []
+          },
+          "source": {
+            "Kind": "validated-artifact",
+            "semanticId": "sem1:eae9043627db369cc1fa591ecbe6c7967124303aa33627eb7b66a9613cb4196a",
+            "Path": "",
+            "ConstantValue": "",
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Tenant",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "TenantId",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "Tenant",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "CausedBy",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "CausedBy",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "CausedBy",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Occurred",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "DateTime",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "Occurred",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "IsWholeArtifact",
+          "IsNullable": false,
+          "IsDerived": true,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "Boolean",
+            "properties": []
+          },
+          "source": {
+            "Kind": "derived",
+            "semanticId": null,
+            "Path": "Property",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        }
+      ]
+    },
+    {
+      "RequirementId": "2b1ce94020c1084312955e0f2a2c35634f4710a2980d210f8898c32f9d51a1fe",
+      "role": "RulePredicate",
+      "ContextVersion": 1,
+      "operationId": "sem1:eae9043627db369cc1fa591ecbe6c7967124303aa33627eb7b66a9613cb4196a",
+      "IsWrapperReady": true,
+      "types": [
+        {
+          "id": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+          "Name": "Code",
+          "kind": "Concept",
+          "primitive": "Text",
+          "properties": []
+        }
+      ],
+      "members": [
+        {
+          "Name": "Artifact",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "shape",
+            "modelType": null,
+            "shape": "sem1:eae9043627db369cc1fa591ecbe6c7967124303aa33627eb7b66a9613cb4196a",
+            "RuntimeToken": null,
+            "properties": [
+              {
+                "Name": "code",
+                "id": "sem1:9c3463e9dcd0e20b2b27eb798c16157d6513f5a3ff67707d1cf37618c74d4bc0",
+                "type": {
+                  "kind": "Concept",
+                  "primitive": "Unknown",
+                  "target": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+                  "IsCollection": false,
+                  "IsOptional": false
+                }
+              }
+            ]
+          },
+          "source": {
+            "Kind": "command",
+            "semanticId": "sem1:eae9043627db369cc1fa591ecbe6c7967124303aa33627eb7b66a9613cb4196a",
+            "Path": "Artifact",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Value",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "model",
+            "modelType": {
+              "kind": "Concept",
+              "primitive": "Unknown",
+              "target": "sem1:ca51fd2d26b5511409aaa7019437ceb86a9bb67d0c76d144a4cbeba3c5c51541",
+              "IsCollection": false,
+              "IsOptional": false
+            },
+            "shape": null,
+            "RuntimeToken": null,
+            "properties": []
+          },
+          "source": {
+            "Kind": "model-property",
+            "semanticId": "sem1:9c3463e9dcd0e20b2b27eb798c16157d6513f5a3ff67707d1cf37618c74d4bc0",
+            "Path": "code",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Property",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "Text",
+            "properties": []
+          },
+          "source": {
+            "Kind": "validated-property",
+            "semanticId": "sem1:9c3463e9dcd0e20b2b27eb798c16157d6513f5a3ff67707d1cf37618c74d4bc0",
+            "Path": "",
+            "ConstantValue": "code",
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Tenant",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "TenantId",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "Tenant",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "CausedBy",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "CausedBy",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "CausedBy",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "Occurred",
+          "IsNullable": false,
+          "IsDerived": false,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "DateTime",
+            "properties": []
+          },
+          "source": {
+            "Kind": "context-contract",
+            "semanticId": null,
+            "Path": "Occurred",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        },
+        {
+          "Name": "IsWholeArtifact",
+          "IsNullable": false,
+          "IsDerived": true,
+          "type": {
+            "Kind": "runtime",
+            "modelType": null,
+            "shape": null,
+            "RuntimeToken": "Boolean",
+            "properties": []
+          },
+          "source": {
+            "Kind": "derived",
+            "semanticId": null,
+            "Path": "Property",
+            "ConstantValue": null,
+            "eventRevision": null
+          }
+        }
+      ]
+    }
+  ]
+}

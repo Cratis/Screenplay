@@ -5,7 +5,7 @@ using Cratis.Screenplay.Semantics.Serialization.given;
 
 namespace Cratis.Screenplay.Semantics.Serialization.for_CanonicalSemanticModelSerializer;
 
-public class when_publishing_typed_context_sidecars : Specification
+public class when_preserving_canonical_model_vectors_with_sidecars : Specification
 {
     [Fact] void should_preserve_every_existing_schema_byte_vector_and_semantic_revision()
     {

@@ -1,9 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
 using Cratis.Screenplay.Contexts;
 
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder;
@@ -33,31 +30,15 @@ public class when_describing_an_unbound_handler : given.a_semantic_binder
         descriptor.Members.Select(value => value.Name).ShouldContainOnly(["Command", "Tenant", "Identity", "CausedBy", "Causation", "Occurred"]);
     }
     [Fact] void should_hold_the_runtime_command_context_to_the_vector() =>
-        typeof(CommandContext).GetProperties().Select(property => property.Name).ShouldContainOnly(_result.TypedContextDescriptors.Single().Members.Select(member => member.Name));
+        given.context_contract_surface.AssertMatches(typeof(CommandContext), _result.TypedContextDescriptors.Single());
+    [Fact] void should_report_an_incomplete_compilation() => _result.TypedContextDescriptors.Single().IsWrapperReady.ShouldBeFalse();
     [Fact] void should_pin_the_handler_vector()
     {
-        var descriptor = _result.TypedContextDescriptors.Single();
-        var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
-        {
-            descriptor.RequirementId,
-            descriptor.Role,
-            descriptor.ContextVersion,
-            OperationId = descriptor.OperationId?.ToString(),
-            ModelRevision = descriptor.ModelRevision?.ToString(),
-            Members = descriptor.Members.Select(member => new
-            {
-                member.Name,
-                member.IsNullable,
-                member.IsDerived,
-                member.Type.Kind,
-                Shape = member.Type.Shape?.ToString(),
-                member.Type.RuntimeToken,
-                Properties = member.Type.Properties.Select(property => new { property.Name, Id = property.Id.ToString(), Type = property.Type.Kind.ToString(), Target = property.Type.Target.ToString(), property.Type.IsOptional }),
-                SourceKind = member.Source.Kind,
-                SemanticId = member.Source.SemanticId?.ToString(),
-                member.Source.Path
-            })
-        }));
-        Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant().ShouldEqual("db26867396b739e4fdddef401341355f565c65cb83ac7ee1d38a525a842c0634");
+        var bytes = SemanticTypedContextSerializer.Serialize(_result.TypedContextDescriptors);
+        if (Environment.GetEnvironmentVariable("SCREENPLAY_WRITE_HANDLER_VECTOR") is { } destination) File.WriteAllBytes(destination, bytes);
+        using var stream = typeof(when_describing_an_unbound_handler).Assembly.GetManifestResourceStream("Cratis.Screenplay.Semantics.Serialization.Golden.unbound-handler-context-v1.json")!;
+        using var buffer = new MemoryStream();
+        stream.CopyTo(buffer);
+        bytes.SequenceEqual(buffer.ToArray()).ShouldBeTrue();
     }
 }
