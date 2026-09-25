@@ -55,6 +55,8 @@ static class McpDeclarationDetails
                     specification.Name,
                     specification.Location,
                     command = specification.When?.CommandType,
+                    whenAppendedEvent = specification.WhenAppended?.EventType,
+                    thenDenied = specification.ThenDenied is not null,
                     givenEvents = specification.Given.Count(),
                     thenEvents = specification.ThenEvents.Count(),
                     thenErrors = specification.ThenErrors.Count(),

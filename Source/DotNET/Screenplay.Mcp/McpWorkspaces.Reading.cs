@@ -15,6 +15,31 @@ internal sealed partial class McpWorkspaces
     {
         var workspace = CheckedCurrent(arguments);
         var view = McpJson.OptionalString(arguments, "view") ?? "documents";
+        if (view == "source-map")
+        {
+            var compilation = workspace.Compilation.Value;
+            return McpJson.ToolResult(new
+            {
+                workspace = McpWorkspaceTransport.Describe(workspace),
+                view,
+                available = compilation is not null,
+                executableDiagnostics = compilation is null ? workspace.Compilation.Diagnostics : [],
+                page = McpPaging.Page(
+                    compilation?.SourceMap.Entries ?? [],
+                    entry => new
+                    {
+                        semanticId = entry.SemanticId.ToString(),
+                        role = entry.Role.ToString(),
+                        origin = entry.Origin.ToString(),
+                        documentId = entry.Span.Document.ToString(),
+                        path = workspace.Documents.Single(document => document.Id == entry.Span.Document).Path.Value,
+                        span = entry.Span
+                    },
+                    arguments,
+                    workspace.Revision.ToString())
+            });
+        }
+
         var items = view switch
         {
             "documents" => workspace.Documents.Select(document => (object)new

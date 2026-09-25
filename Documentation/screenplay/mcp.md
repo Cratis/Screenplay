@@ -59,8 +59,8 @@ index; it is never silently presented as a valid complete model.
 | `declaration-details` | `address`, `kind`; optional `view` | Summary or paged properties, occurrences, commands, specifications, produces, enum values; explicit syntax view |
 | `find-references` | `address`, `kind` | Paged resolved incoming references and ambiguities, with owners/roles |
 | `dependencies` | `address`, `kind`, direction incoming/outgoing; optional descendants/document | Direct indexed dependencies and resolution candidates |
-| `find-fixtures` | Specification address, role, property, value, scope/document | Paged assignments with type, value and location |
-| `find-assertion-gaps` | Optional scope/document | Slices without specifications declaring a `then` assertion |
+| `find-fixtures` | Specification address, role, property, value, scope/document | Paged assignments with type, value and location, including `when append` event payloads (`whenAppendedEvent`) and `for` destinations (`whenAppendedEventDestination`) |
+| `find-assertion-gaps` | Optional scope/document | Slices without specifications declaring a `then` assertion, including `then denied` |
 | `diagnostics` | Optional document | Paged diagnostics and total severity counts |
 | `read-document` | Required relative `path` | Exact original UTF-8 byte pages |
 | `merged-document` | `view`: source, syntax or both | Canonical merged byte pages or explicitly requested typed AST |
@@ -81,7 +81,10 @@ state their coverage.
 Fixture values are syntax, not evaluated expressions. Text filtering is invariant
 and exact. Field types come from their own unambiguous declaration, not a global
 field-name lookup. Assertion presence is not runtime coverage; no tool executes
-specifications.
+specifications. Compact specification summaries include `thenDenied` independently of
+error counts and `whenAppendedEvent` independently of the `when` command. Appended
+event references and dependencies carry the `whenAppendedEvent` role, not
+`thenEvent`.
 
 ## Paging and snapshots
 
@@ -105,7 +108,7 @@ is canonicalized.
 | Tool | Required arguments | Optional arguments |
 | --- | --- | --- |
 | `open-workspace` | None | `applicationName`, `workspaceJson`, `includeContent` |
-| `read-workspace` | `expectedRevision` | view (`implementation-requirements` for code attachment requirements), offset, limit |
+| `read-workspace` | `expectedRevision` | view (`source-map` for compiler source locations; `implementation-requirements` for code attachment requirements), offset, limit |
 | `read-ast` | `expectedRevision` | documentId, path, kind, name, semanticId, view, includeContent, offset, limit |
 | `propose` | Expected workspace/catalog revisions, operations | Explicit migrations/retirements, includeContent; legacy single-operation form supported |
 | `propose-ast` | Expected revisions, formatting | operations, documents, validation, referencePolicy, migrations/retirements, includeContent |
@@ -122,8 +125,15 @@ is canonicalized.
 from the server; do not infer them from names or line numbers.
 
 `read-workspace` views: documents, semantics, eventContracts, diagnostics,
-executable-diagnostics and implementation-requirements. The last view pages
-implementation requirement envelopes by role, owner address, optional member, language or
+executable-diagnostics, source-map and implementation-requirements. The `source-map`
+view pages the compiler's semantic entries: `semanticId`, `role` (Declaration or
+Description), identity `origin`, `documentId`, `path`, and exact `span` (zero-based
+UTF-16 start/length and one-based start/end line/column). It reports
+`available: false` with `executableDiagnostics` if compilation has no value;
+an empty page alone is not evidence of successful compilation. Continuations
+require the current `expectedRevision` as usual. The
+`implementation-requirements` view pages implementation requirement envelopes
+by role, owner address, optional member, language or
 file, `RequirementId`, context/result contract versions, `RequiredCapability`,
 `AttachmentResolution`, content hash, semantic/document ID and source line/column.
 Each item also carries `bodySpan` (start/end-exclusive UTF-16 offsets and one-based
@@ -186,8 +196,10 @@ diagnostics and `dropped-comments`, every comment a changed document loses. `wor
 Apply accepts only a retained server proposal and checks revisions, source
 preimages, identity-state preimages and destination ownership. Stable assignments
 persist automatically in `.screenplay/identities.json`; keep it with the model.
-Canonical export remains available, but ordinary restart no longer requires
-manual export to retain identities.
+Canonical `export-workspace` is optional for portable transfer or backup; ordinary
+restart does not require manual export to retain identities. Initialize instructions
+likewise distinguish `read-proposal` review and source acceptance from executable
+readiness before `apply`.
 
 A durable pending journal precedes source mutation. Interrupted or uncertain
 operations block normal editing; inspect status and explicitly request rollback.
