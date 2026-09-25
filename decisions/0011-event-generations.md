@@ -81,4 +81,4 @@ Screenplay: [#71](https://github.com/Cratis/Screenplay/issues/71), [#168](https:
 
 At this grammar-only milestone, ESM predecessor lineage and #168's v2 vector were pending. Models using marked generations then failed binding with `PLAY0449` rather than dropping historical shapes; decision 0015 subsequently replaced that guard. This was the shipped grammar increment, not ESM lineage; it was not yet `verified` at that time.
 
-**2026-09-25 — implemented, not verified. Release version: TBD.** Decision 0015 completes the ESM lineage and the corrected #168 v2 corpus at ESM v4. `PLAY0449` now guards historical-shape references and catalog revision mismatches rather than rejecting every marked event. Cross-target migration and replay conformance remain open under #71.
+**2026-09-25 — implemented, not verified. Shipped in v4.37.0.** Decision 0015 completes the ESM lineage and the corrected #168 v2 corpus at ESM v4. `PLAY0449` now guards historical-shape references and catalog revision mismatches rather than rejecting every marked event. Cross-target migration and replay conformance remain open under #71.
