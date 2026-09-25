@@ -35,6 +35,11 @@ public sealed record SemanticSpecificationRun(
 /// <summary>
 /// Executes semantic specifications against immutable in-memory world state.
 /// </summary>
+/// <remarks>
+/// Unlike public world establishment, given events without a source retain their legacy null destination,
+/// and events observed by a reducer do not make a specification unsupported unless it asserts or queries
+/// that reducer's read-model state.
+/// </remarks>
 /// <param name="evaluator">The reference semantic evaluator.</param>
 public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : ISemanticSpecificationRunner
 {
@@ -130,7 +135,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
                 Context = value.EventSource is null ? null : new(value.EventSource)
             })
             .ToImmutableArray();
-        var establishment = new SemanticEvaluator().EstablishWorld(plan, facts);
+        var establishment = new SemanticEvaluator().EstablishSpecificationWorld(plan, facts);
         if (establishment is not SemanticAccepted accepted)
         {
             world = SemanticWorld.Empty;

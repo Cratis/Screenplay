@@ -26,6 +26,16 @@ public class when_establishing_malformed_facts : for_SemanticSpecificationRunner
         _duplicate = evaluator.EstablishWorld(_plan, [new(@event.Id, key, [values[0], values[0]])]);
     }
 
+    [Fact] void should_allow_a_legacy_v1_fact_without_occurrence_context()
+    {
+        _plan.Model.SemanticVersion.ShouldEqual(SemanticVersion.V1);
+        var @event = _plan.Events.Values.Single();
+        var values = @event.Properties.Select(property => new SemanticPropertyValue(property.Id,
+            SemanticValue.Text(property.Name == "name" ? "Screenplay" : "3fa85f64-5717-4562-b3fc-2c963f66afa6"))).ToImmutableArray();
+        new SemanticEvaluator().EstablishWorld(_plan, [new(@event.Id, SemanticValue.Null, values)])
+            .ShouldBeOfExactType<SemanticAccepted>();
+    }
+
     [Fact] void should_reject_default_facts() => AssertRejected(_default);
     [Fact] void should_reject_unknown_event_contracts() => AssertRejected(_unknown);
     [Fact] void should_reject_missing_event_properties() => AssertRejected(_missing);

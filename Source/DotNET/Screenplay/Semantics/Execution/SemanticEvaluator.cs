@@ -178,91 +178,15 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
     /// <summary>
     /// Establishes reference world state from existing facts in occurrence order.
     /// </summary>
+    /// <remarks>
+    /// Unlike specification runs that do not inspect reducer state, this public operation fails closed when
+    /// a supplied event affects a reducer-backed read model. Legacy ESM v1 facts may omit typed event sources.
+    /// </remarks>
     /// <param name="plan">The capability-admitted plan.</param>
     /// <param name="facts">The ordered existing facts; no read-model snapshots are required.</param>
     /// <returns>An accepted established world, a contract rejection, or an unsupported projection.</returns>
-    public SemanticExecutionResult EstablishWorld(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts)
-    {
-        try
-        {
-            // Validate the entire history before any projection can observe an invalid occurrence.
-            if (!facts.IsDefault && facts.Any(fact => fact is { Tags.IsDefault: true } or { Context.EventSource: null }))
-            {
-                return new SemanticRejected(SemanticWorld.Empty, SemanticRejectionCategory.Contract, null, "Fact occurrence metadata is malformed.");
-            }
-
-            SemanticWorld.Create(facts, []);
-            var validator = new SemanticValueValidator(
-                plan.Model.Application.Concepts.ToDictionary(concept => concept.Id),
-                plan.Model.Application.Types.ToDictionary(type => type.Id));
-            foreach (var fact in facts)
-            {
-                if (!plan.Events.TryGetValue(fact.EventContract, out var eventContract) ||
-                    fact.Values.Length != eventContract.Properties.Length ||
-                    fact.Values.Select(value => value.TargetProperty).Distinct().Count() != fact.Values.Length)
-                {
-                    return new SemanticRejected(
-                        SemanticWorld.Empty,
-                        SemanticRejectionCategory.Contract,
-                        null,
-                        $"Fact '{fact.EventContract}' does not match a known event contract and its exact property shape.");
-                }
-
-                var values = fact.Values.ToDictionary(value => value.TargetProperty);
-                foreach (var property in eventContract.Properties)
-                {
-                    if (!values.TryGetValue(property.Id, out var value))
-                    {
-                        return new SemanticRejected(
-                            SemanticWorld.Empty,
-                            SemanticRejectionCategory.Contract,
-                            null,
-                            $"Fact '{fact.EventContract}' is missing event property '{property.Name}'.");
-                    }
-
-                    validator.Validate(value.Value, property.Type, $"event property '{property.Name}'");
-                }
-
-                validator.ValidateVariant(fact.Destination);
-                if (fact.Context is { } context)
-                {
-                    validator.Validate(context.EventSource.Value, context.EventSource.Type, "event source identity");
-                }
-            }
-        }
-        catch (InvalidSemanticContract exception)
-        {
-            return new SemanticRejected(SemanticWorld.Empty, SemanticRejectionCategory.Contract, null, exception.Message);
-        }
-
-        var observedEvents = facts.Select(fact => fact.EventContract).ToHashSet();
-        var reducer = plan.Model.Application.Modules.SelectMany(module => Reducers(module.Features))
-            .FirstOrDefault(candidate =>
-                candidate.Transitions.Any(transition => observedEvents.Contains(transition.EventContract)) ||
-                (observedEvents.Count > 0 && plan.Projections.Values.Any(projection => projection.ReadModel == candidate.ReadModel &&
-                    projection.GetAffectedInstances().Any(affected => affected.EventContract is null || observedEvents.Contains(affected.EventContract.Value)))));
-        if (reducer is not null)
-        {
-            return new SemanticUnsupported(
-                SemanticWorld.Empty,
-                SemanticExecutionCapability.Projection,
-                $"Reducer '{reducer.Name}' has opaque transitions and requires a target provider to compute read-model state.");
-        }
-
-        try
-        {
-            if (!TryProject(plan, [], [], facts, out var readModels, out var failure))
-            {
-                return new SemanticUnsupported(SemanticWorld.Empty, SemanticExecutionCapability.Projection, failure!);
-            }
-
-            return new SemanticAccepted(SemanticWorld.Create(facts, readModels), facts, []);
-        }
-        catch (InvalidSemanticContract exception)
-        {
-            return new SemanticUnsupported(SemanticWorld.Empty, SemanticExecutionCapability.Projection, exception.Message);
-        }
-    }
+    public SemanticExecutionResult EstablishWorld(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts) =>
+        EstablishWorld(plan, facts, true);
 
     internal static SemanticExecutionResult Append(
         SemanticExecutionPlan plan,
@@ -304,6 +228,108 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         SemanticNumberValue or SemanticBooleanValue or SemanticCompositeValue => false,
         _ => throw SemanticValueRules.Malformed()
     };
+
+    // Specifications also retain legacy given events without an event source; their null destination must not
+    // become a fabricated identity. All supplied identities, payloads, tags and projections use the same core.
+    internal SemanticExecutionResult EstablishSpecificationWorld(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts) =>
+        EstablishWorld(plan, facts, false);
+
+    internal SemanticExecutionResult EstablishWorld(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts, bool publicReplay)
+    {
+        try
+        {
+            // Validate the entire history before any projection can observe an invalid occurrence.
+            if (!facts.IsDefault && facts.Any(fact =>
+                (fact is { Tags.IsDefault: true } or { Context.EventSource: null }) ||
+                (fact is { Tags: var tags } && tags.Any(string.IsNullOrWhiteSpace)) ||
+                (plan.Model.SemanticVersion != SemanticVersion.V1 &&
+                    ((publicReplay && fact.Context is null) ||
+                     (fact.Context is not null && (fact.Destination is SemanticNullValue ||
+                         (fact.Destination is SemanticTextValue text && string.IsNullOrWhiteSpace(text.Value))))))))
+            {
+                return new SemanticRejected(SemanticWorld.Empty, SemanticRejectionCategory.Contract, null, "Fact occurrence metadata is malformed.");
+            }
+
+            SemanticWorld.Create(facts, []);
+            var validator = new SemanticValueValidator(
+                plan.Model.Application.Concepts.ToDictionary(concept => concept.Id),
+                plan.Model.Application.Types.ToDictionary(type => type.Id));
+            foreach (var fact in facts)
+            {
+                if (!plan.Events.TryGetValue(fact.EventContract, out var eventContract) ||
+                    fact.Values.Length != eventContract.Properties.Length ||
+                    fact.Values.Select(value => value.TargetProperty).Distinct().Count() != fact.Values.Length)
+                {
+                    return new SemanticRejected(
+                        SemanticWorld.Empty,
+                        SemanticRejectionCategory.Contract,
+                        null,
+                        $"Fact '{fact.EventContract}' does not match a known event contract and its exact property shape.");
+                }
+
+                var values = fact.Values.ToDictionary(value => value.TargetProperty);
+                foreach (var property in eventContract.Properties)
+                {
+                    if (!values.TryGetValue(property.Id, out var value))
+                    {
+                        return new SemanticRejected(
+                            SemanticWorld.Empty,
+                            SemanticRejectionCategory.Contract,
+                            null,
+                            $"Fact '{fact.EventContract}' is missing event property '{property.Name}'.");
+                    }
+
+                    validator.Validate(value.Value, property.Type, $"event property '{property.Name}'");
+                }
+
+                validator.ValidateVariant(fact.Destination);
+                if (fact.Context is { } context)
+                {
+                    var requiredType = plan.Model.SemanticVersion == SemanticVersion.V1
+                        ? context.EventSource.Type
+                        : SemanticModelValidator.DeclaredEventSourceType(plan.Commands.Values, fact.EventContract);
+                    if (context.EventSource.Type != requiredType)
+                    {
+                        throw new InvalidSemanticContract("A specification event source must have the required scalar destination type.");
+                    }
+
+                    validator.Validate(context.EventSource.Value, requiredType, "event source identity");
+                }
+            }
+        }
+        catch (InvalidSemanticContract exception)
+        {
+            return new SemanticRejected(SemanticWorld.Empty, SemanticRejectionCategory.Contract, null, exception.Message);
+        }
+
+        var observedEvents = facts.Select(fact => fact.EventContract).ToHashSet();
+        var reducer = plan.Model.Application.Modules.SelectMany(module => Reducers(module.Features))
+            .FirstOrDefault(candidate =>
+                candidate.Transitions.Any(transition => observedEvents.Contains(transition.EventContract)) ||
+                (observedEvents.Count > 0 && plan.Projections.Values.Any(projection => projection.ReadModel == candidate.ReadModel &&
+                    projection.GetAffectedInstances().Any(affected => affected.EventContract is null || observedEvents.Contains(affected.EventContract.Value)))));
+        if (publicReplay && reducer is not null)
+        {
+            return new SemanticUnsupported(
+                SemanticWorld.Empty,
+                SemanticExecutionCapability.Projection,
+                $"Reducer '{reducer.Name}' has opaque transitions and requires a target provider to compute read-model state.");
+        }
+
+        try
+        {
+            if (!TryProject(plan, [], [], facts, out var readModels, out var failure))
+            {
+                return new SemanticUnsupported(SemanticWorld.Empty, SemanticExecutionCapability.Projection, failure!);
+            }
+
+            return new SemanticAccepted(SemanticWorld.Create(facts, readModels), facts, []);
+        }
+        catch (InvalidSemanticContract exception)
+        {
+            return new SemanticUnsupported(SemanticWorld.Empty, SemanticExecutionCapability.Projection, exception.Message);
+        }
+    }
 
     static SemanticRejected RejectWithMessage(SemanticWorld world, SemanticRejectionCategory category, string? code, string message) =>
         new(world, category, code, message) { MessageIsStringKey = message.StartsWith("$strings.", StringComparison.Ordinal) };
