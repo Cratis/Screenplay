@@ -50,7 +50,7 @@ export function createCompletionProvider(monaco: Monaco): languages.CompletionIt
                 range,
             });
             const eventNames = () =>
-                knownEventNames(symbols).map((name) => symbolItem(name, kinds.Event, 'event'));
+                [...new Set(knownEventNames(symbols))].map((name) => symbolItem(name, kinds.Event, 'event'));
 
             switch (plan.kind) {
                 case 'contextVariables': {
@@ -77,7 +77,7 @@ export function createCompletionProvider(monaco: Monaco): languages.CompletionIt
                     return { suggestions: eventNames() };
                 case 'triggers':
                     return {
-                        suggestions: knownTriggerNames(symbols).map((name) =>
+                        suggestions: [...new Set(knownTriggerNames(symbols))].map((name) =>
                             symbolItem(name, kinds.Event, 'trigger'),
                         ),
                     };

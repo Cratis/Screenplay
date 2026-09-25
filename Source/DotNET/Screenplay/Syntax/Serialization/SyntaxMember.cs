@@ -21,7 +21,9 @@ internal sealed class SyntaxMember(PropertyInfo property, ParameterInfo? paramet
 
     internal Type? ElementType { get; } = CollectionElement(property.PropertyType);
 
-    internal bool Required => ElementType is null && !Nullable && Parameter?.HasDefaultValue != true;
+    internal bool Required => ElementType is null && !Nullable && Parameter?.HasDefaultValue != true &&
+        !(Property.DeclaringType == typeof(EventSyntax) &&
+          (Property.Name == nameof(EventSyntax.Generation) || Property.Name == nameof(EventSyntax.HasGenerationMarker)));
 
     internal object? MissingValue
     {
@@ -30,6 +32,12 @@ internal sealed class SyntaxMember(PropertyInfo property, ParameterInfo? paramet
             if (ElementType is not null)
             {
                 return Array.CreateInstance(ElementType, 0);
+            }
+
+            if (Property.DeclaringType == typeof(EventSyntax))
+            {
+                if (Property.Name == nameof(EventSyntax.Generation)) return 1u;
+                if (Property.Name == nameof(EventSyntax.HasGenerationMarker)) return false;
             }
 
             return Parameter?.HasDefaultValue == true ? Parameter.DefaultValue : null;

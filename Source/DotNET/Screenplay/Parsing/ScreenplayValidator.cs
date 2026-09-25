@@ -100,10 +100,11 @@ internal static class ScreenplayValidator
         var declaredTriggers = (application.Triggers ?? []).ToDictionary(trigger => trigger.Name, StringComparer.Ordinal);
         var eventsByName = slices.SelectMany(slice => slice.Events)
             .GroupBy(@event => @event.Name, StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+            .ToDictionary(group => group.Key, group => group.OrderByDescending(@event => @event.Generation).First(), StringComparer.Ordinal);
 
         foreach (var slice in slices)
         {
+            ValidateEventGenerations(slice, context);
             ValidateSlice(slice, knownEvents, knownPolicies, knownTypes, knownReadModels, context);
             ValidateReactionConsequences(slice, knownEvents, knownCommands, context);
             ValidateReactionTriggers(slice, knownEvents, knownReadModels, declaredTriggers, eventsByName, context);
@@ -151,6 +152,49 @@ internal static class ScreenplayValidator
         ValidateThemes(application, context);
         ValidateProfileLayouts(application, context);
         ValidateArrangements(application, context);
+    }
+
+    /// <summary>
+    /// Validates the range, uniqueness and consecutive numbering of event generations in one slice.
+    /// </summary>
+    static void ValidateEventGenerations(SliceSyntax slice, ParserContext context)
+    {
+        // The same event name denotes one contract only within one owning slice.
+        foreach (var @event in slice.Events.Where(@event => @event.Generation is 0 or uint.MaxValue))
+        {
+            context.Error(
+                DiagnosticCodes.InvalidEventGeneration,
+                $"Event '{@event.Name}' must declare a generation between 1 and {uint.MaxValue - 1}",
+                @event.Location);
+        }
+
+        foreach (var group in slice.Events.GroupBy(@event => @event.Name, StringComparer.Ordinal))
+        {
+            foreach (var duplicate in group.GroupBy(@event => @event.Generation).SelectMany(generation => generation.Skip(1)))
+            {
+                context.Error(
+                    DiagnosticCodes.DuplicateEventGeneration,
+                    duplicate.Generation == 1 && !duplicate.HasGenerationMarker &&
+                    group.Count(@event => @event.Generation == 1 && !@event.HasGenerationMarker) > 1
+                        ? $"Event '{group.Key}' is declared more than once without a generation marker in slice '{slice.Name}' (both are generation 1)"
+                        : $"Event '{group.Key}' declares generation {duplicate.Generation} more than once in slice '{slice.Name}'",
+                    duplicate.Location);
+            }
+
+            var previous = 0u;
+            foreach (var @event in group.Where(@event => @event.Generation is > 0 and < uint.MaxValue).OrderBy(@event => @event.Generation))
+            {
+                if (@event.Generation > previous && @event.Generation != previous + 1)
+                {
+                    context.Error(
+                        DiagnosticCodes.MissingEventGeneration,
+                        $"Event '{group.Key}' in slice '{slice.Name}' is missing generation {previous + 1} before generation {@event.Generation}",
+                        @event.Location);
+                }
+
+                previous = @event.Generation;
+            }
+        }
     }
 
     /// <summary>

@@ -27,4 +27,17 @@ public class when_defaulting_missing_optional_members : Specification
     [Fact] void should_treat_explicit_optional_null_collections_as_empty() => _explicitNullTags.Tags.ShouldBeEmpty();
     [Fact] void should_compare_the_equivalent_optional_collections_equally() => SyntaxJson.StructurallyEqual(_event, _explicitNullTags).ShouldBeTrue();
     [Fact] void should_create_nested_locations_on_the_server() => _property.Type.Location.ShouldEqual(Diagnostics.SourceLocation.Start);
+    [Fact] void should_default_an_unmarked_event_to_generation_one()
+    {
+        _event.Generation.ShouldEqual(1u);
+        _event.HasGenerationMarker.ShouldBeFalse();
+    }
+
+    [Fact] void should_round_trip_a_marked_event_generation()
+    {
+        var marked = _event with { Generation = 2, HasGenerationMarker = true };
+        var restored = (EventSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(marked));
+        restored.Generation.ShouldEqual(2u);
+        restored.HasGenerationMarker.ShouldBeTrue();
+    }
 }

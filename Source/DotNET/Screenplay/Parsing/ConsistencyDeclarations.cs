@@ -46,7 +46,12 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
     /// <param name="name">The event name.</param>
     /// <param name="scope">The referring scope.</param>
     /// <returns>The declared event, or null for an unknown or ambiguous shape.</returns>
-    public EventSyntax? Event(string name, DeclarationScope scope) => Resolve(name, scope, slice => slice.Events, node => node.Name)?.Node;
+    public EventSyntax? Event(string name, DeclarationScope scope) => Resolve(
+        name,
+        scope,
+        slice => slice.Events.GroupBy(@event => @event.Name, StringComparer.Ordinal)
+            .Select(group => group.OrderByDescending(@event => @event.Generation).First()),
+        node => node.Name)?.Node;
 
     /// <summary>
     /// Resolves a view identity, including projection aliases and variant names.

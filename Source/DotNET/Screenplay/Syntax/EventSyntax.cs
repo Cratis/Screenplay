@@ -30,4 +30,14 @@ public record EventSyntax(
     /// an init property is neither, and is how this record should grow from here.
     /// </remarks>
     public FileReferenceSyntax? File { get; init; }
+
+    /// <summary>
+    /// Gets the generation of this complete event declaration. Unmarked events are generation 1.
+    /// </summary>
+    public uint Generation { get; init; } = 1;
+
+    /// <summary>
+    /// Gets whether the source explicitly declared the generation, including an explicit generation 1.
+    /// </summary>
+    public bool HasGenerationMarker { get; init; }
 }

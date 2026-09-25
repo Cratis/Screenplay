@@ -28,6 +28,11 @@ internal static class SyntaxScalars
             return integer;
         }
 
+        if (type == typeof(uint) && value.ValueKind == JsonValueKind.Number && value.TryGetUInt32(out var unsignedInteger))
+        {
+            return unsignedInteger;
+        }
+
         if (type.IsEnum && value.ValueKind == JsonValueKind.String && Enum.GetNames(type).Contains(value.GetString(), StringComparer.Ordinal))
         {
             return Enum.Parse(type, value.GetString()!, false);
@@ -65,7 +70,7 @@ internal static class SyntaxScalars
             return time.ToString("HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
         }
 
-        if (value is string or bool or int)
+        if (value is string or bool or int or uint)
         {
             return value;
         }

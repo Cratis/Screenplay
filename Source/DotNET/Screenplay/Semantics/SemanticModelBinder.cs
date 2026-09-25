@@ -19,6 +19,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         SemanticDocumentSet documents)
     {
         var context = new BindingContext(applicationName, syntax, documents);
+        if (context.RejectEventGenerations())
+        {
+            return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics);
+        }
+
         try
         {
             var application = context.BindApplication();
@@ -98,6 +103,23 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
         internal void Error(string code, string message, SourceLocation location) =>
             _diagnostics.Add(Diagnostic.Error(code, message, location));
+
+        internal bool RejectEventGenerations()
+        {
+            foreach (var (_, _, slice) in AllSlices())
+            {
+                var unsupported = slice.Events.FirstOrDefault(@event => @event.HasGenerationMarker || @event.Generation != 1);
+                if (unsupported is null) continue;
+
+                Error(
+                    DiagnosticCodes.UnsupportedEventGenerationSemantics,
+                    $"Event '{unsupported.Name}' cannot bind: generation lineage in the executable model is not yet available",
+                    unsupported.Location);
+                return true;
+            }
+
+            return false;
+        }
 
         static SemanticModule PromoteV2Destinations(SemanticModule module) =>
             module with { Features = [.. module.Features.Select(PromoteV2Destinations)] };

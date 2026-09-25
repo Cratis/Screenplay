@@ -31,6 +31,13 @@
         "keywords": {
             "patterns": [
                 {
+                    "match": "^\\s*(event)\\s+[A-Za-z_]\\w*\\s+(generation)(?=\\s+[0-9]+\\s*$)",
+                    "captures": {
+                        "1": { "name": "keyword.control.screenplay" },
+                        "2": { "name": "keyword.other.screenplay" }
+                    }
+                },
+                {
                     "match": "^\\s*(domain|import|concept|type|policy|persona|authentication|module|layout|feature|slice|event|command|query|reaction|trigger|screen|constraint|specification|seed)\\b",
                     "captures": {
                         "1": { "name": "keyword.control.screenplay" }

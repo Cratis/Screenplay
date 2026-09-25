@@ -91,7 +91,7 @@ public partial class ScreenplayPrinter
     void WriteEvent(ScreenplayWriter writer, EventSyntax @event)
     {
         using var anchor = writer.Anchor(@event);
-        writer.Line($"event {@event.Name}");
+        writer.Line(@event.HasGenerationMarker || @event.Generation != 1 ? $"event {@event.Name} generation {@event.Generation}" : $"event {@event.Name}");
         using (writer.Indent())
         {
             WriteFile(writer, @event.File);
