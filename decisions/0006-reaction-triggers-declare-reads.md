@@ -70,7 +70,7 @@ An automation's inputs become visible to readers, Studio and renderers, using th
 
 ## Status notes
 
-**2026-09-25 — implemented.** Reaction trigger reads now parse, validate, print, walk and appear in editor grammars and guidance. Reactions remain unbound in the ESM; protection for direct `produces` waits for binding. Release version: TBD. It is not yet `verified`.
+**2026-09-25 — implemented.** Reaction trigger reads now parse, validate, print, walk and appear in editor grammars and guidance. Reactions remain unbound in the ESM; protection for direct `produces` waits for binding. Shipped in v4.31.0. It is not yet `verified`.
 
 ## Related issues
 
