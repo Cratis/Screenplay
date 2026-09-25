@@ -463,7 +463,7 @@ public sealed partial class ScreenplayPrinter :
         {
             if (form.Populate is not null)
             {
-                writer.Line(WriteFormPopulate(form.Populate));
+                writer.Line(WriteFormPopulate(form.Populate), form.Populate);
             }
 
             foreach (var field in form.Fields)
@@ -473,7 +473,7 @@ public sealed partial class ScreenplayPrinter :
 
             if (form.OnSubmit is not null)
             {
-                writer.Line($"on submit {WriteScreenNavigate(form.OnSubmit)}");
+                writer.Line($"on submit {WriteScreenNavigate(form.OnSubmit)}", form.OnSubmit);
             }
 
             WriteAttachments(writer, form.Behaviors, form.UsedBehaviors);

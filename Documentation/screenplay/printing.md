@@ -59,8 +59,11 @@ a file does:
 
 - **Comments are kept, not their surrounding whitespace.** Leading comments stay with the
   declaration or member they annotate, trailing comments follow the printed line, and
-  comments at the end of a block stay in that block. The printer uses canonical two-space
-  indentation. A tree created entirely from typed JSON has no authored comments to keep.
+  comments at the end of a block stay in that block. This includes comments before
+  `populate`, `field`, and `on submit` inside a form, as well as comments above a form;
+  comments within screens, layouts, and templates stay with their directives or slots.
+  The printer uses canonical two-space indentation. A tree created entirely from typed
+  JSON has no authored comments to keep.
 - **Order across files cannot be recovered.** Parsed members of a slice, feature or
   module keep their authored order when they share a source file. A folder merge may
   combine members from different files; their line numbers cannot be compared, so

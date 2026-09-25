@@ -101,7 +101,7 @@ public partial class ScreenplayPrinter
 
             if (action.Navigate is not null)
             {
-                writer.Line(WriteScreenNavigate(action.Navigate));
+                writer.Line(WriteScreenNavigate(action.Navigate), action.Navigate);
             }
         }
     }
@@ -156,7 +156,7 @@ public partial class ScreenplayPrinter
 
             if (table.RowClick is not null)
             {
-                writer.Line($"on row-click {WriteScreenNavigate(table.RowClick)}");
+                writer.Line($"on row-click {WriteScreenNavigate(table.RowClick)}", table.RowClick);
             }
 
             foreach (var behavior in table.Behaviors)
