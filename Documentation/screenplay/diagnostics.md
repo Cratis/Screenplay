@@ -746,6 +746,13 @@ Use an opening fence with an info string, such as ` ```csharp ` (without the spa
 |---|---|---|
 | `PLAY0397` | Warning | An inline code block uses a separate language line, `validate csharp`, or a multiline description uses a bare fence. The message names the tagged-fence replacement. |
 
+A compiler-authored typed repair is offered only when `PLAY0397` identifies a
+`validate csharp` header. It replaces its original `CodeValidateSyntax` occurrence
+and, with explicit canonical-formatting consent, prints the tagged `\`\`\`csharp`
+fence. Preview it through the revision-checked AST authoring contract (or MCP
+`read-workspace` repairs / `propose-repair`); review the bytes before applying.
+Other legacy forms are not currently offered as repairs.
+
 ### Repeated command or reaction-trigger reads
 
 | Code | Severity | Reported when |

@@ -57,6 +57,15 @@ Out of scope: which diagnostics get repairs first; new workspace operation kinds
 
 Repairs are safe by construction: they can go stale only detectably, and humans and AI apply them the same way. Hosts that want quick fixes consume typed proposals instead of writing their own. Diagnostics that want a repair must carry a node handle, which some diagnostics may not have today.
 
+## Status notes
+
+**2026-09-24 — implemented.** `PLAY0397` on `validate csharp` produces a
+revision-bound typed AST repair, previewed through workspace authoring and
+exposed through MCP without auto-apply. Adding a node with an unresolved
+reference is refused under the safe policy; this is the `link` criterion in
+[#138](https://github.com/Cratis/Screenplay/issues/138). Release version: TBD.
+It is not yet `verified`: downstream release and issue acceptance remain open.
+
 ## Related issues
 
 Screenplay: [#138](https://github.com/Cratis/Screenplay/issues/138), [#174](https://github.com/Cratis/Screenplay/issues/174), [#128](https://github.com/Cratis/Screenplay/issues/128).

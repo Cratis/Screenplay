@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using System.Text.Json;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
@@ -66,6 +67,20 @@ internal sealed partial class McpWorkspaces
                 assignment.Origin
             }),
             "diagnostics" => McpWorkspaceAnalysis.For(workspace).Source.Compilation.Diagnostics,
+            "repairs" => McpWorkspaceAnalysis.For(workspace).Syntax.Diagnostics
+                .Where(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyInlineCodeFence)
+                .SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(McpWorkspaceAnalysis.For(workspace).Syntax, workspace.Revision, diagnostic)
+                    .Select(repair => (object)new
+                    {
+                        repair.DiagnosticCode,
+                        diagnostic.Location,
+                        subject = McpAstHandles.Describe(repair.Subject),
+                        operations = repair.Operations.Select(operation => operation switch
+                        {
+                            ReplaceWorkspaceNode replace => new { operation = "replace", target = McpAstHandles.Describe(replace.Target) },
+                            _ => throw new McpFailure("Unsupported repair operation.")
+                        })
+                    })),
             "executable-diagnostics" => workspace.Compilation.Diagnostics,
             "implementation-requirements" => workspace.Compilation.ImplementationRequirements.Select(DescribeRequirement),
             _ => throw new McpFailure("Unknown workspace view.", -32602)

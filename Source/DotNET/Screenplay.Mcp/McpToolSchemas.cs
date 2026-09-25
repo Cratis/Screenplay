@@ -49,7 +49,7 @@ static class McpToolSchemas
         "operations" when tool == "propose-ast" => McpAstSchemas.Array(McpAstSchemas.Operations()),
         "operations" => McpAstSchemas.Array(JsonNode.Parse(McpWorkspaceOperations.Schema.GetRawText())!),
         "documents" => McpAstSchemas.Array(McpAstSchemas.Documents()),
-        "target" => McpAstSchemas.Handle(),
+        "target" or "subject" => McpAstSchemas.Handle(),
         "semanticRenames" or "eventRenames" => McpAstSchemas.Array(Rename()),
         "retiredSemanticAddresses" or "retiredEventAddresses" => McpAstSchemas.Array(Address()),
         "formatting" => McpAstSchemas.Choice("CanonicalizeTouchedDocuments", "PreserveExactSource", "PreserveTrivia"),
@@ -62,7 +62,7 @@ static class McpToolSchemas
         "view" when tool == "describe-application" => McpAstSchemas.Choice("summary", "children", "declarations"),
         "view" when tool == "declaration-details" => McpAstSchemas.Choice("summary", "properties", "occurrences", "commands", "specifications", "produces", "values", "syntax"),
         "view" when tool == "merged-document" => McpAstSchemas.Choice("source", "syntax", "both"),
-        "view" when tool == "read-workspace" => McpAstSchemas.Choice("documents", "semantics", "eventContracts", "diagnostics", "executable-diagnostics", "implementation-requirements", "source-map"),
+        "view" when tool == "read-workspace" => McpAstSchemas.Choice("documents", "semantics", "eventContracts", "diagnostics", "executable-diagnostics", "implementation-requirements", "source-map", "repairs"),
         "view" when tool == "read-proposal" => McpAstSchemas.Choice("changes", "before", "after", "diagnostics", "executable-diagnostics", "implementation-requirements", "dropped-comments"),
         "view" when tool == "read-ast" => McpAstSchemas.Choice("nodes", "children"),
         _ => McpAstSchemas.String()

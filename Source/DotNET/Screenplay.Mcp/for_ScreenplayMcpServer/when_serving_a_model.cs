@@ -36,7 +36,7 @@ public class when_serving_a_model : for_McpConnection.given.a_connection
 
     [Fact] void should_emit_only_four_protocol_responses() => _responses.Length.ShouldEqual(4);
     [Fact] void should_initialize_the_screenplay_server() => _responses[0].GetProperty("result").GetProperty("serverInfo").GetProperty("name").GetString().ShouldEqual("cratis.screenplay");
-    [Fact] void should_discover_all_tools() => _responses[1].GetProperty("result").GetProperty("tools").GetArrayLength().ShouldEqual(26);
+    [Fact] void should_discover_all_tools() => _responses[1].GetProperty("result").GetProperty("tools").GetArrayLength().ShouldEqual(27);
     [Fact] void should_open_the_model_from_the_supplied_root() => _responses[2].GetProperty("result").GetProperty("structuredContent").GetProperty("documentCount").GetInt32().ShouldEqual(1);
     [Fact] void should_return_request_failures_as_protocol_errors() => _responses[3].GetProperty("error").GetProperty("code").GetInt32().ShouldEqual(-32601);
     [Fact] void should_return_at_eof_without_closing_input() => _input.Read().ShouldEqual(-1);

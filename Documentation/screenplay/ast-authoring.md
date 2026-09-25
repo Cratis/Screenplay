@@ -116,6 +116,34 @@ new authoring workspace without relaxing ordinary nonempty workspace admission.
 Its first transaction can create one or several typed documents. An empty
 workspace is not executable.
 
+## Diagnostic repairs
+
+`WorkspaceDiagnosticRepairs.Find(workspace, revision, diagnostic)` (or the overload
+accepting an existing `WorkspaceSyntaxIndex`) discovers compiler-authored
+`WorkspaceDiagnosticRepair` values (diagnostic code, original-revision subject
+`WorkspaceNodeHandle`, and one or more typed `WorkspaceAstOperation`s). An unknown,
+stale or ambiguous diagnostic yields no repair. Repairs never contain text edits and
+never write files. Build a `WorkspaceAuthoringRequest` with the current workspace
+and catalog revisions, the repair's `Operations`, `Authoring` validation, and
+explicit `CanonicalizeTouchedDocuments` formatting consent. Preview with
+`ProposeAuthoring`; review the candidate and `WritePlan`, including dropped
+comments, then explicitly accept the plan through the usual destination adapter.
+Stale requests return typed stale conflicts with no partial candidate.
+
+The first repair handles only `PLAY0397` on a `validate csharp` header. Its parsed
+`CodeValidateSyntax` has the unique warning location, and replacing that typed
+node with its own original syntax canonically prints `validate` followed by a
+`\`\`\`csharp` fence. Other `PLAY0397` forms are not offered: a warning on a
+bare description fence or standalone language line does not identify the same
+unique subject. Cases requiring a choice, such as selecting an alias for a
+repeated read, are never presented as one automatic repair.
+
+A “link” is a reference in an added typed node, not a separate edit operation.
+With the default `Safe` reference policy, adding a node with an unresolved
+reference is rejected when the candidate is compiled; `Draft` must be explicitly
+requested to admit new reference debt. Neither policy silently retargets an
+existing binding.
+
 ## Model-aware rename
 
 `ScreenplayWorkspace.ProposeRename(WorkspaceRenameRequest)` plans one logical

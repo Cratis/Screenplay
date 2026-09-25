@@ -111,10 +111,11 @@ is canonicalized.
 | Tool | Required arguments | Optional arguments |
 | --- | --- | --- |
 | `open-workspace` | None | `applicationName`, `workspaceJson`, `includeContent` |
-| `read-workspace` | `expectedRevision` | view (`source-map` for compiler source locations; `implementation-requirements` for code attachment requirements), offset, limit |
+| `read-workspace` | `expectedRevision` | view (`source-map` for compiler source locations; `repairs` for typed diagnostic repairs; `implementation-requirements` for code attachment requirements), offset, limit |
 | `read-ast` | `expectedRevision` | documentId, path, kind, name, semanticId, view, includeContent, offset, limit |
 | `propose` | Expected workspace/catalog revisions, operations | Explicit migrations/retirements, includeContent; legacy single-operation form supported |
 | `propose-ast` | Expected revisions, formatting | operations, documents, validation, referencePolicy, migrations/retirements, includeContent |
+| `propose-repair` | `expectedRevision`, `expectedCatalogRevision`, `diagnosticCode`, `subject` handle, `formatting` | includeContent; only `CanonicalizeTouchedDocuments` is admitted |
 | `propose-rename` | Expected revisions, target handle, expectedName, newName | formatting, validation, includeContent |
 | `expand-layout` | Expected revisions | layout, validation, formatting, referencePolicy, includeContent |
 | `read-proposal` | proposalId | view (`implementation-requirements` for proposed attachments), documentId, offset, limit |
@@ -128,7 +129,7 @@ is canonicalized.
 from the server; do not infer them from names or line numbers.
 
 `read-workspace` views: documents, semantics, eventContracts, diagnostics,
-executable-diagnostics, source-map and implementation-requirements. The `source-map`
+executable-diagnostics, source-map, repairs and implementation-requirements. The `source-map`
 view pages the compiler's semantic entries ordered by semantic ID: `semanticId`,
 `role` (Declaration or Description), identity `origin`, `documentId`, `path`,
 and exact `span` (zero-based UTF-16 start/length and one-based start/end
@@ -160,6 +161,22 @@ bodied reducers no longer block binding. Page offsets and `expectedRevision` pin
 attachments without admitting an executable model. Document results contain root handles. `read-ast` returns
 original occurrences, names, child counts and existing identities. Its `children`
 view selects a parent document/path. Typed content is opt-in.
+
+## Diagnostic repair workflow
+
+Page `read-workspace` with `view: "repairs"` and the current `expectedRevision`.
+Each item includes `diagnosticCode`, diagnostic `location`, a revision-bound
+`subject` handle and a typed operation summary. Supply the code and subject to
+`propose-repair` with both current revisions and explicit
+`formatting: "CanonicalizeTouchedDocuments"`. The server regenerates the repair
+from the current compiler diagnostics, never from a message string or supplied
+text edit. Unknown, ambiguous and unsupported repairs fail closed; stale
+workspace/catalog revisions return typed conflicts. A successful response retains
+the same proposal as `propose-ast`: use `read-proposal` to inspect exact before/after
+bytes and dropped comments, then call `apply` explicitly. Neither discovery nor
+proposal writes. Only the deterministic `PLAY0397` `validate csharp` migration
+is currently offered. Other diagnostics, including repairs requiring a choice,
+have no compiler-authored repair.
 
 ## Editing and validation
 
