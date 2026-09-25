@@ -71,6 +71,11 @@ public sealed partial class SemanticModelBinder
                 .Select(_ => _!)
                 .ToImmutableArray();
             var thenQueries = specification.ThenQueries.Select(BindSpecificationQuery).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
+            if (specification.ThenErrors.Count() > 1)
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, "A rejection specification must contain exactly one 'then error' and no success outcomes.", specification.Location);
+            }
+
             var thenErrors = specification.ThenErrors.Select(value =>
             {
                 ValidateStringKey(value.Name, value.Location);

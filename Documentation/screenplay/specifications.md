@@ -46,7 +46,7 @@ specification <Name>
 - `then readmodel <ReadModelType> [exactly]` — zero or more. The read model state after projection. By default, only asserted properties need match; `exactly` also disallows unasserted properties.
 - `then query <Query> [exactly]` — zero or more. Executes the named query with the authored `arguments` and compares its ordered `result` blocks. By default, rows match asserted properties as a subset; `exactly` requires all properties to match. Row count and order are always exact. No `result` blocks means the query is expected to return nothing.
 - `then denied` — zero or one. Expects the typed `Unauthorized` rejection, not a validation or constraint error. For a read-only query, declare one `then query` with arguments and no `result`, followed by `then denied`; for a command, do not combine it with any success or error outcome.
-- `then error ["<message>"]` — zero or more. An expected rejection. See [Rejections](#rejections).
+- `then error ["<message>"]` — zero or one. An expected rejection, with no success outcomes in the same specification. See [Rejections](#rejections).
 - `file <path>` — zero or one. The repository relative file the specification is realized by. See [File references](file-references.md).
 - `for <event-source-value>` — zero or one inside an event `given`, the command `when`, an event `then`, or an event `when append`. It identifies occurrence context rather than an event payload property.
 
@@ -88,7 +88,7 @@ An authorized scenario must declare an explicit `given caller` block. A read-onl
 
 To assert a localized rule's rejection, quote the key in the specification: `then error "$strings.invoices.validation.reasonRequired"`. Unlike a validation rule's `message` operand, the `then error` grammar accepts only quoted messages (or a bare `then error`), not `then error $strings.invoices.validation.reasonRequired`. The reference runner compares the symbolic key and requires the rejection's `MessageIsStringKey` marker; it never loads translated text. A realization resolves the key against the active locale's paired `.strings` file before displaying it. See [Internationalization](internationalization.md#executable-semantic-model-and-rejections).
 
-Write the bare form rather than `then error ""`. An empty string reads as a reason someone left blank; the bare form says one was never stated. Both forms may appear in the same specification, and both round-trip through the [printer](printing.md) unchanged — which is what keeps generated documents diffable.
+Write the bare form rather than `then error ""`. An empty string reads as a reason someone left blank; the bare form says one was never stated. Choose either the bare or the quoted form for a specification: the executable model accepts exactly one rejection and no success outcomes. Both forms round-trip through the [printer](printing.md) unchanged — which is what keeps generated documents diffable.
 
 ## Query results
 
