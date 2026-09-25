@@ -637,6 +637,11 @@ internal static class ScreenplayValidator
             ValidateReactionReads(trigger, knownReadModels, context);
             if (trigger.Source is not NamedTriggerSourceSyntax named)
             {
+                foreach (var datum in trigger.Data)
+                {
+                    context.Error(DiagnosticCodes.ClockTriggerValue, $"Clock triggers take no values; remove '{datum.Name}'", datum.Location);
+                }
+
                 continue;
             }
 

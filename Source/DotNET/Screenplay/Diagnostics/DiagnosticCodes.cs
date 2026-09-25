@@ -2023,4 +2023,7 @@ public static class DiagnosticCodes
 
     /// <summary>The executable model does not yet admit event generations without migration semantics.</summary>
     public const string UnsupportedEventGenerationSemantics = "PLAY0449";
+
+    /// <summary>A clock trigger takes a value, but clock occurrences have no values.</summary>
+    public const string ClockTriggerValue = "PLAY0450";
 }

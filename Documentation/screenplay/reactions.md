@@ -83,7 +83,7 @@ reaction HandleOrder
 ```
 
 This is a selection, not a declaration — the shape belongs to the event or the trigger, and the reaction
-states which parts of it matter. Taking a value the occurrence does not carry is reported, because the
+states which parts of it matter. Clock triggers (`every` and `at`) carry no values: a value line under one is an error. Taking a value the occurrence does not carry is reported, because the
 document already knows what an event and a declared trigger provide. A value named `reads` must be
 written `@reads` under a reaction trigger; the escape keeps it distinct from a view read.
 

@@ -528,6 +528,7 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0251` | Warning | A reaction takes a value from an occurrence that the trigger does not provide. |
 | `PLAY0252` | Error | A reaction states more than one `where`, and a reaction is narrowed by one condition. |
 | `PLAY0253` | Error | A reaction declares the same trigger more than once, so the second says nothing the first did not. |
+| `PLAY0450` | Error | A value line appears under an `every` or `at` reaction trigger; clock triggers take no values. |
 
 ### Layouts, screen templates and dialog templates
 
