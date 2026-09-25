@@ -16,6 +16,8 @@ public class when_switching_work_item_variants : for_SemanticModelBinder.when_bi
     string? _beforeFailure;
     string? _afterFailure;
     string? _backfillFailure;
+    ImmutableArray<SemanticReadModelInstance> _variantKey;
+    string? _variantKeyFailure;
 
     void Because()
     {
@@ -32,6 +34,11 @@ public class when_switching_work_item_variants : for_SemanticModelBinder.when_bi
         SemanticEvaluator.Establish(plan, [], [created, title, build], out _before, out _beforeFailure);
         SemanticEvaluator.Establish(plan, [], [created, started, title, build], out _after, out _afterFailure);
         SemanticEvaluator.Establish(plan, [], [title, started], out _backfilled, out _backfillFailure);
+
+        // The reference evaluator uses the variant join's explicit issueId key. Chronicle currently uses the
+        // event source id instead (Cratis/Chronicle#4165); pin this divergence without changing routing.
+        var differentSource = new SemanticFact(title.EventContract, SemanticValue.Text("00000000-0000-0000-0000-000000000202"), title.Values);
+        SemanticEvaluator.Establish(plan, [], [created, differentSource], out _variantKey, out _variantKeyFailure);
     }
 
     [Fact] void should_establish_the_first_variant() => _before.Length.ShouldEqual(1);
@@ -42,4 +49,7 @@ public class when_switching_work_item_variants : for_SemanticModelBinder.when_bi
     [Fact] void should_backfill_a_shared_event_key_before_entry() =>
         _backfilled.Single().Values.Any(value => value.Value == SemanticValue.Text("Shared")).ShouldBeTrue();
     [Fact] void should_project_without_failure() => (_beforeFailure is null && _afterFailure is null && _backfillFailure is null).ShouldBeTrue();
+    [Fact] void should_currently_honor_the_variant_key_instead_of_the_event_source_chronicle_4165() =>
+        _variantKey.Single().Values.Any(value => value.Value == SemanticValue.Text("Shared")).ShouldBeTrue();
+    [Fact] void should_project_the_variant_key_without_failure() => _variantKeyFailure.ShouldBeNull();
 }

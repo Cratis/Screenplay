@@ -20,15 +20,28 @@ public class child_upserts_by_identity : given.a_scoped_projection_plan
             parent orderId
         """;
 
+    string? _parentlessFailure;
+
     void Establish() => Plan(Body);
 
-    void Because() => Project(
-        Fact("OrderShipped", FirstOrder, ("carrier", Text("post"))),
-        Fact("LineAdded", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(1)), ("amount", Number(10))),
-        Fact("LineAdded", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(1)), ("amount", Number(5.5m))),
-        Fact("LineAdded", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(2)), ("amount", Number(1))),
-        Fact("LineRemoved", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(2))));
+    void Because()
+    {
+        SemanticEvaluator.Establish(
+            _compilation.Plan!,
+            [],
+            [Fact("LineAdded", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(1)), ("amount", Number(10)))],
+            out _,
+            out _parentlessFailure);
+        Project(
+            Fact("OrderShipped", FirstOrder, ("carrier", Text("post"))),
+            Fact("LineAdded", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(1)), ("amount", Number(10))),
+            Fact("LineAdded", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(1)), ("amount", Number(5.5m))),
+            Fact("LineAdded", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(2)), ("amount", Number(1))),
+            Fact("LineRemoved", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(2))));
+    }
 
+    [Fact] void should_pin_the_parentless_child_failure_until_deferral_is_modeled() =>
+        _parentlessFailure.ShouldContain("Chronicle defers it until the parent exists");
     [Fact] void should_project() => _failure.ShouldBeNull();
     [Fact] void should_keep_one_child_per_identity() => Lines.Length.ShouldEqual(1);
     [Fact] void should_update_the_child_in_place() => SemanticValueRules.AreEqual(Member(Lines[0], "OrderLine", "subtotal"), Number(15.5m)).ShouldBeTrue();

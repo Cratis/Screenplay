@@ -79,3 +79,7 @@ The ESM says only what Chronicle can do, and "many" is visible through the deriv
 ## Related issues
 
 Screenplay: [#132](https://github.com/Cratis/Screenplay/issues/132), [#128](https://github.com/Cratis/Screenplay/issues/128). Chronicle: [#4165](https://github.com/Cratis/Chronicle/issues/4165).
+
+## Status notes
+
+**2026-09-24 — partially implemented.** Shipped in vTBD. The model-level deprecation warning and read-only projection affected-instance view ship first. The source binder cannot express `ZeroOrOne` or `Many` transition cardinality, so source compilation has no such warning; ESM created or read from canonical bytes reports it. Canonical bytes and golden vectors remain unchanged. `stage: none` remains until the next ESM version removes legacy cardinality bytes and the *Done when* criteria are satisfied. Chronicle's variant join-key discrepancy remains tracked in Chronicle#4165; reference child-event deferral remains outstanding.
