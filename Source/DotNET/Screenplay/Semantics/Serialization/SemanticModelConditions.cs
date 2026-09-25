@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace Cratis.Screenplay.Semantics.Serialization;
 
-internal static partial class SemanticModelCanonicalJson
+public static partial class SemanticModelCanonicalJson
 {
     static void WriteCondition(Utf8JsonWriter writer, SemanticCondition condition)
     {

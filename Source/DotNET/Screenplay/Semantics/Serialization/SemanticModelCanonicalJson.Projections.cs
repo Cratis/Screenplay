@@ -15,7 +15,7 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 /// explicit-null convention of the rest of the canonical form. Member names mirror Chronicle's projection definition
 /// (<c>from</c>, <c>join</c>, <c>children</c>, <c>nested</c>, <c>every</c>, <c>removedWith</c>, <c>removedWithJoin</c>).
 /// </remarks>
-internal static partial class SemanticModelCanonicalJson
+public static partial class SemanticModelCanonicalJson
 {
     static void WriteProjectionScope(Utf8JsonWriter writer, SemanticProjectionScope? scope)
     {

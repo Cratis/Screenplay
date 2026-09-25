@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace Cratis.Screenplay.Semantics.Serialization;
 
-internal static partial class SemanticModelCanonicalJson
+public static partial class SemanticModelCanonicalJson
 {
     // A slice without constraints omits the member, so every model written before constraints existed keeps its
     // canonical bytes and revision. The reader rejects an empty array as non-canonical, so each model still has

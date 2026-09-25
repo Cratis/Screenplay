@@ -48,7 +48,7 @@ internal sealed partial class McpWorkspaces
                 available = true,
                 executableDiagnosticsCount = workspace.Compilation.Diagnostics.Count(),
                 executableDiagnosticsView = "executable-diagnostics",
-                schema = "cratis.screenplay.esm",
+                schema = SemanticModelCanonicalJson.Schema,
                 schemaVersion = model.LanguageVersion.Major,
                 languageVersion = model.LanguageVersion.ToString(),
                 semanticVersion = model.SemanticVersion.ToString(),
@@ -62,7 +62,7 @@ internal sealed partial class McpWorkspaces
         if (view == "implementation-requirements")
         {
             var manifestRevision = McpAttachmentManifest.Revision(workspace.Compilation.ImplementationRequirements);
-            CheckContinuation(arguments, "expectedAttachmentManifestRevision", manifestRevision);
+            CheckContinuation(arguments, "expectedAttachmentManifestRevision", manifestRevision, requireOnContinuation: false);
             return McpJson.ToolResult(new
             {
                 workspace = McpWorkspaceTransport.Describe(workspace),
@@ -255,10 +255,10 @@ internal sealed partial class McpWorkspaces
         return McpJson.ToolResult(new { discarded = true, remainingCount = _proposals.Count });
     }
 
-    static void CheckContinuation(JsonElement arguments, string name, string revision)
+    static void CheckContinuation(JsonElement arguments, string name, string revision, bool requireOnContinuation = true)
     {
         var supplied = McpJson.OptionalString(arguments, name);
-        if (McpJson.Integer(arguments, "offset", 0, 0, int.MaxValue) > 0 && supplied is null)
+        if (requireOnContinuation && McpJson.Integer(arguments, "offset", 0, 0, int.MaxValue) > 0 && supplied is null)
         {
             throw new McpFailure($"'{name}' is required for continuation.", -32602);
         }

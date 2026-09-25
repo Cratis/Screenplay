@@ -157,7 +157,7 @@ empty line map. Columns count UTF-16 code units; a tab is one column, and CRLF
 occupies two offsets but one line break. Pagination remains by requirement, with
 the usual response-size limit rather than a truncated body map.
 The MCP server loads implementation attachments from its trusted physical root for content hashing (#244), with warnings for refused files (`PLAY0430`–`PLAY0434`). It refreshes contents on each workspace operation, including when only the attachment changes; neither attachment text nor diagnostics enter persisted identity state or workspace revisions. For a file attachment whose contents could not be supplied, the content hash is empty;
-bodied reducers no longer block binding. The `implementation-requirements` response includes `attachmentManifestRevision`, a deterministic hash of all requirement IDs, content hashes and resolution states. Pass it as `expectedAttachmentManifestRevision` for each continuation (`offset > 0`); a changed manifest refuses the page with `StaleRevision`, even when `expectedRevision` is unchanged. Start again at offset zero after any refusal. Rejected compilations still expose
+bodied reducers no longer block binding. The `implementation-requirements` response includes `attachmentManifestRevision`, a deterministic hash of all requirement IDs, content hashes and resolution states. Legacy continuations (`offset > 0`) without `expectedAttachmentManifestRevision` remain valid but unpinned to attachment content. Clients can pin continuations by passing the response's revision as `expectedAttachmentManifestRevision`; when supplied, a changed manifest refuses the page with `StaleRevision`, even when `expectedRevision` is unchanged. Start again at offset zero after any refusal. Rejected compilations still expose
 attachments without admitting an executable model. Document results contain root handles. `read-ast` returns
 original occurrences, names, child counts and existing identities. Its `children`
 view selects a parent document/path. Typed content is opt-in.
@@ -171,6 +171,7 @@ Call `read-workspace` with `view: "executable-model"` and the current
 and `page` (`revision`, `totalBytes`, decoded-byte `offset`, `byteCount`,
 `bytesBase64`, `nextOffset`). `limit` is decoded bytes, 1–196608 (default 49152)
 for this view; other workspace views use 1–200 items (default 50).
+`expectedModelRevision` applies only to `executable-model`; `expectedAttachmentManifestRevision` applies only to `executable-model` and `implementation-requirements`. Other views ignore these arguments, and `implementation-requirements` ignores `expectedModelRevision`.
 Decode each `bytesBase64` page and concatenate in offset order until `nextOffset`
 is null. For every subsequent page pass `expectedRevision`,
 `expectedModelRevision` and `expectedAttachmentManifestRevision` from the first
@@ -178,7 +179,7 @@ response with `offset` set to the prior `nextOffset`. A changed revision refuses
 continuation without bytes; restart at offset zero. The result is precisely the
 canonical UTF-8 bytes from `SemanticModelSerializer.Serialize` and may be read
 with its strict `Deserialize` reader. The 1 MiB structured-content response cap
-still applies; use a smaller byte limit if other metadata makes a page too large.
+still applies; the maximum byte page fits the cap.
 
 If compilation failed, `available: false` points to `executable-diagnostics`
 and contains no model bytes or last-good result. Successful compilation does not
