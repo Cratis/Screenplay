@@ -63,7 +63,7 @@ Repairs are safe by construction: they can go stale only detectably, and humans 
 revision-bound typed AST repair, previewed through workspace authoring and
 exposed through MCP without auto-apply. Adding a node with an unresolved
 reference is refused under the safe policy; this is the `link` criterion in
-[#138](https://github.com/Cratis/Screenplay/issues/138). Release version: TBD.
+[#138](https://github.com/Cratis/Screenplay/issues/138). Shipped in v4.35.0.
 It is not yet `verified`: downstream release and issue acceptance remain open.
 
 ## Related issues
