@@ -2026,4 +2026,7 @@ public static class DiagnosticCodes
 
     /// <summary>A clock trigger takes a value, but clock occurrences have no values.</summary>
     public const string ClockTriggerValue = "PLAY0450";
+
+    /// <summary>A reads declaration has child lines, but reads takes no body.</summary>
+    public const string ReadsWithChildren = "PLAY0451";
 }

@@ -384,6 +384,7 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0442` | Warning | A reaction trigger reads by a value it does not take. |
 | `PLAY0443` | Error | A clock trigger reads by a value, but clock triggers take no values. |
 | `PLAY0444` | Warning | A reaction trigger reads a primitive type name as a view; use `@reads <PrimitiveType>` if `reads` is a trigger value. |
+| `PLAY0451` | Error | A `reads` line in a command or reaction trigger has indented children; the block is skipped, not parsed as owner values or properties. |
 
 ### Rules about the whole artifact
 

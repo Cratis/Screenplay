@@ -102,7 +102,7 @@ reference in the language.
 
 These need no declaration because every application has them and there is no event to declare for them.
 The clock is built in too, but with its own syntax rather than a name — see
-[what sets a reaction off](reactions.md#what-sets-a-reaction-off). Clock triggers (`every` and `at`) take no values, so value lines beneath them are errors.
+[what sets a reaction off](reactions.md#what-sets-a-reaction-off). Clock triggers (`every` and `at`) take no values, so value lines beneath them are errors. A `reads` line under any reaction trigger takes no indented children either; such lines are rejected, not treated as values.
 
 ## Registering a trigger
 

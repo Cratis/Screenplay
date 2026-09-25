@@ -104,7 +104,7 @@ reaction HandleOrder
     reads OrderStatus as current by orderId
 ```
 
-`reads <View> [as <alias>] [by <trigger value>]` names a view the trigger reads. If a trigger reads
+`reads <View> [as <alias>] [by <trigger value>]` names a view the trigger reads. It takes no indented children; a child line is an error and is not taken as a trigger value. If a trigger reads
 the same view more than once, every read needs a distinct alias; aliases must be unique within the
 trigger and must not match a trigger value. `by` must name a value taken by that trigger. Clock triggers (`every` and `at`) take no values,
 so they can use `reads <View>` but not `by`. An unknown view is reported. A reaction that invokes a
