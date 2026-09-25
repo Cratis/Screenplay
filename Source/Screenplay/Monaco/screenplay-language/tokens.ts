@@ -53,6 +53,9 @@ export const commonTokenRules: MonarchTokenRules = [
 export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMonarchLanguage {
     const tokenizer: Record<string, MonarchTokenRules> = {
         root: [
+            // Only an event header reserves 'generation'; properties and context paths do not.
+            [/^(\s*)(event)(\s+)([A-Za-z_]\w*)(\s+)(generation)(?=\s+\d+\s*$)/,
+                ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword']],
             // A tagged opening fence carries the embedded language; legacy tag lines still highlight.
             ...codeBlockTags.map(
                 (tag): MonarchTokenRules[number] => [

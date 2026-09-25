@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
-using Cratis.Screenplay.Semantics;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.for_ScreenplayCompiler;
@@ -24,20 +24,6 @@ public class when_declaring_event_generations : given.a_compiler
     }
 
     [Fact]
-    void should_resolve_both_generations_to_one_catalog_contract_identity()
-    {
-        var result = _compiler.Compile(Prefix + "      event ProjectRegistered generation 1\n        projectId Uuid\n      event ProjectRegistered generation 2\n        name String\n");
-        result.Success.ShouldBeTrue();
-        var application = ApplicationIdentity.Create("Projects");
-        var slice = SemanticAddress.ForSlice(application, "Projects", "Registration", "RegisterProject");
-        var catalog = SemanticIdentityCatalog.Empty(application);
-        var ids = result.Value!.Modules.Single().Features.Single().Slices.Single().Events
-            .Select(@event => catalog.ResolveEventContract(SemanticAddress.ForEventContract(slice, @event.Name)).Id)
-            .ToArray();
-        ids[0].ShouldEqual(ids[1]);
-    }
-
-    [Fact]
     void should_not_treat_a_same_named_event_in_another_slice_as_generation_one()
     {
         const string source = Prefix + "      event ProjectRegistered generation 1\n        projectId Uuid\n" +
@@ -55,6 +41,25 @@ public class when_declaring_event_generations : given.a_compiler
         var @event = result.Value!.Modules.Single().Features.Single().Slices.Single().Events.Single();
         @event.Generation.ShouldEqual(1u);
         @event.HasGenerationMarker.ShouldBeFalse();
+    }
+
+    [Fact]
+    void should_accept_unmarked_first_generation_followed_by_marked_second()
+    {
+        var result = _compiler.Compile(Prefix + "      event ProjectRegistered\n        projectId Uuid\n      event ProjectRegistered generation 2\n        name String\n");
+        result.Success.ShouldBeTrue();
+        var events = result.Value!.Modules.Single().Features.Single().Slices.Single().Events.ToArray();
+        events[0].HasGenerationMarker.ShouldBeFalse();
+        events[1].Generation.ShouldEqual(2u);
+    }
+
+    [Fact]
+    void should_reject_two_unmarked_declarations_as_duplicate_generation_one()
+    {
+        var result = _compiler.Compile(Prefix + "      event ProjectRegistered\n        projectId Uuid\n      event ProjectRegistered\n        name String\n");
+        result.Success.ShouldBeFalse();
+        result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.DuplicateEventGeneration)
+            .Message.ShouldContain("without a generation marker");
     }
 
     [Fact]
@@ -79,6 +84,22 @@ public class when_declaring_event_generations : given.a_compiler
         var result = _compiler.Compile(Prefix + "      event ProjectRegistered generation 1\n        projectId Uuid\n      event ProjectRegistered generation 1\n        name String\n");
         result.Success.ShouldBeFalse();
         result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.DuplicateEventGeneration).ShouldBeTrue();
+    }
+
+    [Theory]
+    [InlineData(0u)]
+    [InlineData(uint.MaxValue)]
+    void should_reject_out_of_range_generations_in_authored_syntax(uint generation)
+    {
+        var parsed = _compiler.Parse(Prefix + "      event ProjectRegistered\n        name String\n").Value!;
+        var module = parsed.Modules.Single();
+        var feature = module.Features.Single();
+        var slice = feature.Slices.Single();
+        var @event = slice.Events.Single() with { Generation = generation, HasGenerationMarker = true };
+        var syntax = parsed with { Modules = [module with { Features = [feature with { Slices = [slice with { Events = [@event] }] }] }] };
+        var context = new ParserContext(new(SourceLineSplitter.Split(string.Empty)));
+        ScreenplayValidator.Validate(syntax, context);
+        context.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidEventGeneration).ShouldBeTrue();
     }
 
     [Theory]

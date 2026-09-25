@@ -23,7 +23,7 @@ internal static partial class EventParser
         var name = HeaderRegex().Match(header.Content);
         if (!name.Success)
         {
-            context.Error(DiagnosticCodes.InvalidEventDeclaration, $"Invalid event declaration '{header.Content}' - expected 'event <Name>'", header.Location);
+            context.Error(DiagnosticCodes.InvalidEventDeclaration, $"Invalid event declaration '{header.Content}' - expected 'event <Name> [generation <N>]'", header.Location);
         }
 
         var hasGenerationMarker = name.Groups[2].Success;

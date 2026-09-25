@@ -19,4 +19,14 @@ public class when_printing_event_generations : given.a_printer
     [Fact] void should_print_both_markers() => _roundtrip.Printed.ShouldContain("event ProjectRegistered generation 1");
     [Fact] void should_print_the_current_marker() => _roundtrip.Printed.ShouldContain("event ProjectRegistered generation 2");
     [Fact] void should_print_identically_after_round_trip() => _roundtrip.PrintedAgain.ShouldEqual(_roundtrip.Printed);
+
+    [Fact]
+    void should_keep_an_unmarked_first_generation_unmarked()
+    {
+        var roundtrip = RoundTrip(Source.Replace("event ProjectRegistered generation 1", "event ProjectRegistered", StringComparison.Ordinal));
+        roundtrip.Printed.ShouldContain("event ProjectRegistered\n");
+        roundtrip.Printed.ShouldContain("event ProjectRegistered generation 2");
+        roundtrip.Printed.ShouldNotContain("event ProjectRegistered generation 1");
+        roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
+    }
 }

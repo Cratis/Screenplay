@@ -34,6 +34,22 @@ public class when_binding_an_event_generation_before_lineage_admission : given.a
     }
 
     [Fact]
+    void should_reject_an_unmarked_first_generation_followed_by_a_marked_second()
+    {
+        var result = Bind("module Projects\n  feature Registration\n    slice StateChange RegisterProject\n      event ProjectRegistered\n        projectId Uuid\n      event ProjectRegistered generation 2\n        name String\n");
+        result.Success.ShouldBeFalse();
+        result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.UnsupportedEventGenerationSemantics);
+    }
+
+    [Fact]
+    void should_reject_generations_in_two_slices_with_only_one_lineage_error()
+    {
+        var result = Bind(Source + "    slice StateChange ImportProject\n      event Imported generation 1\n        name String\n");
+        result.Success.ShouldBeFalse();
+        result.Diagnostics.Count(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedEventGenerationSemantics).ShouldEqual(1);
+    }
+
+    [Fact]
     void should_leave_unmarked_events_bindable()
     {
         var result = Bind("module Projects\n  feature Registration\n    slice StateChange RegisterProject\n      event ProjectRegistered\n        name String\n");

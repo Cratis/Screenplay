@@ -73,7 +73,19 @@ static class WorkspaceSyntaxAddresses
     internal static ImmutableArray<SemanticAddress> Declarations(ApplicationSyntax syntax, SemanticIdentityCatalog catalog)
     {
         var entries = WorkspaceSyntaxIndex.ForSyntax(syntax, catalog);
-        var groups = entries.Where(entry => entry.Address is not null).GroupBy(entry => entry.Address!);
+
+        // Historical event shapes share a contract address. Only the current shape claims its
+        // property addresses, just as the identity catalog addresses the current contract.
+        var currentEvents = entries.Where(entry => entry.Node is EventSyntax && entry.Address is not null)
+            .GroupBy(entry => entry.Address!)
+            .Select(group => group.OrderByDescending(entry => ((EventSyntax)entry.Node).Generation).First().Handle)
+            .ToHashSet();
+        var historicalEvents = entries.Where(entry => entry.Node is EventSyntax && !currentEvents.Contains(entry.Handle))
+            .Select(entry => entry.Handle).ToHashSet();
+        var groups = entries.Where(entry => entry.Address is not null &&
+                (entry.Node is not EventSyntax || currentEvents.Contains(entry.Handle)) &&
+                (entry.Parent is not { } parent || !historicalEvents.Contains(parent)))
+            .GroupBy(entry => entry.Address!);
         foreach (var group in groups.Where(group => group.Count() > 1 && group.Key.Kind is not (SemanticKind.Application or SemanticKind.Module or SemanticKind.Feature)))
         {
             throw new InvalidSemanticContract($"Multiple source occurrences claim semantic {group.Key.Kind} '{group.Key.Name}'.");

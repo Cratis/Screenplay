@@ -31,6 +31,13 @@
         "keywords": {
             "patterns": [
                 {
+                    "match": "^\\s*(event)\\s+[A-Za-z_]\\w*\\s+(generation)(?=\\s+[0-9]+\\s*$)",
+                    "captures": {
+                        "1": { "name": "keyword.control.screenplay" },
+                        "2": { "name": "keyword.other.screenplay" }
+                    }
+                },
+                {
                     "match": "^\\s*(domain|import|concept|type|policy|persona|authentication|module|layout|feature|slice|event|command|query|reaction|trigger|screen|constraint|specification|seed)\\b",
                     "captures": {
                         "1": { "name": "keyword.control.screenplay" }
@@ -41,7 +48,7 @@
                     "name": "keyword.other.screenplay"
                 },
                 {
-                    "match": "\\b(authorize|validate|produces|reads|as|handler|performer|observable|identifier|reason|from|require|when|given|then|arguments|result|error|template|data|action|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|released|ignore|casing|file|rule|message|severity|information|warning|matches|all|max|min|length|today|not|empty|and|or|authenticated|role|claim|subject|event|generation|query|layout|translate|key|description|concurrency|eventSource|sourceType|streamType|streamId|tag|for|readmodel|provider|nested|exclude|literal|automap)\\b",
+                    "match": "\\b(authorize|validate|produces|reads|as|handler|performer|observable|identifier|reason|from|require|when|given|then|arguments|result|error|template|data|action|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|released|ignore|casing|file|rule|message|severity|information|warning|matches|all|max|min|length|today|not|empty|and|or|authenticated|role|claim|subject|event|query|layout|translate|key|description|concurrency|eventSource|sourceType|streamType|streamId|tag|for|readmodel|provider|nested|exclude|literal|automap)\\b",
                     "name": "keyword.other.screenplay"
                 }
             ]

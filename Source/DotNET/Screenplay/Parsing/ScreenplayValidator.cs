@@ -100,7 +100,7 @@ internal static class ScreenplayValidator
         var declaredTriggers = (application.Triggers ?? []).ToDictionary(trigger => trigger.Name, StringComparer.Ordinal);
         var eventsByName = slices.SelectMany(slice => slice.Events)
             .GroupBy(@event => @event.Name, StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+            .ToDictionary(group => group.Key, group => group.OrderByDescending(@event => @event.Generation).First(), StringComparer.Ordinal);
 
         foreach (var slice in slices)
         {
@@ -155,32 +155,34 @@ internal static class ScreenplayValidator
     }
 
     /// <summary>
-    /// Validates that the <c>variant</c>s of every <c>freeform</c> arrangement agree on which slots exist -
-    /// a variant that omits a slot another variant of the same arrangement places (or explicitly hides)
-    /// leaves that slot's presence undefined for the size class the omitting variant targets.
+    /// Validates the range, uniqueness and consecutive numbering of event generations in one slice.
     /// </summary>
-    /// <param name="application">The <see cref="ApplicationSyntax"/> to validate.</param>
-    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
-    /// <remarks>
-    /// Whether a <c>ui profile</c> targeting a size class with no matching <c>variant</c> should warn is a
-    /// build-time concern - it depends on which templates a profile's screens actually resolve to, which the
-    /// Screenplay compiler does not know. That check belongs to Stage's build pipeline, not here.
-    /// </remarks>
     static void ValidateEventGenerations(SliceSyntax slice, ParserContext context)
     {
         // The same event name denotes one contract only within one owning slice.
+        foreach (var @event in slice.Events.Where(@event => @event.Generation is 0 or uint.MaxValue))
+        {
+            context.Error(
+                DiagnosticCodes.InvalidEventGeneration,
+                $"Event '{@event.Name}' must declare a generation between 1 and {uint.MaxValue - 1}",
+                @event.Location);
+        }
+
         foreach (var group in slice.Events.GroupBy(@event => @event.Name, StringComparer.Ordinal))
         {
             foreach (var duplicate in group.GroupBy(@event => @event.Generation).SelectMany(generation => generation.Skip(1)))
             {
                 context.Error(
                     DiagnosticCodes.DuplicateEventGeneration,
-                    $"Event '{group.Key}' declares generation {duplicate.Generation} more than once in slice '{slice.Name}'",
+                    duplicate.Generation == 1 && !duplicate.HasGenerationMarker &&
+                    group.Count(@event => @event.Generation == 1 && !@event.HasGenerationMarker) > 1
+                        ? $"Event '{group.Key}' is declared more than once without a generation marker in slice '{slice.Name}' (both are generation 1)"
+                        : $"Event '{group.Key}' declares generation {duplicate.Generation} more than once in slice '{slice.Name}'",
                     duplicate.Location);
             }
 
             var previous = 0u;
-            foreach (var @event in group.OrderBy(@event => @event.Generation))
+            foreach (var @event in group.Where(@event => @event.Generation is > 0 and < uint.MaxValue).OrderBy(@event => @event.Generation))
             {
                 if (@event.Generation > previous && @event.Generation != previous + 1)
                 {
@@ -195,6 +197,18 @@ internal static class ScreenplayValidator
         }
     }
 
+    /// <summary>
+    /// Validates that the <c>variant</c>s of every <c>freeform</c> arrangement agree on which slots exist -
+    /// a variant that omits a slot another variant of the same arrangement places (or explicitly hides)
+    /// leaves that slot's presence undefined for the size class the omitting variant targets.
+    /// </summary>
+    /// <param name="application">The <see cref="ApplicationSyntax"/> to validate.</param>
+    /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
+    /// <remarks>
+    /// Whether a <c>ui profile</c> targeting a size class with no matching <c>variant</c> should warn is a
+    /// build-time concern - it depends on which templates a profile's screens actually resolve to, which the
+    /// Screenplay compiler does not know. That check belongs to Stage's build pipeline, not here.
+    /// </remarks>
     static void ValidateArrangements(ApplicationSyntax application, ParserContext context)
     {
         foreach (var (kind, name, arrangement) in Arrangements(application))
