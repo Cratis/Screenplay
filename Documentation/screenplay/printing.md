@@ -60,10 +60,14 @@ a file does:
 - **Comments are kept, not their surrounding whitespace.** Leading comments stay with the
   declaration or member they annotate, trailing comments follow the printed line, and
   comments at the end of a block stay in that block. This includes comments before
-  `populate`, `field`, and `on submit` inside a form, as well as comments above a form;
-  comments within screens, layouts, and templates stay with their directives or slots.
-  The printer uses canonical two-space indentation. A tree created entirely from typed
-  JSON has no authored comments to keep.
+  `populate`, `field`, `on submit`, and inline `on` behaviors inside a form, as well as
+  comments above a form. Comments within screens and layouts stay with their anchored
+  directives or slots. Template slot and behavior comments also stay with their nodes;
+  a comment before `fits slot` has no directive node and prints above the template.
+  Inside a form, the printer always writes `populate`, then fields, then `on submit`,
+  then attached behaviors: a comment moves with the member it annotates when that
+  canonical order differs from the authored order. The printer uses canonical two-space
+  indentation. A tree created entirely from typed JSON has no authored comments to keep.
 - **Order across files cannot be recovered.** Parsed members of a slice, feature or
   module keep their authored order when they share a source file. A folder merge may
   combine members from different files; their line numbers cannot be compared, so
