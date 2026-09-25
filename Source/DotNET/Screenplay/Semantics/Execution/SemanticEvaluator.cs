@@ -180,7 +180,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
     /// </summary>
     /// <remarks>
     /// Unlike specification runs that do not inspect reducer state, this public operation fails closed when
-    /// a supplied event affects a reducer-backed read model. Legacy ESM v1 facts may omit typed event sources.
+    /// a supplied event affects a reducer-backed read model. Legacy ESM v1 facts may omit typed event sources; a supplied source always matches the declared producer destination type.
     /// </remarks>
     /// <param name="plan">The capability-admitted plan.</param>
     /// <param name="facts">The ordered existing facts; no read-model snapshots are required.</param>
@@ -209,8 +209,8 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         return ExecuteQueries(plan, world, world.Commit(facts, readModels), facts, queries, caller);
     }
 
-    // Existing internal callers use this to project from supplied snapshots. The public establishment operation
-    // intentionally starts from empty state so it can validate the complete supplied history first.
+    // Projects from supplied snapshots without validating facts. The public establishment operation intentionally
+    // starts from empty state so it can validate the complete supplied history first.
     internal static bool Establish(
         SemanticExecutionPlan plan,
         ImmutableArray<SemanticReadModelInstance> current,
@@ -240,6 +240,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         {
             // Validate the entire history before any projection can observe an invalid occurrence.
             if (!facts.IsDefault && facts.Any(fact =>
+                fact is null ||
                 (fact is { Tags.IsDefault: true } or { Context.EventSource: null }) ||
                 (fact is { Tags: var tags } && tags.Any(string.IsNullOrWhiteSpace)) ||
                 (plan.Model.SemanticVersion != SemanticVersion.V1 &&
@@ -285,7 +286,9 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                 validator.ValidateVariant(fact.Destination);
                 if (fact.Context is { } context)
                 {
-                    var requiredType = plan.Model.SemanticVersion == SemanticVersion.V1
+                    // Legacy v1 specification events keep their authored source type (model validation already
+                    // checks them); supplied facts always answer to the event's declared producer destination.
+                    var requiredType = plan.Model.SemanticVersion == SemanticVersion.V1 && !publicReplay
                         ? context.EventSource.Type
                         : SemanticModelValidator.DeclaredEventSourceType(plan.Commands.Values, fact.EventContract);
                     if (context.EventSource.Type != requiredType)

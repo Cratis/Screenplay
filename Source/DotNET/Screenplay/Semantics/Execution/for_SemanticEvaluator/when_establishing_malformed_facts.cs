@@ -36,6 +36,16 @@ public class when_establishing_malformed_facts : for_SemanticSpecificationRunner
             .ShouldBeOfExactType<SemanticAccepted>();
     }
 
+    [Fact] void should_reject_a_v1_fact_whose_source_type_differs_from_the_declared_producer()
+    {
+        var @event = _plan.Events.Values.Single();
+        var values = @event.Properties.Select(property => new SemanticPropertyValue(property.Id,
+            SemanticValue.Text(property.Name == "name" ? "Screenplay" : "3fa85f64-5717-4562-b3fc-2c963f66afa6"))).ToImmutableArray();
+        var source = SemanticValue.Text("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+        var fact = new SemanticFact(@event.Id, source, values) { Context = new(new(SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text), source)) };
+        AssertRejected(new SemanticEvaluator().EstablishWorld(_plan, [fact]));
+    }
+
     [Fact] void should_reject_default_facts() => AssertRejected(_default);
     [Fact] void should_reject_unknown_event_contracts() => AssertRejected(_unknown);
     [Fact] void should_reject_missing_event_properties() => AssertRejected(_missing);

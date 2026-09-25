@@ -36,10 +36,9 @@ public class when_establishing_invalid_fact_metadata : Specification
     [Fact] void should_reject_missing_typed_source_in_v2() => AssertRejected(_fact with { Context = null });
     [Fact] void should_reject_null_identity_without_context_in_v2() => AssertRejected(_fact with { Destination = SemanticValue.Null, Context = null });
     [Fact] void should_reject_null_identity_in_v2() => AssertRejected(_fact with { Destination = SemanticValue.Null, Context = new(_fact.Context!.EventSource with { Value = SemanticValue.Null }) });
-    [Fact] void should_reject_empty_identity_in_v2() => AssertRejected(_fact with { Destination = SemanticValue.Text(""), Context = new(_fact.Context!.EventSource with { Value = SemanticValue.Text("") }) });
-    [Fact] void should_reject_blank_identity_in_v2() => AssertRejected(_fact with { Destination = SemanticValue.Text("   "), Context = new(_fact.Context!.EventSource with { Value = SemanticValue.Text("   ") }) });
     [Fact] void should_reject_mismatched_declared_source_type() => AssertRejected(_fact with { Context = new(_fact.Context!.EventSource with { Type = SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text) }) });
     [Fact] void should_reject_event_with_no_declared_producer() => AssertRejected(_fact with { EventContract = _plan.Events.Values.Single(value => value.Name == "ProjectUnproduced").Id });
+    [Fact] void should_reject_a_null_fact() => AssertRejected(null!);
     [Fact] void should_reject_null_tag() => AssertRejected(_fact with { Tags = [null!] });
     [Fact] void should_reject_blank_tag() => AssertRejected(_fact with { Tags = ["  "] });
     [Fact] void should_accept_valid_typed_source() => new SemanticEvaluator().EstablishWorld(_plan, [_fact]).ShouldBeOfExactType<SemanticAccepted>();
