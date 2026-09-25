@@ -55,6 +55,14 @@ public record PolicyContext(
 
 These live in `Cratis.Screenplay.Contexts`. A runtime such as Stage supplies the instance; inline `csharp` blocks and imported files compile against it, in scope as `context`. Reducer rules receive a `ReducerContext` with `State` (null before the first event) and `Event`; they have `StateAs<T>()` and `EventAs<T>()` too.
 
+## Typed context sidecars
+
+Semantic compilation publishes `TypedContextDescriptors` beside `ImplementationRequirements` (pair by `ContextsFor(requirementId)`). The descriptor contract is revision 1, independently of ESM and the role's result contract. Each ordered member names a portable model type or runtime token, its nullability and source identity/path. Shaped payloads include ordered properties with their resolved portable types and stable IDs; an optional payload property does not make its containing payload nullable. `IsFirst` and `IsWholeArtifact` are marked derived. `*As<T>()` accessors are methods, not stored data members. A wrapper provider must reject unknown descriptor contract/context versions, unresolved shapes and unsupported roles rather than generating `dynamic`. Successful descriptors carry the exact `ModelRevision` of the same compilation; descriptors on failed compilations carry no model revision and cannot be attached to an ESM from elsewhere.
+
+Reducer descriptors are per `on Event`: `State` is nullable read-model shape, `Event` is the non-null *current* event generation, and `Key` is the event source identity. Rule descriptors distinguish the whole command or concept value (`Artifact`) from the validated property (`Value`); concept value rules use the concept type for both. Policy descriptors are per authorized command or query use site; an unused policy has no wrapper-ready context. A command with a resolvable shape exposes a `CommandContext` v1 descriptor even if its handler fails ESM binding. No handler result or envelope is implied. Query performers, reactions and constraints have no descriptors yet.
+
+These are sidecars of the **same compilation** as the ESM: canonical v1–v4 bytes and revisions do not include them. An ESM-only loader cannot reconstruct a typed context. Providers must carry the requirement ID, descriptor version and the matching model provenance together with the attachments, not combine arbitrary compilations.
+
 ## The values they carry
 
 | Type | Carries |

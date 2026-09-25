@@ -30,6 +30,7 @@ public class when_paging_implementation_requirements : given.a_connection
     [Fact] void should_list_the_handler_role() => _first.GetProperty("items")[0].GetProperty("role").GetString().ShouldEqual("CommandHandler");
     [Fact] void should_list_the_authored_file() => _first.GetProperty("items")[0].GetProperty("file").GetString().ShouldEqual("Handlers/RegisterProject.cs");
     [Fact] void should_name_the_stable_requirement() => _first.GetProperty("items")[0].GetProperty("requirementId").GetString()!.Length.ShouldEqual(64);
+    [Fact] void should_pair_a_single_valued_context_with_the_handler_requirement() => _first.GetProperty("items")[0].GetProperty("typedContext").GetProperty("members")[0].GetProperty("name").GetString().ShouldEqual("Command");
     [Fact] void should_expose_the_role_contract_versions() => _first.GetProperty("items")[0].GetProperty("contextVersion").GetUInt32().ShouldEqual(1u);
     [Fact] void should_expose_the_required_capability() => _first.GetProperty("items")[0].GetProperty("requiredCapability").GetString().ShouldEqual("provider-defined");
     [Fact] void should_not_claim_to_have_hashed_the_file() => _first.GetProperty("items")[0].GetProperty("contentHash").GetString().ShouldBeEmpty();
