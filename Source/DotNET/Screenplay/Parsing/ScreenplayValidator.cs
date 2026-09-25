@@ -67,7 +67,7 @@ internal static class ScreenplayValidator
         {
             foreach (var policy in persona.Policies.Where(policy => !knownPolicies.Contains(policy)))
             {
-                context.Warning(DiagnosticCodes.UnknownPolicy, $"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
+                context.Error(DiagnosticCodes.UnknownPolicy, $"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
             }
         }
 

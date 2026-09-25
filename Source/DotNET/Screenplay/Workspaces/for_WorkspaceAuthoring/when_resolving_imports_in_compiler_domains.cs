@@ -23,7 +23,6 @@ public class when_resolving_imports_in_compiler_domains
     }
 
     [Theory]
-    [InlineData("persona User\n  policy Missing")]
     [InlineData("module App\n  feature F\n    slice StateView S\n      screen Actions\n        action Missing")]
     [InlineData("module App\n  feature F\n    slice StateView S\n      screen Actions\n        navigate to Missing")]
     [InlineData("module App\n  feature F\n    slice StateView S\n      readmodel View\n        id Uuid\n      screen Browse\n        data View via query Missing")]
@@ -34,13 +33,14 @@ public class when_resolving_imports_in_compiler_domains
         result.Conflicts.Single().Message.Contains("unresolved", StringComparison.Ordinal).ShouldBeTrue();
     }
 
-    [Fact]
-    public void should_admit_a_draft_policy_with_explicit_reference_debt()
+    [Theory]
+    [InlineData(WorkspaceAuthoringReferencePolicy.Safe)]
+    [InlineData(WorkspaceAuthoringReferencePolicy.Draft)]
+    public void should_reject_a_persona_with_an_unknown_policy(WorkspaceAuthoringReferencePolicy policy)
     {
-        var result = Propose("persona User\n  policy Missing", WorkspaceAuthoringReferencePolicy.Draft);
-        result.Accepted.ShouldBeTrue();
-        result.AuthoringDiagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownPolicy).ShouldBeTrue();
-        result.AuthoringDiagnostics.Any(diagnostic => diagnostic.Message.Contains("Reference debt: unresolved Policy", StringComparison.Ordinal)).ShouldBeTrue();
+        var result = Propose("persona User\n  policy Missing", policy);
+        result.Accepted.ShouldBeFalse();
+        result.AuthoringDiagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownPolicy && diagnostic.Severity == DiagnosticSeverity.Error).ShouldBeTrue();
     }
 
     static WorkspaceAuthoringResult Propose(string addition, WorkspaceAuthoringReferencePolicy policy)

@@ -360,7 +360,7 @@ conditions are reported without a code until the compiler checks them too.
 |---|---|---|
 | `PLAY0165` | Warning | A property names a type nothing in the document or its imports declares. |
 | `PLAY0166` | Warning | An event is referred to that nothing in the document or its imports declares. |
-| `PLAY0167` | Warning | A policy is referred to that nothing in the document declares. |
+| `PLAY0167` | Warning or error | A policy is referred to that nothing in the document declares. A persona's unknown policy is an error (including during semantic binding); other unresolved policy references are warnings. |
 | `PLAY0168` | Error | A concept and a type, or two of either, are declared under one name. |
 | `PLAY0169` | Error | An authentication block declares two providers under one name. |
 | `PLAY0170` | Error | A seed block seeds nothing. |
@@ -569,7 +569,7 @@ itself what an unresolvable one means.
 |---|---|---|
 | `PLAY0268` | Error | Source syntax carries portable behavior ESM v1 cannot represent, including unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` or production conditions over read-model paths (#129), date/`today` conditions, non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules, command/concept code validation, and inline/file policy predicates bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
 | `PLAY0269` | Information | Source syntax is explicitly deferred from the current backend semantic profile. |
-| `PLAY0270` | Information | Source syntax is realization or operational metadata rather than portable behavior. |
+| `PLAY0270` | Information | Source syntax, including a valid persona, is realization or authoring/operational metadata rather than portable behavior. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly. |
 | `PLAY0272` | Error | Source syntax requires an explicit reviewed semantic migration before binding. |
 | `PLAY0273` | Error | Syntax and identity information cannot produce a coherent semantic compilation, including an event-source `for` assertion without one unambiguous required scalar command destination type. |
