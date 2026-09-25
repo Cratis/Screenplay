@@ -17,3 +17,4 @@
 | [0013](0013-equivalence-for-screenplay-code-round-trips.md) | What "equivalent" means for Screenplay and code round trips | accepted | none | 2026-09-24 | Sindre Alstad Wilting |
 | [0014](0014-diagnostic-repairs-are-typed-workspace-proposals.md) | Diagnostic repairs are typed workspace proposals | accepted | none | 2026-09-24 | Sindre Alstad Wilting |
 | [0015](0015-event-generations-in-the-executable-model.md) | Event generations in the executable model | accepted | none | 2026-09-25 | Sindre Alstad Wilting |
+| [0016](0016-exporting-the-executable-model-over-mcp.md) | Exporting the executable model over MCP | accepted | none | 2026-09-25 | Sindre Alstad Wilting |
