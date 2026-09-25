@@ -67,7 +67,9 @@ public sealed class SemanticCompilation
         foreach (var eventContract in index.Events)
         {
             var assignment = documents.IdentityCatalog.ResolveEventContract(eventContract.Key);
-            if (assignment.Id != eventContract.Value.ContractId || assignment.Revision != eventContract.Value.Revision)
+            if (assignment.Id != eventContract.Value.ContractId ||
+                (assignment.Revision != eventContract.Value.Revision &&
+                 documents.IdentityCatalog.EventContracts.Any(value => value.Address.Equals(eventContract.Key))))
             {
                 throw new InvalidSemanticContract($"Event contract '{eventContract.Value.Id}' disagrees with its identity catalog assignment.");
             }
@@ -175,7 +177,20 @@ sealed class SemanticCompilationIndex
         {
             var eventAddress = SemanticAddress.ForEventContract(sliceAddress, eventContract.Name);
             Register(eventAddress, eventContract.Id);
-            RegisterProperties(eventAddress, eventContract.Properties);
+            if (eventContract.PriorRevisions.IsEmpty)
+            {
+                RegisterProperties(eventAddress, eventContract.Properties);
+            }
+            else
+            {
+                foreach (var prior in eventContract.PriorRevisions)
+                {
+                    RegisterEventProperties(eventAddress, prior.Revision, prior.Properties);
+                }
+
+                RegisterEventProperties(eventAddress, eventContract.Revision, eventContract.Properties);
+            }
+
             _events.Add(eventAddress, eventContract);
         }
 
@@ -208,6 +223,14 @@ sealed class SemanticCompilationIndex
         foreach (var specification in slice.Specifications)
         {
             Register(SemanticAddress.ForSpecification(sliceAddress, specification.Name), specification.Id);
+        }
+    }
+
+    void RegisterEventProperties(SemanticAddress owner, EventContractRevision revision, ImmutableArray<SemanticProperty> properties)
+    {
+        foreach (var property in properties)
+        {
+            Register(SemanticAddress.ForEventProperty(owner, revision, property.Name), property.Id);
         }
     }
 

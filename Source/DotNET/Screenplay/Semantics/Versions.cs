@@ -28,6 +28,9 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     /// <summary>The language version for opaque reducer transition contracts.</summary>
     public static readonly LanguageVersion V3 = new(3, 0);
 
+    /// <summary>The language version for event-contract lineage.</summary>
+    public static readonly LanguageVersion V4 = new(4, 0);
+
     /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
@@ -78,6 +81,9 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
 
     /// <summary>The semantic version for opaque reducer transition contracts.</summary>
     public static readonly SemanticVersion V3 = new(3, 0);
+
+    /// <summary>The semantic version for event-contract lineage.</summary>
+    public static readonly SemanticVersion V4 = new(4, 0);
 
     /// <summary>
     /// Parses a canonical, supported semantic version.
@@ -233,13 +239,37 @@ public static class EsmSchemaV3Support
     }
 }
 
+/// <summary>Defines version pairs admitted by ESM schema v4.</summary>
+public static class EsmSchemaV4Support
+{
+    /// <summary>Gets supported language versions.</summary>
+    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [.. EsmSchemaV3Support.LanguageVersions, LanguageVersion.V4];
+
+    /// <summary>Gets supported semantic versions.</summary>
+    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [.. EsmSchemaV3Support.SemanticVersions, SemanticVersion.V4];
+
+    /// <summary>Determines whether the exact pair is supported.</summary>
+    public static bool Supports(LanguageVersion languageVersion, SemanticVersion semanticVersion) =>
+        EsmSchemaV3Support.Supports(languageVersion, semanticVersion) ||
+        (languageVersion == LanguageVersion.V4 && semanticVersion == SemanticVersion.V4);
+
+    /// <summary>Rejects unsupported version pairs.</summary>
+    public static void EnsureSupported(LanguageVersion languageVersion, SemanticVersion semanticVersion)
+    {
+        if (!Supports(languageVersion, semanticVersion))
+        {
+            throw new InvalidSemanticContract($"The ESM schema-v4 contract does not declare language version '{languageVersion}' and semantic version '{semanticVersion}'.");
+        }
+    }
+}
+
 static class VersionParser
 {
     internal static LanguageVersion ParseLanguage(string value)
     {
         if (!TryParse(value, out LanguageVersion version))
         {
-            throw new InvalidSemanticContract($"'{value}' is not a canonical language version supported by ESM schema v1, v2 or v3.");
+            throw new InvalidSemanticContract($"'{value}' is not a canonical language version supported by ESM schema v1, v2, v3 or v4.");
         }
 
         return version;
@@ -249,7 +279,7 @@ static class VersionParser
     {
         if (!TryParse(value, out SemanticVersion version))
         {
-            throw new InvalidSemanticContract($"'{value}' is not a canonical semantic version supported by ESM schema v1, v2 or v3.");
+            throw new InvalidSemanticContract($"'{value}' is not a canonical semantic version supported by ESM schema v1, v2, v3 or v4.");
         }
 
         return version;
@@ -259,7 +289,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV3Support.LanguageVersions.Contains(version))
+        if (success && !EsmSchemaV4Support.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -272,7 +302,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV3Support.SemanticVersions.Contains(version))
+        if (success && !EsmSchemaV4Support.SemanticVersions.Contains(version))
         {
             version = default;
             return false;

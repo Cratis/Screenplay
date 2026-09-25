@@ -2,7 +2,7 @@
 id: 0015
 title: Event generations in the executable model
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-09-25
 decider: Sindre Alstad Wilting
 class: contract
@@ -93,3 +93,5 @@ Screenplay: [#71](https://github.com/Cratis/Screenplay/issues/71), [#167](https:
 ## Status notes
 
 **2026-09-25 — accepted.** Sindre Alstad Wilting delegated this choice to the orchestrating agent. The option was chosen under that delegation after an independent review of the Screenplay (v4.33.0) and Chronicle source.
+
+**2026-09-25 — implemented, not verified. Release version: TBD.** ESM v4 carries current and prior event revisions, revision-qualified property identities and explicit catalog advancement. The v4 golden and corrected RegisterProject/v2 corpus pin new bytes and revisions; v1–v3 bytes are unchanged. Historical replay, schema immutability against an admitted baseline and Chronicle migration rendering remain #71 work. Verification across consumers and realizations is pending.

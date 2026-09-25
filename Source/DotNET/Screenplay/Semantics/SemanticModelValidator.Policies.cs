@@ -83,7 +83,7 @@ internal static partial class SemanticModelValidator
             {
                 ValidatePolicyCondition(policy.Condition);
                 if (policy.Condition is SemanticOpaquePolicyCondition opaque &&
-                    (_semanticVersion != SemanticVersion.V3 || string.IsNullOrWhiteSpace(opaque.RequirementId)))
+                    ((_semanticVersion != SemanticVersion.V3 && _semanticVersion != SemanticVersion.V4) || string.IsNullOrWhiteSpace(opaque.RequirementId)))
                 {
                     throw new InvalidSemanticContract($"Policy '{policy.Name}' requires ESM v3 and a requirement identity.");
                 }

@@ -298,6 +298,8 @@ internal static partial class SemanticModelRead
         string? name = null;
         ImmutableArray<SemanticProperty> properties = default;
         ImmutableArray<string> tags = [];
+        EventContractRevision? predecessor = null;
+        ImmutableArray<SemanticEventRevision> priorRevisions = [];
         while (NextProperty(ref reader, seen, "event contract") is { } property)
         {
             switch (property)
@@ -308,12 +310,51 @@ internal static partial class SemanticModelRead
                 case "name": name = String(ref reader, property); break;
                 case "properties": properties = Array(ref reader, Property, property); break;
                 case "tags": tags = StringArray(ref reader, property); break;
+                case "predecessor": predecessor = new(UInt32(ref reader, property)); break;
+                case "priorRevisions": priorRevisions = Array(ref reader, EventRevision, property); break;
                 default: throw Unknown(property, "event contract");
             }
         }
 
         Required(id.IsSet && contractId.IsSet && revision.IsValid && name is not null && !properties.IsDefault, "event contract");
-        return new(id, contractId, revision, name!, properties) { Tags = tags };
+        return new(id, contractId, revision, name!, properties) { Tags = tags, Predecessor = predecessor, PriorRevisions = priorRevisions };
+    }
+
+    internal static SemanticEventRevision EventRevision(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "event revision");
+        var seen = NewSeen();
+        EventContractRevision revision = default;
+        EventContractRevision? predecessor = null;
+        var predecessorRead = false;
+        ImmutableArray<SemanticProperty> properties = default;
+        ImmutableArray<string> tags = [];
+        while (NextProperty(ref reader, seen, "event revision") is { } property)
+        {
+            switch (property)
+            {
+                case "contractRevision": revision = new(UInt32(ref reader, property)); break;
+                case "predecessor": predecessorRead = true; predecessor = NullableUInt32Revision(ref reader, property); break;
+                case "properties": properties = Array(ref reader, Property, property); break;
+                case "tags": tags = StringArray(ref reader, property); break;
+                default: throw Unknown(property, "event revision");
+            }
+        }
+
+        Required(revision.IsValid && predecessorRead && !properties.IsDefault, "event revision");
+        return new(revision, predecessor, properties) { Tags = tags };
+    }
+
+    internal static EventContractRevision? NullableUInt32Revision(ref Utf8JsonReader reader, string property)
+    {
+        RequiredRead(ref reader, property);
+        if (reader.TokenType == JsonTokenType.Null) return null;
+        if (reader.TokenType != JsonTokenType.Number || !reader.TryGetUInt32(out var value))
+        {
+            throw Malformed(property, "an unsigned 32-bit integer or null");
+        }
+
+        return new(value);
     }
 
     internal static SemanticCommand Command(ref Utf8JsonReader reader)
@@ -485,8 +526,8 @@ internal static partial class SemanticModelRead
             }
         }
 
-        Required(cardinality is not null && key is not null, "affected instance");
-        return new(cardinality!.Value, key!);
+        Required(key is not null, "affected instance");
+        return new(cardinality ?? AffectedInstanceCardinality.One, key!);
     }
 
     internal static SemanticKeyedQuery Query(ref Utf8JsonReader reader)

@@ -1,8 +1,9 @@
-concept ProjectId : Uuid
-concept ProjectName : String
 module Projects
+
   feature Registration
+
     slice StateChange RegisterProject
+
       command RegisterProject
         projectId ProjectId identifier
         name ProjectName
@@ -11,11 +12,13 @@ module Projects
         produces ProjectRegistered
           for projectId
           name = name
+
       event ProjectRegistered generation 1
         projectId ProjectId
         name ProjectName
       event ProjectRegistered generation 2
         name ProjectName
+
       specification RegisteringAProject
         when RegisterProject
           projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
@@ -32,17 +35,9 @@ module Projects
           result
             projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
             name = "Screenplay"
+
       specification RejectingAnEmptyProjectName
         when RegisterProject
           projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
           name = ""
         then error "Project name is required"
-    slice StateView ProjectLookup
-      readmodel ProjectSummary
-        projectId ProjectId
-        name ProjectName
-      query ProjectById => ProjectSummary?
-        by projectId ProjectId
-      projection ProjectSummaryProjection => ProjectSummary
-        from ProjectRegistered
-          name = name

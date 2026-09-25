@@ -111,6 +111,18 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
+            foreach (var entry in value.Values)
+            {
+                if (@event.Properties.ContainsKey(entry.Property)) continue;
+                var prior = @event.Contract.PriorRevisions.LastOrDefault(revision => revision.Properties.Any(property => property.Name == entry.Property));
+                if (prior is null) continue;
+                Error(
+                    DiagnosticCodes.UnsupportedEventGenerationSemantics,
+                    $"Event '{@event.Syntax.Name}' revision {prior.Revision.Value} has property '{entry.Property}', but historical-shape references are unsupported; current revision {@event.Contract.Revision.Value} does not declare it.",
+                    entry.Location);
+                return null;
+            }
+
             var types = commands.Values.SelectMany(command => command.Produces
                 .Where(produced => produced.EventContract == @event.Contract.Id)
                 .Select(_ => command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type))

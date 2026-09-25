@@ -8,7 +8,7 @@ namespace Cratis.Screenplay.Semantics.Serialization;
 public static partial class SemanticModelSerializer
 {
     /// <summary>
-    /// Reads strict canonical ESM v1 UTF-8 JSON and verifies its revision.
+    /// Reads strict canonical ESM v1–v4 UTF-8 JSON and verifies its revision.
     /// </summary>
     /// <param name="json">The canonical UTF-8 JSON bytes.</param>
     /// <returns>The verified executable semantic model.</returns>

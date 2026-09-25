@@ -78,7 +78,7 @@ public sealed record ExecutableSemanticModel
         SemanticVersion semanticVersion,
         SemanticApplication application)
     {
-        EsmSchemaV3Support.EnsureSupported(languageVersion, semanticVersion);
+        EsmSchemaV4Support.EnsureSupported(languageVersion, semanticVersion);
         SemanticModelValidator.Validate(application, semanticVersion);
         var withoutRevision = SemanticModelCanonicalJson.SerializeWithoutRevision(languageVersion, semanticVersion, application);
         var revision = SemanticRevision.Compute(withoutRevision);
@@ -111,6 +111,18 @@ internal static partial class SemanticModelValidator
                     specification.ThenEvents.Any(value => value.EventSource is not null))))
         {
             throw new InvalidSemanticContract("An ESM v2 model must contain a typed destination, a specification event source, or an occurrence context mapping.");
+        }
+
+        var evolved = application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices)
+            .SelectMany(slice => slice.Events).Any(@event => !@event.PriorRevisions.IsEmpty);
+        if (semanticVersion == SemanticVersion.V4 && !evolved)
+        {
+            throw new InvalidSemanticContract("An ESM v4 model must contain a multi-generation event contract.");
+        }
+
+        if (semanticVersion != SemanticVersion.V4 && evolved)
+        {
+            throw new InvalidSemanticContract("Event contract lineage requires ESM v4.");
         }
 
         if (semanticVersion == SemanticVersion.V3 && !application.Policies.Any(policy => policy.Condition is SemanticOpaquePolicyCondition) &&
@@ -319,9 +331,28 @@ internal static partial class SemanticModelValidator
         void RegisterEvent(SemanticEventContract eventContract)
         {
             Register(eventContract.Id, eventContract.Name, "event contract");
-            if (!eventContract.ContractId.IsSet || eventContract.Revision != EventContractRevision.Initial)
+            if (!eventContract.ContractId.IsSet || !eventContract.Revision.IsValid || eventContract.Revision.Value == uint.MaxValue)
             {
-                throw new InvalidSemanticContract($"Event contract '{eventContract.Name}' must use the initial ESM v1 contract revision.");
+                throw new InvalidSemanticContract($"Event contract '{eventContract.Name}' has an invalid contract revision.");
+            }
+
+            if (eventContract.PriorRevisions.IsDefault || eventContract.PriorRevisions.Length != eventContract.Revision.Value - 1 ||
+                eventContract.Predecessor != (eventContract.Revision == EventContractRevision.Initial ? null : new EventContractRevision(eventContract.Revision.Value - 1)))
+            {
+                throw new InvalidSemanticContract($"Event contract '{eventContract.Name}' has incomplete predecessor lineage.");
+            }
+
+            for (var index = 0; index < eventContract.PriorRevisions.Length; index++)
+            {
+                var prior = eventContract.PriorRevisions[index];
+                if (prior is null || prior.Revision.Value != (uint)index + 1 ||
+                    prior.Predecessor != (index == 0 ? null : new EventContractRevision((uint)index)) || prior.Properties.IsDefault)
+                {
+                    throw new InvalidSemanticContract($"Event contract '{eventContract.Name}' has invalid historical revision lineage.");
+                }
+
+                ValidateTags(prior.Tags);
+                RegisterProperties(prior.Properties, $"event contract '{eventContract.Name}' revision {prior.Revision.Value}");
             }
 
             if (!_eventContractIds.Add(eventContract.ContractId))
@@ -366,6 +397,10 @@ internal static partial class SemanticModelValidator
             foreach (var eventContract in slice.Events)
             {
                 ValidateProperties(eventContract.Properties);
+                foreach (var prior in eventContract.PriorRevisions)
+                {
+                    ValidateProperties(prior.Properties);
+                }
             }
 
             foreach (var command in slice.Commands)
@@ -432,7 +467,7 @@ internal static partial class SemanticModelValidator
             }
 
             if (command.CodeValidations.IsDefault || command.CodeValidations.Any(block => block is null || string.IsNullOrWhiteSpace(block.RequirementId)) ||
-                (command.CodeValidations.Length > 0 && _semanticVersion != SemanticVersion.V3))
+                (command.CodeValidations.Length > 0 && _semanticVersion != SemanticVersion.V3 && _semanticVersion != SemanticVersion.V4))
             {
                 throw new InvalidSemanticContract("Command code validation requires ESM v3 and a requirement identity.");
             }
@@ -502,7 +537,7 @@ internal static partial class SemanticModelValidator
 
             if (validation.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation)
             {
-                if (_semanticVersion != SemanticVersion.V3 || validation.Operand is not null ||
+                if ((_semanticVersion != SemanticVersion.V3 && _semanticVersion != SemanticVersion.V4) || validation.Operand is not null ||
                     (validation.Kind == SemanticValidationRuleKind.CodeValidation && !isConcept) ||
                     string.IsNullOrWhiteSpace(validation.Name) || string.IsNullOrWhiteSpace(validation.RequirementId))
                 {
@@ -658,6 +693,10 @@ internal static partial class SemanticModelValidator
 
                 RejectNull(transition.AffectedInstance, "affected instance");
                 ValidateEnum(transition.AffectedInstance.Cardinality, AffectedInstanceCardinality.Unknown, "affected instance cardinality");
+                if (_semanticVersion == SemanticVersion.V4 && transition.AffectedInstance.Cardinality != AffectedInstanceCardinality.One)
+                {
+                    throw new InvalidSemanticContract("ESM v4 does not admit zeroOrOne or many projection transition cardinality.");
+                }
                 var sources = Properties(eventContract.Properties);
                 var keyType = ResolveExpression(transition.AffectedInstance.Key, SemanticExpressionRootKind.Event, sources) ??
                     throw new InvalidSemanticContract("An affected-instance key cannot be null.");
@@ -675,7 +714,7 @@ internal static partial class SemanticModelValidator
 
         void ValidateReducer(SemanticReducer reducer)
         {
-            if (_semanticVersion != SemanticVersion.V3 || string.IsNullOrWhiteSpace(reducer.Name) ||
+            if ((_semanticVersion != SemanticVersion.V3 && _semanticVersion != SemanticVersion.V4) || string.IsNullOrWhiteSpace(reducer.Name) ||
                 !_readModels.ContainsKey(reducer.ReadModel) || reducer.Transitions.IsDefaultOrEmpty)
             {
                 throw new InvalidSemanticContract($"Reducer '{reducer.Name}' requires ESM v3, a read model, and transitions.");

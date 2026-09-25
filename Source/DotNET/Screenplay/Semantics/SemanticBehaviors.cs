@@ -213,7 +213,7 @@ public sealed record SemanticPropertyMapping(SemanticId TargetProperty, Semantic
 public sealed record SemanticPropertyValue(SemanticId TargetProperty, SemanticValue Value);
 
 /// <summary>
-/// Represents a persisted event contract in ESM v1.
+/// Represents a persisted event contract; ESM v4 also carries its prior revisions.
 /// </summary>
 /// <param name="Id">The semantic identity of the declaration.</param>
 /// <param name="ContractId">The stable persisted-fact identity.</param>
@@ -233,6 +233,38 @@ public sealed record SemanticEventContract(
     /// <remarks>
     /// Chronicle's IEventSequence.Append accepts tags and stores them as EventContext.Tags (Decision: 0001).
     /// </remarks>
+    public ImmutableArray<string> Tags { get; init; } = [];
+
+    /// <summary>The immediately preceding contract revision, if any.</summary>
+    public EventContractRevision? Predecessor { get; init; }
+
+    /// <summary>Complete historical revisions, in ascending revision order.</summary>
+    public ImmutableArray<SemanticEventRevision> PriorRevisions { get; init; } = [];
+
+    /// <summary>Looks up a revision by contract identity and revision number.</summary>
+    public SemanticEventRevision? FindRevision(EventContractId contractId, EventContractRevision revision)
+    {
+        if (ContractId != contractId)
+        {
+            return null;
+        }
+
+        if (Revision == revision)
+        {
+            return new(Revision, Predecessor, Properties) { Tags = Tags };
+        }
+
+        return PriorRevisions.FirstOrDefault(value => value.Revision == revision);
+    }
+}
+
+/// <summary>A complete historical event schema belonging to one contract.</summary>
+public sealed record SemanticEventRevision(
+    EventContractRevision Revision,
+    EventContractRevision? Predecessor,
+    ImmutableArray<SemanticProperty> Properties)
+{
+    /// <summary>Tags declared on this revision.</summary>
     public ImmutableArray<string> Tags { get; init; } = [];
 }
 

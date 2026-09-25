@@ -89,7 +89,7 @@ public sealed partial class SemanticModelBinder
 
             var address = SemanticAddress.ForSlice(_applicationIdentity, module, featurePath, slice.Name);
             var id = ResolveSlice(address, slice.Location, slice.DescriptionLocation, slice.DescriptionRawLength);
-            var events = slice.Events.Select(value => _eventDeclarations[value]).ToArray();
+            var events = slice.Events.Select(value => _eventDeclarations[value]).Distinct().ToArray();
             var commands = slice.Commands.Select(value =>
             {
                 var bound = BindCommand(address, value, _events);
@@ -117,29 +117,52 @@ public sealed partial class SemanticModelBinder
             };
         }
 
-        BoundEvent BindEvent(SemanticAddress slice, EventSyntax @event)
+        BoundEvent BindEvent(SemanticAddress slice, EventSyntax[] declarations)
         {
-            if (@event.File is not null)
-            {
-                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Event '{@event.Name}' file reference is realization provenance.", @event.File.Location);
-            }
-
-            var tags = BindTags(@event.Tags);
-
-            var address = SemanticAddress.ForEventContract(slice, @event.Name);
+            var current = declarations[^1];
+            var address = SemanticAddress.ForEventContract(slice, current.Name);
             var semanticAssignment = documents.IdentityCatalog.ResolveSemanticAssignment(address);
             var contractAssignment = documents.IdentityCatalog.ResolveEventContract(address);
-            Map(semanticAssignment.Id, contractAssignment.Origin, @event.Location);
-            var properties = @event.Properties.Select(property => BindProperty(address, property, false)).ToImmutableArray();
+            var revision = new EventContractRevision(current.Generation);
+            if (documents.IdentityCatalog.EventContracts.Any(value => value.Address.Equals(address)) && contractAssignment.Revision != revision)
+            {
+                Error(
+                    DiagnosticCodes.UnsupportedEventGenerationSemantics,
+                    revision.Value < contractAssignment.Revision.Value
+                        ? $"Event '{current.Name}' declares revision {revision.Value}, fewer than persisted catalog revision {contractAssignment.Revision.Value}."
+                        : $"Event '{current.Name}' revision {revision.Value} requires an explicit catalog advancement from revision {contractAssignment.Revision.Value}.",
+                    current.Location);
+            }
+
+            if (declarations.Length > 1) UsesV4 = true;
+            var revisions = new List<(EventSyntax Syntax, ImmutableArray<SemanticProperty> Properties, ImmutableArray<string> Tags)>();
+            foreach (var declaration in declarations)
+            {
+                if (declaration.File is not null)
+                {
+                    Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Event '{declaration.Name}' file reference is realization provenance.", declaration.File.Location);
+                }
+
+                var properties = declaration.Properties.Select(property => declarations.Length > 1
+                    ? BindEventProperty(address, new EventContractRevision(declaration.Generation), property)
+                    : BindProperty(address, property, false)).ToImmutableArray();
+                revisions.Add((declaration, properties, BindTags(declaration.Tags)));
+            }
+
+            var latest = revisions[^1];
+            Map(semanticAssignment.Id, contractAssignment.Origin, current.Location);
             return new(
-                @event,
-                new(
-                    semanticAssignment.Id,
-                    contractAssignment.Id,
-                    contractAssignment.Revision,
-                    @event.Name,
-                    properties) { Tags = tags },
-                properties.ToDictionary(_ => _.Name, StringComparer.Ordinal));
+                current,
+                new(semanticAssignment.Id, contractAssignment.Id, revision, current.Name, latest.Properties)
+                {
+                    Tags = latest.Tags,
+                    Predecessor = revision.Value > 1 ? new EventContractRevision(revision.Value - 1) : null,
+                    PriorRevisions = [.. revisions.Take(revisions.Count - 1).Select(value => new SemanticEventRevision(
+                        new EventContractRevision(value.Syntax.Generation),
+                        value.Syntax.Generation > 1 ? new EventContractRevision(value.Syntax.Generation - 1) : null,
+                        value.Properties) { Tags = value.Tags })]
+                },
+                latest.Properties.ToDictionary(_ => _.Name, StringComparer.Ordinal));
         }
     }
 }
