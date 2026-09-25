@@ -135,7 +135,29 @@ internal static class ProjectionCompletenessValidator
 
                     break;
                 case JoinSyntax join:
-                    mapped.Add(Root(join.Property));
+                    foreach (var joined in join.Events)
+                    {
+                        foreach (var mapping in joined.Mappings)
+                        {
+                            mapped.Add(Root(mapping.Property));
+                        }
+
+                        if (autoMap)
+                        {
+                            var eventType = declarations.Event(joined.Event, scope);
+                            if (eventType is null)
+                            {
+                                return null;
+                            }
+
+                            foreach (var field in properties.Where(field => eventType.Properties.Any(sourceField =>
+                                sourceField.Name == field.Name && declarations.Compatible(sourceField.Type, field.Type) != false)))
+                            {
+                                mapped.Add(field.Name);
+                            }
+                        }
+                    }
+
                     break;
                 case ChildrenSyntax children:
                     mapped.Add(Root(children.Property));

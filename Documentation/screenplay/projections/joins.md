@@ -121,7 +121,7 @@ projection Order => OrderReadModel
 
 ## Joins in Children
 
-Joins can be used within children blocks:
+Joins can be used within children blocks. The join label does not populate a child or nested field; `with` mappings (or compatible fields supplied by the level's auto-map) do. Name the join for the related concept, not after a field to satisfy a completeness warning:
 
 ```pdl
 projection Group => GroupReadModel

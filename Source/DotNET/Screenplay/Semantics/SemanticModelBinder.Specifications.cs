@@ -12,6 +12,9 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        static IEnumerable<SliceSyntax> AllSlices(FeatureSyntax feature) =>
+            feature.Slices.Concat(feature.Features.SelectMany(AllSlices));
+
         SemanticSpecification? BindSpecification(
             SemanticAddress slice,
             SpecificationSyntax specification,
@@ -120,7 +123,23 @@ public sealed partial class SemanticModelBinder
                 .Where(produced => produced.EventContract == @event.Contract.Id)
                 .Select(_ => command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type))
                 .OfType<SemanticTypeReference>().Distinct().ToArray();
+
+            // A StateView slice may specify an append for an event produced by a command in another slice.
+            // The event-source type is the producer's command identifier, regardless of the specification's slice.
             var type = types.Length == 1 ? types[0] : null;
+            if (type is null && value.For is not null)
+            {
+                var producerTypes = syntax.Modules.SelectMany(module => module.Features.SelectMany(AllSlices))
+                    .SelectMany(slice => slice.Commands)
+                    .Where(command => command.Produces.Any(produced => ShortName(produced.Event) == ShortName(value.EventType)))
+                    .Select(command => command.Properties.SingleOrDefault(property => property.IsIdentifier))
+                    .Where(property => property is not null)
+                    .Select(property => BindTypeReference(property!.Type))
+                    .Distinct()
+                    .ToArray();
+                type = producerTypes.Length == 1 ? producerTypes[0] : null;
+            }
+
             return new(
                 @event.Contract.Id,
                 BindPropertyValues(value.Values, @event.Properties, "specification event"))
