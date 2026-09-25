@@ -26,11 +26,16 @@ static class WorkspaceAuthoringIdentity
 
         ImmutableArray<SemanticAddress> addresses;
         ImmutableArray<SemanticAddress> events;
+        ImmutableArray<EventContractRevisionAdvancement> newGenerations = [];
         if (provisional.Success)
         {
             var index = SemanticCompilationIndex.Create(provisional.Value!.Model.Application, workspace.IdentityCatalog.Application);
             addresses = [.. index.Declarations.Keys.Order(WorkspaceSemanticAddressComparer.Instance)];
             events = [.. index.Events.Keys.Order(WorkspaceSemanticAddressComparer.Instance)];
+            newGenerations = [.. index.Events
+                .Where(entry => entry.Value.Revision.Value > 1 &&
+                    !workspace.IdentityCatalog.EventContracts.Any(assignment => assignment.Address.Equals(entry.Key)))
+                .Select(entry => new EventContractRevisionAdvancement(entry.Key, entry.Value.Revision))];
         }
         else
         {
@@ -53,10 +58,11 @@ static class WorkspaceAuthoringIdentity
                 .Select(document => new DocumentIdentityAssignment(document.StableKey, document.Id, SemanticIdentityOrigin.Persisted))],
             workspace.IdentityCatalog.Semantics,
             workspace.IdentityCatalog.EventContracts);
-        return SemanticIdentityCatalog.PlanMigration(
+        var keys = documents.Select(document => document.StableKey).ToImmutableArray();
+        var catalog = SemanticIdentityCatalog.PlanMigration(
             previous,
             previous.Revision,
-            [.. documents.Select(document => document.StableKey)],
+            keys,
             addresses,
             events,
             documentRenames,
@@ -65,5 +71,7 @@ static class WorkspaceAuthoringIdentity
             retiredDocuments,
             request.RetiredSemanticAddresses,
             request.RetiredEventAddresses).Catalog;
+        return newGenerations.IsEmpty ? catalog : SemanticIdentityCatalog.PlanEventRevisionAdvancement(
+            catalog, catalog.Revision, keys, addresses, events, newGenerations).Catalog;
     }
 }
