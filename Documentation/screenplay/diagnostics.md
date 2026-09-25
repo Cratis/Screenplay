@@ -763,6 +763,12 @@ These warnings are returned by `AttachmentFiles.Load` for implementation files t
 | `PLAY0433` | Warning | An attachment exceeds 2 MiB or the attachment set exceeds 8 MiB. |
 | `PLAY0434` | Warning | An attachment cannot safely be read as UTF-8 text. |
 
+### Executable semantic model
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0445` | Warning | A flat executable-model projection transition carries deprecated `ZeroOrOne` or `Many` affected-instance cardinality. Chronicle routes one key per transition; use a join for structural many. Returned by `ExecutableSemanticModel.DeprecationDiagnostics` for constructed or deserialized ESM, with a model-level location because ESM does not retain source positions. The source binder produces only `One`; query cardinality is unaffected. |
+
 ## Retired codes
 
 A retired code stays out of use forever.

@@ -22,12 +22,15 @@ public class child_upserts_by_identity : given.a_scoped_projection_plan
 
     void Establish() => Plan(Body);
 
-    void Because() => Project(
-        Fact("OrderShipped", FirstOrder, ("carrier", Text("post"))),
-        Fact("LineAdded", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(1)), ("amount", Number(10))),
-        Fact("LineAdded", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(1)), ("amount", Number(5.5m))),
-        Fact("LineAdded", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(2)), ("amount", Number(1))),
-        Fact("LineRemoved", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(2))));
+    void Because()
+    {
+        Project(
+            Fact("OrderShipped", FirstOrder, ("carrier", Text("post"))),
+            Fact("LineAdded", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(1)), ("amount", Number(10))),
+            Fact("LineAdded", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(1)), ("amount", Number(5.5m))),
+            Fact("LineAdded", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(2)), ("amount", Number(1))),
+            Fact("LineRemoved", "x", ("orderId", Text(FirstOrder)), ("lineNumber", Number(2))));
+    }
 
     [Fact] void should_project() => _failure.ShouldBeNull();
     [Fact] void should_keep_one_child_per_identity() => Lines.Length.ShouldEqual(1);

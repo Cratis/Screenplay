@@ -2008,4 +2008,7 @@ public static class DiagnosticCodes
     /// A trigger read uses a primitive type name that could be a trigger value named <c>reads</c>.
     /// </summary>
     public const string AmbiguousReactionReadsValue = "PLAY0444";
+
+    /// <summary>A flat ESM projection transition uses a deprecated optional or many affected-instance cardinality.</summary>
+    public const string DeprecatedProjectionTransitionCardinality = "PLAY0445";
 }

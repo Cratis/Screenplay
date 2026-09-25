@@ -4,6 +4,7 @@
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Text;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics.Serialization;
 
 namespace Cratis.Screenplay.Semantics;
@@ -13,6 +14,8 @@ namespace Cratis.Screenplay.Semantics;
 /// </summary>
 public sealed record ExecutableSemanticModel
 {
+    static readonly System.Runtime.CompilerServices.ConditionalWeakTable<ExecutableSemanticModel, CachedDeprecations> _deprecations = [];
+
     ExecutableSemanticModel(
         LanguageVersion languageVersion,
         SemanticVersion semanticVersion,
@@ -46,6 +49,23 @@ public sealed record ExecutableSemanticModel
     public SemanticApplication Application { get; }
 
     /// <summary>
+    /// Gets deprecation warnings for legacy projection transition cardinalities. ESM has no source locations;
+    /// these model-level diagnostics point at the beginning of the document.
+    /// </summary>
+    /// <remarks>Only flat projection transitions carry these cardinalities. Query cardinality is unaffected.</remarks>
+    public ImmutableArray<Diagnostic> DeprecationDiagnostics => _deprecations.GetValue(this, static model => new CachedDeprecations(
+    [
+        .. model.Application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices)
+            .SelectMany(slice => slice.Projections)
+            .SelectMany(projection => projection.Transitions
+                .Where(transition => transition.AffectedInstance.Cardinality is AffectedInstanceCardinality.ZeroOrOne or AffectedInstanceCardinality.Many)
+                .Select(transition => Diagnostic.Warning(
+                    DiagnosticCodes.DeprecatedProjectionTransitionCardinality,
+                    $"Projection '{projection.Name}' event contract '{transition.EventContract}' uses deprecated affected-instance cardinality '{transition.AffectedInstance.Cardinality}' on a transition; Chronicle routes one key per transition. Use a join for many affected instances.",
+                    SourceLocation.Start)))
+    ])).Values;
+
+    /// <summary>
     /// Creates a validated model and computes its deterministic revision.
     /// </summary>
     /// <param name="languageVersion">The source language version.</param>
@@ -64,6 +84,11 @@ public sealed record ExecutableSemanticModel
         var revision = SemanticRevision.Compute(withoutRevision);
         return new(languageVersion, semanticVersion, revision, application);
     }
+
+    static IEnumerable<SemanticSlice> AllSlices(SemanticFeature feature) =>
+        feature.Slices.Concat(feature.Features.SelectMany(AllSlices));
+
+    sealed record CachedDeprecations(ImmutableArray<Diagnostic> Values);
 }
 
 internal static partial class SemanticModelValidator

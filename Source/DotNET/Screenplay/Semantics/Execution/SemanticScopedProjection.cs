@@ -14,8 +14,8 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// <param name="observed">The facts observed before the current one, used to back-fill joins.</param>
 /// <remarks>
 /// Instance removal deletes the instance; a child is upserted by identity (Chronicle <c>ProjectionEventContextExtensions.cs:180-202</c>);
-/// a nested object is created on first touch, merged and cleared to null; a join updates every existing instance whose joined
-/// property equals the joined event's source identity and never creates one, and a from event re-reads the latest joined event
+/// a nested object is created on first touch, merged and cleared to null; a root join matches its joined property while a child join
+/// matches the child's identity, and neither creates an instance; a from event re-reads the latest joined event
 /// (<c>ProjectionEventContextExtensions.cs:89-125</c>); <c>every</c> mappings run with the level's from and join events
 /// (<c>ProjectionFactory.cs:589-701</c>). Constructs outside this are plan issues (<see cref="SemanticScopedProjectionIssues"/>).
 /// </remarks>
@@ -141,7 +141,7 @@ internal sealed partial class SemanticScopedProjection(
         });
     }
 
-    // A join matches every existing instance whose joined property equals the joined event's source identity and never creates one.
+    // A root join matches its joined property; a child join matches the child's identity. Neither creates an instance.
     void ApplyJoin(SemanticProjectionJoin join, SemanticProjectionScope scope, Level level)
     {
         if ((join.Key is null ? EventSource() : Key(join.Key)) is not { } value)
@@ -153,7 +153,8 @@ internal sealed partial class SemanticScopedProjection(
         {
             Modify(location with { Nested = level.Nested }, false, target =>
             {
-                if (target.TryGetValue(join.On, out var on) && SemanticValueRules.AreEqual(on, value))
+                var matchProperty = level.Address.IsEmpty ? join.On : level.Address[^1].IdentifiedBy;
+                if (target.TryGetValue(matchProperty, out var on) && SemanticValueRules.AreEqual(on, value))
                 {
                     Apply(target, join.Mappings, level.Targets, _fact);
                     Apply(target, scope.Every?.Mappings ?? [], level.Targets, _fact);
@@ -264,7 +265,7 @@ internal sealed partial class SemanticScopedProjection(
             : [.. Elements(parentAddress).Where(_ => SemanticValueRules.AreEqual(_.Steps[^1].Identity, parentIdentity))];
         if (parents.Length != 1)
         {
-            // Chronicle defers a child event until its parent exists (KeyResolvers.cs:712-717); the reference evaluator has no deferral.
+            // Chronicle stores parentless children as futures (KeyResolvers.cs:768-784; ResolveFutures.cs); the reference evaluator has no deferral.
             Fail(parents.Length == 0
                 ? $"Projection '{projection.Name}' has no parent for a child event; Chronicle defers it until the parent exists, which the reference evaluator does not model."
                 : $"Projection '{projection.Name}' parent identity is ambiguous for a child event.");

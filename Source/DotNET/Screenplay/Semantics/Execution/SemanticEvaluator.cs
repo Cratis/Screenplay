@@ -494,6 +494,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         var types = plan.Model.Application.Types.ToDictionary(_ => _.Id);
         var validator = new SemanticValueValidator(concepts, types);
         var observed = history.ToList();
+
         foreach (var fact in facts)
         {
             foreach (var projection in plan.Projections.Values.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal))
