@@ -65,7 +65,28 @@ a file does:
   directives or slots. Template slot and behavior comments also stay with their nodes;
   comments before or on a template's `fits slot` line stay with that directive.
   Comments on declaration and screen file references and before contribution navigation
-  also stay with their lines.
+  also stay with their lines. The same applies to enum values and concept attribute reasons;
+  policy requirements and persona policy references; theme compatibility and UI profile
+  targets, packages, layout and theme; contribution labels and order; screen-action
+  labels; and reducer, performer, constraint, reaction-trigger and handler file references.
+  Capture keys, map headers, split targets and append conditions; projection sequences,
+  automap settings, parent keys and child exclusions; specification caller fixtures,
+  event sources, query arguments and event-order directives; and command validation,
+  production targets and concurrency dimensions keep comments on their authored lines.
+  An explicit default `severity error` on a requirement is omitted; comments on that
+  line move to the `require` line instead. If `require` already has a trailing comment,
+  the moved comment gets its own line below it.
+  When you reorder, insert, or remove enum values or other scalar collection entries,
+  comments follow unchanged values rather than old list positions; comments attached
+  to removed values are dropped. Repeated projection `automap` settings warn (`PLAY0452`):
+  the last setting wins, but printing keeps each authored line and its comments until
+  a typed edit changes the mode. Then only the edited setting prints: its comment
+  stays inline, and comments on earlier settings appear on their own lines below it.
+  If you remove the setting (inherit), those comments move to the start of the block
+  body instead. Comment positions are source metadata, not members of the typed JSON
+  syntax. Check
+  `dropped-comments` before applying a layout proposal for comments that cannot be
+  retained during canonical printing.
   Inside a form, the printer always writes `populate`, then fields, then `on submit`,
   then attached behaviors: a comment moves with the member it annotates when that
   canonical order differs from the authored order. The printer uses canonical two-space

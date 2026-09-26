@@ -21,6 +21,7 @@ internal sealed class ScreenplayWriter
     readonly StringBuilder _builder = new();
     readonly Dictionary<SyntaxNode, (int First, int Last)> _anchors = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<ScreenTemplateSyntax, int> _fitsSlotAnchors = new(ReferenceEqualityComparer.Instance);
+    readonly Dictionary<SyntaxNode, Dictionary<int, int>> _directiveAnchors = new(ReferenceEqualityComparer.Instance);
     int _depth;
     int _line;
 
@@ -29,6 +30,9 @@ internal sealed class ScreenplayWriter
 
     /// <summary>Gets the printed fits-slot line for each template, keyed by reference identity.</summary>
     internal IReadOnlyDictionary<ScreenTemplateSyntax, int> FitsSlotAnchors => _fitsSlotAnchors;
+
+    /// <summary>Gets printed lines by original line number for scalar directives of each owner.</summary>
+    internal IReadOnlyDictionary<SyntaxNode, Dictionary<int, int>> DirectiveAnchors => _directiveAnchors;
 
     /// <summary>
     /// Writes a line of text at the current indentation depth.
@@ -93,6 +97,22 @@ internal sealed class ScreenplayWriter
         var first = _line;
         Line(text);
         _anchors[node] = (first, first);
+    }
+
+    /// <summary>Writes a scalar directive and associates its authored position with its owner.</summary>
+    internal void DirectiveLine(string text, SyntaxNode owner, string key)
+    {
+        if (owner.DirectiveLocations.TryGetValue(key, out var location) && location.Line > 0)
+        {
+            if (!_directiveAnchors.TryGetValue(owner, out var lines))
+            {
+                _directiveAnchors[owner] = lines = [];
+            }
+
+            lines[location.Line] = _line;
+        }
+
+        Line(text);
     }
 
     /// <summary>Writes a template's fits-slot directive and records its line for source comments.</summary>

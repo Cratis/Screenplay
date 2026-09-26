@@ -28,6 +28,16 @@ internal sealed partial class WorkspaceAstEdits
             _sourceComments[replacement] = comments;
         }
 
+        if (_directiveLocations.TryGetValue(original, out var directives))
+        {
+            _directiveLocations[replacement] = directives;
+        }
+
+        if (_parsedAutoMapModes.TryGetValue(original, out var mode))
+        {
+            _parsedAutoMapModes[replacement] = mode;
+        }
+
         if (original is JsonObject oldObject && replacement is JsonObject newObject)
         {
             foreach (var (name, child) in newObject)
@@ -85,6 +95,16 @@ internal sealed partial class WorkspaceAstEdits
             _sourceComments[json] = node.SourceComments;
         }
 
+        if (node.DirectiveLocations.Count > 0)
+        {
+            _directiveLocations[json] = node.DirectiveLocations;
+        }
+
+        if (node.ParsedAutoMapMode is { } mode)
+        {
+            _parsedAutoMapModes[json] = mode;
+        }
+
         if (node.Location.Line > 1)
         {
             _sourceLocations[json] = node.Location;
@@ -136,6 +156,16 @@ internal sealed partial class WorkspaceAstEdits
         if (_sourceComments.TryGetValue(json, out var comments))
         {
             typeof(SyntaxNode).GetProperty(nameof(SyntaxNode.SourceComments))!.SetValue(node, comments);
+        }
+
+        if (_directiveLocations.TryGetValue(json, out var directives))
+        {
+            typeof(SyntaxNode).GetProperty(nameof(SyntaxNode.DirectiveLocations))!.SetValue(node, directives);
+        }
+
+        if (_parsedAutoMapModes.TryGetValue(json, out var mode))
+        {
+            typeof(SyntaxNode).GetProperty(nameof(SyntaxNode.ParsedAutoMapMode))!.SetValue(node, mode);
         }
 
         var descriptor = SyntaxKinds.All.Single(kind => kind.Type == node.GetType());

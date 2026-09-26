@@ -149,6 +149,7 @@ internal static partial class CommandParser
         string? eventStreamType = null;
         string? eventStreamId = null;
         List<string>? eventTypes = null;
+        var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -157,18 +158,38 @@ internal static partial class CommandParser
             {
                 case "eventSource":
                     eventSource = ParseEventSourceDimension(context, child, eventSource);
+                    if (eventSource)
+                    {
+                        directiveLocations.TryAdd("eventSource", child.Location);
+                    }
                     break;
                 case "sourceType":
                     eventSourceType = ParseNamedDimension(context, child, "sourceType", eventSourceType);
+                    if (eventSourceType is not null)
+                    {
+                        directiveLocations.TryAdd("sourceType", child.Location);
+                    }
                     break;
                 case "streamType":
                     eventStreamType = ParseNamedDimension(context, child, "streamType", eventStreamType);
+                    if (eventStreamType is not null)
+                    {
+                        directiveLocations.TryAdd("streamType", child.Location);
+                    }
                     break;
                 case "streamId":
                     eventStreamId = ParseNamedDimension(context, child, "streamId", eventStreamId);
+                    if (eventStreamId is not null)
+                    {
+                        directiveLocations.TryAdd("streamId", child.Location);
+                    }
                     break;
                 case "events":
                     eventTypes = ParseEventsDimension(context, child, eventTypes);
+                    if (eventTypes is { Count: > 0 })
+                    {
+                        directiveLocations.TryAdd("events", child.Location);
+                    }
                     break;
                 default:
                     context.Error(DiagnosticCodes.UnknownConcurrencyDimension, $"Unexpected '{child.Content}' in concurrency block - expected eventSource, sourceType, streamType, streamId or events", child.Location);
@@ -177,7 +198,7 @@ internal static partial class CommandParser
             }
         }
 
-        return new(eventSource, eventSourceType, eventStreamType, eventStreamId, eventTypes ?? [], line.Location);
+        return new(eventSource, eventSourceType, eventStreamType, eventStreamId, eventTypes ?? [], line.Location) { DirectiveLocations = directiveLocations };
     }
 
     static bool ParseEventSourceDimension(ParserContext context, SourceLine line, bool existing)

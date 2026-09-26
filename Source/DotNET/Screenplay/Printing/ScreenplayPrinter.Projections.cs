@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Text;
 
@@ -25,10 +26,10 @@ public partial class ScreenplayPrinter
 
             if (projection.Sequence is not null)
             {
-                writer.Line($"sequence {projection.Sequence}");
+                writer.DirectiveLine($"sequence {projection.Sequence}", projection, "sequence");
             }
 
-            WriteAutoMap(writer, projection.AutoMap);
+            WriteAutoMap(writer, projection.AutoMap, projection);
 
             if (projection.Key is not null)
             {
@@ -57,7 +58,7 @@ public partial class ScreenplayPrinter
                 writer.Line("all");
                 using (writer.Indent())
                 {
-                    WriteAutoMap(writer, all.AutoMap);
+                    WriteAutoMap(writer, all.AutoMap, all);
                     WriteMappings(writer, all.Mappings, ReservedWords.None);
                 }
 
@@ -69,7 +70,7 @@ public partial class ScreenplayPrinter
                 writer.Line($"children {children.Property} identified by {ScreenplaySyntaxText.Expression(children.IdentifiedBy)}");
                 using (writer.Indent())
                 {
-                    WriteAutoMap(writer, children.AutoMap);
+                    WriteAutoMap(writer, children.AutoMap, children);
                     foreach (var nested in children.Blocks)
                     {
                         WriteProjectionBlock(writer, nested);
@@ -81,7 +82,7 @@ public partial class ScreenplayPrinter
                 writer.Line($"nested {nested.Property}");
                 using (writer.Indent())
                 {
-                    WriteAutoMap(writer, nested.AutoMap);
+                    WriteAutoMap(writer, nested.AutoMap, nested);
                     foreach (var child in nested.Blocks)
                     {
                         WriteProjectionBlock(writer, child);
@@ -147,7 +148,7 @@ public partial class ScreenplayPrinter
 
             if (from.ParentKey is not null)
             {
-                writer.Line($"parent {ScreenplaySyntaxText.Expression(from.ParentKey)}");
+                writer.Line($"parent {ScreenplaySyntaxText.Expression(from.ParentKey)}", from.ParentKey);
             }
 
             WriteMappings(writer, from.Mappings, ReservedWords.ProjectionFromBlock);
@@ -160,10 +161,10 @@ public partial class ScreenplayPrinter
         writer.Line("every");
         using (writer.Indent())
         {
-            WriteAutoMap(writer, every.AutoMap);
+            WriteAutoMap(writer, every.AutoMap, every);
             if (!every.IncludeChildren)
             {
-                writer.Line("exclude children");
+                writer.DirectiveLine("exclude children", every, "exclude children");
             }
 
             WriteMappings(writer, every.Mappings, ReservedWords.None);
@@ -181,7 +182,7 @@ public partial class ScreenplayPrinter
                 writer.Line($"with {joined.Event}", joined);
                 using (writer.Indent())
                 {
-                    WriteAutoMap(writer, joined.AutoMap);
+                    WriteAutoMap(writer, joined.AutoMap, joined);
                     WriteMappings(writer, joined.Mappings, ReservedWords.None);
                 }
             }
@@ -202,7 +203,7 @@ public partial class ScreenplayPrinter
 
         using (writer.Indent())
         {
-            writer.Line($"parent {ScreenplaySyntaxText.Expression(remove.ParentKey)}");
+            writer.Line($"parent {ScreenplaySyntaxText.Expression(remove.ParentKey)}", remove.ParentKey);
         }
     }
 
@@ -230,15 +231,26 @@ public partial class ScreenplayPrinter
         }
     }
 
-    void WriteAutoMap(ScreenplayWriter writer, AutoMapMode autoMap)
+    void WriteAutoMap(ScreenplayWriter writer, AutoMapMode autoMap, SyntaxNode owner)
     {
+        if (autoMap != AutoMapMode.Inherit && autoMap == owner.ParsedAutoMapMode)
+        {
+            foreach (var previous in owner.DirectiveLocations
+                .Where(entry => entry.Key.StartsWith("automap previous:", StringComparison.Ordinal))
+                .OrderBy(entry => entry.Value.Line))
+            {
+                var text = previous.Key.StartsWith("automap previous:Enabled:", StringComparison.Ordinal) ? "automap" : "no automap";
+                writer.DirectiveLine(text, owner, previous.Key);
+            }
+        }
+
         switch (autoMap)
         {
             case AutoMapMode.Enabled:
-                writer.Line("automap");
+                writer.DirectiveLine("automap", owner, "automap");
                 break;
             case AutoMapMode.Disabled:
-                writer.Line("no automap");
+                writer.DirectiveLine("no automap", owner, "automap");
                 break;
             case AutoMapMode.Inherit:
                 break;

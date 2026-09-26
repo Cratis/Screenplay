@@ -45,5 +45,48 @@ public class when_printing_constraint_extensions : given.a_printer
     [Fact] void should_preserve_ignore_casing() => Constraints[0].IgnoreCasing.ShouldBeTrue();
     [Fact] void should_preserve_escaped_message() => Constraints[0].Message.ShouldEqual("Duplicate \"project\"");
 
+    [Fact]
+    void should_print_twice_with_a_trailing_unique_comment()
+    {
+        const string source = """
+            module Projects
+              feature Registration
+                slice StateChange RegisterProject
+                  event ProjectRegistered
+                    code String
+                  event ProjectReleased
+                  constraint UniqueProject
+                    unique code on ProjectRegistered // u
+                    released by ProjectReleased
+            """;
+        var roundtrip = RoundTrip(source);
+        roundtrip.Original!.Diagnostics.ShouldBeEmpty();
+        roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
+        roundtrip.Printed.ShouldContain("constraint UniqueProject // u");
+        roundtrip.PrintedAgain.ShouldEqual(roundtrip.Printed);
+    }
+
+    [Fact]
+    void should_print_twice_with_trailing_release_and_ignore_casing_comments()
+    {
+        const string source = """
+            module Projects
+              feature Registration
+                slice StateChange RegisterProject
+                  event ProjectRegistered
+                    code String
+                  event ProjectReleased
+                  constraint UniqueProject
+                    unique code on ProjectRegistered
+                    released by ProjectReleased // r
+                    ignore casing // i
+            """;
+        var roundtrip = RoundTrip(source);
+        roundtrip.Original!.Diagnostics.ShouldBeEmpty();
+        roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
+        roundtrip.Printed.ShouldContain("event ProjectReleased // r // i");
+        roundtrip.PrintedAgain.ShouldEqual(roundtrip.Printed);
+    }
+
     ConstraintSyntax[] Constraints => [.. _roundtrip.Reparsed.Value!.Modules.Single().Features.Single().Slices.Single().Constraints];
 }

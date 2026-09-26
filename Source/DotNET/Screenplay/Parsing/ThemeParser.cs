@@ -32,6 +32,7 @@ internal static partial class ThemeParser
         var name = match.Groups[1].Value;
         var compatibleWith = new List<string>();
         var seen = new HashSet<string>();
+        var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -51,9 +52,10 @@ internal static partial class ThemeParser
             }
 
             compatibleWith.Add(package);
+            directiveLocations[DirectiveLocationKeys.ForValue("compatible", compatibleWith, compatibleWith.Count - 1)] = line.Location;
         }
 
-        return new(name, compatibleWith, header.Location);
+        return new(name, compatibleWith, header.Location) { DirectiveLocations = directiveLocations };
     }
 
     [GeneratedRegex(@"^theme\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]

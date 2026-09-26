@@ -23,7 +23,7 @@ public sealed partial class ScreenplayPrinter
         var lines = writer.ToString().TrimEnd('\n').Split('\n');
         var before = new Dictionary<int, List<string>>();
         var after = new Dictionary<int, List<string>>();
-        var trailing = new Dictionary<int, List<string>>();
+        var trailing = new Dictionary<int, List<(string Text, bool Relocated)>>();
         var parents = new Dictionary<SyntaxNode, SyntaxNode>(ReferenceEqualityComparer.Instance);
         CollectParents(root, parents);
         foreach (var (owner, comment) in comments.OrderBy(entry => entry.Comment.Line))
@@ -40,12 +40,35 @@ public sealed partial class ScreenplayPrinter
             }
 
             var position = comment.Placement == SourceCommentPlacement.End ? span.Last : span.First;
-            if (owner is ScreenTemplateSyntax { FitsSlotLocation: { } fitsSlotLocation } template &&
+            writer.DirectiveAnchors.TryGetValue(owner, out var directiveLines);
+            if (owner.DirectiveLocations.Any(entry => DirectiveLocationKeys.IsCollectionKey(entry.Key) &&
+                entry.Value.Line == comment.AnchorLine) &&
+                directiveLines?.ContainsKey(comment.AnchorLine) != true)
+            {
+                // A removed collection value has no printed line. Never attach its comment to a new neighbor.
+                continue;
+            }
+
+            if (directiveLines is not null && directiveLines.TryGetValue(comment.AnchorLine, out var directiveLine))
+            {
+                position = directiveLine;
+            }
+            else if (owner is ScreenTemplateSyntax { FitsSlotLocation: { } fitsSlotLocation } template &&
                 comment.AnchorLine == fitsSlotLocation.Line && writer.FitsSlotAnchors.TryGetValue(template, out var fitsSlotLine))
             {
                 position = fitsSlotLine;
             }
-            else if (comment.Placement == SourceCommentPlacement.Trailing && owner.Location.Line > 0 && comment.Line > owner.Location.Line)
+            else if (comment.Placement == SourceCommentPlacement.Trailing &&
+                owner.DirectiveLocations.Any(entry => entry.Value.Line == comment.AnchorLine &&
+                    entry.Key.StartsWith("automap previous:", StringComparison.Ordinal)) &&
+                owner.DirectiveLocations.TryGetValue("automap", out var autoMapLocation) &&
+                directiveLines?.TryGetValue(autoMapLocation.Line, out var printedAutoMapLine) == true)
+            {
+                position = printedAutoMapLine;
+            }
+            else if (comment.Placement == SourceCommentPlacement.Trailing &&
+                !owner.DirectiveLocations.Values.Any(location => location.Line == comment.AnchorLine) &&
+                owner.Location.Line > 0 && comment.Line > owner.Location.Line)
             {
                 position = Math.Min(span.Last, span.First + comment.Line - owner.Location.Line);
             }
@@ -57,18 +80,45 @@ public sealed partial class ScreenplayPrinter
                 indent = lines[span.First].Length - lines[span.First].TrimStart().Length + 2;
             }
 
-            var destination = comment.Placement switch
+            if (comment.Placement == SourceCommentPlacement.Trailing)
             {
-                SourceCommentPlacement.Leading => before,
-                SourceCommentPlacement.Trailing => trailing,
-                _ => after
-            };
-            if (!destination.TryGetValue(position, out var output))
-            {
-                destination[position] = output = [];
-            }
+                var relocated = comment.AnchorLine != owner.Location.Line &&
+                    owner.DirectiveLocations.Values.Any(location => location.Line == comment.AnchorLine) &&
+                    directiveLines?.ContainsKey(comment.AnchorLine) != true;
+                var next = position + 1;
+                if (relocated && next < lines.Length &&
+                    lines[next].Length - lines[next].TrimStart().Length > indent)
+                {
+                    // A comment on an omitted directive belongs to this owner's body, not the
+                    // previous line or an unrelated body line chosen by its old source offset.
+                    if (!before.TryGetValue(next, out var leading))
+                    {
+                        before[next] = leading = [];
+                    }
 
-            output.Add(comment.Placement == SourceCommentPlacement.Trailing ? comment.Text : new string(' ', indent) + comment.Text);
+                    leading.Add(lines[next][..(lines[next].Length - lines[next].TrimStart().Length)] + comment.Text);
+                }
+                else
+                {
+                    if (!trailing.TryGetValue(position, out var side))
+                    {
+                        trailing[position] = side = [];
+                    }
+
+                    // Keep a comment on the printed directive inline; relocate the others.
+                    side.Add((comment.Text, relocated));
+                }
+            }
+            else
+            {
+                var destination = comment.Placement == SourceCommentPlacement.Leading ? before : after;
+                if (!destination.TryGetValue(position, out var output))
+                {
+                    destination[position] = output = [];
+                }
+
+                output.Add(new string(' ', indent) + comment.Text);
+            }
         }
 
         var result = new List<string>();
@@ -79,7 +129,31 @@ public sealed partial class ScreenplayPrinter
                 result.AddRange(preceding);
             }
 
-            result.Add(lines[index] + (trailing.TryGetValue(index, out var side) ? " " + string.Join(' ', side) : string.Empty));
+            if (trailing.TryGetValue(index, out var side))
+            {
+                var inline = side.FindIndex(entry => !entry.Relocated);
+                if (inline < 0)
+                {
+                    inline = 0;
+                }
+
+                // Ordinary trailing comments sharing a printed line retain the original inline behavior.
+                var inlineComments = side.Where((entry, commentIndex) => !entry.Relocated || commentIndex == inline).ToArray();
+                result.Add(lines[index] + " " + string.Join(' ', inlineComments.Select(entry => entry.Text)));
+                var indent = lines[index][..(lines[index].Length - lines[index].TrimStart().Length)];
+                for (var commentIndex = 0; commentIndex < side.Count; commentIndex++)
+                {
+                    if (commentIndex != inline && side[commentIndex].Relocated)
+                    {
+                        result.Add(indent + side[commentIndex].Text);
+                    }
+                }
+            }
+            else
+            {
+                result.Add(lines[index]);
+            }
+
             if (after.TryGetValue(index, out var following))
             {
                 result.AddRange(following);

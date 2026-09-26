@@ -36,6 +36,7 @@ internal static partial class ContributionParser
         var hasNavigate = false;
         var hasLabel = false;
         var hasOrder = false;
+        var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -61,6 +62,10 @@ internal static partial class ContributionParser
 
                     hasLabel = true;
                     label = ParseLabel(context, line);
+                    if (label is not null)
+                    {
+                        directiveLocations["label"] = line.Location;
+                    }
                     break;
                 case "order":
                     if (hasOrder)
@@ -71,6 +76,10 @@ internal static partial class ContributionParser
 
                     hasOrder = true;
                     order = ParseOrder(context, line);
+                    if (order is not null)
+                    {
+                        directiveLocations["order"] = line.Location;
+                    }
                     break;
                 default:
                     context.Error(DiagnosticCodes.UnknownContributionDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in contribution body - expected navigate, label or order", line.Location);
@@ -79,7 +88,7 @@ internal static partial class ContributionParser
             }
         }
 
-        return new(contributionPoint, navigate, label, order, header.Location);
+        return new(contributionPoint, navigate, label, order, header.Location) { DirectiveLocations = directiveLocations };
     }
 
     static ScreenNavigateSyntax? ParseNavigate(ParserContext context, SourceLine line)
