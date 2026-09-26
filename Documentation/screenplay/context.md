@@ -53,7 +53,7 @@ public record PolicyContext(
     DateTimeOffset Occurred);
 ```
 
-These live in `Cratis.Screenplay.Contexts`. A runtime such as Stage supplies the instance; inline `csharp` blocks and imported files compile against it, in scope as `context`. Reducer rules receive a `ReducerContext` with `State` (null before the first event) and `Event`; they have `StateAs<T>()` and `EventAs<T>()` too. In C# bodies, use the provider's generated PascalCase member names (for example `context.Event.Amount` for an authored `amount` property). Screenplay keeps authored names in the DSL and never rewrites opaque bodies; a provider maps compilation errors to body source locations.
+These live in the `Cratis.Screenplay.Contexts` package (namespace `Cratis.Screenplay.Contexts`). Generated applications can reference this package without the compiler; existing compiler consumers continue to resolve these types through type forwarding. A runtime such as Stage supplies the instance; inline `csharp` blocks and imported files compile against it, in scope as `context`. Reducer rules receive a `ReducerContext` with `State` (null before the first event) and `Event`; they have `StateAs<T>()` and `EventAs<T>()` too. In C# bodies, use the provider's generated PascalCase member names (for example `context.Event.Amount` for an authored `amount` property). Screenplay keeps authored names in the DSL and never rewrites opaque bodies; a provider maps compilation errors to body source locations.
 
 ## Typed context sidecars
 

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Screenplay.Contexts</AssemblyName>
+        <RootNamespace>Cratis.Screenplay.Contexts</RootNamespace>
+        <IsPackable>true</IsPackable>
+        <Description>Portable runtime context contracts for Screenplay code bodies</Description>
+        <PackageTags>cratis;screenplay;contexts</PackageTags>
+        <!-- A new package has no published baseline; enable API validation after its first release. -->
+        <EnablePackageValidation>false</EnablePackageValidation>
+    </PropertyGroup>
+</Project>
