@@ -300,6 +300,8 @@ public partial class ScreenplayPrinter
         switch (validate)
         {
             case DeclarativeValidateSyntax declarative:
+            {
+                using var anchor = writer.Anchor(declarative);
                 writer.Line("validate", declarative);
                 using (writer.Indent())
                 {
@@ -331,6 +333,7 @@ public partial class ScreenplayPrinter
                 }
 
                 break;
+            }
             case CodeValidateSyntax code:
                 writer.Line("validate", code);
                 using (writer.Indent())

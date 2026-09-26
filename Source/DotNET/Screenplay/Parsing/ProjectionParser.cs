@@ -138,7 +138,8 @@ internal static partial class ProjectionParser
         return new(name, readModel, sequence, autoMap, key, blocks, header.Location)
         {
             File = file,
-            DirectiveLocations = AddSequenceLocation(directiveLocations, sequenceLocation)
+            DirectiveLocations = AddSequenceLocation(directiveLocations, sequenceLocation),
+            ParsedAutoMapMode = autoMap
         };
     }
 
@@ -268,7 +269,7 @@ internal static partial class ProjectionParser
             return false;
         });
 
-        return new(mappings, includeChildren, autoMap, line.Location) { DirectiveLocations = directiveLocations };
+        return new(mappings, includeChildren, autoMap, line.Location) { DirectiveLocations = directiveLocations, ParsedAutoMapMode = autoMap };
     }
 
     static AllSyntax ParseAll(ParserContext context, SourceLine line)
@@ -276,7 +277,7 @@ internal static partial class ProjectionParser
         var autoMap = AutoMapMode.Inherit;
         var directiveLocations = new Dictionary<string, SourceLocation>();
         var mappings = ParseMappingBlock(context, line, ref autoMap, directiveLocations, _ => false);
-        return new(mappings, autoMap, line.Location) { DirectiveLocations = directiveLocations };
+        return new(mappings, autoMap, line.Location) { DirectiveLocations = directiveLocations, ParsedAutoMapMode = autoMap };
     }
 
     static JoinSyntax ParseJoin(ParserContext context, SourceLine line)
@@ -304,7 +305,7 @@ internal static partial class ProjectionParser
             var autoMap = AutoMapMode.Inherit;
             var directiveLocations = new Dictionary<string, SourceLocation>();
             var mappings = ParseMappingBlock(context, child, ref autoMap, directiveLocations, _ => false);
-            events.Add(new JoinEventSyntax(Unescape(withMatch.Groups[1].Value), autoMap, mappings, child.Location) { DirectiveLocations = directiveLocations });
+            events.Add(new JoinEventSyntax(Unescape(withMatch.Groups[1].Value), autoMap, mappings, child.Location) { DirectiveLocations = directiveLocations, ParsedAutoMapMode = autoMap });
         }
 
         return new(Unescape(match.Groups[1].Value), Unescape(match.Groups[2].Value), events, line.Location);
@@ -324,7 +325,7 @@ internal static partial class ProjectionParser
         var autoMap = AutoMapMode.Inherit;
         var directiveLocations = new Dictionary<string, SourceLocation>();
         var blocks = ParseChildBlocks(context, line, ref autoMap, directiveLocations, nestedScope: true);
-        return new(Unescape(match.Groups[1].Value), identifiedBy, autoMap, blocks, line.Location) { DirectiveLocations = directiveLocations };
+        return new(Unescape(match.Groups[1].Value), identifiedBy, autoMap, blocks, line.Location) { DirectiveLocations = directiveLocations, ParsedAutoMapMode = autoMap };
     }
 
     static NestedSyntax ParseNested(ParserContext context, SourceLine line)
@@ -346,7 +347,7 @@ internal static partial class ProjectionParser
             context.Error(DiagnosticCodes.NestedBlockWithoutFrom, $"Nested block '{name}' must contain at least one 'from' directive", line.Location);
         }
 
-        return new(name, autoMap, blocks, line.Location) { DirectiveLocations = directiveLocations };
+        return new(name, autoMap, blocks, line.Location) { DirectiveLocations = directiveLocations, ParsedAutoMapMode = autoMap };
     }
 
     static List<ProjectionBlockSyntax> ParseChildBlocks(ParserContext context, SourceLine line, ref AutoMapMode autoMap, Dictionary<string, SourceLocation> directiveLocations, bool nestedScope)

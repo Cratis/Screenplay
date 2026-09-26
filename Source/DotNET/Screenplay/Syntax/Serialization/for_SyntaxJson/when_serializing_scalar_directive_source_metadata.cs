@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
@@ -74,6 +75,17 @@ public class when_serializing_scalar_directive_source_metadata : Specification
         var projection = new ScreenplayCompiler().CompileProjection("projection Orders\n  automap\n  every\n    exclude children\n").Value!;
         AssertSourceMetadataDoesNotChangeTypedJson(projection);
         AssertSourceMetadataDoesNotChangeTypedJson(projection.Blocks.Single());
+    }
+
+    [Fact]
+    void should_exclude_parsed_automap_mode_from_the_typed_contract()
+    {
+        var projection = new ScreenplayCompiler().CompileProjection("projection Orders\n  automap\n  no automap\n  from OrderPlaced\n").Value!;
+        projection.ParsedAutoMapMode.ShouldEqual(AutoMapMode.Disabled);
+        var relocated = projection with { ParsedAutoMapMode = AutoMapMode.Enabled };
+        SyntaxJson.Serialize(relocated).GetRawText().ShouldEqual(SyntaxJson.Serialize(projection).GetRawText());
+        SyntaxJson.StructurallyEqual(projection, relocated).ShouldBeTrue();
+        SyntaxSchema.For(nameof(ProjectionSyntax)).GetProperty("properties").TryGetProperty("parsedAutoMapMode", out _).ShouldBeFalse();
     }
 
     [Fact]

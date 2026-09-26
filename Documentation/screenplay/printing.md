@@ -74,12 +74,15 @@ a file does:
   event sources, query arguments and event-order directives; and command validation,
   production targets and concurrency dimensions keep comments on their authored lines.
   An explicit default `severity error` on a requirement is omitted; comments on that
-  line move to the `require` line instead.
+  line move to the `require` line instead. If `require` already has a trailing comment,
+  the moved comment gets its own line below it.
   When you reorder, insert, or remove enum values or other scalar collection entries,
   comments follow unchanged values rather than old list positions; comments attached
   to removed values are dropped. Repeated projection `automap` settings warn (`PLAY0452`):
-  the last setting wins, but printing keeps each authored line and its comments.
-  These positions are source metadata, not members of the typed JSON syntax. Check
+  the last setting wins, but printing keeps each authored line and its comments until
+  a typed edit changes the mode. Then only the edited setting prints, and comments on
+  earlier settings fall back to the enclosing projection or block. These positions
+  are source metadata, not members of the typed JSON syntax. Check
   `dropped-comments` before applying a layout proposal for comments that cannot be
   retained during canonical printing.
   Inside a form, the printer always writes `populate`, then fields, then `on submit`,

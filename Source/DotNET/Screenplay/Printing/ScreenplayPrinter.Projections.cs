@@ -233,7 +233,7 @@ public partial class ScreenplayPrinter
 
     void WriteAutoMap(ScreenplayWriter writer, AutoMapMode autoMap, SyntaxNode owner)
     {
-        if (autoMap != AutoMapMode.Inherit)
+        if (autoMap != AutoMapMode.Inherit && autoMap == owner.ParsedAutoMapMode)
         {
             foreach (var previous in owner.DirectiveLocations
                 .Where(entry => entry.Key.StartsWith("automap previous:", StringComparison.Ordinal))

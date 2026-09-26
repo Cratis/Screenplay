@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Syntax.Projections;
 
 namespace Cratis.Screenplay.for_ScreenplayPrinter;
 
@@ -49,5 +50,20 @@ public class when_repeating_automap_directives_with_comments : given.a_printer
         }
 
         _printer.Print(reparsed.Value!).ShouldEqual(printed);
+    }
+
+    [Fact]
+    void should_not_reprint_previous_automap_settings_after_a_typed_mode_edit()
+    {
+        var parsed = _compiler.CompileProjection(Source);
+        var edited = parsed.Value! with { AutoMap = AutoMapMode.Enabled };
+        var printed = _printer.Print(edited);
+        var reparsed = _compiler.CompileProjection(printed);
+
+        printed.Split('\n').Count(line => line.StartsWith("  automap", StringComparison.Ordinal)).ShouldEqual(1);
+        printed.ShouldNotContain("  no automap // projection second");
+        printed.ShouldContain("automap // projection second\n  // projection first");
+        reparsed.Value!.AutoMap.ShouldEqual(AutoMapMode.Enabled);
+        _printer.Print(reparsed.Value).ShouldEqual(printed);
     }
 }

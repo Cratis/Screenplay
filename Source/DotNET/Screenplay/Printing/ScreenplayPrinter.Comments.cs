@@ -23,7 +23,7 @@ public sealed partial class ScreenplayPrinter
         var lines = writer.ToString().TrimEnd('\n').Split('\n');
         var before = new Dictionary<int, List<string>>();
         var after = new Dictionary<int, List<string>>();
-        var trailing = new Dictionary<int, List<string>>();
+        var trailing = new Dictionary<int, List<(string Text, bool Relocated)>>();
         var parents = new Dictionary<SyntaxNode, SyntaxNode>(ReferenceEqualityComparer.Instance);
         CollectParents(root, parents);
         foreach (var (owner, comment) in comments.OrderBy(entry => entry.Comment.Line))
@@ -70,18 +70,29 @@ public sealed partial class ScreenplayPrinter
                 indent = lines[span.First].Length - lines[span.First].TrimStart().Length + 2;
             }
 
-            var destination = comment.Placement switch
+            if (comment.Placement == SourceCommentPlacement.Trailing)
             {
-                SourceCommentPlacement.Leading => before,
-                SourceCommentPlacement.Trailing => trailing,
-                _ => after
-            };
-            if (!destination.TryGetValue(position, out var output))
-            {
-                destination[position] = output = [];
-            }
+                if (!trailing.TryGetValue(position, out var side))
+                {
+                    trailing[position] = side = [];
+                }
 
-            output.Add(comment.Placement == SourceCommentPlacement.Trailing ? comment.Text : new string(' ', indent) + comment.Text);
+                // A removed directive's comment can land on its owner's already-commented line.
+                // Keep the comment belonging to that line inline; move the others to separate lines.
+                var relocated = comment.AnchorLine != owner.Location.Line &&
+                    directiveLines?.ContainsKey(comment.AnchorLine) != true;
+                side.Add((comment.Text, relocated));
+            }
+            else
+            {
+                var destination = comment.Placement == SourceCommentPlacement.Leading ? before : after;
+                if (!destination.TryGetValue(position, out var output))
+                {
+                    destination[position] = output = [];
+                }
+
+                output.Add(new string(' ', indent) + comment.Text);
+            }
         }
 
         var result = new List<string>();
@@ -92,7 +103,29 @@ public sealed partial class ScreenplayPrinter
                 result.AddRange(preceding);
             }
 
-            result.Add(lines[index] + (trailing.TryGetValue(index, out var side) ? " " + string.Join(' ', side) : string.Empty));
+            if (trailing.TryGetValue(index, out var side))
+            {
+                var inline = side.FindIndex(entry => !entry.Relocated);
+                if (inline < 0)
+                {
+                    inline = 0;
+                }
+
+                result.Add(lines[index] + " " + side[inline].Text);
+                var indent = lines[index][..(lines[index].Length - lines[index].TrimStart().Length)];
+                for (var commentIndex = 0; commentIndex < side.Count; commentIndex++)
+                {
+                    if (commentIndex != inline)
+                    {
+                        result.Add(indent + side[commentIndex].Text);
+                    }
+                }
+            }
+            else
+            {
+                result.Add(lines[index]);
+            }
+
             if (after.TryGetValue(index, out var following))
             {
                 result.AddRange(following);

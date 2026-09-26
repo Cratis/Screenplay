@@ -46,7 +46,7 @@ public class when_expanding_scalar_directives_with_comments : given.an_authoring
                     severity warning // severity note
                     // keep message
                     message "Denied" // message note
-                  require id == "b"
+                  require id == "b" // second requirement note
                     // default severity comment
                     severity error // default severity note
                 produces when id == "a"
@@ -115,7 +115,7 @@ public class when_expanding_scalar_directives_with_comments : given.an_authoring
 
     [Fact] void should_attach_omitted_default_severity_comments_to_requirement()
     {
-        _moduleSource.ShouldContain("// default severity comment\n          require id == \"b\" // default severity note");
+        _moduleSource.ShouldContain("// default severity comment\n          require id == \"b\" // second requirement note\n          // default severity note");
         _moduleSource.ShouldNotContain("severity error");
     }
 

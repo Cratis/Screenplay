@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Syntax;
@@ -27,4 +28,11 @@ public abstract record SyntaxNode(SourceLocation Location)
     /// </summary>
     [SourceSpanMetadata]
     public IReadOnlyDictionary<string, SourceLocation> DirectiveLocations { get; init; } = _noDirectiveLocations;
+
+    /// <summary>
+    /// Gets the final automap mode parsed from the source, before any typed edits. This is source metadata,
+    /// not a typed syntax value.
+    /// </summary>
+    [SourceSpanMetadata]
+    public AutoMapMode? ParsedAutoMapMode { get; init; }
 }
