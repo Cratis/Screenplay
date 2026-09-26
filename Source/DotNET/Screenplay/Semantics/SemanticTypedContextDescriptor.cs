@@ -80,12 +80,12 @@ public sealed record SemanticTypedContextDescriptor(
     public const uint ContractRevision = 1;
 
     /// <summary>Revision of the ESM produced in the same compilation; null for failed compilations such as unbound handlers.</summary>
-    public SemanticRevision? ModelRevision { get; init; }
+    public SemanticRevision? ModelRevision { get; internal init; }
 
     /// <summary>Whether a provider can render this descriptor without an unresolved model or missing type definition.</summary>
     public bool IsWrapperReady => ModelRevision is not null && HasResolvedTypes;
 
-    /// <summary>Transitive definitions for every referenced concept and composite type, in stable declaration order.</summary>
+    /// <summary>Transitive definitions for every referenced concept and composite type, in depth-first discovery order.</summary>
     public ImmutableArray<SemanticContextTypeDefinition> Types { get; init; } = [];
 
     /// <summary>Whether all referenced model type definitions were resolved during derivation.</summary>

@@ -23,7 +23,7 @@ public class when_cataloging_a_handler_with_a_missing_type_definition : given.a_
             """);
         var application = result.Value!.Model.Application with { Concepts = [] };
         var requirement = result.ImplementationRequirements.Single() with { Role = SemanticImplementationRole.CommandHandler };
-        _descriptor = SemanticTypedContextCatalog.Create(application, [requirement], false).Single();
+        _descriptor = SemanticTypedContextCatalog.Create(application, [requirement], false).Single() with { ModelRevision = result.Value.Model.Revision };
     }
 
     [Fact] void should_mark_the_incomplete_shape_as_not_renderable() => _descriptor.IsWrapperReady.ShouldBeFalse();

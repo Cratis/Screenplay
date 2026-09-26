@@ -9,7 +9,7 @@ namespace Cratis.Screenplay.Semantics;
 /// <summary>Serializes the portable descriptor contract independently of model provenance.</summary>
 public static class SemanticTypedContextSerializer
 {
-    static readonly JsonSerializerOptions _options = new() { WriteIndented = true };
+    static readonly JsonSerializerOptions _options = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     /// <summary>Produces stable UTF-8 JSON bytes suitable for shared contract vectors.</summary>
     public static byte[] Serialize(ImmutableArray<SemanticTypedContextDescriptor> descriptors) => JsonSerializer.SerializeToUtf8Bytes(
@@ -57,7 +57,7 @@ public static class SemanticTypedContextSerializer
                     source = new
                     {
                         member.Source.Kind, semanticId = member.Source.SemanticId?.ToString(), member.Source.Path,
-                        member.Source.ConstantValue, eventRevision = member.Source.EventRevision?.ToString()
+                        member.Source.ConstantValue, eventRevision = member.Source.EventRevision?.Value
                     }
                 })
             })

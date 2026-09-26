@@ -328,7 +328,7 @@ internal sealed partial class McpWorkspaces
             },
             member.IsNullable,
             member.IsDerived,
-            source = new { member.Source.Kind, semanticId = member.Source.SemanticId?.ToString(), member.Source.Path, member.Source.ConstantValue, eventRevision = member.Source.EventRevision?.ToString() }
+            source = new { member.Source.Kind, semanticId = member.Source.SemanticId?.ToString(), member.Source.Path, member.Source.ConstantValue, eventRevision = member.Source.EventRevision?.Value }
         })
     };
 

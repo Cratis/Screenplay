@@ -9,7 +9,7 @@ public class when_describing_an_unbound_handler : given.a_semantic_binder
 {
     CompilationResult<SemanticCompilation> _result;
 
-    void Because() => _result = Bind("""
+    const string Source = """
         module Billing
           feature Accounts
             slice StateChange Commands
@@ -18,7 +18,11 @@ public class when_describing_an_unbound_handler : given.a_semantic_binder
                 amount Decimal?
                 handler
                   file Handler.cs
-        """);
+        """;
+
+    void Because() => _result = Bind(Source);
+
+    internal static byte[] GoldenBytes() => SemanticTypedContextSerializer.Serialize(new when_describing_an_unbound_handler().Bind(Source).TypedContextDescriptors);
 
     [Fact] void should_keep_the_handler_unbound() => _result.Success.ShouldBeFalse();
     [Fact] void should_expose_the_shape_of_command_context_v1()
@@ -35,7 +39,6 @@ public class when_describing_an_unbound_handler : given.a_semantic_binder
     [Fact] void should_pin_the_handler_vector()
     {
         var bytes = SemanticTypedContextSerializer.Serialize(_result.TypedContextDescriptors);
-        if (Environment.GetEnvironmentVariable("SCREENPLAY_WRITE_HANDLER_VECTOR") is { } destination) File.WriteAllBytes(destination, bytes);
         using var stream = typeof(when_describing_an_unbound_handler).Assembly.GetManifestResourceStream("Cratis.Screenplay.Semantics.Serialization.Golden.unbound-handler-context-v1.json")!;
         using var buffer = new MemoryStream();
         stream.CopyTo(buffer);

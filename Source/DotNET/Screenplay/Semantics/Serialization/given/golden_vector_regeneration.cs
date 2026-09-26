@@ -3,6 +3,7 @@
 
 #if DEBUG
 using System.Runtime.CompilerServices;
+using Cratis.Screenplay.Semantics.for_SemanticModelBinder;
 
 namespace Cratis.Screenplay.Semantics.Serialization.given;
 
@@ -62,7 +63,9 @@ public static class golden_vector_regeneration
             Write(directory, "full-esm-v3.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV3())),
             Write(directory, "full-esm-v4.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV4())),
             Write(directory, "full-expressions-v1.json", SemanticModelCanonicalJson.SerializeExpressionVector(canonical_serialization_golden_vectors.CreateExpressions())),
-            Write(directory, "full-identity-catalog-v1.json", SemanticIdentityCatalogSerializer.Serialize(canonical_serialization_golden_vectors.CreateIdentityCatalog()))
+            Write(directory, "full-identity-catalog-v1.json", SemanticIdentityCatalogSerializer.Serialize(canonical_serialization_golden_vectors.CreateIdentityCatalog())),
+            Write(directory, "typed-contexts-v1.json", when_describing_typed_contexts.GoldenBytes()),
+            Write(directory, "unbound-handler-context-v1.json", when_describing_an_unbound_handler.GoldenBytes())
         };
 
         throw new GoldenVectorsRegenerated(

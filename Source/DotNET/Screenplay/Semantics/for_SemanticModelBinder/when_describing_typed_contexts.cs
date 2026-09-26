@@ -64,6 +64,8 @@ public class when_describing_typed_contexts : given.a_semantic_binder
 
     void Because() => _result = Bind(Source);
 
+    internal static byte[] GoldenBytes() => SemanticTypedContextSerializer.Serialize(new when_describing_typed_contexts().Bind(Source).TypedContextDescriptors);
+
     [Fact] void should_bind_and_publish_the_independent_contract_revision()
     {
         _result.Success.ShouldBeTrue();
@@ -78,16 +80,56 @@ public class when_describing_typed_contexts : given.a_semantic_binder
     [Fact] void should_pin_member_types_identities_sources_and_context_versions()
     {
         var bytes = SemanticTypedContextSerializer.Serialize(_result.TypedContextDescriptors);
-        if (Environment.GetEnvironmentVariable("SCREENPLAY_WRITE_CONTEXT_VECTOR") is { } destination) File.WriteAllBytes(destination, bytes);
         using var stream = typeof(when_describing_typed_contexts).Assembly.GetManifestResourceStream("Cratis.Screenplay.Semantics.Serialization.Golden.typed-contexts-v1.json")!;
         using var buffer = new MemoryStream();
         stream.CopyTo(buffer);
         bytes.SequenceEqual(buffer.ToArray()).ShouldBeTrue();
     }
+    [Fact] void should_use_portable_camel_case_numeric_event_revisions_and_lf_bytes()
+    {
+        var bytes = SemanticTypedContextSerializer.Serialize(_result.TypedContextDescriptors);
+        bytes.Contains((byte)'\r').ShouldBeFalse();
+        using var json = System.Text.Json.JsonDocument.Parse(bytes);
+        var descriptors = json.RootElement.GetProperty("descriptors");
+        foreach (var descriptor in descriptors.EnumerateArray())
+        {
+            descriptor.TryGetProperty("RequirementId", out _).ShouldBeFalse();
+            descriptor.GetProperty("requirementId").GetString().ShouldNotBeNull();
+            descriptor.GetProperty("isWrapperReady").GetBoolean().ShouldBeTrue();
+            foreach (var member in descriptor.GetProperty("members").EnumerateArray())
+            {
+                var source = member.GetProperty("source");
+                if (source.GetProperty("eventRevision").ValueKind != System.Text.Json.JsonValueKind.Null)
+                    source.GetProperty("eventRevision").ValueKind.ShouldEqual(System.Text.Json.JsonValueKind.Number);
+            }
+        }
+        descriptors.EnumerateArray().SelectMany(descriptor => descriptor.GetProperty("members").EnumerateArray())
+            .Any(member => member.GetProperty("source").GetProperty("eventRevision").ValueKind == System.Text.Json.JsonValueKind.Number).ShouldBeTrue();
+    }
     [Fact] void should_pin_model_revision_separately()
     {
         _result.Value!.Model.Revision.ToString().ShouldEqual("rev1:698456642dc55f915530936e98aa4777d3158cb8ee759e3af7de0d0e39044cf9");
         _result.TypedContextDescriptors.All(value => value.ModelRevision == _result.Value.Model.Revision).ShouldBeTrue();
+    }
+    [Fact] void should_mark_a_rule_value_nullable_when_its_property_is_optional()
+    {
+        var result = Bind("""
+            module Billing
+              feature Accounts
+                slice StateChange Commands
+                  command Deposit
+                    note String?
+                    validate
+                      note rule Check
+                        ```csharp
+                        return true;
+                        ```
+            """);
+        result.Success.ShouldBeTrue();
+        var rule = result.TypedContextDescriptors.Single(value => value.Role == SemanticImplementationRole.RulePredicate);
+        var member = rule.Members.Single(value => value.Name == "Value");
+        member.IsNullable.ShouldBeTrue();
+        member.Type.ModelType!.IsOptional.ShouldBeTrue();
     }
     [Fact] void should_hold_the_runtime_context_data_surfaces_to_the_vector()
     {
