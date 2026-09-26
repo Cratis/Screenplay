@@ -66,7 +66,7 @@ Editors and renderers get one source of truth for what a body can see, and #84's
 
 ## Status notes
 
-**2026-09-25 — partially implemented, not verified. Release version: TBD.** Revision-1 typed context descriptors are published as compilation/MCP sidecars for bound reducer, rule and policy requirements and resolvable but unbound command handlers. Command-handler binding and provider-generated wrappers remain pending. Six shape choices were decided under the maintainer's delegation: sidecar (no canonical ESM byte changes), portable type tokens, policy descriptors per use site, derived booleans but no accessor methods as data, context-only unbound handler descriptors, and an independently versioned descriptor contract without changing attachment manifest semantics.
+**2026-09-25 — partially implemented, not verified. Shipped in v4.41.0.** Revision-1 typed context descriptors are published as compilation/MCP sidecars for bound reducer, rule and policy requirements and resolvable but unbound command handlers. Command-handler binding and provider-generated wrappers remain pending. Six shape choices were decided under the maintainer's delegation: sidecar (no canonical ESM byte changes), portable type tokens, policy descriptors per use site, derived booleans but no accessor methods as data, context-only unbound handler descriptors, and an independently versioned descriptor contract without changing attachment manifest semantics.
 
 ## Related issues
 
