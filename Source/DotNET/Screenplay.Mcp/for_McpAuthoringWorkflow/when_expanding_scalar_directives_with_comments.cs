@@ -46,6 +46,9 @@ public class when_expanding_scalar_directives_with_comments : given.an_authoring
                     severity warning // severity note
                     // keep message
                     message "Denied" // message note
+                  require id == "b"
+                    // default severity comment
+                    severity error // default severity note
                 produces when id == "a"
                   // keep event name
                   OrderPlaced // event note
@@ -110,6 +113,13 @@ public class when_expanding_scalar_directives_with_comments : given.an_authoring
         }
     }
 
+    [Fact] void should_attach_omitted_default_severity_comments_to_requirement()
+    {
+        _moduleSource.ShouldContain("// default severity comment\n          require id == \"b\" // default severity note");
+        _moduleSource.ShouldNotContain("severity error");
+    }
+
     [Fact] void should_report_no_dropped_comments() => _proposal.GetProperty("droppedCommentCount").GetInt32().ShouldEqual(0);
     [Fact] void should_list_no_dropped_comments() => _dropped.GetArrayLength().ShouldEqual(0);
+    [Fact] void should_not_report_play0288() => _proposal.GetRawText().ShouldNotContain("PLAY0288");
 }

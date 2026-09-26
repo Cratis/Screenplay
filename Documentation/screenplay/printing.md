@@ -73,6 +73,8 @@ a file does:
   automap settings, parent keys and child exclusions; specification caller fixtures,
   event sources, query arguments and event-order directives; and command validation,
   production targets and concurrency dimensions keep comments on their authored lines.
+  An explicit default `severity error` on a requirement is omitted; comments on that
+  line move to the `require` line instead.
   When you reorder, insert, or remove enum values or other scalar collection entries,
   comments follow unchanged values rather than old list positions; comments attached
   to removed values are dropped. Repeated projection `automap` settings warn (`PLAY0452`):

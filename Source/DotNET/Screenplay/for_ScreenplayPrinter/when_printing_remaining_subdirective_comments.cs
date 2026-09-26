@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Syntax;
+
 namespace Cratis.Screenplay.for_ScreenplayPrinter;
 
 public class when_printing_remaining_subdirective_comments : given.a_printer
@@ -170,7 +172,32 @@ public class when_printing_remaining_subdirective_comments : given.a_printer
     }
 
     [Fact]
-    void should_keep_explicit_default_requirement_severity()
+    void should_omit_explicit_default_requirement_severity_without_comments()
+    {
+        const string source = """
+            module Shop
+              feature Orders
+                slice StateChange Order
+                  command Place
+                    id String
+                    validate
+                      require id == "a"
+                        severity error
+                        message "Denied"
+                      require id == "b"
+                        severity error
+            """;
+        var roundtrip = RoundTrip(source);
+        roundtrip.Original!.Diagnostics.ShouldBeEmpty();
+        roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
+        roundtrip.Printed.ShouldNotContain("severity error");
+        roundtrip.Printed.ShouldContain("require id == \"a\"\n            message \"Denied\"");
+        roundtrip.Printed.ShouldContain("require id == \"b\"");
+        roundtrip.PrintedAgain.ShouldEqual(roundtrip.Printed);
+    }
+
+    [Fact]
+    void should_attach_comments_on_omitted_default_severity_to_requirement()
     {
         const string source = """
             module Shop
@@ -185,8 +212,57 @@ public class when_printing_remaining_subdirective_comments : given.a_printer
             """;
         var roundtrip = RoundTrip(source);
         roundtrip.Original!.Diagnostics.ShouldBeEmpty();
-        AssertLines(roundtrip.Printed, ("explicit default", "severity error // error note"));
+        roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
+        roundtrip.Printed.ShouldContain("// explicit default\n          require id == \"a\" // error note");
+        roundtrip.Printed.ShouldNotContain("severity error");
         roundtrip.PrintedAgain.ShouldEqual(roundtrip.Printed);
+    }
+
+    [Fact]
+    void should_omit_default_severity_after_typed_edit()
+    {
+        const string source = """
+            module Shop
+              feature Orders
+                slice StateChange Order
+                  command Place
+                    id String
+                    validate
+                      require id == "a"
+                        severity warning // severity note
+            """;
+        var parsed = _compiler.Compile(source);
+        parsed.Diagnostics.ShouldBeEmpty();
+        var module = parsed.Value!.Modules.Single();
+        var feature = module.Features.Single();
+        var slice = feature.Slices.Single();
+        var command = slice.Commands.Single();
+        var validation = (DeclarativeValidateSyntax)command.Validations.Single();
+        var requirement = validation.Requirements!.Single();
+        var edited = parsed.Value with
+        {
+            Modules = [module with
+            {
+                Features = [feature with
+                {
+                    Slices = [slice with
+                    {
+                        Commands = [command with
+                        {
+                            Validations = [validation with
+                            {
+                                Requirements = [requirement with { Severity = ValidationSeverity.Error }]
+                            }]
+                        }]
+                    }]
+                }]
+            }]
+        };
+        var printed = _printer.Print(edited);
+        printed.ShouldContain("require id == \"a\" // severity note");
+        printed.ShouldNotContain("severity error");
+        printed.ShouldNotContain("severity warning");
+        _compiler.Compile(printed).Diagnostics.ShouldBeEmpty();
     }
 
     static void AssertLines(string printed, params (string Comment, string Directive)[] expected)

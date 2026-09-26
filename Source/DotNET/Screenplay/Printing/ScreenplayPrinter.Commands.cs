@@ -312,13 +312,13 @@ public partial class ScreenplayPrinter
                     foreach (var requirement in declarative.Requirements ?? [])
                     {
                         writer.Line($"require {ScreenplaySyntaxText.Condition(requirement.Condition)}", requirement);
-                        if (requirement.Message is not null || requirement.Severity != ValidationSeverity.Error || requirement.DirectiveLocations.ContainsKey("severity"))
+                        if (requirement.Message is not null || requirement.Severity != ValidationSeverity.Error)
                         {
                             using (writer.Indent())
                             {
-                                if (requirement.Severity != ValidationSeverity.Error || requirement.DirectiveLocations.ContainsKey("severity"))
+                                if (requirement.Severity != ValidationSeverity.Error)
                                 {
-                                    writer.DirectiveLine(requirement.Severity == ValidationSeverity.Error ? "severity error" : ScreenplaySyntaxText.Severity(requirement.Severity).TrimStart(), requirement, "severity");
+                                    writer.DirectiveLine(ScreenplaySyntaxText.Severity(requirement.Severity).TrimStart(), requirement, "severity");
                                 }
 
                                 if (requirement.Message is not null)
