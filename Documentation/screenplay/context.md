@@ -53,7 +53,7 @@ public record PolicyContext(
     DateTimeOffset Occurred);
 ```
 
-These live in `Cratis.Screenplay.Contexts`. A runtime such as Stage supplies the instance; inline `csharp` blocks and imported files compile against it, in scope as `context`. Reducer rules receive a `ReducerContext` with `State` (null before the first event) and `Event`; they have `StateAs<T>()` and `EventAs<T>()` too.
+These live in `Cratis.Screenplay.Contexts`. A runtime such as Stage supplies the instance; inline `csharp` blocks and imported files compile against it, in scope as `context`. Reducer rules receive a `ReducerContext` with `State` (null before the first event) and `Event`; they have `StateAs<T>()` and `EventAs<T>()` too. In C# bodies, use the provider's generated PascalCase member names (for example `context.Event.Amount` for an authored `amount` property). Screenplay keeps authored names in the DSL and never rewrites opaque bodies; a provider maps compilation errors to body source locations.
 
 ## Typed context sidecars
 
@@ -69,11 +69,13 @@ These are sidecars of the **same compilation** as the ESM: canonical v1–v4 byt
 
 | Type | Carries |
 | --- | --- |
-| `TenantId` | The tenant identifier. `TenantId.Default` for a single-tenant application. |
+| `TenantId` | The portable tenant identifier. `TenantId.Default` is the zero GUID (`00000000-0000-0000-0000-000000000000`); `TenantId.NotSet` is the empty string. |
 | `Identity` | `Id`, `Name`, `UserName`, `IsAuthenticated`, `Roles`, `Claims` — who the caller is and what they can prove. |
 | `Claim` | `Name` and `Value`. A caller may carry the same claim name more than once, so claims are a sequence rather than a dictionary. |
 | `CausedBy` | `Subject`, `Name`, `UserName` — the same three values a projection reads through `$eventContext.causedBy`. |
 | `Causation` | `Type` (`Command`, `Reactor`, `Schedule`, …), `Occurred`, and free-form `Properties`. |
+
+Providers translate the Arc/Chronicle default namespace `"Default"` into `TenantId.Default` at the context boundary. They must keep named tenants distinct from the default and reject ambiguous mappings (including a genuinely named zero-GUID tenant), not silently merge them. This is a context-contract v1 rule; it does not change an ESM descriptor or its authored model names.
 
 `Identity` and `CausedBy` describe the same caller from two sides. `Identity` is the **decision** view — what a policy is allowed to inspect. `CausedBy` is the **audit** view — the three values that travel with an appended event. `Identity.Id` and `CausedBy.Subject` are the same value.
 
