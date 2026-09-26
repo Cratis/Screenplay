@@ -262,9 +262,18 @@ internal static partial class ScreenplaySyntaxText
         bool boolean => boolean ? "true" : "false",
         string text => StringLiteral.Quote(text),
         double number => Number(number),
+        decimal number => Decimal(number),
         IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
         _ => value.ToString() ?? string.Empty
     };
+
+    static string Decimal(decimal number)
+    {
+        var text = number.ToString(CultureInfo.InvariantCulture);
+        return number == decimal.Truncate(number) && long.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out _)
+            ? $"{text}.0"
+            : text;
+    }
 
     static string Number(double number) =>
         number == Math.Floor(number) && number >= long.MinValue && number < 9223372036854775808d

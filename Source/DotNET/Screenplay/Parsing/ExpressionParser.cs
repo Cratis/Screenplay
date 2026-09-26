@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Globalization;
+using System.Numerics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
@@ -221,7 +222,7 @@ internal static partial class ExpressionParser
         "null" => new(null, location),
         _ when text.Length >= 2 && text.StartsWith('"') && text.EndsWith('"') => new(StringLiteral.Unescape(text[1..^1]), location),
         _ when text.Length >= 2 && text.StartsWith('\'') && text.EndsWith('\'') => new(StringLiteral.Unescape(text[1..^1]), location),
-        _ when NumberRegex().IsMatch(text) => new(double.Parse(text, CultureInfo.InvariantCulture), location),
+        _ when NumberRegex().IsMatch(text) && ParseNumber(text) is { } number => new(number, location),
         _ => null
     };
 
@@ -316,6 +317,59 @@ internal static partial class ExpressionParser
     [GeneratedRegex(@"^@?[A-Za-z_]\w*(\.@?[A-Za-z_$]\w*)*$", RegexOptions.None, 1000)]
     private static partial Regex PathRegex();
 
-    [GeneratedRegex(@"^-?\d+(\.\d+)?$", RegexOptions.None, 1000)]
+    static object? ParseNumber(string text)
+    {
+        if (!text.Contains('.') && !text.Contains('e') && !text.Contains('E') &&
+            long.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var integer))
+        {
+            return integer;
+        }
+
+        var mantissa = text.Split('e', 'E')[0];
+        if (!mantissa.Any(digit => digit is >= '1' and <= '9'))
+        {
+            return decimal.Zero;
+        }
+
+        if (decimal.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var precise) &&
+            IsExactDecimal(text, precise))
+        {
+            return precise;
+        }
+
+        return double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var approximate) &&
+            double.IsFinite(approximate) && approximate != 0
+                ? approximate
+                : null;
+    }
+
+    // Decimal.TryParse rounds numbers with excess fractional digits. Do not call a rounded result exact.
+    static bool IsExactDecimal(string text, decimal value)
+    {
+        var exponentStart = text.IndexOfAny(['e', 'E']);
+        var mantissa = exponentStart < 0 ? text : text[..exponentStart];
+        var exponent = 0;
+        if (exponentStart >= 0 && !int.TryParse(text[(exponentStart + 1)..], NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out exponent))
+        {
+            return false;
+        }
+
+        var decimalPoint = mantissa.IndexOf('.');
+        var fractionalDigits = decimalPoint < 0 ? 0 : mantissa.Length - decimalPoint - 1;
+        var coefficient = BigInteger.Parse(mantissa.Replace(".", string.Empty, StringComparison.Ordinal), CultureInfo.InvariantCulture);
+        var bits = decimal.GetBits(value);
+        var represented = new BigInteger((uint)bits[0]) | (new BigInteger((uint)bits[1]) << 32) | (new BigInteger((uint)bits[2]) << 64);
+        if ((bits[3] & int.MinValue) != 0)
+        {
+            represented = -represented;
+        }
+
+        var shift = (long)exponent - fractionalDigits + ((bits[3] >> 16) & 0xff);
+        return shift is >= 0 and <= 100
+            ? coefficient * BigInteger.Pow(10, (int)shift) == represented
+            : shift is < 0 and >= -100 && coefficient == represented * BigInteger.Pow(10, (int)-shift);
+    }
+
+    [GeneratedRegex(@"^-?[0-9]+(\.[0-9]+)?([Ee][+-]?[0-9]+)?$", RegexOptions.None, 1000)]
     private static partial Regex NumberRegex();
 }

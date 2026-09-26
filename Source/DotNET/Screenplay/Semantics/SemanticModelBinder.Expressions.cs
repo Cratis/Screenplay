@@ -42,9 +42,33 @@ public sealed partial class SemanticModelBinder
             null => SemanticValue.Null,
             string value => SemanticValue.Text(value),
             bool value => SemanticValue.Boolean(value),
-            double value => SemanticValue.Number(Convert.ToDecimal(value, CultureInfo.InvariantCulture)),
+            long value => SemanticValue.Number(value),
+            decimal value => SemanticValue.Number(value),
+            double value => BindDouble(value, expression.Location),
             _ => throw new InvalidSemanticContract($"Literal value type '{expression.Value.GetType().Name}' is unsupported during semantic binding.")
         };
+
+        SemanticValue BindDouble(double value, SourceLocation location)
+        {
+            decimal number;
+            try
+            {
+                number = Convert.ToDecimal(value, CultureInfo.InvariantCulture);
+            }
+            catch (OverflowException)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "The numeric literal is outside the range supported by ESM decimal values.", location);
+                return SemanticValue.Null;
+            }
+
+            if (number == 0 && value != 0)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "The numeric literal is too small for an ESM decimal value.", location);
+                return SemanticValue.Null;
+            }
+
+            return SemanticValue.Number(number);
+        }
 
         SemanticExpression? UnsupportedExpression(ExpressionSyntax expression, string description)
         {

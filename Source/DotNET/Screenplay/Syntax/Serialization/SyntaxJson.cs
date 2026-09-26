@@ -13,7 +13,8 @@ namespace Cratis.Screenplay.Syntax.Serialization;
 /// The <c>kind</c> discriminator is the concrete syntax type name. Structural members use camelCase;
 /// a CLR member named <c>Kind</c> uses <c>syntaxKind</c> to avoid colliding with the discriminator.
 /// Source metadata and computed getters are excluded. Ordinary JSON numbers become finite
-/// <see cref="double"/> literals, matching the parser. Other supported numeric CLR literals use a
+/// <see cref="double"/> literals; parsed source literals use <see cref="long"/> or <see cref="decimal"/>
+/// when representable exactly. Other supported numeric CLR literals use a
 /// <c>{ "literalType": "Decimal", "value": "5.5" }</c> value object to preserve their type and precision.
 /// Optional null collections are represented as empty arrays.
 /// </remarks>

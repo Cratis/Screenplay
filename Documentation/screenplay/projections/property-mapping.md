@@ -42,7 +42,11 @@ Supported literal types:
 
 - **Boolean**: `true`, `false`
 - **String**: `"text"` (double quotes)
-- **Number**: `42`, `3.14`
+- **Number**: `42`, `3.14`, `1e-3`, `2.5E+4`
+
+Whole numbers use a 64-bit integer where possible, then Decimal. Fractional and exponent values use Decimal when it can represent them exactly, otherwise a finite Double. Integers above `9007199254740992` remain exact within the supported integer and Decimal ranges. Printing normalizes spelling (`1e-3` becomes `0.001`) without changing the value.
+
+For typed workspace edits, use Decimal when a value is exactly representable. A Double that would reparse as a Decimal is rejected rather than silently changing the requested numeric type.
 - **Null**: `null`
 
 ## Clearing a Value

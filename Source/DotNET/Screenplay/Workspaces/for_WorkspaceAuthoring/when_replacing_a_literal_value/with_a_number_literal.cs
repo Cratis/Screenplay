@@ -8,7 +8,7 @@ namespace Cratis.Screenplay.Workspaces.for_WorkspaceAuthoring.when_replacing_a_l
 
 public class with_a_number_literal : given.a_document_with_literal_values
 {
-    void Because() => Result = Propose(ReplaceSource("quantity", new LiteralExpressionSyntax(3.5, SourceLocation.Start)));
+    void Because() => Result = Propose(ReplaceSource("quantity", new LiteralExpressionSyntax(3.5m, SourceLocation.Start)));
 
     [Fact] void should_accept_the_edit() => Result.Accepted.ShouldBeTrue();
     [Fact] void should_rewrite_only_the_literal() => Candidate().ShouldEqual(Bytes(OrderSource.Replace("quantity =   2", "quantity =   3.5", StringComparison.Ordinal)));
