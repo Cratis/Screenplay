@@ -83,6 +83,7 @@ public sealed partial class ScreenplayPrinter
             if (comment.Placement == SourceCommentPlacement.Trailing)
             {
                 var relocated = comment.AnchorLine != owner.Location.Line &&
+                    owner.DirectiveLocations.Values.Any(location => location.Line == comment.AnchorLine) &&
                     directiveLines?.ContainsKey(comment.AnchorLine) != true;
                 var next = position + 1;
                 if (relocated && next < lines.Length &&
@@ -136,11 +137,13 @@ public sealed partial class ScreenplayPrinter
                     inline = 0;
                 }
 
-                result.Add(lines[index] + " " + side[inline].Text);
+                // Ordinary trailing comments sharing a printed line retain the original inline behavior.
+                var inlineComments = side.Where((entry, commentIndex) => !entry.Relocated || commentIndex == inline).ToArray();
+                result.Add(lines[index] + " " + string.Join(' ', inlineComments.Select(entry => entry.Text)));
                 var indent = lines[index][..(lines[index].Length - lines[index].TrimStart().Length)];
                 for (var commentIndex = 0; commentIndex < side.Count; commentIndex++)
                 {
-                    if (commentIndex != inline)
+                    if (commentIndex != inline && side[commentIndex].Relocated)
                     {
                         result.Add(indent + side[commentIndex].Text);
                     }

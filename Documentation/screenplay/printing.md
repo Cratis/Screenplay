@@ -80,9 +80,11 @@ a file does:
   comments follow unchanged values rather than old list positions; comments attached
   to removed values are dropped. Repeated projection `automap` settings warn (`PLAY0452`):
   the last setting wins, but printing keeps each authored line and its comments until
-  a typed edit changes the mode. Then only the edited setting prints, and comments on
-  earlier settings fall back to the enclosing projection or block. These positions
-  are source metadata, not members of the typed JSON syntax. Check
+  a typed edit changes the mode. Then only the edited setting prints: its comment
+  stays inline, and comments on earlier settings appear on their own lines below it.
+  If you remove the setting (inherit), those comments move to the start of the block
+  body instead. Comment positions are source metadata, not members of the typed JSON
+  syntax. Check
   `dropped-comments` before applying a layout proposal for comments that cannot be
   retained during canonical printing.
   Inside a form, the printer always writes `populate`, then fields, then `on submit`,
