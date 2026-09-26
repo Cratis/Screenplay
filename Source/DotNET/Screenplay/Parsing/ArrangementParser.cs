@@ -35,7 +35,8 @@ internal static partial class ArrangementParser
         var behaviors = new List<BehaviorSyntax>();
         var usedBehaviors = new List<UsesBehaviorSyntax>();
         ArrangementSyntax? arrangement = null;
-        FitsSlotSyntax? fitsSlot = null;
+        string? fitsSlot = null;
+        SourceLocation? fitsSlotLocation = null;
 
         while (context.TryPeekChild(header.Indent, out var child))
         {
@@ -53,7 +54,7 @@ internal static partial class ArrangementParser
                     arrangement = ParseArrangement(context, child, keyword, name, slots);
                     break;
                 case "fits":
-                    ParseFitsSlot(context, child, keyword, allowsFitsSlot, ref fitsSlot);
+                    ParseFitsSlot(context, child, keyword, allowsFitsSlot, ref fitsSlot, ref fitsSlotLocation);
                     break;
                 case "on":
                 case "uses":
@@ -67,10 +68,10 @@ internal static partial class ArrangementParser
             }
         }
 
-        return new(slots, arrangement, fitsSlot, behaviors, usedBehaviors);
+        return new(slots, arrangement, fitsSlot, fitsSlotLocation, behaviors, usedBehaviors);
     }
 
-    static void ParseFitsSlot(ParserContext context, SourceLine line, string keyword, bool allowsFitsSlot, ref FitsSlotSyntax? fitsSlot)
+    static void ParseFitsSlot(ParserContext context, SourceLine line, string keyword, bool allowsFitsSlot, ref string? fitsSlot, ref SourceLocation? fitsSlotLocation)
     {
         if (!allowsFitsSlot)
         {
@@ -94,7 +95,8 @@ internal static partial class ArrangementParser
             return;
         }
 
-        fitsSlot = new(match.Groups[1].Value, line.Location);
+        fitsSlot = match.Groups[1].Value;
+        fitsSlotLocation = line.Location;
     }
 
     static void AddSlot(ParserContext context, SourceLine line, List<SlotSyntax> slots)
@@ -435,11 +437,13 @@ internal static partial class ArrangementParser
     /// </summary>
     /// <param name="Slots">The slots declared, in declaration order.</param>
     /// <param name="Arrangement">The <c>arrangement</c> block, or <c>null</c> when the body only names slots.</param>
-    /// <param name="FitsSlot">The parsed <c>fits slot</c> directive, or <c>null</c> when the body does not say.</param>
+    /// <param name="FitsSlot">The slot named by <c>fits slot</c>, or <c>null</c> when the body does not say.</param>
+    /// <param name="FitsSlotLocation">The source position of <c>fits slot</c>, or <c>null</c> when absent.</param>
     internal sealed record Body(
         IReadOnlyList<SlotSyntax> Slots,
         ArrangementSyntax? Arrangement,
-        FitsSlotSyntax? FitsSlot,
+        string? FitsSlot,
+        SourceLocation? FitsSlotLocation,
         IReadOnlyList<BehaviorSyntax> Behaviors,
         IReadOnlyList<UsesBehaviorSyntax> UsedBehaviors);
 }

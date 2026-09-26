@@ -36,4 +36,17 @@ public class when_printing_fits_slot_comments : given.a_printer
     [Fact] void should_keep_the_screen_file_comment_inside_the_screen() => _roundtrip.Printed.ShouldContain("      screen Home\n        // source of the home screen\n        file Screens/Home.cs");
     [Fact] void should_keep_the_navigation_comment_inside_the_contribution() => _roundtrip.Printed.ShouldContain("  contribute to Navigation\n    // open the landing page\n    navigate to Home");
     [Fact] void should_stay_stable_after_reparsing() => _roundtrip.PrintedAgain.ShouldEqual(_roundtrip.Printed);
+
+    [Fact] void should_print_a_changed_fits_slot_name_without_losing_its_comments()
+    {
+        var original = _roundtrip.Original!.Value!;
+        var module = original.Modules.Single();
+        var changed = original with
+        {
+            Modules = [module with { ScreenTemplates = [module.ScreenTemplates.Single() with { FitsSlot = "sidebar" }] }]
+        };
+        var printed = _printer.Print(changed);
+        printed.ShouldContain("// shell goes in the content region\n    fits slot sidebar // target slot");
+        printed.ShouldNotContain("fits slot content");
+    }
 }

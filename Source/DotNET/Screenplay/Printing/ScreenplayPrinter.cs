@@ -529,14 +529,7 @@ public sealed partial class ScreenplayPrinter :
         {
             if (template.FitsSlot is not null)
             {
-                if (template.FitsSlotDirective is not null)
-                {
-                    writer.Line($"fits slot {template.FitsSlot}", template.FitsSlotDirective);
-                }
-                else
-                {
-                    writer.Line($"fits slot {template.FitsSlot}");
-                }
+                writer.FitsSlotLine($"fits slot {template.FitsSlot}", template);
                 writer.Blank();
             }
 

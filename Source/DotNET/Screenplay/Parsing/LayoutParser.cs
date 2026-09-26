@@ -55,7 +55,7 @@ internal static partial class LayoutParser
 
         var name = match.Success ? match.Groups[1].Value : string.Empty;
         var body = ArrangementParser.ParseBody(context, header, "screen template", name, allowsFitsSlot: true);
-        return new(name, body.Slots, header.Location, body.FitsSlot?.Name, body.Arrangement) { Behaviors = body.Behaviors, UsedBehaviors = body.UsedBehaviors, FitsSlotDirective = body.FitsSlot };
+        return new(name, body.Slots, header.Location, body.FitsSlot, body.Arrangement) { Behaviors = body.Behaviors, UsedBehaviors = body.UsedBehaviors, FitsSlotLocation = body.FitsSlotLocation };
     }
 
     /// <summary>
