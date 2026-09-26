@@ -134,6 +134,20 @@ internal static partial class SemanticModelValidator
         }
     }
 
+    internal static SemanticTypeReference DeclaredEventSourceType(IEnumerable<SemanticCommand> commands, SemanticId eventContract)
+    {
+        var producerTypes = commands.SelectMany(command => command.Produces
+            .Where(produced => produced.EventContract == eventContract)
+            .Select(_ => command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type))
+            .OfType<SemanticTypeReference>().Distinct().ToArray();
+        if (producerTypes.Length != 1)
+        {
+            throw new InvalidSemanticContract("A specification event source needs one unambiguous declared producer destination type.");
+        }
+
+        return producerTypes[0];
+    }
+
     static void RejectDuplicateRequirementIds(IEnumerable<string?> requirementIds, string owner)
     {
         var seen = new HashSet<string>(StringComparer.Ordinal);
@@ -881,16 +895,7 @@ internal static partial class SemanticModelValidator
             ValidatePropertyValues(value.Values, eventContract.Properties, true);
             if (value.EventSource is not null)
             {
-                var producerTypes = _commands.Values.SelectMany(command => command.Produces
-                    .Where(produced => produced.EventContract == value.EventContract)
-                    .Select(_ => command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type))
-                    .OfType<SemanticTypeReference>().Distinct().ToArray();
-                if (producerTypes.Length != 1)
-                {
-                    throw new InvalidSemanticContract("A specification event source needs one unambiguous declared producer destination type.");
-                }
-
-                ValidateEventSource(value.EventSource, producerTypes[0]);
+                ValidateEventSource(value.EventSource, DeclaredEventSourceType(_commands.Values, value.EventContract));
             }
         }
 
