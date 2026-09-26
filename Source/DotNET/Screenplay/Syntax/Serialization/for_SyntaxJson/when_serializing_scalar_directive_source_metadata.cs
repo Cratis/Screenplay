@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 
@@ -45,6 +46,53 @@ public class when_serializing_scalar_directive_source_metadata : Specification
     [Fact] void should_compare_the_same_as_a_profile_without_authored_positions() => SyntaxJson.StructurallyEqual(_profile, _profile with { DirectiveLocations = new Dictionary<string, SourceLocation>() }).ShouldBeTrue();
 
     [Fact] void should_still_compare_value_changes() => SyntaxJson.StructurallyEqual(_profile, _profile with { Theme = "Other" }).ShouldBeFalse();
+
+    [Fact]
+    void should_keep_the_specification_subdirective_json_contract()
+    {
+        var caller = new SpecificationCallerSyntax(true, ["Clerk"], [], SourceLocation.Start)
+        {
+            DirectiveLocations = new Dictionary<string, SourceLocation> { ["authenticated"] = new(2, 5), ["role:0"] = new(3, 5) }
+        };
+        AssertSourceMetadataDoesNotChangeTypedJson(caller);
+    }
+
+    [Fact]
+    void should_keep_the_capture_subdirective_json_contract()
+    {
+        var capture = new ScreenplayCompiler().CompileCapture("capture Import\n  map\n    split name by \",\"\n      first\n").Value!;
+        AssertSourceMetadataDoesNotChangeTypedJson(capture with
+        {
+            DirectiveLocations = new Dictionary<string, SourceLocation> { ["map"] = new(2, 3) }
+        });
+        AssertSourceMetadataDoesNotChangeTypedJson(capture.Map.Single());
+    }
+
+    [Fact]
+    void should_keep_the_projection_subdirective_json_contract()
+    {
+        var projection = new ScreenplayCompiler().CompileProjection("projection Orders\n  automap\n  every\n    exclude children\n").Value!;
+        AssertSourceMetadataDoesNotChangeTypedJson(projection);
+        AssertSourceMetadataDoesNotChangeTypedJson(projection.Blocks.Single());
+    }
+
+    [Fact]
+    void should_keep_the_command_subdirective_json_contract()
+    {
+        var command = new ScreenplayCompiler().Compile("module Shop\n  feature Orders\n    slice StateChange Order\n      command Place\n        validate\n          require id == 1\n            severity warning\n            message \"Denied\"\n        produces when id == 1\n          OrderPlaced\n").Value!
+            .Modules.Single().Features.Single().Slices.Single().Commands.Single();
+        AssertSourceMetadataDoesNotChangeTypedJson(command.Validations.Single());
+        AssertSourceMetadataDoesNotChangeTypedJson(((DeclarativeValidateSyntax)command.Validations.Single()).Requirements!.Single());
+        AssertSourceMetadataDoesNotChangeTypedJson(command.Produces.Single());
+    }
+
+    static void AssertSourceMetadataDoesNotChangeTypedJson(SyntaxNode node)
+    {
+        var relocated = node with { DirectiveLocations = new Dictionary<string, SourceLocation> { ["other"] = new(100, 4) } };
+        SyntaxJson.Serialize(node).GetRawText().ShouldEqual(SyntaxJson.Serialize(relocated).GetRawText());
+        SyntaxJson.StructurallyEqual(node, relocated).ShouldBeTrue();
+        SyntaxSchema.For(node.GetType().Name).GetProperty("properties").TryGetProperty("directiveLocations", out _).ShouldBeFalse();
+    }
 
     [Fact]
     void should_keep_the_existing_typed_contract_for_sublanguage_directives()

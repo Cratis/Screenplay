@@ -32,6 +32,25 @@ public class when_expanding_scalar_directives_with_comments : given.an_authoring
             order 1 // order note
           feature Ordering
             slice StateView Orders
+            slice StateChange Place
+              event OrderPlaced
+              command Place
+                id String
+                // keep validation block
+                validate // validation note
+                  // keep rule
+                  id not empty // rule note
+                  // keep requirement
+                  require id == "a" // requirement note
+                    // keep severity
+                    severity warning // severity note
+                    // keep message
+                    message "Denied" // message note
+                produces when id == "a"
+                  // keep event name
+                  OrderPlaced // event note
+                    // keep event target
+                    for id // target note
         """;
 
     JsonElement _proposal;
@@ -69,6 +88,28 @@ public class when_expanding_scalar_directives_with_comments : given.an_authoring
     [Fact] void should_keep_profile_theme_comment() => _rootSource.ShouldContain("// selected theme\n  theme Aurora // theme note");
     [Fact] void should_keep_contribution_label_comment() => _moduleSource.ShouldContain("// contribution label\n    label \"Shop\" // label note");
     [Fact] void should_keep_contribution_order_comment() => _moduleSource.ShouldContain("// contribution order\n    order 1 // order note");
+    [Fact] void should_keep_command_subdirective_comments()
+    {
+        var slice = _moduleSource;
+        foreach (var (comment, directive) in new[]
+        {
+            ("keep validation block", "validate // validation note"),
+            ("keep rule", "id not empty // rule note"),
+            ("keep requirement", "require id == \"a\" // requirement note"),
+            ("keep severity", "severity warning // severity note"),
+            ("keep message", "message \"Denied\" // message note"),
+            ("keep event name", "OrderPlaced // event note"),
+            ("keep event target", "for id // target note")
+        })
+        {
+            slice.ShouldContain($"// {comment}\n");
+            var lines = slice.Split('\n');
+            lines.Count(line => line.Trim() == $"// {comment}").ShouldEqual(1);
+            lines.Count(line => line.Trim() == directive).ShouldEqual(1);
+            lines[Array.FindIndex(lines, line => line.Trim() == directive) - 1].Trim().ShouldEqual($"// {comment}");
+        }
+    }
+
     [Fact] void should_report_no_dropped_comments() => _proposal.GetProperty("droppedCommentCount").GetInt32().ShouldEqual(0);
     [Fact] void should_list_no_dropped_comments() => _dropped.GetArrayLength().ShouldEqual(0);
 }

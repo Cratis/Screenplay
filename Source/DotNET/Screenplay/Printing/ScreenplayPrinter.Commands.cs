@@ -300,30 +300,30 @@ public partial class ScreenplayPrinter
         switch (validate)
         {
             case DeclarativeValidateSyntax declarative:
-                writer.Line("validate");
+                writer.Line("validate", declarative);
                 using (writer.Indent())
                 {
                     foreach (var rule in declarative.Rules)
                     {
-                        writer.Line(impliedSubject ? ScreenplaySyntaxText.ImpliedSubjectValidationRule(rule) : ScreenplaySyntaxText.ValidationRule(rule));
+                        writer.Line(impliedSubject ? ScreenplaySyntaxText.ImpliedSubjectValidationRule(rule) : ScreenplaySyntaxText.ValidationRule(rule), rule);
                         WriteRuleImplementation(writer, rule);
                     }
 
                     foreach (var requirement in declarative.Requirements ?? [])
                     {
-                        writer.Line($"require {ScreenplaySyntaxText.Condition(requirement.Condition)}");
-                        if (requirement.Message is not null || requirement.Severity != ValidationSeverity.Error)
+                        writer.Line($"require {ScreenplaySyntaxText.Condition(requirement.Condition)}", requirement);
+                        if (requirement.Message is not null || requirement.Severity != ValidationSeverity.Error || requirement.DirectiveLocations.ContainsKey("severity"))
                         {
                             using (writer.Indent())
                             {
-                                if (requirement.Severity != ValidationSeverity.Error)
+                                if (requirement.Severity != ValidationSeverity.Error || requirement.DirectiveLocations.ContainsKey("severity"))
                                 {
-                                    writer.Line(ScreenplaySyntaxText.Severity(requirement.Severity).TrimStart());
+                                    writer.DirectiveLine(requirement.Severity == ValidationSeverity.Error ? "severity error" : ScreenplaySyntaxText.Severity(requirement.Severity).TrimStart(), requirement, "severity");
                                 }
 
                                 if (requirement.Message is not null)
                                 {
-                                    writer.Line($"message {ScreenplaySyntaxText.LocalizableString(requirement.Message)}");
+                                    writer.DirectiveLine($"message {ScreenplaySyntaxText.LocalizableString(requirement.Message)}", requirement, "message");
                                 }
                             }
                         }
@@ -332,7 +332,7 @@ public partial class ScreenplayPrinter
 
                 break;
             case CodeValidateSyntax code:
-                writer.Line("validate");
+                writer.Line("validate", code);
                 using (writer.Indent())
                 {
                     WriteFencedCode(writer, code.Code);
@@ -405,7 +405,7 @@ public partial class ScreenplayPrinter
         writer.Line($"produces when {ScreenplaySyntaxText.Condition(produces.When)}");
         using (writer.Indent())
         {
-            writer.Line(produces.Event);
+            writer.DirectiveLine(produces.Event, produces, "event");
             using (writer.Indent())
             {
                 WriteProducesTarget(writer, produces.For);
@@ -420,7 +420,7 @@ public partial class ScreenplayPrinter
     {
         if (target is not null)
         {
-            writer.Line($"for {ScreenplaySyntaxText.Expression(target)}");
+            writer.Line($"for {ScreenplaySyntaxText.Expression(target)}", target);
         }
     }
 

@@ -69,12 +69,13 @@ a file does:
   policy requirements and persona policy references; theme compatibility and UI profile
   targets, packages, layout and theme; contribution labels and order; screen-action
   labels; and reducer, performer, constraint, reaction-trigger and handler file references.
-  Capture keys, projection sequences, specification event-order directives and command
-  concurrency dimensions also keep comments on their authored lines. These positions
-  are source metadata, not members of the typed JSON syntax. Other scalar subdirectives
-  without an authored line anchor can still move comments to their enclosing block
-  during canonical printing. Check `dropped-comments` before applying a layout proposal
-  when such lines carry comments.
+  Capture keys, map headers, split targets and append conditions; projection sequences,
+  automap settings, parent keys and child exclusions; specification caller fixtures,
+  event sources, query arguments and event-order directives; and command validation,
+  production targets and concurrency dimensions keep comments on their authored lines.
+  These positions are source metadata, not members of the typed JSON syntax. Check
+  `dropped-comments` before applying a layout proposal for comments that cannot be
+  retained during canonical printing.
   Inside a form, the printer always writes `populate`, then fields, then `on submit`,
   then attached behaviors: a comment moves with the member it annotates when that
   canonical order differs from the authored order. The printer uses canonical two-space

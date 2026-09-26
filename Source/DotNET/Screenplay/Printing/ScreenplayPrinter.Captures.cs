@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Text;
 
@@ -27,7 +28,7 @@ public partial class ScreenplayPrinter
                 writer.DirectiveLine($"key {capture.Key}", capture, "key");
             }
 
-            WriteCaptureMap(writer, capture.Map);
+            WriteCaptureMap(writer, capture.Map, capture);
 
             foreach (var append in capture.Appends)
             {
@@ -59,7 +60,7 @@ public partial class ScreenplayPrinter
         }
     }
 
-    void WriteCaptureMap(ScreenplayWriter writer, IEnumerable<CaptureMapOperationSyntax> operations)
+    void WriteCaptureMap(ScreenplayWriter writer, IEnumerable<CaptureMapOperationSyntax> operations, SyntaxNode owner)
     {
         var list = operations.ToList();
         if (list.Count == 0)
@@ -67,7 +68,7 @@ public partial class ScreenplayPrinter
             return;
         }
 
-        writer.Line("map");
+        writer.DirectiveLine("map", owner, "map");
         using (writer.Indent())
         {
             foreach (var operation in list)
@@ -99,9 +100,10 @@ public partial class ScreenplayPrinter
                 writer.Line($"split {ScreenplaySyntaxText.Expression(split.Source)} by {StringLiteral.Quote(split.Separator)}");
                 using (writer.Indent())
                 {
-                    foreach (var target in split.Targets)
+                    var targets = split.Targets.ToList();
+                    for (var index = 0; index < targets.Count; index++)
                     {
-                        writer.Line(target);
+                        writer.DirectiveLine(targets[index], split, $"target:{index}");
                     }
                 }
 
@@ -125,7 +127,7 @@ public partial class ScreenplayPrinter
                 return;
             }
 
-            writer.Line($"when {ScreenplaySyntaxText.CaptureWhen(append.When)}");
+            writer.Line($"when {ScreenplaySyntaxText.CaptureWhen(append.When)}", append.When);
             using (writer.Indent())
             {
                 WriteMappings(writer, append.Mappings, ReservedWords.MappingBlock);
@@ -139,7 +141,7 @@ public partial class ScreenplayPrinter
         writer.Line($"children {children.Property} identified by {children.IdentifiedBy}");
         using (writer.Indent())
         {
-            WriteCaptureMap(writer, children.Map);
+            WriteCaptureMap(writer, children.Map, children);
             foreach (var append in children.Appends)
             {
                 WriteCaptureAppend(writer, append);
@@ -153,7 +155,7 @@ public partial class ScreenplayPrinter
         writer.Line($"nested {nested.Property}");
         using (writer.Indent())
         {
-            WriteCaptureMap(writer, nested.Map);
+            WriteCaptureMap(writer, nested.Map, nested);
             foreach (var append in nested.Appends)
             {
                 WriteCaptureAppend(writer, append);

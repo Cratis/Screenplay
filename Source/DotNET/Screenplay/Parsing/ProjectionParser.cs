@@ -65,6 +65,7 @@ internal static partial class ProjectionParser
         string? sequence = null;
         SourceLocation? sequenceLocation = null;
         var autoMap = AutoMapMode.Inherit;
+        var directiveLocations = new Dictionary<string, SourceLocation>();
         KeySyntax? key = null;
         var blocks = new List<ProjectionBlockSyntax>();
         FileReferenceSyntax? file = null;
@@ -86,9 +87,11 @@ internal static partial class ProjectionParser
                     break;
                 case "automap":
                     autoMap = AutoMapMode.Enabled;
+                    directiveLocations["automap"] = line.Location;
                     break;
                 case "no" when line.Content == "no automap":
                     autoMap = AutoMapMode.Disabled;
+                    directiveLocations["automap"] = line.Location;
                     break;
                 case "key":
                     context.Warning(DiagnosticCodes.UnusedProjectionKey, "A projection-level key does not route events - declare the key on each 'from' (or its events)", line.Location);
@@ -137,8 +140,14 @@ internal static partial class ProjectionParser
         return new(name, readModel, sequence, autoMap, key, blocks, header.Location)
         {
             File = file,
-            DirectiveLocations = sequenceLocation is null ? [] : new Dictionary<string, SourceLocation> { ["sequence"] = sequenceLocation }
+            DirectiveLocations = AddSequenceLocation(directiveLocations, sequenceLocation)
         };
+    }
+
+    static Dictionary<string, SourceLocation> AddSequenceLocation(Dictionary<string, SourceLocation> locations, SourceLocation? sequence)
+    {
+        if (sequence is not null) locations["sequence"] = sequence;
+        return locations;
     }
 
     static ProjectionBlockSyntax? ParseBlock(ParserContext context, SourceLine line, bool nestedScope)
@@ -200,6 +209,7 @@ internal static partial class ProjectionParser
 
         KeySyntax? key = null;
         ExpressionSyntax? parentKey = null;
+        SourceLocation? parentLocation = null;
         var mappings = new List<MappingSyntax>();
 
         while (context.TryPeekChild(line.Indent, out var child))
@@ -217,6 +227,7 @@ internal static partial class ProjectionParser
             else if (FirstWord(child.Content) == "parent")
             {
                 parentKey = ExpressionParser.ParseProjectionExpression(context, child.Content["parent".Length..], child.Location);
+                parentLocation = child.Location;
             }
             else if (ParseMapping(context, child) is { } mapping)
             {
@@ -224,32 +235,38 @@ internal static partial class ProjectionParser
             }
         }
 
-        return new(events, key, parentKey, mappings, line.Location);
+        return new(events, key, parentKey, mappings, line.Location)
+        {
+            DirectiveLocations = parentLocation is null ? [] : new Dictionary<string, SourceLocation> { ["parent"] = parentLocation }
+        };
     }
 
     static EverySyntax ParseEvery(ParserContext context, SourceLine line)
     {
         var includeChildren = true;
         var autoMap = AutoMapMode.Inherit;
-        var mappings = ParseMappingBlock(context, line, ref autoMap, child =>
+        var directiveLocations = new Dictionary<string, SourceLocation>();
+        var mappings = ParseMappingBlock(context, line, ref autoMap, directiveLocations, child =>
         {
             if (child.Content == "exclude children")
             {
                 includeChildren = false;
+                directiveLocations["exclude children"] = child.Location;
                 return true;
             }
 
             return false;
         });
 
-        return new(mappings, includeChildren, autoMap, line.Location);
+        return new(mappings, includeChildren, autoMap, line.Location) { DirectiveLocations = directiveLocations };
     }
 
     static AllSyntax ParseAll(ParserContext context, SourceLine line)
     {
         var autoMap = AutoMapMode.Inherit;
-        var mappings = ParseMappingBlock(context, line, ref autoMap, _ => false);
-        return new(mappings, autoMap, line.Location);
+        var directiveLocations = new Dictionary<string, SourceLocation>();
+        var mappings = ParseMappingBlock(context, line, ref autoMap, directiveLocations, _ => false);
+        return new(mappings, autoMap, line.Location) { DirectiveLocations = directiveLocations };
     }
 
     static JoinSyntax ParseJoin(ParserContext context, SourceLine line)
@@ -275,8 +292,9 @@ internal static partial class ProjectionParser
             }
 
             var autoMap = AutoMapMode.Inherit;
-            var mappings = ParseMappingBlock(context, child, ref autoMap, _ => false);
-            events.Add(new(Unescape(withMatch.Groups[1].Value), autoMap, mappings, child.Location));
+            var directiveLocations = new Dictionary<string, SourceLocation>();
+            var mappings = ParseMappingBlock(context, child, ref autoMap, directiveLocations, _ => false);
+            events.Add(new JoinEventSyntax(Unescape(withMatch.Groups[1].Value), autoMap, mappings, child.Location) { DirectiveLocations = directiveLocations });
         }
 
         return new(Unescape(match.Groups[1].Value), Unescape(match.Groups[2].Value), events, line.Location);
@@ -294,8 +312,9 @@ internal static partial class ProjectionParser
 
         var identifiedBy = ExpressionParser.ParseProjectionExpression(context, match.Groups[2].Value, line.Location);
         var autoMap = AutoMapMode.Inherit;
-        var blocks = ParseChildBlocks(context, line, ref autoMap, nestedScope: true);
-        return new(Unescape(match.Groups[1].Value), identifiedBy, autoMap, blocks, line.Location);
+        var directiveLocations = new Dictionary<string, SourceLocation>();
+        var blocks = ParseChildBlocks(context, line, ref autoMap, directiveLocations, nestedScope: true);
+        return new(Unescape(match.Groups[1].Value), identifiedBy, autoMap, blocks, line.Location) { DirectiveLocations = directiveLocations };
     }
 
     static NestedSyntax ParseNested(ParserContext context, SourceLine line)
@@ -310,16 +329,17 @@ internal static partial class ProjectionParser
 
         var name = Unescape(match.Groups[1].Value);
         var autoMap = AutoMapMode.Inherit;
-        var blocks = ParseChildBlocks(context, line, ref autoMap, nestedScope: true);
+        var directiveLocations = new Dictionary<string, SourceLocation>();
+        var blocks = ParseChildBlocks(context, line, ref autoMap, directiveLocations, nestedScope: true);
         if (!blocks.OfType<FromSyntax>().Any())
         {
             context.Error(DiagnosticCodes.NestedBlockWithoutFrom, $"Nested block '{name}' must contain at least one 'from' directive", line.Location);
         }
 
-        return new(name, autoMap, blocks, line.Location);
+        return new(name, autoMap, blocks, line.Location) { DirectiveLocations = directiveLocations };
     }
 
-    static List<ProjectionBlockSyntax> ParseChildBlocks(ParserContext context, SourceLine line, ref AutoMapMode autoMap, bool nestedScope)
+    static List<ProjectionBlockSyntax> ParseChildBlocks(ParserContext context, SourceLine line, ref AutoMapMode autoMap, Dictionary<string, SourceLocation> directiveLocations, bool nestedScope)
     {
         var blocks = new List<ProjectionBlockSyntax>();
         while (context.TryPeekChild(line.Indent, out var child))
@@ -328,10 +348,12 @@ internal static partial class ProjectionParser
             if (child.Content == "automap")
             {
                 autoMap = AutoMapMode.Enabled;
+                directiveLocations["automap"] = child.Location;
             }
             else if (child.Content == "no automap")
             {
                 autoMap = AutoMapMode.Disabled;
+                directiveLocations["automap"] = child.Location;
             }
             else if (ParseBlock(context, child, nestedScope) is { } block)
             {
@@ -366,12 +388,14 @@ internal static partial class ProjectionParser
             : null;
 
         ExpressionSyntax? parentKey = null;
+        SourceLocation? parentLocation = null;
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
             if (FirstWord(child.Content) == "parent")
             {
                 parentKey = ExpressionParser.ParseProjectionExpression(context, child.Content["parent".Length..], child.Location);
+                parentLocation = child.Location;
             }
             else
             {
@@ -379,7 +403,10 @@ internal static partial class ProjectionParser
             }
         }
 
-        return new RemoveWithSyntax(Unescape(match.Groups[1].Value), key, parentKey, line.Location);
+        return new RemoveWithSyntax(Unescape(match.Groups[1].Value), key, parentKey, line.Location)
+        {
+            DirectiveLocations = parentLocation is null ? [] : new Dictionary<string, SourceLocation> { ["parent"] = parentLocation }
+        };
     }
 
     /// <summary>
@@ -511,7 +538,7 @@ internal static partial class ProjectionParser
         return new ExpressionKeySyntax(ExpressionParser.ParseProjectionExpression(context, text, line.Location), line.Location);
     }
 
-    static List<MappingSyntax> ParseMappingBlock(ParserContext context, SourceLine line, ref AutoMapMode autoMap, Func<SourceLine, bool> extras)
+    static List<MappingSyntax> ParseMappingBlock(ParserContext context, SourceLine line, ref AutoMapMode autoMap, Dictionary<string, SourceLocation> directiveLocations, Func<SourceLine, bool> extras)
     {
         var mappings = new List<MappingSyntax>();
         while (context.TryPeekChild(line.Indent, out var child))
@@ -520,10 +547,12 @@ internal static partial class ProjectionParser
             if (child.Content == "automap")
             {
                 autoMap = AutoMapMode.Enabled;
+                directiveLocations["automap"] = child.Location;
             }
             else if (child.Content == "no automap")
             {
                 autoMap = AutoMapMode.Disabled;
+                directiveLocations["automap"] = child.Location;
             }
             else if (!extras(child) && ParseMapping(context, child) is { } mapping)
             {
