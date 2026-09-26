@@ -13,7 +13,8 @@ internal static class SyntaxLiterals
         JsonValueKind.String => value.GetString()!,
         JsonValueKind.True => true,
         JsonValueKind.False => false,
-        JsonValueKind.Number when NumericLiteral.Parse(value.GetRawText()) is { } number => number,
+        JsonValueKind.Number when NumericLiteral.Parse(value.GetRawText()) is { } number &&
+            (number is not double floating || double.IsFinite(floating)) => number,
         JsonValueKind.Object => ReadNumber(value, path),
         _ => throw new InvalidSyntaxJson($"{path}: expected a string, finite number, boolean, null, or typed numeric literal.")
     };
@@ -21,7 +22,8 @@ internal static class SyntaxLiterals
     internal static object Write(object value, string path) => value switch
     {
         string or bool => value,
-        double number when double.IsFinite(number) => number,
+        double number when double.IsFinite(number) => NumericLiteral.Parse(number.ToString("R", CultureInfo.InvariantCulture)) is double
+            ? number : Number("Double", number.ToString("R", CultureInfo.InvariantCulture)),
         int number => Number("Int32", number.ToString(CultureInfo.InvariantCulture)),
         long number => Number("Int64", number.ToString(CultureInfo.InvariantCulture)),
         decimal number => Number("Decimal", number.ToString("G29", CultureInfo.InvariantCulture)),

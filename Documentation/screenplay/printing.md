@@ -49,7 +49,7 @@ Because the two directions agree, you can read a `.play` file, adjust the syntax
 Two details make the guarantee hold for values you did not type yourself:
 
 - **Strings are escaped.** A description, message, label or tag holding a `"` or a `\` prints with the backslash escapes described in [the grammar](grammar.md#string-escapes), and compiling that text gives the original value back. You never have to strip quotes out of a value before handing it to the printer.
-- **Numbers are culture-invariant.** Every numeric literal - `decimal`, `float`, `int`, `long` or `double` - prints with a `.` decimal separator regardless of `CurrentCulture`, so output produced on a machine set to `nb-NO` compiles anywhere.
+- **Numbers are culture-invariant.** Every numeric literal - `decimal`, `float`, `int`, `long` or `double` - prints with a `.` decimal separator regardless of `CurrentCulture`, so output produced on a machine set to `nb-NO` compiles anywhere. When a Double's short decimal spelling would parse as a different numeric type, the printer uses its exact binary value's decimal digits instead; printing and reparsing then retain that Double. A Decimal or Int64 prints its exact digits.
 - **Grouping is written out.** Every condition - a [policy](policies.md) `require`, a `produces when` - binds `and` tighter than `or`, so the printer adds the parentheses a condition needs to compile back to the tree it came from, and adds them again wherever `or` and `and` mix so the text does not rely on the reader knowing which binds tighter. You build the tree you mean and the text follows - there is no flag to remember to set.
 
 ## What printing does not keep

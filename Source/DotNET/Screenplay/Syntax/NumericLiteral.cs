@@ -13,18 +13,14 @@ internal static class NumericLiteral
 {
     internal static object? Parse(string text)
     {
-        if (!double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var approximate) || !double.IsFinite(approximate))
+        if (!double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var approximate))
         {
             return null;
         }
 
-        // Faithful means the shortest round-trip Double spelling (R), interpreted as a base-10 number,
-        // equals the authored base-10 value after removing insignificant zeros. This retains the exact
-        // CLR type, printing, typed-JSON shape and Chronicle storage text of every faithful main literal.
-        // In particular 0.1, 2.50, 1e-5 and 1e17 are faithful; comparing binary fractions to the
-        // authored decimal would instead change virtually every existing fractional literal.
-        if ((approximate == 0 && text[0] == '-') ||
-            SameDecimalValue(text, approximate.ToString("R", CultureInfo.InvariantCulture)))
+        // Compare exact rational values, not the shortest decimal spelling of the rounded Double.
+        // Signed zero retains its main CLR value and storage spelling.
+        if (double.IsFinite(approximate) && ((approximate == 0 && text[0] == '-') || SameBinaryValue(text, approximate)))
         {
             return approximate;
         }
@@ -44,8 +40,8 @@ internal static class NumericLiteral
             return precise;
         }
 
-        // Keep main's finite Double fallback when the authored value cannot be represented exactly
-        // by Decimal (including values below Decimal's scale and values outside its range).
+        // Keep main's Double fallback, including overflow to infinity for previously accepted
+        // fixed-point literals, when the authored value cannot be represented exactly by Decimal.
         return approximate;
     }
 
@@ -96,6 +92,36 @@ internal static class NumericLiteral
             return false;
         }
     }
+
+    internal static string ExactDoubleText(double value)
+    {
+        var bits = BitConverter.DoubleToUInt64Bits(value);
+        var exponentBits = (int)((bits >> 52) & 0x7ff);
+        var significand = new BigInteger(bits & 0x000f_ffff_ffff_ffffUL);
+        var exponent = exponentBits == 0 ? -1074 : exponentBits - 1075;
+        if (exponentBits != 0)
+        {
+            significand += BigInteger.One << 52;
+        }
+
+        if ((bits >> 63) != 0)
+        {
+            significand = -significand;
+        }
+
+        if (exponent >= 0)
+        {
+            return (significand << exponent).ToString(CultureInfo.InvariantCulture);
+        }
+
+        var digits = (significand * BigInteger.Pow(5, -exponent)).ToString(CultureInfo.InvariantCulture);
+        var negative = digits[0] == '-';
+        var magnitude = negative ? digits[1..] : digits;
+        var padded = magnitude.PadLeft(-exponent + 1, '0');
+        return $"{(negative ? "-" : string.Empty)}{padded[..^(-exponent)]}.{padded[^(-exponent)..]}";
+    }
+
+    static bool SameBinaryValue(string text, double value) => SameDecimalValue(text, ExactDoubleText(value));
 
     static bool SameDecimalValue(string left, string right)
     {

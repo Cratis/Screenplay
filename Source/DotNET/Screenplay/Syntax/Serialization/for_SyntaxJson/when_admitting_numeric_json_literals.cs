@@ -10,9 +10,10 @@ public class when_admitting_numeric_json_literals
     [Theory]
     [InlineData("2", typeof(double))]
     [InlineData("3.5", typeof(double))]
-    [InlineData("0.00001", typeof(double))]
-    [InlineData("1e-6", typeof(double))]
-    [InlineData("1e-28", typeof(double))]
+    [InlineData("0.00001", typeof(decimal))]
+    [InlineData("1e-6", typeof(decimal))]
+    [InlineData("1e-28", typeof(decimal))]
+    [InlineData("0.1", typeof(decimal))]
     [InlineData("1e-29", typeof(double))]
     [InlineData("9007199254740993", typeof(long))]
     [InlineData("9223372036854775809", typeof(decimal))]
@@ -22,12 +23,17 @@ public class when_admitting_numeric_json_literals
         Assert.IsType(expected, value.Value);
     }
 
-    [Fact]
-    public void should_preserve_an_explicit_double_envelope()
+    [Theory]
+    [InlineData("3.5")]
+    [InlineData("0.1")]
+    [InlineData("1.4411518807585587E+17")]
+    public void should_preserve_an_explicit_double_envelope(string text)
     {
-        const string source = "{\"kind\":\"LiteralExpressionSyntax\",\"value\":{\"literalType\":\"Double\",\"value\":\"3.5\"}}";
+        var source = $"{{\"kind\":\"LiteralExpressionSyntax\",\"value\":{{\"literalType\":\"Double\",\"value\":\"{text}\"}}}}";
         var value = (LiteralExpressionSyntax)SyntaxJson.Deserialize(JsonSerializer.Deserialize<JsonElement>(source));
-        Assert.IsType<double>(value.Value).ShouldEqual(3.5d);
-        ((LiteralExpressionSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(value))).Value.ShouldEqual(3.5d);
+        var number = Assert.IsType<double>(value.Value);
+        var serialized = SyntaxJson.Serialize(value).GetProperty("value");
+        serialized.ValueKind.ShouldEqual(text == "3.5" ? JsonValueKind.Number : JsonValueKind.Object);
+        Assert.IsType<double>(((LiteralExpressionSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(value))).Value).ShouldEqual(number);
     }
 }

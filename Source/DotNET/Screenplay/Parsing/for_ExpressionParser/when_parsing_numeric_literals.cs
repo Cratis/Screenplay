@@ -17,16 +17,19 @@ public class when_parsing_numeric_literals
     [InlineData("2", typeof(double), "2")]
     [InlineData("2.0", typeof(double), "2")]
     [InlineData("2.50", typeof(double), "2.5")]
-    [InlineData("0.1", typeof(double), "0.1")]
-    [InlineData("0.00001", typeof(double), "1E-05")]
-    [InlineData("1e-5", typeof(double), "1E-05")]
-    [InlineData("1e-6", typeof(double), "1E-06")]
-    [InlineData("1e-28", typeof(double), "1E-28")]
+    [InlineData("0.1", typeof(decimal), "0.1")]
+    [InlineData("0.00001", typeof(decimal), "0.00001")]
+    [InlineData("1e-5", typeof(decimal), "0.00001")]
+    [InlineData("1e-6", typeof(decimal), "0.000001")]
+    [InlineData("1e-28", typeof(decimal), "0.0000000000000000000000000001")]
     [InlineData("0.00000000000000000000000000001", typeof(double), "1E-29")]
-    [InlineData("1e-3", typeof(double), "0.001")]
+    [InlineData("1e-3", typeof(decimal), "0.001")]
     [InlineData("2.5E+4", typeof(double), "25000")]
     [InlineData("1e17", typeof(double), "100000000000000000")]
     [InlineData("-0", typeof(double), "0")]
+    [InlineData("144115188075855872", typeof(double), "144115188075855872")]
+    [InlineData("1152921504606846976", typeof(double), "1152921504606846976")]
+    [InlineData("100000000000000020", typeof(long), "100000000000000020")]
     [InlineData("9007199254740993", typeof(long), "9007199254740993")]
     [InlineData("9223372036854775809", typeof(decimal), "9223372036854775809")]
     [InlineData("9007199254740993.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", typeof(long), "9007199254740993")]
@@ -57,9 +60,8 @@ public class when_parsing_numeric_literals
     [InlineData("2", "2")]
     [InlineData("2.0", "2")]
     [InlineData("2.50", "2.5")]
-    [InlineData("0.1", "0.1")]
-    [InlineData("0.00001", "1E-05")]
     [InlineData("1e17", "1E+17")]
+
     [InlineData("-0", "-0")]
     public void should_keep_chronicle_storage_text_and_json_shape_for_faithful_literals(string source, string stored)
     {
@@ -70,6 +72,16 @@ public class when_parsing_numeric_literals
             Convert.ToString(parsed.Value, CultureInfo.InvariantCulture);
         formatted.ShouldEqual(stored);
         SyntaxJson.Serialize(parsed).GetProperty("value").ValueKind.ShouldEqual(JsonValueKind.Number);
+    }
+
+    [Fact]
+    public void should_preserve_faithful_large_binary_numbers_with_a_double_envelope()
+    {
+        var parsed = ExpressionParser.ParseLiteral("144115188075855872", SourceLocation.Start)!;
+        Assert.IsType<double>(parsed.Value);
+        var envelope = SyntaxJson.Serialize(parsed).GetProperty("value");
+        envelope.GetProperty("literalType").GetString().ShouldEqual("Double");
+        Assert.IsType<double>(((LiteralExpressionSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(parsed))).Value);
     }
 
     [Fact]
@@ -105,10 +117,11 @@ public class when_parsing_numeric_literals
     }
 
     [Fact]
-    public void should_reject_a_number_outside_the_finite_range()
+    public void should_preserve_main_overflow_for_a_fixed_point_number()
     {
-        var context = ParserContext.ForDiagnostics();
-        ExpressionParser.ParseProjectionExpression(context, "1e400", SourceLocation.Start).ShouldBeOfExactType<RawExpressionSyntax>();
-        context.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.InvalidExpression);
+        var source = "1" + new string('0', 309);
+        var parsed = ExpressionParser.ParseLiteral(source, SourceLocation.Start)!;
+        Assert.IsType<double>(parsed.Value).ShouldEqual(double.PositiveInfinity);
+        Assert.IsType<double>(ExpressionParser.ParseLiteral(ScreenplaySyntaxText.Expression(parsed), SourceLocation.Start)!.Value).ShouldEqual(double.PositiveInfinity);
     }
 }

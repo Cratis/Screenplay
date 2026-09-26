@@ -52,13 +52,14 @@ incorrect child types, invalid enums and illegal nulls are rejected.
 - Missing collections initialize empty; optional null collections normalize to
   empty arrays. Required scalar values must be supplied according to the schema.
 - Source locations, description offsets and parsed comments are server-owned, not editable data.
-- Ordinary JSON numbers follow source literals: they remain `Double` when the
-  shortest round-trip Double spelling has the same decimal value as the authored
-  number (for example `0.1`, `2.50` or `1e17`). Only values that Double would
-  change use `Int64` when possible, otherwise exact `Decimal`; values outside
-  those ranges retain the former finite Double behavior. Explicit
-  `literalType`/`value` envelopes remain available for intentional CLR numeric types.
-  Faithful Double values retain the same plain JSON shape as before.
+- Ordinary JSON numbers follow source literals: they remain `Double` when their
+  exact decimal value equals the nearest Double's exact binary value (for example
+  `2.50` or `1e17`). Numbers such as `0.1` are not exactly representable as Double;
+  they use `Int64` when integral and in range, otherwise exact `Decimal` where
+  possible. Unrepresentable values retain the former Double fallback. Explicit
+  `literalType`/`value` envelopes allow intentional CLR numeric types. Finite
+  Doubles use an envelope when an ordinary JSON number would decode as a different
+  type. Numeric structural equality still distinguishes CLR types and signed zero.
 - Inline JSON-shaped objects and lists have typed value nodes and individually
   addressable keys. Existing code blocks and raw expressions remain language
   constructs, not an escape hatch for structured data or untyped AST subtrees.

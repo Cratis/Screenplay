@@ -48,7 +48,7 @@ static class WorkspaceAuthoringPrinter
         var text = new ScreenplayPrinter().Print(intended);
         var parsed = new ScreenplayCompiler().Parse(text, path.Value);
         diagnostics.AddRange(parsed.Diagnostics);
-        if (!parsed.Success || parsed.Value is null || !SyntaxJson.StructurallyEqual(checkedSyntax, parsed.Value))
+        if (!parsed.Success || parsed.Value is null || !SyntaxJson.EquivalentForAuthoring(checkedSyntax, parsed.Value))
         {
             throw new InvalidWorkspaceAuthoring($"Printing '{path}' did not reparse to the intended typed AST. A printer omission, unrepresentable value, or malformed syntax cannot be committed.");
         }

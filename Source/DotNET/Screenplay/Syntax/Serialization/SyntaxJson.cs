@@ -13,10 +13,11 @@ namespace Cratis.Screenplay.Syntax.Serialization;
 /// The <c>kind</c> discriminator is the concrete syntax type name. Structural members use camelCase;
 /// a CLR member named <c>Kind</c> uses <c>syntaxKind</c> to avoid colliding with the discriminator.
 /// Source metadata and computed getters are excluded. Ordinary JSON numbers follow source literal
-/// parsing: <see cref="long"/> when possible, otherwise exact <see cref="decimal"/>, otherwise finite
-/// <see cref="double"/>. Explicit numeric CLR types use a
-/// <c>{ "literalType": "Decimal", "value": "5.5" }</c> value object to preserve type and precision;
-/// Doubles also use an envelope when a plain JSON number would decode as Int64 or Decimal.
+/// parsing: faithful values remain <see cref="double"/>, otherwise <see cref="long"/> when possible,
+/// exact <see cref="decimal"/> when representable, or the original <see cref="double"/> fallback.
+/// Int32, Int64, Decimal and Single use a <c>{ "literalType": "Decimal", "value": "5.5" }</c>
+/// envelope to preserve their type. Finite Doubles use plain JSON numbers when they reparse as Double;
+/// otherwise the writer uses a Double envelope, which is also accepted on input.
 /// Optional null collections are represented as empty arrays.
 /// </remarks>
 public static class SyntaxJson
@@ -48,6 +49,9 @@ public static class SyntaxJson
     /// <returns>Whether the trees are equal, treating optional null and empty collections alike.</returns>
     /// <exception cref="InvalidSyntaxJson">Either tree contains an unsupported structural value.</exception>
     public static bool StructurallyEqual(SyntaxNode left, SyntaxNode right) =>
+        string.Equals(Serialize(left).GetRawText(), Serialize(right).GetRawText(), StringComparison.Ordinal);
+
+    internal static bool EquivalentForAuthoring(SyntaxNode left, SyntaxNode right) =>
         Equal(Serialize(left), Serialize(right));
 
     internal static void CheckDepth(int depth, string path)

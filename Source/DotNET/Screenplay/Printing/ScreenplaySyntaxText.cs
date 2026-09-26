@@ -267,18 +267,30 @@ internal static partial class ScreenplaySyntaxText
         _ => value.ToString() ?? string.Empty
     };
 
-    static string Decimal(decimal number)
-    {
-        var text = number.ToString(CultureInfo.InvariantCulture);
-        return number == decimal.Truncate(number) && long.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out _)
-            ? $"{text}.0"
-            : text;
-    }
+    static string Decimal(decimal number) => number.ToString(CultureInfo.InvariantCulture);
 
-    static string Number(double number) =>
-        number == Math.Floor(number) && number >= long.MinValue && number < 9223372036854775808d
+    static string Number(double number)
+    {
+        if (double.IsNaN(number))
+        {
+            return number.ToString(CultureInfo.InvariantCulture);
+        }
+
+        if (double.IsInfinity(number))
+        {
+            return (number < 0 ? "-" : string.Empty) + "1" + new string('0', 309);
+        }
+
+        var text = number == Math.Floor(number) && number >= long.MinValue && number < 9223372036854775808d
             ? ((long)number).ToString(CultureInfo.InvariantCulture)
             : number.ToString(CultureInfo.InvariantCulture);
+        if (NumericLiteral.Parse(text) is double parsed && parsed == number)
+        {
+            return text;
+        }
+
+        return NumericLiteral.ExactDoubleText(number);
+    }
 
     static string Template(TemplateExpressionSyntax template)
     {

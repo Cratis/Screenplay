@@ -15,7 +15,7 @@ public class when_parsing_structured_numeric_literals
     [Theory]
     [InlineData("12345678901234567", typeof(long))]
     [InlineData("9223372036854775809", typeof(decimal))]
-    [InlineData("0.00001", typeof(double))]
+    [InlineData("0.00001", typeof(decimal))]
     [InlineData("2", typeof(double))]
     public void should_share_scalar_numeric_classification_and_survive_printing(string text, Type expected)
     {

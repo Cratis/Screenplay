@@ -23,6 +23,14 @@ public class when_numeric_spellings_describe_the_same_outcome : given.a_compiler
         result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnreachableSpecificationOutcome).ShouldBeFalse();
     }
 
+    [Fact]
+    public void should_distinguish_authored_values_that_main_rounded_to_one_double()
+    {
+        const string source = "module Orders\n  feature Placement\n    slice StateChange Place\n      command PlaceOrder\n        amount Decimal\n        produces OrderPlaced\n          amount = amount\n      event OrderPlaced\n        amount Decimal\n      specification CanPlace\n        when PlaceOrder\n          amount = 100000000000000020\n        then OrderPlaced\n          amount = 100000000000000016\n";
+        var result = _compiler.Compile(source);
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnreachableSpecificationOutcome).ShouldBeTrue();
+    }
+
     [Theory]
     [InlineData("2", "2.0", "!=")]
     [InlineData("2.0", "2", "!=")]

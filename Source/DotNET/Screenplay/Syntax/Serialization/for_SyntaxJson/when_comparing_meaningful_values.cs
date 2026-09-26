@@ -37,5 +37,7 @@ public class when_comparing_meaningful_values : Specification
 
     [Fact] void should_exercise_every_comparison() => _equalities.Length.ShouldEqual(12);
     [Fact] void should_detect_non_numeric_structural_differences() => _equalities.Take(11).Any(equal => equal).ShouldBeFalse();
-    [Fact] void should_compare_numeric_literals_by_value_across_clr_types() => _equalities[^1].ShouldBeTrue();
+    [Fact] void should_keep_numeric_clr_types_structurally_distinct() => _equalities[^1].ShouldBeFalse();
+    [Fact] void should_keep_signed_zero_structurally_distinct() =>
+        SyntaxJson.StructurallyEqual(new LiteralExpressionSyntax(-0d, SourceLocation.Start), new LiteralExpressionSyntax(0d, SourceLocation.Start)).ShouldBeFalse();
 }

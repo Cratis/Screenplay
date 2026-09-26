@@ -48,7 +48,7 @@ static class WorkspaceTriviaPrinter
 
         var candidate = WorkspaceDocument.Create(original.Id, original.StableKey, original.Path, [.. bytes]);
         var reparsed = new ScreenplayCompiler().Parse(candidate.Text, candidate.Path.Value);
-        if (!reparsed.Success || reparsed.Value is null || !SyntaxJson.StructurallyEqual(intended, reparsed.Value))
+        if (!reparsed.Success || reparsed.Value is null || !SyntaxJson.EquivalentForAuthoring(intended, reparsed.Value))
         {
             throw new InvalidWorkspaceAuthoring($"Trivia-preserving patches in '{original.Path}' did not reparse to the intended AST. Use explicit CanonicalizeTouchedDocuments or coordinated typed edits.");
         }
