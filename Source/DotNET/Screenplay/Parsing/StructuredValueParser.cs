@@ -20,15 +20,8 @@ internal sealed class StructuredValueParser(string text, SourceLocation start, P
         return Value(document.RootElement);
     }
 
-    static double Number(JsonElement element)
-    {
-        if (!element.TryGetDouble(out var number) || !double.IsFinite(number))
-        {
-            throw new InvalidStructuredNumber("JSON number is outside the finite Double range.");
-        }
-
-        return number;
-    }
+    static object Number(JsonElement element) =>
+        NumericLiteral.Parse(element.GetRawText()) ?? throw new InvalidStructuredNumber("JSON number is outside the finite Double range.");
 
     SourceLocation At() => start with { Column = start.Column + _position };
 
@@ -116,7 +109,7 @@ internal sealed class StructuredValueParser(string text, SourceLocation start, P
             return new ObjectExpressionSyntax(members, location);
         }
 
-        object? value = element.ValueKind switch
+        var value = element.ValueKind switch
         {
             JsonValueKind.String => element.GetString(),
             JsonValueKind.Number => Number(element),

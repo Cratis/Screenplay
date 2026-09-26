@@ -8,9 +8,14 @@ namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 public class when_admitting_numeric_json_literals
 {
     [Theory]
-    [InlineData("2", typeof(long))]
-    [InlineData("3.5", typeof(decimal))]
+    [InlineData("2", typeof(double))]
+    [InlineData("3.5", typeof(double))]
+    [InlineData("0.00001", typeof(double))]
+    [InlineData("1e-6", typeof(double))]
+    [InlineData("1e-28", typeof(double))]
     [InlineData("1e-29", typeof(double))]
+    [InlineData("9007199254740993", typeof(long))]
+    [InlineData("9223372036854775809", typeof(decimal))]
     public void should_classify_plain_json_numbers_as_source_literals(string text, Type expected)
     {
         var value = (LiteralExpressionSyntax)SyntaxJson.Deserialize(JsonSerializer.Deserialize<JsonElement>($"{{\"kind\":\"LiteralExpressionSyntax\",\"value\":{text}}}"));

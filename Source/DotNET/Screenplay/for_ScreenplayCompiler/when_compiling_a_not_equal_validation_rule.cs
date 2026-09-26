@@ -44,7 +44,7 @@ public class when_compiling_a_not_equal_validation_rule : given.a_compiler
     [Fact] void should_keep_the_operand() => ((LiteralExpressionSyntax)_commandRules[0].Value!).Value.ShouldEqual("draft");
     [Fact] void should_keep_the_message() => _commandRules[0].Message.ShouldEqual("A draft cannot be published");
     [Fact] void should_still_parse_equal_as_equal() => _commandRules[1].Rule.ShouldEqual(ValidationRuleKind.Equal);
-    [Fact] void should_parse_a_numeric_operand() => ((LiteralExpressionSyntax)_commandRules[2].Value!).Value.ShouldEqual(0L);
+    [Fact] void should_parse_a_numeric_operand() => ((LiteralExpressionSyntax)_commandRules[2].Value!).Value.ShouldEqual(0d);
     [Fact] void should_parse_the_rule_on_a_concept() => _conceptRule.Rule.ShouldEqual(ValidationRuleKind.NotEqual);
     [Fact] void should_imply_the_concept_value_subject() => _conceptRule.Property.ShouldEqual(ValidationRuleSyntax.ConceptValue);
 }

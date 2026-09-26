@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Globalization;
+using System.Text.Json;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Printing;
 using Cratis.Screenplay.Syntax;
@@ -11,15 +13,23 @@ namespace Cratis.Screenplay.Parsing.for_ExpressionParser;
 public class when_parsing_numeric_literals
 {
     [Theory]
-    [InlineData("-1", typeof(long), "-1")]
-    [InlineData("1.5", typeof(decimal), "1.5")]
-    [InlineData("1e-3", typeof(decimal), "0.001")]
-    [InlineData("2.5E+4", typeof(decimal), "25000.0")]
+    [InlineData("-1", typeof(double), "-1")]
+    [InlineData("2", typeof(double), "2")]
+    [InlineData("2.0", typeof(double), "2")]
+    [InlineData("2.50", typeof(double), "2.5")]
+    [InlineData("0.1", typeof(double), "0.1")]
+    [InlineData("0.00001", typeof(double), "1E-05")]
+    [InlineData("1e-5", typeof(double), "1E-05")]
+    [InlineData("1e-6", typeof(double), "1E-06")]
+    [InlineData("1e-28", typeof(double), "1E-28")]
+    [InlineData("0.00000000000000000000000000001", typeof(double), "1E-29")]
+    [InlineData("1e-3", typeof(double), "0.001")]
+    [InlineData("2.5E+4", typeof(double), "25000")]
+    [InlineData("1e17", typeof(double), "100000000000000000")]
+    [InlineData("-0", typeof(double), "0")]
     [InlineData("9007199254740993", typeof(long), "9007199254740993")]
-    [InlineData("9223372036854775808", typeof(decimal), "9223372036854775808")]
-    [InlineData("1e-29", typeof(double), "1E-29")]
-    [InlineData("9007199254740993.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", typeof(decimal), "9007199254740993.0")]
-    [InlineData("2.50", typeof(decimal), "2.5")]
+    [InlineData("9223372036854775809", typeof(decimal), "9223372036854775809")]
+    [InlineData("9007199254740993.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", typeof(long), "9007199254740993")]
     public void should_round_trip_numeric_value_and_type(string source, Type expectedType, string expectedText)
     {
         var parsed = ExpressionParser.ParseLiteral(source, SourceLocation.Start)!;
@@ -34,8 +44,7 @@ public class when_parsing_numeric_literals
 
     [Theory]
     [InlineData("9007199254740993", "Int64", "9007199254740993")]
-    [InlineData("9223372036854775808", "Decimal", "9223372036854775808")]
-    [InlineData("1e-3", "Decimal", "0.001")]
+    [InlineData("9223372036854775809", "Decimal", "9223372036854775809")]
     public void should_preserve_precise_numbers_in_typed_json(string source, string expectedType, string expectedValue)
     {
         var parsed = ExpressionParser.ParseLiteral(source, SourceLocation.Start)!;
@@ -45,13 +54,22 @@ public class when_parsing_numeric_literals
     }
 
     [Theory]
+    [InlineData("2", "2")]
     [InlineData("2.0", "2")]
-    [InlineData("2.00", "2")]
-    [InlineData("10.50", "10.5")]
-    public void should_normalize_insignificant_decimal_scale_before_chronicle_storage(string source, string stored)
+    [InlineData("2.50", "2.5")]
+    [InlineData("0.1", "0.1")]
+    [InlineData("0.00001", "1E-05")]
+    [InlineData("1e17", "1E+17")]
+    [InlineData("-0", "-0")]
+    public void should_keep_chronicle_storage_text_and_json_shape_for_faithful_literals(string source, string stored)
     {
-        var value = Assert.IsType<decimal>(ExpressionParser.ParseLiteral(source, SourceLocation.Start)!.Value);
-        Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture).ShouldEqual(stored);
+        var parsed = ExpressionParser.ParseLiteral(source, SourceLocation.Start)!;
+
+        // Mirrors Chronicle origin/main ProjectionDefinitionSyntaxVisitor.FormatLiteralForStorage.
+        var formatted = parsed.Value is double number ? number.ToString(CultureInfo.InvariantCulture) :
+            Convert.ToString(parsed.Value, CultureInfo.InvariantCulture);
+        formatted.ShouldEqual(stored);
+        SyntaxJson.Serialize(parsed).GetProperty("value").ValueKind.ShouldEqual(JsonValueKind.Number);
     }
 
     [Fact]

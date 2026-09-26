@@ -3,43 +3,50 @@
 
 using System.Globalization;
 using System.Numerics;
-using Cratis.Screenplay.Printing;
 
 namespace Cratis.Screenplay.Syntax;
 
 /// <summary>
-/// Shares numeric parsing and exact value comparisons between source syntax, typed JSON and consistency checks.
+/// Shares numeric parsing and value comparisons between source syntax, typed JSON and consistency checks.
 /// </summary>
 internal static class NumericLiteral
 {
     internal static object? Parse(string text)
     {
-        if (!text.Contains('.') && !text.Contains('e') && !text.Contains('E') &&
-            long.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var integer))
+        if (!double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var approximate) || !double.IsFinite(approximate))
         {
-            return integer;
+            return null;
         }
 
-        var mantissa = text.Split('e', 'E')[0];
-        if (!mantissa.Any(digit => digit is >= '1' and <= '9'))
+        // Faithful means the shortest round-trip Double spelling (R), interpreted as a base-10 number,
+        // equals the authored base-10 value after removing insignificant zeros. This retains the exact
+        // CLR type, printing, typed-JSON shape and Chronicle storage text of every faithful main literal.
+        // In particular 0.1, 2.50, 1e-5 and 1e17 are faithful; comparing binary fractions to the
+        // authored decimal would instead change virtually every existing fractional literal.
+        if ((approximate == 0 && text[0] == '-') ||
+            SameDecimalValue(text, approximate.ToString("R", CultureInfo.InvariantCulture)))
         {
-            return decimal.Zero;
+            return approximate;
         }
 
         if (decimal.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var precise) &&
             IsExactDecimal(text, precise))
         {
-            // Chronicle stores decimal syntax using Convert.ToString. Insignificant authored scale must not
-            // make an otherwise unchanged projection definition look different on the next save.
-            return decimal.Parse(precise.ToString("G29", CultureInfo.InvariantCulture), CultureInfo.InvariantCulture);
+            var normalized = precise.ToString("G29", CultureInfo.InvariantCulture);
+
+            // G29 uses exponent notation for small values: NumberStyles.Number would throw here.
+            precise = decimal.Parse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture);
+            if (precise == decimal.Truncate(precise) && precise >= long.MinValue && precise <= long.MaxValue)
+            {
+                return (long)precise;
+            }
+
+            return precise;
         }
 
-        // Main parsed every finite source number as Double. Keep the same fallback (and the same ESM
-        // Convert.ToDecimal binding) for values Decimal cannot represent exactly, including underflow.
-        return double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var approximate) &&
-            double.IsFinite(approximate)
-                ? approximate
-                : null;
+        // Keep main's finite Double fallback when the authored value cannot be represented exactly
+        // by Decimal (including values below Decimal's scale and values outside its range).
+        return approximate;
     }
 
     internal static bool Equal(object? left, object? right)
@@ -52,32 +59,37 @@ internal static class NumericLiteral
         return Equals(left, right);
     }
 
-    // Legacy in-memory Double edits used to print and reparse as Double. Admit their new Decimal spelling
-    // only if both the binary Double round-trips and the bound ESM Decimal is unchanged.
     internal static bool CompatibleForAuthoring(object? left, object? right)
     {
-        if (Equal(left, right))
+        if (left?.GetType() == right?.GetType())
         {
-            return true;
+            return Equal(left, right);
         }
 
+        if (!Equal(left, right) && left is not double && right is not double)
+        {
+            return false;
+        }
+
+        // Cross-kind Double comparisons must preserve the decimal bound into ESM too: binary numeric
+        // equality alone does not imply equal Convert.ToDecimal results at large magnitudes.
         double? floating = left is double first ? first : null;
         floating ??= right is double second ? second : null;
-        decimal? precise = left is decimal firstDecimal ? firstDecimal : null;
-        precise ??= right is decimal secondDecimal ? secondDecimal : null;
-        if (floating is not { } number || precise is not { } value || !double.IsFinite(number))
+        var other = left is double ? right : left;
+        if (floating is not { } number || !double.IsFinite(number))
         {
-            return false;
-        }
-
-        if (number != 0 && value == 0)
-        {
-            return false;
+            return Equal(left, right);
         }
 
         try
         {
-            return Convert.ToDecimal(number, CultureInfo.InvariantCulture) == value && (double)value == number;
+            return other switch
+            {
+                int integer => Convert.ToDecimal(number, CultureInfo.InvariantCulture) == integer && integer == number,
+                long integer => Convert.ToDecimal(number, CultureInfo.InvariantCulture) == integer && integer == number,
+                decimal precise => Convert.ToDecimal(number, CultureInfo.InvariantCulture) == precise && (double)precise == number,
+                _ => false
+            };
         }
         catch (OverflowException)
         {
@@ -85,103 +97,49 @@ internal static class NumericLiteral
         }
     }
 
-    internal static string PrintDouble(double number, string shortest)
+    static bool SameDecimalValue(string left, string right)
     {
-        if (!double.IsFinite(number))
-        {
-            return shortest;
-        }
-
-        if (Parse(shortest) is { } parsed && CompatibleForAuthoring(number, parsed))
-        {
-            return shortest;
-        }
-
-        // The shortest round-trip Double can itself be an exactly representable Decimal, changing both
-        // syntax kind and ESM bytes after printing. Emit the binary value's finite decimal expansion
-        // instead. If even the binary value is an exact Decimal, add an insignificant tail to keep the
-        // same Double on reparsing without changing its executable value.
-        var bits = BitConverter.DoubleToUInt64Bits(number);
-        var exponentBits = (int)((bits >> 52) & 0x7ff);
-        var significand = new BigInteger(bits & 0x000f_ffff_ffff_ffffUL);
-        var exponent = exponentBits == 0 ? -1074 : exponentBits - 1075;
-        if (exponentBits != 0)
-        {
-            significand += BigInteger.One << 52;
-        }
-
-        if (significand.IsZero)
-        {
-            return shortest;
-        }
-
-        var negative = (bits >> 63) != 0 ? "-" : string.Empty;
-        if (exponent >= 0)
-        {
-            return EnsureDouble(number, negative + (significand << exponent).ToString(CultureInfo.InvariantCulture));
-        }
-
-        var scale = -exponent;
-        var digits = (significand * BigInteger.Pow(5, scale)).ToString(CultureInfo.InvariantCulture).PadLeft(scale + 1, '0');
-        return EnsureDouble(number, $"{negative}{digits[..^scale]}.{digits[^scale..]}");
+        var first = Normalize(left);
+        var second = Normalize(right);
+        return first is { } a && second is { } b && a == b;
     }
 
-    static string EnsureDouble(double number, string exact)
+    static (string Digits, BigInteger Exponent)? Normalize(string text)
     {
-        if (Parse(exact) is double)
+        var marker = text.IndexOfAny(['e', 'E']);
+        var mantissa = marker < 0 ? text : text[..marker];
+        if (marker >= 0 && !BigInteger.TryParse(text[(marker + 1)..], NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out _))
         {
-            return exact;
+            return null;
         }
 
-        // Some binary Doubles ARE exact Decimals, but binding them through Convert.ToDecimal would round
-        // away significant digits. A tiny decimal tail rounds back to the SAME Double while preventing
-        // the source parser from switching to Decimal. Never silently print a different executable value.
-        var padded = $"{exact}{(exact.Contains('.') ? string.Empty : ".")}{new string('0', 40)}1";
-        if (Parse(padded) is double same && same == number)
+        var exponent = marker < 0 ? BigInteger.Zero : BigInteger.Parse(text[(marker + 1)..], NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture);
+        var point = mantissa.IndexOf('.');
+        if (point >= 0)
         {
-            return padded;
+            exponent -= mantissa.Length - point - 1;
+            mantissa = mantissa.Remove(point, 1);
         }
 
-        throw new UnsupportedSyntaxForPrinting("numeric literal", number.ToString("R", CultureInfo.InvariantCulture));
+        var negative = mantissa[0] == '-';
+        var digits = (negative ? mantissa[1..] : mantissa).TrimStart('0');
+        if (digits.Length == 0)
+        {
+            return ("0", BigInteger.Zero);
+        }
+
+        var trimmed = digits.TrimEnd('0');
+        exponent += digits.Length - trimmed.Length;
+        return (negative ? $"-{trimmed}" : trimmed, exponent);
     }
 
     static bool IsExactDecimal(string text, decimal value)
     {
-        var exponentStart = text.IndexOfAny(['e', 'E']);
-        var mantissa = exponentStart < 0 ? text : text[..exponentStart];
-        var exponent = 0;
-        if (exponentStart >= 0 && !int.TryParse(text[(exponentStart + 1)..], NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out exponent))
-        {
-            return false;
-        }
-
-        var decimalPoint = mantissa.IndexOf('.');
-        var fractionalDigits = decimalPoint < 0 ? 0 : mantissa.Length - decimalPoint - 1;
-        var coefficient = BigInteger.Parse(mantissa.Replace(".", string.Empty, StringComparison.Ordinal), CultureInfo.InvariantCulture);
         var bits = decimal.GetBits(value);
-        var represented = new BigInteger((uint)bits[0]) | (new BigInteger((uint)bits[1]) << 32) | (new BigInteger((uint)bits[2]) << 64);
-        if ((bits[3] & int.MinValue) != 0)
-        {
-            represented = -represented;
-        }
-
-        var shift = (long)exponent - fractionalDigits + ((bits[3] >> 16) & 0xff);
-
-        // Remove insignificant zeros on BOTH sides before comparing: an arbitrary exponent window would
-        // turn e.g. 9007199254740993 followed by 130 fractional zeros into an inexact Double.
-        while (!coefficient.IsZero && coefficient % 10 == 0)
-        {
-            coefficient /= 10;
-            shift++;
-        }
-
-        while (!represented.IsZero && represented % 10 == 0)
-        {
-            represented /= 10;
-            shift--;
-        }
-
-        return shift == 0 && coefficient == represented;
+        var coefficient = new BigInteger((uint)bits[0]) | (new BigInteger((uint)bits[1]) << 32) | (new BigInteger((uint)bits[2]) << 64);
+        var represented = ((bits[3] & int.MinValue) != 0 ? "-" : string.Empty) + coefficient.ToString(CultureInfo.InvariantCulture);
+        var scale = (bits[3] >> 16) & 0xff;
+        return SameDecimalValue(text, scale == 0 ? represented : $"{represented}e-{scale}");
     }
 
     static (BigInteger Numerator, BigInteger Denominator)? Rational(object? value)

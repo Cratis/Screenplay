@@ -21,8 +21,7 @@ internal static class SyntaxLiterals
     internal static object Write(object value, string path) => value switch
     {
         string or bool => value,
-        double number when double.IsFinite(number) && NumericLiteral.Parse(number.ToString("R", CultureInfo.InvariantCulture)) is double => number,
-        double number when double.IsFinite(number) => Number("Double", number.ToString("R", CultureInfo.InvariantCulture)),
+        double number when double.IsFinite(number) => number,
         int number => Number("Int32", number.ToString(CultureInfo.InvariantCulture)),
         long number => Number("Int64", number.ToString(CultureInfo.InvariantCulture)),
         decimal number => Number("Decimal", number.ToString("G29", CultureInfo.InvariantCulture)),
@@ -35,7 +34,7 @@ internal static class SyntaxLiterals
         ["anyOf"] = new object[]
         {
             new Dictionary<string, object?> { ["type"] = new[] { "string", "boolean", "null" } },
-            new Dictionary<string, object?> { ["type"] = "number", ["description"] = "Parsed like a source literal: Int64 where possible, otherwise an exact Decimal, otherwise a finite Double.", ["minimum"] = -double.MaxValue, ["maximum"] = double.MaxValue },
+            new Dictionary<string, object?> { ["type"] = "number", ["description"] = "Parsed like a source literal: faithful values stay Double; otherwise Int64 or exact Decimal when possible.", ["minimum"] = -double.MaxValue, ["maximum"] = double.MaxValue },
             new Dictionary<string, object?>
             {
                 ["type"] = "object",

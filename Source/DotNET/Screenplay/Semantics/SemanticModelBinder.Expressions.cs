@@ -61,12 +61,6 @@ public sealed partial class SemanticModelBinder
                 return SemanticValue.Null;
             }
 
-            if (number == 0 && value != 0)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, "The numeric literal is too small for an ESM decimal value.", location);
-                return SemanticValue.Null;
-            }
-
             return SemanticValue.Number(number);
         }
 

@@ -45,9 +45,9 @@ Supported literal types:
 - **Number**: `42`, `3.14`, `1e-3`, `2.5E+4`
 - **Null**: `null`
 
-Whole numbers use a 64-bit integer where possible, then Decimal. Fractional and exponent values use Decimal when it can represent them exactly, otherwise a finite Double. Integers above `9007199254740992` remain exact within the supported integer and Decimal ranges. Printing normalizes spelling (`1e-3` becomes `0.001`) without changing the value. Decimal scale is normalized, so `2.50` is stored as `2.5`; numbers with more precision than Decimal can hold keep their Double value, as they did before.
+A number stays a Double when its shortest round-trip Double spelling represents the same decimal value as the authored text: `0.1`, `2.50`, `1e-5` and `1e17` keep their previous type, printed form, typed-JSON shape and Chronicle storage text. When Double would change that decimal value, an integer within Int64 range becomes Int64 (for example `9007199254740993`); otherwise an exactly representable number becomes Decimal. Values neither type can represent exactly retain the previous finite Double behavior, including very small values. Printing normalizes spelling without changing the parsed value.
 
-For typed workspace edits, ordinary JSON numbers use the same kinds as source literals. Explicit numeric envelopes remain available: use Int64 for whole numbers in its range and Decimal for exact fractional values. Existing Double edits are accepted when printing retains their numeric and executable value; inexact Double values print with enough digits to reparse as Double without changing canonical ESM bytes.
+Ordinary typed-workspace JSON numbers follow the same rule, including numbers nested inside objects and lists. Explicit Int64 and Decimal envelopes are available when the CLR type matters.
 
 ## Clearing a Value
 

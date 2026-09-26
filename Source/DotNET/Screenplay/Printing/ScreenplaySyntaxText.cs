@@ -275,13 +275,10 @@ internal static partial class ScreenplaySyntaxText
             : text;
     }
 
-    static string Number(double number)
-    {
-        var shortest = number == Math.Floor(number) && number >= long.MinValue && number < 9223372036854775808d
+    static string Number(double number) =>
+        number == Math.Floor(number) && number >= long.MinValue && number < 9223372036854775808d
             ? ((long)number).ToString(CultureInfo.InvariantCulture)
             : number.ToString(CultureInfo.InvariantCulture);
-        return NumericLiteral.PrintDouble(number, shortest);
-    }
 
     static string Template(TemplateExpressionSyntax template)
     {

@@ -16,8 +16,12 @@ public class when_editing_an_ordinary_json_number : given.an_authoring_connectio
     [Theory]
     [InlineData("2", "PreserveTrivia")]
     [InlineData("3.5", "PreserveTrivia")]
+    [InlineData("0.00001", "PreserveTrivia")]
+    [InlineData("9007199254740993", "PreserveTrivia")]
     [InlineData("2", "CanonicalizeTouchedDocuments")]
     [InlineData("3.5", "CanonicalizeTouchedDocuments")]
+    [InlineData("0.00001", "CanonicalizeTouchedDocuments")]
+    [InlineData("9007199254740993", "CanonicalizeTouchedDocuments")]
     public void should_accept_legacy_plain_json_numbers_in_ast_proposals(string text, string formatting)
     {
         var opened = Open();

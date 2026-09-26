@@ -10,9 +10,11 @@ namespace Cratis.Screenplay.Workspaces.for_WorkspaceAuthoring.when_replacing_a_l
 public class with_an_ordinary_json_number : given.a_document_with_literal_values
 {
     [Theory]
-    [InlineData("2", typeof(long))]
-    [InlineData("3.5", typeof(decimal))]
+    [InlineData("2", typeof(double))]
+    [InlineData("3.5", typeof(double))]
+    [InlineData("0.00001", typeof(double))]
     [InlineData("1e-29", typeof(double))]
+    [InlineData("9007199254740993", typeof(long))]
     public void should_accept_a_trivia_preserving_numeric_edit(string text, Type kind)
     {
         var literal = (LiteralExpressionSyntax)SyntaxJson.Deserialize(JsonSerializer.Deserialize<JsonElement>($"{{\"kind\":\"LiteralExpressionSyntax\",\"value\":{text}}}"));
