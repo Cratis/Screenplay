@@ -71,6 +71,7 @@ internal static partial class SpecificationParser
         SpecificationEventSyntax? whenAppended = null;
         var whenDeclared = false;
         var eventsInAnyOrder = false;
+        SourceLocation? eventsInAnyOrderLocation = null;
         var thenEvents = new List<SpecificationEventSyntax>();
         var thenReadModels = new List<SpecificationReadModelSyntax>();
         var thenQueries = new List<SpecificationQuerySyntax>();
@@ -148,6 +149,7 @@ internal static partial class SpecificationParser
                         else
                         {
                             eventsInAnyOrder = true;
+                            eventsInAnyOrderLocation = line.Location;
                         }
                         context.SkipBlock(line.Indent);
                     }
@@ -186,7 +188,8 @@ internal static partial class SpecificationParser
             GivenCaller = caller,
             ThenDenied = denied,
             WhenAppended = whenAppended,
-            ThenEventsInAnyOrder = eventsInAnyOrder
+            ThenEventsInAnyOrder = eventsInAnyOrder,
+            DirectiveLocations = eventsInAnyOrderLocation is null ? [] : new Dictionary<string, SourceLocation> { ["then events in any order"] = eventsInAnyOrderLocation }
         };
     }
 

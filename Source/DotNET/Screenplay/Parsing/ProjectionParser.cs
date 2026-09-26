@@ -63,6 +63,7 @@ internal static partial class ProjectionParser
         var name = match.Groups[1].Value;
         var readModel = match.Groups[2].Success ? match.Groups[2].Value : null;
         string? sequence = null;
+        SourceLocation? sequenceLocation = null;
         var autoMap = AutoMapMode.Inherit;
         KeySyntax? key = null;
         var blocks = new List<ProjectionBlockSyntax>();
@@ -81,6 +82,7 @@ internal static partial class ProjectionParser
             {
                 case "sequence":
                     sequence = line.Content["sequence".Length..].Trim();
+                    sequenceLocation = line.Location;
                     break;
                 case "automap":
                     autoMap = AutoMapMode.Enabled;
@@ -132,7 +134,11 @@ internal static partial class ProjectionParser
             context.Error(DiagnosticCodes.EmptyProjection, $"Projection '{name}' must contain at least one directive", header.Location);
         }
 
-        return new(name, readModel, sequence, autoMap, key, blocks, header.Location) { File = file };
+        return new(name, readModel, sequence, autoMap, key, blocks, header.Location)
+        {
+            File = file,
+            DirectiveLocations = sequenceLocation is null ? [] : new Dictionary<string, SourceLocation> { ["sequence"] = sequenceLocation }
+        };
     }
 
     static ProjectionBlockSyntax? ParseBlock(ParserContext context, SourceLine line, bool nestedScope)

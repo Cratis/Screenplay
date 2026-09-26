@@ -40,7 +40,12 @@ public sealed partial class ScreenplayPrinter
             }
 
             var position = comment.Placement == SourceCommentPlacement.End ? span.Last : span.First;
-            if (owner is ScreenTemplateSyntax { FitsSlotLocation: { } fitsSlotLocation } template &&
+            if (writer.DirectiveAnchors.TryGetValue(owner, out var directiveLines) &&
+                directiveLines.TryGetValue(comment.AnchorLine, out var directiveLine))
+            {
+                position = directiveLine;
+            }
+            else if (owner is ScreenTemplateSyntax { FitsSlotLocation: { } fitsSlotLocation } template &&
                 comment.AnchorLine == fitsSlotLocation.Line && writer.FitsSlotAnchors.TryGetValue(template, out var fitsSlotLine))
             {
                 position = fitsSlotLine;

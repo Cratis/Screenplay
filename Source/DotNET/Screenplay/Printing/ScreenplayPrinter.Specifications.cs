@@ -56,7 +56,7 @@ public partial class ScreenplayPrinter
                 WriteSpecificationEvent(writer, "when append", appended);
             }
 
-            if (specification.ThenEventsInAnyOrder) writer.Line("then events in any order");
+            if (specification.ThenEventsInAnyOrder) writer.DirectiveLine("then events in any order", specification, "then events in any order");
 
             foreach (var then in specification.ThenEvents)
             {

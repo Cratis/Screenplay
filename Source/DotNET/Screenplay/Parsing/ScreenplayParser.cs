@@ -238,6 +238,7 @@ internal static partial class ScreenplayParser
 
         var values = new List<string>();
         var validations = new List<ValidateSyntax>();
+        var directiveLocations = new Dictionary<string, SourceLocation>();
         FileReferenceSyntax? file = null;
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -263,10 +264,14 @@ internal static partial class ScreenplayParser
             }
             else if (AttributeReasonRegex().Match(child.Content) is { Success: true } reason)
             {
-                ApplyAttributeReason(context, child, name, attributes, reason);
+                if (ApplyAttributeReason(context, child, name, attributes, reason))
+                {
+                    directiveLocations[$"reason:{reason.Groups[1].Value}"] = child.Location;
+                }
             }
             else if (type == "Enum" && EnumValueRegex().IsMatch(child.Content))
             {
+                directiveLocations[$"value:{values.Count}"] = child.Location;
                 values.Add(LineText.Unescape(child.Content));
             }
             else if (type == "Enum")
@@ -280,10 +285,10 @@ internal static partial class ScreenplayParser
             }
         }
 
-        return new(name, type, attributes, values, line.Location, validations) { File = file };
+        return new(name, type, attributes, values, line.Location, validations) { File = file, DirectiveLocations = directiveLocations };
     }
 
-    static void ApplyAttributeReason(
+    static bool ApplyAttributeReason(
         ParserContext context,
         SourceLine line,
         string concept,
@@ -295,16 +300,17 @@ internal static partial class ScreenplayParser
         if (index < 0)
         {
             context.Error(DiagnosticCodes.AttributeReasonWithoutAttribute, $"Concept '{concept}' declares a reason for '{attribute}' without the attribute - write 'concept {concept} : <Type> @{attribute}'", line.Location);
-            return;
+            return false;
         }
 
         if (attributes[index].Reason is not null)
         {
             context.Error(DiagnosticCodes.DuplicateAttributeReason, $"Concept '{concept}' already declares a reason for '{attribute}' - at most one is allowed", line.Location);
-            return;
+            return false;
         }
 
         attributes[index] = attributes[index] with { Reason = StringLiteral.Unescape(reason.Groups[2].Value) };
+        return true;
     }
 
     static PersonaSyntax ParsePersona(ParserContext context, SourceLine line)
@@ -318,6 +324,7 @@ internal static partial class ScreenplayParser
         var name = match.Groups[1].Value;
         string? description = null;
         var policies = new List<string>();
+        var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -330,6 +337,7 @@ internal static partial class ScreenplayParser
                 case "policy":
                     if (PersonaPolicyRegex().Match(child.Content) is { Success: true } policy)
                     {
+                        directiveLocations[$"policy:{policies.Count}"] = child.Location;
                         policies.Add(policy.Groups[1].Value);
                     }
                     else
@@ -345,7 +353,7 @@ internal static partial class ScreenplayParser
             }
         }
 
-        return new(name, description, policies, line.Location);
+        return new(name, description, policies, line.Location) { DirectiveLocations = directiveLocations };
     }
 
     static ModuleSyntax ParseModule(ParserContext context, SourceLine line)

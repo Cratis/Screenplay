@@ -31,6 +31,7 @@ internal static partial class UiProfileParser
         var hasPackagesBlock = false;
         var hasTheme = false;
         var hasLayout = false;
+        var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -39,6 +40,14 @@ internal static partial class UiProfileParser
             {
                 case "target":
                     ParseTarget(context, line, platforms, ref hasTargetPlatform, ref hasTargetSize, ref defaultSizeClass);
+                    if (line.Content.StartsWith("target platform ", StringComparison.Ordinal) && hasTargetPlatform)
+                    {
+                        directiveLocations.TryAdd("target platform", line.Location);
+                    }
+                    else if (line.Content.StartsWith("target size ", StringComparison.Ordinal) && hasTargetSize)
+                    {
+                        directiveLocations.TryAdd("target size", line.Location);
+                    }
                     break;
                 case "packages":
                     if (hasPackagesBlock)
@@ -49,7 +58,8 @@ internal static partial class UiProfileParser
                     }
 
                     hasPackagesBlock = true;
-                    ParsePackages(context, line, packages);
+                    directiveLocations["packages"] = line.Location;
+                    ParsePackages(context, line, packages, directiveLocations);
                     break;
                 case "theme":
                     if (hasTheme)
@@ -67,6 +77,7 @@ internal static partial class UiProfileParser
 
                     hasTheme = true;
                     theme = themeMatch.Groups[1].Value;
+                    directiveLocations["theme"] = line.Location;
                     break;
                 case "layout":
                     if (hasLayout)
@@ -84,6 +95,7 @@ internal static partial class UiProfileParser
 
                     hasLayout = true;
                     layout = layoutMatch.Groups[1].Value;
+                    directiveLocations["layout"] = line.Location;
                     break;
                 default:
                     context.Error(DiagnosticCodes.UnknownUiProfileDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in ui profile body - expected target, packages, theme or layout", line.Location);
@@ -92,7 +104,7 @@ internal static partial class UiProfileParser
             }
         }
 
-        return new(name, platforms, defaultSizeClass, packages, header.Location, theme, layout);
+        return new(name, platforms, defaultSizeClass, packages, header.Location, theme, layout) { DirectiveLocations = directiveLocations };
     }
 
     static void ParseTarget(ParserContext context, SourceLine line, List<string> platforms, ref bool hasTargetPlatform, ref bool hasTargetSize, ref string? defaultSizeClass)
@@ -131,7 +143,7 @@ internal static partial class UiProfileParser
             line.Location);
     }
 
-    static void ParsePackages(ParserContext context, SourceLine header, List<string> packages)
+    static void ParsePackages(ParserContext context, SourceLine header, List<string> packages, Dictionary<string, SourceLocation> directiveLocations)
     {
         var seen = new HashSet<string>();
         while (context.TryPeekChild(header.Indent, out var line))
@@ -149,6 +161,7 @@ internal static partial class UiProfileParser
                 continue;
             }
 
+            directiveLocations[$"package:{packages.Count}"] = line.Location;
             packages.Add(line.Content);
         }
     }

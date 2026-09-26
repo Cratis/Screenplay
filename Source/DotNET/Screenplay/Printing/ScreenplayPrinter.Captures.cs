@@ -24,7 +24,7 @@ public partial class ScreenplayPrinter
 
             if (capture.Key is not null)
             {
-                writer.Line($"key {capture.Key}");
+                writer.DirectiveLine($"key {capture.Key}", capture, "key");
             }
 
             WriteCaptureMap(writer, capture.Map);

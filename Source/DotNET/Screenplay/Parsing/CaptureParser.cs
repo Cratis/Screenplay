@@ -65,6 +65,7 @@ internal static partial class CaptureParser
         var appends = new List<CaptureAppendSyntax>();
         var children = new List<CaptureChildrenSyntax>();
         var nested = new List<CaptureNestedSyntax>();
+        SourceLocation? keyLocation = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -76,6 +77,7 @@ internal static partial class CaptureParser
                     break;
                 case "key":
                     key = line.Content["key".Length..].Trim();
+                    keyLocation = line.Location;
                     break;
                 case "map":
                     map.AddRange(ParseMap(context, line));
@@ -108,7 +110,10 @@ internal static partial class CaptureParser
             }
         }
 
-        return new(name.Groups[1].Value, source, key, map, appends, children, nested, header.Location);
+        return new(name.Groups[1].Value, source, key, map, appends, children, nested, header.Location)
+        {
+            DirectiveLocations = keyLocation is null ? [] : new Dictionary<string, SourceLocation> { ["key"] = keyLocation }
+        };
     }
 
     static CaptureSourceSyntax ParseSource(ParserContext context, SourceLine line)

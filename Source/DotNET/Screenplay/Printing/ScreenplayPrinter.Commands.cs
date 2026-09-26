@@ -62,28 +62,28 @@ public partial class ScreenplayPrinter
         {
             if (concurrency.EventSource)
             {
-                writer.Line("eventSource");
+                writer.DirectiveLine("eventSource", concurrency, "eventSource");
             }
 
             if (concurrency.EventSourceType is not null)
             {
-                writer.Line($"sourceType {concurrency.EventSourceType}");
+                writer.DirectiveLine($"sourceType {concurrency.EventSourceType}", concurrency, "sourceType");
             }
 
             if (concurrency.EventStreamType is not null)
             {
-                writer.Line($"streamType {concurrency.EventStreamType}");
+                writer.DirectiveLine($"streamType {concurrency.EventStreamType}", concurrency, "streamType");
             }
 
             if (concurrency.EventStreamId is not null)
             {
-                writer.Line($"streamId {concurrency.EventStreamId}");
+                writer.DirectiveLine($"streamId {concurrency.EventStreamId}", concurrency, "streamId");
             }
 
             var events = concurrency.EventTypes.ToList();
             if (events.Count > 0)
             {
-                writer.Line($"events {string.Join(", ", events)}");
+                writer.DirectiveLine($"events {string.Join(", ", events)}", concurrency, "events");
             }
         }
     }
@@ -153,7 +153,7 @@ public partial class ScreenplayPrinter
                 return;
             }
 
-            writer.Line($"file {performer.File.Path}");
+            writer.Line($"file {performer.File.Path}", performer.File);
             if (performer.Code is not null)
             {
                 WriteOmittedCode(writer, performer.Code, ReadsOneImplementation("a performer"));
@@ -178,7 +178,7 @@ public partial class ScreenplayPrinter
                         writer.Line($"unique event {uniqueEvent.Event}");
                         break;
                     case FileConstraintSyntax file:
-                        writer.Line($"file {file.File.Path}");
+                        writer.DirectiveLine($"file {file.File.Path}", file, "file");
                         break;
                     default:
                         throw new UnsupportedSyntaxForPrinting("constraint", rule.GetType().Name);
@@ -266,7 +266,7 @@ public partial class ScreenplayPrinter
 
             if (trigger.File is not null)
             {
-                writer.Line($"file {trigger.File.Path}");
+                writer.Line($"file {trigger.File.Path}", trigger.File);
             }
 
             if (trigger.Code is not null)
@@ -378,7 +378,7 @@ public partial class ScreenplayPrinter
                 return;
             }
 
-            writer.Line($"file {rule.File.Path}");
+            writer.Line($"file {rule.File.Path}", rule.File);
             if (rule.Code is not null)
             {
                 WriteOmittedCode(writer, rule.Code, ReadsOneImplementation("a validation rule"));
@@ -440,7 +440,7 @@ public partial class ScreenplayPrinter
                 return;
             }
 
-            writer.Line($"file {handler.File.Path}");
+            writer.Line($"file {handler.File.Path}", handler.File);
             if (handler.Code is not null)
             {
                 WriteOmittedCode(writer, handler.Code, ReadsOneImplementation("a handler"));

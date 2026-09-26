@@ -25,7 +25,7 @@ public partial class ScreenplayPrinter
 
             if (projection.Sequence is not null)
             {
-                writer.Line($"sequence {projection.Sequence}");
+                writer.DirectiveLine($"sequence {projection.Sequence}", projection, "sequence");
             }
 
             WriteAutoMap(writer, projection.AutoMap);
