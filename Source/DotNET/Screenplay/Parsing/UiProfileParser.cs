@@ -161,8 +161,8 @@ internal static partial class UiProfileParser
                 continue;
             }
 
-            directiveLocations[$"package:{packages.Count}"] = line.Location;
             packages.Add(line.Content);
+            directiveLocations[DirectiveLocationKeys.ForValue("package", packages, packages.Count - 1)] = line.Location;
         }
     }
 

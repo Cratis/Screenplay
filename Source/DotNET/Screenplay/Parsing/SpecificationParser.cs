@@ -220,8 +220,8 @@ internal static partial class SpecificationParser
             var role = CallerRoleRegex().Match(child.Content);
             if (role.Success)
             {
-                directiveLocations[$"role:{roles.Count}"] = child.Location;
                 roles.Add(StringLiteral.Unescape(role.Groups[1].Value));
+                directiveLocations[DirectiveLocationKeys.ForValue("role", roles, roles.Count - 1)] = child.Location;
                 continue;
             }
 

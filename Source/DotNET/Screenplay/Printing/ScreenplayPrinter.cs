@@ -195,7 +195,7 @@ public sealed partial class ScreenplayPrinter :
                 {
                     for (var index = 0; index < packages.Count; index++)
                     {
-                        writer.DirectiveLine(packages[index], uiProfile, $"package:{index}");
+                        writer.DirectiveLine(packages[index], uiProfile, DirectiveLocationKeys.ForValue("package", packages, index));
                     }
                 }
             }
@@ -226,7 +226,7 @@ public sealed partial class ScreenplayPrinter :
             var packages = theme.CompatibleWith.ToList();
             for (var index = 0; index < packages.Count; index++)
             {
-                writer.DirectiveLine($"compatible with {packages[index]}", theme, $"compatible:{index}");
+                writer.DirectiveLine($"compatible with {packages[index]}", theme, DirectiveLocationKeys.ForValue("compatible", packages, index));
             }
         }
     }
@@ -346,7 +346,7 @@ public sealed partial class ScreenplayPrinter :
                 var values = concept.Values.ToList();
                 for (var index = 0; index < values.Count; index++)
                 {
-                    writer.DirectiveLine(ReservedWords.Escape(values[index], ReservedWords.ConceptBody), concept, $"value:{index}");
+                    writer.DirectiveLine(ReservedWords.Escape(values[index], ReservedWords.ConceptBody), concept, DirectiveLocationKeys.ForValue("value", values, index));
                 }
             }
 
@@ -406,7 +406,7 @@ public sealed partial class ScreenplayPrinter :
             var policies = persona.Policies.ToList();
             for (var index = 0; index < policies.Count; index++)
             {
-                writer.DirectiveLine($"policy {policies[index]}", persona, $"policy:{index}");
+                writer.DirectiveLine($"policy {policies[index]}", persona, DirectiveLocationKeys.ForValue("policy", policies, index));
             }
         }
     }

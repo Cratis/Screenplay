@@ -271,8 +271,8 @@ internal static partial class ScreenplayParser
             }
             else if (type == "Enum" && EnumValueRegex().IsMatch(child.Content))
             {
-                directiveLocations[$"value:{values.Count}"] = child.Location;
                 values.Add(LineText.Unescape(child.Content));
+                directiveLocations[DirectiveLocationKeys.ForValue("value", values, values.Count - 1)] = child.Location;
             }
             else if (type == "Enum")
             {
@@ -337,8 +337,8 @@ internal static partial class ScreenplayParser
                 case "policy":
                     if (PersonaPolicyRegex().Match(child.Content) is { Success: true } policy)
                     {
-                        directiveLocations[$"policy:{policies.Count}"] = child.Location;
                         policies.Add(policy.Groups[1].Value);
+                        directiveLocations[DirectiveLocationKeys.ForValue("policy", policies, policies.Count - 1)] = child.Location;
                     }
                     else
                     {

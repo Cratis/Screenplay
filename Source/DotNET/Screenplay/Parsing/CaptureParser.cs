@@ -239,8 +239,8 @@ internal static partial class CaptureParser
                 continue;
             }
 
-            directiveLocations[$"target:{targets.Count}"] = child.Location;
             targets.Add(child.Content);
+            directiveLocations[DirectiveLocationKeys.ForValue("target", targets, targets.Count - 1)] = child.Location;
         }
 
         return new(source, StringLiteral.Unescape(match.Groups[2].Value), targets, line.Location) { DirectiveLocations = directiveLocations };

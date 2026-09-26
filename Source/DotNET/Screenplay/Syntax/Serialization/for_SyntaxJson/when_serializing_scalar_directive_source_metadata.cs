@@ -10,7 +10,7 @@ public class when_serializing_scalar_directive_source_metadata : Specification
 {
     readonly UiProfileSyntax _profile = new("Desktop", ["web"], "expanded", ["core"], SourceLocation.Start, "Aurora", "Main")
     {
-        DirectiveLocations = new Dictionary<string, SourceLocation> { ["target platform"] = new(2, 3), ["package:0"] = new(5, 5) }
+        DirectiveLocations = new Dictionary<string, SourceLocation> { ["target platform"] = new(2, 3), ["package:4:core:0"] = new(5, 5) }
     };
 
     [Fact] void should_preserve_the_profile_json_contract() => SyntaxJson.Serialize(_profile).GetRawText().ShouldEqual(
@@ -18,17 +18,17 @@ public class when_serializing_scalar_directive_source_metadata : Specification
 
     [Fact] void should_preserve_the_theme_json_contract() => SyntaxJson.Serialize(new ThemeSyntax("Aurora", ["core"], SourceLocation.Start)
     {
-        DirectiveLocations = new Dictionary<string, SourceLocation> { ["compatible:0"] = new(2, 3) }
+        DirectiveLocations = new Dictionary<string, SourceLocation> { ["compatible:4:core:0"] = new(2, 3) }
     }).GetRawText().ShouldEqual("{\"kind\":\"ThemeSyntax\",\"compatibleWith\":[\"core\"],\"name\":\"Aurora\"}");
 
     [Fact] void should_preserve_the_persona_json_contract() => SyntaxJson.Serialize(new PersonaSyntax("Clerk", null, ["Member"], SourceLocation.Start)
     {
-        DirectiveLocations = new Dictionary<string, SourceLocation> { ["policy:0"] = new(2, 3) }
+        DirectiveLocations = new Dictionary<string, SourceLocation> { ["policy:6:Member:0"] = new(2, 3) }
     }).GetRawText().ShouldEqual("{\"kind\":\"PersonaSyntax\",\"description\":null,\"name\":\"Clerk\",\"policies\":[\"Member\"]}");
 
     [Fact] void should_preserve_the_concept_json_contract() => SyntaxJson.Serialize(new ConceptSyntax("State", "Enum", [], ["active"], SourceLocation.Start)
     {
-        DirectiveLocations = new Dictionary<string, SourceLocation> { ["value:0"] = new(2, 3) }
+        DirectiveLocations = new Dictionary<string, SourceLocation> { ["value:6:active:0"] = new(2, 3) }
     }).GetRawText().ShouldEqual("{\"kind\":\"ConceptSyntax\",\"attributes\":[],\"file\":null,\"name\":\"State\",\"type\":\"Enum\",\"validations\":[],\"values\":[\"active\"]}");
 
     [Fact] void should_preserve_the_contribution_json_contract() => SyntaxJson.Serialize(new ContributionSyntax("Navigation", null, "Shop", 1, SourceLocation.Start)
@@ -52,7 +52,7 @@ public class when_serializing_scalar_directive_source_metadata : Specification
     {
         var caller = new SpecificationCallerSyntax(true, ["Clerk"], [], SourceLocation.Start)
         {
-            DirectiveLocations = new Dictionary<string, SourceLocation> { ["authenticated"] = new(2, 5), ["role:0"] = new(3, 5) }
+            DirectiveLocations = new Dictionary<string, SourceLocation> { ["authenticated"] = new(2, 5), ["role:5:Clerk:0"] = new(3, 5) }
         };
         AssertSourceMetadataDoesNotChangeTypedJson(caller);
     }

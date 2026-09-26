@@ -51,8 +51,8 @@ internal static partial class ThemeParser
                 continue;
             }
 
-            directiveLocations[$"compatible:{compatibleWith.Count}"] = line.Location;
             compatibleWith.Add(package);
+            directiveLocations[DirectiveLocationKeys.ForValue("compatible", compatibleWith, compatibleWith.Count - 1)] = line.Location;
         }
 
         return new(name, compatibleWith, header.Location) { DirectiveLocations = directiveLocations };

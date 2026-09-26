@@ -103,7 +103,7 @@ public partial class ScreenplayPrinter
                     var targets = split.Targets.ToList();
                     for (var index = 0; index < targets.Count; index++)
                     {
-                        writer.DirectiveLine(targets[index], split, $"target:{index}");
+                        writer.DirectiveLine(targets[index], split, DirectiveLocationKeys.ForValue("target", targets, index));
                     }
                 }
 

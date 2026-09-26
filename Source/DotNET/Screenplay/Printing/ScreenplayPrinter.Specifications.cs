@@ -29,7 +29,7 @@ public partial class ScreenplayPrinter
                     var roles = caller.Roles.ToList();
                     for (var index = 0; index < roles.Count; index++)
                     {
-                        writer.DirectiveLine($"role {StringLiteral.Quote(roles[index])}", caller, $"role:{index}");
+                        writer.DirectiveLine($"role {StringLiteral.Quote(roles[index])}", caller, DirectiveLocationKeys.ForValue("role", roles, index));
                     }
                     foreach (var claim in caller.Claims) writer.Line($"claim {StringLiteral.Quote(claim.Type)} = {StringLiteral.Quote(claim.Value)}", claim);
                 }

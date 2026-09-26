@@ -40,8 +40,16 @@ public sealed partial class ScreenplayPrinter
             }
 
             var position = comment.Placement == SourceCommentPlacement.End ? span.Last : span.First;
-            if (writer.DirectiveAnchors.TryGetValue(owner, out var directiveLines) &&
-                directiveLines.TryGetValue(comment.AnchorLine, out var directiveLine))
+            writer.DirectiveAnchors.TryGetValue(owner, out var directiveLines);
+            if (owner.DirectiveLocations.Any(entry => DirectiveLocationKeys.IsCollectionKey(entry.Key) &&
+                entry.Value.Line == comment.AnchorLine) &&
+                directiveLines?.ContainsKey(comment.AnchorLine) != true)
+            {
+                // A removed collection value has no printed line. Never attach its comment to a new neighbor.
+                continue;
+            }
+
+            if (directiveLines is not null && directiveLines.TryGetValue(comment.AnchorLine, out var directiveLine))
             {
                 position = directiveLine;
             }
