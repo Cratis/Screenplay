@@ -1,6 +1,6 @@
 # Golden vectors
 
-These files are the checked-in canonical bytes of the ESM serialization contract:
+The `full-esm-*.json` files pin canonical executable semantic model (ESM) bytes, including each model's semantic revision:
 
 | File | Source model |
 | --- | --- |
@@ -8,14 +8,25 @@ These files are the checked-in canonical bytes of the ESM serialization contract
 | `full-esm-v2.json` | `canonical_serialization_golden_vectors.CreateSemanticModelV2()` — typed destination, explicit specification event sources, and an audit identity occurrence mapping |
 | `full-esm-v3.json` | `canonical_serialization_golden_vectors.CreateSemanticModelV3()` — the full v2 model plus a reducer-built read model with opaque transitions, a rule predicate, command code validation, and an opaque policy predicate |
 | `full-esm-v4.json` | `canonical_serialization_golden_vectors.CreateSemanticModelV4()` — mixed ordinary and three-generation events, with historical tags and v4 transition cardinality |
-| `full-expressions-v1.json` | `canonical_serialization_golden_vectors.CreateExpressions()` |
-| `full-identity-catalog-v1.json` | `canonical_serialization_golden_vectors.CreateIdentityCatalog()` |
-| `typed-contexts-v1.json` | `when_describing_typed_contexts.GoldenBytes()` — bound rule, policy and reducer contexts |
-| `unbound-handler-context-v1.json` | `when_describing_an_unbound_handler.GoldenBytes()` — unbound command handler context |
 
-The ESM source models live in `../given/canonical_serialization_golden_vectors.cs`; the typed-context sources live in the binder specs. The specs in this project
-compare serialized source models and sidecars with these bytes, and `Screenplay.CanonicalVectors.Specs` links the same
-files for consumers and checks the ESM vectors round-trip unchanged. Do not edit the files by hand.
+The other files pin separate serialization contracts, not ESM bytes:
+
+| File | Source |
+| --- | --- |
+| `full-expressions-v1.json` | `canonical_serialization_golden_vectors.CreateExpressions()` — expression variants |
+| `full-identity-catalog-v1.json` | `canonical_serialization_golden_vectors.CreateIdentityCatalog()` — identity catalog with its own catalog revision |
+| `typed-contexts-v1.json` | `when_describing_typed_contexts.GoldenBytes()` — typed-context descriptor sidecars for bound rule, policy, validation and reducer contexts |
+| `unbound-handler-context-v1.json` | `when_describing_an_unbound_handler.GoldenBytes()` — typed-context descriptor sidecar for an unbound command handler |
+
+The ESM, expression and identity-catalog sources live in `../given/canonical_serialization_golden_vectors*.cs`;
+the typed-context sources live in the binder specs. Specs in this project compare the serialized sources
+and descriptor sidecars with these bytes.
+
+`Screenplay.CanonicalVectors.Specs.csproj` links seven of the eight files as embedded resources:
+`full-esm-v1.json`, `full-esm-v2.json`, `full-esm-v3.json`, `full-esm-v4.json`,
+`full-identity-catalog-v1.json`, `typed-contexts-v1.json`, and `unbound-handler-context-v1.json`.
+It does not link `full-expressions-v1.json`. The vectors project checks ESM and identity-catalog
+round trips and the presence of both descriptor sidecars. Do not edit the files by hand.
 
 ## Regenerating
 
@@ -29,7 +40,8 @@ For a v3-only or v4-only regeneration, use `SCREENPLAY_REGENERATE_GOLDEN=3` or `
 `GoldenVectorsRegenerated`, so it can never pass silently in CI. Review the diff, then rebuild and rerun
 without the variable - the bytes are embedded at build time.
 
-Every change to the canonical bytes changes the revision hashes inside them. A change to canonical
-serialization also changes the expected ESM bytes and semantic revision of the corpus in
+ESM vectors carry a semantic revision; the identity catalog carries its own catalog revision. Expression
+and typed-context descriptor vectors are separate contracts, not ESM documents with semantic revisions.
+An ESM serialization change can also change the expected ESM bytes and semantic revision of the corpus in
 `Screenplay.CanonicalCorpus`, which this mechanism does not rewrite. Stage compares its output against that
 corpus, so `Cratis.Screenplay` and `Cratis.Screenplay.CanonicalCorpus` must be released together for Stage.
