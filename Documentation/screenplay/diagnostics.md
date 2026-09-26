@@ -197,6 +197,7 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0073` | Error | A composite key part is a template expression, which a key cannot be. |
 | `PLAY0074` | Error | A composite key declares no parts. |
 | `PLAY0075` | Error | A mapping line in a projection is not one the language can read. |
+| `PLAY0452` | Warning | More than one `automap` or `no automap` appears in the same projection scope. The last setting wins; printing preserves the authored settings and their individual comments. |
 
 ### Captures
 

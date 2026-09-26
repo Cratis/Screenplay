@@ -2029,4 +2029,7 @@ public static class DiagnosticCodes
 
     /// <summary>A reads declaration has child lines, but reads takes no body.</summary>
     public const string ReadsWithChildren = "PLAY0451";
+
+    /// <summary>More than one automap setting appears in a projection block; only the last setting applies.</summary>
+    public const string RepeatedProjectionAutoMap = "PLAY0452";
 }

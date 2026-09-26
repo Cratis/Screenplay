@@ -75,7 +75,8 @@ a file does:
   production targets and concurrency dimensions keep comments on their authored lines.
   When you reorder, insert, or remove enum values or other scalar collection entries,
   comments follow unchanged values rather than old list positions; comments attached
-  to removed values are dropped.
+  to removed values are dropped. Repeated projection `automap` settings warn (`PLAY0452`):
+  the last setting wins, but printing keeps each authored line and its comments.
   These positions are source metadata, not members of the typed JSON syntax. Check
   `dropped-comments` before applying a layout proposal for comments that cannot be
   retained during canonical printing.

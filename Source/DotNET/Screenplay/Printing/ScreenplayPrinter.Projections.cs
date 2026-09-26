@@ -233,6 +233,17 @@ public partial class ScreenplayPrinter
 
     void WriteAutoMap(ScreenplayWriter writer, AutoMapMode autoMap, SyntaxNode owner)
     {
+        if (autoMap != AutoMapMode.Inherit)
+        {
+            foreach (var previous in owner.DirectiveLocations
+                .Where(entry => entry.Key.StartsWith("automap previous:", StringComparison.Ordinal))
+                .OrderBy(entry => entry.Value.Line))
+            {
+                var text = previous.Key.StartsWith("automap previous:Enabled:", StringComparison.Ordinal) ? "automap" : "no automap";
+                writer.DirectiveLine(text, owner, previous.Key);
+            }
+        }
+
         switch (autoMap)
         {
             case AutoMapMode.Enabled:

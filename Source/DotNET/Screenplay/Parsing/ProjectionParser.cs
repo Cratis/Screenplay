@@ -86,12 +86,10 @@ internal static partial class ProjectionParser
                     sequenceLocation = line.Location;
                     break;
                 case "automap":
-                    autoMap = AutoMapMode.Enabled;
-                    directiveLocations["automap"] = line.Location;
+                    RecordAutoMap(context, directiveLocations, ref autoMap, AutoMapMode.Enabled, line.Location);
                     break;
                 case "no" when line.Content == "no automap":
-                    autoMap = AutoMapMode.Disabled;
-                    directiveLocations["automap"] = line.Location;
+                    RecordAutoMap(context, directiveLocations, ref autoMap, AutoMapMode.Disabled, line.Location);
                     break;
                 case "key":
                     context.Warning(DiagnosticCodes.UnusedProjectionKey, "A projection-level key does not route events - declare the key on each 'from' (or its events)", line.Location);
@@ -142,6 +140,18 @@ internal static partial class ProjectionParser
             File = file,
             DirectiveLocations = AddSequenceLocation(directiveLocations, sequenceLocation)
         };
+    }
+
+    static void RecordAutoMap(ParserContext context, Dictionary<string, SourceLocation> locations, ref AutoMapMode mode, AutoMapMode next, SourceLocation location)
+    {
+        if (locations.TryGetValue("automap", out var previous))
+        {
+            context.Warning(DiagnosticCodes.RepeatedProjectionAutoMap, "Repeated automap directive in one block - the last setting wins", location);
+            locations[$"automap previous:{mode}:{previous.Line}"] = previous;
+        }
+
+        mode = next;
+        locations["automap"] = location;
     }
 
     static Dictionary<string, SourceLocation> AddSequenceLocation(Dictionary<string, SourceLocation> locations, SourceLocation? sequence)
@@ -347,13 +357,11 @@ internal static partial class ProjectionParser
             context.Reader.TakeSignificant();
             if (child.Content == "automap")
             {
-                autoMap = AutoMapMode.Enabled;
-                directiveLocations["automap"] = child.Location;
+                RecordAutoMap(context, directiveLocations, ref autoMap, AutoMapMode.Enabled, child.Location);
             }
             else if (child.Content == "no automap")
             {
-                autoMap = AutoMapMode.Disabled;
-                directiveLocations["automap"] = child.Location;
+                RecordAutoMap(context, directiveLocations, ref autoMap, AutoMapMode.Disabled, child.Location);
             }
             else if (ParseBlock(context, child, nestedScope) is { } block)
             {
@@ -546,13 +554,11 @@ internal static partial class ProjectionParser
             context.Reader.TakeSignificant();
             if (child.Content == "automap")
             {
-                autoMap = AutoMapMode.Enabled;
-                directiveLocations["automap"] = child.Location;
+                RecordAutoMap(context, directiveLocations, ref autoMap, AutoMapMode.Enabled, child.Location);
             }
             else if (child.Content == "no automap")
             {
-                autoMap = AutoMapMode.Disabled;
-                directiveLocations["automap"] = child.Location;
+                RecordAutoMap(context, directiveLocations, ref autoMap, AutoMapMode.Disabled, child.Location);
             }
             else if (!extras(child) && ParseMapping(context, child) is { } mapping)
             {
