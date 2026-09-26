@@ -68,7 +68,20 @@ internal sealed partial class McpWorkspaces
                 workspace = McpWorkspaceTransport.Describe(workspace),
                 view,
                 attachmentManifestRevision = manifestRevision,
-                page = McpPaging.Page(workspace.Compilation.ImplementationRequirements, DescribeRequirement, arguments, workspace.Revision.ToString())
+                page = McpPaging.Page(workspace.Compilation.ImplementationRequirements, requirement => DescribeRequirement(requirement, workspace.Compilation.TypedContextDescriptors), arguments, workspace.Revision.ToString())
+            });
+        }
+
+        if (view == "typed-contexts")
+        {
+            CheckContinuation(arguments, "expectedDescriptorContractRevision", SemanticTypedContextDescriptor.ContractRevision.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            return McpJson.ToolResult(new
+            {
+                workspace = McpWorkspaceTransport.Describe(workspace),
+                view,
+                descriptorContractRevision = SemanticTypedContextDescriptor.ContractRevision,
+                available = workspace.Compilation.TypedContextDescriptors.Any(value => value.IsWrapperReady),
+                page = McpPaging.Page(workspace.Compilation.TypedContextDescriptors, DescribeDescriptor, arguments, workspace.Revision.ToString())
             });
         }
 
@@ -219,7 +232,8 @@ internal sealed partial class McpWorkspaces
                 proposal.Workspace.Revision.ToString()),
             "diagnostics" => McpPaging.Page(proposal is McpAuthoringProposal authoring ? authoring.Result.AuthoringDiagnostics : [], arguments, proposal.Workspace.Revision.ToString()),
             "executable-diagnostics" => McpPaging.Page(proposal.Workspace.Compilation.Diagnostics, arguments, proposal.Workspace.Revision.ToString()),
-            "implementation-requirements" => McpPaging.Page(proposal.Workspace.Compilation.ImplementationRequirements, DescribeRequirement, arguments, proposal.Workspace.Revision.ToString()),
+            "implementation-requirements" => McpPaging.Page(proposal.Workspace.Compilation.ImplementationRequirements, requirement => DescribeRequirement(requirement, proposal.Workspace.Compilation.TypedContextDescriptors), arguments, proposal.Workspace.Revision.ToString()),
+            "typed-contexts" => ProposalContexts(proposal, arguments),
             "dropped-comments" => McpPaging.Page(
                 WorkspaceDroppedComments.In(proposal.WritePlan).Select(comment => new
                 {
@@ -269,10 +283,73 @@ internal sealed partial class McpWorkspaces
         }
     }
 
-    static object DescribeRequirement(SemanticImplementationRequirement requirement) => new
+    static object ProposalContexts(IMcpProposal proposal, JsonElement arguments)
+    {
+        CheckContinuation(arguments, "expectedDescriptorContractRevision", SemanticTypedContextDescriptor.ContractRevision.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        return new
+        {
+            descriptorContractRevision = SemanticTypedContextDescriptor.ContractRevision,
+            available = proposal.Workspace.Compilation.TypedContextDescriptors.Any(value => value.IsWrapperReady),
+            page = McpPaging.Page(proposal.Workspace.Compilation.TypedContextDescriptors, DescribeDescriptor, arguments, proposal.Workspace.Revision.ToString())
+        };
+    }
+
+    static object DescribeDescriptor(SemanticTypedContextDescriptor descriptor) => new
+    {
+        descriptor.RequirementId,
+        role = descriptor.Role.ToString(),
+        descriptor.ContextVersion,
+        modelRevision = descriptor.ModelRevision?.ToString(),
+        descriptor.IsWrapperReady,
+        types = descriptor.Types.Select(type => new
+        {
+            id = type.Id.ToString(),
+            type.Name,
+            kind = type.Kind.ToString(),
+            primitive = type.Primitive.ToString(),
+            properties = type.Properties.Select(property => new { property.Name, id = property.Id.ToString(), type = DescribeModelType(property.Type) })
+        }),
+        operationId = descriptor.OperationId?.ToString(),
+        members = descriptor.Members.Select(member => new
+        {
+            member.Name,
+            type = new
+            {
+                member.Type.Kind,
+                modelType = DescribeModelType(member.Type.ModelType),
+                shape = member.Type.Shape?.ToString(),
+                member.Type.RuntimeToken,
+                properties = member.Type.Properties.Select(property => new
+                {
+                    property.Name,
+                    id = property.Id.ToString(),
+                    type = DescribeModelType(property.Type)
+                })
+            },
+            member.IsNullable,
+            member.IsDerived,
+            source = new { member.Source.Kind, semanticId = member.Source.SemanticId?.ToString(), member.Source.Path, member.Source.ConstantValue, eventRevision = member.Source.EventRevision?.Value }
+        })
+    };
+
+    static object? DescribeModelType(SemanticTypeReference? type) => type is null ? null : new
+    {
+        kind = type.Kind.ToString(),
+        primitive = type.Primitive.ToString(),
+        target = type.Kind == SemanticTypeReferenceKind.Primitive ? null : type.Target.ToString(),
+        type.IsCollection,
+        type.IsOptional
+    };
+
+    static object DescribeRequirement(SemanticImplementationRequirement requirement, ImmutableArray<SemanticTypedContextDescriptor> descriptors) => new
     {
         role = requirement.Role.ToString(),
         requirement.RequirementId,
+        typedContext = new
+        {
+            count = descriptors.Count(value => value.RequirementId == requirement.RequirementId),
+            operationIds = descriptors.Where(value => value.RequirementId == requirement.RequirementId).Select(value => value.OperationId?.ToString())
+        },
         requirement.ContextVersion,
         requirement.ResultVersion,
         requirement.RequiredCapability,

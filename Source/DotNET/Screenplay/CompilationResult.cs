@@ -20,10 +20,17 @@ public record CompilationResult<TResult>(TResult? Value, IEnumerable<Diagnostic>
     /// </summary>
     public ImmutableArray<SemanticImplementationRequirement> ImplementationRequirements { get; init; } = [];
 
+    /// <summary>Ordered typed context sidecars; they are not canonical executable-model bytes.</summary>
+    public ImmutableArray<SemanticTypedContextDescriptor> TypedContextDescriptors { get; init; } = [];
+
     /// <summary>
     /// Gets a value indicating whether the compilation succeeded without errors.
     /// </summary>
     public bool Success => Value is not null && !Diagnostics.Any(_ => _.Severity == DiagnosticSeverity.Error);
+
+    /// <summary>Finds all contexts for one implementation requirement (possibly several policy use sites), including contexts that are not wrapper-ready.</summary>
+    public ImmutableArray<SemanticTypedContextDescriptor> ContextsFor(string requirementId) =>
+        [.. TypedContextDescriptors.Where(value => value.RequirementId == requirementId)];
 
     /// <summary>
     /// Creates a failed <see cref="CompilationResult{TResult}"/> from a set of diagnostics.

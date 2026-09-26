@@ -22,9 +22,10 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         try
         {
             var application = context.BindApplication();
+            var descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, !context.HasErrors);
             if (context.HasErrors)
             {
-                return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with { ImplementationRequirements = context.ImplementationRequirements };
+                return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with { ImplementationRequirements = context.ImplementationRequirements, TypedContextDescriptors = descriptors };
             }
 
             var languageVersion = LanguageVersion.V1;
@@ -73,7 +74,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
             var sourceMap = SemanticSourceMap.Create(context.SourceMapEntries, compiledDocuments.Documents);
             var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap);
-            return new CompilationResult<SemanticCompilation>(compilation, context.Diagnostics) { ImplementationRequirements = context.ImplementationRequirements };
+            return new CompilationResult<SemanticCompilation>(compilation, context.Diagnostics)
+            {
+                ImplementationRequirements = context.ImplementationRequirements,
+                TypedContextDescriptors = [.. descriptors.Select(value => value with { ModelRevision = model.Revision })]
+            };
         }
         catch (InvalidSemanticContract exception)
         {

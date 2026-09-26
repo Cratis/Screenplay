@@ -43,5 +43,13 @@
                           Link="Golden/full-identity-catalog-v1.json"
                           WithCulture="false"
                           LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-identity-catalog-v1.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/typed-contexts-v1.json"
+                          Link="Golden/typed-contexts-v1.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.typed-contexts-v1.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/unbound-handler-context-v1.json"
+                          Link="Golden/unbound-handler-context-v1.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.unbound-handler-context-v1.json" />
     </ItemGroup>
 </Project>

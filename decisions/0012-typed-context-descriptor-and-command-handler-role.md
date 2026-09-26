@@ -64,6 +64,10 @@ Out of scope: wrapper generation in any language (owned by providers, Stage#151 
 
 Editors and renderers get one source of truth for what a body can see, and #84's option 1 becomes possible without Screenplay learning C#. Completion for inline code becomes possible in hosts. Query performers and reaction effects are explicitly sequenced behind other records, so they will not ship first.
 
+## Status notes
+
+**2026-09-25 — partially implemented, not verified. Shipped in v4.41.0.** Revision-1 typed context descriptors are published as compilation/MCP sidecars for bound reducer, rule and policy requirements and resolvable but unbound command handlers. Command-handler binding and provider-generated wrappers remain pending. Six shape choices were decided under the maintainer's delegation: sidecar (no canonical ESM byte changes), portable type tokens, policy descriptors per use site, derived booleans but no accessor methods as data, context-only unbound handler descriptors, and an independently versioned descriptor contract without changing attachment manifest semantics.
+
 ## Related issues
 
 Screenplay: [#139](https://github.com/Cratis/Screenplay/issues/139), [#84](https://github.com/Cratis/Screenplay/issues/84), [#65](https://github.com/Cratis/Screenplay/issues/65), [#252](https://github.com/Cratis/Screenplay/pull/252). Stage: [#151](https://github.com/Cratis/Stage/issues/151), [#119](https://github.com/Cratis/Stage/issues/119).

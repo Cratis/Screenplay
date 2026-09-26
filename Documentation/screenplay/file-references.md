@@ -26,6 +26,8 @@ The declarations that carry it are `concept`, `type`, `event`, `readmodel`, `pro
 
 One keyword covers both because the construct already decides which is meant. A second keyword would carry no information a reader or a tool does not already have from the node it is reading, and would be one more word to learn.
 
+A file-backed implementation uses the same typed context descriptor as its inline counterpart. The descriptor is derived from the declared command, concept, policy use site or reducer transition, not from the file path or its code. Unresolved file content can still have a descriptor when its model shape resolves; this does not mean the attachment can execute. Command handlers remain unbound even when their context is described. See [Contexts](context.md#typed-context-sidecars).
+
 ## A worked example
 
 ```screenplay
