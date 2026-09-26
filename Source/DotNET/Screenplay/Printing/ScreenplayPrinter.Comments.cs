@@ -58,7 +58,17 @@ public sealed partial class ScreenplayPrinter
             {
                 position = fitsSlotLine;
             }
-            else if (comment.Placement == SourceCommentPlacement.Trailing && owner.Location.Line > 0 && comment.Line > owner.Location.Line)
+            else if (comment.Placement == SourceCommentPlacement.Trailing &&
+                owner.DirectiveLocations.Any(entry => entry.Value.Line == comment.AnchorLine &&
+                    entry.Key.StartsWith("automap previous:", StringComparison.Ordinal)) &&
+                owner.DirectiveLocations.TryGetValue("automap", out var autoMapLocation) &&
+                directiveLines?.TryGetValue(autoMapLocation.Line, out var printedAutoMapLine) == true)
+            {
+                position = printedAutoMapLine;
+            }
+            else if (comment.Placement == SourceCommentPlacement.Trailing &&
+                !owner.DirectiveLocations.Values.Any(location => location.Line == comment.AnchorLine) &&
+                owner.Location.Line > 0 && comment.Line > owner.Location.Line)
             {
                 position = Math.Min(span.Last, span.First + comment.Line - owner.Location.Line);
             }
@@ -72,16 +82,31 @@ public sealed partial class ScreenplayPrinter
 
             if (comment.Placement == SourceCommentPlacement.Trailing)
             {
-                if (!trailing.TryGetValue(position, out var side))
-                {
-                    trailing[position] = side = [];
-                }
-
-                // A removed directive's comment can land on its owner's already-commented line.
-                // Keep the comment belonging to that line inline; move the others to separate lines.
                 var relocated = comment.AnchorLine != owner.Location.Line &&
                     directiveLines?.ContainsKey(comment.AnchorLine) != true;
-                side.Add((comment.Text, relocated));
+                var next = position + 1;
+                if (relocated && next < lines.Length &&
+                    lines[next].Length - lines[next].TrimStart().Length > indent)
+                {
+                    // A comment on an omitted directive belongs to this owner's body, not the
+                    // previous line or an unrelated body line chosen by its old source offset.
+                    if (!before.TryGetValue(next, out var leading))
+                    {
+                        before[next] = leading = [];
+                    }
+
+                    leading.Add(lines[next][..(lines[next].Length - lines[next].TrimStart().Length)] + comment.Text);
+                }
+                else
+                {
+                    if (!trailing.TryGetValue(position, out var side))
+                    {
+                        trailing[position] = side = [];
+                    }
+
+                    // Keep a comment on the printed directive inline; relocate the others.
+                    side.Add((comment.Text, relocated));
+                }
             }
             else
             {

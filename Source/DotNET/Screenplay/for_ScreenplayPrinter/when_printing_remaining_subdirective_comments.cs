@@ -219,6 +219,27 @@ public class when_printing_remaining_subdirective_comments : given.a_printer
     }
 
     [Fact]
+    void should_move_omitted_severity_comment_into_the_requirement_body()
+    {
+        const string source = """
+            module Shop
+              feature Orders
+                slice StateChange Order
+                  command Place
+                    id String
+                    validate
+                      require id == "a" // requirement note
+                        severity error // default severity note
+                        message "Denied"
+            """;
+        var roundtrip = RoundTrip(source);
+        roundtrip.Original!.Diagnostics.ShouldBeEmpty();
+        roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
+        roundtrip.Printed.ShouldContain("require id == \"a\" // requirement note\n            // default severity note\n            message \"Denied\"");
+        roundtrip.PrintedAgain.ShouldEqual(roundtrip.Printed);
+    }
+
+    [Fact]
     void should_keep_separate_trailing_comments_when_omitting_default_severity()
     {
         const string source = """

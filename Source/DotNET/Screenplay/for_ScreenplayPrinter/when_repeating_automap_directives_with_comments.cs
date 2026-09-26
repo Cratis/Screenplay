@@ -1,8 +1,12 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Text;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Semantics;
+using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
+using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.for_ScreenplayPrinter;
 
@@ -49,6 +53,56 @@ public class when_repeating_automap_directives_with_comments : given.a_printer
             printed.ShouldNotContain($"no automap // {scope} first // {scope} second");
         }
 
+        _printer.Print(reparsed.Value!).ShouldEqual(printed);
+    }
+
+    [Fact]
+    void should_anchor_removed_automap_comments_to_the_projection_body()
+    {
+        const string source = """
+            projection Orders => OrderList
+              automap // projection first
+              no automap // projection second
+              from OrderPlaced
+            """;
+        var original = _compiler.CompileProjection(source);
+        var printed = _printer.Print(original.Value! with { AutoMap = AutoMapMode.Inherit });
+        var reparsed = _compiler.CompileProjection(printed);
+
+        printed.ShouldContain("  // projection first\n  // projection second\n  from OrderPlaced");
+        printed.ShouldNotContain("from OrderPlaced // projection first");
+        _printer.Print(reparsed.Value!).ShouldEqual(printed);
+    }
+
+    [Fact]
+    void should_keep_repeated_automap_lines_and_comments_after_an_unrelated_workspace_edit()
+    {
+        const string source = """
+            module Shop
+              feature Orders
+                slice StateView OrderList
+                  projection Orders => OrderList
+                    automap // projection first
+                    no automap // projection second
+                    from OrderPlaced
+            """;
+        var document = WorkspaceDocument.Create("orders", PortablePlayPath.Parse("Orders.play"), Encoding.UTF8.GetBytes(source));
+        var workspace = ScreenplayWorkspace.Create("Shop", [document], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Shop")));
+        var rootEntry = WorkspaceSyntaxIndex.Create(workspace).Entries.Single(entry => entry.Parent is null);
+        var result = workspace.ProposeAuthoring(new()
+        {
+            ExpectedRevision = workspace.Revision,
+            ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
+            Validation = WorkspaceAuthoringValidation.Authoring,
+            Formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments,
+            Operations = [new AddWorkspaceNode(rootEntry.Handle, rootEntry.Node, "imports", new ImportSyntax("External.Unused", SourceLocation.Start))]
+        });
+
+        result.Accepted.ShouldBeTrue();
+        var printed = result.WritePlan!.Entries.Single().After!.Text;
+        printed.ShouldContain("projection Orders => OrderList");
+        printed.ShouldContain("automap // projection first\n        no automap // projection second");
+        var reparsed = _compiler.Compile(printed);
         _printer.Print(reparsed.Value!).ShouldEqual(printed);
     }
 
