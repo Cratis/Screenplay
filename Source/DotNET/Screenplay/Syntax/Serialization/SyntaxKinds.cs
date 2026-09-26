@@ -72,6 +72,7 @@ internal static class SyntaxKinds
         typeof(FeatureSyntax),
         typeof(FileConstraintSyntax),
         typeof(FileReferenceSyntax),
+        typeof(FitsSlotSyntax),
         typeof(FormFieldSyntax),
         typeof(FormPopulateFromItemSyntax),
         typeof(FormPopulateViaQuerySyntax),

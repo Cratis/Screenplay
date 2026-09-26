@@ -72,6 +72,12 @@ public record ScreenTemplateSyntax(
     /// Gets the named behaviors attached to the screen template with <c>uses</c>.
     /// </summary>
     public IEnumerable<UsesBehaviorSyntax> UsedBehaviors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the parsed <c>fits slot</c> directive, including its source position and comments.
+    /// The <see cref="FitsSlot"/> constructor argument remains the template's slot name.
+    /// </summary>
+    public FitsSlotSyntax? FitsSlotDirective { get; init; }
 }
 
 /// <summary>

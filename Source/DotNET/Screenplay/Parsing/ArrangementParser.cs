@@ -35,7 +35,7 @@ internal static partial class ArrangementParser
         var behaviors = new List<BehaviorSyntax>();
         var usedBehaviors = new List<UsesBehaviorSyntax>();
         ArrangementSyntax? arrangement = null;
-        string? fitsSlot = null;
+        FitsSlotSyntax? fitsSlot = null;
 
         while (context.TryPeekChild(header.Indent, out var child))
         {
@@ -70,7 +70,7 @@ internal static partial class ArrangementParser
         return new(slots, arrangement, fitsSlot, behaviors, usedBehaviors);
     }
 
-    static void ParseFitsSlot(ParserContext context, SourceLine line, string keyword, bool allowsFitsSlot, ref string? fitsSlot)
+    static void ParseFitsSlot(ParserContext context, SourceLine line, string keyword, bool allowsFitsSlot, ref FitsSlotSyntax? fitsSlot)
     {
         if (!allowsFitsSlot)
         {
@@ -94,7 +94,7 @@ internal static partial class ArrangementParser
             return;
         }
 
-        fitsSlot = match.Groups[1].Value;
+        fitsSlot = new(match.Groups[1].Value, line.Location);
     }
 
     static void AddSlot(ParserContext context, SourceLine line, List<SlotSyntax> slots)
@@ -435,11 +435,11 @@ internal static partial class ArrangementParser
     /// </summary>
     /// <param name="Slots">The slots declared, in declaration order.</param>
     /// <param name="Arrangement">The <c>arrangement</c> block, or <c>null</c> when the body only names slots.</param>
-    /// <param name="FitsSlot">The slot named by <c>fits slot</c>, or <c>null</c> when the body does not say.</param>
+    /// <param name="FitsSlot">The parsed <c>fits slot</c> directive, or <c>null</c> when the body does not say.</param>
     internal sealed record Body(
         IReadOnlyList<SlotSyntax> Slots,
         ArrangementSyntax? Arrangement,
-        string? FitsSlot,
+        FitsSlotSyntax? FitsSlot,
         IReadOnlyList<BehaviorSyntax> Behaviors,
         IReadOnlyList<UsesBehaviorSyntax> UsedBehaviors);
 }

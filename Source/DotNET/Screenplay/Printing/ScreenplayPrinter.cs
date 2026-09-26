@@ -440,7 +440,7 @@ public sealed partial class ScreenplayPrinter :
         {
             if (contribution.Navigate is not null)
             {
-                writer.Line(WriteScreenNavigate(contribution.Navigate));
+                writer.Line(WriteScreenNavigate(contribution.Navigate), contribution.Navigate);
             }
 
             if (contribution.Label is not null)
@@ -529,7 +529,14 @@ public sealed partial class ScreenplayPrinter :
         {
             if (template.FitsSlot is not null)
             {
-                writer.Line($"fits slot {template.FitsSlot}");
+                if (template.FitsSlotDirective is not null)
+                {
+                    writer.Line($"fits slot {template.FitsSlot}", template.FitsSlotDirective);
+                }
+                else
+                {
+                    writer.Line($"fits slot {template.FitsSlot}");
+                }
                 writer.Blank();
             }
 
@@ -801,7 +808,7 @@ public sealed partial class ScreenplayPrinter :
     {
         if (file is not null)
         {
-            writer.Line($"file {file.Path}");
+            writer.Line($"file {file.Path}", file);
         }
     }
 }

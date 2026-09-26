@@ -231,6 +231,11 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
 
+        if (syntax.FitsSlotDirective is not null)
+        {
+            VisitFitsSlot(syntax.FitsSlotDirective);
+        }
+
         foreach (var slot in syntax.Slots)
         {
             VisitSlot(slot);
@@ -264,6 +269,12 @@ public abstract partial class ScreenplaySyntaxWalker
 
         VisitAttachments(syntax.Behaviors, syntax.UsedBehaviors);
     }
+
+    /// <summary>
+    /// Visits a <see cref="FitsSlotSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="FitsSlotSyntax"/> to visit.</param>
+    public virtual void VisitFitsSlot(FitsSlotSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="SlotSyntax"/> node.
