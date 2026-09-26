@@ -63,7 +63,9 @@ a file does:
   `populate`, `field`, `on submit`, and inline `on` behaviors inside a form, as well as
   comments above a form. Comments within screens and layouts stay with their anchored
   directives or slots. Template slot and behavior comments also stay with their nodes;
-  a comment before `fits slot` has no directive node and prints above the template.
+  comments before or on a template's `fits slot` line stay with that directive.
+  Comments on declaration and screen file references and before contribution navigation
+  also stay with their lines.
   Inside a form, the printer always writes `populate`, then fields, then `on submit`,
   then attached behaviors: a comment moves with the member it annotates when that
   canonical order differs from the authored order. The printer uses canonical two-space

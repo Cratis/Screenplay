@@ -18,7 +18,7 @@ public partial class ScreenplayPrinter
         {
             if (screen.File is not null)
             {
-                writer.Line($"file {screen.File.Path}");
+                writer.Line($"file {screen.File.Path}", screen.File);
             }
 
             foreach (var directive in screen.Directives)

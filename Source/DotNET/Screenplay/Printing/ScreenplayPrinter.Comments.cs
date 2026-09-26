@@ -40,7 +40,12 @@ public sealed partial class ScreenplayPrinter
             }
 
             var position = comment.Placement == SourceCommentPlacement.End ? span.Last : span.First;
-            if (comment.Placement == SourceCommentPlacement.Trailing && owner.Location.Line > 0 && comment.Line > owner.Location.Line)
+            if (owner is ScreenTemplateSyntax { FitsSlotLocation: { } fitsSlotLocation } template &&
+                comment.AnchorLine == fitsSlotLocation.Line && writer.FitsSlotAnchors.TryGetValue(template, out var fitsSlotLine))
+            {
+                position = fitsSlotLine;
+            }
+            else if (comment.Placement == SourceCommentPlacement.Trailing && owner.Location.Line > 0 && comment.Line > owner.Location.Line)
             {
                 position = Math.Min(span.Last, span.First + comment.Line - owner.Location.Line);
             }

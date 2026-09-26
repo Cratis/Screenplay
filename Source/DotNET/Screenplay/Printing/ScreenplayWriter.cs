@@ -20,11 +20,15 @@ internal sealed class ScreenplayWriter
 
     readonly StringBuilder _builder = new();
     readonly Dictionary<SyntaxNode, (int First, int Last)> _anchors = new(ReferenceEqualityComparer.Instance);
+    readonly Dictionary<ScreenTemplateSyntax, int> _fitsSlotAnchors = new(ReferenceEqualityComparer.Instance);
     int _depth;
     int _line;
 
     /// <summary>Gets the lines written for each syntax owner, keyed by reference identity.</summary>
     internal IReadOnlyDictionary<SyntaxNode, (int First, int Last)> Anchors => _anchors;
+
+    /// <summary>Gets the printed fits-slot line for each template, keyed by reference identity.</summary>
+    internal IReadOnlyDictionary<ScreenTemplateSyntax, int> FitsSlotAnchors => _fitsSlotAnchors;
 
     /// <summary>
     /// Writes a line of text at the current indentation depth.
@@ -89,6 +93,13 @@ internal sealed class ScreenplayWriter
         var first = _line;
         Line(text);
         _anchors[node] = (first, first);
+    }
+
+    /// <summary>Writes a template's fits-slot directive and records its line for source comments.</summary>
+    internal void FitsSlotLine(string text, ScreenTemplateSyntax template)
+    {
+        _fitsSlotAnchors[template] = _line;
+        Line(text);
     }
 
     /// <summary>Tracks a syntax owner's printed extent.</summary>

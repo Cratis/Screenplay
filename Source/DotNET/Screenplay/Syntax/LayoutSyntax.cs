@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Syntax;
 
@@ -72,6 +73,12 @@ public record ScreenTemplateSyntax(
     /// Gets the named behaviors attached to the screen template with <c>uses</c>.
     /// </summary>
     public IEnumerable<UsesBehaviorSyntax> UsedBehaviors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the source position of the parsed <c>fits slot</c> directive. The slot name is <see cref="FitsSlot"/>.
+    /// </summary>
+    [SourceSpanMetadata]
+    public SourceLocation? FitsSlotLocation { get; init; }
 }
 
 /// <summary>

@@ -31,4 +31,9 @@ public sealed record SourceComment(int Line, string Anchor, string Text, SourceC
     /// Gets the source line that introduces the syntax owner of this comment.
     /// </summary>
     public string OwnerAnchor { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Gets the source line of the significant directive this comment follows or precedes.
+    /// </summary>
+    public int AnchorLine { get; init; }
 }
