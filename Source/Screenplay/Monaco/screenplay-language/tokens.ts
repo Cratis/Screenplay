@@ -43,6 +43,7 @@ export const commonTokenRules: MonarchTokenRules = [
     [/"(?:[^"\\]|\\.)*"/, 'string'],
     [/"(?:[^"\\]|\\.)*$/, 'string.invalid'],
     [/\d+(?:ms|s|m|h|d)\b/, 'number'],
+    [/-?\d+(?:\.\d+)?[eE][+-]?\d+/, 'number.float'],
     [/-?\d+\.\d+/, 'number.float'],
     [/-?\d+/, 'number'],
     [/=>|==|!=|>=|<=|[><=:?]/, 'operator'],

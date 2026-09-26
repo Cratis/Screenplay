@@ -78,7 +78,7 @@ internal static class SpecificationOutcomeConsistencyValidator
                 continue;
             }
 
-            if (ProducedValue(mappings[0].Source, target.Type, when, command, declarations, out var actualValue) && !Equals(expectedValue, actualValue))
+            if (ProducedValue(mappings[0].Source, target.Type, when, command, declarations, out var actualValue) && !SpecificationValueConsistencyValidator.Equal(expectedValue, actualValue))
             {
                 return true;
             }
@@ -149,8 +149,8 @@ internal static class SpecificationOutcomeConsistencyValidator
 
         return comparison.Operator switch
         {
-            ComparisonOperator.Equal => Equals(actual, expected),
-            ComparisonOperator.NotEqual => !Equals(actual, expected),
+            ComparisonOperator.Equal => SpecificationValueConsistencyValidator.Equal(actual, expected),
+            ComparisonOperator.NotEqual => !SpecificationValueConsistencyValidator.Equal(actual, expected),
             _ => null
         };
     }

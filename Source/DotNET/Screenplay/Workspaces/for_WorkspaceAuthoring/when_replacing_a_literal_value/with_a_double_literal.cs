@@ -10,6 +10,6 @@ public class with_a_double_literal : given.a_document_with_literal_values
 {
     void Because() => Result = Propose(ReplaceSource("quantity", new LiteralExpressionSyntax(3.5d, SourceLocation.Start)));
 
-    [Fact] void should_reject_a_typed_number_that_cannot_round_trip_through_text() => Result.Accepted.ShouldBeFalse();
-    [Fact] void should_not_expose_a_partial_candidate() => Result.Workspace.ShouldBeNull();
+    [Fact] void should_accept_an_existing_double_edit_without_changing_its_numeric_value() => Result.Accepted.ShouldBeTrue();
+    [Fact] void should_rewrite_only_the_literal() => Candidate().ShouldEqual(Bytes(OrderSource.Replace("quantity =   2", "quantity =   3.5", StringComparison.Ordinal)));
 }

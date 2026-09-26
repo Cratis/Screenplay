@@ -43,11 +43,11 @@ Supported literal types:
 - **Boolean**: `true`, `false`
 - **String**: `"text"` (double quotes)
 - **Number**: `42`, `3.14`, `1e-3`, `2.5E+4`
-
-Whole numbers use a 64-bit integer where possible, then Decimal. Fractional and exponent values use Decimal when it can represent them exactly, otherwise a finite Double. Integers above `9007199254740992` remain exact within the supported integer and Decimal ranges. Printing normalizes spelling (`1e-3` becomes `0.001`) without changing the value.
-
-For typed workspace edits, use Decimal when a value is exactly representable. A Double that would reparse as a Decimal is rejected rather than silently changing the requested numeric type.
 - **Null**: `null`
+
+Whole numbers use a 64-bit integer where possible, then Decimal. Fractional and exponent values use Decimal when it can represent them exactly, otherwise a finite Double. Integers above `9007199254740992` remain exact within the supported integer and Decimal ranges. Printing normalizes spelling (`1e-3` becomes `0.001`) without changing the value. Decimal scale is normalized, so `2.50` is stored as `2.5`; numbers with more precision than Decimal can hold keep their Double value, as they did before.
+
+For typed workspace edits, ordinary JSON numbers use the same kinds as source literals. Explicit numeric envelopes remain available: use Int64 for whole numbers in its range and Decimal for exact fractional values. Existing Double edits are accepted when printing retains their numeric and executable value; inexact Double values print with enough digits to reparse as Double without changing canonical ESM bytes.
 
 ## Clearing a Value
 

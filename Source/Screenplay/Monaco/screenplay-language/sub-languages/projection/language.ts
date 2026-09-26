@@ -150,7 +150,8 @@ export const monarchLanguage: languages.IMonarchLanguage = {
             ],
 
             // Numbers
-            [/\d*\.\d+([eE][-+]?\d+)?/, 'number.float'],
+            [/-?\d+(?:\.\d+)?[eE][+-]?\d+/, 'number.float'],
+            [/\d*\.\d+/, 'number.float'],
             [/0[xX][0-9a-fA-F]+/, 'number.hex'],
             [/\d+/, 'number'],
 

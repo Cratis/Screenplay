@@ -82,7 +82,7 @@
                     "name": "constant.numeric.duration.screenplay"
                 },
                 {
-                    "match": "-?\\b\\d+(?:\\.\\d+)?\\b",
+                    "match": "-?\\b\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b",
                     "name": "constant.numeric.screenplay"
                 },
                 {

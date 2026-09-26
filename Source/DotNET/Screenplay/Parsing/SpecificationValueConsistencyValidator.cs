@@ -61,6 +61,7 @@ internal static class SpecificationValueConsistencyValidator
             declarations.Compatible(type with { IsCollection = false }, type with { IsCollection = false }) == true)
         {
             var items = new List<string>();
+            var knownItems = new List<object?>();
             foreach (var item in list.Items)
             {
                 if (!TryValue(item, type with { IsCollection = false, IsOptional = false }, declarations, out var known))
@@ -69,15 +70,16 @@ internal static class SpecificationValueConsistencyValidator
                 }
 
                 items.Add(Canonical(known));
+                knownItems.Add(known);
             }
 
-            value = new StructuredKnownValue($"[{string.Join(',', items)}]");
+            value = new StructuredKnownValue($"[{string.Join(',', items)}]", knownItems);
             return true;
         }
 
         if (type?.IsCollection == false && expression is ObjectExpressionSyntax obj && declarations.TypeProperties(type.Name) is { } properties)
         {
-            var members = new List<(string Name, string Value)>();
+            var members = new List<(string Name, string Value, object? Known)>();
             foreach (var member in obj.Members)
             {
                 var property = declarations.Property(properties, member.Name, out _);
@@ -86,10 +88,12 @@ internal static class SpecificationValueConsistencyValidator
                     return false;
                 }
 
-                members.Add((member.Name, Canonical(known)));
+                members.Add((member.Name, Canonical(known), known));
             }
 
-            value = new StructuredKnownValue($"{{{string.Join(',', members.OrderBy(member => member.Name, StringComparer.Ordinal).Select(member => $"{JsonSerializer.Serialize(member.Name)}:{member.Value}"))}}}");
+            value = new StructuredKnownValue(
+                $"{{{string.Join(',', members.OrderBy(member => member.Name, StringComparer.Ordinal).Select(member => $"{JsonSerializer.Serialize(member.Name)}:{member.Value}"))}}}",
+                members.ToDictionary(member => member.Name, member => member.Known, StringComparer.Ordinal));
             return true;
         }
 
@@ -111,6 +115,27 @@ internal static class SpecificationValueConsistencyValidator
     internal static void ValidateStructuredMappings(IEnumerable<PropertyMappingSyntax> assignments, IEnumerable<PropertySyntax>? properties, ConsistencyDeclarations declarations, ParserContext context)
     {
         ValidateValues(assignments.Where(assignment => assignment.Source is ObjectExpressionSyntax or ListExpressionSyntax), properties, declarations, context);
+    }
+
+    internal static bool Equal(object? left, object? right)
+    {
+        if (left is StructuredKnownValue first && right is StructuredKnownValue second)
+        {
+            return Equal(first.Values, second.Values);
+        }
+
+        if (left is IReadOnlyList<object?> firstList && right is IReadOnlyList<object?> secondList)
+        {
+            return firstList.Count == secondList.Count && firstList.Zip(secondList).All(pair => Equal(pair.First, pair.Second));
+        }
+
+        if (left is IReadOnlyDictionary<string, object?> firstObject && right is IReadOnlyDictionary<string, object?> secondObject)
+        {
+            return firstObject.Count == secondObject.Count && firstObject.All(property =>
+                secondObject.TryGetValue(property.Key, out var other) && Equal(property.Value, other));
+        }
+
+        return NumericLiteral.Equal(left, right);
     }
 
     static string Canonical(object? value) => value is StructuredKnownValue structured ? structured.Canonical : JsonSerializer.Serialize(value);
@@ -230,5 +255,5 @@ internal static class SpecificationValueConsistencyValidator
         ? value[(enumeration.Length + 1)..]
         : value;
 
-    sealed record StructuredKnownValue(string Canonical);
+    sealed record StructuredKnownValue(string Canonical, object Values);
 }

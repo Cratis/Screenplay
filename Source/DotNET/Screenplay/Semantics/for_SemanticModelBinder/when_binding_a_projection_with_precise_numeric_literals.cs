@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Printing;
 using Cratis.Screenplay.Semantics.Serialization;
 
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder;
@@ -24,6 +25,21 @@ public class when_binding_a_projection_with_precise_numeric_literals : given.a_s
         number.Value.ShouldEqual(decimal.Parse(expected, System.Globalization.CultureInfo.InvariantCulture));
         var serialized = System.Text.Encoding.UTF8.GetString(SemanticModelSerializer.Serialize(result.Value.Model));
         serialized.ShouldContain($"\"value\":{expected}");
+    }
+
+    [Theory]
+    [InlineData("0.123456789012345678901234567890")]
+    [InlineData("18446744073709551616.000000000000000000000000000001")]
+    public void should_keep_fallback_double_canonical_bytes_after_printing(string literal)
+    {
+        var original = Source(literal);
+        var syntax = new ScreenplayCompiler().Parse(original).Value!;
+        var printed = new ScreenplayPrinter().Print(syntax);
+        var before = Bind(original);
+        var after = Bind(printed);
+        Assert.True(before.Success, string.Join("; ", before.Diagnostics.Select(diagnostic => diagnostic.Message)));
+        Assert.True(after.Success, string.Join("; ", after.Diagnostics.Select(diagnostic => diagnostic.Message)));
+        SemanticModelSerializer.Serialize(after.Value!.Model).ShouldEqual(SemanticModelSerializer.Serialize(before.Value!.Model));
     }
 
     [Theory]

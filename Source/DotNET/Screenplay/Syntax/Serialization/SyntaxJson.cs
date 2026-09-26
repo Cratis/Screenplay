@@ -12,10 +12,11 @@ namespace Cratis.Screenplay.Syntax.Serialization;
 /// <remarks>
 /// The <c>kind</c> discriminator is the concrete syntax type name. Structural members use camelCase;
 /// a CLR member named <c>Kind</c> uses <c>syntaxKind</c> to avoid colliding with the discriminator.
-/// Source metadata and computed getters are excluded. Ordinary JSON numbers become finite
-/// <see cref="double"/> literals; parsed source literals use <see cref="long"/> or <see cref="decimal"/>
-/// when representable exactly. Other supported numeric CLR literals use a
-/// <c>{ "literalType": "Decimal", "value": "5.5" }</c> value object to preserve their type and precision.
+/// Source metadata and computed getters are excluded. Ordinary JSON numbers follow source literal
+/// parsing: <see cref="long"/> when possible, otherwise exact <see cref="decimal"/>, otherwise finite
+/// <see cref="double"/>. Explicit numeric CLR types use a
+/// <c>{ "literalType": "Decimal", "value": "5.5" }</c> value object to preserve type and precision;
+/// Doubles also use an envelope when a plain JSON number would decode as Int64 or Decimal.
 /// Optional null collections are represented as empty arrays.
 /// </remarks>
 public static class SyntaxJson
@@ -47,7 +48,7 @@ public static class SyntaxJson
     /// <returns>Whether the trees are equal, treating optional null and empty collections alike.</returns>
     /// <exception cref="InvalidSyntaxJson">Either tree contains an unsupported structural value.</exception>
     public static bool StructurallyEqual(SyntaxNode left, SyntaxNode right) =>
-        string.Equals(Serialize(left).GetRawText(), Serialize(right).GetRawText(), StringComparison.Ordinal);
+        Equal(Serialize(left), Serialize(right));
 
     internal static void CheckDepth(int depth, string path)
     {
@@ -56,6 +57,43 @@ public static class SyntaxJson
             throw new InvalidSyntaxJson($"{path}: syntax nesting exceeds the supported depth of 96.");
         }
     }
+
+    static bool Equal(JsonElement left, JsonElement right)
+    {
+        if (string.Equals(left.GetRawText(), right.GetRawText(), StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        if (IsNumber(left) && IsNumber(right))
+        {
+            return NumericLiteral.CompatibleForAuthoring(SyntaxLiterals.Read(left, "$"), SyntaxLiterals.Read(right, "$"));
+        }
+
+        if (left.ValueKind != right.ValueKind)
+        {
+            return false;
+        }
+
+        if (left.ValueKind == JsonValueKind.Array)
+        {
+            var first = left.EnumerateArray().ToArray();
+            var second = right.EnumerateArray().ToArray();
+            return first.Length == second.Length && first.Zip(second).All(pair => Equal(pair.First, pair.Second));
+        }
+
+        if (left.ValueKind == JsonValueKind.Object)
+        {
+            var first = left.EnumerateObject().ToArray();
+            var second = right.EnumerateObject().ToArray();
+            return first.Length == second.Length && first.Zip(second).All(pair => pair.First.Name == pair.Second.Name && Equal(pair.First.Value, pair.Second.Value));
+        }
+
+        return false;
+    }
+
+    static bool IsNumber(JsonElement element) => element.ValueKind == JsonValueKind.Number ||
+        (element.ValueKind == JsonValueKind.Object && element.TryGetProperty("literalType", out _) && element.TryGetProperty("value", out _));
 
     static T AtBoundary<T>(Func<T> action)
     {

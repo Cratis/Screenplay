@@ -52,9 +52,12 @@ incorrect child types, invalid enums and illegal nulls are rejected.
 - Missing collections initialize empty; optional null collections normalize to
   empty arrays. Required scalar values must be supplied according to the schema.
 - Source locations, description offsets and parsed comments are server-owned, not editable data.
-- Ordinary JSON numbers decode as finite `Double` literals, matching the parser.
-  Other admitted numeric CLR literal types use typed `literalType`/`value`
-  envelopes to retain precision and type.
+- Ordinary JSON numbers use the source parser's numeric kinds: `Int64` for whole
+  numbers in range, otherwise exact `Decimal` when possible, otherwise finite
+  `Double`. Explicit `literalType`/`value` envelopes retain CLR numeric types
+  and their precision (including `Double` when its plain spelling would decode as
+  Int64 or Decimal). Legacy in-memory Double edits are accepted when their printed
+  value and executable meaning survive the round trip.
 - Inline JSON-shaped objects and lists have typed value nodes and individually
   addressable keys. Existing code blocks and raw expressions remain language
   constructs, not an escape hatch for structured data or untyped AST subtrees.

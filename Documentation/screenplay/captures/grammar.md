@@ -131,7 +131,7 @@ Literal         = BoolLiteral
 
 BoolLiteral     = "true" | "false" ;
 StringLiteral   = '"', { StringChar }, '"' ;
-NumberLiteral   = [ "-" ], Digit, { Digit }, [ ".", Digit, { Digit } ] ;
+NumberLiteral   = [ "-" ], Digit, { Digit }, [ ".", Digit, { Digit } ], [ ("e" | "E"), [ "+" | "-" ], Digit, { Digit } ] ;
 NullLiteral     = "null" ;
 
 RawExpression   = (* freeform expression captured verbatim *) ;
