@@ -132,7 +132,7 @@ internal sealed class ScreenplayWriter
         Line(text);
     }
 
-    /// <summary>Matches one in-place scalar collection edit to its authored comment anchor.</summary>
+    /// <summary>Matches in-place scalar collection edits to their authored comment anchors.</summary>
     internal void ResolveEditedCollectionAnchors()
     {
         foreach (var (owner, collections) in _printedCollections)
@@ -149,11 +149,27 @@ internal sealed class ScreenplayWriter
                     continue;
                 }
 
-                var changed = Enumerable.Range(0, printed.Count)
-                    .Where(index => authored[index].Key[..authored[index].Key.LastIndexOf(':')] !=
-                        printed[index].Key[..printed[index].Key.LastIndexOf(':')])
-                    .ToArray();
-                if (changed.Length != 1)
+                var authoredValues = authored.Select(entry => entry.Key[..entry.Key.LastIndexOf(':')]).ToArray();
+                var printedValues = printed.Select(entry => entry.Key[..entry.Key.LastIndexOf(':')]).ToArray();
+                var unmatchedAuthored = Enumerable.Range(0, printed.Count)
+                    .Where(index => authoredValues[index] != printedValues[index]).ToList();
+                var unmatchedPrinted = unmatchedAuthored.ToList();
+                var reordered = false;
+                foreach (var printedIndex in unmatchedPrinted.ToArray())
+                {
+                    var match = unmatchedAuthored.FindIndex(index => authoredValues[index] == printedValues[printedIndex]);
+                    if (match < 0)
+                    {
+                        continue;
+                    }
+
+                    // A value that survived at another index follows its value, not the old slot.
+                    reordered = true;
+                    unmatchedAuthored.RemoveAt(match);
+                    unmatchedPrinted.Remove(printedIndex);
+                }
+
+                if (reordered || unmatchedAuthored.Count == 0 || !unmatchedAuthored.SequenceEqual(unmatchedPrinted))
                 {
                     continue;
                 }
@@ -163,7 +179,7 @@ internal sealed class ScreenplayWriter
                     _directiveAnchors[owner] = lines = [];
                 }
 
-                // A changed duplicate also renumbers later occurrences of that value. Align
+                // Changed duplicates also renumber later occurrences of a value. Align
                 // every authored slot so its existing anchor cannot attach to the wrong twin.
                 for (var index = 0; index < printed.Count; index++)
                 {

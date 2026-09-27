@@ -46,8 +46,8 @@ public sealed partial class ScreenplayPrinter
                 entry.Value.Line == comment.AnchorLine) &&
                 directiveLines?.ContainsKey(comment.AnchorLine) != true)
             {
-                // An unmatched collection value has no printed line; a single in-place text edit
-                // has already been matched to its authored slot. Never attach to a new neighbor.
+                // An unmatched collection value has no printed line; in-place text edits
+                // have already been matched to their authored slots. Never attach to a new neighbor.
                 continue;
             }
 

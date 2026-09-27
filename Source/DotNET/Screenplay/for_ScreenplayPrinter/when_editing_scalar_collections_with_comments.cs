@@ -53,6 +53,27 @@ public class when_editing_scalar_collections_with_comments : given.a_printer
     }
 
     [Fact]
+    void should_keep_comments_when_editing_multiple_scalar_entries_in_place()
+    {
+        var parsed = _compiler.Parse(Source).Value!;
+        var edited = parsed with
+        {
+            Concepts = [parsed.Concepts.Single() with { Values = ["active", "waiting", "done"] }],
+            Personas = [parsed.Personas!.Single() with { Policies = ["Approve", "Manage"] }]
+        };
+
+        var printed = _printer.Print(edited);
+
+        printed.ShouldContain("active // active note");
+        printed.ShouldContain("// pending lead\n  waiting // pending note");
+        printed.ShouldContain("done // closed note");
+        printed.ShouldContain("policy Approve // view note");
+        printed.ShouldContain("policy Manage // edit note");
+        _compiler.Parse(printed).Diagnostics.ShouldBeEmpty();
+        _printer.Print(_compiler.Parse(printed).Value!).ShouldEqual(printed);
+    }
+
+    [Fact]
     void should_keep_comments_when_editing_a_role_or_split_target_in_place()
     {
         const string specification = "specification Access\n  given caller\n    role \"Editor\" // editor note\n    // viewer lead\n    role \"Viewer\" // viewer note\n  when Submit\n";
@@ -104,6 +125,23 @@ public class when_editing_scalar_collections_with_comments : given.a_printer
         printed.ShouldNotContain("closed // active note");
         printed.ShouldNotContain("pending lead");
         printed.ShouldNotContain("pending note");
+    }
+
+    [Fact]
+    void should_not_attach_comments_to_renamed_slots_when_other_values_reorder()
+    {
+        var parsed = _compiler.Parse(Source).Value!;
+        var concept = parsed.Concepts.Single();
+        var edited = parsed with { Concepts = [concept with { Values = ["closed", "waiting", "active"] }] };
+
+        var printed = _printer.Print(edited);
+
+        printed.ShouldContain("closed // closed note");
+        printed.ShouldContain("active // active note");
+        printed.ShouldNotContain("waiting // pending note");
+        printed.ShouldNotContain("pending lead");
+        printed.ShouldNotContain("pending note");
+        _printer.Print(_compiler.Parse(printed).Value!).ShouldEqual(printed);
     }
 
     [Fact]
@@ -186,6 +224,24 @@ public class when_editing_scalar_collections_with_comments : given.a_printer
     }
 
     [Fact]
+    void should_keep_duplicate_comments_when_editing_multiple_occurrences_in_place()
+    {
+        const string source = "concept Status : Enum\n  open // first note\n  open // second note\n  closed // third note\n";
+        var parsed = _compiler.Parse(source).Value!;
+        var edited = parsed with
+        {
+            Concepts = [parsed.Concepts.Single() with { Values = ["waiting", "done", "closed"] }]
+        };
+
+        var printed = _printer.Print(edited);
+
+        printed.ShouldContain("waiting // first note");
+        printed.ShouldContain("done // second note");
+        printed.ShouldContain("closed // third note");
+        _printer.Print(_compiler.Parse(printed).Value!).ShouldEqual(printed);
+    }
+
+    [Fact]
     void should_keep_separate_comments_for_duplicate_enum_values()
     {
         const string source = """
@@ -223,6 +279,18 @@ public class when_editing_scalar_collections_with_comments : given.a_printer
         edited.Accepted.ShouldBeTrue();
         edited.WritePlan!.Entries.Single().After!.Text.ShouldContain("waiting // pending note");
         WorkspaceDroppedComments.In(edited.WritePlan).ShouldBeEmpty();
+
+        var editedTwice = ReplaceValues("active", "waiting", "done");
+        editedTwice.Accepted.ShouldBeTrue();
+        editedTwice.WritePlan!.Entries.Single().After!.Text.ShouldContain("waiting // pending note");
+        editedTwice.WritePlan.Entries.Single().After!.Text.ShouldContain("done // closed note");
+        WorkspaceDroppedComments.In(editedTwice.WritePlan).ShouldBeEmpty();
+
+        var reorderedAndRenamed = ReplaceValues("closed", "waiting", "active");
+        reorderedAndRenamed.Accepted.ShouldBeTrue();
+        reorderedAndRenamed.WritePlan!.Entries.Single().After!.Text.ShouldNotContain("waiting // pending note");
+        WorkspaceDroppedComments.In(reorderedAndRenamed.WritePlan)
+            .Any(comment => comment.Text.Contains("pending note", StringComparison.Ordinal)).ShouldBeTrue();
 
         var removed = ReplaceValues("active", "closed");
         removed.Accepted.ShouldBeTrue();
