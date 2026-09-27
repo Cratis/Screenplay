@@ -110,12 +110,12 @@ public partial class ScreenplayPrinter
 
             if (query.By is not null)
             {
-                writer.Line($"by {ScreenplaySyntaxText.QueryParameter(query.By)}");
+                writer.Line($"by {QueryParameter(query.By)}");
             }
 
             foreach (var filter in query.Filters)
             {
-                writer.Line($"filter {ScreenplaySyntaxText.QueryParameter(filter)}", filter);
+                writer.Line($"filter {QueryParameter(filter)}", filter);
             }
 
             // What the results are narrowed to comes before who may ask for them - the shape of the answer
@@ -217,7 +217,7 @@ public partial class ScreenplayPrinter
 
             if (reaction.Where is not null)
             {
-                writer.Line($"where {ScreenplaySyntaxText.Condition(reaction.Where)}");
+                writer.Line($"where {Condition(reaction.Where)}");
             }
         }
     }
@@ -305,13 +305,13 @@ public partial class ScreenplayPrinter
                 {
                     foreach (var rule in declarative.Rules)
                     {
-                        writer.Line(impliedSubject ? ScreenplaySyntaxText.ImpliedSubjectValidationRule(rule) : ScreenplaySyntaxText.ValidationRule(rule));
+                        writer.Line(impliedSubject ? ImpliedSubjectValidationRule(rule) : ValidationRule(rule));
                         WriteRuleImplementation(writer, rule);
                     }
 
                     foreach (var requirement in declarative.Requirements ?? [])
                     {
-                        writer.Line($"require {ScreenplaySyntaxText.Condition(requirement.Condition)}");
+                        writer.Line($"require {Condition(requirement.Condition)}");
                         if (requirement.Message is not null || requirement.Severity != ValidationSeverity.Error)
                         {
                             using (writer.Indent())
@@ -402,7 +402,7 @@ public partial class ScreenplayPrinter
             return;
         }
 
-        writer.Line($"produces when {ScreenplaySyntaxText.Condition(produces.When)}");
+        writer.Line($"produces when {Condition(produces.When)}");
         using (writer.Indent())
         {
             writer.Line(produces.Event);
@@ -420,7 +420,7 @@ public partial class ScreenplayPrinter
     {
         if (target is not null)
         {
-            writer.Line($"for {ScreenplaySyntaxText.Expression(target)}");
+            writer.Line($"for {Expression(target)}");
         }
     }
 
@@ -452,7 +452,7 @@ public partial class ScreenplayPrinter
     {
         foreach (var mapping in mappings)
         {
-            writer.Line($"{ReservedWords.Escape(mapping.Property, reserved)} = {ScreenplaySyntaxText.Expression(mapping.Source)}", mapping);
+            writer.Line($"{ReservedWords.Escape(mapping.Property, reserved)} = {Expression(mapping.Source)}", mapping);
         }
     }
 
@@ -460,7 +460,7 @@ public partial class ScreenplayPrinter
     {
         foreach (var tag in tags ?? [])
         {
-            writer.Line($"tag {ScreenplaySyntaxText.Tag(tag)}", tag);
+            writer.Line($"tag {Tag(tag)}", tag);
         }
     }
 }

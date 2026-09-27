@@ -11,6 +11,6 @@ public class with_a_legacy_fractional_double_literal : given.a_document_with_lit
     void Because() => Result = Propose(ReplaceSource("quantity", new LiteralExpressionSyntax(0.1d, SourceLocation.Start)));
 
     [Fact] void should_accept_the_edit_with_unchanged_executable_value() => Result.Accepted.ShouldBeTrue();
-    [Fact] void should_print_the_exact_binary_value_to_preserve_the_double() =>
-        Candidate().ShouldEqual(Bytes(OrderSource.Replace("quantity =   2", $"quantity =   {NumericLiteral.ExactDoubleText(0.1d)}", StringComparison.Ordinal)));
+    [Fact] void should_print_a_readable_fraction_without_changing_the_executable_value() =>
+        Candidate().ShouldEqual(Bytes(OrderSource.Replace("quantity =   2", "quantity =   0.1", StringComparison.Ordinal)));
 }

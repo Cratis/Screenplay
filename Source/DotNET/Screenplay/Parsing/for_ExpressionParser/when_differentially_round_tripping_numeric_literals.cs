@@ -1,14 +1,17 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using System.Globalization;
 using System.Numerics;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Printing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
+using Cratis.Screenplay.Workspaces;
 using Xunit.Abstractions;
 
 namespace Cratis.Screenplay.Parsing.for_ExpressionParser;
@@ -31,6 +34,12 @@ public partial class when_differentially_round_tripping_numeric_literals(ITestOu
         foreach (var source in corpus)
         {
             var parsed = ExpressionParser.ParseLiteral(source, SourceLocation.Start);
+            if (source.IndexOfAny(['e', 'E']) >= 0 && double.TryParse(source, CultureInfo.InvariantCulture, out var overflow) && !double.IsFinite(overflow))
+            {
+                Assert.Null(parsed); // Main left exponent overflow as opaque source text.
+                continue;
+            }
+
             Assert.NotNull(parsed);
             var value = parsed.Value!;
             var printed = ScreenplaySyntaxText.Expression(parsed);
@@ -132,6 +141,64 @@ public partial class when_differentially_round_tripping_numeric_literals(ITestOu
         }
 
         output.WriteLine($"typedJsonCompatibility=2; writer={mainWriterSpelling}; javascript={javascriptSpelling}");
+    }
+
+    [Fact]
+    public void should_admit_a_split_plain_json_corpus_through_workspace_authoring()
+    {
+        const string template = "module Orders\n  feature Placement\n    slice StateChange Place\n      command PlaceOrder\n        amount Decimal\n      specification CanPlace\n        when PlaceOrder\n          amount = 1\n";
+        var path = PortablePlayPath.Parse("numbers.play");
+        var document = WorkspaceDocument.Create("numbers", path, Encoding.UTF8.GetBytes(template));
+        var application = new ScreenplayCompiler().Parse(template).Value!;
+        var module = application.Modules.Single();
+        var feature = module.Features.Single();
+        var slice = feature.Slices.Single();
+        var specification = slice.Specifications.Single();
+        var when = specification.When!;
+        var mapping = when.Values.Single();
+        var corpus = Corpus().Where(source => MainNumber().IsMatch(source)).Distinct().Take(120)
+            .Concat(["0.1", "9.99", "0.00001", "100000000000000020", "100000000000000016"])
+            .Distinct().ToArray();
+        Assert.True(corpus.Length >= 100);
+        var admitted = 0;
+        foreach (var source in corpus)
+        {
+            // Plain MCP numbers retain the legacy Double contract, independently of source classification.
+            var json = JsonSerializer.Deserialize<JsonElement>($"{{\"kind\":\"LiteralExpressionSyntax\",\"value\":{source}}}");
+            var literal = (LiteralExpressionSyntax)SyntaxJson.Deserialize(json);
+            Assert.IsType<double>(literal.Value);
+            var intended = application with
+            {
+                Modules = [module with
+                {
+                    Features = [feature with
+                    {
+                        Slices = [slice with
+                        {
+                            Specifications = [specification with
+                            {
+                                When = when with { Values = [mapping with { Source = literal }] }
+                            }]
+                        }]
+                    }]
+                }]
+            };
+            var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
+            var printed = WorkspaceAuthoringPrinter.Print(
+                document.Id,
+                document.StableKey,
+                path,
+                document.Encoding,
+                intended,
+                WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments,
+                diagnostics);
+            var reparsed = new ScreenplayCompiler().Parse(printed.Text);
+            Assert.True(reparsed.Success, $"{source}: {string.Join("; ", reparsed.Diagnostics.Select(item => item.Message))}");
+            Assert.True(SyntaxJson.EquivalentForAuthoring(intended, reparsed.Value!), source);
+            admitted++;
+        }
+
+        output.WriteLine($"splitCorpus: source={Corpus().Distinct().Count()}, plainJsonMcp={admitted}, workspaceAuthoringAccepted={admitted}");
     }
 
     static IEnumerable<string> Corpus()

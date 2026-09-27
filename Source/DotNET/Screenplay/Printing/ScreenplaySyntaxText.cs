@@ -30,11 +30,14 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="expression">The <see cref="ExpressionSyntax"/> to render.</param>
     /// <returns>The rendered expression text.</returns>
-    public static string Expression(ExpressionSyntax expression) => expression switch
+    public static string Expression(ExpressionSyntax expression) => Expression(expression, false);
+
+    /// <inheritdoc cref="Expression(ExpressionSyntax)"/>
+    public static string Expression(ExpressionSyntax expression, bool authoring) => expression switch
     {
-        LiteralExpressionSyntax literal => Literal(literal.Value),
-        ListExpressionSyntax list => $"[{string.Join(',', list.Items.Select(StructuredValue))}]",
-        ObjectExpressionSyntax obj => $"{{{string.Join(',', obj.Members.Select(member => $"{JsonSerializer.Serialize(member.Name, _structuredValueOptions)}:{StructuredValue(member.Value)}"))}}}",
+        LiteralExpressionSyntax literal => Literal(literal.Value, authoring),
+        ListExpressionSyntax list => $"[{string.Join(',', list.Items.Select(item => StructuredValue(item, authoring)))}]",
+        ObjectExpressionSyntax obj => $"{{{string.Join(',', obj.Members.Select(member => $"{JsonSerializer.Serialize(member.Name, _structuredValueOptions)}:{StructuredValue(member.Value, authoring)}"))}}}",
         PathExpressionSyntax path => path.Path,
         ContextExpressionSyntax context => $"$context.{context.Path}",
         EnvironmentExpressionSyntax environment => $"$env.{environment.Name}",
@@ -43,7 +46,7 @@ internal static partial class ScreenplaySyntaxText
         EventSourceIdExpressionSyntax => "$eventSourceId",
         EventContextExpressionSyntax eventContext => $"$eventContext.{eventContext.Path}",
         CausedByExpressionSyntax causedBy => causedBy.Property is null ? "$causedBy" : $"$causedBy.{causedBy.Property}",
-        TemplateExpressionSyntax template => Template(template),
+        TemplateExpressionSyntax template => Template(template, authoring),
         RawExpressionSyntax raw => raw.Text,
         _ => throw Unsupported("expression", expression)
     };
@@ -72,10 +75,13 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="parameter">The <see cref="QueryParameterSyntax"/> to render.</param>
     /// <returns>The rendered parameter text, without the leading <c>by</c> or <c>filter</c> keyword.</returns>
-    public static string QueryParameter(QueryParameterSyntax parameter)
+    public static string QueryParameter(QueryParameterSyntax parameter) => QueryParameter(parameter, false);
+
+    /// <inheritdoc cref="QueryParameter(QueryParameterSyntax)"/>
+    public static string QueryParameter(QueryParameterSyntax parameter, bool authoring)
     {
         var declaration = $"{parameter.Name} {TypeRef(parameter.Type)}";
-        return parameter.Source is null ? declaration : $"{declaration} from {Expression(parameter.Source)}";
+        return parameter.Source is null ? declaration : $"{declaration} from {Expression(parameter.Source, authoring)}";
     }
 
     /// <summary>
@@ -96,14 +102,17 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="condition">The <see cref="ConditionSyntax"/> to render.</param>
     /// <returns>The rendered condition text.</returns>
-    public static string Condition(ConditionSyntax condition) => condition switch
+    public static string Condition(ConditionSyntax condition) => Condition(condition, false);
+
+    /// <inheritdoc cref="Condition(ConditionSyntax)"/>
+    public static string Condition(ConditionSyntax condition, bool authoring) => condition switch
     {
-        ComparisonConditionSyntax comparison => $"{comparison.Left} {Comparison(comparison.Operator)} {Expression(comparison.Right)}",
+        ComparisonConditionSyntax comparison => $"{comparison.Left} {Comparison(comparison.Operator)} {Expression(comparison.Right, authoring)}",
         LogicalConditionSyntax logical => Combined(
-            Condition(logical.Left),
+            Condition(logical.Left, authoring),
             OperatorOf(logical.Left),
             logical.Operator,
-            Condition(logical.Right),
+            Condition(logical.Right, authoring),
             OperatorOf(logical.Right)),
         _ => throw Unsupported("condition", condition)
     };
@@ -113,16 +122,19 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="condition">The <see cref="PolicyConditionSyntax"/> to render.</param>
     /// <returns>The rendered policy condition text.</returns>
-    public static string PolicyCondition(PolicyConditionSyntax condition) => condition switch
+    public static string PolicyCondition(PolicyConditionSyntax condition) => PolicyCondition(condition, false);
+
+    /// <inheritdoc cref="PolicyCondition(PolicyConditionSyntax)"/>
+    public static string PolicyCondition(PolicyConditionSyntax condition, bool authoring) => condition switch
     {
         AuthenticatedConditionSyntax => "authenticated",
         RoleConditionSyntax role => $"role {StringLiteral.Quote(role.Role)}",
-        ClaimConditionSyntax claim => ClaimCondition(claim),
+        ClaimConditionSyntax claim => ClaimCondition(claim, authoring),
         LogicalPolicyConditionSyntax logical => Combined(
-            PolicyCondition(logical.Left),
+            PolicyCondition(logical.Left, authoring),
             OperatorOf(logical.Left),
             logical.Operator,
-            PolicyCondition(logical.Right),
+            PolicyCondition(logical.Right, authoring),
             OperatorOf(logical.Right)),
         _ => throw Unsupported("policy condition", condition)
     };
@@ -149,9 +161,12 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="rule">The <see cref="ValidationRuleSyntax"/> to render.</param>
     /// <returns>The rendered rule text including any message.</returns>
-    public static string ValidationRule(ValidationRuleSyntax rule)
+    public static string ValidationRule(ValidationRuleSyntax rule) => ValidationRule(rule, false);
+
+    /// <inheritdoc cref="ValidationRule(ValidationRuleSyntax)"/>
+    public static string ValidationRule(ValidationRuleSyntax rule, bool authoring)
     {
-        var head = $"{rule.Property} {ValidationRuleBody(rule)}{Severity(rule.Severity)}";
+        var head = $"{rule.Property} {ValidationRuleBody(rule, authoring)}{Severity(rule.Severity)}";
         return rule.Message is null ? head : $"{head} message {LocalizableString(rule.Message)}";
     }
 
@@ -161,9 +176,12 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="rule">The <see cref="ValidationRuleSyntax"/> to render.</param>
     /// <returns>The rendered rule text including any message.</returns>
-    public static string ImpliedSubjectValidationRule(ValidationRuleSyntax rule)
+    public static string ImpliedSubjectValidationRule(ValidationRuleSyntax rule) => ImpliedSubjectValidationRule(rule, false);
+
+    /// <inheritdoc cref="ImpliedSubjectValidationRule(ValidationRuleSyntax)"/>
+    public static string ImpliedSubjectValidationRule(ValidationRuleSyntax rule, bool authoring)
     {
-        var head = $"{ValidationRuleBody(rule)}{Severity(rule.Severity)}";
+        var head = $"{ValidationRuleBody(rule, authoring)}{Severity(rule.Severity)}";
         return rule.Message is null ? head : $"{head} message {LocalizableString(rule.Message)}";
     }
 
@@ -182,10 +200,13 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="tag">The <see cref="TagSyntax"/> to render.</param>
     /// <returns>The rendered tag value text.</returns>
-    public static string Tag(TagSyntax tag) =>
+    public static string Tag(TagSyntax tag) => Tag(tag, false);
+
+    /// <inheritdoc cref="Tag(TagSyntax)"/>
+    public static string Tag(TagSyntax tag, bool authoring) =>
         tag.Value is LiteralExpressionSyntax { Value: string text } && IdentifierRegex().IsMatch(text) && text is not ("true" or "false" or "null")
             ? text
-            : Expression(tag.Value);
+            : Expression(tag.Value, authoring);
 
     /// <summary>
     /// Renders an <see cref="InteractionTriggerSyntax"/> to the text that follows <c>on</c>.
@@ -252,16 +273,16 @@ internal static partial class ScreenplaySyntaxText
         _ => throw new UnsupportedSyntaxForPrinting("validation severity", severity.ToString())
     };
 
-    static string StructuredValue(ExpressionSyntax expression) => expression is LiteralExpressionSyntax { Value: string text }
+    static string StructuredValue(ExpressionSyntax expression, bool authoring) => expression is LiteralExpressionSyntax { Value: string text }
         ? JsonSerializer.Serialize(text, _structuredValueOptions)
-        : Expression(expression);
+        : Expression(expression, authoring);
 
-    static string Literal(object? value) => value switch
+    static string Literal(object? value, bool authoring) => value switch
     {
         null => "null",
         bool boolean => boolean ? "true" : "false",
         string text => StringLiteral.Quote(text),
-        double number => Number(number),
+        double number => authoring ? AuthoringNumber(number) : Number(number),
         decimal number => Decimal(number),
         IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
         _ => value.ToString() ?? string.Empty
@@ -287,7 +308,30 @@ internal static partial class ScreenplaySyntaxText
         return NumericLiteral.ExactDoubleText(number);
     }
 
-    static string Template(TemplateExpressionSyntax template)
+    static string AuthoringNumber(double number)
+    {
+        if (!double.IsFinite(number) || number == 0)
+        {
+            return Number(number);
+        }
+
+        var shortest = number.ToString("R", CultureInfo.InvariantCulture);
+
+        // A short exponent can be more difficult to read than its fixed-point equivalent in a .play file.
+        if (Math.Abs(number) is > 0 and < 1 && shortest.Contains('E') &&
+            decimal.TryParse(shortest, NumberStyles.Float, CultureInfo.InvariantCulture, out var precise))
+        {
+            var fixedPoint = precise.ToString("0.############################", CultureInfo.InvariantCulture);
+            if (NumericLiteral.CompatibleForAuthoring(number, NumericLiteral.Parse(fixedPoint)))
+            {
+                return fixedPoint;
+            }
+        }
+
+        return NumericLiteral.CompatibleForAuthoring(number, NumericLiteral.Parse(shortest)) ? shortest : Number(number);
+    }
+
+    static string Template(TemplateExpressionSyntax template, bool authoring)
     {
         var builder = new StringBuilder("`");
         foreach (var part in template.Parts)
@@ -295,7 +339,7 @@ internal static partial class ScreenplaySyntaxText
             builder.Append(part switch
             {
                 TemplateTextSyntax text => text.Text,
-                TemplateInterpolationSyntax interpolation => $"${{{Expression(interpolation.Expression)}}}",
+                TemplateInterpolationSyntax interpolation => $"${{{Expression(interpolation.Expression, authoring)}}}",
                 _ => throw Unsupported("template part", part)
             });
         }
@@ -405,20 +449,20 @@ internal static partial class ScreenplaySyntaxText
         return schedule.DayOfMonth is { } dayOfMonth ? $"{time} on day {dayOfMonth.ToString(CultureInfo.InvariantCulture)}" : time;
     }
 
-    static string ClaimCondition(ClaimConditionSyntax claim)
+    static string ClaimCondition(ClaimConditionSyntax claim, bool authoring)
     {
         if (claim.MatchesSubject)
         {
             return $"claim {StringLiteral.Quote(claim.Claim)} matches subject";
         }
 
-        var target = claim.Matches is null ? Literal(string.Empty) : Expression(claim.Matches);
+        var target = claim.Matches is null ? Literal(string.Empty, authoring) : Expression(claim.Matches, authoring);
         return $"claim {StringLiteral.Quote(claim.Claim)} matches {target}";
     }
 
-    static string ValidationRuleBody(ValidationRuleSyntax rule)
+    static string ValidationRuleBody(ValidationRuleSyntax rule, bool authoring)
     {
-        var value = rule.Value is null ? string.Empty : Expression(rule.Value);
+        var value = rule.Value is null ? string.Empty : Expression(rule.Value, authoring);
         return rule.Rule switch
         {
             ValidationRuleKind.NotEmpty => "not empty",

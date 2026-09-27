@@ -103,11 +103,11 @@ static class WorkspaceTriviaPrinter
         var (start, length, text) = (change.Kind, before, after) switch
         {
             (WorkspaceTriviaChangeKind.LiteralValue, LiteralExpressionSyntax literal, LiteralExpressionSyntax replacement) =>
-                (literal.RawLocation!, literal.RawLength!.Value, ScreenplaySyntaxText.Expression(replacement)),
+                (literal.RawLocation!, literal.RawLength!.Value, ScreenplaySyntaxText.Expression(replacement, authoring: true)),
             (WorkspaceTriviaChangeKind.MappingSource, PropertyMappingSyntax mapping, PropertyMappingSyntax replacement) =>
-                (mapping.SourceLocation!, mapping.SourceLength!.Value, ScreenplaySyntaxText.Expression(replacement.Source)),
+                (mapping.SourceLocation!, mapping.SourceLength!.Value, ScreenplaySyntaxText.Expression(replacement.Source, authoring: true)),
             (WorkspaceTriviaChangeKind.Mapping, PropertyMappingSyntax mapping, PropertyMappingSyntax replacement) when mapping.SourceLocation!.Line == mapping.Location.Line =>
-                (mapping.Location, mapping.SourceLocation.Column - mapping.Location.Column + mapping.SourceLength!.Value, $"{replacement.Property} = {ScreenplaySyntaxText.Expression(replacement.Source)}"),
+                (mapping.Location, mapping.SourceLocation.Column - mapping.Location.Column + mapping.SourceLength!.Value, $"{replacement.Property} = {ScreenplaySyntaxText.Expression(replacement.Source, authoring: true)}"),
             _ => throw Unsupported(original, change.Path)
         };
         var range = WorkspaceSourceRanges.Bytes(tokens, start, length) ?? throw Unsupported(original, change.Path);

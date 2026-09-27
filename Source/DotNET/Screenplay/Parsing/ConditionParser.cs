@@ -97,6 +97,6 @@ internal static partial class ConditionParser
     static List<string> Tokenize(string text) =>
         [.. TokenRegex().Matches(text).Select(_ => _.Value)];
 
-    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|-?[0-9]+(?:\\.[0-9]+)?[Ee][+-]?[0-9]+|[\\w.$-]+", RegexOptions.None, 1000)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|-?[0-9]+(?:\\.[0-9]+)?[Ee][+-]?[0-9]+(?![\\w.$-])|[\\w.$-]+", RegexOptions.None, 1000)]
     private static partial Regex TokenRegex();
 }

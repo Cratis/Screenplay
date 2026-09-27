@@ -62,6 +62,13 @@ incorrect child types, invalid enums and illegal nulls are rejected.
   types and signed zero. Authoring can accept a cross-kind numeric print/reparse
   when the values and their ESM decimal representations agree; it rejects
   signed-zero normalization because printing `-0` as `0` changes its sign.
+  Workspace authoring prints compatible fractional Doubles as readable `.play`
+  numbers (for example, `0.1` and `0.00001`) instead of their full binary
+  expansions; the ordinary printer can retain exact digits for type-stable
+  output. Specification consistency uses the same ESM-compatible comparison
+  when a typed Double meets a hand-typed Decimal or Int64, without merging
+  distinct exact source values such as `100000000000000020` and
+  `100000000000000016`.
 - Inline JSON-shaped objects and lists have typed value nodes and individually
   addressable keys. Existing code blocks and raw expressions remain language
   constructs, not an escape hatch for structured data or untyped AST subtrees.

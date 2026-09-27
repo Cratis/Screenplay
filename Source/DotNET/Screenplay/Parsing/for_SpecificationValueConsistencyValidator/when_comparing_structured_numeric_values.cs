@@ -16,10 +16,16 @@ public class when_comparing_structured_numeric_values
     }
 
     [Fact]
-    public void should_not_round_binary_fractions_in_a_list()
+    public void should_accept_esm_equivalent_binary_fractions_in_a_list()
     {
         var (floating, precise) = Values(0.1d, 0.1m);
-        SpecificationValueConsistencyValidator.Equal(floating, precise).ShouldBeFalse();
+        SpecificationValueConsistencyValidator.Equal(floating, precise).ShouldBeTrue();
+    }
+
+    [Fact]
+    public void should_not_conflate_distinct_large_source_integers()
+    {
+        SpecificationValueConsistencyValidator.Equal(100000000000000020L, 100000000000000016L).ShouldBeFalse();
     }
 
     static (object? First, object? Second) Values(object first, object second)

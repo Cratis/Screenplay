@@ -134,6 +134,19 @@ public class when_parsing_numeric_literals
     }
 
     [Fact]
+    public void should_leave_exponent_overflow_as_an_opaque_mapping()
+    {
+        Assert.Null(ExpressionParser.ParseLiteral("1e400", SourceLocation.Start));
+        var context = ParserContext.ForDiagnostics();
+        var expression = ExpressionParser.ParseMappingSource(context, "1e400", SourceLocation.Start);
+        Assert.IsType<RawExpressionSyntax>(expression).Text.ShouldEqual("1e400");
+        SyntaxJson.Serialize(expression).GetProperty("text").GetString().ShouldEqual("1e400");
+        const string source = "module Orders\n  feature Placement\n    slice StateChange Place\n      command PlaceOrder\n        amount Decimal\n        produces OrderPlaced\n          amount = 1e400\n      event OrderPlaced\n        amount Decimal\n";
+        var application = new ScreenplayCompiler().Parse(source).Value!;
+        SyntaxJson.Serialize(application).ValueKind.ShouldEqual(JsonValueKind.Object);
+    }
+
+    [Fact]
     public void should_preserve_main_overflow_for_a_fixed_point_number()
     {
         var source = "1" + new string('0', 309);

@@ -135,7 +135,10 @@ internal static class SpecificationValueConsistencyValidator
                 secondObject.TryGetValue(property.Key, out var other) && Equal(property.Value, other));
         }
 
-        return NumericLiteral.Equal(left, right);
+        return (left is double && right is int or long or decimal) ||
+            (right is double && left is int or long or decimal)
+            ? NumericLiteral.CompatibleForAuthoring(left, right)
+            : NumericLiteral.Equal(left, right);
     }
 
     static string Canonical(object? value) => value is StructuredKnownValue structured ? structured.Canonical : JsonSerializer.Serialize(value);

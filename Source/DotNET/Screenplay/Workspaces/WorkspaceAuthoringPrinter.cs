@@ -45,7 +45,7 @@ static class WorkspaceAuthoringPrinter
 
         // The codec validates structural content, but omits server-owned source positions. Print the
         // admitted original so authoring edits can retain locations carried from the parsed document.
-        var text = new ScreenplayPrinter().Print(intended);
+        var text = new ScreenplayPrinter(authoring: true).Print(intended);
         var parsed = new ScreenplayCompiler().Parse(text, path.Value);
         diagnostics.AddRange(parsed.Diagnostics);
         if (!parsed.Success || parsed.Value is null || !SyntaxJson.EquivalentForAuthoring(checkedSyntax, parsed.Value))

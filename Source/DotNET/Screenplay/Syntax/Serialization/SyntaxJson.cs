@@ -12,13 +12,12 @@ namespace Cratis.Screenplay.Syntax.Serialization;
 /// <remarks>
 /// The <c>kind</c> discriminator is the concrete syntax type name. Structural members use camelCase;
 /// a CLR member named <c>Kind</c> uses <c>syntaxKind</c> to avoid colliding with the discriminator.
-/// Source metadata and computed getters are excluded. Ordinary JSON numbers follow source literal
-/// parsing: faithful values remain <see cref="double"/>, otherwise <see cref="long"/> when possible,
-/// exact <see cref="decimal"/> when representable, or the original <see cref="double"/> fallback.
-/// Int32, Int64, Decimal and Single use a <c>{ "literalType": "Decimal", "value": "5.5" }</c>
-/// envelope to preserve their type. Finite Doubles use plain JSON numbers: when their shortest
-/// round-trip spelling would decode as another type, the writer emits exact binary-value decimal
-/// digits instead. Explicit Double envelopes are also accepted on input.
+/// Source metadata and computed getters are excluded. Plain JSON numbers decode as
+/// <see cref="double"/> regardless of their spelling; exact source classification applies only
+/// to parsed <c>.play</c> literals. Int32, Int64, Decimal and Single use a
+/// <c>{ "literalType": "Decimal", "value": "5.5" }</c> envelope to preserve their type.
+/// Finite Doubles use plain JSON numbers with the JSON serializer's spelling. Explicit Double
+/// envelopes are also accepted on input.
 /// Optional null collections are represented as empty arrays.
 /// </remarks>
 public static class SyntaxJson

@@ -85,7 +85,7 @@ public partial class ScreenplayPrinter
             case CaptureMapEntrySyntax entry:
                 var translations = entry.Translations.ToList();
                 var suffix = translations.Count > 0 ? " translate" : string.Empty;
-                writer.Line($"{entry.Property} = {ScreenplaySyntaxText.Expression(entry.Source)}{suffix}");
+                writer.Line($"{entry.Property} = {Expression(entry.Source)}{suffix}");
                 using (writer.Indent())
                 {
                     foreach (var translation in translations)
@@ -96,7 +96,7 @@ public partial class ScreenplayPrinter
 
                 break;
             case CaptureSplitSyntax split:
-                writer.Line($"split {ScreenplaySyntaxText.Expression(split.Source)} by {StringLiteral.Quote(split.Separator)}");
+                writer.Line($"split {Expression(split.Source)} by {StringLiteral.Quote(split.Separator)}");
                 using (writer.Indent())
                 {
                     foreach (var target in split.Targets)

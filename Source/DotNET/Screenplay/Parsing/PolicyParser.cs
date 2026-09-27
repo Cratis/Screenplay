@@ -180,6 +180,6 @@ internal static partial class PolicyParser
     [GeneratedRegex(@"^policy\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|\\(|\\)|-?[0-9]+(?:\\.[0-9]+)?[Ee][+-]?[0-9]+|[\\w.$]+", RegexOptions.None, 1000)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|\\(|\\)|-?[0-9]+(?:\\.[0-9]+)?[Ee][+-]?[0-9]+(?![\\w.$])|[\\w.$]+", RegexOptions.None, 1000)]
     private static partial Regex TokenRegex();
 }

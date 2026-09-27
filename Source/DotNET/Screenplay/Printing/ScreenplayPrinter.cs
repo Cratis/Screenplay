@@ -25,6 +25,17 @@ public sealed partial class ScreenplayPrinter :
     ISpecificationSyntaxVisitor<string>,
     ICaptureSyntaxVisitor<string>
 {
+    readonly bool _authoring;
+
+    /// <summary>
+    /// Creates a printer with type-stable canonical numeric spellings.
+    /// </summary>
+    public ScreenplayPrinter() : this(false)
+    {
+    }
+
+    internal ScreenplayPrinter(bool authoring) => _authoring = authoring;
+
     /// <inheritdoc/>
     public string Print(ApplicationSyntax application)
     {
@@ -68,6 +79,14 @@ public sealed partial class ScreenplayPrinter :
 
     /// <inheritdoc/>
     string ICaptureSyntaxVisitor<string>.Visit(CaptureSyntax syntax) => Print(syntax);
+
+    string QueryParameter(QueryParameterSyntax parameter) => ScreenplaySyntaxText.QueryParameter(parameter, _authoring);
+    string Expression(ExpressionSyntax expression) => ScreenplaySyntaxText.Expression(expression, _authoring);
+    string Condition(ConditionSyntax condition) => ScreenplaySyntaxText.Condition(condition, _authoring);
+    string PolicyCondition(PolicyConditionSyntax condition) => ScreenplaySyntaxText.PolicyCondition(condition, _authoring);
+    string Tag(TagSyntax tag) => ScreenplaySyntaxText.Tag(tag, _authoring);
+    string ValidationRule(ValidationRuleSyntax rule) => ScreenplaySyntaxText.ValidationRule(rule, _authoring);
+    string ImpliedSubjectValidationRule(ValidationRuleSyntax rule) => ScreenplaySyntaxText.ImpliedSubjectValidationRule(rule, _authoring);
 
     void WriteApplication(ScreenplayWriter writer, ApplicationSyntax application)
     {
@@ -375,7 +394,7 @@ public sealed partial class ScreenplayPrinter :
         {
             if (policy.Condition is not null)
             {
-                writer.Line($"require {ScreenplaySyntaxText.PolicyCondition(policy.Condition)}");
+                writer.Line($"require {PolicyCondition(policy.Condition)}");
             }
 
             if (policy.File is not null)

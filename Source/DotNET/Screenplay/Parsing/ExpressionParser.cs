@@ -220,7 +220,8 @@ internal static partial class ExpressionParser
         "null" => new(null, location),
         _ when text.Length >= 2 && text.StartsWith('"') && text.EndsWith('"') => new(StringLiteral.Unescape(text[1..^1]), location),
         _ when text.Length >= 2 && text.StartsWith('\'') && text.EndsWith('\'') => new(StringLiteral.Unescape(text[1..^1]), location),
-        _ when NumberRegex().IsMatch(text) && NumericLiteral.Parse(text) is { } number => new(number, location),
+        _ when NumberRegex().IsMatch(text) && NumericLiteral.Parse(text) is { } number &&
+            !(text.IndexOfAny(['e', 'E']) >= 0 && number is double overflow && !double.IsFinite(overflow)) => new(number, location),
         _ => null
     };
 

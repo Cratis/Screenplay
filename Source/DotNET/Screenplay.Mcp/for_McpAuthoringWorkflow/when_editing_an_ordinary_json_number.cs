@@ -14,10 +14,14 @@ public class when_editing_an_ordinary_json_number : given.an_authoring_connectio
     }
 
     [Theory]
+    [InlineData("0.1", "PreserveTrivia")]
+    [InlineData("9.99", "PreserveTrivia")]
     [InlineData("2", "PreserveTrivia")]
     [InlineData("3.5", "PreserveTrivia")]
     [InlineData("0.00001", "PreserveTrivia")]
     [InlineData("9007199254740993", "PreserveTrivia")]
+    [InlineData("0.1", "CanonicalizeTouchedDocuments")]
+    [InlineData("9.99", "CanonicalizeTouchedDocuments")]
     [InlineData("2", "CanonicalizeTouchedDocuments")]
     [InlineData("3.5", "CanonicalizeTouchedDocuments")]
     [InlineData("0.00001", "CanonicalizeTouchedDocuments")]
@@ -39,5 +43,10 @@ public class when_editing_an_ordinary_json_number : given.an_authoring_connectio
             operations = new[] { new { operation = "replace", target = mapping.GetProperty("handle"), node } }
         });
         Assert.False(string.IsNullOrEmpty(proposal.GetProperty("proposalId").GetString()));
+        var candidate = Candidate(proposal).Documents.Single().Text;
+        if (text != "9007199254740993")
+        {
+            Assert.Contains($"amount = {text}", candidate, StringComparison.Ordinal);
+        }
     }
 }
