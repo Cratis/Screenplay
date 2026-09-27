@@ -20,6 +20,7 @@ public sealed partial class ScreenplayPrinter
             return writer.ToString();
         }
 
+        writer.ResolveEditedCollectionAnchors();
         var lines = writer.ToString().TrimEnd('\n').Split('\n');
         var before = new Dictionary<int, List<string>>();
         var after = new Dictionary<int, List<string>>();
@@ -45,7 +46,8 @@ public sealed partial class ScreenplayPrinter
                 entry.Value.Line == comment.AnchorLine) &&
                 directiveLines?.ContainsKey(comment.AnchorLine) != true)
             {
-                // A removed collection value has no printed line. Never attach its comment to a new neighbor.
+                // An unmatched collection value has no printed line; a single in-place text edit
+                // has already been matched to its authored slot. Never attach to a new neighbor.
                 continue;
             }
 
