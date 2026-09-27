@@ -145,7 +145,7 @@ internal static partial class SemanticModelRead
                 case "projections": projections = Array(ref reader, (ref Utf8JsonReader item) => Projection(ref item, schemaVersion), property); break;
                 case "reducers": reducers = Array(ref reader, Reducer, property); break;
                 case "queries": queries = Array(ref reader, Query, property); break;
-                case "specifications": specifications = Array(ref reader, Specification, property); break;
+                case "specifications": specifications = Array(ref reader, (ref Utf8JsonReader item) => Specification(ref item, schemaVersion), property); break;
                 case "constraints": constraints = Array(ref reader, Constraint, property); break;
                 default: throw Unknown(property, "slice");
             }
@@ -594,7 +594,7 @@ internal static partial class SemanticModelRead
         return new(id, name!, type!);
     }
 
-    internal static SemanticSpecification Specification(ref Utf8JsonReader reader)
+    internal static SemanticSpecification Specification(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "specification");
         var seen = NewSeen();
@@ -607,6 +607,7 @@ internal static partial class SemanticModelRead
         var thenEventsInAnyOrder = false;
         ImmutableArray<SemanticSpecificationEvent> thenEvents = default;
         ImmutableArray<SemanticSpecificationReadModel> thenReadModels = default;
+        ImmutableArray<SemanticSpecificationAbsentReadModel> thenAbsentReadModels = default;
         ImmutableArray<SemanticSpecificationQueryResult> thenQueries = default;
         ImmutableArray<SemanticSpecificationError> thenErrors = default;
         SemanticCaller? caller = null;
@@ -625,6 +626,7 @@ internal static partial class SemanticModelRead
                 case "thenEventsInAnyOrder": thenEventsInAnyOrder = Boolean(ref reader, property); if (!thenEventsInAnyOrder) throw Malformed("specification", "thenEventsInAnyOrder may only be true when present"); break;
                 case "thenEvents": thenEvents = Array(ref reader, SpecificationEvent, property); break;
                 case "thenReadModels": thenReadModels = Array(ref reader, SpecificationReadModel, property); break;
+                case "thenAbsentReadModels" when schemaVersion == 5: thenAbsentReadModels = Array(ref reader, SpecificationAbsentReadModel, property); break;
                 case "thenQueries": thenQueries = Array(ref reader, SpecificationQuery, property); break;
                 case "thenErrors": thenErrors = Array(ref reader, SpecificationError, property); break;
                 case "thenDenied": thenDenied = Boolean(ref reader, property); if (!thenDenied) throw Malformed("specification", "thenDenied may only be true when present"); break;
@@ -634,9 +636,9 @@ internal static partial class SemanticModelRead
 
         Required(
             id.IsSet && name is not null && !givenEvents.IsDefault && !givenReadModels.IsDefault &&
-            !thenEvents.IsDefault && !thenReadModels.IsDefault && !thenQueries.IsDefault && !thenErrors.IsDefault,
+            !thenEvents.IsDefault && !thenReadModels.IsDefault && (schemaVersion != 5 || !thenAbsentReadModels.IsDefault) && !thenQueries.IsDefault && !thenErrors.IsDefault,
             "specification");
-        return new(id, name!, givenEvents, givenReadModels, when, thenEvents, thenReadModels, thenQueries, thenErrors) { GivenCaller = caller, ThenDenied = thenDenied, WhenAppended = whenAppended, ThenEventsInAnyOrder = thenEventsInAnyOrder };
+        return new(id, name!, givenEvents, givenReadModels, when, thenEvents, thenReadModels, thenQueries, thenErrors) { GivenCaller = caller, ThenDenied = thenDenied, WhenAppended = whenAppended, ThenEventsInAnyOrder = thenEventsInAnyOrder, ThenAbsentReadModels = schemaVersion == 5 ? thenAbsentReadModels : [] };
     }
 
     internal static SemanticSpecificationAppend SpecificationAppend(ref Utf8JsonReader reader)
@@ -710,6 +712,26 @@ internal static partial class SemanticModelRead
 
         Required(readModel.IsSet && key is not null && !values.IsDefault, "specification read model");
         return new(readModel, key!, values) { Exactly = exactly };
+    }
+
+    internal static SemanticSpecificationAbsentReadModel SpecificationAbsentReadModel(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "specification absent read model");
+        var seen = NewSeen();
+        SemanticId readModel = default;
+        SemanticValue? key = null;
+        while (NextProperty(ref reader, seen, "specification absent read model") is { } property)
+        {
+            switch (property)
+            {
+                case "readModel": readModel = SemanticId.Parse(String(ref reader, property)); break;
+                case "key": RequiredToken(ref reader, JsonTokenType.StartObject, property); key = Value(ref reader); break;
+                default: throw Unknown(property, "specification absent read model");
+            }
+        }
+
+        Required(readModel.IsSet && key is not null, "specification absent read model");
+        return new(readModel, key!);
     }
 
     internal static SemanticSpecificationQueryResult SpecificationQuery(ref Utf8JsonReader reader)

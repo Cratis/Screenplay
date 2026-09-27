@@ -31,6 +31,9 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     /// <summary>The language version for event-contract lineage.</summary>
     public static readonly LanguageVersion V4 = new(4, 0);
 
+    /// <summary>The language version for keyed read-model absence assertions.</summary>
+    public static readonly LanguageVersion V5 = new(5, 0);
+
     /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
@@ -84,6 +87,9 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
 
     /// <summary>The semantic version for event-contract lineage.</summary>
     public static readonly SemanticVersion V4 = new(4, 0);
+
+    /// <summary>The semantic version for keyed read-model absence assertions.</summary>
+    public static readonly SemanticVersion V5 = new(5, 0);
 
     /// <summary>
     /// Parses a canonical, supported semantic version.
@@ -263,13 +269,37 @@ public static class EsmSchemaV4Support
     }
 }
 
+/// <summary>Defines version pairs admitted by ESM schema v5.</summary>
+public static class EsmSchemaV5Support
+{
+    /// <summary>Gets the supported language versions.</summary>
+    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [.. EsmSchemaV4Support.LanguageVersions, LanguageVersion.V5];
+
+    /// <summary>Gets the supported semantic versions.</summary>
+    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [.. EsmSchemaV4Support.SemanticVersions, SemanticVersion.V5];
+
+    /// <summary>Determines whether the exact pair is supported.</summary>
+    public static bool Supports(LanguageVersion languageVersion, SemanticVersion semanticVersion) =>
+        EsmSchemaV4Support.Supports(languageVersion, semanticVersion) ||
+        (languageVersion == LanguageVersion.V5 && semanticVersion == SemanticVersion.V5);
+
+    /// <summary>Rejects unsupported version pairs.</summary>
+    public static void EnsureSupported(LanguageVersion languageVersion, SemanticVersion semanticVersion)
+    {
+        if (!Supports(languageVersion, semanticVersion))
+        {
+            throw new InvalidSemanticContract($"The ESM schema-v5 contract does not declare language version '{languageVersion}' and semantic version '{semanticVersion}'.");
+        }
+    }
+}
+
 static class VersionParser
 {
     internal static LanguageVersion ParseLanguage(string value)
     {
         if (!TryParse(value, out LanguageVersion version))
         {
-            throw new InvalidSemanticContract($"'{value}' is not a canonical language version supported by ESM schema v1, v2, v3 or v4.");
+            throw new InvalidSemanticContract($"'{value}' is not a canonical language version supported by ESM schema v1, v2, v3, v4 or v5.");
         }
 
         return version;
@@ -279,7 +309,7 @@ static class VersionParser
     {
         if (!TryParse(value, out SemanticVersion version))
         {
-            throw new InvalidSemanticContract($"'{value}' is not a canonical semantic version supported by ESM schema v1, v2, v3 or v4.");
+            throw new InvalidSemanticContract($"'{value}' is not a canonical semantic version supported by ESM schema v1, v2, v3, v4 or v5.");
         }
 
         return version;
@@ -289,7 +319,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV4Support.LanguageVersions.Contains(version))
+        if (success && !EsmSchemaV5Support.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -302,7 +332,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV4Support.SemanticVersions.Contains(version))
+        if (success && !EsmSchemaV5Support.SemanticVersions.Contains(version))
         {
             version = default;
             return false;

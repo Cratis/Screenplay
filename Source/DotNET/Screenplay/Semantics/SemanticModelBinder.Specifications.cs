@@ -36,13 +36,13 @@ public sealed partial class SemanticModelBinder
                 specification.ThenQueries.Count() == 1 && !specification.ThenQueries.Single().Results.Any();
             if (specification.When is null && specification.WhenAppended is null && (specification.ThenEvents.Any() || specification.ThenErrors.Any() ||
                 (specification.ThenDenied is not null && !deniedQuery) ||
-                (!(specification.ThenReadModels?.Any() ?? false) && !specification.ThenQueries.Any())))
+                (!(specification.ThenReadModels?.Any() ?? false) && !specification.ThenAbsentReadModels.Any() && !specification.ThenQueries.Any())))
             {
-                Error(DiagnosticCodes.InvalidWhenlessSpecification, "A specification without 'when' requires 'then readmodel' or 'then query'; denial requires one query with arguments and no results.", specification.Location);
+                Error(DiagnosticCodes.InvalidWhenlessSpecification, "A specification without 'when' requires 'then readmodel', 'then no readmodel', or 'then query'; denial requires one query with arguments and no results.", specification.Location);
             }
 
             if (specification.ThenDenied is not null && (specification.ThenErrors.Any() || specification.ThenEvents.Any() ||
-                (specification.ThenReadModels?.Any() ?? false) || (specification.ThenQueries.Any() && !deniedQuery)))
+                (specification.ThenReadModels?.Any() ?? false) || specification.ThenAbsentReadModels.Any() || (specification.ThenQueries.Any() && !deniedQuery)))
             {
                 Error(DiagnosticCodes.InvalidSpecificationDenied, "'then denied' cannot be combined with success or error outcomes.", specification.ThenDenied.Location);
             }
@@ -74,6 +74,8 @@ public sealed partial class SemanticModelBinder
                 .Select(_ => _!)
                 .ToImmutableArray();
             var thenQueries = specification.ThenQueries.Select(BindSpecificationQuery).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
+            var thenAbsentReadModels = specification.ThenAbsentReadModels.Select(BindAbsentReadModel).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
+            if (specification.ThenAbsentReadModels.Any()) UsesV5 = true;
             if (specification.ThenErrors.Count() > 1)
             {
                 Error(DiagnosticCodes.InvalidSemanticBinding, "A rejection specification must contain exactly one 'then error' and no success outcomes.", specification.Location);
@@ -101,7 +103,8 @@ public sealed partial class SemanticModelBinder
                     [.. specification.GivenCaller.Claims.Select(claim => new SemanticCallerClaim(claim.Type, claim.Value))]),
                 ThenDenied = specification.ThenDenied is not null,
                 WhenAppended = specification.WhenAppended is null ? null : BindSpecificationAppend(specification.WhenAppended, commands),
-                ThenEventsInAnyOrder = specification.ThenEventsInAnyOrder
+                ThenEventsInAnyOrder = specification.ThenEventsInAnyOrder,
+                ThenAbsentReadModels = thenAbsentReadModels
             };
         }
 
@@ -218,6 +221,20 @@ public sealed partial class SemanticModelBinder
             }
 
             return new(readModel.Model.Id, key, bound);
+        }
+
+        SemanticSpecificationAbsentReadModel? BindAbsentReadModel(SpecificationAbsentReadModelSyntax value)
+        {
+            if (!_readModels.TryGetValue(ShortName(value.Name), out var readModel))
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"Specification read model '{value.Name}' is unresolved.", value.Location);
+                return null;
+            }
+
+            var identifier = readModel.Model.Properties.SingleOrDefault(_ => _.IsIdentifier);
+            if (identifier is null) return null; // The declaration has already reported an ambiguous or missing identifier.
+            var key = BindConcreteValue(value.Key, identifier.Type, "specification read model key", false);
+            return key is null ? null : new(readModel.Model.Id, key);
         }
 
         SemanticSpecificationQueryResult? BindSpecificationQuery(SpecificationQuerySyntax value)

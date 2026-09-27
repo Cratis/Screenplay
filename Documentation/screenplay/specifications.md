@@ -28,6 +28,7 @@ specification <Name>
     <property> = <value>
   then readmodel <ReadModelType> [exactly]
     <property> = <value>
+  then no readmodel <ReadModelType> for <key>
   then query <Query> [exactly]
     arguments
       <argument> = <value>
@@ -40,10 +41,11 @@ specification <Name>
 - `given <EventType>` — zero or more. Establishes prior state by replaying events onto the slice's event source before the command runs.
 - `given readmodel <ReadModelType>` — zero or more. Establishes prior read model state directly, for scenarios where expressing the state as events would be noise.
 - `given caller` — zero or one. Explicit authentication, roles, and repeatable claim values for authorization. No fixture is inferred for an authorized scenario (`PLAY0389`).
-- `when <CommandType>` or `when append <EventType>` — at most one action. Append directly establishes an event occurrence, checks append-time constraints, projects it, then checks read models and queries; it does not run a command. Without `when`, provide at least one `then readmodel` or `then query`; `then` events and errors require an action (`PLAY0352`).
+- `when <CommandType>` or `when append <EventType>` — at most one action. Append directly establishes an event occurrence, checks append-time constraints, projects it, then checks read models and queries; it does not run a command. Without `when`, provide at least one `then readmodel`, `then no readmodel`, or `then query`; `then` events and errors require an action (`PLAY0352`).
 - `then <EventType>` — zero or more. Compares the complete set of new facts, in authored order by default. For `when append`, if any `then` events are asserted, they must match exactly the appended fact (no extra facts); omit them to check only projected state or queries.
 - `then events in any order` — once per specification. Compares all asserted events by event type, payload, and optional source without regard to order, still requiring the exact number of new facts. Without it, order matters.
 - `then readmodel <ReadModelType> [exactly]` — zero or more. The read model state after projection. By default, only asserted properties need match; `exactly` also disallows unasserted properties.
+- `then no readmodel <ReadModelType> for <key>` — zero or more. Asserts that precisely the keyed instance is absent, not that it exists with empty or null properties, and not that a query result is empty. The concrete key is required and type-checked against the view identifier. It has no children or `exactly` qualifier. Presence and absence for the same view and key conflict.
 - `then query <Query> [exactly]` — zero or more. Executes the named query with the authored `arguments` and compares its ordered `result` blocks. By default, rows match asserted properties as a subset; `exactly` requires all properties to match. Row count and order are always exact. No `result` blocks means the query is expected to return nothing.
 - `then denied` — zero or one. Expects the typed `Unauthorized` rejection, not a validation or constraint error. For a read-only query, declare one `then query` with arguments and no `result`, followed by `then denied`; for a command, do not combine it with any success or error outcome.
 - `then error ["<message>"]` — zero or one. An expected rejection, with no success outcomes in the same specification. See [Rejections](#rejections).
@@ -172,6 +174,25 @@ When a scenario is really about derived state rather than events, `given readmod
 
 `given readmodel` seeds a complete instance and must include the identifier property. `then readmodel` also must include the identifier to select the instance, but asserts only its stated properties. The identifier is inferred from the read model's keyed query (see [Read models](readmodels.md)); omitting it produces `PLAY0351` at that block. Additional properties in actual state do not fail a subset assertion. A missing asserted property is different from a present property with a `null` value.
 
+A projection can remove one instance while another remains. For example, with `InvoiceView` keyed by `invoiceId` through `query InvoiceById => InvoiceView? by invoiceId` and a projection declaring `remove with InvoiceRemoved key invoiceId`:
+
+```screenplay
+specification RemovingOneOfTwoInvoices
+  given readmodel InvoiceView
+    invoiceId = "first"
+  given readmodel InvoiceView
+    invoiceId = "second"
+  when append InvoiceRemoved
+    invoiceId = "first"
+  then no readmodel InvoiceView for "first"
+  then readmodel InvoiceView
+    invoiceId = "second"
+```
+
+The absence assertion selects ESM v5 (language and semantics `5.0`, canonical `schemaVersion: 5`); existing v1–v4 models retain their bytes and revisions. The reference runner compares both the view identity and the semantic key, so a surviving instance under another key does not fail the absence check. Opaque reducer-built read models still require a target provider: their absence returns typed `SemanticUnsupported`, not a passing assertion. ESM consumers must explicitly admit v5 before using it.
+
+Typed workspace authoring currently refuses structural changes to a workspace containing an absence assertion, even in Draft mode. Renames in that workspace are also refused. No write plan is produced; edit the `.play` source directly until absence-key correspondence is supported.
+
 You can omit `when` to check established state without running a command:
 
 ```screenplay
@@ -186,7 +207,7 @@ specification LookingUpAnExistingInvoice
       status = "draft"
 ```
 
-The reference runner establishes `given` events, projects them, applies complete `given readmodel` states, then queries and compares. A when-less specification may also assert `then readmodel`, but not events or errors. With a `when`, event, read-model and query assertions can be combined as needed. An appended event can also be rejected by an append-time constraint using `then error`. Reactions triggered by the appended event are **not** executed: reactions are not part of the ESM.
+The reference runner establishes `given` events, projects them, applies complete `given readmodel` states, then queries and compares. A when-less specification may also assert `then readmodel` or `then no readmodel`, but not events or errors. With a `when`, event, read-model and query assertions can be combined as needed. An appended event can also be rejected by an append-time constraint using `then error`. Reactions triggered by the appended event are **not** executed: reactions are not part of the ESM.
 
 ## Reference execution
 

@@ -77,7 +77,7 @@ static class WorkspaceReferenceMembers
         InvokesSyntax or ScreenActionSyntax => [("command", WorkspaceReferenceDomain.Command)],
         FormSyntax => [("for", WorkspaceReferenceDomain.Command)],
         ReadsSyntax or ProjectionSyntax or ReducerSyntax => [("readModel", WorkspaceReferenceDomain.View)],
-        SpecificationReadModelSyntax => [("name", WorkspaceReferenceDomain.View)],
+        SpecificationReadModelSyntax or SpecificationAbsentReadModelSyntax => [("name", WorkspaceReferenceDomain.View)],
         ScreenDataSyntax or FormPopulateViaQuerySyntax or SpecificationQuerySyntax => [("query", WorkspaceReferenceDomain.Query)],
         ScreenNavigateSyntax => [("screen", WorkspaceReferenceDomain.Screen)],
         PolicyReferenceSyntax => [("name", WorkspaceReferenceDomain.Policy)],

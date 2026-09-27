@@ -1,0 +1,22 @@
+// Chronicle ProjectionFactory routes remove with by one event key; a second keyed instance survives.
+module Billing
+  feature Invoices
+    slice StateView InvoiceLookup
+      event InvoiceRemoved
+        invoiceId String
+      readmodel InvoiceView
+        invoiceId String
+      query InvoiceById => InvoiceView?
+        by invoiceId String
+      projection Invoices => InvoiceView
+        remove with InvoiceRemoved key invoiceId
+      specification RemovingOneOfTwoInvoices
+        given readmodel InvoiceView
+          invoiceId = "first"
+        given readmodel InvoiceView
+          invoiceId = "second"
+        when append InvoiceRemoved
+          invoiceId = "first"
+        then no readmodel InvoiceView for "first"
+        then readmodel InvoiceView
+          invoiceId = "second"

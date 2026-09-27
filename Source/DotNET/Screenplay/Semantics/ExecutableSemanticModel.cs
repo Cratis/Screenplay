@@ -78,7 +78,7 @@ public sealed record ExecutableSemanticModel
         SemanticVersion semanticVersion,
         SemanticApplication application)
     {
-        EsmSchemaV4Support.EnsureSupported(languageVersion, semanticVersion);
+        EsmSchemaV5Support.EnsureSupported(languageVersion, semanticVersion);
         SemanticModelValidator.Validate(application, semanticVersion);
         var withoutRevision = SemanticModelCanonicalJson.SerializeWithoutRevision(languageVersion, semanticVersion, application);
         var revision = SemanticRevision.Compute(withoutRevision);
@@ -120,9 +120,21 @@ internal static partial class SemanticModelValidator
             throw new InvalidSemanticContract("An ESM v4 model must contain a multi-generation event contract.");
         }
 
-        if (semanticVersion != SemanticVersion.V4 && evolved)
+        if (semanticVersion != SemanticVersion.V4 && semanticVersion != SemanticVersion.V5 && evolved)
         {
             throw new InvalidSemanticContract("Event contract lineage requires ESM v4.");
+        }
+
+        var absent = application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices)
+            .SelectMany(slice => slice.Specifications).Any(specification => !specification.ThenAbsentReadModels.IsDefaultOrEmpty);
+        if (semanticVersion == SemanticVersion.V5 && !absent)
+        {
+            throw new InvalidSemanticContract("An ESM v5 model must contain a keyed read-model absence assertion.");
+        }
+
+        if (semanticVersion != SemanticVersion.V5 && absent)
+        {
+            throw new InvalidSemanticContract("A keyed read-model absence assertion requires ESM v5.");
         }
 
         if (semanticVersion == SemanticVersion.V3 && !application.Policies.Any(policy => policy.Condition is SemanticOpaquePolicyCondition) &&
@@ -481,7 +493,7 @@ internal static partial class SemanticModelValidator
             }
 
             if (command.CodeValidations.IsDefault || command.CodeValidations.Any(block => block is null || string.IsNullOrWhiteSpace(block.RequirementId)) ||
-                (command.CodeValidations.Length > 0 && _semanticVersion != SemanticVersion.V3 && _semanticVersion != SemanticVersion.V4))
+                (command.CodeValidations.Length > 0 && _semanticVersion != SemanticVersion.V3 && _semanticVersion != SemanticVersion.V4 && _semanticVersion != SemanticVersion.V5))
             {
                 throw new InvalidSemanticContract("Command code validation requires ESM v3 and a requirement identity.");
             }
@@ -551,7 +563,7 @@ internal static partial class SemanticModelValidator
 
             if (validation.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation)
             {
-                if ((_semanticVersion != SemanticVersion.V3 && _semanticVersion != SemanticVersion.V4) || validation.Operand is not null ||
+                if ((_semanticVersion != SemanticVersion.V3 && _semanticVersion != SemanticVersion.V4 && _semanticVersion != SemanticVersion.V5) || validation.Operand is not null ||
                     (validation.Kind == SemanticValidationRuleKind.CodeValidation && !isConcept) ||
                     string.IsNullOrWhiteSpace(validation.Name) || string.IsNullOrWhiteSpace(validation.RequirementId))
                 {
@@ -707,7 +719,7 @@ internal static partial class SemanticModelValidator
 
                 RejectNull(transition.AffectedInstance, "affected instance");
                 ValidateEnum(transition.AffectedInstance.Cardinality, AffectedInstanceCardinality.Unknown, "affected instance cardinality");
-                if (_semanticVersion == SemanticVersion.V4 && transition.AffectedInstance.Cardinality != AffectedInstanceCardinality.One)
+                if ((_semanticVersion == SemanticVersion.V4 || _semanticVersion == SemanticVersion.V5) && transition.AffectedInstance.Cardinality != AffectedInstanceCardinality.One)
                 {
                     throw new InvalidSemanticContract("ESM v4 does not admit zeroOrOne or many projection transition cardinality.");
                 }
@@ -728,7 +740,7 @@ internal static partial class SemanticModelValidator
 
         void ValidateReducer(SemanticReducer reducer)
         {
-            if ((_semanticVersion != SemanticVersion.V3 && _semanticVersion != SemanticVersion.V4) || string.IsNullOrWhiteSpace(reducer.Name) ||
+            if ((_semanticVersion != SemanticVersion.V3 && _semanticVersion != SemanticVersion.V4 && _semanticVersion != SemanticVersion.V5) || string.IsNullOrWhiteSpace(reducer.Name) ||
                 !_readModels.ContainsKey(reducer.ReadModel) || reducer.Transitions.IsDefaultOrEmpty)
             {
                 throw new InvalidSemanticContract($"Reducer '{reducer.Name}' requires ESM v3, a read model, and transitions.");
@@ -839,6 +851,24 @@ internal static partial class SemanticModelValidator
             }
 
             RejectDuplicateReadModelStates(specification.ThenReadModels, "expected read model");
+            foreach (var absentState in specification.ThenAbsentReadModels)
+            {
+                if (!_readModels.TryGetValue(absentState.ReadModel, out var readModel))
+                {
+                    throw new InvalidSemanticContract($"Specification absent read model '{absentState.ReadModel}' is unresolved.");
+                }
+
+                ValidateValue(absentState.Key, IdentifierProperty(readModel).Type, "specification absent read model key");
+                if (specification.ThenReadModels.Any(present => present.ReadModel == absentState.ReadModel &&
+                        SemanticValueRules.AreEqual(present.Key, absentState.Key)) ||
+                    specification.ThenQueries.Any(query => query.Results.Any(present => present.ReadModel == absentState.ReadModel &&
+                        SemanticValueRules.AreEqual(present.Key, absentState.Key))))
+                {
+                    throw new InvalidSemanticContract("A specification cannot assert both presence and absence for the same read model and key.");
+                }
+            }
+
+            RejectDuplicateAbsentReadModels(specification.ThenAbsentReadModels);
             foreach (var result in specification.ThenQueries)
             {
                 ValidateSpecificationQuery(result);
@@ -860,7 +890,7 @@ internal static partial class SemanticModelValidator
             var deniedQuery = specification.ThenDenied && specification.When is null && specification.WhenAppended is null &&
                 specification.ThenQueries.Length == 1 && specification.ThenQueries[0].Results.IsEmpty;
             var hasRejection = specification.ThenErrors.Length > 0 || specification.ThenDenied;
-            var hasSuccessOutcome = specification.ThenEvents.Length > 0 || specification.ThenReadModels.Length > 0 ||
+            var hasSuccessOutcome = specification.ThenEvents.Length > 0 || specification.ThenReadModels.Length > 0 || specification.ThenAbsentReadModels.Length > 0 ||
                 (specification.ThenQueries.Length > 0 && !deniedQuery);
             if (hasRejection && (specification.ThenErrors.Length + (specification.ThenDenied ? 1 : 0) != 1 || hasSuccessOutcome))
             {
@@ -869,7 +899,7 @@ internal static partial class SemanticModelValidator
 
             if (specification.When is null && specification.WhenAppended is null && (specification.ThenErrors.Length > 0 || specification.ThenEvents.Length > 0 ||
                 (specification.ThenDenied && !deniedQuery) ||
-                (specification.ThenReadModels.Length == 0 && specification.ThenQueries.Length == 0)))
+                (specification.ThenReadModels.Length == 0 && specification.ThenAbsentReadModels.Length == 0 && specification.ThenQueries.Length == 0)))
             {
                 throw new InvalidSemanticContract("A specification without a command requires a read model or query outcome and cannot assert events or errors.");
             }
@@ -1187,6 +1217,21 @@ internal static partial class SemanticModelValidator
             }
         }
 
+        void RejectDuplicateAbsentReadModels(ImmutableArray<SemanticSpecificationAbsentReadModel> states)
+        {
+            for (var first = 0; first < states.Length; first++)
+            {
+                for (var second = first + 1; second < states.Length; second++)
+                {
+                    if (states[first].ReadModel == states[second].ReadModel &&
+                        SemanticValueRules.AreEqual(states[first].Key, states[second].Key))
+                    {
+                        throw new InvalidSemanticContract("A specification contains a duplicated absent read model key.");
+                    }
+                }
+            }
+        }
+
         void RejectDuplicateQueryExpectations(ImmutableArray<SemanticSpecificationQueryResult> results)
         {
             for (var first = 0; first < results.Length; first++)
@@ -1213,6 +1258,7 @@ internal static partial class SemanticModelValidator
             if (specification.WhenAppended is not null) RequireObjects(specification.WhenAppended.Values, nameof(specification.WhenAppended.Values), "property value");
             RequireObjects(specification.ThenEvents, nameof(specification.ThenEvents), "specification event");
             RequireObjects(specification.ThenReadModels, nameof(specification.ThenReadModels), "specification read model");
+            RequireObjects(specification.ThenAbsentReadModels, nameof(specification.ThenAbsentReadModels), "specification absent read model");
             RequireObjects(specification.ThenQueries, nameof(specification.ThenQueries), "specification query result");
             RequireObjects(specification.ThenErrors, nameof(specification.ThenErrors), "specification error");
         }

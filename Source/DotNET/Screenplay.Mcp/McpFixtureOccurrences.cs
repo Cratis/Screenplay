@@ -30,6 +30,8 @@ static class McpFixtureOccurrences
             return (specification.GivenReadModels ?? []).Any(item => ReferenceEquals(item, node)) ? "givenReadModel" : "thenReadModel";
         }
 
+        if (node is SpecificationAbsentReadModelSyntax) return "thenAbsentReadModel";
+
         return fallback;
     }
 
@@ -64,6 +66,11 @@ static class McpFixtureOccurrences
         foreach (var item in (specification.GivenReadModels ?? []).Concat(specification.ThenReadModels ?? []))
         {
             yield return Occurrence(item.Name, "ReadModel", Role(specification, item, string.Empty), item, item.Properties);
+        }
+
+        foreach (var item in specification.ThenAbsentReadModels)
+        {
+            yield return Occurrence(item.Name, "ReadModel", "thenAbsentReadModel", item, []);
         }
 
         foreach (var query in specification.ThenQueries)

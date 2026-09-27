@@ -1,0 +1,2 @@
+module Billing
+  feature Invoices

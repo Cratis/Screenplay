@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Workspaces;
 
@@ -110,6 +111,11 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
     WorkspaceAuthoringResult RenameCore(WorkspaceRenameRequest request)
     {
         var index = WorkspaceSyntaxIndex.Create(workspace);
+        if (index.Entries.Any(entry => entry.Node is SpecificationAbsentReadModelSyntax))
+        {
+            throw new InvalidWorkspaceAuthoring("Rename of a workspace with keyed absence assertions requires isolated absence-key binding proof; this rename is unsupported.");
+        }
+
         var target = request.Target is null ? null : index.Find(request.Target);
         var compositeProperty = target?.Node is PropertySyntax && target.Parent is { } parent && index.Find(parent)?.Node is TypeSyntax;
         if (target?.Address is null || (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax)))

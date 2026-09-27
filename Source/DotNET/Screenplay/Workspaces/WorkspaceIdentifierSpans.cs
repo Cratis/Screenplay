@@ -39,7 +39,7 @@ static class WorkspaceIdentifierSpans
             (UniquePropertyConstraintSyntax or UniqueEventConstraintSyntax, "event") => keyword == "unique",
             (SpecificationEventSyntax, "eventType") => keyword == "given" || keyword == "then" || keyword == "and",
             (SpecificationCommandSyntax, "commandType") => keyword == "when",
-            (SpecificationReadModelSyntax, "name") => keyword == "given" || keyword == "then" || keyword == "and",
+            (SpecificationReadModelSyntax or SpecificationAbsentReadModelSyntax, "name") => keyword == "given" || keyword == "then" || keyword == "and",
             (SpecificationQuerySyntax, "query") => keyword == "then" || keyword == "and",
             (InvokesSyntax, "command") => keyword == "invokes",
             (ScreenActionSyntax, "command") => keyword == "action",

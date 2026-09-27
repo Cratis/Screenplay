@@ -68,6 +68,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             .FirstOrDefault(candidate =>
                 expected.GivenReadModels.Any(state => state.ReadModel == candidate.ReadModel) ||
                 expected.ThenReadModels.Any(state => state.ReadModel == candidate.ReadModel) ||
+                expected.ThenAbsentReadModels.Any(state => state.ReadModel == candidate.ReadModel) ||
                 expected.ThenQueries.Any(query => plan.Queries.TryGetValue(query.Query, out var target) && target.ReadModel == candidate.ReadModel));
         if (reducer is not null)
         {
@@ -203,6 +204,14 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             failures.Add("Produced fact destination does not match the specification command event source.");
         }
         CompareReadModels(expected.ThenReadModels, accepted.World.ReadModels, failures, "read model");
+        foreach (var absent in expected.ThenAbsentReadModels)
+        {
+            if (accepted.World.ReadModels.Any(instance => instance.ReadModel == absent.ReadModel &&
+                SemanticValueRules.AreEqual(instance.Key, absent.Key)))
+            {
+                failures.Add($"Expected read model '{absent.ReadModel}' with key '{absent.Key}' to be absent.");
+            }
+        }
         CompareQueries(expected.ThenQueries, accepted.Queries, failures);
         return failures.ToImmutable();
     }

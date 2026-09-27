@@ -50,6 +50,9 @@ public record SpecificationSyntax(
     /// </remarks>
     public IEnumerable<SpecificationQuerySyntax> ThenQueries { get; init; } = [];
 
+    /// <summary>Gets the keyed read-model instances expected not to exist, in authored order.</summary>
+    public IEnumerable<SpecificationAbsentReadModelSyntax> ThenAbsentReadModels { get; init; } = [];
+
     /// <summary>Gets the explicit caller fixture, or null when no identity context was authored.</summary>
     public SpecificationCallerSyntax? GivenCaller { get; init; }
 
@@ -121,6 +124,14 @@ public record SpecificationReadModelSyntax(
     /// <summary>Gets whether every actual property must be asserted; the default is subset matching.</summary>
     public bool Exactly { get; init; }
 }
+
+/// <summary>
+/// Represents an assertion that a particular keyed read-model instance does not exist.
+/// </summary>
+/// <param name="Name">The referenced read model type.</param>
+/// <param name="Key">The required instance key.</param>
+/// <param name="Location">The source location of the assertion.</param>
+public record SpecificationAbsentReadModelSyntax(string Name, ExpressionSyntax Key, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents an expected query result declared with <c>then query &lt;Query&gt;</c>.

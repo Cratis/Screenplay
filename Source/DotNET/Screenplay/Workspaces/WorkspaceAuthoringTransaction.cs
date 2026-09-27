@@ -6,6 +6,7 @@ using System.Text.Json;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Semantics;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Workspaces;
 
@@ -171,6 +172,17 @@ sealed class WorkspaceAuthoringTransaction(ScreenplayWorkspace workspace, IReadO
         }
 
         var candidate = ScreenplayWorkspace.CreateValidated(workspace.ApplicationName, ordered, catalog, compilation, workspace.AttachmentContents);
+
+        // Until absence-key correspondence has an independent, transaction-local proof, the generic
+        // reference engine cannot attest changes to individual members of a keyed absence assertion.
+        // Do not return a write plan for a changed layout in either Safe or Draft mode.
+        if ((WorkspaceSyntaxIndex.Create(workspace).Entries.Any(entry => entry.Node is SpecificationAbsentReadModelSyntax) ||
+             WorkspaceSyntaxIndex.Create(candidate).Entries.Any(entry => entry.Node is SpecificationAbsentReadModelSyntax)) &&
+            !WorkspaceReferenceLayout.Equivalent(workspace, candidate))
+        {
+            throw new InvalidWorkspaceAuthoring("Keyed absence workspace edits require isolated absence-key binding proof; this proposal is unsupported.");
+        }
+
         WorkspaceAuthoringReferences.Validate(workspace, candidate, request, _diagnostics, referenceRenames);
         return new()
         {

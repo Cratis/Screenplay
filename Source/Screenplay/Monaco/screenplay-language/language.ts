@@ -115,6 +115,7 @@ export const clauseKeywords = [
     'tag',
     'for',
     'readmodel',
+    'no',
     'when',
     'every',
     'at',

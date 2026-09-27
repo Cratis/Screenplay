@@ -59,6 +59,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitSpecificationReadModel(readModel);
         }
 
+        foreach (var absent in syntax.ThenAbsentReadModels)
+        {
+            VisitSpecificationAbsentReadModel(absent);
+        }
+
         foreach (var query in syntax.ThenQueries)
         {
             VisitSpecificationQuery(query);
@@ -138,6 +143,14 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitPropertyMapping(property);
         }
+    }
+
+    /// <summary>Visits a keyed read-model absence assertion and its key.</summary>
+    /// <param name="syntax">The absence assertion.</param>
+    public virtual void VisitSpecificationAbsentReadModel(SpecificationAbsentReadModelSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitExpression(syntax.Key);
     }
 
     /// <summary>

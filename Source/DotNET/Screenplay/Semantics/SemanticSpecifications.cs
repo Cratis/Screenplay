@@ -61,6 +61,11 @@ public sealed record SemanticSpecificationReadModel(
     public bool Exactly { get; init; }
 }
 
+/// <summary>Represents the absence of exactly one keyed read-model instance.</summary>
+/// <param name="ReadModel">The read-model semantic identity.</param>
+/// <param name="Key">The typed instance key.</param>
+public sealed record SemanticSpecificationAbsentReadModel(SemanticId ReadModel, SemanticValue Key);
+
 /// <summary>
 /// Represents an expected keyed query result.
 /// </summary>
@@ -121,4 +126,7 @@ public sealed record SemanticSpecification(
 
     /// <summary>Gets whether then-events are compared without regard to occurrence order.</summary>
     public bool ThenEventsInAnyOrder { get; init; }
+
+    /// <summary>Gets the keyed read-model instances expected not to exist.</summary>
+    public ImmutableArray<SemanticSpecificationAbsentReadModel> ThenAbsentReadModels { get; init; } = [];
 }

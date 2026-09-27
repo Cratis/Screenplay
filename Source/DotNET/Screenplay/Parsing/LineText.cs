@@ -15,7 +15,7 @@ internal static class LineText
     /// <returns>The first word.</returns>
     public static string FirstWord(string content)
     {
-        var space = content.IndexOf(' ', StringComparison.Ordinal);
+        var space = content.IndexOfAny([' ', '\t']);
         return space == -1 ? content : content[..space];
     }
 

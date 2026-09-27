@@ -234,6 +234,7 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0099` | Error | A `given readmodel` or `then readmodel` line does not name a read model type. |
 | `PLAY0100` | Error | A `given` or `then` line does not name an event type. |
 | `PLAY0101` | Error | A value a specification step states is not `<property> = <value>`. |
+| `PLAY0453` | Error | A `then no readmodel` line lacks a view or key, uses `exactly`, or has child mappings. |
 
 ### Screens
 
