@@ -2,13 +2,13 @@
 id: 0012
 title: A language-neutral typed-context descriptor, then command handlers as the next role
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-09-24
 decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
 applies-to:
-  - Source/DotNET/Screenplay/Contexts/**
+  - Source/DotNET/Screenplay.Contexts/Contexts/**
   - Source/DotNET/Screenplay/Semantics/SemanticImplementationRequirement.cs
   - Source/DotNET/Screenplay/Semantics/SemanticModelBinder.Implementations.cs
   - Source/DotNET/Screenplay/Semantics/Serialization/**
@@ -20,7 +20,7 @@ applies-to:
 
 [Decision 0002](0002-implementation-attachments-envelope-and-reducer-role.md) delegated editing support to the host editor and said Screenplay emits wrapper and source-map data only. Exact source maps shipped in v4.30.0 ([#252](https://github.com/Cratis/Screenplay/pull/252)). The wrapper data has no defined shape yet: an editor or renderer cannot learn, from Screenplay, what an implementation body can see and with which types.
 
-The code contexts are still `dynamic` where they carry model data: `CommandContext.Command`, `QueryContext.Arguments`, `RuleContext.Artifact` and `Value`, `PolicyContext.Artifact`, `ReducerContext.State` and `Event` ([`CommandContext.cs:25`](../Source/DotNET/Screenplay/Contexts/CommandContext.cs), [`QueryContext.cs:26`](../Source/DotNET/Screenplay/Contexts/QueryContext.cs), [`RuleContext.cs:38-39`](../Source/DotNET/Screenplay/Contexts/RuleContext.cs), [`PolicyContext.cs:33`](../Source/DotNET/Screenplay/Contexts/PolicyContext.cs), [`ReducerContext.cs:29-30`](../Source/DotNET/Screenplay/Contexts/ReducerContext.cs)). v4.21.0 added typed accessors beside them (option 2 of [#84](https://github.com/Cratis/Screenplay/issues/84)), but the consumer names the type. Option 1, a context typed per artifact, is what #84 still asks for.
+The code contexts are still `dynamic` where they carry model data: `CommandContext.Command`, `QueryContext.Arguments`, `RuleContext.Artifact` and `Value`, `PolicyContext.Artifact`, `ReducerContext.State` and `Event` ([`CommandContext.cs:25`](../Source/DotNET/Screenplay.Contexts/Contexts/CommandContext.cs), [`QueryContext.cs:26`](../Source/DotNET/Screenplay.Contexts/Contexts/QueryContext.cs), [`RuleContext.cs:38-39`](../Source/DotNET/Screenplay.Contexts/Contexts/RuleContext.cs), [`PolicyContext.cs:33`](../Source/DotNET/Screenplay.Contexts/Contexts/PolicyContext.cs), [`ReducerContext.cs:29-30`](../Source/DotNET/Screenplay.Contexts/Contexts/ReducerContext.cs)). v4.21.0 added typed accessors beside them (option 2 of [#84](https://github.com/Cratis/Screenplay/issues/84)), but the consumer names the type. Option 1, a context typed per artifact, is what #84 still asks for.
 
 Screenplay already has one precedent for publishing a catalog as data: `EventContextCatalog` restates Chronicle's event context once, and specs hold the editor surfaces and documentation to it ([`EventContextCatalog.cs`](../Source/DotNET/Screenplay/Syntax/EventContextCatalog.cs), `Syntax/for_EventContextCatalog`).
 

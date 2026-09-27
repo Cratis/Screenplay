@@ -11,7 +11,7 @@ applies-to:
   - Source/DotNET/Screenplay/Parsing/PolicyParser.cs
   - Source/DotNET/Screenplay/Parsing/CommandParser.cs
   - Source/DotNET/Screenplay/Parsing/QueryParser.cs
-  - Source/DotNET/Screenplay/Contexts/PolicyContext.cs
+  - Source/DotNET/Screenplay.Contexts/Contexts/PolicyContext.cs
   - Source/DotNET/Screenplay/Semantics/SemanticPolicies.cs
   - Source/DotNET/Screenplay/Semantics/SemanticModelBinder.Policies.cs
   - Source/DotNET/Screenplay/Semantics/SemanticModelValidator.Policies.cs
@@ -36,7 +36,7 @@ Under [decision 0001](0001-chronicle-runtime-semantic-authority.md), the runtime
 
 Policy predicates are the third attachment role. The reference evaluator composes them in authored order, as the target does.
 
-1. **Binding.** A `policy` with a `csharp` body or a `file` reference binds as an opaque attachment: role `PolicyPredicate` ([`SemanticImplementationRequirement.cs:24`](../Source/DotNET/Screenplay/Semantics/SemanticImplementationRequirement.cs)), capability `pure`, context contract v1 and result contract v1. The result is a `bool`. The context is `PolicyContext` v1, as documented in [`policies.md` "What the code can see"](../Documentation/screenplay/policies.md): `Identity` (`Id`, `Name`, `UserName`, `IsAuthenticated`, `Roles`, `Claims`), `Artifact`, `Subject`, `Tenant` and `Occurred` ([`PolicyContext.cs`](../Source/DotNET/Screenplay/Contexts/PolicyContext.cs)). Inline and file forms produce the same requirement identity, and the file form is identified by content, per decision 0002.
+1. **Binding.** A `policy` with a `csharp` body or a `file` reference binds as an opaque attachment: role `PolicyPredicate` ([`SemanticImplementationRequirement.cs:24`](../Source/DotNET/Screenplay/Semantics/SemanticImplementationRequirement.cs)), capability `pure`, context contract v1 and result contract v1. The result is a `bool`. The context is `PolicyContext` v1, as documented in [`policies.md` "What the code can see"](../Documentation/screenplay/policies.md): `Identity` (`Id`, `Name`, `UserName`, `IsAuthenticated`, `Roles`, `Claims`), `Artifact`, `Subject`, `Tenant` and `Occurred` ([`PolicyContext.cs`](../Source/DotNET/Screenplay.Contexts/Contexts/PolicyContext.cs)). Inline and file forms produce the same requirement identity, and the file form is identified by content, per decision 0002.
 2. **One form per policy.** A policy has either a `require` condition or one implementation, never both. Combining `require` with code or a file is a compile error.
 3. **ESM version.** The construct joins ESM v3 under the rule [decision 0004](0004-admission-and-governance-of-portable-executable-semantics.md) proposes: only models that use an opaque policy select v3, and portable policy entries keep their v1/v2 bytes.
 4. **Composition.** The reference evaluator gives each operand one of three outcomes: allow, deny or unsupported. It evaluates left to right with short-circuit:

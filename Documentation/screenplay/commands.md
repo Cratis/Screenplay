@@ -253,7 +253,7 @@ Cross-field or complex rules drop into C#. The block yields the message of every
 ````screenplay
 validate
   ```csharp
-  if (context.Artifact.paymentTerms == "immediate" && context.Artifact.total > 1_000_000)
+  if (context.Artifact.PaymentTerms == "immediate" && context.Artifact.Total > 1_000_000)
   {
       yield return "Invoices over 1,000,000 cannot require immediate payment";
   }

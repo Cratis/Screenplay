@@ -4,18 +4,20 @@
 namespace Cratis.Screenplay.Contexts;
 
 /// <summary>
-/// Represents the identifier of the tenant a command or query is executing for.
+/// Represents the portable identifier of the tenant a code body is executing for.
+/// Providers translate their runtime tenant or namespace at the context boundary, rejecting ambiguous mappings.
 /// </summary>
 /// <param name="Value">The underlying value of the identifier.</param>
 public record TenantId(string Value)
 {
     /// <summary>
-    /// The tenant of a single tenant application.
+    /// The portable default tenant, the zero GUID. Providers map the Arc/Chronicle default namespace
+    /// <c>Default</c> to this value without conflating it with a named tenant.
     /// </summary>
     public static readonly TenantId Default = new("00000000-0000-0000-0000-000000000000");
 
     /// <summary>
-    /// The absence of a tenant.
+    /// The absence of a tenant, represented by an empty string. Providers must distinguish it from named tenants.
     /// </summary>
     public static readonly TenantId NotSet = new(string.Empty);
 
