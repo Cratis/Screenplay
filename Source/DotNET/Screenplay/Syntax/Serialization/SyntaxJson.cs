@@ -16,8 +16,9 @@ namespace Cratis.Screenplay.Syntax.Serialization;
 /// parsing: faithful values remain <see cref="double"/>, otherwise <see cref="long"/> when possible,
 /// exact <see cref="decimal"/> when representable, or the original <see cref="double"/> fallback.
 /// Int32, Int64, Decimal and Single use a <c>{ "literalType": "Decimal", "value": "5.5" }</c>
-/// envelope to preserve their type. Finite Doubles use plain JSON numbers when they reparse as Double;
-/// otherwise the writer uses a Double envelope, which is also accepted on input.
+/// envelope to preserve their type. Finite Doubles use plain JSON numbers: when their shortest
+/// round-trip spelling would decode as another type, the writer emits exact binary-value decimal
+/// digits instead. Explicit Double envelopes are also accepted on input.
 /// Optional null collections are represented as empty arrays.
 /// </remarks>
 public static class SyntaxJson

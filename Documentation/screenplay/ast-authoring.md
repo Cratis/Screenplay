@@ -58,8 +58,12 @@ incorrect child types, invalid enums and illegal nulls are rejected.
   they use `Int64` when integral and in range, otherwise exact `Decimal` where
   possible. Unrepresentable values retain the former Double fallback. Explicit
   `literalType`/`value` envelopes allow intentional CLR numeric types. Finite
-  Doubles use an envelope when an ordinary JSON number would decode as a different
-  type. Numeric structural equality still distinguishes CLR types and signed zero.
+  Doubles remain plain JSON numbers; if their shortest `R` spelling would decode
+  as a different type, serialization uses their exact binary-value decimal digits
+  (for example, 2^64) instead. Explicit Double envelopes are also accepted on
+  input. Numeric structural equality and authoring round trips distinguish CLR
+  types and signed zero; since main prints `-0` as `0`, authoring rejects that
+  normalization rather than silently changing the sign.
 - Inline JSON-shaped objects and lists have typed value nodes and individually
   addressable keys. Existing code blocks and raw expressions remain language
   constructs, not an escape hatch for structured data or untyped AST subtrees.

@@ -24,16 +24,17 @@ public class when_admitting_numeric_json_literals
     }
 
     [Theory]
-    [InlineData("3.5")]
-    [InlineData("0.1")]
-    [InlineData("1.4411518807585587E+17")]
-    public void should_preserve_an_explicit_double_envelope(string text)
+    [InlineData("3.5", "3.5")]
+    [InlineData("0.1", "0.1000000000000000055511151231257827021181583404541015625")]
+    [InlineData("1.4411518807585587E+17", "144115188075855872")]
+    public void should_preserve_an_explicit_double_envelope(string text, string exact)
     {
         var source = $"{{\"kind\":\"LiteralExpressionSyntax\",\"value\":{{\"literalType\":\"Double\",\"value\":\"{text}\"}}}}";
         var value = (LiteralExpressionSyntax)SyntaxJson.Deserialize(JsonSerializer.Deserialize<JsonElement>(source));
         var number = Assert.IsType<double>(value.Value);
         var serialized = SyntaxJson.Serialize(value).GetProperty("value");
-        serialized.ValueKind.ShouldEqual(text == "3.5" ? JsonValueKind.Number : JsonValueKind.Object);
+        serialized.ValueKind.ShouldEqual(JsonValueKind.Number);
+        serialized.GetRawText().ShouldEqual(exact);
         Assert.IsType<double>(((LiteralExpressionSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(value))).Value).ShouldEqual(number);
     }
 }

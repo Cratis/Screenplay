@@ -13,6 +13,27 @@ namespace Cratis.Screenplay.Parsing.for_ExpressionParser;
 public class when_parsing_structured_numeric_literals
 {
     [Theory]
+    [InlineData("[1e400]")]
+    [InlineData("[-1e400]")]
+    [InlineData("{\"amount\":1e400}")]
+    public void should_reject_non_finite_structured_numbers(string source)
+    {
+        var context = ParserContext.ForDiagnostics();
+        var expression = ExpressionParser.ParseMappingSource(context, source, SourceLocation.Start);
+        Assert.IsType<RawExpressionSyntax>(expression);
+        context.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidStructuredValue).ShouldBeTrue();
+    }
+
+    [Fact]
+    public void should_reject_a_309_digit_structured_number()
+    {
+        var context = ParserContext.ForDiagnostics();
+        var expression = ExpressionParser.ParseMappingSource(context, $"[1{new string('0', 309)}]", SourceLocation.Start);
+        Assert.IsType<RawExpressionSyntax>(expression);
+        context.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidStructuredValue).ShouldBeTrue();
+    }
+
+    [Theory]
     [InlineData("12345678901234567", typeof(long))]
     [InlineData("9223372036854775809", typeof(decimal))]
     [InlineData("0.00001", typeof(decimal))]

@@ -23,7 +23,7 @@ internal static class SyntaxLiterals
     {
         string or bool => value,
         double number when double.IsFinite(number) => NumericLiteral.Parse(number.ToString("R", CultureInfo.InvariantCulture)) is double
-            ? number : Number("Double", number.ToString("R", CultureInfo.InvariantCulture)),
+            ? number : ExactNumber(number),
         int number => Number("Int32", number.ToString(CultureInfo.InvariantCulture)),
         long number => Number("Int64", number.ToString(CultureInfo.InvariantCulture)),
         decimal number => Number("Decimal", number.ToString("G29", CultureInfo.InvariantCulture)),
@@ -51,6 +51,12 @@ internal static class SyntaxLiterals
             }
         }
     };
+
+    static JsonElement ExactNumber(double number)
+    {
+        using var document = JsonDocument.Parse(NumericLiteral.ExactDoubleText(number));
+        return document.RootElement.Clone();
+    }
 
     static object ReadNumber(JsonElement value, string path)
     {

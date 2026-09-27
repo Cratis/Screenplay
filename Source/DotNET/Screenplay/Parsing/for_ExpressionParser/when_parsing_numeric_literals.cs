@@ -28,6 +28,8 @@ public class when_parsing_numeric_literals
     [InlineData("1e17", typeof(double), "100000000000000000")]
     [InlineData("-0", typeof(double), "0")]
     [InlineData("144115188075855872", typeof(double), "144115188075855872")]
+    [InlineData("18446744073709551616", typeof(double), "18446744073709551616")]
+    [InlineData("0.1000000000000000055511151231257827021181583404541015625", typeof(double), "0.1000000000000000055511151231257827021181583404541015625")]
     [InlineData("1152921504606846976", typeof(double), "1152921504606846976")]
     [InlineData("100000000000000020", typeof(long), "100000000000000020")]
     [InlineData("9007199254740993", typeof(long), "9007199254740993")]
@@ -74,14 +76,29 @@ public class when_parsing_numeric_literals
         SyntaxJson.Serialize(parsed).GetProperty("value").ValueKind.ShouldEqual(JsonValueKind.Number);
     }
 
-    [Fact]
-    public void should_preserve_faithful_large_binary_numbers_with_a_double_envelope()
+    [Theory]
+    [InlineData("144115188075855872")]
+    [InlineData("18446744073709551616")]
+    public void should_keep_faithful_large_binary_numbers_as_plain_json_numbers(string text)
     {
-        var parsed = ExpressionParser.ParseLiteral("144115188075855872", SourceLocation.Start)!;
-        Assert.IsType<double>(parsed.Value);
-        var envelope = SyntaxJson.Serialize(parsed).GetProperty("value");
-        envelope.GetProperty("literalType").GetString().ShouldEqual("Double");
-        Assert.IsType<double>(((LiteralExpressionSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(parsed))).Value);
+        var parsed = ExpressionParser.ParseLiteral(text, SourceLocation.Start)!;
+        var value = Assert.IsType<double>(parsed.Value);
+        var serialized = SyntaxJson.Serialize(parsed).GetProperty("value");
+        serialized.ValueKind.ShouldEqual(JsonValueKind.Number);
+        serialized.GetRawText().ShouldEqual(text);
+        var restored = Assert.IsType<double>(((LiteralExpressionSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(parsed))).Value);
+        BitConverter.DoubleToInt64Bits(restored).ShouldEqual(BitConverter.DoubleToInt64Bits(value));
+    }
+
+    [Theory]
+    [InlineData("-0")]
+    [InlineData("-0.0")]
+    public void should_preserve_signed_zero_on_parse_and_keep_mains_printed_zero(string text)
+    {
+        var parsed = ExpressionParser.ParseLiteral(text, SourceLocation.Start)!;
+        var number = Assert.IsType<double>(parsed.Value);
+        BitConverter.DoubleToInt64Bits(number).ShouldEqual(BitConverter.DoubleToInt64Bits(-0d));
+        ScreenplaySyntaxText.Expression(parsed).ShouldEqual("0");
     }
 
     [Fact]

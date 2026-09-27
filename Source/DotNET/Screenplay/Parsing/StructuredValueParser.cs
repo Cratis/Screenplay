@@ -20,8 +20,16 @@ internal sealed class StructuredValueParser(string text, SourceLocation start, P
         return Value(document.RootElement);
     }
 
-    static object Number(JsonElement element) =>
-        NumericLiteral.Parse(element.GetRawText()) ?? throw new InvalidStructuredNumber("JSON number is outside the finite Double range.");
+    static object Number(JsonElement element)
+    {
+        var value = NumericLiteral.Parse(element.GetRawText());
+        if (value is null || (value is double number && !double.IsFinite(number)))
+        {
+            throw new InvalidStructuredNumber("JSON number is outside the finite Double range.");
+        }
+
+        return value;
+    }
 
     SourceLocation At() => start with { Column = start.Column + _position };
 

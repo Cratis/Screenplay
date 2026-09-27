@@ -76,16 +76,15 @@ public partial class when_differentially_round_tripping_numeric_literals(ITestOu
                 Assert.IsType<double>(value);
                 Assert.Equal(previous, value);
                 var mainPrinted = MainPrint(previous);
-                if (mainPrinted == printed || FaithfulPrinted(mainPrinted, previous))
-                {
-                    Assert.Equal(mainPrinted, printed);
-                }
-                else
+                var shortest = previous.ToString("R", CultureInfo.InvariantCulture);
+                var expected = NumericLiteral.Parse(shortest) is double ? mainPrinted : NumericLiteral.ExactDoubleText(previous);
+                Assert.Equal(expected, printed); // Any other printed-text deviation from main fails the harness.
+                if (printed != mainPrinted)
                 {
                     faithfulPrintChanged++;
                     if (faithfulPrintChanged <= 3)
                     {
-                        deviations.Add($"{source}: faithful main Double prints {mainPrinted}, but this spelling is not its exact binary value; branch prints {printed} to preserve type+value on reparse");
+                        deviations.Add($"{source}: faithful main Double prints {mainPrinted}, but shortest R spelling {shortest} changes type; branch prints exact digits {printed}");
                     }
                 }
 
@@ -148,7 +147,7 @@ public partial class when_differentially_round_tripping_numeric_literals(ITestOu
             yield return "-0." + new string('0', exponent - 1) + "1";
         }
 
-        foreach (var text in new[] { "-0", "-0.0", "0.000", "1e17", "1E+20", "1e30", "1e308", "1e400", "-1e400", "1" + new string('0', 309), "-1" + new string('0', 309), "9007199254740993." + new string('0', 130) })
+        foreach (var text in new[] { "-0", "-0.0", "0.000", "1e17", "1E+20", "1e30", "1e308", "1e400", "-1e400", "18446744073709551616", "0.1000000000000000055511151231257827021181583404541015625", "1" + new string('0', 309), "-1" + new string('0', 309), "9007199254740993." + new string('0', 130) })
         {
             yield return text;
         }
@@ -156,8 +155,6 @@ public partial class when_differentially_round_tripping_numeric_literals(ITestOu
 
     [GeneratedRegex(@"^-?\d+(\.\d+)?$", RegexOptions.None, 1000)]
     private static partial Regex MainNumber();
-
-    static bool FaithfulPrinted(string printed, double number) => MainNumber().IsMatch(printed) && Faithful(printed, number);
 
     static string MainPrint(double number) =>
         number == Math.Floor(number) && number >= long.MinValue && number < 9223372036854775808d

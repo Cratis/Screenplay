@@ -57,6 +57,11 @@ internal static class NumericLiteral
 
     internal static bool CompatibleForAuthoring(object? left, object? right)
     {
+        if (IsNegativeZero(left) || IsNegativeZero(right))
+        {
+            return IsNegativeZero(left) && IsNegativeZero(right);
+        }
+
         if (left?.GetType() == right?.GetType())
         {
             return Equal(left, right);
@@ -118,8 +123,12 @@ internal static class NumericLiteral
         var negative = digits[0] == '-';
         var magnitude = negative ? digits[1..] : digits;
         var padded = magnitude.PadLeft(-exponent + 1, '0');
-        return $"{(negative ? "-" : string.Empty)}{padded[..^(-exponent)]}.{padded[^(-exponent)..]}";
+        var whole = padded[..^(-exponent)];
+        var fraction = padded[^(-exponent)..].TrimEnd('0');
+        return fraction.Length == 0 ? $"{(negative ? "-" : string.Empty)}{whole}" : $"{(negative ? "-" : string.Empty)}{whole}.{fraction}";
     }
+
+    static bool IsNegativeZero(object? value) => value is double number && number == 0 && double.IsNegative(number);
 
     static bool SameBinaryValue(string text, double value) => SameDecimalValue(text, ExactDoubleText(value));
 
