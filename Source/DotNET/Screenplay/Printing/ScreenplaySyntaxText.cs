@@ -271,14 +271,9 @@ internal static partial class ScreenplaySyntaxText
 
     static string Number(double number)
     {
-        if (double.IsNaN(number))
+        if (!double.IsFinite(number))
         {
             return number.ToString(CultureInfo.InvariantCulture);
-        }
-
-        if (double.IsInfinity(number))
-        {
-            return (number < 0 ? "-" : string.Empty) + "1" + new string('0', 309);
         }
 
         var text = number == Math.Floor(number) && number >= long.MinValue && number < 9223372036854775808d

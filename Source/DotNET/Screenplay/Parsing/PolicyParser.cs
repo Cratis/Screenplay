@@ -162,7 +162,7 @@ internal static partial class PolicyParser
                 var target = tokens[position++];
                 return target == "subject"
                     ? new ClaimConditionSyntax(claim, true, null, location)
-                    : new ClaimConditionSyntax(claim, false, ExpressionParser.ParseMappingSource(context, target, location), location);
+                    : new ClaimConditionSyntax(claim, false, ExpressionParser.ParseConditionOperand(context, target, location), location);
 
             default:
                 context.Error(DiagnosticCodes.UnexpectedTokenInPolicyCondition, $"Unexpected '{tokens[position]}' in policy condition", location);
@@ -180,6 +180,6 @@ internal static partial class PolicyParser
     [GeneratedRegex(@"^policy\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|\\(|\\)|[\\w.$]+", RegexOptions.None, 1000)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|\\(|\\)|-?[0-9]+(?:\\.[0-9]+)?[Ee][+-]?[0-9]+|[\\w.$]+", RegexOptions.None, 1000)]
     private static partial Regex TokenRegex();
 }

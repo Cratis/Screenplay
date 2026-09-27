@@ -224,6 +224,13 @@ internal static partial class ExpressionParser
         _ => null
     };
 
+    // Conditions historically kept exponent operands as opaque expressions. Keep their source
+    // round trips unchanged even though projection and mapping literals now parse exponents.
+    internal static ExpressionSyntax ParseConditionOperand(ParserContext context, string text, SourceLocation location) =>
+        NumberRegex().IsMatch(text) && text.IndexOfAny(['e', 'E']) >= 0
+            ? new RawExpressionSyntax(text, location)
+            : ParseMappingSource(context, text, location);
+
     /// <summary>
     /// Warns when a <c>$context.</c> path does not name something the command or query context carries.
     /// </summary>

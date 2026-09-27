@@ -34,18 +34,19 @@ public partial class when_differentially_round_tripping_numeric_literals(ITestOu
             Assert.NotNull(parsed);
             var value = parsed.Value!;
             var printed = ScreenplaySyntaxText.Expression(parsed);
-            var reparsed = ExpressionParser.ParseLiteral(printed, SourceLocation.Start);
-            Assert.NotNull(reparsed);
-            Assert.Equal(value.GetType(), reparsed.Value!.GetType());
-            Assert.Equal(value, reparsed.Value);
-
             if (value is double number && !double.IsFinite(number))
             {
-                // The typed-JSON contract has never admitted non-finite JSON numbers.
+                // Neither source reparsing nor typed JSON admits printed Infinity.
+                Assert.Equal(MainPrint(number), printed);
                 nonFinite++;
             }
             else
             {
+                var reparsed = ExpressionParser.ParseLiteral(printed, SourceLocation.Start);
+                Assert.NotNull(reparsed);
+                Assert.Equal(value.GetType(), reparsed.Value!.GetType());
+                Assert.Equal(value, reparsed.Value);
+
                 var typed = SyntaxJson.Serialize(parsed);
                 var restored = (LiteralExpressionSyntax)SyntaxJson.Deserialize(typed);
                 Assert.Equal(value.GetType(), restored.Value!.GetType());
@@ -57,8 +58,8 @@ public partial class when_differentially_round_tripping_numeric_literals(ITestOu
 
                 var ordinary = JsonSerializer.Deserialize<JsonElement>($"{{\"kind\":\"LiteralExpressionSyntax\",\"value\":{source}}}");
                 var fromJson = (LiteralExpressionSyntax)SyntaxJson.Deserialize(ordinary);
-                Assert.Equal(value.GetType(), fromJson.Value!.GetType());
-                Assert.Equal(value, fromJson.Value);
+                var jsonDouble = Assert.IsType<double>(fromJson.Value);
+                Assert.Equal(ordinary.GetProperty("value").GetDouble(), jsonDouble);
             }
 
             // Main's ExpressionParser.NumberRegex + double.Parse; exponent-only forms were not
@@ -88,7 +89,7 @@ public partial class when_differentially_round_tripping_numeric_literals(ITestOu
                     }
                 }
 
-                // Chronicle origin/main ProjectionDefinitionSyntaxVisitor.FormatLiteralForStorage:
+                // Chronicle ProjectionDefinitionSyntaxVisitor.FormatLiteralForStorage:
                 // double -> number.ToString(InvariantCulture), otherwise Convert.ToString(InvariantCulture).
                 Assert.Equal(previous.ToString(CultureInfo.InvariantCulture), ChronicleStorage(value));
             }
@@ -111,6 +112,26 @@ public partial class when_differentially_round_tripping_numeric_literals(ITestOu
         {
             output.WriteLine(deviation);
         }
+    }
+
+    [Theory]
+    [InlineData(144115188075855872d, "144115188075855870")]
+    [InlineData(9007199254740992d, "9007199254740992")]
+    [InlineData(0.1d, "0.1")]
+    public void should_read_writer_and_javascript_echoed_json_as_the_same_double(double value, string javascriptSpelling)
+    {
+        // The previous writer passed the Double to JsonSerializer without altering its spelling.
+        var mainWriterSpelling = JsonSerializer.Serialize(value);
+        foreach (var spelling in new[] { mainWriterSpelling, javascriptSpelling })
+        {
+            var json = JsonSerializer.Deserialize<JsonElement>($"{{\"kind\":\"LiteralExpressionSyntax\",\"value\":{spelling}}}");
+            var restored = (LiteralExpressionSyntax)SyntaxJson.Deserialize(json);
+            var restoredDouble = Assert.IsType<double>(restored.Value);
+            Assert.Equal(BitConverter.DoubleToInt64Bits(value), BitConverter.DoubleToInt64Bits(restoredDouble));
+            Assert.Equal(mainWriterSpelling, SyntaxJson.Serialize(restored).GetProperty("value").GetRawText());
+        }
+
+        output.WriteLine($"typedJsonCompatibility=2; writer={mainWriterSpelling}; javascript={javascriptSpelling}");
     }
 
     static IEnumerable<string> Corpus()

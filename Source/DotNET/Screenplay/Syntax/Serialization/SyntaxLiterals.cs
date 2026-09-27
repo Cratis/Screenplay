@@ -13,8 +13,7 @@ internal static class SyntaxLiterals
         JsonValueKind.String => value.GetString()!,
         JsonValueKind.True => true,
         JsonValueKind.False => false,
-        JsonValueKind.Number when NumericLiteral.Parse(value.GetRawText()) is { } number &&
-            (number is not double floating || double.IsFinite(floating)) => number,
+        JsonValueKind.Number when value.TryGetDouble(out var number) && double.IsFinite(number) => number,
         JsonValueKind.Object => ReadNumber(value, path),
         _ => throw new InvalidSyntaxJson($"{path}: expected a string, finite number, boolean, null, or typed numeric literal.")
     };
@@ -22,8 +21,7 @@ internal static class SyntaxLiterals
     internal static object Write(object value, string path) => value switch
     {
         string or bool => value,
-        double number when double.IsFinite(number) => NumericLiteral.Parse(number.ToString("R", CultureInfo.InvariantCulture)) is double
-            ? number : ExactNumber(number),
+        double number when double.IsFinite(number) => number,
         int number => Number("Int32", number.ToString(CultureInfo.InvariantCulture)),
         long number => Number("Int64", number.ToString(CultureInfo.InvariantCulture)),
         decimal number => Number("Decimal", number.ToString("G29", CultureInfo.InvariantCulture)),
@@ -36,7 +34,7 @@ internal static class SyntaxLiterals
         ["anyOf"] = new object[]
         {
             new Dictionary<string, object?> { ["type"] = new[] { "string", "boolean", "null" } },
-            new Dictionary<string, object?> { ["type"] = "number", ["description"] = "Parsed like a source literal: faithful values stay Double; otherwise Int64 or exact Decimal when possible.", ["minimum"] = -double.MaxValue, ["maximum"] = double.MaxValue },
+            new Dictionary<string, object?> { ["type"] = "number", ["minimum"] = -double.MaxValue, ["maximum"] = double.MaxValue },
             new Dictionary<string, object?>
             {
                 ["type"] = "object",
@@ -51,12 +49,6 @@ internal static class SyntaxLiterals
             }
         }
     };
-
-    static JsonElement ExactNumber(double number)
-    {
-        using var document = JsonDocument.Parse(NumericLiteral.ExactDoubleText(number));
-        return document.RootElement.Clone();
-    }
 
     static object ReadNumber(JsonElement value, string path)
     {

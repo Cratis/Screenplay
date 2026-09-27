@@ -53,7 +53,9 @@ public class when_parsing_structured_numeric_literals
 
         var typed = JsonNode.Parse(SyntaxJson.Serialize(parsed).GetRawText())!;
         typed["items"]![0]!["members"]![0]!["value"]!["value"] = JsonNode.Parse(text);
-        var admitted = SyntaxJson.Deserialize(JsonSerializer.Deserialize<JsonElement>(typed.ToJsonString()));
-        SyntaxJson.StructurallyEqual(parsed, admitted).ShouldBeTrue();
+        var admitted = Assert.IsType<ListExpressionSyntax>(SyntaxJson.Deserialize(JsonSerializer.Deserialize<JsonElement>(typed.ToJsonString())));
+        var admittedValue = Assert.IsType<LiteralExpressionSyntax>(Assert.IsType<ObjectExpressionSyntax>(admitted.Items.Single()).Members.Single().Value);
+        Assert.IsType<double>(admittedValue.Value).ShouldEqual(JsonSerializer.Deserialize<JsonElement>(text).GetDouble());
+        SyntaxJson.StructurallyEqual(parsed, admitted).ShouldEqual(expected == typeof(double));
     }
 }

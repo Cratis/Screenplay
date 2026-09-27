@@ -85,7 +85,7 @@ public class when_parsing_numeric_literals
         var value = Assert.IsType<double>(parsed.Value);
         var serialized = SyntaxJson.Serialize(parsed).GetProperty("value");
         serialized.ValueKind.ShouldEqual(JsonValueKind.Number);
-        serialized.GetRawText().ShouldEqual(text);
+        serialized.GetRawText().ShouldEqual(JsonSerializer.Serialize(value));
         var restored = Assert.IsType<double>(((LiteralExpressionSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(parsed))).Value);
         BitConverter.DoubleToInt64Bits(restored).ShouldEqual(BitConverter.DoubleToInt64Bits(value));
     }
@@ -139,6 +139,6 @@ public class when_parsing_numeric_literals
         var source = "1" + new string('0', 309);
         var parsed = ExpressionParser.ParseLiteral(source, SourceLocation.Start)!;
         Assert.IsType<double>(parsed.Value).ShouldEqual(double.PositiveInfinity);
-        Assert.IsType<double>(ExpressionParser.ParseLiteral(ScreenplaySyntaxText.Expression(parsed), SourceLocation.Start)!.Value).ShouldEqual(double.PositiveInfinity);
+        ScreenplaySyntaxText.Expression(parsed).ShouldEqual("Infinity");
     }
 }

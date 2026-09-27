@@ -56,7 +56,7 @@ internal static partial class ConditionParser
             return null;
         }
 
-        var right = ExpressionParser.ParseMappingSource(context, tokens[position++], location);
+        var right = ExpressionParser.ParseConditionOperand(context, tokens[position++], location);
         return new ComparisonConditionSyntax(left, comparison, right, location);
     }
 
@@ -97,6 +97,6 @@ internal static partial class ConditionParser
     static List<string> Tokenize(string text) =>
         [.. TokenRegex().Matches(text).Select(_ => _.Value)];
 
-    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|[\\w.$-]+", RegexOptions.None, 1000)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|-?[0-9]+(?:\\.[0-9]+)?[Ee][+-]?[0-9]+|[\\w.$-]+", RegexOptions.None, 1000)]
     private static partial Regex TokenRegex();
 }
