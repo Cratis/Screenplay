@@ -2,7 +2,7 @@
 id: 0018
 title: Use provider-generated identifiers in code bodies and keep the portable default tenant
 status: accepted
-stage: implemented
+stage: partially implemented
 decided: 2026-09-26
 decider: Sindre Alstad Wilting
 class: contract
@@ -45,3 +45,7 @@ Applies from context-contract v1 through a deliberate new contract revision. Thi
 ## Consequences
 
 C# authors must use generated PascalCase names in bodies even when the DSL used camelCase. Providers own explicit tenancy translation and reject collisions; the portable context contract and existing ESM stay stable.
+
+## Status notes
+
+**2026-09-27 — partially implemented, not verified.** Screenplay owns the portable tenant contract and the corrected C# body examples. Provider tests for default, unset, named and zero-GUID-colliding tenants, plus source-mapped casing diagnostics, are consumer follow-up work in Stage/Arc; they have not shipped in this repository. The original verification criteria remain outstanding until provider evidence is available.

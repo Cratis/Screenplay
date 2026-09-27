@@ -51,3 +51,6 @@ jobs:
       # break in the pull request that causes it, which is what Directory.Build.props already claims happens.
       - name: Pack
         run: dotnet pack --no-build --configuration Release -o ./Artifacts/NuGet -p:Version=9999.0.0
+
+      - name: Verify context package dependencies
+        run: python3 Source/DotNET/Screenplay.Contexts/verify-package.py ./Artifacts/NuGet 9999.0.0
