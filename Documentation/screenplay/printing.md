@@ -73,7 +73,11 @@ a file does:
   automap settings, parent keys and child exclusions; specification caller fixtures,
   event sources, query arguments and event-order directives; and command validation,
   production targets and concurrency dimensions keep comments on their authored lines.
-  An explicit default `severity error` on a requirement is omitted. Its trailing
+  Persona descriptions, constraint headers, unique rules, release events, casing and messages,
+  and query descriptions, `by` parameters and `scoped to` declarations also keep their
+  comments on the corresponding printed lines when canonical order differs from source order.
+  Adjacent trailing comments stay separate, including across a constraint's release and
+  casing lines. An explicit default `severity error` on a requirement is omitted. Its trailing
   comment moves to the `require` line, unless a `message` follows: then it gets its
   own line inside the requirement body, before `message`. If `require` already has
   a trailing comment and no `message` follows, the severity comment gets its own

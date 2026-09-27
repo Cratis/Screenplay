@@ -401,7 +401,7 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"persona {persona.Name}");
         using (writer.Indent())
         {
-            WriteDescription(writer, persona.Description);
+            WriteDescription(writer, persona.Description, persona);
 
             var policies = persona.Policies.ToList();
             for (var index = 0; index < policies.Count; index++)
@@ -778,7 +778,7 @@ public sealed partial class ScreenplayPrinter :
         }
     }
 
-    void WriteDescription(ScreenplayWriter writer, string? description)
+    void WriteDescription(ScreenplayWriter writer, string? description, SyntaxNode? owner = null)
     {
         if (description is null)
         {
@@ -787,11 +787,27 @@ public sealed partial class ScreenplayPrinter :
 
         if (!description.Contains('\n'))
         {
-            writer.Line($"description {StringLiteral.Quote(description)}");
+            var line = $"description {StringLiteral.Quote(description)}";
+            if (owner is null)
+            {
+                writer.Line(line);
+            }
+            else
+            {
+                writer.DirectiveLine(line, owner, "description");
+            }
+
             return;
         }
 
-        writer.Line("description");
+        if (owner is null)
+        {
+            writer.Line("description");
+        }
+        else
+        {
+            writer.DirectiveLine("description", owner, "description");
+        }
         using (writer.Indent())
         {
             WriteFencedText(writer, description);

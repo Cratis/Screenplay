@@ -37,6 +37,7 @@ internal static partial class QueryParser
         PerformerSyntax? performer = null;
         string? description = null;
         string? scope = null;
+        var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -44,10 +45,21 @@ internal static partial class QueryParser
             switch (LineText.FirstWord(line.Content))
             {
                 case "description":
+                    var previousDescription = description;
                     description = DescriptionParser.Parse(context, line, description, $"Query '{name}'");
+                    if (previousDescription is null && description is not null)
+                    {
+                        directiveLocations["description"] = line.Location;
+                    }
+
                     break;
                 case "by":
-                    by = ParseParameter(context, line, "by") ?? by;
+                    if (ParseParameter(context, line, "by") is { } parameter)
+                    {
+                        by = parameter;
+                        directiveLocations["by"] = line.Location;
+                    }
+
                     break;
                 case "filter":
                     if (ParseParameter(context, line, "filter") is { } filter)
@@ -63,7 +75,12 @@ internal static partial class QueryParser
                     performer = ParsePerformer(context, line, performer, name);
                     break;
                 case "scoped":
-                    scope = ParseScope(context, line, scope, name) ?? scope;
+                    if (ParseScope(context, line, scope, name) is { } parsedScope)
+                    {
+                        scope = parsedScope;
+                        directiveLocations["scoped to"] = line.Location;
+                    }
+
                     break;
                 default:
                     context.Error(DiagnosticCodes.UnknownQueryDirective, $"Unexpected '{line.Content}' in query body - expected description, by, filter, authorize, scoped or performer", line.Location);
@@ -72,7 +89,11 @@ internal static partial class QueryParser
             }
         }
 
-        return new(name, returnType, by, filters, authorize, header.Location, description, performer, isObservable) { Scope = scope };
+        return new(name, returnType, by, filters, authorize, header.Location, description, performer, isObservable)
+        {
+            Scope = scope,
+            DirectiveLocations = directiveLocations
+        };
     }
 
     static QueryParameterSyntax? ParseParameter(ParserContext context, SourceLine line, string keyword)

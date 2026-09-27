@@ -106,11 +106,11 @@ public partial class ScreenplayPrinter
         writer.Line($"query {query.Name} => {ScreenplaySyntaxText.QueryReturnType(query)}");
         using (writer.Indent())
         {
-            WriteDescription(writer, query.Description);
+            WriteDescription(writer, query.Description, query);
 
             if (query.By is not null)
             {
-                writer.Line($"by {ScreenplaySyntaxText.QueryParameter(query.By)}");
+                writer.Line($"by {ScreenplaySyntaxText.QueryParameter(query.By)}", query.By);
             }
 
             foreach (var filter in query.Filters)
@@ -122,7 +122,7 @@ public partial class ScreenplayPrinter
             // before the right to it.
             if (query.Scope is not null)
             {
-                writer.Line($"scoped to {query.Scope}");
+                writer.DirectiveLine($"scoped to {query.Scope}", query, "scoped to");
             }
 
             if (query.Authorize is not null)
@@ -164,7 +164,7 @@ public partial class ScreenplayPrinter
     void WriteConstraint(ScreenplayWriter writer, ConstraintSyntax constraint)
     {
         using var anchor = writer.Anchor(constraint);
-        writer.Line($"constraint {constraint.Name}");
+        writer.DirectiveLine($"constraint {constraint.Name}", constraint, "header");
         using (writer.Indent())
         {
             foreach (var rule in new[] { constraint }.Concat(constraint.AdditionalRules))
@@ -172,10 +172,10 @@ public partial class ScreenplayPrinter
                 switch (rule)
                 {
                     case UniquePropertyConstraintSyntax unique:
-                        writer.Line($"unique {string.Join(", ", new[] { unique.Property }.Concat(unique.AdditionalProperties))} on {unique.Event}");
+                        writer.DirectiveLine($"unique {string.Join(", ", new[] { unique.Property }.Concat(unique.AdditionalProperties))} on {unique.Event}", rule, "rule");
                         break;
                     case UniqueEventConstraintSyntax uniqueEvent:
-                        writer.Line($"unique event {uniqueEvent.Event}");
+                        writer.DirectiveLine($"unique event {uniqueEvent.Event}", rule, "rule");
                         break;
                     case FileConstraintSyntax file:
                         writer.DirectiveLine($"file {file.File.Path}", file, "file");
@@ -185,19 +185,20 @@ public partial class ScreenplayPrinter
                 }
             }
 
-            foreach (var releasedBy in constraint.ReleasedBy)
+            var releases = constraint.ReleasedBy.ToList();
+            for (var index = 0; index < releases.Count; index++)
             {
-                writer.Line($"released by {releasedBy}");
+                writer.DirectiveLine($"released by {releases[index]}", constraint, DirectiveLocationKeys.ForValue("released by", releases, index));
             }
 
             if (constraint.IgnoreCasing)
             {
-                writer.Line("ignore casing");
+                writer.DirectiveLine("ignore casing", constraint, "ignore casing");
             }
 
             if (constraint.Message is not null)
             {
-                writer.Line($"message {StringLiteral.Quote(constraint.Message)}");
+                writer.DirectiveLine($"message {StringLiteral.Quote(constraint.Message)}", constraint, "message");
             }
         }
     }

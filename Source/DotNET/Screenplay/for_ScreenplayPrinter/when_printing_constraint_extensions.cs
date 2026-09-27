@@ -62,7 +62,7 @@ public class when_printing_constraint_extensions : given.a_printer
         var roundtrip = RoundTrip(source);
         roundtrip.Original!.Diagnostics.ShouldBeEmpty();
         roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
-        roundtrip.Printed.ShouldContain("constraint UniqueProject // u");
+        roundtrip.Printed.ShouldContain("unique code on ProjectRegistered // u");
         roundtrip.PrintedAgain.ShouldEqual(roundtrip.Printed);
     }
 
@@ -84,7 +84,7 @@ public class when_printing_constraint_extensions : given.a_printer
         var roundtrip = RoundTrip(source);
         roundtrip.Original!.Diagnostics.ShouldBeEmpty();
         roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
-        roundtrip.Printed.ShouldContain("event ProjectReleased // r // i");
+        roundtrip.Printed.ShouldContain("released by ProjectReleased // r\n        ignore casing // i");
         roundtrip.PrintedAgain.ShouldEqual(roundtrip.Printed);
     }
 

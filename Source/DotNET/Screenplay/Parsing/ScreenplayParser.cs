@@ -332,7 +332,13 @@ internal static partial class ScreenplayParser
             switch (LineText.FirstWord(child.Content))
             {
                 case "description":
+                    var previousDescription = description;
                     description = DescriptionParser.Parse(context, child, description, $"Persona '{name}'");
+                    if (previousDescription is null && description is not null)
+                    {
+                        directiveLocations["description"] = child.Location;
+                    }
+
                     break;
                 case "policy":
                     if (PersonaPolicyRegex().Match(child.Content) is { Success: true } policy)

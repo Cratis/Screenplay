@@ -29,5 +29,6 @@ internal static class DirectiveLocationKeys
         key.StartsWith("compatible:", StringComparison.Ordinal) ||
         key.StartsWith("package:", StringComparison.Ordinal) ||
         key.StartsWith("role:", StringComparison.Ordinal) ||
-        key.StartsWith("target:", StringComparison.Ordinal);
+        key.StartsWith("target:", StringComparison.Ordinal) ||
+        key.StartsWith("released by:", StringComparison.Ordinal);
 }
