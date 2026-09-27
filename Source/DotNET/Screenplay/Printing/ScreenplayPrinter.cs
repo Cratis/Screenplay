@@ -178,24 +178,24 @@ public sealed partial class ScreenplayPrinter :
             var platforms = uiProfile.Platforms.ToList();
             if (platforms.Count > 0)
             {
-                writer.Line($"target platform {string.Join(", ", platforms)}");
+                writer.DirectiveLine($"target platform {string.Join(", ", platforms)}", uiProfile, "target platform");
             }
 
             if (uiProfile.DefaultSizeClass is not null)
             {
-                writer.Line($"target size {uiProfile.DefaultSizeClass}");
+                writer.DirectiveLine($"target size {uiProfile.DefaultSizeClass}", uiProfile, "target size");
             }
 
             var packages = uiProfile.Packages.ToList();
             if (packages.Count > 0)
             {
                 writer.Blank();
-                writer.Line("packages");
+                writer.DirectiveLine("packages", uiProfile, "packages");
                 using (writer.Indent())
                 {
-                    foreach (var package in packages)
+                    for (var index = 0; index < packages.Count; index++)
                     {
-                        writer.Line(package);
+                        writer.DirectiveLine(packages[index], uiProfile, DirectiveLocationKeys.ForValue("package", packages, index));
                     }
                 }
             }
@@ -207,12 +207,12 @@ public sealed partial class ScreenplayPrinter :
 
             if (uiProfile.Layout is not null)
             {
-                writer.Line($"layout {uiProfile.Layout}");
+                writer.DirectiveLine($"layout {uiProfile.Layout}", uiProfile, "layout");
             }
 
             if (uiProfile.Theme is not null)
             {
-                writer.Line($"theme {uiProfile.Theme}");
+                writer.DirectiveLine($"theme {uiProfile.Theme}", uiProfile, "theme");
             }
         }
     }
@@ -223,9 +223,10 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"theme {theme.Name}");
         using (writer.Indent())
         {
-            foreach (var package in theme.CompatibleWith)
+            var packages = theme.CompatibleWith.ToList();
+            for (var index = 0; index < packages.Count; index++)
             {
-                writer.Line($"compatible with {package}");
+                writer.DirectiveLine($"compatible with {packages[index]}", theme, DirectiveLocationKeys.ForValue("compatible", packages, index));
             }
         }
     }
@@ -283,7 +284,7 @@ public sealed partial class ScreenplayPrinter :
 
                     if (rule.File is not null)
                     {
-                        writer.Line($"file {rule.File.Path}");
+                        writer.Line($"file {rule.File.Path}", rule.File);
                     }
 
                     if (rule.Code is not null)
@@ -337,14 +338,15 @@ public sealed partial class ScreenplayPrinter :
 
             foreach (var attribute in reasoned)
             {
-                writer.Line($"{attribute.Name} reason {StringLiteral.Quote(attribute.Reason!)}");
+                writer.DirectiveLine($"{attribute.Name} reason {StringLiteral.Quote(attribute.Reason!)}", concept, $"reason:{attribute.Name}");
             }
 
             if (concept.IsEnum)
             {
-                foreach (var value in concept.Values)
+                var values = concept.Values.ToList();
+                for (var index = 0; index < values.Count; index++)
                 {
-                    writer.Line(ReservedWords.Escape(value, ReservedWords.ConceptBody));
+                    writer.DirectiveLine(ReservedWords.Escape(values[index], ReservedWords.ConceptBody), concept, DirectiveLocationKeys.ForValue("value", values, index));
                 }
             }
 
@@ -375,7 +377,7 @@ public sealed partial class ScreenplayPrinter :
         {
             if (policy.Condition is not null)
             {
-                writer.Line($"require {ScreenplaySyntaxText.PolicyCondition(policy.Condition)}");
+                writer.Line($"require {ScreenplaySyntaxText.PolicyCondition(policy.Condition)}", policy.Condition);
             }
 
             if (policy.File is not null)
@@ -401,9 +403,10 @@ public sealed partial class ScreenplayPrinter :
         {
             WriteDescription(writer, persona.Description);
 
-            foreach (var policy in persona.Policies)
+            var policies = persona.Policies.ToList();
+            for (var index = 0; index < policies.Count; index++)
             {
-                writer.Line($"policy {policy}");
+                writer.DirectiveLine($"policy {policies[index]}", persona, DirectiveLocationKeys.ForValue("policy", policies, index));
             }
         }
     }
@@ -445,12 +448,12 @@ public sealed partial class ScreenplayPrinter :
 
             if (contribution.Label is not null)
             {
-                writer.Line($"label {ScreenplaySyntaxText.LocalizableString(contribution.Label)}");
+                writer.DirectiveLine($"label {ScreenplaySyntaxText.LocalizableString(contribution.Label)}", contribution, "label");
             }
 
             if (contribution.Order is not null)
             {
-                writer.Line($"order {contribution.Order}");
+                writer.DirectiveLine($"order {contribution.Order}", contribution, "order");
             }
         }
     }

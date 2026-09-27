@@ -25,8 +25,12 @@ public partial class ScreenplayPrinter
                 writer.Line("given caller", caller);
                 using (writer.Indent())
                 {
-                    if (caller.Authenticated) writer.Line("authenticated");
-                    foreach (var role in caller.Roles) writer.Line($"role {StringLiteral.Quote(role)}");
+                    if (caller.Authenticated) writer.DirectiveLine("authenticated", caller, "authenticated");
+                    var roles = caller.Roles.ToList();
+                    for (var index = 0; index < roles.Count; index++)
+                    {
+                        writer.DirectiveLine($"role {StringLiteral.Quote(roles[index])}", caller, DirectiveLocationKeys.ForValue("role", roles, index));
+                    }
                     foreach (var claim in caller.Claims) writer.Line($"claim {StringLiteral.Quote(claim.Type)} = {StringLiteral.Quote(claim.Value)}", claim);
                 }
             }
@@ -56,7 +60,7 @@ public partial class ScreenplayPrinter
                 WriteSpecificationEvent(writer, "when append", appended);
             }
 
-            if (specification.ThenEventsInAnyOrder) writer.Line("then events in any order");
+            if (specification.ThenEventsInAnyOrder) writer.DirectiveLine("then events in any order", specification, "then events in any order");
 
             foreach (var then in specification.ThenEvents)
             {
@@ -111,7 +115,7 @@ public partial class ScreenplayPrinter
         {
             if (query.Arguments.Any())
             {
-                writer.Line("arguments");
+                writer.DirectiveLine("arguments", query, "arguments");
                 using (writer.Indent())
                 {
                     WriteSpecificationValues(writer, query.Arguments);
@@ -133,7 +137,7 @@ public partial class ScreenplayPrinter
     {
         if (eventSource is not null)
         {
-            writer.Line($"for {ScreenplaySyntaxText.Expression(eventSource)}");
+            writer.Line($"for {ScreenplaySyntaxText.Expression(eventSource)}", eventSource);
         }
     }
 

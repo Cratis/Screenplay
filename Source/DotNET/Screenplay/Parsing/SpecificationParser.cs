@@ -71,6 +71,7 @@ internal static partial class SpecificationParser
         SpecificationEventSyntax? whenAppended = null;
         var whenDeclared = false;
         var eventsInAnyOrder = false;
+        SourceLocation? eventsInAnyOrderLocation = null;
         var thenEvents = new List<SpecificationEventSyntax>();
         var thenReadModels = new List<SpecificationReadModelSyntax>();
         var thenQueries = new List<SpecificationQuerySyntax>();
@@ -148,6 +149,7 @@ internal static partial class SpecificationParser
                         else
                         {
                             eventsInAnyOrder = true;
+                            eventsInAnyOrderLocation = line.Location;
                         }
                         context.SkipBlock(line.Indent);
                     }
@@ -186,7 +188,8 @@ internal static partial class SpecificationParser
             GivenCaller = caller,
             ThenDenied = denied,
             WhenAppended = whenAppended,
-            ThenEventsInAnyOrder = eventsInAnyOrder
+            ThenEventsInAnyOrder = eventsInAnyOrder,
+            DirectiveLocations = eventsInAnyOrderLocation is null ? [] : new Dictionary<string, SourceLocation> { ["then events in any order"] = eventsInAnyOrderLocation }
         };
     }
 
@@ -203,12 +206,14 @@ internal static partial class SpecificationParser
         var seenAuthenticated = false;
         var roles = new List<string>();
         var claims = new List<SpecificationCallerClaimSyntax>();
+        var directiveLocations = new Dictionary<string, SourceLocation>();
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
             if (child.Content == "authenticated" && !seenAuthenticated)
             {
                 authenticated = seenAuthenticated = true;
+                directiveLocations["authenticated"] = child.Location;
                 continue;
             }
 
@@ -216,6 +221,7 @@ internal static partial class SpecificationParser
             if (role.Success)
             {
                 roles.Add(StringLiteral.Unescape(role.Groups[1].Value));
+                directiveLocations[DirectiveLocationKeys.ForValue("role", roles, roles.Count - 1)] = child.Location;
                 continue;
             }
 
@@ -229,7 +235,7 @@ internal static partial class SpecificationParser
             context.Error(DiagnosticCodes.InvalidSpecificationCaller, $"Invalid caller fixture '{child.Content}' - expected authenticated, role \"...\", or claim \"...\" = \"...\".", child.Location);
         }
 
-        return new(authenticated, roles, claims, line.Location);
+        return new(authenticated, roles, claims, line.Location) { DirectiveLocations = directiveLocations };
     }
 
     static SpecificationCommandSyntax? ParseWhen(ParserContext context, SourceLine line)
@@ -317,6 +323,7 @@ internal static partial class SpecificationParser
 
         var arguments = new List<PropertyMappingSyntax>();
         var results = new List<SpecificationQueryResultSyntax>();
+        SourceLocation? argumentsLocation = null;
         var hasArguments = false;
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -332,6 +339,7 @@ internal static partial class SpecificationParser
                     }
 
                     hasArguments = true;
+                    argumentsLocation = child.Location;
                     arguments.AddRange(ParseValues(context, child));
                     break;
                 case "result":
@@ -347,7 +355,11 @@ internal static partial class SpecificationParser
             }
         }
 
-        return new(match.Groups[1].Value, arguments, results, line.Location) { Exactly = match.Groups[2].Success };
+        return new(match.Groups[1].Value, arguments, results, line.Location)
+        {
+            Exactly = match.Groups[2].Success,
+            DirectiveLocations = argumentsLocation is null ? [] : new Dictionary<string, SourceLocation> { ["arguments"] = argumentsLocation }
+        };
     }
 
     static SpecificationReadModelSyntax? ParseReadModel(ParserContext context, SourceLine line, Regex regex, string keyword)

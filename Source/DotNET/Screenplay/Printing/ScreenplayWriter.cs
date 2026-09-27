@@ -21,6 +21,8 @@ internal sealed class ScreenplayWriter
     readonly StringBuilder _builder = new();
     readonly Dictionary<SyntaxNode, (int First, int Last)> _anchors = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<ScreenTemplateSyntax, int> _fitsSlotAnchors = new(ReferenceEqualityComparer.Instance);
+    readonly Dictionary<SyntaxNode, Dictionary<int, int>> _directiveAnchors = new(ReferenceEqualityComparer.Instance);
+    readonly Dictionary<SyntaxNode, Dictionary<string, List<(string Key, int Line)>>> _printedCollections = new(ReferenceEqualityComparer.Instance);
     int _depth;
     int _line;
 
@@ -29,6 +31,9 @@ internal sealed class ScreenplayWriter
 
     /// <summary>Gets the printed fits-slot line for each template, keyed by reference identity.</summary>
     internal IReadOnlyDictionary<ScreenTemplateSyntax, int> FitsSlotAnchors => _fitsSlotAnchors;
+
+    /// <summary>Gets printed lines by original line number for scalar directives of each owner.</summary>
+    internal IReadOnlyDictionary<SyntaxNode, Dictionary<int, int>> DirectiveAnchors => _directiveAnchors;
 
     /// <summary>
     /// Writes a line of text at the current indentation depth.
@@ -93,6 +98,95 @@ internal sealed class ScreenplayWriter
         var first = _line;
         Line(text);
         _anchors[node] = (first, first);
+    }
+
+    /// <summary>Writes a scalar directive and associates its authored position with its owner.</summary>
+    internal void DirectiveLine(string text, SyntaxNode owner, string key)
+    {
+        if (DirectiveLocationKeys.IsCollectionKey(key))
+        {
+            var kind = key[..key.IndexOf(':')];
+            if (!_printedCollections.TryGetValue(owner, out var collections))
+            {
+                _printedCollections[owner] = collections = [];
+            }
+
+            if (!collections.TryGetValue(kind, out var entries))
+            {
+                collections[kind] = entries = [];
+            }
+
+            entries.Add((key, _line));
+        }
+
+        if (owner.DirectiveLocations.TryGetValue(key, out var location) && location.Line > 0)
+        {
+            if (!_directiveAnchors.TryGetValue(owner, out var lines))
+            {
+                _directiveAnchors[owner] = lines = [];
+            }
+
+            lines[location.Line] = _line;
+        }
+
+        Line(text);
+    }
+
+    /// <summary>Matches in-place scalar collection edits to their authored comment anchors.</summary>
+    internal void ResolveEditedCollectionAnchors()
+    {
+        foreach (var (owner, collections) in _printedCollections)
+        {
+            foreach (var (kind, printed) in collections)
+            {
+                var authored = owner.DirectiveLocations
+                    .Where(entry => DirectiveLocationKeys.IsCollectionKey(entry.Key) &&
+                        entry.Key.StartsWith(kind + ":", StringComparison.Ordinal))
+                    .OrderBy(entry => entry.Value.Line)
+                    .ToArray();
+                if (authored.Length != printed.Count || authored.Any(entry => entry.Value.Line <= 0))
+                {
+                    continue;
+                }
+
+                var authoredValues = authored.Select(entry => entry.Key[..entry.Key.LastIndexOf(':')]).ToArray();
+                var printedValues = printed.Select(entry => entry.Key[..entry.Key.LastIndexOf(':')]).ToArray();
+                var unmatchedAuthored = Enumerable.Range(0, printed.Count)
+                    .Where(index => authoredValues[index] != printedValues[index]).ToList();
+                var unmatchedPrinted = unmatchedAuthored.ToList();
+                var reordered = false;
+                foreach (var printedIndex in unmatchedPrinted.ToArray())
+                {
+                    var match = unmatchedAuthored.FindIndex(index => authoredValues[index] == printedValues[printedIndex]);
+                    if (match < 0)
+                    {
+                        continue;
+                    }
+
+                    // A value that survived at another index follows its value, not the old slot.
+                    reordered = true;
+                    unmatchedAuthored.RemoveAt(match);
+                    unmatchedPrinted.Remove(printedIndex);
+                }
+
+                if (reordered || unmatchedAuthored.Count == 0 || !unmatchedAuthored.SequenceEqual(unmatchedPrinted))
+                {
+                    continue;
+                }
+
+                if (!_directiveAnchors.TryGetValue(owner, out var lines))
+                {
+                    _directiveAnchors[owner] = lines = [];
+                }
+
+                // Changed duplicates also renumber later occurrences of a value. Align
+                // every authored slot so its existing anchor cannot attach to the wrong twin.
+                for (var index = 0; index < printed.Count; index++)
+                {
+                    lines[authored[index].Value.Line] = printed[index].Line;
+                }
+            }
+        }
     }
 
     /// <summary>Writes a template's fits-slot directive and records its line for source comments.</summary>

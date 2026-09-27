@@ -163,7 +163,10 @@ internal static partial class ConstraintParser
                 DiagnosticCodes.FileConstraintOnlySupportsUniqueness,
                 "A file constraint can only declare unique constraints in Chronicle - declare them with 'unique ...' so they are portable; a rule that is not uniqueness belongs in command validation or a 'require' condition",
                 line.Location);
-            return new FileConstraintSyntax(name, FileReferenceParser.Parse(context, line), line.Location);
+            return new FileConstraintSyntax(name, FileReferenceParser.Parse(context, line), line.Location)
+            {
+                DirectiveLocations = new Dictionary<string, SourceLocation> { ["file"] = line.Location }
+            };
         }
 
         context.Error(DiagnosticCodes.InvalidConstraintBody, $"Invalid constraint body '{line.Content}'", line.Location);

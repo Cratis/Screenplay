@@ -62,28 +62,28 @@ public partial class ScreenplayPrinter
         {
             if (concurrency.EventSource)
             {
-                writer.Line("eventSource");
+                writer.DirectiveLine("eventSource", concurrency, "eventSource");
             }
 
             if (concurrency.EventSourceType is not null)
             {
-                writer.Line($"sourceType {concurrency.EventSourceType}");
+                writer.DirectiveLine($"sourceType {concurrency.EventSourceType}", concurrency, "sourceType");
             }
 
             if (concurrency.EventStreamType is not null)
             {
-                writer.Line($"streamType {concurrency.EventStreamType}");
+                writer.DirectiveLine($"streamType {concurrency.EventStreamType}", concurrency, "streamType");
             }
 
             if (concurrency.EventStreamId is not null)
             {
-                writer.Line($"streamId {concurrency.EventStreamId}");
+                writer.DirectiveLine($"streamId {concurrency.EventStreamId}", concurrency, "streamId");
             }
 
             var events = concurrency.EventTypes.ToList();
             if (events.Count > 0)
             {
-                writer.Line($"events {string.Join(", ", events)}");
+                writer.DirectiveLine($"events {string.Join(", ", events)}", concurrency, "events");
             }
         }
     }
@@ -153,7 +153,7 @@ public partial class ScreenplayPrinter
                 return;
             }
 
-            writer.Line($"file {performer.File.Path}");
+            writer.Line($"file {performer.File.Path}", performer.File);
             if (performer.Code is not null)
             {
                 WriteOmittedCode(writer, performer.Code, ReadsOneImplementation("a performer"));
@@ -178,7 +178,7 @@ public partial class ScreenplayPrinter
                         writer.Line($"unique event {uniqueEvent.Event}");
                         break;
                     case FileConstraintSyntax file:
-                        writer.Line($"file {file.File.Path}");
+                        writer.DirectiveLine($"file {file.File.Path}", file, "file");
                         break;
                     default:
                         throw new UnsupportedSyntaxForPrinting("constraint", rule.GetType().Name);
@@ -266,7 +266,7 @@ public partial class ScreenplayPrinter
 
             if (trigger.File is not null)
             {
-                writer.Line($"file {trigger.File.Path}");
+                writer.Line($"file {trigger.File.Path}", trigger.File);
             }
 
             if (trigger.Code is not null)
@@ -300,30 +300,32 @@ public partial class ScreenplayPrinter
         switch (validate)
         {
             case DeclarativeValidateSyntax declarative:
-                writer.Line("validate");
+            {
+                using var anchor = writer.Anchor(declarative);
+                writer.Line("validate", declarative);
                 using (writer.Indent())
                 {
                     foreach (var rule in declarative.Rules)
                     {
-                        writer.Line(impliedSubject ? ScreenplaySyntaxText.ImpliedSubjectValidationRule(rule) : ScreenplaySyntaxText.ValidationRule(rule));
+                        writer.Line(impliedSubject ? ScreenplaySyntaxText.ImpliedSubjectValidationRule(rule) : ScreenplaySyntaxText.ValidationRule(rule), rule);
                         WriteRuleImplementation(writer, rule);
                     }
 
                     foreach (var requirement in declarative.Requirements ?? [])
                     {
-                        writer.Line($"require {ScreenplaySyntaxText.Condition(requirement.Condition)}");
+                        writer.Line($"require {ScreenplaySyntaxText.Condition(requirement.Condition)}", requirement);
                         if (requirement.Message is not null || requirement.Severity != ValidationSeverity.Error)
                         {
                             using (writer.Indent())
                             {
                                 if (requirement.Severity != ValidationSeverity.Error)
                                 {
-                                    writer.Line(ScreenplaySyntaxText.Severity(requirement.Severity).TrimStart());
+                                    writer.DirectiveLine(ScreenplaySyntaxText.Severity(requirement.Severity).TrimStart(), requirement, "severity");
                                 }
 
                                 if (requirement.Message is not null)
                                 {
-                                    writer.Line($"message {ScreenplaySyntaxText.LocalizableString(requirement.Message)}");
+                                    writer.DirectiveLine($"message {ScreenplaySyntaxText.LocalizableString(requirement.Message)}", requirement, "message");
                                 }
                             }
                         }
@@ -331,8 +333,9 @@ public partial class ScreenplayPrinter
                 }
 
                 break;
+            }
             case CodeValidateSyntax code:
-                writer.Line("validate");
+                writer.Line("validate", code);
                 using (writer.Indent())
                 {
                     WriteFencedCode(writer, code.Code);
@@ -378,7 +381,7 @@ public partial class ScreenplayPrinter
                 return;
             }
 
-            writer.Line($"file {rule.File.Path}");
+            writer.Line($"file {rule.File.Path}", rule.File);
             if (rule.Code is not null)
             {
                 WriteOmittedCode(writer, rule.Code, ReadsOneImplementation("a validation rule"));
@@ -405,7 +408,7 @@ public partial class ScreenplayPrinter
         writer.Line($"produces when {ScreenplaySyntaxText.Condition(produces.When)}");
         using (writer.Indent())
         {
-            writer.Line(produces.Event);
+            writer.DirectiveLine(produces.Event, produces, "event");
             using (writer.Indent())
             {
                 WriteProducesTarget(writer, produces.For);
@@ -420,7 +423,7 @@ public partial class ScreenplayPrinter
     {
         if (target is not null)
         {
-            writer.Line($"for {ScreenplaySyntaxText.Expression(target)}");
+            writer.Line($"for {ScreenplaySyntaxText.Expression(target)}", target);
         }
     }
 
@@ -440,7 +443,7 @@ public partial class ScreenplayPrinter
                 return;
             }
 
-            writer.Line($"file {handler.File.Path}");
+            writer.Line($"file {handler.File.Path}", handler.File);
             if (handler.Code is not null)
             {
                 WriteOmittedCode(writer, handler.Code, ReadsOneImplementation("a handler"));

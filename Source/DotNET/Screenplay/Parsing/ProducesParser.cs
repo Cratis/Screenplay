@@ -39,7 +39,10 @@ internal static partial class ProducesParser
             context.Reader.TakeSignificant();
             var body = ParseBody(context, eventLine);
             context.SkipBlock(line.Indent);
-            return new(eventLine.Content, condition, body.Mappings, line.Location, body.Tags, body.For);
+            return new ProducesSyntax(eventLine.Content, condition, body.Mappings, line.Location, body.Tags, body.For)
+            {
+                DirectiveLocations = new Dictionary<string, SourceLocation> { ["event"] = eventLine.Location }
+            };
         }
 
         var unconditional = ProducesRegex().Match(line.Content);

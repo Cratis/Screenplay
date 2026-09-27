@@ -36,6 +36,7 @@ internal static partial class RequirementParser
         string? message = null;
         var severity = ValidationSeverity.Error;
         var hasSeverity = false;
+        var directiveLocations = new Dictionary<string, SourceLocation>();
 
         // The message goes in the body rather than on the end of the line - a condition is as long as the
         // rule it states, and a message pushed out past it is the part nobody reads.
@@ -45,6 +46,7 @@ internal static partial class RequirementParser
             if (MessageRegex().Match(child.Content) is { Success: true } text)
             {
                 message = text.Groups[1].Success ? StringLiteral.Unescape(text.Groups[1].Value) : text.Groups[2].Value;
+                directiveLocations["message"] = child.Location;
                 continue;
             }
 
@@ -69,6 +71,10 @@ internal static partial class RequirementParser
                     context.Error(DiagnosticCodes.InvalidRequirementSeverity, $"Invalid requirement severity '{child.Content}' - expected severity information, warning or error", child.Location);
                     severity = ValidationSeverity.Error;
                 }
+                else
+                {
+                    directiveLocations["severity"] = child.Location;
+                }
 
                 continue;
             }
@@ -80,7 +86,7 @@ internal static partial class RequirementParser
             context.SkipBlock(child.Indent);
         }
 
-        return condition is null ? null : new RequirementSyntax(condition, message, line.Location) { Severity = severity };
+        return condition is null ? null : new RequirementSyntax(condition, message, line.Location) { Severity = severity, DirectiveLocations = directiveLocations };
     }
 
     [GeneratedRegex(@"^require\s+(\S.*)$", RegexOptions.None, 1000)]

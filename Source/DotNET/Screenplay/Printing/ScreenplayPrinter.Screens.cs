@@ -96,7 +96,7 @@ public partial class ScreenplayPrinter
         {
             if (action.Label is not null)
             {
-                writer.Line($"label {ScreenplaySyntaxText.LocalizableString(action.Label)}");
+                writer.DirectiveLine($"label {ScreenplaySyntaxText.LocalizableString(action.Label)}", action, "label");
             }
 
             if (action.Navigate is not null)

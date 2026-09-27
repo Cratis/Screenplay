@@ -111,6 +111,7 @@ internal static partial class ScreenParser
         }
 
         string? label = null;
+        SourceLocation? labelLocation = null;
         ScreenNavigateSyntax? navigate = null;
 
         while (context.TryPeekChild(line.Indent, out var child))
@@ -120,6 +121,7 @@ internal static partial class ScreenParser
             if (labelMatch.Success)
             {
                 label = OperandText(labelMatch, 1);
+                labelLocation = child.Location;
             }
             else if (LineText.FirstWord(child.Content) == "navigate")
             {
@@ -131,7 +133,10 @@ internal static partial class ScreenParser
             }
         }
 
-        return new(match.Groups[1].Value, label, navigate, line.Location);
+        return new(match.Groups[1].Value, label, navigate, line.Location)
+        {
+            DirectiveLocations = labelLocation is null ? [] : new Dictionary<string, SourceLocation> { ["label"] = labelLocation }
+        };
     }
 
     static ScreenNavigateSyntax? ParseNavigate(ParserContext context, string text, SourceLine line)

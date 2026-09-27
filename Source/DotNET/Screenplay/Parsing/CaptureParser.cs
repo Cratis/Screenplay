@@ -65,6 +65,8 @@ internal static partial class CaptureParser
         var appends = new List<CaptureAppendSyntax>();
         var children = new List<CaptureChildrenSyntax>();
         var nested = new List<CaptureNestedSyntax>();
+        SourceLocation? keyLocation = null;
+        SourceLocation? mapLocation = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -76,8 +78,10 @@ internal static partial class CaptureParser
                     break;
                 case "key":
                     key = line.Content["key".Length..].Trim();
+                    keyLocation = line.Location;
                     break;
                 case "map":
+                    mapLocation = line.Location;
                     map.AddRange(ParseMap(context, line));
                     break;
                 case "append":
@@ -108,7 +112,18 @@ internal static partial class CaptureParser
             }
         }
 
-        return new(name.Groups[1].Value, source, key, map, appends, children, nested, header.Location);
+        return new(name.Groups[1].Value, source, key, map, appends, children, nested, header.Location)
+        {
+            DirectiveLocations = MapLocations(keyLocation, mapLocation)
+        };
+    }
+
+    static Dictionary<string, SourceLocation> MapLocations(SourceLocation? key, SourceLocation? map)
+    {
+        var locations = new Dictionary<string, SourceLocation>();
+        if (key is not null) locations["key"] = key;
+        if (map is not null) locations["map"] = map;
+        return locations;
     }
 
     static CaptureSourceSyntax ParseSource(ParserContext context, SourceLine line)
@@ -214,6 +229,7 @@ internal static partial class CaptureParser
 
         var source = ExpressionParser.ParseProjectionExpression(context, match.Groups[1].Value, line.Location);
         var targets = new List<string>();
+        var directiveLocations = new Dictionary<string, SourceLocation>();
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
@@ -224,9 +240,10 @@ internal static partial class CaptureParser
             }
 
             targets.Add(child.Content);
+            directiveLocations[DirectiveLocationKeys.ForValue("target", targets, targets.Count - 1)] = child.Location;
         }
 
-        return new(source, StringLiteral.Unescape(match.Groups[2].Value), targets, line.Location);
+        return new(source, StringLiteral.Unescape(match.Groups[2].Value), targets, line.Location) { DirectiveLocations = directiveLocations };
     }
 
     static CaptureAppendSyntax? ParseAppend(ParserContext context, SourceLine line)
@@ -404,8 +421,11 @@ internal static partial class CaptureParser
             return null;
         }
 
-        var (map, appends) = ParseMapAndAppends(context, line, "children");
-        return new(match.Groups[1].Value, match.Groups[2].Value, map, appends, line.Location);
+        var (map, appends, mapLocation) = ParseMapAndAppends(context, line, "children");
+        return new(match.Groups[1].Value, match.Groups[2].Value, map, appends, line.Location)
+        {
+            DirectiveLocations = mapLocation is null ? [] : new Dictionary<string, SourceLocation> { ["map"] = mapLocation }
+        };
     }
 
     static CaptureNestedSyntax? ParseNested(ParserContext context, SourceLine line)
@@ -418,13 +438,17 @@ internal static partial class CaptureParser
             return null;
         }
 
-        var (map, appends) = ParseMapAndAppends(context, line, "nested");
-        return new(match.Groups[1].Value, map, appends, line.Location);
+        var (map, appends, mapLocation) = ParseMapAndAppends(context, line, "nested");
+        return new(match.Groups[1].Value, map, appends, line.Location)
+        {
+            DirectiveLocations = mapLocation is null ? [] : new Dictionary<string, SourceLocation> { ["map"] = mapLocation }
+        };
     }
 
-    static (IEnumerable<CaptureMapOperationSyntax> Map, List<CaptureAppendSyntax> Appends) ParseMapAndAppends(ParserContext context, SourceLine line, string blockName)
+    static (IEnumerable<CaptureMapOperationSyntax> Map, List<CaptureAppendSyntax> Appends, SourceLocation? MapLocation) ParseMapAndAppends(ParserContext context, SourceLine line, string blockName)
     {
         IEnumerable<CaptureMapOperationSyntax> map = [];
+        SourceLocation? mapLocation = null;
         var appends = new List<CaptureAppendSyntax>();
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -432,6 +456,7 @@ internal static partial class CaptureParser
             switch (LineText.FirstWord(child.Content))
             {
                 case "map":
+                    mapLocation = child.Location;
                     map = ParseMap(context, child);
                     break;
                 case "append":
@@ -448,7 +473,7 @@ internal static partial class CaptureParser
             }
         }
 
-        return (map, appends);
+        return (map, appends, mapLocation);
     }
 
     [GeneratedRegex(@"^capture\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]

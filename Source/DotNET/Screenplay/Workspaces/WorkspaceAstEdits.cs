@@ -8,6 +8,7 @@ using System.Text.Json.Nodes;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Workspaces;
@@ -21,6 +22,8 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
     readonly List<Edit> _edits = [];
     readonly Dictionary<JsonNode, SourceLocation> _sourceLocations = [];
     readonly Dictionary<JsonNode, ImmutableArray<SourceComment>> _sourceComments = [];
+    readonly Dictionary<JsonNode, IReadOnlyDictionary<string, SourceLocation>> _directiveLocations = [];
+    readonly Dictionary<JsonNode, AutoMapMode> _parsedAutoMapModes = [];
 
     internal ImmutableArray<DocumentId> Touched => [.. _edits.SelectMany(edit => new[] { edit.Target?.Handle.Document, edit.Destination?.Parent.Handle.Document }).OfType<DocumentId>().Distinct()];
 
@@ -55,6 +58,11 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
         {
             _sourceLocations[Resolve(entry.Handle)] = entry.Location;
             _sourceComments[Resolve(entry.Handle)] = entry.Node.SourceComments;
+            _directiveLocations[Resolve(entry.Handle)] = entry.Node.DirectiveLocations;
+            if (entry.Node.ParsedAutoMapMode is { } mode)
+            {
+                _parsedAutoMapModes[Resolve(entry.Handle)] = mode;
+            }
         }
 
         foreach (var edit in _edits.Where(edit => edit.Target is not null))
