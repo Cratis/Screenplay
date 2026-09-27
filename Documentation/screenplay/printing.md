@@ -79,8 +79,10 @@ a file does:
   a trailing comment and no `message` follows, the severity comment gets its own
   line below `require`.
   When you reorder enum values or other scalar collection entries, comments follow
-  unchanged values rather than old list positions. Changing entries in
-  place keeps their comments; removing an entry drops its comments.
+  unchanged values rather than old list positions. Renaming entries in place keeps
+  their comments when the entry count and the order of other values stay the same.
+  Otherwise, comments stay with unchanged values; comments on renamed or removed
+  entries are dropped and reported in `dropped-comments`.
   Repeated projection `automap` settings warn (`PLAY0452`):
   the last setting wins, but printing keeps each authored line and its comments until
   a typed edit changes the mode. Then only the edited setting prints: its comment
