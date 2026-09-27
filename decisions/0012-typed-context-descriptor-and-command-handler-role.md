@@ -2,7 +2,7 @@
 id: 0012
 title: A language-neutral typed-context descriptor, then command handlers as the next role
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-09-24
 decider: Sindre Alstad Wilting
 class: contract
