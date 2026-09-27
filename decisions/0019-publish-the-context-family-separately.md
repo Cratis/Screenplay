@@ -9,7 +9,6 @@ class: contract
 reversibility: costly
 applies-to:
   - Source/DotNET/Screenplay.Contexts/**
-  - Source/DotNET/Screenplay/Contexts/**
   - Source/DotNET/Screenplay/ContextTypeForwarders.cs
   - Source/DotNET/Screenplay/Screenplay.csproj
   - Screenplay.slnx

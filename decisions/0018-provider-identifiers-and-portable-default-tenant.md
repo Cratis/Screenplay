@@ -10,7 +10,7 @@ reversibility: costly
 applies-to:
   - Documentation/screenplay/readmodels.md
   - Documentation/screenplay/context.md
-  - Source/DotNET/Screenplay/Contexts/**
+  - Source/DotNET/Screenplay.Contexts/Contexts/**
 ---
 
 ## Context
