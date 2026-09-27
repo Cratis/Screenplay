@@ -2,7 +2,7 @@
 id: 0018
 title: Use provider-generated identifiers in code bodies and keep the portable default tenant
 status: accepted
-stage: partially implemented
+stage: implemented
 decided: 2026-09-26
 decider: Sindre Alstad Wilting
 class: contract

@@ -20,5 +20,5 @@
 | [0014](0014-diagnostic-repairs-are-typed-workspace-proposals.md) | Diagnostic repairs are typed workspace proposals | accepted | implemented | 2026-09-24 | Sindre Alstad Wilting |
 | [0015](0015-event-generations-in-the-executable-model.md) | Event generations in the executable model | accepted | implemented | 2026-09-25 | Sindre Alstad Wilting |
 | [0016](0016-exporting-the-executable-model-over-mcp.md) | Exporting the executable model over MCP | accepted | implemented | 2026-09-25 | Sindre Alstad Wilting |
-| [0018](0018-provider-identifiers-and-portable-default-tenant.md) | Use provider-generated identifiers in code bodies and keep the portable default tenant | accepted | partially implemented | 2026-09-26 | Sindre Alstad Wilting |
+| [0018](0018-provider-identifiers-and-portable-default-tenant.md) | Use provider-generated identifiers in code bodies and keep the portable default tenant | accepted | implemented | 2026-09-26 | Sindre Alstad Wilting |
 | [0019](0019-publish-the-context-family-separately.md) | Publish the context family in a slim package with compiler type forwarding | accepted | implemented | 2026-09-26 | Sindre Alstad Wilting |
