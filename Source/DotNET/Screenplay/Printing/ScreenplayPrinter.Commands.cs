@@ -17,7 +17,7 @@ public partial class ScreenplayPrinter
         writer.Line($"command {command.Name}");
         using (writer.Indent())
         {
-            WriteDescription(writer, command.Description);
+            WriteDescription(writer, command.Description, command);
             WriteProperties(writer, command.Properties, ReservedWords.CommandBody);
 
             // What the command reads comes before what references it - a mapping fed from state and a rule
@@ -209,7 +209,7 @@ public partial class ScreenplayPrinter
         writer.Line($"reaction {reaction.Name}");
         using (writer.Indent())
         {
-            WriteDescription(writer, reaction.Description);
+            WriteDescription(writer, reaction.Description, reaction);
 
             foreach (var trigger in reaction.Triggers)
             {
@@ -218,7 +218,7 @@ public partial class ScreenplayPrinter
 
             if (reaction.Where is not null)
             {
-                writer.Line($"where {ScreenplaySyntaxText.Condition(reaction.Where)}");
+                writer.Line($"where {ScreenplaySyntaxText.Condition(reaction.Where)}", reaction.Where);
             }
         }
     }
@@ -226,7 +226,7 @@ public partial class ScreenplayPrinter
     void WriteReactionTrigger(ScreenplayWriter writer, ReactionTriggerSyntax trigger)
     {
         using var anchor = writer.Anchor(trigger);
-        writer.Line(ScreenplaySyntaxText.TriggerSource(trigger.Source));
+        writer.Line(ScreenplaySyntaxText.TriggerSource(trigger.Source), trigger);
 
         // A trigger with nothing but what sets it off is complete on its own, so it prints as a single line
         // rather than an empty indented block.
@@ -238,12 +238,12 @@ public partial class ScreenplayPrinter
 
         using (writer.Indent())
         {
-            WriteDescription(writer, trigger.Description);
+            WriteDescription(writer, trigger.Description, trigger);
 
             foreach (var datum in trigger.Data)
             {
                 var name = ReservedWords.Escape(datum.Name, ReservedWords.TriggerBody);
-                writer.Line(datum.Type is null ? name : $"{name} {ScreenplaySyntaxText.TypeRef(datum.Type)}");
+                writer.Line(datum.Type is null ? name : $"{name} {ScreenplaySyntaxText.TypeRef(datum.Type)}", datum);
             }
 
             foreach (var reads in trigger.Reads ?? [])

@@ -237,7 +237,7 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"trigger {trigger.Name}");
         using (writer.Indent())
         {
-            WriteDescription(writer, trigger.Description);
+            WriteDescription(writer, trigger.Description, trigger);
             WriteFile(writer, trigger.File);
 
             foreach (var datum in trigger.Data)
@@ -254,7 +254,7 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"readmodel {readModel.Name}");
         using (writer.Indent())
         {
-            WriteDescription(writer, readModel.Description);
+            WriteDescription(writer, readModel.Description, readModel);
             WriteFile(writer, readModel.File);
             WriteProperties(writer, readModel.Properties, ReservedWords.ReadModelBody);
         }
@@ -266,7 +266,7 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"reducer {reducer.Name} => {reducer.ReadModel}");
         using (writer.Indent())
         {
-            WriteDescription(writer, reducer.Description);
+            WriteDescription(writer, reducer.Description, reducer);
 
             foreach (var rule in reducer.Rules)
             {
@@ -280,7 +280,7 @@ public sealed partial class ScreenplayPrinter :
 
                 using (writer.Indent())
                 {
-                    WriteDescription(writer, rule.Description);
+                    WriteDescription(writer, rule.Description, rule);
 
                     if (rule.File is not null)
                     {
@@ -363,7 +363,7 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"type {type.Name}");
         using (writer.Indent())
         {
-            WriteDescription(writer, type.Description);
+            WriteDescription(writer, type.Description, type);
             WriteFile(writer, type.File);
             WriteProperties(writer, type.Properties, ReservedWords.None);
         }
@@ -417,7 +417,7 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"module {module.Name}");
         using (writer.Indent())
         {
-            WriteDescription(writer, module.Description);
+            WriteDescription(writer, module.Description, module);
             var members = new List<PrintableMember>();
             if (module.Authorize is not null)
             {
@@ -735,7 +735,7 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"feature {feature.Name}");
         using (writer.Indent())
         {
-            WriteDescription(writer, feature.Description);
+            WriteDescription(writer, feature.Description, feature);
             var members = new List<PrintableMember>();
             if (feature.Authorize is not null)
             {
@@ -757,7 +757,7 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"slice {slice.Type} {slice.Name}");
         using (writer.Indent())
         {
-            WriteDescription(writer, slice.Description);
+            WriteDescription(writer, slice.Description, slice);
             WriteFile(writer, slice.File);
 
             var members = new List<PrintableMember>();

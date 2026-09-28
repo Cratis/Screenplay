@@ -28,6 +28,7 @@ internal static partial class ReadModelParser
 
         var properties = new List<PropertySyntax>();
         string? description = null;
+        var directiveLocations = new Dictionary<string, SourceLocation>();
         FileReferenceSyntax? file = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
@@ -35,7 +36,12 @@ internal static partial class ReadModelParser
             context.Reader.TakeSignificant();
             if (LineText.FirstWord(line.Content) == "description" && PropertyLineParser.TryParse(line) is null)
             {
+                var previousDescription = description;
                 description = DescriptionParser.Parse(context, line, description, $"Read model '{name.Groups[1].Value}'");
+                if (previousDescription is null && description is not null)
+                {
+                    directiveLocations["description"] = line.Location;
+                }
             }
             else if (FileReferenceParser.IsDirectiveAmongProperties(line))
             {
@@ -60,7 +66,7 @@ internal static partial class ReadModelParser
             }
         }
 
-        return new(name.Groups[1].Value, properties, header.Location, description) { File = file };
+        return new(name.Groups[1].Value, properties, header.Location, description) { File = file, DirectiveLocations = directiveLocations };
     }
 
     [GeneratedRegex(@"^readmodel\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]

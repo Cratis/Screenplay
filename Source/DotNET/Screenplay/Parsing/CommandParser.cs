@@ -34,6 +34,7 @@ internal static partial class CommandParser
         HandlerSyntax? handler = null;
         ConcurrencySyntax? concurrency = null;
         string? description = null;
+        var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -51,7 +52,13 @@ internal static partial class CommandParser
                     AddProperty(context, properties, validated, name.Groups[1].Value);
                     break;
                 case "description":
+                    var previousDescription = description;
                     description = DescriptionParser.Parse(context, line, description, $"Command '{name.Groups[1].Value}'");
+                    if (previousDescription is null && description is not null)
+                    {
+                        directiveLocations["description"] = line.Location;
+                    }
+
                     break;
                 case "authorize":
                     authorize = AuthorizeParser.Combine(authorize, AuthorizeParser.Parse(context, line));
@@ -103,7 +110,10 @@ internal static partial class CommandParser
             context.Error(DiagnosticCodes.CommandWithProducesAndHandler, $"Command '{name.Groups[1].Value}' cannot declare both 'produces' and 'handler'", header.Location);
         }
 
-        return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency, description, reads);
+        return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency, description, reads)
+        {
+            DirectiveLocations = directiveLocations
+        };
     }
 
     /// <summary>

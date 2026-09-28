@@ -19,7 +19,7 @@ public partial class ScreenplayPrinter
 
         using (writer.Indent())
         {
-            WriteDescription(writer, behavior.Description);
+            WriteDescription(writer, behavior.Description, behavior);
             WriteFile(writer, behavior.File);
 
             foreach (var parameter in behavior.Parameters)
@@ -33,7 +33,7 @@ public partial class ScreenplayPrinter
 
             if (behavior.Order is { } order)
             {
-                writer.Line($"order {order}");
+                writer.DirectiveLine($"order {order}", behavior, "order");
             }
 
             WriteInteractionBindings(writer, behavior.Bindings);
@@ -122,7 +122,7 @@ public partial class ScreenplayPrinter
         {
             if (binding.Condition is not null)
             {
-                writer.Line($"where {binding.Condition}");
+                writer.DirectiveLine($"where {binding.Condition}", binding, "where");
             }
 
             foreach (var action in binding.Actions)
@@ -150,20 +150,20 @@ public partial class ScreenplayPrinter
                 writer.Line($"with {argument.Name} from {argument.Binding}", argument);
             }
 
-            WriteContinuation(writer, "success", action.OnSuccess);
-            WriteContinuation(writer, "failure", action.OnFailure);
-            WriteContinuation(writer, "result", action.OnResult);
+            WriteContinuation(writer, "success", action.OnSuccess, action);
+            WriteContinuation(writer, "failure", action.OnFailure, action);
+            WriteContinuation(writer, "result", action.OnResult, action);
         }
     }
 
-    void WriteContinuation(ScreenplayWriter writer, string keyword, IEnumerable<InteractionActionSyntax> actions)
+    void WriteContinuation(ScreenplayWriter writer, string keyword, IEnumerable<InteractionActionSyntax> actions, InteractionActionSyntax owner)
     {
         if (!actions.Any())
         {
             return;
         }
 
-        writer.Line($"on {keyword}");
+        writer.DirectiveLine($"on {keyword}", owner, $"on {keyword}");
 
         using (writer.Indent())
         {

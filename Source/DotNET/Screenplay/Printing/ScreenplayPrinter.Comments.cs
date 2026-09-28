@@ -68,12 +68,6 @@ public sealed partial class ScreenplayPrinter
             {
                 position = printedAutoMapLine;
             }
-            else if (comment.Placement == SourceCommentPlacement.Trailing &&
-                !owner.DirectiveLocations.Values.Any(location => location.Line == comment.AnchorLine) &&
-                owner.Location.Line > 0 && comment.Line > owner.Location.Line)
-            {
-                position = Math.Min(span.Last, span.First + comment.Line - owner.Location.Line);
-            }
 
             position = Math.Clamp(position, 0, lines.Length - 1);
             var indent = lines[position].Length - lines[position].TrimStart().Length;

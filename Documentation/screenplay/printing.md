@@ -76,6 +76,9 @@ a file does:
   Persona descriptions, constraint headers, unique rules, release events, casing and messages,
   and query descriptions, `by` parameters and `scoped to` declarations also keep their
   comments on the corresponding printed lines when canonical order differs from source order.
+  Other descriptions, behavior order, reaction triggers and conditions, interaction
+  conditions and action continuations keep their trailing comments on the authored
+  line even when blank lines are inserted or declarations move.
   Adjacent trailing comments stay separate, including across a constraint's release and
   casing lines. An explicit default `severity error` on a requirement is omitted. Its trailing
   comment moves to the `require` line, unless a `message` follows: then it gets its

@@ -44,6 +44,7 @@ internal static partial class SliceParser
         string? description = null;
         SourceLocation? descriptionLocation = null;
         int? descriptionRawLength = null;
+        var directiveLocations = new Dictionary<string, SourceLocation>();
         var events = new List<EventSyntax>();
         var commands = new List<CommandSyntax>();
         var queries = new List<QuerySyntax>();
@@ -69,7 +70,12 @@ internal static partial class SliceParser
             switch (LineText.FirstWord(line.Content))
             {
                 case "description":
+                    var previousDescription = description;
                     description = DescriptionParser.Parse(context, line, description, $"Slice '{name}'", out var descriptionSpan);
+                    if (previousDescription is null && description is not null)
+                    {
+                        directiveLocations["description"] = line.Location;
+                    }
                     if (descriptionSpan is { } span)
                     {
                         descriptionLocation = span.Location;
@@ -121,7 +127,8 @@ internal static partial class SliceParser
         {
             File = file,
             DescriptionLocation = descriptionLocation,
-            DescriptionRawLength = descriptionRawLength
+            DescriptionRawLength = descriptionRawLength,
+            DirectiveLocations = directiveLocations
         };
     }
 
