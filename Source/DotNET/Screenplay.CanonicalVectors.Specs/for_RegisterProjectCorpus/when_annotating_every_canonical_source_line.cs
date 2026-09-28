@@ -16,7 +16,7 @@ public class when_annotating_every_canonical_source_line
         var documents = new[] { RegisterProjectCorpus.LegacyV1, RegisterProjectCorpus.V2 }
             .SelectMany(corpus => corpus.SourceForms.SelectMany(form => form.Documents))
             .Select(document => (document.DisplayPath, document.Text)).ToList();
-        using (var stream = typeof(ScreenplayCompiler).Assembly.GetManifestResourceStream("Cratis.Screenplay.for_ScreenplayCompiler.invoicing.play")!)
+        using (var stream = typeof(when_annotating_every_canonical_source_line).Assembly.GetManifestResourceStream("Cratis.Screenplay.CanonicalVectors.Samples.invoicing.play")!)
         using (var reader = new StreamReader(stream))
         {
             documents.Add(("invoicing.play", reader.ReadToEnd()));
