@@ -15,7 +15,11 @@ public partial class ScreenplayPrinter
         WriteFencedCode(writer, code);
     }
 
-    void WriteFencedCode(ScreenplayWriter writer, CodeBlockSyntax code) => WriteFencedText(writer, code.Code, code.Language);
+    void WriteFencedCode(ScreenplayWriter writer, CodeBlockSyntax code)
+    {
+        using var anchor = writer.Anchor(code);
+        WriteFencedText(writer, code.Code, code.Language);
+    }
 
     void WriteFencedText(ScreenplayWriter writer, string text, string language = "text")
     {
