@@ -578,9 +578,8 @@ public sealed partial class ScreenplayPrinter :
             return;
         }
 
-        using var anchor = writer.Anchor(arrangement);
-
         writer.Blank();
+        using var anchor = writer.Anchor(arrangement);
         writer.Line(arrangement.Mode == ArrangementMode.Freeform ? "arrangement freeform" : "arrangement flow");
         using (writer.Indent())
         {
