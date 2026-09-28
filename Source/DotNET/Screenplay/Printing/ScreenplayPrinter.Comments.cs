@@ -91,8 +91,9 @@ public sealed partial class ScreenplayPrinter
                     continue;
                 }
 
-                if (owner.DirectiveLocations.Any(entry => entry.Key.StartsWith("omitted:", StringComparison.Ordinal) &&
-                    entry.Value.Line == comment.AnchorLine) && directiveLines?.ContainsKey(comment.AnchorLine) == true)
+                if ((owner is AuthorizeSyntax or PolicyConditionSyntax && comment.AnchorLine != owner.Location.Line) ||
+                    (owner.DirectiveLocations.Any(entry => entry.Key.StartsWith("omitted:", StringComparison.Ordinal) &&
+                    entry.Value.Line == comment.AnchorLine) && directiveLines?.ContainsKey(comment.AnchorLine) == true))
                 {
                     if (!before.TryGetValue(position, out var displaced))
                     {
