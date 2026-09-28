@@ -155,6 +155,11 @@ internal static partial class InteractionParser
                     if (ParseOrder(context, line) is { } parsedOrder)
                     {
                         order = parsedOrder;
+                        if (directiveLocations.TryGetValue("order", out var previousOrder))
+                        {
+                            directiveLocations[$"omitted:order:{previousOrder.Line}"] = previousOrder;
+                        }
+
                         directiveLocations["order"] = line.Location;
                     }
 
@@ -415,7 +420,13 @@ internal static partial class InteractionParser
             {
                 if (ParseContinuation(context, child, continuation.Groups[1].Value, action, depth, onSuccess, onFailure, onResult))
                 {
-                    directiveLocations[$"on {continuation.Groups[1].Value}"] = child.Location;
+                    var key = $"on {continuation.Groups[1].Value}";
+                    if (directiveLocations.TryGetValue(key, out var previousContinuation))
+                    {
+                        directiveLocations[$"omitted:{key}:{previousContinuation.Line}"] = previousContinuation;
+                    }
+
+                    directiveLocations[key] = child.Location;
                 }
 
                 continue;

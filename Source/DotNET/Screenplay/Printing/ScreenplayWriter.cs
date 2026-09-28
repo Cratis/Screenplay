@@ -127,6 +127,10 @@ internal sealed class ScreenplayWriter
             }
 
             lines[location.Line] = _line;
+            foreach (var displaced in owner.DirectiveLocations.Where(entry => entry.Key.StartsWith($"omitted:{key}:", StringComparison.Ordinal)))
+            {
+                lines[displaced.Value.Line] = _line;
+            }
         }
 
         Line(text);

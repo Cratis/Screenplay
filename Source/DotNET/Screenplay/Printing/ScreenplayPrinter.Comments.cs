@@ -78,6 +78,18 @@ public sealed partial class ScreenplayPrinter
 
             if (comment.Placement == SourceCommentPlacement.Trailing)
             {
+                if (owner.DirectiveLocations.Any(entry => entry.Key.StartsWith("omitted:", StringComparison.Ordinal) &&
+                    entry.Value.Line == comment.AnchorLine) && directiveLines?.ContainsKey(comment.AnchorLine) == true)
+                {
+                    if (!before.TryGetValue(position, out var displaced))
+                    {
+                        before[position] = displaced = [];
+                    }
+
+                    displaced.Add(new string(' ', indent) + comment.Text);
+                    continue;
+                }
+
                 var relocated = comment.AnchorLine != owner.Location.Line &&
                     owner.DirectiveLocations.Values.Any(location => location.Line == comment.AnchorLine) &&
                     directiveLines?.ContainsKey(comment.AnchorLine) != true;
