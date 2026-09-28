@@ -2,13 +2,39 @@
     "$comment": [
         "Screenplay's TypeScript lives in the Yarn workspaces under Source/ (screenplay-language, screenplay-editor, VSCodeExtension).",
         "Only changes there trigger the frontend gates; managed .cratis/ai updates contain .ts files that are not part of the product (Cratis/AI#430).",
-        "There is no g:compile script. CI type-checks the language package (publish.yml builds @cratis/screenplay-language), so the compile gate",
-        "runs that package's compile, which includes its specs. screenplay-editor's compile is not part of CI and has pre-existing errors."
+        "There is no g:compile script. The compile gate type-checks the language package (specs included), builds it, and type-checks the VS Code extension against it: the extension's publish build (esbuild) does not type-check.",
+        "screenplay-editor has no separate type-check in CI and has pre-existing errors, so it is not compiled here."
     ],
     "gates": [
-        { "id": "frontend-lint", "changed": ["Source/**/*.ts", "Source/**/*.tsx"] },
-        { "id": "frontend-compile", "changed": ["Source/**/*.ts", "Source/**/*.tsx"], "command": ["yarn", "workspace", "@cratis/screenplay-language", "compile"] },
-        { "id": "frontend-compile-specs", "changed": [] },
-        { "id": "frontend-specs", "changed": ["Source/**/*.ts", "Source/**/*.tsx"] }
+        {
+            "id": "frontend-lint",
+            "changed": [
+                "Source/**/*.ts",
+                "Source/**/*.tsx"
+            ]
+        },
+        {
+            "id": "frontend-compile",
+            "changed": [
+                "Source/**/*.ts",
+                "Source/**/*.tsx"
+            ],
+            "command": [
+                "bash",
+                "-c",
+                "yarn workspace @cratis/screenplay-language compile && yarn workspace @cratis/screenplay-language build && yarn workspace screenplay typecheck"
+            ]
+        },
+        {
+            "id": "frontend-compile-specs",
+            "changed": []
+        },
+        {
+            "id": "frontend-specs",
+            "changed": [
+                "Source/**/*.ts",
+                "Source/**/*.tsx"
+            ]
+        }
     ]
 }
