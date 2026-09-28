@@ -56,6 +56,11 @@ internal static partial class QueryParser
                 case "by":
                     if (ParseParameter(context, line, "by") is { } parameter)
                     {
+                        if (directiveLocations.TryGetValue("by", out var previousBy))
+                        {
+                            directiveLocations[$"omitted:by:{previousBy.Line}"] = previousBy;
+                        }
+
                         by = parameter;
                         directiveLocations["by"] = line.Location;
                     }

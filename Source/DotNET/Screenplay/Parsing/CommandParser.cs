@@ -88,7 +88,25 @@ internal static partial class CommandParser
 
                     break;
                 case "handler":
-                    handler = ParseHandler(context, line);
+                    var parsedHandler = ParseHandler(context, line);
+                    if (parsedHandler is not null && handler is not null)
+                    {
+                        // The last handler wins. Keep where the replaced one and its file were written,
+                        // so their comments print beside the retained handler instead of merging into
+                        // the command header.
+                        directiveLocations[$"omitted:handler:{handler.Location.Line}"] = handler.Location;
+                        if (handler.File is { } replacedFile)
+                        {
+                            directiveLocations[$"omitted:handler:{replacedFile.Location.Line}"] = replacedFile.Location;
+                        }
+
+                        if (handler.Code is { } replacedCode)
+                        {
+                            directiveLocations[$"omitted:handler:{replacedCode.Location.Line}"] = replacedCode.Location;
+                        }
+                    }
+
+                    handler = parsedHandler;
                     break;
                 default:
                     if (PropertyLineParser.TryParse(line) is { } property)

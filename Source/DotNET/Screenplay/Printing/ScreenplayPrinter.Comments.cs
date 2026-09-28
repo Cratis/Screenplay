@@ -61,11 +61,10 @@ public sealed partial class ScreenplayPrinter
             {
                 position = fitsSlotLine;
             }
-            else if (FileReferenceParser.IsReplacedFile(owner, comment.AnchorLine) &&
-                owner.GetType().GetProperty("File")?.GetValue(owner) is FileReferenceSyntax file &&
-                writer.Anchors.TryGetValue(file, out var fileSpan))
+            else if (RetainedDirectiveNode(owner, comment.AnchorLine) is { } retained &&
+                writer.Anchors.TryGetValue(retained, out var retainedSpan))
             {
-                position = fileSpan.First;
+                position = retainedSpan.First;
             }
             else if (comment.Placement == SourceCommentPlacement.Trailing &&
                 owner.DirectiveLocations.Any(entry => entry.Value.Line == comment.AnchorLine &&
@@ -99,7 +98,7 @@ public sealed partial class ScreenplayPrinter
                 }
 
                 if ((owner is AuthorizeSyntax or PolicyConditionSyntax && comment.AnchorLine != owner.Location.Line) ||
-                    FileReferenceParser.IsReplacedFile(owner, comment.AnchorLine) ||
+                    RetainedDirectiveNode(owner, comment.AnchorLine) is not null ||
                     (owner.DirectiveLocations.Any(entry => entry.Key.StartsWith("omitted:", StringComparison.Ordinal) &&
                     entry.Value.Line == comment.AnchorLine) && directiveLines?.ContainsKey(comment.AnchorLine) == true))
                 {
@@ -191,6 +190,37 @@ public sealed partial class ScreenplayPrinter
         }
 
         return string.Join('\n', result) + '\n';
+    }
+
+    /// <summary>
+    /// The node a replaced single-valued directive gave way to, when a comment was written on the
+    /// replaced line. Parsers record each replaced line as <c>omitted:&lt;directive&gt;:&lt;line&gt;</c>, and the
+    /// directive's value lives in the owner's property of the same name (<c>file</c> in <c>File</c>,
+    /// <c>by</c> in <c>By</c>, <c>handler</c> in <c>Handler</c>).
+    /// </summary>
+    static SyntaxNode? RetainedDirectiveNode(SyntaxNode owner, int line)
+    {
+        foreach (var (key, location) in owner.DirectiveLocations)
+        {
+            if (location.Line != line || !key.StartsWith("omitted:", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var directive = key["omitted:".Length..key.LastIndexOf(':')];
+            if (directive.Length == 0)
+            {
+                continue;
+            }
+
+            var property = char.ToUpperInvariant(directive[0]) + directive[1..];
+            if (owner.GetType().GetProperty(property)?.GetValue(owner) is SyntaxNode retained)
+            {
+                return retained;
+            }
+        }
+
+        return null;
     }
 
     static void CollectParents(SyntaxNode node, Dictionary<SyntaxNode, SyntaxNode> parents)

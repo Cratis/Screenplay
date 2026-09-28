@@ -90,12 +90,6 @@ internal static partial class FileReferenceParser
         return Parse(context, line);
     }
 
-    /// <summary>
-    /// Whether a source line belonged to a replaced file directive.
-    /// </summary>
-    internal static bool IsReplacedFile(SyntaxNode owner, int line) =>
-        owner.DirectiveLocations.Any(entry => entry.Key.StartsWith("omitted:file:", StringComparison.Ordinal) && entry.Value.Line == line);
-
     static string PathOf(SourceLine line) =>
         LineText.FirstWord(line.Content) == Keyword ? line.Content[Keyword.Length..].Trim() : string.Empty;
 
