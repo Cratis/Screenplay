@@ -27,6 +27,8 @@ internal static partial class ConstraintParser
 
         var rules = new List<ConstraintSyntax>();
         var releases = new List<string>();
+        var releaseLocations = new List<SourceLocation>();
+        var directiveLocations = new Dictionary<string, SourceLocation> { ["header"] = header.Location };
         string? message = null;
         var ignoreCasing = false;
         while (context.TryPeekChild(header.Indent, out var line))
@@ -42,6 +44,7 @@ internal static partial class ConstraintParser
                 else
                 {
                     releases.Add(releaseName);
+                    releaseLocations.Add(line.Location);
                 }
 
                 continue;
@@ -56,6 +59,7 @@ internal static partial class ConstraintParser
                 else
                 {
                     message = StringLiteral.Unescape(text.Groups[1].Value);
+                    directiveLocations["message"] = line.Location;
                 }
 
                 continue;
@@ -66,6 +70,11 @@ internal static partial class ConstraintParser
                 if (ignoreCasing)
                 {
                     context.Error(DiagnosticCodes.DuplicateConstraintBody, $"Constraint '{name}' already ignores casing", line.Location);
+                }
+
+                if (!ignoreCasing)
+                {
+                    directiveLocations["ignore casing"] = line.Location;
                 }
 
                 ignoreCasing = true;
@@ -126,12 +135,24 @@ internal static partial class ConstraintParser
             context.Error(DiagnosticCodes.InvalidConstraintBody, $"File constraint '{name}' cannot have declarative options", header.Location);
         }
 
+        for (var index = 0; index < releases.Count; index++)
+        {
+            directiveLocations[DirectiveLocationKeys.ForValue("released by", releases, index)] = releaseLocations[index];
+        }
+
+        directiveLocations["rule"] = rules[0].Location;
+        foreach (var location in rules[0].DirectiveLocations)
+        {
+            directiveLocations[location.Key] = location.Value;
+        }
+
         return rules[0] with
         {
             AdditionalRules = [.. rules.Skip(1)],
             ReleasedBy = releases,
             Message = message,
-            IgnoreCasing = ignoreCasing
+            IgnoreCasing = ignoreCasing,
+            DirectiveLocations = directiveLocations
         };
     }
 
@@ -139,7 +160,10 @@ internal static partial class ConstraintParser
     {
         if (UniqueEventRegex().Match(line.Content) is { Success: true } uniqueEvent)
         {
-            return new UniqueEventConstraintSyntax(name, uniqueEvent.Groups[1].Value, line.Location);
+            return new UniqueEventConstraintSyntax(name, uniqueEvent.Groups[1].Value, line.Location)
+            {
+                DirectiveLocations = new Dictionary<string, SourceLocation> { ["rule"] = line.Location }
+            };
         }
 
         if (UniquePropertyRegex().Match(line.Content) is { Success: true } uniqueProperty)
@@ -153,7 +177,8 @@ internal static partial class ConstraintParser
 
             return new UniquePropertyConstraintSyntax(name, properties[0], uniqueProperty.Groups[2].Value, line.Location)
             {
-                AdditionalProperties = [.. properties.Skip(1)]
+                AdditionalProperties = [.. properties.Skip(1)],
+                DirectiveLocations = new Dictionary<string, SourceLocation> { ["rule"] = line.Location }
             };
         }
 
