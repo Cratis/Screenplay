@@ -12,6 +12,7 @@ applies-to:
   - Source/DotNET/Screenplay/Semantics/**
   - Source/DotNET/Screenplay/Syntax/CommandSyntax.cs
   - Source/DotNET/Screenplay/Semantics/Versions.cs
+  - Documentation/screenplay/commands.md
 ---
 
 ## Context
