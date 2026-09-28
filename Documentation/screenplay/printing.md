@@ -90,9 +90,11 @@ a file does:
   their comments when the entry count and the order of other values stay the same.
   Otherwise, comments stay with unchanged values; comments on renamed or removed
   entries are dropped and reported in `dropped-comments`.
-  When a declaration repeats `file`, a query repeats `by`, or a command repeats `handler`,
-  the last one wins. Comments on the replaced lines print on their own lines directly above
-  the retained line, never merged into the declaration's header comment.
+  When a single-valued directive is written more than once and the last one wins (for example
+  a repeated `file`, query `by`, command `handler`, capture `source` or `key`, projection
+  `parent`, table `on row-click`, or action `label` or `navigate`), comments on the replaced
+  lines keep their own lines: directly above the retained line where it has one, otherwise at
+  the start of the declaration body. They are never merged into the declaration's header comment.
   Repeated projection `automap` settings warn (`PLAY0452`):
   the last setting wins, but printing keeps each authored line and its comments until
   a typed edit changes the mode. Then only the edited setting prints: its comment

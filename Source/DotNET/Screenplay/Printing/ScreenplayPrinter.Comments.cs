@@ -42,6 +42,7 @@ public sealed partial class ScreenplayPrinter
             }
 
             var position = comment.Placement == SourceCommentPlacement.End ? span.Last : span.First;
+            var resolved = false;
             writer.DirectiveAnchors.TryGetValue(owner, out var directiveLines);
             if (owner.DirectiveLocations.Any(entry => DirectiveLocationKeys.IsCollectionKey(entry.Key) &&
                 entry.Value.Line == comment.AnchorLine) &&
@@ -55,16 +56,19 @@ public sealed partial class ScreenplayPrinter
             if (directiveLines is not null && directiveLines.TryGetValue(comment.AnchorLine, out var directiveLine))
             {
                 position = directiveLine;
+                resolved = true;
             }
             else if (owner is ScreenTemplateSyntax { FitsSlotLocation: { } fitsSlotLocation } template &&
                 comment.AnchorLine == fitsSlotLocation.Line && writer.FitsSlotAnchors.TryGetValue(template, out var fitsSlotLine))
             {
                 position = fitsSlotLine;
+                resolved = true;
             }
             else if (RetainedDirectiveNode(owner, comment.AnchorLine) is { } retained &&
                 writer.Anchors.TryGetValue(retained, out var retainedSpan))
             {
                 position = retainedSpan.First;
+                resolved = true;
             }
             else if (comment.Placement == SourceCommentPlacement.Trailing &&
                 owner.DirectiveLocations.Any(entry => entry.Value.Line == comment.AnchorLine &&
@@ -73,6 +77,7 @@ public sealed partial class ScreenplayPrinter
                 directiveLines?.TryGetValue(autoMapLocation.Line, out var printedAutoMapLine) == true)
             {
                 position = printedAutoMapLine;
+                resolved = true;
             }
 
             position = Math.Clamp(position, 0, lines.Length - 1);
@@ -111,9 +116,12 @@ public sealed partial class ScreenplayPrinter
                     continue;
                 }
 
+                // A trailing comment from any body line that resolved to no printed position (for
+                // example a directive a later one silently replaced) is relocated too: it never joins
+                // the header's own comment.
                 var relocated = comment.AnchorLine != owner.Location.Line &&
-                    owner.DirectiveLocations.Values.Any(location => location.Line == comment.AnchorLine) &&
-                    directiveLines?.ContainsKey(comment.AnchorLine) != true;
+                    ((owner.DirectiveLocations.Values.Any(location => location.Line == comment.AnchorLine) &&
+                    directiveLines?.ContainsKey(comment.AnchorLine) != true) || !resolved);
                 var next = position + 1;
                 if (relocated && next < lines.Length &&
                     lines[next].Length - lines[next].TrimStart().Length > indent)
