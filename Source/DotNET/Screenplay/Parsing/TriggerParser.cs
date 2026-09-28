@@ -66,7 +66,7 @@ internal static partial class TriggerParser
             // reaction - a value named after it is written '@file', which is what the printer has always emitted.
             if (FileReferenceParser.IsDirective(line))
             {
-                file = FileReferenceParser.Parse(context, line);
+                file = FileReferenceParser.ParseReplacing(context, line, file, directiveLocations);
                 continue;
             }
 

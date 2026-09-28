@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
 
@@ -60,9 +61,9 @@ public sealed partial class ScreenplayPrinter
             {
                 position = fitsSlotLine;
             }
-            else if (owner is TypeSyntax { File: { } file } &&
-                owner.DirectiveLocations.Any(entry => entry.Key.StartsWith("omitted:file:", StringComparison.Ordinal) &&
-                    entry.Value.Line == comment.AnchorLine) && writer.Anchors.TryGetValue(file, out var fileSpan))
+            else if (FileReferenceParser.IsReplacedFile(owner, comment.AnchorLine) &&
+                owner.GetType().GetProperty("File")?.GetValue(owner) is FileReferenceSyntax file &&
+                writer.Anchors.TryGetValue(file, out var fileSpan))
             {
                 position = fileSpan.First;
             }
@@ -98,8 +99,7 @@ public sealed partial class ScreenplayPrinter
                 }
 
                 if ((owner is AuthorizeSyntax or PolicyConditionSyntax && comment.AnchorLine != owner.Location.Line) ||
-                    (owner is TypeSyntax && owner.DirectiveLocations.Any(entry =>
-                        entry.Key.StartsWith("omitted:file:", StringComparison.Ordinal) && entry.Value.Line == comment.AnchorLine)) ||
+                    FileReferenceParser.IsReplacedFile(owner, comment.AnchorLine) ||
                     (owner.DirectiveLocations.Any(entry => entry.Key.StartsWith("omitted:", StringComparison.Ordinal) &&
                     entry.Value.Line == comment.AnchorLine) && directiveLines?.ContainsKey(comment.AnchorLine) == true))
                 {

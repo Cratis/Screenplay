@@ -166,7 +166,7 @@ internal static partial class ReactionParser
 
                     continue;
                 case FileReferenceParser.Keyword:
-                    file = FileReferenceParser.Parse(context, body);
+                    file = FileReferenceParser.ParseReplacing(context, body, file, directiveLocations);
                     continue;
                 case "reads":
                     if (body.Content == "reads")

@@ -245,7 +245,7 @@ internal static partial class ScreenplayParser
             context.Reader.TakeSignificant();
             if (FileReferenceParser.IsDirective(child))
             {
-                file = FileReferenceParser.Parse(context, child);
+                file = FileReferenceParser.ParseReplacing(context, child, file, directiveLocations);
             }
             else if (LineText.FirstWord(child.Content) == "validate")
             {

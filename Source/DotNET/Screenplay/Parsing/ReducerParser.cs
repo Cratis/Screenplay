@@ -93,7 +93,7 @@ internal static partial class ReducerParser
             }
             else if (FileReferenceParser.IsDirective(body))
             {
-                file = FileReferenceParser.Parse(context, body);
+                file = FileReferenceParser.ParseReplacing(context, body, file, directiveLocations);
             }
             else if (CodeBlockParser.IsCodeLine(context, body))
             {

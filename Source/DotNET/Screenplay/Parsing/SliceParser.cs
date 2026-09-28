@@ -63,7 +63,7 @@ internal static partial class SliceParser
             context.Reader.TakeSignificant();
             if (FileReferenceParser.IsDirective(line))
             {
-                file = FileReferenceParser.Parse(context, line);
+                file = FileReferenceParser.ParseReplacing(context, line, file, directiveLocations);
                 continue;
             }
 

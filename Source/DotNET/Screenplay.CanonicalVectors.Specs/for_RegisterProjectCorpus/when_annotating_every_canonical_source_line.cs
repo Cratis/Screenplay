@@ -26,6 +26,59 @@ public class when_annotating_every_canonical_source_line : Specification
             documents.Add(("invoicing.play", reader.ReadToEnd()));
         }
 
+        documents.Add(("repeated-files.play", """
+            concept Id : Uuid
+              file A.cs
+              file B.cs
+
+            type Entry
+              file A.cs
+              file B.cs
+              id String
+
+            trigger Started
+              file A.cs
+              file B.cs
+
+            behavior Act
+              file A.cs
+              file B.cs
+
+            module Sales
+              feature Orders
+                slice StateChange Place
+                  file A.cs
+                  file B.cs
+                  event Created
+                    file A.cs
+                    file B.cs
+                  readmodel Order
+                    file A.cs
+                    file B.cs
+                  projection Orders => Order
+                    file A.cs
+                    file B.cs
+                    from Created
+                      id = id
+                  specification Works
+                    file A.cs
+                    file B.cs
+                  screen Main
+                    file A.cs
+                    file B.cs
+                slice StateView View
+                  readmodel Summary
+                  reducer Summarize => Summary
+                    on Created
+                      file A.cs
+                      file B.cs
+                slice Automation Sync
+                  reaction Update
+                    when Started
+                      file A.cs
+                      file B.cs
+            """));
+
         var nextId = 0;
         foreach (var document in documents)
         {
