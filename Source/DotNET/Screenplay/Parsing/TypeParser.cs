@@ -51,6 +51,11 @@ internal static partial class TypeParser
 
             if (FileReferenceParser.IsDirectiveAmongProperties(line))
             {
+                if (file is not null)
+                {
+                    directiveLocations[$"omitted:file:{file.Location.Line}"] = file.Location;
+                }
+
                 file = FileReferenceParser.Parse(context, line);
                 continue;
             }

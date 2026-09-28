@@ -60,6 +60,12 @@ public sealed partial class ScreenplayPrinter
             {
                 position = fitsSlotLine;
             }
+            else if (owner is TypeSyntax { File: { } file } &&
+                owner.DirectiveLocations.Any(entry => entry.Key.StartsWith("omitted:file:", StringComparison.Ordinal) &&
+                    entry.Value.Line == comment.AnchorLine) && writer.Anchors.TryGetValue(file, out var fileSpan))
+            {
+                position = fileSpan.First;
+            }
             else if (comment.Placement == SourceCommentPlacement.Trailing &&
                 owner.DirectiveLocations.Any(entry => entry.Value.Line == comment.AnchorLine &&
                     entry.Key.StartsWith("automap previous:", StringComparison.Ordinal)) &&
@@ -92,6 +98,8 @@ public sealed partial class ScreenplayPrinter
                 }
 
                 if ((owner is AuthorizeSyntax or PolicyConditionSyntax && comment.AnchorLine != owner.Location.Line) ||
+                    (owner is TypeSyntax && owner.DirectiveLocations.Any(entry =>
+                        entry.Key.StartsWith("omitted:file:", StringComparison.Ordinal) && entry.Value.Line == comment.AnchorLine)) ||
                     (owner.DirectiveLocations.Any(entry => entry.Key.StartsWith("omitted:", StringComparison.Ordinal) &&
                     entry.Value.Line == comment.AnchorLine) && directiveLines?.ContainsKey(comment.AnchorLine) == true))
                 {
