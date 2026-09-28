@@ -78,6 +78,19 @@ public sealed partial class ScreenplayPrinter
 
             if (comment.Placement == SourceCommentPlacement.Trailing)
             {
+                if (lines[position].TrimStart().StartsWith("```", StringComparison.Ordinal))
+                {
+                    // A trailing comment would change the language of the opening fence and make
+                    // the entire block unparseable. Keep it above the fence instead.
+                    if (!before.TryGetValue(position, out var fenceComments))
+                    {
+                        before[position] = fenceComments = [];
+                    }
+
+                    fenceComments.Add(new string(' ', indent) + comment.Text);
+                    continue;
+                }
+
                 if (owner.DirectiveLocations.Any(entry => entry.Key.StartsWith("omitted:", StringComparison.Ordinal) &&
                     entry.Value.Line == comment.AnchorLine) && directiveLines?.ContainsKey(comment.AnchorLine) == true)
                 {
