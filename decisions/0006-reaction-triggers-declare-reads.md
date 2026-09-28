@@ -20,6 +20,8 @@ applies-to:
   - Source/Screenplay/VSCodeExtension/**
 ---
 
+**2026-09-28 —** [Decision 0017](0017-map-declared-decision-reads-to-chronicle-decision-reads.md) supersedes [decision 0003](0003-decision-consistency-for-command-reads.md)’s runtime protection mapping for command reads; 0003’s versioned migration and alias rules remain. Reaction `produces` protection is still deferred until reactions bind.
+
 ## Context
 
 An automation decides from state it consults: in Event Modeling, a process watches a to-do view and acts on each item. [#69](https://github.com/Cratis/Screenplay/issues/69) asks for that relationship. A reaction can already start from an event, a declared trigger or the clock, and can `produces` or `invokes`, but it cannot name the views behind its decision. `ReactionTriggerSyntax` has no reads member ([`ReactionSyntax.cs:44-52`](../Source/DotNET/Screenplay/Syntax/ReactionSyntax.cs)), so the inputs of an automation are invisible in the document.
