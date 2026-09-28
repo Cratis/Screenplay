@@ -23,6 +23,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <EmbeddedResource Include="../Screenplay/for_ScreenplayCompiler/invoicing.play"
+                          Link="Samples/invoicing.play"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Samples.invoicing.play" />
         <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v1.json"
                           Link="Golden/full-esm-v1.json"
                           WithCulture="false"

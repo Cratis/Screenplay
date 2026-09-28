@@ -36,13 +36,20 @@ internal static partial class ReducerParser
         var name = match.Groups[1].Value;
         var rules = new List<ReducerRuleSyntax>();
         string? description = null;
+        var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
             if (LineText.FirstWord(line.Content) == "description")
             {
+                var previousDescription = description;
                 description = DescriptionParser.Parse(context, line, description, $"Reducer '{name}'");
+                if (previousDescription is null && description is not null)
+                {
+                    directiveLocations["description"] = line.Location;
+                }
+
                 continue;
             }
 
@@ -62,7 +69,7 @@ internal static partial class ReducerParser
             context.Error(DiagnosticCodes.ReducerWithoutRule, $"Reducer '{name}' must declare at least one 'on <EventType>' rule", header.Location);
         }
 
-        return new(name, match.Groups[2].Value, rules, header.Location, description);
+        return new(name, match.Groups[2].Value, rules, header.Location, description) { DirectiveLocations = directiveLocations };
     }
 
     static ReducerRuleSyntax ParseRule(ParserContext context, SourceLine line, string @event)
@@ -70,17 +77,23 @@ internal static partial class ReducerParser
         FileReferenceSyntax? file = null;
         CodeBlockSyntax? code = null;
         string? description = null;
+        var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(line.Indent, out var body))
         {
             context.Reader.TakeSignificant();
             if (LineText.FirstWord(body.Content) == "description")
             {
+                var previousDescription = description;
                 description = DescriptionParser.Parse(context, body, description, $"Rule 'on {@event}'");
+                if (previousDescription is null && description is not null)
+                {
+                    directiveLocations["description"] = body.Location;
+                }
             }
             else if (FileReferenceParser.IsDirective(body))
             {
-                file = FileReferenceParser.Parse(context, body);
+                file = FileReferenceParser.ParseReplacing(context, body, file, directiveLocations);
             }
             else if (CodeBlockParser.IsCodeLine(context, body))
             {
@@ -96,7 +109,7 @@ internal static partial class ReducerParser
             }
         }
 
-        return new(@event, file, code, line.Location, description);
+        return new(@event, file, code, line.Location, description) { DirectiveLocations = directiveLocations };
     }
 
     [GeneratedRegex(@"^reducer\s+([A-Za-z_]\w*)\s*=>\s*([A-Za-z_]\w*)$", RegexOptions.None, 1000)]

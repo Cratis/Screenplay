@@ -75,7 +75,7 @@ internal static partial class ProjectionParser
             context.Reader.TakeSignificant();
             if (FileReferenceParser.IsDirective(line))
             {
-                file = FileReferenceParser.Parse(context, line);
+                file = FileReferenceParser.ParseReplacing(context, line, file, directiveLocations);
                 continue;
             }
 

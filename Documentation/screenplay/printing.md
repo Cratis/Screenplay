@@ -76,6 +76,9 @@ a file does:
   Persona descriptions, constraint headers, unique rules, release events, casing and messages,
   and query descriptions, `by` parameters and `scoped to` declarations also keep their
   comments on the corresponding printed lines when canonical order differs from source order.
+  Other descriptions, behavior order, reaction triggers and conditions, interaction
+  conditions and action continuations keep their trailing comments on the authored
+  line even when blank lines are inserted or declarations move.
   Adjacent trailing comments stay separate, including across a constraint's release and
   casing lines. An explicit default `severity error` on a requirement is omitted. Its trailing
   comment moves to the `require` line, unless a `message` follows: then it gets its
@@ -87,6 +90,12 @@ a file does:
   their comments when the entry count and the order of other values stay the same.
   Otherwise, comments stay with unchanged values; comments on renamed or removed
   entries are dropped and reported in `dropped-comments`.
+  When a single-valued directive is written more than once and the last one wins (for example
+  a repeated `file`, query `by`, command `handler`, capture `source` or `key`, projection
+  `parent`, table `on row-click`, or action `label` or `navigate`), comments on the replaced
+  lines keep their own lines: directly above the retained line for `file`, `by`, `handler` and
+  projection `parent`, and at the start of the declaration body otherwise. They are never merged
+  into the declaration's header comment.
   Repeated projection `automap` settings warn (`PLAY0452`):
   the last setting wins, but printing keeps each authored line and its comments until
   a typed edit changes the mode. Then only the edited setting prints: its comment

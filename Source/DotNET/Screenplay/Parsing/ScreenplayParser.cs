@@ -245,7 +245,7 @@ internal static partial class ScreenplayParser
             context.Reader.TakeSignificant();
             if (FileReferenceParser.IsDirective(child))
             {
-                file = FileReferenceParser.Parse(context, child);
+                file = FileReferenceParser.ParseReplacing(context, child, file, directiveLocations);
             }
             else if (LineText.FirstWord(child.Content) == "validate")
             {
@@ -374,6 +374,7 @@ internal static partial class ScreenplayParser
         string? description = null;
         var screenTemplates = new List<ScreenTemplateSyntax>();
         var dialogTemplates = new List<DialogTemplateSyntax>();
+        var directiveLocations = new Dictionary<string, SourceLocation>();
         var features = new List<FeatureSyntax>();
         var forms = new List<FormSyntax>();
         var contributions = new List<ContributionSyntax>();
@@ -387,7 +388,13 @@ internal static partial class ScreenplayParser
             switch (LineText.FirstWord(child.Content))
             {
                 case "description":
+                    var previousDescription = description;
                     description = DescriptionParser.Parse(context, child, description, $"Module '{name}'");
+                    if (previousDescription is null && description is not null)
+                    {
+                        directiveLocations["description"] = child.Location;
+                    }
+
                     break;
                 case "authorize":
                     authorize = AuthorizeParser.Combine(authorize, AuthorizeParser.Parse(context, child));
@@ -424,7 +431,8 @@ internal static partial class ScreenplayParser
         {
             Behaviors = behaviors,
             UsedBehaviors = usedBehaviors,
-            Authorize = authorize
+            Authorize = authorize,
+            DirectiveLocations = directiveLocations
         };
     }
 
@@ -451,6 +459,7 @@ internal static partial class ScreenplayParser
         string? description = null;
         var features = new List<FeatureSyntax>();
         var slices = new List<SliceSyntax>();
+        var directiveLocations = new Dictionary<string, SourceLocation>();
         var contributions = new List<ContributionSyntax>();
         var behaviors = new List<BehaviorSyntax>();
         var usedBehaviors = new List<UsesBehaviorSyntax>();
@@ -462,7 +471,13 @@ internal static partial class ScreenplayParser
             switch (LineText.FirstWord(child.Content))
             {
                 case "description":
+                    var previousDescription = description;
                     description = DescriptionParser.Parse(context, child, description, $"Feature '{name}'");
+                    if (previousDescription is null && description is not null)
+                    {
+                        directiveLocations["description"] = child.Location;
+                    }
+
                     break;
                 case "authorize":
                     authorize = AuthorizeParser.Combine(authorize, AuthorizeParser.Parse(context, child));
@@ -491,7 +506,8 @@ internal static partial class ScreenplayParser
         {
             Behaviors = behaviors,
             UsedBehaviors = usedBehaviors,
-            Authorize = authorize
+            Authorize = authorize,
+            DirectiveLocations = directiveLocations
         };
     }
 

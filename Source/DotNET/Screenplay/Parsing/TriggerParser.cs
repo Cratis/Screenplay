@@ -44,6 +44,7 @@ internal static partial class TriggerParser
         var name = match.Groups[1].Value;
         string? description = null;
         var data = new List<TriggerDataSyntax>();
+        var directiveLocations = new Dictionary<string, SourceLocation>();
         FileReferenceSyntax? file = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
@@ -51,7 +52,13 @@ internal static partial class TriggerParser
             context.Reader.TakeSignificant();
             if (LineText.FirstWord(line.Content) == "description")
             {
+                var previousDescription = description;
                 description = DescriptionParser.Parse(context, line, description, $"Trigger '{name}'");
+                if (previousDescription is null && description is not null)
+                {
+                    directiveLocations["description"] = line.Location;
+                }
+
                 continue;
             }
 
@@ -59,7 +66,7 @@ internal static partial class TriggerParser
             // reaction - a value named after it is written '@file', which is what the printer has always emitted.
             if (FileReferenceParser.IsDirective(line))
             {
-                file = FileReferenceParser.Parse(context, line);
+                file = FileReferenceParser.ParseReplacing(context, line, file, directiveLocations);
                 continue;
             }
 
@@ -69,7 +76,7 @@ internal static partial class TriggerParser
             }
         }
 
-        return new(name, data, header.Location, description) { File = file };
+        return new(name, data, header.Location, description) { File = file, DirectiveLocations = directiveLocations };
     }
 
     /// <summary>

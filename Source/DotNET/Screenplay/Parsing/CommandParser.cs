@@ -34,6 +34,7 @@ internal static partial class CommandParser
         HandlerSyntax? handler = null;
         ConcurrencySyntax? concurrency = null;
         string? description = null;
+        var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -51,7 +52,13 @@ internal static partial class CommandParser
                     AddProperty(context, properties, validated, name.Groups[1].Value);
                     break;
                 case "description":
+                    var previousDescription = description;
                     description = DescriptionParser.Parse(context, line, description, $"Command '{name.Groups[1].Value}'");
+                    if (previousDescription is null && description is not null)
+                    {
+                        directiveLocations["description"] = line.Location;
+                    }
+
                     break;
                 case "authorize":
                     authorize = AuthorizeParser.Combine(authorize, AuthorizeParser.Parse(context, line));
@@ -81,7 +88,25 @@ internal static partial class CommandParser
 
                     break;
                 case "handler":
-                    handler = ParseHandler(context, line);
+                    var parsedHandler = ParseHandler(context, line);
+                    if (parsedHandler is not null && handler is not null)
+                    {
+                        // The last handler wins. Keep where the replaced one and its file were written,
+                        // so their comments print beside the retained handler instead of merging into
+                        // the command header.
+                        directiveLocations[$"omitted:handler:{handler.Location.Line}"] = handler.Location;
+                        if (handler.File is { } replacedFile)
+                        {
+                            directiveLocations[$"omitted:handler:{replacedFile.Location.Line}"] = replacedFile.Location;
+                        }
+
+                        if (handler.Code is { } replacedCode)
+                        {
+                            directiveLocations[$"omitted:handler:{replacedCode.Location.Line}"] = replacedCode.Location;
+                        }
+                    }
+
+                    handler = parsedHandler;
                     break;
                 default:
                     if (PropertyLineParser.TryParse(line) is { } property)
@@ -103,7 +128,10 @@ internal static partial class CommandParser
             context.Error(DiagnosticCodes.CommandWithProducesAndHandler, $"Command '{name.Groups[1].Value}' cannot declare both 'produces' and 'handler'", header.Location);
         }
 
-        return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency, description, reads);
+        return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency, description, reads)
+        {
+            DirectiveLocations = directiveLocations
+        };
     }
 
     /// <summary>

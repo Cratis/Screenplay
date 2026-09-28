@@ -79,13 +79,14 @@ internal static partial class SpecificationParser
         SpecificationCallerSyntax? caller = null;
         SpecificationDeniedSyntax? denied = null;
         FileReferenceSyntax? file = null;
+        var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
             if (FileReferenceParser.IsDirective(line))
             {
-                file = FileReferenceParser.Parse(context, line);
+                file = FileReferenceParser.ParseReplacing(context, line, file, directiveLocations);
                 continue;
             }
 
@@ -189,8 +190,18 @@ internal static partial class SpecificationParser
             ThenDenied = denied,
             WhenAppended = whenAppended,
             ThenEventsInAnyOrder = eventsInAnyOrder,
-            DirectiveLocations = eventsInAnyOrderLocation is null ? [] : new Dictionary<string, SourceLocation> { ["then events in any order"] = eventsInAnyOrderLocation }
+            DirectiveLocations = WithEventOrderLocation(directiveLocations, eventsInAnyOrderLocation)
         };
+    }
+
+    static Dictionary<string, SourceLocation> WithEventOrderLocation(Dictionary<string, SourceLocation> locations, SourceLocation? location)
+    {
+        if (location is not null)
+        {
+            locations["then events in any order"] = location;
+        }
+
+        return locations;
     }
 
     static SpecificationCallerSyntax? ParseCaller(ParserContext context, SourceLine line)

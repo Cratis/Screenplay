@@ -125,6 +125,7 @@ internal static partial class InteractionParser
         string? description = null;
         int? order = null;
         FileReferenceSyntax? file = null;
+        var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -132,20 +133,36 @@ internal static partial class InteractionParser
 
             if (FileReferenceParser.IsDirective(line))
             {
-                file = FileReferenceParser.Parse(context, line);
+                file = FileReferenceParser.ParseReplacing(context, line, file, directiveLocations);
                 continue;
             }
 
             switch (LineText.FirstWord(line.Content))
             {
                 case "description":
+                    var previousDescription = description;
                     description = DescriptionParser.Parse(context, line, description, $"behavior '{name}'");
+                    if (previousDescription is null && description is not null)
+                    {
+                        directiveLocations["description"] = line.Location;
+                    }
+
                     break;
                 case "parameter":
                     ParseParameter(context, line, parameters);
                     break;
                 case "order":
-                    order = ParseOrder(context, line) ?? order;
+                    if (ParseOrder(context, line) is { } parsedOrder)
+                    {
+                        order = parsedOrder;
+                        if (directiveLocations.TryGetValue("order", out var previousOrder))
+                        {
+                            directiveLocations[$"omitted:order:{previousOrder.Line}"] = previousOrder;
+                        }
+
+                        directiveLocations["order"] = line.Location;
+                    }
+
                     break;
                 case "on":
                     if (ParseBinding(context, line) is { } binding)
@@ -172,7 +189,11 @@ internal static partial class InteractionParser
                 header.Location);
         }
 
-        return new(name, parameters, bindings, header.Location, description, order) { File = file };
+        return new(name, parameters, bindings, header.Location, description, order)
+        {
+            File = file,
+            DirectiveLocations = directiveLocations
+        };
     }
 
     /// <summary>
@@ -265,6 +286,7 @@ internal static partial class InteractionParser
         }
 
         string? condition = null;
+        var directiveLocations = new Dictionary<string, SourceLocation>();
         var actions = new List<InteractionActionSyntax>();
 
         while (context.TryPeekChild(line.Indent, out var child))
@@ -280,6 +302,7 @@ internal static partial class InteractionParser
                 }
 
                 condition = where.Groups[1].Value.Trim();
+                directiveLocations["where"] = child.Location;
                 continue;
             }
 
@@ -294,7 +317,7 @@ internal static partial class InteractionParser
             context.Error(DiagnosticCodes.InteractionBindingWithoutActions, $"'{line.Content}' declares no actions - a trigger with nothing to do is never what was meant", line.Location);
         }
 
-        return new(trigger, condition, actions, line.Location);
+        return new(trigger, condition, actions, line.Location) { DirectiveLocations = directiveLocations };
     }
 
     static InteractionTriggerSyntax? ParseTrigger(ParserContext context, SourceLine line)
@@ -373,6 +396,7 @@ internal static partial class InteractionParser
         var onSuccess = new List<InteractionActionSyntax>();
         var onFailure = new List<InteractionActionSyntax>();
         var onResult = new List<InteractionActionSyntax>();
+        var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -394,7 +418,17 @@ internal static partial class InteractionParser
             var continuation = ContinuationRegex().Match(child.Content);
             if (continuation.Success)
             {
-                ParseContinuation(context, child, continuation.Groups[1].Value, action, depth, onSuccess, onFailure, onResult);
+                if (ParseContinuation(context, child, continuation.Groups[1].Value, action, depth, onSuccess, onFailure, onResult))
+                {
+                    var key = $"on {continuation.Groups[1].Value}";
+                    if (directiveLocations.TryGetValue(key, out var previousContinuation))
+                    {
+                        directiveLocations[$"omitted:{key}:{previousContinuation.Line}"] = previousContinuation;
+                    }
+
+                    directiveLocations[key] = child.Location;
+                }
+
                 continue;
             }
 
@@ -410,11 +444,12 @@ internal static partial class InteractionParser
             Arguments = arguments,
             OnSuccess = onSuccess,
             OnFailure = onFailure,
-            OnResult = onResult
+            OnResult = onResult,
+            DirectiveLocations = directiveLocations
         };
     }
 
-    static void ParseContinuation(
+    static bool ParseContinuation(
         ParserContext context,
         SourceLine line,
         string keyword,
@@ -440,7 +475,7 @@ internal static partial class InteractionParser
                 $"'on result' is only valid on 'open dialog' - {ActionText(action)} produces no result",
                 line.Location);
             context.SkipBlock(line.Indent);
-            return;
+            return false;
         }
 
         if (!string.Equals(keyword, "result", StringComparison.Ordinal) && !CanFail(action))
@@ -450,7 +485,7 @@ internal static partial class InteractionParser
                 $"'on {keyword}' is not valid on {ActionText(action)} - it has no outcome to branch on, so the continuation could never run",
                 line.Location);
             context.SkipBlock(line.Indent);
-            return;
+            return false;
         }
 
         while (context.TryPeekChild(line.Indent, out var child))
@@ -461,6 +496,8 @@ internal static partial class InteractionParser
                 target.Add(continuation);
             }
         }
+
+        return true;
     }
 
     static InteractionActionSyntax? ParseActionHeader(ParserContext context, SourceLine line)

@@ -36,13 +36,14 @@ internal static partial class EventParser
 
         var properties = new List<PropertySyntax>();
         var tags = new List<TagSyntax>();
+        var directiveLocations = new Dictionary<string, SourceLocation>();
         FileReferenceSyntax? file = null;
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
             if (FileReferenceParser.IsDirectiveAmongProperties(line))
             {
-                file = FileReferenceParser.Parse(context, line);
+                file = FileReferenceParser.ParseReplacing(context, line, file, directiveLocations);
             }
             else if (LineText.FirstWord(line.Content) == "tag")
             {
@@ -68,7 +69,7 @@ internal static partial class EventParser
             }
         }
 
-        return new(name.Groups[1].Value, properties, header.Location, tags) { File = file, Generation = generation, HasGenerationMarker = hasGenerationMarker };
+        return new(name.Groups[1].Value, properties, header.Location, tags) { File = file, Generation = generation, HasGenerationMarker = hasGenerationMarker, DirectiveLocations = directiveLocations };
     }
 
     /// <summary>

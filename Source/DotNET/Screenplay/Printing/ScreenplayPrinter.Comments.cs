@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
 
@@ -41,6 +42,7 @@ public sealed partial class ScreenplayPrinter
             }
 
             var position = comment.Placement == SourceCommentPlacement.End ? span.Last : span.First;
+            var resolved = false;
             writer.DirectiveAnchors.TryGetValue(owner, out var directiveLines);
             if (owner.DirectiveLocations.Any(entry => DirectiveLocationKeys.IsCollectionKey(entry.Key) &&
                 entry.Value.Line == comment.AnchorLine) &&
@@ -54,11 +56,19 @@ public sealed partial class ScreenplayPrinter
             if (directiveLines is not null && directiveLines.TryGetValue(comment.AnchorLine, out var directiveLine))
             {
                 position = directiveLine;
+                resolved = true;
             }
             else if (owner is ScreenTemplateSyntax { FitsSlotLocation: { } fitsSlotLocation } template &&
                 comment.AnchorLine == fitsSlotLocation.Line && writer.FitsSlotAnchors.TryGetValue(template, out var fitsSlotLine))
             {
                 position = fitsSlotLine;
+                resolved = true;
+            }
+            else if (RetainedDirectiveNode(owner, comment.AnchorLine) is { } retained &&
+                writer.Anchors.TryGetValue(retained, out var retainedSpan))
+            {
+                position = retainedSpan.First;
+                resolved = true;
             }
             else if (comment.Placement == SourceCommentPlacement.Trailing &&
                 owner.DirectiveLocations.Any(entry => entry.Value.Line == comment.AnchorLine &&
@@ -67,12 +77,7 @@ public sealed partial class ScreenplayPrinter
                 directiveLines?.TryGetValue(autoMapLocation.Line, out var printedAutoMapLine) == true)
             {
                 position = printedAutoMapLine;
-            }
-            else if (comment.Placement == SourceCommentPlacement.Trailing &&
-                !owner.DirectiveLocations.Values.Any(location => location.Line == comment.AnchorLine) &&
-                owner.Location.Line > 0 && comment.Line > owner.Location.Line)
-            {
-                position = Math.Min(span.Last, span.First + comment.Line - owner.Location.Line);
+                resolved = true;
             }
 
             position = Math.Clamp(position, 0, lines.Length - 1);
@@ -84,9 +89,39 @@ public sealed partial class ScreenplayPrinter
 
             if (comment.Placement == SourceCommentPlacement.Trailing)
             {
+                if (lines[position].TrimStart().StartsWith("```", StringComparison.Ordinal))
+                {
+                    // A trailing comment would change the language of the opening fence and make
+                    // the entire block unparseable. Keep it above the fence instead.
+                    if (!before.TryGetValue(position, out var fenceComments))
+                    {
+                        before[position] = fenceComments = [];
+                    }
+
+                    fenceComments.Add(new string(' ', indent) + comment.Text);
+                    continue;
+                }
+
+                if ((owner is AuthorizeSyntax or PolicyConditionSyntax && comment.AnchorLine != owner.Location.Line) ||
+                    RetainedDirectiveNode(owner, comment.AnchorLine) is not null ||
+                    (owner.DirectiveLocations.Any(entry => entry.Key.StartsWith("omitted:", StringComparison.Ordinal) &&
+                    entry.Value.Line == comment.AnchorLine) && directiveLines?.ContainsKey(comment.AnchorLine) == true))
+                {
+                    if (!before.TryGetValue(position, out var displaced))
+                    {
+                        before[position] = displaced = [];
+                    }
+
+                    displaced.Add(new string(' ', indent) + comment.Text);
+                    continue;
+                }
+
+                // A trailing comment from any body line that resolved to no printed position (for
+                // example a directive a later one silently replaced) is relocated too: it never joins
+                // the header's own comment.
                 var relocated = comment.AnchorLine != owner.Location.Line &&
-                    owner.DirectiveLocations.Values.Any(location => location.Line == comment.AnchorLine) &&
-                    directiveLines?.ContainsKey(comment.AnchorLine) != true;
+                    ((owner.DirectiveLocations.Values.Any(location => location.Line == comment.AnchorLine) &&
+                    directiveLines?.ContainsKey(comment.AnchorLine) != true) || !resolved);
                 var next = position + 1;
                 if (relocated && next < lines.Length &&
                     lines[next].Length - lines[next].TrimStart().Length > indent)
@@ -163,6 +198,37 @@ public sealed partial class ScreenplayPrinter
         }
 
         return string.Join('\n', result) + '\n';
+    }
+
+    /// <summary>
+    /// The node a replaced single-valued directive gave way to, when a comment was written on the
+    /// replaced line. Parsers record each replaced line as <c>omitted:&lt;directive&gt;:&lt;line&gt;</c>, and the
+    /// directive's value lives in the owner's property of the same name (<c>file</c> in <c>File</c>,
+    /// <c>by</c> in <c>By</c>, <c>handler</c> in <c>Handler</c>).
+    /// </summary>
+    static SyntaxNode? RetainedDirectiveNode(SyntaxNode owner, int line)
+    {
+        foreach (var (key, location) in owner.DirectiveLocations)
+        {
+            if (location.Line != line || !key.StartsWith("omitted:", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var directive = key["omitted:".Length..key.LastIndexOf(':')];
+            if (directive.Length == 0)
+            {
+                continue;
+            }
+
+            var property = char.ToUpperInvariant(directive[0]) + directive[1..];
+            if (owner.GetType().GetProperty(property)?.GetValue(owner) is SyntaxNode retained)
+            {
+                return retained;
+            }
+        }
+
+        return null;
     }
 
     static void CollectParents(SyntaxNode node, Dictionary<SyntaxNode, SyntaxNode> parents)

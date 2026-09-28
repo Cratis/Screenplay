@@ -35,6 +35,7 @@ internal static partial class ReactionParser
         var triggers = new List<ReactionTriggerSyntax>();
         string? description = null;
         ConditionSyntax? where = null;
+        var directiveLocations = new Dictionary<string, SourceLocation>();
 
         // Whether the body already told the author something is wrong. A reaction whose only trigger is
         // misspelled has no trigger, but saying so as well turns one mistake into two diagnostics and points
@@ -47,13 +48,25 @@ internal static partial class ReactionParser
             var keyword = LineText.FirstWord(line.Content);
             if (keyword == "description")
             {
+                var previousDescription = description;
                 description = DescriptionParser.Parse(context, line, description, $"Reaction '{name}'");
+                if (previousDescription is null && description is not null)
+                {
+                    directiveLocations["description"] = line.Location;
+                }
+
                 continue;
             }
 
             if (keyword == "where")
             {
+                var previousWhere = where;
                 where = ParseWhere(context, line, where, name);
+                if (previousWhere is null && where is not null)
+                {
+                    directiveLocations["where"] = line.Location;
+                }
+
                 continue;
             }
 
@@ -92,7 +105,7 @@ internal static partial class ReactionParser
             context.Error(DiagnosticCodes.ReactionWithoutTrigger, $"Reaction '{name}' must declare at least one trigger - nothing sets it off", header.Location);
         }
 
-        return new(name, triggers, header.Location, description, where);
+        return new(name, triggers, header.Location, description, where) { DirectiveLocations = directiveLocations };
     }
 
     // Two triggers are the same when they name the same occurrence, wherever in the file they were written -
@@ -134,6 +147,7 @@ internal static partial class ReactionParser
         string? description = null;
         var data = new List<TriggerDataSyntax>();
         var reads = new List<ReadsSyntax>();
+        var directiveLocations = new Dictionary<string, SourceLocation>();
         var produces = new List<ProducesSyntax>();
         var invokes = new List<InvokesSyntax>();
 
@@ -143,10 +157,16 @@ internal static partial class ReactionParser
             switch (LineText.FirstWord(body.Content))
             {
                 case "description":
+                    var previousDescription = description;
                     description = DescriptionParser.Parse(context, body, description, $"Trigger '{body.Content}'");
+                    if (previousDescription is null && description is not null)
+                    {
+                        directiveLocations["description"] = body.Location;
+                    }
+
                     continue;
                 case FileReferenceParser.Keyword:
-                    file = FileReferenceParser.Parse(context, body);
+                    file = FileReferenceParser.ParseReplacing(context, body, file, directiveLocations);
                     continue;
                 case "reads":
                     if (body.Content == "reads")
@@ -196,7 +216,11 @@ internal static partial class ReactionParser
             }
         }
 
-        return new(source, data, file, code, line.Location, description, produces, invokes) { Reads = reads };
+        return new(source, data, file, code, line.Location, description, produces, invokes)
+        {
+            Reads = reads,
+            DirectiveLocations = directiveLocations
+        };
     }
 
     /// <summary>

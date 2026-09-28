@@ -73,6 +73,23 @@ internal static partial class FileReferenceParser
         return new(path, line.Location);
     }
 
+    /// <summary>
+    /// Parses a file directive, preserving the location of a replaced file for comment placement.
+    /// </summary>
+    internal static FileReferenceSyntax ParseReplacing(
+        ParserContext context,
+        SourceLine line,
+        FileReferenceSyntax? previous,
+        Dictionary<string, SourceLocation> directiveLocations)
+    {
+        if (previous is not null)
+        {
+            directiveLocations[$"omitted:file:{previous.Location.Line}"] = previous.Location;
+        }
+
+        return Parse(context, line);
+    }
+
     static string PathOf(SourceLine line) =>
         LineText.FirstWord(line.Content) == Keyword ? line.Content[Keyword.Length..].Trim() : string.Empty;
 
