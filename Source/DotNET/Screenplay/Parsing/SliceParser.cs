@@ -76,6 +76,7 @@ internal static partial class SliceParser
                     {
                         directiveLocations["description"] = line.Location;
                     }
+
                     if (descriptionSpan is { } span)
                     {
                         descriptionLocation = span.Location;
