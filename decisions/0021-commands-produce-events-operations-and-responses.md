@@ -11,7 +11,8 @@ applies-to:
   - Source/DotNET/Screenplay/Parsing/**
   - Source/DotNET/Screenplay/Semantics/**
   - Source/DotNET/Screenplay/Syntax/CommandSyntax.cs
-  - Source/DotNET/Screenplay/Syntax/ProducesSyntax.cs
+  - Source/DotNET/Screenplay/Syntax/ScreenplaySyntaxWalker.Commands.cs
+  - Source/DotNET/Screenplay/Semantics/Versions.cs
   - Source/DotNET/Screenplay/Workspaces/WorkspaceDiagnosticRepairs.cs
   - Documentation/screenplay/commands.md
   - Documentation/screenplay/events.md
@@ -36,7 +37,7 @@ Issue [#298](https://github.com/Cratis/Screenplay/issues/298) set the guarantees
 
 **2. The event source id is never payload.** Inside `produces event`, a missing `for` means the command's `identifier`. Plain `produces X` keeps today's meaning; the documentation is corrected and a typed repair adds an explicit `for`. Mapping the identifier into a payload raises `EventSourceIdInPayload` (a warning on inline events, information on declared ones) with two typed repairs per 0014: move identity to the event source, or declare generation 2 without the identity.
 
-**3. `generated`.** A modifier on any command property whose type is a concept over `Uuid`. `generated identifier` is a generated event source id; `generated` alone is another generated value. A generated property is not a request input: it is absent from forms and proxies. Specifications supply it with `when … for` (the identifier) or `when … generated <name> = <value>`.
+**3. `generated`.** A modifier on any command property whose type is a concept over `Uuid`. `generated identifier` (canonical printed order) is a generated event source id; `generated` alone is another generated value. A generated property is not a request input: it is absent from forms and proxies. Specifications supply it with `when … for` (the identifier) or `when … generated <name> = <value>`.
 
 **4. Responses.** `returns <property>` comes first: one response value, cleared on failure, rendered as an Arc tuple. Named response records, `returns <Name>` with typed lines, follow later. Screens and forms bind returned names in `on submit` and `on success`; using one under `on failure` is an error. Specifications assert with `then returns`.
 
@@ -60,7 +61,7 @@ This record allocates no version number. v5 and v6 are held by [#284](https://gi
 ```screenplay
 slice StateChange RegisterProject
   command RegisterProject
-    projectId  ProjectId identifier generated
+    projectId  ProjectId generated identifier
     name       ProjectName
     ownerId    UserId
     ownerEmail EmailAddress
@@ -111,7 +112,7 @@ Authors write a command and its events in one place, and the identity rule stops
 
 ## Related issues
 
-Screenplay: [#284](https://github.com/Cratis/Screenplay/issues/284), [#285](https://github.com/Cratis/Screenplay/issues/285), [#298](https://github.com/Cratis/Screenplay/issues/298), [#299](https://github.com/Cratis/Screenplay/issues/299), [#300](https://github.com/Cratis/Screenplay/issues/300), [#301](https://github.com/Cratis/Screenplay/issues/301), [#302](https://github.com/Cratis/Screenplay/issues/302), [#303](https://github.com/Cratis/Screenplay/issues/303), [#304](https://github.com/Cratis/Screenplay/issues/304), [#305](https://github.com/Cratis/Screenplay/issues/305), [#141](https://github.com/Cratis/Screenplay/issues/141) (subject). Stage: [#175](https://github.com/Cratis/Stage/issues/175), [#176](https://github.com/Cratis/Stage/issues/176), [#177](https://github.com/Cratis/Stage/issues/177), [#178](https://github.com/Cratis/Stage/issues/178). Scene: [#53](https://github.com/Cratis/Scene/issues/53). Arc: [#2885](https://github.com/Cratis/Arc/issues/2885), [#2886](https://github.com/Cratis/Arc/issues/2886), [#2887](https://github.com/Cratis/Arc/issues/2887). Decisions: 0001, 0003, 0004, 0008, 0009, 0011, 0012, 0014, 0015, 0017.
+Screenplay: [#284](https://github.com/Cratis/Screenplay/issues/284), [#285](https://github.com/Cratis/Screenplay/issues/285), [#298](https://github.com/Cratis/Screenplay/issues/298), [#299](https://github.com/Cratis/Screenplay/issues/299), [#300](https://github.com/Cratis/Screenplay/issues/300), [#301](https://github.com/Cratis/Screenplay/issues/301), [#302](https://github.com/Cratis/Screenplay/issues/302), [#303](https://github.com/Cratis/Screenplay/issues/303), [#304](https://github.com/Cratis/Screenplay/issues/304), [#305](https://github.com/Cratis/Screenplay/issues/305), [#141](https://github.com/Cratis/Screenplay/issues/141) (subject). Stage: [#175](https://github.com/Cratis/Stage/issues/175), [#176](https://github.com/Cratis/Stage/issues/176), [#177](https://github.com/Cratis/Stage/issues/177), [#178](https://github.com/Cratis/Stage/issues/178). Scene: [#53](https://github.com/Cratis/Scene/issues/53). Arc: [#2885](https://github.com/Cratis/Arc/issues/2885), [#2886](https://github.com/Cratis/Arc/issues/2886), [#2887](https://github.com/Cratis/Arc/issues/2887). Decisions: 0001, 0003, 0004, 0008, 0009, 0011, 0012, 0013, 0014, 0015, 0017.
 
 ## Status notes
 
