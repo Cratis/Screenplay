@@ -21,3 +21,4 @@
 | [0017](0017-map-declared-decision-reads-to-chronicle-decision-reads.md) | Map declared decision reads to Chronicle decision reads | accepted | none | 2026-09-28 | Sindre Alstad Wilting |
 | [0018](0018-provider-identifiers-and-portable-default-tenant.md) | Use provider-generated identifiers in code bodies and keep the portable default tenant | accepted | implemented | 2026-09-26 | Sindre Alstad Wilting |
 | [0019](0019-publish-the-context-family-separately.md) | Publish the context family in a slim package with compiler type forwarding | accepted | implemented | 2026-09-26 | Sindre Alstad Wilting |
+| [0021](0021-commands-produce-events-operations-and-responses.md) | Commands produce events, operations and responses | accepted | none | 2026-09-28 | Sindre Alstad Wilting |
