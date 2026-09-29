@@ -18,6 +18,8 @@ applies-to:
   - Documentation/screenplay/events.md
 ---
 
+> **2026-09-29 — under revision; items 1 and 4–6 are being reworked in [#309](https://github.com/Cratis/Screenplay/issues/309).** Do not implement items 4–6 from this record. Known corrections: item 1's `id` pins identity only when renaming an event that already has stored events, since argument-free `[EventType]` stays the convention. Item 4's named response record becomes an unnamed `returns` block rendered as `<Command>Response` ([#303](https://github.com/Cratis/Screenplay/issues/303)). Item 5's `append` block is replaced by named event-source and stream declarations ([#302](https://github.com/Cratis/Screenplay/issues/302)), and the `concurrency` block is **not** deprecated: it declares concurrency scope, not routing. Item 6's `uses <Interface> as <name>` becomes `uses <System>`, operations are intent first with optional code ([#301](https://github.com/Cratis/Screenplay/issues/301), [#307](https://github.com/Cratis/Screenplay/issues/307)), and command reads, derived values and provided values are proposed in [#308](https://github.com/Cratis/Screenplay/issues/308). Items 1–3 otherwise stand, and phase 1 ([#299](https://github.com/Cratis/Screenplay/issues/299)) can proceed. This record will be amended once the open decisions in #309 are settled.
+
 ## Context
 
 A Screenplay command today declares its events elsewhere and maps them with `produces <Name>`. It cannot say which value is the runtime-generated event source id, return a value to the caller, run a side effect that must succeed with the command, or state the append metadata Chronicle already accepts. Chronicle and Arc support all of these; the model does not.
@@ -117,3 +119,5 @@ Screenplay: [#284](https://github.com/Cratis/Screenplay/issues/284), [#285](http
 ## Status notes
 
 **2026-09-28 — accepted, not implemented.** Sindre Alstad Wilting accepted the seven decisions above. No syntax, binding or rendering exists yet.
+
+**2026-09-29 — under revision.** Design review after acceptance reopened items 4–6 and corrected item 1's `id` guidance; see the banner and [#309](https://github.com/Cratis/Screenplay/issues/309).
