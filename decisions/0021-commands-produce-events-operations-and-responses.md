@@ -111,7 +111,7 @@ Authors write a command and its events in one place, and the identity rule stops
 
 ## Related issues
 
-Screenplay: [#284](https://github.com/Cratis/Screenplay/issues/284), [#285](https://github.com/Cratis/Screenplay/issues/285), [#298](https://github.com/Cratis/Screenplay/issues/298), [#299](https://github.com/Cratis/Screenplay/issues/299). Decisions: 0001, 0003, 0004, 0008, 0009, 0011, 0012, 0014, 0015, 0017.
+Screenplay: [#284](https://github.com/Cratis/Screenplay/issues/284), [#285](https://github.com/Cratis/Screenplay/issues/285), [#298](https://github.com/Cratis/Screenplay/issues/298), [#299](https://github.com/Cratis/Screenplay/issues/299), [#300](https://github.com/Cratis/Screenplay/issues/300), [#301](https://github.com/Cratis/Screenplay/issues/301), [#302](https://github.com/Cratis/Screenplay/issues/302), [#303](https://github.com/Cratis/Screenplay/issues/303), [#304](https://github.com/Cratis/Screenplay/issues/304), [#305](https://github.com/Cratis/Screenplay/issues/305), [#141](https://github.com/Cratis/Screenplay/issues/141) (subject). Stage: [#175](https://github.com/Cratis/Stage/issues/175), [#176](https://github.com/Cratis/Stage/issues/176), [#177](https://github.com/Cratis/Stage/issues/177), [#178](https://github.com/Cratis/Stage/issues/178). Scene: [#53](https://github.com/Cratis/Scene/issues/53). Arc: [#2885](https://github.com/Cratis/Arc/issues/2885), [#2886](https://github.com/Cratis/Arc/issues/2886), [#2887](https://github.com/Cratis/Arc/issues/2887). Decisions: 0001, 0003, 0004, 0008, 0009, 0011, 0012, 0014, 0015, 0017.
 
 ## Status notes
 
