@@ -6,11 +6,16 @@ using System.Text.Json;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Semantics;
+using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Serialization;
 using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Workspaces;
 
-sealed class WorkspaceAuthoringTransaction(ScreenplayWorkspace workspace, IReadOnlyDictionary<SemanticAddress, SemanticAddress>? referenceRenames = null)
+sealed class WorkspaceAuthoringTransaction(
+    ScreenplayWorkspace workspace,
+    IReadOnlyDictionary<SemanticAddress, SemanticAddress>? referenceRenames = null,
+    IReadOnlySet<DocumentId>? shapePreservingReplacements = null)
 {
     readonly ImmutableArray<Diagnostic>.Builder _diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
 
@@ -57,6 +62,47 @@ sealed class WorkspaceAuthoringTransaction(ScreenplayWorkspace workspace, IReadO
             exception.GetType().Namespace == "Cratis.Screenplay.Syntax.Serialization")
         {
             return Failure(WorkspaceConflictKind.InvalidOperation, exception.Message);
+        }
+    }
+
+    // A typed replacement of a keyed query's 'by' argument that changes only its name renames that one argument
+    // occurrence. When the query keys a read model named by an absence assertion, this is the absence identifier
+    // repair; supply its address migration so the argument's own references keep their correspondence.
+    static IReadOnlyDictionary<SemanticAddress, SemanticAddress>? IdentifierMigrations(WorkspaceSyntaxIndex index, WorkspaceAstEdits edits, IReadOnlyDictionary<SemanticAddress, SemanticAddress>? referenceRenames)
+    {
+        var views = index.Entries.Select(entry => entry.Node).OfType<SpecificationAbsentReadModelSyntax>().Select(assertion => assertion.Name.Split('.')[^1]).ToHashSet(StringComparer.Ordinal);
+        var migrations = new Dictionary<SemanticAddress, SemanticAddress>();
+        foreach (var (target, value) in edits.Replacements)
+        {
+            if (string.Equals(target.Member, "by", StringComparison.Ordinal) && target is { Address: { } previous, Node: QueryParameterSyntax original } && value is QueryParameterSyntax replacement &&
+                original.Name != replacement.Name && SyntaxJson.StructurallyEqual(original with { Name = replacement.Name }, replacement) &&
+                target.Parent is { } parent && index.Find(parent) is { Node: QuerySyntax query, Address: { } owner } &&
+                views.Contains(query.ReturnType.Name.Split('.')[^1]))
+            {
+                migrations[previous] = SemanticAddress.ForQueryArgument(owner, replacement.Name);
+            }
+        }
+
+        if (migrations.Count == 0)
+        {
+            return referenceRenames;
+        }
+
+        foreach (var (previous, current) in referenceRenames ?? new Dictionary<SemanticAddress, SemanticAddress>())
+        {
+            migrations[previous] = current;
+        }
+
+        return migrations;
+    }
+
+    static void RequireShape(WorkspaceSyntaxIndex before, WorkspaceSyntaxIndex after, DocumentId document)
+    {
+        var original = before.Entries.Where(entry => entry.Handle.Document == document).ToDictionary(entry => entry.Handle.Path, entry => entry.Kind, StringComparer.Ordinal);
+        var candidate = after.Entries.Where(entry => entry.Handle.Document == document).ToDictionary(entry => entry.Handle.Path, entry => entry.Kind, StringComparer.Ordinal);
+        if (original.Count != candidate.Count || original.Any(pair => candidate.GetValueOrDefault(pair.Key) != pair.Value))
+        {
+            throw new InvalidWorkspaceAuthoring("A generated rename rewrite changed the syntax shape of a document, so its absence-key correspondence cannot be proven.");
         }
     }
 
@@ -172,18 +218,9 @@ sealed class WorkspaceAuthoringTransaction(ScreenplayWorkspace workspace, IReadO
         }
 
         var candidate = ScreenplayWorkspace.CreateValidated(workspace.ApplicationName, ordered, catalog, compilation, workspace.AttachmentContents);
-
-        // Until absence-key correspondence has an independent, transaction-local proof, the generic
-        // reference engine cannot attest changes to individual members of a keyed absence assertion.
-        // Do not return a write plan for a changed layout in either Safe or Draft mode.
-        if ((WorkspaceSyntaxIndex.Create(workspace).Entries.Any(entry => entry.Node is SpecificationAbsentReadModelSyntax) ||
-             WorkspaceSyntaxIndex.Create(candidate).Entries.Any(entry => entry.Node is SpecificationAbsentReadModelSyntax)) &&
-            !WorkspaceReferenceLayout.Equivalent(workspace, candidate))
-        {
-            throw new InvalidWorkspaceAuthoring("Keyed absence workspace edits require isolated absence-key binding proof; this proposal is unsupported.");
-        }
-
-        WorkspaceAuthoringReferences.Validate(workspace, candidate, request, _diagnostics, referenceRenames);
+        var migrations = IdentifierMigrations(index, edits, referenceRenames);
+        WorkspaceAuthoringReferences.Validate(workspace, candidate, request, _diagnostics, migrations);
+        ValidateAbsenceKeys(request, index, candidate, edits, replacements, migrations);
         return new()
         {
             Workspace = candidate,
@@ -199,6 +236,51 @@ sealed class WorkspaceAuthoringTransaction(ScreenplayWorkspace workspace, IReadO
             ExecutableReady = compilation.Success,
             ExecutableDiagnostics = [.. compilation.Diagnostics]
         };
+    }
+
+    // Keyed absence obligations are validated beside, not through, the generic reference engine. Correspondence
+    // comes only from this transaction's operations; see WorkspaceEditProvenance.
+    void ValidateAbsenceKeys(
+        WorkspaceAuthoringRequest request,
+        WorkspaceSyntaxIndex before,
+        ScreenplayWorkspace candidate,
+        WorkspaceAstEdits edits,
+        List<ReplaceWorkspaceSyntaxDocument> replacements,
+        IReadOnlyDictionary<SemanticAddress, SemanticAddress>? renames)
+    {
+        var after = WorkspaceSyntaxIndex.Create(candidate);
+        if (!WorkspaceAbsenceKeyBindings.Present(before) && !WorkspaceAbsenceKeyBindings.Present(after))
+        {
+            return;
+        }
+
+        var provenance = new WorkspaceEditProvenance();
+        var replaced = replacements.Select(replacement => replacement.Document).ToHashSet();
+        var survivors = candidate.Documents.Select(document => document.Id).ToHashSet();
+        foreach (var document in workspace.Documents.Where(document => survivors.Contains(document.Id) && !replaced.Contains(document.Id) && !edits.Touched.Contains(document.Id)))
+        {
+            provenance.Subtree(before, (document.Id, string.Empty), (document.Id, string.Empty));
+        }
+
+        foreach (var document in replaced.Where(document => shapePreservingReplacements?.Contains(document) == true))
+        {
+            RequireShape(before, after, document);
+            provenance.Subtree(before, (document, string.Empty), (document, string.Empty));
+        }
+
+        edits.Record(provenance, after);
+        foreach (var document in replaced.Where(document => shapePreservingReplacements?.Contains(document) != true))
+        {
+            provenance.Region(before, (document, string.Empty), after, (document, string.Empty));
+        }
+
+        var migrations = renames?.ToDictionary(pair => pair.Key, pair => pair.Value) ?? [];
+        foreach (var rename in request.SemanticRenames)
+        {
+            migrations[rename.PreviousAddress] = rename.CurrentAddress;
+        }
+
+        WorkspaceAbsenceKeyValidation.Validate(before, after, WorkspaceReferenceLayout.Equivalent(workspace, candidate), provenance, request.ReferencePolicy, migrations, _diagnostics);
     }
 
     WorkspaceAuthoringResult Failure(WorkspaceConflictKind kind, string message) => new()

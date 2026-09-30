@@ -44,7 +44,7 @@ public class when_round_tripping_an_absent_read_model : an_authoring_connection
     [Fact] void should_round_trip_the_typed_key() => _node.GetProperty("node").GetProperty("key").GetProperty("value").GetString().ShouldEqual("missing");
     [Fact] void should_find_the_absent_view_reference() => _references.GetProperty("references").EnumerateArray().Any(item => item.GetRawText().Contains("thenAbsentReadModel", StringComparison.Ordinal)).ShouldBeTrue();
     [Fact] void should_report_the_absence_as_an_assertion() => _details.GetProperty("details").GetProperty("items")[0].GetProperty("thenAbsentReadModels").GetInt32().ShouldEqual(1);
-    [Fact] void should_refuse_unproved_rename() => _proposal.GetProperty("isError").GetBoolean().ShouldBeTrue();
-    [Fact] void should_return_a_typed_conflict_without_a_write_plan() => _proposal.GetProperty("structuredContent").GetProperty("conflicts").GetArrayLength().ShouldEqual(1);
+    [Fact] void should_propose_the_rename() => _proposal.GetProperty("isError").GetBoolean().ShouldBeFalse();
+    [Fact] void should_return_an_accepted_proposal() => _proposal.GetProperty("structuredContent").GetProperty("success").GetBoolean().ShouldBeTrue();
     [Fact] void should_keep_disk_unchanged_until_apply() => File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldContain("then no readmodel ItemView");
 }

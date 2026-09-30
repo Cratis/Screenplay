@@ -56,11 +56,12 @@ public class when_appending_an_absence_assertion_through_authoring : Specificati
         });
     }
 
-    [Fact] void should_refuse_the_append_without_absence_binding_proof() => _result.Accepted.ShouldBeFalse();
-    [Fact] void should_refuse_the_prepend_without_occurrence_provenance() => _prepended.Accepted.ShouldBeFalse();
-    [Fact] void should_not_return_a_write_plan_for_either_proposal()
-    {
-        _result.WritePlan.ShouldBeNull();
-        _prepended.WritePlan.ShouldBeNull();
-    }
+    [Fact] void should_accept_the_append() => _result.WritePlan.ShouldNotBeNull();
+    [Fact] void should_accept_the_prepend() => _prepended.WritePlan.ShouldNotBeNull();
+    [Fact] void should_print_the_appended_assertion_last() => Order(_result).ShouldEqual("first,second");
+    [Fact] void should_print_the_prepended_assertion_first() => Order(_prepended).ShouldEqual("second,first");
+
+    static string Order(WorkspaceAuthoringResult result) => string.Join(',', result.Workspace!.Documents.Single().Text.Split('\n')
+        .Where(line => line.TrimStart().StartsWith("then no readmodel", StringComparison.Ordinal))
+        .Select(line => line.Split('"')[1]));
 }

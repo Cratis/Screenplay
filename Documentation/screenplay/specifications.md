@@ -191,7 +191,7 @@ specification RemovingOneOfTwoInvoices
 
 The absence assertion selects ESM v5 (language and semantics `5.0`, canonical `schemaVersion: 5`); existing v1–v4 models retain their bytes and revisions. The reference runner compares both the view identity and the semantic key, so a surviving instance under another key does not fail the absence check. Opaque reducer-built read models still require a target provider: their absence returns typed `SemanticUnsupported`, not a passing assertion. ESM consumers must explicitly admit v5 before using it.
 
-Typed workspace authoring currently refuses structural changes to a workspace containing an absence assertion, even in Draft mode. Renames in that workspace are also refused. No write plan is produced; edit the `.play` source directly until absence-key correspondence is supported.
+Typed workspace authoring binds each member of a composite absence key to the identifier type of the read model's keyed query. Safe authoring rejects a new key member that doesn't resolve, keeps existing unresolved members that the edit leaves unchanged, and accepts an explicit repair of a key member, an enclosing member or the keyed query's `by` identifier. Draft authoring accepts new unresolved key members and reports them as reference debt (`PLAY0198`). An edit that would silently change what an existing key member binds to is refused in both modes, and so is a whole-document replacement in which an unresolved absence assertion can't be matched to exactly one original. Renaming a composite-type property also renames the absence-key members bound to it. A rename is refused while any absence key in the workspace is unresolved; repair the key first.
 
 You can omit `when` to check established state without running a command:
 

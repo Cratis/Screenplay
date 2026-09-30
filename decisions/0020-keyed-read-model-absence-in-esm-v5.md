@@ -11,6 +11,8 @@ applies-to:
   - Source/DotNET/Screenplay/Syntax/Specifications/**
   - Source/DotNET/Screenplay/Parsing/SpecificationParser.cs
   - Source/DotNET/Screenplay/Semantics/**
+  - Source/DotNET/Screenplay/Workspaces/WorkspaceAbsenceKey*.cs
+  - Source/DotNET/Screenplay/Workspaces/WorkspaceEditProvenance.cs
   - Source/DotNET/Screenplay.CanonicalCorpus/**
   - Source/DotNET/Screenplay.CanonicalVectors.Specs/**
   - Documentation/screenplay/specifications.md
@@ -47,4 +49,4 @@ Applies from ESM v5 until superseded. In scope: parser, syntax, binding, evaluat
 
 ## Consequences
 
-The assertion carries a precise portable meaning and consumers need explicit v5 admission. A provider that cannot check deletion must reject the specification instead of silently passing it. Until independent absence-key binding and correspondence exist, typed workspace edits that change a workspace containing keyed absence assertions and renames of its declarations refuse proposals without write plans.
+The assertion carries a precise portable meaning and consumers need explicit v5 admission. A provider that cannot check deletion must reject the specification instead of silently passing it. Typed workspace authoring binds absence keys in their own pass, separate from generic reference correspondence, so v1–v4 reference behaviour is unchanged. Each key member either binds to a property of the read model's identifier type or is an explicit unresolved obligation. Correspondence between the original and the proposed workspace comes only from the operations in the proposal, never from a matching physical path or collection index. Safe rejects new unresolved key members, keeps proven unchanged debt and accepts explicit repairs; Draft reports new debt; both refuse unexplained rebinding and ambiguous correspondence without a write plan. A rename rewrites only the key members bound to the renamed declaration and verifies the complete candidate before it returns a write plan. A rename is refused while an absence key in the workspace is unresolved.

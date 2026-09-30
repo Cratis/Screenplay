@@ -11,7 +11,9 @@ public class and_an_absence_key_has_a_nested_member : given.a_workspace_with_an_
 
     void Because() => _result = Workspace.ProposeRename(Rename<PropertySyntax>("part", "segment"));
 
-    [Fact] void should_refuse_the_rename_without_absence_key_proof() => _result.Accepted.ShouldBeFalse();
-    [Fact] void should_not_produce_a_write_plan() => _result.WritePlan.ShouldBeNull();
+    [Fact] void should_accept_the_rename() => _result.Accepted.ShouldBeTrue();
+    [Fact] void should_produce_a_write_plan() => _result.WritePlan.ShouldNotBeNull();
+    [Fact] void should_rename_the_declaration() => Text(_result).ShouldContain("  segment String");
+    [Fact] void should_rewrite_the_bound_absence_key_member() => Text(_result).ShouldContain("{\"id\":\"first\",\"detail\":{\"segment\":\"old\"}}");
     [Fact] void should_leave_the_original_workspace_unchanged() => Workspace.Documents.Single().Text.ShouldContain("\"detail\":{\"part\":\"old\"}");
 }

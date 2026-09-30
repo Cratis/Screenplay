@@ -24,8 +24,14 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
     readonly Dictionary<JsonNode, ImmutableArray<SourceComment>> _sourceComments = [];
     readonly Dictionary<JsonNode, IReadOnlyDictionary<string, SourceLocation>> _directiveLocations = [];
     readonly Dictionary<JsonNode, AutoMapMode> _parsedAutoMapModes = [];
+    readonly List<(WorkspaceSyntaxEntry Entry, JsonNode Node)> _originals = [];
+    readonly List<(WorkspaceSyntaxEntry Target, JsonNode Original, JsonNode Replacement)> _replaced = [];
+    readonly List<(WorkspaceSyntaxEntry Target, JsonNode Original, JsonNode Inserted)> _moved = [];
 
     internal ImmutableArray<DocumentId> Touched => [.. _edits.SelectMany(edit => new[] { edit.Target?.Handle.Document, edit.Destination?.Parent.Handle.Document }).OfType<DocumentId>().Distinct()];
+
+    internal IEnumerable<(WorkspaceSyntaxEntry Target, SyntaxNode Replacement)> Replacements =>
+        _edits.Where(edit => edit.Target is not null && edit.Destination is null && edit.Value is not null).Select(edit => (edit.Target!, edit.Value!));
 
     internal static bool Contains(WorkspaceNodeHandle ancestor, WorkspaceNodeHandle descendant) => ancestor.Document == descendant.Document &&
         (ancestor.Path == descendant.Path || descendant.Path.StartsWith($"{ancestor.Path}/", StringComparison.Ordinal));
@@ -56,6 +62,7 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
     {
         foreach (var entry in index.Entries)
         {
+            _originals.Add((entry, Resolve(entry.Handle)));
             _sourceLocations[Resolve(entry.Handle)] = entry.Location;
             _sourceComments[Resolve(entry.Handle)] = entry.Node.SourceComments;
             _directiveLocations[Resolve(entry.Handle)] = entry.Node.DirectiveLocations;
@@ -67,12 +74,22 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
 
         foreach (var edit in _edits.Where(edit => edit.Target is not null))
         {
-            Replace(edit.Target!, edit.Original!, edit.Destination is null && edit.Value is not null ? ToJson(edit.Value) : null, edit.Value);
+            var replacement = edit.Destination is null && edit.Value is not null ? ToJson(edit.Value) : null;
+            Replace(edit.Target!, edit.Original!, replacement, edit.Value);
+            if (replacement is not null)
+            {
+                _replaced.Add((edit.Target!, edit.Original!, replacement));
+            }
         }
 
         foreach (var edit in _edits.Where(edit => edit.Destination is not null))
         {
-            Insert(edit.Destination!, ToJson(edit.Value!));
+            var inserted = ToJson(edit.Value!);
+            Insert(edit.Destination!, inserted);
+            if (edit.Target is not null)
+            {
+                _moved.Add((edit.Target, edit.Original!, inserted));
+            }
         }
 
         return Touched.ToDictionary(
@@ -81,6 +98,72 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
                 _roots[document],
                 SyntaxJson.Deserialize(JsonSerializer.SerializeToElement(_roots[document], _jsonOptions)) as ApplicationSyntax
                     ?? throw new InvalidWorkspaceAuthoring("A document root must remain an ApplicationSyntax.")));
+    }
+
+    /// <summary>
+    /// Records the provenance of every occurrence in the applied documents. Only the applied operations establish
+    /// correspondence; see <see cref="WorkspaceEditProvenance"/>.
+    /// </summary>
+    /// <param name="provenance">The transaction provenance to extend.</param>
+    /// <param name="after">The candidate occurrence index.</param>
+    internal void Record(WorkspaceEditProvenance provenance, WorkspaceSyntaxIndex after)
+    {
+        var positions = new Dictionary<JsonNode, (DocumentId Document, string Path)>(ReferenceEqualityComparer.Instance);
+        foreach (var document in Touched)
+        {
+            Walk(_roots[document], document, string.Empty, positions);
+        }
+
+        foreach (var (entry, node) in _originals.Where(original => Touched.Contains(original.Entry.Handle.Document)))
+        {
+            if (positions.TryGetValue(node, out var position))
+            {
+                provenance.Map(position, (entry.Handle.Document, entry.Handle.Path));
+            }
+        }
+
+        foreach (var (target, original, inserted) in _moved)
+        {
+            if (positions.TryGetValue(inserted, out var position))
+            {
+                provenance.Identical(original, (target.Handle.Document, target.Handle.Path), inserted, position);
+            }
+        }
+
+        foreach (var (target, original, replacement) in _replaced)
+        {
+            if (positions.TryGetValue(replacement, out var position))
+            {
+                provenance.Replacement(original, (target.Handle.Document, target.Handle.Path), replacement, position);
+            }
+        }
+
+        foreach (var (target, _, replacement) in _replaced)
+        {
+            if (positions.TryGetValue(replacement, out var position))
+            {
+                provenance.Region(index, (target.Handle.Document, target.Handle.Path), after, position);
+            }
+        }
+    }
+
+    static void Walk(JsonNode? node, DocumentId document, string path, Dictionary<JsonNode, (DocumentId Document, string Path)> positions)
+    {
+        if (node is JsonObject owner)
+        {
+            positions[owner] = (document, path);
+            foreach (var (name, value) in owner)
+            {
+                Walk(value, document, $"{path}/{name}", positions);
+            }
+        }
+        else if (node is JsonArray items)
+        {
+            for (var position = 0; position < items.Count; position++)
+            {
+                Walk(items[position], document, $"{path}/{position}", positions);
+            }
+        }
     }
 
     static bool RequireSlotType(WorkspaceSyntaxEntry parent, string member, SyntaxNode value)
