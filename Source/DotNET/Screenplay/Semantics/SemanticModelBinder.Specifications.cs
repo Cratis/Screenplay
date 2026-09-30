@@ -362,7 +362,9 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            var declared = declaration.Properties.ToDictionary(property => property.Name, StringComparer.Ordinal);
+            // A property declared more than once cannot be bound; it is reported where a value names it.
+            var declared = declaration.Properties.GroupBy(property => property.Name, StringComparer.Ordinal)
+                .ToDictionary(group => group.Key, group => group.Count() == 1 ? group.Single() : null, StringComparer.Ordinal);
             var assigned = new HashSet<string>(StringComparer.Ordinal);
             var properties = ImmutableArray.CreateBuilder<SemanticPropertyValue>();
             var valid = true;
@@ -378,6 +380,13 @@ public sealed partial class SemanticModelBinder
                 if (!declared.TryGetValue(member.Name, out var property))
                 {
                     Error(DiagnosticCodes.UnknownStructuredValueMember, $"Unknown property '{member.Name}' in structured value for '{declaration.Name}'.", member.Location);
+                    valid = false;
+                    continue;
+                }
+
+                if (property is null)
+                {
+                    Error(DiagnosticCodes.UnknownStructuredValueMember, $"Property '{member.Name}' is declared more than once on '{declaration.Name}', so the structured value cannot bind it.", member.Location);
                     valid = false;
                     continue;
                 }

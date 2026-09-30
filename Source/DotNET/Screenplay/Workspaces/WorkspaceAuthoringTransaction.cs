@@ -19,6 +19,16 @@ sealed class WorkspaceAuthoringTransaction(
 {
     readonly ImmutableArray<Diagnostic>.Builder _diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
 
+    internal static void RequireShape(WorkspaceSyntaxIndex before, WorkspaceSyntaxIndex after, DocumentId document)
+    {
+        var original = before.Entries.Where(entry => entry.Handle.Document == document).ToDictionary(entry => entry.Handle.Path, entry => entry.Kind, StringComparer.Ordinal);
+        var candidate = after.Entries.Where(entry => entry.Handle.Document == document).ToDictionary(entry => entry.Handle.Path, entry => entry.Kind, StringComparer.Ordinal);
+        if (original.Count != candidate.Count || original.Any(pair => candidate.GetValueOrDefault(pair.Key) != pair.Value))
+        {
+            throw new InvalidWorkspaceAuthoring("A generated rename rewrite changed the syntax shape of a document, so its absence-key correspondence cannot be proven.");
+        }
+    }
+
     internal WorkspaceAuthoringResult Propose(WorkspaceAuthoringRequest request)
     {
         if (request is null)
@@ -94,16 +104,6 @@ sealed class WorkspaceAuthoringTransaction(
         }
 
         return migrations;
-    }
-
-    static void RequireShape(WorkspaceSyntaxIndex before, WorkspaceSyntaxIndex after, DocumentId document)
-    {
-        var original = before.Entries.Where(entry => entry.Handle.Document == document).ToDictionary(entry => entry.Handle.Path, entry => entry.Kind, StringComparer.Ordinal);
-        var candidate = after.Entries.Where(entry => entry.Handle.Document == document).ToDictionary(entry => entry.Handle.Path, entry => entry.Kind, StringComparer.Ordinal);
-        if (original.Count != candidate.Count || original.Any(pair => candidate.GetValueOrDefault(pair.Key) != pair.Value))
-        {
-            throw new InvalidWorkspaceAuthoring("A generated rename rewrite changed the syntax shape of a document, so its absence-key correspondence cannot be proven.");
-        }
     }
 
     WorkspaceAuthoringResult ProposeCore(WorkspaceAuthoringRequest request)

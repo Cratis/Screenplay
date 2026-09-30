@@ -16,6 +16,8 @@ namespace Cratis.Screenplay.Workspaces;
 /// </summary>
 static class WorkspaceAbsenceKeyValidation
 {
+    static readonly Func<WorkspaceSyntaxEntry, WorkspaceSyntaxEntry, bool> _anywhere = (_, _) => true;
+
     /// <summary>
     /// Rejects unexplained target changes in every policy and newly introduced unresolved obligations under Safe;
     /// reports every remaining unresolved obligation as reference debt.
@@ -75,12 +77,15 @@ static class WorkspaceAbsenceKeyValidation
 
         var origin = provenance.Origin(obligation.Occurrence);
         var original = origin is { } position && previous.TryGetValue(position, out var found) && found.IsKey == obligation.IsKey ? found : null;
-        var edited = Edited(obligation, original, entries, provenance);
+        var edited = Edited(obligation, original, entries, provenance, _anywhere) || (original is not null && Rehomed(obligation, original, provenance));
         if (original?.Target is { } resolved)
         {
+            // A change elsewhere in the resolution chain only repairs debt; retargeting or unbinding a resolved member
+            // needs an edit of the assertion itself (its read model name or the member and its enclosing members).
+            var explicitly = Explicitly(obligation, original, entries, provenance);
             if (obligation.Target is { } target)
             {
-                if (!edited && !SameTarget(resolved, target, migrations))
+                if (!explicitly && !SameTarget(resolved, target, migrations))
                 {
                     throw new InvalidWorkspaceAuthoring($"Absence key '{obligation.Text}' at '{location}' would silently rebind to another declaration. Edit the key or its identifier explicitly.");
                 }
@@ -88,7 +93,7 @@ static class WorkspaceAbsenceKeyValidation
                 return;
             }
 
-            if (!edited)
+            if (!explicitly)
             {
                 throw new InvalidWorkspaceAuthoring($"Absence key '{obligation.Text}' at '{location}' would lose its resolved target without an explicit edit ({obligation.Reason}).");
             }
@@ -101,7 +106,7 @@ static class WorkspaceAbsenceKeyValidation
         {
             if (obligation.Target is not null)
             {
-                if (!edited)
+                if (!edited || (!Explicitly(obligation, original, entries, provenance) && !Repairable(obligation.Target, entries, migrations)))
                 {
                     throw new InvalidWorkspaceAuthoring($"Existing absence key debt '{obligation.Text}' at '{location}' would become resolved without an explicit repair; its intended target cannot be inferred safely.");
                 }
@@ -109,7 +114,7 @@ static class WorkspaceAbsenceKeyValidation
                 return;
             }
 
-            if (original.Text != obligation.Text)
+            if (original.Text != obligation.Text || (edited && !SameChain(obligation, original, provenance, migrations)))
             {
                 RequireDraft(obligation, location, policy);
             }
@@ -131,12 +136,55 @@ static class WorkspaceAbsenceKeyValidation
         }
     }
 
+    // Debt resolved through a chain repair must bind a declaration that existed before, or one the transaction created
+    // (the generic reference rule). A migration value, or a declaration "created" while another one disappeared, could
+    // be a rename capturing the debt.
+    static bool Repairable(WorkspaceSyntaxEntry target, Entries entries, IReadOnlyDictionary<SemanticAddress, SemanticAddress> migrations)
+    {
+        if (target.Address is not { } address || migrations.Values.Contains(address))
+        {
+            return false;
+        }
+
+        var previous = entries.Before.Values.Where(entry => entry.Address is not null).Select(entry => entry.Address!).ToArray();
+        if (previous.Contains(address))
+        {
+            return true;
+        }
+
+        var retained = entries.After.Values.Where(entry => entry.Address is not null).Select(entry => entry.Address!).ToHashSet();
+        return previous.All(declared => retained.Contains(migrations.GetValueOrDefault(declared) ?? declared));
+    }
+
+    // Unchanged debt must keep its whole chain: every dependency binds the same declaration (through migrations) or, for
+    // occurrences without an address, descends from the same original occurrence.
+    static bool SameChain(WorkspaceAbsenceKeyObligation obligation, WorkspaceAbsenceKeyObligation original, WorkspaceEditProvenance provenance, IReadOnlyDictionary<SemanticAddress, SemanticAddress> migrations) =>
+        obligation.Dependencies.Length == original.Dependencies.Length &&
+        obligation.Dependencies.Zip(original.Dependencies).All(pair => pair.First.Address is { } address
+            ? pair.Second.Address is { } previous && (migrations.GetValueOrDefault(previous) ?? previous).Equals(address)
+            : pair.Second.Address is null && provenance.Origin(pair.First) == (pair.Second.Handle.Document, pair.Second.Handle.Path));
+
+    // The assertion itself was edited for this obligation: its read model name, or the member and its enclosing members,
+    // changed or moved.
+    static bool Explicitly(WorkspaceAbsenceKeyObligation obligation, WorkspaceAbsenceKeyObligation original, Entries entries, WorkspaceEditProvenance provenance) =>
+        Edited(obligation, original, entries, provenance, InAssertion) || Rehomed(obligation, original, provenance);
+
+    static bool InAssertion(WorkspaceSyntaxEntry entry, WorkspaceSyntaxEntry assertion) =>
+        entry.Handle.Document == assertion.Handle.Document &&
+        (entry.Handle.Path == assertion.Handle.Path || entry.Handle.Path.StartsWith($"{assertion.Handle.Path}/", StringComparison.Ordinal));
+
     // The transaction explicitly edited a resolution chain when an occurrence either chain depends on changed its own
     // members, or exists on one side only. Provenance decides correspondence; an occurrence without provenance (inside a
     // replaced region) corresponds only to an occurrence of the other chain with the same kind, address and own members.
-    static bool Edited(WorkspaceAbsenceKeyObligation obligation, WorkspaceAbsenceKeyObligation? original, Entries entries, WorkspaceEditProvenance provenance)
+    // The scope limits the check to the dependencies it admits, given the assertion of the same side.
+    static bool Edited(
+        WorkspaceAbsenceKeyObligation obligation,
+        WorkspaceAbsenceKeyObligation? original,
+        Entries entries,
+        WorkspaceEditProvenance provenance,
+        Func<WorkspaceSyntaxEntry, WorkspaceSyntaxEntry, bool> scope)
     {
-        foreach (var dependency in obligation.Dependencies)
+        foreach (var dependency in obligation.Dependencies.Where(dependency => scope(dependency, obligation.Assertion)))
         {
             if (provenance.Origin(dependency) is { } origin
                 ? !entries.Before.TryGetValue(origin, out var previous) || !SameOwn(previous, dependency)
@@ -146,7 +194,7 @@ static class WorkspaceAbsenceKeyValidation
             }
         }
 
-        foreach (var previous in original?.Dependencies ?? [])
+        foreach (var previous in original?.Dependencies.Where(previous => scope(previous, original.Assertion)) ?? [])
         {
             if (provenance.Image(previous) is { } image
                 ? !entries.After.TryGetValue(image, out var current) || !SameOwn(previous, current)
@@ -158,6 +206,15 @@ static class WorkspaceAbsenceKeyValidation
 
         return false;
     }
+
+    // An unchanged key member can still move under another assertion: an occurrence of the assertion's subtree descends
+    // from one outside the original chain, or the original's occurrence now lies outside the chain. Only the assertion's
+    // own subtree counts; declarations joining or leaving the chain are judged by their edits alone.
+    static bool Rehomed(WorkspaceAbsenceKeyObligation obligation, WorkspaceAbsenceKeyObligation original, WorkspaceEditProvenance provenance) =>
+        obligation.Dependencies.Any(dependency => InAssertion(dependency, obligation.Assertion) &&
+            provenance.Origin(dependency) is { } origin && !original.Dependencies.Any(entry => (entry.Handle.Document, entry.Handle.Path) == origin)) ||
+        original.Dependencies.Any(previous => InAssertion(previous, original.Assertion) &&
+            provenance.Image(previous) is { } image && !obligation.Dependencies.Any(entry => (entry.Handle.Document, entry.Handle.Path) == image));
 
     static bool SameOwn(WorkspaceSyntaxEntry before, WorkspaceSyntaxEntry after) =>
         before.Node.GetType() == after.Node.GetType() && JsonNode.DeepEquals(Own(before.Node), Own(after.Node));

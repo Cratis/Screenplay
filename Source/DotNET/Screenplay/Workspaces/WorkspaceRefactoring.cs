@@ -10,6 +10,33 @@ namespace Cratis.Screenplay.Workspaces;
 
 sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
 {
+    // The complete candidate must bind every original absence obligation, at its unchanged position, to the migrated
+    // original target, and only members bound to the renamed declaration may change their text.
+    internal static void RequireAbsenceContinuity(
+        WorkspaceAbsenceKeyBindings before,
+        WorkspaceAbsenceKeyBindings after,
+        Dictionary<SemanticAddress, SemanticAddress> migrations,
+        SemanticAddress renamed,
+        string newName)
+    {
+        var remaining = after.Obligations.ToDictionary(obligation => obligation.Position);
+        foreach (var previous in before.Obligations)
+        {
+            if (!remaining.Remove(previous.Position, out var current) || current.IsKey != previous.IsKey ||
+                previous.Target?.Address is not { } original || current.Target?.Address is not { } address ||
+                !(migrations.GetValueOrDefault(original) ?? original).Equals(address) ||
+                (!previous.IsKey && current.Text != (renamed.Equals(original) ? newName : previous.Text)))
+            {
+                throw new InvalidWorkspaceAuthoring($"Rename changes absence key binding at '{previous.Occurrence.Handle.Path}' ({previous.Text}). Capture, retargeting, and lost absence keys are not admitted.");
+            }
+        }
+
+        if (remaining.Count > 0)
+        {
+            throw new InvalidWorkspaceAuthoring("Rename introduced unexpected absence key occurrences.");
+        }
+    }
+
     internal WorkspaceAuthoringResult Rename(WorkspaceRenameRequest request)
     {
         if (request is null)
@@ -97,33 +124,6 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             WorkspaceReferenceBindings.Scope(entry, index).Segments.SequenceEqual(scope.Segments)))
         {
             throw new InvalidWorkspaceAuthoring($"Cannot merge distinct logical {target.Address!.Kind} declarations by renaming '{target.Address.Name}' to '{newName}'.");
-        }
-    }
-
-    // The complete candidate must bind every original absence obligation, at its unchanged position, to the migrated
-    // original target, and only members bound to the renamed declaration may change their text.
-    static void RequireAbsenceContinuity(
-        WorkspaceAbsenceKeyBindings before,
-        WorkspaceAbsenceKeyBindings after,
-        Dictionary<SemanticAddress, SemanticAddress> migrations,
-        SemanticAddress renamed,
-        string newName)
-    {
-        var remaining = after.Obligations.ToDictionary(obligation => obligation.Position);
-        foreach (var previous in before.Obligations)
-        {
-            if (!remaining.Remove(previous.Position, out var current) || current.IsKey != previous.IsKey ||
-                previous.Target?.Address is not { } original || current.Target?.Address is not { } address ||
-                !(migrations.GetValueOrDefault(original) ?? original).Equals(address) ||
-                (!previous.IsKey && current.Text != (renamed.Equals(original) ? newName : previous.Text)))
-            {
-                throw new InvalidWorkspaceAuthoring($"Rename changes absence key binding at '{previous.Occurrence.Handle.Path}' ({previous.Text}). Capture, retargeting, and lost absence keys are not admitted.");
-            }
-        }
-
-        if (remaining.Count > 0)
-        {
-            throw new InvalidWorkspaceAuthoring("Rename introduced unexpected absence key occurrences.");
         }
     }
 

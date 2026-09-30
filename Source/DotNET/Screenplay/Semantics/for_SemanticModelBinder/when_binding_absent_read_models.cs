@@ -114,5 +114,26 @@ public class when_binding_absent_read_models : given.a_semantic_binder
         result.Success.ShouldBeFalse();
         result.Diagnostics.Single(_ => _.Message.Contains("presence and absence", StringComparison.Ordinal)).Code.ShouldEqual(DiagnosticCodes.InvalidSemanticBinding);
     }
+    [Fact] void should_report_a_key_member_whose_property_is_declared_twice()
+    {
+        var result = Bind(
+            """
+            type InvoiceKey
+              id String
+              id String
+            module Billing
+              feature Invoices
+                slice StateView InvoiceLookup
+                  readmodel InvoiceView
+                    invoiceId InvoiceKey
+                  query InvoiceById => InvoiceView?
+                    by invoiceId InvoiceKey
+                  specification NoInvoice
+                    then no readmodel InvoiceView for {"id":"first"}
+            """);
+        result.Success.ShouldBeFalse();
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownStructuredValueMember && diagnostic.Message.Contains("declared more than once", StringComparison.Ordinal)).ShouldBeTrue();
+    }
+
     [Fact] void should_reject_duplicate_absences() => Bind(Source.Replace("        then readmodel InvoiceView", "        then no readmodel InvoiceView for \"first\"\n        then readmodel InvoiceView", StringComparison.Ordinal)).Success.ShouldBeFalse();
 }

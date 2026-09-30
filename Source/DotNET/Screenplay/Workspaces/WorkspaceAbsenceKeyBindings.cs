@@ -107,14 +107,15 @@ sealed class WorkspaceAbsenceKeyBindings
             return null;
         }
 
+        // Every competing declaration is a dependency, so removing a duplicate is an explicit repair.
         var properties = Children(readModelEntry, "properties").Where(property => ((PropertySyntax)property.Node).Name == names[0]).ToArray();
+        dependencies.AddRange(properties);
         if (properties.Length != 1)
         {
             reason = $"identifier '{names[0]}' is not declared exactly once on read model '{readModel.Name}'";
             return null;
         }
 
-        dependencies.Add(properties[0]);
         type = TypeOf(properties[0], dependencies, out reason);
         return properties[0];
     }
@@ -145,7 +146,7 @@ sealed class WorkspaceAbsenceKeyBindings
                 continue;
             }
 
-            var property = Property(type, ((ObjectMemberSyntax)outer.Node).Name, out reason);
+            var property = Property(type, ((ObjectMemberSyntax)outer.Node).Name, dependencies, out reason);
             if (property is null)
             {
                 reason = $"its enclosing member is unresolved: {reason}";
@@ -153,17 +154,11 @@ sealed class WorkspaceAbsenceKeyBindings
                 continue;
             }
 
-            dependencies.Add(property);
             type = TypeOf(property, dependencies, out reason);
         }
 
         dependencies.Add(member);
-        var target = type is null ? null : Property(type, ((ObjectMemberSyntax)member.Node).Name, out reason);
-        if (target is not null)
-        {
-            dependencies.Add(target);
-        }
-
+        var target = type is null ? null : Property(type, ((ObjectMemberSyntax)member.Node).Name, dependencies, out reason);
         return new(assertion, member, target, target is null ? reason : "resolved", dependencies.ToImmutable());
     }
 
@@ -192,9 +187,11 @@ sealed class WorkspaceAbsenceKeyBindings
         return null;
     }
 
-    WorkspaceSyntaxEntry? Property(WorkspaceSyntaxEntry type, string name, out string reason)
+    WorkspaceSyntaxEntry? Property(WorkspaceSyntaxEntry type, string name, ImmutableArray<WorkspaceSyntaxEntry>.Builder dependencies, out string reason)
     {
+        // Every competing declaration is a dependency, so removing a duplicate is an explicit repair.
         var matches = Children(type, "properties").Where(property => ((PropertySyntax)property.Node).Name == name).ToArray();
+        dependencies.AddRange(matches);
         reason = matches.Length switch
         {
             1 => "resolved",

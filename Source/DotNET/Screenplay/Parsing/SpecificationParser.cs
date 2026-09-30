@@ -91,7 +91,8 @@ internal static partial class SpecificationParser
                 continue;
             }
 
-            switch (LineText.FirstWord(line.Content))
+            // Absence assertions admit any whitespace after 'then'; every other directive keeps its space-separated first word.
+            switch (ThenNoPrefixRegex().IsMatch(line.Content) ? "then" : LineText.FirstWord(line.Content))
             {
                 case "given":
                     if (line.Content.StartsWith("given caller", StringComparison.Ordinal))
