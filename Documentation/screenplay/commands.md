@@ -71,7 +71,7 @@ command RegisterInvoice
   invoiceNumber InvoiceNumber
 ```
 
-A runtime such as Stage honors that property as the event source id for everything the command appends. Leave it out and the runtime generates a fresh `Uuid` instead — which is right for a command that creates something whose identity the caller does not supply:
+The identifier names the command's event source; a `produces` that states [`for <identifier>`](#where-an-event-lands) appends to it. The event source id is never event payload. Leave it out and the runtime generates a fresh `Uuid` instead — which is right for a command that creates something whose identity the caller does not supply:
 
 ```screenplay
 command ArchiveOldInvoices
@@ -92,7 +92,7 @@ command StartMonth
   reads EngagementScope by engagementId
 
   produces TimesheetStarted
-    engagementId = engagementId
+    for engagementId
     consultantId = EngagementScope.consultantId
 ```
 
@@ -360,7 +360,8 @@ Declares what events a command emits. Supports single, multiple, and conditional
 
 ```screenplay
 produces InvoiceRegistered
-  invoiceId     = invoiceId              // from command property
+  for invoiceId                          // event source, never payload
+  invoiceNumber = invoiceNumber          // from command property
   registeredAt  = $context.occurred      // event occurrence time
   registeredBy  = $context.identity.id  // caller identity
   source        = $env.SERVICE_NAME      // environment variable
@@ -375,7 +376,8 @@ produces InvoiceRegistered
 ```screenplay
 produces InvoiceRegistered
   tag audit
-  invoiceId = invoiceId
+  for invoiceId
+  invoiceNumber = invoiceNumber
 ```
 
 ### Mapping sources
@@ -398,7 +400,7 @@ Every `$context.` path names a member of the `CommandContext` an inline handler 
 
 ### Where an event lands
 
-By default a produced event is appended to the command's own event source — the common case, and it stays unstated. An explicit `for` can name the command's required scalar identifier on an indented line:
+A plain `produces <Event>` without `for` does not say where the event lands, and it does not mean the command's [identifier](#the-identifier). The executable model appends it to an identity the execution request allocates for the command, and reports the command as unsupported when none is supplied. In ESM v2, a plain `produces` in a command where another production states `for` uses that destination. State `for` on every production that belongs to the command's event source; the event source id is never payload. An explicit `for` can name the command's required scalar identifier on an indented line:
 
 ```screenplay
 command Activate
@@ -406,7 +408,7 @@ command Activate
   contractId Uuid
 
   produces RequestActivated
-    requestId = requestId
+    for requestId
 
   produces ContractPolicyActivated
     for requestId
@@ -423,11 +425,11 @@ Repeat `produces` for each event; all are emitted:
 
 ```screenplay
 produces InvoiceLineItemAdded
-  invoiceId  = invoiceId
+  for invoiceId
   addedAt    = $context.occurred
 
 produces InvoiceRunningTotalUpdated
-  invoiceId  = invoiceId
+  for invoiceId
   adjustment = lines.sum(l => l.quantity * l.unitPrice * (1 - l.discountPct / 100))
 ```
 
@@ -438,12 +440,12 @@ produces InvoiceRunningTotalUpdated
 ```screenplay
 produces when isProForma == true
   ProFormaInvoiceIssued
-    invoiceId  = invoiceId
+    for invoiceId
     issuedAt   = $context.occurred
 
 produces when paymentTerms == "net30" or paymentTerms == "net60"
   DeferredPaymentInvoiceRegistered
-    invoiceId    = invoiceId
+    for invoiceId
     paymentTerms = paymentTerms
 
 produces when $env.WELCOME_EMAILS_ENABLED == "true"
@@ -507,4 +509,4 @@ command RegisterInvoice
 | `streamId <Name>` | Scope the check to an event stream id |
 | `events <EventType>[, ...]` | Scope the check to the listed event types |
 
-All dimensions are optional and each appears at most once, but the block must declare at least one — an empty `concurrency` block is a compile error. A command without a `concurrency` block appends with no concurrency check.
+All dimensions are optional and each appears at most once, but the block must declare at least one — an empty `concurrency` block is a compile error. A command without a `concurrency` block does not append unchecked: Chronicle's default optimistic concurrency strategy applies to every append, narrowed by the append's routing metadata. It skips only the first append into a scope, unless `CheckFirstAppendIntoAScope` is turned on or the append uses `ExpectingNoMatchingEvent()`. The executable model does not bind the `concurrency` block yet. See [Chronicle concurrency](https://github.com/Cratis/Chronicle/blob/main/Documentation/events/concurrency.mdx).
