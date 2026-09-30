@@ -51,7 +51,7 @@ static class McpFixtureQueries
     }
 
     static bool HasAssertions(SpecificationSyntax specification) => specification.ThenDenied is not null || specification.ThenEvents.Any() || specification.ThenErrors.Any() ||
-        (specification.ThenReadModels?.Any() ?? false) || specification.ThenQueries.Any();
+        (specification.ThenReadModels?.Any() ?? false) || specification.ThenAbsentReadModels.Any() || specification.ThenQueries.Any();
 
     static IEnumerable<McpFixtureValue> Values(McpSyntaxIndex index, McpFixtureOccurrence occurrence)
     {

@@ -61,6 +61,7 @@ static class McpDeclarationDetails
                     thenEvents = specification.ThenEvents.Count(),
                     thenErrors = specification.ThenErrors.Count(),
                     thenReadModels = specification.ThenReadModels?.Count() ?? 0,
+                    thenAbsentReadModels = specification.ThenAbsentReadModels.Count(),
                     thenQueries = specification.ThenQueries.Count()
                 },
                 arguments,

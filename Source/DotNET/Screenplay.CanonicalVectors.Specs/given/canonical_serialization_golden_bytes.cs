@@ -9,12 +9,14 @@ public static class canonical_serialization_golden_bytes
     const string SemanticModelV2Resource = "Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v2.json";
     const string SemanticModelV3Resource = "Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v3.json";
     const string SemanticModelV4Resource = "Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v4.json";
+    const string SemanticModelV5Resource = "Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v5.json";
     const string IdentityCatalogResource = "Cratis.Screenplay.CanonicalVectors.Golden.full-identity-catalog-v1.json";
 
     public static byte[] SemanticModel => Read(SemanticModelResource);
     public static byte[] SemanticModelV2 => Read(SemanticModelV2Resource);
     public static byte[] SemanticModelV3 => Read(SemanticModelV3Resource);
     public static byte[] SemanticModelV4 => Read(SemanticModelV4Resource);
+    public static byte[] SemanticModelV5 => Read(SemanticModelV5Resource);
     public static byte[] IdentityCatalog => Read(IdentityCatalogResource);
 
     static byte[] Read(string name)

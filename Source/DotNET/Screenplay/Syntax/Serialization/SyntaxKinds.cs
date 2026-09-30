@@ -155,6 +155,7 @@ internal static class SyntaxKinds
         typeof(SliceSyntax),
         typeof(SlotSyntax),
         typeof(SourceItemExpressionSyntax),
+        typeof(SpecificationAbsentReadModelSyntax),
         typeof(SpecificationCallerClaimSyntax),
         typeof(SpecificationCallerSyntax),
         typeof(SpecificationCommandSyntax),

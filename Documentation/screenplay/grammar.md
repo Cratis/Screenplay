@@ -655,6 +655,7 @@ SpecificationWhen = "when", ( Ident | "append", Ident ), NL,
 
 SpecificationThen = "then", "readmodel", Ident, [ "exactly" ], NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
+               | "then", "no", "readmodel", Ident, "for", Expression, NL
                | "then", "query", QualifiedName, [ "exactly" ], NL,
                  [ INDENT, { SpecificationQueryDirective }, DEDENT ]
                | "then", "error", [ StringLiteral ], NL
@@ -675,6 +676,10 @@ SpecificationQueryDirective = "arguments", NL,
    by default; "then events in any order" retains exact count and payload
    comparison while ignoring their order. Append actions are event occurrences,
    not commands; optional "for" asserts the typed event source (ESM v2). *)
+
+(* "then no readmodel" requires a concrete key of the view identifier's type;
+   it has no "exactly" qualifier or child mappings. It selects ESM v5, and
+   contradicts "then readmodel" for the same view and key. *)
 
 (* Repeat "result" to assert several results in authored comparison order. A
    "then query" with no result blocks asserts an empty result. The query

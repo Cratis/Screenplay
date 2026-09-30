@@ -74,6 +74,7 @@ internal static partial class SpecificationParser
         SourceLocation? eventsInAnyOrderLocation = null;
         var thenEvents = new List<SpecificationEventSyntax>();
         var thenReadModels = new List<SpecificationReadModelSyntax>();
+        var thenAbsentReadModels = new List<SpecificationAbsentReadModelSyntax>();
         var thenQueries = new List<SpecificationQuerySyntax>();
         var thenErrors = new List<SpecificationErrorSyntax>();
         SpecificationCallerSyntax? caller = null;
@@ -90,7 +91,8 @@ internal static partial class SpecificationParser
                 continue;
             }
 
-            switch (LineText.FirstWord(line.Content))
+            // Absence assertions admit any whitespace after 'then'; every other directive keeps its space-separated first word.
+            switch (ThenNoPrefixRegex().IsMatch(line.Content) ? "then" : LineText.FirstWord(line.Content))
             {
                 case "given":
                     if (line.Content.StartsWith("given caller", StringComparison.Ordinal))
@@ -172,7 +174,7 @@ internal static partial class SpecificationParser
                     }
                     else
                     {
-                        ParseThen(context, line, thenEvents, thenReadModels, thenQueries, thenErrors);
+                        ParseThen(context, line, thenEvents, thenReadModels, thenAbsentReadModels, thenQueries, thenErrors);
                     }
                     break;
                 default:
@@ -186,6 +188,7 @@ internal static partial class SpecificationParser
         {
             File = file,
             ThenQueries = thenQueries,
+            ThenAbsentReadModels = thenAbsentReadModels,
             GivenCaller = caller,
             ThenDenied = denied,
             WhenAppended = whenAppended,
@@ -271,6 +274,7 @@ internal static partial class SpecificationParser
         SourceLine line,
         List<SpecificationEventSyntax> thenEvents,
         List<SpecificationReadModelSyntax> thenReadModels,
+        List<SpecificationAbsentReadModelSyntax> thenAbsentReadModels,
         List<SpecificationQuerySyntax> thenQueries,
         List<SpecificationErrorSyntax> thenErrors)
     {
@@ -293,6 +297,16 @@ internal static partial class SpecificationParser
         {
             context.Error(DiagnosticCodes.InvalidThenError, $"Invalid 'then error' declaration '{line.Content}' - expected 'then error' or 'then error \"<reason>\"'", line.Location);
             context.SkipBlock(line.Indent);
+            return;
+        }
+
+        if (ThenNoPrefixRegex().IsMatch(line.Content))
+        {
+            if (ParseAbsentReadModel(context, line) is { } absent)
+            {
+                thenAbsentReadModels.Add(absent);
+            }
+
             return;
         }
 
@@ -320,6 +334,42 @@ internal static partial class SpecificationParser
         {
             thenEvents.Add(thenEvent);
         }
+    }
+
+    static SpecificationAbsentReadModelSyntax? ParseAbsentReadModel(ParserContext context, SourceLine line)
+    {
+        var match = ThenAbsentReadModelRegex().Match(line.Content);
+        if (!match.Success || match.Groups[2].Value.EndsWith(" exactly", StringComparison.Ordinal))
+        {
+            context.Error(DiagnosticCodes.InvalidAbsentReadModelStep, $"Invalid absence assertion '{line.Content}' - expected 'then no readmodel <ReadModelType> for <key>'", line.Location);
+            context.SkipBlock(line.Indent);
+            return null;
+        }
+
+        var keyGroup = match.Groups[2];
+        var keyText = keyGroup.Value.Trim();
+        var keyStart = line.LocationAt(keyGroup.Index + (keyGroup.Value.Length - keyGroup.Value.TrimStart().Length));
+        var validString = !(keyText.StartsWith('"') || keyText.StartsWith('\'')) || AbsentKeyStringRegex().IsMatch(keyText);
+        var key = validString ? ExpressionParser.ParseMappingSource(context, keyText, keyText.StartsWith('{') || keyText.StartsWith('[') ? keyStart : line.Location) : null;
+        if (key is LiteralExpressionSyntax literal)
+        {
+            key = literal with { RawLocation = keyStart, RawLength = keyText.Length };
+        }
+
+        if (key is not LiteralExpressionSyntax and not ObjectExpressionSyntax)
+        {
+            context.Error(DiagnosticCodes.InvalidAbsentReadModelStep, $"Invalid absence key '{keyText}' - expected exactly one concrete value.", line.Location);
+        }
+
+        var hasChildren = false;
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            context.Error(DiagnosticCodes.InvalidAbsentReadModelStep, "An absent read model assertion cannot have child mappings.", child.Location);
+            hasChildren = true;
+        }
+
+        return hasChildren || key is not LiteralExpressionSyntax and not ObjectExpressionSyntax ? null : new(match.Groups[1].Value, key, line.Location);
     }
 
     static SpecificationQuerySyntax? ParseQuery(ParserContext context, SourceLine line)
@@ -498,6 +548,15 @@ internal static partial class SpecificationParser
 
     [GeneratedRegex(@"^then\s+readmodel\s+([A-Z]\w*)(\s+exactly)?$", RegexOptions.None, 1000)]
     private static partial Regex ThenReadModelRegex();
+
+    [GeneratedRegex(@"^then\s+no\b", RegexOptions.None, 1000)]
+    private static partial Regex ThenNoPrefixRegex();
+
+    [GeneratedRegex(@"^then\s+no\s+readmodel\s+([A-Z]\w*)\s+for\s+(.+)$", RegexOptions.None, 1000)]
+    private static partial Regex ThenAbsentReadModelRegex();
+
+    [GeneratedRegex("^(?:\"" + StringLiteral.BodyPattern + "\"|'(?:[^'\\\\]|\\\\.)*')$", RegexOptions.None, 1000)]
+    private static partial Regex AbsentKeyStringRegex();
 
     [GeneratedRegex("^then\\s+error\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
     private static partial Regex ThenErrorRegex();

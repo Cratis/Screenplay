@@ -10,6 +10,33 @@ namespace Cratis.Screenplay.Workspaces;
 
 sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
 {
+    // The complete candidate must bind every original absence obligation, at its unchanged position, to the migrated
+    // original target, and only members bound to the renamed declaration may change their text.
+    internal static void RequireAbsenceContinuity(
+        WorkspaceAbsenceKeyBindings before,
+        WorkspaceAbsenceKeyBindings after,
+        Dictionary<SemanticAddress, SemanticAddress> migrations,
+        SemanticAddress renamed,
+        string newName)
+    {
+        var remaining = after.Obligations.ToDictionary(obligation => obligation.Position);
+        foreach (var previous in before.Obligations)
+        {
+            if (!remaining.Remove(previous.Position, out var current) || current.IsKey != previous.IsKey ||
+                previous.Target?.Address is not { } original || current.Target?.Address is not { } address ||
+                !(migrations.GetValueOrDefault(original) ?? original).Equals(address) ||
+                (!previous.IsKey && current.Text != (renamed.Equals(original) ? newName : previous.Text)))
+            {
+                throw new InvalidWorkspaceAuthoring($"Rename changes absence key binding at '{previous.Occurrence.Handle.Path}' ({previous.Text}). Capture, retargeting, and lost absence keys are not admitted.");
+            }
+        }
+
+        if (remaining.Count > 0)
+        {
+            throw new InvalidWorkspaceAuthoring("Rename introduced unexpected absence key occurrences.");
+        }
+    }
+
     internal WorkspaceAuthoringResult Rename(WorkspaceRenameRequest request)
     {
         if (request is null)
@@ -137,6 +164,12 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         RejectOpaque(workspace.Documents, index, target, request);
         var bindings = new WorkspaceReferenceBindings(index);
         bindings.RequireNoCollisions();
+        var absence = new WorkspaceAbsenceKeyBindings(index, bindings);
+        if (absence.Obligations.FirstOrDefault(obligation => obligation.Target is null) is { } debt)
+        {
+            throw new InvalidWorkspaceAuthoring($"Cannot prove a rename while absence key '{debt.Text}' at '{Position(workspace.Documents, debt.Occurrence)}' is unresolved ({debt.Reason}). Repair the absence key with a typed edit first.");
+        }
+
         var roots = index.Entries.Where(entry => entry.Parent is null).ToDictionary(entry => entry.Handle.Document, entry => WorkspaceSyntaxMutation.Json(entry.Node));
         var touched = new HashSet<DocumentId>();
         foreach (var entry in index.Entries.Where(entry => target.Address.Equals(entry.Address)).ToArray())
@@ -169,6 +202,13 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             }
         }
 
+        // Only absence-key members bound to the renamed composite-type property are rewritten.
+        foreach (var obligation in absence.Obligations.Where(obligation => !obligation.IsKey && target.Address.Equals(obligation.Target!.Address)))
+        {
+            WorkspaceSyntaxMutation.Set(roots[obligation.Occurrence.Handle.Document], $"{obligation.Occurrence.Handle.Path}/name", request.NewName);
+            touched.Add(obligation.Occurrence.Handle.Document);
+        }
+
         var referenceRenames = new Dictionary<SemanticAddress, SemanticAddress>();
         var semanticRenames = new Dictionary<SemanticAddress, SemanticAddress>();
         var eventRenames = new Dictionary<SemanticAddress, SemanticAddress>();
@@ -198,7 +238,7 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             documents.Add(new ReplaceWorkspaceSyntaxDocument(document, intended));
         }
 
-        var result = new WorkspaceAuthoringTransaction(workspace, referenceRenames).Propose(new()
+        var result = new WorkspaceAuthoringTransaction(workspace, referenceRenames, touched).Propose(new()
         {
             ExpectedRevision = request.ExpectedRevision,
             ExpectedCatalogRevision = request.ExpectedCatalogRevision,
@@ -213,9 +253,11 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             return result;
         }
 
-        var candidateBindings = new WorkspaceReferenceBindings(WorkspaceSyntaxIndex.Create(result.Workspace!));
+        var candidateIndex = WorkspaceSyntaxIndex.Create(result.Workspace!);
+        var candidateBindings = new WorkspaceReferenceBindings(candidateIndex);
         candidateBindings.RequireNoCollisions();
         WorkspaceReferenceSafety.RequireRenameContinuity(bindings, candidateBindings);
+        RequireAbsenceContinuity(absence, new WorkspaceAbsenceKeyBindings(candidateIndex, candidateBindings), referenceRenames, target.Address, request.NewName);
         return result;
     }
 }

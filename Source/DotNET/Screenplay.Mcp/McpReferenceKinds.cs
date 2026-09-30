@@ -33,6 +33,7 @@ static class McpReferenceKinds
         SpecificationEventSyntax value => [(value.EventType, ["Event"], "specificationEvent")],
         SpecificationCommandSyntax value => [(value.CommandType, ["Command"], "whenCommand")],
         SpecificationReadModelSyntax value => [(value.Name, ["ReadModel"], "specificationReadModel")],
+        SpecificationAbsentReadModelSyntax value => [(value.Name, ["ReadModel"], "thenAbsentReadModel")],
         SpecificationQuerySyntax value => [(value.Query, ["Query"], "thenQuery")],
         CompositeKeySyntax value => [(value.Type, ["Type", "Concept"], "compositeKeyType")],
         EventSpecSyntax value => [(value.Event, ["Event"], "from")],

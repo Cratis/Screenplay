@@ -12,6 +12,32 @@ namespace Cratis.Screenplay.Printing;
 /// </summary>
 public partial class ScreenplayPrinter
 {
+    static int AssertionLine(SyntaxNode[] siblings, int position)
+    {
+        if (siblings[position].Location.Line > 1)
+        {
+            return siblings[position].Location.Line;
+        }
+
+        for (var previous = position - 1; previous >= 0; previous--)
+        {
+            if (siblings[previous].Location.Line > 1)
+            {
+                return siblings[previous].Location.Line;
+            }
+        }
+
+        for (var next = position + 1; next < siblings.Length; next++)
+        {
+            if (siblings[next].Location.Line > 1)
+            {
+                return siblings[next].Location.Line;
+            }
+        }
+
+        return int.MaxValue;
+    }
+
     void WriteSpecification(ScreenplayWriter writer, SpecificationSyntax specification)
     {
         using var anchor = writer.Anchor(specification);
@@ -62,26 +88,59 @@ public partial class ScreenplayPrinter
 
             if (specification.ThenEventsInAnyOrder) writer.DirectiveLine("then events in any order", specification, "then events in any order");
 
-            foreach (var then in specification.ThenEvents)
+            if (specification.ThenAbsentReadModels.Any())
             {
-                WriteSpecificationEvent(writer, "then", then);
+                // Merge the authored kinds without reordering assertions inside a typed collection.
+                // New nodes have no meaningful source line; anchor them to their nearest sibling.
+                SyntaxNode[][] kinds =
+                [
+                    [.. specification.ThenEvents],
+                    [.. specification.ThenReadModels ?? []],
+                    [.. specification.ThenAbsentReadModels],
+                    [.. specification.ThenQueries],
+                    specification.ThenDenied is null ? [] : [specification.ThenDenied],
+                    [.. specification.ThenErrors]
+                ];
+                var positions = new int[kinds.Length];
+                while (Enumerable.Range(0, kinds.Length).Any(kind => positions[kind] < kinds[kind].Length))
+                {
+                    var kind = Enumerable.Range(0, kinds.Length)
+                        .Where(candidate => positions[candidate] < kinds[candidate].Length)
+                        .MinBy(candidate => AssertionLine(kinds[candidate], positions[candidate]));
+                    switch (kinds[kind][positions[kind]++])
+                    {
+                        case SpecificationEventSyntax @event: WriteSpecificationEvent(writer, "then", @event); break;
+                        case SpecificationReadModelSyntax present: WriteSpecificationReadModel(writer, "then", present); break;
+                        case SpecificationAbsentReadModelSyntax absent: WriteSpecificationAbsentReadModel(writer, absent); break;
+                        case SpecificationQuerySyntax query: WriteSpecificationQuery(writer, query); break;
+                        case SpecificationDeniedSyntax denied: writer.Line("then denied", denied); break;
+                        case SpecificationErrorSyntax error: writer.Line(error.Name is null ? "then error" : $"then error {StringLiteral.Quote(error.Name)}", error); break;
+                    }
+                }
             }
-
-            foreach (var then in specification.ThenReadModels ?? [])
+            else
             {
-                WriteSpecificationReadModel(writer, "then", then);
-            }
+                foreach (var then in specification.ThenEvents)
+                {
+                    WriteSpecificationEvent(writer, "then", then);
+                }
 
-            foreach (var then in specification.ThenQueries)
-            {
-                WriteSpecificationQuery(writer, then);
-            }
+                foreach (var then in specification.ThenReadModels ?? [])
+                {
+                    WriteSpecificationReadModel(writer, "then", then);
+                }
 
-            if (specification.ThenDenied is { } denied) writer.Line("then denied", denied);
+                foreach (var then in specification.ThenQueries)
+                {
+                    WriteSpecificationQuery(writer, then);
+                }
 
-            foreach (var error in specification.ThenErrors)
-            {
-                writer.Line(error.Name is null ? "then error" : $"then error {StringLiteral.Quote(error.Name)}", error);
+                if (specification.ThenDenied is { } denied) writer.Line("then denied", denied);
+
+                foreach (var error in specification.ThenErrors)
+                {
+                    writer.Line(error.Name is null ? "then error" : $"then error {StringLiteral.Quote(error.Name)}", error);
+                }
             }
         }
     }
@@ -105,6 +164,12 @@ public partial class ScreenplayPrinter
         {
             WriteSpecificationValues(writer, readModel.Properties);
         }
+    }
+
+    void WriteSpecificationAbsentReadModel(ScreenplayWriter writer, SpecificationAbsentReadModelSyntax readModel)
+    {
+        using var anchor = writer.Anchor(readModel);
+        writer.Line($"then no readmodel {readModel.Name} for {ScreenplaySyntaxText.Expression(readModel.Key)}");
     }
 
     void WriteSpecificationQuery(ScreenplayWriter writer, SpecificationQuerySyntax query)

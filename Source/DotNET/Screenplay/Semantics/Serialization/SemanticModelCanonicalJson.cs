@@ -149,7 +149,7 @@ public static partial class SemanticModelCanonicalJson
         WriteArray(writer, "projections", slice.Projections.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, projection) => WriteProjection(output, projection, version));
         if (!slice.Reducers.IsEmpty) WriteArray(writer, "reducers", slice.Reducers.OrderBy(_ => _.Name, StringComparer.Ordinal), WriteReducer);
         WriteArray(writer, "queries", slice.Queries.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteQuery);
-        WriteArray(writer, "specifications", slice.Specifications.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteSpecification);
+        WriteArray(writer, "specifications", slice.Specifications.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, specification) => WriteSpecification(output, specification, version));
         WriteConstraints(writer, slice.Constraints);
         writer.WriteEndObject();
     }
@@ -228,7 +228,7 @@ public static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", eventContract.Name);
         WriteArray(writer, "properties", eventContract.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProperty);
         if (!eventContract.Tags.IsDefaultOrEmpty) WriteStringArray(writer, "tags", eventContract.Tags);
-        if (version == SemanticVersion.V4 && !eventContract.PriorRevisions.IsDefaultOrEmpty)
+        if ((version == SemanticVersion.V4 || version == SemanticVersion.V5) && !eventContract.PriorRevisions.IsDefaultOrEmpty)
         {
             writer.WriteNumber("predecessor", eventContract.Predecessor!.Value.Value);
             WriteArray(writer, "priorRevisions", eventContract.PriorRevisions, (output, prior) =>
@@ -332,7 +332,7 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteString("eventContract", transition.EventContract.ToString());
         writer.WritePropertyName("affectedInstance");
         writer.WriteStartObject();
-        if (version != SemanticVersion.V4) writer.WriteString("cardinality", AffectedCardinality(transition.AffectedInstance.Cardinality));
+        if (version != SemanticVersion.V4 && version != SemanticVersion.V5) writer.WriteString("cardinality", AffectedCardinality(transition.AffectedInstance.Cardinality));
         writer.WritePropertyName("key");
         WriteExpression(writer, transition.AffectedInstance.Key);
         writer.WriteEndObject();
@@ -364,7 +364,7 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
-    static void WriteSpecification(Utf8JsonWriter writer, SemanticSpecification specification)
+    static void WriteSpecification(Utf8JsonWriter writer, SemanticSpecification specification, SemanticVersion version)
     {
         writer.WriteStartObject();
         WriteId(writer, specification.Id);
@@ -389,6 +389,7 @@ public static partial class SemanticModelCanonicalJson
         WriteArray(writer, "thenEvents", specification.ThenEvents, WriteSpecificationEvent);
         if (specification.ThenEventsInAnyOrder) writer.WriteBoolean("thenEventsInAnyOrder", true);
         WriteArray(writer, "thenReadModels", specification.ThenReadModels, WriteSpecificationReadModel);
+        if (version == SemanticVersion.V5) WriteArray(writer, "thenAbsentReadModels", specification.ThenAbsentReadModels, WriteSpecificationAbsentReadModel);
         WriteArray(writer, "thenQueries", specification.ThenQueries, WriteSpecificationQuery);
         WriteArray(writer, "thenErrors", specification.ThenErrors, WriteSpecificationError);
         if (specification.ThenDenied) writer.WriteBoolean("thenDenied", true);
@@ -441,6 +442,15 @@ public static partial class SemanticModelCanonicalJson
         WriteValue(writer, value.Key);
         WriteArray(writer, "values", value.Values.OrderBy(_ => _.TargetProperty.ToString(), StringComparer.Ordinal), WritePropertyValue);
         if (value.Exactly) writer.WriteBoolean("exactly", true);
+        writer.WriteEndObject();
+    }
+
+    static void WriteSpecificationAbsentReadModel(Utf8JsonWriter writer, SemanticSpecificationAbsentReadModel value)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("readModel", value.ReadModel.ToString());
+        writer.WritePropertyName("key");
+        WriteValue(writer, value.Key);
         writer.WriteEndObject();
     }
 

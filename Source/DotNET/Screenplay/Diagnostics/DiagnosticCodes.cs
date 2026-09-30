@@ -2032,4 +2032,7 @@ public static class DiagnosticCodes
 
     /// <summary>More than one automap setting appears in a projection block; only the last setting applies.</summary>
     public const string RepeatedProjectionAutoMap = "PLAY0452";
+
+    /// <summary>An absent read-model assertion is malformed or has child mappings.</summary>
+    public const string InvalidAbsentReadModelStep = "PLAY0453";
 }
