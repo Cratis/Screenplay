@@ -5,8 +5,8 @@ import { ApplicationSyntax, ApplicationSyntaxVisitor, FeatureSyntax, ModuleSynta
 import { EventModelDocument, FeatureDocument, ModuleDocument } from '../Document/EventModelDocument';
 import { guidFor } from '../Document/identity';
 import { SchemaSynthesizer } from '../Schemas/SchemaSynthesizer';
+import { Audience } from './Audience';
 import { EventOwners } from './EventOwners';
-import { userActor } from '../Prototypes/toUserExperience';
 import { SliceScope } from './SliceScope';
 import { systemActor } from './systemActor';
 import { toSlice } from './toSlice';
@@ -23,14 +23,16 @@ export class EventModelDocumentVisitor implements ApplicationSyntaxVisitor<Event
 
     visit(syntax: ApplicationSyntax): EventModelDocument {
         const owners = new EventOwners(syntax.modules, new SchemaSynthesizer(syntax));
+        const audience = Audience.of(syntax.personas);
+        const modules = syntax.modules.map((module, index) => toModule(module, index, owners, audience));
         return {
             id: guidFor(`event-model:${this.name}`),
             name: this.name,
             collections: syntax.modules.length === 0 ? [] : [{
                 id: guidFor(`collection:${this.name}`),
                 position: collectionPosition,
-                modules: syntax.modules.map((module, index) => toModule(module, index, owners)),
-                actors: [...(hasScreens(syntax.modules) ? [userActor] : []), ...(hasSystemSlices(syntax.modules) ? [systemActor] : [])],
+                modules,
+                actors: [...audience.actors(), ...(hasSystemSlices(syntax.modules) ? [systemActor] : [])],
             }],
             stickyNotes: [],
             links: [],
@@ -43,13 +45,6 @@ export function toEventModelDocument(application: ApplicationSyntax, name: strin
     return new EventModelDocumentVisitor(name).visit(application);
 }
 
-// The board only draws a row of prototypes for a UI role, so the user is only there when there is a screen.
-function hasScreens(modules: readonly ModuleSyntax[]): boolean {
-    const inFeature = (feature: FeatureSyntax): boolean =>
-        feature.slices.some(slice => slice.screens.length > 0) || feature.features.some(inFeature);
-    return modules.some(module => module.features.some(inFeature));
-}
-
 // The system acts in automations and translations; without one there is no row for it.
 function hasSystemSlices(modules: readonly ModuleSyntax[]): boolean {
     const inFeature = (feature: FeatureSyntax): boolean =>
@@ -57,24 +52,26 @@ function hasSystemSlices(modules: readonly ModuleSyntax[]): boolean {
     return modules.some(module => module.features.some(inFeature));
 }
 
-function toModule(module: ModuleSyntax, sortOrder: number, owners: EventOwners): ModuleDocument {
+function toModule(module: ModuleSyntax, sortOrder: number, owners: EventOwners, audience: Audience): ModuleDocument {
     const scope = SliceScope.module(module.name);
+    const within = audience.within(module.authorize);
     return {
         id: scope.id,
         name: module.name,
-        features: module.features.map(feature => toFeature(feature, scope.feature(feature.name), owners)),
+        features: module.features.map(feature => toFeature(feature, scope.feature(feature.name), owners, within)),
         collapsed: false,
         sortOrder,
         commentCount: 0,
     };
 }
 
-function toFeature(feature: FeatureSyntax, scope: SliceScope, owners: EventOwners): FeatureDocument {
+function toFeature(feature: FeatureSyntax, scope: SliceScope, owners: EventOwners, audience: Audience): FeatureDocument {
+    const within = audience.within(feature.authorize);
     return {
         id: scope.id,
         name: feature.name,
-        subFeatures: feature.features.map(child => toFeature(child, scope.feature(child.name), owners)),
-        slices: feature.slices.map((slice, index) => toSlice(slice, scope.slice(slice.name), index, owners)),
+        subFeatures: feature.features.map(child => toFeature(child, scope.feature(child.name), owners, within)),
+        slices: feature.slices.map((slice, index) => toSlice(slice, scope.slice(slice.name), index, owners, within.actorsFor(slice))),
         collapsed: false,
         rowCollapsed: false,
         enabled: true,

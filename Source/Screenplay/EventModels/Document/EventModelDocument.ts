@@ -37,6 +37,7 @@ export interface ActorDocument {
     name: string;
     actorType: number;
     description: string;
+    persona?: { id: string; name: string };
 }
 
 // What a UI role sees in one slice - the screens drawn as prototype elements (@cratis/scene UIElement data).

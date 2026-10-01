@@ -27,7 +27,7 @@ const sliceTypes: Record<SliceSyntax['type'], number> = {
 // and shows its read model; every slice that is not a State Change also shows the events it produces through
 // its reactions and captures, and the events it consumes, pointing back at the slice that produces each. An
 // automation shows the command it invokes, and a translation what its captures read.
-export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number, owners: EventOwners): SliceDocument {
+export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number, owners: EventOwners, audience: readonly string[]): SliceDocument {
     const sliceType = sliceTypes[slice.type];
     const isStateView = slice.type === 'StateView';
     const command = isStateView ? undefined : commandOf(slice, scope, owners);
@@ -46,7 +46,7 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
             name: query.name,
             parameters: [query.by, ...query.filters].filter(parameter => parameter !== null).map(parameter => parameterOf(parameter, owners)),
         }) satisfies QueryItemDocument),
-        actors: toUserExperience(slice.screens, scope.path),
+        actors: toUserExperience(slice.screens, scope.path, audience),
         specifications: toSpecifications(slice.specifications, scope, owners, command?.id),
         commentCount: 0,
     };
