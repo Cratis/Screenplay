@@ -9,5 +9,6 @@ export * from './Queries';
 export * from './Projections';
 export * from './Reactions';
 export * from './Constraints';
+export * from './Specifications';
 export * from './Structure';
 export * from './SyntaxJson';

@@ -7,6 +7,7 @@ import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, ReadModelSyntax
 import { ProjectionSyntax } from './Projections';
 import { QuerySyntax } from './Queries';
 import { ReactionSyntax } from './Reactions';
+import { SpecificationSyntax } from './Specifications';
 import { SyntaxNode } from './SyntaxNode';
 
 // The four kinds of slice. The names are the C# SliceType members, which is also how SyntaxJson writes them.
@@ -25,6 +26,7 @@ export interface SliceSyntax extends SyntaxNode {
     readonly projections: readonly ProjectionSyntax[];
     readonly reactions: readonly ReactionSyntax[];
     readonly constraints: readonly ConstraintSyntax[];
+    readonly specifications: readonly SpecificationSyntax[];
     readonly readModels: readonly ReadModelSyntax[];
 }
 

@@ -49,3 +49,10 @@ export type ExpressionSyntax =
     | StringsExpressionSyntax
     | SourceItemExpressionSyntax
     | RawExpressionSyntax;
+
+// '<property> = <value>' - a value a specification step states.
+export interface PropertyMappingSyntax extends SyntaxNode {
+    readonly kind: 'PropertyMappingSyntax';
+    readonly property: string;
+    readonly source: ExpressionSyntax;
+}
