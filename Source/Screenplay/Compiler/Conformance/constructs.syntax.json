@@ -46,14 +46,37 @@
   "modules": [
     {
       "kind": "ModuleSyntax",
+      "authorize": {
+        "kind": "AuthorizeSyntax",
+        "requirement": {
+          "kind": "PolicyReferenceSyntax",
+          "name": "Staff"
+        }
+      },
       "description": "Customers and what happens to them",
       "features": [
         {
           "kind": "FeatureSyntax",
+          "authorize": {
+            "kind": "AuthorizeSyntax",
+            "requirement": {
+              "kind": "LogicalPolicyRequirementSyntax",
+              "left": {
+                "kind": "PolicyReferenceSyntax",
+                "name": "Staff"
+              },
+              "operator": "Or",
+              "right": {
+                "kind": "PolicyReferenceSyntax",
+                "name": "Managers"
+              }
+            }
+          },
           "description": "Bringing a customer on board",
           "features": [
             {
               "kind": "FeatureSyntax",
+              "authorize": null,
               "description": null,
               "features": [],
               "name": "Drafts",
@@ -64,6 +87,7 @@
                   "commands": [
                     {
                       "kind": "CommandSyntax",
+                      "authorize": null,
                       "description": null,
                       "name": "SaveDraft",
                       "properties": [
@@ -137,6 +161,45 @@
               "commands": [
                 {
                   "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "LogicalPolicyRequirementSyntax",
+                      "left": {
+                        "kind": "LogicalPolicyRequirementSyntax",
+                        "left": {
+                          "kind": "LogicalPolicyRequirementSyntax",
+                          "left": {
+                            "kind": "LogicalPolicyRequirementSyntax",
+                            "left": {
+                              "kind": "PolicyReferenceSyntax",
+                              "name": "Staff"
+                            },
+                            "operator": "Or",
+                            "right": {
+                              "kind": "PolicyReferenceSyntax",
+                              "name": "Managers"
+                            }
+                          },
+                          "operator": "And",
+                          "right": {
+                            "kind": "PolicyReferenceSyntax",
+                            "name": "Auditors"
+                          }
+                        },
+                        "operator": "Or",
+                        "right": {
+                          "kind": "PolicyReferenceSyntax",
+                          "name": "Owners"
+                        }
+                      },
+                      "operator": "And",
+                      "right": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "Staff"
+                      }
+                    }
+                  },
                   "description": "Register a customer",
                   "name": "Register",
                   "properties": [
@@ -623,6 +686,7 @@
         },
         {
           "kind": "FeatureSyntax",
+          "authorize": null,
           "description": null,
           "features": [],
           "name": "Lookup",
@@ -810,6 +874,21 @@
               "queries": [
                 {
                   "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "LogicalPolicyRequirementSyntax",
+                      "left": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "Staff"
+                      },
+                      "operator": "And",
+                      "right": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "Auditors"
+                      }
+                    }
+                  },
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "customerId",
@@ -834,6 +913,7 @@
                 },
                 {
                   "kind": "QuerySyntax",
+                  "authorize": null,
                   "by": null,
                   "description": null,
                   "filters": [
@@ -1196,6 +1276,22 @@
         }
       ],
       "name": "Customers"
+    }
+  ],
+  "personas": [
+    {
+      "kind": "PersonaSyntax",
+      "description": "Works the front desk",
+      "name": "Clerk",
+      "policies": [
+        "Staff"
+      ]
+    },
+    {
+      "kind": "PersonaSyntax",
+      "description": null,
+      "name": "Visitor",
+      "policies": []
     }
   ],
   "types": [

@@ -24,7 +24,7 @@ describe('when parsing slice members', () => {
             '        projectId ProjectId identifier',
             '        name ProjectName',
             '        description String',
-            '        authorize policy Admins',
+            '        authorize Admins',
             '        validate',
             '          name not empty message "Project name is required"',
             '          name max 40 severity warning',

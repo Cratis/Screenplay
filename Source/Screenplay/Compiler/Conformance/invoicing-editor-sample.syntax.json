@@ -158,14 +158,17 @@
   "modules": [
     {
       "kind": "ModuleSyntax",
+      "authorize": null,
       "description": "Everything related to invoicing customers.\nRegistration, lifecycle and payment tracking of invoices.",
       "features": [
         {
           "kind": "FeatureSyntax",
+          "authorize": null,
           "description": "Registering and managing the lifecycle of invoices",
           "features": [
             {
               "kind": "FeatureSyntax",
+              "authorize": null,
               "description": "Discounts and write-offs applied to issued invoices",
               "features": [],
               "name": "Adjustments",
@@ -176,6 +179,21 @@
                   "commands": [
                     {
                       "kind": "CommandSyntax",
+                      "authorize": {
+                        "kind": "AuthorizeSyntax",
+                        "requirement": {
+                          "kind": "LogicalPolicyRequirementSyntax",
+                          "left": {
+                            "kind": "PolicyReferenceSyntax",
+                            "name": "IsAccountant"
+                          },
+                          "operator": "Or",
+                          "right": {
+                            "kind": "PolicyReferenceSyntax",
+                            "name": "IsFinanceDepartment"
+                          }
+                        }
+                      },
                       "description": null,
                       "name": "ApplyDiscount",
                       "properties": [
@@ -367,6 +385,13 @@
                   "commands": [
                     {
                       "kind": "CommandSyntax",
+                      "authorize": {
+                        "kind": "AuthorizeSyntax",
+                        "requirement": {
+                          "kind": "PolicyReferenceSyntax",
+                          "name": "CanWriteOff"
+                        }
+                      },
                       "description": null,
                       "name": "WriteOffInvoice",
                       "properties": [
@@ -571,6 +596,21 @@
               "commands": [
                 {
                   "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "LogicalPolicyRequirementSyntax",
+                      "left": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "CanManageInvoice"
+                      },
+                      "operator": "And",
+                      "right": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "IsAdultCustomer"
+                      }
+                    }
+                  },
                   "description": "Registers a new invoice with its lines and payment terms",
                   "name": "RegisterInvoice",
                   "properties": [
@@ -1329,6 +1369,13 @@
               "commands": [
                 {
                   "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "CanManageInvoice"
+                    }
+                  },
                   "description": null,
                   "name": "CancelInvoice",
                   "properties": [
@@ -1541,6 +1588,13 @@
               "commands": [
                 {
                   "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
                   "description": null,
                   "name": "ChangeInvoiceStatus",
                   "properties": [
@@ -1875,6 +1929,13 @@
               "commands": [
                 {
                   "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
                   "description": null,
                   "name": "ProcessInvoiceBatch",
                   "properties": [
@@ -2040,6 +2101,13 @@
               "commands": [
                 {
                   "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
                   "description": null,
                   "name": "ArchiveOldInvoices",
                   "properties": [
@@ -2310,6 +2378,13 @@
               "queries": [
                 {
                   "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAuthenticated"
+                    }
+                  },
                   "by": null,
                   "description": "Every invoice the caller may see, narrowed by status and customer",
                   "filters": [
@@ -2676,6 +2751,21 @@
               "queries": [
                 {
                   "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "LogicalPolicyRequirementSyntax",
+                      "left": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "OwnsInvoice"
+                      },
+                      "operator": "Or",
+                      "right": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "IsAuthenticated"
+                      }
+                    }
+                  },
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "invoiceId",
@@ -2883,6 +2973,13 @@
               "queries": [
                 {
                   "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
                   "by": null,
                   "description": "Every invoice line, priced, for the accounting line report",
                   "filters": [
@@ -2952,6 +3049,13 @@
               "queries": [
                 {
                   "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
                   "by": null,
                   "description": "Cancelled invoices, kept for audit",
                   "filters": [],
@@ -3104,6 +3208,13 @@
               "queries": [
                 {
                   "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
                   "by": null,
                   "description": "The counters behind the dashboard header",
                   "filters": [],
@@ -3119,6 +3230,13 @@
                 },
                 {
                   "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
                   "by": null,
                   "description": "Invoices past their due date, oldest first",
                   "filters": [],
@@ -3316,6 +3434,13 @@
               "queries": [
                 {
                   "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
                   "by": null,
                   "description": null,
                   "filters": [],
@@ -3548,6 +3673,25 @@
         }
       ],
       "name": "Invoicing"
+    }
+  ],
+  "personas": [
+    {
+      "kind": "PersonaSyntax",
+      "description": "Keeps the books and approves invoices",
+      "name": "Accountant",
+      "policies": [
+        "IsAccountant",
+        "CanManageInvoice"
+      ]
+    },
+    {
+      "kind": "PersonaSyntax",
+      "description": "Registers invoices and manages their lifecycle",
+      "name": "InvoiceManager",
+      "policies": [
+        "CanManageInvoice"
+      ]
     }
   ],
   "types": [

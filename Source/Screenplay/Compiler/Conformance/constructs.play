@@ -19,10 +19,18 @@ type Address
 policy Staff
   require authenticated
 
+persona Clerk
+  description "Works the front desk"
+  policy Staff
+
+persona Visitor
+
 module Customers
   description "Customers and what happens to them"
+  authorize Staff
   feature Onboarding
     description "Bringing a customer on board"
+    authorize Staff or Managers
     feature Drafts
       slice StateChange SaveDraft
         command SaveDraft
@@ -34,6 +42,9 @@ module Customers
       description "Registers a customer"
       command Register
         description "Register a customer"
+        authorize (Staff or Managers) Auditors
+          or Owners
+        authorize Staff
         customerId CustomerId identifier
         name String
         email Email
@@ -105,6 +116,7 @@ module Customers
         visits Int
       query CustomerById => CustomerSummary?
         description "One customer"
+        authorize Staff and Auditors
         by customerId CustomerId
       query AllCustomers => observable CustomerSummary[]
         filter name String

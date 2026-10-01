@@ -6,10 +6,12 @@
   "modules": [
     {
       "kind": "ModuleSyntax",
+      "authorize": null,
       "description": null,
       "features": [
         {
           "kind": "FeatureSyntax",
+          "authorize": null,
           "description": null,
           "features": [],
           "name": "Invoices",
@@ -61,6 +63,7 @@
               "queries": [
                 {
                   "kind": "QuerySyntax",
+                  "authorize": null,
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "invoiceId",
@@ -189,5 +192,6 @@
       "name": "Billing"
     }
   ],
+  "personas": [],
   "types": []
 }

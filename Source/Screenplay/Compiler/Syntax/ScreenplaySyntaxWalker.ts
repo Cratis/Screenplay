@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { AuthorizeSyntax, PersonaSyntax, PolicyRequirementSyntax } from './Authorization';
 import { CaptureAppendSyntax, CaptureChildrenSyntax, CaptureNestedSyntax, CaptureSourceSettingSyntax, CaptureSourceSyntax, CaptureSyntax } from './Captures';
 import { CommandSyntax, ValidateSyntax, ValidationRuleSyntax } from './Commands';
 import { ConstraintSyntax } from './Constraints';
@@ -26,7 +27,25 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.imports.forEach(node => this.visitImport(node));
         syntax.concepts.forEach(node => this.visitConcept(node));
         syntax.types.forEach(node => this.visitType(node));
+        syntax.personas.forEach(node => this.visitPersona(node));
         syntax.modules.forEach(node => this.visitModule(node));
+    }
+
+    visitPersona(syntax: PersonaSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitAuthorize(syntax: AuthorizeSyntax): void {
+        this.visitNode(syntax);
+        this.visitPolicyRequirement(syntax.requirement);
+    }
+
+    visitPolicyRequirement(syntax: PolicyRequirementSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.kind === 'LogicalPolicyRequirementSyntax') {
+            this.visitPolicyRequirement(syntax.left);
+            this.visitPolicyRequirement(syntax.right);
+        }
     }
 
     visitDomain(syntax: DomainSyntax): void {
@@ -49,11 +68,13 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitModule(syntax: ModuleSyntax): void {
         this.visitNode(syntax);
+        if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         syntax.features.forEach(node => this.visitFeature(node));
     }
 
     visitFeature(syntax: FeatureSyntax): void {
         this.visitNode(syntax);
+        if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         syntax.features.forEach(node => this.visitFeature(node));
         syntax.slices.forEach(node => this.visitSlice(node));
     }
@@ -75,6 +96,7 @@ export abstract class ScreenplaySyntaxWalker {
     visitCommand(syntax: CommandSyntax): void {
         this.visitNode(syntax);
         syntax.properties.forEach(node => this.visitProperty(node));
+        if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         syntax.validations.forEach(node => this.visitValidate(node));
     }
 
@@ -115,6 +137,7 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitTypeRef(syntax.returnType);
         if (syntax.by !== null) this.visitQueryParameter(syntax.by);
         syntax.filters.forEach(node => this.visitQueryParameter(node));
+        if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
     }
 
     visitQueryParameter(syntax: QueryParameterSyntax): void {

@@ -1622,6 +1622,92 @@
             "diagnostics": [
                 "PLAY0397@5"
             ]
+        },
+        {
+            "name": "invalid persona declaration",
+            "source": [
+                "persona 1Bad"
+            ],
+            "diagnostics": [
+                "PLAY0030@1"
+            ]
+        },
+        {
+            "name": "invalid persona policy reference",
+            "source": [
+                "persona Clerk",
+                "  policy is-bad"
+            ],
+            "diagnostics": [
+                "PLAY0031@2"
+            ]
+        },
+        {
+            "name": "unknown persona directive",
+            "source": [
+                "persona Clerk",
+                "  role Admin"
+            ],
+            "diagnostics": [
+                "PLAY0032@2"
+            ]
+        },
+        {
+            "name": "authorize without a policy",
+            "source": [
+                "module A",
+                "  authorize"
+            ],
+            "diagnostics": [
+                "PLAY0122@2"
+            ]
+        },
+        {
+            "name": "authorize with a policy that is not PascalCase",
+            "source": [
+                "module A",
+                "  authorize isAdmin"
+            ],
+            "diagnostics": [
+                "PLAY0123@2"
+            ]
+        },
+        {
+            "name": "authorize ending in an operator",
+            "source": [
+                "module A",
+                "  feature F",
+                "    authorize IsAdmin or"
+            ],
+            "diagnostics": [
+                "PLAY0122@3"
+            ]
+        },
+        {
+            "name": "unexpected token in authorize",
+            "source": [
+                "module A",
+                "  feature F",
+                "    slice StateChange S",
+                "      command S",
+                "        authorize IsAdmin )"
+            ],
+            "diagnostics": [
+                "PLAY0184@5"
+            ]
+        },
+        {
+            "name": "unclosed group in authorize",
+            "source": [
+                "module A",
+                "  feature F",
+                "    slice StateView V",
+                "      query All => V[]",
+                "        authorize (IsAdmin or IsClerk"
+            ],
+            "diagnostics": [
+                "PLAY0185@5"
+            ]
         }
     ]
 }

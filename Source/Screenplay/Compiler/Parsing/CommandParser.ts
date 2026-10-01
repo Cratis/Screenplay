@@ -2,11 +2,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { CommandSyntax, ValidateSyntax, ValidationRuleKind, ValidationRuleSyntax, ValidationSeverity } from '../Syntax/Commands';
 import { PropertySyntax } from '../Syntax/Declarations';
 import { ExpressionSyntax } from '../Syntax/Expressions';
 import { pattern } from '../Text/patterns';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
+import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseDescription } from './DescriptionParser';
 import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
@@ -40,7 +42,7 @@ const operandKinds: Record<string, ValidationRuleKind> = {
 const severities: Record<string, ValidationSeverity> = { information: 'Information', warning: 'Warning', error: 'Error' };
 
 // Command directives this compiler does not model. They are skipped whole.
-const opaqueDirectives = new Set(['authorize', 'produces', 'reads', 'handler', 'concurrency']);
+const opaqueDirectives = new Set(['produces', 'reads', 'handler', 'concurrency']);
 
 // The bare directives cannot take a type reference, so a line with property shape is a property whatever
 // keyword it starts with - 'description String' declares a property called description.
@@ -54,6 +56,7 @@ export function parseCommand(context: ParserContext, line: SourceLine): CommandS
     const properties: PropertySyntax[] = [];
     const validations: ValidateSyntax[] = [];
     let description: string | null = null;
+    let authorize: AuthorizeSyntax | null = null;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const keyword = firstWord(child.content);
@@ -62,6 +65,8 @@ export function parseCommand(context: ParserContext, line: SourceLine): CommandS
             addProperty(context, properties, asProperty, name);
         } else if (keyword === 'description') {
             description = parseDescription(context, child, description, `Command '${name}'`);
+        } else if (keyword === 'authorize') {
+            authorize = combineAuthorize(authorize, parseAuthorize(context, child));
         } else if (keyword === 'validate') {
             const validate = parseValidate(context, child);
             if (validate !== undefined) {
@@ -76,7 +81,7 @@ export function parseCommand(context: ParserContext, line: SourceLine): CommandS
             context.skipBlock(child.indent);
         }
     }
-    return { kind: 'CommandSyntax', name, description, properties, validations, location: locationOf(line) };
+    return { kind: 'CommandSyntax', name, description, authorize, properties, validations, location: locationOf(line) };
 }
 
 function addProperty(context: ParserContext, properties: PropertySyntax[], property: PropertySyntax, commandName: string): void {

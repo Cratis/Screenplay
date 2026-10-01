@@ -9,6 +9,7 @@ export * from './Queries';
 export * from './Projections';
 export * from './Reactions';
 export * from './Captures';
+export * from './Authorization';
 export * from './Constraints';
 export * from './Specifications';
 export * from './Screens';

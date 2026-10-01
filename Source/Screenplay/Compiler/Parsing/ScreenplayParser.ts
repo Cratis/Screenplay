@@ -2,10 +2,12 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { AuthorizeSyntax, PersonaSyntax } from '../Syntax/Authorization';
 import { ConceptAttributeSyntax, ConceptSyntax, DomainSyntax, ImportSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { ApplicationSyntax, FeatureSyntax, ModuleSyntax, SliceSyntax } from '../Syntax/Structure';
 import { pattern } from '../Text/patterns';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
+import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseType } from './DeclarationParsers';
 import { parseDescription } from './DescriptionParser';
 import { isFileDirective } from './FileReferences';
@@ -21,14 +23,16 @@ const enumValuePattern = pattern('^@?[a-z_]\\w*$');
 const attributeReasonPattern = pattern(`^([a-z_]\\w*)\\s+reason\\s+"(${stringBodyPattern})"$`);
 const modulePattern = pattern('^module\\s+([A-Za-z_]\\w*)$');
 const featurePattern = pattern('^feature\\s+([A-Za-z_]\\w*)$');
+const personaPattern = pattern('^persona\\s+([A-Za-z_]\\w*)$');
+const personaPolicyPattern = pattern('^policy\\s+([A-Za-z_]\\w*)$');
 const tabIndentPattern = /^[ ]*\t/;
 const primitiveTypes = ['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime'];
 
 // Top-level, module and feature constructs the C# compiler knows that this compiler does not model. They
 // are skipped whole, not reported.
-const opaqueTopLevel = new Set(['policy', 'persona', 'authentication', 'seed', 'ui', 'theme', 'trigger', 'layout', 'behavior']);
-const opaqueModuleMembers = new Set(['authorize', 'on', 'uses', 'screen', 'dialog', 'form', 'contribute']);
-const opaqueFeatureMembers = new Set(['authorize', 'on', 'uses', 'contribute']);
+const opaqueTopLevel = new Set(['policy', 'authentication', 'seed', 'ui', 'theme', 'trigger', 'layout', 'behavior']);
+const opaqueModuleMembers = new Set(['on', 'uses', 'screen', 'dialog', 'form', 'contribute']);
+const opaqueFeatureMembers = new Set(['on', 'uses', 'contribute']);
 
 // Parses one document into its application syntax - the port of the C# ScreenplayParser.
 export function parseApplication(context: ParserContext, lines: readonly SourceLine[]): ApplicationSyntax {
@@ -38,6 +42,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     const concepts: ConceptSyntax[] = [];
     const types: TypeSyntax[] = [];
     const modules: ModuleSyntax[] = [];
+    const personas: PersonaSyntax[] = [];
     let sawOtherConstruct = false;
     for (let line = context.reader.peekSignificant(); line !== undefined; line = context.reader.peekSignificant()) {
         context.reader.takeSignificant();
@@ -62,6 +67,8 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             types.push(parseType(context, line));
         } else if (keyword === 'module') {
             modules.push(parseModule(context, line));
+        } else if (keyword === 'persona') {
+            personas.push(parsePersona(context, line));
         } else if (opaqueTopLevel.has(keyword)) {
             context.skipOpaqueBlock(line.indent);
         } else {
@@ -69,14 +76,14 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             context.skipBlock(line.indent);
         }
     }
-    return { kind: 'ApplicationSyntax', domain, imports, concepts, types, modules, location: context.start };
+    return { kind: 'ApplicationSyntax', domain, imports, concepts, types, modules, personas, location: context.start };
 }
 
 function declaresConstruct(keyword: string, line: SourceLine): boolean {
     if (keyword === 'import') {
         return importPattern.test(line.content);
     }
-    return keyword === 'concept' || keyword === 'type' || keyword === 'module' || opaqueTopLevel.has(keyword);
+    return keyword === 'concept' || keyword === 'type' || keyword === 'module' || keyword === 'persona' || opaqueTopLevel.has(keyword);
 }
 
 function parseDomain(context: ParserContext, line: SourceLine, existing: DomainSyntax | null, sawOtherConstruct: boolean): DomainSyntax | null {
@@ -167,12 +174,15 @@ function parseModule(context: ParserContext, line: SourceLine): ModuleSyntax {
         context.error(DiagnosticCodes.InvalidModuleDeclaration, `Invalid module declaration '${line.content}' - expected 'module <Name>'`, locationOf(line));
     }
     let description: string | null = null;
+    let authorize: AuthorizeSyntax | null = null;
     const features: FeatureSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const keyword = firstWord(child.content);
         if (keyword === 'description') {
             description = parseDescription(context, child, description, `Module '${name}'`);
+        } else if (keyword === 'authorize') {
+            authorize = combineAuthorize(authorize, parseAuthorize(context, child));
         } else if (keyword === 'feature') {
             features.push(parseFeature(context, child));
         } else if (opaqueModuleMembers.has(keyword)) {
@@ -182,7 +192,7 @@ function parseModule(context: ParserContext, line: SourceLine): ModuleSyntax {
             context.skipBlock(child.indent);
         }
     }
-    return { kind: 'ModuleSyntax', name, description, features, location: locationOf(line) };
+    return { kind: 'ModuleSyntax', name, description, authorize, features, location: locationOf(line) };
 }
 
 function parseFeature(context: ParserContext, line: SourceLine): FeatureSyntax {
@@ -191,6 +201,7 @@ function parseFeature(context: ParserContext, line: SourceLine): FeatureSyntax {
         context.error(DiagnosticCodes.InvalidFeatureDeclaration, `Invalid feature declaration '${line.content}' - expected 'feature <Name>'`, locationOf(line));
     }
     let description: string | null = null;
+    let authorize: AuthorizeSyntax | null = null;
     const features: FeatureSyntax[] = [];
     const slices: SliceSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
@@ -198,6 +209,8 @@ function parseFeature(context: ParserContext, line: SourceLine): FeatureSyntax {
         const keyword = firstWord(child.content);
         if (keyword === 'description') {
             description = parseDescription(context, child, description, `Feature '${name}'`);
+        } else if (keyword === 'authorize') {
+            authorize = combineAuthorize(authorize, parseAuthorize(context, child));
         } else if (keyword === 'feature') {
             features.push(parseFeature(context, child));
         } else if (keyword === 'slice') {
@@ -209,5 +222,33 @@ function parseFeature(context: ParserContext, line: SourceLine): FeatureSyntax {
             context.skipBlock(child.indent);
         }
     }
-    return { kind: 'FeatureSyntax', name, description, features, slices, location: locationOf(line) };
+    return { kind: 'FeatureSyntax', name, description, authorize, features, slices, location: locationOf(line) };
+}
+
+// 'persona <Name>' with an optional description and the policies it holds - the port of the C# ParsePersona.
+function parsePersona(context: ParserContext, line: SourceLine): PersonaSyntax {
+    const name = personaPattern.exec(line.content)?.[1] ?? '';
+    if (name === '') {
+        context.error(DiagnosticCodes.InvalidPersonaDeclaration, `Invalid persona declaration '${line.content}' - expected 'persona <Name>'`, locationOf(line));
+    }
+    let description: string | null = null;
+    const policies: string[] = [];
+    for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
+        context.reader.takeSignificant();
+        const keyword = firstWord(child.content);
+        if (keyword === 'description') {
+            description = parseDescription(context, child, description, `Persona '${name}'`);
+        } else if (keyword === 'policy') {
+            const policy = personaPolicyPattern.exec(child.content);
+            if (policy === null) {
+                context.error(DiagnosticCodes.InvalidPersonaPolicyReference, `Invalid policy reference '${child.content}' - expected 'policy <Name>'`, locationOf(child));
+            } else {
+                policies.push(policy[1]);
+            }
+        } else {
+            context.error(DiagnosticCodes.UnknownPersonaDirective, `Unexpected '${keyword}' in persona body - expected description or policy`, locationOf(child));
+            context.skipBlock(child.indent);
+        }
+    }
+    return { kind: 'PersonaSyntax', name, description, policies, location: locationOf(line) };
 }

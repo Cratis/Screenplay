@@ -21,10 +21,12 @@
   "modules": [
     {
       "kind": "ModuleSyntax",
+      "authorize": null,
       "description": null,
       "features": [
         {
           "kind": "FeatureSyntax",
+          "authorize": null,
           "description": null,
           "features": [],
           "name": "Registration",
@@ -35,6 +37,7 @@
               "commands": [
                 {
                   "kind": "CommandSyntax",
+                  "authorize": null,
                   "description": null,
                   "name": "RegisterProject",
                   "properties": [
@@ -281,6 +284,7 @@
               "queries": [
                 {
                   "kind": "QuerySyntax",
+                  "authorize": null,
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "projectId",
@@ -346,5 +350,6 @@
       "name": "Projects"
     }
   ],
+  "personas": [],
   "types": []
 }

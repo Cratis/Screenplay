@@ -2,8 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { QueryParameterSyntax, QuerySyntax } from '../Syntax/Queries';
 import { pattern } from '../Text/patterns';
+import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseDescription } from './DescriptionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
@@ -15,7 +17,7 @@ const parameterPattern = pattern('^([a-z_]\\w*)\\s+([\\w.]+(?:\\[\\])?\\??)(?:\\
 const scopePattern = pattern('^scoped\\s+to\\s+([a-z_]\\w*)$');
 
 // Query directives this compiler does not model. They are skipped whole.
-const opaqueDirectives = new Set(['authorize', 'performer']);
+const opaqueDirectives = new Set(['performer']);
 
 export function parseQuery(context: ParserContext, line: SourceLine): QuerySyntax {
     const match = header.exec(line.content);
@@ -24,7 +26,7 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
         context.skipBlock(line.indent);
         return {
             kind: 'QuerySyntax', name: firstWord(line.content), returnType: parseTypeRef('', locationOf(line)), by: null, filters: [],
-            description: null, isObservable: false, scope: null, location: locationOf(line),
+            description: null, isObservable: false, scope: null, authorize: null, location: locationOf(line),
         };
     }
     const name = match[1];
@@ -32,6 +34,7 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
     const filters: QueryParameterSyntax[] = [];
     let description: string | null = null;
     let scope: string | null = null;
+    let authorize: AuthorizeSyntax | null = null;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const keyword = firstWord(child.content);
@@ -44,6 +47,8 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
             if (filter !== undefined) {
                 filters.push(filter);
             }
+        } else if (keyword === 'authorize') {
+            authorize = combineAuthorize(authorize, parseAuthorize(context, child));
         } else if (keyword === 'scoped') {
             scope = parseScope(context, child, scope, name) ?? scope;
         } else if (opaqueDirectives.has(keyword)) {
@@ -62,6 +67,7 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
         description,
         isObservable: match[2] !== undefined,
         scope,
+        authorize,
         location: locationOf(line),
     };
 }

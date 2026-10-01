@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { AuthorizeSyntax, PersonaSyntax } from './Authorization';
 import { CaptureSyntax } from './Captures';
 import { CommandSyntax } from './Commands';
 import { ConstraintSyntax } from './Constraints';
@@ -38,6 +39,7 @@ export interface FeatureSyntax extends SyntaxNode {
     readonly kind: 'FeatureSyntax';
     readonly name: string;
     readonly description: string | null;
+    readonly authorize: AuthorizeSyntax | null;
     readonly features: readonly FeatureSyntax[];
     readonly slices: readonly SliceSyntax[];
 }
@@ -46,6 +48,7 @@ export interface ModuleSyntax extends SyntaxNode {
     readonly kind: 'ModuleSyntax';
     readonly name: string;
     readonly description: string | null;
+    readonly authorize: AuthorizeSyntax | null;
     readonly features: readonly FeatureSyntax[];
 }
 
@@ -56,4 +59,5 @@ export interface ApplicationSyntax extends SyntaxNode {
     readonly concepts: readonly ConceptSyntax[];
     readonly types: readonly TypeSyntax[];
     readonly modules: readonly ModuleSyntax[];
+    readonly personas: readonly PersonaSyntax[];
 }

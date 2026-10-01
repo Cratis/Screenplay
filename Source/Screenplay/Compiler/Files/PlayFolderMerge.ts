@@ -4,9 +4,12 @@
 import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
+import { combineAuthorize } from '../Parsing/AuthorizeParser';
 import { CompilationResult, parse } from '../ScreenplayCompiler';
+import { AuthorizeSyntax, PersonaSyntax } from '../Syntax/Authorization';
 import { ConceptSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { ApplicationSyntax, FeatureSyntax, ModuleSyntax } from '../Syntax/Structure';
+import { toSyntaxJson } from '../Syntax/SyntaxJson';
 
 // One .play document of a folder: its path relative to the folder, and its text.
 export interface PlayFileSource {
@@ -36,13 +39,17 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         diagnostics.push(error(DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles,
             `The folder already declares a domain in '${describe(domains[0].location.path)}' - a folder compiles to one application, which can have at most one`, extra.location));
     }
+    // Modules merge before personas are claimed, so the diagnostics come in the order the C# merge reports them.
+    const modules = mergeModules(applications.flatMap(application => application.modules), diagnostics);
+    const personas = declaredInOneFile<PersonaSyntax>(applications.flatMap(application => application.personas), 'persona', diagnostics);
     const value: ApplicationSyntax = {
         kind: 'ApplicationSyntax',
         domain: domains[0] ?? null,
         imports: firstOfEach(applications.flatMap(application => application.imports), item => item.qualifiedName),
         concepts,
         types,
-        modules: mergeModules(applications.flatMap(application => application.modules), diagnostics),
+        modules,
+        personas,
         location: applications[0]?.location ?? { line: 1, column: 1 },
     };
     const all = [...documents.flatMap(document => document.diagnostics), ...diagnostics];
@@ -53,6 +60,7 @@ function mergeModules(modules: readonly ModuleSyntax[], diagnostics: Diagnostic[
     return groupByName(modules).map(parts => parts.length === 1 ? parts[0] : {
         ...parts[0],
         description: firstDescription(parts, `module '${parts[0].name}'`, diagnostics),
+        authorize: combineAuthorization(parts.map(part => part.authorize), `module '${parts[0].name}'`, diagnostics),
         features: mergeFeatures(parts.flatMap(part => part.features), diagnostics),
     });
 }
@@ -61,9 +69,27 @@ function mergeFeatures(features: readonly FeatureSyntax[], diagnostics: Diagnost
     return groupByName(features).map(parts => parts.length === 1 ? parts[0] : {
         ...parts[0],
         description: firstDescription(parts, `feature '${parts[0].name}'`, diagnostics),
+        authorize: combineAuthorization(parts.map(part => part.authorize), `feature '${parts[0].name}'`, diagnostics),
         features: mergeFeatures(parts.flatMap(part => part.features), diagnostics),
         slices: declaredInOneFile(parts.flatMap(part => part.slices), 'slice', diagnostics, `feature '${parts[0].name}'`),
     });
+}
+
+// Combines the gates files declare on one module or feature with 'and', never weakening an earlier one. The
+// same gate repeated in another file says nothing new and is reported and left out.
+function combineAuthorization(declarations: readonly (AuthorizeSyntax | null)[], owner: string, diagnostics: Diagnostic[]): AuthorizeSyntax | null {
+    const kept: AuthorizeSyntax[] = [];
+    for (const authorization of declarations.filter(declaration => declaration !== null)) {
+        const first = kept.find(earlier => earlier.location.path !== authorization.location.path
+            && JSON.stringify(toSyntaxJson(earlier)) === JSON.stringify(toSyntaxJson(authorization)));
+        if (first !== undefined) {
+            diagnostics.push(warning(DiagnosticCodes.DuplicateAuthorizationAcrossFiles,
+                `An identical authorization is already declared on the ${owner} in '${describe(first.location.path)}' - this repeated gate is ignored`, authorization.location));
+            continue;
+        }
+        kept.push(authorization);
+    }
+    return kept.reduce<AuthorizeSyntax | null>((combined, next) => combineAuthorize(combined, next), null);
 }
 
 function firstOfEach<T>(items: readonly T[], key: (item: T) => string): T[] {
