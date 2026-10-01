@@ -20,7 +20,21 @@ export interface ShowBoardMessage {
     readonly problems: readonly BoardProblem[];
 }
 
-export type ExtensionToBoardMessage = ShowBoardMessage;
+// How the person last chose to view boards: how much of each slice is drawn, whether properties are
+// shown and how connections are drawn. Kept by the extension for the person, across boards and sessions.
+export interface BoardViewOptions {
+    readonly detailLevel: 'full' | 'overview';
+    readonly showProperties: boolean;
+    readonly visualizationMode: 'simplified' | 'fillLines';
+}
+
+// The view options to show the board with - sent when the board is ready, and when another board changes them.
+export interface ViewOptionsMessage {
+    readonly type: 'viewOptions';
+    readonly options: BoardViewOptions;
+}
+
+export type ExtensionToBoardMessage = ShowBoardMessage | ViewOptionsMessage;
 
 // The webview is loaded and listening; the extension answers with the board.
 export interface BoardReadyMessage {
@@ -35,4 +49,10 @@ export interface ShowSourceMessage {
     readonly path?: string;
 }
 
-export type BoardToExtensionMessage = BoardReadyMessage | ShowSourceMessage;
+// The person changed how the board is viewed; the extension keeps it for every board.
+export interface ViewOptionsChangedMessage {
+    readonly type: 'viewOptionsChanged';
+    readonly options: BoardViewOptions;
+}
+
+export type BoardToExtensionMessage = BoardReadyMessage | ShowSourceMessage | ViewOptionsChangedMessage;

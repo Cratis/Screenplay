@@ -3,12 +3,9 @@
 
 import { BoardToExtensionMessage } from './BoardMessage';
 
-// The part of the API VS Code gives a webview that the board uses: messages to the extension, and state
-// VS Code keeps for the webview while its editor is open - also across the webview being hidden.
+// The part of the API VS Code gives a webview that the board uses: messages to the extension.
 interface VsCodeApi {
     postMessage(message: BoardToExtensionMessage): void;
-    getState(): unknown;
-    setState(state: unknown): void;
 }
 
 declare function acquireVsCodeApi(): VsCodeApi;

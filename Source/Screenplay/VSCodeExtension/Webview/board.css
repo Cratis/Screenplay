@@ -55,8 +55,8 @@ body {
     position: absolute;
     top: 1rem;
     left: 1rem;
-    width: 1.75rem;
-    aspect-ratio: 175 / 298;
+    width: 7.5rem;
+    aspect-ratio: 600 / 328;
     background-color: #fff;
     mask: url('./cratis-logo.svg') no-repeat center / contain;
     -webkit-mask: url('./cratis-logo.svg') no-repeat center / contain;
@@ -73,4 +73,11 @@ body {
     display: flex;
     gap: 0.5rem;
     z-index: 10;
+}
+
+/* What the webview shows instead of a board that failed to draw. */
+.screenplay-board__failure pre {
+    white-space: pre-wrap;
+    font-size: 0.75rem;
+    opacity: 0.7;
 }
