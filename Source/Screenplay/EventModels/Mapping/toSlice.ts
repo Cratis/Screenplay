@@ -9,6 +9,7 @@ import { toUserExperience } from '../Prototypes/toUserExperience';
 import { consumedEvents } from './consumedEvents';
 import { EventOwners } from './EventOwners';
 import { producedEvents } from './producedEvents';
+import { readModelSchemaFromProjection } from './readModelSchemaFromProjection';
 import { SliceScope } from './SliceScope';
 import { toAutomationTrigger } from './toAutomationTrigger';
 import { toCaptureSource, toCaptureTrigger } from './toCaptureSource';
@@ -117,7 +118,8 @@ function withConstraints(event: EventItemDocument, constraints: readonly Constra
 }
 
 // The read model a State View shows: the one its projection builds, else the one its first query returns,
-// else the first it declares. Its shape is the declaration of that name when the slice has one.
+// else the first it declares. Its shape is the declaration of that name when the slice has one, else what
+// the projection building it implies.
 function readModelOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): ReadModelItemDocument | undefined {
     const name = slice.projections.find(projection => projection.readModel !== null)?.readModel
         ?? slice.queries[0]?.returnType.name
@@ -126,10 +128,12 @@ function readModelOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners)
         return undefined;
     }
     const declared = slice.readModels.find(readModel => readModel.name === name);
+    const projection = slice.projections.find(candidate => candidate.readModel === name);
     return {
         id: scope.idOf('readmodel', name),
         name,
-        schema: declared === undefined ? {} : owners.schemas.forProperties(declared.properties),
+        schema: declared !== undefined ? owners.schemas.forProperties(declared.properties)
+            : projection !== undefined ? readModelSchemaFromProjection(projection, event => owners.schemaFor(event)) : {},
         materializes: true,
     };
 }
