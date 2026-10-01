@@ -12,3 +12,5 @@ export * from './Constraints';
 export * from './Specifications';
 export * from './Structure';
 export * from './SyntaxJson';
+export * from './Visitors';
+export * from './ScreenplaySyntaxWalker';
