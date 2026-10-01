@@ -193,7 +193,7 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine):
         context.reader.takeSignificant();
         const mapping = mappingPattern.exec(child.content);
         if (mapping !== null) {
-            values.push(mappingOf(child, mapping));
+            values.push(mappingOf(context, child, mapping));
         } else if (firstWord(child.content) === 'for') {
             const source = child.content.substring('for'.length).trim();
             if (source.length === 0) {
@@ -201,7 +201,7 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine):
             } else if (eventSource !== null) {
                 context.error(DiagnosticCodes.DuplicateSpecificationEventSource, 'A specification step can declare its event-source assertion only once', locationOf(child));
             } else {
-                eventSource = parseMappingSource(source, locationOf(child));
+                eventSource = parseMappingSource(source, locationOf(child), context);
             }
         } else {
             context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child));
@@ -219,11 +219,11 @@ function parseValues(context: ParserContext, parent: SourceLine): PropertyMappin
             context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child));
             continue;
         }
-        values.push(mappingOf(child, mapping));
+        values.push(mappingOf(context, child, mapping));
     }
     return values;
 }
 
-function mappingOf(line: SourceLine, match: RegExpExecArray): PropertyMappingSyntax {
-    return { kind: 'PropertyMappingSyntax', property: match[1], source: parseMappingSource(match[2], locationOf(line)), location: locationOf(line) };
+function mappingOf(context: ParserContext, line: SourceLine, match: RegExpExecArray): PropertyMappingSyntax {
+    return { kind: 'PropertyMappingSyntax', property: match[1], source: parseMappingSource(match[2], locationOf(line), context), location: locationOf(line) };
 }

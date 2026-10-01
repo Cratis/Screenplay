@@ -189,7 +189,7 @@ function parseRule(context: ParserContext, rule: string, line: SourceLine): { ki
         }
         return { kind: 'Rule', value: { kind: 'PathExpressionSyntax', path: name, location: locationOf(line) } };
     }
-    const value = parseMappingSource(operand[2], locationOf(line));
+    const value = parseMappingSource(operand[2], locationOf(line), context);
     const kind = operandKinds[operand[1]];
     if (kind === undefined) {
         context.error(DiagnosticCodes.UnknownValidationRule, `Unknown validation rule '${operand[1]}'`, locationOf(line));

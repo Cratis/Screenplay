@@ -307,7 +307,8 @@
                             "name": "DateTime"
                           }
                         }
-                      ]
+                      ],
+                      "tags": []
                     },
                     {
                       "kind": "EventSyntax",
@@ -326,7 +327,8 @@
                             "name": "InvoiceId"
                           }
                         }
-                      ]
+                      ],
+                      "tags": []
                     },
                     {
                       "kind": "EventSyntax",
@@ -345,7 +347,8 @@
                             "name": "InvoiceId"
                           }
                         }
-                      ]
+                      ],
+                      "tags": []
                     }
                   ],
                   "name": "ApplyDiscount",
@@ -501,7 +504,8 @@
                             "name": "DateTime"
                           }
                         }
-                      ]
+                      ],
+                      "tags": []
                     },
                     {
                       "kind": "EventSyntax",
@@ -520,7 +524,8 @@
                             "name": "InvoiceId"
                           }
                         }
-                      ]
+                      ],
+                      "tags": []
                     },
                     {
                       "kind": "EventSyntax",
@@ -539,7 +544,8 @@
                             "name": "InvoiceId"
                           }
                         }
-                      ]
+                      ],
+                      "tags": []
                     }
                   ],
                   "name": "WriteOffInvoice",
@@ -941,6 +947,29 @@
                         "name": "InvoiceStatus"
                       }
                     }
+                  ],
+                  "tags": [
+                    {
+                      "kind": "TagSyntax",
+                      "value": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "invoicing"
+                      }
+                    },
+                    {
+                      "kind": "TagSyntax",
+                      "value": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "billing"
+                      }
+                    },
+                    {
+                      "kind": "TagSyntax",
+                      "value": {
+                        "kind": "ContextExpressionSyntax",
+                        "path": "identity.id"
+                      }
+                    }
                   ]
                 },
                 {
@@ -971,7 +1000,8 @@
                         "name": "DateTime"
                       }
                     }
-                  ]
+                  ],
+                  "tags": []
                 },
                 {
                   "kind": "EventSyntax",
@@ -1001,7 +1031,8 @@
                         "name": "CurrencyCode"
                       }
                     }
-                  ]
+                  ],
+                  "tags": []
                 },
                 {
                   "kind": "EventSyntax",
@@ -1031,7 +1062,8 @@
                         "name": "Date"
                       }
                     }
-                  ]
+                  ],
+                  "tags": []
                 },
                 {
                   "kind": "EventSyntax",
@@ -1072,7 +1104,8 @@
                         "name": "Date"
                       }
                     }
-                  ]
+                  ],
+                  "tags": []
                 }
               ],
               "name": "RegisterInvoice",
@@ -1440,7 +1473,8 @@
                         "name": "String"
                       }
                     }
-                  ]
+                  ],
+                  "tags": []
                 },
                 {
                   "kind": "EventSyntax",
@@ -1481,7 +1515,8 @@
                         "name": "BankAccount"
                       }
                     }
-                  ]
+                  ],
+                  "tags": []
                 }
               ],
               "name": "CancelInvoice",
@@ -1606,7 +1641,8 @@
                         "name": "String"
                       }
                     }
-                  ]
+                  ],
+                  "tags": []
                 },
                 {
                   "kind": "EventSyntax",
@@ -1647,7 +1683,8 @@
                         "name": "String"
                       }
                     }
-                  ]
+                  ],
+                  "tags": []
                 },
                 {
                   "kind": "EventSyntax",
@@ -1677,7 +1714,8 @@
                         "name": "DateTime"
                       }
                     }
-                  ]
+                  ],
+                  "tags": []
                 },
                 {
                   "kind": "EventSyntax",
@@ -1718,7 +1756,8 @@
                         "name": "DateTime"
                       }
                     }
-                  ]
+                  ],
+                  "tags": []
                 }
               ],
               "name": "ChangeInvoiceStatus",
@@ -1929,7 +1968,8 @@
                         "name": "DateTime"
                       }
                     }
-                  ]
+                  ],
+                  "tags": []
                 },
                 {
                   "kind": "EventSyntax",
@@ -1970,7 +2010,8 @@
                         "name": "DateTime"
                       }
                     }
-                  ]
+                  ],
+                  "tags": []
                 }
               ],
               "name": "ProcessInvoiceBatch",

@@ -57,20 +57,27 @@ export function parseProjection(context: ParserContext, line: SourceLine): Proje
             }
         }
     }
-    reportDuplicateVariants(context, blocks);
+    reportVariantConflicts(context, blocks, name);
     if (blocks.length === 0) {
         context.error(DiagnosticCodes.EmptyProjection, `Projection '${name}' must contain at least one directive`, locationOf(line));
     }
     return { kind: 'ProjectionSyntax', name, readModel: match[2] ?? null, sequence, blocks, location: locationOf(line) };
 }
 
-function reportDuplicateVariants(context: ParserContext, blocks: readonly ProjectionBlockSyntax[]): void {
-    const seen = new Set<string>();
-    for (const variant of blocks.filter((block): block is ProjectionVariantSyntax => block.kind === 'ProjectionVariantSyntax')) {
-        if (seen.has(variant.name)) {
-            context.error(DiagnosticCodes.DuplicateProjectionVariant, `Duplicate variant '${variant.name}' - a variant name is declared once`, variant.location);
+function reportVariantConflicts(context: ParserContext, blocks: readonly ProjectionBlockSyntax[], name: string): void {
+    // Grouped by name in the order each name first appears, as the C# parser reports them.
+    const variants = blocks.filter((block): block is ProjectionVariantSyntax => block.kind === 'ProjectionVariantSyntax');
+    const byName = new Map<string, ProjectionVariantSyntax[]>();
+    variants.forEach(variant => byName.set(variant.name, [...(byName.get(variant.name) ?? []), variant]));
+    for (const duplicate of [...byName.values()].flatMap(group => group.slice(1))) {
+        context.error(DiagnosticCodes.DuplicateProjectionVariant, `Duplicate variant '${duplicate.name}' - a variant name is declared once`, duplicate.location);
+    }
+    const entering = new Set<string>();
+    for (const entry of blocks.flatMap(block => block.kind === 'ProjectionVariantSyntax' ? block.entersOn : [])) {
+        if (entry.event.length > 0 && entering.has(entry.event)) {
+            context.error(DiagnosticCodes.DuplicateVariantEnteringEvent, `Entering event '${entry.event}' is claimed more than once in projection '${name}'`, entry.location);
         }
-        seen.add(variant.name);
+        entering.add(entry.event);
     }
 }
 

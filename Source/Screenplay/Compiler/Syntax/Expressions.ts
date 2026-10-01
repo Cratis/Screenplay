@@ -34,8 +34,26 @@ export interface SourceItemExpressionSyntax extends SyntaxNode {
     readonly path: string;
 }
 
-// Text that is not any other expression. This compiler also reads an inline structured value ('{...}' or
-// '[...]') as raw text, where the C# compiler builds an object or list expression from it.
+// An inline JSON list, '[...]'.
+export interface ListExpressionSyntax extends SyntaxNode {
+    readonly kind: 'ListExpressionSyntax';
+    readonly items: readonly ExpressionSyntax[];
+}
+
+// One member of an inline JSON object.
+export interface ObjectMemberSyntax extends SyntaxNode {
+    readonly kind: 'ObjectMemberSyntax';
+    readonly name: string;
+    readonly value: ExpressionSyntax;
+}
+
+// An inline JSON object, '{...}'.
+export interface ObjectExpressionSyntax extends SyntaxNode {
+    readonly kind: 'ObjectExpressionSyntax';
+    readonly members: readonly ObjectMemberSyntax[];
+}
+
+// Text that is not any other expression - including an inline structured value that is not valid JSON.
 export interface RawExpressionSyntax extends SyntaxNode {
     readonly kind: 'RawExpressionSyntax';
     readonly text: string;
@@ -48,6 +66,8 @@ export type ExpressionSyntax =
     | EnvironmentExpressionSyntax
     | StringsExpressionSyntax
     | SourceItemExpressionSyntax
+    | ListExpressionSyntax
+    | ObjectExpressionSyntax
     | RawExpressionSyntax;
 
 // '<property> = <value>' - a value a specification step states.

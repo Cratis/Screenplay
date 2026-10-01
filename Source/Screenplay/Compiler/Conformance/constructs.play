@@ -60,6 +60,8 @@ module Customers
         name String
         email Email
         tag "customers"
+        tag onboarding
+        tag $context.tenant
       event CustomerArchived
         reason String
       constraint UniqueEmail
@@ -79,6 +81,8 @@ module Customers
           name = "Ada"
           age = 36
           email = $context.identity.name
+          tags = ["vip", "early", 3, true, null]
+          address = {"street": "Main 1", "lines": [1.5, -2e3], "nested": {"empty": {}}}
         then CustomerRegistered
           for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
           name = name

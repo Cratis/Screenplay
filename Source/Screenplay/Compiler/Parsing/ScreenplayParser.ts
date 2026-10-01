@@ -128,13 +128,15 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
         if (isFileDirective(child)) {
             continue;
         } else if (firstWord(child.content) === 'validate') {
-            // Validations are not modeled yet; the block is skipped whole.
+            if (type === 'Enum' && child.content === 'validate' && context.peekChild(child.indent) === undefined) {
+                context.warning(DiagnosticCodes.ValidateReadAsEnumerationBlock,
+                    `'validate' in enumeration concept '${name}' declares an empty validate block, not a value named 'validate' - write '@validate' for the value`,
+                    locationOf(child));
+            }
+            // Concept validations are not modeled; the block is skipped whole.
             context.skipOpaqueBlock(child.indent);
         } else if (reason !== null) {
-            const index = attributes.findIndex(attribute => attribute.name === reason[1]);
-            if (index >= 0 && attributes[index].reason === null) {
-                attributes[index] = { ...attributes[index], reason: unescapeString(reason[2]) };
-            }
+            applyAttributeReason(context, child, name, attributes, reason[1], unescapeString(reason[2]));
         } else if (type === 'Enum' && enumValuePattern.test(child.content)) {
             values.push(unescapeIdentifier(child.content));
         } else if (type === 'Enum') {
@@ -145,6 +147,18 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
         }
     }
     return { kind: 'ConceptSyntax', name, type, attributes, values, location: locationOf(line) };
+}
+
+function applyAttributeReason(context: ParserContext, line: SourceLine, concept: string, attributes: ConceptAttributeSyntax[], attribute: string, reason: string): void {
+    const index = attributes.findIndex(candidate => candidate.name === attribute);
+    if (index < 0) {
+        context.error(DiagnosticCodes.AttributeReasonWithoutAttribute,
+            `Concept '${concept}' declares a reason for '${attribute}' without the attribute - write 'concept ${concept} : <Type> @${attribute}'`, locationOf(line));
+    } else if (attributes[index].reason !== null) {
+        context.error(DiagnosticCodes.DuplicateAttributeReason, `Concept '${concept}' already declares a reason for '${attribute}' - at most one is allowed`, locationOf(line));
+    } else {
+        attributes[index] = { ...attributes[index], reason };
+    }
 }
 
 function parseModule(context: ParserContext, line: SourceLine): ModuleSyntax {

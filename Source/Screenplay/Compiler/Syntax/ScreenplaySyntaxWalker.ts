@@ -3,8 +3,8 @@
 
 import { CommandSyntax, ValidateSyntax, ValidationRuleSyntax } from './Commands';
 import { ConstraintSyntax } from './Constraints';
-import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, PropertySyntax, ReadModelSyntax, TypeRefSyntax, TypeSyntax } from './Declarations';
-import { ExpressionSyntax, PropertyMappingSyntax } from './Expressions';
+import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, PropertySyntax, ReadModelSyntax, TagSyntax, TypeRefSyntax, TypeSyntax } from './Declarations';
+import { ExpressionSyntax, ObjectMemberSyntax, PropertyMappingSyntax } from './Expressions';
 import { ProjectionBlockSyntax, ProjectionSyntax } from './Projections';
 import { QueryParameterSyntax, QuerySyntax } from './Queries';
 import { ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
@@ -87,6 +87,12 @@ export abstract class ScreenplaySyntaxWalker {
     visitEvent(syntax: EventSyntax): void {
         this.visitNode(syntax);
         syntax.properties.forEach(node => this.visitProperty(node));
+        syntax.tags.forEach(node => this.visitTag(node));
+    }
+
+    visitTag(syntax: TagSyntax): void {
+        this.visitNode(syntax);
+        this.visitExpression(syntax.value);
     }
 
     visitReadModel(syntax: ReadModelSyntax): void {
@@ -195,5 +201,15 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitExpression(syntax: ExpressionSyntax): void {
         this.visitNode(syntax);
+        if (syntax.kind === 'ListExpressionSyntax') {
+            syntax.items.forEach(item => this.visitExpression(item));
+        } else if (syntax.kind === 'ObjectExpressionSyntax') {
+            syntax.members.forEach(member => this.visitObjectMember(member));
+        }
+    }
+
+    visitObjectMember(syntax: ObjectMemberSyntax): void {
+        this.visitNode(syntax);
+        this.visitExpression(syntax.value);
     }
 }

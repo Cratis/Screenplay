@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { ExpressionSyntax } from './Expressions';
 import { SyntaxNode } from './SyntaxNode';
 
 export interface TypeRefSyntax extends SyntaxNode {
@@ -48,10 +49,17 @@ export interface TypeSyntax extends SyntaxNode {
     readonly description: string | null;
 }
 
+// 'tag <value>' on an event - an identifier, a string or a context expression.
+export interface TagSyntax extends SyntaxNode {
+    readonly kind: 'TagSyntax';
+    readonly value: ExpressionSyntax;
+}
+
 export interface EventSyntax extends SyntaxNode {
     readonly kind: 'EventSyntax';
     readonly name: string;
     readonly properties: readonly PropertySyntax[];
+    readonly tags: readonly TagSyntax[];
     readonly generation: number;
     readonly hasGenerationMarker: boolean;
 }

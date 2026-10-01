@@ -108,7 +108,8 @@
                         "name": "ProjectName"
                       }
                     }
-                  ]
+                  ],
+                  "tags": []
                 }
               ],
               "name": "RegisterProject",

@@ -2,9 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
-import { EventSyntax, PropertySyntax, ReadModelSyntax, TypeSyntax } from '../Syntax/Declarations';
+import { EventSyntax, PropertySyntax, ReadModelSyntax, TagSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { pattern } from '../Text/patterns';
 import { parseDescription } from './DescriptionParser';
+import { parseMappingSource } from './ExpressionParser';
 import { isFileDirectiveAmongProperties } from './FileReferences';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
@@ -15,6 +16,8 @@ const typeHeader = pattern('^type\\s+([A-Za-z_]\\w*)$');
 const eventHeader = pattern('^event\\s+([A-Za-z_]\\w*)(?:\\s+generation\\s+([0-9]+))?$');
 const readModelHeader = pattern('^readmodel\\s+([A-Za-z_]\\w*)$');
 const maximumGeneration = 4294967295;
+const typeShapedPattern = pattern('^[A-Z]\\w*(?:\\[\\])?\\??$');
+const tagIdentifierPattern = pattern('^[A-Za-z_]\\w*$');
 
 // 'description' takes no type reference, so a line with property shape is a property named description.
 const isDescription = (line: SourceLine): boolean => firstWord(line.content) === 'description' && tryParseProperty(line) === undefined;
@@ -74,10 +77,17 @@ export function parseEvent(context: ParserContext, header: SourceLine): EventSyn
         }
     }
     const properties: PropertySyntax[] = [];
+    const tags: TagSyntax[] = [];
     for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
-        // Tags are not modeled yet; the line is recognized so it is not misread as a property.
-        if (isFileDirectiveAmongProperties(line) || firstWord(line.content) === 'tag') {
+        if (isFileDirectiveAmongProperties(line)) {
+            continue;
+        }
+        if (firstWord(line.content) === 'tag') {
+            const tag = parseTag(context, line);
+            if (tag !== undefined) {
+                tags.push(tag);
+            }
             continue;
         }
         const property = tryParseProperty(line);
@@ -88,7 +98,31 @@ export function parseEvent(context: ParserContext, header: SourceLine): EventSyn
         properties.push(withoutIdentifier(context, property, line, DiagnosticCodes.IdentifierOnEventProperty,
             `Property '${property.name}' of event '${name}' cannot be marked identifier - an event never carries its event source id`));
     }
-    return { kind: 'EventSyntax', name, properties, generation, hasGenerationMarker, location: locationOf(header) };
+    return { kind: 'EventSyntax', name, properties, tags, generation, hasGenerationMarker, location: locationOf(header) };
+}
+
+// 'tag <value>' - the port of the C# TagParser, with the warning the C# EventParser gives for a tag whose
+// value looks like a type, which is almost always a property named tag written without its '@'.
+function parseTag(context: ParserContext, line: SourceLine): TagSyntax | undefined {
+    const value = line.content.substring('tag'.length).trim();
+    if (typeShapedPattern.test(value)) {
+        context.warning(DiagnosticCodes.TagPropertyReadAsTag,
+            `'${line.content}' declares a static tag with the value '${value}', not a property named 'tag' - write 'tag "${value}"' for the tag, or '@${line.content}' for the property`,
+            locationOf(line));
+    }
+    if (value.length === 0) {
+        context.error(DiagnosticCodes.TagWithoutValue, 'Expected a value after \'tag\' - an identifier, a string literal or a context expression', locationOf(line));
+        return undefined;
+    }
+    if (tagIdentifierPattern.test(value)) {
+        return { kind: 'TagSyntax', value: { kind: 'LiteralExpressionSyntax', value, location: locationOf(line) }, location: locationOf(line) };
+    }
+    const expression = parseMappingSource(value, locationOf(line), context);
+    if (expression.kind === 'RawExpressionSyntax') {
+        context.error(DiagnosticCodes.InvalidTagValue, `Invalid tag value '${value}' - expected an identifier, a string literal or a context expression`, locationOf(line));
+        return undefined;
+    }
+    return { kind: 'TagSyntax', value: expression, location: locationOf(line) };
 }
 
 export function parseReadModel(context: ParserContext, header: SourceLine): ReadModelSyntax {
