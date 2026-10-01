@@ -72,6 +72,10 @@
   href: grammar.md
 - name: Compiler and CLI
   href: tool.md
+- name: VS Code extension
+  href: vscode.md
+- name: TypeScript compiler
+  href: typescript-compiler.md
 - name: MCP server
   href: mcp.md
 - name: Install the MCP server

@@ -1,0 +1,157 @@
+// Every construct the TypeScript compiler models, in one document, with constructs it skips mixed in.
+// Its syntax is held to the C# compiler's by the conformance specs on both sides.
+domain Cratis.Conformance
+import Cratis.Identity
+
+concept CustomerId : Uuid
+concept Email : String @pii
+  pii reason "Identifies a person"
+concept Priority : Enum
+  low
+  high
+  @validate
+
+type Address
+  description "Where a customer lives"
+  street String
+  lines String[]?
+
+policy Staff
+  require authenticated
+
+module Customers
+  description "Customers and what happens to them"
+  feature Onboarding
+    description "Bringing a customer on board"
+    feature Drafts
+      slice StateChange SaveDraft
+        command SaveDraft
+          customerId CustomerId identifier
+          name String
+        event DraftSaved
+          name String
+    slice StateChange Register
+      description "Registers a customer"
+      command Register
+        description "Register a customer"
+        customerId CustomerId identifier
+        name String
+        email Email
+        age Int
+        tags String[]
+        validate
+          name not empty message "A name is required"
+          name max 40 severity warning
+          age >= 18
+          age < 130 message $strings.customers.tooOld
+          email matches "^.+@.+$"
+          tags all > 0
+          name length == 3 severity information
+          email rule KnownDomain
+            file Rules/KnownDomain.cs
+        validate
+          ```csharp
+          return ValidationResult.Success;
+          ```
+        produces CustomerRegistered
+          for customerId
+          name = name
+      event CustomerRegistered generation 2
+        name String
+        email Email
+        tag "customers"
+        tag onboarding
+        tag $context.tenant
+      event CustomerArchived
+        reason String
+      constraint UniqueEmail
+        unique email on CustomerRegistered
+        released by CustomerArchived
+        message "That email is taken"
+        ignore casing
+      constraint OneArchive
+        unique event CustomerArchived
+      specification RegisteringACustomer
+        given caller
+          authenticated
+        given CustomerArchived
+          reason = "moved"
+        when Register
+          customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          name = "Ada"
+          age = 36
+          email = $context.identity.name
+          tags = ["vip", "early", 3, true, null]
+          address = {"street": "Main 1", "lines": [1.5, -2e3], "nested": {"empty": {}}}
+        then CustomerRegistered
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          name = name
+        then readmodel CustomerSummary exactly
+          name = "Ada"
+        then query CustomerById
+          arguments
+            customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+      specification RejectingAMinor
+        when Register
+          age = 12
+        then error "Too young"
+        then error
+  feature Lookup
+    slice StateView CustomerList
+      readmodel CustomerSummary
+        description "A customer at a glance"
+        customerId CustomerId
+        name String
+        visits Int
+      query CustomerById => CustomerSummary?
+        description "One customer"
+        by customerId CustomerId
+      query AllCustomers => observable CustomerSummary[]
+        filter name String
+        scoped to tenant
+      projection CustomerSummaryProjection => CustomerSummary
+        sequence customers
+        from CustomerRegistered, DraftSaved key customerId
+          key Composite {
+            customerId = customerId
+          }
+          name = name
+        every
+          exclude children
+        all
+          visits = 0
+        join company on companyId
+          with CompanyRenamed
+            companyName = name
+        children addresses identified by addressId
+          from AddressAdded
+          remove with AddressRemoved
+          nested primary
+            from PrimaryAddressSet
+            clear with PrimaryAddressCleared
+        remove via join on CompanyRemoved
+        remove with CustomerArchived
+      projection ArchiveProjection => ArchivedCustomer
+        variant Archived
+          enters on CustomerArchived
+          from CustomerArchived
+            reason = reason
+    slice Automation Reminders
+      reaction RemindCustomer
+        description "Reminds a customer"
+        when CustomerRegistered
+          description "Right after registering"
+          invokes SendWelcome
+            customerId = customerId
+        every 2 hours
+        at 09:30 on Monday
+        at 08:00 on day 15
+    slice Translate Mirroring
+      reaction MirrorRegistration
+        when CustomerRegistered
+          produces CustomerMirrored
+            name = name
+      screen Mirror
+        ```tsx
+export const Mirror = () => <div/>;
+        ```

@@ -1,0 +1,12 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "types": []
+    },
+    "exclude": [
+        "dist",
+        "node_modules",
+        "**/for_*",
+        "vitest.setup.ts"
+    ]
+}

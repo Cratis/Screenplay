@@ -11,6 +11,8 @@ on:
       - "**"
     paths:
       - "Source/DotNET/**"
+      # The C# compiler is held to the TypeScript compiler's golden syntax, so a change to it is a C# change.
+      - "Source/Screenplay/Compiler/Conformance/**"
       - "Documentation/**"
       - "*.props"
       - "*.targets"

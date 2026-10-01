@@ -1,0 +1,36 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+import { ProjectionBlockSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
+
+// The events a slice observes without producing them: those its projections consume and those its
+// reactions are set off by. Each name appears once, compared without regard to case.
+export function consumedEvents(slice: SliceSyntax): string[] {
+    const names = [
+        ...slice.projections.flatMap(projection => projection.blocks.flatMap(eventsOf)),
+        ...slice.reactions.flatMap(reaction => reaction.triggers)
+            .map(trigger => trigger.source)
+            .flatMap(source => source.kind === 'NamedTriggerSourceSyntax' ? [source.name] : []),
+    ];
+    const seen = new Set<string>();
+    return names.filter(name => name.trim().length > 0 && !seen.has(name.toLowerCase()) && seen.add(name.toLowerCase()) !== undefined);
+}
+
+function eventsOf(block: ProjectionBlockSyntax): string[] {
+    switch (block.kind) {
+        case 'FromSyntax':
+        case 'JoinSyntax':
+            return block.events.map(event => event.event);
+        case 'ChildrenSyntax':
+        case 'NestedSyntax':
+            return block.blocks.flatMap(eventsOf);
+        case 'ProjectionVariantSyntax':
+            return [...block.entersOn.map(entry => entry.event), ...block.blocks.flatMap(eventsOf)];
+        case 'RemoveWithSyntax':
+        case 'RemoveViaJoinSyntax':
+        case 'ClearWithSyntax':
+            return [block.event];
+        default:
+            return [];
+    }
+}

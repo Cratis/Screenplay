@@ -1,0 +1,215 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+import { CommandSyntax, ValidateSyntax, ValidationRuleSyntax } from './Commands';
+import { ConstraintSyntax } from './Constraints';
+import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, PropertySyntax, ReadModelSyntax, TagSyntax, TypeRefSyntax, TypeSyntax } from './Declarations';
+import { ExpressionSyntax, ObjectMemberSyntax, PropertyMappingSyntax } from './Expressions';
+import { ProjectionBlockSyntax, ProjectionSyntax } from './Projections';
+import { QueryParameterSyntax, QuerySyntax } from './Queries';
+import { ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
+import { SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationReadModelSyntax, SpecificationSyntax } from './Specifications';
+import { ApplicationSyntax, FeatureSyntax, ModuleSyntax, SliceSyntax } from './Structure';
+import { SyntaxNode } from './SyntaxNode';
+
+// Walks a whole syntax tree, depth first, in the order the C# ScreenplaySyntaxWalker does. Every visit
+// method calls visitNode and then walks the node's children, so an emitter overrides only the nodes it
+// cares about - and calls the base method when it still wants the children walked.
+export abstract class ScreenplaySyntaxWalker {
+    visitNode(_node: SyntaxNode): void {}
+
+    visitApplication(syntax: ApplicationSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.domain !== null) this.visitDomain(syntax.domain);
+        syntax.imports.forEach(node => this.visitImport(node));
+        syntax.concepts.forEach(node => this.visitConcept(node));
+        syntax.types.forEach(node => this.visitType(node));
+        syntax.modules.forEach(node => this.visitModule(node));
+    }
+
+    visitDomain(syntax: DomainSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitImport(syntax: ImportSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitConcept(syntax: ConceptSyntax): void {
+        this.visitNode(syntax);
+        syntax.attributes.forEach(node => this.visitNode(node));
+    }
+
+    visitType(syntax: TypeSyntax): void {
+        this.visitNode(syntax);
+        syntax.properties.forEach(node => this.visitProperty(node));
+    }
+
+    visitModule(syntax: ModuleSyntax): void {
+        this.visitNode(syntax);
+        syntax.features.forEach(node => this.visitFeature(node));
+    }
+
+    visitFeature(syntax: FeatureSyntax): void {
+        this.visitNode(syntax);
+        syntax.features.forEach(node => this.visitFeature(node));
+        syntax.slices.forEach(node => this.visitSlice(node));
+    }
+
+    visitSlice(syntax: SliceSyntax): void {
+        this.visitNode(syntax);
+        syntax.commands.forEach(node => this.visitCommand(node));
+        syntax.events.forEach(node => this.visitEvent(node));
+        syntax.constraints.forEach(node => this.visitConstraint(node));
+        syntax.queries.forEach(node => this.visitQuery(node));
+        syntax.projections.forEach(node => this.visitProjection(node));
+        syntax.readModels.forEach(node => this.visitReadModel(node));
+        syntax.reactions.forEach(node => this.visitReaction(node));
+        syntax.specifications.forEach(node => this.visitSpecification(node));
+    }
+
+    visitCommand(syntax: CommandSyntax): void {
+        this.visitNode(syntax);
+        syntax.properties.forEach(node => this.visitProperty(node));
+        syntax.validations.forEach(node => this.visitValidate(node));
+    }
+
+    visitValidate(syntax: ValidateSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.kind === 'DeclarativeValidateSyntax') syntax.rules.forEach(node => this.visitValidationRule(node));
+    }
+
+    visitValidationRule(syntax: ValidationRuleSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.value !== null) this.visitExpression(syntax.value);
+    }
+
+    visitEvent(syntax: EventSyntax): void {
+        this.visitNode(syntax);
+        syntax.properties.forEach(node => this.visitProperty(node));
+        syntax.tags.forEach(node => this.visitTag(node));
+    }
+
+    visitTag(syntax: TagSyntax): void {
+        this.visitNode(syntax);
+        this.visitExpression(syntax.value);
+    }
+
+    visitReadModel(syntax: ReadModelSyntax): void {
+        this.visitNode(syntax);
+        syntax.properties.forEach(node => this.visitProperty(node));
+    }
+
+    visitConstraint(syntax: ConstraintSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.kind === 'FileConstraintSyntax') this.visitNode(syntax.file);
+        syntax.additionalRules.forEach(node => this.visitConstraint(node));
+    }
+
+    visitQuery(syntax: QuerySyntax): void {
+        this.visitNode(syntax);
+        this.visitTypeRef(syntax.returnType);
+        if (syntax.by !== null) this.visitQueryParameter(syntax.by);
+        syntax.filters.forEach(node => this.visitQueryParameter(node));
+    }
+
+    visitQueryParameter(syntax: QueryParameterSyntax): void {
+        this.visitNode(syntax);
+        this.visitTypeRef(syntax.type);
+    }
+
+    visitProjection(syntax: ProjectionSyntax): void {
+        this.visitNode(syntax);
+        syntax.blocks.forEach(node => this.visitProjectionBlock(node));
+    }
+
+    visitProjectionBlock(syntax: ProjectionBlockSyntax): void {
+        this.visitNode(syntax);
+        switch (syntax.kind) {
+            case 'FromSyntax':
+                syntax.events.forEach(node => this.visitNode(node));
+                break;
+            case 'JoinSyntax':
+                syntax.events.forEach(node => this.visitNode(node));
+                break;
+            case 'ProjectionVariantSyntax':
+                syntax.entersOn.forEach(node => this.visitNode(node));
+                syntax.blocks.forEach(node => this.visitProjectionBlock(node));
+                break;
+            case 'ChildrenSyntax':
+            case 'NestedSyntax':
+                syntax.blocks.forEach(node => this.visitProjectionBlock(node));
+                break;
+        }
+    }
+
+    visitReaction(syntax: ReactionSyntax): void {
+        this.visitNode(syntax);
+        syntax.triggers.forEach(node => this.visitReactionTrigger(node));
+    }
+
+    visitReactionTrigger(syntax: ReactionTriggerSyntax): void {
+        this.visitNode(syntax);
+        this.visitTriggerSource(syntax.source);
+    }
+
+    visitTriggerSource(syntax: TriggerSourceSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitSpecification(syntax: SpecificationSyntax): void {
+        this.visitNode(syntax);
+        syntax.given.forEach(node => this.visitSpecificationEvent(node));
+        syntax.givenReadModels.forEach(node => this.visitSpecificationReadModel(node));
+        if (syntax.when !== null) this.visitSpecificationCommand(syntax.when);
+        if (syntax.whenAppended !== null) this.visitSpecificationEvent(syntax.whenAppended);
+        syntax.thenEvents.forEach(node => this.visitSpecificationEvent(node));
+        syntax.thenReadModels.forEach(node => this.visitSpecificationReadModel(node));
+        syntax.thenErrors.forEach(node => this.visitNode(node));
+    }
+
+    visitSpecificationEvent(syntax: SpecificationEventSyntax): void {
+        this.visitNode(syntax);
+        syntax.values.forEach(node => this.visitPropertyMapping(node));
+        if (syntax.for !== null) this.visitExpression(syntax.for);
+    }
+
+    visitSpecificationCommand(syntax: SpecificationCommandSyntax): void {
+        this.visitNode(syntax);
+        syntax.values.forEach(node => this.visitPropertyMapping(node));
+        if (syntax.for !== null) this.visitExpression(syntax.for);
+    }
+
+    visitSpecificationReadModel(syntax: SpecificationReadModelSyntax): void {
+        this.visitNode(syntax);
+        syntax.properties.forEach(node => this.visitPropertyMapping(node));
+    }
+
+    visitPropertyMapping(syntax: PropertyMappingSyntax): void {
+        this.visitNode(syntax);
+        this.visitExpression(syntax.source);
+    }
+
+    visitProperty(syntax: PropertySyntax): void {
+        this.visitNode(syntax);
+        this.visitTypeRef(syntax.type);
+    }
+
+    visitTypeRef(syntax: TypeRefSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitExpression(syntax: ExpressionSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.kind === 'ListExpressionSyntax') {
+            syntax.items.forEach(item => this.visitExpression(item));
+        } else if (syntax.kind === 'ObjectExpressionSyntax') {
+            syntax.members.forEach(member => this.visitObjectMember(member));
+        }
+    }
+
+    visitObjectMember(syntax: ObjectMemberSyntax): void {
+        this.visitNode(syntax);
+        this.visitExpression(syntax.value);
+    }
+}

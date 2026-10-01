@@ -7,6 +7,7 @@ import { registerCompletions } from './Completions';
 import { registerHover } from './Hover';
 import { registerDiagnostics } from './Diagnostics';
 import { registerFileLinks } from './FileLinks';
+import { registerEventModelBoard } from './EventModelBoard/registerEventModelBoard';
 
 export function activate(context: vscode.ExtensionContext): void {
     ensureBuiltInSubLanguages();
@@ -14,6 +15,7 @@ export function activate(context: vscode.ExtensionContext): void {
     registerHover(context);
     registerDiagnostics(context);
     registerFileLinks(context);
+    registerEventModelBoard(context);
 }
 
 export function deactivate(): void {}

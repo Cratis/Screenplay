@@ -1,0 +1,973 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "CustomerId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "name": "pii",
+          "reason": "Identifies a person"
+        }
+      ],
+      "name": "Email",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "Priority",
+      "type": "Enum",
+      "values": [
+        "low",
+        "high",
+        "validate"
+      ]
+    }
+  ],
+  "domain": {
+    "kind": "DomainSyntax",
+    "name": "Cratis.Conformance"
+  },
+  "imports": [
+    {
+      "kind": "ImportSyntax",
+      "qualifiedName": "Cratis.Identity"
+    }
+  ],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "description": "Customers and what happens to them",
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "description": "Bringing a customer on board",
+          "features": [
+            {
+              "kind": "FeatureSyntax",
+              "description": null,
+              "features": [],
+              "name": "Drafts",
+              "slices": [
+                {
+                  "kind": "SliceSyntax",
+                  "commands": [
+                    {
+                      "kind": "CommandSyntax",
+                      "description": null,
+                      "name": "SaveDraft",
+                      "properties": [
+                        {
+                          "kind": "PropertySyntax",
+                          "isIdentifier": true,
+                          "name": "customerId",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "CustomerId"
+                          }
+                        },
+                        {
+                          "kind": "PropertySyntax",
+                          "isIdentifier": false,
+                          "name": "name",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "String"
+                          }
+                        }
+                      ],
+                      "validations": []
+                    }
+                  ],
+                  "constraints": [],
+                  "description": null,
+                  "events": [
+                    {
+                      "kind": "EventSyntax",
+                      "generation": 1,
+                      "hasGenerationMarker": false,
+                      "name": "DraftSaved",
+                      "properties": [
+                        {
+                          "kind": "PropertySyntax",
+                          "isIdentifier": false,
+                          "name": "name",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "String"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "name": "SaveDraft",
+                  "projections": [],
+                  "queries": [],
+                  "reactions": [],
+                  "readModels": [],
+                  "specifications": [],
+                  "type": "StateChange"
+                }
+              ]
+            }
+          ],
+          "name": "Onboarding",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "description": "Register a customer",
+                  "name": "Register",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": true,
+                      "name": "customerId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "CustomerId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "email",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Email"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "age",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "tags",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "validations": [
+                    {
+                      "kind": "DeclarativeValidateSyntax",
+                      "rules": [
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "message": "A name is required",
+                          "property": "name",
+                          "rule": "NotEmpty",
+                          "severity": "Error",
+                          "value": null
+                        },
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "message": null,
+                          "property": "name",
+                          "rule": "Max",
+                          "severity": "Warning",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 40
+                          }
+                        },
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "message": null,
+                          "property": "age",
+                          "rule": "GreaterThanOrEqual",
+                          "severity": "Error",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 18
+                          }
+                        },
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "message": "$strings.customers.tooOld",
+                          "property": "age",
+                          "rule": "LessThan",
+                          "severity": "Error",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 130
+                          }
+                        },
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "message": null,
+                          "property": "email",
+                          "rule": "Matches",
+                          "severity": "Error",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "^.+@.+$"
+                          }
+                        },
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "message": null,
+                          "property": "tags",
+                          "rule": "AllGreaterThan",
+                          "severity": "Error",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 0
+                          }
+                        },
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "message": null,
+                          "property": "name",
+                          "rule": "Length",
+                          "severity": "Information",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 3
+                          }
+                        },
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "message": null,
+                          "property": "email",
+                          "rule": "Rule",
+                          "severity": "Error",
+                          "value": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "KnownDomain"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "CodeValidateSyntax"
+                    }
+                  ]
+                }
+              ],
+              "constraints": [
+                {
+                  "kind": "UniquePropertyConstraintSyntax",
+                  "additionalProperties": [],
+                  "additionalRules": [],
+                  "event": "CustomerRegistered",
+                  "ignoreCasing": true,
+                  "message": "That email is taken",
+                  "name": "UniqueEmail",
+                  "property": "email",
+                  "releasedBy": [
+                    "CustomerArchived"
+                  ]
+                },
+                {
+                  "kind": "UniqueEventConstraintSyntax",
+                  "additionalRules": [],
+                  "event": "CustomerArchived",
+                  "ignoreCasing": false,
+                  "message": null,
+                  "name": "OneArchive",
+                  "releasedBy": []
+                }
+              ],
+              "description": "Registers a customer",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "generation": 2,
+                  "hasGenerationMarker": true,
+                  "name": "CustomerRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "email",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Email"
+                      }
+                    }
+                  ],
+                  "tags": [
+                    {
+                      "kind": "TagSyntax",
+                      "value": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "customers"
+                      }
+                    },
+                    {
+                      "kind": "TagSyntax",
+                      "value": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "onboarding"
+                      }
+                    },
+                    {
+                      "kind": "TagSyntax",
+                      "value": {
+                        "kind": "ContextExpressionSyntax",
+                        "path": "tenant"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "EventSyntax",
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "name": "CustomerArchived",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "reason",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "Register",
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "CustomerArchived",
+                      "for": null,
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reason",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "moved"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenReadModels": [],
+                  "name": "RegisteringACustomer",
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "CustomerRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "name"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": true,
+                      "name": "CustomerSummary",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Ada"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "Register",
+                    "for": null,
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "customerId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "name",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Ada"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "age",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 36
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "email",
+                        "source": {
+                          "kind": "ContextExpressionSyntax",
+                          "path": "identity.name"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "tags",
+                        "source": {
+                          "kind": "ListExpressionSyntax",
+                          "items": [
+                            {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "vip"
+                            },
+                            {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "early"
+                            },
+                            {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": 3
+                            },
+                            {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": true
+                            },
+                            {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": null
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "address",
+                        "source": {
+                          "kind": "ObjectExpressionSyntax",
+                          "members": [
+                            {
+                              "kind": "ObjectMemberSyntax",
+                              "name": "street",
+                              "value": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "Main 1"
+                              }
+                            },
+                            {
+                              "kind": "ObjectMemberSyntax",
+                              "name": "lines",
+                              "value": {
+                                "kind": "ListExpressionSyntax",
+                                "items": [
+                                  {
+                                    "kind": "LiteralExpressionSyntax",
+                                    "value": 1.5
+                                  },
+                                  {
+                                    "kind": "LiteralExpressionSyntax",
+                                    "value": -2000
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "kind": "ObjectMemberSyntax",
+                              "name": "nested",
+                              "value": {
+                                "kind": "ObjectExpressionSyntax",
+                                "members": [
+                                  {
+                                    "kind": "ObjectMemberSyntax",
+                                    "name": "empty",
+                                    "value": {
+                                      "kind": "ObjectExpressionSyntax",
+                                      "members": []
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenReadModels": [],
+                  "name": "RejectingAMinor",
+                  "thenErrors": [
+                    {
+                      "kind": "SpecificationErrorSyntax",
+                      "name": "Too young"
+                    },
+                    {
+                      "kind": "SpecificationErrorSyntax",
+                      "name": null
+                    }
+                  ],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenReadModels": [],
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "Register",
+                    "for": null,
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "age",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 12
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null
+                }
+              ],
+              "type": "StateChange"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "description": null,
+          "features": [],
+          "name": "Lookup",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "CustomerList",
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "CustomerRegistered"
+                        },
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "DraftSaved"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "EverySyntax",
+                      "includeChildren": false
+                    },
+                    {
+                      "kind": "AllSyntax"
+                    },
+                    {
+                      "kind": "JoinSyntax",
+                      "events": [
+                        {
+                          "kind": "JoinEventSyntax",
+                          "event": "CompanyRenamed"
+                        }
+                      ],
+                      "on": "companyId",
+                      "property": "company"
+                    },
+                    {
+                      "kind": "ChildrenSyntax",
+                      "blocks": [
+                        {
+                          "kind": "FromSyntax",
+                          "events": [
+                            {
+                              "kind": "EventSpecSyntax",
+                              "event": "AddressAdded"
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "RemoveWithSyntax",
+                          "event": "AddressRemoved"
+                        },
+                        {
+                          "kind": "NestedSyntax",
+                          "blocks": [
+                            {
+                              "kind": "FromSyntax",
+                              "events": [
+                                {
+                                  "kind": "EventSpecSyntax",
+                                  "event": "PrimaryAddressSet"
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "ClearWithSyntax",
+                              "event": "PrimaryAddressCleared"
+                            }
+                          ],
+                          "property": "primary"
+                        }
+                      ],
+                      "property": "addresses"
+                    },
+                    {
+                      "kind": "RemoveViaJoinSyntax",
+                      "event": "CompanyRemoved"
+                    },
+                    {
+                      "kind": "RemoveWithSyntax",
+                      "event": "CustomerArchived"
+                    }
+                  ],
+                  "name": "CustomerSummaryProjection",
+                  "readModel": "CustomerSummary",
+                  "sequence": "customers"
+                },
+                {
+                  "kind": "ProjectionSyntax",
+                  "blocks": [
+                    {
+                      "kind": "ProjectionVariantSyntax",
+                      "blocks": [
+                        {
+                          "kind": "FromSyntax",
+                          "events": [
+                            {
+                              "kind": "EventSpecSyntax",
+                              "event": "CustomerArchived"
+                            }
+                          ]
+                        }
+                      ],
+                      "entersOn": [
+                        {
+                          "kind": "ProjectionEntersOnSyntax",
+                          "event": "CustomerArchived"
+                        }
+                      ],
+                      "name": "Archived"
+                    }
+                  ],
+                  "name": "ArchiveProjection",
+                  "readModel": "ArchivedCustomer",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "customerId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "CustomerId"
+                    }
+                  },
+                  "description": "One customer",
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "CustomerById",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "CustomerSummary"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "by": null,
+                  "description": null,
+                  "filters": [
+                    {
+                      "kind": "QueryParameterSyntax",
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "isObservable": true,
+                  "name": "AllCustomers",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "CustomerSummary"
+                  },
+                  "scope": "tenant"
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": "A customer at a glance",
+                  "name": "CustomerSummary",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "customerId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "CustomerId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "visits",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "specifications": [],
+              "type": "StateView"
+            },
+            {
+              "kind": "SliceSyntax",
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "Reminders",
+              "projections": [],
+              "queries": [],
+              "reactions": [
+                {
+                  "kind": "ReactionSyntax",
+                  "description": "Reminds a customer",
+                  "name": "RemindCustomer",
+                  "triggers": [
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": "Right after registering",
+                      "source": {
+                        "kind": "NamedTriggerSourceSyntax",
+                        "name": "CustomerRegistered"
+                      }
+                    },
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "source": {
+                        "kind": "IntervalTriggerSourceSyntax",
+                        "amount": 2,
+                        "unit": "Hours"
+                      }
+                    },
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "source": {
+                        "kind": "ScheduleTriggerSourceSyntax",
+                        "dayOfMonth": null,
+                        "dayOfWeek": "Monday",
+                        "time": "09:30:00.0000000"
+                      }
+                    },
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "source": {
+                        "kind": "ScheduleTriggerSourceSyntax",
+                        "dayOfMonth": 15,
+                        "dayOfWeek": null,
+                        "time": "08:00:00.0000000"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "readModels": [],
+              "specifications": [],
+              "type": "Automation"
+            },
+            {
+              "kind": "SliceSyntax",
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "Mirroring",
+              "projections": [],
+              "queries": [],
+              "reactions": [
+                {
+                  "kind": "ReactionSyntax",
+                  "description": null,
+                  "name": "MirrorRegistration",
+                  "triggers": [
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "source": {
+                        "kind": "NamedTriggerSourceSyntax",
+                        "name": "CustomerRegistered"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "readModels": [],
+              "specifications": [],
+              "type": "Translate"
+            }
+          ]
+        }
+      ],
+      "name": "Customers"
+    }
+  ],
+  "types": [
+    {
+      "kind": "TypeSyntax",
+      "description": "Where a customer lives",
+      "name": "Address",
+      "properties": [
+        {
+          "kind": "PropertySyntax",
+          "isIdentifier": false,
+          "name": "street",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "String"
+          }
+        },
+        {
+          "kind": "PropertySyntax",
+          "isIdentifier": false,
+          "name": "lines",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": true,
+            "isOptional": true,
+            "name": "String"
+          }
+        }
+      ]
+    }
+  ]
+}

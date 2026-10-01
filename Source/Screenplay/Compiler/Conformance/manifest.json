@@ -1,0 +1,11 @@
+{
+    "description": "The .play documents whose syntax the TypeScript and C# compilers must agree on. Paths are relative to the repository root. Each document's golden syntax is written by the TypeScript compiler beside this manifest as <name>.syntax.json; the C# compiler is held to it by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_it.",
+    "documents": [
+        { "name": "constructs", "path": "Source/Screenplay/Compiler/Conformance/constructs.play" },
+        { "name": "register-project", "path": "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/RegisterProject/v2/source/RegisterProject.play" },
+        { "name": "register-project-legacy", "path": "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/RegisterProject/v1-legacy/source/single/RegisterProject.play" },
+        { "name": "invoice-removal", "path": "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ReadModelAbsence/v5/source/InvoiceRemoval.play" },
+        { "name": "invoicing", "path": "Source/DotNET/Screenplay/for_ScreenplayCompiler/invoicing.play" },
+        { "name": "invoicing-editor-sample", "path": "Source/Screenplay/Monaco/screenplay-editor/samples/invoicing.play" }
+    ]
+}

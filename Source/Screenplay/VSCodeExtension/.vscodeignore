@@ -17,3 +17,7 @@ vitest.config.mts
 # Packaging artifacts.
 **/*.vsix
 .vscodeignore
+
+# The webview's sources; it ships as the bundle in `out/`.
+Webview/**
+**/for_*/**

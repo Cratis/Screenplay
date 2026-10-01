@@ -7,7 +7,7 @@ const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
 
 /** @type {import('esbuild').BuildOptions} */
-const buildOptions = {
+const extension = {
     entryPoints: ['extension.ts'],
     bundle: true,
     format: 'cjs',
@@ -20,10 +20,28 @@ const buildOptions = {
     logLevel: 'info',
 };
 
+// The event model board runs in a webview: a browser page with everything it needs bundled beside it -
+// React, the board and its stylesheets, and the fonts the stylesheets load.
+/** @type {import('esbuild').BuildOptions} */
+const webview = {
+    entryPoints: ['Webview/main.tsx'],
+    bundle: true,
+    format: 'iife',
+    minify: production,
+    sourcemap: !production,
+    sourcesContent: false,
+    platform: 'browser',
+    jsx: 'automatic',
+    outfile: 'out/webview.js',
+    loader: { '.woff': 'file', '.woff2': 'file', '.ttf': 'file', '.eot': 'file', '.svg': 'file' },
+    define: { 'process.env.NODE_ENV': production ? '"production"' : '"development"' },
+    logLevel: 'info',
+};
+
 if (watch) {
-    const context = await esbuild.context(buildOptions);
-    await context.watch();
+    const contexts = await Promise.all([esbuild.context(extension), esbuild.context(webview)]);
+    await Promise.all(contexts.map(context => context.watch()));
     console.log('[esbuild] watching...');
 } else {
-    await esbuild.build(buildOptions);
+    await Promise.all([esbuild.build(extension), esbuild.build(webview)]);
 }

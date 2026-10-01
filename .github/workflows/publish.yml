@@ -109,6 +109,13 @@ jobs:
       - name: Yarn install
         run: yarn
 
+      # The extension bundles the compiler and the event model mapping, which read each other's built output.
+      - name: Build compiler
+        run: yarn workspace @cratis/screenplay-compiler build
+
+      - name: Build event model mapping
+        run: yarn workspace @cratis/screenplay-event-models build
+
       - name: Build language service
         run: yarn workspace @cratis/screenplay-language build
 

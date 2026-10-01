@@ -1,0 +1,48 @@
+{
+    "name": "@cratis/screenplay-compiler",
+    "version": "0.0.0",
+    "private": true,
+    "description": "TypeScript compiler for the Cratis Screenplay DSL — parses .play documents into the same syntax tree the C# compiler produces, with visitors for turning it into artifacts",
+    "keywords": [
+        "cratis",
+        "screenplay",
+        "event-sourcing",
+        "event-modeling",
+        "cqrs",
+        "dsl",
+        "compiler",
+        "parser"
+    ],
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Cratis/Screenplay.git"
+    },
+    "type": "module",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "compile": "tsc --noEmit -p tsconfig.json",
+        "lint": "yarn g:lint",
+        "lint:ci": "yarn g:lint:ci",
+        "test": "vitest run --coverage"
+    },
+    "devDependencies": {
+        "@types/chai": "^5.2.3",
+        "@vitest/coverage-v8": "4.1.11",
+        "chai": "^6.2.2",
+        "typescript": "6.0.3",
+        "vitest": "^4.1.11"
+    }
+}

@@ -2,6 +2,8 @@
     "private": true,
     "name": "screenplay-workspace",
     "workspaces": [
+        "Source/Screenplay/Compiler",
+        "Source/Screenplay/EventModels",
         "Source/Screenplay/Monaco/screenplay-language",
         "Source/Screenplay/Monaco/screenplay-editor",
         "Source/Screenplay/VSCodeExtension"

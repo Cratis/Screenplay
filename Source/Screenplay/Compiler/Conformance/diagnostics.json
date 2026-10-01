@@ -1,0 +1,1428 @@
+{
+    "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone.",
+    "cases": [
+        {
+            "name": "invalid import",
+            "source": [
+                "import Bad-Name"
+            ],
+            "diagnostics": [
+                "PLAY0005@1"
+            ]
+        },
+        {
+            "name": "invalid domain",
+            "source": [
+                "domain 1Bad"
+            ],
+            "diagnostics": [
+                "PLAY0002@1"
+            ]
+        },
+        {
+            "name": "duplicate domain",
+            "source": [
+                "domain A",
+                "domain B"
+            ],
+            "diagnostics": [
+                "PLAY0003@2"
+            ]
+        },
+        {
+            "name": "domain not first",
+            "source": [
+                "concept Id : Uuid",
+                "domain A"
+            ],
+            "diagnostics": [
+                "PLAY0004@2"
+            ]
+        },
+        {
+            "name": "tab indentation",
+            "source": [
+                "module A",
+                "\tfeature B"
+            ],
+            "diagnostics": [
+                "PLAY0006@2"
+            ]
+        },
+        {
+            "name": "unknown top-level construct",
+            "source": [
+                "modul A"
+            ],
+            "diagnostics": [
+                "PLAY0001@1"
+            ]
+        },
+        {
+            "name": "invalid concept",
+            "source": [
+                "concept Bad"
+            ],
+            "diagnostics": [
+                "PLAY0007@1"
+            ]
+        },
+        {
+            "name": "unknown primitive type",
+            "source": [
+                "concept Id : Number"
+            ],
+            "diagnostics": [
+                "PLAY0008@1"
+            ]
+        },
+        {
+            "name": "invalid enumeration value",
+            "source": [
+                "concept Status : Enum",
+                "  Active"
+            ],
+            "diagnostics": [
+                "PLAY0009@2"
+            ]
+        },
+        {
+            "name": "unknown concept directive",
+            "source": [
+                "concept Name : String",
+                "  minimum 3"
+            ],
+            "diagnostics": [
+                "PLAY0010@2"
+            ]
+        },
+        {
+            "name": "empty validate in an enumeration",
+            "source": [
+                "concept Status : Enum",
+                "  validate"
+            ],
+            "diagnostics": [
+                "PLAY0011@2"
+            ]
+        },
+        {
+            "name": "reason without its attribute",
+            "source": [
+                "concept Email : String",
+                "  pii reason \"Personal\""
+            ],
+            "diagnostics": [
+                "PLAY0012@2"
+            ]
+        },
+        {
+            "name": "duplicate attribute reason",
+            "source": [
+                "concept Email : String @pii",
+                "  pii reason \"One\"",
+                "  pii reason \"Two\""
+            ],
+            "diagnostics": [
+                "PLAY0013@3"
+            ]
+        },
+        {
+            "name": "invalid type",
+            "source": [
+                "type 1Bad",
+                "  name String"
+            ],
+            "diagnostics": [
+                "PLAY0014@1"
+            ]
+        },
+        {
+            "name": "type without properties",
+            "source": [
+                "type Empty"
+            ],
+            "diagnostics": [
+                "PLAY0015@1"
+            ]
+        },
+        {
+            "name": "invalid type property",
+            "source": [
+                "type Address",
+                "  Street String"
+            ],
+            "diagnostics": [
+                "PLAY0016@2",
+                "PLAY0015@1"
+            ]
+        },
+        {
+            "name": "identifier on a type property",
+            "source": [
+                "type Address",
+                "  street String identifier"
+            ],
+            "diagnostics": [
+                "PLAY0017@2"
+            ]
+        },
+        {
+            "name": "invalid module",
+            "source": [
+                "module 1Bad"
+            ],
+            "diagnostics": [
+                "PLAY0021@1"
+            ]
+        },
+        {
+            "name": "unknown module directive",
+            "source": [
+                "module A",
+                "  slice StateChange X"
+            ],
+            "diagnostics": [
+                "PLAY0022@2"
+            ]
+        },
+        {
+            "name": "invalid feature",
+            "source": [
+                "module A",
+                "  feature 1Bad"
+            ],
+            "diagnostics": [
+                "PLAY0023@2"
+            ]
+        },
+        {
+            "name": "unknown feature directive",
+            "source": [
+                "module A",
+                "  feature B",
+                "    command X"
+            ],
+            "diagnostics": [
+                "PLAY0024@3"
+            ]
+        },
+        {
+            "name": "invalid slice",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice X"
+            ],
+            "diagnostics": [
+                "PLAY0027@3"
+            ]
+        },
+        {
+            "name": "unknown slice type",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice Sideways X"
+            ],
+            "diagnostics": [
+                "PLAY0028@3"
+            ]
+        },
+        {
+            "name": "unknown slice directive",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      widget Y"
+            ],
+            "diagnostics": [
+                "PLAY0029@4"
+            ]
+        },
+        {
+            "name": "invalid event",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      event 1Bad"
+            ],
+            "diagnostics": [
+                "PLAY0018@4"
+            ]
+        },
+        {
+            "name": "invalid event generation",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      event Registered generation 0"
+            ],
+            "diagnostics": [
+                "PLAY0446@4"
+            ]
+        },
+        {
+            "name": "invalid event property",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      event Registered",
+                "        Name String"
+            ],
+            "diagnostics": [
+                "PLAY0016@5"
+            ]
+        },
+        {
+            "name": "identifier on an event property",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      event Registered",
+                "        name String identifier"
+            ],
+            "diagnostics": [
+                "PLAY0019@5"
+            ]
+        },
+        {
+            "name": "tag that looks like a type",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      event Registered",
+                "        tag String"
+            ],
+            "diagnostics": [
+                "PLAY0020@5"
+            ]
+        },
+        {
+            "name": "tag without a value",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      event Registered",
+                "        tag"
+            ],
+            "diagnostics": [
+                "PLAY0148@5"
+            ]
+        },
+        {
+            "name": "invalid tag value",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      event Registered",
+                "        tag 12 13"
+            ],
+            "diagnostics": [
+                "PLAY0149@5"
+            ]
+        },
+        {
+            "name": "unknown context path in a tag",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      event Registered",
+                "        tag $context.weather"
+            ],
+            "diagnostics": [
+                "PLAY0153@5"
+            ]
+        },
+        {
+            "name": "invalid read model",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      readmodel 1Bad"
+            ],
+            "diagnostics": [
+                "PLAY0186@4"
+            ]
+        },
+        {
+            "name": "identifier on a read model property",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      readmodel R",
+                "        id Uuid identifier"
+            ],
+            "diagnostics": [
+                "PLAY0017@5"
+            ]
+        },
+        {
+            "name": "invalid read model property",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      readmodel R",
+                "        Id Uuid"
+            ],
+            "diagnostics": [
+                "PLAY0016@5"
+            ]
+        },
+        {
+            "name": "invalid description",
+            "source": [
+                "module A",
+                "  description unquoted"
+            ],
+            "diagnostics": [
+                "PLAY0145@2"
+            ]
+        },
+        {
+            "name": "duplicate description",
+            "source": [
+                "module A",
+                "  description \"a\"",
+                "  description \"b\""
+            ],
+            "diagnostics": [
+                "PLAY0147@3"
+            ]
+        },
+        {
+            "name": "empty fenced description",
+            "source": [
+                "module A",
+                "  description",
+                "    ```text",
+                "    ```"
+            ],
+            "diagnostics": [
+                "PLAY0146@2"
+            ]
+        },
+        {
+            "name": "bare description fence",
+            "source": [
+                "module A",
+                "  description",
+                "    ```",
+                "    words",
+                "    ```"
+            ],
+            "diagnostics": [
+                "PLAY0397@3"
+            ]
+        },
+        {
+            "name": "description without its fence",
+            "source": [
+                "module A",
+                "  description",
+                "  feature B"
+            ],
+            "diagnostics": [
+                "PLAY0163@2"
+            ]
+        },
+        {
+            "name": "unclosed description fence",
+            "source": [
+                "module A",
+                "  description",
+                "    ```text",
+                "    words"
+            ],
+            "diagnostics": [
+                "PLAY0164@3"
+            ]
+        },
+        {
+            "name": "invalid command",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      command 1Bad"
+            ],
+            "diagnostics": [
+                "PLAY0033@4"
+            ]
+        },
+        {
+            "name": "unknown command directive",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      command C",
+                "        Bad thing here"
+            ],
+            "diagnostics": [
+                "PLAY0034@5"
+            ]
+        },
+        {
+            "name": "second command identifier",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      command C",
+                "        a Uuid identifier",
+                "        b Uuid identifier"
+            ],
+            "diagnostics": [
+                "PLAY0036@6"
+            ]
+        },
+        {
+            "name": "invalid validate",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      command C",
+                "        validate now please"
+            ],
+            "diagnostics": [
+                "PLAY0140@5"
+            ]
+        },
+        {
+            "name": "invalid validation rule",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      command C",
+                "        name String",
+                "        validate",
+                "          name"
+            ],
+            "diagnostics": [
+                "PLAY0141@7"
+            ]
+        },
+        {
+            "name": "unknown validation operand",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      command C",
+                "        name String",
+                "        validate",
+                "          name between 1 and 3"
+            ],
+            "diagnostics": [
+                "PLAY0141@7"
+            ]
+        },
+        {
+            "name": "invalid validation severity",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      command C",
+                "        name String",
+                "        validate",
+                "          name not empty severity fatal"
+            ],
+            "diagnostics": [
+                "PLAY0368@7"
+            ]
+        },
+        {
+            "name": "invalid rule name",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      command C",
+                "        name String",
+                "        validate",
+                "          name rule 1Bad"
+            ],
+            "diagnostics": [
+                "PLAY0143@7"
+            ]
+        },
+        {
+            "name": "unknown context path in a rule",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      command C",
+                "        name String",
+                "        validate",
+                "          name == $context.weather"
+            ],
+            "diagnostics": [
+                "PLAY0153@7"
+            ]
+        },
+        {
+            "name": "unknown caused-by property",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      command C",
+                "        name String",
+                "        validate",
+                "          name == $context.causedBy.mood"
+            ],
+            "diagnostics": [
+                "PLAY0154@7"
+            ]
+        },
+        {
+            "name": "unknown identity property",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      command C",
+                "        name String",
+                "        validate",
+                "          name == $context.identity.mood"
+            ],
+            "diagnostics": [
+                "PLAY0155@7"
+            ]
+        },
+        {
+            "name": "invalid query",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      query Bad"
+            ],
+            "diagnostics": [
+                "PLAY0047@4"
+            ]
+        },
+        {
+            "name": "unknown query directive",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      query Q => R",
+                "        sort name"
+            ],
+            "diagnostics": [
+                "PLAY0048@5"
+            ]
+        },
+        {
+            "name": "invalid query parameter",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      query Q => R",
+                "        by Id"
+            ],
+            "diagnostics": [
+                "PLAY0049@5"
+            ]
+        },
+        {
+            "name": "invalid query scope",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      query Q => R",
+                "        scoped by tenant"
+            ],
+            "diagnostics": [
+                "PLAY0199@5"
+            ]
+        },
+        {
+            "name": "second query scope",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      query Q => R",
+                "        scoped to tenant",
+                "        scoped to user"
+            ],
+            "diagnostics": [
+                "PLAY0200@6"
+            ]
+        },
+        {
+            "name": "invalid projection",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection A B"
+            ],
+            "diagnostics": [
+                "PLAY0056@4"
+            ]
+        },
+        {
+            "name": "empty projection",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R"
+            ],
+            "diagnostics": [
+                "PLAY0057@4"
+            ]
+        },
+        {
+            "name": "unknown projection directive",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R",
+                "        whenever X"
+            ],
+            "diagnostics": [
+                "PLAY0058@5",
+                "PLAY0057@4"
+            ]
+        },
+        {
+            "name": "from without an event",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R",
+                "        from A,,B"
+            ],
+            "diagnostics": [
+                "PLAY0061@5"
+            ]
+        },
+        {
+            "name": "invalid event reference",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R",
+                "        from A-B"
+            ],
+            "diagnostics": [
+                "PLAY0062@5"
+            ]
+        },
+        {
+            "name": "invalid join",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R",
+                "        join x"
+            ],
+            "diagnostics": [
+                "PLAY0063@5"
+            ]
+        },
+        {
+            "name": "join without with",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R",
+                "        join x on y",
+                "          from A"
+            ],
+            "diagnostics": [
+                "PLAY0064@6"
+            ]
+        },
+        {
+            "name": "invalid children",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R",
+                "        children items"
+            ],
+            "diagnostics": [
+                "PLAY0065@5"
+            ]
+        },
+        {
+            "name": "invalid nested",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R",
+                "        nested"
+            ],
+            "diagnostics": [
+                "PLAY0066@5"
+            ]
+        },
+        {
+            "name": "nested without from",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R",
+                "        nested address",
+                "          clear with A"
+            ],
+            "diagnostics": [
+                "PLAY0067@5"
+            ]
+        },
+        {
+            "name": "clear outside a nested block",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R",
+                "        from A",
+                "        clear with B"
+            ],
+            "diagnostics": [
+                "PLAY0071@6"
+            ]
+        },
+        {
+            "name": "invalid clear",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R",
+                "        nested address",
+                "          from A",
+                "          clear A"
+            ],
+            "diagnostics": [
+                "PLAY0070@7"
+            ]
+        },
+        {
+            "name": "invalid remove",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R",
+                "        remove A"
+            ],
+            "diagnostics": [
+                "PLAY0068@5",
+                "PLAY0057@4"
+            ]
+        },
+        {
+            "name": "unknown remove directive",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R",
+                "        remove with A",
+                "          key x"
+            ],
+            "diagnostics": [
+                "PLAY0069@6"
+            ]
+        },
+        {
+            "name": "invalid variant",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R",
+                "        variant"
+            ],
+            "diagnostics": [
+                "PLAY0277@5"
+            ]
+        },
+        {
+            "name": "variant without an entering event",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R",
+                "        variant Archived",
+                "          from A"
+            ],
+            "diagnostics": [
+                "PLAY0382@5"
+            ]
+        },
+        {
+            "name": "variant inside a variant",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R",
+                "        variant A",
+                "          enters on X",
+                "          variant B"
+            ],
+            "diagnostics": [
+                "PLAY0280@7"
+            ]
+        },
+        {
+            "name": "invalid enters on",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R",
+                "        variant A",
+                "          enters X"
+            ],
+            "diagnostics": [
+                "PLAY0279@6"
+            ]
+        },
+        {
+            "name": "duplicate variant",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R",
+                "        variant A",
+                "          enters on X",
+                "        variant A",
+                "          enters on Y"
+            ],
+            "diagnostics": [
+                "PLAY0384@7"
+            ]
+        },
+        {
+            "name": "entering event claimed twice",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      projection P => R",
+                "        variant A",
+                "          enters on X",
+                "        variant B",
+                "          enters on X"
+            ],
+            "diagnostics": [
+                "PLAY0385@8"
+            ]
+        },
+        {
+            "name": "invalid reaction",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice Automation C",
+                "      reaction"
+            ],
+            "diagnostics": [
+                "PLAY0136@4",
+                "PLAY0138@4"
+            ]
+        },
+        {
+            "name": "reaction without a trigger",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice Automation C",
+                "      reaction R"
+            ],
+            "diagnostics": [
+                "PLAY0138@4"
+            ]
+        },
+        {
+            "name": "not a trigger",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice Automation C",
+                "      reaction R",
+                "        on Registered"
+            ],
+            "diagnostics": [
+                "PLAY0137@5"
+            ]
+        },
+        {
+            "name": "invalid when trigger",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice Automation C",
+                "      reaction R",
+                "        when 1Bad"
+            ],
+            "diagnostics": [
+                "PLAY0137@5"
+            ]
+        },
+        {
+            "name": "duplicate trigger",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice Automation C",
+                "      reaction R",
+                "        when A",
+                "        when A"
+            ],
+            "diagnostics": [
+                "PLAY0253@6"
+            ]
+        },
+        {
+            "name": "invalid interval",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice Automation C",
+                "      reaction R",
+                "        every 0 minutes"
+            ],
+            "diagnostics": [
+                "PLAY0249@5"
+            ]
+        },
+        {
+            "name": "invalid time of day",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice Automation C",
+                "      reaction R",
+                "        at 25:00"
+            ],
+            "diagnostics": [
+                "PLAY0250@5"
+            ]
+        },
+        {
+            "name": "invalid day of month",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice Automation C",
+                "      reaction R",
+                "        at 08:00 on day 32"
+            ],
+            "diagnostics": [
+                "PLAY0250@5"
+            ]
+        },
+        {
+            "name": "invalid constraint",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      constraint"
+            ],
+            "diagnostics": [
+                "PLAY0132@4",
+                "PLAY0133@4"
+            ]
+        },
+        {
+            "name": "constraint without a rule",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      constraint C",
+                "        message \"x\""
+            ],
+            "diagnostics": [
+                "PLAY0133@4"
+            ]
+        },
+        {
+            "name": "released twice by the same event",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      constraint C",
+                "        unique event A",
+                "        released by B",
+                "        released by B"
+            ],
+            "diagnostics": [
+                "PLAY0135@7"
+            ]
+        },
+        {
+            "name": "second constraint message",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      constraint C",
+                "        unique event A",
+                "        message \"x\"",
+                "        message \"y\""
+            ],
+            "diagnostics": [
+                "PLAY0135@7"
+            ]
+        },
+        {
+            "name": "casing ignored twice",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      constraint C",
+                "        unique event A",
+                "        ignore casing",
+                "        ignore casing"
+            ],
+            "diagnostics": [
+                "PLAY0135@7"
+            ]
+        },
+        {
+            "name": "targeted and released by one event",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      constraint C",
+                "        unique event A",
+                "        released by A"
+            ],
+            "diagnostics": [
+                "PLAY0135@4"
+            ]
+        },
+        {
+            "name": "file constraint with options",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      constraint C",
+                "        file Rules/C.cs",
+                "        message \"x\""
+            ],
+            "diagnostics": [
+                "PLAY0396@5",
+                "PLAY0134@4"
+            ]
+        },
+        {
+            "name": "mixed constraint kinds",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      constraint C",
+                "        unique event A",
+                "        unique name on B"
+            ],
+            "diagnostics": [
+                "PLAY0135@6"
+            ]
+        },
+        {
+            "name": "event targeted twice",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      constraint C",
+                "        unique name on A",
+                "        unique email on A"
+            ],
+            "diagnostics": [
+                "PLAY0135@6"
+            ]
+        },
+        {
+            "name": "repeated composite key property",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      constraint C",
+                "        unique name, name on A"
+            ],
+            "diagnostics": [
+                "PLAY0135@5",
+                "PLAY0133@4"
+            ]
+        },
+        {
+            "name": "invalid constraint body",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      constraint C",
+                "        whatever"
+            ],
+            "diagnostics": [
+                "PLAY0134@5",
+                "PLAY0133@4"
+            ]
+        },
+        {
+            "name": "invalid specification",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      specification"
+            ],
+            "diagnostics": [
+                "PLAY0094@4"
+            ]
+        },
+        {
+            "name": "unknown specification directive",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      specification S",
+                "        expect X"
+            ],
+            "diagnostics": [
+                "PLAY0095@5"
+            ]
+        },
+        {
+            "name": "second when",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      specification S",
+                "        when A",
+                "        when B"
+            ],
+            "diagnostics": [
+                "PLAY0097@6"
+            ]
+        },
+        {
+            "name": "when after when append",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      specification S",
+                "        when append A",
+                "        when B"
+            ],
+            "diagnostics": [
+                "PLAY0358@6"
+            ]
+        },
+        {
+            "name": "invalid when",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      specification S",
+                "        when lowercase"
+            ],
+            "diagnostics": [
+                "PLAY0096@5"
+            ]
+        },
+        {
+            "name": "invalid event order",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      specification S",
+                "        then events in order"
+            ],
+            "diagnostics": [
+                "PLAY0359@5"
+            ]
+        },
+        {
+            "name": "invalid denial",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      specification S",
+                "        then denied now"
+            ],
+            "diagnostics": [
+                "PLAY0388@5"
+            ]
+        },
+        {
+            "name": "invalid then error",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      specification S",
+                "        then error oops"
+            ],
+            "diagnostics": [
+                "PLAY0098@5"
+            ]
+        },
+        {
+            "name": "invalid read model step",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      specification S",
+                "        then readmodel lowercase"
+            ],
+            "diagnostics": [
+                "PLAY0099@5"
+            ]
+        },
+        {
+            "name": "invalid event step",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      specification S",
+                "        given lowercase"
+            ],
+            "diagnostics": [
+                "PLAY0100@5"
+            ]
+        },
+        {
+            "name": "event source without a value",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      specification S",
+                "        given A",
+                "          for"
+            ],
+            "diagnostics": [
+                "PLAY0275@6"
+            ]
+        },
+        {
+            "name": "second event source",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      specification S",
+                "        given A",
+                "          for 1",
+                "          for 2"
+            ],
+            "diagnostics": [
+                "PLAY0276@7"
+            ]
+        },
+        {
+            "name": "invalid specification value",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      specification S",
+                "        given A",
+                "          nonsense"
+            ],
+            "diagnostics": [
+                "PLAY0101@6"
+            ]
+        },
+        {
+            "name": "invalid read model value",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      specification S",
+                "        then readmodel R",
+                "          nonsense"
+            ],
+            "diagnostics": [
+                "PLAY0101@6"
+            ]
+        },
+        {
+            "name": "invalid structured value",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      specification S",
+                "        given A",
+                "          items = [1, 2"
+            ],
+            "diagnostics": [
+                "PLAY0291@6"
+            ]
+        },
+        {
+            "name": "structured value member repeated",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange C",
+                "      specification S",
+                "        given A",
+                "          item = {\"a\": 1, \"a\": 2}"
+            ],
+            "diagnostics": [
+                "PLAY0294@6"
+            ]
+        }
+    ]
+}

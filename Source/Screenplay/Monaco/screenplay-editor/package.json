@@ -14,7 +14,7 @@
     "dependencies": {
         "@cratis/screenplay-language": "workspace:*",
         "@monaco-editor/react": "^4.7.0",
-        "monaco-editor": "^0.52.2",
+        "monaco-editor": "^0.55.1",
         "react": "19.2.7",
         "react-dom": "19.2.7"
     },

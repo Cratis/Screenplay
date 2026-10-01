@@ -1,7 +1,7 @@
 {
     "name": "screenplay",
     "displayName": "Screenplay Language",
-    "description": "Language support for the Cratis Screenplay DSL (.play) — syntax highlighting, IntelliSense, hover documentation, and diagnostics",
+    "description": "Language support for the Cratis Screenplay DSL (.play) — the event model board, syntax highlighting, IntelliSense, hover documentation, and diagnostics",
     "keywords": [
         "cratis",
         "screenplay",
@@ -74,29 +74,94 @@
                     "markdownDescription": "Root, or roots, that a `file <path>` reference in a `.play` document is relative to. A relative entry resolves against the workspace folder. Nothing in a `.play` document records its root, so the extension otherwise probes the workspace folder, the document's own folder and the conventional source roots beneath the workspace, in that order. Set this when that probing finds the wrong tree — it is checked first, so it decides."
                 }
             }
+        },
+        "customEditors": [
+            {
+                "viewType": "screenplay.eventModelBoard",
+                "displayName": "Event Model Board",
+                "selector": [
+                    {
+                        "filenamePattern": "*.play"
+                    }
+                ],
+                "priority": "default"
+            }
+        ],
+        "commands": [
+            {
+                "command": "screenplay.showSource",
+                "title": "Show Source",
+                "category": "Screenplay",
+                "icon": "$(go-to-file)"
+            },
+            {
+                "command": "screenplay.showBoard",
+                "title": "Open Event Model Board",
+                "category": "Screenplay",
+                "icon": "$(preview)"
+            }
+        ],
+        "menus": {
+            "editor/title": [
+                {
+                    "command": "screenplay.showSource",
+                    "when": "activeCustomEditorId == screenplay.eventModelBoard",
+                    "group": "navigation"
+                },
+                {
+                    "command": "screenplay.showBoard",
+                    "when": "editorLangId == screenplay && activeCustomEditorId != screenplay.eventModelBoard",
+                    "group": "navigation"
+                }
+            ],
+            "commandPalette": [
+                {
+                    "command": "screenplay.showSource",
+                    "when": "activeCustomEditorId == screenplay.eventModelBoard"
+                },
+                {
+                    "command": "screenplay.showBoard",
+                    "when": "editorLangId == screenplay"
+                }
+            ]
         }
     },
     "scripts": {
         "vscode:prepublish": "node esbuild.mjs --production",
-        "build": "node esbuild.mjs && tsc --noEmit",
+        "build": "node esbuild.mjs && tsc --noEmit && tsc --noEmit -p Webview",
         "compile": "node esbuild.mjs",
         "watch": "node esbuild.mjs --watch",
-        "typecheck": "tsc --noEmit",
+        "typecheck": "tsc --noEmit && tsc --noEmit -p Webview",
         "package": "vsce package --no-dependencies",
         "lint": "yarn g:lint",
         "lint:ci": "yarn g:lint:ci",
         "test": "vitest run"
     },
     "dependencies": {
+        "@cratis/screenplay-compiler": "workspace:*",
+        "@cratis/screenplay-event-models": "workspace:*",
         "@cratis/screenplay-language": "workspace:*"
     },
     "devDependencies": {
+        "@cratis/arc": "22.41.1",
+        "@cratis/arc.react": "22.41.1",
+        "@cratis/components": "4.22.0",
+        "@cratis/event-models": "0.106.0",
+        "@cratis/fundamentals": "7.19.8",
+        "@cratis/scene": "0.106.0",
         "@types/chai": "^5.2.3",
         "@types/node": "26.1.1",
+        "@types/react": "19.2.17",
+        "@types/react-dom": "19.2.3",
         "@types/vscode": "^1.85.0",
         "@vscode/vsce": "^3.9.2",
         "chai": "^6.2.2",
         "esbuild": "^0.28.1",
+        "pixi.js": "8.21.0",
+        "primeicons": "8.0.2",
+        "react": "19.3.0",
+        "react-dom": "19.3.0",
+        "reflect-metadata": "0.2.2",
         "typescript": "6.0.3",
         "vitest": "^4.1.11"
     }
