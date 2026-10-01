@@ -28,7 +28,9 @@ The **View** button in the upper right of the board offers the view options Crat
 - **Properties** shows the properties of commands, events and read models.
 - **Visualization**: **Arrows** connects slices with arrows, **Lines** with lines.
 
-The choice is kept while the board is open.
+The choice is kept for you: every board, and every later session, opens with the view you last chose.
+
+The collapse button on a module, feature or slice header folds it away while you look at the rest. It changes only how the board is drawn, never the model.
 
 ## Move between the board and the text
 
