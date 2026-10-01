@@ -2,25 +2,49 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { useEffect, useState } from 'react';
-import { defaultEventModelPresentation, EventModelPresentation } from '@cratis/event-models';
+import { defaultDetailsVisibilityState, EventModelPresentation } from '@cratis/event-models';
+import type { BoardViewOptions, ExtensionToBoardMessage } from './BoardMessage';
 import { vscode } from './vscodeApi';
 
-interface BoardState {
-    readonly presentation?: Partial<EventModelPresentation>;
-}
-
 // How the board is first shown: what Cratis Studio starts from.
-export const defaultPresentation: EventModelPresentation = { ...defaultEventModelPresentation, visualizationMode: 'simplified' };
+export const defaultPresentation: EventModelPresentation = {
+    detailLevel: 'full',
+    visualizationMode: 'simplified',
+    detailsVisibility: defaultDetailsVisibilityState,
+};
 
-// How the board is presented - detail level, properties and how connections are drawn - starting from
-// what Cratis Studio starts from, and kept by VS Code for as long as the editor is open.
+const toPresentation = (options: BoardViewOptions): EventModelPresentation => ({
+    detailLevel: options.detailLevel,
+    visualizationMode: options.visualizationMode,
+    detailsVisibility: { ...defaultDetailsVisibilityState, global: options.showProperties },
+});
+
+const toViewOptions = (presentation: EventModelPresentation): BoardViewOptions => ({
+    detailLevel: presentation.detailLevel,
+    showProperties: presentation.detailsVisibility.global,
+    visualizationMode: presentation.visualizationMode,
+});
+
+// How the board is presented - detail level, properties and how connections are drawn. The extension
+// keeps it for the person: it sends what they last chose when the board is ready, and is told of every
+// change, which it saves and shows on the other open boards.
 export function usePresentation(): [EventModelPresentation, (change: (current: EventModelPresentation) => EventModelPresentation) => void] {
-    const [presentation, setPresentation] = useState<EventModelPresentation>(() => ({
-        ...defaultPresentation,
-        ...(vscode.getState() as BoardState | undefined)?.presentation,
-    }));
+    const [presentation, setPresentation] = useState(defaultPresentation);
 
-    useEffect(() => vscode.setState({ presentation } satisfies BoardState), [presentation]);
+    useEffect(() => {
+        const receive = (event: MessageEvent<ExtensionToBoardMessage>) => {
+            if (event.data.type === 'viewOptions') {
+                setPresentation(toPresentation(event.data.options));
+            }
+        };
+        window.addEventListener('message', receive);
+        return () => window.removeEventListener('message', receive);
+    }, []);
 
-    return [presentation, change => setPresentation(current => change(current))];
+    const change = (update: (current: EventModelPresentation) => EventModelPresentation) => {
+        const next = update(presentation);
+        setPresentation(next);
+        vscode.postMessage({ type: 'viewOptionsChanged', options: toViewOptions(next) });
+    };
+    return [presentation, change];
 }
