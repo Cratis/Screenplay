@@ -2,19 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import * as vscode from 'vscode';
-import { parse } from '@cratis/screenplay-compiler';
 import { BoardToExtensionMessage } from '../Webview/BoardMessage';
-import { boardFor } from './compileBoard';
+import { BoardRefresh } from './BoardRefresh';
 import { boardHtml, createNonce } from './boardHtml';
 
 export const eventModelBoardViewType = 'screenplay.eventModelBoard';
 
-// How long the board waits after a keystroke before compiling again, so typing does not redraw it per key.
-const recompileDelay = 300;
-
 // Opens a .play document on the event model board. It is the default editor for .play files; the text
-// stays the source of truth, and the board redraws whenever it changes - also when it is edited in a text
-// editor beside the board.
+// stays the source of truth, and the board redraws whenever the application changes - see BoardRefresh.
 export class EventModelBoardEditor implements vscode.CustomTextEditorProvider {
     constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -35,24 +30,17 @@ export class EventModelBoardEditor implements vscode.CustomTextEditorProvider {
             nonce: createNonce(),
         });
 
-        const show = () => void panel.webview.postMessage(boardFor(parse(document.getText()), nameOf(document.uri)));
-        let pending: ReturnType<typeof setTimeout> | undefined;
-        const changed = vscode.workspace.onDidChangeTextDocument(event => {
-            if (event.document.uri.toString() === document.uri.toString()) {
-                clearTimeout(pending);
-                pending = setTimeout(show, recompileDelay);
-            }
-        });
+        const board = new BoardRefresh(document, panel.webview);
         const received = panel.webview.onDidReceiveMessage((message: BoardToExtensionMessage) => {
             if (message.type === 'ready') {
-                show();
+                board.now();
             } else if (message.type === 'showSource') {
-                void showSource(document.uri, message.line);
+                const file = message.path !== undefined && board.root !== undefined ? vscode.Uri.joinPath(board.root, message.path) : document.uri;
+                void showSource(file, message.line);
             }
         });
         panel.onDidDispose(() => {
-            clearTimeout(pending);
-            changed.dispose();
+            board.dispose();
             received.dispose();
         });
     }
@@ -66,9 +54,4 @@ export async function showSource(uri: vscode.Uri, line?: number): Promise<void> 
         editor.selection = new vscode.Selection(position, position);
         editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
     }
-}
-
-function nameOf(uri: vscode.Uri): string {
-    const file = uri.path.substring(uri.path.lastIndexOf('/') + 1);
-    return file.endsWith('.play') ? file.substring(0, file.length - '.play'.length) : file;
 }

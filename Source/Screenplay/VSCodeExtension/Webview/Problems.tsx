@@ -5,7 +5,7 @@ import { BoardProblem } from './BoardMessage';
 
 export interface ProblemsProps {
     readonly problems: readonly BoardProblem[];
-    readonly onShowSource: (line?: number) => void;
+    readonly onShowSource: (line?: number, path?: string) => void;
 }
 
 // The errors the compiler found, above the board. The board still draws everything that could be read, so
@@ -21,7 +21,7 @@ export const Problems = ({ problems, onShowSource }: ProblemsProps) => {
             <ul>
                 {errors.slice(0, 5).map((problem, index) => (
                     <li key={index}>
-                        <button type='button' onClick={() => onShowSource(problem.line)}>
+                        <button type='button' onClick={() => onShowSource(problem.line, problem.path)}>
                             {problem.path === undefined ? '' : `${problem.path} `}line {problem.line}
                         </button>
                         {` ${problem.code}: ${problem.message}`}

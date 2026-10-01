@@ -27,10 +27,12 @@ export interface BoardReadyMessage {
     readonly type: 'ready';
 }
 
-// The person asked to see the source behind the board.
+// The person asked to see the source behind the board - at a line, and in a file of a folder application
+// when the path relative to its root is given.
 export interface ShowSourceMessage {
     readonly type: 'showSource';
     readonly line?: number;
+    readonly path?: string;
 }
 
 export type BoardToExtensionMessage = BoardReadyMessage | ShowSourceMessage;

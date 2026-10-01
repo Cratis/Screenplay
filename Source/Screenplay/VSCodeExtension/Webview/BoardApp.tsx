@@ -49,7 +49,7 @@ export const BoardApp = () => {
     if (board === undefined || model === undefined) {
         return <div className='screenplay-board__message'>Compiling…</div>;
     }
-    const showSource = (line?: number) => vscode.postMessage({ type: 'showSource', line });
+    const showSource = (line?: number, path?: string) => vscode.postMessage({ type: 'showSource', line, path });
     return (
         <div className='screenplay-board'>
             <Problems problems={board.problems} onShowSource={showSource} />
