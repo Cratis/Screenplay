@@ -46,6 +46,7 @@
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
                       "kind": "RemoveWithSyntax",

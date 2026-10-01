@@ -3,7 +3,7 @@
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import {
-    ChildrenSyntax, ClearWithSyntax, EventSpecSyntax, FromSyntax, JoinEventSyntax, JoinSyntax, NestedSyntax,
+    AutoMapMode, ChildrenSyntax, ClearWithSyntax, EventSpecSyntax, FromSyntax, JoinEventSyntax, JoinSyntax, MappingKind, MappingSyntax, NestedSyntax,
     ProjectionBlockSyntax, ProjectionEntersOnSyntax, ProjectionSyntax, ProjectionVariantSyntax,
 } from '../Syntax/Projections';
 import { pattern } from '../Text/patterns';
@@ -23,18 +23,30 @@ const removeViaJoinPattern = pattern('^remove\\s+via\\s+join\\s+on\\s+(@?[\\w.]+
 const clearWithPattern = pattern('^clear\\s+with\\s+(@?[\\w.]+)$');
 const variantPattern = pattern('^variant\\s+(@?[\\w.]+)\\s*$');
 const entersOnPattern = pattern('^enters\\s+on\\s+(@?[\\w.]+)(?:\\s+key\\s+(.+))?$');
+const keywordMappingPattern = pattern('^(increment|decrement|count|clear)\\s+(@?[$\\w.]+)$');
+const arithmeticPattern = pattern('^(add|subtract)\\s+(@?[$\\w.]+)\\s+by\\s+(.+)$');
+const setPattern = pattern('^set\\s+(@?[$\\w.]+)\\s+(?:=|to)\\s+(.+)$');
+const assignmentPattern = pattern('^(@?[$\\w.@]+)\\s*=(?!=|>)\\s*(.+)$');
+const keywordMappings: Record<string, MappingKind> = {
+    increment: 'IncrementMappingSyntax',
+    decrement: 'DecrementMappingSyntax',
+    clear: 'ClearMappingSyntax',
+    count: 'CountMappingSyntax',
+};
 
-// Reads a projection's structure: its name, the read model it builds and the events each block consumes.
-// Keys, mappings and automap settings are recognized and skipped.
+// Reads a projection's structure: its name, the read model it builds, the events each block consumes, the
+// properties each mapping sets and where automap is turned on or off. Keys, and where a mapping takes its
+// value from, are recognized and skipped.
 export function parseProjection(context: ParserContext, line: SourceLine): ProjectionSyntax {
     const match = header.exec(line.content);
     if (match === null) {
         context.error(DiagnosticCodes.InvalidProjectionDeclaration, `Invalid projection declaration '${line.content}' - expected 'projection <Name> [=> <ReadModel>]'`, locationOf(line));
         context.skipBlock(line.indent);
-        return { kind: 'ProjectionSyntax', name: firstWord(line.content), readModel: null, sequence: null, blocks: [], location: locationOf(line) };
+        return { kind: 'ProjectionSyntax', name: firstWord(line.content), readModel: null, sequence: null, autoMap: 'Inherit', blocks: [], location: locationOf(line) };
     }
     const name = match[1];
     let sequence: string | null = null;
+    let autoMap: AutoMapMode = 'Inherit';
     const blocks: ProjectionBlockSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
@@ -44,8 +56,10 @@ export function parseProjection(context: ParserContext, line: SourceLine): Proje
         const keyword = firstWord(child.content);
         if (keyword === 'sequence') {
             sequence = child.content.substring('sequence'.length).trim();
-        } else if (keyword === 'automap' || child.content === 'no automap') {
-            continue;
+        } else if (keyword === 'automap') {
+            autoMap = 'Enabled';
+        } else if (child.content === 'no automap') {
+            autoMap = 'Disabled';
         } else if (keyword === 'key') {
             skipKey(context, child);
         } else if (keyword === 'variant') {
@@ -61,7 +75,7 @@ export function parseProjection(context: ParserContext, line: SourceLine): Proje
     if (blocks.length === 0) {
         context.error(DiagnosticCodes.EmptyProjection, `Projection '${name}' must contain at least one directive`, locationOf(line));
     }
-    return { kind: 'ProjectionSyntax', name, readModel: match[2] ?? null, sequence, blocks, location: locationOf(line) };
+    return { kind: 'ProjectionSyntax', name, readModel: match[2] ?? null, sequence, autoMap, blocks, location: locationOf(line) };
 }
 
 function reportVariantConflicts(context: ParserContext, blocks: readonly ProjectionBlockSyntax[], name: string): void {
@@ -88,14 +102,19 @@ function parseBlock(context: ParserContext, line: SourceLine, nestedScope: boole
             return parseFrom(context, line);
         case 'every': {
             let includeChildren = true;
-            skipMappings(context, line, child => {
-                includeChildren = includeChildren && child.content !== 'exclude children';
+            const { autoMap, mappings } = parseMappingBlock(context, line, child => {
+                if (child.content !== 'exclude children') {
+                    return false;
+                }
+                includeChildren = false;
+                return true;
             });
-            return { kind: 'EverySyntax', includeChildren, location };
+            return { kind: 'EverySyntax', includeChildren, autoMap, mappings, location };
         }
-        case 'all':
-            skipMappings(context, line);
-            return { kind: 'AllSyntax', location };
+        case 'all': {
+            const { autoMap, mappings } = parseMappingBlock(context, line);
+            return { kind: 'AllSyntax', autoMap, mappings, location };
+        }
         case 'join':
             return parseJoin(context, line);
         case 'children':
@@ -131,13 +150,17 @@ function parseFrom(context: ParserContext, line: SourceLine): FromSyntax {
         }
         events.push({ kind: 'EventSpecSyntax', event: unescapeIdentifier(match[1]), location: locationOf(line) });
     }
+    const mappings: MappingSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
-        if (firstWord(child.content) === 'key') {
+        const keyword = firstWord(child.content);
+        if (keyword === 'key') {
             skipKey(context, child);
+        } else if (keyword !== 'parent') {
+            pushMapping(child, mappings);
         }
     }
-    return { kind: 'FromSyntax', events, location: locationOf(line) };
+    return { kind: 'FromSyntax', events, mappings, location: locationOf(line) };
 }
 
 function parseJoin(context: ParserContext, line: SourceLine): JoinSyntax {
@@ -156,8 +179,8 @@ function parseJoin(context: ParserContext, line: SourceLine): JoinSyntax {
             context.skipBlock(child.indent);
             continue;
         }
-        skipMappings(context, child);
-        events.push({ kind: 'JoinEventSyntax', event: unescapeIdentifier(withMatch[1]), location: locationOf(child) });
+        const { autoMap, mappings } = parseMappingBlock(context, child);
+        events.push({ kind: 'JoinEventSyntax', event: unescapeIdentifier(withMatch[1]), autoMap, mappings, location: locationOf(child) });
     }
     return { kind: 'JoinSyntax', property: unescapeIdentifier(match[1]), on: unescapeIdentifier(match[2]), events, location: locationOf(line) };
 }
@@ -167,9 +190,10 @@ function parseChildren(context: ParserContext, line: SourceLine): ChildrenSyntax
     if (match === null) {
         context.error(DiagnosticCodes.InvalidChildrenDeclaration, `Invalid children declaration '${line.content}' - expected 'children <collection> identified by <key>'`, locationOf(line));
         context.skipBlock(line.indent);
-        return { kind: 'ChildrenSyntax', property: '', blocks: [], location: locationOf(line) };
+        return { kind: 'ChildrenSyntax', property: '', autoMap: 'Inherit', blocks: [], location: locationOf(line) };
     }
-    return { kind: 'ChildrenSyntax', property: unescapeIdentifier(match[1]), blocks: parseChildBlocks(context, line), location: locationOf(line) };
+    const { autoMap, blocks } = parseChildBlocks(context, line);
+    return { kind: 'ChildrenSyntax', property: unescapeIdentifier(match[1]), autoMap, blocks, location: locationOf(line) };
 }
 
 function parseNested(context: ParserContext, line: SourceLine): NestedSyntax {
@@ -177,21 +201,27 @@ function parseNested(context: ParserContext, line: SourceLine): NestedSyntax {
     if (match === null) {
         context.error(DiagnosticCodes.InvalidNestedDeclaration, `Invalid nested declaration '${line.content}' - expected 'nested <property>'`, locationOf(line));
         context.skipBlock(line.indent);
-        return { kind: 'NestedSyntax', property: '', blocks: [], location: locationOf(line) };
+        return { kind: 'NestedSyntax', property: '', autoMap: 'Inherit', blocks: [], location: locationOf(line) };
     }
     const property = unescapeIdentifier(match[1]);
-    const blocks = parseChildBlocks(context, line);
+    const { autoMap, blocks } = parseChildBlocks(context, line);
     if (!blocks.some(block => block.kind === 'FromSyntax')) {
         context.error(DiagnosticCodes.NestedBlockWithoutFrom, `Nested block '${property}' must contain at least one 'from' directive`, locationOf(line));
     }
-    return { kind: 'NestedSyntax', property, blocks, location: locationOf(line) };
+    return { kind: 'NestedSyntax', property, autoMap, blocks, location: locationOf(line) };
 }
 
-function parseChildBlocks(context: ParserContext, line: SourceLine): ProjectionBlockSyntax[] {
+function parseChildBlocks(context: ParserContext, line: SourceLine): { autoMap: AutoMapMode; blocks: ProjectionBlockSyntax[] } {
     const blocks: ProjectionBlockSyntax[] = [];
+    let autoMap: AutoMapMode = 'Inherit';
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
-        if (child.content === 'automap' || child.content === 'no automap') {
+        if (child.content === 'automap') {
+            autoMap = 'Enabled';
+            continue;
+        }
+        if (child.content === 'no automap') {
+            autoMap = 'Disabled';
             continue;
         }
         const block = parseBlock(context, child, true);
@@ -199,7 +229,7 @@ function parseChildBlocks(context: ParserContext, line: SourceLine): ProjectionB
             blocks.push(block);
         }
     }
-    return blocks;
+    return { autoMap, blocks };
 }
 
 function parseRemove(context: ParserContext, line: SourceLine): ProjectionBlockSyntax | undefined {
@@ -284,10 +314,42 @@ function skipKey(context: ParserContext, line: SourceLine): void {
     }
 }
 
-// Mapping lines carry no body, so a mapping block is its direct children.
-function skipMappings(context: ParserContext, line: SourceLine, each?: (child: SourceLine) => void): void {
+// Mapping lines carry no body, so a mapping block is its direct children. The last automap setting wins;
+// a line 'extra' claims is not a mapping.
+function parseMappingBlock(context: ParserContext, line: SourceLine, extra: (child: SourceLine) => boolean = () => false): { autoMap: AutoMapMode; mappings: MappingSyntax[] } {
+    let autoMap: AutoMapMode = 'Inherit';
+    const mappings: MappingSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
-        each?.(child);
+        if (child.content === 'automap') {
+            autoMap = 'Enabled';
+        } else if (child.content === 'no automap') {
+            autoMap = 'Disabled';
+        } else if (!extra(child)) {
+            pushMapping(child, mappings);
+        }
+    }
+    return { autoMap, mappings };
+}
+
+// The property one mapping line sets, and how - the port of the C# ParseMappingLine. A line that is no
+// mapping is left to the C# compiler to report.
+function pushMapping(line: SourceLine, mappings: MappingSyntax[]): void {
+    const location = locationOf(line);
+    const keyword = keywordMappingPattern.exec(line.content);
+    if (keyword !== null) {
+        if (keyword[1] !== 'clear' || keyword[2] !== 'with') {
+            mappings.push({ kind: keywordMappings[keyword[1]], property: unescapeIdentifier(keyword[2]), location });
+        }
+        return;
+    }
+    const arithmetic = arithmeticPattern.exec(line.content);
+    if (arithmetic !== null) {
+        mappings.push({ kind: arithmetic[1] === 'add' ? 'AddMappingSyntax' : 'SubtractMappingSyntax', property: unescapeIdentifier(arithmetic[2]), location });
+        return;
+    }
+    const assigned = setPattern.exec(line.content) ?? assignmentPattern.exec(line.content);
+    if (assigned !== null) {
+        mappings.push({ kind: 'SetMappingSyntax', property: unescapeIdentifier(assigned[1]), location });
     }
 }

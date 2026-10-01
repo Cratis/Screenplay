@@ -638,6 +638,7 @@
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
                       "kind": "FromSyntax",
@@ -650,21 +651,56 @@
                           "kind": "EventSpecSyntax",
                           "event": "DraftSaved"
                         }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "name"
+                        },
+                        {
+                          "kind": "CountMappingSyntax",
+                          "property": "registrations"
+                        }
                       ]
                     },
                     {
                       "kind": "EverySyntax",
-                      "includeChildren": false
+                      "autoMap": "Disabled",
+                      "includeChildren": false,
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "lastSeen"
+                        }
+                      ]
                     },
                     {
-                      "kind": "AllSyntax"
+                      "kind": "AllSyntax",
+                      "autoMap": "Inherit",
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "visits"
+                        },
+                        {
+                          "kind": "IncrementMappingSyntax",
+                          "property": "touches"
+                        }
+                      ]
                     },
                     {
                       "kind": "JoinSyntax",
                       "events": [
                         {
                           "kind": "JoinEventSyntax",
-                          "event": "CompanyRenamed"
+                          "autoMap": "Enabled",
+                          "event": "CompanyRenamed",
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "companyName"
+                            }
+                          ]
                         }
                       ],
                       "on": "companyId",
@@ -672,6 +708,7 @@
                     },
                     {
                       "kind": "ChildrenSyntax",
+                      "autoMap": "Disabled",
                       "blocks": [
                         {
                           "kind": "FromSyntax",
@@ -679,6 +716,16 @@
                             {
                               "kind": "EventSpecSyntax",
                               "event": "AddressAdded"
+                            }
+                          ],
+                          "mappings": [
+                            {
+                              "kind": "AddMappingSyntax",
+                              "property": "total"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "street"
                             }
                           ]
                         },
@@ -688,6 +735,7 @@
                         },
                         {
                           "kind": "NestedSyntax",
+                          "autoMap": "Inherit",
                           "blocks": [
                             {
                               "kind": "FromSyntax",
@@ -696,7 +744,8 @@
                                   "kind": "EventSpecSyntax",
                                   "event": "PrimaryAddressSet"
                                 }
-                              ]
+                              ],
+                              "mappings": []
                             },
                             {
                               "kind": "ClearWithSyntax",
@@ -723,6 +772,7 @@
                 },
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
                       "kind": "ProjectionVariantSyntax",
@@ -733,6 +783,12 @@
                             {
                               "kind": "EventSpecSyntax",
                               "event": "CustomerArchived"
+                            }
+                          ],
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "reason"
                             }
                           ]
                         }

@@ -2399,10 +2399,18 @@
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
                       "kind": "EverySyntax",
-                      "includeChildren": true
+                      "autoMap": "Inherit",
+                      "includeChildren": true,
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "lastActivityAt"
+                        }
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
@@ -2410,6 +2418,40 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "id"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "customerId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "invoiceNumber"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "currency"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "lineCount"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "dueDate"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "channel"
                         }
                       ]
                     },
@@ -2420,6 +2462,16 @@
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceSent"
                         }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "touched"
+                        }
                       ]
                     },
                     {
@@ -2428,6 +2480,16 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "InvoicePaid"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "touched"
                         }
                       ]
                     },
@@ -2438,6 +2500,12 @@
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceMarkedOverdue"
                         }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
                       ]
                     },
                     {
@@ -2446,6 +2514,12 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceStatusChanged"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
                         }
                       ]
                     },
@@ -2737,10 +2811,18 @@
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
                       "kind": "EverySyntax",
-                      "includeChildren": false
+                      "autoMap": "Inherit",
+                      "includeChildren": false,
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "lastUpdatedAt"
+                        }
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
@@ -2748,6 +2830,52 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "customerId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "invoiceNumber"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "currency"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "paymentTerms"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "dueDate"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "registeredAt"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "registeredBy"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "registeredByUser"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "registeredForSubject"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "displayLabel"
                         }
                       ]
                     },
@@ -2758,6 +2886,16 @@
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceSent"
                         }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "sentAt"
+                        }
                       ]
                     },
                     {
@@ -2766,6 +2904,16 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "InvoicePaid"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "paidAt"
                         }
                       ]
                     },
@@ -2776,6 +2924,16 @@
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceMarkedOverdue"
                         }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "overdueAt"
+                        }
                       ]
                     },
                     {
@@ -2783,7 +2941,14 @@
                       "events": [
                         {
                           "kind": "JoinEventSyntax",
-                          "event": "CustomerRegistered"
+                          "autoMap": "Disabled",
+                          "event": "CustomerRegistered",
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "customerName"
+                            }
+                          ]
                         }
                       ],
                       "on": "customerId",
@@ -2791,6 +2956,7 @@
                     },
                     {
                       "kind": "ChildrenSyntax",
+                      "autoMap": "Inherit",
                       "blocks": [
                         {
                           "kind": "FromSyntax",
@@ -2798,6 +2964,24 @@
                             {
                               "kind": "EventSpecSyntax",
                               "event": "InvoiceLineItemAdded"
+                            }
+                          ],
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "quantity"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "unitPrice"
+                            },
+                            {
+                              "kind": "AddMappingSyntax",
+                              "property": "subtotal"
+                            },
+                            {
+                              "kind": "CountMappingSyntax",
+                              "property": "itemCount"
                             }
                           ]
                         },
@@ -2810,6 +2994,7 @@
                     },
                     {
                       "kind": "NestedSyntax",
+                      "autoMap": "Inherit",
                       "blocks": [
                         {
                           "kind": "FromSyntax",
@@ -2817,6 +3002,12 @@
                             {
                               "kind": "EventSpecSyntax",
                               "event": "InvoiceShipped"
+                            }
+                          ],
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "carrier"
                             }
                           ]
                         },
@@ -3234,6 +3425,7 @@
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
                       "kind": "FromSyntax",
@@ -3241,6 +3433,16 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceLineItemAdded"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "quantity"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "unitPrice"
                         }
                       ]
                     }
@@ -3353,6 +3555,7 @@
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
                       "kind": "FromSyntax",
@@ -3361,7 +3564,8 @@
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceCancelled"
                         }
-                      ]
+                      ],
+                      "mappings": []
                     }
                   ],
                   "name": "CancelledInvoices",
@@ -3466,6 +3670,7 @@
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
                       "kind": "FromSyntax",
@@ -3473,6 +3678,20 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "IncrementMappingSyntax",
+                          "property": "totalCount"
+                        },
+                        {
+                          "kind": "IncrementMappingSyntax",
+                          "property": "draftCount"
+                        },
+                        {
+                          "kind": "CountMappingSyntax",
+                          "property": "touches"
                         }
                       ]
                     },
@@ -3483,6 +3702,16 @@
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceSent"
                         }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "DecrementMappingSyntax",
+                          "property": "draftCount"
+                        },
+                        {
+                          "kind": "IncrementMappingSyntax",
+                          "property": "sentCount"
+                        }
                       ]
                     },
                     {
@@ -3491,6 +3720,16 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "InvoicePaid"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "DecrementMappingSyntax",
+                          "property": "sentCount"
+                        },
+                        {
+                          "kind": "IncrementMappingSyntax",
+                          "property": "paidCount"
                         }
                       ]
                     },
@@ -3501,6 +3740,12 @@
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceMarkedOverdue"
                         }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "IncrementMappingSyntax",
+                          "property": "overdueCount"
+                        }
                       ]
                     },
                     {
@@ -3510,6 +3755,16 @@
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceWrittenOff"
                         }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "AddMappingSyntax",
+                          "property": "writeOffTotal"
+                        },
+                        {
+                          "kind": "SubtractMappingSyntax",
+                          "property": "outstandingTotal"
+                        }
                       ]
                     },
                     {
@@ -3518,6 +3773,12 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceCancelled"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "DecrementMappingSyntax",
+                          "property": "totalCount"
                         }
                       ]
                     }
@@ -3875,9 +4136,21 @@
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
-                      "kind": "AllSyntax"
+                      "kind": "AllSyntax",
+                      "autoMap": "Inherit",
+                      "mappings": [
+                        {
+                          "kind": "CountMappingSyntax",
+                          "property": "totalEvents"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "lastOccurred"
+                        }
+                      ]
                     }
                   ],
                   "name": "SystemActivity",

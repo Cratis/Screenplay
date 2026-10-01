@@ -116,15 +116,23 @@ module Customers
             customerId = customerId
           }
           name = name
+          count registrations
         every
           exclude children
+          no automap
+          lastSeen = $eventContext.occurred
         all
           visits = 0
+          increment touches
         join company on companyId
           with CompanyRenamed
+            automap
             companyName = name
         children addresses identified by addressId
+          no automap
           from AddressAdded
+            add total by amount
+            set street to street
           remove with AddressRemoved
           nested primary
             from PrimaryAddressSet

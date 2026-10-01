@@ -6,7 +6,7 @@ import { CommandSyntax, ValidateSyntax, ValidationRuleSyntax } from './Commands'
 import { ConstraintSyntax } from './Constraints';
 import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, PropertySyntax, ReadModelSyntax, TagSyntax, TypeRefSyntax, TypeSyntax } from './Declarations';
 import { ExpressionSyntax, ObjectMemberSyntax, PropertyMappingSyntax } from './Expressions';
-import { ProjectionBlockSyntax, ProjectionSyntax } from './Projections';
+import { JoinEventSyntax, MappingSyntax, ProjectionBlockSyntax, ProjectionSyntax } from './Projections';
 import { QueryParameterSyntax, QuerySyntax } from './Queries';
 import { InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
 import { ScreenDirectiveSyntax, ScreenSyntax } from './Screens';
@@ -132,9 +132,14 @@ export abstract class ScreenplaySyntaxWalker {
         switch (syntax.kind) {
             case 'FromSyntax':
                 syntax.events.forEach(node => this.visitNode(node));
+                syntax.mappings.forEach(node => this.visitMapping(node));
+                break;
+            case 'EverySyntax':
+            case 'AllSyntax':
+                syntax.mappings.forEach(node => this.visitMapping(node));
                 break;
             case 'JoinSyntax':
-                syntax.events.forEach(node => this.visitNode(node));
+                syntax.events.forEach(node => this.visitJoinEvent(node));
                 break;
             case 'ProjectionVariantSyntax':
                 syntax.entersOn.forEach(node => this.visitNode(node));
@@ -145,6 +150,15 @@ export abstract class ScreenplaySyntaxWalker {
                 syntax.blocks.forEach(node => this.visitProjectionBlock(node));
                 break;
         }
+    }
+
+    visitJoinEvent(syntax: JoinEventSyntax): void {
+        this.visitNode(syntax);
+        syntax.mappings.forEach(node => this.visitMapping(node));
+    }
+
+    visitMapping(syntax: MappingSyntax): void {
+        this.visitNode(syntax);
     }
 
     visitReaction(syntax: ReactionSyntax): void {

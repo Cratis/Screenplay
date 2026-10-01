@@ -270,6 +270,7 @@
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
                       "kind": "FromSyntax",
@@ -277,6 +278,12 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "ProjectRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "name"
                         }
                       ]
                     }
