@@ -57,7 +57,7 @@ export const BoardApp = () => {
                     : (
                         <MenuDropdownOpenProvider>
                             <EventModelPresentationProvider presentation={presentation}>
-                                <BoardErrorBoundary onReset={() => changePresentation(() => defaultPresentation)}>
+                                <BoardErrorBoundary resetWhenChanged={presentation} onReset={() => changePresentation(() => defaultPresentation)}>
                                     <EventModelBoard document={model} readOnly canvas={{ chrome: boardChrome }} />
                                 </BoardErrorBoundary>
                                 <ViewOptions presentation={presentation} onChange={changePresentation} />

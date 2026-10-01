@@ -5,6 +5,8 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 
 export interface BoardErrorBoundaryProps {
     readonly children: ReactNode;
+    // What the board is drawn with besides its document; when it changes, the board is tried again.
+    readonly resetWhenChanged: unknown;
     // Puts the board back to how it is first shown, for when what it was asked to show cannot be drawn.
     readonly onReset: () => void;
 }
@@ -14,12 +16,19 @@ interface BoardErrorBoundaryState {
 }
 
 // Keeps a failure while drawing the board from emptying the whole webview: it says what failed, so it can
-// be reported, and offers to show the board as it first appears.
+// be reported, while the view options stay usable - choosing another tries the board again - and offers
+// to show the board as it first appears.
 export class BoardErrorBoundary extends Component<BoardErrorBoundaryProps, BoardErrorBoundaryState> {
     override state: BoardErrorBoundaryState = {};
 
     static getDerivedStateFromError(error: Error): BoardErrorBoundaryState {
         return { error };
+    }
+
+    override componentDidUpdate(previous: BoardErrorBoundaryProps): void {
+        if (this.state.error !== undefined && previous.resetWhenChanged !== this.props.resetWhenChanged) {
+            this.setState({ error: undefined });
+        }
     }
 
     override componentDidCatch(error: Error, info: ErrorInfo): void {
