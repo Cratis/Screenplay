@@ -74,3 +74,10 @@ body {
     gap: 0.5rem;
     z-index: 10;
 }
+
+/* What the webview shows instead of a board that failed to draw. */
+.screenplay-board__failure pre {
+    white-space: pre-wrap;
+    font-size: 0.75rem;
+    opacity: 0.7;
+}

@@ -4,9 +4,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { EventModelBoard, EventModelPresentationProvider, MenuDropdownOpenProvider, readEventModelDocument } from '@cratis/event-models';
 import { boardChrome } from './boardChrome';
+import { BoardErrorBoundary } from './BoardErrorBoundary';
 import { BoardProblem, ExtensionToBoardMessage } from './BoardMessage';
 import { Problems } from './Problems';
-import { usePresentation } from './usePresentation';
+import { defaultPresentation, usePresentation } from './usePresentation';
 import { ViewOptions } from './ViewOptions';
 import { vscode } from './vscodeApi';
 
@@ -56,7 +57,9 @@ export const BoardApp = () => {
                     : (
                         <MenuDropdownOpenProvider>
                             <EventModelPresentationProvider presentation={presentation}>
-                                <EventModelBoard document={model} readOnly canvas={{ chrome: boardChrome }} />
+                                <BoardErrorBoundary onReset={() => changePresentation(() => defaultPresentation)}>
+                                    <EventModelBoard document={model} readOnly canvas={{ chrome: boardChrome }} />
+                                </BoardErrorBoundary>
                                 <ViewOptions presentation={presentation} onChange={changePresentation} />
                             </EventModelPresentationProvider>
                         </MenuDropdownOpenProvider>

@@ -9,12 +9,14 @@ interface BoardState {
     readonly presentation?: Partial<EventModelPresentation>;
 }
 
+// How the board is first shown: what Cratis Studio starts from.
+export const defaultPresentation: EventModelPresentation = { ...defaultEventModelPresentation, visualizationMode: 'simplified' };
+
 // How the board is presented - detail level, properties and how connections are drawn - starting from
 // what Cratis Studio starts from, and kept by VS Code for as long as the editor is open.
 export function usePresentation(): [EventModelPresentation, (change: (current: EventModelPresentation) => EventModelPresentation) => void] {
     const [presentation, setPresentation] = useState<EventModelPresentation>(() => ({
-        ...defaultEventModelPresentation,
-        visualizationMode: 'simplified',
+        ...defaultPresentation,
         ...(vscode.getState() as BoardState | undefined)?.presentation,
     }));
 
