@@ -1,0 +1,53 @@
+name: JavaScript Build
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - "**"
+    paths:
+      - "Source/Screenplay/**"
+      - "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/**"
+      - "Source/DotNET/Screenplay/for_ScreenplayCompiler/*.play"
+      - "package.json"
+      - "eslint.config.mjs"
+      - ".yarnrc.yml"
+      - ".github/workflows/javascript-build.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23.x
+
+      - name: Yarn install
+        run: yarn
+
+      # The packages are built in dependency order: the extension bundles the compiler and the language
+      # service, so it needs both built first.
+      - name: Build compiler
+        run: yarn workspace @cratis/screenplay-compiler build
+
+      - name: Build language service
+        run: yarn workspace @cratis/screenplay-language build
+
+      - name: Build extension
+        run: yarn workspace screenplay build
+
+      - name: Lint
+        run: yarn lint:ci
+
+      - name: Test
+        run: yarn test
