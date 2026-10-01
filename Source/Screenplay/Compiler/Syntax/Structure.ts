@@ -7,6 +7,7 @@ import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, ReadModelSyntax
 import { ProjectionSyntax } from './Projections';
 import { QuerySyntax } from './Queries';
 import { ReactionSyntax } from './Reactions';
+import { ScreenSyntax } from './Screens';
 import { SpecificationSyntax } from './Specifications';
 import { SyntaxNode } from './SyntaxNode';
 
@@ -28,6 +29,7 @@ export interface SliceSyntax extends SyntaxNode {
     readonly constraints: readonly ConstraintSyntax[];
     readonly specifications: readonly SpecificationSyntax[];
     readonly readModels: readonly ReadModelSyntax[];
+    readonly screens: readonly ScreenSyntax[];
 }
 
 export interface FeatureSyntax extends SyntaxNode {

@@ -1423,6 +1423,205 @@
             "diagnostics": [
                 "PLAY0294@6"
             ]
+        },
+        {
+            "name": "invalid screen declaration",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      screen 1Bad",
+                "        title \"Kept\""
+            ],
+            "diagnostics": [
+                "PLAY0102@4"
+            ]
+        },
+        {
+            "name": "unknown screen directive",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      screen S",
+                "        bogus thing",
+                "          nested",
+                "        title \"Kept\""
+            ],
+            "diagnostics": [
+                "PLAY0103@5"
+            ]
+        },
+        {
+            "name": "invalid data directive",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      screen S",
+                "        data Invoice"
+            ],
+            "diagnostics": [
+                "PLAY0104@5"
+            ]
+        },
+        {
+            "name": "invalid action directive",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      screen S",
+                "        action 1Register",
+                "          label \"Skipped\""
+            ],
+            "diagnostics": [
+                "PLAY0105@5"
+            ]
+        },
+        {
+            "name": "unknown action directive",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      screen S",
+                "        action Register",
+                "          colour red",
+                "          label \"Kept\""
+            ],
+            "diagnostics": [
+                "PLAY0106@6"
+            ]
+        },
+        {
+            "name": "invalid navigation",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      screen S",
+                "        navigate somewhere"
+            ],
+            "diagnostics": [
+                "PLAY0107@5"
+            ]
+        },
+        {
+            "name": "invalid navigation in an action",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      screen S",
+                "        action Register",
+                "          navigate to"
+            ],
+            "diagnostics": [
+                "PLAY0107@6"
+            ]
+        },
+        {
+            "name": "invalid screen layout slot",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      screen S",
+                "        template MasterDetail",
+                "          Main",
+                "            title \"Skipped\"",
+                "          main",
+                "            title \"Kept\""
+            ],
+            "diagnostics": [
+                "PLAY0108@6"
+            ]
+        },
+        {
+            "name": "invalid title directive",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      screen S",
+                "        title Untitled"
+            ],
+            "diagnostics": [
+                "PLAY0109@5"
+            ]
+        },
+        {
+            "name": "unknown table directive",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      screen S",
+                "        table invoices",
+                "          width 3",
+                "          column number"
+            ],
+            "diagnostics": [
+                "PLAY0110@6"
+            ]
+        },
+        {
+            "name": "invalid row click navigation",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      screen S",
+                "        table invoices",
+                "          on row-click navigate to Details Now"
+            ],
+            "diagnostics": [
+                "PLAY0107@6"
+            ]
+        },
+        {
+            "name": "unknown summary directive",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      screen S",
+                "        summary invoice",
+                "          field number"
+            ],
+            "diagnostics": [
+                "PLAY0111@6"
+            ]
+        },
+        {
+            "name": "unregistered screen code language",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      screen S",
+                "        ```tsx"
+            ],
+            "diagnostics": [
+                "PLAY0163@5"
+            ]
+        },
+        {
+            "name": "legacy screen code language",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateView C",
+                "      screen S",
+                "        typescript",
+                "          ```",
+                "          export const x = 1;",
+                "          ```"
+            ],
+            "diagnostics": [
+                "PLAY0397@5"
+            ]
         }
     ]
 }

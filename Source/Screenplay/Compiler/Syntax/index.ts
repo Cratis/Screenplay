@@ -10,6 +10,7 @@ export * from './Projections';
 export * from './Reactions';
 export * from './Constraints';
 export * from './Specifications';
+export * from './Screens';
 export * from './Structure';
 export * from './SyntaxJson';
 export * from './Visitors';

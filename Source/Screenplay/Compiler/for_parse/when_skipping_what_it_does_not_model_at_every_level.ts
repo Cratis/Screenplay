@@ -100,7 +100,7 @@ describe('when skipping what it does not model at every level', () => {
             '      reducer Totals => Customer',
             '        on Registered',
             '      screen Register',
-            '        ```tsx',
+            '        ```typescript',
             'export const Register = () => <div/>;',
             '        ```',
             '      event Archived',
@@ -145,7 +145,7 @@ describe('when skipping what it does not model at every level', () => {
         [slice.specifications[0].when!.commandType, slice.specifications[0].thenEventsInAnyOrder].should.deep.equal(['Register', true]);
     });
 
-    it('should read the event after the skipped screen', () => {
+    it('should read the event after a screen holding a dedented fence', () => {
         slice.events.map(event => event.name).should.deep.equal(['Registered', 'Archived']);
     });
 });

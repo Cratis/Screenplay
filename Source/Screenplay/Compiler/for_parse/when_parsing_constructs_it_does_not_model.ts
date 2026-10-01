@@ -20,7 +20,7 @@ describe('when parsing constructs it does not model', () => {
             '  feature Registration',
             '    slice StateChange RegisterProject',
             '      screen Register',
-            '        ```tsx',
+            '        ```typescript',
             'export const Register = () => <div/>;',
             '        ```',
             '      event ProjectRegistered',

@@ -121,6 +121,7 @@
                   "queries": [],
                   "reactions": [],
                   "readModels": [],
+                  "screens": [],
                   "specifications": [],
                   "type": "StateChange"
                 }
@@ -395,6 +396,7 @@
               "queries": [],
               "reactions": [],
               "readModels": [],
+              "screens": [],
               "specifications": [
                 {
                   "kind": "SpecificationSyntax",
@@ -841,6 +843,165 @@
                   ]
                 }
               ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTitleSyntax",
+                      "text": "Customers"
+                    },
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "AllCustomers",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "CustomerSummary"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "Register",
+                      "label": "Register customer",
+                      "navigate": {
+                        "kind": "ScreenNavigateSyntax",
+                        "by": "customerId",
+                        "screen": "CustomerDetail"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "SaveDraft",
+                      "label": null,
+                      "navigate": null
+                    },
+                    {
+                      "kind": "ScreenTableSyntax",
+                      "columns": [
+                        {
+                          "kind": "ScreenColumnSyntax",
+                          "label": "Name",
+                          "property": "name"
+                        },
+                        {
+                          "kind": "ScreenColumnSyntax",
+                          "label": null,
+                          "property": "visits"
+                        }
+                      ],
+                      "rowClick": {
+                        "kind": "ScreenNavigateSyntax",
+                        "by": "customerId",
+                        "screen": "CustomerDetail"
+                      },
+                      "target": "customers"
+                    },
+                    {
+                      "kind": "ScreenBehaviorSyntax"
+                    },
+                    {
+                      "kind": "ScreenUsesBehaviorSyntax"
+                    }
+                  ],
+                  "name": "CustomerOverview"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": "customerId",
+                      "query": "CustomerById",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "CustomerSummary"
+                      }
+                    },
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "name": "MasterDetail",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenSummarySyntax",
+                              "fields": [
+                                {
+                                  "kind": "ScreenFieldSyntax",
+                                  "label": "Name",
+                                  "property": "name"
+                                },
+                                {
+                                  "kind": "ScreenFieldSyntax",
+                                  "label": "$strings.customers.visits",
+                                  "property": "visits"
+                                }
+                              ],
+                              "target": "customer"
+                            },
+                            {
+                              "kind": "ScreenSectionSyntax",
+                              "directives": [
+                                {
+                                  "kind": "ScreenTitleSyntax",
+                                  "text": "$strings.customers.title"
+                                },
+                                {
+                                  "kind": "ScreenActionSyntax",
+                                  "command": "Register",
+                                  "label": null,
+                                  "navigate": null
+                                }
+                              ],
+                              "name": "commands"
+                            }
+                          ],
+                          "name": "sidebar"
+                        },
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenNavigateSyntax",
+                              "by": null,
+                              "screen": "CustomerOverview"
+                            },
+                            {
+                              "kind": "ScreenCodeSyntax",
+                              "code": {
+                                "kind": "CodeBlockSyntax",
+                                "code": "export const visits = (count: number) => `${count} visits`;",
+                                "language": "typescript"
+                              }
+                            },
+                            {
+                              "kind": "ScreenCodeSyntax",
+                              "code": {
+                                "kind": "CodeBlockSyntax",
+                                "code": "export default () => <section/>;",
+                                "language": "react"
+                              }
+                            }
+                          ],
+                          "name": "main"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "CustomerDetail"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [],
+                  "name": "CustomerReport"
+                }
+              ],
               "specifications": [],
               "type": "StateView"
             },
@@ -900,6 +1061,7 @@
                 }
               ],
               "readModels": [],
+              "screens": [],
               "specifications": [],
               "type": "Automation"
             },
@@ -930,6 +1092,22 @@
                 }
               ],
               "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenCodeSyntax",
+                      "code": {
+                        "kind": "CodeBlockSyntax",
+                        "code": "export const Mirror = () => <div/>;",
+                        "language": "typescript"
+                      }
+                    }
+                  ],
+                  "name": "Mirror"
+                }
+              ],
               "specifications": [],
               "type": "Translate"
             }

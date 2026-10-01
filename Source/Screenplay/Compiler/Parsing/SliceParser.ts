@@ -8,6 +8,7 @@ import { EventSyntax, ReadModelSyntax } from '../Syntax/Declarations';
 import { ProjectionSyntax } from '../Syntax/Projections';
 import { QuerySyntax } from '../Syntax/Queries';
 import { ReactionSyntax } from '../Syntax/Reactions';
+import { ScreenSyntax } from '../Syntax/Screens';
 import { SpecificationSyntax } from '../Syntax/Specifications';
 import { SliceSyntax, SliceType, sliceTypes } from '../Syntax/Structure';
 import { pattern } from '../Text/patterns';
@@ -21,6 +22,7 @@ import { ParserContext } from './ParserContext';
 import { parseProjection } from './ProjectionParser';
 import { parseQuery } from './QueryParser';
 import { parseReaction } from './ReactionParser';
+import { parseScreen } from './ScreenParser';
 import { parseSpecification } from './SpecificationParser';
 import { locationOf, SourceLine } from './SourceLine';
 
@@ -28,7 +30,7 @@ const header = pattern('^slice\\s+([A-Za-z]\\w*)\\s+([A-Za-z_]\\w*)$');
 
 // Slice members the C# compiler knows that this compiler does not model yet. They are skipped whole rather
 // than reported - the C# compiler and the editor diagnostics remain the authority on whether they are valid.
-const opaqueMembers = new Set(['capture', 'screen', 'reducer']);
+const opaqueMembers = new Set(['capture', 'reducer']);
 
 export function parseSlice(context: ParserContext, line: SourceLine): SliceSyntax {
     const match = header.exec(line.content);
@@ -53,6 +55,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     const constraints: ConstraintSyntax[] = [];
     const specifications: SpecificationSyntax[] = [];
     const readModels: ReadModelSyntax[] = [];
+    const screens: ScreenSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         if (isFileDirective(child)) {
@@ -77,6 +80,8 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
             specifications.push(parseSpecification(context, child));
         } else if (keyword === 'readmodel') {
             readModels.push(parseReadModel(context, child));
+        } else if (keyword === 'screen') {
+            screens.push(parseScreen(context, child));
         } else if (opaqueMembers.has(keyword)) {
             context.skipOpaqueBlock(child.indent);
         } else {
@@ -85,7 +90,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
         }
     }
     return {
-        kind: 'SliceSyntax', type, name, description, events, commands, queries, projections, reactions, constraints, specifications, readModels,
+        kind: 'SliceSyntax', type, name, description, events, commands, queries, projections, reactions, constraints, specifications, readModels, screens,
         location: locationOf(line),
     };
 }
