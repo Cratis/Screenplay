@@ -55,8 +55,8 @@ body {
     position: absolute;
     top: 1rem;
     left: 1rem;
-    width: 1.75rem;
-    aspect-ratio: 175 / 298;
+    width: 7.5rem;
+    aspect-ratio: 600 / 328;
     background-color: #fff;
     mask: url('./cratis-logo.svg') no-repeat center / contain;
     -webkit-mask: url('./cratis-logo.svg') no-repeat center / contain;
