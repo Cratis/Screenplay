@@ -1,0 +1,50 @@
+{
+    "name": "@cratis/screenplay-event-models",
+    "version": "0.0.0",
+    "description": "Turns a compiled Cratis Screenplay application into the document the Cratis event model board (@cratis/event-models) draws",
+    "keywords": [
+        "cratis",
+        "screenplay",
+        "event-modeling",
+        "event-models"
+    ],
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Cratis/Screenplay.git"
+    },
+    "type": "module",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "publishConfig": {
+        "access": "public"
+    },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "compile": "tsc --noEmit -p tsconfig.json",
+        "lint": "yarn g:lint",
+        "lint:ci": "yarn g:lint:ci",
+        "test": "vitest run"
+    },
+    "dependencies": {
+        "@cratis/screenplay-compiler": "workspace:*"
+    },
+    "devDependencies": {
+        "@cratis/event-models": "0.106.0",
+        "@types/chai": "^5.2.3",
+        "ajv": "^8.17.1",
+        "chai": "^6.2.2",
+        "typescript": "6.0.3",
+        "vitest": "^4.1.11"
+    }
+}
