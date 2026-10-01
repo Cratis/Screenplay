@@ -21,7 +21,3 @@ export const locationOf = (line: SourceLine): SourceLocation => sourceLocation(l
 
 // The location of the line's first column, whatever its indent.
 export const startOf = (line: SourceLine): SourceLocation => sourceLocation(line.number, 1, line.path);
-
-// The location of a character in the line's content, counted from its first significant character.
-export const locationAt = (line: SourceLine, offset: number): SourceLocation =>
-    sourceLocation(line.number, line.indent + offset + 1, line.path);

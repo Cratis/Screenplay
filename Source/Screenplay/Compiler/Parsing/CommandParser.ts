@@ -21,6 +21,7 @@ const rulePattern = pattern('^([\\w.]+)\\s+(.+)$');
 const operandPattern = pattern('^(not empty|length ==|all >=|all >|matches|max|min|rule|>=|<=|==|!=|>|<)\\s*(.*)$');
 const ruleNamePattern = pattern('^[A-Za-z_]\\w*$');
 
+// Every operand the pattern matches has a kind, so an operand never goes unrecognized here.
 const operandKinds: Record<string, ValidationRuleKind> = {
     max: 'Max',
     min: 'Min',
@@ -189,11 +190,5 @@ function parseRule(context: ParserContext, rule: string, line: SourceLine): { ki
         }
         return { kind: 'Rule', value: { kind: 'PathExpressionSyntax', path: name, location: locationOf(line) } };
     }
-    const value = parseMappingSource(operand[2], locationOf(line), context);
-    const kind = operandKinds[operand[1]];
-    if (kind === undefined) {
-        context.error(DiagnosticCodes.UnknownValidationRule, `Unknown validation rule '${operand[1]}'`, locationOf(line));
-        return undefined;
-    }
-    return { kind, value };
+    return { kind: operandKinds[operand[1]], value: parseMappingSource(operand[2], locationOf(line), context) };
 }

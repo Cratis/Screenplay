@@ -90,7 +90,8 @@ function sameSource(left: TriggerSourceSyntax, right: TriggerSourceSyntax): bool
     return false;
 }
 
-// Reads a 'when', 'every' or 'at' clause - the port of the C# TriggerParser.ParseSource.
+// Reads a 'when', 'every' or 'at' clause - the port of the C# TriggerParser.ParseSource. The caller only
+// hands it a line starting with one of the three, so anything that is not 'when' or 'every' is 'at'.
 export function parseTriggerSource(context: ParserContext, line: SourceLine): TriggerSourceSyntax | undefined {
     const location = locationOf(line);
     switch (firstWord(line.content)) {
@@ -113,10 +114,8 @@ export function parseTriggerSource(context: ParserContext, line: SourceLine): Tr
             }
             return { kind: 'IntervalTriggerSourceSyntax', amount, unit: unitOf(match[2]), location };
         }
-        case 'at':
-            return parseSchedule(context, line);
         default:
-            return undefined;
+            return parseSchedule(context, line);
     }
 }
 

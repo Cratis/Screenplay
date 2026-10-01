@@ -68,7 +68,6 @@ export const DiagnosticCodes = {
     ReactionWithoutTrigger: 'PLAY0138',
     InvalidValidateDeclaration: 'PLAY0140',
     InvalidValidationRule: 'PLAY0141',
-    UnknownValidationRule: 'PLAY0142',
     InvalidRuleName: 'PLAY0143',
     InvalidDescription: 'PLAY0145',
     EmptyDescription: 'PLAY0146',
