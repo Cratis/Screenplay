@@ -32,7 +32,7 @@
         "compile": "tsc --noEmit -p tsconfig.json",
         "lint": "yarn g:lint",
         "lint:ci": "yarn g:lint:ci",
-        "test": "vitest run"
+        "test": "vitest run --coverage"
     },
     "dependencies": {
         "@cratis/screenplay-compiler": "workspace:*"
@@ -40,6 +40,7 @@
     "devDependencies": {
         "@cratis/event-models": "0.106.0",
         "@types/chai": "^5.2.3",
+        "@vitest/coverage-v8": "4.1.11",
         "ajv": "^8.17.1",
         "chai": "^6.2.2",
         "typescript": "6.0.3",

@@ -90,13 +90,13 @@ The compiler reads what an event model is made of:
 
 - the domain, imports, concepts and types
 - modules, features (nested too) and slices
-- events, read models and descriptions
+- events with their tags, read models and descriptions
 - commands with their properties and declarative `validate` rules
 - queries with their parameters
 - the events each projection block consumes
 - reaction triggers (`when`, `every`, `at`)
 - unique and file constraints
-- specifications with the values they state
+- specifications with the values they state, structured values included
 
 Everything else is recognized and skipped whole, without a diagnostic. That covers:
 
@@ -105,6 +105,8 @@ Everything else is recognized and skipped whole, without a diagnostic. That cove
 - what a command produces and its handler
 - projection keys and mappings
 - what a trigger does
+
+Inside the constructs it reads, it reports the diagnostics the C# parser reports, with the same codes, lines and order.
 
 Each node carries the members of its C# record that the compiler reads, under the same camelCase names `SyntaxJson` writes. A member it does not read is absent rather than empty, because an empty list would claim the document declared nothing there.
 
@@ -119,3 +121,7 @@ SCREENPLAY_REGENERATE_SYNTAX_VECTORS=1 yarn workspace @cratis/screenplay-compile
 ```
 
 To hold a new construct to the C# compiler, add it to `Conformance/constructs.play`, or add a document to `Conformance/manifest.json`.
+
+Invalid documents are held to the C# compiler the same way. `Conformance/diagnostics.json` lists invalid documents together with the diagnostics they must produce: the code, the line and the order. Specs on both sides hold their compiler to that list. When the TypeScript compiler starts reporting something new, add a case for it there.
+
+The compiler's specs also enforce coverage. `yarn workspace @cratis/screenplay-compiler test` fails when the share of code they exercise drops below the thresholds in its `vitest.config.mts`, so new code arrives with its specs.
