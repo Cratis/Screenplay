@@ -2,17 +2,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { useEffect, useMemo, useState } from 'react';
-import { EventModelBoard, readEventModelDocument } from '@cratis/event-models';
-import { BoardProblem, BoardToExtensionMessage, ExtensionToBoardMessage } from './BoardMessage';
+import { EventModelBoard, EventModelPresentationProvider, MenuDropdownOpenProvider, readEventModelDocument } from '@cratis/event-models';
+import { boardChrome } from './boardChrome';
+import { BoardProblem, ExtensionToBoardMessage } from './BoardMessage';
 import { Problems } from './Problems';
-
-interface VsCodeApi {
-    postMessage(message: BoardToExtensionMessage): void;
-}
-
-declare function acquireVsCodeApi(): VsCodeApi;
-
-const vscode = acquireVsCodeApi();
+import { usePresentation } from './usePresentation';
+import { ViewOptions } from './ViewOptions';
+import { vscode } from './vscodeApi';
 
 interface Board {
     readonly document: unknown;
@@ -23,6 +19,7 @@ interface Board {
 // the board keeps what it remembers - collapsed modules, the viewport - because the ids are stable.
 export const BoardApp = () => {
     const [board, setBoard] = useState<Board | undefined>();
+    const [presentation, changePresentation] = usePresentation();
 
     useEffect(() => {
         const receive = (event: MessageEvent<ExtensionToBoardMessage>) => {
@@ -56,7 +53,15 @@ export const BoardApp = () => {
             <div className='screenplay-board__canvas'>
                 {model instanceof Error
                     ? <div className='screenplay-board__message'>The board could not read this model: {model.message}</div>
-                    : <EventModelBoard document={model} readOnly />}
+                    : (
+                        <MenuDropdownOpenProvider>
+                            <EventModelPresentationProvider presentation={presentation}>
+                                <EventModelBoard document={model} readOnly canvas={{ chrome: boardChrome }} />
+                                <ViewOptions presentation={presentation} onChange={changePresentation} />
+                            </EventModelPresentationProvider>
+                        </MenuDropdownOpenProvider>
+                    )}
+                <div className='screenplay-board__watermark' role='img' aria-label='Cratis' />
             </div>
         </div>
     );

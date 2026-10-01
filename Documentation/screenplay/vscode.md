@@ -5,8 +5,30 @@ The Screenplay extension for Visual Studio Code (`cratis.screenplay`) opens a `.
 - modules and features across
 - each slice as a column holding its command, the events it produces and the read model it builds
 - the specifications of each slice beneath it
+- the screens of each slice, drawn as a prototype in the **User** row above it
 
 The text stays the source of truth. The board redraws as you edit, and the language support (highlighting, completion, hover and diagnostics) is one click away.
+
+## Screens
+
+Each slice that declares [screens](screens.md) gets a prototype in the board's **User** row. The prototype is a sketch of what the screen holds, laid out top to bottom:
+
+- titles
+- actions, side by side
+- tables, summaries and inline code
+- the slots of a template, the header and footer spanning and the others side by side
+
+Data a table or summary presents is not drawn twice. A screen implemented in a file is drawn as one content area. The User row appears only when the model has a screen.
+
+## View options
+
+The **View** button in the upper right of the board offers the view options Cratis Studio has:
+
+- **Detail level**: **Full** draws each slice whole. **Overview** leaves out the specifications and the properties.
+- **Properties** shows the properties of commands, events and read models.
+- **Visualization**: **Arrows** connects slices with arrows, **Lines** with lines.
+
+The choice is kept while the board is open.
 
 ## Move between the board and the text
 
