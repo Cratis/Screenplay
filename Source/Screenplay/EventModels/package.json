@@ -1,6 +1,7 @@
 {
     "name": "@cratis/screenplay-event-models",
     "version": "0.0.0",
+    "private": true,
     "description": "Turns a compiled Cratis Screenplay application into the document the Cratis event model board (@cratis/event-models) draws",
     "keywords": [
         "cratis",
@@ -17,9 +18,6 @@
     "main": "./dist/index.js",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
-    "publishConfig": {
-        "access": "public"
-    },
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
