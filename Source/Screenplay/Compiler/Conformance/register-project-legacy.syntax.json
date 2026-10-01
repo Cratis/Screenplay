@@ -1,0 +1,338 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "ProjectId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "ProjectName",
+      "type": "String",
+      "values": []
+    }
+  ],
+  "domain": null,
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "description": null,
+          "features": [],
+          "name": "Registration",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "description": null,
+                  "name": "RegisterProject",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": true,
+                      "name": "projectId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ProjectId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ProjectName"
+                      }
+                    }
+                  ],
+                  "validations": [
+                    {
+                      "kind": "DeclarativeValidateSyntax",
+                      "rules": [
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "message": "Project name is required",
+                          "property": "name",
+                          "rule": "NotEmpty",
+                          "severity": "Error",
+                          "value": null
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "name": "ProjectRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "projectId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ProjectId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ProjectName"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "name": "RegisterProject",
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenReadModels": [],
+                  "name": "RegisteringAProject",
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "ProjectRegistered",
+                      "for": null,
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "projectId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Screenplay"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "ProjectSummary",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "projectId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Screenplay"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RegisterProject",
+                    "for": null,
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "projectId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "name",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Screenplay"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenReadModels": [],
+                  "name": "RejectingAnEmptyProjectName",
+                  "thenErrors": [
+                    {
+                      "kind": "SpecificationErrorSyntax",
+                      "name": "Project name is required"
+                    }
+                  ],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenReadModels": [],
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RegisterProject",
+                    "for": null,
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "projectId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "name",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": ""
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "ProjectLookup",
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "ProjectRegistered"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "ProjectSummaryProjection",
+                  "readModel": "ProjectSummary",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "projectId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "ProjectId"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "ProjectById",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "ProjectSummary"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "ProjectSummary",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "projectId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ProjectId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "ProjectName"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "specifications": [],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "name": "Projects"
+    }
+  ],
+  "types": []
+}
