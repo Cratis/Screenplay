@@ -5,7 +5,7 @@ const wordCharacters = '\\p{L}\\p{Mn}\\p{Nd}\\p{Pc}';
 
 // Builds a regular expression from a pattern written the way the C# parser writes it. In .NET '\w' is a
 // Unicode word character; in JavaScript it is ASCII only, so it is rewritten to the same Unicode classes
-// and the expression runs in Unicode mode. Copying a C# pattern verbatim therefore keeps its meaning.
+// and the expression runs in Unicode mode. '\d' is likewise any Unicode decimal digit. Copying a C# pattern verbatim therefore keeps its meaning.
 export function pattern(source: string): RegExp {
     let result = '';
     let inClass = false;
@@ -16,6 +16,8 @@ export function pattern(source: string): RegExp {
             index++;
             if (next === 'w') {
                 result += inClass ? wordCharacters : `[${wordCharacters}]`;
+            } else if (next === 'd') {
+                result += '\\p{Nd}';
             } else {
                 result += `\\${next}`;
             }

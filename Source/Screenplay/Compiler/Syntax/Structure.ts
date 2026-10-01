@@ -1,7 +1,12 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { CommandSyntax } from './Commands';
+import { ConstraintSyntax } from './Constraints';
 import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, ReadModelSyntax, TypeSyntax } from './Declarations';
+import { ProjectionSyntax } from './Projections';
+import { QuerySyntax } from './Queries';
+import { ReactionSyntax } from './Reactions';
 import { SyntaxNode } from './SyntaxNode';
 
 // The four kinds of slice. The names are the C# SliceType members, which is also how SyntaxJson writes them.
@@ -15,6 +20,11 @@ export interface SliceSyntax extends SyntaxNode {
     readonly name: string;
     readonly description: string | null;
     readonly events: readonly EventSyntax[];
+    readonly commands: readonly CommandSyntax[];
+    readonly queries: readonly QuerySyntax[];
+    readonly projections: readonly ProjectionSyntax[];
+    readonly reactions: readonly ReactionSyntax[];
+    readonly constraints: readonly ConstraintSyntax[];
     readonly readModels: readonly ReadModelSyntax[];
 }
 
