@@ -51,3 +51,24 @@ describe('when walking every construct', () => {
         Object.fromEntries([...walked].sort()).should.deep.equal(Object.fromEntries([...inTree].sort()));
     });
 });
+
+// The invoicing sample holds what the construct corpus cannot - a capture, which the C# semantic model
+// does not bind yet - so it is walked as well.
+describe('when walking the invoicing sample', () => {
+    let walked: Map<string, number>;
+    let inTree: Map<string, number>;
+
+    beforeAll(() => {
+        const application = parse(readFileSync(resolve(__dirname, '../../../Monaco/screenplay-editor/samples/invoicing.play'), 'utf8')).value;
+        const counter = new KindCounter();
+        counter.visitApplication(application);
+        walked = counter.kinds;
+        inTree = kindsIn(toSyntaxJson(application));
+    });
+
+    it('should find a capture to walk', () => (inTree.get('CaptureSyntax') ?? 0).should.be.greaterThan(0));
+
+    it('should visit every node of every kind once', () => {
+        Object.fromEntries([...walked].sort()).should.deep.equal(Object.fromEntries([...inTree].sort()));
+    });
+});

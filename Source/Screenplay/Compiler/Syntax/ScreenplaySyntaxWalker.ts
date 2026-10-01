@@ -1,13 +1,14 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { CaptureAppendSyntax, CaptureChildrenSyntax, CaptureNestedSyntax, CaptureSourceSettingSyntax, CaptureSourceSyntax, CaptureSyntax } from './Captures';
 import { CommandSyntax, ValidateSyntax, ValidationRuleSyntax } from './Commands';
 import { ConstraintSyntax } from './Constraints';
 import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, PropertySyntax, ReadModelSyntax, TagSyntax, TypeRefSyntax, TypeSyntax } from './Declarations';
 import { ExpressionSyntax, ObjectMemberSyntax, PropertyMappingSyntax } from './Expressions';
 import { ProjectionBlockSyntax, ProjectionSyntax } from './Projections';
 import { QueryParameterSyntax, QuerySyntax } from './Queries';
-import { ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
+import { InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
 import { ScreenDirectiveSyntax, ScreenSyntax } from './Screens';
 import { SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationReadModelSyntax, SpecificationSyntax } from './Specifications';
 import { ApplicationSyntax, FeatureSyntax, ModuleSyntax, SliceSyntax } from './Structure';
@@ -65,6 +66,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.queries.forEach(node => this.visitQuery(node));
         syntax.projections.forEach(node => this.visitProjection(node));
         syntax.readModels.forEach(node => this.visitReadModel(node));
+        syntax.captures.forEach(node => this.visitCapture(node));
         syntax.reactions.forEach(node => this.visitReaction(node));
         syntax.screens.forEach(node => this.visitScreen(node));
         syntax.specifications.forEach(node => this.visitSpecification(node));
@@ -153,6 +155,47 @@ export abstract class ScreenplaySyntaxWalker {
     visitReactionTrigger(syntax: ReactionTriggerSyntax): void {
         this.visitNode(syntax);
         this.visitTriggerSource(syntax.source);
+        syntax.produces.forEach(node => this.visitProduces(node));
+        syntax.invokes.forEach(node => this.visitInvokes(node));
+    }
+
+    visitProduces(syntax: ProducesSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitInvokes(syntax: InvokesSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitCapture(syntax: CaptureSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.source !== null) this.visitCaptureSource(syntax.source);
+        syntax.appends.forEach(node => this.visitCaptureAppend(node));
+        syntax.children.forEach(node => this.visitCaptureChildren(node));
+        syntax.nested.forEach(node => this.visitCaptureNested(node));
+    }
+
+    visitCaptureSource(syntax: CaptureSourceSyntax): void {
+        this.visitNode(syntax);
+        syntax.settings.forEach(node => this.visitCaptureSourceSetting(node));
+    }
+
+    visitCaptureSourceSetting(syntax: CaptureSourceSettingSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitCaptureAppend(syntax: CaptureAppendSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitCaptureChildren(syntax: CaptureChildrenSyntax): void {
+        this.visitNode(syntax);
+        syntax.appends.forEach(node => this.visitCaptureAppend(node));
+    }
+
+    visitCaptureNested(syntax: CaptureNestedSyntax): void {
+        this.visitNode(syntax);
+        syntax.appends.forEach(node => this.visitCaptureAppend(node));
     }
 
     visitTriggerSource(syntax: TriggerSourceSyntax): void {

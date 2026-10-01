@@ -31,6 +31,7 @@
           "slices": [
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [
                 {
                   "kind": "CommandSyntax",
@@ -245,6 +246,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { CaptureSyntax } from '../Syntax/Captures';
 import { CommandSyntax } from '../Syntax/Commands';
 import { ConstraintSyntax } from '../Syntax/Constraints';
 import { EventSyntax, ReadModelSyntax } from '../Syntax/Declarations';
@@ -12,6 +13,7 @@ import { ScreenSyntax } from '../Syntax/Screens';
 import { SpecificationSyntax } from '../Syntax/Specifications';
 import { SliceSyntax, SliceType, sliceTypes } from '../Syntax/Structure';
 import { pattern } from '../Text/patterns';
+import { parseCapture } from './CaptureParser';
 import { parseCommand } from './CommandParser';
 import { parseConstraint } from './ConstraintParser';
 import { parseEvent, parseReadModel } from './DeclarationParsers';
@@ -30,7 +32,7 @@ const header = pattern('^slice\\s+([A-Za-z]\\w*)\\s+([A-Za-z_]\\w*)$');
 
 // Slice members the C# compiler knows that this compiler does not model yet. They are skipped whole rather
 // than reported - the C# compiler and the editor diagnostics remain the authority on whether they are valid.
-const opaqueMembers = new Set(['capture', 'reducer']);
+const opaqueMembers = new Set(['reducer']);
 
 export function parseSlice(context: ParserContext, line: SourceLine): SliceSyntax {
     const match = header.exec(line.content);
@@ -52,6 +54,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     const queries: QuerySyntax[] = [];
     const projections: ProjectionSyntax[] = [];
     const reactions: ReactionSyntax[] = [];
+    const captures: CaptureSyntax[] = [];
     const constraints: ConstraintSyntax[] = [];
     const specifications: SpecificationSyntax[] = [];
     const readModels: ReadModelSyntax[] = [];
@@ -72,6 +75,8 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
             queries.push(parseQuery(context, child));
         } else if (keyword === 'projection') {
             projections.push(parseProjection(context, child));
+        } else if (keyword === 'capture') {
+            captures.push(parseCapture(context, child));
         } else if (keyword === 'reaction') {
             reactions.push(parseReaction(context, child));
         } else if (keyword === 'constraint') {
@@ -90,7 +95,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
         }
     }
     return {
-        kind: 'SliceSyntax', type, name, description, events, commands, queries, projections, reactions, constraints, specifications, readModels, screens,
+        kind: 'SliceSyntax', type, name, description, events, commands, queries, projections, captures, reactions, constraints, specifications, readModels, screens,
         location: locationOf(line),
     };
 }

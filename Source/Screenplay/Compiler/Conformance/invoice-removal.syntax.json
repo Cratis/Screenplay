@@ -16,6 +16,7 @@
           "slices": [
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,

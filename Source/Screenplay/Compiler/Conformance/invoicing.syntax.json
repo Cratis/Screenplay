@@ -172,6 +172,7 @@
               "slices": [
                 {
                   "kind": "SliceSyntax",
+                  "captures": [],
                   "commands": [
                     {
                       "kind": "CommandSyntax",
@@ -362,6 +363,7 @@
                 },
                 {
                   "kind": "SliceSyntax",
+                  "captures": [],
                   "commands": [
                     {
                       "kind": "CommandSyntax",
@@ -565,6 +567,7 @@
           "slices": [
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [
                 {
                   "kind": "CommandSyntax",
@@ -1322,6 +1325,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [
                 {
                   "kind": "CommandSyntax",
@@ -1533,6 +1537,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [
                 {
                   "kind": "CommandSyntax",
@@ -1866,6 +1871,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [
                 {
                   "kind": "CommandSyntax",
@@ -2030,6 +2036,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [
                 {
                   "kind": "CommandSyntax",
@@ -2082,6 +2089,85 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [
+                {
+                  "kind": "CaptureSyntax",
+                  "appends": [
+                    {
+                      "kind": "CaptureAppendSyntax",
+                      "event": "InvoiceStatusChanged"
+                    },
+                    {
+                      "kind": "CaptureAppendSyntax",
+                      "event": "InvoicePaidFromSent"
+                    },
+                    {
+                      "kind": "CaptureAppendSyntax",
+                      "event": "InvoiceNeedsAttention"
+                    },
+                    {
+                      "kind": "CaptureAppendSyntax",
+                      "event": "InvoiceFullyApproved"
+                    },
+                    {
+                      "kind": "CaptureAppendSyntax",
+                      "event": "InvoiceFlagged"
+                    }
+                  ],
+                  "children": [
+                    {
+                      "kind": "CaptureChildrenSyntax",
+                      "appends": [
+                        {
+                          "kind": "CaptureAppendSyntax",
+                          "event": "InvoiceLineItemAdded"
+                        },
+                        {
+                          "kind": "CaptureAppendSyntax",
+                          "event": "InvoiceLineItemRemoved"
+                        }
+                      ],
+                      "identifiedBy": "lineNumber",
+                      "property": "lineItems"
+                    }
+                  ],
+                  "key": "id",
+                  "name": "LegacyInvoiceCapture",
+                  "nested": [
+                    {
+                      "kind": "CaptureNestedSyntax",
+                      "appends": [
+                        {
+                          "kind": "CaptureAppendSyntax",
+                          "event": "BillingContactUpdated"
+                        }
+                      ],
+                      "property": "billingContact"
+                    }
+                  ],
+                  "source": {
+                    "kind": "CaptureSourceSyntax",
+                    "settings": [
+                      {
+                        "kind": "CaptureSourceSettingSyntax",
+                        "name": "api",
+                        "value": "LegacyInvoicingApi"
+                      },
+                      {
+                        "kind": "CaptureSourceSettingSyntax",
+                        "name": "route",
+                        "value": "/invoices"
+                      },
+                      {
+                        "kind": "CaptureSourceSettingSyntax",
+                        "name": "poll",
+                        "value": "5m"
+                      }
+                    ],
+                    "syntaxKind": "api"
+                  }
+                }
+              ],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -2304,6 +2390,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -2641,6 +2728,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -3137,6 +3225,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -3255,6 +3344,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": "Archive of cancelled invoices - every property auto-maps from the event",
@@ -3367,6 +3457,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -3775,6 +3866,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": "Counts every event in the system for the activity ticker",
@@ -3848,6 +3940,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -3864,6 +3957,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "NamedTriggerSourceSyntax",
                         "name": "InvoiceRegistered"
@@ -3879,6 +3974,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -3895,6 +3991,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "NamedTriggerSourceSyntax",
                         "name": "InvoiceRegistered"
@@ -3903,6 +4001,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "NamedTriggerSourceSyntax",
                         "name": "InvoiceSent"
@@ -3918,6 +4018,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": "Described before any of it is implemented - no 'file' anywhere",
@@ -3934,6 +4035,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "NamedTriggerSourceSyntax",
                         "name": "InvoicePaid"
@@ -3942,6 +4045,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": "Re-checks whether a late payment has since arrived",
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "NamedTriggerSourceSyntax",
                         "name": "InvoiceMarkedOverdue"
@@ -3957,6 +4062,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": "Driven by the clock rather than by an event",
@@ -3973,6 +4079,13 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "InvoiceMarkedOverdue"
+                        }
+                      ],
                       "source": {
                         "kind": "ScheduleTriggerSourceSyntax",
                         "dayOfMonth": null,
@@ -3990,6 +4103,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -4006,6 +4120,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "IntervalTriggerSourceSyntax",
                         "amount": 15,
@@ -4015,6 +4131,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "NamedTriggerSourceSyntax",
                         "name": "DirectoryChanged"

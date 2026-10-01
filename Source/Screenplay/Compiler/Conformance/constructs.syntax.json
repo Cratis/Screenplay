@@ -60,6 +60,7 @@
               "slices": [
                 {
                   "kind": "SliceSyntax",
+                  "captures": [],
                   "commands": [
                     {
                       "kind": "CommandSyntax",
@@ -132,6 +133,7 @@
           "slices": [
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [
                 {
                   "kind": "CommandSyntax",
@@ -627,6 +629,7 @@
           "slices": [
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -1007,6 +1010,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -1023,6 +1027,13 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": "Right after registering",
+                      "invokes": [
+                        {
+                          "kind": "InvokesSyntax",
+                          "command": "SendWelcome"
+                        }
+                      ],
+                      "produces": [],
                       "source": {
                         "kind": "NamedTriggerSourceSyntax",
                         "name": "CustomerRegistered"
@@ -1031,6 +1042,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "IntervalTriggerSourceSyntax",
                         "amount": 2,
@@ -1040,6 +1053,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "ScheduleTriggerSourceSyntax",
                         "dayOfMonth": null,
@@ -1050,6 +1065,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "ScheduleTriggerSourceSyntax",
                         "dayOfMonth": 15,
@@ -1067,6 +1084,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -1083,6 +1101,13 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "CustomerMirrored"
+                        }
+                      ],
                       "source": {
                         "kind": "NamedTriggerSourceSyntax",
                         "name": "CustomerRegistered"
