@@ -6,14 +6,17 @@ import { defaultDetailsVisibilityState, EventModelPresentation } from '@cratis/e
 import type { BoardViewOptions, ExtensionToBoardMessage } from './BoardMessage';
 import { vscode } from './vscodeApi';
 
-// How the board is first shown: what Cratis Studio starts from.
+// How the board is first shown: what Cratis Studio starts from - without statuses, which a model drawn
+// from its text has nothing to provide.
 export const defaultPresentation: EventModelPresentation = {
     detailLevel: 'full',
     visualizationMode: 'simplified',
     detailsVisibility: defaultDetailsVisibilityState,
+    showStatuses: false,
 };
 
 const toPresentation = (options: BoardViewOptions): EventModelPresentation => ({
+    ...defaultPresentation,
     detailLevel: options.detailLevel,
     visualizationMode: options.visualizationMode,
     detailsVisibility: { ...defaultDetailsVisibilityState, global: options.showProperties },
