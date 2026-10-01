@@ -3,6 +3,7 @@
 
 import { describe, beforeAll, it } from 'vitest';
 import { EventModelDocument, SliceType } from '../../Document/EventModelDocument';
+import { userActor } from '../../Prototypes/toUserExperience';
 import { ids_in, problems_the_board_finds_in } from './given/the_board_schema';
 import { slice_named, the_constructs_document } from './given/the_constructs_document';
 
@@ -28,6 +29,12 @@ describe('when mapping every construct', () => {
     it('should give every element its own id', () => {
         const ids = ids_in(document);
         new Set(ids).size.should.equal(ids.length);
+    });
+
+    it('should draw the screens for the user', () => {
+        document.collections[0].actors.should.deep.equal([userActor]);
+        slice_named(document, 'CustomerList').actors.map(actor => [actor.id, actor.elements.length > 0]).should.deep.equal([[userActor.id, true]]);
+        slice_named(document, 'Register').actors.should.deep.equal([]);
     });
 
     it('should map the slice types', () => {

@@ -6,6 +6,7 @@ import { EventModelDocument, FeatureDocument, ModuleDocument } from '../Document
 import { guidFor } from '../Document/identity';
 import { SchemaSynthesizer } from '../Schemas/SchemaSynthesizer';
 import { EventOwners } from './EventOwners';
+import { userActor } from '../Prototypes/toUserExperience';
 import { SliceScope } from './SliceScope';
 import { toSlice } from './toSlice';
 
@@ -28,7 +29,7 @@ export class EventModelDocumentVisitor implements ApplicationSyntaxVisitor<Event
                 id: guidFor(`collection:${this.name}`),
                 position: collectionPosition,
                 modules: syntax.modules.map((module, index) => toModule(module, index, owners)),
-                actors: [],
+                actors: hasScreens(syntax.modules) ? [userActor] : [],
             }],
             stickyNotes: [],
             links: [],
@@ -39,6 +40,13 @@ export class EventModelDocumentVisitor implements ApplicationSyntaxVisitor<Event
 // Compiles nothing - it takes an application already parsed - and returns the board's document for it.
 export function toEventModelDocument(application: ApplicationSyntax, name: string): EventModelDocument {
     return new EventModelDocumentVisitor(name).visit(application);
+}
+
+// The board only draws a row of prototypes for a UI role, so the user is only there when there is a screen.
+function hasScreens(modules: readonly ModuleSyntax[]): boolean {
+    const inFeature = (feature: FeatureSyntax): boolean =>
+        feature.slices.some(slice => slice.screens.length > 0) || feature.features.some(inFeature);
+    return modules.some(module => module.features.some(inFeature));
 }
 
 function toModule(module: ModuleSyntax, sortOrder: number, owners: EventOwners): ModuleDocument {
