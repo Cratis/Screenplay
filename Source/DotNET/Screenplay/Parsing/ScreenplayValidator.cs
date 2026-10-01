@@ -110,9 +110,11 @@ internal static class ScreenplayValidator
             .GroupBy(@event => @event.Name, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.OrderByDescending(@event => @event.Generation).First(), StringComparer.Ordinal);
 
+        var eventDeclarations = slices.SelectMany(slice => slice.Events).ToLookup(@event => @event.Name, StringComparer.Ordinal);
         foreach (var slice in slices)
         {
             ValidateEventGenerations(slice, context);
+            ValidateConstraintProperties(slice, eventDeclarations, context);
             ValidateSlice(slice, knownEvents, knownPolicies, knownTypes, knownReadModels, context);
             ValidateReactionConsequences(slice, knownEvents, knownCommands, context);
             ValidateReactionTriggers(slice, knownEvents, knownReadModels, declaredTriggers, eventsByName, context);
@@ -1376,6 +1378,32 @@ internal static class ScreenplayValidator
             if (directive is ScreenTableSyntax { RowClick: { } onRowClick })
             {
                 yield return onRowClick;
+            }
+        }
+    }
+
+    // A unique constraint names properties the event declares directly. An event that is not declared here is
+    // left to the unknown event check (an imported one has no properties to compare with), a property path is
+    // left to the binder, and a property that only an earlier generation declares is left to the binder too,
+    // which names the revision it was removed in.
+    static void ValidateConstraintProperties(SliceSyntax slice, ILookup<string, EventSyntax> eventDeclarations, ParserContext context)
+    {
+        foreach (var rule in slice.Constraints.SelectMany(constraint => new[] { constraint }.Concat(constraint.AdditionalRules)).OfType<UniquePropertyConstraintSyntax>())
+        {
+            var declarations = eventDeclarations[rule.Event].ToArray();
+            if (declarations.Length == 0)
+            {
+                continue;
+            }
+
+            foreach (var property in new[] { rule.Property }.Concat(rule.AdditionalProperties)
+                .Where(property => !property.Contains('.', StringComparison.Ordinal) &&
+                    !declarations.Any(declaration => declaration.Properties.Any(declared => declared.Name == property))))
+            {
+                context.Error(
+                    DiagnosticCodes.UnknownConstraintProperty,
+                    $"Constraint '{rule.Name}' names property '{property}', which event '{rule.Event}' does not declare.",
+                    rule.Location);
             }
         }
     }
