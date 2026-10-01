@@ -55,8 +55,8 @@ describe('when parsing the canonical folder', () => {
         folder.diagnostics.should.deep.equal([]);
     });
 
+    it('should merge into the same syntax as the single document', () => {
         (slicesByName(toSyntaxJson(folder.value)) as object).should.deep.equal(slicesByName(toSyntaxJson(single.value)));
-        slicesByName(toSyntaxJson(folder.value)).should.deep.equal(slicesByName(toSyntaxJson(single.value)));
     });
 
     it('should keep where each slice came from, in folder order', () => {
