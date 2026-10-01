@@ -35,19 +35,13 @@ jobs:
       - name: Yarn install
         run: yarn
 
-      # The packages are built in dependency order: the event model mapping reads the compiler's syntax,
-      # and the extension bundles all three packages.
-      - name: Build compiler
-        run: yarn workspace @cratis/screenplay-compiler build
+      # The root scripts run every workspace in dependency order, so a workspace that stops building fails
+      # here rather than on the first merge that publishes.
+      - name: Build
+        run: yarn build
 
-      - name: Build event model mapping
-        run: yarn workspace @cratis/screenplay-event-models build
-
-      - name: Build language service
-        run: yarn workspace @cratis/screenplay-language build
-
-      - name: Build extension
-        run: yarn workspace screenplay build
+      - name: Compile
+        run: yarn compile
 
       - name: Lint
         run: yarn lint:ci

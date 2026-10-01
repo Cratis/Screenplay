@@ -8,7 +8,7 @@ import { completionEntriesFor } from '../completion-planner';
 describe('when completing a keyed absence assertion', () => {
     it('should offer the entire keyed form without child mappings', () => {
         const entry = completionEntriesFor(['specification']).find(item => item.label === 'then no readmodel');
-        entry.should.not.be.undefined;
+        (entry !== undefined).should.be.true;
         entry!.insertText.should.equal('then no readmodel ${1:ReadModelType} for ${2:key}');
     });
 });
