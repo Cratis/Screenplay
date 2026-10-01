@@ -10,7 +10,7 @@ export type JsonSchemaObject = Record<string, unknown>;
 export const SliceType = { stateChange: 0, stateView: 1, automation: 2, translator: 3 } as const;
 export const SliceStatus = { notStarted: 0 } as const;
 export const AutomationTriggerType = { timer: 0, event: 1, custom: 2, none: 3 } as const;
-export const ActorType = { uiRole: 0 } as const;
+export const ActorType = { uiRole: 0, systemRole: 1 } as const;
 export const PrototypeLayout = { absolute: 0 } as const;
 export const PrototypeVisibility = { visible: 0 } as const;
 export const PrototypeAnchoring = { none: 0 } as const;
@@ -95,13 +95,19 @@ export interface SliceDocument {
     sortOrder: number;
     command?: CommandItemDocument;
     readModel?: ReadModelItemDocument;
-    externalEvents: [];
+    externalEvents: ExternalEventItemDocument[];
     events: EventItemDocument[];
     queries: QueryItemDocument[];
     actors: UserExperienceActorDocument[];
     automationTrigger?: AutomationTriggerDocument;
     specifications: SliceSpecificationDocument[];
     commentCount: number;
+}
+
+// Something from outside the model a translation turns into events - for a capture, the system it reads.
+export interface ExternalEventItemDocument {
+    id: string;
+    name: string;
 }
 
 export interface EventConstraintDocument {

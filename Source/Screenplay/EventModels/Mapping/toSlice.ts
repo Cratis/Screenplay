@@ -1,15 +1,17 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { ConstraintSyntax, QueryParameterSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
+import { CommandSyntax, ConstraintSyntax, QueryParameterSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
 import {
-    EventItemDocument, QueryItemDocument, QueryParameterType, ReadModelItemDocument, SliceDocument, SliceStatus, SliceType,
+    CommandItemDocument, EventItemDocument, QueryItemDocument, QueryParameterType, ReadModelItemDocument, SliceDocument, SliceStatus, SliceType,
 } from '../Document/EventModelDocument';
 import { toUserExperience } from '../Prototypes/toUserExperience';
 import { consumedEvents } from './consumedEvents';
 import { EventOwners } from './EventOwners';
+import { producedEvents } from './producedEvents';
 import { SliceScope } from './SliceScope';
 import { toAutomationTrigger } from './toAutomationTrigger';
+import { toCaptureSource, toCaptureTrigger } from './toCaptureSource';
 import { toCommand } from './toCommand';
 import { toSpecifications } from './toSpecifications';
 
@@ -21,12 +23,13 @@ const sliceTypes: Record<SliceSyntax['type'], number> = {
 };
 
 // One slice as the board draws it - the port of Studio's SliceSyntaxVisitor. A State View has no command
-// and shows its read model; every slice that is not a State Change also shows the events it consumes,
-// pointing back at the slice that produces each.
+// and shows its read model; every slice that is not a State Change also shows the events it produces through
+// its reactions and captures, and the events it consumes, pointing back at the slice that produces each. An
+// automation shows the command it invokes, and a translation what its captures read.
 export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number, owners: EventOwners): SliceDocument {
     const sliceType = sliceTypes[slice.type];
     const isStateView = slice.type === 'StateView';
-    const command = isStateView || slice.commands.length === 0 ? undefined : toCommand(slice.commands[0], scope, owners.schemas);
+    const command = isStateView ? undefined : commandOf(slice, scope, owners);
     const document: SliceDocument = {
         id: scope.id,
         name: slice.name,
@@ -35,7 +38,7 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
         status: SliceStatus.notStarted,
         collapsed: false,
         sortOrder,
-        externalEvents: [],
+        externalEvents: slice.captures.map(capture => toCaptureSource(capture, scope)),
         events: eventsOf(slice, scope, owners),
         queries: slice.queries.map(query => ({
             id: scope.idOf('query', query.name),
@@ -53,7 +56,9 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
     if (readModel !== undefined) {
         document.readModel = readModel;
     }
-    const trigger = slice.type === 'Automation' || slice.type === 'Translate' ? toAutomationTrigger(slice.reactions, owners) : undefined;
+    const trigger = slice.type === 'Automation' || slice.type === 'Translate'
+        ? toAutomationTrigger(slice.reactions, owners) ?? (slice.captures.length > 0 ? toCaptureTrigger(slice.captures[0]) : undefined)
+        : undefined;
     if (trigger !== undefined) {
         document.automationTrigger = trigger;
     }
@@ -70,12 +75,32 @@ function eventsOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): E
         return declared;
     }
     const declaredNames = new Set(declared.map(event => event.name.toLowerCase()));
+    const produced = producedEvents(slice).filter(name => !declaredNames.has(name.toLowerCase())).map(name => {
+        declaredNames.add(name.toLowerCase());
+        return { id: scope.idOf('produces', name), name, schema: owners.schemaFor(name) } satisfies EventItemDocument;
+    });
     const consumed = consumedEvents(slice).filter(name => !declaredNames.has(name.toLowerCase())).map(name => {
         const producer = owners.idFor(name);
         const event: EventItemDocument = { id: scope.idOf('consumes', name), name, schema: owners.schemaFor(name) };
         return producer === undefined ? event : { ...event, sourceEventId: producer };
     });
-    return [...declared, ...consumed];
+    return [...declared, ...produced, ...consumed];
+}
+
+// The slice's own command, else - for an automation - the first command its reactions invoke, shaped by
+// its declaration when the model has one.
+function commandOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): CommandItemDocument | undefined {
+    if (slice.commands.length > 0) {
+        return toCommand(slice.commands[0], scope, owners.schemas);
+    }
+    const invoked = slice.reactions.flatMap(reaction => reaction.triggers).flatMap(trigger => trigger.invokes)[0];
+    if (invoked === undefined) {
+        return undefined;
+    }
+    const declared: CommandSyntax | undefined = owners.commandNamed(invoked.command);
+    return declared === undefined
+        ? { id: scope.idOf('command', invoked.command), name: invoked.command, schema: {}, stateSchema: {}, logicDescription: '', rules: [] }
+        : toCommand(declared, scope, owners.schemas);
 }
 
 function withConstraints(event: EventItemDocument, constraints: readonly ConstraintSyntax[]): EventItemDocument {

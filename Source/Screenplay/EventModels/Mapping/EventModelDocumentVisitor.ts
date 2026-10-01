@@ -8,6 +8,7 @@ import { SchemaSynthesizer } from '../Schemas/SchemaSynthesizer';
 import { EventOwners } from './EventOwners';
 import { userActor } from '../Prototypes/toUserExperience';
 import { SliceScope } from './SliceScope';
+import { systemActor } from './systemActor';
 import { toSlice } from './toSlice';
 
 // Where the board places the one collection a Screenplay document becomes - the origin Studio's import uses.
@@ -29,7 +30,7 @@ export class EventModelDocumentVisitor implements ApplicationSyntaxVisitor<Event
                 id: guidFor(`collection:${this.name}`),
                 position: collectionPosition,
                 modules: syntax.modules.map((module, index) => toModule(module, index, owners)),
-                actors: hasScreens(syntax.modules) ? [userActor] : [],
+                actors: [...(hasScreens(syntax.modules) ? [userActor] : []), ...(hasSystemSlices(syntax.modules) ? [systemActor] : [])],
             }],
             stickyNotes: [],
             links: [],
@@ -46,6 +47,13 @@ export function toEventModelDocument(application: ApplicationSyntax, name: strin
 function hasScreens(modules: readonly ModuleSyntax[]): boolean {
     const inFeature = (feature: FeatureSyntax): boolean =>
         feature.slices.some(slice => slice.screens.length > 0) || feature.features.some(inFeature);
+    return modules.some(module => module.features.some(inFeature));
+}
+
+// The system acts in automations and translations; without one there is no row for it.
+function hasSystemSlices(modules: readonly ModuleSyntax[]): boolean {
+    const inFeature = (feature: FeatureSyntax): boolean =>
+        feature.slices.some(slice => slice.type === 'Automation' || slice.type === 'Translate') || feature.features.some(inFeature);
     return modules.some(module => module.features.some(inFeature));
 }
 

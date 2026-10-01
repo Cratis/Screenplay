@@ -5,6 +5,7 @@ import { describe, beforeAll, it } from 'vitest';
 import { parse } from '@cratis/screenplay-compiler';
 import { EventModelDocument } from '../../Document/EventModelDocument';
 import { toEventModelDocument } from '../EventModelDocumentVisitor';
+import { systemActor } from '../systemActor';
 import { problems_the_board_finds_in } from './given/the_board_schema';
 import { slice_named } from './given/the_constructs_document';
 
@@ -46,7 +47,7 @@ describe('when mapping slices without their parts', () => {
         [slice_named(document, 'Bare').command!.schema, slice_named(document, 'Bare').events[0].schema].should.deep.equal([{}, {}]);
     });
 
-    it('should leave out the user when there are no screens to show', () => document.collections[0].actors.should.deep.equal([]));
+    it('should leave out the user when there are no screens to show', () => document.collections[0].actors.should.deep.equal([systemActor]));
 });
 
 describe('when mapping an application without modules', () => {

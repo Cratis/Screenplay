@@ -32,7 +32,7 @@ describe('when mapping every construct', () => {
     });
 
     it('should draw the screens for the user', () => {
-        document.collections[0].actors.should.deep.equal([userActor]);
+        document.collections[0].actors[0].should.deep.equal(userActor);
         slice_named(document, 'CustomerList').actors.map(actor => [actor.id, actor.elements.length > 0]).should.deep.equal([[userActor.id, true]]);
         slice_named(document, 'Register').actors.should.deep.equal([]);
     });
