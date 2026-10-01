@@ -4,3 +4,4 @@
 export * from './Diagnostics';
 export * from './Syntax';
 export * from './ScreenplayCompiler';
+export * from './Files/PlayFolderMerge';
