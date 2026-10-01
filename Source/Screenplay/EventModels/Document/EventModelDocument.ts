@@ -10,6 +10,10 @@ export type JsonSchemaObject = Record<string, unknown>;
 export const SliceType = { stateChange: 0, stateView: 1, automation: 2, translator: 3 } as const;
 export const SliceStatus = { notStarted: 0 } as const;
 export const AutomationTriggerType = { timer: 0, event: 1, custom: 2, none: 3 } as const;
+export const ActorType = { uiRole: 0 } as const;
+export const PrototypeLayout = { absolute: 0 } as const;
+export const PrototypeVisibility = { visible: 0 } as const;
+export const PrototypeAnchoring = { none: 0 } as const;
 export const QueryParameterType = { text: 0, number: 1, boolean: 2, date: 3, time: 4, uniqueId: 5 } as const;
 
 export interface EventModelDocument {
@@ -24,7 +28,41 @@ export interface ModuleCollectionDocument {
     id: string;
     position: { x: number; y: number };
     modules: ModuleDocument[];
-    actors: [];
+    actors: ActorDocument[];
+}
+
+// Someone the model is drawn for. A UI role gets a row of prototypes on the board.
+export interface ActorDocument {
+    id: string;
+    name: string;
+    actorType: number;
+    description: string;
+}
+
+// What a UI role sees in one slice - the screens drawn as prototype elements (@cratis/scene UIElement data).
+export interface UserExperienceActorDocument {
+    id: string;
+    type: number;
+    elements: PrototypeElementDocument[];
+    layout: number;
+    windowWidth: number;
+    windowHeight: number;
+}
+
+// One element of a prototype. 'type' is the placeholder the board draws it as when no component library
+// is registered to render it - a button, a data table, a panel.
+export interface PrototypeElementDocument {
+    id: string;
+    name: string;
+    type: string;
+    width: number;
+    height: number;
+    ZIndex: number;
+    visibility: number;
+    isEnabled: boolean;
+    opacity: number;
+    anchoring: number;
+    properties: { canvas: { x: number; y: number } };
 }
 
 export interface ModuleDocument {
@@ -60,7 +98,7 @@ export interface SliceDocument {
     externalEvents: [];
     events: EventItemDocument[];
     queries: QueryItemDocument[];
-    actors: [];
+    actors: UserExperienceActorDocument[];
     automationTrigger?: AutomationTriggerDocument;
     specifications: SliceSpecificationDocument[];
     commentCount: number;

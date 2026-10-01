@@ -5,6 +5,7 @@ import { ConstraintSyntax, QueryParameterSyntax, SliceSyntax } from '@cratis/scr
 import {
     EventItemDocument, QueryItemDocument, QueryParameterType, ReadModelItemDocument, SliceDocument, SliceStatus, SliceType,
 } from '../Document/EventModelDocument';
+import { toUserExperience } from '../Prototypes/toUserExperience';
 import { consumedEvents } from './consumedEvents';
 import { EventOwners } from './EventOwners';
 import { SliceScope } from './SliceScope';
@@ -41,7 +42,7 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
             name: query.name,
             parameters: [query.by, ...query.filters].filter(parameter => parameter !== null).map(parameter => parameterOf(parameter, owners)),
         }) satisfies QueryItemDocument),
-        actors: [],
+        actors: toUserExperience(slice.screens, scope.path),
         specifications: toSpecifications(slice.specifications, scope, owners, command?.id),
         commentCount: 0,
     };

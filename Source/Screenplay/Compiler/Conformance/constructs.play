@@ -136,6 +136,43 @@ module Customers
           enters on CustomerArchived
           from CustomerArchived
             reason = reason
+      screen CustomerOverview
+        title "Customers"
+        data CustomerSummary[] via query AllCustomers
+        action Register
+          label "Register customer"
+          navigate to CustomerDetail by customerId
+        action SaveDraft
+        table customers
+          column name label "Name"
+          column visits
+          on row-click navigate to CustomerDetail by customerId
+          on select
+            execute SaveDraft
+        on load
+          refresh AllCustomers
+        uses Confirming
+      screen CustomerDetail
+        data CustomerSummary via query CustomerById by customerId
+        template MasterDetail
+          sidebar
+            summary customer
+              field name label "Name"
+              field visits label $strings.customers.visits
+            section commands
+              title $strings.customers.title
+              action Register
+          main
+            navigate to CustomerOverview
+            ```typescript
+export const visits = (count: number) => `${count} visits`;
+            ```
+            react
+              ```
+              export default () => <section/>;
+              ```
+      screen CustomerReport
+        file Screens/CustomerReport.tsx
     slice Automation Reminders
       reaction RemindCustomer
         description "Reminds a customer"
@@ -152,6 +189,6 @@ module Customers
           produces CustomerMirrored
             name = name
       screen Mirror
-        ```tsx
+        ```typescript
 export const Mirror = () => <div/>;
         ```

@@ -356,6 +356,7 @@
                   "queries": [],
                   "reactions": [],
                   "readModels": [],
+                  "screens": [],
                   "specifications": [],
                   "type": "StateChange"
                 },
@@ -553,6 +554,7 @@
                   "queries": [],
                   "reactions": [],
                   "readModels": [],
+                  "screens": [],
                   "specifications": [],
                   "type": "StateChange"
                 }
@@ -1113,6 +1115,7 @@
               "queries": [],
               "reactions": [],
               "readModels": [],
+              "screens": [],
               "specifications": [
                 {
                   "kind": "SpecificationSyntax",
@@ -1524,6 +1527,7 @@
               "queries": [],
               "reactions": [],
               "readModels": [],
+              "screens": [],
               "specifications": [],
               "type": "StateChange"
             },
@@ -1765,6 +1769,7 @@
               "queries": [],
               "reactions": [],
               "readModels": [],
+              "screens": [],
               "specifications": [
                 {
                   "kind": "SpecificationSyntax",
@@ -2019,6 +2024,7 @@
               "queries": [],
               "reactions": [],
               "readModels": [],
+              "screens": [],
               "specifications": [],
               "type": "StateChange"
             },
@@ -2070,6 +2076,7 @@
               "queries": [],
               "reactions": [],
               "readModels": [],
+              "screens": [],
               "specifications": [],
               "type": "StateChange"
             },
@@ -2291,6 +2298,7 @@
               "queries": [],
               "reactions": [],
               "readModels": [],
+              "screens": [],
               "specifications": [],
               "type": "Translate"
             },
@@ -2541,6 +2549,91 @@
                       }
                     }
                   ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "name": "RegisterInvoiceDialog",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenTitleSyntax",
+                              "text": "Register invoice"
+                            }
+                          ],
+                          "name": "body"
+                        },
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "RegisterInvoice",
+                              "label": null,
+                              "navigate": {
+                                "kind": "ScreenNavigateSyntax",
+                                "by": null,
+                                "screen": "InvoiceList"
+                              }
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "RegisterInvoiceScreen"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTitleSyntax",
+                      "text": "Invoices"
+                    },
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "ListInvoices",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "InvoiceListReadModel"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "RegisterInvoice",
+                      "label": null,
+                      "navigate": {
+                        "kind": "ScreenNavigateSyntax",
+                        "by": null,
+                        "screen": "RegisterInvoiceScreen"
+                      }
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "CancelInvoice",
+                      "label": null,
+                      "navigate": null
+                    },
+                    {
+                      "kind": "ScreenCodeSyntax",
+                      "code": {
+                        "kind": "CodeBlockSyntax",
+                        "code": "export const statusLabel = (status: string) => status.toUpperCase();",
+                        "language": "typescript"
+                      }
+                    }
+                  ],
+                  "name": "InvoiceList"
                 }
               ],
               "specifications": [],
@@ -2901,6 +2994,144 @@
                   ]
                 }
               ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTitleSyntax",
+                      "text": "Line item"
+                    },
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": "invoiceId",
+                      "query": "GetInvoice",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceDetailsReadModel"
+                      }
+                    }
+                  ],
+                  "name": "InvoiceLineDetail"
+                },
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "name": "MasterDetail",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenDataSyntax",
+                              "by": "invoiceId",
+                              "query": "GetInvoice",
+                              "type": {
+                                "kind": "TypeRefSyntax",
+                                "isCollection": false,
+                                "isOptional": false,
+                                "name": "InvoiceDetailsReadModel"
+                              }
+                            },
+                            {
+                              "kind": "ScreenSummarySyntax",
+                              "fields": [
+                                {
+                                  "kind": "ScreenFieldSyntax",
+                                  "label": "Invoice #",
+                                  "property": "invoiceNumber"
+                                },
+                                {
+                                  "kind": "ScreenFieldSyntax",
+                                  "label": "Status",
+                                  "property": "status"
+                                }
+                              ],
+                              "target": "InvoiceDetailsReadModel"
+                            },
+                            {
+                              "kind": "ScreenSectionSyntax",
+                              "directives": [
+                                {
+                                  "kind": "ScreenActionSyntax",
+                                  "command": "CancelInvoice",
+                                  "label": null,
+                                  "navigate": null
+                                },
+                                {
+                                  "kind": "ScreenActionSyntax",
+                                  "command": "ChangeInvoiceStatus",
+                                  "label": null,
+                                  "navigate": null
+                                }
+                              ],
+                              "name": "actions"
+                            }
+                          ],
+                          "name": "sidebar"
+                        },
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenSectionSyntax",
+                              "directives": [
+                                {
+                                  "kind": "ScreenTableSyntax",
+                                  "columns": [
+                                    {
+                                      "kind": "ScreenColumnSyntax",
+                                      "label": "#",
+                                      "property": "lineNumber"
+                                    },
+                                    {
+                                      "kind": "ScreenColumnSyntax",
+                                      "label": "Qty",
+                                      "property": "quantity"
+                                    },
+                                    {
+                                      "kind": "ScreenColumnSyntax",
+                                      "label": "Unit Price",
+                                      "property": "unitPrice"
+                                    }
+                                  ],
+                                  "rowClick": {
+                                    "kind": "ScreenNavigateSyntax",
+                                    "by": "lineNumber",
+                                    "screen": "InvoiceLineDetail"
+                                  },
+                                  "target": "lineItems"
+                                }
+                              ],
+                              "name": "lineItems"
+                            },
+                            {
+                              "kind": "ScreenSectionSyntax",
+                              "directives": [
+                                {
+                                  "kind": "ScreenCodeSyntax",
+                                  "code": {
+                                    "kind": "CodeBlockSyntax",
+                                    "code": "<p class=\"hint\">Line items become read-only once an invoice is paid.</p>",
+                                    "language": "html"
+                                  }
+                                }
+                              ],
+                              "name": "help"
+                            }
+                          ],
+                          "name": "main"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "InvoiceDetails"
+                }
+              ],
               "specifications": [],
               "type": "StateView"
             },
@@ -3010,6 +3241,13 @@
                       }
                     }
                   ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [],
+                  "name": "InvoiceLineReport"
                 }
               ],
               "specifications": [],
@@ -3123,6 +3361,7 @@
                   ]
                 }
               ],
+              "screens": [],
               "specifications": [],
               "type": "StateView"
             },
@@ -3389,6 +3628,148 @@
                   ]
                 }
               ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "name": "Dashboard",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenSectionSyntax",
+                              "directives": [
+                                {
+                                  "kind": "ScreenDataSyntax",
+                                  "by": null,
+                                  "query": "GetInvoiceSummary",
+                                  "type": {
+                                    "kind": "TypeRefSyntax",
+                                    "isCollection": false,
+                                    "isOptional": false,
+                                    "name": "InvoiceSummaryReadModel"
+                                  }
+                                },
+                                {
+                                  "kind": "ScreenCodeSyntax",
+                                  "code": {
+                                    "kind": "CodeBlockSyntax",
+                                    "code": "export default ({ data }: Props) => (\n  <header className=\"dashboard-header\">\n    <h1>Invoice Dashboard</h1>\n    <span className=\"badge\">{data.totalCount} invoices</span>\n    {data.overdueCount > 0 && (\n      <span className=\"badge badge--warning\">{data.overdueCount} overdue</span>\n    )}\n  </header>\n);",
+                                    "language": "react"
+                                  }
+                                }
+                              ],
+                              "name": "title"
+                            }
+                          ],
+                          "name": "header"
+                        },
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenSectionSyntax",
+                              "directives": [
+                                {
+                                  "kind": "ScreenDataSyntax",
+                                  "by": null,
+                                  "query": "GetOverdueInvoices",
+                                  "type": {
+                                    "kind": "TypeRefSyntax",
+                                    "isCollection": true,
+                                    "isOptional": false,
+                                    "name": "OverdueInvoicesReadModel"
+                                  }
+                                },
+                                {
+                                  "kind": "ScreenTableSyntax",
+                                  "columns": [
+                                    {
+                                      "kind": "ScreenColumnSyntax",
+                                      "label": "Invoice #",
+                                      "property": "invoiceNumber"
+                                    },
+                                    {
+                                      "kind": "ScreenColumnSyntax",
+                                      "label": "Due Date",
+                                      "property": "dueDate"
+                                    }
+                                  ],
+                                  "rowClick": {
+                                    "kind": "ScreenNavigateSyntax",
+                                    "by": "invoiceId",
+                                    "screen": "InvoiceDetails"
+                                  },
+                                  "target": "OverdueInvoicesReadModel"
+                                }
+                              ],
+                              "name": "overdue"
+                            }
+                          ],
+                          "name": "left"
+                        },
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenSectionSyntax",
+                              "directives": [
+                                {
+                                  "kind": "ScreenDataSyntax",
+                                  "by": null,
+                                  "query": "GetInvoiceSummary",
+                                  "type": {
+                                    "kind": "TypeRefSyntax",
+                                    "isCollection": false,
+                                    "isOptional": false,
+                                    "name": "InvoiceSummaryReadModel"
+                                  }
+                                },
+                                {
+                                  "kind": "ScreenCodeSyntax",
+                                  "code": {
+                                    "kind": "CodeBlockSyntax",
+                                    "code": "import { PieChart, Pie, Cell, Tooltip } from 'recharts';\nconst COLORS = ['#94a3b8', '#60a5fa', '#34d399', '#f87171'];\nexport default ({ data }: Props) => (\n  <PieChart width={300} height={300}>\n    <Pie data={[\n      { name: 'Draft', value: data.draftCount },\n      { name: 'Sent',  value: data.sentCount },\n      { name: 'Paid',  value: data.paidCount },\n    ]} dataKey=\"value\">\n      {COLORS.map((c, i) => <Cell key={i} fill={c} />)}\n    </Pie>\n    <Tooltip />\n  </PieChart>\n);",
+                                    "language": "react"
+                                  }
+                                }
+                              ],
+                              "name": "summary"
+                            }
+                          ],
+                          "name": "right"
+                        },
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenSectionSyntax",
+                              "directives": [
+                                {
+                                  "kind": "ScreenActionSyntax",
+                                  "command": "RegisterInvoice",
+                                  "label": "$strings.invoices.actions.newInvoice",
+                                  "navigate": {
+                                    "kind": "ScreenNavigateSyntax",
+                                    "by": null,
+                                    "screen": "RegisterInvoiceScreen"
+                                  }
+                                }
+                              ],
+                              "name": "actions"
+                            }
+                          ],
+                          "name": "footer"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "InvoiceDashboard"
+                }
+              ],
               "specifications": [],
               "type": "StateView"
             },
@@ -3461,6 +3842,7 @@
                   ]
                 }
               ],
+              "screens": [],
               "specifications": [],
               "type": "StateView"
             },
@@ -3491,6 +3873,7 @@
                 }
               ],
               "readModels": [],
+              "screens": [],
               "specifications": [],
               "type": "Automation"
             },
@@ -3529,6 +3912,7 @@
                 }
               ],
               "readModels": [],
+              "screens": [],
               "specifications": [],
               "type": "Automation"
             },
@@ -3567,6 +3951,7 @@
                 }
               ],
               "readModels": [],
+              "screens": [],
               "specifications": [],
               "type": "Automation"
             },
@@ -3599,6 +3984,7 @@
                 }
               ],
               "readModels": [],
+              "screens": [],
               "specifications": [],
               "type": "Automation"
             },
@@ -3638,6 +4024,7 @@
                 }
               ],
               "readModels": [],
+              "screens": [],
               "specifications": [],
               "type": "Automation"
             }

@@ -22,5 +22,8 @@ export function ids_in(value: unknown): string[] {
     if (value === null || typeof value !== 'object') {
         return [];
     }
-    return Object.entries(value).flatMap(([member, child]) => member === 'id' && typeof child === 'string' ? [child] : ids_in(child));
+    // A slice's user experience is identified by the collection actor it is for - a reference, not an element.
+    const referencesActor = 'elements' in value;
+    return Object.entries(value).flatMap(([member, child]) =>
+        member === 'id' && typeof child === 'string' ? (referencesActor ? [] : [child]) : ids_in(child));
 }

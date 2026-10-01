@@ -137,6 +137,7 @@
               "queries": [],
               "reactions": [],
               "readModels": [],
+              "screens": [],
               "specifications": [
                 {
                   "kind": "SpecificationSyntax",
@@ -341,6 +342,7 @@
                   ]
                 }
               ],
+              "screens": [],
               "specifications": [],
               "type": "StateView"
             }

@@ -8,6 +8,7 @@ import { ExpressionSyntax, ObjectMemberSyntax, PropertyMappingSyntax } from './E
 import { ProjectionBlockSyntax, ProjectionSyntax } from './Projections';
 import { QueryParameterSyntax, QuerySyntax } from './Queries';
 import { ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
+import { ScreenDirectiveSyntax, ScreenSyntax } from './Screens';
 import { SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationReadModelSyntax, SpecificationSyntax } from './Specifications';
 import { ApplicationSyntax, FeatureSyntax, ModuleSyntax, SliceSyntax } from './Structure';
 import { SyntaxNode } from './SyntaxNode';
@@ -65,6 +66,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.projections.forEach(node => this.visitProjection(node));
         syntax.readModels.forEach(node => this.visitReadModel(node));
         syntax.reactions.forEach(node => this.visitReaction(node));
+        syntax.screens.forEach(node => this.visitScreen(node));
         syntax.specifications.forEach(node => this.visitSpecification(node));
     }
 
@@ -155,6 +157,42 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitTriggerSource(syntax: TriggerSourceSyntax): void {
         this.visitNode(syntax);
+    }
+
+    visitScreen(syntax: ScreenSyntax): void {
+        this.visitNode(syntax);
+        syntax.directives.forEach(node => this.visitScreenDirective(node));
+    }
+
+    visitScreenDirective(syntax: ScreenDirectiveSyntax): void {
+        this.visitNode(syntax);
+        switch (syntax.kind) {
+            case 'ScreenDataSyntax':
+                this.visitTypeRef(syntax.type);
+                break;
+            case 'ScreenActionSyntax':
+                if (syntax.navigate !== null) this.visitScreenDirective(syntax.navigate);
+                break;
+            case 'ScreenTemplateReferenceSyntax':
+                syntax.slots.forEach(slot => {
+                    this.visitNode(slot);
+                    slot.directives.forEach(node => this.visitScreenDirective(node));
+                });
+                break;
+            case 'ScreenSectionSyntax':
+                syntax.directives.forEach(node => this.visitScreenDirective(node));
+                break;
+            case 'ScreenTableSyntax':
+                syntax.columns.forEach(node => this.visitNode(node));
+                if (syntax.rowClick !== null) this.visitScreenDirective(syntax.rowClick);
+                break;
+            case 'ScreenSummarySyntax':
+                syntax.fields.forEach(node => this.visitNode(node));
+                break;
+            case 'ScreenCodeSyntax':
+                this.visitNode(syntax.code);
+                break;
+        }
     }
 
     visitSpecification(syntax: SpecificationSyntax): void {

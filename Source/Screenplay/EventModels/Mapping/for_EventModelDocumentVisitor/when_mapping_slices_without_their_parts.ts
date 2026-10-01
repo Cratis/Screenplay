@@ -45,6 +45,8 @@ describe('when mapping slices without their parts', () => {
     it('should shape a command and an event without properties as empty', () => {
         [slice_named(document, 'Bare').command!.schema, slice_named(document, 'Bare').events[0].schema].should.deep.equal([{}, {}]);
     });
+
+    it('should leave out the user when there are no screens to show', () => document.collections[0].actors.should.deep.equal([]));
 });
 
 describe('when mapping an application without modules', () => {

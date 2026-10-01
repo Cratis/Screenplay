@@ -97,10 +97,12 @@ The compiler reads what an event model is made of:
 - reaction triggers (`when`, `every`, `at`)
 - unique and file constraints
 - specifications with the values they state, structured values included
+- screens with their data, actions, navigation, titles, tables, summaries, sections, template slots and inline code
 
 Everything else is recognized and skipped whole, without a diagnostic. That covers:
 
-- screens, captures, reducers, forms and layouts
+- captures, reducers, forms, layouts and screen templates
+- the interaction a screen binds with `on` and `uses`, which it keeps only as a marker in the screen's directives
 - policies, personas, authentication, seeds and themes
 - what a command produces and its handler
 - projection keys and mappings
