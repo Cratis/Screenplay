@@ -21,19 +21,23 @@
   "modules": [
     {
       "kind": "ModuleSyntax",
+      "authorize": null,
       "description": null,
       "features": [
         {
           "kind": "FeatureSyntax",
+          "authorize": null,
           "description": null,
           "features": [],
           "name": "Registration",
           "slices": [
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [
                 {
                   "kind": "CommandSyntax",
+                  "authorize": null,
                   "description": null,
                   "name": "RegisterProject",
                   "properties": [
@@ -260,6 +264,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -268,6 +273,7 @@
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
                       "kind": "FromSyntax",
@@ -275,6 +281,12 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "ProjectRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "name"
                         }
                       ]
                     }
@@ -287,6 +299,7 @@
               "queries": [
                 {
                   "kind": "QuerySyntax",
+                  "authorize": null,
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "projectId",
@@ -352,5 +365,6 @@
       "name": "Projects"
     }
   ],
+  "personas": [],
   "types": []
 }

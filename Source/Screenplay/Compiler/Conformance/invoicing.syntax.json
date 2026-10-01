@@ -158,23 +158,42 @@
   "modules": [
     {
       "kind": "ModuleSyntax",
+      "authorize": null,
       "description": "Everything related to invoicing customers.\nRegistration, lifecycle and payment tracking of invoices.",
       "features": [
         {
           "kind": "FeatureSyntax",
+          "authorize": null,
           "description": "Registering and managing the lifecycle of invoices",
           "features": [
             {
               "kind": "FeatureSyntax",
+              "authorize": null,
               "description": "Discounts and write-offs applied to issued invoices",
               "features": [],
               "name": "Adjustments",
               "slices": [
                 {
                   "kind": "SliceSyntax",
+                  "captures": [],
                   "commands": [
                     {
                       "kind": "CommandSyntax",
+                      "authorize": {
+                        "kind": "AuthorizeSyntax",
+                        "requirement": {
+                          "kind": "LogicalPolicyRequirementSyntax",
+                          "left": {
+                            "kind": "PolicyReferenceSyntax",
+                            "name": "IsAccountant"
+                          },
+                          "operator": "Or",
+                          "right": {
+                            "kind": "PolicyReferenceSyntax",
+                            "name": "IsFinanceDepartment"
+                          }
+                        }
+                      },
                       "description": null,
                       "name": "ApplyDiscount",
                       "properties": [
@@ -362,9 +381,17 @@
                 },
                 {
                   "kind": "SliceSyntax",
+                  "captures": [],
                   "commands": [
                     {
                       "kind": "CommandSyntax",
+                      "authorize": {
+                        "kind": "AuthorizeSyntax",
+                        "requirement": {
+                          "kind": "PolicyReferenceSyntax",
+                          "name": "CanWriteOff"
+                        }
+                      },
                       "description": null,
                       "name": "WriteOffInvoice",
                       "properties": [
@@ -565,9 +592,25 @@
           "slices": [
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [
                 {
                   "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "LogicalPolicyRequirementSyntax",
+                      "left": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "CanManageInvoice"
+                      },
+                      "operator": "And",
+                      "right": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "IsAdultCustomer"
+                      }
+                    }
+                  },
                   "description": "Registers a new invoice with its lines and payment terms",
                   "name": "RegisterInvoice",
                   "properties": [
@@ -1322,9 +1365,17 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [
                 {
                   "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "CanManageInvoice"
+                    }
+                  },
                   "description": null,
                   "name": "CancelInvoice",
                   "properties": [
@@ -1533,9 +1584,17 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [
                 {
                   "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
                   "description": null,
                   "name": "ChangeInvoiceStatus",
                   "properties": [
@@ -1866,9 +1925,17 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [
                 {
                   "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
                   "description": null,
                   "name": "ProcessInvoiceBatch",
                   "properties": [
@@ -2030,9 +2097,17 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [
                 {
                   "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
                   "description": null,
                   "name": "ArchiveOldInvoices",
                   "properties": [
@@ -2082,6 +2157,85 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [
+                {
+                  "kind": "CaptureSyntax",
+                  "appends": [
+                    {
+                      "kind": "CaptureAppendSyntax",
+                      "event": "InvoiceStatusChanged"
+                    },
+                    {
+                      "kind": "CaptureAppendSyntax",
+                      "event": "InvoicePaidFromSent"
+                    },
+                    {
+                      "kind": "CaptureAppendSyntax",
+                      "event": "InvoiceNeedsAttention"
+                    },
+                    {
+                      "kind": "CaptureAppendSyntax",
+                      "event": "InvoiceFullyApproved"
+                    },
+                    {
+                      "kind": "CaptureAppendSyntax",
+                      "event": "InvoiceFlagged"
+                    }
+                  ],
+                  "children": [
+                    {
+                      "kind": "CaptureChildrenSyntax",
+                      "appends": [
+                        {
+                          "kind": "CaptureAppendSyntax",
+                          "event": "InvoiceLineItemAdded"
+                        },
+                        {
+                          "kind": "CaptureAppendSyntax",
+                          "event": "InvoiceLineItemRemoved"
+                        }
+                      ],
+                      "identifiedBy": "lineNumber",
+                      "property": "lineItems"
+                    }
+                  ],
+                  "key": "id",
+                  "name": "LegacyInvoiceCapture",
+                  "nested": [
+                    {
+                      "kind": "CaptureNestedSyntax",
+                      "appends": [
+                        {
+                          "kind": "CaptureAppendSyntax",
+                          "event": "BillingContactUpdated"
+                        }
+                      ],
+                      "property": "billingContact"
+                    }
+                  ],
+                  "source": {
+                    "kind": "CaptureSourceSyntax",
+                    "settings": [
+                      {
+                        "kind": "CaptureSourceSettingSyntax",
+                        "name": "api",
+                        "value": "LegacyInvoicingApi"
+                      },
+                      {
+                        "kind": "CaptureSourceSettingSyntax",
+                        "name": "route",
+                        "value": "/invoices"
+                      },
+                      {
+                        "kind": "CaptureSourceSettingSyntax",
+                        "name": "poll",
+                        "value": "5m"
+                      }
+                    ],
+                    "syntaxKind": "api"
+                  }
+                }
+              ],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -2304,6 +2458,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -2312,10 +2467,18 @@
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
                       "kind": "EverySyntax",
-                      "includeChildren": true
+                      "autoMap": "Inherit",
+                      "includeChildren": true,
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "lastActivityAt"
+                        }
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
@@ -2323,6 +2486,40 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "id"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "customerId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "invoiceNumber"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "currency"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "lineCount"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "dueDate"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "channel"
                         }
                       ]
                     },
@@ -2333,6 +2530,16 @@
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceSent"
                         }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "touched"
+                        }
                       ]
                     },
                     {
@@ -2341,6 +2548,16 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "InvoicePaid"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "touched"
                         }
                       ]
                     },
@@ -2351,6 +2568,12 @@
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceMarkedOverdue"
                         }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
                       ]
                     },
                     {
@@ -2359,6 +2582,12 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceStatusChanged"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
                         }
                       ]
                     },
@@ -2375,6 +2604,13 @@
               "queries": [
                 {
                   "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAuthenticated"
+                    }
+                  },
                   "by": null,
                   "description": "Every invoice the caller may see, narrowed by status and customer",
                   "filters": [
@@ -2641,6 +2877,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -2649,10 +2886,18 @@
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
                       "kind": "EverySyntax",
-                      "includeChildren": false
+                      "autoMap": "Inherit",
+                      "includeChildren": false,
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "lastUpdatedAt"
+                        }
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
@@ -2660,6 +2905,52 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "customerId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "invoiceNumber"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "currency"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "paymentTerms"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "dueDate"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "registeredAt"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "registeredBy"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "registeredByUser"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "registeredForSubject"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "displayLabel"
                         }
                       ]
                     },
@@ -2670,6 +2961,16 @@
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceSent"
                         }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "sentAt"
+                        }
                       ]
                     },
                     {
@@ -2678,6 +2979,16 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "InvoicePaid"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "paidAt"
                         }
                       ]
                     },
@@ -2688,6 +2999,16 @@
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceMarkedOverdue"
                         }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "overdueAt"
+                        }
                       ]
                     },
                     {
@@ -2695,7 +3016,14 @@
                       "events": [
                         {
                           "kind": "JoinEventSyntax",
-                          "event": "CustomerRegistered"
+                          "autoMap": "Disabled",
+                          "event": "CustomerRegistered",
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "customerName"
+                            }
+                          ]
                         }
                       ],
                       "on": "customerId",
@@ -2703,6 +3031,7 @@
                     },
                     {
                       "kind": "ChildrenSyntax",
+                      "autoMap": "Inherit",
                       "blocks": [
                         {
                           "kind": "FromSyntax",
@@ -2710,6 +3039,24 @@
                             {
                               "kind": "EventSpecSyntax",
                               "event": "InvoiceLineItemAdded"
+                            }
+                          ],
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "quantity"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "unitPrice"
+                            },
+                            {
+                              "kind": "AddMappingSyntax",
+                              "property": "subtotal"
+                            },
+                            {
+                              "kind": "CountMappingSyntax",
+                              "property": "itemCount"
                             }
                           ]
                         },
@@ -2722,6 +3069,7 @@
                     },
                     {
                       "kind": "NestedSyntax",
+                      "autoMap": "Inherit",
                       "blocks": [
                         {
                           "kind": "FromSyntax",
@@ -2729,6 +3077,12 @@
                             {
                               "kind": "EventSpecSyntax",
                               "event": "InvoiceShipped"
+                            }
+                          ],
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "carrier"
                             }
                           ]
                         },
@@ -2752,6 +3106,21 @@
               "queries": [
                 {
                   "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "LogicalPolicyRequirementSyntax",
+                      "left": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "OwnsInvoice"
+                      },
+                      "operator": "Or",
+                      "right": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "IsAuthenticated"
+                      }
+                    }
+                  },
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "invoiceId",
@@ -3137,6 +3506,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -3145,6 +3515,7 @@
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
                       "kind": "FromSyntax",
@@ -3152,6 +3523,16 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceLineItemAdded"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "quantity"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "unitPrice"
                         }
                       ]
                     }
@@ -3164,6 +3545,13 @@
               "queries": [
                 {
                   "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
                   "by": null,
                   "description": "Every invoice line, priced, for the accounting line report",
                   "filters": [
@@ -3255,6 +3643,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": "Archive of cancelled invoices - every property auto-maps from the event",
@@ -3263,6 +3652,7 @@
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
                       "kind": "FromSyntax",
@@ -3271,7 +3661,8 @@
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceCancelled"
                         }
-                      ]
+                      ],
+                      "mappings": []
                     }
                   ],
                   "name": "CancelledInvoices",
@@ -3282,6 +3673,13 @@
               "queries": [
                 {
                   "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
                   "by": null,
                   "description": "Cancelled invoices, kept for audit",
                   "filters": [],
@@ -3367,6 +3765,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -3375,6 +3774,7 @@
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
                       "kind": "FromSyntax",
@@ -3382,6 +3782,20 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceRegistered"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "IncrementMappingSyntax",
+                          "property": "totalCount"
+                        },
+                        {
+                          "kind": "IncrementMappingSyntax",
+                          "property": "draftCount"
+                        },
+                        {
+                          "kind": "CountMappingSyntax",
+                          "property": "touches"
                         }
                       ]
                     },
@@ -3392,6 +3806,16 @@
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceSent"
                         }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "DecrementMappingSyntax",
+                          "property": "draftCount"
+                        },
+                        {
+                          "kind": "IncrementMappingSyntax",
+                          "property": "sentCount"
+                        }
                       ]
                     },
                     {
@@ -3400,6 +3824,16 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "InvoicePaid"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "DecrementMappingSyntax",
+                          "property": "sentCount"
+                        },
+                        {
+                          "kind": "IncrementMappingSyntax",
+                          "property": "paidCount"
                         }
                       ]
                     },
@@ -3410,6 +3844,12 @@
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceMarkedOverdue"
                         }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "IncrementMappingSyntax",
+                          "property": "overdueCount"
+                        }
                       ]
                     },
                     {
@@ -3419,6 +3859,16 @@
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceWrittenOff"
                         }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "AddMappingSyntax",
+                          "property": "writeOffTotal"
+                        },
+                        {
+                          "kind": "SubtractMappingSyntax",
+                          "property": "outstandingTotal"
+                        }
                       ]
                     },
                     {
@@ -3427,6 +3877,12 @@
                         {
                           "kind": "EventSpecSyntax",
                           "event": "InvoiceCancelled"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "DecrementMappingSyntax",
+                          "property": "totalCount"
                         }
                       ]
                     }
@@ -3439,6 +3895,13 @@
               "queries": [
                 {
                   "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
                   "by": null,
                   "description": "The counters behind the dashboard header",
                   "filters": [],
@@ -3454,6 +3917,13 @@
                 },
                 {
                   "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
                   "by": null,
                   "description": "Invoices past their due date, oldest first",
                   "filters": [],
@@ -3775,6 +4245,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": "Counts every event in the system for the activity ticker",
@@ -3783,9 +4254,21 @@
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
-                      "kind": "AllSyntax"
+                      "kind": "AllSyntax",
+                      "autoMap": "Inherit",
+                      "mappings": [
+                        {
+                          "kind": "CountMappingSyntax",
+                          "property": "totalEvents"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "lastOccurred"
+                        }
+                      ]
                     }
                   ],
                   "name": "SystemActivity",
@@ -3796,6 +4279,13 @@
               "queries": [
                 {
                   "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
                   "by": null,
                   "description": null,
                   "filters": [],
@@ -3848,6 +4338,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -3864,6 +4355,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "NamedTriggerSourceSyntax",
                         "name": "InvoiceRegistered"
@@ -3879,6 +4372,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -3895,6 +4389,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "NamedTriggerSourceSyntax",
                         "name": "InvoiceRegistered"
@@ -3903,6 +4399,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "NamedTriggerSourceSyntax",
                         "name": "InvoiceSent"
@@ -3918,6 +4416,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": "Described before any of it is implemented - no 'file' anywhere",
@@ -3934,6 +4433,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "NamedTriggerSourceSyntax",
                         "name": "InvoicePaid"
@@ -3942,6 +4443,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": "Re-checks whether a late payment has since arrived",
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "NamedTriggerSourceSyntax",
                         "name": "InvoiceMarkedOverdue"
@@ -3957,6 +4460,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": "Driven by the clock rather than by an event",
@@ -3973,6 +4477,13 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "InvoiceMarkedOverdue"
+                        }
+                      ],
                       "source": {
                         "kind": "ScheduleTriggerSourceSyntax",
                         "dayOfMonth": null,
@@ -3990,6 +4501,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -4006,6 +4518,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "IntervalTriggerSourceSyntax",
                         "amount": 15,
@@ -4015,6 +4529,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "NamedTriggerSourceSyntax",
                         "name": "DirectoryChanged"
@@ -4032,6 +4548,25 @@
         }
       ],
       "name": "Invoicing"
+    }
+  ],
+  "personas": [
+    {
+      "kind": "PersonaSyntax",
+      "description": "Keeps the books and approves invoices",
+      "name": "Accountant",
+      "policies": [
+        "IsAccountant",
+        "CanManageInvoice"
+      ]
+    },
+    {
+      "kind": "PersonaSyntax",
+      "description": "Registers invoices and manages their lifecycle",
+      "name": "InvoiceManager",
+      "policies": [
+        "CanManageInvoice"
+      ]
     }
   ],
   "types": [

@@ -6,16 +6,19 @@
   "modules": [
     {
       "kind": "ModuleSyntax",
+      "authorize": null,
       "description": null,
       "features": [
         {
           "kind": "FeatureSyntax",
+          "authorize": null,
           "description": null,
           "features": [],
           "name": "Invoices",
           "slices": [
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -45,6 +48,7 @@
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
                       "kind": "RemoveWithSyntax",
@@ -59,6 +63,7 @@
               "queries": [
                 {
                   "kind": "QuerySyntax",
+                  "authorize": null,
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "invoiceId",
@@ -187,5 +192,6 @@
       "name": "Billing"
     }
   ],
+  "personas": [],
   "types": []
 }

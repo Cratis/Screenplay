@@ -46,23 +46,48 @@
   "modules": [
     {
       "kind": "ModuleSyntax",
+      "authorize": {
+        "kind": "AuthorizeSyntax",
+        "requirement": {
+          "kind": "PolicyReferenceSyntax",
+          "name": "Staff"
+        }
+      },
       "description": "Customers and what happens to them",
       "features": [
         {
           "kind": "FeatureSyntax",
+          "authorize": {
+            "kind": "AuthorizeSyntax",
+            "requirement": {
+              "kind": "LogicalPolicyRequirementSyntax",
+              "left": {
+                "kind": "PolicyReferenceSyntax",
+                "name": "Staff"
+              },
+              "operator": "Or",
+              "right": {
+                "kind": "PolicyReferenceSyntax",
+                "name": "Managers"
+              }
+            }
+          },
           "description": "Bringing a customer on board",
           "features": [
             {
               "kind": "FeatureSyntax",
+              "authorize": null,
               "description": null,
               "features": [],
               "name": "Drafts",
               "slices": [
                 {
                   "kind": "SliceSyntax",
+                  "captures": [],
                   "commands": [
                     {
                       "kind": "CommandSyntax",
+                      "authorize": null,
                       "description": null,
                       "name": "SaveDraft",
                       "properties": [
@@ -132,9 +157,49 @@
           "slices": [
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [
                 {
                   "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "LogicalPolicyRequirementSyntax",
+                      "left": {
+                        "kind": "LogicalPolicyRequirementSyntax",
+                        "left": {
+                          "kind": "LogicalPolicyRequirementSyntax",
+                          "left": {
+                            "kind": "LogicalPolicyRequirementSyntax",
+                            "left": {
+                              "kind": "PolicyReferenceSyntax",
+                              "name": "Staff"
+                            },
+                            "operator": "Or",
+                            "right": {
+                              "kind": "PolicyReferenceSyntax",
+                              "name": "Managers"
+                            }
+                          },
+                          "operator": "And",
+                          "right": {
+                            "kind": "PolicyReferenceSyntax",
+                            "name": "Auditors"
+                          }
+                        },
+                        "operator": "Or",
+                        "right": {
+                          "kind": "PolicyReferenceSyntax",
+                          "name": "Owners"
+                        }
+                      },
+                      "operator": "And",
+                      "right": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "Staff"
+                      }
+                    }
+                  },
                   "description": "Register a customer",
                   "name": "Register",
                   "properties": [
@@ -621,12 +686,14 @@
         },
         {
           "kind": "FeatureSyntax",
+          "authorize": null,
           "description": null,
           "features": [],
           "name": "Lookup",
           "slices": [
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -635,6 +702,7 @@
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
                       "kind": "FromSyntax",
@@ -647,21 +715,56 @@
                           "kind": "EventSpecSyntax",
                           "event": "DraftSaved"
                         }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "name"
+                        },
+                        {
+                          "kind": "CountMappingSyntax",
+                          "property": "registrations"
+                        }
                       ]
                     },
                     {
                       "kind": "EverySyntax",
-                      "includeChildren": false
+                      "autoMap": "Disabled",
+                      "includeChildren": false,
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "lastSeen"
+                        }
+                      ]
                     },
                     {
-                      "kind": "AllSyntax"
+                      "kind": "AllSyntax",
+                      "autoMap": "Inherit",
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "visits"
+                        },
+                        {
+                          "kind": "IncrementMappingSyntax",
+                          "property": "touches"
+                        }
+                      ]
                     },
                     {
                       "kind": "JoinSyntax",
                       "events": [
                         {
                           "kind": "JoinEventSyntax",
-                          "event": "CompanyRenamed"
+                          "autoMap": "Enabled",
+                          "event": "CompanyRenamed",
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "companyName"
+                            }
+                          ]
                         }
                       ],
                       "on": "companyId",
@@ -669,6 +772,7 @@
                     },
                     {
                       "kind": "ChildrenSyntax",
+                      "autoMap": "Disabled",
                       "blocks": [
                         {
                           "kind": "FromSyntax",
@@ -676,6 +780,16 @@
                             {
                               "kind": "EventSpecSyntax",
                               "event": "AddressAdded"
+                            }
+                          ],
+                          "mappings": [
+                            {
+                              "kind": "AddMappingSyntax",
+                              "property": "total"
+                            },
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "street"
                             }
                           ]
                         },
@@ -685,6 +799,7 @@
                         },
                         {
                           "kind": "NestedSyntax",
+                          "autoMap": "Inherit",
                           "blocks": [
                             {
                               "kind": "FromSyntax",
@@ -693,7 +808,8 @@
                                   "kind": "EventSpecSyntax",
                                   "event": "PrimaryAddressSet"
                                 }
-                              ]
+                              ],
+                              "mappings": []
                             },
                             {
                               "kind": "ClearWithSyntax",
@@ -720,6 +836,7 @@
                 },
                 {
                   "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
                   "blocks": [
                     {
                       "kind": "ProjectionVariantSyntax",
@@ -730,6 +847,12 @@
                             {
                               "kind": "EventSpecSyntax",
                               "event": "CustomerArchived"
+                            }
+                          ],
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "reason"
                             }
                           ]
                         }
@@ -751,6 +874,21 @@
               "queries": [
                 {
                   "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "LogicalPolicyRequirementSyntax",
+                      "left": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "Staff"
+                      },
+                      "operator": "And",
+                      "right": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "Auditors"
+                      }
+                    }
+                  },
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "customerId",
@@ -775,6 +913,7 @@
                 },
                 {
                   "kind": "QuerySyntax",
+                  "authorize": null,
                   "by": null,
                   "description": null,
                   "filters": [
@@ -1007,6 +1146,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -1023,6 +1163,13 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": "Right after registering",
+                      "invokes": [
+                        {
+                          "kind": "InvokesSyntax",
+                          "command": "SendWelcome"
+                        }
+                      ],
+                      "produces": [],
                       "source": {
                         "kind": "NamedTriggerSourceSyntax",
                         "name": "CustomerRegistered"
@@ -1031,6 +1178,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "IntervalTriggerSourceSyntax",
                         "amount": 2,
@@ -1040,6 +1189,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "ScheduleTriggerSourceSyntax",
                         "dayOfMonth": null,
@@ -1050,6 +1201,8 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [],
                       "source": {
                         "kind": "ScheduleTriggerSourceSyntax",
                         "dayOfMonth": 15,
@@ -1067,6 +1220,7 @@
             },
             {
               "kind": "SliceSyntax",
+              "captures": [],
               "commands": [],
               "constraints": [],
               "description": null,
@@ -1083,6 +1237,13 @@
                     {
                       "kind": "ReactionTriggerSyntax",
                       "description": null,
+                      "invokes": [],
+                      "produces": [
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "CustomerMirrored"
+                        }
+                      ],
                       "source": {
                         "kind": "NamedTriggerSourceSyntax",
                         "name": "CustomerRegistered"
@@ -1115,6 +1276,22 @@
         }
       ],
       "name": "Customers"
+    }
+  ],
+  "personas": [
+    {
+      "kind": "PersonaSyntax",
+      "description": "Works the front desk",
+      "name": "Clerk",
+      "policies": [
+        "Staff"
+      ]
+    },
+    {
+      "kind": "PersonaSyntax",
+      "description": null,
+      "name": "Visitor",
+      "policies": []
     }
   ],
   "types": [

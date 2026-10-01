@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { AuthorizeSyntax } from './Authorization';
 import { TypeRefSyntax } from './Declarations';
 import { SyntaxNode } from './SyntaxNode';
 
@@ -19,4 +20,5 @@ export interface QuerySyntax extends SyntaxNode {
     readonly description: string | null;
     readonly isObservable: boolean;
     readonly scope: string | null;
+    readonly authorize: AuthorizeSyntax | null;
 }

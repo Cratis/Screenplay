@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { EventSyntax, FeatureSyntax, ModuleSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
+import { CommandSyntax, EventSyntax, FeatureSyntax, ModuleSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
 import { JsonSchemaObject } from '../Document/EventModelDocument';
 import { SchemaSynthesizer } from '../Schemas/SchemaSynthesizer';
 import { SliceScope } from './SliceScope';
@@ -11,11 +11,12 @@ interface Owned {
     readonly schema: JsonSchemaObject;
 }
 
-// Which slice produces each event. State Change slices own the events they declare, so a slice consuming one
+// Which slice produces each event, and where each command is declared. State Change slices own the events they declare, so a slice consuming one
 // elsewhere points back at it and carries its shape - as Studio's ScreenplayEventOwners does. Names compare
 // without regard to case, and the first producer of a name wins.
 export class EventOwners {
     readonly #owned = new Map<string, Owned>();
+    readonly #commands = new Map<string, CommandSyntax>();
 
     constructor(modules: readonly ModuleSyntax[], readonly schemas: SchemaSynthesizer) {
         for (const module of modules) {
@@ -33,7 +34,15 @@ export class EventOwners {
         return this.#owned.get(name.toLowerCase())?.schema ?? {};
     }
 
+    // The declaration of a command a slice does not declare itself, such as one an automation invokes.
+    commandNamed(name: string): CommandSyntax | undefined {
+        return this.#commands.get(name.toLowerCase());
+    }
+
     #register(scope: SliceScope, feature: FeatureSyntax): void {
+        feature.slices.flatMap(slice => slice.commands)
+            .filter(command => !this.#commands.has(command.name.toLowerCase()))
+            .forEach(command => this.#commands.set(command.name.toLowerCase(), command));
         feature.slices.filter(slice => slice.type === 'StateChange').forEach(slice => this.#own(scope.slice(slice.name), slice));
         feature.features.forEach(child => this.#register(scope.feature(child.name), child));
     }

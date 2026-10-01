@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { AuthorizeSyntax } from './Authorization';
 import { PropertySyntax } from './Declarations';
 import { ExpressionSyntax } from './Expressions';
 import { SyntaxNode } from './SyntaxNode';
@@ -37,6 +38,7 @@ export interface CommandSyntax extends SyntaxNode {
     readonly kind: 'CommandSyntax';
     readonly name: string;
     readonly description: string | null;
+    readonly authorize: AuthorizeSyntax | null;
     readonly properties: readonly PropertySyntax[];
     readonly validations: readonly ValidateSyntax[];
 }

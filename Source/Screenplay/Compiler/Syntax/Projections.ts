@@ -6,6 +6,26 @@ import { SyntaxNode } from './SyntaxNode';
 // A projection as far as this compiler models it: what it is called, what it builds and the events each of
 // its blocks consumes. Keys, mappings and automap settings are not modeled.
 
+// Whether a block copies the properties an event shares with the read model by name: 'Inherit' takes the
+// enclosing block's setting, which is on unless something turns it off.
+export type AutoMapMode = 'Inherit' | 'Disabled' | 'Enabled';
+
+// What a mapping does to one property of the read model. Where a set, add or subtract takes its value from is
+// not modeled.
+export type MappingKind =
+    | 'SetMappingSyntax'
+    | 'ClearMappingSyntax'
+    | 'IncrementMappingSyntax'
+    | 'DecrementMappingSyntax'
+    | 'CountMappingSyntax'
+    | 'AddMappingSyntax'
+    | 'SubtractMappingSyntax';
+
+export interface MappingSyntax extends SyntaxNode {
+    readonly kind: MappingKind;
+    readonly property: string;
+}
+
 export interface EventSpecSyntax extends SyntaxNode {
     readonly kind: 'EventSpecSyntax';
     readonly event: string;
@@ -14,20 +34,27 @@ export interface EventSpecSyntax extends SyntaxNode {
 export interface FromSyntax extends SyntaxNode {
     readonly kind: 'FromSyntax';
     readonly events: readonly EventSpecSyntax[];
+    readonly mappings: readonly MappingSyntax[];
 }
 
 export interface EverySyntax extends SyntaxNode {
     readonly kind: 'EverySyntax';
     readonly includeChildren: boolean;
+    readonly autoMap: AutoMapMode;
+    readonly mappings: readonly MappingSyntax[];
 }
 
 export interface AllSyntax extends SyntaxNode {
     readonly kind: 'AllSyntax';
+    readonly autoMap: AutoMapMode;
+    readonly mappings: readonly MappingSyntax[];
 }
 
 export interface JoinEventSyntax extends SyntaxNode {
     readonly kind: 'JoinEventSyntax';
     readonly event: string;
+    readonly autoMap: AutoMapMode;
+    readonly mappings: readonly MappingSyntax[];
 }
 
 export interface JoinSyntax extends SyntaxNode {
@@ -40,12 +67,14 @@ export interface JoinSyntax extends SyntaxNode {
 export interface ChildrenSyntax extends SyntaxNode {
     readonly kind: 'ChildrenSyntax';
     readonly property: string;
+    readonly autoMap: AutoMapMode;
     readonly blocks: readonly ProjectionBlockSyntax[];
 }
 
 export interface NestedSyntax extends SyntaxNode {
     readonly kind: 'NestedSyntax';
     readonly property: string;
+    readonly autoMap: AutoMapMode;
     readonly blocks: readonly ProjectionBlockSyntax[];
 }
 
@@ -93,5 +122,6 @@ export interface ProjectionSyntax extends SyntaxNode {
     readonly name: string;
     readonly readModel: string | null;
     readonly sequence: string | null;
+    readonly autoMap: AutoMapMode;
     readonly blocks: readonly ProjectionBlockSyntax[];
 }

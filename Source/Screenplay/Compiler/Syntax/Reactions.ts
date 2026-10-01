@@ -31,12 +31,27 @@ export interface ScheduleTriggerSourceSyntax extends SyntaxNode {
 
 export type TriggerSourceSyntax = NamedTriggerSourceSyntax | IntervalTriggerSourceSyntax | ScheduleTriggerSourceSyntax;
 
-// One trigger of a reaction. What the trigger does - its code, produced events and invoked commands - is not
-// modeled.
+// 'produces <Event>', or 'produces when <condition>' with the event on the next line - an event a trigger
+// appends. Its condition and what it carries are not modeled.
+export interface ProducesSyntax extends SyntaxNode {
+    readonly kind: 'ProducesSyntax';
+    readonly event: string;
+}
+
+// 'invokes <Command>' - a command a trigger runs. What it passes the command is not modeled.
+export interface InvokesSyntax extends SyntaxNode {
+    readonly kind: 'InvokesSyntax';
+    readonly command: string;
+}
+
+// One trigger of a reaction: what sets it off, and the events it produces and commands it invokes. Its code,
+// the values it takes and the read models it reads are not modeled.
 export interface ReactionTriggerSyntax extends SyntaxNode {
     readonly kind: 'ReactionTriggerSyntax';
     readonly source: TriggerSourceSyntax;
     readonly description: string | null;
+    readonly produces: readonly ProducesSyntax[];
+    readonly invokes: readonly InvokesSyntax[];
 }
 
 export interface ReactionSyntax extends SyntaxNode {

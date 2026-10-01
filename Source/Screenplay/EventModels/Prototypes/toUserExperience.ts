@@ -7,8 +7,8 @@ import { guidFor } from '../Document/identity';
 import { PrototypeCanvas } from './PrototypeCanvas';
 import { layoutDirectives, prototypeMetrics } from './screenLayout';
 
-// The one UI role a Screenplay model is drawn for. Screenplay does not say who looks at a screen, so every
-// screen is shown to the same user, whose row of prototypes the board draws.
+// Whoever uses a screen no persona is said to - a model without personas, or a slice nobody is required
+// to be authorized for. Their row of prototypes is drawn like a persona's.
 export const userActor: ActorDocument = {
     id: guidFor('actor:User'),
     name: 'User',
@@ -16,9 +16,9 @@ export const userActor: ActorDocument = {
     description: 'Whoever uses the screens of the model',
 };
 
-// What the user sees in a slice - its screens, one under the other, drawn as one prototype. A slice without
-// screens has none.
-export function toUserExperience(screens: readonly ScreenSyntax[], path: string): UserExperienceActorDocument[] {
+// What the actors who use a slice see - its screens, one under the other, drawn as one prototype in each of
+// their rows. A slice without screens has none.
+export function toUserExperience(screens: readonly ScreenSyntax[], path: string, actorIds: readonly string[] = [userActor.id]): UserExperienceActorDocument[] {
     if (screens.length === 0) {
         return [];
     }
@@ -32,14 +32,8 @@ export function toUserExperience(screens: readonly ScreenSyntax[], path: string)
             : layoutDirectives(canvas, screen.directives, region, y, presentsData(screen.directives));
         y += height + gap;
     }
-    return [{
-        id: userActor.id,
-        type: ActorType.uiRole,
-        elements: canvas.elements,
-        layout: PrototypeLayout.absolute,
-        windowWidth,
-        windowHeight: Math.max(minimumWindowHeight, y - gap + padding),
-    }];
+    const windowHeight = Math.max(minimumWindowHeight, y - gap + padding);
+    return actorIds.map(id => ({ id, type: ActorType.uiRole, elements: canvas.elements, layout: PrototypeLayout.absolute, windowWidth, windowHeight }));
 }
 
 // A screen implemented in a file says nothing about what is on it, so it is drawn as one content area.

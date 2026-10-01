@@ -16,7 +16,7 @@ describe('when parsing constructs it does not model', () => {
             'policy Admins',
             '  claim role = "admin"',
             'module Projects',
-            '  authorize policy Admins',
+            '  authorize Admins',
             '  feature Registration',
             '    slice StateChange RegisterProject',
             '      screen Register',

@@ -1,13 +1,15 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { AuthorizeSyntax, PersonaSyntax, PolicyRequirementSyntax } from './Authorization';
+import { CaptureAppendSyntax, CaptureChildrenSyntax, CaptureNestedSyntax, CaptureSourceSettingSyntax, CaptureSourceSyntax, CaptureSyntax } from './Captures';
 import { CommandSyntax, ValidateSyntax, ValidationRuleSyntax } from './Commands';
 import { ConstraintSyntax } from './Constraints';
 import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, PropertySyntax, ReadModelSyntax, TagSyntax, TypeRefSyntax, TypeSyntax } from './Declarations';
 import { ExpressionSyntax, ObjectMemberSyntax, PropertyMappingSyntax } from './Expressions';
-import { ProjectionBlockSyntax, ProjectionSyntax } from './Projections';
+import { JoinEventSyntax, MappingSyntax, ProjectionBlockSyntax, ProjectionSyntax } from './Projections';
 import { QueryParameterSyntax, QuerySyntax } from './Queries';
-import { ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
+import { InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
 import { ScreenDirectiveSyntax, ScreenSyntax } from './Screens';
 import { SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationReadModelSyntax, SpecificationSyntax } from './Specifications';
 import { ApplicationSyntax, FeatureSyntax, ModuleSyntax, SliceSyntax } from './Structure';
@@ -25,7 +27,25 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.imports.forEach(node => this.visitImport(node));
         syntax.concepts.forEach(node => this.visitConcept(node));
         syntax.types.forEach(node => this.visitType(node));
+        syntax.personas.forEach(node => this.visitPersona(node));
         syntax.modules.forEach(node => this.visitModule(node));
+    }
+
+    visitPersona(syntax: PersonaSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitAuthorize(syntax: AuthorizeSyntax): void {
+        this.visitNode(syntax);
+        this.visitPolicyRequirement(syntax.requirement);
+    }
+
+    visitPolicyRequirement(syntax: PolicyRequirementSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.kind === 'LogicalPolicyRequirementSyntax') {
+            this.visitPolicyRequirement(syntax.left);
+            this.visitPolicyRequirement(syntax.right);
+        }
     }
 
     visitDomain(syntax: DomainSyntax): void {
@@ -48,11 +68,13 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitModule(syntax: ModuleSyntax): void {
         this.visitNode(syntax);
+        if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         syntax.features.forEach(node => this.visitFeature(node));
     }
 
     visitFeature(syntax: FeatureSyntax): void {
         this.visitNode(syntax);
+        if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         syntax.features.forEach(node => this.visitFeature(node));
         syntax.slices.forEach(node => this.visitSlice(node));
     }
@@ -65,6 +87,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.queries.forEach(node => this.visitQuery(node));
         syntax.projections.forEach(node => this.visitProjection(node));
         syntax.readModels.forEach(node => this.visitReadModel(node));
+        syntax.captures.forEach(node => this.visitCapture(node));
         syntax.reactions.forEach(node => this.visitReaction(node));
         syntax.screens.forEach(node => this.visitScreen(node));
         syntax.specifications.forEach(node => this.visitSpecification(node));
@@ -73,6 +96,7 @@ export abstract class ScreenplaySyntaxWalker {
     visitCommand(syntax: CommandSyntax): void {
         this.visitNode(syntax);
         syntax.properties.forEach(node => this.visitProperty(node));
+        if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         syntax.validations.forEach(node => this.visitValidate(node));
     }
 
@@ -113,6 +137,7 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitTypeRef(syntax.returnType);
         if (syntax.by !== null) this.visitQueryParameter(syntax.by);
         syntax.filters.forEach(node => this.visitQueryParameter(node));
+        if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
     }
 
     visitQueryParameter(syntax: QueryParameterSyntax): void {
@@ -130,9 +155,14 @@ export abstract class ScreenplaySyntaxWalker {
         switch (syntax.kind) {
             case 'FromSyntax':
                 syntax.events.forEach(node => this.visitNode(node));
+                syntax.mappings.forEach(node => this.visitMapping(node));
+                break;
+            case 'EverySyntax':
+            case 'AllSyntax':
+                syntax.mappings.forEach(node => this.visitMapping(node));
                 break;
             case 'JoinSyntax':
-                syntax.events.forEach(node => this.visitNode(node));
+                syntax.events.forEach(node => this.visitJoinEvent(node));
                 break;
             case 'ProjectionVariantSyntax':
                 syntax.entersOn.forEach(node => this.visitNode(node));
@@ -145,6 +175,15 @@ export abstract class ScreenplaySyntaxWalker {
         }
     }
 
+    visitJoinEvent(syntax: JoinEventSyntax): void {
+        this.visitNode(syntax);
+        syntax.mappings.forEach(node => this.visitMapping(node));
+    }
+
+    visitMapping(syntax: MappingSyntax): void {
+        this.visitNode(syntax);
+    }
+
     visitReaction(syntax: ReactionSyntax): void {
         this.visitNode(syntax);
         syntax.triggers.forEach(node => this.visitReactionTrigger(node));
@@ -153,6 +192,47 @@ export abstract class ScreenplaySyntaxWalker {
     visitReactionTrigger(syntax: ReactionTriggerSyntax): void {
         this.visitNode(syntax);
         this.visitTriggerSource(syntax.source);
+        syntax.produces.forEach(node => this.visitProduces(node));
+        syntax.invokes.forEach(node => this.visitInvokes(node));
+    }
+
+    visitProduces(syntax: ProducesSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitInvokes(syntax: InvokesSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitCapture(syntax: CaptureSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.source !== null) this.visitCaptureSource(syntax.source);
+        syntax.appends.forEach(node => this.visitCaptureAppend(node));
+        syntax.children.forEach(node => this.visitCaptureChildren(node));
+        syntax.nested.forEach(node => this.visitCaptureNested(node));
+    }
+
+    visitCaptureSource(syntax: CaptureSourceSyntax): void {
+        this.visitNode(syntax);
+        syntax.settings.forEach(node => this.visitCaptureSourceSetting(node));
+    }
+
+    visitCaptureSourceSetting(syntax: CaptureSourceSettingSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitCaptureAppend(syntax: CaptureAppendSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitCaptureChildren(syntax: CaptureChildrenSyntax): void {
+        this.visitNode(syntax);
+        syntax.appends.forEach(node => this.visitCaptureAppend(node));
+    }
+
+    visitCaptureNested(syntax: CaptureNestedSyntax): void {
+        this.visitNode(syntax);
+        syntax.appends.forEach(node => this.visitCaptureAppend(node));
     }
 
     visitTriggerSource(syntax: TriggerSourceSyntax): void {

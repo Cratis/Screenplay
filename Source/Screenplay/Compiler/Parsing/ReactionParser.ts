@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
-import { DayOfWeek, IntervalUnit, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from '../Syntax/Reactions';
+import { DayOfWeek, IntervalUnit, InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from '../Syntax/Reactions';
 import { pattern } from '../Text/patterns';
 import { parseDescription } from './DescriptionParser';
 import { firstWord } from './LineText';
@@ -14,6 +14,10 @@ const whenPattern = pattern('^when\\s+([A-Za-z_]\\w*)$');
 const everyPattern = pattern('^every\\s+(\\d+)\\s+(seconds?|minutes?|hours?|days?)$');
 const atPattern = pattern('^at\\s+(\\d{2}:\\d{2})(?:\\s+on\\s+(?:(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)|day\\s+(\\d{1,2})))?$');
 const clauseKeywords = new Set(['when', 'every', 'at']);
+const producesPattern = pattern('^produces\\s+([A-Z]\\w*)$');
+const producesWhenPattern = pattern('^produces\\s+when\\s+(.+)$');
+const eventNamePattern = pattern('^([A-Z]\\w*)$');
+const invokesPattern = pattern('^invokes\\s+([A-Z]\\w*)$');
 
 export function parseReaction(context: ParserContext, line: SourceLine): ReactionSyntax {
     const name = header.exec(line.content)?.[1] ?? '';
@@ -60,13 +64,25 @@ export function parseReaction(context: ParserContext, line: SourceLine): Reactio
     return { kind: 'ReactionSyntax', name, description, triggers, location: locationOf(line) };
 }
 
-// What a trigger does - reads, produces, invokes, code - is not modeled; only its description is read.
+// What a trigger does - the events it produces and the commands it invokes - is read by name; its reads,
+// values and code are not modeled. The C# compiler remains the authority on whether what is skipped is valid.
 function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerSourceSyntax): ReactionTriggerSyntax {
     let description: string | null = null;
+    const produces: ProducesSyntax[] = [];
+    const invokes: InvokesSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
-        if (firstWord(child.content) === 'description') {
+        const keyword = firstWord(child.content);
+        if (keyword === 'description') {
             description = parseDescription(context, child, description, `Trigger '${child.content}'`);
+        } else if (keyword === 'produces') {
+            const produced = parseProduces(context, child);
+            if (produced !== undefined) {
+                produces.push(produced);
+            }
+        } else if (keyword === 'invokes' && invokesPattern.test(child.content)) {
+            invokes.push({ kind: 'InvokesSyntax', command: invokesPattern.exec(child.content)![1], location: locationOf(child) });
+            context.skipOpaqueBlock(child.indent);
         } else {
             if (child.content.startsWith('```')) {
                 context.skipFencedBody();
@@ -74,7 +90,25 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
             context.skipOpaqueBlock(child.indent);
         }
     }
-    return { kind: 'ReactionTriggerSyntax', source, description, location: locationOf(line) };
+    return { kind: 'ReactionTriggerSyntax', source, description, produces, invokes, location: locationOf(line) };
+}
+
+// 'produces <Event>' with its mappings, or 'produces when <condition>' with the event on the line below it.
+function parseProduces(context: ParserContext, line: SourceLine): ProducesSyntax | undefined {
+    const location = locationOf(line);
+    const unconditional = producesPattern.exec(line.content);
+    if (unconditional !== null) {
+        context.skipOpaqueBlock(line.indent);
+        return { kind: 'ProducesSyntax', event: unconditional[1], location };
+    }
+    if (producesWhenPattern.test(line.content)) {
+        const eventLine = context.peekChild(line.indent);
+        const event = eventLine === undefined ? null : eventNamePattern.exec(eventLine.content);
+        context.skipOpaqueBlock(line.indent);
+        return event === null || event === undefined ? undefined : { kind: 'ProducesSyntax', event: event[1], location };
+    }
+    context.skipOpaqueBlock(line.indent);
+    return undefined;
 }
 
 function sameSource(left: TriggerSourceSyntax, right: TriggerSourceSyntax): boolean {
