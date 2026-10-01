@@ -1,0 +1,51 @@
+/* Copyright (c) Cratis. All rights reserved. */
+/* Licensed under the MIT license. See LICENSE file in the project root for full license information. */
+
+/* The page is dark (see applyDarkTheme); this sizes it, paints it from the board's surface and borrows VS Code's font. */
+html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--vscode-font-family, Inter, Helvetica, Arial, sans-serif);
+    background: var(--surface-ground, var(--vscode-editor-background));
+    color: var(--text-color, var(--vscode-editor-foreground));
+}
+
+.screenplay-board {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.screenplay-board__canvas {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+}
+
+.screenplay-board__message {
+    padding: 1rem;
+}
+
+.screenplay-board__problems {
+    padding: 0.5rem 1rem;
+    background: var(--vscode-inputValidation-errorBackground);
+    border-bottom: 1px solid var(--vscode-inputValidation-errorBorder);
+}
+
+.screenplay-board__problems ul {
+    margin: 0.25rem 0 0;
+    padding-left: 1.25rem;
+}
+
+.screenplay-board__problems button {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--vscode-textLink-foreground);
+    cursor: pointer;
+    font: inherit;
+}
