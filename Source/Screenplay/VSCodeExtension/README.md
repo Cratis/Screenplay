@@ -4,6 +4,7 @@ Language support for the Cratis **Screenplay** DSL — the modeling language tha
 
 ## Features
 
+- **The event model board** — a `.play` file opens on the Cratis event model board, the board Cratis Studio draws, and redraws as you edit. A file inside a folder application shows the whole application. **Show Source** opens the text beside the board, and **Open Event Model Board** goes back.
 - **Syntax highlighting** for all Screenplay constructs, slice types, concept attributes (`@pii`, `@sensitive`), and context variables (`$context.*`, `$env.*`).
 - **Embedded language highlighting** — inline `csharp`, `typescript`, `react`, and `html` blocks between triple backticks are highlighted with their own grammars.
 - **Sub-language highlighting** for the Projection Declaration Language (PDL) inside `projection` blocks and the Change Data Capture Language (CDL) inside `capture` blocks.
@@ -14,11 +15,14 @@ Language support for the Cratis **Screenplay** DSL — the modeling language tha
 
 ## Development
 
-From the repository root:
+From the repository root, build the packages the extension bundles, then the extension:
 
 ```shell
 yarn install
-yarn build
+yarn workspace @cratis/screenplay-compiler build
+yarn workspace @cratis/screenplay-event-models build
+yarn workspace @cratis/screenplay-language build
+yarn workspace screenplay build
 ```
 
 Then press **F5** in VS Code to launch an Extension Development Host with the extension loaded.

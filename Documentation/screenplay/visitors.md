@@ -2,6 +2,8 @@
 
 Screenplay's job is to make a `.play` document compilable to anything - C#, TypeScript, a diagram, a database schema, a checklist for an auditor. The compiler gets you a syntax tree. Turning that tree into your own representation is what this page is about.
 
+In TypeScript, the [TypeScript compiler](typescript-compiler.md) offers the same visitors and walker.
+
 There are two surfaces, and they answer different questions. The **root visitors** answer "hand me the tree". The **walker** answers "call me for the parts I care about". Reach for the walker first - it is the one that keeps working when the language grows.
 
 ## The problem the walker solves
