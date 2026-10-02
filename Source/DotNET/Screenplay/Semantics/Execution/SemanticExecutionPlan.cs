@@ -82,7 +82,9 @@ public sealed class SemanticExecutionPlan
         ImmutableDictionary<SemanticId, SemanticReadModel> readModels,
         ImmutableDictionary<SemanticId, SemanticKeyedQuery> queries,
         ImmutableDictionary<SemanticId, SemanticSpecification> specifications,
-        ImmutableDictionary<string, SemanticConstraint> constraints)
+        ImmutableDictionary<string, SemanticConstraint> constraints,
+        ImmutableArray<SemanticReaction> reactions,
+        ImmutableDictionary<SemanticId, SemanticCapture> captures)
     {
         Model = model;
         Commands = commands;
@@ -92,6 +94,8 @@ public sealed class SemanticExecutionPlan
         Queries = queries;
         Specifications = specifications;
         Constraints = constraints;
+        Reactions = reactions;
+        Captures = captures;
     }
 
     /// <summary>
@@ -138,6 +142,16 @@ public sealed class SemanticExecutionPlan
     /// Gets append-time constraints by name, which is a constraint's identity.
     /// </summary>
     public ImmutableDictionary<string, SemanticConstraint> Constraints { get; }
+
+    /// <summary>
+    /// Gets the reactions in the order they run for one occurrence: by semantic identity, which canonical form preserves.
+    /// </summary>
+    public ImmutableArray<SemanticReaction> Reactions { get; }
+
+    /// <summary>
+    /// Gets the captures indexed by semantic identity.
+    /// </summary>
+    public ImmutableDictionary<SemanticId, SemanticCapture> Captures { get; }
 
     /// <summary>
     /// Compiles ESM into a plan only when every reachable capability is admitted.
@@ -193,7 +207,9 @@ public sealed class SemanticExecutionPlan
                 slices.SelectMany(_ => _.ReadModels).ToImmutableDictionary(_ => _.Id),
                 slices.SelectMany(_ => _.Queries).ToImmutableDictionary(_ => _.Id),
                 slices.SelectMany(_ => _.Specifications).ToImmutableDictionary(_ => _.Id),
-                slices.SelectMany(_ => _.Constraints).ToImmutableDictionary(_ => _.Name, StringComparer.Ordinal)),
+                slices.SelectMany(_ => _.Constraints).ToImmutableDictionary(_ => _.Name, StringComparer.Ordinal),
+                [.. slices.SelectMany(_ => _.Reactions).OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal)],
+                slices.SelectMany(_ => _.Captures).ToImmutableDictionary(_ => _.Id)),
             []);
     }
 
