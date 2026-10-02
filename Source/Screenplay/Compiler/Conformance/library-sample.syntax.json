@@ -93,6 +93,44 @@
                   },
                   "description": null,
                   "name": "AddBook",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "BookAdded",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "bookId"
+                      },
+                      "inlineEvent": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "isbn",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "isbn"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "title"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "author",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "author"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
@@ -184,8 +222,11 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "BookAdded",
                   "properties": [
                     {
@@ -1136,6 +1177,28 @@
                   },
                   "description": null,
                   "name": "RegisterMember",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "MemberRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "memberId"
+                      },
+                      "inlineEvent": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "name"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
@@ -1182,8 +1245,11 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "MemberRegistered",
                   "properties": [
                     {
@@ -1363,8 +1429,11 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "WelcomeLetterSent",
                   "properties": [
                     {
@@ -1398,7 +1467,20 @@
                       "produces": [
                         {
                           "kind": "ProducesSyntax",
-                          "event": "WelcomeLetterSent"
+                          "event": "WelcomeLetterSent",
+                          "for": null,
+                          "inlineEvent": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "addressedTo",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "name"
+                              }
+                            }
+                          ],
+                          "tags": []
                         }
                       ],
                       "source": {
@@ -1513,6 +1595,36 @@
                   },
                   "description": null,
                   "name": "BorrowBook",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "BookBorrowed",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "bookId"
+                      },
+                      "inlineEvent": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "memberId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "memberId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "dueDate",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "dueDate"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
@@ -1573,8 +1685,11 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "BookBorrowed",
                   "properties": [
                     {
@@ -1879,6 +1994,28 @@
                   },
                   "description": null,
                   "name": "ReturnBook",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "BookReturned",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "bookId"
+                      },
+                      "inlineEvent": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "returnedOn",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "returnedOn"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
@@ -1911,8 +2048,11 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "BookReturned",
                   "properties": [
                     {

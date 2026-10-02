@@ -40,4 +40,19 @@ public record EventSyntax(
     /// Gets whether the source explicitly declared the generation, including an explicit generation 1.
     /// </summary>
     public bool HasGenerationMarker { get; init; }
+
+    /// <summary>
+    /// Gets the previous persisted event name retained when renaming an event. This is authoring metadata, not an ESM contract id.
+    /// </summary>
+    public string? Id { get; init; }
+
+    /// <summary>
+    /// Gets the optional human-readable description.
+    /// </summary>
+    public string? Description { get; init; }
+
+    /// <summary>
+    /// Gets the optional Markdown documentation.
+    /// </summary>
+    public string? Documentation { get; init; }
 }

@@ -49,7 +49,7 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
     public EventSyntax? Event(string name, DeclarationScope scope) => Resolve(
         name,
         scope,
-        slice => slice.Events.GroupBy(@event => @event.Name, StringComparer.Ordinal)
+        slice => EventDeclarations.In(slice).GroupBy(@event => @event.Name, StringComparer.Ordinal)
             .Select(group => group.OrderByDescending(@event => @event.Generation).First()),
         node => node.Name)?.Node;
 
@@ -73,7 +73,7 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
     /// <param name="name">The short name.</param>
     /// <returns>Whether any such declaration carries the name.</returns>
     public bool Declares(string name) =>
-        slices.Any(entry => entry.Slice.Events.Any(@event => @event.Name == name) ||
+        slices.Any(entry => EventDeclarations.In(entry.Slice).Any(@event => @event.Name == name) ||
             entry.Slice.Commands.Any(command => command.Name == name) ||
             ViewNames(entry.Slice).Contains(name, StringComparer.Ordinal)) ||
         application.Concepts.Any(concept => concept.Name == name) ||

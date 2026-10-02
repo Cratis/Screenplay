@@ -7,6 +7,7 @@ import { pattern } from '../Text/patterns';
 import { parseDescription } from './DescriptionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
+import { parseProduces } from './ProducesParser';
 import { locationOf, SourceLine } from './SourceLine';
 
 const header = pattern('^reaction\\s+([A-Za-z_]\\w*)$');
@@ -14,9 +15,6 @@ const whenPattern = pattern('^when\\s+([A-Za-z_]\\w*)$');
 const everyPattern = pattern('^every\\s+(\\d+)\\s+(seconds?|minutes?|hours?|days?)$');
 const atPattern = pattern('^at\\s+(\\d{2}:\\d{2})(?:\\s+on\\s+(?:(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)|day\\s+(\\d{1,2})))?$');
 const clauseKeywords = new Set(['when', 'every', 'at']);
-const producesPattern = pattern('^produces\\s+([A-Z]\\w*)$');
-const producesWhenPattern = pattern('^produces\\s+when\\s+(.+)$');
-const eventNamePattern = pattern('^([A-Z]\\w*)$');
 const invokesPattern = pattern('^invokes\\s+([A-Z]\\w*)$');
 
 export function parseReaction(context: ParserContext, line: SourceLine): ReactionSyntax {
@@ -91,24 +89,6 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
         }
     }
     return { kind: 'ReactionTriggerSyntax', source, description, produces, invokes, location: locationOf(line) };
-}
-
-// 'produces <Event>' with its mappings, or 'produces when <condition>' with the event on the line below it.
-function parseProduces(context: ParserContext, line: SourceLine): ProducesSyntax | undefined {
-    const location = locationOf(line);
-    const unconditional = producesPattern.exec(line.content);
-    if (unconditional !== null) {
-        context.skipOpaqueBlock(line.indent);
-        return { kind: 'ProducesSyntax', event: unconditional[1], location };
-    }
-    if (producesWhenPattern.test(line.content)) {
-        const eventLine = context.peekChild(line.indent);
-        const event = eventLine === undefined ? null : eventNamePattern.exec(eventLine.content);
-        context.skipOpaqueBlock(line.indent);
-        return event === null || event === undefined ? undefined : { kind: 'ProducesSyntax', event: event[1], location };
-    }
-    context.skipOpaqueBlock(line.indent);
-    return undefined;
 }
 
 function sameSource(left: TriggerSourceSyntax, right: TriggerSourceSyntax): boolean {

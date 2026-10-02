@@ -13,7 +13,7 @@ export function parseFencedText(context: ParserContext, opener: string, tagLine:
     const open = onTagLine ? tagLine : context.reader.peekSignificant();
     const expectedFence = opener === 'description' ? '```text' : `\`\`\`${opener}`;
     if (open === undefined || (open !== tagLine && open.indent <= tagLine.indent) ||
-        (open.content !== expectedFence && !(open.content === '```' && open !== tagLine))) {
+        (open.content !== expectedFence && !(opener === 'description' && open.content === '```markdown') && !(open.content === '```' && open !== tagLine))) {
         context.error(DiagnosticCodes.ExpectedCodeFence, `Expected an opening \`\`\`${opener === 'description' ? 'text' : opener} fence after '${opener}'`, locationOf(tagLine));
         return null;
     }

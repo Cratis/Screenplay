@@ -65,7 +65,7 @@ internal static class CodeBlockParser
         var open = tagLine.Content.StartsWith("```", StringComparison.Ordinal) ? tagLine : context.Reader.PeekSignificant();
         var expectedFence = opener == "description" ? "```text" : $"```{opener}";
         if (open is null || (open != tagLine && open.Indent <= tagLine.Indent) ||
-            (open.Content != expectedFence && !(open.Content == "```" && open != tagLine)))
+            (open.Content != expectedFence && !(opener == "description" && open.Content == "```markdown") && !(open.Content == "```" && open != tagLine)))
         {
             context.Error(DiagnosticCodes.ExpectedCodeFence, $"Expected an opening ```{(opener == "description" ? "text" : opener)} fence after '{opener}'", tagLine.Location);
             return null;

@@ -43,6 +43,28 @@
                   "authorize": null,
                   "description": null,
                   "name": "RegisterProject",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "ProjectRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "projectId"
+                      },
+                      "inlineEvent": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "name"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
@@ -89,8 +111,11 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": true,
+                  "id": null,
                   "name": "ProjectRegistered",
                   "properties": [
                     {
@@ -120,8 +145,11 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 2,
                   "hasGenerationMarker": true,
+                  "id": null,
                   "name": "ProjectRegistered",
                   "properties": [
                     {

@@ -21,6 +21,10 @@ export class ParserContext {
         return this.#diagnostics;
     }
 
+    information(code: string, message: string, location: SourceLocation): void {
+        this.#diagnostics.push({ severity: 'information', code, message, location });
+    }
+
     error(code: string, message: string, location: SourceLocation): void {
         this.#diagnostics.push({ severity: 'error', code, message, location });
     }

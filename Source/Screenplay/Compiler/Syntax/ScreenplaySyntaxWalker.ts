@@ -108,6 +108,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.properties.forEach(node => this.visitProperty(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         syntax.validations.forEach(node => this.visitValidate(node));
+        syntax.produces.forEach(node => this.visitProduces(node));
     }
 
     visitValidate(syntax: ValidateSyntax): void {
@@ -208,6 +209,10 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitProduces(syntax: ProducesSyntax): void {
         this.visitNode(syntax);
+        if (syntax.inlineEvent !== null) this.visitEvent(syntax.inlineEvent);
+        if (syntax.for !== null) this.visitExpression(syntax.for);
+        syntax.mappings.forEach(node => this.visitPropertyMapping(node));
+        syntax.tags.forEach(node => this.visitTag(node));
     }
 
     visitInvokes(syntax: InvokesSyntax): void {

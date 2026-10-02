@@ -5,6 +5,7 @@ import { Diagnostic } from './Diagnostics/Diagnostic';
 import { documentPlacement, PlayPlacement } from './Files/PlayPlacement';
 import { DiscoveredImport, discoverImports as discoverImportsIn } from './Parsing/ImportDiscovery';
 import { LineReader } from './Parsing/LineReader';
+import { validateInlineEvents } from './Parsing/InlineEventValidator';
 import { ParserContext } from './Parsing/ParserContext';
 import { parseApplication } from './Parsing/ScreenplayParser';
 import { splitLines } from './Parsing/SourceLineSplitter';
@@ -28,6 +29,7 @@ export function parse(source: string, path?: string, placement: PlayPlacement = 
     const lines = splitLines(source, false, path);
     const context = new ParserContext(new LineReader(lines), path);
     const value = parseApplication(context, lines, placement);
+    validateInlineEvents(value, context);
     return {
         value,
         diagnostics: context.diagnostics,

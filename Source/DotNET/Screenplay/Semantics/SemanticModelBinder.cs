@@ -251,7 +251,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             foreach (var (module, featurePath, slice) in AllSlices())
             {
                 var sliceAddress = SemanticAddress.ForSlice(_applicationIdentity, module, featurePath, slice.Name);
-                foreach (var group in slice.Events.GroupBy(@event => @event.Name, StringComparer.Ordinal))
+                foreach (var group in EventDeclarations.In(slice).GroupBy(@event => @event.Name, StringComparer.Ordinal))
                 {
                     var declarations = group.OrderBy(@event => @event.Generation).ToArray();
                     var bound = BindEvent(sliceAddress, declarations);

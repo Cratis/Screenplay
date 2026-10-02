@@ -94,6 +94,7 @@ public partial class ScreenplayPrinter
         writer.Line(@event.HasGenerationMarker || @event.Generation != 1 ? $"event {@event.Name} generation {@event.Generation}" : $"event {@event.Name}");
         using (writer.Indent())
         {
+            WriteEventMetadata(writer, @event);
             WriteFile(writer, @event.File);
             WriteTags(writer, @event.Tags);
             WriteProperties(writer, @event.Properties, ReservedWords.EventBody);
@@ -393,6 +394,24 @@ public partial class ScreenplayPrinter
     void WriteProduces(ScreenplayWriter writer, ProducesSyntax produces)
     {
         using var anchor = writer.Anchor(produces);
+        if (produces.InlineEvent is { } inline)
+        {
+            writer.Line($"produces event {inline.Name}");
+            using (writer.Indent())
+            {
+                WriteEventMetadata(writer, inline);
+                WriteProducesTarget(writer, produces.For);
+                WriteTags(writer, inline.Tags);
+                foreach (var mapping in produces.Mappings)
+                {
+                    var property = inline.Properties.Single(value => value.Name == mapping.Property);
+                    writer.Line($"{ReservedWords.Escape(property.Name, ReservedWords.InlineEventBody)} {ScreenplaySyntaxText.TypeRef(property.Type)} = {ScreenplaySyntaxText.Expression(mapping.Source)}", mapping);
+                }
+            }
+
+            return;
+        }
+
         if (produces.When is null)
         {
             writer.Line($"produces {produces.Event}");
@@ -415,6 +434,26 @@ public partial class ScreenplayPrinter
                 WriteProducesTarget(writer, produces.For);
                 WriteTags(writer, produces.Tags);
                 WriteMappings(writer, produces.Mappings, ReservedWords.MappingBlock);
+            }
+        }
+    }
+
+    void WriteEventMetadata(ScreenplayWriter writer, EventSyntax declaration)
+    {
+        if (declaration.Id is not null)
+        {
+            writer.DirectiveLine($"id {StringLiteral.Quote(declaration.Id)}", declaration, "id");
+        }
+
+        WriteDescription(writer, declaration.Description, declaration);
+        if (declaration.Documentation is not null)
+        {
+            writer.DirectiveLine("documentation", declaration, "documentation");
+            using (writer.Indent())
+            {
+                writer.Line("```markdown");
+                foreach (var line in declaration.Documentation.Split('\n')) writer.Line(line);
+                writer.Line("```");
             }
         }
     }

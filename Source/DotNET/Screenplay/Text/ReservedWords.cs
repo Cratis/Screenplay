@@ -38,6 +38,12 @@ internal static class ReservedWords
         new HashSet<string>(StringComparer.Ordinal) { "tag" };
 
     /// <summary>
+    /// The directive names reserved in inline event bodies.
+    /// </summary>
+    public static readonly IReadOnlySet<string> InlineEventBody =
+        new HashSet<string>(StringComparer.Ordinal) { "tag", "for", "generation", "origin", "namespace", "sequence", "correlation", "causation", "causedBy", "occurred" };
+
+    /// <summary>
     /// The keywords a reaction trigger body reserves, and so the trigger values that need escaping.
     /// </summary>
     public static readonly IReadOnlySet<string> TriggerBody =
@@ -47,7 +53,7 @@ internal static class ReservedWords
     /// The keywords a mapping block reserves, and so the mapping targets that need escaping.
     /// </summary>
     public static readonly IReadOnlySet<string> MappingBlock =
-        new HashSet<string>(StringComparer.Ordinal) { "tag" };
+        new HashSet<string>(StringComparer.Ordinal) { "tag", "namespace", "sequence", "correlation", "causation", "causedBy", "occurred" };
 
     /// <summary>
     /// The keywords a projection <c>from</c> block reserves, and so the mapping targets that need escaping.

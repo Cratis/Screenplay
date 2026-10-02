@@ -89,7 +89,7 @@ public sealed partial class SemanticModelBinder
 
             var address = SemanticAddress.ForSlice(_applicationIdentity, module, featurePath, slice.Name);
             var id = ResolveSlice(address, slice.Location, slice.DescriptionLocation, slice.DescriptionRawLength);
-            var events = slice.Events.Select(value => _eventDeclarations[value]).Distinct().ToArray();
+            var events = EventDeclarations.In(slice).Select(value => _eventDeclarations[value]).Distinct().ToArray();
             var commands = slice.Commands.Select(value =>
             {
                 var bound = BindCommand(address, value, _events);
@@ -138,6 +138,11 @@ public sealed partial class SemanticModelBinder
             var revisions = new List<(EventSyntax Syntax, ImmutableArray<SemanticProperty> Properties, ImmutableArray<string> Tags)>();
             foreach (var declaration in declarations)
             {
+                if (declaration.Description is not null || declaration.Documentation is not null || declaration.Id is not null)
+                {
+                    Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Event '{declaration.Name}' description, documentation and id are authoring metadata.", declaration.Location);
+                }
+
                 if (declaration.File is not null)
                 {
                     Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Event '{declaration.Name}' file reference is realization provenance.", declaration.File.Location);

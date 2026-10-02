@@ -32,7 +32,7 @@ internal static class ScreenplayValidator
             .SelectMany(feature => feature.Slices)
             .ToList();
 
-        var knownEvents = slices.SelectMany(slice => slice.Events.Select(@event => @event.Name))
+        var knownEvents = slices.SelectMany(slice => EventDeclarations.In(slice).Select(@event => @event.Name))
             .Concat(application.Imports.Select(import => import.Name))
             .ToHashSet();
         var knownPolicies = application.Policies.Select(policy => policy.Name).ToHashSet();
@@ -106,11 +106,12 @@ internal static class ScreenplayValidator
             .ToHashSet();
 
         var declaredTriggers = (application.Triggers ?? []).ToDictionary(trigger => trigger.Name, StringComparer.Ordinal);
-        var eventsByName = slices.SelectMany(slice => slice.Events)
+        var eventsByName = slices.SelectMany(EventDeclarations.In)
             .GroupBy(@event => @event.Name, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.OrderByDescending(@event => @event.Generation).First(), StringComparer.Ordinal);
 
-        var eventDeclarations = slices.SelectMany(slice => slice.Events).ToLookup(@event => @event.Name, StringComparer.Ordinal);
+        var eventDeclarations = slices.SelectMany(EventDeclarations.In).ToLookup(@event => @event.Name, StringComparer.Ordinal);
+        InlineEventValidator.Validate(application, slices, context);
         foreach (var slice in slices)
         {
             ValidateEventGenerations(slice, context);
@@ -171,7 +172,7 @@ internal static class ScreenplayValidator
     static void ValidateEventGenerations(SliceSyntax slice, ParserContext context)
     {
         // The same event name denotes one contract only within one owning slice.
-        foreach (var @event in slice.Events.Where(@event => @event.Generation is 0 or uint.MaxValue))
+        foreach (var @event in EventDeclarations.In(slice).Where(@event => @event.Generation is 0 or uint.MaxValue))
         {
             context.Error(
                 DiagnosticCodes.InvalidEventGeneration,
@@ -179,7 +180,7 @@ internal static class ScreenplayValidator
                 @event.Location);
         }
 
-        foreach (var group in slice.Events.GroupBy(@event => @event.Name, StringComparer.Ordinal))
+        foreach (var group in EventDeclarations.In(slice).GroupBy(@event => @event.Name, StringComparer.Ordinal))
         {
             foreach (var duplicate in group.GroupBy(@event => @event.Generation).SelectMany(generation => generation.Skip(1)))
             {
@@ -1417,7 +1418,7 @@ internal static class ScreenplayValidator
         HashSet<string> knownReadModels,
         ParserContext context)
     {
-        foreach (var @event in slice.Events)
+        foreach (var @event in EventDeclarations.In(slice))
         {
             ValidatePropertyTypes(@event.Properties, $"event '{@event.Name}'", knownTypes, context);
         }

@@ -62,6 +62,9 @@ export interface EventSyntax extends SyntaxNode {
     readonly tags: readonly TagSyntax[];
     readonly generation: number;
     readonly hasGenerationMarker: boolean;
+    readonly id: string | null;
+    readonly description: string | null;
+    readonly documentation: string | null;
 }
 
 export interface ReadModelSyntax extends SyntaxNode {

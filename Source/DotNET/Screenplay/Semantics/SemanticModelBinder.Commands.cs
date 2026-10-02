@@ -54,12 +54,22 @@ public sealed partial class SemanticModelBinder
                 .Where(_ => _.condition is not null)
                 .Select(_ => new SemanticRequirement(_.condition!, _.requirement.Message) { Severity = Severity(_.requirement.Severity) })
                 .ToImmutableArray();
-            var produced = command.Produces
+            var productions = command.Produces.Select(value => value.InlineEvent is not null && value.For is null
+                ? value with { For = command.Properties.SingleOrDefault(property => property.IsIdentifier) is { } identifier
+                    ? new PathExpressionSyntax(identifier.Name, value.Location)
+                    : null }
+                : value).ToArray();
+            foreach (var production in productions.Where(value => value.InlineEvent is not null && value.For is null))
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"Inline event '{production.Event}' requires a command identifier or an explicit 'for'", production.Location);
+            }
+
+            var produced = productions
                 .Select(value => BindProducedEvent(command, value, propertiesByName, events))
                 .Where(_ => _ is not null)
                 .Select(_ => _!)
                 .ToImmutableArray();
-            var typedDestination = command.Produces.Any(value => value.For is PathExpressionSyntax source &&
+            var typedDestination = productions.Any(value => value.For is PathExpressionSyntax source &&
                 events.TryGetValue(value.Event, out var @event) && !@event.Properties.ContainsKey(source.Path));
             if (typedDestination) UsesV2 = true;
             var defaultDestination = typedDestination || UsesV2
