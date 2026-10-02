@@ -11,6 +11,8 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        readonly HashSet<SemanticAddress> _persistedEventAddresses = [.. documents.IdentityCatalog.EventContracts.Select(value => value.Address)];
+
         SemanticModule BindModule(ModuleSyntax module)
         {
             if (module.Description is not null)
@@ -124,7 +126,7 @@ public sealed partial class SemanticModelBinder
             var semanticAssignment = documents.IdentityCatalog.ResolveSemanticAssignment(address);
             var contractAssignment = documents.IdentityCatalog.ResolveEventContract(address);
             var revision = new EventContractRevision(current.Generation);
-            if (documents.IdentityCatalog.EventContracts.Any(value => value.Address.Equals(address)) && contractAssignment.Revision != revision)
+            if (_persistedEventAddresses.Contains(address) && contractAssignment.Revision != revision)
             {
                 Error(
                     DiagnosticCodes.UnsupportedEventGenerationSemantics,

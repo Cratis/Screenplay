@@ -64,8 +64,12 @@ public sealed partial class SemanticModelBinder
                 }
             }
 
+            // Resolve the identifier once, and only when an inline omission needs it.
+            var identifier = command.Produces.Any(value => value.InlineEvent is not null && value.For is null)
+                ? command.Properties.SingleOrDefault(property => property.IsIdentifier)
+                : null;
             var productions = command.Produces.Select(value => value.InlineEvent is not null && value.For is null
-                ? value with { For = command.Properties.SingleOrDefault(property => property.IsIdentifier) is { } identifier
+                ? value with { For = identifier is not null
                     ? new PathExpressionSyntax(identifier.Name, value.Location)
                     : null }
                 : value).ToArray();

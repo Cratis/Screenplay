@@ -57,6 +57,7 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
         name = plain[1];
     }
     const properties: PropertySyntax[] = [];
+    const propertyNames = new Set<string>();
     const mappings: PropertyMappingSyntax[] = [];
     const tags: TagSyntax[] = [];
     const metadata = new EventMetadataParser(name);
@@ -99,9 +100,10 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
                     property = { ...property, isIdentifier: false };
                 }
                 const propertyName = property.name;
-                if (properties.some(existing => existing.name === propertyName)) {
+                if (propertyNames.has(propertyName)) {
                     context.error(DiagnosticCodes.DuplicateDeclaration, `Event '${name}' already declares property '${property.name}'`, location);
                 }
+                propertyNames.add(propertyName);
                 properties.push(property);
             }
             mappings.push({ kind: 'PropertyMappingSyntax', property: property?.name ?? unescapeIdentifier(match[1]), source: parseMappingSource(match[2], location, context), location });

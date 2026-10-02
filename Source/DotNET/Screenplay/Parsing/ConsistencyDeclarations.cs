@@ -13,6 +13,17 @@ namespace Cratis.Screenplay.Parsing;
 /// <param name="slices">The slices and their declaration scopes.</param>
 internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IReadOnlyList<(SliceSyntax Slice, DeclarationScope Scope)> slices)
 {
+    readonly ILookup<string, (EventSyntax Node, Declaration Declaration)> _eventsByName = slices.SelectMany(entry =>
+        EventDeclarations.In(entry.Slice).GroupBy(@event => @event.Name, StringComparer.Ordinal)
+            .Select(group => (Node: group.OrderByDescending(@event => @event.Generation).First(), Declaration: new Declaration(group.Key, entry.Scope))))
+        .ToLookup(entry => entry.Declaration.Name, StringComparer.Ordinal);
+    readonly ILookup<string, ImportSyntax> _importsByName = application.Imports.ToLookup(import => import.Name, StringComparer.Ordinal);
+    readonly HashSet<string> _declaredNames = slices.SelectMany(entry => EventDeclarations.In(entry.Slice).Select(@event => @event.Name)
+        .Concat(entry.Slice.Commands.Select(command => command.Name)).Concat(ViewNames(entry.Slice)))
+        .Concat(application.Concepts.Select(concept => concept.Name)).Concat((application.Types ?? []).Select(type => type.Name))
+        .ToHashSet(StringComparer.Ordinal);
+    readonly Dictionary<(string Name, DeclarationScope Scope), EventSyntax?> _resolvedEvents = [];
+
     /// <summary>
     /// Gets the scoped slices.
     /// </summary>
@@ -46,12 +57,30 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
     /// <param name="name">The event name.</param>
     /// <param name="scope">The referring scope.</param>
     /// <returns>The declared event, or null for an unknown or ambiguous shape.</returns>
-    public EventSyntax? Event(string name, DeclarationScope scope) => Resolve(
-        name,
-        scope,
-        slice => EventDeclarations.In(slice).GroupBy(@event => @event.Name, StringComparer.Ordinal)
-            .Select(group => group.OrderByDescending(@event => @event.Generation).First()),
-        node => node.Name)?.Node;
+    public EventSyntax? Event(string name, DeclarationScope scope)
+    {
+        if (_resolvedEvents.TryGetValue((name, scope), out var cached))
+        {
+            return cached;
+        }
+
+        var entries = EventCandidates(name);
+        var resolution = ReferenceResolver.Resolve(name, scope, [.. entries.Select(entry => entry.Declaration)]);
+        if (resolution.IsUnresolved)
+        {
+            var imports = _importsByName[name].ToArray();
+            if (imports.Length == 1)
+            {
+                entries = EventCandidates(imports[0].QualifiedName);
+                resolution = ReferenceResolver.Resolve(imports[0].QualifiedName, scope, [.. entries.Select(entry => entry.Declaration)]);
+            }
+        }
+
+        var result = resolution.Resolved is { } resolved ? entries.First(entry => entry.Declaration == resolved).Node : null;
+        _resolvedEvents[(name, scope)] = result;
+
+        return result;
+    }
 
     /// <summary>
     /// Resolves a view identity, including projection aliases and variant names.
@@ -72,12 +101,7 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
     /// </summary>
     /// <param name="name">The short name.</param>
     /// <returns>Whether any such declaration carries the name.</returns>
-    public bool Declares(string name) =>
-        slices.Any(entry => EventDeclarations.In(entry.Slice).Any(@event => @event.Name == name) ||
-            entry.Slice.Commands.Any(command => command.Name == name) ||
-            ViewNames(entry.Slice).Contains(name, StringComparer.Ordinal)) ||
-        application.Concepts.Any(concept => concept.Name == name) ||
-        (application.Types ?? []).Any(type => type.Name == name);
+    public bool Declares(string name) => _declaredNames.Contains(name);
 
     /// <summary>
     /// Resolves the explicitly declared shape of a read model.
@@ -183,6 +207,9 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
             .Concat(slice.Projections.SelectMany(projection => projection.Blocks.OfType<ProjectionVariantSyntax>().Any()
                 ? projection.Blocks.OfType<ProjectionVariantSyntax>().Select(variant => variant.Name)
                 : [projection.ReadModel ?? projection.Name]));
+
+    (EventSyntax Node, Declaration Declaration)[] EventCandidates(string reference) =>
+        [.. _eventsByName[reference.Split('.', StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? string.Empty]];
 
     // A concept wraps exactly one primitive, so nothing sits below a primitive, a concept or an enum. A name that
     // is also a composite type is ambiguous and stays unknown.

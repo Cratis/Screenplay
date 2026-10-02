@@ -48,10 +48,12 @@ const providerFor = (index: ApplicationIndex): vscode.CompletionItemProvider => 
 
         const file = index.fileOf(document.uri);
         const symbols = file === undefined ? scanDocument(lines) : mergeSymbols(scanDocument(lines), file.application.symbolsExcept(file.path));
-        const eventNames = () =>
-            [...new Set(knownEventNames(symbols))].map((name) =>
-                symbolItem(name, vscode.CompletionItemKind.Event, symbols.events.some(event => event.name === name && event.inline) ? 'inline event' : 'event'),
+        const eventNames = () => {
+            const inlineNames = new Set(symbols.events.filter(event => event.inline).map(event => event.name));
+            return [...new Set(knownEventNames(symbols))].map((name) =>
+                symbolItem(name, vscode.CompletionItemKind.Event, inlineNames.has(name) ? 'inline event' : 'event'),
             );
+        };
 
         switch (plan.kind) {
             case 'playFiles': {

@@ -3,7 +3,11 @@
 
 import { describe, expect, it, vi } from 'vitest';
 import { compileApplication } from '../Files/PlayApplicationAssembly';
+import { validateInlineEvents } from '../Parsing/InlineEventValidator';
+import { LineReader } from '../Parsing/LineReader';
+import { ParserContext } from '../Parsing/ParserContext';
 import { parse } from '../ScreenplayCompiler';
+import { FeatureSyntax } from '../Syntax/Structure';
 
 function document(count: number): string {
     return [...Array.from({ length: count }, (_, index) => `import Other.Imported${index}`),
@@ -41,6 +45,31 @@ describe('when validating many inline events', () => {
             });
             expect(diagnostics).toBe(copyingIdentifier ? count : 0);
             return units;
+        };
+        const small = measure(100);
+        const large = measure(200);
+        expect(small).toBeGreaterThan(0);
+        expect(large).toBeLessThan(small * 2.2);
+    });
+
+    it('should collect deeply nested feature slices without copying every descendant at each level', () => {
+        const measure = (count: number) => {
+            const application = parse(document(count)).value;
+            const feature = application.modules[0].features[0];
+            let nested: FeatureSyntax | undefined;
+            for (const slice of [...feature.slices].reverse()) {
+                nested = { ...feature, slices: [slice], features: nested === undefined ? [] : [nested] };
+            }
+            const value = { ...application, modules: [{ ...application.modules[0], features: [nested!] }] };
+            const context = new ParserContext(new LineReader([]));
+            const flattening = vi.spyOn(Array.prototype, 'flatMap');
+            try {
+                validateInlineEvents(value, context);
+                expect(context.diagnostics).toEqual([]);
+                return flattening.mock.results.reduce<number>((sum, result) => sum + (result.value as unknown[]).length, 0);
+            } finally {
+                flattening.mockRestore();
+            }
         };
         const small = measure(100);
         const large = measure(200);

@@ -169,9 +169,16 @@ public sealed class WorkspaceSyntaxIndex
         ApplicationIdentity application,
         IReadOnlyDictionary<SemanticAddress, SemanticId> semantics,
         IReadOnlyDictionary<SemanticAddress, EventContractId> events,
-        ImmutableArray<WorkspaceSyntaxEntry>.Builder entries)
+        ImmutableArray<WorkspaceSyntaxEntry>.Builder entries,
+        IReadOnlyDictionary<string, int>? standaloneEventCounts = null)
     {
-        var address = WorkspaceSyntaxAddresses.Address(node, member, ancestors, application);
+        if (node is SliceSyntax slice)
+        {
+            standaloneEventCounts = slice.Events.GroupBy(@event => @event.Name, StringComparer.Ordinal)
+                .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
+        }
+
+        var address = WorkspaceSyntaxAddresses.Address(node, member, ancestors, application, standaloneEventCounts);
         var entry = new WorkspaceSyntaxEntry
         {
             Handle = handle,
@@ -192,7 +199,7 @@ public sealed class WorkspaceSyntaxIndex
             var path = $"{handle.Path}/{name}";
             if (value is SyntaxNode child)
             {
-                Visit(child, handle with { Path = path }, entry, name, null, lineage, application, semantics, events, entries);
+                Visit(child, handle with { Path = path }, entry, name, null, lineage, application, semantics, events, entries, standaloneEventCounts);
             }
             else if (value is IEnumerable children and not string)
             {
@@ -201,7 +208,7 @@ public sealed class WorkspaceSyntaxIndex
                 {
                     if (item is SyntaxNode childNode)
                     {
-                        Visit(childNode, handle with { Path = $"{path}/{childIndex}" }, entry, name, childIndex, lineage, application, semantics, events, entries);
+                        Visit(childNode, handle with { Path = $"{path}/{childIndex}" }, entry, name, childIndex, lineage, application, semantics, events, entries, standaloneEventCounts);
                     }
 
                     childIndex++;

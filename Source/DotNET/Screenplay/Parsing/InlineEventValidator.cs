@@ -20,6 +20,7 @@ internal static class InlineEventValidator
     public static void Validate(ApplicationSyntax application, IReadOnlyList<SliceSyntax> slices, ParserContext context)
     {
         var declarations = slices.SelectMany(EventDeclarations.In).ToLookup(value => value.Name, StringComparer.Ordinal);
+        var importedNames = application.Imports.Select(import => import.Name).ToHashSet(StringComparer.Ordinal);
         foreach (var command in slices.SelectMany(slice => slice.Commands))
         {
             var identifier = command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Name;
@@ -30,7 +31,7 @@ internal static class InlineEventValidator
             foreach (var production in command.Produces)
             {
                 if (production.InlineEvent is { } inline &&
-                    (declarations[inline.Name].Count() > 1 || application.Imports.Any(import => import.Name == inline.Name)))
+                    (declarations[inline.Name].Count() > 1 || importedNames.Contains(inline.Name)))
                 {
                     context.Error(DiagnosticCodes.InlineEventCollision, $"Inline event '{inline.Name}' collides with another event declaration or import", production.Location);
                 }

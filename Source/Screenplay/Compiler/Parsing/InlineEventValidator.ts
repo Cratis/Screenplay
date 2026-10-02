@@ -8,8 +8,12 @@ import { ApplicationSyntax, FeatureSyntax, SliceSyntax } from '../Syntax/Structu
 import { ParserContext } from './ParserContext';
 
 export function validateInlineEvents(application: ApplicationSyntax, context: ParserContext): void {
-    const inFeature = (feature: FeatureSyntax): readonly SliceSyntax[] => [...feature.slices, ...feature.features.flatMap(inFeature)];
-    const slices = application.modules.flatMap(module => module.features.flatMap(inFeature));
+    const slices: SliceSyntax[] = [];
+    const inFeature = (feature: FeatureSyntax): void => {
+        slices.push(...feature.slices);
+        feature.features.forEach(inFeature);
+    };
+    application.modules.forEach(module => module.features.forEach(inFeature));
     const eventCounts = new Map<string, number>();
     for (const event of slices.flatMap(eventDeclarations)) eventCounts.set(event.name, (eventCounts.get(event.name) ?? 0) + 1);
     const importedNames = new Set(application.imports.map(value => value.qualifiedName.split('.').at(-1)));

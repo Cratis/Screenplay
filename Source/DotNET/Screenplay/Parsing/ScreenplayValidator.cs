@@ -182,12 +182,13 @@ internal static class ScreenplayValidator
 
         foreach (var group in EventDeclarations.In(slice).GroupBy(@event => @event.Name, StringComparer.Ordinal))
         {
+            var unmarkedFirstGenerations = group.Count(@event => @event.Generation == 1 && !@event.HasGenerationMarker);
             foreach (var duplicate in group.GroupBy(@event => @event.Generation).SelectMany(generation => generation.Skip(1)))
             {
                 context.Error(
                     DiagnosticCodes.DuplicateEventGeneration,
                     duplicate.Generation == 1 && !duplicate.HasGenerationMarker &&
-                    group.Count(@event => @event.Generation == 1 && !@event.HasGenerationMarker) > 1
+                    unmarkedFirstGenerations > 1
                         ? $"Event '{group.Key}' is declared more than once without a generation marker in slice '{slice.Name}' (both are generation 1)"
                         : $"Event '{group.Key}' declares generation {duplicate.Generation} more than once in slice '{slice.Name}'",
                     duplicate.Location);

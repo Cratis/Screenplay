@@ -23,8 +23,9 @@ internal static partial class ProducesParser
     /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
     /// <param name="line">The consumed <see cref="SourceLine"/> holding the <c>produces</c> keyword.</param>
     /// <param name="inCommand">Whether the production belongs to a command.</param>
+    /// <param name="propertyNameComparer">The inline property-name comparer, defaulting to ordinal comparison.</param>
     /// <returns>The parsed <see cref="ProducesSyntax"/>, or <c>null</c> when the declaration is malformed.</returns>
-    public static ProducesSyntax? Parse(ParserContext context, SourceLine line, bool inCommand = false)
+    public static ProducesSyntax? Parse(ParserContext context, SourceLine line, bool inCommand = false, IEqualityComparer<string>? propertyNameComparer = null)
     {
         if (InlineHeaderRegex().Match(line.Content) is { Success: true } inline)
         {
@@ -40,7 +41,7 @@ internal static partial class ProducesParser
                 context.Error(DiagnosticCodes.InlineEventGeneration, "Inline events are generation 1 - extract the event before declaring generations", line.Location);
             }
 
-            return ParseInline(context, line, inline.Groups[1].Value);
+            return ParseInline(context, line, inline.Groups[1].Value, propertyNameComparer);
         }
 
         var conditional = ProducesWhenRegex().Match(line.Content);
@@ -139,10 +140,11 @@ internal static partial class ProducesParser
         return (mappings, tags, target);
     }
 
-    static ProducesSyntax ParseInline(ParserContext context, SourceLine header, string name)
+    static ProducesSyntax ParseInline(ParserContext context, SourceLine header, string name, IEqualityComparer<string>? propertyNameComparer)
     {
         var metadata = new EventMetadataParser(name);
         var properties = new List<PropertySyntax>();
+        var propertyNames = new HashSet<string>(propertyNameComparer ?? StringComparer.Ordinal);
         var mappings = new List<PropertyMappingSyntax>();
         var tags = new List<TagSyntax>();
         ExpressionSyntax? target = null;
@@ -194,7 +196,7 @@ internal static partial class ProducesParser
                     property = property with { IsIdentifier = false };
                 }
 
-                if (properties.Exists(existing => existing.Name == property.Name))
+                if (!propertyNames.Add(property.Name))
                 {
                     context.Error(DiagnosticCodes.DuplicateDeclaration, $"Event '{name}' already declares property '{property.Name}'", line.Location);
                 }
