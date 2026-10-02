@@ -64,7 +64,7 @@ public class and_many_destinations_are_omitted : given.a_command_production
     void should_cache_only_verdict_fields_not_candidate_workspaces_or_write_plans()
     {
         Discover(Workspace).Length.ShouldEqual(ProductionCount);
-        var verification = typeof(WorkspaceProductionRepairs).GetNestedType("Verification", BindingFlags.NonPublic)!;
+        var verification = typeof(WorkspaceRepairVerification).GetNestedType("Verification", BindingFlags.NonPublic)!;
         var subjects = verification.GetProperty("Subjects", BindingFlags.Instance | BindingFlags.NonPublic)!.PropertyType;
         var cached = subjects.GetGenericArguments()[1];
         cached.GetGenericTypeDefinition().ShouldEqual(typeof(Lazy<>));
@@ -169,7 +169,7 @@ public class and_many_destinations_are_omitted : given.a_command_production
 
     IDictionary CachedSubjects()
     {
-        var verification = typeof(WorkspaceProductionRepairs).GetField("_verification", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+        var verification = typeof(WorkspaceRepairVerification).GetField("_verification", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
         object?[] arguments = [Workspace, null];
         ((bool)verification.GetType().GetMethod("TryGetValue")!.Invoke(verification, arguments)!).ShouldBeTrue();
         var snapshot = arguments[1]!;

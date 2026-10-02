@@ -149,6 +149,11 @@ public static class WorkspaceDiagnosticRepairs
             return WorkspaceProductionRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
 
+        if (diagnostic.Code == DiagnosticCodes.RedundantEventId)
+        {
+            return WorkspaceEventRepairs.Find(index, revision, diagnostic, verifyRepair);
+        }
+
         if (diagnostic.Code != DiagnosticCodes.LegacyInlineCodeFence)
         {
             return [];
@@ -176,13 +181,14 @@ public static class WorkspaceDiagnosticRepairs
 
         // Filter before building or verifying recipes. In particular, PLAY0478 can occur on
         // every plain production in a workspace, but only the selected occurrence is relevant.
-        return index.RepairableDiagnostics.Where(diagnostic => diagnostic.Code == code && diagnostic.Location == entry.Location)
+        return index.RepairableDiagnostics.Where(diagnostic => diagnostic.Code == code && (diagnostic.Location == entry.Location ||
+            (code == DiagnosticCodes.RedundantEventId && entry.Node.DirectiveLocations.GetValueOrDefault("id") == diagnostic.Location)))
             .SelectMany(diagnostic => Find(index, revision, diagnostic, false))
             .Where(repair => repair.Subject == subject);
     }
 
     static WorkspaceAuthoringResult ProposeSelected(ScreenplayWorkspace workspace, WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, WorkspaceAuthoringRequest request) =>
-        WorkspaceProductionRepairs.Verify(index, repair, request);
+        WorkspaceRepairVerification.Verify(index, repair, request);
 
     static bool Matches(WorkspaceDiagnosticRepair candidate, WorkspaceDiagnosticRepair selected)
     {

@@ -196,7 +196,9 @@ compilation diagnostics belong to the paged diagnostics view. Available typed re
 | `PLAY0478` (Information) | Replace a plain production with an explicit `for <identifier>`. This deliberately selects the identifier rather than preserving allocated-identity routing. Optional or collection identifiers have no repair. Both models must be executable; a change to the language/semantic version or any other production's effective destination refuses the repair. |
 | `PLAY0397` on `validate csharp` | Replace the validation with itself so canonical printing migrates its legacy fence. Other legacy forms have no individual repair. |
 
-Listed `PLAY0166` and `PLAY0478` repairs are verified, not unchecked suggestions.
+`PLAY0471` also offers removal of a redundant event `id`, inline or standalone, only when the executable model, catalog and comments are preserved.
+
+Listed repairs are verified, not unchecked suggestions.
 Discovery checks authoring acceptance and comment preservation, plus routing safety
 for `PLAY0478`. For example, an inferred event that conflicts with a specification's
 asserted fields is not listed. Only acceptance and conflicts are cached per subject

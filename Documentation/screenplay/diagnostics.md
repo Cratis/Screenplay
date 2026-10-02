@@ -822,7 +822,7 @@ These codes cover [inline command events](commands.md#declare-an-event-inline) a
 |---|---|---|
 | `PLAY0469` | Warning (inline), information (plain) | A production copies the command identifier into payload while targeting that same identifier. Review persistence before removing the field or evolving its generation. |
 | `PLAY0470` | Error | A command targets another event source but one or more productions omit `for`, or both an inline and a plain production omit `for` and therefore have different defaults. The diagnostic names the production. State every destination explicitly; cross-source execution is still unsupported. |
-| `PLAY0471` | Information | An event's `id` equals its current name. Remove the redundant pin. |
+| `PLAY0471` | Information | An event's `id` equals its current name. The typed removal repair covers inline and standalone declarations, preserves the executable model and catalog, and refuses comment loss. |
 | `PLAY0472` | Error | Event `id` is missing its nonempty quoted value or is repeated. |
 | `PLAY0473` | Error | An inline event name collides with a standalone declaration, import, or another inline declaration. |
 | `PLAY0474` | Error | `produces event` occurs outside a command, such as in a reaction. |
