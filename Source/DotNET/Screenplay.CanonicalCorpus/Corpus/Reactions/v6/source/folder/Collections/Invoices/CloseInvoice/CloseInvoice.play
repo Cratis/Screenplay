@@ -1,0 +1,11 @@
+module Collections
+  feature Invoices
+    slice StateChange CloseInvoice
+      command CloseInvoice
+        invoiceId InvoiceId identifier
+        reason String
+        produces InvoiceClosed
+          for invoiceId
+          reason = reason
+      event InvoiceClosed
+        reason String

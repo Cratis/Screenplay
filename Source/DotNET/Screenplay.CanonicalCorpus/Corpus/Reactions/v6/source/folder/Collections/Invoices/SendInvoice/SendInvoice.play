@@ -1,0 +1,23 @@
+module Collections
+  feature Invoices
+    slice StateChange SendInvoice
+      command SendInvoice
+        invoiceId InvoiceId identifier
+        produces InvoiceSent
+          for invoiceId
+          invoiceId = invoiceId
+          sentAt = $context.occurred
+      event InvoiceSent
+        invoiceId InvoiceId
+        sentAt DateTime
+      specification SendingAnInvoice
+        given clock "2026-10-02T09:00:00Z"
+        when SendInvoice
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+        then InvoiceSent
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          sentAt = "2026-10-02T09:00:00Z"
+        then ReminderScheduled
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          scheduledAt = "2026-10-02T09:00:00Z"
