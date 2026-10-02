@@ -95,10 +95,20 @@ is rejected rather than silently becoming a different hierarchy.
 | `ReplaceWorkspaceNode` | Target handle, expected node, replacement node |
 | `RemoveWorkspaceNode` | Target handle and expected node |
 | `MoveWorkspaceNode` | Target/expectation and destination parent/expectation/member/index |
+| `MigrateOptionalTypeSpelling` | Original type handle and expected `TypeRefSyntax`; the compiler derives the spelling change |
 
 All handles and expectations address the **base snapshot**. Multiple disjoint
 edits to the same document compose in memory; intermediate states do not need
 to compile. The final complete application does.
+
+`PLAY0479` repairs use `MigrateOptionalTypeSpelling` rather than a caller-supplied
+text patch. With `PreserveTrivia`, each operation changes only the optionality spelling;
+a document-wide repair submits all occurrences in one transaction. The candidate is
+reparsed and must have the same syntax structure, without the selected diagnostics.
+Do not mix spelling migrations with other edits to the same document. Explicit
+`CanonicalizeTouchedDocuments` consent opts into reprinting instead. Discover a
+single occurrence with `WorkspaceDiagnosticRepairs.Find`, or a whole document with
+`FindDocumentOptionality` and its root handle; preview either through `ProposeRepair`.
 
 Overlapping subtree edits, incompatible slots, moving a node into itself and
 conflicting insertion boundaries are rejected. Replace one containing subtree

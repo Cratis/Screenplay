@@ -86,7 +86,7 @@ internal static class WorkspaceProductionRepairs
 
         // Auxiliary edits and migrations belong to the full request, not a cached repair recipe.
         // Publish only compact verdicts that discovery can reuse for an unmodified request.
-        if (request.Documents.IsDefaultOrEmpty && !request.Documents.IsDefault &&
+        if (request.Formatting == repair.RequiredFormatting && request.Documents.IsDefaultOrEmpty && !request.Documents.IsDefault &&
             request.SemanticRenames.IsDefaultOrEmpty && !request.SemanticRenames.IsDefault &&
             request.EventRenames.IsDefaultOrEmpty && !request.EventRenames.IsDefault &&
             request.RetiredSemanticAddresses.IsDefaultOrEmpty && !request.RetiredSemanticAddresses.IsDefault &&
@@ -100,7 +100,7 @@ internal static class WorkspaceProductionRepairs
         return result;
     }
 
-    static ImmutableArray<WorkspaceDiagnosticRepair> Discover(WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, bool verifyRepair)
+    internal static ImmutableArray<WorkspaceDiagnosticRepair> Discover(WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, bool verifyRepair)
     {
         var workspace = index.Workspace;
         if (!verifyRepair)

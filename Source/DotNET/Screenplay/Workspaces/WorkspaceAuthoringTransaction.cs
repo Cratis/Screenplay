@@ -110,7 +110,13 @@ sealed class WorkspaceAuthoringTransaction(
     {
         var index = WorkspaceSyntaxIndex.Create(workspace);
         var edits = new WorkspaceAstEdits(index);
-        edits.Prepare(request.Operations);
+        if (request.Operations.OfType<MigrateOptionalTypeSpelling>().Any(operation => operation.Target is null || operation.Expected is null))
+        {
+            throw new InvalidWorkspaceAuthoring("Optionality migrations require a target and expected type.");
+        }
+
+        var spellingMigrations = request.Operations.OfType<MigrateOptionalTypeSpelling>().GroupBy(operation => operation.Target.Document).ToArray();
+        edits.Prepare([.. request.Operations.Where(operation => operation is not MigrateOptionalTypeSpelling)]);
         var candidates = workspace.Documents.ToDictionary(document => document.Id);
         var documentRenames = ImmutableArray.CreateBuilder<DocumentIdentityRename>();
         var retiredDocuments = ImmutableArray.CreateBuilder<string>();
@@ -157,6 +163,16 @@ sealed class WorkspaceAuthoringTransaction(
             {
                 return new() { Conflicts = [conflict] };
             }
+        }
+
+        foreach (var spellings in spellingMigrations)
+        {
+            if (edits.Touched.Contains(spellings.Key) || targeted.Contains(spellings.Key) || !candidates.TryGetValue(spellings.Key, out var document))
+            {
+                throw new InvalidWorkspaceAuthoring("A spelling migration requires an existing document not targeted by another edit.");
+            }
+
+            candidates[spellings.Key] = WorkspaceOptionalityRepairs.Print(index, document, [.. spellings], request.Formatting, _diagnostics);
         }
 
         edits.ValidateFragmentRenames(replacements);

@@ -137,15 +137,17 @@ internal sealed partial class McpWorkspaces
                 assignment.Origin
             }),
             "diagnostics" => McpWorkspaceAnalysis.For(workspace).Source.Compilation.Diagnostics,
-            "repairs" => syntax!.RepairableDiagnostics.SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(syntax, workspace.Revision, diagnostic)
+            "repairs" => syntax!.RepairableDiagnostics.SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(syntax, workspace.Revision, diagnostic))
+                .Concat(syntax.Entries.Where(entry => entry.Node is ApplicationSyntax).SelectMany(entry => WorkspaceDiagnosticRepairs.FindDocumentOptionality(syntax, entry.Handle)))
                 .Select(repair => (object)new
                 {
                     repair.DiagnosticCode,
                     repair.RequiredFormatting,
-                    diagnostic.Location,
+                    syntax.Find(repair.Subject)!.Location,
+                    scope = repair.Subject.Path.Length == 0 ? "document" : "occurrence",
                     subject = McpAstHandles.Describe(repair.Subject),
                     operations = repair.Operations.Select(McpAstOperations.Describe)
-                })),
+                }),
             "executable-diagnostics" => workspace.Compilation.Diagnostics,
             _ => throw new McpFailure("Unknown workspace view.", -32602)
         };

@@ -135,7 +135,7 @@ is canonicalized.
 | `read-ast` | `expectedRevision` | documentId, path, kind, name, semanticId, view, includeContent, offset, limit |
 | `propose` | Expected workspace/catalog revisions, operations | Explicit migrations/retirements, includeContent; legacy single-operation form supported |
 | `propose-ast` | Expected revisions, formatting | operations, documents, validation, referencePolicy, migrations/retirements, includeContent |
-| `propose-repair` | `expectedRevision`, `expectedCatalogRevision`, `diagnosticCode`, `subject` handle, `formatting` | includeContent; only `CanonicalizeTouchedDocuments` is admitted |
+| `propose-repair` | `expectedRevision`, `expectedCatalogRevision`, `diagnosticCode`, `subject` handle, `formatting` | includeContent; use the discovered `requiredFormatting`. `PLAY0479` supports `PreserveTrivia` or explicit `CanonicalizeTouchedDocuments` |
 | `propose-rename` | Expected revisions, target handle, expectedName, newName | formatting, validation, includeContent |
 | `expand-layout` | Expected revisions | layout, validation, formatting, referencePolicy, includeContent |
 | `read-proposal` | proposalId | view (`implementation-requirements` for proposed attachments), documentId, offset, limit |

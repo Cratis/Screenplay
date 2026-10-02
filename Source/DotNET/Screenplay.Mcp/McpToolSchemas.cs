@@ -60,7 +60,7 @@ static class McpToolSchemas
         "target" or "subject" => McpAstSchemas.Handle(),
         "semanticRenames" or "eventRenames" => McpAstSchemas.Array(Rename()),
         "retiredSemanticAddresses" or "retiredEventAddresses" => McpAstSchemas.Array(Address()),
-        "formatting" when tool == "propose-repair" => McpAstSchemas.Choice("CanonicalizeTouchedDocuments"),
+        "formatting" when tool == "propose-repair" => McpAstSchemas.Choice("CanonicalizeTouchedDocuments", "PreserveTrivia"),
         "formatting" => McpAstSchemas.Choice("CanonicalizeTouchedDocuments", "PreserveExactSource", "PreserveTrivia"),
         "validation" => McpAstSchemas.Choice("Authoring", "Executable"),
         "referencePolicy" => McpAstSchemas.Choice("Safe", "Draft"),
