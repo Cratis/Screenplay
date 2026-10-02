@@ -2,6 +2,7 @@
 // Its syntax is held to the C# compiler's by the conformance specs on both sides.
 domain Cratis.Conformance
 import Cratis.Identity
+import "Shared/**/*.play"
 
 concept CustomerId : Uuid
 concept Email : String @pii
@@ -28,9 +29,11 @@ persona Visitor
 module Customers
   description "Customers and what happens to them"
   authorize Staff
+  import "Customers/*.play"
   feature Onboarding
     description "Bringing a customer on board"
     authorize Staff or Managers
+    import "Onboarding/Slice?.play"
     feature Drafts
       slice StateChange SaveDraft
         command SaveDraft
@@ -107,6 +110,34 @@ module Customers
           age = 12
         then error "Too young"
         then error
+      specification ArchivingWhenTheClockStrikes
+        given clock "2026-10-05T08:00:00Z"
+        given capture LegacyCustomers
+          name = "Ada"
+        given capture LegacyCustomers
+          name = "Grace"
+        when clock "2026-10-05T09:30:00.250+02:00"
+        then CustomerArchived
+          reason = "expired"
+      specification ArchivingWhenTriggered
+        when trigger NightlySync
+          batch = 3
+        then CustomerArchived
+      specification RegisteringFromACapture
+        when capture LegacyCustomers
+          name = "Ada"
+          email = "ada@example.com"
+        then CustomerRegistered
+      specification LookingUpACustomer
+        when query Customers.CustomerById
+          customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        then result exactly
+          name = "Ada"
+        then result
+          visits = 2
+      specification LookingUpNobody
+        when query AllCustomers
+        then no result
   feature Lookup
     slice StateView CustomerList
       readmodel CustomerSummary

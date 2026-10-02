@@ -137,6 +137,7 @@
     "kind": "DomainSyntax",
     "name": "Sales"
   },
+  "fileImports": [],
   "imports": [
     {
       "kind": "ImportSyntax",
@@ -171,6 +172,8 @@
               "authorize": null,
               "description": "Discounts and write-offs applied to issued invoices",
               "features": [],
+              "fileImports": [],
+              "isPlacement": false,
               "name": "Adjustments",
               "slices": [
                 {
@@ -588,6 +591,8 @@
               ]
             }
           ],
+          "fileImports": [],
+          "isPlacement": false,
           "name": "InvoiceManagement",
           "slices": [
             {
@@ -1187,6 +1192,8 @@
                       ]
                     }
                   ],
+                  "givenCaptures": [],
+                  "givenClock": null,
                   "givenReadModels": [],
                   "name": "RegisteringADraftInvoice",
                   "thenErrors": [],
@@ -1232,7 +1239,9 @@
                     }
                   ],
                   "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
                   "thenReadModels": [],
+                  "thenResults": [],
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "RegisterInvoice",
@@ -1272,11 +1281,17 @@
                       }
                     ]
                   },
-                  "whenAppended": null
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
                 },
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
                   "givenReadModels": [],
                   "name": "RejectingAnInvoiceWithNoLines",
                   "thenErrors": [
@@ -1287,7 +1302,9 @@
                   ],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
                   "thenReadModels": [],
+                  "thenResults": [],
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "RegisterInvoice",
@@ -1303,7 +1320,11 @@
                       }
                     ]
                   },
-                  "whenAppended": null
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
                 },
                 {
                   "kind": "SpecificationSyntax",
@@ -1324,6 +1345,8 @@
                       ]
                     }
                   ],
+                  "givenCaptures": [],
+                  "givenClock": null,
                   "givenReadModels": [],
                   "name": "RejectingAnInvoiceWhoseNumberIsAlreadyTaken",
                   "thenErrors": [
@@ -1334,7 +1357,9 @@
                   ],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
                   "thenReadModels": [],
+                  "thenResults": [],
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "RegisterInvoice",
@@ -1358,7 +1383,11 @@
                       }
                     ]
                   },
-                  "whenAppended": null
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
                 }
               ],
               "type": "StateChange"
@@ -1833,6 +1862,8 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -1878,6 +1909,7 @@
                     }
                   ],
                   "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -1895,6 +1927,7 @@
                       ]
                     }
                   ],
+                  "thenResults": [],
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "ChangeInvoiceStatus",
@@ -1918,7 +1951,11 @@
                       }
                     ]
                   },
-                  "whenAppended": null
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
                 }
               ],
               "type": "StateChange"
@@ -4547,6 +4584,8 @@
           ]
         }
       ],
+      "fileImports": [],
+      "isPlacement": false,
       "name": "Invoicing"
     }
   ],

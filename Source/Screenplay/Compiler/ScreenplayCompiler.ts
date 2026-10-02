@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { Diagnostic } from './Diagnostics/Diagnostic';
+import { documentPlacement, PlayPlacement } from './Files/PlayPlacement';
+import { DiscoveredImport, discoverImports as discoverImportsIn } from './Parsing/ImportDiscovery';
 import { LineReader } from './Parsing/LineReader';
 import { ParserContext } from './Parsing/ParserContext';
 import { parseApplication } from './Parsing/ScreenplayParser';
@@ -19,11 +21,13 @@ export interface CompilationResult<T> {
 
 // Parses one .play document - the TypeScript counterpart of the C# ScreenplayCompiler.Parse. The path, when
 // given, is carried on every source location so a folder of documents can be merged and still point back
-// at the file each node came from.
-export function parse(source: string, path?: string): CompilationResult<ApplicationSyntax> {
+// at the file each node came from. A placement says the document's top level belongs to the module or
+// feature an import placed it in: that module and feature are in the tree, marked as placements, holding what
+// the document declares at its top level.
+export function parse(source: string, path?: string, placement: PlayPlacement = documentPlacement): CompilationResult<ApplicationSyntax> {
     const lines = splitLines(source, false, path);
     const context = new ParserContext(new LineReader(lines), path);
-    const value = parseApplication(context, lines);
+    const value = parseApplication(context, lines, placement);
     return {
         value,
         diagnostics: context.diagnostics,
@@ -37,4 +41,11 @@ export function parse(source: string, path?: string): CompilationResult<Applicat
 export function compile<T>(source: string, visitor: ApplicationSyntaxVisitor<T>, path?: string): CompilationResult<T> {
     const parsed = parse(source, path);
     return { value: visitor.visit(parsed.value), diagnostics: parsed.diagnostics, success: parsed.success };
+}
+
+// Finds the files a document imports and where in it each import is written - each import with the module
+// and feature names around it, outermost first. Diagnostics are not collected; parsing the document reports them.
+export function discoverImports(source: string, path?: string): DiscoveredImport[] {
+    const lines = splitLines(source, false, path);
+    return discoverImportsIn(new ParserContext(new LineReader(lines), path));
 }

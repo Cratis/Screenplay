@@ -5,7 +5,7 @@ import { describe, beforeEach, it } from 'vitest';
 import { CompilationResult } from '../../ScreenplayCompiler';
 import { PolicyRequirementSyntax } from '../../Syntax/Authorization';
 import { ApplicationSyntax } from '../../Syntax/Structure';
-import { parseFolder } from '../PlayFolderMerge';
+import { parseFolder } from '../PlayApplicationAssembly';
 
 const read = (requirement: PolicyRequirementSyntax): string => requirement.kind === 'PolicyReferenceSyntax'
     ? requirement.name
