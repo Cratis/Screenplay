@@ -84,7 +84,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
                 ],
             ),
             // A bare description keyword at end of line opens a fenced plain-text block.
-            [/\bdescription\b(?=\s*$)/, { token: 'keyword', next: '@descriptionBlockPending' }],
+            [/\b(?:description|documentation)\b(?=\s*$)/, { token: 'keyword', next: '@descriptionBlockPending' }],
             [/\brow-click\b/, 'keyword'],
             // A leading @ escapes a name that collides with a directive keyword - it is a name, not an attribute.
             [/^\s*@[a-z_]\w*/, 'identifier'],
@@ -131,7 +131,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
 
         // After a bare description, the only thing allowed before the opening fence is whitespace.
         descriptionBlockPending: [
-            [/^\s*```(?:text)?\s*$/, { token: 'string.quote', switchTo: '@descriptionBlock' }],
+            [/^\s*```(?:text|markdown)?\s*$/, { token: 'string.quote', switchTo: '@descriptionBlock' }],
             [/^\s*[^\s`].*$/, { token: '@rematch', next: '@pop' }],
             [/\s+/, 'white'],
         ],

@@ -10,6 +10,15 @@
 // and those stay codeless deliberately: minting a PLAY number for something no compiler run can emit
 // would make the catalogue describe two different tools.
 export const diagnosticCodes = {
+    eventSourceIdInPayload: 'PLAY0469',
+    explicitProducesTargetsRequired: 'PLAY0470',
+    redundantEventId: 'PLAY0471',
+    invalidEventId: 'PLAY0472',
+    inlineEventCollision: 'PLAY0473',
+    inlineEventOutsideCommand: 'PLAY0474',
+    inlineEventGeneration: 'PLAY0475',
+    reservedProductionMetadata: 'PLAY0476',
+    invalidEventDocumentation: 'PLAY0477',
     tabIndentation: 'PLAY0006',
     unknownPrimitiveType: 'PLAY0008',
     unknownSliceType: 'PLAY0028',

@@ -45,6 +45,8 @@ export function completionEntriesFor(chain: string[]): CompletionEntry[] {
             return items.typeItems;
         case 'command':
             return items.commandItems;
+        case 'event':
+            return items.eventItems;
         case 'produces':
             return items.producesItems;
         case 'handler':
@@ -153,6 +155,10 @@ export function planCompletions(
     }
 
     const enclosingLine = nearestEnclosingLine(lines, fences, lineIndex, effectiveIndent);
+    if (enclosingLine && /^produces\s+event\b/.test(enclosingLine)) {
+        if (/^\s+@?[a-z_]\w*\s+[\w[\]?]*$/.test(textBefore)) return { kind: 'types' };
+        return { kind: 'entries', entries: items.inlineEventItems };
+    }
     if (enclosingLine && RULE_LINE_PATTERN.test(enclosingLine)) {
         return { kind: 'entries', entries: items.ruleItems };
     }

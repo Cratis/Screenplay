@@ -3,6 +3,7 @@
 
 import { fenceMap, indentOf } from './document-context';
 import { clauseKeywords } from './language';
+import { ProductionSymbol } from './ProductionSymbol';
 
 export interface PropertySymbol {
     name: string;
@@ -35,6 +36,7 @@ export interface PolicySymbol {
 export interface EventSymbol {
     name: string;
     generation?: number;
+    inline?: boolean;
     properties: PropertySymbol[];
     line: number;
 }
@@ -42,6 +44,7 @@ export interface EventSymbol {
 export interface CommandSymbol extends NamedSymbol {
     properties: PropertySymbol[];
     reads?: ReadSymbol[];
+    produces?: ProductionSymbol[];
 }
 
 export interface ReadSymbol {
@@ -95,7 +98,7 @@ function propertiesIn(lines: string[], body: number[]): PropertySymbol[] {
     return body
         .map((index) => ({ index, match: lines[index].match(propertyPattern) }))
         .filter((entry): entry is { index: number; match: RegExpMatchArray } => entry.match !== null)
-        .filter(({ match }) => match[1].startsWith('@') || match[1] === 'as' || !clauseKeywords.includes(match[1]))
+        .filter(({ match }) => match[1].startsWith('@') || ['as', 'id', 'description', 'documentation'].includes(match[1]) || !clauseKeywords.includes(match[1]))
         .map(({ index, match }) => ({
             name: match[1].replace(/^@/, ''),
             type: match[2],
@@ -117,6 +120,13 @@ function collectBody(lines: string[], fences: boolean[], start: number, indent: 
         body.push(index);
     }
     return body;
+}
+
+// Only direct children can be properties or directives of an owner. Fenced prose is never syntax.
+export function directBody(lines: string[], fences: boolean[], start: number, indent: number): number[] {
+    const body = collectBody(lines, fences, start, indent).filter(index => !fences[index] && !/^\s*(?:\/\/|#)/.test(lines[index]));
+    const childIndent = Math.min(...body.map(index => indentOf(lines[index])));
+    return body.filter(index => indentOf(lines[index]) === childIndent);
 }
 
 export function scanDocument(lines: string[]): DocumentSymbols {
@@ -191,12 +201,14 @@ export function scanDocument(lines: string[]): DocumentSymbols {
             continue;
         }
 
-        const eventMatch = trimmed.match(/^event\s+(\w+)(?:\s+generation\s+(\d+))?\s*$/);
+        const eventMatch = trimmed.match(/^(?:produces\s+)?event\s+(\w+)(?:\s+generation\s+(\d+))?\s*$/);
         if (eventMatch) {
             symbols.events.push({
                 name: eventMatch[1],
                 ...(eventMatch[2] ? { generation: Number(eventMatch[2]) } : {}),
-                properties: propertiesIn(lines, collectBody(lines, fences, index, indent)),
+                inline: trimmed.startsWith('produces '),
+                properties: propertiesIn(trimmed.startsWith('produces ') ? lines.map(line => line.replace(/\s*=(?!=|>).*/, '')) : lines,
+                    directBody(lines, fences, index, indent)),
                 line: index,
             });
             continue;
@@ -207,7 +219,22 @@ export function scanDocument(lines: string[]): DocumentSymbols {
             const body = collectBody(lines, fences, index, indent);
             symbols.commands.push({
                 name: commandMatch[1],
-                properties: propertiesIn(lines, body),
+                properties: propertiesIn(lines, directBody(lines, fences, index, indent)),
+                produces: directBody(lines, fences, index, indent).filter(line => /^\s*produces\b/.test(lines[line])).flatMap(line => {
+                    const header = lines[line].trim();
+                    const inline = /^produces\s+event\b/.test(header);
+                    const conditional = /^produces\s+when\b/.test(header);
+                    const eventLine = conditional ? directBody(lines, fences, line, indentOf(lines[line]))[0] : line;
+                    if (eventLine === undefined) return [];
+                    const name = conditional ? lines[eventLine].trim() : header.replace(/^produces\s+(?:event\s+)?/, '').split(/\s+/)[0];
+                    const children = directBody(lines, fences, eventLine, indentOf(lines[eventLine]));
+                    const target = children.map(index => lines[index].trim().match(/^for\s+(.+)$/)?.[1]).find(value => value !== undefined);
+                    const mappings = children.flatMap(index => {
+                        const match = lines[index].trim().match(inline ? /^(@?[a-z_]\w*)\s+[\w.[\]?]+\s*=(?!=|>)\s*(.+)$/ : /^(@?[\w.]+)\s*=(?!=|>)\s*(.+)$/);
+                        return match === null ? [] : [{ name: match[1].replace(/^@/, ''), source: match[2], line: index }];
+                    });
+                    return [{ name, inline, line, target, mappings }];
+                }),
                 reads: body.filter((line) => !fences[line])
                     .map((line) => ({ line, match: lines[line].match(readPattern) }))
                     .filter((entry): entry is { line: number; match: RegExpMatchArray } => entry.match !== null)

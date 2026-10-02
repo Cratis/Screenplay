@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { validateInlineEvents } from './inline-event-validation';
 import { causedByProperties, contextRoots, identityProperties, primitiveTypes, sliceTypes } from './language';
 import { DiagnosticCode, diagnosticCodes } from './diagnostic-codes';
 import { enclosingChain, fenceMap, indentOf } from './document-context';
@@ -15,7 +16,7 @@ import {
 } from './symbols';
 import { fileImportOn, isFileImportLine } from './file-imports';
 
-export type ValidationSeverity = 'error' | 'warning';
+export type ValidationSeverity = 'error' | 'warning' | 'information';
 
 export interface ValidationIssue {
     line: number;
@@ -325,6 +326,7 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
     }
 
     issues.push(...validateEventContextPaths(lines, fences));
+    issues.push(...validateInlineEvents(lines, symbols, application));
 
     const fenceLines = lines
         .map((line, index) => ({ line, index }))

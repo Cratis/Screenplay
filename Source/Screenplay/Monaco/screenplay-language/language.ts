@@ -52,6 +52,8 @@ export const constructKeywords = [
 
 export const clauseKeywords = [
     'description',
+    'documentation',
+    'id',
     'template',
     'profile',
     'require',
