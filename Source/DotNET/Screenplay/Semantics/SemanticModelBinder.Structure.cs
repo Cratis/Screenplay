@@ -80,6 +80,8 @@ public sealed partial class SemanticModelBinder
             {
                 SliceType.StateChange => SemanticSliceKind.StateChange,
                 SliceType.StateView => SemanticSliceKind.StateView,
+                SliceType.Automation => SemanticSliceKind.Automation,
+                SliceType.Translate => SemanticSliceKind.Translate,
                 _ => SemanticSliceKind.Unknown
             };
             if (kind == SemanticSliceKind.Unknown)
@@ -89,6 +91,8 @@ public sealed partial class SemanticModelBinder
 
             var address = SemanticAddress.ForSlice(_applicationIdentity, module, featurePath, slice.Name);
             var id = ResolveSlice(address, slice.Location, slice.DescriptionLocation, slice.DescriptionRawLength);
+            if (kind is SemanticSliceKind.Automation or SemanticSliceKind.Translate) UsesV6 = true;
+            if (slice.Reactions.Any() || slice.Captures.Any()) _automationSlices[id] = (address, slice);
             var events = slice.Events.Select(value => _eventDeclarations[value]).Distinct().ToArray();
             var commands = slice.Commands.Select(value =>
             {

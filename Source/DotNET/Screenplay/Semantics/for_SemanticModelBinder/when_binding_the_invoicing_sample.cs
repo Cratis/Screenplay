@@ -29,8 +29,7 @@ public class when_binding_the_invoicing_sample : given.a_semantic_binder
         (DiagnosticCodes.InvalidSemanticBinding, "Event type 'InvoiceShipped' not found"),
         (DiagnosticCodes.InvalidSemanticBinding, "Event type 'InvoiceShippingCleared' not found"),
 
-        // Identity, personas, compliance and occurrences outside the executable model.
-        (Unsupported, "Trigger 'DirectoryChanged'"),
+        // Identity, personas and compliance outside the executable model.
         (Unsupported, "Concept 'PersonName' compliance attributes"),
         (Unsupported, "Concept 'BankAccount' compliance attributes"),
         (Unsupported, "Concept 'EmailAddress' compliance attributes"),
@@ -75,19 +74,8 @@ public class when_binding_the_invoicing_sample : given.a_semantic_binder
         (Unsupported, "Read model 'OverdueInvoicesReadModel' must have one unambiguous keyed query"),
         (Unsupported, "Read model 'SystemActivityReadModel' must have one unambiguous keyed query"),
 
-        // Translation and automation slices.
-        (Unsupported, "Slice 'LegacyInvoiceSync' of type 'Translate'"),
-        (Unsupported, "Capture 'LegacyInvoiceCapture'"),
-        (Unsupported, "Slice 'NotifyCustomerOnInvoiceRegistered' of type 'Automation'"),
-        (Unsupported, "Reaction 'NotifyCustomer' requires"),
-        (Unsupported, "Slice 'DetectOverdueInvoices' of type 'Automation'"),
-        (Unsupported, "Reaction 'OverdueInvoiceDetector' requires"),
-        (Unsupported, "Slice 'ReconcilePayments' of type 'Automation'"),
-        (Unsupported, "Reaction 'PaymentReconciler' requires"),
-        (Unsupported, "Slice 'ChaseOverdueInvoices' of type 'Automation'"),
-        (Unsupported, "Reaction 'OverdueChaser' requires"),
-        (Unsupported, "Slice 'SyncBillingDirectory' of type 'Automation'"),
-        (Unsupported, "Reaction 'BillingDirectorySync' requires")
+        // A clock reaction appends to no event source unless it names one with 'for' (decision 0022).
+        (DiagnosticCodes.InvalidSemanticBinding, "Reaction 'OverdueChaser' must say with 'for' which event source")
     ];
 
     Diagnostic[] _errors;
@@ -99,7 +87,8 @@ public class when_binding_the_invoicing_sample : given.a_semantic_binder
     [Fact] void should_report_every_pinned_disposition_once() =>
         _dispositions.Where(disposition => _errors.Count(_ => Matches(_, disposition)) != 1).Select(_ => $"{_.Code}: {_.Fragment}").ShouldBeEmpty();
     [Fact] void should_leave_only_imported_names_unresolved() =>
-        _errors.Where(_ => _.Code == DiagnosticCodes.InvalidSemanticBinding && !_importedNames.Any(name => _.Message.Contains($"'{name}'", StringComparison.Ordinal))).Select(Describe).ShouldBeEmpty();
+        _errors.Where(_ => _.Code == DiagnosticCodes.InvalidSemanticBinding && !_importedNames.Any(name => _.Message.Contains($"'{name}'", StringComparison.Ordinal)) &&
+            !_dispositions.Any(disposition => Matches(_, disposition))).Select(Describe).ShouldBeEmpty();
     [Fact] void should_report_no_warnings() => Bind(Samples.Invoicing).Diagnostics.Where(_ => _.Severity == DiagnosticSeverity.Warning).Select(Describe).ShouldBeEmpty();
     [Fact] void should_report_personas_as_information() => Bind(Samples.Invoicing).Diagnostics.Where(_ => _.Message.StartsWith("Persona '", StringComparison.Ordinal)).Select(_ => _.Severity).ShouldContainOnly(DiagnosticSeverity.Information, DiagnosticSeverity.Information);
 
