@@ -2,9 +2,8 @@
   href: index.mdx
 - name: Getting started
   href: getting-started.md
-  items:
-    - name: See your event model
-      href: see-your-event-model.md
+- name: See your event model
+  href: see-your-event-model.md
 - name: Why Screenplay
   href: why-screenplay.md
 - name: Language overview
@@ -80,15 +79,7 @@
 - name: TypeScript compiler
   href: typescript-compiler.md
 - name: MCP server
-  href: mcp.md
-- name: Install the MCP server
-  href: install-mcp.md
-- name: MCP identity state and recovery
-  href: mcp-recovery.md
-- name: Create and edit a model with MCP
-  href: mcp-authoring.md
-- name: See a model as an event model board with MCP
-  href: mcp-visualization.md
+  href: mcp/toc.yml
 - name: AST authoring API
   href: ast-authoring.md
 - name: Diagnostics

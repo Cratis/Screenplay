@@ -27,14 +27,16 @@ compatible .NET SDK, restored project dependencies, and the
 
 2. Open your model's folder in VS Code, then open a `.play` file. For Commerce,
    choose `Ordering/Orders/PlaceOrder.play`. The extension opens the board by
-   default and resolves the surrounding application.
+   default, compiles the surrounding application, and draws the open file's
+   slices. Open the root `application.play` to see the whole model.
 3. Choose **Show Source** in the editor title bar. Edit the text beside the board
    and watch it redraw. Pan to a slice and use **View** to show properties or
    switch between **Full** and **Overview**.
 
-![Commerce's Ordering board beside the PlaceOrder source, with command, event, screen, and specification cards](images/vscode-source-and-board.png)
+![The Screenplay extension displays Commerce's Ordering board beside the PlaceOrder source. The board includes order summaries, a checkout command, payment settlement, and given–when–then specifications.](images/vscode-source-and-board.png)
 
-*The released extension in code-server, showing the Commerce sample.*
+*Extension 4.48.1 in code-server, showing Commerce. Newer versions focus the board
+on the open file's slices; open `application.play` for the whole application.*
 
 You have succeeded when you can find `PlaceOrder`, the `OrderPlaced` event it
 produces, and the specifications below the slice. The text remains the source of
@@ -76,7 +78,7 @@ that bundle Screenplay 4.47.0 or later**. CLI hosting itself shipped in 3.11.0:
 you can use `cratis screenplay mcp ./specifications` instead, with `command`
 `cratis` and `args` `["screenplay", "mcp", "${workspaceFolder}/specifications"]`.
 An older CLI can host MCP without offering the board. See
-[Install the MCP server](install-mcp.md) for setup and recovery.
+[Install the MCP server](mcp/install.md) for setup and recovery.
 
 Use the same tool in three ways:
 
@@ -90,13 +92,13 @@ Ask the assistant to pass either `proposalId` or `sketch`, never both. A sketch
 replaces the whole document at each supplied path, not a fragment of it. Start
 with a self-contained, single-file model for what-if sketches: Screenplay 4.48.0
 has known failures with multi-file sketch paths. Keep the original files intact.
-The [MCP board guide](mcp-visualization.md) shows the argument shapes.
+The [MCP board guide](mcp/view.md) shows the argument shapes.
 
-![The MCP App's Proposed board shows a Notifications what-if beside Commerce fulfillment flows inside a labeled capture harness](images/mcp-app-what-if-harness.png)
+![The Screenplay MCP App shows a proposed Notifications module beside Commerce's fulfillment flows. Its SendOrderConfirmation command produces OrderConfirmationSent; the surrounding frame identifies the local capture harness.](images/mcp-app-what-if-harness.png)
 
-*The real MCP App rendered in a local capture harness, not a commercial chat
-host. This capture uses a single-file Commerce adaptation and an unsaved
-Notifications sketch.*
+*Captured in a minimal MCP Apps test host (a local capture harness), not a
+commercial chat host. This capture uses a single-file Commerce adaptation and an
+unsaved Notifications sketch.*
 
 Viewing never applies a proposal. Keep approval enabled for `apply` and
 `recover-workspace`, and review the exact plan before allowing writes.
@@ -116,7 +118,7 @@ expose structure. The Arc guide covers disabling generation and protecting the
 route. This board reads source-derived resources embedded during the build,
 not stored events or live business data.
 
-![Arc's runtime explorer shows four command slices in its AspNetCore sample, with project navigation and conversion warnings](images/arc-runtime-full-board.png)
+![The Reservations slice shows the ReserveTable command with its four properties. A neighboring MongoWatcher command and the explorer's conversion warnings remain visible.](images/arc-runtime-slice-detail.png)
 
 *The Arc AspNetCore sample is not event-sourced: its event lanes are empty.
 Conversion warnings remain visible.*
@@ -135,7 +137,7 @@ none are available. Select a document to see the board. Stop the terminal proces
 with **Ctrl+C** when finished. Use `--from-source` to regenerate rather than read
 embedded output, or `--no-browser` to open the printed URL yourself.
 
-![The cratis view browser explorer lists AspNetCore and Shared projects beside the sample's board and conversion warnings](images/cli-view-explorer.png)
+![The browser explorer launched by cratis view lists the AspNetCore and Shared projects and displays the selected sample board. The generated model's conversion warnings remain visible.](images/cli-view-explorer.png)
 
 *The CLI and runtime routes use the same explorer; neither starts the business
 application to inspect its model.*
@@ -149,9 +151,10 @@ https://view.cratis.studio/?url=<public .play URL>
 ```
 
 Replace the placeholder with a URL-encoded, publicly accessible raw `.play` URL,
-not a GitHub HTML file page. Use a complete standalone document supported by the
-viewer. A Commerce slice is a fragment, and the deployed viewer does not support
-the Commerce root's file imports. Do not expect either URL to load that sample.
+not a GitHub HTML file page. The anonymous viewer works with self-contained,
+single-file models supported by its compiler; it does not follow file imports
+yet. A Commerce slice is a fragment, and its root imports the other files. Do not
+expect either URL to load that sample.
 Never put a private model URL, access token, or customer data into a share link.
 
 For editing, sign in to [Cratis Studio](https://app.cratis.studio/). Import a
@@ -176,7 +179,9 @@ store. Read the diagnostics before treating the output as complete. See
 [Arc generation](/arc/backend/csharp/generating-a-screenplay/) and the
 [Critter Stack guides](/screenplay/ecosystem-examples/critter-stack/).
 
-Open the generated file in VS Code. In CI, validate it and fail on warnings:
+Treat the generated model as a starting point to review, not a reconstruction
+of the system. Open the generated file in VS Code. In CI, validate it and fail on
+warnings:
 
 ```bash
 cratis screenplay validate ./MyApp.play --warnings-as-errors
@@ -201,4 +206,4 @@ alternative is `screenplay ./MyApp.play --warnaserror`; its flag is different.
   public-safe. No viewing step here requires applying an AI proposal.
 
 Next, [model your first feature](getting-started.md) or
-[review a change with MCP](mcp-authoring.md).
+[review a change with MCP](mcp/edit.md).

@@ -1,10 +1,15 @@
 ---
-title: Create and edit a model with MCP
-description: Create typed Screenplay elements, review atomic changes across files, and preserve identities between editing sessions.
+title: Authoring with the MCP tools
+description: The typed propose, review and apply workflow with complete tool arguments, for client authors and for understanding what an assistant did on your behalf.
 ---
 
+This page shows the tool calls behind [Create a model](create.md) and
+[Edit a model](edit.md): the exact arguments an MCP client sends. If you are asking an
+assistant to do the work, those guides give you prompts instead. Use this page when
+you are building a client, debugging a proposal, or checking what an assistant did.
+
 Use this procedure with an MCP client connected to
-[the Screenplay server](mcp.md). Calls below are MCP tools, not shell commands.
+[the Screenplay server](reference.md). Calls below are MCP tools, not shell commands.
 The server root is the application boundary; file layout does not create separate
 applications.
 
@@ -41,10 +46,12 @@ Use the following complete value for the `documents` argument of `propose-ast`:
         {
           "kind": "ModuleSyntax",
           "name": "Sales",
+          "isPlacement": false,
           "features": [
             {
               "kind": "FeatureSyntax",
               "name": "Orders",
+              "isPlacement": false,
               "slices": [
                 {
                   "kind": "SliceSyntax",
@@ -64,6 +71,12 @@ Use the following complete value for the `documents` argument of `propose-ast`:
 ]
 ```
 
+`isPlacement` is required on every module and feature. Use `false` for one written in
+this document; it is `true` only when a document was imported into the module, so
+its top level is the module's body. Call `syntax-schema` to see every required
+member of a kind; a proposal that omits one is rejected with the path of the
+missing property.
+
 Also supply the returned workspace values as `expectedRevision` and
 `expectedCatalogRevision`, plus `formatting: "CanonicalizeTouchedDocuments"`.
 The default AST validation is `Authoring`. Empty collections initialize empty;
@@ -74,9 +87,22 @@ are rejected. For an intentionally incomplete draft, choose `referencePolicy: "D
 inspect the reported debt. Draft never waives parse, identity or
 binding-safety checks.
 
-The proposal creates an event declaration in a new document. It does not write
-the file yet and does not claim that this initial model is executable. Continue
-with the review and apply steps below.
+The proposal creates one new document holding a module, a feature, a slice and an
+event. It does not write the file yet. Treat the readiness it reports as a property
+of this proposal, not a promise about the model you will build on it. Continue with
+the review and apply steps below.
+
+Applying the proposal writes `application.play`:
+
+```screenplay
+module Sales
+
+  feature Orders
+
+    slice StateChange Register
+
+      event OrderRegistered
+```
 
 ## Read and edit existing elements
 
@@ -150,7 +176,7 @@ require explicit identity migrations:
 
 Use explicit retirement addresses when removing assigned declarations. If edits
 overlap, replace their common containing subtree instead of sending conflicting
-parent/child operations. See [the authoring contract](ast-authoring.md).
+parent/child operations. See [the authoring contract](../ast-authoring.md).
 
 ## Fix a diagnostic
 
@@ -177,7 +203,7 @@ reprints the whole document instead: attached comments stay with their syntax ow
 while blank lines are normalized. Existing members from the same parsed document retain their authored
 order, including when an edited member is replaced through typed JSON. Newly authored
 members without comparable source positions follow the canonical insertion rule;
-see [Printing and generating](printing.md#what-printing-does-not-keep). The
+see [Printing and generating](../printing.md#what-printing-does-not-keep). The
 `dropped-comments` view lists only comments that cannot be placed. An edit that
 keeps all comments reports zero dropped comments.
 

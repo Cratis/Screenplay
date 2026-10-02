@@ -10,7 +10,7 @@ reversibility: costly
 applies-to:
   - Source/DotNET/Screenplay.Mcp/**
   - Source/DotNET/Screenplay/Semantics/Serialization/SemanticModelSerializer*.cs
-  - Documentation/screenplay/mcp.md
+  - Documentation/screenplay/mcp/reference.md
 ---
 
 ## Context
@@ -23,7 +23,7 @@ MCP already has the parts an export needs:
 - The `source-map` view reports `available` from compilation success and points at `executable-diagnostics` (lines 18-41).
 - A tool result is capped at 1 MiB of structured content, and the response carries a text copy of it as well ([`McpJson.cs:12,112-128`](../Source/DotNET/Screenplay.Mcp/McpJson.cs)). `read-workspace` advertises a `limit` of at most 200 because its views page items ([`McpToolSchemas.cs:48`](../Source/DotNET/Screenplay.Mcp/McpToolSchemas.cs)).
 
-Neither revision pins attachment contents. The workspace revision does not change when an attachment changes ([`mcp.md:140-141,159`](../Documentation/screenplay/mcp.md)). The model revision does not change on a content-only edit either. A requirement id hashes the owner's identity, the role and the member, not the content, and the content hash is computed separately ([`SemanticModelBinder.Implementations.cs:84-86,97-105`](../Source/DotNET/Screenplay/Semantics/SemanticModelBinder.Implementations.cs)). The canonical ESM stores only requirement ids, for reducer transitions and code or rule validations ([`SemanticModelCanonicalJson.cs:165-171,214-218,243-248`](../Source/DotNET/Screenplay/Semantics/Serialization/SemanticModelCanonicalJson.cs)) and for opaque policies ([`SemanticModelCanonicalJson.Policies.cs:31-34`](../Source/DotNET/Screenplay/Semantics/Serialization/SemanticModelCanonicalJson.Policies.cs)). The `implementation-requirements` view returns each content hash ([`McpWorkspaces.Reading.cs:193-212`](../Source/DotNET/Screenplay.Mcp/McpWorkspaces.Reading.cs)) but nothing that holds the set steady across pages.
+Neither revision pins attachment contents. The workspace revision does not change when an attachment changes ([`mcp/reference.md:145-146,164`](../Documentation/screenplay/mcp/reference.md)). The model revision does not change on a content-only edit either. A requirement id hashes the owner's identity, the role and the member, not the content, and the content hash is computed separately ([`SemanticModelBinder.Implementations.cs:84-86,97-105`](../Source/DotNET/Screenplay/Semantics/SemanticModelBinder.Implementations.cs)). The canonical ESM stores only requirement ids, for reducer transitions and code or rule validations ([`SemanticModelCanonicalJson.cs:165-171,214-218,243-248`](../Source/DotNET/Screenplay/Semantics/Serialization/SemanticModelCanonicalJson.cs)) and for opaque policies ([`SemanticModelCanonicalJson.Policies.cs:31-34`](../Source/DotNET/Screenplay/Semantics/Serialization/SemanticModelCanonicalJson.Policies.cs)). The `implementation-requirements` view returns each content hash ([`McpWorkspaces.Reading.cs:193-212`](../Source/DotNET/Screenplay.Mcp/McpWorkspaces.Reading.cs)) but nothing that holds the set steady across pages.
 
 ## Decision
 

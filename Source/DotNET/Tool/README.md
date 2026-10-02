@@ -4,10 +4,11 @@ Compile and verify `.play` models, or connect an AI host to your model through t
 Screenplay MCP server. MCP Apps-capable hosts can show the event model board
 without writing a file.
 
-![The Screenplay MCP App displays an unsaved Notifications sketch beside Commerce fulfillment flows in a labeled capture harness](https://raw.githubusercontent.com/Cratis/Screenplay/main/Documentation/screenplay/images/mcp-app-what-if-harness.png)
+![The Screenplay MCP App shows a proposed Notifications module beside Commerce's fulfillment flows. Its SendOrderConfirmation command produces OrderConfirmationSent; the surrounding frame identifies the local capture harness.](https://raw.githubusercontent.com/Cratis/Screenplay/main/Documentation/screenplay/images/mcp-app-what-if-harness.png)
 
-*The real MCP App in a local capture harness, not a commercial chat host. The
-capture uses a single-file Commerce adaptation and an unsaved what-if sketch.*
+*Captured in a minimal MCP Apps test host (a local capture harness), not a
+commercial chat host. The capture uses a single-file Commerce adaptation and an
+unsaved what-if sketch.*
 
 ## Quickstart
 
@@ -51,8 +52,8 @@ Run the compiler to check validity, and read diagnostics rather than treating a
 partial board as success.
 
 [See your event model](https://cratis.io/screenplay/see-your-event-model/) ·
-[Install and configure MCP](https://cratis.io/screenplay/install-mcp/) ·
-[MCP board guide](https://cratis.io/screenplay/mcp-visualization/) ·
+[Install and configure MCP](https://cratis.io/screenplay/mcp/install/) ·
+[MCP board guide](https://cratis.io/screenplay/mcp/view/) ·
 [Compiler reference](https://cratis.io/screenplay/tool/)
 
 ## CLI alternative

@@ -17,9 +17,10 @@ Open your model folder, then a `.play` file. Choose **Show Source** to edit besi
 its board. For other places to open the same board, see
 [See your event model](see-your-event-model.md).
 
-![Commerce's Ordering board beside the PlaceOrder source, including command, event, screen, and specification cards](images/vscode-source-and-board.png)
+![The Screenplay extension displays Commerce's Ordering board beside the PlaceOrder source. The board includes order summaries, a checkout command, payment settlement, and given–when–then specifications.](images/vscode-source-and-board.png)
 
-*The released Screenplay extension in code-server, showing the Commerce sample.*
+*Extension 4.48.1 in code-server, showing Commerce. Newer versions focus the board
+on the open file's slices; open `application.play` for the whole application.*
 
 ## Screens
 
@@ -63,11 +64,22 @@ To always open `.play` files as text, add this to your settings:
 
 ## Folder applications
 
-A [folder of `.play` files](folders.md) is one application, and a file in it holds only its share of the model. When the file is inside a folder application, the board shows the whole application:
+A [folder of `.play` files](folders.md) is one application, and a file in it holds only its share of the model. When the file is inside a folder application, the board compiles the whole application and draws the file's share of it:
 
 - The application is every `.play` file beneath the nearest folder that holds an `application.play`, which is the file the compiler writes at the root when it expands an application into folders.
 - The search stays inside the workspace folder.
 - Changes count wherever they are made: unsaved edits to any file of the folder, and files saved, created or deleted on disk.
+
+What the file's share is depends on what it holds:
+
+| The open file | The board shows |
+| --- | --- |
+| `application.play` at the root of the folder | The whole application |
+| A slice file | Its slices |
+| A feature or module file | The slices of the files it [imports](imports.md), and the slices other files place in the modules and features it declares |
+| A file with no slice of its own, such as one that only declares concepts, types or policies | The whole application |
+
+Every slice is drawn against everything the application declares, so a slice file's board has the same personas and events as the whole one. The problems listed above the board are the ones in the files it draws.
 
 A file that is not inside a folder application is shown on its own - unless it [imports](imports.md) other files, in which case it is the root of an application and the board shows everything it imports.
 

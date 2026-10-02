@@ -234,6 +234,6 @@ before/after documents. The destination adapter owns file application and failur
 recovery. Atomic proposal acceptance is not a promise of crash-atomic file writes.
 
 Persist with `ScreenplayWorkspaceSerializer`; the envelope includes exact source,
-revision and authoritative identity catalog. The [MCP server](mcp.md) persists
+revision and authoritative identity catalog. The [MCP server](mcp/reference.md) persists
 identity state beside source automatically during apply, and provides paged
 canonical export, reviewed application and explicit interruption recovery.

@@ -1,0 +1,45 @@
+name: Docker Build
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - "**"
+    paths:
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".github/workflows/docker-build.yml"
+      # The image builds the event model board and the tool from source.
+      - "Source/DotNET/**"
+      - "Source/Screenplay/McpApp/**"
+      - "Source/Screenplay/Compiler/**"
+      - "Source/Screenplay/EventModels/**"
+      - "package.json"
+      - "*.props"
+      - "*.targets"
+      - "global.json"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Builds both architectures the release publishes, without pushing. The build stages run on the build
+      # platform, so the arm64 image needs no emulation.
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: false
