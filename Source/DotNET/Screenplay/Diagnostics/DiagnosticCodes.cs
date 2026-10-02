@@ -2056,4 +2056,28 @@ public static class DiagnosticCodes
 
     /// <summary>The top level of a file imported into a module or feature holds something that scope cannot.</summary>
     public const string UnexpectedInPlacedFile = "PLAY0460";
+
+    /// <summary>A <c>given clock</c> or <c>when clock</c> does not state one ISO 8601 instant, or <c>given clock</c> is repeated.</summary>
+    public const string InvalidSpecificationClock = "PLAY0461";
+
+    /// <summary>A <c>when trigger</c> line is not <c>when trigger &lt;Trigger&gt;</c>.</summary>
+    public const string InvalidSpecificationTrigger = "PLAY0462";
+
+    /// <summary>A <c>given capture</c> or <c>when capture</c> line is not <c>&lt;given|when&gt; capture &lt;Capture&gt;</c>.</summary>
+    public const string InvalidSpecificationCapture = "PLAY0463";
+
+    /// <summary>A <c>when query</c> line is not <c>when query &lt;Query&gt;</c>, or a <c>then result</c> line is not <c>then result [exactly]</c>.</summary>
+    public const string InvalidSpecificationQueryAction = "PLAY0464";
+
+    /// <summary>A query result is asserted without <c>when query</c>, or <c>when query</c> asserts no result, no empty result and no denial.</summary>
+    public const string MismatchedSpecificationQueryResult = "PLAY0465";
+
+    /// <summary>A <c>when trigger</c> names a trigger nothing declares or registers, or a value its declaration does not carry.</summary>
+    public const string UnknownSpecificationTrigger = "PLAY0466";
+
+    /// <summary>A <c>given capture</c> or <c>when capture</c> names a capture the application does not declare.</summary>
+    public const string UnknownSpecificationCapture = "PLAY0467";
+
+    /// <summary>A <c>when query</c> argument is not a <c>by</c> or <c>filter</c> parameter of the query.</summary>
+    public const string UnknownSpecificationQueryArgument = "PLAY0468";
 }

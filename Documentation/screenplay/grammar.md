@@ -9,6 +9,10 @@ The full EBNF grammar of the Screenplay DSL. `INDENT`/`DEDENT` are synthesized b
 
 Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { TypeDecl }, { PolicyDecl }, { PersonaDecl }, [ AuthenticationDecl ], { TriggerDecl }, { ThemeDecl }, { LayoutDecl }, { UiProfileDecl }, { BehaviorDecl }, { Module }, { SeedDecl } ;
 
+(* A document a FileImport placed in a module or feature holds, besides the
+   declarations above, the body of that module or feature at its top level - see
+   Module and Feature below, and imports.md.                                   *)
+
 (* -------------------------------------------------------------- *)
 (* Domain                                                          *)
 (* -------------------------------------------------------------- *)
@@ -19,8 +23,20 @@ DomainDecl     = "domain", QualifiedName, NL ;
 (* Imports                                                         *)
 (* -------------------------------------------------------------- *)
 
-Import         = "import", QualifiedName, NL ;
+Import         = "import", QualifiedName, NL
+               | FileImport ;
 QualifiedName  = Ident, { ".", Ident } ;
+
+FileImport     = "import", '"', ImportPattern, '"', NL ;
+ImportPattern  = ? a path or glob relative to the importing file's folder -
+                   "**" any number of folders, "*" within one, "?" one character, ".." climbs ? ;
+
+(* A quoted operand imports .play files; an unquoted one keeps naming a contract
+   from another bounded context. At the top level a file import brings in whole
+   documents. Inside a module or feature it places each imported file there: the
+   file's top level is that module's or feature's body, and also holds whatever
+   belongs to the application as a whole. A file matched by several imports is
+   imported once, at the deepest placement - see imports.md.                  *)
 
 (* -------------------------------------------------------------- *)
 (* Concepts                                                        *)
@@ -173,6 +189,7 @@ Module         = "module", Ident, NL,
                  INDENT,
                    { DescriptionDecl
                    | AuthorizeDecl
+                   | FileImport
                    | ScreenTemplateDecl
                    | DialogTemplateDecl
                    | FormDecl
@@ -309,6 +326,7 @@ Feature        = "feature", Ident, NL,
                  INDENT,
                    { DescriptionDecl
                    | AuthorizeDecl
+                   | FileImport
                    | Feature
                    | SliceDecl
                    | ContributionDecl
@@ -647,17 +665,40 @@ SpecificationGiven = "given", "caller", NL,
                  [ INDENT, { "authenticated", NL | "role", StringLiteral, NL | "claim", StringLiteral, "=", StringLiteral, NL }, DEDENT ]
                | "given", "readmodel", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
+               | "given", "clock", StringLiteral, NL
+               | "given", "capture", Ident, NL,
+                 [ INDENT, { PropertyMapping }, DEDENT ]
                | "given", Ident, NL,
                  [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ] ;
 
+(* "given clock" states the ISO 8601 instant the scenario happens at - the
+   occurrence time of everything it does. "given capture" states an earlier record
+   of a capture's source, so a value transition has something to transition from. *)
+
 SpecificationWhen = "when", ( Ident | "append", Ident ), NL,
-                 [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ] ;
+                 [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ]
+               | "when", "clock", StringLiteral, NL
+               | "when", "trigger", Ident, NL,
+                 [ INDENT, { PropertyMapping }, DEDENT ]
+               | "when", "capture", Ident, NL,
+                 [ INDENT, { PropertyMapping }, DEDENT ]
+               | "when", "query", QualifiedName, NL,
+                 [ INDENT, { PropertyMapping }, DEDENT ] ;
+
+(* One action per specification. "when clock" lets the clock reach an instant, so
+   a reaction scheduled with "every" or "at" is due. "when trigger" fires an
+   application trigger with the values it carries. "when capture" hands a capture
+   one record of its source. "when query" performs a query with its arguments;
+   its outcome is "then result", "then no result" or "then denied".           *)
 
 SpecificationThen = "then", "readmodel", Ident, [ "exactly" ], NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
                | "then", "no", "readmodel", Ident, "for", Expression, NL
                | "then", "query", QualifiedName, [ "exactly" ], NL,
                  [ INDENT, { SpecificationQueryDirective }, DEDENT ]
+               | "then", "result", [ "exactly" ], NL,
+                 [ INDENT, { PropertyMapping }, DEDENT ]
+               | "then", "no", "result", NL
                | "then", "error", [ StringLiteral ], NL
                | "then", "denied", NL
                | "then", "events", "in", "any", "order", NL
@@ -822,7 +863,12 @@ ScreenDirective = DataDecl
                | ActionDecl
                | SectionDecl
                | TemplateRef
+               | InteractionBinding
+               | UsesBehaviorDecl
                | InlineBlock ;
+
+(* A screen, a section and a filled slot attach interactions the same way a
+   module or feature does - see interactions.md.                              *)
 
 DataDecl       = "data", TypeRef, "via", "query", QualifiedName,
                  [ "by", Ident ], NL ;
@@ -934,7 +980,7 @@ Screenplay's workflow is *author the document first, then Stage performs it*. Th
 
 | Construct | Declarative story | Realization escape hatch |
 | --- | --- | --- |
-| `concept` / `type` | primitive or properties, attributes, `validate` | `validate csharp` |
+| `concept` / `type` | primitive or properties, attributes, `validate` | a ```` ```csharp ```` block under `validate` |
 | `command` | `produces` with mappings and conditions | `handler` |
 | `query` | `=>` return type with optional `observable`, `by`/`filter`, `description` | `performer` |
 | `policy` | `require` conditions | inline `csharp` |

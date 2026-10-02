@@ -64,6 +64,47 @@ public record SpecificationSyntax(
 
     /// <summary>Gets whether the expected events can occur in any order; the default is authored order.</summary>
     public bool ThenEventsInAnyOrder { get; init; }
+
+    /// <summary>
+    /// Gets the instant the scenario happens at - the occurrence time of everything it does - or <c>null</c>
+    /// when the specification does not state one.
+    /// </summary>
+    public SpecificationClockSyntax? GivenClock { get; init; }
+
+    /// <summary>
+    /// Gets the earlier records of a capture's source, stated with <c>given capture</c>, in authored order.
+    /// </summary>
+    public IEnumerable<SpecificationCaptureSyntax> GivenCaptures { get; init; } = [];
+
+    /// <summary>
+    /// Gets the instant the clock reaches, as the action, stated with <c>when clock</c>.
+    /// </summary>
+    public SpecificationClockSyntax? WhenClock { get; init; }
+
+    /// <summary>
+    /// Gets the application trigger that fires, as the action, stated with <c>when trigger</c>.
+    /// </summary>
+    public SpecificationTriggerSyntax? WhenTrigger { get; init; }
+
+    /// <summary>
+    /// Gets the source record a capture sees, as the action, stated with <c>when capture</c>.
+    /// </summary>
+    public SpecificationCaptureSyntax? WhenCapture { get; init; }
+
+    /// <summary>
+    /// Gets the query performed, as the action, stated with <c>when query</c>.
+    /// </summary>
+    public SpecificationWhenQuerySyntax? WhenQuery { get; init; }
+
+    /// <summary>
+    /// Gets the results the query performed by <c>when query</c> returns, in order, stated with <c>then result</c>.
+    /// </summary>
+    public IEnumerable<SpecificationQueryResultSyntax> ThenResults { get; init; } = [];
+
+    /// <summary>
+    /// Gets the assertion that the query performed by <c>when query</c> returns nothing, stated with <c>then no result</c>.
+    /// </summary>
+    public SpecificationNoResultSyntax? ThenNoResult { get; init; }
 }
 
 /// <summary>
@@ -157,7 +198,63 @@ public record SpecificationQuerySyntax(
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record SpecificationQueryResultSyntax(
     IEnumerable<PropertyMappingSyntax> Properties,
+    SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets whether a <c>then result exactly</c> requires every property to match rather than the asserted ones.
+    /// </summary>
+    /// <remarks>
+    /// Only a <c>then result</c> after <c>when query</c> carries it; a <c>result</c> block inside <c>then query</c>
+    /// takes its comparison from the query assertion.
+    /// </remarks>
+    public bool Exactly { get; init; }
+}
+
+/// <summary>
+/// Represents an instant a specification states with <c>given clock</c> or <c>when clock</c>.
+/// </summary>
+/// <param name="Instant">The ISO 8601 instant as written, such as <c>2026-10-05T08:00:00Z</c>.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record SpecificationClockSyntax(string Instant, SourceLocation Location) : SyntaxNode(Location);
+
+/// <summary>
+/// Represents an application trigger firing, stated with <c>when trigger</c>.
+/// </summary>
+/// <param name="Trigger">The name of the trigger.</param>
+/// <param name="Values">The values the occurrence carries.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record SpecificationTriggerSyntax(
+    string Trigger,
+    IEnumerable<PropertyMappingSyntax> Values,
     SourceLocation Location) : SyntaxNode(Location);
+
+/// <summary>
+/// Represents a record of a capture's source, stated with <c>given capture</c> or <c>when capture</c>.
+/// </summary>
+/// <param name="Capture">The name of the capture.</param>
+/// <param name="Record">The fields of the source record.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record SpecificationCaptureSyntax(
+    string Capture,
+    IEnumerable<PropertyMappingSyntax> Record,
+    SourceLocation Location) : SyntaxNode(Location);
+
+/// <summary>
+/// Represents a query performed as a specification's action, stated with <c>when query</c>.
+/// </summary>
+/// <param name="Query">The name of the query, bare or qualified.</param>
+/// <param name="Arguments">The arguments it is performed with.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record SpecificationWhenQuerySyntax(
+    string Query,
+    IEnumerable<PropertyMappingSyntax> Arguments,
+    SourceLocation Location) : SyntaxNode(Location);
+
+/// <summary>
+/// Represents the assertion that the query a specification performs returns nothing, stated with <c>then no result</c>.
+/// </summary>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record SpecificationNoResultSyntax(SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents an expected rejection declared with <c>then error "&lt;message&gt;"</c>, or with a bare

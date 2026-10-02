@@ -17,6 +17,16 @@ public sealed partial class SemanticModelBinder
         [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$", RegexOptions.None, 1000)]
         private static partial Regex IsoInstant();
 
+        static string? UnadmittedAction(SpecificationSyntax specification) => specification switch
+        {
+            { GivenClock: not null } => "given clock",
+            { WhenClock: not null } => "when clock",
+            { WhenTrigger: not null } => "when trigger",
+            { WhenCapture: not null } => "when capture",
+            _ when specification.GivenCaptures.Any() => "given capture",
+            _ => null
+        };
+
         static IEnumerable<SliceSyntax> AllSlices(FeatureSyntax feature) =>
             feature.Slices.Concat(feature.Features.SelectMany(AllSlices));
 
@@ -28,6 +38,32 @@ public sealed partial class SemanticModelBinder
             if (specification.File is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Specification '{specification.Name}' file reference is realization provenance.", specification.File.Location);
+            }
+
+            if (UnadmittedAction(specification) is { } form)
+            {
+                Error(
+                    DiagnosticCodes.UnsupportedSemanticSyntax,
+                    $"Specification '{specification.Name}' uses '{form}', which the executable model does not admit yet - clocks, application triggers and capture records are proposed for ESM v6 in decision 0022.",
+                    specification.Location);
+                return null;
+            }
+
+            // Performing a query and asserting its results says what 'then query' says, so it binds to exactly the
+            // same model - its bytes are those of the 'then query' spelling.
+            if (specification.WhenQuery is { } performed)
+            {
+                var results = specification.ThenResults.ToList();
+                if (results.Select(result => result.Exactly).Distinct().Count() > 1)
+                {
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Specification '{specification.Name}' compares some results exactly and some not; the executable model compares all of a query's results one way.", specification.Location);
+                    return null;
+                }
+
+                specification = specification with
+                {
+                    ThenQueries = [.. specification.ThenQueries, new SpecificationQuerySyntax(performed.Query, performed.Arguments, results, performed.Location) { Exactly = results.Count > 0 && results[0].Exactly }]
+                };
             }
 
             SemanticCommand? command = null;

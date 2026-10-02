@@ -799,6 +799,21 @@ See [Imports](imports.md).
 | `PLAY0459` | Error | A file imported into a module or feature declares a module other than the one it is placed in. Restating the module it is placed in is allowed. |
 | `PLAY0460` | Error | The top level of a file imported into a module or feature holds something that scope cannot hold, such as a `screen template` in a file placed in a feature. |
 
+### Specification actions
+
+See [Specifications](specifications.md#clocks-triggers-and-captures).
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0461` | Error | A `given clock` or `when clock` does not state one ISO 8601 instant with an offset or `Z`, or `given clock` is repeated. |
+| `PLAY0462` | Error | A `when trigger` line is not `when trigger <Trigger>`. |
+| `PLAY0463` | Error | A `given capture` or `when capture` line is not `<given\|when> capture <Capture>`. |
+| `PLAY0464` | Error | A `when query` line is not `when query <Query>`, a `then result` line is not `then result [exactly]`, or `then no result` is malformed or repeated. |
+| `PLAY0465` | Error | A query result is asserted without `when query`, `when query` asserts neither a result, `then no result` nor `then denied`, or both results and no result are asserted. |
+| `PLAY0466` | Warning | A `when trigger` names a trigger nothing declares or registers, or a value its declaration does not carry. |
+| `PLAY0467` | Warning | A `given capture` or `when capture` names a capture the application does not declare. |
+| `PLAY0468` | Error | A `when query` argument is not a `by` or `filter` parameter of the query. |
+
 ## Retired codes
 
 A retired code stays out of use forever.

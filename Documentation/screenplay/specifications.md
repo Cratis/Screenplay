@@ -16,12 +16,22 @@ specification <Name>
     authenticated
     role "<role>"
     claim "<type>" = "<value>"
+  given clock "<ISO 8601 instant>"
+  given capture <Capture>
+    <field> = <value>
   when <CommandType>
     [for <event-source-value>]
     <property> = <value>
   when append <EventType>
     [for <event-source-value>]
     <property> = <value>
+  when clock "<ISO 8601 instant>"
+  when trigger <Trigger>
+    <value> = <value>
+  when capture <Capture>
+    <field> = <value>
+  when query <Query>
+    <argument> = <value>
   then events in any order
   then <EventType>
     [for <event-source-value>]
@@ -34,6 +44,9 @@ specification <Name>
       <argument> = <value>
     result
       <property> = <value>
+  then result [exactly]
+    <property> = <value>
+  then no result
   then error ["<message>"]
   then denied
 ```
@@ -174,7 +187,7 @@ When a scenario is really about derived state rather than events, `given readmod
 
 `given readmodel` seeds a complete instance and must include the identifier property. `then readmodel` also must include the identifier to select the instance, but asserts only its stated properties. The identifier is inferred from the read model's keyed query (see [Read models](readmodels.md)); omitting it produces `PLAY0351` at that block. Additional properties in actual state do not fail a subset assertion. A missing asserted property is different from a present property with a `null` value.
 
-A projection can remove one instance while another remains. For example, with `InvoiceView` keyed by `invoiceId` through `query InvoiceById => InvoiceView? by invoiceId` and a projection declaring `remove with InvoiceRemoved key invoiceId`:
+A projection can remove one instance while another remains. For example, with `InvoiceView` keyed by `invoiceId` through a query `InvoiceById => InvoiceView?` whose body declares `by invoiceId InvoiceId`, and a projection declaring `remove with InvoiceRemoved key invoiceId`:
 
 ```screenplay
 specification RemovingOneOfTwoInvoices
@@ -209,6 +222,57 @@ specification LookingUpAnExistingInvoice
 
 The reference runner establishes `given` events, projects them, applies complete `given readmodel` states, then queries and compares. A when-less specification may also assert `then readmodel` or `then no readmodel`, but not events or errors. With a `when`, event, read-model and query assertions can be combined as needed. An appended event can also be rejected by an append-time constraint using `then error`. Reactions triggered by the appended event are **not** executed: reactions are not part of the ESM.
 
+## Performing a query
+
+A view nothing builds from events - one a query's `performer` composes from somewhere else - has no command or event to act on. `when query` makes reading the action, and `then result` the outcome:
+
+```screenplay
+specification LookingUpTheEuroRate
+  given readmodel ExchangeRate
+    currency = "EUR"
+    rate = 11.52
+  when query ExchangeRateFor
+    currency = "EUR"
+  then result
+    rate = 11.52
+```
+
+The lines under `when query` are its arguments, each a `by` or `filter` parameter of the query (`PLAY0468` otherwise). Repeat `then result` for a query that returns several rows - their order is the authored order - and add `exactly` to compare every property. `then no result` asserts the query returns nothing, and `then denied` that the caller may not perform it. A `when query` must assert one of the three (`PLAY0465`).
+
+This says the same thing as `then query` with `arguments` and `result` blocks, and binds to the same executable model - choose whichever reads better. `when query` is the Given/When/Then reading: given this state, when someone asks, then this is what they get.
+
+## Clocks, triggers and captures
+
+Reactions run because time passes, because an application trigger fires, and captures run because a source record changes. Each has an action of its own:
+
+```screenplay
+specification ChasingAnOverdueInvoiceEveryMorning
+  given clock "2026-10-05T07:00:00Z"
+  given InvoiceMarkedOverdue
+    for "9c858901-8a57-4791-81fe-4c455b099bc9"
+    overdueAt = "2026-10-04T00:00:00Z"
+  when clock "2026-10-05T08:00:00Z"
+  then InvoiceReminderSent
+    for "9c858901-8a57-4791-81fe-4c455b099bc9"
+    reminderNumber = 2
+```
+
+| Form | Means |
+| --- | --- |
+| `given clock "<instant>"` | The scenario happens at this instant. Everything mapped from `$context.occurred` takes this value, so an event property mapped from it can be asserted. At most once. |
+| `when clock "<instant>"` | The clock reaches this instant, so every reaction scheduled with `every` or `at` that is due by then runs. |
+| `when trigger <Trigger>` | A declared or registered application trigger fires, carrying the values beneath it. A value the trigger does not carry is a warning (`PLAY0466`). |
+| `given capture <Capture>` | An earlier record of a capture's source, so a value transition such as `when status from "sent" to "paid"` has something to transition from. Repeatable. |
+| `when capture <Capture>` | The capture sees this record of its source. The lines beneath are the record's fields, named as the source names them. |
+
+An instant is ISO 8601 with an explicit offset or `Z`, such as `2026-10-05T08:00:00Z` (`PLAY0461` otherwise), so the same text means the same moment wherever the specification runs.
+
+:::caution[Parsed, not yet executable]
+The executable semantic model does not admit clocks, application triggers or capture records yet - nor automation and translate slices, whose reactions and captures they drive. A specification using one compiles, prints and is checked against the document, but binding it reports `PLAY0268` naming the proposed ESM v6 in [decision 0022](https://github.com/Cratis/Screenplay/blob/main/decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md). `when query` is the exception: it binds today.
+
+Under that proposal, the events a reaction appends join the facts every action produces. A `then` after `when append`, `when clock`, `when trigger` or `when capture` then asserts what the reactions did, not only the appended or captured fact - which is how the samples already write their automation and translate specifications.
+:::
+
 ## Reference execution
 
 Screenplay supplies a framework-neutral reference path for admitted semantic capabilities. It does not start Arc, Chronicle, a database, the filesystem, or a network service. It executes against an immutable in-memory world so Stage and rendered targets have one normalized behavior to match.
@@ -242,6 +306,14 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `given caller` | Explicit identity, roles, and repeated claims. |
 | `when <CommandType>` | The command under test, with its property values. |
 | `when append <EventType>` | Append an event occurrence, enforce constraints and project it; no reactions run. |
+| `given clock "<instant>"` | The instant the scenario happens at. |
+| `given capture <Capture>` | An earlier record of a capture's source. |
+| `when clock "<instant>"` | The clock reaches an instant; scheduled reactions that are due run. |
+| `when trigger <Trigger>` | An application trigger fires with the values it carries. |
+| `when capture <Capture>` | A capture sees one record of its source. |
+| `when query <Query>` | Perform a query with its arguments. |
+| `then result [exactly]` | One expected row of the performed query; repeat for several. |
+| `then no result` | The performed query returns nothing. |
 | `then events in any order` | Ignore order, but still require the exact set of new facts. |
 | `exactly` on read model or query | Compare every property rather than the default subset. |
 | `then <EventType>` | An expected new fact; if asserted, the full new fact set must match. |

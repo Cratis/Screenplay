@@ -28,6 +28,7 @@ public abstract partial class ScreenplaySyntaxWalker
         }
 
         if (syntax.GivenCaller is not null) VisitSpecificationCaller(syntax.GivenCaller);
+        if (syntax.GivenClock is not null) VisitSpecificationClock(syntax.GivenClock);
 
         foreach (var @event in syntax.Given)
         {
@@ -44,10 +45,20 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitSpecificationCommand(syntax.When);
         }
 
+        foreach (var capture in syntax.GivenCaptures)
+        {
+            VisitSpecificationCapture(capture);
+        }
+
         if (syntax.WhenAppended is not null)
         {
             VisitSpecificationEvent(syntax.WhenAppended);
         }
+
+        if (syntax.WhenClock is not null) VisitSpecificationClock(syntax.WhenClock);
+        if (syntax.WhenTrigger is not null) VisitSpecificationTrigger(syntax.WhenTrigger);
+        if (syntax.WhenCapture is not null) VisitSpecificationCapture(syntax.WhenCapture);
+        if (syntax.WhenQuery is not null) VisitSpecificationWhenQuery(syntax.WhenQuery);
 
         foreach (var @event in syntax.ThenEvents)
         {
@@ -69,6 +80,12 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitSpecificationQuery(query);
         }
 
+        foreach (var result in syntax.ThenResults)
+        {
+            VisitSpecificationQueryResult(result);
+        }
+
+        if (syntax.ThenNoResult is not null) VisitSpecificationNoResult(syntax.ThenNoResult);
         if (syntax.ThenDenied is not null) VisitSpecificationDenied(syntax.ThenDenied);
 
         foreach (var error in syntax.ThenErrors)
@@ -191,4 +208,55 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The <see cref="SpecificationErrorSyntax"/> to visit.</param>
     public virtual void VisitSpecificationError(SpecificationErrorSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a <see cref="SpecificationClockSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SpecificationClockSyntax"/> to visit.</param>
+    public virtual void VisitSpecificationClock(SpecificationClockSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a <see cref="SpecificationTriggerSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SpecificationTriggerSyntax"/> to visit.</param>
+    public virtual void VisitSpecificationTrigger(SpecificationTriggerSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var value in syntax.Values)
+        {
+            VisitPropertyMapping(value);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="SpecificationCaptureSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SpecificationCaptureSyntax"/> to visit.</param>
+    public virtual void VisitSpecificationCapture(SpecificationCaptureSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var value in syntax.Record)
+        {
+            VisitPropertyMapping(value);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="SpecificationWhenQuerySyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SpecificationWhenQuerySyntax"/> to visit.</param>
+    public virtual void VisitSpecificationWhenQuery(SpecificationWhenQuerySyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var argument in syntax.Arguments)
+        {
+            VisitPropertyMapping(argument);
+        }
+    }
+
+    /// <summary>
+    /// Visits a <see cref="SpecificationNoResultSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="SpecificationNoResultSyntax"/> to visit.</param>
+    public virtual void VisitSpecificationNoResult(SpecificationNoResultSyntax syntax) => VisitNode(syntax);
 }
