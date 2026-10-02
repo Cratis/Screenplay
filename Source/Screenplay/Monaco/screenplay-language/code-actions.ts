@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import type { editor, IRange, languages } from 'monaco-editor';
-import { DiagnosticCodes, PlayPlacement, prepareQuickFixes } from '@cratis/screenplay-compiler';
+import { DiagnosticCodes, prepareQuickFixes } from '@cratis/screenplay-compiler';
 
 const migrateOptional = 'source.screenplay.migrateOptional';
 const containsKind = (requested: string, kind: string) => requested === '' || requested === kind || kind.startsWith(`${requested}.`);
@@ -14,7 +14,7 @@ function intersects(left: IRange, right: IRange): boolean {
 
 // The compiler owns recipes and verification. The adapter only translates verified offsets and pins
 // edits to the analyzed buffer version, so future fixes need no editor-specific parsing or .NET bridge.
-export function createCodeActionProvider(placement?: PlayPlacement): languages.CodeActionProvider {
+export function createCodeActionProvider(placement?: readonly string[]): languages.CodeActionProvider {
     const cache = new WeakMap<editor.ITextModel, { version: number; placement: string; fixes: ReturnType<typeof prepareQuickFixes> }>();
     return {
         provideCodeActions(model, range, context, token) {
