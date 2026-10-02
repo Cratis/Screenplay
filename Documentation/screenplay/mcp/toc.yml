@@ -1,0 +1,18 @@
+- name: Overview
+  href: index.md
+- name: Install the MCP server
+  href: install.md
+- name: Create a model
+  href: create.md
+- name: Explore a model
+  href: explore.md
+- name: View a model
+  href: view.md
+- name: Edit a model
+  href: edit.md
+- name: Authoring with the MCP tools
+  href: authoring-tools.md
+- name: Identity state and recovery
+  href: recovery.md
+- name: MCP reference
+  href: reference.md
