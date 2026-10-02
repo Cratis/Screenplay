@@ -16,7 +16,7 @@ export async function checkPackage() {
     await mkdir(work, { recursive: true });
     const consumer = await mkdtemp(join(work, 'monaco-pack-'));
     try {
-        const result = JSON.parse(execFileSync('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', consumer], { cwd: packageRoot, encoding: 'utf8' }));
+        const result = JSON.parse(execFileSync('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', consumer], { cwd: packageRoot, encoding: 'utf8', shell: process.platform === 'win32' }));
         const packed = Object.values(result)[0];
         if (!packed?.filename) throw new Error('npm pack did not report a package filename');
         const installed = join(consumer, 'node_modules/@cratis/screenplay-language');

@@ -31,9 +31,9 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
     }
     const name = match[1];
     const returnType = parseTypeRef(match[3], { ...locationOf(line), column: line.indent + 1 + match[0].length - match[3].length });
-    if (match[2] === undefined && returnType.name === 'observable' && returnType.isOptional && !returnType.isCollection) {
-        context.information(DiagnosticCodes.LegacyOptionalSuffix, "Keep 'observable?' here: 'observable optional' means a live query returning the type named 'optional'.", returnType.location);
-    } else {
+    // This one '?' has no equivalent keyword spelling: 'observable optional' is a live query
+    // returning the type named 'optional'. It is neither deprecated nor a migration occurrence.
+    if (!(match[2] === undefined && returnType.name === 'observable' && returnType.isOptional && !returnType.isCollection)) {
         reportLegacyOptionalSuffix(context, returnType, line);
     }
     let by: QueryParameterSyntax | null = null;

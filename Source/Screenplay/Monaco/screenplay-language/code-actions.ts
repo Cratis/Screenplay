@@ -1,21 +1,44 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import type { languages } from 'monaco-editor';
-import { findQuickFixes } from '@cratis/screenplay-compiler';
+import type { editor, IRange, languages } from 'monaco-editor';
+import { DiagnosticCodes, PlayPlacement, prepareQuickFixes } from '@cratis/screenplay-compiler';
+
+const migrateOptional = 'source.screenplay.migrateOptional';
+const containsKind = (requested: string, kind: string) => requested === '' || requested === kind || kind.startsWith(`${requested}.`);
+
+function intersects(left: IRange, right: IRange): boolean {
+    return (left.startLineNumber < right.endLineNumber || (left.startLineNumber === right.endLineNumber && left.startColumn <= right.endColumn)) &&
+        (right.startLineNumber < left.endLineNumber || (right.startLineNumber === left.endLineNumber && right.startColumn <= left.endColumn));
+}
 
 // The compiler owns recipes and verification. The adapter only translates verified offsets and pins
 // edits to the analyzed buffer version, so future fixes need no editor-specific parsing or .NET bridge.
-export function createCodeActionProvider(): languages.CodeActionProvider {
+export function createCodeActionProvider(placement?: PlayPlacement): languages.CodeActionProvider {
+    const cache = new WeakMap<editor.ITextModel, { version: number; placement: string; fixes: ReturnType<typeof prepareQuickFixes> }>();
     return {
-        provideCodeActions(model, range, _context, token) {
+        provideCodeActions(model, range, context, token) {
+            const migrationRequested = context.only !== undefined && containsKind(context.only, migrateOptional);
+            if (token.isCancellationRequested || (context.only !== undefined && !migrationRequested && !containsKind(context.only, 'quickfix'))) return { actions: [], dispose() {} };
+            const diagnostic = context.markers.find(marker => {
+                const code = typeof marker.code === 'object' ? marker.code.value : marker.code;
+                return code === DiagnosticCodes.LegacyOptionalSuffix && intersects(marker, range);
+            });
+            if (!migrationRequested && diagnostic === undefined) return { actions: [], dispose() {} };
             const version = model.getVersionId();
-            const fixes = findQuickFixes(model.getValue(), { line: range.startLineNumber });
+            const placementKey = JSON.stringify(placement) ?? '';
+            let analysis = cache.get(model);
+            if (analysis?.version !== version || analysis.placement !== placementKey) {
+                analysis = { version, placement: placementKey, fixes: prepareQuickFixes(model.getValue(), { placement }) };
+                cache.set(model, analysis);
+            }
+            const fixes = analysis.fixes(diagnostic?.startLineNumber)
+                .filter(fix => context.only === undefined || containsKind(context.only, fix.scope === 'document' ? migrateOptional : 'quickfix'));
             if (token.isCancellationRequested || model.getVersionId() !== version) return { actions: [], dispose() {} };
             return {
                 actions: fixes.map(fix => ({
                     title: fix.title,
-                    kind: fix.scope === 'document' ? 'source.screenplay.migrateOptional' : 'quickfix',
+                    kind: fix.scope === 'document' ? migrateOptional : 'quickfix',
                     isPreferred: fix.scope === 'occurrence',
                     edit: { edits: fix.edits.map(edit => {
                         const start = model.getPositionAt(edit.start);

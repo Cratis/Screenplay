@@ -35,15 +35,10 @@ internal static partial class QueryParser
         var name = match.Groups[1].Value;
         var isObservable = match.Groups[2].Success;
         var returnType = PropertyLineParser.ParseTypeRef(match.Groups[3].Value, header.LocationAt(match.Groups[3].Index));
-        if (!isObservable && returnType.Name == QuerySyntax.ObservableModifier && returnType is { IsOptional: true, IsCollection: false })
-        {
-            context.Add(new(
-                DiagnosticSeverity.Information,
-                DiagnosticCodes.LegacyOptionalSuffix,
-                "Keep 'observable?' here: 'observable optional' means a live query returning the type named 'optional'.",
-                returnType.Location));
-        }
-        else
+
+        // This one '?' has no equivalent keyword spelling: 'observable optional' is a live query
+        // returning the type named 'optional'. It is neither deprecated nor a migration occurrence.
+        if (!(!isObservable && returnType.Name == QuerySyntax.ObservableModifier && returnType is { IsOptional: true, IsCollection: false }))
         {
             PropertyLineParser.ReportLegacyOptionalSuffix(context, returnType, header);
         }

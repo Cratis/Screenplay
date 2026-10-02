@@ -83,10 +83,16 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
             if (produced !== undefined) {
                 produces.push(produced);
             }
-        } else if (keyword === 'invokes' && invokesPattern.test(child.content)) {
-            invokes.push({ kind: 'InvokesSyntax', command: invokesPattern.exec(child.content)![1], location: locationOf(child) });
-            context.skipOpaqueBlock(child.indent);
-        } else if (keyword === 'reads' || keyword === 'file' || keyword === 'csharp' || child.content.startsWith('```')) {
+        } else if (keyword === 'invokes') {
+            const match = invokesPattern.exec(child.content);
+            if (match === null) {
+                context.error(DiagnosticCodes.InvalidInvokesDeclaration, `Invalid invokes declaration '${child.content}' - expected 'invokes <Command>'`, locationOf(child));
+                context.skipBlock(child.indent);
+            } else {
+                invokes.push({ kind: 'InvokesSyntax', command: match[1], location: locationOf(child) });
+                context.skipOpaqueBlock(child.indent);
+            }
+        } else if (keyword === 'reads' || keyword === 'file' || child.content === 'csharp' || child.content.startsWith('```')) {
             if (optionalReads.test(child.content)) {
                 context.error(DiagnosticCodes.OptionalReadsNotSupported, 'Optional reads are not yet supported (see #308).', locationOf(child));
             }

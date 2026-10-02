@@ -114,6 +114,7 @@ export const DiagnosticCodes = {
     UnexpectedTokenInAuthorize: 'PLAY0184',
     UnclosedAuthorizeGroup: 'PLAY0185',
     InvalidReadModelDeclaration: 'PLAY0186',
+    InvalidInvokesDeclaration: 'PLAY0194',
     InvalidScopeDeclaration: 'PLAY0199',
     DuplicateScope: 'PLAY0200',
     InvalidIntervalTrigger: 'PLAY0249',

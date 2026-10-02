@@ -22,7 +22,7 @@ A type declares at least one property. Events, commands and read models use the 
 
 ### Compatibility note
 
-The earlier `String?` and `InvoiceLine[]?` spellings remain valid with Information diagnostic `PLAY0479`; they do not fail `--warnaserror`. Write `String optional` and `InvoiceLine[] optional` in new models. [Editor quick fixes](vscode.md#optional-values-and-quick-fixes) and [workspace repairs](mcp/authoring-tools.md#fix-a-diagnostic) migrate the spelling without changing meaning, comments or alignment. Canonical printing always writes `optional`.
+The earlier `String?` and `InvoiceLine[]?` spellings remain valid with Information diagnostic `PLAY0479`; they do not fail `--warnaserror`. Write `String optional` and `InvoiceLine[] optional` in new models. [Editor quick fixes](vscode.md#optional-values-and-quick-fixes) and [workspace repairs](mcp/authoring-tools.md#fix-a-diagnostic) migrate the spelling without changing meaning, comments or alignment. Canonical printing writes `optional` except for [`query Q => observable?`](queries.md#observable-queries). That one spelling has no equivalent keyword form, so it stays unchanged, produces no `PLAY0479`, and is excluded from repairs and document migrations.
 
 ## Example
 

@@ -49,6 +49,36 @@ describe('when migrating optional spelling', () => {
         }
     });
 
+    it('should leave the only unambiguous query spelling out of occurrence and document fixes', () => {
+        const source = 'module M\n  feature F\n    slice StateView S\n      query Q => observable?\n        filter note String?';
+        const fixes = findQuickFixes(source, { line: 5 });
+        expect(fixes.map(fix => fix.scope)).toEqual(['occurrence', 'document']);
+        for (const fix of fixes) {
+            expect(fix.edits).toHaveLength(1);
+            expect(applyQuickFixEdits(source, fix.edits)).toBe(source.replace('String?', 'String optional'));
+        }
+        expect(findQuickFixes(source, { line: 4 }).map(fix => fix.scope)).toEqual(['document']);
+        expect(compiler.parse(applyQuickFixEdits(source, fixes[1].edits)!).diagnostics).toEqual([]);
+    });
+
+    it('should migrate both reaction values when one is named csharp', () => {
+        const source = 'module M\n  feature F\n    slice Automation S\n      reaction R\n        when T\n          csharp String?\n          note String?';
+        const fixes = findQuickFixes(source, { line: 6 });
+        expect(fixes.map(fix => fix.scope)).toEqual(['occurrence', 'document']);
+        expect(fixes[1].edits).toHaveLength(2);
+        const candidate = applyQuickFixEdits(source, fixes[1].edits)!;
+        expect(candidate).toBe(source.replaceAll('String?', 'String optional'));
+        expect(compiler.parseForAuthoring(candidate).triggerData.map(value => value.name)).toEqual(['csharp', 'note']);
+        expect(findQuickFixes(candidate)).toEqual([]);
+    });
+
+    it('should not mistake a malformed invocation for a trigger value', () => {
+        const source = 'module M\n  feature F\n    slice Automation S\n      reaction R\n        when T\n          invokes C?';
+        expect(compiler.parseForAuthoring(source).triggerData).toEqual([]);
+        expect(compiler.parse(source).diagnostics.map(diagnostic => diagnostic.code)).toEqual(['PLAY0194']);
+        expect(findQuickFixes(source, { line: 6 })).toEqual([]);
+    });
+
     it('should refuse ambiguous query replacements and duplicate query keys', () => {
         const prefix = 'module M\n  feature F\n    slice StateView S\n      query Q => ';
         expect(findQuickFixes(prefix + 'observable?', { line: 4 })).toEqual([]);

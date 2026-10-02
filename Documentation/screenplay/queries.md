@@ -67,6 +67,8 @@ The marker qualifies only *how* the result arrives, so everything else about the
 
 The result `=> observable optional` means an observable result whose type is named `optional`, not an optional result of a type named `observable`. The leading `observable` is read first. To make that result optional, write `=> observable optional optional`.
 
+A one-shot query returning an optional scalar type named `observable` must keep `query Q => observable?`. This is the one place the `?` spelling remains canonical: replacing it with `optional` changes the meaning. It produces no `PLAY0479`, and quick fixes and document migrations leave it unchanged. Collections (`=> observable[] optional`) and live queries (`=> observable observable optional`) still use the keyword.
+
 ## What the caller sees
 
 `authorize` says *who may call* a query. In ESM v1, declarative gates on optional keyed snapshot queries run before the lookup and compare a supplied caller against the keyed query argument. A missing caller or failed gate yields `Unauthorized`; module and feature gates also apply by AND. If evaluation reaches an opaque ESM v3 policy predicate, the reference evaluator returns `SemanticUnsupported` instead of guessing a decision. Other query shapes (live, filtered, scoped, or performer-backed) are not yet admitted into the reference evaluator. It says nothing about *what they get back* — and in a real application those are different questions. `All` and `Mine` may admit exactly the same callers and return entirely different rows, and that difference is the access model a reader needs.

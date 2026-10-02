@@ -33,8 +33,8 @@ internal static class WorkspaceOptionalityRepairs
         }
 
         // Every splice preserves the same typed syntax. Verifying their union once authenticates the
-        // document, references and workspace policy for each subset too. If the union fails (including
-        // an ambiguous observable return type), discovery conservatively offers no occurrence in it.
+        // document, references and workspace policy for each subset too. If the union fails,
+        // discovery conservatively offers no occurrence in it.
         var root = entry.Handle with { Path = string.Empty };
         if (verify && ForDocument(index, root, true).IsEmpty)
         {

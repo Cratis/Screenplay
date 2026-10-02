@@ -60,7 +60,7 @@ describe('when parsing optional type references', () => {
         const parsed = parse(`${prefix}      query Q => ${type}`);
         const query = parsed.value.modules[0].features[0].slices[0].queries[0];
         expect(query).toMatchObject({ isObservable, returnType: { name, isOptional, isCollection } });
-        if (type === 'observable?') expect(parsed.diagnostics[0].message).toContain("Keep 'observable?'");
+        expect(parsed.diagnostics.map(diagnostic => diagnostic.code)).toEqual(type === 'observable[]?' || type === 'observable observable?' ? ['PLAY0479'] : []);
     });
 
     it('should keep observable greedy', () => {

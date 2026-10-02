@@ -106,12 +106,14 @@ public class when_parsing_optional_type_references : given.a_compiler
         query.ReturnType.Name.ShouldEqual(name);
         query.ReturnType.IsOptional.ShouldEqual(optional);
         query.ReturnType.IsCollection.ShouldEqual(collection);
+        original.Diagnostics.Count(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyOptionalSuffix)
+            .ShouldEqual(type.Equals("observable[]?", StringComparison.Ordinal) || type.Equals("observable observable?", StringComparison.Ordinal) ? 1 : 0);
         var printed = new ScreenplayPrinter().Print(original.Value!);
         SyntaxJson.StructurallyEqual(original.Value!, _compiler.Parse(printed).Value!).ShouldBeTrue();
         if (type == "observable?")
         {
             printed.ShouldContain("=> observable?");
-            original.Diagnostics.Single().Message.ShouldContain("Keep 'observable?'");
+            original.Diagnostics.ShouldBeEmpty();
         }
     }
 

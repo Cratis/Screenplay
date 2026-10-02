@@ -41,20 +41,61 @@ public class when_discovering_legacy_optionality_repairs
     }
 
     [Fact]
-    void should_refuse_the_ambiguous_observable_spelling_with_full_typed_conflicts()
+    void should_exclude_the_only_unambiguous_observable_spelling_from_all_recipes()
     {
         var workspace = Workspace("module M\n  feature F\n    slice StateView S\n      query Q => observable?");
         var index = WorkspaceSyntaxIndex.Create(workspace);
-        var diagnostic = index.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyOptionalSuffix);
-        WorkspaceDiagnosticRepairs.Find(index, workspace.Revision, diagnostic).ShouldBeEmpty();
+        index.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyOptionalSuffix).ShouldBeFalse();
+        var root = index.Entries.Single(entry => entry.Node is ApplicationSyntax).Handle;
+        WorkspaceDiagnosticRepairs.FindDocumentOptionality(index, root).ShouldBeEmpty();
         var subject = index.Entries.Single(entry => entry.Node is TypeRefSyntax).Handle;
         var proposal = WorkspaceDiagnosticRepairs.ProposeRepair(workspace, DiagnosticCodes.LegacyOptionalSuffix, subject, Request(workspace));
         proposal.Accepted.ShouldBeFalse();
         proposal.Workspace.ShouldBeNull();
         proposal.WritePlan.ShouldBeNull();
         proposal.Conflicts.ShouldNotBeEmpty();
-        proposal.Conflicts.All(conflict => conflict.Kind == WorkspaceConflictKind.InvalidOperation).ShouldBeTrue();
-        WorkspaceProductionRepairs.TransactionCount(workspace).ShouldEqual(2);
+        proposal.Conflicts.All(conflict => conflict.Kind == WorkspaceConflictKind.UnknownRepair).ShouldBeTrue();
+        WorkspaceProductionRepairs.TransactionCount(workspace).ShouldEqual(0);
+    }
+
+    [Theory]
+    [InlineData(WorkspaceAuthoringFormatting.PreserveTrivia)]
+    [InlineData(WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments)]
+    void should_migrate_other_types_without_changing_the_ambiguous_observable_return(WorkspaceAuthoringFormatting formatting)
+    {
+        const string source = "module M\n  feature F\n    slice StateView S\n      query Q => observable?\n        filter note String?";
+        var workspace = Workspace(source);
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var diagnostic = index.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyOptionalSuffix);
+        diagnostic.Location.Line.ShouldEqual(5);
+        var occurrence = WorkspaceDiagnosticRepairs.Find(index, workspace.Revision, diagnostic).Single();
+        var root = index.Entries.Single(entry => entry.Node is ApplicationSyntax).Handle;
+        var document = WorkspaceDiagnosticRepairs.FindDocumentOptionality(index, root).Single();
+        foreach (var repair in new[] { occurrence, document })
+        {
+            repair.Operations.Length.ShouldEqual(1);
+            var result = WorkspaceDiagnosticRepairs.ProposeRepair(workspace, repair, Request(workspace) with { Formatting = formatting });
+            result.Accepted.ShouldBeTrue();
+            var text = result.Workspace!.Documents.Single().Text;
+            text.ShouldContain("query Q => observable?");
+            text.ShouldContain("filter note String optional");
+            result.AuthoringDiagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyOptionalSuffix).ShouldBeFalse();
+        }
+    }
+
+    [Fact]
+    void should_migrate_both_reaction_values_when_one_is_named_csharp()
+    {
+        const string source = "module M\n  feature F\n    slice Automation S\n      reaction R\n        when T\n          csharp String?\n          note String?";
+        var workspace = Workspace(source);
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var root = index.Entries.Single(entry => entry.Node is ApplicationSyntax).Handle;
+        var repair = WorkspaceDiagnosticRepairs.FindDocumentOptionality(index, root).Single();
+        repair.Operations.Length.ShouldEqual(2);
+        var result = WorkspaceDiagnosticRepairs.ProposeRepair(workspace, repair, Request(workspace));
+        result.Accepted.ShouldBeTrue();
+        result.Workspace!.Documents.Single().Text.ShouldEqual(source.Replace("String?", "String optional", StringComparison.Ordinal));
+        result.AuthoringDiagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyOptionalSuffix).ShouldBeFalse();
     }
 
     [Fact]
