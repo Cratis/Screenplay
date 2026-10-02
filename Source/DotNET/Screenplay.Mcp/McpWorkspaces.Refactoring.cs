@@ -9,6 +9,21 @@ namespace Cratis.Screenplay.Mcp;
 
 internal sealed partial class McpWorkspaces
 {
+    internal object ExtractInlineEvent(JsonElement arguments)
+    {
+        var workspace = Current();
+        var request = new WorkspaceAuthoringRequest
+        {
+            ExpectedRevision = WorkspaceRevision.Parse(McpJson.RequiredString(arguments, "expectedRevision")),
+            ExpectedCatalogRevision = CatalogRevision.Parse(McpJson.RequiredString(arguments, "expectedCatalogRevision")),
+            Formatting = McpJson.Enumeration(arguments, "formatting", WorkspaceAuthoringFormatting.PreserveExactSource),
+            Validation = McpJson.Enumeration(arguments, "validation", WorkspaceAuthoringValidation.Authoring)
+        };
+        root.Verify(workspace);
+        var result = WorkspaceEventRefactorings.ProposeExtractInlineEvent(workspace, McpAstHandles.Read(arguments.GetProperty("subject")), request);
+        return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation), arguments) : Rejected(result);
+    }
+
     internal object Rename(JsonElement arguments)
     {
         var workspace = Current();

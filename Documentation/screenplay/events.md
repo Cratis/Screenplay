@@ -61,6 +61,8 @@ Workspace and MCP event renames pin the previous effective name by default, beca
 
 Rename preserves trivia by default, including when inserting or removing the pin. Unsupported source edits refuse rather than silently reformatting the document.
 
+To evolve an inline event, first use `WorkspaceEventRefactorings.ProposeExtractInlineEvent` or MCP `propose-extract-inline-event`. The declaration moves into the slice, keeping its id, description, documentation, tags and property identities. Its production keeps explicit routing or receives the previously implicit identifier destination. Extraction requires unchanged canonical ESM and catalog assignments, preserves comments exactly once or refuses, and needs explicit canonical formatting consent. Add later generations only after extraction; there is no reverse inlining refactoring.
+
 ````screenplay
 event Renamed
   description "The project acquired another name"

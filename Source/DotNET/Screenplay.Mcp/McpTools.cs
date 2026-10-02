@@ -33,6 +33,7 @@ sealed class McpTools
                 "workspace-state" => _workspaces.State(arguments),
                 "recover-workspace" => _workspaces.Recover(arguments),
                 "propose-rename" => _workspaces.Rename(arguments),
+                "propose-extract-inline-event" => _workspaces.ExtractInlineEvent(arguments),
                 "read-workspace" => _workspaces.ReadWorkspace(arguments),
                 "read-ast" => _workspaces.ReadAst(arguments),
                 "propose" => _workspaces.Propose(arguments, false),

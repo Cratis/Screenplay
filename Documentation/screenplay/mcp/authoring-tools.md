@@ -184,6 +184,22 @@ Use explicit retirement addresses when removing assigned declarations. If edits
 overlap, replace their common containing subtree instead of sending conflicting
 parent/child operations. See [the authoring contract](../ast-authoring.md).
 
+## Extract an inline event
+
+Use `read-ast` to find the inline `EventSyntax` handle, then call
+`propose-extract-inline-event` with `subject`, `expectedRevision`,
+`expectedCatalogRevision` and `formatting: "CanonicalizeTouchedDocuments"`.
+This is an explicit refactoring, not a diagnostic repair. The declaration moves
+into the owning slice; an omitted inline destination becomes `for <identifier>`.
+An existing destination stays unchanged. Event metadata and tags move with the
+declaration, while production and mapping comments remain attached to their intent.
+
+Extraction requires byte-identical canonical ESM, unchanged catalog assignments
+and every comment preserved exactly once. It refuses unsupported or unbindable
+models rather than guessing. Extract before adding `generation`; parser-invalid
+inline generations cannot be edited through occurrence handles. There is no reverse
+inlining operation. Review and apply the returned proposal as any other edit.
+
 ## Fix a diagnostic
 
 Call `read-workspace` with `view: "diagnostics"` to inspect source diagnostics,

@@ -85,6 +85,12 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
         foreach (var edit in _edits.Where(edit => edit.Destination is not null))
         {
             var inserted = ToJson(edit.Value!);
+            if (edit.Original is not null)
+            {
+                CarrySourceLocations(edit.Original, inserted);
+            }
+
+            CarryReplacementMetadata(edit.Value!, inserted);
             Insert(edit.Destination!, inserted);
             if (edit.Target is not null)
             {
