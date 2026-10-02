@@ -1,7 +1,8 @@
 ---
 id: 0021
 title: Commands produce events, operations and responses
-status: accepted
+status: superseded
+superseded-by: 0023
 stage: none
 decided: 2026-09-28
 decider: Sindre Alstad Wilting
