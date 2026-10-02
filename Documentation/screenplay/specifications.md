@@ -220,7 +220,7 @@ specification LookingUpAnExistingInvoice
       status = "draft"
 ```
 
-The reference runner establishes `given` events, projects them, applies complete `given readmodel` states, then queries and compares. A when-less specification may also assert `then readmodel` or `then no readmodel`, but not events or errors. With a `when`, event, read-model and query assertions can be combined as needed. An appended event can also be rejected by an append-time constraint using `then error`. Reactions triggered by the appended event are **not** executed: reactions are not part of the ESM.
+The reference runner establishes `given` events, projects them, applies complete `given readmodel` states, then queries and compares. A when-less specification may also assert `then readmodel` or `then no readmodel`, but not events or errors. With a `when`, event, read-model and query assertions can be combined as needed. An appended event can also be rejected by an append-time constraint using `then error`. Before ESM v6, `then` events after `when append` equal the appended fact and nothing reacts to it; since ESM v6, the reactions it sets off run - see [Clocks, triggers and captures](#clocks-triggers-and-captures).
 
 ## Performing a query
 
@@ -267,11 +267,15 @@ specification ChasingAnOverdueInvoiceEveryMorning
 
 An instant is ISO 8601 with an explicit offset or `Z`, such as `2026-10-05T08:00:00Z` (`PLAY0461` otherwise), so the same text means the same moment wherever the specification runs.
 
-:::caution[Parsed, not yet executable]
-The executable semantic model does not admit clocks, application triggers or capture records yet - nor automation and translate slices, whose reactions and captures they drive. A specification using one compiles, prints and is checked against the document, but binding it reports `PLAY0268` naming the proposed ESM v6 in [decision 0022](https://github.com/Cratis/Screenplay/blob/main/decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md). `when query` is the exception: it binds today.
+These forms, and the automation and translate slices whose reactions and captures they drive, bind to ESM v6 ([decision 0022](https://github.com/Cratis/Screenplay/blob/main/decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md)), and the reference runner executes them:
 
-Under that proposal, the events a reaction appends join the facts every action produces. A `then` after `when append`, `when clock`, `when trigger` or `when capture` then asserts what the reactions did, not only the appended or captured fact - which is how the samples already write their automation and translate specifications.
-:::
+- **Every action sets reactions off.** After a command, an append, a clock tick, a trigger or a capture record, each new fact runs the reactions to its event, and what those append or the commands they invoke run more, until nothing is left to react to. `then` events compare every new fact, the action's and the reactions'.
+- **An appended event is the action itself.** After `when append`, `then` events are what followed it - what reactions appended - the way a command's `then` events are what it produced.
+- **`given clock` fixes when the scenario happens.** Every command, append and reaction occurs at that instant; an occurrence a clock tick sets off occurs at the instant it fell due. A specification with `when clock` states `given clock` too, the instant the clock moves from. The clock states a time, not a caller, so a mapping from `$context.causedBy` is unsupported in a scenario that states one.
+- **The clock is UTC and exact.** Each `every` or `at` occurrence due after `given clock` and at or before `when clock` fires exactly once, in time order. An interval counts from the Unix epoch; a schedule's time of day is UTC.
+- **Captures compare records.** `given capture` is the record a capture last saw for a key, and `when capture` the record it sees now. Nested objects and lists of objects in a record are a capture's `nested` record and `children`.
+
+Reactions with a code body (`file` or an inline block) and reactions that never settle return `SemanticUnsupported` rather than a guessed outcome. A command a reaction invokes runs through its full pipeline with no caller, so a command that needs one rejects it, and that rejection ends the scenario. A model using any of these forms selects language and semantics `6.0` (canonical `schemaVersion: 6`); models without them keep their bytes and revisions.
 
 ## Reference execution
 

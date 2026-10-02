@@ -87,11 +87,12 @@ Automation and translate slices are driven by time, by application triggers and 
 ## Parsed is not executable
 
 This document is a showcase of the language, not of what runs today. It compiles with no diagnostics, but much
-of it is outside what the executable semantic model admits: automation and translate slices, captures,
-reactions, clocks and triggers in specifications, reducers, performers, list queries, handlers, `reads`, `@pii`
-concepts and code policies among them. Admitting clocks, triggers, captures and reactions is proposed as ESM v6 in
-[decision 0022](../../decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md).
-The reference specification runner can therefore not execute most of these specifications. For a model whose
+of it is outside what the executable semantic model admits: imported events, reducers, performers, list
+queries, handlers, command `reads`, `@pii` concepts and code policies among them. Clocks, triggers, captures and
+reactions are admitted as ESM v6 by
+[decision 0022](../../decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md), but
+because the document as a whole does not bind, the reference specification runner can not execute most of
+these specifications here. For a model whose
 core specifications do run, see [Library](../Library).
 
 ## Verify
