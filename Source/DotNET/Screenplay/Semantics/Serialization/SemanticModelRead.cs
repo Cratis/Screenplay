@@ -20,6 +20,7 @@ internal static partial class SemanticModelRead
         ImmutableArray<SemanticCompositeType> types = default;
         ImmutableArray<SemanticModule> modules = default;
         ImmutableArray<SemanticPolicy> policies = [];
+        ImmutableArray<SemanticApplicationTrigger> triggers = [];
         while (NextProperty(ref reader, seen, "application") is { } property)
         {
             switch (property)
@@ -30,12 +31,13 @@ internal static partial class SemanticModelRead
                 case "types": types = Array(ref reader, CompositeType, property); break;
                 case "modules": modules = Array(ref reader, (ref Utf8JsonReader item) => Module(ref item, schemaVersion), property); break;
                 case "policies": policies = Array(ref reader, Policy, property); break;
+                case "triggers" when schemaVersion >= 6: triggers = Array(ref reader, Trigger, property); break;
                 default: throw Unknown(property, "application");
             }
         }
 
         Required(id.IsSet && name is not null && !concepts.IsDefault && !types.IsDefault && !modules.IsDefault, "application");
-        return new(id, name!, concepts, types, modules) { Policies = policies };
+        return new(id, name!, concepts, types, modules) { Policies = policies, Triggers = triggers };
     }
 
     internal static SemanticConcept Concept(ref Utf8JsonReader reader)
@@ -132,6 +134,8 @@ internal static partial class SemanticModelRead
         ImmutableArray<SemanticKeyedQuery> queries = default;
         ImmutableArray<SemanticSpecification> specifications = default;
         ImmutableArray<SemanticConstraint> constraints = [];
+        ImmutableArray<SemanticReaction> reactions = [];
+        ImmutableArray<SemanticCapture> captures = [];
         while (NextProperty(ref reader, seen, "slice") is { } property)
         {
             switch (property)
@@ -147,6 +151,8 @@ internal static partial class SemanticModelRead
                 case "queries": queries = Array(ref reader, Query, property); break;
                 case "specifications": specifications = Array(ref reader, (ref Utf8JsonReader item) => Specification(ref item, schemaVersion), property); break;
                 case "constraints": constraints = Array(ref reader, Constraint, property); break;
+                case "reactions" when schemaVersion >= 6: reactions = Array(ref reader, Reaction, property); break;
+                case "captures" when schemaVersion >= 6: captures = Array(ref reader, Capture, property); break;
                 default: throw Unknown(property, "slice");
             }
         }
@@ -155,7 +161,7 @@ internal static partial class SemanticModelRead
             id.IsSet && name is not null && kind is not null && !events.IsDefault && !commands.IsDefault &&
             !readModels.IsDefault && !projections.IsDefault && !queries.IsDefault && !specifications.IsDefault,
             "slice");
-        return new(id, name!, kind!.Value, events, commands, readModels, projections, queries, specifications) { Constraints = constraints, Reducers = reducers };
+        return new(id, name!, kind!.Value, events, commands, readModels, projections, queries, specifications) { Constraints = constraints, Reducers = reducers, Reactions = reactions, Captures = captures };
     }
 
     internal static SemanticReducer Reducer(ref Utf8JsonReader reader)
@@ -424,6 +430,7 @@ internal static partial class SemanticModelRead
         ImmutableArray<SemanticPropertyMapping> mappings = default;
         SemanticCondition? when = null;
         ImmutableArray<string> tags = [];
+        SemanticTypeReference? destinationType = null;
         while (NextProperty(ref reader, seen, "produced event") is { } property)
         {
             switch (property)
@@ -434,12 +441,13 @@ internal static partial class SemanticModelRead
                 case "mappings": mappings = Array(ref reader, Mapping, property); break;
                 case "when": RequiredToken(ref reader, JsonTokenType.StartObject, property); when = Condition(ref reader); break;
                 case "tags": tags = StringArray(ref reader, property); break;
+                case "destinationType": RequiredToken(ref reader, JsonTokenType.StartObject, property); destinationType = TypeReference(ref reader); break;
                 default: throw Unknown(property, "produced event");
             }
         }
 
         Required(eventContract.IsSet && conditionRead && destinationRead && !mappings.IsDefault, "produced event");
-        return new(eventContract, condition, destination, mappings) { When = when, Tags = tags };
+        return new(eventContract, condition, destination, mappings) { When = when, Tags = tags, DestinationType = destinationType };
     }
 
     internal static SemanticPropertyMapping Mapping(ref Utf8JsonReader reader)
@@ -612,6 +620,7 @@ internal static partial class SemanticModelRead
         ImmutableArray<SemanticSpecificationError> thenErrors = default;
         SemanticCaller? caller = null;
         var thenDenied = false;
+        var automation = new AutomationSpecification();
         while (NextProperty(ref reader, seen, "specification") is { } property)
         {
             switch (property)
@@ -626,19 +635,32 @@ internal static partial class SemanticModelRead
                 case "thenEventsInAnyOrder": thenEventsInAnyOrder = Boolean(ref reader, property); if (!thenEventsInAnyOrder) throw Malformed("specification", "thenEventsInAnyOrder may only be true when present"); break;
                 case "thenEvents": thenEvents = Array(ref reader, SpecificationEvent, property); break;
                 case "thenReadModels": thenReadModels = Array(ref reader, SpecificationReadModel, property); break;
-                case "thenAbsentReadModels" when schemaVersion == 5: thenAbsentReadModels = Array(ref reader, SpecificationAbsentReadModel, property); break;
+                case "thenAbsentReadModels" when schemaVersion >= 5: thenAbsentReadModels = Array(ref reader, SpecificationAbsentReadModel, property); break;
                 case "thenQueries": thenQueries = Array(ref reader, SpecificationQuery, property); break;
                 case "thenErrors": thenErrors = Array(ref reader, SpecificationError, property); break;
                 case "thenDenied": thenDenied = Boolean(ref reader, property); if (!thenDenied) throw Malformed("specification", "thenDenied may only be true when present"); break;
+                case "givenClock" or "givenCaptures" or "whenClock" or "whenTrigger" or "whenCapture" when schemaVersion >= 6: automation.Read(ref reader, property); break;
                 default: throw Unknown(property, "specification");
             }
         }
 
         Required(
             id.IsSet && name is not null && !givenEvents.IsDefault && !givenReadModels.IsDefault &&
-            !thenEvents.IsDefault && !thenReadModels.IsDefault && (schemaVersion != 5 || !thenAbsentReadModels.IsDefault) && !thenQueries.IsDefault && !thenErrors.IsDefault,
+            !thenEvents.IsDefault && !thenReadModels.IsDefault && (schemaVersion < 5 || !thenAbsentReadModels.IsDefault) && !thenQueries.IsDefault && !thenErrors.IsDefault,
             "specification");
-        return new(id, name!, givenEvents, givenReadModels, when, thenEvents, thenReadModels, thenQueries, thenErrors) { GivenCaller = caller, ThenDenied = thenDenied, WhenAppended = whenAppended, ThenEventsInAnyOrder = thenEventsInAnyOrder, ThenAbsentReadModels = schemaVersion == 5 ? thenAbsentReadModels : [] };
+        return new(id, name!, givenEvents, givenReadModels, when, thenEvents, thenReadModels, thenQueries, thenErrors)
+        {
+            GivenCaller = caller,
+            ThenDenied = thenDenied,
+            WhenAppended = whenAppended,
+            ThenEventsInAnyOrder = thenEventsInAnyOrder,
+            ThenAbsentReadModels = schemaVersion >= 5 ? thenAbsentReadModels : [],
+            GivenClock = automation.GivenClock,
+            GivenCaptures = automation.GivenCaptures,
+            WhenClock = automation.WhenClock,
+            WhenTrigger = automation.WhenTrigger,
+            WhenCapture = automation.WhenCapture
+        };
     }
 
     internal static SemanticSpecificationAppend SpecificationAppend(ref Utf8JsonReader reader)
@@ -1148,6 +1170,8 @@ internal static partial class SemanticModelRead
     {
         "stateChange" => SemanticSliceKind.StateChange,
         "stateView" => SemanticSliceKind.StateView,
+        "automation" => SemanticSliceKind.Automation,
+        "translate" => SemanticSliceKind.Translate,
         _ => throw DiscriminatorError(value, "slice kind")
     };
 
@@ -1203,6 +1227,7 @@ internal static partial class SemanticModelRead
     {
         "command" => SemanticExpressionRootKind.Command,
         "event" => SemanticExpressionRootKind.Event,
+        "trigger" => SemanticExpressionRootKind.Trigger,
         _ => throw DiscriminatorError(value, "expression root")
     };
 

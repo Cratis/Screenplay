@@ -33,7 +33,7 @@ public class when_serializing_the_golden_catalog : Specification
     [Fact] void should_reserialize_the_golden_bytes_identically() => _reserialized.SequenceEqual(_expected).ShouldBeTrue();
     [Fact] void should_preserve_the_distinct_catalog_revision() => _roundTripped.Revision.ShouldEqual(_catalog.Revision);
     [Fact] void should_cover_every_semantic_kind() => _roundTripped.Semantics.Select(_ => _.Address.Kind).Distinct().ShouldContainOnly(Enum.GetValues<SemanticKind>().Where(_ => _ != SemanticKind.Unknown));
-    [Fact] void should_cover_every_legal_property_owner() => _roundTripped.Semantics.Where(_ => _.Address.Kind == SemanticKind.Property).Select(_ => _.Address.OwnerKind).ShouldContainOnly([SemanticKind.CompositeType, SemanticKind.Command, SemanticKind.EventContract, SemanticKind.ReadModel]);
+    [Fact] void should_cover_every_legal_property_owner() => _roundTripped.Semantics.Where(_ => _.Address.Kind == SemanticKind.Property).Select(_ => _.Address.OwnerKind).ShouldContainOnly([SemanticKind.CompositeType, SemanticKind.Trigger, SemanticKind.Command, SemanticKind.EventContract, SemanticKind.ReadModel]);
     [Fact] void should_cover_both_origins() => _roundTripped.Semantics.Select(_ => _.Origin).Distinct().ShouldContainOnly([SemanticIdentityOrigin.Persisted, SemanticIdentityOrigin.LegacyBootstrap]);
     [Fact] void should_cover_multiple_event_contracts() => _roundTripped.EventContracts.Length.ShouldEqual(2);
 }

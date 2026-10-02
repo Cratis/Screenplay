@@ -655,7 +655,11 @@ public static partial class canonical_serialization_golden_vectors
             command,
             slice,
             feature,
-            queryArgument
+            queryArgument,
+            SemanticAddress.ForTrigger(application, "InvoiceDue"),
+            SemanticAddress.ForProperty(SemanticAddress.ForTrigger(application, "InvoiceDue"), "invoiceId"),
+            SemanticAddress.ForReaction(slice, "ReminderSender"),
+            SemanticAddress.ForCapture(slice, "LegacyInvoices")
         };
         var semantics = addresses
             .Select((address, index) => new SemanticIdentityAssignment(

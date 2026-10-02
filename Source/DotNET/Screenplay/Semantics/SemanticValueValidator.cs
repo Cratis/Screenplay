@@ -40,6 +40,15 @@ static class SemanticValueRules
         _ => false
     };
 
+    // The text a scalar reads as where values meet text: capture translations, transitions, templates and keys.
+    internal static string Text(SemanticValue? value) => value switch
+    {
+        SemanticTextValue text => text.Value,
+        SemanticNumberValue number => number.Value.ToString(CultureInfo.InvariantCulture),
+        SemanticBooleanValue boolean => boolean.Value ? "true" : "false",
+        _ => string.Empty
+    };
+
     internal static InvalidSemanticContract Malformed() => new("A semantic value variant is malformed or unknown.");
 }
 
