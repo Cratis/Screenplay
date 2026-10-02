@@ -1,6 +1,26 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+// Matches SourceLineSplitter.CommentStart: // inside a double-quoted string or a
+// backtick template is content; a backslash escapes the next character only in a string.
+export function withoutComment(line: string): string {
+    let inString = false;
+    let inTemplate = false;
+    for (let index = 0; index < line.length; index++) {
+        const character = line[index];
+        if (character === '\\' && inString && index + 1 < line.length) {
+            index++;
+        } else if (character === '"' && !inTemplate) {
+            inString = !inString;
+        } else if (character === '`' && !inString) {
+            inTemplate = !inTemplate;
+        } else if (!inString && !inTemplate && character === '/' && line[index + 1] === '/') {
+            return line.slice(0, index);
+        }
+    }
+    return line;
+}
+
 export function indentOf(line: string): number {
     return line.length - line.trimStart().length;
 }
@@ -39,7 +59,7 @@ export function enclosingChain(
     let currentIndent = indent;
     for (let index = lineIndex - 1; index >= 0 && currentIndent > 0; index--) {
         if (fences[index]) continue;
-        const line = lines[index];
+        const line = withoutComment(lines[index]);
         if (line.trim().length === 0) continue;
         const lineIndent = indentOf(line);
         if (lineIndent < currentIndent) {
@@ -63,7 +83,7 @@ export function nearestEnclosingLine(
 ): string | undefined {
     for (let index = lineIndex - 1; index >= 0 && indent > 0; index--) {
         if (fences[index]) continue;
-        const line = lines[index];
+        const line = withoutComment(lines[index]);
         if (line.trim().length === 0) continue;
         if (indentOf(line) < indent) {
             return line.trim();

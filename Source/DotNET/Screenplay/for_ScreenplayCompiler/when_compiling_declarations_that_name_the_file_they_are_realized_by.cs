@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Specifications;
@@ -61,7 +62,7 @@ public class when_compiling_declarations_that_name_the_file_they_are_realized_by
     void Because() => _result = _compiler.Compile(Source);
 
     [Fact] void should_succeed() => _result.Success.ShouldBeTrue();
-    [Fact] void should_have_no_diagnostics() => _result.Diagnostics.ShouldBeEmpty();
+    [Fact] void should_have_no_other_diagnostics() => _result.Diagnostics.Where(diagnostic => diagnostic.Code != DiagnosticCodes.OmittedProductionDestination).ShouldBeEmpty();
     [Fact] void should_carry_the_concept_file() => Concept.File!.Path.ShouldEqual("Invoicing/InvoiceId.cs");
     [Fact] void should_carry_the_type_file() => Type.File!.Path.ShouldEqual("Invoicing/InvoiceLine.cs");
     [Fact] void should_carry_the_trigger_file() => Trigger.File!.Path.ShouldEqual("Integrations/LedgerFileTrigger.cs");

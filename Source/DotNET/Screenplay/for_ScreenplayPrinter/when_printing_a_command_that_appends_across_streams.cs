@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.for_ScreenplayPrinter;
@@ -44,13 +45,13 @@ public class when_printing_a_command_that_appends_across_streams : given.a_print
 
     void Because() => _roundtrip = RoundTrip(Source);
 
-    [Fact] void should_compile_without_diagnostics() => _roundtrip.Original!.Diagnostics.ShouldBeEmpty();
-    [Fact] void should_reparse_without_diagnostics() => _roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
+    [Fact] void should_compile_without_other_diagnostics() => _roundtrip.Original!.Diagnostics.Where(diagnostic => diagnostic.Code != DiagnosticCodes.OmittedProductionDestination).ShouldBeEmpty();
+    [Fact] void should_reparse_without_other_diagnostics() => _roundtrip.Reparsed.Diagnostics.Where(diagnostic => diagnostic.Code != DiagnosticCodes.OmittedProductionDestination).ShouldBeEmpty();
     [Fact] void should_print_the_same_text_on_a_second_pass() => _roundtrip.PrintedAgain.ShouldEqual(_roundtrip.Printed);
 
     [Fact] void should_keep_every_production() => Command.Produces.Count().ShouldEqual(3);
 
-    // The event on the command's own stream says nothing about where it lands, which is the default.
+    // Preserve the authored omission; parsing and printing do not choose a destination.
     [Fact] void should_leave_the_implicit_stream_unstated() => Produces("RequestActivated").For.ShouldBeNull();
     [Fact] void should_state_the_contract_stream() => ((PathExpressionSyntax)Produces("ContractPolicyActivated").For!).Path.ShouldEqual("contractId");
     [Fact] void should_state_the_candidate_stream() => ((PathExpressionSyntax)Produces("CandidateEngaged").For!).Path.ShouldEqual("candidateId");
