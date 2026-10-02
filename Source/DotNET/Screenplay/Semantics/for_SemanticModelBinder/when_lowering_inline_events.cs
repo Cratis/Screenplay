@@ -23,6 +23,19 @@ public class when_lowering_inline_events : given.a_semantic_binder
         SemanticModelSerializer.Serialize(inline.Value!.Model).SequenceEqual(SemanticModelSerializer.Serialize(explicitForm.Value!.Model)).ShouldBeTrue();
     }
 
+    [Theory]
+    [InlineData("String?")]
+    [InlineData("String[]?")]
+    void should_keep_optional_type_spelling_out_of_esm_bytes(string type)
+    {
+        var source = Inline.Replace("name String", $"name {type}", StringComparison.Ordinal);
+        var legacy = Bind(source);
+        var canonical = Bind(source.Replace("?", " optional", StringComparison.Ordinal));
+        legacy.Success.ShouldBeTrue();
+        canonical.Success.ShouldBeTrue();
+        SemanticModelSerializer.Serialize(legacy.Value!.Model).ShouldEqual(SemanticModelSerializer.Serialize(canonical.Value!.Model));
+    }
+
     [Fact]
     void should_ignore_authoring_metadata_in_esm()
     {

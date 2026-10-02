@@ -7,6 +7,7 @@ import { pattern } from '../Text/patterns';
 import { parseDescription } from './DescriptionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
+import { parseTriggerData } from './TriggerDataParser';
 import { parseProduces } from './ProducesParser';
 import { locationOf, SourceLine } from './SourceLine';
 
@@ -81,11 +82,16 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
         } else if (keyword === 'invokes' && invokesPattern.test(child.content)) {
             invokes.push({ kind: 'InvokesSyntax', command: invokesPattern.exec(child.content)![1], location: locationOf(child) });
             context.skipOpaqueBlock(child.indent);
-        } else {
+        } else if (keyword === 'reads' || keyword === 'file' || keyword === 'csharp' || child.content.startsWith('```')) {
+            if (/^reads\s+[A-Z]\w*\s+optional(?:\s|$)/.test(child.content)) {
+                context.error(DiagnosticCodes.OptionalReadsNotSupported, 'Optional reads are not yet supported (see #308).', locationOf(child));
+            }
             if (child.content.startsWith('```')) {
                 context.skipFencedBody();
             }
             context.skipOpaqueBlock(child.indent);
+        } else {
+            parseTriggerData(context, child);
         }
     }
     return { kind: 'ReactionTriggerSyntax', source, description, produces, invokes, location: locationOf(line) };

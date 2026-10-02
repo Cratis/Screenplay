@@ -19,7 +19,7 @@ public class and_it_is_used_from_another_module : given.a_folder_with_and_withou
                   readmodel ItemView
                     itemId ItemId
                     channel Channel
-                  query GetItem => ItemView?
+                  query GetItem => ItemView optional
                     by itemId ItemId
             """);
         Write(

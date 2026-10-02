@@ -1,0 +1,317 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Recording",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "name": "Record",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "Recorded",
+                      "for": null,
+                      "inlineEvent": {
+                        "kind": "EventSyntax",
+                        "description": null,
+                        "documentation": null,
+                        "generation": 1,
+                        "hasGenerationMarker": false,
+                        "id": null,
+                        "name": "Recorded",
+                        "properties": [
+                          {
+                            "kind": "PropertySyntax",
+                            "isIdentifier": false,
+                            "name": "note",
+                            "type": {
+                              "kind": "TypeRefSyntax",
+                              "isCollection": false,
+                              "isOptional": true,
+                              "name": "String"
+                            }
+                          },
+                          {
+                            "kind": "PropertySyntax",
+                            "isIdentifier": false,
+                            "name": "tags",
+                            "type": {
+                              "kind": "TypeRefSyntax",
+                              "isCollection": true,
+                              "isOptional": true,
+                              "name": "String"
+                            }
+                          }
+                        ],
+                        "tags": []
+                      },
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "note",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "optional"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "tags",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "optional"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": true,
+                      "name": "id",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Uuid"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "optional",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": true,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "description",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": true,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "Imported",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "tag",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": true,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "file",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": true,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "Record",
+              "projections": [],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "id",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": true,
+                      "name": "Uuid"
+                    }
+                  },
+                  "description": null,
+                  "filters": [
+                    {
+                      "kind": "QueryParameterSyntax",
+                      "name": "note",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": true,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "isObservable": true,
+                  "name": "NoteById",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "Note"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "NamedOptional",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": false,
+                    "name": "optional"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [
+                {
+                  "kind": "ReactionSyntax",
+                  "description": null,
+                  "name": "React",
+                  "triggers": [
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "invokes": [],
+                      "produces": [],
+                      "source": {
+                        "kind": "NamedTriggerSourceSyntax",
+                        "name": "Notified"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Note",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "note",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": true,
+                        "name": "String"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Notes"
+    }
+  ],
+  "personas": [],
+  "types": [
+    {
+      "kind": "TypeSyntax",
+      "description": null,
+      "name": "optional",
+      "properties": [
+        {
+          "kind": "PropertySyntax",
+          "isIdentifier": false,
+          "name": "optional",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "String"
+          }
+        },
+        {
+          "kind": "PropertySyntax",
+          "isIdentifier": false,
+          "name": "value",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": true,
+            "name": "optional"
+          }
+        },
+        {
+          "kind": "PropertySyntax",
+          "isIdentifier": false,
+          "name": "tags",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": true,
+            "isOptional": true,
+            "name": "String"
+          }
+        }
+      ]
+    }
+  ]
+}

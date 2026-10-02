@@ -5,7 +5,7 @@ import { pattern } from '../Text/patterns';
 import { firstWord } from './LineText';
 import { SourceLine } from './SourceLine';
 
-const typeReferencePattern = pattern('^[A-Za-z_]\\w*(?:\\[\\])?\\??$');
+const typeReferencePattern = pattern('^[A-Za-z_]\\w*(?:\\[\\])?(?:\\?|\\s+optional)?$');
 
 const pathOf = (line: SourceLine): string =>
     firstWord(line.content) === 'file' ? line.content.substring('file'.length).trim() : '';

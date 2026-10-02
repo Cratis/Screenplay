@@ -17,7 +17,7 @@ public class when_printing_a_composite_type : given.a_printer
           lineNumber  Int
           productName ProductName
           unitPrice   Money
-          note        String?
+          note        String optional
         """;
 
     RoundTripResult _roundtrip;
@@ -29,7 +29,7 @@ public class when_printing_a_composite_type : given.a_printer
     [Fact] void should_print_the_same_text_on_a_second_pass() => _roundtrip.PrintedAgain.ShouldEqual(_roundtrip.Printed);
     [Fact] void should_print_the_type_header() => _roundtrip.Printed.ShouldContain("type InvoiceLine");
     [Fact] void should_print_the_description() => _roundtrip.Printed.ShouldContain("description \"A single billed line of an invoice\"");
-    [Fact] void should_print_the_optional_suffix() => _roundtrip.Printed.ShouldContain("note String?");
+    [Fact] void should_print_the_optional_modifier() => _roundtrip.Printed.ShouldContain("note String optional");
     [Fact] void should_preserve_the_properties() => Type.Properties.Count().ShouldEqual(4);
     [Fact] void should_preserve_the_description() => Type.Description.ShouldEqual("A single billed line of an invoice");
 

@@ -7,6 +7,7 @@ import { describePlacement, documentPlacement, isDocumentPlacement, PlayPlacemen
 import { PersonaSyntax } from '../Syntax/Authorization';
 import { ConceptAttributeSyntax, ConceptSyntax, DomainSyntax, ImportSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { ApplicationSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax } from '../Syntax/Structure';
+import { parseTriggerDeclaration } from './TriggerDataParser';
 import { pattern } from '../Text/patterns';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { parseType } from './DeclarationParsers';
@@ -86,6 +87,8 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             modules.push(parseModule(context, line));
         } else if (keyword === 'persona') {
             personas.push(parsePersona(context, line));
+        } else if (keyword === 'trigger') {
+            parseTriggerDeclaration(context, line);
         } else if (opaqueTopLevel.has(keyword)) {
             context.skipOpaqueBlock(line.indent);
         } else if (placedBody?.tryParse(context, line) !== true) {

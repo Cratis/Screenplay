@@ -46,10 +46,10 @@ internal static partial class CommandParser
                 // property called description. Only the directives that do take an identifier operand
                 // ('authorize', 'produces') stay ambiguous, and those use the '@' escape.
                 case "description" or "handler" or "concurrency" when PropertyLineParser.TryParse(line) is { } named:
-                    AddProperty(context, properties, named, name.Groups[1].Value);
+                    AddProperty(context, properties, named, name.Groups[1].Value, line);
                     break;
                 case "validate" when line.Content != "validate csharp" && PropertyLineParser.TryParse(line) is { } validated:
-                    AddProperty(context, properties, validated, name.Groups[1].Value);
+                    AddProperty(context, properties, validated, name.Groups[1].Value, line);
                     break;
                 case "description":
                     var previousDescription = description;
@@ -111,10 +111,11 @@ internal static partial class CommandParser
                 default:
                     if (PropertyLineParser.TryParse(line) is { } property)
                     {
-                        AddProperty(context, properties, property, name.Groups[1].Value);
+                        AddProperty(context, properties, property, name.Groups[1].Value, line);
                     }
                     else
                     {
+                        PropertyLineParser.ReportInvalidModifierOrder(context, line);
                         context.Error(DiagnosticCodes.UnknownCommandDirective, $"Unexpected '{line.Content}' in command body", line.Location);
                         context.SkipBlock(line.Indent);
                     }
@@ -141,12 +142,14 @@ internal static partial class CommandParser
     /// <param name="properties">The properties parsed so far.</param>
     /// <param name="property">The <see cref="PropertySyntax"/> to add.</param>
     /// <param name="commandName">The name of the command, used in diagnostics.</param>
+    /// <param name="line">The committed property line.</param>
     /// <remarks>
     /// The identifier is what a runtime resolves the event source id from, so a second one would leave it
     /// with no way to choose. The first declaration wins and the rest are reported.
     /// </remarks>
-    static void AddProperty(ParserContext context, List<PropertySyntax> properties, PropertySyntax property, string commandName)
+    static void AddProperty(ParserContext context, List<PropertySyntax> properties, PropertySyntax property, string commandName, SourceLine line)
     {
+        PropertyLineParser.ReportLegacyOptionalSuffix(context, property.Type, line);
         if (property.IsIdentifier && properties.Find(existing => existing.IsIdentifier) is { } identifier)
         {
             context.Error(DiagnosticCodes.DuplicateCommandIdentifier, $"Command '{commandName}' already marks '{identifier.Name}' as identifier - only one property can be the identifier", property.Location);

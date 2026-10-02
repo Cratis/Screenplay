@@ -54,7 +54,7 @@ internal static partial class EventParser
                     tags.Add(tag);
                 }
             }
-            else if (PropertyLineParser.TryParse(line) is { } property)
+            else if (PropertyLineParser.Parse(context, line) is { } property)
             {
                 if (property.IsIdentifier)
                 {
@@ -100,6 +100,6 @@ internal static partial class EventParser
     [GeneratedRegex(@"^event\s+([A-Za-z_]\w*)(?:\s+generation\s+([0-9]+))?$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^[A-Z]\w*(?:\[\])?\??$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[A-Z]\w*(?:\[\])?(?:\?|\s+optional)?$", RegexOptions.None, 1000)]
     private static partial Regex TypeShapedRegex();
 }

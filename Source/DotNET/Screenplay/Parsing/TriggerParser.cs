@@ -91,7 +91,7 @@ internal static partial class TriggerParser
     /// </remarks>
     public static TriggerDataSyntax? ParseData(ParserContext context, SourceLine line)
     {
-        if (PropertyLineParser.TryParse(line) is { } property)
+        if (PropertyLineParser.Parse(context, line) is { } property)
         {
             return new(property.Name, property.Type, line.Location);
         }

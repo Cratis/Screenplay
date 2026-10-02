@@ -52,7 +52,7 @@ describe('when parsing the canonical folder', () => {
     });
 
     it('should succeed', () => {
-        folder.diagnostics.should.deep.equal([]);
+        folder.diagnostics.filter(diagnostic => diagnostic.code !== 'PLAY0479').should.deep.equal([]);
     });
 
     it('should merge into the same syntax as the single document', () => {

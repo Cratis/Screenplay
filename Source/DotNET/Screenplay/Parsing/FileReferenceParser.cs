@@ -93,7 +93,7 @@ internal static partial class FileReferenceParser
     static string PathOf(SourceLine line) =>
         LineText.FirstWord(line.Content) == Keyword ? line.Content[Keyword.Length..].Trim() : string.Empty;
 
-    [GeneratedRegex(@"^[A-Za-z_]\w*(?:\[\])?\??$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[A-Za-z_]\w*(?:\[\])?(?:\?|\s+optional)?$", RegexOptions.None, 1000)]
     private static partial Regex TypeReferenceRegex();
 
     [GeneratedRegex(@"^(?:[/\\]|[A-Za-z]:[/\\]|~[/\\])", RegexOptions.None, 1000)]

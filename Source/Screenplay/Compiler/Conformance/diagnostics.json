@@ -2,6 +2,46 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "canonical optionality is contextual",
+            "source": ["type optional", "  optional String", "  value optional optional", "  lines String[] optional"],
+            "diagnostics": []
+        },
+        {
+            "name": "legacy optionality reports each committed type once",
+            "source": ["type T", "  description String?", "  lines String[]?", "trigger T", "  value String?", "module M", "  feature F", "    slice StateChange S", "      command C", "        id Uuid identifier", "        name String?", "        produces event E", "          name String? = name", "      event Old", "        @tag String?", "      readmodel R", "        name String?", "      query Q => observable R?", "        by id Uuid?", "        filter name String? from name", "      reaction R", "        when T", "          value String?"],
+            "diagnostics": ["PLAY0479@2", "PLAY0479@3", "PLAY0479@5", "PLAY0479@11", "PLAY0479@13", "PLAY0479@15", "PLAY0479@17", "PLAY0479@18", "PLAY0479@19", "PLAY0479@20", "PLAY0479@23"]
+        },
+        {
+            "name": "duplicate mixed and out of order optional markers",
+            "source": ["type T", "  good String", "  a String optional optional", "  b String? optional", "  c String optional?", "  d String optional[]", "  e String?[]", "  f String Optional"],
+            "diagnostics": ["PLAY0016@3", "PLAY0016@4", "PLAY0016@5", "PLAY0016@6", "PLAY0016@7", "PLAY0016@8"]
+        },
+        {
+            "name": "optional must precede identifier",
+            "source": ["type T", "  good String", "  value String identifier optional"],
+            "diagnostics": ["PLAY0480@3", "PLAY0016@3"]
+        },
+        {
+            "name": "optional event identifiers retain owner rejection",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      event E", "        id Uuid optional identifier"],
+            "diagnostics": ["PLAY0019@5"]
+        },
+        {
+            "name": "optional reads are reserved rather than implemented",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        reads R optional as r"],
+            "diagnostics": ["PLAY0481@5"]
+        },
+        {
+            "name": "file properties and observable type names remain contextual",
+            "source": ["type T", "  file String optional", "  file Models/T.cs", "module M", "  feature F", "    slice StateView S", "      query Q => observable optional"],
+            "diagnostics": []
+        },
+        {
+            "name": "optional tags remain tags rather than type occurrences",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      event E", "        tag TagType optional"],
+            "diagnostics": ["PLAY0020@5", "PLAY0149@5"]
+        },
+        {
             "name": "documented multiline command authorization before an inline event",
             "source": ["policy IsAccountant", "  require role \"Accountant\"", "policy IsCustomerSelf", "  require authenticated", "module M", "  feature F", "    slice StateChange S", "      command C", "        projectId Uuid identifier", "        authorize IsAccountant", "                  or IsCustomerSelf", "        produces event Renamed"],
             "diagnostics": []

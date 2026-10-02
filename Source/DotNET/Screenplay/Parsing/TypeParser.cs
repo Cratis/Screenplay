@@ -55,7 +55,7 @@ internal static partial class TypeParser
                 continue;
             }
 
-            if (PropertyLineParser.TryParse(line) is not { } property)
+            if (PropertyLineParser.Parse(context, line) is not { } property)
             {
                 context.Error(DiagnosticCodes.InvalidPropertyDeclaration, $"Invalid property '{line.Content}' - expected '<name> <Type>'", line.Location);
                 continue;

@@ -54,7 +54,7 @@ internal static partial class ScreenplaySyntaxText
     /// <param name="type">The <see cref="TypeRefSyntax"/> to render.</param>
     /// <returns>The rendered type reference text.</returns>
     public static string TypeRef(TypeRefSyntax type) =>
-        $"{type.Name}{(type.IsCollection ? "[]" : string.Empty)}{(type.IsOptional ? "?" : string.Empty)}";
+        $"{type.Name}{(type.IsCollection ? "[]" : string.Empty)}{(type.IsOptional ? " optional" : string.Empty)}";
 
     /// <summary>
     /// Renders the return type of a <see cref="QuerySyntax"/>, prefixed with <c>observable</c> when the

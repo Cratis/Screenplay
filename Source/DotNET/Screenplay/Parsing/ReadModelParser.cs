@@ -47,7 +47,7 @@ internal static partial class ReadModelParser
             {
                 file = FileReferenceParser.ParseReplacing(context, line, file, directiveLocations);
             }
-            else if (PropertyLineParser.TryParse(line) is { } property)
+            else if (PropertyLineParser.Parse(context, line) is { } property)
             {
                 if (property.IsIdentifier)
                 {

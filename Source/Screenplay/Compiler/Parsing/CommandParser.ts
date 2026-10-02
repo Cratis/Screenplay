@@ -15,7 +15,7 @@ import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseProduces } from './ProducesParser';
-import { tryParseProperty } from './PropertyLineParser';
+import { reportInvalidModifierOrder, reportLegacyOptionalSuffix, tryParseProperty } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
 
 const header = pattern('^command\\s+([A-Za-z_]\\w*)$');
@@ -65,7 +65,7 @@ export function parseCommand(context: ParserContext, line: SourceLine): CommandS
         const keyword = firstWord(child.content);
         const asProperty = tryParseProperty(child);
         if (asProperty !== undefined && (propertyShapedDirectives.has(keyword) || (keyword === 'validate' && child.content !== 'validate csharp'))) {
-            addProperty(context, properties, asProperty, name);
+            addProperty(context, properties, asProperty, name, child);
         } else if (keyword === 'description') {
             description = parseDescription(context, child, description, `Command '${name}'`);
         } else if (keyword === 'authorize') {
@@ -79,10 +79,14 @@ export function parseCommand(context: ParserContext, line: SourceLine): CommandS
             const production = parseProduces(context, child, true);
             if (production !== undefined) produces.push(production);
         } else if (opaqueDirectives.has(keyword)) {
+            if (/^reads\s+[A-Z]\w*\s+optional(?:\s|$)/.test(child.content)) {
+                context.error(DiagnosticCodes.OptionalReadsNotSupported, 'Optional reads are not yet supported (see #308).', locationOf(child));
+            }
             context.skipOpaqueBlock(child.indent);
         } else if (asProperty !== undefined) {
-            addProperty(context, properties, asProperty, name);
+            addProperty(context, properties, asProperty, name, child);
         } else {
+            reportInvalidModifierOrder(context, child);
             context.error(DiagnosticCodes.UnknownCommandDirective, `Unexpected '${child.content}' in command body`, locationOf(child));
             context.skipBlock(child.indent);
         }
@@ -90,8 +94,9 @@ export function parseCommand(context: ParserContext, line: SourceLine): CommandS
     return { kind: 'CommandSyntax', name, description, authorize, properties, validations, produces, location: locationOf(line) };
 }
 
-function addProperty(context: ParserContext, properties: PropertySyntax[], property: PropertySyntax, commandName: string): void {
-    const identifier = properties.find(existing => existing.isIdentifier);
+function addProperty(context: ParserContext, properties: PropertySyntax[], property: PropertySyntax, commandName: string, line: SourceLine): void {
+    reportLegacyOptionalSuffix(context, property.type, line);
+    const identifier = property.isIdentifier ? properties.find(existing => existing.isIdentifier) : undefined;
     if (property.isIdentifier && identifier !== undefined) {
         context.error(DiagnosticCodes.DuplicateCommandIdentifier, `Command '${commandName}' already marks '${identifier.name}' as identifier - only one property can be the identifier`, property.location);
         property = { ...property, isIdentifier: false };

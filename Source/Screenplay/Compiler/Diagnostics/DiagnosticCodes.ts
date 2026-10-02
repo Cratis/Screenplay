@@ -148,4 +148,8 @@ export const DiagnosticCodes = {
     InvalidSpecificationTrigger: 'PLAY0462',
     InvalidSpecificationCapture: 'PLAY0463',
     InvalidSpecificationQueryAction: 'PLAY0464',
+    LegacyOptionalSuffix: 'PLAY0479',
+    InvalidOptionalModifierOrder: 'PLAY0480',
+    OptionalReadsNotSupported: 'PLAY0481',
+    InvalidTriggerData: 'PLAY0246',
 } as const;

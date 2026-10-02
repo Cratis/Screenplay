@@ -188,7 +188,7 @@ internal static partial class ProducesParser
             }
 
             var match = TypedMappingRegex().Match(line.Content);
-            if (match.Success && PropertyLineParser.TryParse(line with { Content = match.Groups[1].Value.TrimEnd() }) is { } property)
+            if (match.Success && PropertyLineParser.Parse(context, line with { Content = match.Groups[1].Value.TrimEnd() }) is { } property)
             {
                 if (property.IsIdentifier)
                 {

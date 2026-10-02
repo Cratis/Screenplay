@@ -480,7 +480,9 @@ internal static class ScreenplayValidator
         {
             context.Warning(
                 DiagnosticCodes.UnknownType,
-                $"Unknown type '{property.Type.Name}' on '{property.Name}' of {owner} - declare it with 'concept {property.Type.Name} : <Primitive>' or 'type {property.Type.Name}'",
+                property.Type.Name == "optional"
+                    ? $"Unknown type 'optional' on '{property.Name}' of {owner} - did you forget the type before 'optional'?"
+                    : $"Unknown type '{property.Type.Name}' on '{property.Name}' of {owner} - declare it with 'concept {property.Type.Name} : <Primitive>' or 'type {property.Type.Name}'",
                 property.Location);
         }
     }
