@@ -16,8 +16,7 @@ reaction <Name>
     [produces <EventType> ...]
     [invokes <Command> ...]
     [file <Path>]
-    [csharp
-      ```
+    [```csharp
       <C# returning event side effects>
       ```]
   [where <condition>]
