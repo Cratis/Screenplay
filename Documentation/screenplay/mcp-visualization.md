@@ -12,6 +12,16 @@ The board is offered only to hosts that advertise the MCP Apps extension
 (`io.modelcontextprotocol/ui`) when they connect. Other clients see the server's
 usual tools, without `visualize-model`.
 
+Use **Cratis.Screenplay.Tool 4.47.0 or later**, or **CLI versions that bundle
+Screenplay 4.47.0 or later**. CLI hosting alone does not guarantee MCP Apps support.
+See [installation](install-mcp.md) and [See your event model](see-your-event-model.md)
+for the same board in other places.
+
+![The MCP App shows an unsaved Notifications proposal beside Commerce fulfillment flows in a labeled capture harness](images/mcp-app-what-if-harness.png)
+
+*The real MCP App in a local capture harness, not a commercial chat host. The
+capture uses a single-file Commerce adaptation and an unsaved what-if sketch.*
+
 ## Show the model on disk
 
 Ask for the board, or call `visualize-model` without arguments. The board shows
@@ -42,12 +52,15 @@ as described in [Create and edit a model with MCP](mcp-authoring.md#review-and-a
 ## Sketch a what-if
 
 To see how a piece of functionality could look before shaping it into a proposal,
-pass whole `.play` documents as a `sketch`:
+pass whole `.play` documents as a `sketch`. Screenplay 4.48.0 has known failures
+with multi-file sketch paths; use a self-contained single-file model for this
+workflow. For a model whose complete source is `application.play`, this scratch
+example replaces that document for the view only:
 
 ```json
 {
   "sketch": [
-    { "path": "orders/returns.play", "source": "module Orders\n  feature Returns\n    slice StateChange RegisterReturn\n..." }
+    { "path": "application.play", "source": "module Orders\n  feature Returns\n    slice StateChange RegisterReturn\n      command RegisterReturn\n        produces ReturnRegistered\n      event ReturnRegistered\n" }
   ]
 }
 ```

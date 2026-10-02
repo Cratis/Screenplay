@@ -2,6 +2,24 @@
 
 Language support for the Cratis **Screenplay** DSL — the modeling language that describes a complete bounded context (events, commands, queries, projections, screens, automations, authorization, validation, constraints, and concepts) in a single declarative `.play` file.
 
+![The Screenplay event model board beside PlaceOrder source, with Commerce command, event, screen, and specification cards](https://raw.githubusercontent.com/Cratis/Screenplay/main/Documentation/screenplay/images/vscode-source-and-board.png)
+
+*The released extension in code-server, showing the Commerce sample.*
+
+## Quickstart
+
+1. Run `code --install-extension cratis.screenplay`.
+2. Open your model's folder, then a `.play` file to see the board.
+3. Choose **Show Source** to edit beside the board and watch it redraw.
+
+[See your event model](https://cratis.io/screenplay/see-your-event-model/) ·
+[VS Code guide](https://cratis.io/screenplay/vscode/) ·
+[Language documentation](https://cratis.io/screenplay/)
+
+The board visualizes the model; it does not execute commands or specifications.
+Use the [compiler](https://cratis.io/screenplay/tool/) to validate your model;
+a board that draws is not proof that every semantic check passes.
+
 ## Features
 
 - **The event model board** — a `.play` file opens on the Cratis event model board, the board Cratis Studio draws, and redraws as you edit. A file inside a folder application shows the whole application. **Show Source** opens the text beside the board, and **Open Event Model Board** goes back.

@@ -1,6 +1,6 @@
 ---
 title: Install the Screenplay MCP server
-description: Install the Screenplay .NET tool and connect a local MCP client to a model directory.
+description: Connect a local MCP client to a Screenplay model directory with the standalone .NET tool or the Cratis CLI.
 ---
 
 Use this guide to connect an MCP client to a Screenplay application. You need the
@@ -27,12 +27,20 @@ screenplay --version
 Ensure the .NET global-tool directory is on `PATH`. The MCP server is part of the
 same `screenplay` executable; no separate MCP tool or daemon is required.
 
-Cratis CLI hosting and AI-distribution integration are coming in a coordinated
-release. They will use the embeddable `Cratis.Screenplay.Mcp` library rather than
-require a separate Screenplay tool installation. Until that release is available,
-use the standalone setup below; installing AI guidance alone does not install this
-executable. The existing `cratis screenplay generate` command generates source
-models, not an MCP server.
+Cratis CLI hosting shipped in **CLI 3.11.0**. If you have the CLI installed,
+use its bundled server without installing a second tool:
+
+```bash
+cratis screenplay mcp ./specifications
+```
+
+For the MCP App board (`visualize-model`), use **CLI versions that bundle
+Screenplay 4.47.0 or later**, or the standalone **Cratis.Screenplay.Tool 4.47.0
+or later**. CLI hosting and board support are separate requirements. The host
+must also support MCP Apps. See [the board guide](mcp-visualization.md).
+
+`cratis screenplay generate` generates source models; `cratis screenplay mcp`
+hosts the MCP server.
 
 Host developers can consult the [embedding API](mcp.md#embedding-api).
 
@@ -76,6 +84,9 @@ whose physical root contains `specifications`:
   }
 }
 ```
+
+To use CLI hosting in this configuration, set `command` to `cratis` and `args`
+to `["screenplay", "mcp", "${workspaceFolder}/specifications"]`.
 
 For other clients, configure the same executable and arguments using their stdio
 server configuration. If the client cannot find `screenplay`, use the installed

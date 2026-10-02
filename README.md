@@ -20,11 +20,17 @@ projections, specifications, automations, and the rules that govern them — top
 
 Screenplay owns that language and its portable meaning; it does not prescribe the runtime. It is a
 model-first language for event-sourced, CQRS systems — commands, events, projections, and the screens they
-feed — and it is part of the experimental Cratis model-first layer. Downstream tools can interpret the same
+feed — and it is part of the Cratis model-first layer. Downstream tools can interpret the same
 model: [**Stage**](https://github.com/Cratis/Stage) is being built to render it into a running
 [Cratis Arc](https://github.com/Cratis/Arc) + [Chronicle](https://github.com/Cratis/Chronicle) application,
 while [**Studio**](https://github.com/Cratis/Studio) visualizes and edits it. The goal is one script with
 explicit capability checks, not a claim that every downstream surface already performs every construct.
+
+## See your event model
+
+[Open the board in VS Code, an AI chat, your Arc app, the CLI, or Studio](https://cratis.io/screenplay/see-your-event-model/).
+Start with `code --install-extension cratis.screenplay`, then open a `.play` file.
+The board visualizes the model; it does not execute it.
 
 ## 🎬 Why "Screenplay"?
 
@@ -218,7 +224,8 @@ This project is part of [Cratis](https://www.cratis.io) — free, MIT-licensed t
 - **[Arc](https://github.com/Cratis/Arc)** — opinionated CQRS framework for ASP.NET Core with commands, queries, validation, authorization, and TypeScript proxy generation. Works without event sourcing. [Docs](https://www.cratis.io/arc/)
 - **[Components](https://github.com/Cratis/Components)** — React components aligned with Arc patterns. [Docs](https://www.cratis.io/components/)
 - **[CLI](https://github.com/Cratis/cli) + Workbench** — inspect and diagnose Chronicle from the terminal or the browser. [Docs](https://www.cratis.io/cli/)
-- **Model-first layer (experimental)** — [Studio](https://github.com/Cratis/Studio), Screenplay (this repository), [Stage](https://github.com/Cratis/Stage), [Scene](https://github.com/Cratis/Scene), [Prologue](https://github.com/Cratis/Prologue)
+- **Model-first language** — Screenplay (this repository)
+- **Model-first tools (experimental)** — [Studio](https://github.com/Cratis/Studio), [Stage](https://github.com/Cratis/Stage), [Scene](https://github.com/Cratis/Scene), [Prologue](https://github.com/Cratis/Prologue)
 - **Supporting** — [Fundamentals](https://github.com/Cratis/Fundamentals), [Specifications](https://github.com/Cratis/Specifications), [Synopsis](https://github.com/Cratis/Synopsis), [Lens](https://github.com/Cratis/Lens), [Narrator](https://github.com/Cratis/Narrator), and free [AI tooling](https://github.com/Cratis/AI) (preview); [Ensemble](https://github.com/Cratis/Ensemble) coming soon (pre-release)
 - **[Samples](https://github.com/Cratis/Samples)** — runnable event sourcing and CQRS samples for the whole stack
 

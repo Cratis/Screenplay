@@ -2,6 +2,9 @@
   href: index.mdx
 - name: Getting started
   href: getting-started.md
+  items:
+    - name: See your event model
+      href: see-your-event-model.md
 - name: Why Screenplay
   href: why-screenplay.md
 - name: Language overview
