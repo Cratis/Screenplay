@@ -56,6 +56,7 @@ static class McpToolSchemas
         "operations" when tool == "propose-ast" => McpAstSchemas.Array(McpAstSchemas.Operations()),
         "operations" => McpAstSchemas.Array(JsonNode.Parse(McpWorkspaceOperations.Schema.GetRawText())!),
         "documents" => McpAstSchemas.Array(McpAstSchemas.Documents()),
+        "sketch" => McpVisualization.SketchSchema(),
         "target" or "subject" => McpAstSchemas.Handle(),
         "semanticRenames" or "eventRenames" => McpAstSchemas.Array(Rename()),
         "retiredSemanticAddresses" or "retiredEventAddresses" => McpAstSchemas.Array(Address()),

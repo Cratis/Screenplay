@@ -18,12 +18,12 @@ sealed class McpTools
         _workspaces = new(root);
     }
 
-    internal object Call(JsonElement parameters)
+    internal object Call(JsonElement parameters, bool visual = false)
     {
         McpJson.ValidateObject(parameters, ["name", "arguments", "_meta"], ["name"]);
         var name = McpJson.RequiredString(parameters, "name");
         var arguments = parameters.TryGetProperty("arguments", out var supplied) ? supplied : McpJson.Empty;
-        McpToolCatalog.Validate(name, arguments);
+        McpToolCatalog.Validate(name, arguments, visual);
         try
         {
             return name switch
@@ -43,6 +43,7 @@ sealed class McpTools
                 "export-workspace" => _workspaces.ExportWorkspace(arguments),
                 "discard-proposal" => _workspaces.DiscardProposal(arguments),
                 "apply" => _workspaces.Apply(arguments),
+                McpVisualization.ToolName => _workspaces.Visualize(arguments),
                 _ => Read(name, arguments)
             };
         }
