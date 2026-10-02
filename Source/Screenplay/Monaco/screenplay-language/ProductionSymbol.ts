@@ -4,6 +4,7 @@
 export interface ProductionSymbol {
     name: string;
     inline: boolean;
+    conditional?: boolean;
     line: number;
     target?: string;
     mappings: { name: string; source: string; line: number }[];

@@ -100,8 +100,8 @@ public class when_declaring_inline_events : given.a_compiler
         _compiler.Compile(Command + "        produces Renamed\n          for projectId\n          projectId = projectId\n      event Renamed\n        projectId Uuid\n").Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.EventSourceIdInPayload).Severity.ShouldEqual(DiagnosticSeverity.Information);
 
     [Fact]
-    void should_not_change_the_legacy_plain_omission_diagnostic() =>
-        _compiler.Compile(Command + "        produces Renamed\n          projectId = projectId\n      event Renamed\n        projectId Uuid\n").Diagnostics.ShouldBeEmpty();
+    void should_retain_the_plain_omission_advice_without_warning_about_its_payload() =>
+        _compiler.Compile(Command + "        produces Renamed\n          projectId = projectId\n      event Renamed\n        projectId Uuid\n").Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.OmittedProductionDestination);
 
     [Fact]
     void should_reject_implicit_inline_and_plain_destinations_without_retargeting_the_plain_event()

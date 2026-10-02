@@ -45,8 +45,8 @@ public class when_printing_a_command_that_appends_across_streams : given.a_print
 
     void Because() => _roundtrip = RoundTrip(Source);
 
-    [Fact] void should_diagnose_the_omitted_mixed_source_destination() => _roundtrip.Original!.Diagnostics.Where(diagnostic => diagnostic.Code != DiagnosticCodes.OmittedProductionDestination).Single().Code.ShouldEqual(DiagnosticCodes.ExplicitProducesTargetsRequired);
-    [Fact] void should_preserve_the_diagnostic_on_reparse() => _roundtrip.Reparsed.Diagnostics.Where(diagnostic => diagnostic.Code != DiagnosticCodes.OmittedProductionDestination).Single().Code.ShouldEqual(DiagnosticCodes.ExplicitProducesTargetsRequired);
+    [Fact] void should_diagnose_the_omitted_mixed_source_destination() => _roundtrip.Original!.Diagnostics.Single(diagnostic => diagnostic.Code != DiagnosticCodes.OmittedProductionDestination).Code.ShouldEqual(DiagnosticCodes.ExplicitProducesTargetsRequired);
+    [Fact] void should_preserve_the_diagnostic_on_reparse() => _roundtrip.Reparsed.Diagnostics.Single(diagnostic => diagnostic.Code != DiagnosticCodes.OmittedProductionDestination).Code.ShouldEqual(DiagnosticCodes.ExplicitProducesTargetsRequired);
     [Fact] void should_print_the_same_text_on_a_second_pass() => _roundtrip.PrintedAgain.ShouldEqual(_roundtrip.Printed);
 
     [Fact] void should_keep_every_production() => Command.Produces.Count().ShouldEqual(3);

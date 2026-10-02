@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { fenceMap, indentOf, withoutComment } from './document-context';
+import { fenceMap, indentOf } from './document-context';
 import { eventAnalysisSource } from './event-analysis-source';
 import { clauseKeywords } from './language';
 import { ProductionSymbol } from './ProductionSymbol';
@@ -46,6 +46,7 @@ export interface CommandSymbol extends NamedSymbol {
     properties: PropertySymbol[];
     reads?: ReadSymbol[];
     produces?: ProductionSymbol[];
+    productionHeaders?: number[];
 }
 
 export interface ReadSymbol {
@@ -87,6 +88,8 @@ const conceptPattern = /^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@\w+)*)\s*$/;
 const propertyPattern = /^\s*(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?\??)(\s+identifier)?\s*$/;
 const attributeReasonPattern = /^([a-z_]\w*)\s+reason\s+"((?:[^"\\]|\\.)*)"\s*$/;
 const readPattern = /^\s*reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?\s*$/;
+const commandReserved = ['authorize', 'produces', 'reads'];
+const eventReserved = clauseKeywords.filter(keyword => !['id', 'description', 'documentation'].includes(keyword));
 const queryParameterPattern =
     /^\s*(?:by|filter)\s+([a-z_]\w*)\s+([\w.]+(?:\[\])?\??)(?:\s+from\s+.+)?\s*$/;
 
@@ -130,7 +133,8 @@ export function directBody(lines: string[], fences: boolean[], start: number, in
         const childIndent = indentOf(lines[index]);
         if (blockIndent !== undefined && childIndent > blockIndent) return false;
         const text = lines[index].trim();
-        const leaf = propertiesIn(lines, [index], clauseKeywords).length > 0 || /^(?:description|authorize)(?:\s|$)/.test(text);
+        const property = text !== 'validate csharp' && propertiesIn(lines, [index], commandReserved).length > 0;
+        const leaf = property || /^(?:description|authorize)(?:\s|$)/.test(text);
         blockIndent = leaf ? undefined : childIndent;
         return true;
     });
@@ -148,11 +152,14 @@ export function scanDocument(lines: string[]): DocumentSymbols {
         screens: [],
         triggers: [],
     };
+    // One normalization pass for every declaration, including comments on fence openers.
+    lines = eventAnalysisSource(lines);
     const fences = fenceMap(lines);
-    const eventLines = eventAnalysisSource(lines);
-    const eventFences = fenceMap(eventLines);
-    // Normalize only structural lines; quoted strings and fenced code retain their contents.
-    lines = lines.map((line, index) => fences[index] ? line : withoutComment(line));
+    const eventLines = lines;
+    const eventFences = fences;
+    // Typed inline mappings share property syntax once their source expression is removed.
+    // Do this once, never once per inline event.
+    const eventPropertyLines = lines.map(line => line.replace(/\s*=(?!=|>).*/, ''));
 
     for (let index = 0; index < lines.length; index++) {
         if (fences[index]) continue;
@@ -218,8 +225,8 @@ export function scanDocument(lines: string[]): DocumentSymbols {
                 name: eventMatch[1],
                 ...(eventMatch[2] ? { generation: Number(eventMatch[2]) } : {}),
                 inline: trimmed.startsWith('produces '),
-                properties: propertiesIn(trimmed.startsWith('produces ') ? eventLines.map(line => line.replace(/\s*=(?!=|>).*/, '')) : eventLines,
-                    directBody(eventLines, eventFences, index, indent), clauseKeywords.filter(keyword => !['id', 'description', 'documentation'].includes(keyword))),
+                properties: propertiesIn(trimmed.startsWith('produces ') ? eventPropertyLines : eventLines,
+                    directBody(eventLines, eventFences, index, indent), eventReserved),
                 line: index,
             });
             continue;
@@ -227,21 +234,15 @@ export function scanDocument(lines: string[]): DocumentSymbols {
 
         const commandMatch = eventLines[index].trim().match(/^command\s+(\w+)\s*$/);
         if (commandMatch) {
-            const body = collectBody(lines, fences, index, indent);
-            // The body is already comment-normalized and fence-free. Track indentation once,
-            // rather than walking back to the document root for every property-shaped line.
-            const ancestors = [indent];
-            const directChildren = body.filter(line => {
-                const childIndent = indentOf(lines[line]);
-                while (ancestors[ancestors.length - 1] >= childIndent) ancestors.pop();
-                const direct = ancestors.length === 1;
-                ancestors.push(childIndent);
-                return direct && lines[line].trim() !== 'validate csharp';
-            });
+            // A command property is a leaf, not an indentation owner. Share the parser-shaped
+            // body with properties, productions, advice and destination hints.
+            const body = directBody(lines, fences, index, indent);
+            const productionHeaders = body.filter(line => /^\s*produces\b/.test(lines[line]));
             symbols.commands.push({
                 name: commandMatch[1],
-                properties: propertiesIn(lines, directChildren, ['authorize', 'produces', 'reads']),
-                produces: directBody(eventLines, eventFences, index, indent).filter(line => /^\s*produces\b/.test(eventLines[line])).flatMap(line => {
+                properties: propertiesIn(lines, body.filter(line => lines[line].trim() !== 'validate csharp'), commandReserved),
+                productionHeaders,
+                produces: productionHeaders.flatMap(line => {
                     const header = eventLines[line].trim();
                     const inline = /^produces\s+event\b/.test(header);
                     const conditional = /^produces\s+when\b/.test(header);
@@ -257,7 +258,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
                         const match = eventLines[index].trim().match(inline ? /^(@?[a-z_]\w*)\s+[\w.[\]?]+\s*=(?!=|>)\s*(.+)$/ : /^(@?[\w.]+)\s*=(?!=|>)\s*(.+)$/);
                         return match === null ? [] : [{ name: match[1].replace(/^@/, ''), source: match[2], line: index }];
                     });
-                    return [{ name, inline, line, target, mappings }];
+                    return [{ name, inline, conditional, line, target, mappings }];
                 }),
                 reads: body.filter((line) => !fences[line])
                     .map((line) => ({ line, match: lines[line].match(readPattern) }))

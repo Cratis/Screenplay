@@ -485,6 +485,7 @@ produces when paymentTerms == "net30" or paymentTerms == "net60"
 
 produces when $env.WELCOME_EMAILS_ENABLED == "true"
   CustomerWelcomeEmailRequested
+    for invoiceId
     customerId  = customerId
 ```
 

@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCode, diagnosticCodes } from './diagnostic-codes';
-import { enclosingChain, fenceMap, indentOf } from './document-context';
+import { fenceMap, indentOf } from './document-context';
 import { productionDestinations } from './production-destinations';
 import { eventAnalysisSource } from './event-analysis-source';
 import { directBody, DocumentSymbols } from './symbols';
@@ -15,6 +15,13 @@ export function validateInlineEvents(lines: string[], symbols: DocumentSymbols, 
     lines = eventAnalysisSource(lines);
     const issues: ValidationIssue[] = [];
     const fences = fenceMap(lines);
+    const commandProductions = new Set(symbols.commands.flatMap(command => command.productionHeaders ?? []));
+    const eventCounts = new Map<string, number>();
+    const importedNames = new Set<string>();
+    for (const document of [symbols, application]) {
+        for (const event of document.events) eventCounts.set(event.name, (eventCounts.get(event.name) ?? 0) + 1);
+        for (const imported of document.imports) importedNames.add(imported.shortName);
+    }
     const report = (line: number, code: DiagnosticCode, message: string, severity: ValidationSeverity = 'error') => {
         issues.push({ line, startColumn: indentOf(lines[line]) + 1, endColumn: lines[line].length + 1, code, message, severity });
     };
@@ -26,11 +33,9 @@ export function validateInlineEvents(lines: string[], symbols: DocumentSymbols, 
                 if (properties.has(property.name)) report(property.line, diagnosticCodes.duplicateDeclaration, `Event '${event.name}' already declares property '${property.name}'.`);
                 properties.add(property.name);
             }
-            const chain = enclosingChain(lines, fences, event.line, indentOf(lines[event.line]));
-            if (chain[0] !== 'command') report(event.line, diagnosticCodes.inlineEventOutsideCommand, 'Inline events can only be declared inside commands.');
+            if (!commandProductions.has(event.line)) report(event.line, diagnosticCodes.inlineEventOutsideCommand, 'Inline events can only be declared inside commands.');
             if (event.generation !== undefined) report(event.line, diagnosticCodes.inlineEventGeneration, 'Inline events are generation 1; extract the event before declaring generations.');
-            if ([...symbols.events, ...application.events].filter(other => other.name === event.name).length > 1 ||
-                [...symbols.imports, ...application.imports].some(other => other.shortName === event.name)) {
+            if ((eventCounts.get(event.name) ?? 0) > 1 || importedNames.has(event.name)) {
                 report(event.line, diagnosticCodes.inlineEventCollision, `Inline event '${event.name}' collides with another declaration or import.`);
             }
         }
@@ -62,12 +67,17 @@ export function validateInlineEvents(lines: string[], symbols: DocumentSymbols, 
             }
         }
     }
+    // Also cover reaction productions without a backward ancestry walk per metadata line.
+    const productionIndents: number[] = [];
     for (let index = 0; index < lines.length; index++) {
-        if (fences[index]) continue;
+        if (fences[index] || lines[index].trim().length === 0) continue;
+        const indent = indentOf(lines[index]);
+        while (productionIndents.length > 0 && productionIndents[productionIndents.length - 1] >= indent) productionIndents.pop();
         const keyword = lines[index].trim().split(/\s+/)[0];
-        if (reserved.has(keyword) && enclosingChain(lines, fences, index, indentOf(lines[index])).includes('produces')) {
+        if (reserved.has(keyword) && productionIndents.length > 0) {
             report(index, diagnosticCodes.reservedProductionMetadata, `'${keyword}' is system-assigned production metadata.`);
         }
+        if (keyword === 'produces') productionIndents.push(indent);
     }
     for (const command of symbols.commands) {
         const { identifier, mixed } = productionDestinations(command);
