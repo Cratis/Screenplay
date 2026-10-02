@@ -5,6 +5,8 @@ import * as vscode from 'vscode';
 import { ensureBuiltInSubLanguages } from '@cratis/screenplay-language';
 import { registerCompletions } from './Completions';
 import { registerHover } from './Hover';
+import { registerInlayHints } from './InlayHints';
+import { registerDefinitions } from './Definitions';
 import { registerDiagnostics } from './Diagnostics';
 import { registerFileLinks } from './FileLinks';
 import { registerEventModelBoard } from './EventModelBoard/registerEventModelBoard';
@@ -18,6 +20,8 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(index);
     registerCompletions(context, index);
     registerHover(context);
+    registerInlayHints(context);
+    registerDefinitions(context, index);
     registerDiagnostics(context, index);
     registerFileLinks(context);
     registerEventModelBoard(context);

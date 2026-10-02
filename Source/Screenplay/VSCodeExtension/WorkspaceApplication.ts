@@ -8,6 +8,23 @@ import { DocumentSymbols, importablePaths, mergeSymbols, scanDocument } from '@c
 // imports resolve, and whether it holds what the module or feature it is placed in can. An import with the
 // wrong shape is left out - the editor reports that itself, as it is typed.
 const surfacedCodes = new Set<string>([
+    DiagnosticCodes.InvalidProducesDeclaration,
+    DiagnosticCodes.ProducesWhenWithoutEvent,
+    DiagnosticCodes.InvalidPropertyMapping,
+    DiagnosticCodes.DuplicateProducesTarget,
+    DiagnosticCodes.InvalidDescription,
+    DiagnosticCodes.DuplicateDescription,
+    DiagnosticCodes.EmptyDescription,
+    DiagnosticCodes.ExpectedCodeFence,
+    DiagnosticCodes.EventSourceIdInPayload,
+    DiagnosticCodes.ExplicitProducesTargetsRequired,
+    DiagnosticCodes.RedundantEventId,
+    DiagnosticCodes.InvalidEventId,
+    DiagnosticCodes.InlineEventCollision,
+    DiagnosticCodes.InlineEventOutsideCommand,
+    DiagnosticCodes.InlineEventGeneration,
+    DiagnosticCodes.ReservedProductionMetadata,
+    DiagnosticCodes.InvalidEventDocumentation,
     DiagnosticCodes.FileImportMatchesNothing,
     DiagnosticCodes.ImportedFileNotFound,
     DiagnosticCodes.ConflictingImportPlacement,
@@ -52,6 +69,11 @@ export class WorkspaceApplication {
     symbolsExcept(path: string): DocumentSymbols {
         const key = normalizePlayPath(path);
         return mergeSymbols(...[...this.#symbols].filter(([other]) => other !== key).map(([, symbols]) => symbols));
+    }
+
+    // Inline events are scanned with their slice-owned declarations, so navigation is independent of syntax form.
+    eventDeclarations(name: string): { path: string; line: number }[] {
+        return [...this.#symbols].flatMap(([path, symbols]) => symbols.events.filter(event => event.name === name).map(event => ({ path, line: event.line })));
     }
 
     // What compiling the application reports in a file about its imports and its placement.

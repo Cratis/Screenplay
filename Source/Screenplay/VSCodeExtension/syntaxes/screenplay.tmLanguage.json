@@ -57,7 +57,7 @@
                     }
                 },
                 {
-                    "match": "^\\s*(event)\\s+[A-Za-z_]\\w*\\s+(generation)(?=\\s+[0-9]+\\s*$)",
+                    "match": "^\\s*(?:produces\\s+)?(event)\\s+[A-Za-z_]\\w*\\s+(generation)(?=\\s+[0-9]+\\s*$)",
                     "captures": {
                         "1": { "name": "keyword.control.screenplay" },
                         "2": { "name": "keyword.other.screenplay" }
@@ -74,7 +74,7 @@
                     "name": "keyword.other.screenplay"
                 },
                 {
-                    "match": "\\b(authorize|validate|produces|reads|as|handler|performer|observable|identifier|reason|from|require|when|given|then|arguments|result|error|template|data|action|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|released|ignore|casing|file|rule|message|severity|information|warning|matches|all|max|min|length|today|not|no|empty|and|or|authenticated|role|claim|subject|event|query|layout|translate|key|description|concurrency|eventSource|sourceType|streamType|streamId|tag|for|readmodel|provider|nested|exclude|literal|automap)\\b",
+                    "match": "\\b(authorize|validate|produces|reads|as|handler|performer|observable|identifier|reason|from|require|when|given|then|arguments|result|error|template|data|action|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|released|ignore|casing|file|rule|message|severity|information|warning|matches|all|max|min|length|today|not|no|empty|and|or|authenticated|role|claim|subject|event|query|layout|translate|key|description|documentation|id|concurrency|eventSource|sourceType|streamType|streamId|tag|for|readmodel|provider|nested|exclude|literal|automap)\\b",
                     "name": "keyword.other.screenplay"
                 }
             ]
@@ -282,14 +282,14 @@
             ]
         },
         "description-block": {
-            "begin": "^([ ]*)(description)[ ]*$",
+            "begin": "^([ ]*)(description|documentation)[ ]*$",
             "beginCaptures": {
                 "2": { "name": "keyword.other.screenplay" }
             },
             "while": "^(?=\\1[ ]+\\S|[ ]*$)",
             "patterns": [
                 {
-                    "begin": "^[ ]*(```)(?:text)?[ ]*$",
+                    "begin": "^[ ]*(```)(?:text|markdown)?[ ]*$",
                     "beginCaptures": {
                         "1": { "name": "punctuation.definition.fence.screenplay" }
                     },

@@ -23,6 +23,11 @@ export class Position {
     ) {}
 }
 
+export class InlayHint {
+    paddingLeft?: boolean;
+    constructor(readonly position: Position, readonly label: string) {}
+}
+
 export class Range {
     readonly start: Position;
     readonly end: Position;

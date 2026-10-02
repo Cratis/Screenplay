@@ -50,7 +50,7 @@ const providerFor = (index: ApplicationIndex): vscode.CompletionItemProvider => 
         const symbols = file === undefined ? scanDocument(lines) : mergeSymbols(scanDocument(lines), file.application.symbolsExcept(file.path));
         const eventNames = () =>
             [...new Set(knownEventNames(symbols))].map((name) =>
-                symbolItem(name, vscode.CompletionItemKind.Event, 'event'),
+                symbolItem(name, vscode.CompletionItemKind.Event, symbols.events.some(event => event.name === name && event.inline) ? 'inline event' : 'event'),
             );
 
         switch (plan.kind) {
