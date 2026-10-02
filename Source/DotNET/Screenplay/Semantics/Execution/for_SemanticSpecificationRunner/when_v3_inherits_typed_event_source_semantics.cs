@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Diagnostics;
+
 namespace Cratis.Screenplay.Semantics.Execution.for_SemanticSpecificationRunner;
 
 public class when_v3_inherits_typed_event_source_semantics : Specification
@@ -139,7 +141,8 @@ public class when_v3_inherits_typed_event_source_semantics : Specification
         const string key = "typed-event-source-v3";
         var document = SemanticSourceDocument.Create(catalog.ResolveDocument(key), key, "Projects.play", Source + "\n" + (withReducer ? ReducerAttachment : CodeAttachment));
         var compilation = new SemanticModelCompiler().Compile("Projects", SemanticDocumentSet.Create([document], catalog));
-        compilation.Diagnostics.ShouldBeEmpty();
+        compilation.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.EventSourceIdInPayload);
+        compilation.Diagnostics.Single().Severity.ShouldEqual(DiagnosticSeverity.Information);
         return SemanticExecutionPlan.Compile(compilation.Value!.Model).Plan!;
     }
 }

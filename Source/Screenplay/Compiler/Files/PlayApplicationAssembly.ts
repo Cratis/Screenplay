@@ -1,6 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { validateInlineEvents } from '../Parsing/InlineEventValidator';
+import { LineReader } from '../Parsing/LineReader';
+import { ParserContext } from '../Parsing/ParserContext';
 import { CompilationResult, parse } from '../ScreenplayCompiler';
 import { ApplicationSyntax } from '../Syntax/Structure';
 import { mergeDocuments } from './PlayFolderMerge';
@@ -25,7 +28,11 @@ export interface ApplicationCompilation extends CompilationResult<ApplicationSyn
 export function assembleApplication(roots: Iterable<string>, source: PlayDocumentSource): ApplicationCompilation {
     const { documents, diagnostics } = resolveImports(roots, source);
     const merged = mergeDocuments(documents.map(document => parse(document.source, document.path, document.placement)));
-    const all = [...diagnostics, ...merged.diagnostics];
+    const context = new ParserContext(new LineReader([]));
+    validateInlineEvents(merged.value, context);
+    const existing = [...diagnostics, ...merged.diagnostics];
+    const all = [...existing, ...context.diagnostics.filter(diagnostic => !existing.some(value => value.code === diagnostic.code &&
+        value.location.path === diagnostic.location.path && value.location.line === diagnostic.location.line && value.location.column === diagnostic.location.column))];
     return { ...merged, documents, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error') };
 }
 

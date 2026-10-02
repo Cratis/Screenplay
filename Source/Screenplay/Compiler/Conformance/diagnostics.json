@@ -2,6 +2,31 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone.",
     "cases": [
         {
+            "name": "inline generation and system metadata",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        produces event Created generation 2", "          sequence 3", "          origin External", "          name = name"],
+            "diagnostics": ["PLAY0475@5", "PLAY0476@6", "PLAY0476@7", "PLAY0044@8"]
+        },
+        {
+            "name": "inline event in a reaction",
+            "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        every 1 day", "          produces event Created"],
+            "diagnostics": ["PLAY0474@6"]
+        },
+        {
+            "name": "inline malformed metadata",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        produces event Created", "          id \"\"", "          documentation \"not fenced\"", "          for key", "          for key"],
+            "diagnostics": ["PLAY0472@6", "PLAY0477@7", "PLAY0193@9"]
+        },
+        {
+            "name": "redundant standalone event pin",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      event Created", "        id \"Created\""],
+            "diagnostics": ["PLAY0471@5"]
+        },
+        {
+            "name": "duplicate event documentation",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      event Created", "        documentation", "          ```markdown", "          One", "          ```", "        documentation", "          ```markdown", "          Two", "          ```"],
+            "diagnostics": ["PLAY0477@9"]
+        },
+        {
             "name": "invalid import",
             "source": [
                 "import Bad-Name"
