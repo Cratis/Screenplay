@@ -31,7 +31,11 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
     }
     const name = match[1];
     const returnType = parseTypeRef(match[3], { ...locationOf(line), column: line.indent + 1 + match[0].length - match[3].length });
-    reportLegacyOptionalSuffix(context, returnType, line);
+    if (match[2] === undefined && returnType.name === 'observable' && returnType.isOptional && !returnType.isCollection) {
+        context.information(DiagnosticCodes.LegacyOptionalSuffix, "Keep 'observable?' here: 'observable optional' means a live query returning the type named 'optional'.", returnType.location);
+    } else {
+        reportLegacyOptionalSuffix(context, returnType, line);
+    }
     let by: QueryParameterSyntax | null = null;
     const filters: QueryParameterSyntax[] = [];
     let description: string | null = null;
@@ -43,7 +47,13 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
         if (keyword === 'description') {
             description = parseDescription(context, child, description, `Query '${name}'`);
         } else if (keyword === 'by') {
-            by = parseParameter(context, child, 'by') ?? by;
+            const parameter = parseParameter(context, child, 'by');
+            if (parameter !== undefined) {
+                if (by !== null) {
+                    context.error(DiagnosticCodes.InvalidQueryParameter, `Query '${name}' already declares 'by' - a query can have at most one key parameter`, locationOf(child));
+                }
+                by = parameter;
+            }
         } else if (keyword === 'filter') {
             const filter = parseParameter(context, child, 'filter');
             if (filter !== undefined) {

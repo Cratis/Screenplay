@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { pattern } from '../Text/patterns';
 import { parseDescription } from './DescriptionParser';
 import { isFileDirective } from './FileReferences';
 import { firstWord } from './LineText';
@@ -9,13 +10,19 @@ import { ParserContext } from './ParserContext';
 import { parseProperty } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
 
+const typedValue = pattern('^@?[a-z_]\\w*\\s+[\\w.]+');
+
 // Trigger values are not part of the TypeScript syntax projection. Recognize their type spelling in
 // exactly the C# data positions, without scanning descriptions, attachments, code or mapping expressions.
 export function parseTriggerData(context: ParserContext, line: SourceLine): void {
-    if (parseProperty(context, line) !== undefined) return;
+    const property = parseProperty(context, line);
+    if (property !== undefined) {
+        context.triggerData.push(property);
+        return;
+    }
     // Keep the existing opaque projection for other trigger values and implementation bodies.
     // Only optionality-shaped failures belong to this spelling change.
-    if (/^@?[a-z_]\w*\s+[\w.]+/.test(line.content) && /\?|\boptional\b/.test(line.content)) {
+    if (typedValue.test(line.content) && /\?|\boptional\b/.test(line.content)) {
         context.error(DiagnosticCodes.InvalidTriggerData, `Invalid trigger value '${line.content}' - expected '<name>' or '<name> <Type>'`, locationOf(line));
     }
     context.skipOpaqueBlock(line.indent);

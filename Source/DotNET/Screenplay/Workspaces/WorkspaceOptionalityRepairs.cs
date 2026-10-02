@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
@@ -19,28 +20,36 @@ public sealed record MigrateOptionalTypeSpelling(WorkspaceNodeHandle Target, Typ
 
 internal static class WorkspaceOptionalityRepairs
 {
+    // Index-local recipes are bounded by the source occurrences. Only compact document verdicts are
+    // cached on the weak workspace snapshot by production discovery, never candidates or write plans.
+    static readonly ConditionalWeakTable<WorkspaceSyntaxIndex, Occurrences> _occurrences = [];
+
     internal static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic, bool verify)
     {
-        var matches = index.Entries.Where(entry => entry.Handle.Revision == revision && entry.Node is TypeRefSyntax && entry.Location == diagnostic.Location).ToArray();
-        if (matches.Length != 1)
+        var occurrences = _occurrences.GetValue(index, static index => new(index));
+        if (revision != index.Workspace.Revision || !occurrences.Types.TryGetValue(diagnostic.Location, out var entry))
         {
             return [];
         }
 
-        var entry = matches[0];
-        return WorkspaceProductionRepairs.Discover(index, Recipe(entry.Handle, [entry]), verify);
+        // Every splice preserves the same typed syntax. Verifying their union once authenticates the
+        // document, references and workspace policy for each subset too. If the union fails (including
+        // an ambiguous observable return type), discovery conservatively offers no occurrence in it.
+        var root = entry.Handle with { Path = string.Empty };
+        if (verify && ForDocument(index, root, true).IsEmpty)
+        {
+            return [];
+        }
+
+        return [Recipe(entry.Handle, [entry])];
     }
 
     internal static ImmutableArray<WorkspaceDiagnosticRepair> ForDocument(WorkspaceSyntaxIndex index, WorkspaceNodeHandle root, bool verify)
     {
-        if (index.Find(root)?.Node is not ApplicationSyntax)
-        {
-            return [];
-        }
-
-        var locations = index.RepairableDiagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyOptionalSuffix).Select(diagnostic => diagnostic.Location).ToHashSet();
-        var entries = index.Entries.Where(entry => entry.Handle.Document == root.Document && entry.Node is TypeRefSyntax && locations.Contains(entry.Location)).ToArray();
-        return entries.Length == 0 ? [] : WorkspaceProductionRepairs.Discover(index, Recipe(root, entries), verify);
+        var occurrences = _occurrences.GetValue(index, static index => new(index));
+        return occurrences.Documents.TryGetValue(root, out var recipe)
+            ? WorkspaceProductionRepairs.Discover(index, recipe, verify)
+            : [];
     }
 
     internal static WorkspaceDocument Print(
@@ -57,7 +66,7 @@ internal static class WorkspaceOptionalityRepairs
 
         var root = index.Find(new(index.Workspace.Revision, document.Id, string.Empty))?.Node as ApplicationSyntax
             ?? throw new InvalidWorkspaceAuthoring("Optionality migration requires a parsed original document.");
-        var legacy = index.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyOptionalSuffix).Select(diagnostic => diagnostic.Location).ToHashSet();
+        var legacy = index.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyOptionalSuffix && diagnostic.Location.Path == document.Path.Value).Select(diagnostic => diagnostic.Location).ToHashSet();
         var lineStarts = new List<int> { 0 };
         for (var offset = 0; offset < document.Text.Length; offset++)
         {
@@ -105,7 +114,8 @@ internal static class WorkspaceOptionalityRepairs
         var candidate = text.ToString();
         var parsed = new ScreenplayCompiler().Parse(candidate, document.Path.Value);
         if (!parsed.Success || parsed.Value is null || !SyntaxJson.StructurallyEqual(root, parsed.Value) ||
-            parsed.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyOptionalSuffix && repairedLocations.Contains(diagnostic.Location)))
+            parsed.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyOptionalSuffix &&
+                (migrations.Count == legacy.Count || repairedLocations.Contains(diagnostic.Location))))
         {
             throw new InvalidWorkspaceAuthoring("The optionality migration did not preserve syntax or remove the selected diagnostics.");
         }
@@ -126,4 +136,33 @@ internal static class WorkspaceOptionalityRepairs
     {
         RequiredFormatting = WorkspaceAuthoringFormatting.PreserveTrivia
     };
+
+    sealed class Occurrences
+    {
+        internal Occurrences(WorkspaceSyntaxIndex index)
+        {
+            var diagnostics = index.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyOptionalSuffix).ToArray();
+            var locations = diagnostics.Select(diagnostic => diagnostic.Location).ToHashSet();
+            Types = index.Entries.Where(entry => entry.Node is TypeRefSyntax && locations.Contains(entry.Location))
+                .GroupBy(entry => entry.Location).Where(group => group.Count() == 1).ToDictionary(group => group.Key, group => group.Single());
+            var byDocument = Types.Values.ToLookup(entry => entry.Handle.Document);
+            var byPath = diagnostics.ToLookup(diagnostic => diagnostic.Location.Path);
+            foreach (var document in index.Workspace.Documents)
+            {
+                var root = new WorkspaceNodeHandle(index.Workspace.Revision, document.Id, string.Empty);
+                var entries = byDocument[document.Id].ToArray();
+
+                // A document repair must cover every reported occurrence, including anything a parser
+                // might have discarded. Erroneous/partial documents are deliberately not editable.
+                if (entries.Length > 0 && entries.Length == byPath[document.Path.Value].Count() && index.Find(root)?.Node is ApplicationSyntax)
+                {
+                    Documents.Add(root, Recipe(root, entries));
+                }
+            }
+        }
+
+        internal Dictionary<SourceLocation, WorkspaceSyntaxEntry> Types { get; }
+
+        internal Dictionary<WorkspaceNodeHandle, WorkspaceDiagnosticRepair> Documents { get; } = [];
+    }
 }

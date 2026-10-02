@@ -4,7 +4,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as compiler from '../../ScreenplayCompiler';
 import { toSyntaxJson } from '../../Syntax/SyntaxJson';
-import { applyQuickFixEdits, findQuickFixes } from '../QuickFixes';
+import { applyQuickFixEdits, findQuickFixes, prepareQuickFixes } from '../QuickFixes';
 
 const source = '// café?\r\ntype T\r\n  note    String? // keep?\r\n  lines   String[]?';
 
@@ -37,7 +37,7 @@ describe('when migrating optional spelling', () => {
     });
 
     it('should verify a document-wide migration with a constant number of parses', () => {
-        const parse = vi.spyOn(compiler, 'parse');
+        const parse = vi.spyOn(compiler, 'parseForAuthoring');
         try {
             const document = `type T\n${Array.from({ length: 4000 }, (_, index) => `  p${index} String?`).join('\n')}`;
             const fixes = findQuickFixes(document, { line: 2 });
@@ -46,6 +46,49 @@ describe('when migrating optional spelling', () => {
             expect(parse.mock.calls.map(call => call[0].length).every(length => length < document.length * 2)).toBe(true);
         } finally {
             parse.mockRestore();
+        }
+    });
+
+    it('should refuse ambiguous query replacements and duplicate query keys', () => {
+        const prefix = 'module M\n  feature F\n    slice StateView S\n      query Q => ';
+        expect(findQuickFixes(prefix + 'observable?', { line: 4 })).toEqual([]);
+        expect(findQuickFixes(prefix + 'View\n        by first Uuid?\n        by second Uuid?', { line: 5 })).toEqual([]);
+    });
+
+    it('should verify both top-level and reaction trigger data outside the syntax projection', () => {
+        const source = 'trigger T\n  note String?\nmodule M\n  feature F\n    slice Automation S\n      reaction R\n        when T\n          data String[]?';
+        const fix = findQuickFixes(source, { line: 8 })[1];
+        expect(fix.edits).toHaveLength(2);
+        const candidate = compiler.parseForAuthoring(applyQuickFixEdits(source, fix.edits)!);
+        expect(candidate.triggerData.map(value => [value.name, value.type.name, value.type.isOptional, value.type.isCollection])).toEqual([
+            ['note', 'String', true, false], ['data', 'String', true, true],
+        ]);
+    });
+
+    it('should refuse when omitted trigger data changes even if SyntaxJson stays equal', () => {
+        const realParse = compiler.parseForAuthoring;
+        const spy = vi.spyOn(compiler, 'parseForAuthoring').mockImplementation((source, path, placement) => {
+            const result = realParse(source, path, placement);
+            return source.includes(' optional') ? { ...result, triggerData: result.triggerData.map(value => ({ ...value, type: { ...value.type, isOptional: false } })) } : result;
+        });
+        try {
+            expect(findQuickFixes('trigger T\n  value String?', { line: 2 })).toEqual([]);
+        } finally {
+            spy.mockRestore();
+        }
+    });
+
+    it('should analyze each buffer once and reuse its document and occurrence verdicts', () => {
+        const spy = vi.spyOn(compiler, 'parseForAuthoring');
+        try {
+            const fixes = prepareQuickFixes(source);
+            fixes(3);
+            fixes(3);
+            fixes(4);
+            fixes(4);
+            expect(spy).toHaveBeenCalledTimes(4); // original, document, two selected occurrences
+        } finally {
+            spy.mockRestore();
         }
     });
 

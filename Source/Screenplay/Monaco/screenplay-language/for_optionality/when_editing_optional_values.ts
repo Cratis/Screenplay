@@ -53,6 +53,27 @@ describe('when editing optional values', () => {
         expect(hoverContent(['type T', '  value optional'], 1, 'optional', 9, 17)).toBeNull();
     });
 
+    it.each(['triggers', 'constraints', 'identifiers', 'attributes'])('should keep compiler validation linear for growing %s', shape => {
+        const measure = (count: number) => {
+            const lines = shape === 'triggers'
+                ? ['module M', '  feature F', '    slice Automation S', '      reaction R', ...Array.from({ length: count }, (_, index) => `        when T${index}`)]
+                : shape === 'constraints'
+                    ? ['constraint C', ...Array.from({ length: count }, (_, index) => `  unique event E${index}`), ...Array.from({ length: count }, (_, index) => `  released by R${index}`)]
+                    : shape === 'attributes'
+                        ? [`concept C : String ${Array.from({ length: count }, (_, index) => `@attribute${index}`).join(' ')}`, ...Array.from({ length: count }, (_, index) => `  attribute${index} reason "why"`)]
+                        : [...prefix, ...Array.from({ length: count }, (_, index) => `        p${index} String`), ...Array.from({ length: count }, (_, index) => `        id${index} Uuid identifier`)];
+            const scans = (['filter', 'find', 'some', 'findIndex', 'includes'] as const).map(method => vi.spyOn(Array.prototype, method));
+            try {
+                validateLines(lines);
+                return scans.reduce((sum, scan) => sum + scan.mock.contexts.reduce<number>((sum, value) => sum + (value as unknown[]).length, 0), 0);
+            } finally {
+                scans.forEach(scan => scan.mockRestore());
+            }
+        };
+        const small = measure(250);
+        expect(measure(500)).toBeLessThan(small * 2.3);
+    });
+
     it('should keep optionality validation linear as the document doubles', () => {
         const measure = (count: number) => {
             const lines = [...prefix, ...Array.from({ length: count }, (_, index) => `        p${index} String?`)];

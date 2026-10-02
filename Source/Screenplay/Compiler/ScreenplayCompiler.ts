@@ -9,6 +9,7 @@ import { validateInlineEvents } from './Parsing/InlineEventValidator';
 import { ParserContext } from './Parsing/ParserContext';
 import { parseApplication } from './Parsing/ScreenplayParser';
 import { splitLines } from './Parsing/SourceLineSplitter';
+import { PropertySyntax } from './Syntax/Declarations';
 import { ApplicationSyntax } from './Syntax/Structure';
 import { ApplicationSyntaxVisitor } from './Syntax/Visitors';
 
@@ -26,6 +27,12 @@ export interface CompilationResult<T> {
 // feature an import placed it in: that module and feature are in the tree, marked as placements, holding what
 // the document declares at its top level.
 export function parse(source: string, path?: string, placement: PlayPlacement = documentPlacement): CompilationResult<ApplicationSyntax> {
+    const { value, diagnostics, success } = parseForAuthoring(source, path, placement);
+    return { value, diagnostics, success };
+}
+
+// Additive authoring view: do not widen TypeRefSyntax or the cross-compiler SyntaxJson projection.
+export function parseForAuthoring(source: string, path?: string, placement: PlayPlacement = documentPlacement): CompilationResult<ApplicationSyntax> & { readonly triggerData: readonly PropertySyntax[] } {
     const lines = splitLines(source, false, path);
     const context = new ParserContext(new LineReader(lines), path);
     const value = parseApplication(context, lines, placement);
@@ -33,6 +40,7 @@ export function parse(source: string, path?: string, placement: PlayPlacement = 
     return {
         value,
         diagnostics: context.diagnostics,
+        triggerData: context.triggerData,
         success: !context.diagnostics.some(diagnostic => diagnostic.severity === 'error'),
     };
 }

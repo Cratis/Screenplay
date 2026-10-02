@@ -35,7 +35,18 @@ internal static partial class QueryParser
         var name = match.Groups[1].Value;
         var isObservable = match.Groups[2].Success;
         var returnType = PropertyLineParser.ParseTypeRef(match.Groups[3].Value, header.LocationAt(match.Groups[3].Index));
-        PropertyLineParser.ReportLegacyOptionalSuffix(context, returnType, header);
+        if (!isObservable && returnType.Name == QuerySyntax.ObservableModifier && returnType is { IsOptional: true, IsCollection: false })
+        {
+            context.Add(new(
+                DiagnosticSeverity.Information,
+                DiagnosticCodes.LegacyOptionalSuffix,
+                "Keep 'observable?' here: 'observable optional' means a live query returning the type named 'optional'.",
+                returnType.Location));
+        }
+        else
+        {
+            PropertyLineParser.ReportLegacyOptionalSuffix(context, returnType, header);
+        }
         QueryParameterSyntax? by = null;
         var filters = new List<QueryParameterSyntax>();
         AuthorizeSyntax? authorize = null;
@@ -63,6 +74,7 @@ internal static partial class QueryParser
                     {
                         if (directiveLocations.TryGetValue("by", out var previousBy))
                         {
+                            context.Error(DiagnosticCodes.InvalidQueryParameter, $"Query '{name}' already declares 'by' - a query can have at most one key parameter", line.Location);
                             directiveLocations[$"omitted:by:{previousBy.Line}"] = previousBy;
                         }
 

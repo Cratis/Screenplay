@@ -93,6 +93,28 @@ public class when_parsing_optional_type_references : given.a_compiler
         type.File!.Path.ShouldEqual("Models/T.cs");
     }
 
+    [Theory]
+    [InlineData("observable?", false, "observable", true, false)]
+    [InlineData("observable[]?", false, "observable", true, true)]
+    [InlineData("observable observable?", true, "observable", true, false)]
+    [InlineData("observable optional", true, "optional", false, false)]
+    void should_print_ambiguous_query_types_without_changing_their_meaning(string type, bool observable, string name, bool optional, bool collection)
+    {
+        var original = _compiler.Parse(Prefix + "      query Q => " + type);
+        var query = original.Value!.Modules.Single().Features.Single().Slices.Single().Queries.Single();
+        query.IsObservable.ShouldEqual(observable);
+        query.ReturnType.Name.ShouldEqual(name);
+        query.ReturnType.IsOptional.ShouldEqual(optional);
+        query.ReturnType.IsCollection.ShouldEqual(collection);
+        var printed = new ScreenplayPrinter().Print(original.Value!);
+        SyntaxJson.StructurallyEqual(original.Value!, _compiler.Parse(printed).Value!).ShouldBeTrue();
+        if (type == "observable?")
+        {
+            printed.ShouldContain("=> observable?");
+            original.Diagnostics.Single().Message.ShouldContain("Keep 'observable?'");
+        }
+    }
+
     [Fact]
     void should_print_legacy_types_canonically()
     {

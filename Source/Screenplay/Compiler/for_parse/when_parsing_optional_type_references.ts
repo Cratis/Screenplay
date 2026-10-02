@@ -51,6 +51,18 @@ describe('when parsing optional type references', () => {
         expect(parse(`${prefix}      command C\n        reads R optional as r\n`).diagnostics.map(value => value.code)).toEqual(['PLAY0481']);
     });
 
+    it.each([
+        ['observable?', false, 'observable', true, false],
+        ['observable[]?', false, 'observable', true, true],
+        ['observable observable?', true, 'observable', true, false],
+        ['observable optional', true, 'optional', false, false],
+    ] as const)('should preserve the query interpretation of %s', (type, isObservable, name, isOptional, isCollection) => {
+        const parsed = parse(`${prefix}      query Q => ${type}`);
+        const query = parsed.value.modules[0].features[0].slices[0].queries[0];
+        expect(query).toMatchObject({ isObservable, returnType: { name, isOptional, isCollection } });
+        if (type === 'observable?') expect(parsed.diagnostics[0].message).toContain("Keep 'observable?'");
+    });
+
     it('should keep observable greedy', () => {
         const query = parse(`${prefix}      query Q => observable optional\n`).value.modules[0].features[0].slices[0].queries[0];
         expect(query.isObservable).toBe(true);

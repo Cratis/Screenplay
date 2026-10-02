@@ -2,12 +2,12 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import * as vscode from 'vscode';
-import { findQuickFixes, QuickFix } from '@cratis/screenplay-compiler';
+import { DiagnosticCodes, findQuickFixes, prepareQuickFixes, QuickFix } from '@cratis/screenplay-compiler';
 import { languageId } from '@cratis/screenplay-language';
 import { ApplicationIndex } from './ApplicationIndex';
 
 const applyCommand = 'screenplay.applyQuickFix';
-const fixAll = vscode.CodeActionKind.SourceFixAll.append('screenplay');
+const migrateOptional = vscode.CodeActionKind.Source.append('screenplay.migrateOptional');
 
 interface PendingQuickFix {
     readonly uri: vscode.Uri;
@@ -16,20 +16,35 @@ interface PendingQuickFix {
 }
 
 export function registerCodeActions(context: vscode.ExtensionContext, index: ApplicationIndex): void {
+    const cache = new WeakMap<vscode.TextDocument, { version: number; placement: string; fixes: ReturnType<typeof prepareQuickFixes> }>();
     context.subscriptions.push(vscode.languages.registerCodeActionsProvider(languageId, {
-        provideCodeActions(document, range, _context, token) {
+        provideCodeActions(document, range, request, token) {
+            const migrationRequested = request.only?.contains(migrateOptional) === true;
+            if (request.only !== undefined && !migrationRequested && !request.only.contains(vscode.CodeActionKind.QuickFix)) return [];
+            const diagnostic = request.diagnostics.find(diagnostic => {
+                const code = typeof diagnostic.code === 'object' ? diagnostic.code.value : diagnostic.code;
+                return code === DiagnosticCodes.LegacyOptionalSuffix && diagnostic.range.intersection(range) !== undefined;
+            });
+            if (token.isCancellationRequested || (!migrationRequested && diagnostic === undefined)) return [];
             const file = index.fileOf(document.uri);
+            const placement = file?.application.placementOf(file.path);
+            const placementKey = JSON.stringify(placement);
             const version = document.version;
-            const fixes = findQuickFixes(document.getText(), { line: range.start.line + 1, placement: file?.application.placementOf(file.path) });
+            let analysis = cache.get(document);
+            if (analysis?.version !== version || analysis.placement !== placementKey) {
+                analysis = { version, placement: placementKey, fixes: prepareQuickFixes(document.getText(), { placement }) };
+                cache.set(document, analysis);
+            }
+            const fixes = analysis.fixes(diagnostic === undefined ? undefined : diagnostic.range.start.line + 1);
             if (token.isCancellationRequested || document.version !== version) return [];
             return fixes.map(fix => {
-                const action = new vscode.CodeAction(fix.title, fix.scope === 'document' ? fixAll : vscode.CodeActionKind.QuickFix);
+                const action = new vscode.CodeAction(fix.title, fix.scope === 'document' ? migrateOptional : vscode.CodeActionKind.QuickFix);
                 action.isPreferred = fix.scope === 'occurrence';
                 action.command = { command: applyCommand, title: fix.title, arguments: [{ uri: document.uri, version, fix } satisfies PendingQuickFix] };
                 return action;
             });
         },
-    }, { providedCodeActionKinds: [vscode.CodeActionKind.QuickFix, fixAll] }));
+    }, { providedCodeActionKinds: [vscode.CodeActionKind.QuickFix, migrateOptional] }));
 
     // An explicit action is the only write boundary. Never apply offsets from an older dirty buffer.
     context.subscriptions.push(vscode.commands.registerCommand(applyCommand, async (pending: PendingQuickFix) => {

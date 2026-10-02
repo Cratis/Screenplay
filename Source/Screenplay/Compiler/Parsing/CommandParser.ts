@@ -24,6 +24,7 @@ const messagePattern = pattern(`\\bmessage\\s+(?:"(${stringBodyPattern})"|(\\$st
 const rulePattern = pattern('^([\\w.]+)\\s+(.+)$');
 const operandPattern = pattern('^(not empty|length ==|all >=|all >|matches|max|min|rule|>=|<=|==|!=|>|<)\\s*(.*)$');
 const ruleNamePattern = pattern('^[A-Za-z_]\\w*$');
+const optionalReads = pattern('^reads\\s+[A-Z]\\w*\\s+optional(?:\\s|$)');
 
 // Every operand the pattern matches has a kind, so an operand never goes unrecognized here.
 const operandKinds: Record<string, ValidationRuleKind> = {
@@ -56,6 +57,7 @@ export function parseCommand(context: ParserContext, line: SourceLine): CommandS
         context.error(DiagnosticCodes.InvalidCommandDeclaration, `Invalid command declaration '${line.content}' - expected 'command <Name>'`, locationOf(line));
     }
     const properties: PropertySyntax[] = [];
+    let identifier: PropertySyntax | undefined;
     const validations: ValidateSyntax[] = [];
     const produces: ProducesSyntax[] = [];
     let description: string | null = null;
@@ -65,7 +67,7 @@ export function parseCommand(context: ParserContext, line: SourceLine): CommandS
         const keyword = firstWord(child.content);
         const asProperty = tryParseProperty(child);
         if (asProperty !== undefined && (propertyShapedDirectives.has(keyword) || (keyword === 'validate' && child.content !== 'validate csharp'))) {
-            addProperty(context, properties, asProperty, name, child);
+            identifier = addProperty(context, properties, asProperty, name, child, identifier);
         } else if (keyword === 'description') {
             description = parseDescription(context, child, description, `Command '${name}'`);
         } else if (keyword === 'authorize') {
@@ -79,12 +81,12 @@ export function parseCommand(context: ParserContext, line: SourceLine): CommandS
             const production = parseProduces(context, child, true);
             if (production !== undefined) produces.push(production);
         } else if (opaqueDirectives.has(keyword)) {
-            if (/^reads\s+[A-Z]\w*\s+optional(?:\s|$)/.test(child.content)) {
+            if (optionalReads.test(child.content)) {
                 context.error(DiagnosticCodes.OptionalReadsNotSupported, 'Optional reads are not yet supported (see #308).', locationOf(child));
             }
             context.skipOpaqueBlock(child.indent);
         } else if (asProperty !== undefined) {
-            addProperty(context, properties, asProperty, name, child);
+            identifier = addProperty(context, properties, asProperty, name, child, identifier);
         } else {
             reportInvalidModifierOrder(context, child);
             context.error(DiagnosticCodes.UnknownCommandDirective, `Unexpected '${child.content}' in command body`, locationOf(child));
@@ -94,14 +96,14 @@ export function parseCommand(context: ParserContext, line: SourceLine): CommandS
     return { kind: 'CommandSyntax', name, description, authorize, properties, validations, produces, location: locationOf(line) };
 }
 
-function addProperty(context: ParserContext, properties: PropertySyntax[], property: PropertySyntax, commandName: string, line: SourceLine): void {
+function addProperty(context: ParserContext, properties: PropertySyntax[], property: PropertySyntax, commandName: string, line: SourceLine, identifier: PropertySyntax | undefined): PropertySyntax | undefined {
     reportLegacyOptionalSuffix(context, property.type, line);
-    const identifier = property.isIdentifier ? properties.find(existing => existing.isIdentifier) : undefined;
     if (property.isIdentifier && identifier !== undefined) {
         context.error(DiagnosticCodes.DuplicateCommandIdentifier, `Command '${commandName}' already marks '${identifier.name}' as identifier - only one property can be the identifier`, property.location);
         property = { ...property, isIdentifier: false };
     }
     properties.push(property);
+    return identifier ?? (property.isIdentifier ? property : undefined);
 }
 
 // Reads a 'validate' block: declarative rules, or code - which is recognized but not modeled.

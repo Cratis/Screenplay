@@ -2,6 +2,21 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "Unicode optional reads are reserved in commands and reactions",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        reads Vïew optional as r", "      reaction R", "        when E", "          reads Vïew optional as r"],
+            "diagnostics": ["PLAY0481@5", "PLAY0481@8"]
+        },
+        {
+            "name": "duplicate optional query keys are diagnosed rather than silently shadowed",
+            "source": ["module M", "  feature F", "    slice StateView S", "      query Q => View", "        by first Uuid?", "        by second Uuid?"],
+            "diagnostics": ["PLAY0479@5", "PLAY0479@6", "PLAY0049@6"]
+        },
+        {
+            "name": "optional observable type retains its legacy spelling",
+            "source": ["module M", "  feature F", "    slice StateView S", "      query Q => observable?"],
+            "diagnostics": ["PLAY0479@4"]
+        },
+        {
             "name": "canonical optionality is contextual",
             "source": ["type optional", "  optional String", "  value optional optional", "  lines String[] optional"],
             "diagnostics": []

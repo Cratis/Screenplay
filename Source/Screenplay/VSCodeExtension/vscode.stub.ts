@@ -36,6 +36,13 @@ export class Range {
         this.start = new Position(startLine, startCharacter);
         this.end = new Position(endLine, endCharacter);
     }
+
+    intersection(other: Range): Range | undefined {
+        const before = (left: Position, right: Position) => left.line < right.line || (left.line === right.line && left.character < right.character);
+        const start = before(this.start, other.start) ? other.start : this.start;
+        const end = before(this.end, other.end) ? this.end : other.end;
+        return before(end, start) ? undefined : new Range(start.line, start.character, end.line, end.character);
+    }
 }
 
 export class Uri {

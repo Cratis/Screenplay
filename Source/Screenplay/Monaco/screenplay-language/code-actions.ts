@@ -15,7 +15,7 @@ export function createCodeActionProvider(): languages.CodeActionProvider {
             return {
                 actions: fixes.map(fix => ({
                     title: fix.title,
-                    kind: fix.scope === 'document' ? 'source.fixAll.screenplay' : 'quickfix',
+                    kind: fix.scope === 'document' ? 'source.screenplay.migrateOptional' : 'quickfix',
                     isPreferred: fix.scope === 'occurrence',
                     edit: { edits: fix.edits.map(edit => {
                         const start = model.getPositionAt(edit.start);

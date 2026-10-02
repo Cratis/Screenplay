@@ -5,10 +5,10 @@ Queries are read-side entry points. A query maps to a return type — a read mod
 ## Syntax
 
 ```screenplay
-query <Name> => [observable] <ReturnType>[[]?]
+query <Name> => [observable] <ReturnType>[[]] [optional]
   [description "<text>"]
   [by <paramName> <Type> [from <source>]]
-  [filter <paramName> <Type>? [from <source>]]
+  [filter <paramName> <Type> [optional] [from <source>]]
   [scoped to <scope>]
   [authorize <PolicyName> [or <PolicyName>]*]
   [performer
