@@ -91,7 +91,7 @@ internal static class WorkspaceProductionRepairs
         {
             var subjects = _verification.GetOrCreateValue(index.Workspace).Subjects;
             var key = (repair.Subject, repair.DiagnosticCode, request.Validation, request.ReferencePolicy);
-            if (subjects.TryGetValue(key, out var cached) && !cached.Value.Accepted)
+            if (subjects.TryGetValue(key, out var cached) && cached.IsValueCreated && !cached.Value.Accepted)
             {
                 return cached.Value.Refusal();
             }
@@ -278,23 +278,13 @@ internal static class WorkspaceProductionRepairs
         right.Any(other => other.Name == property.Name && other.Type.Name == property.Type.Name &&
             other.Type.IsCollection == property.Type.IsCollection && other.Type.IsOptional == property.Type.IsOptional));
 
-    sealed record Verdict(
-        bool Accepted,
-        ImmutableArray<WorkspaceConflict> Conflicts,
-        ImmutableArray<Diagnostic> AuthoringDiagnostics,
-        bool ExecutableReady,
-        ImmutableArray<Diagnostic> ExecutableDiagnostics)
+    sealed record Verdict(bool Accepted, ImmutableArray<WorkspaceConflict> Conflicts)
     {
-        internal static Verdict From(WorkspaceAuthoringResult result) => result.Accepted
-            ? new(true, [], [], false, [])
-            : new(false, result.Conflicts, result.AuthoringDiagnostics, result.ExecutableReady, result.ExecutableDiagnostics);
+        internal static Verdict From(WorkspaceAuthoringResult result) => new(result.Accepted, result.Accepted ? [] : result.Conflicts);
 
         internal WorkspaceAuthoringResult Refusal() => new()
         {
-            Conflicts = Conflicts,
-            AuthoringDiagnostics = AuthoringDiagnostics,
-            ExecutableReady = ExecutableReady,
-            ExecutableDiagnostics = ExecutableDiagnostics
+            Conflicts = Conflicts
         };
     }
 
