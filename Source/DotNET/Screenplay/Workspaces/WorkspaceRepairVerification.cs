@@ -28,7 +28,7 @@ internal static class WorkspaceRepairVerification
         var result = VerifyTransaction(index, repair, request);
         if (request.Documents is { IsDefault: false, Length: 0 } && request.SemanticRenames is { IsDefault: false, Length: 0 } &&
             request.EventRenames is { IsDefault: false, Length: 0 } && request.RetiredSemanticAddresses is { IsDefault: false, Length: 0 } &&
-            request.RetiredEventAddresses is { IsDefault: false, Length: 0 })
+            request.RetiredEventAddresses is { IsDefault: false, Length: 0 } && Enum.IsDefined(request.Validation) && Enum.IsDefined(request.ReferencePolicy))
         {
             _verification.GetOrCreateValue(index.Workspace).Subjects.GetOrAdd(
                 (repair.Subject, repair.DiagnosticCode, request.Validation, request.ReferencePolicy),
@@ -85,7 +85,17 @@ internal static class WorkspaceRepairVerification
 
     static WorkspaceAuthoringResult VerifyTransaction(WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, WorkspaceAuthoringRequest request)
     {
-        var result = RequireComments(Propose(index.Workspace, request with { Operations = repair.Operations }));
+        var result = RequireComments(Propose(index.Workspace, request with
+        {
+            Operations = repair.Operations,
+            RetiredSemanticAddresses = request.RetiredSemanticAddresses.IsDefault ? default : [.. request.RetiredSemanticAddresses, .. repair.RetiredSemanticAddresses]
+        }));
+        if (result.Accepted && repair.DiagnosticCode == DiagnosticCodes.EventSourceIdInPayload &&
+            (WorkspaceEventRepairs.HasConsumers(index, repair) || !result.ExecutableReady ||
+                !WorkspaceProductionRepairs.KeepsDestinations(index, index.Find(index.Find(repair.Subject)!.Parent!)!, result, true, true)))
+        {
+            return Refuse(result, WorkspaceConflictKind.InvalidOperation, "Removing the payload property changes the event contract. Consumer, opaque implementation or routing impact cannot be proven safe.");
+        }
         if (result.Accepted && repair.DiagnosticCode == DiagnosticCodes.OmittedProductionDestination &&
             !WorkspaceProductionRepairs.KeepsOtherDestinations(index, index.Find(repair.Subject)!, result))
         {

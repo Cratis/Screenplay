@@ -67,7 +67,10 @@ internal static class WorkspaceProductionRepairs
         return WorkspaceRepairVerification.Discover(index, new(diagnostic.Code, subject.Handle, [new AddWorkspaceNode(slice.Handle, slice.Node, "events", new EventSyntax(produces.Event, properties, produces.Location))]), verifyRepair);
     }
 
-    internal static bool KeepsOtherDestinations(WorkspaceSyntaxIndex index, WorkspaceSyntaxEntry subject, WorkspaceAuthoringResult proposal)
+    internal static bool KeepsOtherDestinations(WorkspaceSyntaxIndex index, WorkspaceSyntaxEntry subject, WorkspaceAuthoringResult proposal) =>
+        KeepsDestinations(index, subject, proposal, false, false);
+
+    internal static bool KeepsDestinations(WorkspaceSyntaxIndex index, WorkspaceSyntaxEntry subject, WorkspaceAuthoringResult proposal, bool allowVersionChange, bool includeSubject)
     {
         var workspace = index.Workspace;
         if (workspace.Compilation.Value is not { } original || subject.Parent is null ||
@@ -77,7 +80,7 @@ internal static class WorkspaceProductionRepairs
         }
 
         if (!proposal.Accepted || proposal.Workspace!.Compilation.Value is not { } candidate ||
-            original.Model.LanguageVersion != candidate.Model.LanguageVersion || original.Model.SemanticVersion != candidate.Model.SemanticVersion)
+            (!allowVersionChange && (original.Model.LanguageVersion != candidate.Model.LanguageVersion || original.Model.SemanticVersion != candidate.Model.SemanticVersion)))
         {
             return false;
         }
@@ -99,7 +102,7 @@ internal static class WorkspaceProductionRepairs
 
             for (var production = 0; production < producer.Produces.Length; production++)
             {
-                if (producer.Id == subjectCommand && production == subject.Index.Value)
+                if (!includeSubject && producer.Id == subjectCommand && production == subject.Index.Value)
                 {
                     continue;
                 }

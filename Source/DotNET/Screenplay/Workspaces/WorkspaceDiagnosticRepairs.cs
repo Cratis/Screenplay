@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
 
@@ -23,6 +24,21 @@ public sealed record WorkspaceDiagnosticRepair(
     /// Gets the formatting required to make this repair effective. PreserveTrivia cannot migrate this warning.
     /// </summary>
     public WorkspaceAuthoringFormatting RequiredFormatting { get; init; } = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments;
+
+    /// <summary>
+    /// Gets the human-readable action label, including any contract-changing consequence.
+    /// </summary>
+    public string? Title { get; init; }
+
+    /// <summary>
+    /// Gets whether a host may include the repair in fix-all. Contract-changing repairs require individual review.
+    /// </summary>
+    public bool CanFixAll { get; init; } = true;
+
+    /// <summary>
+    /// Gets semantic addresses deliberately retired by this repair.
+    /// </summary>
+    public ImmutableArray<SemanticAddress> RetiredSemanticAddresses { get; init; } = [];
 }
 
 /// <summary>
@@ -149,7 +165,7 @@ public static class WorkspaceDiagnosticRepairs
             return WorkspaceProductionRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
 
-        if (diagnostic.Code == DiagnosticCodes.RedundantEventId)
+        if (diagnostic.Code == DiagnosticCodes.RedundantEventId || diagnostic.Code == DiagnosticCodes.EventSourceIdInPayload)
         {
             return WorkspaceEventRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
@@ -192,7 +208,9 @@ public static class WorkspaceDiagnosticRepairs
 
     static bool Matches(WorkspaceDiagnosticRepair candidate, WorkspaceDiagnosticRepair selected)
     {
-        if (candidate.RequiredFormatting != selected.RequiredFormatting || selected.Operations.IsDefault || candidate.Operations.Length != selected.Operations.Length)
+        if (candidate.RequiredFormatting != selected.RequiredFormatting || candidate.Title != selected.Title || candidate.CanFixAll != selected.CanFixAll ||
+            selected.RetiredSemanticAddresses.IsDefault || !candidate.RetiredSemanticAddresses.SequenceEqual(selected.RetiredSemanticAddresses) ||
+            selected.Operations.IsDefault || candidate.Operations.Length != selected.Operations.Length)
         {
             return false;
         }
