@@ -1,7 +1,12 @@
 ---
-title: MCP server
-description: Bounded model navigation, safe AST refactoring, durable identities, and recoverable multi-file authoring.
+title: MCP reference
+description: Every Screenplay MCP server tool, argument, limit and validation policy, plus the embedding API for hosts.
 ---
+
+This page is the reference for the server's tools. To use the server through an
+assistant, start with [the MCP server overview](index.md), and see
+[Create a model](create.md), [Explore a model](explore.md), [View a model](view.md)
+and [Edit a model](edit.md) for prompts.
 
 ## Installation and scope
 
@@ -13,7 +18,7 @@ screenplay --version
 screenplay mcp ./specifications
 ```
 
-See [installation and client configuration](install-mcp.md). One physical root
+See [installation and client configuration](install.md). One physical root
 is one application, whether it has one source file or hundreds of nested files.
 Symbolic links are rejected. An empty root can be opened to create its first model.
 
@@ -97,7 +102,7 @@ Hosts that render MCP Apps views (`io.modelcontextprotocol/ui`) are also offered
 `proposalId` or a `sketch` of whole `.play` documents, the board shows what the
 change would make of the application, and the result lists the drawn declarations
 it adds and removes. Nothing is written. See
-[See a model as an event model board with MCP](mcp-visualization.md).
+[See a model as an event model board with MCP](view.md).
 
 ## Paging and snapshots
 
@@ -254,7 +259,7 @@ canonicalization removes comments in touched files and normalizes member order;
 each proposal reports its `droppedCommentCount`. Untouched bytes and BOM
 policy are retained. Printer omissions reject the proposal.
 
-See [the AST API](ast-authoring.md) and [authoring procedure](mcp-authoring.md).
+See [the AST API](../ast-authoring.md) and [authoring procedure](authoring-tools.md).
 
 ## Review, durable state and recovery
 
@@ -274,7 +279,7 @@ A durable pending journal precedes source mutation. Interrupted or uncertain
 operations block normal editing; inspect status and explicitly request rollback.
 Recovery refuses unexpected external bytes and retains uncertain backups. This
 is not simultaneous crash-atomic visibility across files. See
-[identity state and recovery](mcp-recovery.md).
+[identity state and recovery](recovery.md).
 
 ## Protocol and limits
 

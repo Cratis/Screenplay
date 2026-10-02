@@ -170,9 +170,11 @@ Embedding the compiler in your own tooling is one package away — see
 dotnet add package Cratis.Screenplay
 ```
 
-For AI clients, [install the stdio MCP server](Documentation/screenplay/install-mcp.md) from the
-same tool package. Navigate large split models, inspect dependencies and fixtures, and use
-[typed AST authoring and model-aware rename](Documentation/screenplay/mcp-authoring.md).
+For AI clients, [install the stdio MCP server](Documentation/screenplay/mcp/install.md) from the
+same tool package and connect Claude Code, Codex, VS Code or Claude Desktop. Navigate large
+split models, inspect dependencies and fixtures, draw the model as an event model board, and
+[create and edit a model with prompts](Documentation/screenplay/mcp/index.md), including
+[typed AST authoring and model-aware rename](Documentation/screenplay/mcp/authoring-tools.md).
 Review revision-bound proposals before applying them. Stable identities persist beside source,
 and interrupted writes require explicit recovery. Source validity and executable backend
 readiness remain separate verdicts.
