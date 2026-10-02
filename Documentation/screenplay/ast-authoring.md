@@ -168,6 +168,8 @@ composite types**, commands, events, read models, queries, modules, features and
 slices. Other property declarations are not automatic rename targets. Module/feature fragments change
 together. Proven typed references and qualified descendant references are repaired;
 read-model output aliases remain distinct from projection builder identities.
+Event renames also update constraint `released by` references and screen/behavior
+`on event` triggers.
 
 The planner rechecks bindings after the change. Name collisions, ambiguous
 references, capture, affected opaque realizations/imports, unsupported spans and
@@ -237,8 +239,10 @@ Other additions, removals or reorderings of nodes are structural and still requi
 
 Canonical printing retains attached comments and normalizes blank lines. It preserves
 parsed member order within a document. Added nodes do not inherit source positions
-or comments from their supplied values. Cross-document moves retain their comments
-and internal order without imposing their old root position on the destination;
+or comments from their supplied values. Moves retain their comments and internal
+order. A same-document move retains its root source position only when it agrees
+with the requested order among destination siblings of the same kind;
+cross-document moves discard that root position. In either case,
 new members follow the insertion rule in
 [Printing and generating](printing.md#what-printing-does-not-keep). Before applying such a result, call
 `WorkspaceDroppedComments.In(result.WritePlan)` to list any comment that could not be

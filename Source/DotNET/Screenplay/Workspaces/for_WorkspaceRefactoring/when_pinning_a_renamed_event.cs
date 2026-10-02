@@ -33,6 +33,41 @@ public class when_pinning_a_renamed_event : Specification
     }
 
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    void should_pin_a_non_ascii_name_without_json_unicode_escapes(bool standalone)
+    {
+        var source = standalone ? Source.Replace("produces event Renamed", "produces Renamed\n          for projectId\n      event Renamed", StringComparison.Ordinal)
+            .Replace("name   String = \"something\"", "name   String", StringComparison.Ordinal) : Source;
+        source = source.Replace("Renamed", "Café", StringComparison.Ordinal);
+        var result = Rename(Create(source), "Café", "Again");
+        result.Conflicts.ShouldBeEmpty();
+        Event(result.Workspace!).Id.ShouldEqual("Café");
+        result.Workspace!.Documents[0].Text.ShouldContain("id \"Café\"");
+        Rename(result.Workspace, "Again", "Café").Workspace!.Documents[0].Bytes.ShouldEqual(Encoding.UTF8.GetBytes(source));
+    }
+
+    [Theory]
+    [InlineData("Café")]
+    [InlineData("Café \"quoted\" \\ history")]
+    [InlineData("Café\\u00E9\n\r\t")]
+    void should_round_trip_screenplay_pin_literals(string identity)
+    {
+        var workspace = Create(Source);
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var subject = index.Entries.Single(entry => entry.Node is EventSyntax);
+        var edits = new WorkspaceAstEdits(index);
+        edits.Prepare([new ReplaceWorkspaceNode(subject.Handle, subject.Node, ((EventSyntax)subject.Node) with { Id = identity })]);
+        var intended = edits.Apply()[subject.Handle.Document];
+        var printed = WorkspaceTriviaPrinter.Print(workspace.Documents[0], intended);
+        var parsed = new ScreenplayCompiler().Parse(printed.Text, printed.Path.Value);
+        parsed.Success.ShouldBeTrue();
+        WorkspaceSyntaxIndex.ForSyntax(parsed.Value!, workspace.IdentityCatalog).Select(entry => entry.Node).OfType<EventSyntax>().Single().Id.ShouldEqual(identity);
+        var original = new ScreenplayCompiler().Parse(Source).Value!;
+        WorkspaceTriviaPrinter.Print(printed, original).Text.ShouldEqual(Source);
+    }
+
+    [Theory]
     [InlineData("\n")]
     [InlineData("\r\n")]
     void should_keep_a_pin_across_repeated_renames_and_remove_it_on_rename_back(string newline)
@@ -70,6 +105,20 @@ public class when_pinning_a_renamed_event : Specification
     }
 
     [Theory]
+    [InlineData("unique event Other")]
+    [InlineData("unique name on Other")]
+    void should_rename_constraint_release_references_with_preserved_trivia(string rule)
+    {
+        var consumer = "      event Other\n        name String\n      event Unrelated\n      constraint Claimed\n        " + rule +
+            "\n        released by Unrelated // unrelated release\n        released   by Renamed // release intent\n";
+        var result = Rename(Create(Source + consumer), "Renamed", "Again");
+        result.Conflicts.ShouldBeEmpty();
+        WorkspaceSyntaxIndex.Create(result.Workspace!).Entries.Select(entry => entry.Node).OfType<ConstraintSyntax>()
+            .Single().ReleasedBy.ShouldEqual(["Unrelated", "Again"]);
+        result.Workspace!.Documents[0].Text.ShouldContain(consumer.Replace("Renamed", "Again", StringComparison.Ordinal));
+    }
+
+    [Theory]
     [InlineData(false)]
     [InlineData(true)]
     void should_pin_generations_consistently_or_refuse_contradictory_pins(bool contradictory)
@@ -92,7 +141,7 @@ public class when_pinning_a_renamed_event : Specification
     {
         ExpectedRevision = workspace.Revision,
         ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
-        Target = WorkspaceSyntaxIndex.Create(workspace).Entries.First(value => value.Node is EventSyntax).Handle,
+        Target = WorkspaceSyntaxIndex.Create(workspace).Entries.First(value => value.Node is EventSyntax declaration && declaration.Name == before).Handle,
         ExpectedName = before,
         NewName = after,
         EventNeverPersisted = neverPersisted

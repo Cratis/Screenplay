@@ -88,10 +88,10 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
             if (edit.Target is not null)
             {
                 CarrySourceLocations(edit.Original!, inserted);
-                if (edit.Target.Handle.Document != edit.Destination!.Parent.Handle.Document)
+                if (edit.Target.Handle.Document != edit.Destination!.Parent.Handle.Document || !LocationAgreesWithInsertion(edit.Destination, inserted))
                 {
-                    // The moved subtree retains its internal order and comment anchors, but its root
-                    // has no comparable position among the destination document's authored members.
+                    // Keep subtree order and comment/directive anchors, but do not let the old root
+                    // position override the requested order among the destination's same-kind siblings.
                     _sourceLocations.Remove(inserted);
                 }
             }
@@ -211,6 +211,39 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
     }
 
     static JsonNode ToJson(SyntaxNode node) => JsonNode.Parse(SyntaxJson.Serialize(node).GetRawText(), documentOptions: new JsonDocumentOptions { MaxDepth = 256 })!;
+
+    bool LocationAgreesWithInsertion(Insertion destination, JsonNode node)
+    {
+        if (!destination.Collection || destination.Owner[destination.Member] is not JsonArray siblings)
+        {
+            return true;
+        }
+
+        if (!_sourceLocations.TryGetValue(node, out var location) || location is not { Line: > 1, Column: > 0 })
+        {
+            return false;
+        }
+
+        var boundary = destination.Anchor is null ? siblings.Count : siblings.IndexOf(destination.Anchor);
+        for (var position = 0; position < siblings.Count; position++)
+        {
+            if (siblings[position] is not { } sibling || !_sourceLocations.TryGetValue(sibling, out var other) || other is not { Line: > 1, Column: > 0 })
+            {
+                // The printer places unlocated siblings after all located members of their kind.
+                if (position < boundary) return false;
+                continue;
+            }
+
+            var order = location.Line.CompareTo(other.Line);
+            if (order == 0) order = location.Column.CompareTo(other.Column);
+            if (location.Path != other.Path || (position < boundary ? order < 0 : order > 0))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     Edit Replacement(ReplaceWorkspaceNode operation)
     {

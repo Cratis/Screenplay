@@ -28,6 +28,8 @@ public class and_an_inline_event_copies_the_identifier : given.a_command_product
     [Fact] void should_keep_the_contract_identity() => Result.Workspace!.IdentityCatalog.EventContracts.Single().Id.ShouldEqual(Workspace.IdentityCatalog.EventContracts.Single().Id);
 
     [Theory]
+    [InlineData("      event Other\n      constraint Claimed\n        unique event Other\n        released by Renamed\n")]
+    [InlineData("      event Other\n        name String\n      constraint Claimed\n        unique name on Other\n        released by Renamed\n")]
     [InlineData("behavior Observe\n  on event Renamed\n    notify info \"Changed\"\n")]
     [InlineData("      screen Observe\n        on event Renamed\n          notify info \"Changed\"\n")]
     [InlineData("      readmodel Names\n        name String\n      projection Names => Names\n        all\n          name = \"something\"\n")]

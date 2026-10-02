@@ -7,6 +7,7 @@ using Cratis.Screenplay.Printing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Workspaces;
 
@@ -96,7 +97,18 @@ static class WorkspaceTriviaPrinter
             return (range.Offset, range.Length, Encoding.UTF8.GetBytes(JsonSerializer.Serialize(change.After)));
         }
 
-        var token = tokensByLine[owner.Location.Line].SingleOrDefault();
+        var location = owner.Location;
+        if (owner is ConstraintSyntax constraint && member.StartsWith("releasedBy/", StringComparison.Ordinal))
+        {
+            var releases = constraint.ReleasedBy.ToArray();
+            if (!int.TryParse(member["releasedBy/".Length..], out var position) || position < 0 || position >= releases.Length ||
+                !constraint.DirectiveLocations.TryGetValue(DirectiveLocationKeys.ForValue("released by", releases, position), out location))
+            {
+                throw Unsupported(original, change.Path);
+            }
+        }
+
+        var token = tokensByLine[location.Line].SingleOrDefault();
         if (token is null || !WorkspaceIdentifierSpans.Supports(owner, member, token.Text))
         {
             throw Unsupported(original, change.Path);
@@ -169,7 +181,7 @@ static class WorkspaceTriviaPrinter
             ? tokens.FirstOrDefault(value => value.Span.Line == next.Span.Line && value.Kind == WorkspaceSourceTokenKind.Indentation)?.Text ?? (indentation + "  ")
             : indentation + "  ";
         var newline = ending?.Text ?? "\n";
-        var text = (ending is null ? newline : string.Empty) + childIndentation + "id " + JsonSerializer.Serialize(after.Id) + newline;
+        var text = (ending is null ? newline : string.Empty) + childIndentation + "id " + StringLiteral.Quote(after.Id) + newline;
         return (ending is null ? original.Bytes.Length : ending.Span.ByteOffset + ending.Span.ByteLength, 0, Encoding.UTF8.GetBytes(text));
     }
 

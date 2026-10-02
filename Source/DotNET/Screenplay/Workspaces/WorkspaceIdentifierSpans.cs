@@ -38,6 +38,7 @@ static class WorkspaceIdentifierSpans
             (ReducerRuleSyntax, "event") => keyword == "on",
             (EventInteractionTriggerSyntax, "eventName") => keyword == "on",
             (UniquePropertyConstraintSyntax or UniqueEventConstraintSyntax, "event") => keyword == "unique",
+            (ConstraintSyntax, var reference) when reference.StartsWith("releasedBy/", StringComparison.Ordinal) => keyword == "released",
             (SpecificationEventSyntax, "eventType") => keyword == "given" || keyword == "then" || keyword == "and",
             (SpecificationCommandSyntax, "commandType") => keyword == "when",
             (SpecificationReadModelSyntax or SpecificationAbsentReadModelSyntax, "name") => keyword == "given" || keyword == "then" || keyword == "and",
