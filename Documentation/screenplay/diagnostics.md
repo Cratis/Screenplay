@@ -842,9 +842,10 @@ syntax may hide a contract or another producer. Reaction and capture producers a
 
 Both repairs require canonical formatting consent and refuse any dropped comment.
 Discovery verifies authoring acceptance for `PLAY0166` too: an inferred event whose
-fields conflict with a specification is not offered. Discovery and proposals reuse
-the verification result on the same immutable workspace snapshot. A matched repair
-that fails returns its typed transaction conflicts and diagnostics; `UnknownRepair`
+fields conflict with a specification is not offered. Discovery reuses cached acceptance
+and conflicts on the same immutable workspace snapshot; diagnostics are never cached.
+Every proposal runs one fresh transaction, even after discovery. A matched repair
+that fails returns that transaction's typed conflicts and full diagnostics; `UnknownRepair`
 means no recipe matches the code and original subject, not a verification failure.
 Discovery and preview never write source. Review the write plan and explicitly
 accept it through the [workspace authoring contract](ast-authoring.md) or

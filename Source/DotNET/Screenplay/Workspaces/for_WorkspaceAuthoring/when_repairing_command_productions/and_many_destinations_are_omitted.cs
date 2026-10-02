@@ -47,6 +47,20 @@ public class and_many_destinations_are_omitted : given.a_command_production
     }
 
     [Fact]
+    void should_publish_a_completed_proposal_verdict_for_discovery_to_reuse()
+    {
+        var index = WorkspaceSyntaxIndex.Create(Workspace);
+        var subject = index.Entries.Single(entry => entry.Node is ProducesSyntax production && production.Event == "Registered7");
+        Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, DiagnosticCodes.OmittedProductionDestination, subject.Handle, Request());
+        Result.Accepted.ShouldBeTrue();
+        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(1);
+        var cached = CachedSubjects().Values.Cast<object>().Single();
+        ((bool)cached.GetType().GetProperty("IsValueCreated")!.GetValue(cached)!).ShouldBeTrue();
+        Discover(Workspace).Length.ShouldEqual(ProductionCount);
+        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(ProductionCount);
+    }
+
+    [Fact]
     void should_cache_only_verdict_fields_not_candidate_workspaces_or_write_plans()
     {
         Discover(Workspace).Length.ShouldEqual(ProductionCount);
@@ -97,11 +111,13 @@ public class and_many_destinations_are_omitted : given.a_command_production
             Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, DiagnosticCodes.OmittedProductionDestination, subject.Handle, Request());
             Result.Accepted.ShouldBeFalse();
             Result.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.InvalidOperation);
-            Result.AuthoringDiagnostics.ShouldBeEmpty();
-            Result.ExecutableDiagnostics.ShouldBeEmpty();
+            Result.AuthoringDiagnostics.Count(diagnostic => diagnostic.Code == DiagnosticCodes.OmittedProductionDestination).ShouldEqual(ProductionCount - 1);
+            Result.ExecutableDiagnostics.Count(diagnostic => diagnostic.Code == DiagnosticCodes.OmittedProductionDestination).ShouldEqual(ProductionCount - 1);
         }
 
-        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(ProductionCount);
+        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(ProductionCount * 2);
+        Discover(Workspace).ShouldBeEmpty();
+        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(ProductionCount * 2);
     }
 
     [Fact]
@@ -122,6 +138,7 @@ public class and_many_destinations_are_omitted : given.a_command_production
         Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, Repair, Request());
         Result.Accepted.ShouldBeTrue();
         evaluated.ShouldBeFalse();
+        ReferenceEquals(subjects[key], pending).ShouldBeTrue();
         ((bool)pending.GetType().GetProperty("IsValueCreated")!.GetValue(pending)!).ShouldBeFalse();
         WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(before + 1);
     }

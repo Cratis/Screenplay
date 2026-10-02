@@ -56,7 +56,7 @@ public class and_the_destination_would_change_other_routing : given.a_command_pr
         Result.Accepted.ShouldBeFalse();
         Result.Workspace.ShouldBeNull();
         Result.WritePlan.ShouldBeNull();
-        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(before);
+        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(before + 1);
         if (Workspace.Compilation.Success)
         {
             Result.Conflicts.Single().Message.ShouldContain("destination");

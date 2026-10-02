@@ -193,10 +193,11 @@ compilation diagnostics belong to the paged diagnostics view. Available typed re
 Listed `PLAY0166` and `PLAY0478` repairs are verified, not unchecked suggestions.
 Discovery checks authoring acceptance and comment preservation, plus routing safety
 for `PLAY0478`. For example, an inferred event that conflicts with a specification's
-asserted fields is not listed. Verification is cached per subject on the current
-immutable workspace snapshot. Paging, rereading or proposing the same repair reuses
-the result; a new snapshot requires fresh verification. `propose-repair` verifies
-only the selected subject, with at most one authoring transaction.
+asserted fields is not listed. Only acceptance and conflicts are cached per subject
+on the current immutable workspace snapshot for discovery reuse; diagnostics are
+never cached. Paging or rereading reuses the verdict; a new snapshot requires fresh
+verification. `propose-repair` always verifies only the selected subject in one fresh
+authoring transaction and returns its full diagnostics, even after discovery.
 
 An unknown code, subject or recipe returns the `UnknownRepair` argument error.
 A matched repair that fails verification instead returns `success: false` with typed

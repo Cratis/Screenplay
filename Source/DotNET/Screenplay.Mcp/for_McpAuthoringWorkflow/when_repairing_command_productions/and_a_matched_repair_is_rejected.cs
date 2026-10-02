@@ -19,10 +19,11 @@ public class and_a_matched_repair_is_rejected : for_McpAuthoringWorkflow.given.a
         """;
 
     [Theory]
-    [InlineData("reference", DiagnosticCodes.OmittedProductionDestination, "InvalidOperation", "New unresolved")]
-    [InlineData("routing", DiagnosticCodes.OmittedProductionDestination, "InvalidOperation", "destination")]
-    [InlineData("consistency", DiagnosticCodes.UnknownEvent, "CompilationFailed", "valid full-language")]
-    void should_return_transaction_conflicts_not_unknown_repair(string scenario, string code, string kind, string message)
+    [InlineData("reference", DiagnosticCodes.OmittedProductionDestination, "InvalidOperation", "New unresolved", false)]
+    [InlineData("routing", DiagnosticCodes.OmittedProductionDestination, "InvalidOperation", "destination", false)]
+    [InlineData("consistency", DiagnosticCodes.UnknownEvent, "CompilationFailed", "valid full-language", false)]
+    [InlineData("consistency", DiagnosticCodes.UnknownEvent, "CompilationFailed", "valid full-language", true)]
+    void should_return_transaction_conflicts_not_unknown_repair(string scenario, string code, string kind, string message, bool discoverFirst)
     {
         var source = scenario switch
         {
@@ -36,6 +37,11 @@ public class and_a_matched_repair_is_rejected : for_McpAuthoringWorkflow.given.a
         var opened = Open();
         var revision = opened.GetProperty("revision").GetString()!;
         var subject = Node("ProducesSyntax", revision).GetProperty("handle");
+        if (discoverFirst)
+        {
+            Page("repairs", revision).EnumerateArray().Any(repair => repair.GetProperty("diagnosticCode").GetString() == code).ShouldBeFalse();
+        }
+
         var response = Call("propose-repair", new
         {
             expectedRevision = revision,
@@ -56,6 +62,8 @@ public class and_a_matched_repair_is_rejected : for_McpAuthoringWorkflow.given.a
         if (scenario == "consistency")
         {
             content.GetProperty("authoringDiagnostics").EnumerateArray().Any(diagnostic => diagnostic.GetProperty("code").GetString() == "PLAY0287").ShouldBeTrue();
+            content.GetProperty("executableDiagnostics").EnumerateArray().ShouldBeEmpty();
+            content.GetProperty("executableReady").GetBoolean().ShouldBeFalse();
         }
         File.ReadAllBytes(Path.Combine(RootPath, "application.play")).SequenceEqual(original).ShouldBeTrue();
     }

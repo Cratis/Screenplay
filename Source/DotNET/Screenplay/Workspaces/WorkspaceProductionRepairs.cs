@@ -81,8 +81,11 @@ internal static class WorkspaceProductionRepairs
 
     internal static WorkspaceAuthoringResult Verify(WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, WorkspaceAuthoringRequest request)
     {
+        // Proposals always run their own transaction and return its full diagnostics.
+        var result = VerifyTransaction(index, repair, request);
+
         // Auxiliary edits and migrations belong to the full request, not a cached repair recipe.
-        // Do not let a cached success admit non-default arrays or bypass their validation.
+        // Publish only compact verdicts that discovery can reuse for an unmodified request.
         if (request.Documents.IsDefaultOrEmpty && !request.Documents.IsDefault &&
             request.SemanticRenames.IsDefaultOrEmpty && !request.SemanticRenames.IsDefault &&
             request.EventRenames.IsDefaultOrEmpty && !request.EventRenames.IsDefault &&
@@ -91,20 +94,10 @@ internal static class WorkspaceProductionRepairs
         {
             var subjects = _verification.GetOrCreateValue(index.Workspace).Subjects;
             var key = (repair.Subject, repair.DiagnosticCode, request.Validation, request.ReferencePolicy);
-            if (subjects.TryGetValue(key, out var cached) && cached.IsValueCreated && !cached.Value.Accepted)
-            {
-                return cached.Value.Refusal();
-            }
-
-            // An accepted verdict cannot supply a candidate: proposals run their own single transaction.
-            var result = VerifyTransaction(index, repair, request);
-            var verdict = Verdict.From(result);
-            subjects.GetOrAdd(key, static (_, value) => new Lazy<Verdict>(() => value), verdict);
-
-            return result;
+            subjects.GetOrAdd(key, static (_, value) => new Lazy<Verdict>(value), Verdict.From(result));
         }
 
-        return VerifyTransaction(index, repair, request);
+        return result;
     }
 
     static ImmutableArray<WorkspaceDiagnosticRepair> Discover(WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, bool verifyRepair)
@@ -281,11 +274,6 @@ internal static class WorkspaceProductionRepairs
     sealed record Verdict(bool Accepted, ImmutableArray<WorkspaceConflict> Conflicts)
     {
         internal static Verdict From(WorkspaceAuthoringResult result) => new(result.Accepted, result.Accepted ? [] : result.Conflicts);
-
-        internal WorkspaceAuthoringResult Refusal() => new()
-        {
-            Conflicts = Conflicts
-        };
     }
 
     sealed class Verification
