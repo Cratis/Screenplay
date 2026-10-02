@@ -1,0 +1,45 @@
+{
+    "name": "@cratis/screenplay-mcp-app",
+    "version": "0.0.0",
+    "private": true,
+    "description": "The event model board the Screenplay MCP server shows in hosts that render MCP Apps views",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Cratis/Screenplay.git"
+    },
+    "type": "module",
+    "scripts": {
+        "build": "node build.mjs && tsc --noEmit",
+        "compile": "tsc --noEmit",
+        "lint": "yarn g:lint",
+        "lint:ci": "yarn g:lint:ci",
+        "test": "vitest run"
+    },
+    "dependencies": {
+        "@cratis/screenplay-compiler": "workspace:*",
+        "@cratis/screenplay-event-models": "workspace:*"
+    },
+    "devDependencies": {
+        "@cratis/arc": "22.41.1",
+        "@cratis/arc.react": "22.41.1",
+        "@cratis/components": "4.22.0",
+        "@cratis/event-models": "0.109.0",
+        "@cratis/fundamentals": "7.22.0",
+        "@cratis/scene": "0.109.0",
+        "@modelcontextprotocol/ext-apps": "2.0.3",
+        "@types/chai": "^5.2.3",
+        "@types/node": "26.1.1",
+        "@types/react": "19.2.17",
+        "@types/react-dom": "19.2.3",
+        "chai": "^6.2.2",
+        "esbuild": "^0.28.1",
+        "pixi.js": "8.21.0",
+        "primeicons": "8.0.2",
+        "react": "19.3.0",
+        "react-dom": "19.3.0",
+        "reflect-metadata": "0.2.2",
+        "typescript": "6.0.3",
+        "vitest": "^4.1.11"
+    }
+}

@@ -36,20 +36,30 @@ static class McpToolCatalog
         new("read-proposal", "Review paged change metadata, diagnostics, implementation requirements, comments a changed document drops (view dropped-comments), or exact before/after base64 byte chunks by documentId. The proposal ID identifies an immutable complete plan.", ["proposalId"], ["proposalId", "view", "documentId", "offset", "limit", "expectedDescriptorContractRevision"]),
         new("export-workspace", "Export a portable canonical workspace snapshot in bounded base64 chunks. Root-local applied identities already survive restarts without export. A proposalId selects its candidate before apply; expectedRevision must identify that snapshot.", ["expectedRevision"], ["expectedRevision", "proposalId", "offset", "limit"]),
         new("discard-proposal", "Discard one connection-local proposal without writing source files.", ["proposalId"], ["proposalId"]),
+        new(McpVisualization.ToolName, "Draw the application as an event model board in the host's view. Without arguments it shows the model on disk. proposalId shows what that outstanding proposal would change; sketch draws a what-if from whole .play documents laid over the disk model, which is never validated as a proposal nor written. Returns a short change summary; the board itself is for the person.", [], ["proposalId", "sketch"]),
         new("apply", "Apply only an accepted server-produced proposal after revision and exact disk checks. Source authoring acceptance does not imply executable readiness. Failures return rollback/recovery status; this is not crash-atomic multi-file visibility.", ["proposalId", "expectedRevision", "expectedCatalogRevision"], ["proposalId", "expectedRevision", "expectedCatalogRevision", "includeContent"])
     ];
 
-    internal static IEnumerable<object> Describe() => _tools.Select(tool => new
-    {
-        tool.Name,
-        tool.Description,
-        inputSchema = McpToolSchemas.For(tool),
-        annotations = new { readOnlyHint = tool.Name != "apply" && tool.Name != "recover-workspace", destructiveHint = tool.Name == "apply" || tool.Name == "recover-workspace", openWorldHint = false }
-    });
+    internal static IEnumerable<object> Describe(bool visual = false) => _tools.Where(tool => visual || tool.Name != McpVisualization.ToolName).Select(tool => tool.Name == McpVisualization.ToolName
+        ? new
+        {
+            tool.Name,
+            tool.Description,
+            inputSchema = McpToolSchemas.For(tool),
+            annotations = Annotations(tool),
+            _meta = new { ui = new { resourceUri = McpAppResources.BoardUri } }
+        }
+        : (object)new
+        {
+            tool.Name,
+            tool.Description,
+            inputSchema = McpToolSchemas.For(tool),
+            annotations = Annotations(tool)
+        });
 
-    internal static void Validate(string name, JsonElement arguments)
+    internal static void Validate(string name, JsonElement arguments, bool visual = false)
     {
-        var tool = _tools.SingleOrDefault(tool => tool.Name == name) ?? throw new McpFailure($"Unknown tool '{name}'.", -32602);
+        var tool = _tools.SingleOrDefault(tool => tool.Name == name && (visual || name != McpVisualization.ToolName)) ?? throw new McpFailure($"Unknown tool '{name}'.", -32602);
         if (name == "propose-repair" && arguments.ValueKind == JsonValueKind.Object && !arguments.TryGetProperty("formatting", out _))
         {
             throw new McpFailure("FormattingConsentRequired: diagnostic repairs require explicit canonical formatting consent.", -32602);
@@ -79,4 +89,7 @@ static class McpToolCatalog
             }
         }
     }
+
+    static object Annotations(McpToolDefinition tool) =>
+        new { readOnlyHint = tool.Name != "apply" && tool.Name != "recover-workspace", destructiveHint = tool.Name == "apply" || tool.Name == "recover-workspace", openWorldHint = false };
 }

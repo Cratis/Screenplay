@@ -13,6 +13,11 @@ on:
       - "Source/DotNET/**"
       # The C# compiler is held to the TypeScript compiler's golden syntax, so a change to it is a C# change.
       - "Source/Screenplay/Compiler/Conformance/**"
+      # The MCP server embeds the event model board, which is built from these.
+      - "Source/Screenplay/McpApp/**"
+      - "Source/Screenplay/Compiler/**"
+      - "Source/Screenplay/EventModels/**"
+      - "package.json"
       - "Documentation/**"
       - "*.props"
       - "*.targets"
@@ -35,6 +40,18 @@ jobs:
             8.0.x
             9.0.x
             10.0.x
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23.x
+
+      - name: Yarn install
+        run: yarn
+
+      # The MCP server embeds the event model board page, and packing refuses without it.
+      - name: Build event model board
+        run: yarn workspaces foreach -Rt --from @cratis/screenplay-mcp-app run build
 
       - name: Build & run tests
         run: dotnet test --configuration Debug

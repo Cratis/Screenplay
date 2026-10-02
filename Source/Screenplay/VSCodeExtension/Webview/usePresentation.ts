@@ -31,7 +31,7 @@ const toViewOptions = (presentation: EventModelPresentation): BoardViewOptions =
 // How the board is presented - detail level, properties and how connections are drawn. The extension
 // keeps it for the person: it sends what they last chose when the board is ready, and is told of every
 // change, which it saves and shows on the other open boards.
-export function usePresentation(): [EventModelPresentation, (change: (current: EventModelPresentation) => EventModelPresentation) => void] {
+export function usePresentation(): [EventModelPresentation, (presentation: EventModelPresentation) => void] {
     const [presentation, setPresentation] = useState(defaultPresentation);
 
     useEffect(() => {
@@ -44,8 +44,7 @@ export function usePresentation(): [EventModelPresentation, (change: (current: E
         return () => window.removeEventListener('message', receive);
     }, []);
 
-    const change = (update: (current: EventModelPresentation) => EventModelPresentation) => {
-        const next = update(presentation);
+    const change = (next: EventModelPresentation) => {
         setPresentation(next);
         vscode.postMessage({ type: 'viewOptionsChanged', options: toViewOptions(next) });
     };

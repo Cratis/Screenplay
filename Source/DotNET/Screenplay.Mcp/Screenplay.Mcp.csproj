@@ -15,4 +15,17 @@
     <ItemGroup>
         <ProjectReference Include="../Screenplay/Screenplay.csproj" />
     </ItemGroup>
+
+    <!-- The event model board hosts render beside the conversation (MCP Apps). It is built by the
+         @cratis/screenplay-mcp-app workspace: yarn workspaces foreach -Rt from @cratis/screenplay-mcp-app run build.
+         Without it the server still runs, and offers no views. -->
+    <PropertyGroup>
+        <EventModelBoardPage>$(MSBuildProjectDirectory)/../../Screenplay/McpApp/dist/event-model-board.html</EventModelBoardPage>
+    </PropertyGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="$(EventModelBoardPage)" LogicalName="Cratis.Screenplay.Mcp.Apps.event-model-board.html" Condition="Exists('$(EventModelBoardPage)')" />
+    </ItemGroup>
+    <Target Name="RequireEventModelBoardForPack" BeforeTargets="GenerateNuspec">
+        <Error Condition="!Exists('$(EventModelBoardPage)')" Text="Build the event model board before packing: yarn workspaces foreach -Rt --from @cratis/screenplay-mcp-app run build" />
+    </Target>
 </Project>

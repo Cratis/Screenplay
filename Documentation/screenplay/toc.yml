@@ -84,6 +84,8 @@
   href: mcp-recovery.md
 - name: Create and edit a model with MCP
   href: mcp-authoring.md
+- name: See a model as an event model board with MCP
+  href: mcp-visualization.md
 - name: AST authoring API
   href: ast-authoring.md
 - name: Diagnostics

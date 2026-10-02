@@ -6,11 +6,19 @@ using System.Text.Json;
 
 namespace Cratis.Screenplay.Mcp;
 
-sealed class McpConnection(McpTools tools)
+sealed class McpConnection(McpTools tools, McpAppResources apps)
 {
     internal const int MaximumRequestCharacters = 32 * 1024 * 1024;
+    const string VisualInstructions = " This host renders views: visualize-model draws the application as an event model board. Pass a proposalId to show what a proposal would change before apply, or sketch documents to draw a what-if that is never written.";
+
     bool _initialized;
     bool _ready;
+    bool _visual;
+
+    internal McpConnection(McpTools tools)
+        : this(tools, McpAppResources.FromAssembly())
+    {
+    }
 
     internal void Run(TextReader input, TextWriter output)
     {
@@ -141,12 +149,22 @@ sealed class McpConnection(McpTools tools)
             _ = McpJson.RequiredString(clientInfo, "name");
             _ = McpJson.RequiredString(clientInfo, "version");
             _initialized = true;
+
+            // Views are offered only to a host that renders them; every other client sees the same server as before.
+            _visual = apps.Available && McpAppResources.Supports(capabilities);
             return new
             {
                 protocolVersion = "2025-06-18",
-                capabilities = new { tools = new { listChanged = false } },
+                capabilities = _visual
+                    ? new Dictionary<string, object>
+                    {
+                        ["tools"] = new { listChanged = false },
+                        ["resources"] = new { listChanged = false },
+                        ["extensions"] = new Dictionary<string, object> { [McpAppResources.Extension] = new { } }
+                    }
+                    : new Dictionary<string, object> { ["tools"] = new { listChanged = false } },
                 serverInfo = new { name = "cratis.screenplay", version = typeof(McpConnection).Assembly.GetName().Version!.ToString() },
-                instructions = "Read full Screenplay syntax, discover syntax-schema, open a revision-bound workspace, and use read-ast handles with propose-ast for typed edits. Source authoring acceptance is separate from executable readiness. Review exact bytes with read-proposal; identity state persists on apply, and export-workspace is optional for portable transfer or backup. Only apply and explicit recover-workspace may write source. The root must be trusted and exclusively owned during apply or recovery; rollback is not crash-atomic."
+                instructions = "Read full Screenplay syntax, discover syntax-schema, open a revision-bound workspace, and use read-ast handles with propose-ast for typed edits. Source authoring acceptance is separate from executable readiness. Review exact bytes with read-proposal; identity state persists on apply, and export-workspace is optional for portable transfer or backup. Only apply and explicit recover-workspace may write source. The root must be trusted and exclusively owned during apply or recovery; rollback is not crash-atomic." + (_visual ? VisualInstructions : string.Empty)
             };
         }
 
@@ -157,8 +175,11 @@ sealed class McpConnection(McpTools tools)
 
         return method switch
         {
-            "tools/list" => parameters.TryGetProperty("cursor", out _) ? throw new McpFailure("This server has no additional tool pages.", -32602) : new { tools = McpToolCatalog.Describe() },
-            "tools/call" => tools.Call(parameters),
+            "tools/list" => parameters.TryGetProperty("cursor", out _) ? throw new McpFailure("This server has no additional tool pages.", -32602) : new { tools = McpToolCatalog.Describe(_visual) },
+            "tools/call" => tools.Call(parameters, _visual),
+            "resources/list" when _visual => parameters.TryGetProperty("cursor", out _) ? throw new McpFailure("This server has no additional resource pages.", -32602) : apps.List(),
+            "resources/templates/list" when _visual => new { resourceTemplates = Array.Empty<object>() },
+            "resources/read" when _visual => apps.Read(parameters),
             _ => throw new McpFailure($"Unknown method '{method}'.", -32601)
         };
     }

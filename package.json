@@ -6,6 +6,7 @@
         "Source/Screenplay/EventModels",
         "Source/Screenplay/Monaco/screenplay-language",
         "Source/Screenplay/Monaco/screenplay-editor",
+        "Source/Screenplay/McpApp",
         "Source/Screenplay/VSCodeExtension"
     ],
     "engines": {
