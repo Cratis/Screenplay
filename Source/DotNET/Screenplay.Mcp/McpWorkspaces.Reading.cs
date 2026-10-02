@@ -137,7 +137,7 @@ internal sealed partial class McpWorkspaces
                 assignment.Origin
             }),
             "diagnostics" => McpWorkspaceAnalysis.For(workspace).Source.Compilation.Diagnostics,
-            "repairs" => syntax!.Diagnostics.SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(syntax, workspace.Revision, diagnostic)
+            "repairs" => syntax!.RepairableDiagnostics.SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(syntax, workspace.Revision, diagnostic)
                 .Select(repair => (object)new
                 {
                     repair.DiagnosticCode,

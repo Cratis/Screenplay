@@ -155,12 +155,13 @@ parent/child operations. See [the authoring contract](ast-authoring.md).
 ## Fix a diagnostic
 
 Call `read-workspace` with `view: "diagnostics"` to inspect source diagnostics,
-then `view: "repairs"` at the same current revision. Available typed repairs include:
+then `view: "repairs"` at the same current revision. `read-ast` reports parser diagnostics only;
+compilation diagnostics belong to the paged diagnostics view. Available typed repairs include:
 
 | Diagnostic | Proposal |
 | --- | --- |
-| `PLAY0166` on command `produces` | Add an event declaration in the producing slice. Types come from command property paths, retaining concepts, or from `$context.occurred` as `DateTime`. Uncertain types, conflicting producer shapes, imported/already-declared events and cross-file producers have no repair. |
-| `PLAY0478` (Information) | Replace a plain production with an explicit `for <identifier>`. This deliberately selects the identifier rather than preserving allocated-identity routing. Optional or collection identifiers have no repair. |
+| `PLAY0166` on command `produces` | Add an event declaration in the producing slice. Types come from command property paths, retaining concepts, or from `$context.occurred` as `DateTime`. Uncertain types, conflicting producer shapes, imported/already-declared events and cross-file producers have no repair. Parser errors in any workspace document also block inference. |
+| `PLAY0478` (Information) | Replace a plain production with an explicit `for <identifier>`. This deliberately selects the identifier rather than preserving allocated-identity routing. Optional or collection identifiers have no repair. Both models must be executable; a change to the language/semantic version or any other production's effective destination refuses the repair. |
 | `PLAY0397` on `validate csharp` | Replace the validation with itself so canonical printing migrates its legacy fence. Other legacy forms have no individual repair. |
 
 Pass the selected repair's `diagnosticCode` and `subject` to `propose-repair` with

@@ -9,6 +9,14 @@ namespace Cratis.Screenplay.Workspaces.for_WorkspaceAuthoring.when_repairing_com
 
 public class and_the_proposal_is_not_authorized : given.a_command_production
 {
+    void Prepare(string code)
+    {
+        if (code == DiagnosticCodes.OmittedProductionDestination)
+        {
+            Create(DestinationSource);
+        }
+    }
+
     void Establish()
     {
         Create(Source.Replace("          for projectId\n", string.Empty, StringComparison.Ordinal));
@@ -19,6 +27,7 @@ public class and_the_proposal_is_not_authorized : given.a_command_production
     [InlineData(DiagnosticCodes.OmittedProductionDestination)]
     void should_reject_a_stale_workspace_revision(string code)
     {
+        Prepare(code);
         Repair = Find(code);
         Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, Repair, Request() with { ExpectedRevision = default });
         Result.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.StaleWorkspaceRevision);
@@ -31,6 +40,7 @@ public class and_the_proposal_is_not_authorized : given.a_command_production
     [InlineData(DiagnosticCodes.OmittedProductionDestination)]
     void should_reject_a_stale_catalog_revision(string code)
     {
+        Prepare(code);
         Repair = Find(code);
         Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, Repair, Request() with { ExpectedCatalogRevision = default });
         Result.Accepted.ShouldBeFalse();
@@ -42,6 +52,7 @@ public class and_the_proposal_is_not_authorized : given.a_command_production
     [InlineData(DiagnosticCodes.OmittedProductionDestination)]
     void should_require_formatting_consent(string code)
     {
+        Prepare(code);
         Repair = Find(code);
         Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, Repair, Request() with { Formatting = WorkspaceAuthoringFormatting.PreserveTrivia });
         Result.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.FormattingConsentRequired);
@@ -60,6 +71,7 @@ public class and_the_proposal_is_not_authorized : given.a_command_production
     [Fact]
     void should_reject_a_tampered_destination()
     {
+        Prepare(DiagnosticCodes.OmittedProductionDestination);
         Repair = Find(DiagnosticCodes.OmittedProductionDestination);
         var replace = (ReplaceWorkspaceNode)Repair.Operations.Single();
         Repair = Repair with { Operations = [replace with { Node = ((ProducesSyntax)replace.Node) with { For = new LiteralExpressionSyntax("tampered", replace.Node.Location) } }] };
@@ -72,11 +84,7 @@ public class and_the_proposal_is_not_authorized : given.a_command_production
     [InlineData(DiagnosticCodes.OmittedProductionDestination)]
     void should_accept_structurally_equivalent_wire_operations(string code)
     {
-        if (code == DiagnosticCodes.OmittedProductionDestination)
-        {
-            Create(Source.Replace("          for projectId\n", string.Empty, StringComparison.Ordinal) + "\n      event ProjectRegistered\n        name ProjectName\n        registeredAt DateTime\n");
-        }
-
+        Prepare(code);
         Repair = Find(code);
         Repair = Repair with { Operations = [Repair.Operations.Single() switch
         {

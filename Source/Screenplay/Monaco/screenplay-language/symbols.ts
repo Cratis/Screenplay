@@ -108,7 +108,6 @@ function collectBody(lines: string[], fences: boolean[], start: number, indent: 
     const body: number[] = [];
     for (let index = start + 1; index < lines.length; index++) {
         if (fences[index]) {
-            body.push(index);
             continue;
         }
         const line = lines[index];
@@ -117,6 +116,18 @@ function collectBody(lines: string[], fences: boolean[], start: number, indent: 
         body.push(index);
     }
     return body;
+}
+
+function withoutComment(line: string): string {
+    let quoted = false;
+    let escaped = false;
+    for (let index = 0; index < line.length; index++) {
+        const character = line[index];
+        if (!quoted && character === '/' && line[index + 1] === '/') return line.slice(0, index);
+        if (character === '"' && !escaped) quoted = !quoted;
+        escaped = quoted && character === '\\' && !escaped;
+    }
+    return line;
 }
 
 export function scanDocument(lines: string[]): DocumentSymbols {
@@ -132,6 +143,8 @@ export function scanDocument(lines: string[]): DocumentSymbols {
         triggers: [],
     };
     const fences = fenceMap(lines);
+    // Normalize only structural lines; quoted strings and fenced code retain their contents.
+    lines = lines.map((line, index) => fences[index] ? line : withoutComment(line));
 
     for (let index = 0; index < lines.length; index++) {
         if (fences[index]) continue;

@@ -351,7 +351,7 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
 function validateProductionDestinations(lines: string[], fences: boolean[], symbols: DocumentSymbols): ValidationIssue[] {
     const issues: ValidationIssue[] = [];
     for (const command of symbols.commands) {
-        const identifiers = command.properties.filter(property => property.isIdentifier);
+        const identifiers = command.properties.filter(property => property.isIdentifier && !property.type.endsWith('?') && !property.type.endsWith('[]'));
         if (identifiers.length !== 1) continue;
         const commandIndent = indentOf(lines[command.line]);
         for (let line = command.line + 1; line < lines.length; line++) {

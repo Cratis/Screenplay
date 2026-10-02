@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
 
@@ -29,14 +30,19 @@ internal static class WorkspaceProductionRepairs
                 return [];
             }
 
-            return [new(diagnostic.Code, subject.Handle, [new ReplaceWorkspaceNode(subject.Handle, produces, produces with { For = new PathExpressionSyntax(identifiers[0].Name, produces.Location) })])];
+            var repair = new WorkspaceDiagnosticRepair(
+                diagnostic.Code,
+                subject.Handle,
+                [new ReplaceWorkspaceNode(subject.Handle, produces, produces with { For = new PathExpressionSyntax(identifiers[0].Name, produces.Location) })]);
+
+            return KeepsOtherDestinations(index, commandEntry, subject, repair) ? [repair] : [];
         }
 
-        // Names resolve application-wide. Never invent a local copy of a declared/imported contract,
-        // or make another file's (or non-command producer's) missing declaration disappear implicitly.
-        if (index.Entries.Any(entry => (entry.Node is EventSyntax declared && declared.Name == produces.Event) ||
-            (entry.Node is ImportSyntax import && import.Name == produces.Event) ||
-            (entry.Node is CaptureAppendSyntax append && append.Event == produces.Event)))
+        // Compilation includes partial ASTs, but editable entries do not. Never infer a contract
+        // while another document's declarations or producers might be hidden by parser errors.
+        // Declared/imported contracts cannot produce PLAY0166: names resolve application-wide.
+        if (index.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error) ||
+            index.Entries.Any(entry => entry.Node is CaptureAppendSyntax append && append.Event == produces.Event))
         {
             return [];
         }
@@ -58,6 +64,72 @@ internal static class WorkspaceProductionRepairs
 
         return [new(diagnostic.Code, subject.Handle, [new AddWorkspaceNode(slice.Handle, slice.Node, "events", new EventSyntax(produces.Event, properties, produces.Location))])];
     }
+
+    static bool KeepsOtherDestinations(WorkspaceSyntaxIndex index, WorkspaceSyntaxEntry command, WorkspaceSyntaxEntry subject, WorkspaceDiagnosticRepair repair)
+    {
+        var workspace = index.Workspace;
+        if (workspace.Compilation.Value is not { } original || command.Address is null || subject.Index is null)
+        {
+            return false;
+        }
+
+        var proposal = workspace.ProposeAuthoring(new WorkspaceAuthoringRequest
+        {
+            ExpectedRevision = workspace.Revision,
+            ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
+            Validation = WorkspaceAuthoringValidation.Authoring,
+            Formatting = repair.RequiredFormatting,
+            Operations = repair.Operations
+        });
+        if (!proposal.Accepted || proposal.Workspace!.Compilation.Value is not { } candidate ||
+            original.Model.LanguageVersion != candidate.Model.LanguageVersion || original.Model.SemanticVersion != candidate.Model.SemanticVersion)
+        {
+            return false;
+        }
+
+        var subjectCommand = original.Documents.IdentityCatalog.ResolveSemantic(command.Address);
+        var before = Commands(original.Model.Application).ToArray();
+        var after = Commands(candidate.Model.Application).ToDictionary(value => value.Id);
+        if (before.Length != after.Count)
+        {
+            return false;
+        }
+
+        foreach (var producer in before)
+        {
+            if (!after.TryGetValue(producer.Id, out var changed) || producer.Produces.Length != changed.Produces.Length)
+            {
+                return false;
+            }
+
+            for (var production = 0; production < producer.Produces.Length; production++)
+            {
+                if (producer.Id == subjectCommand && production == subject.Index.Value)
+                {
+                    continue;
+                }
+
+                // Compare effective routing, not just the nullable override: changing a command's
+                // default can reroute untouched sibling productions even within the same version.
+                var previous = producer.Produces[production];
+                var current = changed.Produces[production];
+                if (previous.EventContract != current.EventContract ||
+                    (previous.Destination ?? producer.Destination?.Value) != (current.Destination ?? changed.Destination?.Value) ||
+                    (previous.Destination is null ? producer.Destination?.Type : null) != (current.Destination is null ? changed.Destination?.Type : null))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    static IEnumerable<SemanticCommand> Commands(SemanticApplication application) => application.Modules
+        .SelectMany(module => Commands(module.Features));
+
+    static IEnumerable<SemanticCommand> Commands(IEnumerable<SemanticFeature> features) => features
+        .SelectMany(feature => feature.Slices.SelectMany(slice => slice.Commands).Concat(Commands(feature.Features)));
 
     static PropertySyntax[]? Infer(WorkspaceSyntaxIndex index, CommandSyntax command, ProducesSyntax produces)
     {

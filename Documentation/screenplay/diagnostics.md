@@ -818,14 +818,16 @@ See [Specifications](specifications.md#clocks-triggers-and-captures).
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0478` | Information | A plain `produces <Event>` omits `for` and its command has an identifier. Conditional productions and commands without an identifier are not reported. |
+| `PLAY0478` | Information | A plain `produces <Event>` omits `for` and its command has one required scalar identifier. Conditional productions and optional or collection identifiers are not reported. |
 
 `PLAY0478` does not change routing or executable-model bytes. Its typed repair
 replaces the production with one that explicitly states `for <identifier>`.
 Accept it only when that event should address the command's identifier: a plain
 omission can intentionally use an allocated identity, or inherit another
 production's explicit destination. The repair is not offered for an optional or
-collection identifier.
+collection identifier. It is also refused when the original or candidate has no executable model,
+when the repair would change the language or semantic version, or when any other production's
+effective destination would change (including through a command default).
 
 For `PLAY0166` on a command production, a typed repair can add an `event`
 declaration to the producing slice. Properties follow mapping order; command
@@ -833,7 +835,8 @@ property paths retain their types and concepts (including compliance markings),
 and `$context.occurred` becomes `DateTime`. No generation, tags, subject or origin
 is inferred. Unknown sources, literals, computations, reads, conflicting producer
 shapes, imported or already-declared events, and cross-file producers have no
-repair. Reaction and capture producers are not inferred.
+repair. Any workspace document with parser errors also blocks inference, because its partial
+syntax may hide a contract or another producer. Reaction and capture producers are not inferred.
 
 Both repairs require canonical formatting consent and refuse any dropped comment.
 Discovery and preview never write source. Review the write plan and explicitly

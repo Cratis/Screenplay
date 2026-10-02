@@ -28,6 +28,10 @@ public class a_command_production : Specification
                   registeredAt = $context.occurred
         """;
 
+    protected static string DestinationSource => Source.Replace("          for projectId\n", string.Empty, StringComparison.Ordinal) + "\n      event ProjectRegistered\n        name ProjectName\n        registeredAt DateTime\n" + VersionAnchor;
+
+    protected const string VersionAnchor = "\n      command Anchor\n        anchorId Uuid identifier\n        produces Anchored\n          for anchorId\n      event Anchored\n";
+
     protected ScreenplayWorkspace Workspace = null!;
     protected WorkspaceDiagnosticRepair Repair = null!;
     protected WorkspaceAuthoringResult Result = null!;
@@ -39,11 +43,11 @@ public class a_command_production : Specification
         Workspace = ScreenplayWorkspace.Create("Projects", documents, SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Projects")));
     }
 
-    protected WorkspaceDiagnosticRepair Find(string code) => WorkspaceSyntaxIndex.Create(Workspace).Diagnostics
+    protected WorkspaceDiagnosticRepair Find(string code) => WorkspaceSyntaxIndex.Create(Workspace).RepairableDiagnostics
         .Where(diagnostic => diagnostic.Code == code)
         .SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(Workspace, Workspace.Revision, diagnostic)).First();
 
-    protected bool HasRepair(string code) => WorkspaceSyntaxIndex.Create(Workspace).Diagnostics
+    protected bool HasRepair(string code) => WorkspaceSyntaxIndex.Create(Workspace).RepairableDiagnostics
         .Where(diagnostic => diagnostic.Code == code)
         .SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(Workspace, Workspace.Revision, diagnostic)).Any();
 

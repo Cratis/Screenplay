@@ -27,7 +27,7 @@ public class a_producing_workspace : for_McpAuthoringWorkflow.given.an_authoring
             """;
         if (declared)
         {
-            source += "\n      event ProjectRegistered\n        name String\n        registeredAt DateTime\n";
+            source += "\n      event ProjectRegistered\n        name String\n        registeredAt DateTime\n      command Anchor\n        anchorId Uuid identifier\n        produces Anchored\n          for anchorId\n      event Anchored\n";
         }
 
         File.WriteAllText(Path.Combine(RootPath, "application.play"), source);

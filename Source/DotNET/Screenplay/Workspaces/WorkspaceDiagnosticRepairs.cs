@@ -57,7 +57,7 @@ public static class WorkspaceDiagnosticRepairs
         }
 
         var index = WorkspaceSyntaxIndex.Create(workspace);
-        var matches = index.Diagnostics.Where(diagnostic => diagnostic.Code == repair.DiagnosticCode)
+        var matches = index.RepairableDiagnostics.Where(diagnostic => diagnostic.Code == repair.DiagnosticCode)
             .SelectMany(diagnostic => Find(index, workspace.Revision, diagnostic))
             .Where(candidate => candidate.Subject == repair.Subject && Matches(candidate, repair)).ToArray();
         if (matches.Length != 1 || repair.Operations.IsDefaultOrEmpty)
@@ -106,7 +106,7 @@ public static class WorkspaceDiagnosticRepairs
 
         // PLAY0397 also covers bare description fences and legacy handler language lines. Only the
         // 'validate csharp' form has a unique CodeValidateSyntax subject at the warning's position.
-        if (!index.Diagnostics.Any(item => item.Code == diagnostic.Code && item.Location == diagnostic.Location))
+        if (!index.RepairableDiagnostics.Contains(diagnostic))
         {
             return [];
         }

@@ -26,6 +26,14 @@ public class and_the_destination_is_omitted : given.a_producing_workspace
     }
 
     [Fact] void should_surface_an_information_diagnostic() => _diagnostic.GetProperty("severity").GetString().ShouldEqual("Information");
+    [Fact]
+    void should_keep_compilation_advice_out_of_read_ast()
+    {
+        var ast = Result("read-ast", new { expectedRevision = Opened.GetProperty("revision").GetString(), kind = "CommandSyntax", limit = 1 });
+        ast.GetProperty("diagnostics").GetArrayLength().ShouldEqual(0);
+        ast.GetProperty("page").GetProperty("items").GetArrayLength().ShouldEqual(1);
+    }
+
     [Fact] void should_expose_a_typed_replacement() => Repair.GetProperty("operations").EnumerateArray().Single().GetProperty("operation").GetString().ShouldEqual("replace");
     [Fact] void should_insert_the_explicit_destination() => _candidate.Documents[0].Text.ShouldContain("for projectId");
     [Fact] void should_preserve_the_comment() => _candidate.Documents[0].Text.ShouldContain("// preserve this comment");

@@ -34,7 +34,7 @@ internal sealed partial class McpWorkspaces
         var code = McpJson.RequiredString(arguments, "diagnosticCode");
         var subject = McpAstHandles.Read(arguments.GetProperty("subject"));
         var index = McpWorkspaceAnalysis.For(workspace).Syntax;
-        var repairs = index.Diagnostics
+        var repairs = index.RepairableDiagnostics
             .Where(diagnostic => diagnostic.Code == code)
             .SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(index, expectedRevision, diagnostic))
             .Where(repair => repair.Subject == subject).ToArray();

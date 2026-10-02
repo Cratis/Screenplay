@@ -18,7 +18,7 @@ internal static class ProductionDestinationDiagnostics
 
     static IEnumerable<Diagnostic> In(CommandSyntax command)
     {
-        var identifiers = command.Properties.Where(property => property.IsIdentifier).ToArray();
+        var identifiers = command.Properties.Where(property => property.IsIdentifier && !property.Type.IsOptional && !property.Type.IsCollection).ToArray();
         if (identifiers.Length != 1)
         {
             return [];

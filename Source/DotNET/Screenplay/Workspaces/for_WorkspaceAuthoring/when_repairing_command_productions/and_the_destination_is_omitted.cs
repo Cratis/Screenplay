@@ -12,8 +12,8 @@ public class and_the_destination_is_omitted : given.a_command_production
 
     void Establish()
     {
-        Create(Source.Replace("          for projectId\n", string.Empty, StringComparison.Ordinal) + "\n      event ProjectRegistered\n        name ProjectName\n        registeredAt DateTime\n");
-        _diagnostic = WorkspaceSyntaxIndex.Create(Workspace).Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.OmittedProductionDestination);
+        Create(DestinationSource);
+        _diagnostic = WorkspaceSyntaxIndex.Create(Workspace).RepairableDiagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.OmittedProductionDestination);
         Repair = Find(_diagnostic.Code);
     }
 

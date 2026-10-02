@@ -85,10 +85,12 @@ public sealed class WorkspaceSyntaxIndex
 
     readonly IReadOnlyDictionary<WorkspaceNodeHandle, WorkspaceSyntaxEntry> _handles;
 
-    WorkspaceSyntaxIndex(ImmutableArray<WorkspaceSyntaxEntry> entries, ImmutableArray<Diagnostic> diagnostics)
+    WorkspaceSyntaxIndex(ScreenplayWorkspace workspace, ImmutableArray<WorkspaceSyntaxEntry> entries, ImmutableArray<Diagnostic> diagnostics)
     {
+        Workspace = workspace;
         Entries = entries;
         Diagnostics = diagnostics;
+        RepairableDiagnostics = [.. diagnostics.Concat(workspace.Compilation.Diagnostics).Distinct()];
         _handles = entries.ToDictionary(entry => entry.Handle);
     }
 
@@ -98,15 +100,22 @@ public sealed class WorkspaceSyntaxIndex
     public ImmutableArray<WorkspaceSyntaxEntry> Entries { get; }
 
     /// <summary>
-    /// Gets parse and workspace compilation diagnostics; erroneous documents are not indexed as editable syntax.
+    /// Gets parser diagnostics; erroneous documents are not indexed as editable syntax.
     /// </summary>
     public ImmutableArray<Diagnostic> Diagnostics { get; }
+
+    /// <summary>
+    /// Gets parser and compilation diagnostics for revision-bound repair discovery, preserving distinct messages.
+    /// </summary>
+    public ImmutableArray<Diagnostic> RepairableDiagnostics { get; }
+
+    internal ScreenplayWorkspace Workspace { get; }
 
     /// <summary>
     /// Creates an index from exact source without requiring ESM binding.
     /// </summary>
     /// <param name="workspace">The original workspace.</param>
-    /// <returns>The occurrence index and parser diagnostics.</returns>
+    /// <returns>The original occurrence index, parser diagnostics, and separate repair-discovery diagnostics.</returns>
     public static WorkspaceSyntaxIndex Create(ScreenplayWorkspace workspace)
     {
         var entries = ImmutableArray.CreateBuilder<WorkspaceSyntaxEntry>();
@@ -123,9 +132,7 @@ public sealed class WorkspaceSyntaxIndex
             }
         }
 
-        diagnostics.AddRange(workspace.Compilation.Diagnostics);
-
-        return new(entries.ToImmutable(), [.. diagnostics.DistinctBy(diagnostic => (diagnostic.Code, diagnostic.Location))]);
+        return new(workspace, entries.ToImmutable(), diagnostics.ToImmutable());
     }
 
     /// <summary>
