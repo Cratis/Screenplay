@@ -841,7 +841,7 @@ syntax may hide a contract or another producer. Reaction and capture producers a
 Both repairs require canonical formatting consent and refuse any dropped comment.
 Discovery and preview never write source. Review the write plan and explicitly
 accept it through the [workspace authoring contract](ast-authoring.md) or
-[MCP repair workflow](mcp-authoring.md#fix-a-diagnostic). Stale workspace or catalog
+[MCP repair workflow](mcp/authoring-tools.md#fix-a-diagnostic). Stale workspace or catalog
 revisions are rejected. Source authoring and executable readiness remain separate;
 for example, compliance attributes and nested mapping paths can require capabilities
 the executable model does not yet admit.

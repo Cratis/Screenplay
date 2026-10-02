@@ -43,7 +43,7 @@ Diagnostic repairs (`PLAY0166` event declaration and `PLAY0478` explicit destina
 use the same proposal/apply envelope as other typed authoring. Discovery and
 `propose-repair` do not modify source or identity state. Review both before applying;
 if apply is interrupted, use the recovery procedure below rather than proposing the
-repair again against partially installed files. See [Fix a diagnostic](mcp-authoring.md#fix-a-diagnostic).
+repair again against partially installed files. See [Fix a diagnostic](authoring-tools.md#fix-a-diagnostic).
 
 Every proposal includes `stateChange` with before/after state revisions. Source
 and identity state are installed under the same rollback envelope.

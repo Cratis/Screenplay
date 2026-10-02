@@ -407,7 +407,7 @@ A plain `produces <Event>` without `for` does not say where the event lands, and
 
 A plain omission with an available identifier reports information diagnostic
 [`PLAY0478`](diagnostics.md#production-destination-advice-and-repairs). Its typed
-[MCP repair](mcp-authoring.md#fix-a-diagnostic) inserts `for <identifier>` after
+[MCP repair](mcp/authoring-tools.md#fix-a-diagnostic) inserts `for <identifier>` after
 review; it does not apply automatically. Accept it when the identifier is the
 intended destination, not when you deliberately want an allocated identity.
 

@@ -197,7 +197,7 @@ whitespace and other legacy fences can change; a proposal that would drop any
 comment is refused. No file is written until you review the `before`/`after` bytes
 with `read-proposal` and explicitly call `apply`. After external edits, reopen and
 rediscover repairs rather than reusing stale handles. Applying a repair uses the
-same [identity state and recovery](mcp-recovery.md) contract as other proposals.
+same [identity state and recovery](recovery.md) contract as other proposals.
 
 ## Review and apply
 

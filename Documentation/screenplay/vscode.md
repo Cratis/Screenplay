@@ -86,7 +86,7 @@ The text editor also reports `PLAY0478` as information when a plain production
 omits `for` and its command has an identifier. This is advice, not a new routing
 default. Monaco and VS Code use their own TypeScript validation; they do not host
 the C# workspace repair transaction or offer these repairs as editor quick fixes.
-Use the [MCP repair workflow](mcp-authoring.md#fix-a-diagnostic) to preview an explicit
+Use the [MCP repair workflow](mcp/authoring-tools.md#fix-a-diagnostic) to preview an explicit
 `for` or declare a missing produced event, then review and apply the typed proposal.
 
 ## Theme
