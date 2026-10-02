@@ -135,8 +135,9 @@ is canonicalized.
 | `read-ast` | `expectedRevision` | documentId, path, kind, name, semanticId, view, includeContent, offset, limit |
 | `propose` | Expected workspace/catalog revisions, operations | Explicit migrations/retirements, includeContent; legacy single-operation form supported |
 | `propose-ast` | Expected revisions, formatting | operations, documents, validation, referencePolicy, migrations/retirements, includeContent |
-| `propose-repair` | `expectedRevision`, `expectedCatalogRevision`, `diagnosticCode`, `subject` handle, `formatting` | includeContent; use the discovered `requiredFormatting`. `PLAY0479` supports `PreserveTrivia` or explicit `CanonicalizeTouchedDocuments` |
-| `propose-rename` | Expected revisions, target handle, expectedName, newName | formatting, validation, includeContent |
+| `propose-repair` | `expectedRevision`, `expectedCatalogRevision`, `diagnosticCode`, `subject` handle, `formatting` | includeContent; use the discovered `requiredFormatting`. `PLAY0479` supports `PreserveTrivia` or explicit `CanonicalizeTouchedDocuments`; other repairs require `CanonicalizeTouchedDocuments` |
+| `propose-rename` | Expected revisions, target handle, expectedName, newName | formatting, validation, includeContent, `eventNeverPersisted` (boolean, default false) |
+| `propose-extract-inline-event` | `expectedRevision`, `expectedCatalogRevision`, inline event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted |
 | `expand-layout` | Expected revisions | layout, validation, formatting, referencePolicy, includeContent |
 | `read-proposal` | proposalId | view (`implementation-requirements` for proposed attachments), documentId, offset, limit |
 | `export-workspace` | expectedRevision | proposalId, offset, limit |
@@ -215,7 +216,9 @@ workspace proposals for changes.
 
 Page `read-workspace` with `view: "repairs"` and the current `expectedRevision`.
 Each item includes `diagnosticCode`, diagnostic `location`, a revision-bound
-`subject` handle and a typed operation summary. Supply the code and subject to
+`subject` handle, a typed operation summary, `requiredFormatting`, optional `title`,
+`canFixAll` and `retiredSemanticAddresses`. A contract-changing `PLAY0469` repair
+has `canFixAll: false` and lists the payload property's retirement. Supply the code and subject to
 `propose-repair` with both current revisions and explicit
 `formatting: "CanonicalizeTouchedDocuments"`. The server regenerates the repair
 from the current compiler diagnostics, never from a message string or supplied
@@ -229,9 +232,15 @@ Unknown, ambiguous and unsupported repairs fail closed; stale workspace/catalog
 revisions return typed conflicts. A successful response retains the same proposal
 as `propose-ast`: use `read-proposal` to inspect exact before/after bytes,
 then call `apply` explicitly. Neither discovery nor
-proposal writes. Only the deterministic `PLAY0397` `validate csharp` migration
-is currently offered. Other diagnostics, including repairs requiring a choice,
-have no compiler-authored repair.
+proposal writes. Available repairs are `PLAY0166` (infer an undeclared produced
+event), `PLAY0478` (make a production's identifier destination explicit), `PLAY0469`
+(remove an inline identifier payload copy), `PLAY0471` (remove a redundant event
+pin), and `PLAY0397` (`validate csharp` migration). See the
+[repair conditions](authoring-tools.md#fix-a-diagnostic) before choosing one.
+Discovery verifies acceptance and comment preservation for the first four, with
+their routing, consumer or model-preservation checks. `PLAY0397` discovery identifies
+the recipe only; its proposal may still be refused. `PLAY0470` remains deferred,
+and repairs requiring a choice are not offered.
 
 ## Editing and validation
 
@@ -243,6 +252,14 @@ whole-document replacement can repair parser-invalid source without node handles
 references and assigned identities. It preserves trivia by default. Ambiguity,
 name capture, opaque text naming the old or new name, unsupported spans or resolver
 disagreement refuse automation. It is not global text replacement or automatic property-schema evolution.
+Event renames retain an existing `id` pin or insert the previous name by default.
+`eventNeverPersisted: true` omits a new pin and removes a redundant pin equal to the current name; a pin naming an earlier identity is kept. A rename
+that inserts a pin also refuses comment loss or duplication.
+
+`propose-extract-inline-event` moves a declaration into its owning slice and makes
+an implicit destination explicit. It requires canonical formatting consent,
+byte-identical canonical ESM, unchanged catalog assignments and every comment
+preserved exactly once.
 
 Two independent choices control AST authoring:
 
@@ -258,11 +275,13 @@ Explicit valid reference edits differ from an untouched reference changing meani
 
 Formatting policies are `PreserveExactSource`, `PreserveTrivia`, and
 `CanonicalizeTouchedDocuments`. Verified trivia patches cover identifiers, literal
-values and whole property mappings, and must reparse to the intended AST;
-unsupported patches reject rather than silently canonicalizing. Explicit
-canonicalization removes comments in touched files and normalizes member order;
-each proposal reports its `droppedCommentCount`. Untouched bytes and BOM
-policy are retained. Printer omissions reject the proposal.
+values, whole property mappings and event-pin insertion/removal, and must reparse
+to the intended AST; unsupported patches reject rather than silently canonicalizing.
+Canonicalization retains attached comments and parsed member order, normalizes
+whitespace, and reports any unplaceable comments in `droppedCommentCount`.
+Repairs, extraction and pin-inserting event renames refuse comment loss or
+duplication; other explicitly canonicalized edits may disclose dropped comments.
+Untouched bytes and BOM policy are retained. Printer omissions reject the proposal.
 
 See [the AST API](../ast-authoring.md) and [authoring procedure](authoring-tools.md).
 

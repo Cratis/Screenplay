@@ -143,7 +143,8 @@ rejected.
 For a supported declaration, call `propose-rename` with its handle, exact
 `expectedName`, `newName`, and both workspace revisions. The default formatting
 is `PreserveTrivia`: verified identifier patches leave comments, line endings,
-BOM and unrelated text intact.
+BOM and unrelated text intact. Event renames update typed consumers, including
+constraint `released by` references and screen/behavior `on event` triggers.
 
 The planner coordinates logical fragments, repairs proven typed references and
 preserves assigned descendant/event identities. It refuses ambiguous targets,
@@ -184,6 +185,22 @@ Use explicit retirement addresses when removing assigned declarations. If edits
 overlap, replace their common containing subtree instead of sending conflicting
 parent/child operations. See [the authoring contract](../ast-authoring.md).
 
+## Extract an inline event
+
+Use `read-ast` to find the inline `EventSyntax` handle, then call
+`propose-extract-inline-event` with `subject`, `expectedRevision`,
+`expectedCatalogRevision` and `formatting: "CanonicalizeTouchedDocuments"`.
+This is an explicit refactoring, not a diagnostic repair. The declaration moves
+into the owning slice; an omitted inline destination becomes `for <identifier>`.
+An existing destination stays unchanged. Event metadata and tags move with the
+declaration, while production and mapping comments remain attached to their intent.
+
+Extraction requires byte-identical canonical ESM, unchanged catalog assignments
+and every comment preserved exactly once. It refuses unsupported or unbindable
+models rather than guessing. Extract before adding `generation`; parser-invalid
+inline generations cannot be edited through occurrence handles. There is no reverse
+inlining operation. Review and apply the returned proposal as any other edit.
+
 ## Fix a diagnostic
 
 Call `read-workspace` with `view: "diagnostics"` to inspect source diagnostics,
@@ -194,13 +211,20 @@ compilation diagnostics belong to the paged diagnostics view. Available typed re
 | --- | --- |
 | `PLAY0166` on command `produces` | Add an event declaration in the producing slice. Types come from command property paths, retaining concepts, or from `$context.occurred` as `DateTime`. Uncertain types, conflicting producer shapes, imported/already-declared events and cross-file producers have no repair. Parser errors in any workspace document also block inference. |
 | `PLAY0478` (Information) | Replace a plain production with an explicit `for <identifier>`. This deliberately selects the identifier rather than preserving allocated-identity routing. Optional or collection identifiers have no repair. Both models must be executable; a change to the language/semantic version or any other production's effective destination refuses the repair. |
-| `PLAY0397` on `validate csharp` | Replace the validation with itself so canonical printing migrates its legacy fence. |
+| `PLAY0469` on an inline mapping | Remove the payload property and its mapping together, retiring the property address. The label says “changes the event contract”; `canFixAll` is false. This narrow repair requires an executable model without other consumers of that event (including constraint releases, projection subscriptions and `on event` triggers) or opaque syntax/attachments. It refuses changed routing or lost comments. Plain productions receive guidance only. |
+| `PLAY0471` | Remove a redundant event `id`, inline or standalone, only when the executable model, catalog and comments are preserved. |
+| `PLAY0397` on `validate csharp` | Replace the validation with itself so canonical printing migrates its legacy fence. Other forms of `PLAY0397` have no individual repair. |
 | `PLAY0479` (Information) | Write `optional` after the type. An occurrence repair changes one type; a document repair contains all spelling changes in one transaction. Both preserve syntax structure. |
 
-Listed `PLAY0166`, `PLAY0478` and `PLAY0479` repairs are verified, not unchecked suggestions.
-Discovery checks authoring acceptance and comment preservation, plus routing safety
-for `PLAY0478`. For example, an inferred event that conflicts with a specification's
-asserted fields is not listed. Only acceptance and conflicts are cached per subject
+Discovery verifies listed `PLAY0166`, `PLAY0478`, `PLAY0469`, `PLAY0471` and `PLAY0479` repairs.
+It checks authoring acceptance and comment preservation, plus routing safety for
+`PLAY0478`, consumer/routing impact and executable readiness for `PLAY0469`, and
+executable-model/catalog preservation for `PLAY0471`. For example, an inferred
+event that conflicts with a specification's asserted fields is not listed.
+`PLAY0479` verifies all spellings together once per document and snapshot; occurrence
+repairs are offered only when that document migration passes.
+`PLAY0397` discovery identifies the recipe only; its proposal may still be refused.
+Only acceptance and conflicts for verified repairs are cached per subject
 on the current immutable workspace snapshot for discovery reuse; diagnostics are
 never cached. Paging or rereading reuses the verdict; a new snapshot requires fresh
 verification. `propose-repair` always verifies only the selected subject in one fresh
@@ -224,7 +248,7 @@ UTF-8 BOM are retained. `"CanonicalizeTouchedDocuments"` remains an explicit opt
 
 Other listed repairs require `"CanonicalizeTouchedDocuments"` and reprint the entire
 touched file, so whitespace and other legacy fences can change. A proposal that
-would drop any comment is refused. No file is written until you review the `before`/`after` bytes
+would drop any comment, or duplicate one, is refused. No file is written until you review the `before`/`after` bytes
 with `read-proposal` and explicitly call `apply`. After external edits, reopen and
 rediscover repairs rather than reusing stale handles. Applying a repair uses the
 same [identity state and recovery](recovery.md) contract as other proposals.

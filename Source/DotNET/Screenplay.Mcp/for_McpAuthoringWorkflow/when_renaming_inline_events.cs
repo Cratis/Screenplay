@@ -8,6 +8,47 @@ namespace Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow;
 
 public class when_renaming_inline_events : given.an_authoring_connection
 {
+    [Fact]
+    void should_omit_a_new_pin_only_with_explicit_never_persisted_intent()
+    {
+        File.WriteAllText(Path.Combine(RootPath, "application.play"), "module Projects\n  feature Naming\n    slice StateChange Rename\n      command Rename\n        projectId Uuid identifier\n        produces event Renamed\n");
+        Initialize();
+        var opened = Open();
+        var revision = opened.GetProperty("revision").GetString()!;
+        var proposal = Result("propose-rename", new
+        {
+            expectedRevision = revision,
+            expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+            target = Node("EventSyntax", revision).GetProperty("handle"),
+            expectedName = "Renamed",
+            newName = "Again",
+            eventNeverPersisted = true
+        });
+        WorkspaceSyntaxIndex.Create(Candidate(proposal)).Entries.Select(value => value.Node).OfType<EventSyntax>().Single().Id.ShouldBeNull();
+    }
+
+    [Theory]
+    [InlineData("true")]
+    [InlineData(1)]
+    [InlineData(null)]
+    void should_reject_non_boolean_never_persisted_intent_as_an_argument_error(object? value)
+    {
+        File.WriteAllText(Path.Combine(RootPath, "application.play"), "module Projects\n  feature Naming\n    slice StateChange Rename\n      command Rename\n        projectId Uuid identifier\n        produces event Renamed\n");
+        Initialize();
+        var opened = Open();
+        var revision = opened.GetProperty("revision").GetString()!;
+        var response = Call("propose-rename", new
+        {
+            expectedRevision = revision,
+            expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+            target = Node("EventSyntax", revision).GetProperty("handle"),
+            expectedName = "Renamed",
+            newName = "Again",
+            eventNeverPersisted = value
+        });
+        response.GetProperty("error").GetProperty("code").GetInt32().ShouldEqual(-32602);
+    }
+
     [Theory]
     [InlineData("EventSyntax", "Renamed")]
     [InlineData("SliceSyntax", "Rename")]
@@ -30,6 +71,7 @@ public class when_renaming_inline_events : given.an_authoring_connection
         var candidate = Candidate(proposal);
         var index = WorkspaceSyntaxIndex.Create(candidate);
         var declaration = index.Entries.Single(entry => entry.Node is EventSyntax);
+        ((EventSyntax)declaration.Node).Id.ShouldEqual(kind == "EventSyntax" ? name : null);
         declaration.SemanticId.ShouldNotBeNull();
         declaration.EventContractId.ShouldNotBeNull();
         index.Entries.Single(entry => entry.Node is PropertySyntax && entry.Parent == declaration.Handle).SemanticId.ShouldNotBeNull();

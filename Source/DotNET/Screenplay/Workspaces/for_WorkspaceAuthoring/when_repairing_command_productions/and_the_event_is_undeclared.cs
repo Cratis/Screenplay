@@ -38,6 +38,19 @@ public class and_the_event_is_undeclared : given.a_command_production
         WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(3);
     }
 
+    [Fact]
+    void should_append_the_inferred_event_after_existing_events()
+    {
+        Create(Source + "\n      event Existing\n        value String\n      command Later\n        projectId Uuid identifier\n");
+        var result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, Find(DiagnosticCodes.UnknownEvent), Request());
+        result.Conflicts.ShouldBeEmpty();
+        var text = result.Workspace!.Documents[0].Text;
+        text.IndexOf("event Existing", StringComparison.Ordinal).ShouldBeLessThan(text.IndexOf("event ProjectRegistered", StringComparison.Ordinal));
+        text.IndexOf("event ProjectRegistered", StringComparison.Ordinal).ShouldBeLessThan(text.IndexOf("command Later", StringComparison.Ordinal));
+        WorkspaceSyntaxIndex.Create(result.Workspace).Entries.Select(entry => entry.Node).OfType<SliceSyntax>().Single()
+            .Events.Select(@event => @event.Name).ToArray().ShouldEqual(["Existing", "ProjectRegistered"]);
+    }
+
     [Fact] void should_run_one_proposal_transaction_after_discovery() => WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(2);
     [Fact] void should_propose_a_typed_addition() => Repair.Operations.Single().ShouldBeOfExactType<AddWorkspaceNode>();
     [Fact] void should_target_the_producing_slice() => WorkspaceSyntaxIndex.Create(Workspace).Find(((AddWorkspaceNode)Repair.Operations.Single()).Parent)!.Node.ShouldBeOfExactType<SliceSyntax>();

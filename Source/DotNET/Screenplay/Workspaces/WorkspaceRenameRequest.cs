@@ -35,6 +35,13 @@ public sealed record WorkspaceRenameRequest
     public required string NewName { get; init; }
 
     /// <summary>
+    /// Gets an explicit assertion that this event has never been persisted. Omits a new rename pin and removes a
+    /// redundant pin equal to the current name; a pin naming an earlier, different identity is kept.
+    /// The default conservatively preserves the previous effective identity.
+    /// </summary>
+    public bool EventNeverPersisted { get; init; }
+
+    /// <summary>
     /// Gets the explicit formatting policy. Trivia preservation never falls back to canonical printing.
     /// </summary>
     public WorkspaceAuthoringFormatting Formatting { get; init; } = WorkspaceAuthoringFormatting.PreserveTrivia;

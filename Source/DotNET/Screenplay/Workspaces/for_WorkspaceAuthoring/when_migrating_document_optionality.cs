@@ -93,6 +93,19 @@ public class when_migrating_document_optionality : Specification
         result.AuthoringDiagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.AuthoringSourceNormalization).ShouldBeTrue();
     }
 
+    [Fact]
+    void should_verify_preserved_spelling_separately_after_an_explicit_canonical_proposal()
+    {
+        WorkspaceDiagnosticRepairs.ProposeRepair(_workspace, DiagnosticCodes.LegacyOptionalSuffix, _root, Request() with { Formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments }).Accepted.ShouldBeTrue();
+        WorkspaceRepairVerification.TransactionCount(_workspace).ShouldEqual(1);
+
+        var repair = WorkspaceDiagnosticRepairs.FindDocumentOptionality(_index, _root).Single();
+        repair.RequiredFormatting.ShouldEqual(WorkspaceAuthoringFormatting.PreserveTrivia);
+        WorkspaceRepairVerification.TransactionCount(_workspace).ShouldEqual(2);
+        WorkspaceDiagnosticRepairs.FindDocumentOptionality(_index, _root).Length.ShouldEqual(1);
+        WorkspaceRepairVerification.TransactionCount(_workspace).ShouldEqual(2);
+    }
+
     WorkspaceAuthoringRequest Request() => new()
     {
         ExpectedRevision = _workspace.Revision,

@@ -21,7 +21,7 @@ public sealed record MigrateOptionalTypeSpelling(WorkspaceNodeHandle Target, Typ
 internal static class WorkspaceOptionalityRepairs
 {
     // Index-local recipes are bounded by the source occurrences. Only compact document verdicts are
-    // cached on the weak workspace snapshot by production discovery, never candidates or write plans.
+    // cached on the weak workspace snapshot by shared verification, never candidates or write plans.
     static readonly ConditionalWeakTable<WorkspaceSyntaxIndex, Occurrences> _occurrences = [];
 
     internal static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic, bool verify)
@@ -48,7 +48,7 @@ internal static class WorkspaceOptionalityRepairs
     {
         var occurrences = _occurrences.GetValue(index, static index => new(index));
         return occurrences.Documents.TryGetValue(root, out var recipe)
-            ? WorkspaceProductionRepairs.Discover(index, recipe, verify)
+            ? WorkspaceRepairVerification.Discover(index, recipe, verify)
             : [];
     }
 
