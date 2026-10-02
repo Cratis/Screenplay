@@ -12,7 +12,7 @@ public class when_extracting_an_inline_event : given.an_authoring_connection
     [Fact]
     void should_expose_an_explicit_preview_and_preserve_event_identity()
     {
-        var source = "module Projects\n  feature Naming\n    slice StateChange Rename\n      command Rename\n        projectId Uuid identifier\n        produces event Renamed // preserve this\n          name String = \"something\"\n";
+        const string source = "module Projects\n  feature Naming\n    slice StateChange Rename\n      command Rename\n        projectId Uuid identifier\n        produces event Renamed // preserve this\n          name String = \"something\"\n";
         File.WriteAllText(Path.Combine(RootPath, "application.play"), source);
         Initialize();
         var opened = Open();
