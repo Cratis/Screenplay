@@ -14,6 +14,8 @@ import {
     primitiveTypes,
     producesItems,
     scanDocument,
+    typeReferenceSymbol,
+    typeReferenceText,
 } from '@cratis/screenplay-language';
 
 function snippetItem(entry: CompletionEntry): vscode.CompletionItem {
@@ -100,7 +102,7 @@ const providerFor = (index: ApplicationIndex): vscode.CompletionItemProvider => 
                     symbolItem(
                         query.name,
                         vscode.CompletionItemKind.Function,
-                        `query => ${query.returnType}`,
+                        `query => ${typeReferenceText(query.returnTypeReference ?? typeReferenceSymbol(query.returnType))}`,
                     ),
                 );
             case 'types':

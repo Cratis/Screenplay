@@ -71,7 +71,7 @@ Property values (`<property> = <value>`) accept literals (including `null`), sin
 
 Executable specification values must be concrete: literals, inline objects and lists. The ESM binds object members to the declared composite properties and list items to the element type, preserving authored list order. An empty list `[]` is valid for any collection property. Objects must supply every required member; optional members may be omitted. `null` is valid only for an optional read-model property (including nested properties). `null` in command or event values, even nested ones, is rejected (`PLAY0350`): in Chronicle, an optional fact is a separate event. Non-literal mapping expressions other than typed objects and lists are not portable specification values in ESM v1.
 
-For example, if `OrderView` declares `lines Line[]`, `tags String[]`, and `note String?`, and `Line` declares `sku String`, you can seed `lines = [{"sku":"A-1"}]`, `tags = []`, and `note = null` in a `given readmodel` block. A `then readmodel` may assert just the identifier and `lines`; the list must match in order.
+For example, if `OrderView` declares `lines Line[]`, `tags String[]`, and `note String optional`, and `Line` declares `sku String`, you can seed `lines = [{"sku":"A-1"}]`, `tags = []`, and `note = null` in a `given readmodel` block. A `then readmodel` may assert just the identifier and `lines`; the list must match in order.
 
 ## Rejections
 
@@ -187,7 +187,7 @@ When a scenario is really about derived state rather than events, `given readmod
 
 `given readmodel` seeds a complete instance and must include the identifier property. `then readmodel` also must include the identifier to select the instance, but asserts only its stated properties. The identifier is inferred from the read model's keyed query (see [Read models](readmodels.md)); omitting it produces `PLAY0351` at that block. Additional properties in actual state do not fail a subset assertion. A missing asserted property is different from a present property with a `null` value.
 
-A projection can remove one instance while another remains. For example, with `InvoiceView` keyed by `invoiceId` through a query `InvoiceById => InvoiceView?` whose body declares `by invoiceId InvoiceId`, and a projection declaring `remove with InvoiceRemoved key invoiceId`:
+A projection can remove one instance while another remains. For example, with `InvoiceView` keyed by `invoiceId` through a query `InvoiceById => InvoiceView optional` whose body declares `by invoiceId InvoiceId`, and a projection declaring `remove with InvoiceRemoved key invoiceId`:
 
 ```screenplay
 specification RemovingOneOfTwoInvoices

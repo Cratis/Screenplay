@@ -26,7 +26,7 @@ slice StateView PublicHolidays
       order by Date
       ```
 
-  query HolidayOn => PublicHoliday?
+  query HolidayOn => PublicHoliday optional
     description "The holiday falling on one date, if any"
     by date WorkDate
     scoped to global

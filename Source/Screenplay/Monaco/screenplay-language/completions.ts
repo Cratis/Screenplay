@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import type { editor, languages } from 'monaco-editor';
+import { typeReferenceSymbol, typeReferenceText } from './TypeReferenceSymbol';
 import { Monaco, primitiveTypes } from './language';
 import { knownEventNames, knownTriggerNames, scanDocument } from './symbols';
 import { planCompletions } from './completion-planner';
@@ -123,7 +124,7 @@ export function createCompletionProvider(monaco: Monaco, options: CompletionOpti
                 case 'queries':
                     return {
                         suggestions: symbols.queries.map((query) =>
-                            symbolItem(query.name, kinds.Function, `query => ${query.returnType}`),
+                            symbolItem(query.name, kinds.Function, `query => ${typeReferenceText(query.returnTypeReference ?? typeReferenceSymbol(query.returnType))}`),
                         ),
                     };
                 case 'types':

@@ -14,7 +14,7 @@ slice StateView ProductSearch
 
   query SearchProducts => ProductSearchHit[]
     description "Products whose name or SKU matches what the customer typed, best match first"
-    filter text String?
+    filter text String optional
     authorize IsCustomer
     performer
       ```sql
@@ -24,7 +24,7 @@ slice StateView ProductSearch
       order by rank desc
       ```
 
-  query SearchHitById => ProductSearchHit?
+  query SearchHitById => ProductSearchHit optional
     description "One product from the search index, for the product page"
     by productId ProductId
     authorize IsCustomer

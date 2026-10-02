@@ -17,6 +17,7 @@ public partial class when_compiling_the_samples : given.the_samples
 {
     readonly List<string> _playFiles = [];
     readonly List<string> _diagnostics = [];
+    readonly List<Diagnostic> _legacyOptionality = [];
     readonly List<string> _slicesWithoutScreens = [];
     readonly List<string> _slicesWithoutSpecifications = [];
     readonly List<string> _missingStrings = [];
@@ -30,6 +31,7 @@ public partial class when_compiling_the_samples : given.the_samples
         {
             var name = Path.GetFileName(sample);
             var compilation = compiler.CompileFolder(sample);
+            _legacyOptionality.AddRange(compilation.Result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyOptionalSuffix));
             _playFiles.AddRange(compilation.Sources.Select(source => $"{name}/{source.File.RelativePath}"));
             _diagnostics.AddRange(compilation.Result.Diagnostics
                 .Where(diagnostic => diagnostic.Severity is DiagnosticSeverity.Error or DiagnosticSeverity.Warning)
@@ -49,6 +51,7 @@ public partial class when_compiling_the_samples : given.the_samples
     [Fact] void should_find_play_files_in_every_sample() => _samples.Select(Path.GetFileName).Except(_playFiles.Select(file => file.Split('/')[0])).ShouldBeEmpty();
     [Fact] void should_find_slices() => _slices.ShouldBeGreaterThan(0);
     [Fact] void should_compile_without_errors_or_warnings() => _diagnostics.ShouldBeEmpty();
+    [Fact] void should_use_only_canonical_optionality() => _legacyOptionality.ShouldBeEmpty();
     [Fact] void should_give_every_state_change_and_state_view_slice_a_screen() => _slicesWithoutScreens.ShouldBeEmpty();
     [Fact] void should_give_every_slice_a_specification() => _slicesWithoutSpecifications.ShouldBeEmpty();
     [Fact] void should_define_every_referenced_string_in_every_locale() => _missingStrings.ShouldBeEmpty();

@@ -14,6 +14,7 @@ vi.mock('vscode', async importOriginal => {
     return {
         ...original,
         DiagnosticSeverity: { Error: 0, Warning: 1, Information: 2 },
+        DiagnosticTag: { Deprecated: 2 },
         Diagnostic: class {
             source?: string;
             #code: string | number | undefined;
@@ -92,6 +93,19 @@ describe('when validating many inline events in the workspace', () => {
         expect(small.codeReads).toBeGreaterThan(0);
         expect(large.collectionWork).toBeLessThan(small.collectionWork * 2.2);
         expect(large.codeReads).toBeLessThan(small.codeReads * 2.2);
+    });
+
+    it('should mark legacy optionality deprecated at its complete type span without duplicate compiler advice', () => {
+        const source = 'type T\n  note String? // keep?';
+        const application = new WorkspaceApplication();
+        application.set('model.play', source);
+        refresh(application, source);
+        expect(editor.diagnostics).toHaveLength(1);
+        expect(editor.diagnostics[0].code).toBe('PLAY0479');
+        expect(editor.diagnostics[0].tags).toEqual([vscode.DiagnosticTag.Deprecated]);
+        expect(editor.diagnostics[0].severity).toBe(vscode.DiagnosticSeverity.Information);
+        expect(editor.diagnostics[0].range.start).toEqual(new vscode.Position(1, 7));
+        expect(editor.diagnostics[0].range.end).toEqual(new vscode.Position(1, 14));
     });
 
     it('should preserve editor precedence and distinct codes or lines when merging diagnostics', () => {

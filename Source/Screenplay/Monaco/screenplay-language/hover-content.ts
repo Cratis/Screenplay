@@ -2,7 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { enclosingChain, fenceMap, indentOf } from './document-context';
-import { directBody, scanDocument } from './symbols';
+import { directBody, propertyTypeReference, scanDocument } from './symbols';
+import { typeReferenceText } from './TypeReferenceSymbol';
 import { eventAnalysisSource } from './event-analysis-source';
 import { getSubLanguage } from './sub-language-registry';
 import { attributeDocs, contextVariableDocs, keywordDocs, specificationKeywordDocs } from './keyword-docs';
@@ -37,6 +38,15 @@ export function hoverContent(
         }
     }
 
+    // Do not mistake a property/type named optional for the contextual modifier.
+    const prefix = line.slice(0, startColumn - 1);
+    const followsPropertyType = /^\s*(?:(?:by|filter)\s+)?@?[a-z_]\w*\s+[\w.]+(?:\[\])?\s+$/.test(prefix);
+    const followsQueryType = /^\s*query\s+\w+\s*=>\s*(?:observable\s+)?[\w.]+(?:\[\])?\s+$/.test(prefix) &&
+        !/^\s*query\s+\w+\s*=>\s*observable\s+$/.test(prefix);
+    if (word === 'optional' && (followsPropertyType || followsQueryType)) {
+        return `**optional** — ${keywordDocs.optional}`;
+    }
+
     const symbols = scanDocument(lines);
 
     const concept = symbols.concepts.find((candidate) => candidate.name === word);
@@ -54,7 +64,7 @@ export function hoverContent(
     const type = symbols.types.find((candidate) => candidate.name === word);
     if (type) {
         const properties = type.properties
-            .map((property) => `${property.name} ${property.type}`)
+            .map((property) => `${property.name} ${typeReferenceText(propertyTypeReference(property))}`)
             .join('\n');
         return `\`\`\`screenplay\ntype ${type.name}\n${properties}\n\`\`\``;
     }
@@ -70,7 +80,7 @@ export function hoverContent(
             .sort((left, right) => (right.generation ?? 1) - (left.generation ?? 1))[0];
     if (event) {
         const properties = event.properties
-            .map((property) => `${property.name} ${property.type}`)
+            .map((property) => `${property.name} ${typeReferenceText(propertyTypeReference(property))}`)
             .join('\n');
         return `\`\`\`screenplay\nevent ${event.name}${event.generation !== undefined ? ` generation ${event.generation}` : ''}\n${properties}\n\`\`\``;
     }
@@ -80,7 +90,7 @@ export function hoverContent(
         const properties = command.properties
             .map(
                 (property) =>
-                    `${property.name} ${property.type}${property.isIdentifier ? ' identifier' : ''}`,
+                    `${property.name} ${typeReferenceText(propertyTypeReference(property))}${property.isIdentifier ? ' identifier' : ''}`,
             )
             .join('\n');
         return `\`\`\`screenplay\ncommand ${command.name}\n${properties}\n\`\`\``;
@@ -110,6 +120,7 @@ export function hoverContent(
         if (!inEvent || !directive || startColumn !== indentOf(line) + 1) return null;
     }
 
+    if (word === 'optional') return null;
     const keywordDoc = keywordDocs[word];
     if (keywordDoc) return `**${word}** — ${keywordDoc}`;
 

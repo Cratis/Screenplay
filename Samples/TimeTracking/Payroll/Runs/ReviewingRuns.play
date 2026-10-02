@@ -10,7 +10,7 @@ slice StateView PayrollRuns
     lineCount         Int
     totalHours        Decimal
     exported          Bool
-    providerReference String?
+    providerReference String optional
 
   // The run currently being filled - one instance, not looked up by a key.
   readmodel CurrentPayrollRun
@@ -22,11 +22,11 @@ slice StateView PayrollRuns
     description "Every payroll run, kept current while lines are queued"
     authorize IsPayrollOfficer
 
-  query PayrollRunById => PayrollRun?
+  query PayrollRunById => PayrollRun optional
     by payrollRunId PayrollRunId
     authorize IsPayrollOfficer
 
-  query CurrentRun => CurrentPayrollRun?
+  query CurrentRun => CurrentPayrollRun optional
     description "The run approved hours are queued on right now"
     authorize IsPayrollOfficer
 

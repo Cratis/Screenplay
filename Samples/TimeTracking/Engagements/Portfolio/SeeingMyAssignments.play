@@ -25,7 +25,7 @@ slice StateView MyAssignments
     scoped to identity
     authorize IsConsultant
 
-  query AssignmentById => Assignment?
+  query AssignmentById => Assignment optional
     by assignmentId AssignmentId
     authorize IsConsultant or IsEngagementManager
 

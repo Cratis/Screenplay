@@ -26,7 +26,7 @@ query <Name> => [observable] <ReturnType>[[]?]
 | `observable` | The query is a live read — it keeps pushing as the read model changes, instead of answering once. |
 | `description` | What the query is trying to accomplish, in prose. |
 | `by` | The identifying parameter — the query returns the instance it identifies. |
-| `filter` | An optional parameter narrowing the result set. Filter types are typically optional (`?`). |
+| `filter` | An optional parameter narrowing the result set. Write `optional` after the type when the caller may omit the filter. |
 | `from` | Fills the parameter from the query context instead of the caller. |
 | `authorize` | The [policies](policies.md) that must pass. |
 | `performer` | The code that performs the query — an external file, or an inline block. |
@@ -63,7 +63,9 @@ query GetInvoice => InvoiceDetailsReadModel
   by invoiceId InvoiceId
 ```
 
-The marker qualifies only *how* the result arrives, so everything else about the query is unchanged: `observable` composes with `[]` and `?` (`observable InvoiceDetailsReadModel?`), with `by` and `filter` parameters, with `authorize`, and with a `performer`. A [screen](screens.md) binds to a live query exactly the way it binds to a one-shot one — `data <ReadModel> via query <QueryName>` — and gets the updates for free.
+The marker qualifies only *how* the result arrives, so everything else about the query is unchanged: `observable` composes with `[]` and `optional` (`observable InvoiceDetailsReadModel optional`), with `by` and `filter` parameters, with `authorize`, and with a `performer`. A [screen](screens.md) binds to a live query exactly the way it binds to a one-shot one — `data <ReadModel> via query <QueryName>` — and gets the updates for free.
+
+The result `=> observable optional` means an observable result whose type is named `optional`, not an optional result of a type named `observable`. The leading `observable` is read first. To make that result optional, write `=> observable optional optional`.
 
 ## What the caller sees
 
@@ -106,8 +108,8 @@ That query is already scoped to the current tenant. Nothing states it, because n
 ```screenplay
 query ListInvoices => InvoiceListReadModel[]
   description "Every invoice the caller may see, narrowed by status and customer"
-  filter status     InvoiceStatus?
-  filter customerId CustomerId?
+  filter status     InvoiceStatus optional
+  filter customerId CustomerId optional
   filter tenantId   TenantId from $context.tenant
   authorize IsAuthenticated
 ```
@@ -130,8 +132,8 @@ A collection query with optional filters:
 ```screenplay
 query ListInvoices => InvoiceListReadModel[]
   description "Every invoice the caller may see, narrowed by status and customer"
-  filter status     InvoiceStatus?
-  filter customerId CustomerId?
+  filter status     InvoiceStatus optional
+  filter customerId CustomerId optional
   authorize IsAuthenticated
 ```
 

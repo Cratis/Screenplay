@@ -143,7 +143,7 @@ A query parameter declared with `from` is filled from the context instead of the
 ```screenplay
 query ListInvoices => InvoiceListReadModel[]
   description "Every invoice the caller may see"
-  filter status   InvoiceStatus?
+  filter status   InvoiceStatus optional
   filter tenantId TenantId from $context.tenant
   authorize IsAuthenticated
 ```

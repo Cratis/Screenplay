@@ -32,6 +32,22 @@
         "keywords": {
             "patterns": [
                 {
+                    "comment": "Optional is a modifier after a type, not a reserved name.",
+                    "match": "^\\s*(?:(?:by|filter)\\s+)?@?[a-z_]\\w*\\s+([\\w.]+(?:\\[\\])?)\\s+(optional)\\b(?=\\s*(?:identifier\\b|from\\b|=(?!=|>)|//|$))",
+                    "captures": {
+                        "1": { "name": "entity.name.type.screenplay" },
+                        "2": { "name": "keyword.other.screenplay" }
+                    }
+                },
+                {
+                    "comment": "Observable optional means an observable of the type named optional.",
+                    "match": "^\\s*query\\s+[A-Za-z_]\\w*\\s*=>\\s*(?!observable\\s+optional\\s*(?://.*)?$)(?:observable\\s+)?([\\w.]+(?:\\[\\])?)\\s+(optional)\\b(?=\\s*(?://.*)?$)",
+                    "captures": {
+                        "1": { "name": "entity.name.type.screenplay" },
+                        "2": { "name": "keyword.other.screenplay" }
+                    }
+                },
+                {
                     "comment": "A specification's clock, capture, trigger and query steps.",
                     "match": "^\\s*(given|when)\\s+(clock|capture|trigger|query)\\b",
                     "captures": {

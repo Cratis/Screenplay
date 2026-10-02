@@ -8,18 +8,18 @@ slice StateView OrderDetails
     lines              OrderLine[]
     shippingAddress    Address
     status             OrderStatus
-    amountPaid         Money?
-    paymentReference   PaymentReference?
-    carrier            Carrier?
-    trackingNumber     TrackingNumber?
-    cancellationReason String?
+    amountPaid         Money optional
+    paymentReference   PaymentReference optional
+    carrier            Carrier optional
+    trackingNumber     TrackingNumber optional
+    cancellationReason String optional
 
   query AllOrders => observable OrderDetail[]
     description "Every order in the shop, kept current for the support desk"
-    filter status OrderStatus?
+    filter status OrderStatus optional
     authorize IsSupportAgent
 
-  query OrderDetailById => OrderDetail?
+  query OrderDetailById => OrderDetail optional
     description "One order, in full"
     by orderId OrderId
     authorize IsSupportAgent

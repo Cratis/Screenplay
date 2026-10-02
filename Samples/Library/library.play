@@ -129,7 +129,7 @@ module Lending
         author    AuthorName
         available Bool
 
-      query BookById => CatalogEntry?
+      query BookById => CatalogEntry optional
         by bookId BookId
         authorize IsMember or IsLibrarian
 
@@ -191,7 +191,7 @@ module Lending
         opens  String
         closes String
 
-      query OpeningHoursFor => OpeningDay?
+      query OpeningHoursFor => OpeningDay optional
         by day String
         authorize IsMember or IsLibrarian
         performer
@@ -413,7 +413,7 @@ module Lending
         dueDate  Date
         status   LoanStatus
 
-      query LoanForBook => Loan?
+      query LoanForBook => Loan optional
         by bookId BookId
         authorize IsMember
 

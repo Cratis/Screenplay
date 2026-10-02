@@ -8,6 +8,14 @@ import { ValidationIssue, validateLines } from '../../validation';
 // One document holding every condition the editor and the compiler both check, so a condition added
 // later without a code fails here rather than reaching a user as a codeless squiggle.
 const document = [
+    'type OptionalExamples',
+    '  value String?',
+    '  id Uuid identifier optional',
+    'module OptionalExamples',
+    '  feature F',
+    '    slice StateChange S',
+    '      command C',
+    '        reads View optional as existing',
     'concept InvoiceId : Guid',
     'concept InvoiceId : String',
     'concept Amount : Wat',

@@ -7,13 +7,13 @@ slice StateView HoursByEngagement
     engagementId   EngagementId
     totalHours     Decimal
     entries        Int
-    lastRecordedOn WorkDate?
+    lastRecordedOn WorkDate optional
 
   query HoursByEngagement => EngagementHours[]
     description "Every engagement's logged hours, for invoicing and payroll reconciliation"
     authorize IsEngagementManager or IsPayrollOfficer
 
-  query EngagementHoursById => EngagementHours?
+  query EngagementHoursById => EngagementHours optional
     by engagementId EngagementId
     authorize IsEngagementManager or IsPayrollOfficer
 
