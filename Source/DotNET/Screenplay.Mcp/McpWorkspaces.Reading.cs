@@ -142,6 +142,9 @@ internal sealed partial class McpWorkspaces
                 {
                     repair.DiagnosticCode,
                     repair.RequiredFormatting,
+                    repair.Title,
+                    repair.CanFixAll,
+                    retiredSemanticAddresses = repair.RetiredSemanticAddresses.Select(McpSemanticAddresses.Describe),
                     diagnostic.Location,
                     subject = McpAstHandles.Describe(repair.Subject),
                     operations = repair.Operations.Select(McpAstOperations.Describe)

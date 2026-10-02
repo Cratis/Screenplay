@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
 
@@ -23,6 +24,21 @@ public sealed record WorkspaceDiagnosticRepair(
     /// Gets the formatting required to make this repair effective. PreserveTrivia cannot migrate this warning.
     /// </summary>
     public WorkspaceAuthoringFormatting RequiredFormatting { get; init; } = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments;
+
+    /// <summary>
+    /// Gets the human-readable action label, including any contract-changing consequence.
+    /// </summary>
+    public string? Title { get; init; }
+
+    /// <summary>
+    /// Gets whether a host may include the repair in fix-all. Contract-changing repairs require individual review.
+    /// </summary>
+    public bool CanFixAll { get; init; } = true;
+
+    /// <summary>
+    /// Gets semantic addresses deliberately retired by this repair.
+    /// </summary>
+    public ImmutableArray<SemanticAddress> RetiredSemanticAddresses { get; init; } = [];
 }
 
 /// <summary>
@@ -124,7 +140,7 @@ public static class WorkspaceDiagnosticRepairs
     /// <param name="index">The original workspace occurrence index.</param>
     /// <param name="revision">The expected workspace revision.</param>
     /// <param name="diagnostic">A diagnostic reported by the index.</param>
-    /// <remarks>PLAY0166 and PLAY0478 verdicts (acceptance and conflicts only) are cached on the immutable workspace snapshot for discovery, never shared with a newer revision. Proposals always run one fresh transaction and return its full diagnostics.</remarks>
+    /// <remarks>PLAY0166, PLAY0478, PLAY0469 and PLAY0471 verdicts (acceptance and conflicts only) are cached on the immutable workspace snapshot for discovery, never shared with a newer revision. Proposals always run one fresh transaction and return its full diagnostics.</remarks>
     /// <returns>Zero or more typed repair proposals.</returns>
     public static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic) =>
         Find(index, revision, diagnostic, true);
@@ -147,6 +163,11 @@ public static class WorkspaceDiagnosticRepairs
         if (diagnostic.Code == DiagnosticCodes.UnknownEvent || diagnostic.Code == DiagnosticCodes.OmittedProductionDestination)
         {
             return WorkspaceProductionRepairs.Find(index, revision, diagnostic, verifyRepair);
+        }
+
+        if (diagnostic.Code == DiagnosticCodes.RedundantEventId || diagnostic.Code == DiagnosticCodes.EventSourceIdInPayload)
+        {
+            return WorkspaceEventRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
 
         if (diagnostic.Code != DiagnosticCodes.LegacyInlineCodeFence)
@@ -176,17 +197,20 @@ public static class WorkspaceDiagnosticRepairs
 
         // Filter before building or verifying recipes. In particular, PLAY0478 can occur on
         // every plain production in a workspace, but only the selected occurrence is relevant.
-        return index.RepairableDiagnostics.Where(diagnostic => diagnostic.Code == code && diagnostic.Location == entry.Location)
+        return index.RepairableDiagnostics.Where(diagnostic => diagnostic.Code == code && (diagnostic.Location == entry.Location ||
+            (code == DiagnosticCodes.RedundantEventId && entry.Node.DirectiveLocations.GetValueOrDefault("id") == diagnostic.Location)))
             .SelectMany(diagnostic => Find(index, revision, diagnostic, false))
             .Where(repair => repair.Subject == subject);
     }
 
     static WorkspaceAuthoringResult ProposeSelected(ScreenplayWorkspace workspace, WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, WorkspaceAuthoringRequest request) =>
-        WorkspaceProductionRepairs.Verify(index, repair, request);
+        WorkspaceRepairVerification.Verify(index, repair, request);
 
     static bool Matches(WorkspaceDiagnosticRepair candidate, WorkspaceDiagnosticRepair selected)
     {
-        if (candidate.RequiredFormatting != selected.RequiredFormatting || selected.Operations.IsDefault || candidate.Operations.Length != selected.Operations.Length)
+        if (candidate.RequiredFormatting != selected.RequiredFormatting || candidate.Title != selected.Title || candidate.CanFixAll != selected.CanFixAll ||
+            selected.RetiredSemanticAddresses.IsDefault || !candidate.RetiredSemanticAddresses.SequenceEqual(selected.RetiredSemanticAddresses) ||
+            selected.Operations.IsDefault || candidate.Operations.Length != selected.Operations.Length)
         {
             return false;
         }

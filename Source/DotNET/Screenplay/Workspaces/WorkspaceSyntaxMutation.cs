@@ -23,7 +23,7 @@ static class WorkspaceSyntaxMutation
         return current;
     }
 
-    internal static void Set(JsonNode root, string path, string value)
+    internal static void Set(JsonNode root, string path, string? value)
     {
         var separator = path.LastIndexOf('/');
         var parent = At(root, path[..separator]);

@@ -21,6 +21,7 @@ public class when_replacing_non_node_directives_with_comments : Specification
             slice StateChange Place
               event OrderPlaced
                 id String
+              event OrderRemoved
               constraint UniqueOrder // header note
                 message "Already placed" // message note
                 released by OrderRemoved // release note

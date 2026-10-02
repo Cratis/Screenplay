@@ -59,8 +59,10 @@ public class when_discovering_and_enforcing_typed_batch_operations : given.an_au
     void should_advertise_all_public_tools() => _tools.EnumerateArray().Select(tool => tool.GetProperty("name").GetString()).ShouldContainOnly(
         ["describe-application", "find-declaration", "search-declarations", "declaration-details", "dependencies", "find-references",
         "find-fixtures", "find-assertion-gaps", "merged-document", "read-document", "diagnostics", "recommend-layout", "syntax-schema",
-        "open-workspace", "workspace-state", "recover-workspace", "propose-rename", "read-workspace", "read-ast", "propose", "propose-repair", "propose-ast",
+        "open-workspace", "workspace-state", "recover-workspace", "propose-rename", "read-workspace", "read-ast", "propose", "propose-extract-inline-event", "propose-repair", "propose-ast",
         "expand-layout", "read-proposal", "export-workspace", "discard-proposal", "apply"]);
+    [Fact] void should_advertise_only_supported_extraction_formatting() => Schema("propose-extract-inline-event").GetProperty("properties").GetProperty("formatting")
+        .GetProperty("enum").EnumerateArray().Select(value => value.GetString()).ToArray().ShouldEqual(["CanonicalizeTouchedDocuments"]);
     [Fact] void should_advertise_all_six_strict_document_operation_shapes() => Names(_strict).ShouldContainOnly("update-slice-description", "move-document", "rename-document-key", "add-document", "replace-document", "remove-document");
     [Fact] void should_advertise_all_four_typed_ast_operation_shapes() => Names(_ast).ShouldContainOnly("add", "replace", "remove", "move");
     [Fact] void should_forbid_unknown_members_in_every_operation_shape() => _strict.EnumerateArray().Concat(_ast.EnumerateArray()).All(shape => !shape.GetProperty("additionalProperties").GetBoolean()).ShouldBeTrue();

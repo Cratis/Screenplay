@@ -133,7 +133,15 @@ document with `RepairWouldDropComments`. Review the candidate and `WritePlan`,
 then explicitly accept the plan through the usual destination adapter.
 Stale requests return typed stale conflicts with no partial candidate.
 
-The first repair handles only `PLAY0397` on a `validate csharp` header. Its parsed
+Discovery verifies `PLAY0166`, `PLAY0478`, `PLAY0469` and `PLAY0471` repairs before
+listing them: authoring acceptance and comment preservation, plus each repair's
+routing, consumer or executable-model constraints. Verdicts are cached only on the
+current immutable snapshot; proposals run one fresh transaction. See the
+[repair conditions](mcp/authoring-tools.md#fix-a-diagnostic). `PLAY0470` remains deferred.
+
+The legacy-fence repair handles only `PLAY0397` on a `validate csharp` header.
+Its discovery identifies the recipe without verifying the candidate; the proposal
+may still be refused. Its parsed
 subject has the unique warning location. The operation is an **identity replacement**:
 it replaces the node with its own original syntax, and canonical printing performs
 the migration to `validate` followed by a `` ```csharp `` fence. This reprints the
@@ -160,6 +168,8 @@ composite types**, commands, events, read models, queries, modules, features and
 slices. Other property declarations are not automatic rename targets. Module/feature fragments change
 together. Proven typed references and qualified descendant references are repaired;
 read-model output aliases remain distinct from projection builder identities.
+Event renames also update constraint `released by` references and screen/behavior
+`on event` triggers.
 
 The planner rechecks bindings after the change. Name collisions, ambiguous
 references, capture, affected opaque realizations/imports, unsupported spans and
@@ -178,7 +188,10 @@ column, the syntax pointer, and the matched name.
 The default rename formatting is `PreserveTrivia`: verified byte patches retain
 comments, BOM, line endings and every byte outside the proved member spans.
 Unsupported changes require an explicit canonical formatting choice; semantic
-uncertainty cannot be waived by that choice.
+uncertainty cannot be waived by that choice. Event renames retain an existing `id`
+pin or insert the previous name by default. `EventNeverPersisted = true` omits a new
+pin and removes a redundant pin equal to the current name; an earlier identity pin is kept. A pin-inserting rename refuses comment loss or duplication;
+other renames retain the ordinary explicit-canonicalization contract.
 
 ## Identity continuity
 
@@ -208,7 +221,7 @@ source stays byte-identical; touched documents preserve their UTF-8 BOM policy.
 applies only byte patches whose result reparses to the complete intended AST;
 unsupported changes reject without a canonicalization fallback.
 
-`PreserveTrivia` patches three kinds of change in place:
+`PreserveTrivia` patches these changes in place:
 
 - An identifier member, such as a declaration name or an event reference, through
   its proven identifier span.
@@ -218,12 +231,19 @@ unsupported changes reject without a canonicalization fallback.
 - A whole property mapping of a `produces` block or a specification value. When
   only its source changes, only the right-hand side is rewritten; when its target
   property changes too, the mapping text is rewritten up to the end of its source.
+- An event `id` pin inserted or removed by a rename. Removing an uncommented pin
+  removes the entire directive line; a trailing comment remains exactly once.
 
-Adding, removing or reordering nodes is structural and still requires
+Other additions, removals or reorderings of nodes are structural and still require
 `CanonicalizeTouchedDocuments`.
 
 Canonical printing retains attached comments and normalizes blank lines. It preserves
-parsed member order within a document; new members follow the insertion rule in
+parsed member order within a document. Added nodes do not inherit source positions
+or comments from their supplied values. Moves retain their comments and internal
+order. A same-document move retains its root source position only when it agrees
+with the requested order among destination siblings of the same kind;
+cross-document moves discard that root position. In either case,
+new members follow the insertion rule in
 [Printing and generating](printing.md#what-printing-does-not-keep). Before applying such a result, call
 `WorkspaceDroppedComments.In(result.WritePlan)` to list any comment that could not be
 placed, with its path, line, column and text. The `PLAY0288` warning for each

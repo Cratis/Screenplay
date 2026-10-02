@@ -49,7 +49,7 @@ static class McpToolSchemas
 
     internal static JsonObject Argument(string tool, string property) => property switch
     {
-        "includeContent" => new() { ["type"] = "boolean", ["default"] = false },
+        "includeContent" or "eventNeverPersisted" => new() { ["type"] = "boolean", ["default"] = false },
         "descendants" => new() { ["type"] = "boolean", ["default"] = tool != "dependencies" },
         "offset" => McpAstSchemas.Integer(),
         "limit" => Limit(tool == "export-workspace" || tool == "read-proposal" || tool == "read-document" || tool == "merged-document" || tool == "workspace-state" || tool == "read-workspace" ? 192 * 1024 : 200),
@@ -60,7 +60,7 @@ static class McpToolSchemas
         "target" or "subject" => McpAstSchemas.Handle(),
         "semanticRenames" or "eventRenames" => McpAstSchemas.Array(Rename()),
         "retiredSemanticAddresses" or "retiredEventAddresses" => McpAstSchemas.Array(Address()),
-        "formatting" when tool == "propose-repair" => McpAstSchemas.Choice("CanonicalizeTouchedDocuments"),
+        "formatting" when tool == "propose-repair" || tool == "propose-extract-inline-event" => McpAstSchemas.Choice("CanonicalizeTouchedDocuments"),
         "formatting" => McpAstSchemas.Choice("CanonicalizeTouchedDocuments", "PreserveExactSource", "PreserveTrivia"),
         "validation" => McpAstSchemas.Choice("Authoring", "Executable"),
         "referencePolicy" => McpAstSchemas.Choice("Safe", "Draft"),
