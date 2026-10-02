@@ -17,7 +17,7 @@ export function destinationHints(lines: string[]): DestinationHint[] {
         const { identifier, mixed } = productionDestinations(command);
         if (mixed) return [];
         return (command.produces ?? []).flatMap(production => {
-            if (production.target !== undefined || (production.inline && identifier === undefined)) return [];
+            if (production.target !== undefined || (production.inline && (identifier === undefined || /\bgeneration\b/.test(lines[production.line])))) return [];
             return [{ line: production.line, column: lines[production.line].length + 1, label: production.inline ? `for ${identifier}` : 'for <new event source>' }];
         });
     });

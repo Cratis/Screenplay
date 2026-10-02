@@ -29,6 +29,11 @@ describe('when authoring inline events', () => {
     });
     it('should show the implicit command identifier', () => expect(destinationHints(source).map(hint => hint.label)).toEqual(['for projectId']));
     it('should suppress hints for uncertain mixed destinations', () => expect(destinationHints([...source, '  produces Another', '    for otherId'])).toEqual([]));
+    it('should suppress hints for incomplete and repeated explicit destinations', () => {
+        expect(destinationHints([...source, '    for'])).toEqual([]);
+        expect(destinationHints([...source, '    for projectId', '    for projectId'])).toEqual([]);
+    });
+    it('should not hint a header that has no event name', () => expect(destinationHints(['command Rename', '  produces'])).toEqual([]));
     it('should explain the new declaration form', () => expect(hoverContent(source, 3, 'produces', 3, 11)).toContain('produces event'));
     it('should preserve information severity for redundant pins', () => expect(validateLines([...source, '    id "Renamed"']).find(issue => issue.code === 'PLAY0471')?.severity).toBe('information'));
     it.each(['namespace', 'sequence', 'correlation', 'causation', 'causedBy', 'occurred'])('should reject %s as system metadata', keyword => {

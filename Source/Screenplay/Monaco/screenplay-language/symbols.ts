@@ -226,9 +226,12 @@ export function scanDocument(lines: string[]): DocumentSymbols {
                     const conditional = /^produces\s+when\b/.test(header);
                     const eventLine = conditional ? directBody(lines, fences, line, indentOf(lines[line]))[0] : line;
                     if (eventLine === undefined) return [];
-                    const name = conditional ? lines[eventLine].trim() : header.replace(/^produces\s+(?:event\s+)?/, '').split(/\s+/)[0];
+                    const name = conditional ? lines[eventLine].trim() : header.match(/^produces\s+(?:event\s+)?([A-Za-z_]\w*)(?:\s+generation\s+\d+)?\s*$/)?.[1];
+                    if (name === undefined || !/^[A-Za-z_]\w*$/.test(name)) return [];
                     const children = directBody(lines, fences, eventLine, indentOf(lines[eventLine]));
-                    const target = children.map(index => lines[index].trim().match(/^for\s+(.+)$/)?.[1]).find(value => value !== undefined);
+                    const targets = children.map(index => lines[index].trim().match(/^for(?:\s+(.*))?$/)).filter(match => match !== null);
+                    // Empty or repeated targets are uncertain, not implicit destinations.
+                    const target = targets.length === 0 ? undefined : targets.length === 1 ? targets[0][1] ?? '' : '';
                     const mappings = children.flatMap(index => {
                         const match = lines[index].trim().match(inline ? /^(@?[a-z_]\w*)\s+[\w.[\]?]+\s*=(?!=|>)\s*(.+)$/ : /^(@?[\w.]+)\s*=(?!=|>)\s*(.+)$/);
                         return match === null ? [] : [{ name: match[1].replace(/^@/, ''), source: match[2], line: index }];
