@@ -24,7 +24,8 @@ public class when_renaming_an_event_and_restarting : given.an_authoring_connecti
     {
         const string comment = "\uFEFF// ProjectRegistered remains in this comment\r\n";
         _original = Encoding.UTF8.GetBytes(comment + Source.Replace("\n", "\r\n", StringComparison.Ordinal));
-        _expected = Encoding.UTF8.GetBytes(comment + Source.Replace("ProjectRegistered", "ProjectEnrolled", StringComparison.Ordinal).Replace("\n", "\r\n", StringComparison.Ordinal));
+        _expected = Encoding.UTF8.GetBytes(comment + Source.Replace("ProjectRegistered", "ProjectEnrolled", StringComparison.Ordinal)
+            .Replace("event ProjectEnrolled\n", "event ProjectEnrolled\n        id \"ProjectRegistered\"\n", StringComparison.Ordinal).Replace("\n", "\r\n", StringComparison.Ordinal));
         File.WriteAllBytes(Path.Combine(RootPath, "application.play"), _original);
         Initialize();
     }

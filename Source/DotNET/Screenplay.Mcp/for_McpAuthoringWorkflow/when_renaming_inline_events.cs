@@ -8,6 +8,25 @@ namespace Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow;
 
 public class when_renaming_inline_events : given.an_authoring_connection
 {
+    [Fact]
+    void should_omit_a_new_pin_only_with_explicit_never_persisted_intent()
+    {
+        File.WriteAllText(Path.Combine(RootPath, "application.play"), "module Projects\n  feature Naming\n    slice StateChange Rename\n      command Rename\n        projectId Uuid identifier\n        produces event Renamed\n");
+        Initialize();
+        var opened = Open();
+        var revision = opened.GetProperty("revision").GetString()!;
+        var proposal = Result("propose-rename", new
+        {
+            expectedRevision = revision,
+            expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+            target = Node("EventSyntax", revision).GetProperty("handle"),
+            expectedName = "Renamed",
+            newName = "Again",
+            eventNeverPersisted = true
+        });
+        WorkspaceSyntaxIndex.Create(Candidate(proposal)).Entries.Select(value => value.Node).OfType<EventSyntax>().Single().Id.ShouldBeNull();
+    }
+
     [Theory]
     [InlineData("EventSyntax", "Renamed")]
     [InlineData("SliceSyntax", "Rename")]
