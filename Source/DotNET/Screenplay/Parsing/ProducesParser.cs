@@ -194,6 +194,11 @@ internal static partial class ProducesParser
                     property = property with { IsIdentifier = false };
                 }
 
+                if (properties.Exists(existing => existing.Name == property.Name))
+                {
+                    context.Error(DiagnosticCodes.DuplicateDeclaration, $"Event '{name}' already declares property '{property.Name}'", line.Location);
+                }
+
                 properties.Add(property);
                 mappings.Add(ExpressionParser.ParseMapping(context, property.Name, match.Groups[2], line));
             }

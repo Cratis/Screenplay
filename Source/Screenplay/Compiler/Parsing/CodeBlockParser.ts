@@ -8,12 +8,12 @@ import { locationOf, SourceLine } from './SourceLine';
 // Reads the body of a fenced block that follows a directive, the way the C# CodeBlockParser does: the
 // opening fence is either on the directive's own line or the next deeper line, and the body runs to a line
 // holding only the closing fence. Body lines lose up to the opening fence's indent.
-export function parseFencedText(context: ParserContext, opener: string, tagLine: SourceLine): string | null {
+export function parseFencedText(context: ParserContext, opener: string, tagLine: SourceLine, allowMarkdown = false): string | null {
     const onTagLine = tagLine.content.startsWith('```');
     const open = onTagLine ? tagLine : context.reader.peekSignificant();
     const expectedFence = opener === 'description' ? '```text' : `\`\`\`${opener}`;
     if (open === undefined || (open !== tagLine && open.indent <= tagLine.indent) ||
-        (open.content !== expectedFence && !(opener === 'description' && open.content === '```markdown') && !(open.content === '```' && open !== tagLine))) {
+        (open.content !== expectedFence && !(allowMarkdown && opener === 'description' && open.content === '```markdown') && !(open.content === '```' && open !== tagLine))) {
         context.error(DiagnosticCodes.ExpectedCodeFence, `Expected an opening \`\`\`${opener === 'description' ? 'text' : opener} fence after '${opener}'`, locationOf(tagLine));
         return null;
     }

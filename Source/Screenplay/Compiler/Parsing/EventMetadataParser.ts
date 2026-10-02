@@ -34,7 +34,7 @@ export class EventMetadataParser {
                 return true;
             }
             case 'description':
-                this.value.description = parseDescription(context, line, this.value.description, `Event '${this.name}'`);
+                this.value.description = parseDescription(context, line, this.value.description, `Event '${this.name}'`, true);
                 return true;
             case 'documentation': {
                 if (line.content !== 'documentation' || context.peekChild(line.indent)?.content !== '```markdown') {

@@ -21,7 +21,7 @@ static class WorkspaceIdentifierSpans
             (FeatureSyntax, "name") => keyword == "feature",
             (SliceSyntax, "name") => keyword == "slice",
             (CommandSyntax, "name") => keyword == "command",
-            (EventSyntax, "name") => keyword == "event",
+            (EventSyntax, "name") => keyword == "event" || (keyword == "produces" && line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries).ElementAtOrDefault(1) == "event"),
             (ReadModelSyntax, "name") => keyword == "readmodel",
             (QuerySyntax, "name") => keyword == "query",
             (TypeRefSyntax, "name") => line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries).Length >= 2,

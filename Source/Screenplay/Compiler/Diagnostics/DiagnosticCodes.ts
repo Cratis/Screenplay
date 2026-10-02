@@ -107,6 +107,7 @@ export const DiagnosticCodes = {
     UnknownContextIdentityProperty: 'PLAY0155',
     ExpectedCodeFence: 'PLAY0163',
     UnclosedCodeBlock: 'PLAY0164',
+    DuplicateDeclaration: 'PLAY0168',
     RepeatedSingularDeclarationAcrossFiles: 'PLAY0172',
     RepeatedDeclarationAcrossFiles: 'PLAY0173',
     ConflictingDescriptionAcrossFiles: 'PLAY0174',

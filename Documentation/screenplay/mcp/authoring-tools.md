@@ -29,7 +29,7 @@ it from directory names.
 
 ## Inspect inline event declarations
 
-An event declared with `produces event` appears as an `Event` in declaration queries at its **slice-owned** address, not beneath the command. `declaration-details` exposes its typed properties and authoring documentation; the command's `produces` view retains `InlineEvent`. Reference queries include `declares` relationships from the command and slice, alongside the command's `produces` relationship. The visualization counts and draws the event like a standalone declaration.
+An event declared with `produces event` appears as an `Event` in declaration queries at its **slice-owned** address, not beneath the command. `declaration-details` exposes its typed properties and authoring documentation; the command's `produces` view retains `InlineEvent`. Reference queries include `declares` relationships from the command and slice, alongside the command's `produces` relationship. The visualization counts and draws the event like a standalone declaration. Workspace syntax entries assign the event and its properties the same stable addresses and catalog identities as their standalone equivalents in that slice. Event and containing-slice rename proposals preserve those assignments.
 
 Descriptions, documentation, and optional rename-only `id` remain syntax metadata. They do not replace the workspace identity catalog or the portable hashed event contract id. Workspace repair and rename proposals remain separate, explicit transactions; querying or visualizing an inline event never applies a repair.
 

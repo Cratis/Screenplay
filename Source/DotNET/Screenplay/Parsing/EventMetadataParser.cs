@@ -46,7 +46,7 @@ internal sealed partial class EventMetadataParser(string name)
 
                 return true;
             case "description":
-                _description = DescriptionParser.Parse(context, line, _description, $"Event '{name}'");
+                _description = DescriptionParser.ParseEvent(context, line, _description, $"Event '{name}'");
                 _locations.TryAdd("description", line.Location);
                 return true;
             case "documentation":

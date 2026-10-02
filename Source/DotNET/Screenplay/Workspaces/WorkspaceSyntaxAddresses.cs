@@ -43,6 +43,13 @@ static class WorkspaceSyntaxAddresses
             return SemanticAddress.ForSlice(application, moduleName, features, slice.Name);
         }
 
+        // Inline declaration placement is authoring structure, not event contract ownership.
+        if (node is EventSyntax inlineEvent && member == "inlineEvent" && parent?.Node is ProducesSyntax &&
+            ancestors.LastOrDefault(entry => entry.Node is SliceSyntax)?.Address is { } sliceAddress)
+        {
+            return SemanticAddress.ForEventContract(sliceAddress, inlineEvent.Name);
+        }
+
         if (owner?.Kind == SemanticKind.Slice)
         {
             return node switch

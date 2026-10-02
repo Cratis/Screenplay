@@ -34,7 +34,10 @@ static class WorkspaceTriviaPrinter
 
         var bytes = original.Bytes.ToArray().ToList();
         var previousStart = bytes.Count;
-        foreach (var patch in patches.OrderByDescending(patch => patch.Offset))
+
+        // An inline event's declaration and production share one authored identifier.
+        // Coalesce only byte-identical edits; conflicting or partial overlaps still fail closed.
+        foreach (var patch in patches.DistinctBy(patch => (patch.Offset, patch.Length, Convert.ToHexString(patch.Bytes))).OrderByDescending(patch => patch.Offset))
         {
             if (patch.Offset + patch.Length > previousStart)
             {

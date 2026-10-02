@@ -54,6 +54,16 @@ public sealed partial class SemanticModelBinder
                 .Where(_ => _.condition is not null)
                 .Select(_ => new SemanticRequirement(_.condition!, _.requirement.Message) { Severity = Severity(_.requirement.Severity) })
                 .ToImmutableArray();
+
+            // Binding a parsed tree directly must not silently promote an inline default onto a plain sibling.
+            if (command.Produces.Any(value => value.InlineEvent is not null && value.For is null))
+            {
+                foreach (var plain in command.Produces.Where(value => value.InlineEvent is null && value.For is null))
+                {
+                    Error(DiagnosticCodes.ExplicitProducesTargetsRequired, $"Production '{plain.Event}' in command '{command.Name}' must state 'for' explicitly - every production must state 'for' when destinations differ", plain.Location);
+                }
+            }
+
             var productions = command.Produces.Select(value => value.InlineEvent is not null && value.For is null
                 ? value with { For = command.Properties.SingleOrDefault(property => property.IsIdentifier) is { } identifier
                     ? new PathExpressionSyntax(identifier.Name, value.Location)

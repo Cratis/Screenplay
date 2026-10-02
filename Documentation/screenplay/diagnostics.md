@@ -363,7 +363,7 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0165` | Warning | A property names a type nothing in the document or its imports declares. |
 | `PLAY0166` | Warning | An event is referred to that nothing in the document or its imports declares. |
 | `PLAY0167` | Warning or error | A policy is referred to that nothing in the document declares. A persona's unknown policy is an error during compilation, Safe authoring, and executable binding. Draft authoring retains it as a warning with explicit unresolved-reference debt; other unresolved policy references are warnings. |
-| `PLAY0168` | Error | A concept and a type, or two of either, are declared under one name. |
+| `PLAY0168` | Error | A concept and a type, or two of either, are declared under one name; also reused when an inline event repeats a typed payload property name. |
 | `PLAY0169` | Error | An authentication block declares two providers under one name. |
 | `PLAY0170` | Error | A seed block seeds nothing. |
 | `PLAY0171` | Error | A concurrency block narrows nothing. |
@@ -821,7 +821,7 @@ See [Inline command events](commands.md#declare-an-event-inline) and [Event meta
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0469` | Warning (inline), information (plain) | A production copies the command identifier into payload while targeting that same identifier. Review persistence before removing the field or evolving its generation. |
-| `PLAY0470` | Error | A command targets another event source but one or more productions omit `for`. State every destination explicitly; cross-source execution is still unsupported. |
+| `PLAY0470` | Error | A command targets another event source but one or more productions omit `for`, or both an inline and a plain production omit `for` and therefore have different defaults. The diagnostic names the production. State every destination explicitly; cross-source execution is still unsupported. |
 | `PLAY0471` | Information | An event's `id` equals its current name. Remove the redundant pin. |
 | `PLAY0472` | Error | Event `id` is missing its nonempty quoted value or is repeated. |
 | `PLAY0473` | Error | An inline event name collides with a standalone declaration, import, or another inline declaration. |

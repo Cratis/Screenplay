@@ -908,7 +908,7 @@ public static class DiagnosticCodes
     public const string UnknownPolicy = "PLAY0167";
 
     /// <summary>
-    /// A concept and a type, or two of either, are declared under one name.
+    /// A concept and a type, or two of either, are declared under one name, or an inline event repeats a payload property name.
     /// </summary>
     public const string DuplicateDeclaration = "PLAY0168";
 

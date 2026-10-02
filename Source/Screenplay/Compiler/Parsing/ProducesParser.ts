@@ -98,6 +98,10 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
                     context.error(DiagnosticCodes.IdentifierOnEventProperty, `Property '${property.name}' of event '${name}' cannot be marked identifier - an event never carries its event source id`, location);
                     property = { ...property, isIdentifier: false };
                 }
+                const propertyName = property.name;
+                if (properties.some(existing => existing.name === propertyName)) {
+                    context.error(DiagnosticCodes.DuplicateDeclaration, `Event '${name}' already declares property '${property.name}'`, location);
+                }
                 properties.push(property);
             }
             mappings.push({ kind: 'PropertyMappingSyntax', property: property?.name ?? unescapeIdentifier(match[1]), source: parseMappingSource(match[2], location, context), location });

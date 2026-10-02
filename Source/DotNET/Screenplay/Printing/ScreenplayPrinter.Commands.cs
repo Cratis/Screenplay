@@ -402,9 +402,11 @@ public partial class ScreenplayPrinter
                 WriteEventMetadata(writer, inline);
                 WriteProducesTarget(writer, produces.For);
                 WriteTags(writer, inline.Tags);
-                foreach (var mapping in produces.Mappings)
+
+                // The parser creates each property and mapping together, including on erroneous trees.
+                foreach (var (property, mapping) in inline.Properties.Zip(produces.Mappings))
                 {
-                    var property = inline.Properties.Single(value => value.Name == mapping.Property);
+                    using var propertyAnchor = writer.Anchor(property);
                     writer.Line($"{ReservedWords.Escape(property.Name, ReservedWords.InlineEventBody)} {ScreenplaySyntaxText.TypeRef(property.Type)} = {ScreenplaySyntaxText.Expression(mapping.Source)}", mapping);
                 }
             }

@@ -57,6 +57,43 @@ describe('when declaring inline events', () => {
         expect(implicitDestination(command, command.produces[0])).toBeUndefined();
     });
 
+    it('should require explicit destinations for mixed inline and plain omissions', () => {
+        const result = parse(`${inline}        produces Legacy\n      event Legacy\n`);
+        expect(result.diagnostics.filter(value => value.code === 'PLAY0470').map(value => value.message)).toEqual([
+            "Production 'Renamed' in command 'Rename' must state 'for' explicitly - every production must state 'for' when destinations differ",
+            "Production 'Legacy' in command 'Rename' must state 'for' explicitly - every production must state 'for' when destinations differ",
+        ]);
+    });
+
+    it('should accept a plain sibling explicitly targeting the identifier', () => {
+        expect(parse(`${inline}        produces Legacy\n          for projectId\n      event Legacy\n`).diagnostics).toEqual([]);
+    });
+
+    it.each([
+        `${prefix}        produces Renamed\n          for projectId\n        produces Legacy\n`,
+        `${inline}        produces Legacy\n`,
+    ])('should suppress uncertain legacy allocation hints', source => {
+        const command = parse(source).value.modules[0].features[0].slices[0].commands[0];
+        expect(implicitDestination(command, command.produces[1])).toBeUndefined();
+    });
+
+    it('should reject duplicate inline properties', () => {
+        expect(parse(`${inline}          name String = name\n          name Uuid = otherId\n`).diagnostics.map(value => value.code)).toContain('PLAY0168');
+    });
+
+    it.each(['      event Described\n', '      command Rename\n        produces event Described\n'])('should allow event markdown descriptions', declaration => {
+        const indent = declaration.includes('produces') ? '          ' : '        ';
+        expect(parse(`module Projects\n  feature Naming\n    slice StateChange Rename\n${declaration}${indent}description\n${indent}  \`\`\`markdown\n${indent}  **Details**\n${indent}  \`\`\`\n`).diagnostics).toEqual([]);
+    });
+
+    it.each([
+        ['module Projects\n', '  '],
+        ['module Projects\n  feature Naming\n    slice StateChange Rename\n', '      '],
+        [prefix, '        '],
+    ])('should not widen markdown descriptions to other declarations', (declaration, indent) => {
+        expect(parse(`${declaration}${indent}description\n${indent}  \`\`\`markdown\n${indent}  **Details**\n${indent}  \`\`\`\n`).diagnostics.map(value => value.code)).toContain('PLAY0163');
+    });
+
     it('should distinguish legacy allocation from inline defaults', () => {
         const command = parse(`${prefix}        produces Renamed\n`).value.modules[0].features[0].slices[0].commands[0];
         expect(implicitDestination(command, command.produces[0])).toBe('new event source');

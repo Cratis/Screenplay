@@ -20,7 +20,7 @@ export function validateInlineEvents(application: ApplicationSyntax, context: Pa
                 context.error(DiagnosticCodes.InlineEventCollision, `Inline event '${inline.name}' collides with another event declaration or import`, production.location);
             }
             if (mixed && production.for === null) {
-                context.error(DiagnosticCodes.ExplicitProducesTargetsRequired, `Command '${command.name}' targets another event source - every production must state 'for' explicitly`, production.location);
+                context.error(DiagnosticCodes.ExplicitProducesTargetsRequired, `Production '${production.event}' in command '${command.name}' must state 'for' explicitly - every production must state 'for' when destinations differ`, production.location);
             }
             const destination = production.for?.kind === 'PathExpressionSyntax' ? production.for.path : production.for === null && inline !== null ? identifier : undefined;
             if (identifier === undefined || destination !== identifier) continue;

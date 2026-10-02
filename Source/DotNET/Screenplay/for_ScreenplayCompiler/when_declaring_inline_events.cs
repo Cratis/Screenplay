@@ -29,7 +29,7 @@ public class when_declaring_inline_events : given.a_compiler
 
     [Fact]
     void should_resolve_plain_references_before_the_inline_declaration() =>
-        _compiler.Compile(Command + "        produces Renamed\n          name = name\n        produces event Renamed\n          name String = name\n").Diagnostics.ShouldBeEmpty();
+        _compiler.Compile(Command + "        produces Renamed\n          for projectId\n          name = name\n        produces event Renamed\n          name String = name\n").Diagnostics.ShouldBeEmpty();
 
     [Theory]
     [InlineData("          generation 2\n", DiagnosticCodes.InlineEventGeneration)]
@@ -102,6 +102,42 @@ public class when_declaring_inline_events : given.a_compiler
     [Fact]
     void should_not_change_the_legacy_plain_omission_diagnostic() =>
         _compiler.Compile(Command + "        produces Renamed\n          projectId = projectId\n      event Renamed\n        projectId Uuid\n").Diagnostics.ShouldBeEmpty();
+
+    [Fact]
+    void should_reject_implicit_inline_and_plain_destinations_without_retargeting_the_plain_event()
+    {
+        var result = _compiler.Compile(Inline + "        produces Legacy\n      event Legacy\n");
+        result.Success.ShouldBeFalse();
+        var diagnostic = result.Diagnostics.Single(value => value.Code == DiagnosticCodes.ExplicitProducesTargetsRequired && value.Location.Line == 9);
+        diagnostic.Message.ShouldContain("Legacy");
+        diagnostic.Severity.ShouldEqual(DiagnosticSeverity.Error);
+    }
+
+    [Fact]
+    void should_accept_an_explicit_identifier_plain_sibling() =>
+        _compiler.Compile(Inline + "        produces Legacy\n          for projectId\n      event Legacy\n").Diagnostics.ShouldBeEmpty();
+
+    [Fact]
+    void should_reject_duplicate_typed_mapping_properties() =>
+        _compiler.Compile(Inline + "          name String = name\n          name Uuid = otherId\n").Diagnostics
+            .Single(value => value.Code == DiagnosticCodes.DuplicateDeclaration).Location.Line.ShouldEqual(10);
+
+    [Theory]
+    [InlineData("      event Described\n")]
+    [InlineData("      command Described\n        projectId Uuid identifier\n        produces event Described\n")]
+    void should_accept_markdown_descriptions_on_events(string declaration)
+    {
+        var indent = declaration.Contains("produces", StringComparison.Ordinal) ? "          " : "        ";
+        _compiler.Compile(Prefix + declaration + $"{indent}description\n{indent}  ```markdown\n{indent}  **Details**\n{indent}  ```\n").Diagnostics.ShouldBeEmpty();
+    }
+
+    [Theory]
+    [InlineData("module Projects\n", "  ")]
+    [InlineData(Prefix, "      ")]
+    [InlineData(Command, "        ")]
+    void should_not_widen_markdown_descriptions_to_other_declarations(string declaration, string indent) =>
+        _compiler.Compile(declaration + $"{indent}description\n{indent}  ```markdown\n{indent}  **Details**\n{indent}  ```\n").Diagnostics
+            .Any(value => value.Code == DiagnosticCodes.ExpectedCodeFence).ShouldBeTrue();
 
     [Fact]
     void should_keep_property_shaped_standalone_metadata_names() =>

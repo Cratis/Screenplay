@@ -48,6 +48,25 @@ public class when_lowering_inline_events : given.a_semantic_binder
         Bind(Inline.Replace("        name String\n", "        name String\n        otherId Uuid\n", StringComparison.Ordinal).Replace("          tag audit", "          for otherId\n          tag audit", StringComparison.Ordinal)).Success.ShouldBeFalse();
 
     [Fact]
+    void should_not_bind_an_inline_default_onto_a_plain_omission()
+    {
+        var result = Bind(Inline + "        produces Legacy\n          name = name\n      event Legacy\n        name String\n");
+        result.Success.ShouldBeFalse();
+        result.Diagnostics.Any(value => value.Code == DiagnosticCodes.ExplicitProducesTargetsRequired && value.Message.Contains("Legacy", StringComparison.Ordinal)).ShouldBeTrue();
+    }
+
+    [Fact]
+    void should_lower_an_inline_event_with_an_explicit_plain_sibling_to_identical_bytes()
+    {
+        const string Sibling = "        produces Legacy\n          for projectId\n          name = name\n      event Legacy\n        name String\n";
+        var inline = Bind(Inline + Sibling);
+        var explicitForm = Bind(Explicit.Replace("      event Renamed", Sibling + "      event Renamed", StringComparison.Ordinal));
+        inline.Success.ShouldBeTrue();
+        explicitForm.Success.ShouldBeTrue();
+        SemanticModelSerializer.Serialize(inline.Value!.Model).SequenceEqual(SemanticModelSerializer.Serialize(explicitForm.Value!.Model)).ShouldBeTrue();
+    }
+
+    [Fact]
     void should_keep_plain_omission_distinct_from_inline_default()
     {
         var legacy = Explicit.Replace("          for projectId\n", string.Empty, StringComparison.Ordinal);

@@ -59,7 +59,7 @@ command RegisterInvoice
     ```
 ````
 
-Descriptions work the same on modules, features, slices, and personas — see [Descriptions](slices.md#descriptions).
+Command descriptions use `text` fences, not `markdown`; Markdown description fences are available only on events. Descriptions work the same on modules, features, slices, and personas — see [Descriptions](slices.md#descriptions).
 
 ## Declare an event inline
 
@@ -77,9 +77,9 @@ command Rename
 
 Here the omitted `for` means `for projectId`; the identifier is **not** copied into the payload. The declaration belongs to the slice, so extracting it into a standalone `event Renamed` plus `produces Renamed` with explicit `for projectId` preserves its identity and canonical ESM bytes. Declarations remain order-independent. A plain `produces Renamed` still references a declared event rather than creating one.
 
-Inline events are generation 1 only, local to the command, and cannot declare `generation` or `origin`. Reactions cannot declare inline events. Names must not collide with another standalone, imported, or inline event. `tag` inside this block is an **event-type** tag, unlike a tag on plain `produces`. [Event metadata](events.md#authoring-metadata) covers descriptions, documentation, and rename-only identity pins.
+Each inline payload property is declared once; repeating its name reports `PLAY0168`. Inline events are generation 1 only, local to the command, and cannot declare `generation` or `origin`. Reactions cannot declare inline events. Names must not collide with another standalone, imported, or inline event. `tag` inside this block is an **event-type** tag, unlike a tag on plain `produces`. [Event metadata](events.md#authoring-metadata) covers descriptions, documentation, and rename-only identity pins.
 
-If any production targets a source other than the command identifier, **every production must state `for` explicitly** (`PLAY0470`). The compiler compares authored paths, not runtime values. Cross-source execution remains unsupported; explicit syntax does not make it executable. An inline omission without a required scalar identifier cannot bind.
+If any production targets a source other than the command identifier, **every production must state `for` explicitly** (`PLAY0470`). The same rule applies when an inline production and a plain production both omit `for`: their defaults differ. The diagnostic names the production that needs a destination; adding an inline event never silently retargets a plain sibling. The compiler compares authored paths, not runtime values. Cross-source execution remains unsupported; explicit syntax does not make it executable. An inline omission without a required scalar identifier cannot bind.
 
 Plain `produces <Name>` retains its legacy omission behavior; it does not acquire the inline default. Copying an identifier into a same-source payload reports `PLAY0469`: warning for inline declarations, information for plain productions with explicit `for`. Review the persisted contract before removing a payload field.
 

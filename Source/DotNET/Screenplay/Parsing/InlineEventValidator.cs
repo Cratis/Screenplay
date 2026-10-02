@@ -24,7 +24,9 @@ internal static class InlineEventValidator
         {
             var identifier = command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Name;
             var mixed = command.Produces.Any(value => value.For is not null &&
-                (value.For is not PathExpressionSyntax path || path.Path != identifier));
+                (value.For is not PathExpressionSyntax path || path.Path != identifier)) ||
+                (command.Produces.Any(value => value.InlineEvent is not null && value.For is null) &&
+                 command.Produces.Any(value => value.InlineEvent is null && value.For is null));
             foreach (var production in command.Produces)
             {
                 if (production.InlineEvent is { } inline &&
@@ -35,7 +37,7 @@ internal static class InlineEventValidator
 
                 if (mixed && production.For is null)
                 {
-                    context.Error(DiagnosticCodes.ExplicitProducesTargetsRequired, $"Command '{command.Name}' targets another event source - every production must state 'for' explicitly", production.Location);
+                    context.Error(DiagnosticCodes.ExplicitProducesTargetsRequired, $"Production '{production.Event}' in command '{command.Name}' must state 'for' explicitly - every production must state 'for' when destinations differ", production.Location);
                 }
 
                 var destination = (production.For as PathExpressionSyntax)?.Path ?? (production.InlineEvent is not null && production.For is null ? identifier : null);

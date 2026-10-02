@@ -51,6 +51,8 @@ Standalone events and [inline command events](commands.md#declare-an-event-inlin
 - `documentation` followed by one nonempty fenced `markdown` block;
 - optional `id "<old-name>"` when renaming an event that already has stored events.
 
+Markdown description fences are specific to events, including inline declarations; descriptions on other constructs use `text`. A bare description fence remains accepted with deprecation warning `PLAY0397`.
+
 Each directive can appear at most once. These are authoring metadata: binding reports `PLAY0270`, but they add no ESM bytes. The `id` string does **not** replace or rehash the portable `EventContractId`; catalog identity remains authoritative. Rendering documentation into generated XML or TypeScript comments is a separate downstream capability.
 
 Leave `id` absent for a new event. Cratis convention is plain `[EventType]` without arguments; a pin exists to preserve an old persisted name on a rename, not to decorate a new declaration. A pin equal to the current name reports information diagnostic `PLAY0471`.
@@ -69,7 +71,7 @@ Property-shaped lines remain properties: `id String`, `description String`, and 
 
 ## Inline declarations
 
-`produces event <Name>` inside a command declares the same slice-owned event as a standalone declaration. The [command reference](commands.md#declare-an-event-inline) explains its typed mappings and destination default. Extract an inline event before introducing later generations. Plain productions can reference it regardless of declaration order.
+`produces event <Name>` inside a command declares the same slice-owned event as a standalone declaration. The [command reference](commands.md#declare-an-event-inline) explains its typed mappings and destination default. Extract an inline event before introducing later generations. Plain productions can reference it regardless of declaration order. The event and its properties have the same workspace addresses and stable identities as the equivalent standalone event in that slice. Inline typed mappings cannot repeat a property name (`PLAY0168`).
 
 ## Type modifiers
 
