@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
+using System.Reflection;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
@@ -29,14 +31,31 @@ public class and_many_destinations_are_omitted : given.a_command_production
     }
 
     [Fact]
-    void should_not_verify_other_diagnostics_or_reverify_discovery_when_proposing_a_recipe()
+    void should_run_one_proposal_transaction_after_discovery_without_verifying_other_diagnostics()
     {
         var index = WorkspaceSyntaxIndex.Create(Workspace);
         Repair = WorkspaceDiagnosticRepairs.Find(index, Workspace.Revision, index.RepairableDiagnostics.Last(diagnostic => diagnostic.Code == DiagnosticCodes.OmittedProductionDestination)).Single();
         WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(1);
         Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, Repair, Request());
         Result.Accepted.ShouldBeTrue();
-        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(1);
+        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(2);
+        Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, Repair, Request());
+        Result.Accepted.ShouldBeTrue();
+        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(3);
+    }
+
+    [Fact]
+    void should_cache_only_verdict_fields_not_candidate_workspaces_or_write_plans()
+    {
+        Discover(Workspace).Length.ShouldEqual(ProductionCount);
+        var verification = typeof(WorkspaceProductionRepairs).GetNestedType("Verification", BindingFlags.NonPublic)!;
+        var subjects = verification.GetProperty("Subjects", BindingFlags.Instance | BindingFlags.NonPublic)!.PropertyType;
+        var cached = subjects.GetGenericArguments()[1];
+        cached.GetGenericTypeDefinition().ShouldEqual(typeof(Lazy<>));
+        var fields = cached.GetGenericArguments()[0].GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        fields.Length.ShouldEqual(5);
+        fields.Select(field => field.FieldType).ShouldContainOnly(
+            typeof(bool), typeof(ImmutableArray<WorkspaceConflict>), typeof(ImmutableArray<Diagnostic>), typeof(bool), typeof(ImmutableArray<Diagnostic>));
     }
 
     [Fact]

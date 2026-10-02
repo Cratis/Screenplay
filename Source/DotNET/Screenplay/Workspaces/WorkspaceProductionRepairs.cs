@@ -13,8 +13,8 @@ namespace Cratis.Screenplay.Workspaces;
 
 internal static class WorkspaceProductionRepairs
 {
-    // The workspace is immutable and owns its derived compilation. Weak keys keep verification
-    // snapshot-local (including attachments), without retaining old revisions or candidate workspaces.
+    // Weak keys keep verdicts snapshot-local (including attachments), without retaining old revisions.
+    // Values retain only acceptance or refusal details, never candidate workspaces or write-plan bytes.
     static readonly ConditionalWeakTable<ScreenplayWorkspace, Verification> _verification = [];
 
     internal static int TransactionCount(ScreenplayWorkspace workspace) => _verification.GetOrCreateValue(workspace).Transactions;
@@ -89,10 +89,19 @@ internal static class WorkspaceProductionRepairs
             request.RetiredSemanticAddresses.IsDefaultOrEmpty && !request.RetiredSemanticAddresses.IsDefault &&
             request.RetiredEventAddresses.IsDefaultOrEmpty && !request.RetiredEventAddresses.IsDefault)
         {
-            return _verification.GetOrCreateValue(index.Workspace).Subjects.GetOrAdd(
-                (repair.Subject, repair.DiagnosticCode, request.Validation, request.ReferencePolicy),
-                static (_, state) => new Lazy<WorkspaceAuthoringResult>(() => VerifyTransaction(state.Index, state.Repair, state.Request)),
-                (Index: index, Repair: repair, Request: request)).Value;
+            var subjects = _verification.GetOrCreateValue(index.Workspace).Subjects;
+            var key = (repair.Subject, repair.DiagnosticCode, request.Validation, request.ReferencePolicy);
+            if (subjects.TryGetValue(key, out var cached) && !cached.Value.Accepted)
+            {
+                return cached.Value.Refusal();
+            }
+
+            // An accepted verdict cannot supply a candidate: proposals run their own single transaction.
+            var result = VerifyTransaction(index, repair, request);
+            var verdict = Verdict.From(result);
+            subjects.GetOrAdd(key, static (_, value) => new Lazy<Verdict>(() => value), verdict);
+
+            return result;
         }
 
         return VerifyTransaction(index, repair, request);
@@ -101,13 +110,24 @@ internal static class WorkspaceProductionRepairs
     static ImmutableArray<WorkspaceDiagnosticRepair> Discover(WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, bool verifyRepair)
     {
         var workspace = index.Workspace;
-        return !verifyRepair || Verify(index, repair, new WorkspaceAuthoringRequest
+        if (!verifyRepair)
+        {
+            return [repair];
+        }
+
+        var request = new WorkspaceAuthoringRequest
         {
             ExpectedRevision = workspace.Revision,
             ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
             Validation = WorkspaceAuthoringValidation.Authoring,
             Formatting = repair.RequiredFormatting
-        }).Accepted ? [repair] : [];
+        };
+        var verdict = _verification.GetOrCreateValue(workspace).Subjects.GetOrAdd(
+            (repair.Subject, repair.DiagnosticCode, request.Validation, request.ReferencePolicy),
+            static (_, state) => new Lazy<Verdict>(() => Verdict.From(VerifyTransaction(state.Index, state.Repair, state.Request))),
+            (Index: index, Repair: repair, Request: request)).Value;
+
+        return verdict.Accepted ? [repair] : [];
     }
 
     static WorkspaceAuthoringResult VerifyTransaction(WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, WorkspaceAuthoringRequest request)
@@ -258,9 +278,29 @@ internal static class WorkspaceProductionRepairs
         right.Any(other => other.Name == property.Name && other.Type.Name == property.Type.Name &&
             other.Type.IsCollection == property.Type.IsCollection && other.Type.IsOptional == property.Type.IsOptional));
 
+    sealed record Verdict(
+        bool Accepted,
+        ImmutableArray<WorkspaceConflict> Conflicts,
+        ImmutableArray<Diagnostic> AuthoringDiagnostics,
+        bool ExecutableReady,
+        ImmutableArray<Diagnostic> ExecutableDiagnostics)
+    {
+        internal static Verdict From(WorkspaceAuthoringResult result) => result.Accepted
+            ? new(true, [], [], false, [])
+            : new(false, result.Conflicts, result.AuthoringDiagnostics, result.ExecutableReady, result.ExecutableDiagnostics);
+
+        internal WorkspaceAuthoringResult Refusal() => new()
+        {
+            Conflicts = Conflicts,
+            AuthoringDiagnostics = AuthoringDiagnostics,
+            ExecutableReady = ExecutableReady,
+            ExecutableDiagnostics = ExecutableDiagnostics
+        };
+    }
+
     sealed class Verification
     {
         internal int Transactions;
-        internal ConcurrentDictionary<(WorkspaceNodeHandle Subject, string Code, WorkspaceAuthoringValidation Validation, WorkspaceAuthoringReferencePolicy ReferencePolicy), Lazy<WorkspaceAuthoringResult>> Subjects { get; } = [];
+        internal ConcurrentDictionary<(WorkspaceNodeHandle Subject, string Code, WorkspaceAuthoringValidation Validation, WorkspaceAuthoringReferencePolicy ReferencePolicy), Lazy<Verdict>> Subjects { get; } = [];
     }
 }

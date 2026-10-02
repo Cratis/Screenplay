@@ -26,7 +26,7 @@ public class and_the_event_is_undeclared : given.a_command_production
     {
         var result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, Repair, Request() with { Validation = WorkspaceAuthoringValidation.Executable });
         result.Accepted.ShouldBeTrue();
-        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(2);
+        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(3);
     }
 
     [Fact]
@@ -35,10 +35,10 @@ public class and_the_event_is_undeclared : given.a_command_production
         var result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, Repair, Request() with { Documents = default });
         result.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.InvalidOperation);
         result.Workspace.ShouldBeNull();
-        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(2);
+        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(3);
     }
 
-    [Fact] void should_reuse_discovery_verification() => WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(1);
+    [Fact] void should_run_one_proposal_transaction_after_discovery() => WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(2);
     [Fact] void should_propose_a_typed_addition() => Repair.Operations.Single().ShouldBeOfExactType<AddWorkspaceNode>();
     [Fact] void should_target_the_producing_slice() => WorkspaceSyntaxIndex.Create(Workspace).Find(((AddWorkspaceNode)Repair.Operations.Single()).Parent)!.Node.ShouldBeOfExactType<SliceSyntax>();
     [Fact] void should_preserve_mapping_order() => Declaration.Properties.Select(property => property.Name).ShouldContainOnly("name", "registeredAt");
