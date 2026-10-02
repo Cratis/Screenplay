@@ -25,17 +25,26 @@ public class and_the_inferred_event_is_inconsistent : given.a_command_production
     }
 
     [Fact]
-    void should_reuse_the_failed_verification_and_preserve_its_typed_diagnostics()
+    void should_return_fresh_transaction_diagnostics_after_failed_discovery()
     {
         HasRepair(DiagnosticCodes.UnknownEvent).ShouldBeFalse();
         var subject = WorkspaceSyntaxIndex.Create(Workspace).Entries.Single(entry => entry.Node is ProducesSyntax);
         Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, DiagnosticCodes.UnknownEvent, subject.Handle, Request());
         Result.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.CompilationFailed);
         Result.AuthoringDiagnostics.Any(diagnostic => diagnostic.Code == "PLAY0287").ShouldBeTrue();
+        Result.ExecutableDiagnostics.ShouldBeEmpty();
+        Result.ExecutableReady.ShouldBeFalse();
         Result.Accepted.ShouldBeFalse();
         Result.Workspace.ShouldBeNull();
         Result.WritePlan.ShouldBeNull();
-        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(1);
+        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(2);
+        Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, DiagnosticCodes.UnknownEvent, subject.Handle, Request());
+        Result.AuthoringDiagnostics.Any(diagnostic => diagnostic.Code == "PLAY0287").ShouldBeTrue();
+        Result.ExecutableDiagnostics.ShouldBeEmpty();
+        Result.Accepted.ShouldBeFalse();
+        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(3);
+        HasRepair(DiagnosticCodes.UnknownEvent).ShouldBeFalse();
+        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(3);
     }
 
     [Fact]
@@ -44,6 +53,8 @@ public class and_the_inferred_event_is_inconsistent : given.a_command_production
         var subject = WorkspaceSyntaxIndex.Create(Workspace).Entries.Single(entry => entry.Node is ProducesSyntax);
         Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, DiagnosticCodes.UnknownEvent, subject.Handle, Request());
         Result.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.CompilationFailed);
+        Result.AuthoringDiagnostics.Any(diagnostic => diagnostic.Code == "PLAY0287").ShouldBeTrue();
+        Result.ExecutableDiagnostics.ShouldBeEmpty();
         WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(1);
         HasRepair(DiagnosticCodes.UnknownEvent).ShouldBeFalse();
         WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(1);
