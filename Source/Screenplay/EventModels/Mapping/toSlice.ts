@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { CommandSyntax, ConstraintSyntax, QueryParameterSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
+import { eventDeclarations, CommandSyntax, ConstraintSyntax, QueryParameterSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
 import {
     CommandItemDocument, EventItemDocument, QueryItemDocument, QueryParameterType, ReadModelItemDocument, SliceDocument, SliceStatus, SliceType,
 } from '../Document/EventModelDocument';
@@ -67,7 +67,7 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
 }
 
 function eventsOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): EventItemDocument[] {
-    const declared = slice.events.filter(event => event.name.trim().length > 0).map(event => withConstraints({
+    const declared = eventDeclarations(slice).filter(event => event.name.trim().length > 0).map(event => withConstraints({
         id: owners.idFor(event.name) ?? scope.idOf('event', event.name),
         name: event.name,
         schema: owners.schemas.forProperties(event.properties),
