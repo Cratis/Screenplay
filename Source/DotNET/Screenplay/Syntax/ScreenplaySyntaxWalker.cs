@@ -70,6 +70,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitImport(import);
         }
 
+        foreach (var import in syntax.FileImports)
+        {
+            VisitFileImport(import);
+        }
+
         foreach (var concept in syntax.Concepts)
         {
             VisitConcept(concept);
@@ -144,6 +149,12 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitImport(ImportSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
+    /// Visits a <see cref="FileImportSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="FileImportSyntax"/> to visit.</param>
+    public virtual void VisitFileImport(FileImportSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
     /// Visits a <see cref="ModuleSyntax"/> node and its children.
     /// </summary>
     /// <param name="syntax">The <see cref="ModuleSyntax"/> to visit.</param>
@@ -168,6 +179,11 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitModule(ModuleSyntax syntax)
     {
         VisitNode(syntax);
+
+        foreach (var import in syntax.FileImports)
+        {
+            VisitFileImport(import);
+        }
 
         if (syntax.Authorize is not null)
         {
@@ -423,6 +439,11 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitFeature(FeatureSyntax syntax)
     {
         VisitNode(syntax);
+
+        foreach (var import in syntax.FileImports)
+        {
+            VisitFileImport(import);
+        }
 
         if (syntax.Authorize is not null)
         {

@@ -1,0 +1,67 @@
+// The consultant follows each week from draft to approval.
+
+slice StateView MyTimesheets
+  description "The signed-in consultant's weeks and where each one stands"
+
+  readmodel ConsultantTimesheet
+    timesheetId  TimesheetId
+    consultantId ConsultantId
+    year         TimesheetYear
+    week         WeekNumber
+    status       TimesheetStatus
+
+  query MyTimesheets => observable ConsultantTimesheet[]
+    description "The caller's own timesheets, kept current through approval"
+    scoped to identity
+    authorize IsConsultant
+
+  query ConsultantTimesheetById => ConsultantTimesheet?
+    by timesheetId TimesheetId
+    authorize IsConsultant
+
+  projection MyTimesheets => ConsultantTimesheet
+    from TimesheetStarted key timesheetId
+      status = "draft"
+    from TimesheetSubmitted key timesheetId
+      status = "submitted"
+    from TimesheetApproved key timesheetId
+      status = "approved"
+    from TimesheetRejected key timesheetId
+      status = "rejected"
+
+  screen MyTimesheetsScreen
+    title $strings.timesheets.mine.title
+    data ConsultantTimesheet[] via query MyTimesheets
+    section weeks
+      table weeks
+        column year   label $strings.timesheets.fields.year
+        column week   label $strings.timesheets.fields.week
+        column status label $strings.timesheets.fields.status
+        on row-click navigate to RecordTimeScreen by timesheetId
+    action StartTimesheet
+      label $strings.timesheets.start.action
+      navigate to StartTimesheetDialog
+
+  specification FollowingAWeekThroughSubmission
+    given caller
+      authenticated
+      role "Consultant"
+    given TimesheetStarted
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    when append TimesheetSubmitted
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 37.5
+    then readmodel ConsultantTimesheet
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      week        = 40
+      status      = "submitted"
+    then query ConsultantTimesheetById
+      arguments
+        timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      result
+        year   = 2026
+        status = "submitted"

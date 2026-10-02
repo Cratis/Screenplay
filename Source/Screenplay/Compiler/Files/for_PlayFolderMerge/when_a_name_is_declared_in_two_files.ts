@@ -4,7 +4,7 @@
 import { describe, beforeEach, it } from 'vitest';
 import { CompilationResult } from '../../ScreenplayCompiler';
 import { ApplicationSyntax } from '../../Syntax/Structure';
-import { parseFolder } from '../PlayFolderMerge';
+import { parseFolder } from '../PlayApplicationAssembly';
 
 describe('when a name is declared in two files', () => {
     let result: CompilationResult<ApplicationSyntax>;

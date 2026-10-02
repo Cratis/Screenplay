@@ -79,4 +79,16 @@ public interface IPlayFileCompiler
     /// application arrives as one file or as a folder.
     /// </remarks>
     ApplicationCompilation<TApplication> CompileFile<TApplication>(string path, IApplicationSyntaxVisitor<TApplication> visitor);
+
+    /// <summary>
+    /// Compiles the application a file is the root of - the file, and every file its imports bring in.
+    /// </summary>
+    /// <param name="path">The path of the root file.</param>
+    /// <returns>The <see cref="ApplicationCompilation{TApplication}"/> of the application as a whole.</returns>
+    /// <remarks>
+    /// Import paths are relative to the folder of the file that writes them, and every source is reported
+    /// relative to the folder of the root file. A file without imports compiles exactly as
+    /// <see cref="CompileFile(string)"/> does, as one application of one document.
+    /// </remarks>
+    ApplicationCompilation<ApplicationSyntax> CompileApplication(string path) => new PlayFileCompiler().CompileApplication(path);
 }

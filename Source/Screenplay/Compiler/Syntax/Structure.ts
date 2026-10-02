@@ -35,6 +35,14 @@ export interface SliceSyntax extends SyntaxNode {
     readonly screens: readonly ScreenSyntax[];
 }
 
+// An 'import "<pattern>"' of other .play files. Where it is written decides where what it imports belongs:
+// at the top level of a document it brings in whole documents; inside a module or feature it places each
+// imported file there, so the file's top level is that module's or feature's body.
+export interface FileImportSyntax extends SyntaxNode {
+    readonly kind: 'FileImportSyntax';
+    readonly pattern: string;
+}
+
 export interface FeatureSyntax extends SyntaxNode {
     readonly kind: 'FeatureSyntax';
     readonly name: string;
@@ -42,6 +50,11 @@ export interface FeatureSyntax extends SyntaxNode {
     readonly authorize: AuthorizeSyntax | null;
     readonly features: readonly FeatureSyntax[];
     readonly slices: readonly SliceSyntax[];
+    readonly fileImports: readonly FileImportSyntax[];
+
+    // Whether the feature is not written in the document but places it - the document was imported into
+    // the feature, so its top level is the feature's body.
+    readonly isPlacement: boolean;
 }
 
 export interface ModuleSyntax extends SyntaxNode {
@@ -50,6 +63,11 @@ export interface ModuleSyntax extends SyntaxNode {
     readonly description: string | null;
     readonly authorize: AuthorizeSyntax | null;
     readonly features: readonly FeatureSyntax[];
+    readonly fileImports: readonly FileImportSyntax[];
+
+    // Whether the module is not written in the document but places it - the document was imported into
+    // the module, so its top level is the module's body.
+    readonly isPlacement: boolean;
 }
 
 export interface ApplicationSyntax extends SyntaxNode {
@@ -60,4 +78,7 @@ export interface ApplicationSyntax extends SyntaxNode {
     readonly types: readonly TypeSyntax[];
     readonly modules: readonly ModuleSyntax[];
     readonly personas: readonly PersonaSyntax[];
+
+    // The files the document imports at its top level - whole documents, merged into the application.
+    readonly fileImports: readonly FileImportSyntax[];
 }

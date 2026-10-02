@@ -81,6 +81,14 @@ internal static partial class SpecificationParser
         SpecificationDeniedSyntax? denied = null;
         FileReferenceSyntax? file = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
+        SpecificationClockSyntax? givenClock = null;
+        var givenCaptures = new List<SpecificationCaptureSyntax>();
+        SpecificationClockSyntax? whenClock = null;
+        SpecificationTriggerSyntax? whenTrigger = null;
+        SpecificationCaptureSyntax? whenCapture = null;
+        SpecificationWhenQuerySyntax? whenQuery = null;
+        var thenResults = new List<SpecificationQueryResultSyntax>();
+        SpecificationNoResultSyntax? thenNoResult = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
@@ -95,7 +103,26 @@ internal static partial class SpecificationParser
             switch (ThenNoPrefixRegex().IsMatch(line.Content) ? "then" : LineText.FirstWord(line.Content))
             {
                 case "given":
-                    if (line.Content.StartsWith("given caller", StringComparison.Ordinal))
+                    if (KeywordRegex("given", "clock").IsMatch(line.Content))
+                    {
+                        if (givenClock is not null)
+                        {
+                            context.Error(DiagnosticCodes.InvalidSpecificationClock, "A specification states its clock at most once.", line.Location);
+                            context.SkipBlock(line.Indent);
+                        }
+                        else
+                        {
+                            givenClock = ParseClock(context, line, "given");
+                        }
+                    }
+                    else if (KeywordRegex("given", "capture").IsMatch(line.Content))
+                    {
+                        if (ParseCapture(context, line, "given") is { } capture)
+                        {
+                            givenCaptures.Add(capture);
+                        }
+                    }
+                    else if (line.Content.StartsWith("given caller", StringComparison.Ordinal))
                     {
                         if (caller is not null)
                         {
@@ -137,6 +164,22 @@ internal static partial class SpecificationParser
                     {
                         whenAppended = ParseEventReference(context, line, WhenAppendRegex(), "when append");
                     }
+                    else if (KeywordRegex("when", "clock").IsMatch(line.Content))
+                    {
+                        whenClock = ParseClock(context, line, "when");
+                    }
+                    else if (KeywordRegex("when", "trigger").IsMatch(line.Content))
+                    {
+                        whenTrigger = ParseTrigger(context, line);
+                    }
+                    else if (KeywordRegex("when", "capture").IsMatch(line.Content))
+                    {
+                        whenCapture = ParseCapture(context, line, "when");
+                    }
+                    else if (KeywordRegex("when", "query").IsMatch(line.Content))
+                    {
+                        whenQuery = ParseWhenQuery(context, line);
+                    }
                     else
                     {
                         when = ParseWhen(context, line);
@@ -154,6 +197,26 @@ internal static partial class SpecificationParser
                             eventsInAnyOrder = true;
                             eventsInAnyOrderLocation = line.Location;
                         }
+                        context.SkipBlock(line.Indent);
+                    }
+                    else if (KeywordRegex("then", "result").IsMatch(line.Content))
+                    {
+                        if (ParseResult(context, line) is { } result)
+                        {
+                            thenResults.Add(result);
+                        }
+                    }
+                    else if (NoResultRegex().IsMatch(line.Content))
+                    {
+                        if (line.Content != "then no result" || thenNoResult is not null)
+                        {
+                            context.Error(DiagnosticCodes.InvalidSpecificationQueryAction, "Expected one 'then no result' directive.", line.Location);
+                        }
+                        else
+                        {
+                            thenNoResult = new(line.Location);
+                        }
+
                         context.SkipBlock(line.Indent);
                     }
                     else if (line.Content.StartsWith("then denied", StringComparison.Ordinal))
@@ -193,6 +256,14 @@ internal static partial class SpecificationParser
             ThenDenied = denied,
             WhenAppended = whenAppended,
             ThenEventsInAnyOrder = eventsInAnyOrder,
+            GivenClock = givenClock,
+            GivenCaptures = givenCaptures,
+            WhenClock = whenClock,
+            WhenTrigger = whenTrigger,
+            WhenCapture = whenCapture,
+            WhenQuery = whenQuery,
+            ThenResults = thenResults,
+            ThenNoResult = thenNoResult,
             DirectiveLocations = WithEventOrderLocation(directiveLocations, eventsInAnyOrderLocation)
         };
     }
@@ -206,6 +277,87 @@ internal static partial class SpecificationParser
 
         return locations;
     }
+
+    static SpecificationClockSyntax? ParseClock(ParserContext context, SourceLine line, string keyword)
+    {
+        var match = ClockRegex().Match(line.Content);
+        context.SkipBlock(line.Indent);
+        if (!match.Success || match.Groups[1].Value != keyword)
+        {
+            context.Error(
+                DiagnosticCodes.InvalidSpecificationClock,
+                $"Invalid '{keyword} clock' - expected '{keyword} clock \"<ISO 8601 instant>\"', such as '{keyword} clock \"2026-10-05T08:00:00Z\"'",
+                line.Location);
+            return null;
+        }
+
+        return new(match.Groups[2].Value, line.Location);
+    }
+
+    static SpecificationTriggerSyntax? ParseTrigger(ParserContext context, SourceLine line)
+    {
+        var match = WhenTriggerRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidSpecificationTrigger, $"Invalid 'when trigger' declaration '{line.Content}' - expected 'when trigger <Trigger>'", line.Location);
+            context.SkipBlock(line.Indent);
+            return null;
+        }
+
+        return new(match.Groups[1].Value, ParseValues(context, line), line.Location);
+    }
+
+    static SpecificationCaptureSyntax? ParseCapture(ParserContext context, SourceLine line, string keyword)
+    {
+        var match = CaptureRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidSpecificationCapture, $"Invalid '{keyword} capture' declaration '{line.Content}' - expected '{keyword} capture <Capture>'", line.Location);
+            context.SkipBlock(line.Indent);
+            return null;
+        }
+
+        return new(match.Groups[1].Value, ParseValues(context, line), line.Location);
+    }
+
+    static SpecificationWhenQuerySyntax? ParseWhenQuery(ParserContext context, SourceLine line)
+    {
+        var match = WhenQueryRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidSpecificationQueryAction, $"Invalid 'when query' declaration '{line.Content}' - expected 'when query <Query>'", line.Location);
+            context.SkipBlock(line.Indent);
+            return null;
+        }
+
+        return new(match.Groups[1].Value, ParseValues(context, line), line.Location);
+    }
+
+    static SpecificationQueryResultSyntax? ParseResult(ParserContext context, SourceLine line)
+    {
+        var match = ThenResultRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidSpecificationQueryAction, $"Invalid 'then result' declaration '{line.Content}' - expected 'then result [exactly]'", line.Location);
+            context.SkipBlock(line.Indent);
+            return null;
+        }
+
+        return new(ParseValues(context, line), line.Location) { Exactly = match.Groups[1].Success };
+    }
+
+    static Regex KeywordRegex(string verb, string keyword) => verb switch
+    {
+        "given" => keyword == "clock" ? GivenClockPrefixRegex() : GivenCapturePrefixRegex(),
+        "when" => keyword switch
+        {
+            "clock" => WhenClockPrefixRegex(),
+            "trigger" => WhenTriggerPrefixRegex(),
+            "capture" => WhenCapturePrefixRegex(),
+            _ => WhenQueryPrefixRegex()
+        },
+        _ => ThenResultPrefixRegex()
+    };
 
     static SpecificationCallerSyntax? ParseCaller(ParserContext context, SourceLine line)
     {
@@ -518,6 +670,47 @@ internal static partial class SpecificationParser
 
     [GeneratedRegex("^claim\\s+\"(" + StringLiteral.BodyPattern + ")\"\\s*=\\s*\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
     private static partial Regex CallerClaimRegex();
+
+    [GeneratedRegex(@"^given\s+clock\b", RegexOptions.None, 1000)]
+    private static partial Regex GivenClockPrefixRegex();
+
+    [GeneratedRegex(@"^given\s+capture\b", RegexOptions.None, 1000)]
+    private static partial Regex GivenCapturePrefixRegex();
+
+    [GeneratedRegex(@"^when\s+clock\b", RegexOptions.None, 1000)]
+    private static partial Regex WhenClockPrefixRegex();
+
+    [GeneratedRegex(@"^when\s+trigger\b", RegexOptions.None, 1000)]
+    private static partial Regex WhenTriggerPrefixRegex();
+
+    [GeneratedRegex(@"^when\s+capture\b", RegexOptions.None, 1000)]
+    private static partial Regex WhenCapturePrefixRegex();
+
+    [GeneratedRegex(@"^when\s+query\b", RegexOptions.None, 1000)]
+    private static partial Regex WhenQueryPrefixRegex();
+
+    [GeneratedRegex(@"^then\s+result\b", RegexOptions.None, 1000)]
+    private static partial Regex ThenResultPrefixRegex();
+
+    [GeneratedRegex(@"^then\s+no\s+result\b", RegexOptions.None, 1000)]
+    private static partial Regex NoResultRegex();
+
+    // An instant in ISO 8601 - a date, a time to the minute or finer, and an explicit offset or Z - so the
+    // same text means the same moment wherever the specification runs.
+    [GeneratedRegex(@"^(given|when)\s+clock\s+""(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2}))""$", RegexOptions.None, 1000)]
+    private static partial Regex ClockRegex();
+
+    [GeneratedRegex(@"^when\s+trigger\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex WhenTriggerRegex();
+
+    [GeneratedRegex(@"^(?:given|when)\s+capture\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex CaptureRegex();
+
+    [GeneratedRegex(@"^when\s+query\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    private static partial Regex WhenQueryRegex();
+
+    [GeneratedRegex(@"^then\s+result(\s+exactly)?$", RegexOptions.None, 1000)]
+    private static partial Regex ThenResultRegex();
 
     [GeneratedRegex(@"^specification\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();

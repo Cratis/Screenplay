@@ -2,18 +2,21 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
-import { AuthorizeSyntax, PersonaSyntax } from '../Syntax/Authorization';
+import { SourceLocation } from '../Diagnostics/SourceLocation';
+import { describePlacement, documentPlacement, isDocumentPlacement, PlayPlacement } from '../Files/PlayPlacement';
+import { PersonaSyntax } from '../Syntax/Authorization';
 import { ConceptAttributeSyntax, ConceptSyntax, DomainSyntax, ImportSyntax, TypeSyntax } from '../Syntax/Declarations';
-import { ApplicationSyntax, FeatureSyntax, ModuleSyntax, SliceSyntax } from '../Syntax/Structure';
+import { ApplicationSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax } from '../Syntax/Structure';
 import { pattern } from '../Text/patterns';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
-import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseType } from './DeclarationParsers';
 import { parseDescription } from './DescriptionParser';
+import { FeatureBody, featureBodyExpected } from './FeatureBody';
+import { isFileImport, parseFileImport } from './FileImportParser';
 import { isFileDirective } from './FileReferences';
 import { firstWord, unescapeIdentifier } from './LineText';
+import { ModuleBody, moduleBodyExpected, modulePattern, parseModule } from './ModuleBody';
 import { ParserContext } from './ParserContext';
-import { parseSlice } from './SliceParser';
 import { locationOf, SourceLine, startOf } from './SourceLine';
 
 const domainPattern = pattern('^domain\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)$');
@@ -21,8 +24,6 @@ const importPattern = pattern('^import\\s+([\\w.]+)$');
 const conceptPattern = pattern('^concept\\s+(\\w+)\\s*:\\s*(\\w+)((?:\\s+@\\w+)*)$');
 const enumValuePattern = pattern('^@?[a-z_]\\w*$');
 const attributeReasonPattern = pattern(`^([a-z_]\\w*)\\s+reason\\s+"(${stringBodyPattern})"$`);
-const modulePattern = pattern('^module\\s+([A-Za-z_]\\w*)$');
-const featurePattern = pattern('^feature\\s+([A-Za-z_]\\w*)$');
 const personaPattern = pattern('^persona\\s+([A-Za-z_]\\w*)$');
 const personaPolicyPattern = pattern('^policy\\s+([A-Za-z_]\\w*)$');
 const tabIndentPattern = /^[ ]*\t/;
@@ -31,14 +32,20 @@ const primitiveTypes = ['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'Dat
 // Top-level, module and feature constructs the C# compiler knows that this compiler does not model. They
 // are skipped whole, not reported.
 const opaqueTopLevel = new Set(['policy', 'authentication', 'seed', 'ui', 'theme', 'trigger', 'layout', 'behavior']);
-const opaqueModuleMembers = new Set(['on', 'uses', 'screen', 'dialog', 'form', 'contribute']);
-const opaqueFeatureMembers = new Set(['on', 'uses', 'contribute']);
 
-// Parses one document into its application syntax - the port of the C# ScreenplayParser.
-export function parseApplication(context: ParserContext, lines: readonly SourceLine[]): ApplicationSyntax {
+// What belongs in a module or feature body; at the top level of a whole document it gets a hint saying so.
+const bodyKeywords = new Set(['slice', 'feature', 'description', 'authorize', 'screen', 'dialog', 'form', 'contribute', 'on', 'uses']);
+
+// Parses one document into its application syntax - the port of the C# ScreenplayParser. The placement says
+// where the document's top level belongs: the application, unless an import placed it in a module or feature.
+export function parseApplication(context: ParserContext, lines: readonly SourceLine[], placement: PlayPlacement = documentPlacement): ApplicationSyntax {
     warnOnTabIndentation(context, lines);
+    const moduleBody = placement.length === 1 ? new ModuleBody(placement[0]) : undefined;
+    const featureBody = placement.length > 1 ? new FeatureBody(placement[placement.length - 1]) : undefined;
+    const placedBody = moduleBody ?? featureBody;
     let domain: DomainSyntax | null = null;
     const imports: ImportSyntax[] = [];
+    const fileImports: FileImportSyntax[] = [];
     const concepts: ConceptSyntax[] = [];
     const types: TypeSyntax[] = [];
     const modules: ModuleSyntax[] = [];
@@ -51,10 +58,18 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             domain = parseDomain(context, line, domain, sawOtherConstruct);
             continue;
         }
-        // The C# parser asks whether anything was declared before the domain, so an import it rejected
-        // and an unknown construct do not count.
-        sawOtherConstruct ||= declaresConstruct(keyword, line);
-        if (keyword === 'import') {
+        // The C# parser asks whether anything was declared before the domain, so an import it rejected,
+        // a file import and an unknown construct do not count.
+        sawOtherConstruct ||= declaresConstruct(keyword, line, placement);
+        if (keyword === 'import' && isFileImport(line.content)) {
+            // A top level import belongs to whatever the document's top level is - the application, or the
+            // module or feature the document was itself imported into.
+            if (placedBody !== undefined) {
+                placedBody.tryParse(context, line);
+            } else {
+                parseFileImport(context, line, fileImports);
+            }
+        } else if (keyword === 'import') {
             const match = importPattern.exec(line.content);
             if (match === null) {
                 context.error(DiagnosticCodes.InvalidImportDeclaration, `Invalid import '${line.content}' - expected 'import <Qualified.Name>'`, locationOf(line));
@@ -65,25 +80,77 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             concepts.push(parseConcept(context, line));
         } else if (keyword === 'type') {
             types.push(parseType(context, line));
+        } else if (keyword === 'module' && !isDocumentPlacement(placement)) {
+            parseModuleInPlacedFile(context, line, placement, moduleBody);
         } else if (keyword === 'module') {
             modules.push(parseModule(context, line));
         } else if (keyword === 'persona') {
             personas.push(parsePersona(context, line));
         } else if (opaqueTopLevel.has(keyword)) {
             context.skipOpaqueBlock(line.indent);
-        } else {
-            context.error(DiagnosticCodes.UnknownTopLevelConstruct, `Unexpected '${keyword}' at the top level - expected domain, import, concept, type, policy, persona, authentication, module, seed, trigger, behavior, ui profile, theme or layout`, locationOf(line));
-            context.skipBlock(line.indent);
+        } else if (placedBody?.tryParse(context, line) !== true) {
+            reportUnexpectedTopLevel(context, line, placement);
         }
     }
-    return { kind: 'ApplicationSyntax', domain, imports, concepts, types, modules, personas, location: context.start };
+    if (moduleBody !== undefined) {
+        modules.unshift(moduleBody.build(context.start, true));
+    } else if (featureBody !== undefined) {
+        modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
+    }
+    return { kind: 'ApplicationSyntax', domain, imports, concepts, types, modules, personas, fileImports, location: context.start };
 }
 
-function declaresConstruct(keyword: string, line: SourceLine): boolean {
+function declaresConstruct(keyword: string, line: SourceLine, placement: PlayPlacement): boolean {
     if (keyword === 'import') {
         return importPattern.test(line.content);
     }
-    return keyword === 'concept' || keyword === 'type' || keyword === 'module' || keyword === 'persona' || opaqueTopLevel.has(keyword);
+    if (keyword === 'module') {
+        return isDocumentPlacement(placement);
+    }
+    return keyword === 'concept' || keyword === 'type' || keyword === 'persona' || opaqueTopLevel.has(keyword);
+}
+
+function parseModuleInPlacedFile(context: ParserContext, line: SourceLine, placement: PlayPlacement, moduleBody: ModuleBody | undefined): void {
+    const name = modulePattern.exec(line.content)?.[1] ?? '';
+
+    // Restating the module a file is placed in says nothing new, so its body simply joins the placement.
+    if (moduleBody !== undefined && name === placement[0]) {
+        moduleBody.parseChildren(context, line);
+        return;
+    }
+    context.error(DiagnosticCodes.ModuleInPlacedFile,
+        `This file is imported into ${describePlacement(placement)}, so it cannot declare module '${name}' - import it at the top level of a document instead`, locationOf(line));
+    context.skipBlock(line.indent);
+}
+
+function reportUnexpectedTopLevel(context: ParserContext, line: SourceLine, placement: PlayPlacement): void {
+    const word = firstWord(line.content);
+    if (!isDocumentPlacement(placement)) {
+        const expected = placement.length === 1 ? moduleBodyExpected : featureBodyExpected;
+        context.error(DiagnosticCodes.UnexpectedInPlacedFile,
+            `Unexpected '${word}' in a file imported into ${describePlacement(placement)} - expected an application declaration or ${expected}`, locationOf(line));
+    } else {
+        const hint = bodyKeywords.has(word)
+            ? ` - '${word}' belongs in a module or feature; wrap it in one, or import this file from inside one`
+            : ' - expected domain, import, concept, type, policy, persona, authentication, module, seed, trigger, behavior, ui profile, theme or layout';
+        context.error(DiagnosticCodes.UnknownTopLevelConstruct, `Unexpected '${word}' at the top level${hint}`, locationOf(line));
+    }
+    context.skipBlock(line.indent);
+}
+
+// Wraps the feature a file is placed in in the features and module around it, each marked as a placement.
+function place(placement: PlayPlacement, innermost: FeatureSyntax, start: SourceLocation): ModuleSyntax {
+    let feature = innermost;
+    for (let index = placement.length - 2; index >= 1; index--) {
+        feature = {
+            kind: 'FeatureSyntax', name: placement[index], description: null, authorize: null,
+            features: [feature], slices: [], fileImports: [], isPlacement: true, location: start,
+        };
+    }
+    return {
+        kind: 'ModuleSyntax', name: placement[0], description: null, authorize: null,
+        features: [feature], fileImports: [], isPlacement: true, location: start,
+    };
 }
 
 function parseDomain(context: ParserContext, line: SourceLine, existing: DomainSyntax | null, sawOtherConstruct: boolean): DomainSyntax | null {
@@ -166,63 +233,6 @@ function applyAttributeReason(context: ParserContext, line: SourceLine, concept:
     } else {
         attributes[index] = { ...attributes[index], reason };
     }
-}
-
-function parseModule(context: ParserContext, line: SourceLine): ModuleSyntax {
-    const name = modulePattern.exec(line.content)?.[1] ?? '';
-    if (name === '') {
-        context.error(DiagnosticCodes.InvalidModuleDeclaration, `Invalid module declaration '${line.content}' - expected 'module <Name>'`, locationOf(line));
-    }
-    let description: string | null = null;
-    let authorize: AuthorizeSyntax | null = null;
-    const features: FeatureSyntax[] = [];
-    for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
-        context.reader.takeSignificant();
-        const keyword = firstWord(child.content);
-        if (keyword === 'description') {
-            description = parseDescription(context, child, description, `Module '${name}'`);
-        } else if (keyword === 'authorize') {
-            authorize = combineAuthorize(authorize, parseAuthorize(context, child));
-        } else if (keyword === 'feature') {
-            features.push(parseFeature(context, child));
-        } else if (opaqueModuleMembers.has(keyword)) {
-            context.skipOpaqueBlock(child.indent);
-        } else {
-            context.error(DiagnosticCodes.UnknownModuleDirective, `Unexpected '${keyword}' in module body - expected description, authorize, screen template, dialog template, form, contribute, feature, 'on <trigger>' or 'uses <Behavior>'`, locationOf(child));
-            context.skipBlock(child.indent);
-        }
-    }
-    return { kind: 'ModuleSyntax', name, description, authorize, features, location: locationOf(line) };
-}
-
-function parseFeature(context: ParserContext, line: SourceLine): FeatureSyntax {
-    const name = featurePattern.exec(line.content)?.[1] ?? '';
-    if (name === '') {
-        context.error(DiagnosticCodes.InvalidFeatureDeclaration, `Invalid feature declaration '${line.content}' - expected 'feature <Name>'`, locationOf(line));
-    }
-    let description: string | null = null;
-    let authorize: AuthorizeSyntax | null = null;
-    const features: FeatureSyntax[] = [];
-    const slices: SliceSyntax[] = [];
-    for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
-        context.reader.takeSignificant();
-        const keyword = firstWord(child.content);
-        if (keyword === 'description') {
-            description = parseDescription(context, child, description, `Feature '${name}'`);
-        } else if (keyword === 'authorize') {
-            authorize = combineAuthorize(authorize, parseAuthorize(context, child));
-        } else if (keyword === 'feature') {
-            features.push(parseFeature(context, child));
-        } else if (keyword === 'slice') {
-            slices.push(parseSlice(context, child));
-        } else if (opaqueFeatureMembers.has(keyword)) {
-            context.skipOpaqueBlock(child.indent);
-        } else {
-            context.error(DiagnosticCodes.UnknownFeatureDirective, `Unexpected '${keyword}' in feature body - expected description, authorize, feature, slice, contribute, 'on <trigger>' or 'uses <Behavior>'`, locationOf(child));
-            context.skipBlock(child.indent);
-        }
-    }
-    return { kind: 'FeatureSyntax', name, description, authorize, features, slices, location: locationOf(line) };
 }
 
 // 'persona <Name>' with an optional description and the policies it holds - the port of the C# ParsePersona.

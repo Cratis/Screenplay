@@ -1,0 +1,67 @@
+// A consultant sees the engagements they are staffed on.
+
+// A file placed in a feature holds the feature's body, so it may contribute
+// on the feature's behalf - here, the consultants' own navigation entry.
+contribute to Navigation
+  navigate to MyAssignmentsScreen
+  label $strings.navigation.assignments
+  order 15
+
+slice StateView MyAssignments
+  description "The engagements the signed-in consultant is staffed on"
+
+  readmodel Assignment
+    assignmentId   AssignmentId
+    engagementId   EngagementId
+    consultantId   ConsultantId
+    engagementName EngagementName
+    hourlyRate     HourlyRate
+
+  // 'scoped to identity': each caller sees only their own rows, and the
+  // consultant id comes from the caller, never from the UI.
+  query MyAssignments => observable Assignment[]
+    description "The caller's own assignments, kept current as they are staffed"
+    filter consultantId ConsultantId from $context.identity.id
+    scoped to identity
+    authorize IsConsultant
+
+  query AssignmentById => Assignment?
+    by assignmentId AssignmentId
+    authorize IsConsultant or IsEngagementManager
+
+  // AutoMap copies every property ConsultantAssigned shares with the read model.
+  projection MyAssignments => Assignment
+    from ConsultantAssigned key assignmentId
+
+  screen MyAssignmentsScreen
+    uses RefreshOnEnter
+      view MyAssignments
+    title $strings.engagements.assignments.title
+    data Assignment[] via query MyAssignments
+    section assignments
+      table assignments
+        column engagementName label $strings.engagements.fields.name
+        column hourlyRate     label $strings.engagements.fields.rate
+        on row-click navigate to MyTimesheetsScreen
+
+  specification SeeingANewAssignment
+    given caller
+      authenticated
+      role "Consultant"
+    when append ConsultantAssigned
+      assignmentId   = "2c8d4e6f-0a1b-4c3d-8e5f-7a9b0c1d2e31"
+      engagementId   = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      consultantId   = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      contact        = {"name":"Ingrid Solberg","email":"ingrid.solberg@fjordline.example"}
+      hourlyRate     = 1300
+      engagementName = "ERP migration"
+    then readmodel Assignment
+      assignmentId   = "2c8d4e6f-0a1b-4c3d-8e5f-7a9b0c1d2e31"
+      engagementName = "ERP migration"
+      hourlyRate     = 1300
+    then query AssignmentById
+      arguments
+        assignmentId = "2c8d4e6f-0a1b-4c3d-8e5f-7a9b0c1d2e31"
+      result
+        engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+        consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"

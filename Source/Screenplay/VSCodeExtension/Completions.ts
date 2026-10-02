@@ -2,12 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import * as vscode from 'vscode';
+import { ApplicationIndex } from './ApplicationIndex';
 import {
     CompletionEntry,
     contextVariableItems,
     knownEventNames,
     knownTriggerNames,
     languageId,
+    mergeSymbols,
     planCompletions,
     primitiveTypes,
     producesItems,
@@ -34,7 +36,9 @@ function symbolItem(
     return item;
 }
 
-const provider: vscode.CompletionItemProvider = {
+// Completes from what the whole application declares - the document and the other files of its workspace
+// folder - and completes an import path from the files an import in the document can name.
+const providerFor = (index: ApplicationIndex): vscode.CompletionItemProvider => ({
     provideCompletionItems(document, position) {
         const lines = document.getText().split(/\r?\n/);
         const currentLine = lines[position.line] ?? '';
@@ -42,13 +46,22 @@ const provider: vscode.CompletionItemProvider = {
         const plan = planCompletions(lines, position.line, textBefore);
         if (plan.kind === 'none') return [];
 
-        const symbols = scanDocument(lines);
+        const file = index.fileOf(document.uri);
+        const symbols = file === undefined ? scanDocument(lines) : mergeSymbols(scanDocument(lines), file.application.symbolsExcept(file.path));
         const eventNames = () =>
-            knownEventNames(symbols).map((name) =>
+            [...new Set(knownEventNames(symbols))].map((name) =>
                 symbolItem(name, vscode.CompletionItemKind.Event, 'event'),
             );
 
         switch (plan.kind) {
+            case 'playFiles': {
+                const range = new vscode.Range(position.line, position.character - plan.replaceLength, position.line, position.character);
+                return (file?.application.importablePathsFor(file.path) ?? []).map((path) => {
+                    const item = new vscode.CompletionItem(path, path.includes('*') ? vscode.CompletionItemKind.Folder : vscode.CompletionItemKind.File);
+                    item.range = range;
+                    return item;
+                });
+            }
             case 'contextVariables':
                 return contextVariableItems.map((entry) => {
                     const item = snippetItem(entry);
@@ -67,7 +80,7 @@ const provider: vscode.CompletionItemProvider = {
             case 'events':
                 return eventNames();
             case 'triggers':
-                return knownTriggerNames(symbols).map((name) =>
+                return [...new Set(knownTriggerNames(symbols))].map((name) =>
                     symbolItem(name, vscode.CompletionItemKind.Event, 'trigger'),
                 );
             case 'commands':
@@ -112,10 +125,10 @@ const provider: vscode.CompletionItemProvider = {
                 return plan.entries.map(snippetItem);
         }
     },
-};
+});
 
-export function registerCompletions(context: vscode.ExtensionContext): void {
+export function registerCompletions(context: vscode.ExtensionContext, index: ApplicationIndex): void {
     context.subscriptions.push(
-        vscode.languages.registerCompletionItemProvider(languageId, provider, ' ', '$', '@', '.'),
+        vscode.languages.registerCompletionItemProvider(languageId, providerFor(index), ' ', '$', '@', '.', '"', '/'),
     );
 }

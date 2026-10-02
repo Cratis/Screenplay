@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Languages;
 using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
@@ -53,12 +54,12 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     }
 
     /// <inheritdoc/>
-    public CompilationResult<ApplicationSyntax> Parse(string source, string? path = null)
-    {
-        var lines = SourceLineSplitter.Split(source, path: path);
-        var context = new ParserContext(new(lines), path, languages);
-        return new(SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines), lines), context.Diagnostics);
-    }
+    public CompilationResult<ApplicationSyntax> Parse(string source, string? path = null) =>
+        ParsePlaced(source, path, PlayPlacement.Document, languages);
+
+    /// <inheritdoc/>
+    public CompilationResult<ApplicationSyntax> Parse(string source, string? path, PlayPlacement placement) =>
+        ParsePlaced(source, path, placement, languages);
 
     /// <inheritdoc/>
     public CompilationResult<ProjectionSyntax> CompileProjection(string source)
@@ -112,5 +113,32 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
         return result.Success
             ? new(visitor.Visit(result.Value!), result.Diagnostics)
             : CompilationResult<TCapture>.Failed(result.Diagnostics);
+    }
+
+    /// <summary>
+    /// Parses source text in a placement with a given language registry.
+    /// </summary>
+    /// <param name="source">The source text to parse.</param>
+    /// <param name="path">The path to attribute locations to.</param>
+    /// <param name="placement">The <see cref="PlayPlacement"/> saying where the top level belongs.</param>
+    /// <param name="languages">The <see cref="IScreenplayLanguageRegistry"/> saying what the compiler recognizes.</param>
+    /// <returns>The <see cref="CompilationResult{TResult}"/> of the parse.</returns>
+    internal static CompilationResult<ApplicationSyntax> ParsePlaced(string source, string? path, PlayPlacement placement, IScreenplayLanguageRegistry languages)
+    {
+        var lines = SourceLineSplitter.Split(source, path: path);
+        var context = new ParserContext(new(lines), path, languages);
+        return new(SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines, placement), lines), context.Diagnostics);
+    }
+
+    /// <summary>
+    /// Finds the files a document imports and where in it each import is written.
+    /// </summary>
+    /// <param name="source">The source text.</param>
+    /// <param name="path">The path to attribute locations to.</param>
+    /// <returns>Each import with the module and feature names around it, outermost first.</returns>
+    internal static IReadOnlyList<DiscoveredFileImport> DiscoverImports(string source, string? path)
+    {
+        var lines = SourceLineSplitter.Split(source, path: path);
+        return ScreenplayParser.DiscoverImports(new ParserContext(new(lines), path));
     }
 }

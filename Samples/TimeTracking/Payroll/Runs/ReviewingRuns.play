@@ -1,0 +1,97 @@
+// Payroll sees every run, what is on it, and whether the provider has it.
+
+slice StateView PayrollRuns
+  description "Every payroll run and its state"
+
+  readmodel PayrollRun
+    payrollRunId      PayrollRunId
+    year              TimesheetYear
+    week              WeekNumber
+    lineCount         Int
+    totalHours        Decimal
+    exported          Bool
+    providerReference String?
+
+  // The run currently being filled - one instance, not looked up by a key.
+  readmodel CurrentPayrollRun
+    payrollRunId PayrollRunId
+    year         TimesheetYear
+    week         WeekNumber
+
+  query PayrollRuns => observable PayrollRun[]
+    description "Every payroll run, kept current while lines are queued"
+    authorize IsPayrollOfficer
+
+  query PayrollRunById => PayrollRun?
+    by payrollRunId PayrollRunId
+    authorize IsPayrollOfficer
+
+  query CurrentRun => CurrentPayrollRun?
+    description "The run approved hours are queued on right now"
+    authorize IsPayrollOfficer
+
+  projection PayrollRuns => PayrollRun
+    from PayrollRunOpened key payrollRunId
+      lineCount  = 0
+      totalHours = 0
+      exported   = false
+    from HoursAddedToPayroll key payrollRunId
+      increment lineCount
+      add totalHours by hours
+    from PayrollRunExported key payrollRunId
+      exported = true
+    from PayrollRunAcknowledged key payrollRunId
+      providerReference = providerReference
+
+  // A second projection in the slice, building a different read model. The
+  // literal key folds every run into the one 'current' instance.
+  projection CurrentPayrollRun => CurrentPayrollRun
+    from PayrollRunOpened key "current"
+
+  screen PayrollRunsScreen
+    on enter
+      refresh PayrollRuns
+    template Ledger
+      overview
+        data CurrentPayrollRun via query CurrentRun
+        summary CurrentPayrollRun
+          field year label $strings.timesheets.fields.year
+          field week label $strings.timesheets.fields.week
+        action OpenPayrollRun
+          label $strings.payroll.open.action
+          navigate to OpenPayrollRunDialog
+      lines
+        section runs
+          data PayrollRun[] via query PayrollRuns
+          table runs
+            column week              label $strings.timesheets.fields.week
+            column lineCount         label $strings.payroll.fields.lines
+            column totalHours        label $strings.payroll.fields.totalHours
+            column providerReference label $strings.payroll.fields.reference
+            on row-click navigate to ExportPayrollRunDialog by payrollRunId
+
+  specification FillingARun
+    given caller
+      authenticated
+      role "PayrollOfficer"
+      claim "department" = "Finance"
+    given PayrollRunOpened
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      year         = 2026
+      week         = 40
+    when append HoursAddedToPayroll
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      hours        = 37.5
+    then readmodel PayrollRun
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      lineCount    = 1
+      totalHours   = 37.5
+      exported     = false
+    then query PayrollRunById
+      arguments
+        payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      result
+        week      = 40
+        lineCount = 1

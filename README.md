@@ -145,6 +145,7 @@ files pleasant:
 | Piece | What it is | Where |
 | --- | --- | --- |
 | **Language & grammar** | The language reference for every construct and the full EBNF grammar | [`Documentation/screenplay`](Documentation/screenplay/index) |
+| **Samples** | Hand-written applications, from a one-file starter to multi-module folders — every construct in use, all verified by the specs | [`Samples`](Samples) |
 | **`Cratis.Screenplay`** | The .NET compiler — parsing, the shared syntax tree, [visitors and tree traversal](Documentation/screenplay/visitors.md), diagnostics, file/folder compilation, and the versioned executable semantic model foundation | [`Source/DotNET/Screenplay`](Source/DotNET/Screenplay) |
 | **`Cratis.Screenplay.Tool`** | The `screenplay` CLI (a dotnet tool) — verifies `.play` files and exposes syntax and workspace tools over MCP | [`Source/DotNET/Tool`](Source/DotNET/Tool) |
 | **`@cratis/screenplay-language`** | Monaco language service — highlighting (incl. embedded C#/TS/React/HTML and PDL/CDL), IntelliSense, hover, diagnostics | [`Source/Screenplay/Monaco/screenplay-language`](Source/Screenplay/Monaco/screenplay-language) |
@@ -193,6 +194,7 @@ and launches an Extension Development Host with full `.play` support, ready to t
 - [`Documentation/screenplay`](Documentation/screenplay/index) — the language overview, design principles, and top-level structure. **Start here to learn the language.**
 - [`Documentation/screenplay/slices.md`](Documentation/screenplay/slices.md) — modules, features, and the four slice types.
 - [`Documentation/screenplay/grammar.md`](Documentation/screenplay/grammar.md) — the complete EBNF grammar.
+- [`Samples`](Samples) — complete applications written in Screenplay. [`Samples/Invoicing`](Samples/Invoicing) uses every construct the language has.
 - [`Documentation/screenplay/sub-languages.md`](Documentation/screenplay/sub-languages.md) — how PDL, CDL, and your own sub-languages plug in.
 - [`Source/Screenplay/Monaco/screenplay-language/README.md`](Source/Screenplay/Monaco/screenplay-language/README.md) — embedding the language service in a Monaco editor.
 

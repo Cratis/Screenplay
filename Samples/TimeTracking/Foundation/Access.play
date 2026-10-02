@@ -1,0 +1,39 @@
+// Who may do what. Policies are the named rules; personas hold them by name.
+// The event-model board draws a slice's screens on the row of every persona
+// whose policies satisfy every gate in front of it - the module's, the
+// feature's, and the slice's first command or query.
+
+policy HasWorkspaceAccess
+  require authenticated
+
+policy IsConsultant
+  require role "Consultant"
+
+policy IsEngagementManager
+  require role "EngagementManager"
+
+policy IsPayrollOfficer
+  require role "PayrollOfficer"
+
+// A claim compared against a literal: payroll is only reachable from finance.
+policy IsFinanceDepartment
+  require claim "department" matches "Finance"
+
+persona Consultant
+  description "Records the hours worked on each engagement and submits a timesheet every week"
+  policy HasWorkspaceAccess
+  policy IsConsultant
+
+persona EngagementManager
+  description "Opens engagements, staffs them with consultants, and approves the hours logged against them"
+  policy HasWorkspaceAccess
+  policy IsEngagementManager
+
+persona PayrollOfficer
+  description "Turns approved hours into payroll runs and hands them to the external payroll provider"
+  policy HasWorkspaceAccess
+  policy IsPayrollOfficer
+  policy IsFinanceDepartment
+
+authentication
+  provider EntraId

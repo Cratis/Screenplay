@@ -3,6 +3,7 @@
 
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Text;
 
@@ -13,15 +14,26 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal static partial class ScreenplayParser
 {
+    // The words that open something belonging in a module or feature body, which a document's top level cannot hold.
+    static readonly HashSet<string> _scopeKeywords = new(StringComparer.Ordinal)
+    {
+        "slice", "feature", "description", "authorize", "screen", "dialog", "form", "contribute", "on", "uses"
+    };
+
     /// <summary>
     /// Parses a document.
     /// </summary>
     /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
     /// <param name="lines">All <see cref="SourceLine">lines</see> of the document, for whole document checks.</param>
+    /// <param name="placement">Where the document's top level belongs - the application unless an import placed it in a module or feature.</param>
     /// <returns>The parsed <see cref="ApplicationSyntax"/>.</returns>
-    public static ApplicationSyntax Parse(ParserContext context, IReadOnlyList<SourceLine> lines)
+    public static ApplicationSyntax Parse(ParserContext context, IReadOnlyList<SourceLine> lines, PlayPlacement? placement = null)
     {
         WarnOnTabIndentation(context, lines);
+        placement ??= PlayPlacement.Document;
+        var moduleBody = placement.Scope.Count == 1 ? new ModuleBody(placement.Scope[0]) : null;
+        var featureBody = placement.Scope.Count > 1 ? new FeatureBody(placement.Scope[^1]) : null;
+        var fileImports = new List<FileImportSyntax>();
 
         DomainSyntax? domain = null;
         AuthenticationSyntax? authentication = null;
@@ -45,6 +57,19 @@ internal static partial class ScreenplayParser
             {
                 case "domain":
                     domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null || uiProfiles.Count > 0 || themes.Count > 0 || triggers.Count > 0 || layouts.Count > 0);
+                    break;
+                case "import" when FileImportParser.IsFileImport(line.Content):
+                    // A top level import belongs to whatever the document's top level is - the application, or the
+                    // module or feature the document was itself imported into.
+                    if (moduleBody is not null || featureBody is not null)
+                    {
+                        _ = moduleBody?.TryParse(context, line) ?? featureBody!.TryParse(context, line);
+                    }
+                    else
+                    {
+                        FileImportParser.Parse(context, line, fileImports);
+                    }
+
                     break;
                 case "import":
                     if (ImportRegex().Match(line.Content) is { Success: true } import)
@@ -72,6 +97,9 @@ internal static partial class ScreenplayParser
                 case "authentication":
                     authentication = AuthenticationParser.Parse(context, line, authentication);
                     break;
+                case "module" when !placement.IsDocument:
+                    ParseModuleInPlacedFile(context, line, placement, moduleBody);
+                    break;
                 case "module":
                     modules.Add(ParseModule(context, line));
                     break;
@@ -94,16 +122,164 @@ internal static partial class ScreenplayParser
                     AddBehavior(context, InteractionParser.ParseBehavior(context, line), behaviors);
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{LineText.FirstWord(line.Content)}' at the top level - expected domain, import, concept, type, policy, persona, authentication, module, seed, trigger, behavior, ui profile, theme or layout", line.Location);
+                    if (moduleBody?.TryParse(context, line) == true || featureBody?.TryParse(context, line) == true)
+                    {
+                        break;
+                    }
+
+                    ReportUnexpectedTopLevel(context, line, placement);
+                    break;
+            }
+        }
+
+        if (moduleBody is not null)
+        {
+            modules.Insert(0, moduleBody.Build(context.Start, isPlacement: true));
+        }
+        else if (featureBody is not null)
+        {
+            modules.Insert(0, Place(placement, featureBody.Build(context.Start, isPlacement: true), context.Start));
+        }
+
+        return new(imports, concepts, policies, modules, context.Start, domain, personas, seeds, authentication, types, uiProfiles, themes, triggers, layouts)
+        {
+            Behaviors = behaviors,
+            FileImports = fileImports
+        };
+    }
+
+    /// <summary>
+    /// Finds the files a document imports and where in it each import is written, without settling where the
+    /// document itself belongs.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to parse in - its diagnostics are not the document's.</param>
+    /// <returns>Each <see cref="DiscoveredFileImport"/>, with the module and feature names around it.</returns>
+    /// <remarks>
+    /// Where a file belongs depends on what imports it, and what it imports depends on where the imports are
+    /// written in it - so this reads the module and feature structure of any file, whether its top level is the
+    /// application's or the body of a module or feature it will later be placed in.
+    /// </remarks>
+    public static IReadOnlyList<DiscoveredFileImport> DiscoverImports(ParserContext context)
+    {
+        var found = new List<DiscoveredFileImport>();
+        while (context.Reader.PeekSignificant() is { } line)
+        {
+            context.Reader.TakeSignificant();
+            switch (LineText.FirstWord(line.Content))
+            {
+                case "import" when FileImportParser.TryParse(line) is { } import:
+                    found.Add(new([], false, import));
+                    break;
+                case "module":
+                    var module = ParseModule(context, line);
+                    found.AddRange(module.FileImports.Select(import => new DiscoveredFileImport([module.Name], true, import)));
+                    found.AddRange(module.Features.SelectMany(feature => ImportsIn(feature, [module.Name], true)));
+                    break;
+                case "feature":
+                    found.AddRange(ImportsIn(ParseFeature(context, line), [], false));
+                    break;
+                default:
                     context.SkipBlock(line.Indent);
                     break;
             }
         }
 
-        return new(imports, concepts, policies, modules, context.Start, domain, personas, seeds, authentication, types, uiProfiles, themes, triggers, layouts)
+        return found;
+    }
+
+    /// <summary>
+    /// Parses a feature from its already consumed header line.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
+    /// <param name="line">The consumed <see cref="SourceLine"/> holding the <c>feature</c> header.</param>
+    /// <returns>The parsed <see cref="FeatureSyntax"/>.</returns>
+    internal static FeatureSyntax ParseFeature(ParserContext context, SourceLine line)
+    {
+        var match = FeatureRegex().Match(line.Content);
+        if (!match.Success)
         {
-            Behaviors = behaviors
-        };
+            context.Error(DiagnosticCodes.InvalidFeatureDeclaration, $"Invalid feature declaration '{line.Content}' - expected 'feature <Name>'", line.Location);
+        }
+
+        var body = new FeatureBody(match.Groups[1].Value);
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            if (!body.TryParse(context, child))
+            {
+                context.Error(DiagnosticCodes.UnknownFeatureDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in feature body - expected {FeatureBody.Expected}", child.Location);
+                context.SkipBlock(child.Indent);
+            }
+        }
+
+        return body.Build(line.Location);
+    }
+
+    static IEnumerable<DiscoveredFileImport> ImportsIn(FeatureSyntax feature, IReadOnlyList<string> outer, bool startsAtModule)
+    {
+        IReadOnlyList<string> scope = [.. outer, feature.Name];
+        return feature.FileImports.Select(import => new DiscoveredFileImport(scope, startsAtModule, import))
+            .Concat(feature.Features.SelectMany(nested => ImportsIn(nested, scope, startsAtModule)));
+    }
+
+    static void ParseModuleInPlacedFile(ParserContext context, SourceLine line, PlayPlacement placement, ModuleBody? moduleBody)
+    {
+        var name = ModuleRegex().Match(line.Content).Groups[1].Value;
+
+        // Restating the module a file is placed in says nothing new, so its body simply joins the placement.
+        if (moduleBody is not null && string.Equals(name, placement.Scope[0], StringComparison.Ordinal))
+        {
+            while (context.TryPeekChild(line.Indent, out var child))
+            {
+                context.Reader.TakeSignificant();
+                if (!moduleBody.TryParse(context, child))
+                {
+                    context.Error(DiagnosticCodes.UnknownModuleDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected {ModuleBody.Expected}", child.Location);
+                    context.SkipBlock(child.Indent);
+                }
+            }
+
+            return;
+        }
+
+        context.Error(
+            DiagnosticCodes.ModuleInPlacedFile,
+            $"This file is imported into {placement.Description}, so it cannot declare module '{name}' - import it at the top level of a document instead",
+            line.Location);
+        context.SkipBlock(line.Indent);
+    }
+
+    static void ReportUnexpectedTopLevel(ParserContext context, SourceLine line, PlayPlacement placement)
+    {
+        var word = LineText.FirstWord(line.Content);
+        if (!placement.IsDocument)
+        {
+            var expected = placement.Scope.Count == 1 ? ModuleBody.Expected : FeatureBody.Expected;
+            context.Error(
+                DiagnosticCodes.UnexpectedInPlacedFile,
+                $"Unexpected '{word}' in a file imported into {placement.Description} - expected an application declaration or {expected}",
+                line.Location);
+        }
+        else
+        {
+            var hint = _scopeKeywords.Contains(word)
+                ? $" - '{word}' belongs in a module or feature; wrap it in one, or import this file from inside one"
+                : " - expected domain, import, concept, type, policy, persona, authentication, module, seed, trigger, behavior, ui profile, theme or layout";
+            context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{word}' at the top level{hint}", line.Location);
+        }
+
+        context.SkipBlock(line.Indent);
+    }
+
+    static ModuleSyntax Place(PlayPlacement placement, FeatureSyntax innermost, SourceLocation start)
+    {
+        var feature = innermost;
+        for (var index = placement.Scope.Count - 2; index >= 1; index--)
+        {
+            feature = new FeatureSyntax(placement.Scope[index], [feature], [], start) { IsPlacement = true };
+        }
+
+        return new ModuleSyntax(placement.Scope[0], [], [feature], start) { IsPlacement = true };
     }
 
     static void AddLayout(ParserContext context, LayoutSyntax layout, List<LayoutSyntax> layouts)
@@ -370,145 +546,18 @@ internal static partial class ScreenplayParser
             context.Error(DiagnosticCodes.InvalidModuleDeclaration, $"Invalid module declaration '{line.Content}' - expected 'module <Name>'", line.Location);
         }
 
-        var name = match.Groups[1].Value;
-        string? description = null;
-        var screenTemplates = new List<ScreenTemplateSyntax>();
-        var dialogTemplates = new List<DialogTemplateSyntax>();
-        var directiveLocations = new Dictionary<string, SourceLocation>();
-        var features = new List<FeatureSyntax>();
-        var forms = new List<FormSyntax>();
-        var contributions = new List<ContributionSyntax>();
-        var behaviors = new List<BehaviorSyntax>();
-        var usedBehaviors = new List<UsesBehaviorSyntax>();
-        AuthorizeSyntax? authorize = null;
-
+        var body = new ModuleBody(match.Groups[1].Value);
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
-            switch (LineText.FirstWord(child.Content))
+            if (!body.TryParse(context, child))
             {
-                case "description":
-                    var previousDescription = description;
-                    description = DescriptionParser.Parse(context, child, description, $"Module '{name}'");
-                    if (previousDescription is null && description is not null)
-                    {
-                        directiveLocations["description"] = child.Location;
-                    }
-
-                    break;
-                case "authorize":
-                    authorize = AuthorizeParser.Combine(authorize, AuthorizeParser.Parse(context, child));
-                    break;
-                case "on":
-                case "uses":
-                    // Attached here, a behavior covers every screen in the module - the level a confirm on
-                    // every destructive action belongs at.
-                    InteractionParser.ParseAttachment(context, child, behaviors, usedBehaviors);
-                    break;
-                case "screen":
-                    screenTemplates.Add(LayoutParser.ParseScreenTemplate(context, child));
-                    break;
-                case "dialog":
-                    dialogTemplates.Add(LayoutParser.ParseDialogTemplate(context, child));
-                    break;
-                case "form":
-                    AddForm(context, FormParser.Parse(context, child), forms);
-                    break;
-                case "contribute":
-                    contributions.Add(ContributionParser.Parse(context, child));
-                    break;
-                case "feature":
-                    features.Add(ParseFeature(context, child));
-                    break;
-                default:
-                    context.Error(DiagnosticCodes.UnknownModuleDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected description, authorize, screen template, dialog template, form, contribute, feature, 'on <trigger>' or 'uses <Behavior>'", child.Location);
-                    context.SkipBlock(child.Indent);
-                    break;
+                context.Error(DiagnosticCodes.UnknownModuleDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in module body - expected {ModuleBody.Expected}", child.Location);
+                context.SkipBlock(child.Indent);
             }
         }
 
-        return new(name, screenTemplates, features, line.Location, description, forms, contributions, dialogTemplates)
-        {
-            Behaviors = behaviors,
-            UsedBehaviors = usedBehaviors,
-            Authorize = authorize,
-            DirectiveLocations = directiveLocations
-        };
-    }
-
-    static void AddForm(ParserContext context, FormSyntax form, List<FormSyntax> forms)
-    {
-        if (forms.Exists(existing => existing.Name == form.Name))
-        {
-            context.Error(DiagnosticCodes.DuplicateForm, $"Duplicate form '{form.Name}' - a form is declared once", form.Location);
-            return;
-        }
-
-        forms.Add(form);
-    }
-
-    static FeatureSyntax ParseFeature(ParserContext context, SourceLine line)
-    {
-        var match = FeatureRegex().Match(line.Content);
-        if (!match.Success)
-        {
-            context.Error(DiagnosticCodes.InvalidFeatureDeclaration, $"Invalid feature declaration '{line.Content}' - expected 'feature <Name>'", line.Location);
-        }
-
-        var name = match.Groups[1].Value;
-        string? description = null;
-        var features = new List<FeatureSyntax>();
-        var slices = new List<SliceSyntax>();
-        var directiveLocations = new Dictionary<string, SourceLocation>();
-        var contributions = new List<ContributionSyntax>();
-        var behaviors = new List<BehaviorSyntax>();
-        var usedBehaviors = new List<UsesBehaviorSyntax>();
-        AuthorizeSyntax? authorize = null;
-
-        while (context.TryPeekChild(line.Indent, out var child))
-        {
-            context.Reader.TakeSignificant();
-            switch (LineText.FirstWord(child.Content))
-            {
-                case "description":
-                    var previousDescription = description;
-                    description = DescriptionParser.Parse(context, child, description, $"Feature '{name}'");
-                    if (previousDescription is null && description is not null)
-                    {
-                        directiveLocations["description"] = child.Location;
-                    }
-
-                    break;
-                case "authorize":
-                    authorize = AuthorizeParser.Combine(authorize, AuthorizeParser.Parse(context, child));
-                    break;
-                case "on":
-                case "uses":
-                    InteractionParser.ParseAttachment(context, child, behaviors, usedBehaviors);
-                    break;
-                case "feature":
-                    features.Add(ParseFeature(context, child));
-                    break;
-                case "slice":
-                    slices.Add(SliceParser.Parse(context, child));
-                    break;
-                case "contribute":
-                    contributions.Add(ContributionParser.Parse(context, child));
-                    break;
-                default:
-                    context.Error(DiagnosticCodes.UnknownFeatureDirective, $"Unexpected '{LineText.FirstWord(child.Content)}' in feature body - expected description, authorize, feature, slice, contribute, 'on <trigger>' or 'uses <Behavior>'", child.Location);
-                    context.SkipBlock(child.Indent);
-                    break;
-            }
-        }
-
-        return new(name, features, slices, line.Location, description, contributions)
-        {
-            Behaviors = behaviors,
-            UsedBehaviors = usedBehaviors,
-            Authorize = authorize,
-            DirectiveLocations = directiveLocations
-        };
+        return body.Build(line.Location);
     }
 
     [GeneratedRegex(@"^domain\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]

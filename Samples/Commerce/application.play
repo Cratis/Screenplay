@@ -1,0 +1,25 @@
+// ============================================================
+// Commerce - a webshop, composed from focused files
+//
+// This root reads as the table of contents. Each import names
+// the files that make up one part of the application; the module
+// files go on to import their features, and the feature files
+// their slices. 'screenplay application.play' compiles exactly
+// what is reachable from here.
+// ============================================================
+
+domain Commerce
+
+// What the whole application shares: values, shapes, and who may do what.
+import "Shared/*.play"
+
+// The shell everything renders inside: look, layout and shared behaviors.
+import "Shell/*.play"
+
+// The three modules - each module file imports its own features.
+import "Catalog/Catalog.play"
+import "Ordering/Ordering.play"
+import "Fulfillment/Fulfillment.play"
+
+// The demo catalog a fresh environment starts from.
+import "seed.play"

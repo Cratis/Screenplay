@@ -5,25 +5,11 @@ import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { combineAuthorize } from '../Parsing/AuthorizeParser';
-import { CompilationResult, parse } from '../ScreenplayCompiler';
+import { CompilationResult } from '../ScreenplayCompiler';
 import { AuthorizeSyntax, PersonaSyntax } from '../Syntax/Authorization';
 import { ConceptSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { ApplicationSyntax, FeatureSyntax, ModuleSyntax } from '../Syntax/Structure';
 import { toSyntaxJson } from '../Syntax/SyntaxJson';
-
-// One .play document of a folder: its path relative to the folder, and its text.
-export interface PlayFileSource {
-    readonly path: string;
-    readonly source: string;
-}
-
-// Compiles the documents of a folder as one application - the counterpart of the C# CompileFolder. The
-// documents are read in ordinal order of their relative paths, as the C# compiler reads them, so a merge
-// keeps the same first declaration in either language.
-export function parseFolder(files: readonly PlayFileSource[]): CompilationResult<ApplicationSyntax> {
-    const ordered = [...files].sort((left, right) => ordinal(left.path, right.path));
-    return mergeDocuments(ordered.map(file => parse(file.source, file.path)));
-}
 
 // "The documents of a folder are one document": modules and features with the same name combine, and a
 // name declared in two files is reported - the port of the C# PlayFolderMerge for what this compiler
@@ -50,6 +36,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         types,
         modules,
         personas,
+        fileImports: applications.flatMap(application => application.fileImports),
         location: applications[0]?.location ?? { line: 1, column: 1 },
     };
     const all = [...documents.flatMap(document => document.diagnostics), ...diagnostics];
@@ -57,8 +44,10 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
 }
 
 function mergeModules(modules: readonly ModuleSyntax[], diagnostics: Diagnostic[]): ModuleSyntax[] {
-    return groupByName(modules).map(parts => parts.length === 1 ? parts[0] : {
+    return groupByName(modules).map(placedLast).map(parts => parts.length === 1 ? { ...parts[0], isPlacement: false, features: parts[0].features.map(unplaced) } : {
         ...parts[0],
+        isPlacement: false,
+        fileImports: parts.flatMap(part => part.fileImports),
         description: firstDescription(parts, `module '${parts[0].name}'`, diagnostics),
         authorize: combineAuthorization(parts.map(part => part.authorize), `module '${parts[0].name}'`, diagnostics),
         features: mergeFeatures(parts.flatMap(part => part.features), diagnostics),
@@ -66,13 +55,26 @@ function mergeModules(modules: readonly ModuleSyntax[], diagnostics: Diagnostic[
 }
 
 function mergeFeatures(features: readonly FeatureSyntax[], diagnostics: Diagnostic[]): FeatureSyntax[] {
-    return groupByName(features).map(parts => parts.length === 1 ? parts[0] : {
+    return groupByName(features).map(placedLast).map(parts => parts.length === 1 ? unplaced(parts[0]) : {
         ...parts[0],
+        isPlacement: false,
+        fileImports: parts.flatMap(part => part.fileImports),
         description: firstDescription(parts, `feature '${parts[0].name}'`, diagnostics),
         authorize: combineAuthorization(parts.map(part => part.authorize), `feature '${parts[0].name}'`, diagnostics),
         features: mergeFeatures(parts.flatMap(part => part.features), diagnostics),
         slices: declaredInOneFile(parts.flatMap(part => part.slices), 'slice', diagnostics, `feature '${parts[0].name}'`),
     });
+}
+
+// Where a module or feature is written comes before files merely placed in it, so the merged one is located
+// at its declaration. Within each kind, path order is kept.
+function placedLast<T extends { readonly isPlacement: boolean }>(parts: readonly T[]): T[] {
+    return [...parts.filter(part => !part.isPlacement), ...parts.filter(part => part.isPlacement)];
+}
+
+// Once merged, a feature is the feature - whether a file was placed in it no longer says anything.
+function unplaced(feature: FeatureSyntax): FeatureSyntax {
+    return { ...feature, isPlacement: false, features: feature.features.map(unplaced) };
 }
 
 // Combines the gates files declare on one module or feature with 'and', never weakening an earlier one. The
@@ -138,4 +140,3 @@ function declaredInOneFile<T extends { readonly name: string; readonly location:
 const describe = (path: string | undefined): string => path ?? 'another file';
 const error = (code: string, message: string, location: SourceLocation): Diagnostic => ({ severity: 'error', code, message, location });
 const warning = (code: string, message: string, location: SourceLocation): Diagnostic => ({ severity: 'warning', code, message, location });
-const ordinal = (left: string, right: string): number => left < right ? -1 : left > right ? 1 : 0;

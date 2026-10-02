@@ -42,6 +42,17 @@ public record ModuleSyntax(
     /// and their enclosing features' requirements. This init member preserves the 4.0.0 positional contract.
     /// </summary>
     public AuthorizeSyntax? Authorize { get; init; }
+
+    /// <summary>
+    /// Gets the files imported inside the module - what they declare at their top level belongs to the module.
+    /// </summary>
+    public IEnumerable<FileImportSyntax> FileImports { get; init; } = [];
+
+    /// <summary>
+    /// Gets whether the module is not written in the document but places it - the document was imported into
+    /// the module, so its top level is the module's body.
+    /// </summary>
+    public bool IsPlacement { get; init; }
 }
 
 /// <summary>
@@ -77,4 +88,15 @@ public record FeatureSyntax(
     /// features, in addition to the enclosing requirements.
     /// </summary>
     public AuthorizeSyntax? Authorize { get; init; }
+
+    /// <summary>
+    /// Gets the files imported inside the feature - what they declare at their top level belongs to the feature.
+    /// </summary>
+    public IEnumerable<FileImportSyntax> FileImports { get; init; } = [];
+
+    /// <summary>
+    /// Gets whether the feature is not written in the document but places it - the document was imported into
+    /// the feature, so its top level is the feature's body.
+    /// </summary>
+    public bool IsPlacement { get; init; }
 }

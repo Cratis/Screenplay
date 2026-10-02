@@ -1,0 +1,121 @@
+slice StateView OrderDetails
+  description "Everything support needs to answer a customer about an order"
+
+  readmodel OrderDetail
+    description "One order with its lines, delivery address, payment and shipment"
+    orderId            OrderId
+    customerId         CustomerId
+    lines              OrderLine[]
+    shippingAddress    Address
+    status             OrderStatus
+    amountPaid         Money?
+    paymentReference   PaymentReference?
+    carrier            Carrier?
+    trackingNumber     TrackingNumber?
+    cancellationReason String?
+
+  query AllOrders => observable OrderDetail[]
+    description "Every order in the shop, kept current for the support desk"
+    filter status OrderStatus?
+    authorize IsSupportAgent
+
+  query OrderDetailById => OrderDetail?
+    description "One order, in full"
+    by orderId OrderId
+    authorize IsSupportAgent
+
+  projection OrderDetails => OrderDetail
+    from OrderPlaced
+      orderId         = $eventSourceId
+      customerId      = customerId
+      lines           = lines
+      shippingAddress = shippingAddress
+      status          = "placed"
+    // OrderPaid and ShipmentDelivered are appended by automations, so they
+    // are keyed by the order id they carry rather than by their event source.
+    from OrderPaid key orderId
+      status           = "paid"
+      amountPaid       = amount
+      paymentReference = paymentReference
+    from OrderCancelled
+      status             = "cancelled"
+      cancellationReason = reason
+    from ShipmentDispatched
+      status         = "shipped"
+      carrier        = carrier
+      trackingNumber = trackingNumber
+    from ShipmentDelivered key orderId
+      status = "delivered"
+
+  // The caller satisfies the module gate, the Support feature gate and the
+  // query gate - all three are ANDed.
+  specification SeeingAPaidOrder
+    given caller
+      authenticated
+      role "SupportAgent"
+    given OrderPlaced
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      customerId      = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      lines           = [{"productId":"6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01","sku":"MUG-0042","quantity":2,"unitPrice":12.5}]
+      shippingAddress = {"recipient":"Ada Lovelace","street":"12 Analytical Way","postalCode":"0150","city":"Oslo","country":"NO"}
+    when append OrderPaid
+      orderId          = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      amount           = 25.0
+      paymentReference = "PSP-7731-0042"
+    then readmodel OrderDetail
+      orderId          = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      status           = "paid"
+      amountPaid       = 25.0
+      paymentReference = "PSP-7731-0042"
+    then query OrderDetailById
+      arguments
+        orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      result
+        customerId = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+        status     = "paid"
+        amountPaid = 25.0
+
+  // A customer passes the module gate but not the Support feature gate.
+  specification ACustomerCannotOpenTheSupportView
+    given caller
+      authenticated
+      role "Customer"
+    when query OrderDetailById
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    then denied
+
+  screen OrderDetails
+    template OrderWorkspace
+      summary
+        title "Orders"
+      details
+        data OrderDetail[] via query AllOrders
+        section orders
+          table OrderDetail
+            column status         label "Status"
+            column amountPaid     label "Paid"
+            column trackingNumber label "Tracking"
+            on row-click navigate to OrderDetail by orderId
+    on enter
+      refresh AllOrders
+
+  screen OrderDetail
+    template OrderWorkspace
+      summary
+        data OrderDetail via query OrderDetailById by orderId
+        summary OrderDetail
+          field status           label "Status"
+          field amountPaid       label "Paid"
+          field paymentReference label "Payment reference"
+          field carrier          label "Carrier"
+          field trackingNumber   label "Tracking number"
+        section actions
+          action CancelOrder
+            label "Cancel on the customer's behalf"
+            navigate to CancelOrderScreen
+      details
+        section lines
+          table lines
+            column sku       label "SKU"
+            column quantity  label "Qty"
+            column unitPrice label "Unit price"

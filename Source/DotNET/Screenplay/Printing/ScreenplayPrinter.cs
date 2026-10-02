@@ -83,6 +83,8 @@ public sealed partial class ScreenplayPrinter :
             writer.Line($"import {import.QualifiedName}", import);
         }
 
+        WriteFileImports(writer, application.FileImports);
+
         foreach (var concept in application.Concepts)
         {
             writer.Blank();
@@ -414,25 +416,47 @@ public sealed partial class ScreenplayPrinter :
     void WriteModule(ScreenplayWriter writer, ModuleSyntax module)
     {
         using var anchor = writer.Anchor(module);
+
+        // A module that only places an imported file is not written in it - its body is the file's top level.
+        if (module.IsPlacement)
+        {
+            WriteModuleBody(writer, module);
+            return;
+        }
+
         writer.Line($"module {module.Name}");
         using (writer.Indent())
         {
-            WriteDescription(writer, module.Description, module);
-            var members = new List<PrintableMember>();
-            if (module.Authorize is not null)
-            {
-                AddMembers(members, [module.Authorize], 0, authorize => WriteAuthorize(writer, authorize));
-            }
-
-            AddMembers(members, module.Behaviors, 1, behavior => WriteAttachedBehavior(writer, behavior));
-            AddMembers(members, module.UsedBehaviors, 2, uses => WriteUsesBehavior(writer, uses));
-            AddSeparatedMembers(members, writer, module.ScreenTemplates, 3, WriteScreenTemplate);
-            AddSeparatedMembers(members, writer, module.DialogTemplates ?? [], 4, WriteDialogTemplate);
-            AddSeparatedMembers(members, writer, module.Forms ?? [], 5, WriteForm);
-            AddSeparatedMembers(members, writer, module.Contributions ?? [], 6, WriteContribution);
-            AddSeparatedMembers(members, writer, module.Features, 7, WriteFeature);
-            WriteMembers(members);
+            WriteModuleBody(writer, module);
         }
+    }
+
+    void WriteFileImports(ScreenplayWriter writer, IEnumerable<FileImportSyntax> imports)
+    {
+        foreach (var import in imports)
+        {
+            writer.Line($"import {StringLiteral.Quote(import.Pattern)}", import);
+        }
+    }
+
+    void WriteModuleBody(ScreenplayWriter writer, ModuleSyntax module)
+    {
+        WriteDescription(writer, module.Description, module);
+        WriteFileImports(writer, module.FileImports);
+        var members = new List<PrintableMember>();
+        if (module.Authorize is not null)
+        {
+            AddMembers(members, [module.Authorize], 0, authorize => WriteAuthorize(writer, authorize));
+        }
+
+        AddMembers(members, module.Behaviors, 1, behavior => WriteAttachedBehavior(writer, behavior));
+        AddMembers(members, module.UsedBehaviors, 2, uses => WriteUsesBehavior(writer, uses));
+        AddSeparatedMembers(members, writer, module.ScreenTemplates, 3, WriteScreenTemplate);
+        AddSeparatedMembers(members, writer, module.DialogTemplates ?? [], 4, WriteDialogTemplate);
+        AddSeparatedMembers(members, writer, module.Forms ?? [], 5, WriteForm);
+        AddSeparatedMembers(members, writer, module.Contributions ?? [], 6, WriteContribution);
+        AddSeparatedMembers(members, writer, module.Features, 7, WriteFeature);
+        WriteMembers(members);
     }
 
     void WriteContribution(ScreenplayWriter writer, ContributionSyntax contribution)
@@ -731,23 +755,35 @@ public sealed partial class ScreenplayPrinter :
     void WriteFeature(ScreenplayWriter writer, FeatureSyntax feature)
     {
         using var anchor = writer.Anchor(feature);
+        if (feature.IsPlacement)
+        {
+            WriteFeatureBody(writer, feature);
+            return;
+        }
+
         writer.Line($"feature {feature.Name}");
         using (writer.Indent())
         {
-            WriteDescription(writer, feature.Description, feature);
-            var members = new List<PrintableMember>();
-            if (feature.Authorize is not null)
-            {
-                AddMembers(members, [feature.Authorize], 0, authorize => WriteAuthorize(writer, authorize));
-            }
-
-            AddMembers(members, feature.Behaviors, 1, behavior => WriteAttachedBehavior(writer, behavior));
-            AddMembers(members, feature.UsedBehaviors, 2, uses => WriteUsesBehavior(writer, uses));
-            AddSeparatedMembers(members, writer, feature.Features, 3, WriteFeature);
-            AddSeparatedMembers(members, writer, feature.Slices, 4, WriteSlice);
-            AddSeparatedMembers(members, writer, feature.Contributions ?? [], 5, WriteContribution);
-            WriteMembers(members);
+            WriteFeatureBody(writer, feature);
         }
+    }
+
+    void WriteFeatureBody(ScreenplayWriter writer, FeatureSyntax feature)
+    {
+        WriteDescription(writer, feature.Description, feature);
+        WriteFileImports(writer, feature.FileImports);
+        var members = new List<PrintableMember>();
+        if (feature.Authorize is not null)
+        {
+            AddMembers(members, [feature.Authorize], 0, authorize => WriteAuthorize(writer, authorize));
+        }
+
+        AddMembers(members, feature.Behaviors, 1, behavior => WriteAttachedBehavior(writer, behavior));
+        AddMembers(members, feature.UsedBehaviors, 2, uses => WriteUsesBehavior(writer, uses));
+        AddSeparatedMembers(members, writer, feature.Features, 3, WriteFeature);
+        AddSeparatedMembers(members, writer, feature.Slices, 4, WriteSlice);
+        AddSeparatedMembers(members, writer, feature.Contributions ?? [], 5, WriteContribution);
+        WriteMembers(members);
     }
 
     void WriteSlice(ScreenplayWriter writer, SliceSyntax slice)

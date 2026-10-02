@@ -23,9 +23,14 @@ public class PlayFiles : IPlayFiles
         matcher.AddInclude(Pattern);
 
         var directory = new DirectoryInfo(root);
+        if (!directory.Exists)
+        {
+            return [];
+        }
+
         return [.. matcher.Execute(new DirectoryInfoWrapper(directory))
             .Files
-            .Select(match => new PlayFile(System.IO.Path.GetFullPath(System.IO.Path.Combine(directory.FullName, match.Path)), match.Path))
+            .Select(match => new PlayFile(System.IO.Path.GetFullPath(System.IO.Path.Combine(directory.FullName, match.Path)), match.Path.Replace('\\', '/')))
             .OrderBy(file => file.RelativePath, StringComparer.Ordinal)];
     }
 

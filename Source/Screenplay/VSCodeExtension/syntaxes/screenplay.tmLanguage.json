@@ -31,6 +31,32 @@
         "keywords": {
             "patterns": [
                 {
+                    "comment": "A specification's clock, capture, trigger and query steps.",
+                    "match": "^\\s*(given|when)\\s+(clock|capture|trigger|query)\\b",
+                    "captures": {
+                        "1": { "name": "keyword.other.screenplay" },
+                        "2": { "name": "keyword.other.screenplay" }
+                    }
+                },
+                {
+                    "comment": "What the query a specification performs returns.",
+                    "match": "^\\s*(then)\\s+(?:(no)\\s+)?(result)\\b(?:\\s+(exactly)\\b)?",
+                    "captures": {
+                        "1": { "name": "keyword.other.screenplay" },
+                        "2": { "name": "keyword.other.screenplay" },
+                        "3": { "name": "keyword.other.screenplay" },
+                        "4": { "name": "keyword.other.screenplay" }
+                    }
+                },
+                {
+                    "comment": "A quoted import names .play files by path or glob rather than a qualified name.",
+                    "match": "^\\s*(import)\\s+(\"[^\"\\\\]*\")",
+                    "captures": {
+                        "1": { "name": "keyword.control.screenplay" },
+                        "2": { "name": "string.quoted.double.import-path.screenplay" }
+                    }
+                },
+                {
                     "match": "^\\s*(event)\\s+[A-Za-z_]\\w*\\s+(generation)(?=\\s+[0-9]+\\s*$)",
                     "captures": {
                         "1": { "name": "keyword.control.screenplay" },

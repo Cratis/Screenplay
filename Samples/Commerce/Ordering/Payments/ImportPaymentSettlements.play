@@ -1,0 +1,63 @@
+slice Translate ImportPaymentSettlements
+  description "Translates the payment provider's settlements into the shop's own fact: the order is paid"
+
+  // External data enters the application here. The provider calls a webhook;
+  // a settlement that moves from pending to settled becomes a fact.
+  capture PaymentProviderSettlements
+    source webhook
+      path /webhooks/payments
+    key paymentReference
+    append PaymentSettled
+      when status from "pending" to "settled"
+        orderId          = $.orderReference
+        amount           = $.amount
+        paymentReference = $.paymentReference
+
+  // The provider's vocabulary, captured as it arrives.
+  event PaymentSettled
+    orderId          OrderId
+    amount           Money
+    paymentReference PaymentReference
+
+  // The shop's vocabulary. It carries the order id as payload as well as
+  // landing on the order's event source, because the Fulfillment module's
+  // automation selects it as a trigger value.
+  event OrderPaid
+    orderId          OrderId
+    amount           Money
+    paymentReference PaymentReference
+
+  // The translation: one event in, the shop's own event out.
+  reaction SettlementTranslator
+    description "Marks the order paid once its payment has settled"
+    when PaymentSettled
+      orderId
+      amount
+      paymentReference
+      produces OrderPaid
+        for orderId
+        orderId          = orderId
+        amount           = amount
+        paymentReference = paymentReference
+
+  // The provider first reports the payment pending, then settled. The
+  // transition is captured as the provider's fact and translated into ours.
+  specification SettlingAPaymentPaysTheOrder
+    given capture PaymentProviderSettlements
+      paymentReference = "PSP-7731-0042"
+      orderReference   = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      amount           = 25.0
+      status           = "pending"
+    when capture PaymentProviderSettlements
+      paymentReference = "PSP-7731-0042"
+      orderReference   = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      amount           = 25.0
+      status           = "settled"
+    then PaymentSettled
+      orderId          = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      amount           = 25.0
+      paymentReference = "PSP-7731-0042"
+    then OrderPaid
+      orderId          = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      amount           = 25.0
+      paymentReference = "PSP-7731-0042"

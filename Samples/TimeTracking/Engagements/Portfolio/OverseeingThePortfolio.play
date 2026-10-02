@@ -1,0 +1,120 @@
+// Managers and payroll watch every engagement: its status and who is on it.
+
+slice StateView EngagementPortfolio
+  description "Every engagement with its status and how many consultants are staffed on it"
+
+  readmodel EngagementOverview
+    engagementId    EngagementId
+    clientName      ClientName
+    name            EngagementName
+    hourlyRate      HourlyRate
+    billing         BillingType
+    status          EngagementStatus
+    consultantCount Int
+
+  // Observable: the dashboard keeps current while a colleague staffs an engagement.
+  query AllEngagements => observable EngagementOverview[]
+    description "Every engagement in the consultancy, narrowed by status, kept current"
+    filter status EngagementStatus?
+    authorize IsEngagementManager or IsPayrollOfficer
+
+  query EngagementById => EngagementOverview?
+    description "One engagement"
+    by engagementId EngagementId
+    authorize IsEngagementManager or IsPayrollOfficer
+
+  // 'no automap' because ConsultantAssigned carries the consultant's own
+  // hourlyRate, which must not overwrite the engagement's.
+  projection EngagementPortfolio => EngagementOverview
+    no automap
+    from EngagementOpened key engagementId
+      clientName      = clientName
+      name            = name
+      hourlyRate      = hourlyRate
+      billing         = billing
+      status          = "active"
+      consultantCount = 0
+    from ConsultantAssigned key engagementId
+      increment consultantCount
+    from EngagementClosed key engagementId
+      status = "closed"
+
+  screen EngagementPortfolioScreen
+    template PortfolioDashboard
+      headline
+        section heading
+          title $strings.engagements.portfolio.title
+      utilization
+        section hours
+          data EngagementHours[] via query HoursByEngagement
+          ```react
+          export default ({ data }: Props) => (
+            <ul className="utilization">
+              {data.map(row => <li key={row.engagementId}>{row.totalHours} h</li>)}
+            </ul>
+          );
+          ```
+      roster
+        section engagements
+          data EngagementOverview[] via query AllEngagements
+          table engagements
+            column name            label $strings.engagements.fields.name
+            column clientName      label $strings.engagements.fields.client
+            column status          label $strings.engagements.fields.status
+            column consultantCount label $strings.engagements.fields.consultants
+            on row-click navigate to AssignConsultantDialog by engagementId
+          action OpenEngagement
+            label $strings.engagements.open.action
+            navigate to OpenEngagementDialog
+
+  specification CountingStaffedConsultants
+    given caller
+      authenticated
+      role "EngagementManager"
+    given EngagementOpened
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      clientName   = "Northwind Freight"
+      name         = "ERP migration"
+      hourlyRate   = 1450
+      billing      = "billable"
+      openedAt     = "2026-08-31T08:00:00Z"
+    when append ConsultantAssigned
+      assignmentId   = "2c8d4e6f-0a1b-4c3d-8e5f-7a9b0c1d2e31"
+      engagementId   = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      consultantId   = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      contact        = {"name":"Ingrid Solberg","email":"ingrid.solberg@fjordline.example"}
+      hourlyRate     = 1300
+      engagementName = "ERP migration"
+    then readmodel EngagementOverview
+      engagementId    = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      hourlyRate      = 1450
+      status          = "active"
+      consultantCount = 1
+    then query EngagementById
+      arguments
+        engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      result
+        name            = "ERP migration"
+        clientName      = "Northwind Freight"
+        consultantCount = 1
+
+  specification ClosingMarksTheEngagementClosed
+    given caller
+      authenticated
+      role "PayrollOfficer"
+      claim "department" = "Finance"
+    given EngagementOpened
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      clientName   = "Northwind Freight"
+      name         = "ERP migration"
+      hourlyRate   = 1450
+      billing      = "billable"
+      openedAt     = "2026-08-31T08:00:00Z"
+    when append EngagementClosed
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      reason       = "Delivered"
+    then query EngagementById
+      arguments
+        engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      result
+        status = "closed"

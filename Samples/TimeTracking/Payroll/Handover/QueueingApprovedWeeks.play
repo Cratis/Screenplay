@@ -1,0 +1,38 @@
+// Every approved week is queued on the current payroll run - nobody presses
+// a button for it.
+
+slice Automation QueueApprovedTimesheets
+  description "Every approved week is queued on the current payroll run"
+
+  reaction QueueApprovedHours
+    description "Asks payroll to take an approved week - the command may still refuse it"
+    when TimesheetApproved
+      timesheetId
+      consultantId
+      totalHours
+      reads CurrentPayrollRun as run
+      invokes AddHoursToPayroll
+        payrollRunId = run.payrollRunId
+        timesheetId  = timesheetId
+        consultantId = consultantId
+        hours        = totalHours
+    // Only occurrences worth acting on: an empty week has nothing to pay.
+    where totalHours > 0
+
+  // An event-driven reaction is driven by appending the event it reacts to.
+  // The outcome is the fact the invoked command records.
+  specification QueueingAnApprovedWeek
+    given PayrollRunOpened
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      year         = 2026
+      week         = 40
+    when append TimesheetApproved
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 37.5
+      approvedBy   = "kari.nordmann"
+    then HoursAddedToPayroll
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      hours        = 37.5

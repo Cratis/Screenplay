@@ -2035,4 +2035,49 @@ public static class DiagnosticCodes
 
     /// <summary>An absent read-model assertion is malformed or has child mappings.</summary>
     public const string InvalidAbsentReadModelStep = "PLAY0453";
+
+    /// <summary>An <c>import</c> inside a module or feature does not name files as <c>import "&lt;path or glob&gt;"</c>.</summary>
+    public const string InvalidFileImport = "PLAY0454";
+
+    /// <summary>A file import pattern with wildcards matches no <c>.play</c> file.</summary>
+    public const string FileImportMatchesNothing = "PLAY0455";
+
+    /// <summary>A file import names one file, without wildcards, and that file does not exist.</summary>
+    public const string ImportedFileNotFound = "PLAY0456";
+
+    /// <summary>Two imports place the same file in scopes where neither lies inside the other.</summary>
+    public const string ConflictingImportPlacement = "PLAY0457";
+
+    /// <summary>Imports place a file inside itself, so its placement never settles.</summary>
+    public const string ImportCycle = "PLAY0458";
+
+    /// <summary>A file imported into a module or feature declares a module other than the one it is placed in.</summary>
+    public const string ModuleInPlacedFile = "PLAY0459";
+
+    /// <summary>The top level of a file imported into a module or feature holds something that scope cannot.</summary>
+    public const string UnexpectedInPlacedFile = "PLAY0460";
+
+    /// <summary>A <c>given clock</c> or <c>when clock</c> does not state one ISO 8601 instant, or <c>given clock</c> is repeated.</summary>
+    public const string InvalidSpecificationClock = "PLAY0461";
+
+    /// <summary>A <c>when trigger</c> line is not <c>when trigger &lt;Trigger&gt;</c>.</summary>
+    public const string InvalidSpecificationTrigger = "PLAY0462";
+
+    /// <summary>A <c>given capture</c> or <c>when capture</c> line is not <c>&lt;given|when&gt; capture &lt;Capture&gt;</c>.</summary>
+    public const string InvalidSpecificationCapture = "PLAY0463";
+
+    /// <summary>A <c>when query</c> line is not <c>when query &lt;Query&gt;</c>, or a <c>then result</c> line is not <c>then result [exactly]</c>.</summary>
+    public const string InvalidSpecificationQueryAction = "PLAY0464";
+
+    /// <summary>A query result is asserted without <c>when query</c>, or <c>when query</c> asserts no result, no empty result and no denial.</summary>
+    public const string MismatchedSpecificationQueryResult = "PLAY0465";
+
+    /// <summary>A <c>when trigger</c> names a trigger nothing declares or registers, or a value its declaration does not carry.</summary>
+    public const string UnknownSpecificationTrigger = "PLAY0466";
+
+    /// <summary>A <c>given capture</c> or <c>when capture</c> names a capture the application does not declare.</summary>
+    public const string UnknownSpecificationCapture = "PLAY0467";
+
+    /// <summary>A <c>when query</c> argument is not a <c>by</c> or <c>filter</c> parameter of the query.</summary>
+    public const string UnknownSpecificationQueryArgument = "PLAY0468";
 }

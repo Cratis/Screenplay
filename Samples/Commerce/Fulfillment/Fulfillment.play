@@ -1,0 +1,38 @@
+// The Fulfillment module. A module's screens fill the templates their own
+// module declares.
+module Fulfillment
+  description
+    ```text
+    Getting paid orders out of the warehouse and to the customer's
+    door, and keeping the customer told along the way.
+    ```
+  authorize IsAuthenticated
+
+  screen template WarehouseBoard
+    fits slot content
+
+    queue
+    help
+
+    arrangement flow
+      row gap 16
+        queue grow
+        help width 320
+
+      when width compact
+        column
+          queue
+
+  dialog template ShipmentDialog
+    body
+    actions
+
+  // Opened from a row of the shipment queue, so it starts from that row.
+  form DispatchShipmentForm for DispatchShipment
+    populate from item
+    field carrier        label "Carrier"
+    field trackingNumber label "Tracking number"
+    on submit navigate to ShipmentQueue
+
+  import "Shipping/Shipping.play"
+  import "Tracking/Tracking.play"

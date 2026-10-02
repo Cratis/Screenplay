@@ -1,0 +1,2485 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "BookId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "MemberId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "Isbn",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "BookTitle",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "AuthorName",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "name": "pii",
+          "reason": "The member's name, needed to lend books to them; lawful basis: contract performance."
+        }
+      ],
+      "name": "MemberName",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "LoanStatus",
+      "type": "Enum",
+      "values": [
+        "onLoan",
+        "returned"
+      ]
+    }
+  ],
+  "domain": null,
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": "Books, the members who borrow them, and the loans between them",
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "The books the library owns",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Catalog",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsLibrarian"
+                    }
+                  },
+                  "description": null,
+                  "name": "AddBook",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": true,
+                      "name": "bookId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "BookId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "isbn",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Isbn"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "title",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "BookTitle"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "author",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "AuthorName"
+                      }
+                    }
+                  ],
+                  "validations": [
+                    {
+                      "kind": "DeclarativeValidateSyntax",
+                      "rules": [
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "message": "An ISBN has 13 digits",
+                          "property": "isbn",
+                          "rule": "Matches",
+                          "severity": "Error",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "^[0-9]{13}$"
+                          }
+                        },
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "message": "A book needs a title",
+                          "property": "title",
+                          "rule": "NotEmpty",
+                          "severity": "Error",
+                          "value": null
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "constraints": [
+                {
+                  "kind": "UniquePropertyConstraintSyntax",
+                  "additionalProperties": [],
+                  "additionalRules": [],
+                  "event": "BookAdded",
+                  "ignoreCasing": false,
+                  "message": null,
+                  "name": "UniqueIsbn",
+                  "property": "isbn",
+                  "releasedBy": []
+                }
+              ],
+              "description": "The librarian adds a newly bought book to the catalog",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "name": "BookAdded",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "isbn",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Isbn"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "title",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "BookTitle"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "author",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "AuthorName"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "AddBook",
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "name": "Dialog",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenTitleSyntax",
+                              "text": "Add a book"
+                            }
+                          ],
+                          "name": "body"
+                        },
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "AddBook",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "AddBook"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenReadModels": [],
+                  "name": "AddingABook",
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "BookAdded",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "isbn",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "9780262033848"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Introduction to Algorithms"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "author",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Cormen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "AddBook",
+                    "for": null,
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "bookId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "isbn",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "9780262033848"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "title",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Introduction to Algorithms"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "author",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Cormen"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenReadModels": [],
+                  "name": "RejectingAMalformedIsbn",
+                  "thenErrors": [
+                    {
+                      "kind": "SpecificationErrorSyntax",
+                      "name": "An ISBN has 13 digits"
+                    }
+                  ],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "AddBook",
+                    "for": null,
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "bookId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "isbn",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "12345"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "title",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Introduction to Algorithms"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "author",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Cormen"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenReadModels": [],
+                  "name": "RefusingAMemberAddingBooks",
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "AddBook",
+                    "for": null,
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "bookId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "isbn",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "9780262033848"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "title",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Introduction to Algorithms"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "author",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Cormen"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Every book, and whether it is on the shelf",
+              "events": [],
+              "name": "BookCatalog",
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "BookAdded"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "bookId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "title"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "author"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "available"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "BookBorrowed"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "available"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "BookReturned"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "available"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "BookCatalog",
+                  "readModel": "CatalogEntry",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "LogicalPolicyRequirementSyntax",
+                      "left": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "IsMember"
+                      },
+                      "operator": "Or",
+                      "right": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "IsLibrarian"
+                      }
+                    }
+                  },
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "bookId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "BookId"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "BookById",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "CatalogEntry"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "LogicalPolicyRequirementSyntax",
+                      "left": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "IsMember"
+                      },
+                      "operator": "Or",
+                      "right": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "IsLibrarian"
+                      }
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": true,
+                  "name": "AllBooks",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "CatalogEntry"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "CatalogEntry",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "bookId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "BookId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "title",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "BookTitle"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "author",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "AuthorName"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "available",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Bool"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTitleSyntax",
+                      "text": "Catalog"
+                    },
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "AllBooks",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "CatalogEntry"
+                      }
+                    },
+                    {
+                      "kind": "ScreenTableSyntax",
+                      "columns": [
+                        {
+                          "kind": "ScreenColumnSyntax",
+                          "label": "Title",
+                          "property": "title"
+                        },
+                        {
+                          "kind": "ScreenColumnSyntax",
+                          "label": "Author",
+                          "property": "author"
+                        },
+                        {
+                          "kind": "ScreenColumnSyntax",
+                          "label": "On the shelf",
+                          "property": "available"
+                        }
+                      ],
+                      "rowClick": null,
+                      "target": "CatalogEntry"
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "AddBook",
+                      "label": null,
+                      "navigate": null
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "BorrowBook",
+                      "label": null,
+                      "navigate": null
+                    }
+                  ],
+                  "name": "BookCatalog"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "BookAdded",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "isbn",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "9780262033848"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Introduction to Algorithms"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "author",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Cormen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenReadModels": [],
+                  "name": "BorrowingTakesABookOffTheShelf",
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "CatalogEntry",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "bookId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "available",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": false
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "when": null,
+                  "whenAppended": {
+                    "kind": "SpecificationEventSyntax",
+                    "eventType": "BookBorrowed",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                    },
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "memberId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "a3bb189e-8bf9-3888-9912-ace4e6543002"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "dueDate",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-10-30"
+                        }
+                      }
+                    ]
+                  },
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "When the library is open this week",
+              "events": [],
+              "name": "OpeningHours",
+              "projections": [],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "LogicalPolicyRequirementSyntax",
+                      "left": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "IsMember"
+                      },
+                      "operator": "Or",
+                      "right": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "IsLibrarian"
+                      }
+                    }
+                  },
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "day",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "String"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "OpeningHoursFor",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "OpeningDay"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "LogicalPolicyRequirementSyntax",
+                      "left": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "IsMember"
+                      },
+                      "operator": "Or",
+                      "right": {
+                        "kind": "PolicyReferenceSyntax",
+                        "name": "IsLibrarian"
+                      }
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "ThisWeek",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "OpeningDay"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "OpeningDay",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "day",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "opens",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "closes",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTitleSyntax",
+                      "text": "Opening hours"
+                    },
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "ThisWeek",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "OpeningDay"
+                      }
+                    },
+                    {
+                      "kind": "ScreenTableSyntax",
+                      "columns": [
+                        {
+                          "kind": "ScreenColumnSyntax",
+                          "label": "Day",
+                          "property": "day"
+                        },
+                        {
+                          "kind": "ScreenColumnSyntax",
+                          "label": "Opens",
+                          "property": "opens"
+                        },
+                        {
+                          "kind": "ScreenColumnSyntax",
+                          "label": "Closes",
+                          "property": "closes"
+                        }
+                      ],
+                      "rowClick": null,
+                      "target": "OpeningDay"
+                    }
+                  ],
+                  "name": "OpeningHours"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "OpeningDay",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "day",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Monday"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "opens",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "10:00"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "closes",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "20:00"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "ShowingTodaysOpeningHours",
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenReadModels": [],
+                  "thenResults": [
+                    {
+                      "kind": "SpecificationQueryResultSyntax",
+                      "exactly": false,
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "opens",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "10:00"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "closes",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "20:00"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": {
+                    "kind": "SpecificationWhenQuerySyntax",
+                    "arguments": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "day",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Monday"
+                        }
+                      }
+                    ],
+                    "query": "OpeningHoursFor"
+                  },
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "The people who may borrow",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Members",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsLibrarian"
+                    }
+                  },
+                  "description": null,
+                  "name": "RegisterMember",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": true,
+                      "name": "memberId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "MemberId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "MemberName"
+                      }
+                    }
+                  ],
+                  "validations": [
+                    {
+                      "kind": "DeclarativeValidateSyntax",
+                      "rules": [
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "message": "A member needs a name",
+                          "property": "name",
+                          "rule": "NotEmpty",
+                          "severity": "Error",
+                          "value": null
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "name": "MemberRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "MemberName"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RegisterMember",
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "name": "Dialog",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenTitleSyntax",
+                              "text": "Register a member"
+                            }
+                          ],
+                          "name": "body"
+                        },
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "RegisterMember",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "RegisterMember"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenReadModels": [],
+                  "name": "RegisteringAMember",
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "MemberRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "a3bb189e-8bf9-3888-9912-ace4e6543002"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Ada Lovelace"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RegisterMember",
+                    "for": null,
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "memberId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "a3bb189e-8bf9-3888-9912-ace4e6543002"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "name",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Ada Lovelace"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenReadModels": [],
+                  "name": "RejectingAMemberWithNoName",
+                  "thenErrors": [
+                    {
+                      "kind": "SpecificationErrorSyntax",
+                      "name": "A member needs a name"
+                    }
+                  ],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RegisterMember",
+                    "for": null,
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "memberId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "a3bb189e-8bf9-3888-9912-ace4e6543002"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "name",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": ""
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "name": "WelcomeLetterSent",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "addressedTo",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "MemberName"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "WelcomeNewMembers",
+              "projections": [],
+              "queries": [],
+              "reactions": [
+                {
+                  "kind": "ReactionSyntax",
+                  "description": "Sends every new member a welcome letter with their library card",
+                  "name": "WelcomeLetter",
+                  "triggers": [
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "invokes": [],
+                      "produces": [
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "WelcomeLetterSent"
+                        }
+                      ],
+                      "source": {
+                        "kind": "NamedTriggerSourceSyntax",
+                        "name": "MemberRegistered"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "readModels": [],
+              "screens": [],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "MemberRegistered",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Grace Hopper"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenReadModels": [],
+                  "name": "WelcomingANewMember",
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "WelcomeLetterSent",
+                      "for": null,
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "addressedTo",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Ada Lovelace"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "when": null,
+                  "whenAppended": {
+                    "kind": "SpecificationEventSyntax",
+                    "eventType": "MemberRegistered",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "a3bb189e-8bf9-3888-9912-ace4e6543002"
+                    },
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "name",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Ada Lovelace"
+                        }
+                      }
+                    ]
+                  },
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "Automation"
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": "Borrowing and returning",
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Loans",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsMember"
+                    }
+                  },
+                  "description": null,
+                  "name": "BorrowBook",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": true,
+                      "name": "bookId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "BookId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "memberId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "MemberId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "dueDate",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    }
+                  ],
+                  "validations": [
+                    {
+                      "kind": "DeclarativeValidateSyntax",
+                      "rules": [
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "message": "A loan must be due in the future",
+                          "property": "dueDate",
+                          "rule": "GreaterThan",
+                          "severity": "Error",
+                          "value": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "today"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "name": "BookBorrowed",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "memberId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "MemberId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "dueDate",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "BorrowBook",
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "name": "Dialog",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenTitleSyntax",
+                              "text": "Borrow"
+                            }
+                          ],
+                          "name": "body"
+                        },
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "BorrowBook",
+                              "label": null,
+                              "navigate": {
+                                "kind": "ScreenNavigateSyntax",
+                                "by": null,
+                                "screen": "MyLoans"
+                              }
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "BorrowBook"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "CatalogEntry",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "bookId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Introduction to Algorithms"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "author",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Cormen"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "available",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": true
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "BorrowingAnAvailableBook",
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "BookBorrowed",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "memberId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "a3bb189e-8bf9-3888-9912-ace4e6543002"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "dueDate",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-30"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "BorrowBook",
+                    "for": null,
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "bookId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "memberId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "a3bb189e-8bf9-3888-9912-ace4e6543002"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "dueDate",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-10-30"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "CatalogEntry",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "bookId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Introduction to Algorithms"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "author",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Cormen"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "available",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": false
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "RefusingABookThatIsOnLoan",
+                  "thenErrors": [
+                    {
+                      "kind": "SpecificationErrorSyntax",
+                      "name": "That book is already on loan"
+                    }
+                  ],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "BorrowBook",
+                    "for": null,
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "bookId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "memberId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "a3bb189e-8bf9-3888-9912-ace4e6543002"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "dueDate",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-10-30"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsMember"
+                    }
+                  },
+                  "description": null,
+                  "name": "ReturnBook",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": true,
+                      "name": "bookId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "BookId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "returnedOn",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    }
+                  ],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "name": "BookReturned",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "returnedOn",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "ReturnBook",
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTemplateReferenceSyntax",
+                      "name": "Dialog",
+                      "slots": [
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenTitleSyntax",
+                              "text": "Return"
+                            }
+                          ],
+                          "name": "body"
+                        },
+                        {
+                          "kind": "ScreenSlotSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenActionSyntax",
+                              "command": "ReturnBook",
+                              "label": null,
+                              "navigate": null
+                            }
+                          ],
+                          "name": "actions"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "ReturnBook"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "BookAdded",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "isbn",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "9780262033848"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Introduction to Algorithms"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "author",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Cormen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "BookBorrowed",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "memberId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "a3bb189e-8bf9-3888-9912-ace4e6543002"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "dueDate",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-30"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenReadModels": [],
+                  "name": "ReturningABook",
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "BookReturned",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "returnedOn",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-12"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "ReturnBook",
+                    "for": null,
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "bookId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "returnedOn",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-10-12"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "MyLoans",
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "BookBorrowed"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "bookId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "memberId"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "dueDate"
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "BookReturned"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "Loans",
+                  "readModel": "Loan",
+                  "sequence": null
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsMember"
+                    }
+                  },
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "bookId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "BookId"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "LoanForBook",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "Loan"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsMember"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [
+                    {
+                      "kind": "QueryParameterSyntax",
+                      "name": "memberId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "MemberId"
+                      }
+                    }
+                  ],
+                  "isObservable": true,
+                  "name": "MyLoans",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Loan"
+                  },
+                  "scope": "identity"
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Loan",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "bookId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "BookId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "memberId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "MemberId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "dueDate",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Date"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "LoanStatus"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenTitleSyntax",
+                      "text": "My loans"
+                    },
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "MyLoans",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Loan"
+                      }
+                    },
+                    {
+                      "kind": "ScreenTableSyntax",
+                      "columns": [
+                        {
+                          "kind": "ScreenColumnSyntax",
+                          "label": "Book",
+                          "property": "bookId"
+                        },
+                        {
+                          "kind": "ScreenColumnSyntax",
+                          "label": "Due",
+                          "property": "dueDate"
+                        },
+                        {
+                          "kind": "ScreenColumnSyntax",
+                          "label": "Status",
+                          "property": "status"
+                        }
+                      ],
+                      "rowClick": null,
+                      "target": "Loan"
+                    },
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "ReturnBook",
+                      "label": null,
+                      "navigate": null
+                    }
+                  ],
+                  "name": "MyLoans"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "BookAdded",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "isbn",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "9780262033848"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Introduction to Algorithms"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "author",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Cormen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "BookBorrowed",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "memberId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "a3bb189e-8bf9-3888-9912-ace4e6543002"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "dueDate",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-30"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenReadModels": [],
+                  "name": "SeeingAReturnedLoan",
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "Loan",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "bookId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "returned"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "when": null,
+                  "whenAppended": {
+                    "kind": "SpecificationEventSyntax",
+                    "eventType": "BookReturned",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
+                    },
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "returnedOn",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-10-12"
+                        }
+                      }
+                    ]
+                  },
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Lending"
+    }
+  ],
+  "personas": [
+    {
+      "kind": "PersonaSyntax",
+      "description": "Runs the catalog and signs up members",
+      "name": "Librarian",
+      "policies": [
+        "IsLibrarian"
+      ]
+    },
+    {
+      "kind": "PersonaSyntax",
+      "description": "Borrows and returns books",
+      "name": "Member",
+      "policies": [
+        "IsMember"
+      ]
+    }
+  ],
+  "types": []
+}

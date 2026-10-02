@@ -23,7 +23,11 @@ internal static partial class QueryParser
         var match = HeaderRegex().Match(header.Content);
         if (!match.Success)
         {
-            context.Error(DiagnosticCodes.InvalidQueryDeclaration, $"Invalid query declaration '{header.Content}' - expected 'query <Name> => [observable] <ReadModel>'", header.Location);
+            var keyedOnHeader = KeyedHeaderRegex().Match(header.Content);
+            var message = keyedOnHeader.Success
+                ? $"Invalid query declaration '{header.Content}' - a query's key goes on its own line in the query body: 'by {keyedOnHeader.Groups[1].Value}'"
+                : $"Invalid query declaration '{header.Content}' - expected 'query <Name> => [observable] <ReadModel>'";
+            context.Error(DiagnosticCodes.InvalidQueryDeclaration, message, header.Location);
             context.SkipBlock(header.Indent);
             return new(LineText.FirstWord(header.Content), new(string.Empty, false, false, header.Location), null, [], null, header.Location);
         }
@@ -183,6 +187,9 @@ internal static partial class QueryParser
 
         return match.Groups[1].Value;
     }
+
+    [GeneratedRegex(@"^query\s+[A-Za-z_]\w*\s*=>\s*(?:observable\s+)?[\w.]+(?:\[\])?\??\s+by\s+(.+)$", RegexOptions.None, 1000)]
+    private static partial Regex KeyedHeaderRegex();
 
     [GeneratedRegex(@"^scoped\s+to\s+([a-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex ScopeRegex();

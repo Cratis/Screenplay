@@ -11,8 +11,11 @@ import { JoinEventSyntax, MappingSyntax, ProjectionBlockSyntax, ProjectionSyntax
 import { QueryParameterSyntax, QuerySyntax } from './Queries';
 import { InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
 import { ScreenDirectiveSyntax, ScreenSyntax } from './Screens';
-import { SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationReadModelSyntax, SpecificationSyntax } from './Specifications';
-import { ApplicationSyntax, FeatureSyntax, ModuleSyntax, SliceSyntax } from './Structure';
+import {
+    SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax,
+    SpecificationReadModelSyntax, SpecificationSyntax, SpecificationTriggerSyntax, SpecificationWhenQuerySyntax,
+} from './Specifications';
+import { ApplicationSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax, SliceSyntax } from './Structure';
 import { SyntaxNode } from './SyntaxNode';
 
 // Walks a whole syntax tree, depth first, in the order the C# ScreenplaySyntaxWalker does. Every visit
@@ -25,6 +28,7 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
         if (syntax.domain !== null) this.visitDomain(syntax.domain);
         syntax.imports.forEach(node => this.visitImport(node));
+        syntax.fileImports.forEach(node => this.visitFileImport(node));
         syntax.concepts.forEach(node => this.visitConcept(node));
         syntax.types.forEach(node => this.visitType(node));
         syntax.personas.forEach(node => this.visitPersona(node));
@@ -56,6 +60,10 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
     }
 
+    visitFileImport(syntax: FileImportSyntax): void {
+        this.visitNode(syntax);
+    }
+
     visitConcept(syntax: ConceptSyntax): void {
         this.visitNode(syntax);
         syntax.attributes.forEach(node => this.visitNode(node));
@@ -68,12 +76,14 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitModule(syntax: ModuleSyntax): void {
         this.visitNode(syntax);
+        syntax.fileImports.forEach(node => this.visitFileImport(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         syntax.features.forEach(node => this.visitFeature(node));
     }
 
     visitFeature(syntax: FeatureSyntax): void {
         this.visitNode(syntax);
+        syntax.fileImports.forEach(node => this.visitFileImport(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         syntax.features.forEach(node => this.visitFeature(node));
         syntax.slices.forEach(node => this.visitSlice(node));
@@ -277,13 +287,45 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitSpecification(syntax: SpecificationSyntax): void {
         this.visitNode(syntax);
+        if (syntax.givenClock !== null) this.visitSpecificationClock(syntax.givenClock);
         syntax.given.forEach(node => this.visitSpecificationEvent(node));
         syntax.givenReadModels.forEach(node => this.visitSpecificationReadModel(node));
         if (syntax.when !== null) this.visitSpecificationCommand(syntax.when);
+        syntax.givenCaptures.forEach(node => this.visitSpecificationCapture(node));
         if (syntax.whenAppended !== null) this.visitSpecificationEvent(syntax.whenAppended);
+        if (syntax.whenClock !== null) this.visitSpecificationClock(syntax.whenClock);
+        if (syntax.whenTrigger !== null) this.visitSpecificationTrigger(syntax.whenTrigger);
+        if (syntax.whenCapture !== null) this.visitSpecificationCapture(syntax.whenCapture);
+        if (syntax.whenQuery !== null) this.visitSpecificationWhenQuery(syntax.whenQuery);
         syntax.thenEvents.forEach(node => this.visitSpecificationEvent(node));
         syntax.thenReadModels.forEach(node => this.visitSpecificationReadModel(node));
+        syntax.thenResults.forEach(node => this.visitSpecificationQueryResult(node));
+        if (syntax.thenNoResult !== null) this.visitNode(syntax.thenNoResult);
         syntax.thenErrors.forEach(node => this.visitNode(node));
+    }
+
+    visitSpecificationClock(syntax: SpecificationClockSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitSpecificationTrigger(syntax: SpecificationTriggerSyntax): void {
+        this.visitNode(syntax);
+        syntax.values.forEach(node => this.visitPropertyMapping(node));
+    }
+
+    visitSpecificationCapture(syntax: SpecificationCaptureSyntax): void {
+        this.visitNode(syntax);
+        syntax.record.forEach(node => this.visitPropertyMapping(node));
+    }
+
+    visitSpecificationWhenQuery(syntax: SpecificationWhenQuerySyntax): void {
+        this.visitNode(syntax);
+        syntax.arguments.forEach(node => this.visitPropertyMapping(node));
+    }
+
+    visitSpecificationQueryResult(syntax: SpecificationQueryResultSyntax): void {
+        this.visitNode(syntax);
+        syntax.properties.forEach(node => this.visitPropertyMapping(node));
     }
 
     visitSpecificationEvent(syntax: SpecificationEventSyntax): void {

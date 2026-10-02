@@ -34,8 +34,13 @@ public class PlayFileCompiler(IPlayFiles playFiles, IScreenplayCompiler compiler
     public PlayFileCompilation CompileFile(string path) => Compile(Locate(path));
 
     /// <inheritdoc/>
-    public ApplicationCompilation<ApplicationSyntax> CompileFolder(string root) =>
-        AsOneApplication([.. playFiles.FindIn(root).Select(Read)]);
+    public ApplicationCompilation<ApplicationSyntax> CompileFolder(string root)
+    {
+        // Every file in the folder is a root, so a file nobody imports is still a whole document of the
+        // application - and one an import places in a module or feature is placed there.
+        var source = new DiskPlayDocumentSource(playFiles, root);
+        return Assemble(source, source.FilesBeneath(string.Empty));
+    }
 
     /// <inheritdoc/>
     public ApplicationCompilation<TApplication> CompileFolder<TApplication>(string root, IApplicationSyntaxVisitor<TApplication> visitor) =>
@@ -43,7 +48,16 @@ public class PlayFileCompiler(IPlayFiles playFiles, IScreenplayCompiler compiler
 
     /// <inheritdoc/>
     public ApplicationCompilation<TApplication> CompileFile<TApplication>(string path, IApplicationSyntaxVisitor<TApplication> visitor) =>
-        Visit(AsOneApplication([Read(Locate(path))]), visitor);
+        Visit(CompileApplication(path), visitor);
+
+    /// <inheritdoc/>
+    public ApplicationCompilation<ApplicationSyntax> CompileApplication(string path)
+    {
+        var file = Locate(path);
+        var source = new DiskPlayDocumentSource(playFiles, System.IO.Path.GetDirectoryName(file.Path)!);
+        source.Add(file);
+        return Assemble(source, [file.RelativePath]);
+    }
 
     static ApplicationCompilation<TApplication> Visit<TApplication>(
         ApplicationCompilation<ApplicationSyntax> compilation,
@@ -60,10 +74,11 @@ public class PlayFileCompiler(IPlayFiles playFiles, IScreenplayCompiler compiler
         return new(full, System.IO.Path.GetFileName(full));
     }
 
-    ApplicationCompilation<ApplicationSyntax> AsOneApplication(IReadOnlyList<PlayFileSource> sources) =>
-        new(sources, PlayFolderMerge.Merge([.. sources.Select(source => compiler.Parse(source.Source, source.File.RelativePath))]));
-
-    PlayFileSource Read(PlayFile file) => new(file, playFiles.ReadContent(file));
+    ApplicationCompilation<ApplicationSyntax> Assemble(DiskPlayDocumentSource source, IEnumerable<string> roots)
+    {
+        var (documents, result) = PlayApplicationAssembly.Compile(compiler, roots, source);
+        return new([.. documents.Select(document => new PlayFileSource(source.File(document.Path), document.Source))], result);
+    }
 
     PlayFileCompilation Compile(PlayFile file)
     {

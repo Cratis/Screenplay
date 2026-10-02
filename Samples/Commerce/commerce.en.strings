@@ -1,0 +1,13 @@
+// English strings for the Commerce sample. Every $strings key used by a
+// .play file in this folder resolves here.
+navigation.shop       = "Shop"
+navigation.products   = "Products"
+navigation.pricing    = "Pricing"
+navigation.myOrders   = "My orders"
+navigation.support    = "Support"
+navigation.shipments  = "Shipments"
+storefront.title      = "Find something you like"
+orders.title          = "My orders"
+orders.checkout       = "Check out"
+orders.confirmCancel  = "Cancelling cannot be undone. Cancel this order?"
+shipping.queueTitle   = "Ready to ship"

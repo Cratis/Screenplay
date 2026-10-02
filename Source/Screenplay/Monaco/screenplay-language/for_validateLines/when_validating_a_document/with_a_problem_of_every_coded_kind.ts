@@ -13,6 +13,7 @@ const document = [
     'concept Amount : Wat',
     '',
     'module Invoicing',
+    '  import Customers.CustomerRegistered',
     '  feature Invoices',
     '    slice Wat Register',
     '      event InvoiceRegistered',

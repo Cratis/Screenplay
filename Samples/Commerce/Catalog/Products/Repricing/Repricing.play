@@ -1,0 +1,11 @@
+// A nested feature. Products.play imports this file inside 'feature
+// Products', so the Products gate still applies here.
+feature Repricing
+  description "Changing what products cost, and keeping track of how often they changed"
+
+  contribute to Navigation
+    navigate to PriceHistory
+    label $strings.navigation.pricing
+    order 30
+
+  import "*.play"

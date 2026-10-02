@@ -17,6 +17,7 @@ export type CompletionPlan =
     | { kind: 'none' }
     | { kind: 'entries'; entries: CompletionEntry[] }
     | { kind: 'contextVariables'; replaceLength: number }
+    | { kind: 'playFiles'; replaceLength: number }
     | { kind: 'policies' }
     | { kind: 'events' }
     | { kind: 'triggers' }
@@ -93,6 +94,15 @@ export function planCompletions(
     const fences = fenceMap(lines);
     if (fences[lineIndex]) return { kind: 'none' };
 
+    // Inside the quotes of a file import, what is wanted is a path - replacing what has been typed so far.
+    const importPath = textBefore.match(/^\s*import\s+"([^"]*)$/);
+    if (importPath) {
+        return { kind: 'playFiles', replaceLength: importPath[1].length };
+    }
+
+    // A quote or a slash only asks for a completion inside an import path.
+    if (/["/]$/.test(textBefore)) return { kind: 'none' };
+
     const contextVariableMatch = textBefore.match(/\$[\w.]*$/);
     if (contextVariableMatch) {
         return { kind: 'contextVariables', replaceLength: contextVariableMatch[0].length };
@@ -123,6 +133,11 @@ export function planCompletions(
     }
     if (/\bnavigate\s+to\s+\w*$/.test(textBefore)) {
         return { kind: 'screens' };
+    }
+    if (chain[0] === 'specification') {
+        if (/^\s*when\s+query\s+[\w.]*$/.test(textBefore)) return { kind: 'queries' };
+        const step = textBefore.match(/^\s*(given|when|then)\s+\w*$/);
+        if (step) return { kind: 'entries', entries: items.specificationStepItems[step[1] as 'given' | 'when' | 'then'] };
     }
     if (/\b(?:via|then)\s+query\s+[\w.]*$/.test(textBefore)) {
         return { kind: 'queries' };

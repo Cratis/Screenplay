@@ -1,0 +1,28 @@
+// The shell. 'navigation contributes Navigation' opens the slot to
+// contributions declared anywhere in the module/feature tree - each feature
+// file adds the one link it owns with 'contribute to Navigation'.
+
+theme Harbor
+  compatible with Cratis.Components
+
+layout Storefront
+  topbar
+  navigation contributes Navigation
+  content
+  footer
+
+  arrangement flow
+    column
+      topbar height 56
+      row
+        navigation width 240
+        content grow
+      footer height 32
+
+ui profile Web
+  target platform web
+  target size regular
+  packages
+    Cratis.Components
+  layout Storefront
+  theme Harbor

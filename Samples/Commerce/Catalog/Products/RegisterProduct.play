@@ -1,0 +1,94 @@
+// Only this slice and its seed data talk about weight, so the concept lives here.
+concept Weight : Decimal
+
+slice StateChange RegisterProduct
+  description "Adds a new product to the catalog"
+
+  command RegisterProduct
+    description "Registers a product with its SKU, name, price and shipping weight"
+    productId ProductId identifier
+    sku       Sku
+    name      ProductName
+    price     Money
+    weight    Weight
+
+    authorize IsMerchandiser
+
+    validate
+      name not empty  message "A product needs a name"
+      price > 0       message "A product needs a price"
+      weight > 0      message "A product needs a shipping weight"
+
+    // 'for' says which event source the fact lands on; the id is never payload.
+    produces ProductRegistered
+      for productId
+      sku    = sku
+      name   = name
+      price  = price
+      weight = weight
+
+  event ProductRegistered
+    sku    Sku
+    name   ProductName
+    price  Money
+    weight Weight
+
+  // Two products can never share a SKU - enforced by the event store at append time.
+  constraint UniqueSku
+    unique sku on ProductRegistered
+    ignore casing
+
+  // The caller is always stated: the feature gate and the command gate both
+  // require the Merchandiser role.
+  specification RegisteringAProduct
+    given caller
+      authenticated
+      role "Merchandiser"
+    when RegisterProduct
+      productId = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e03"
+      sku       = "CAP-2001"
+      name      = "Waxed canvas cap"
+      price     = 29.0
+      weight    = 0.15
+    then ProductRegistered
+      for "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e03"
+      sku    = "CAP-2001"
+      name   = "Waxed canvas cap"
+      price  = 29.0
+      weight = 0.15
+
+  specification RejectingAProductWithoutAPrice
+    given caller
+      authenticated
+      role "Merchandiser"
+    when RegisterProduct
+      productId = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e03"
+      sku       = "CAP-2001"
+      name      = "Waxed canvas cap"
+      price     = 0
+      weight    = 0.15
+    then error "A product needs a price"
+
+  // A customer satisfies neither gate, so the command is never run.
+  specification ACustomerCannotRegisterProducts
+    given caller
+      authenticated
+      role "Customer"
+    when RegisterProduct
+      productId = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e03"
+      sku       = "CAP-2001"
+      name      = "Waxed canvas cap"
+      price     = 29.0
+      weight    = 0.15
+    then denied
+
+  // A dialog filled from the module's ProductDialog template. Its input
+  // surface is RegisterProductForm, discovered through the action.
+  screen RegisterProductScreen
+    template ProductDialog
+      body
+        title "Register product"
+      actions
+        action RegisterProduct
+          label "Register"
+          navigate to ProductList

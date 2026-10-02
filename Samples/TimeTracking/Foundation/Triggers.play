@@ -1,0 +1,9 @@
+// Application triggers: signals from outside the event log. A trigger says that
+// it exists and what an occurrence carries - never what makes one occur, which
+// belongs to the integration that raises it.
+
+trigger PayrollProviderAcknowledged
+  description "The external payroll provider confirmed it has received a payroll run"
+  payrollRunId      PayrollRunId
+  acceptedLines     Int
+  providerReference String

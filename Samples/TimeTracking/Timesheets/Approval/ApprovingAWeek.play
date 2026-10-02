@@ -1,0 +1,81 @@
+// An engagement manager approves a submitted week.
+
+slice StateChange ApproveTimesheet
+  description "An engagement manager approves a submitted week"
+
+  command ApproveTimesheet
+    timesheetId TimesheetId identifier
+
+    // A variant read model (Reporting/TrackingWeeksOnTheBoard.play) is read like
+    // any other: only a week that is currently submitted has one.
+    reads SubmittedTimesheet as submitted by timesheetId
+
+    authorize IsEngagementManager
+
+    validate
+      require submitted.totalHours > 0
+        message $strings.timesheets.validation.notSubmitted
+
+    produces TimesheetApproved
+      for timesheetId
+      timesheetId  = timesheetId
+      consultantId = submitted.consultantId
+      totalHours   = submitted.totalHours
+      approvedBy   = $context.identity.id
+
+  event TimesheetApproved
+    timesheetId  TimesheetId
+    consultantId ConsultantId
+    totalHours   WeeklyHours
+    approvedBy   String
+
+  screen ApproveTimesheetDialog
+    template TimesheetDialog
+      body
+        title $strings.timesheets.approve.title
+        data SubmittedTimesheet via query SubmittedTimesheetById by timesheetId
+        summary SubmittedTimesheet
+          field totalHours label $strings.timesheets.fields.totalHours
+      actions
+        action ApproveTimesheet
+          label $strings.timesheets.approve.action
+          navigate to ApprovalBoard
+
+  specification ApprovingASubmittedWeek
+    given caller
+      authenticated
+      role "EngagementManager"
+    given TimesheetSubmitted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 37.5
+    when ApproveTimesheet
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+    then TimesheetApproved
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 37.5
+
+  specification RejectingApprovalOfAWeekNotSubmitted
+    given caller
+      authenticated
+      role "EngagementManager"
+    given TimesheetStarted
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    when ApproveTimesheet
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+    then error "$strings.timesheets.validation.notSubmitted"
+
+  specification ConsultantsCannotApproveTheirOwnWeek
+    given caller
+      authenticated
+      role "Consultant"
+    when ApproveTimesheet
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+    then denied

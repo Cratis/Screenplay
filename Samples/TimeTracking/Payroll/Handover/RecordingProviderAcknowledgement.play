@@ -1,0 +1,42 @@
+// The payroll provider confirms it has taken a run in, and the run notes the
+// provider's reference.
+
+slice Automation RecordProviderAcknowledgement
+  description "Notes the payroll provider's reference on the run once it has taken it in"
+
+  reaction ProviderAcknowledgement
+    description "Records the provider's acknowledgement of an exported run"
+    // A declared application trigger (Foundation/Triggers.play), consumed
+    // exactly like an event.
+    when PayrollProviderAcknowledged
+      payrollRunId
+      acceptedLines
+      providerReference
+      produces PayrollRunAcknowledged
+        for payrollRunId
+        payrollRunId      = payrollRunId
+        acceptedLines     = acceptedLines
+        providerReference = providerReference
+    // A fallback for a missed webhook: ask the provider every 15 minutes.
+    every 15 minutes
+      description "Polls the provider for acknowledgements of exported runs"
+
+  event PayrollRunAcknowledged
+    payrollRunId      PayrollRunId
+    acceptedLines     Int
+    providerReference String
+
+  specification AcknowledgingAnExportedRun
+    given PayrollRunExported
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      lineCount    = 1
+      totalHours   = 37.5
+    when trigger PayrollProviderAcknowledged
+      payrollRunId      = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      acceptedLines     = 1
+      providerReference = "PAY-2026-40"
+    then PayrollRunAcknowledged
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId      = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      acceptedLines     = 1
+      providerReference = "PAY-2026-40"

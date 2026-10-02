@@ -4,7 +4,9 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
 import {
-    SpecificationCommandSyntax, SpecificationErrorSyntax, SpecificationEventSyntax, SpecificationReadModelSyntax, SpecificationSyntax,
+    SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationErrorSyntax, SpecificationEventSyntax,
+    SpecificationNoResultSyntax, SpecificationQueryResultSyntax, SpecificationReadModelSyntax, SpecificationSyntax, SpecificationTriggerSyntax,
+    SpecificationWhenQuerySyntax,
 } from '../Syntax/Specifications';
 import { pattern } from '../Text/patterns';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
@@ -26,6 +28,22 @@ const thenReadModelPattern = pattern('^then\\s+readmodel\\s+([A-Z]\\w*)(\\s+exac
 const thenNoPrefix = pattern('^then\\s+no\\b');
 const thenErrorPattern = pattern(`^then\\s+error\\s+"(${stringBodyPattern})"$`);
 const mappingPattern = pattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
+const givenClockPrefix = pattern('^given\\s+clock\\b');
+const givenCapturePrefix = pattern('^given\\s+capture\\b');
+const whenClockPrefix = pattern('^when\\s+clock\\b');
+const whenTriggerPrefix = pattern('^when\\s+trigger\\b');
+const whenCapturePrefix = pattern('^when\\s+capture\\b');
+const whenQueryPrefix = pattern('^when\\s+query\\b');
+const thenResultPrefix = pattern('^then\\s+result\\b');
+const noResultPrefix = pattern('^then\\s+no\\s+result\\b');
+
+// An instant in ISO 8601 - a date, a time to the minute or finer, and an explicit offset or Z - so the same text
+// means the same moment wherever the specification runs.
+const clockPattern = pattern('^(given|when)\\s+clock\\s+"(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(?::\\d{2}(?:\\.\\d+)?)?(?:Z|[+-]\\d{2}:\\d{2}))"$');
+const whenTriggerPattern = pattern('^when\\s+trigger\\s+([A-Za-z_]\\w*)$');
+const capturePattern = pattern('^(?:given|when)\\s+capture\\s+([A-Za-z_]\\w*)$');
+const whenQueryPattern = pattern('^when\\s+query\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)$');
+const thenResultPattern = pattern('^then\\s+result(\\s+exactly)?$');
 
 interface SpecificationBody {
     given: SpecificationEventSyntax[];
@@ -37,6 +55,14 @@ interface SpecificationBody {
     thenEventsInAnyOrder: boolean;
     thenReadModels: SpecificationReadModelSyntax[];
     thenErrors: SpecificationErrorSyntax[];
+    givenClock: SpecificationClockSyntax | null;
+    givenCaptures: SpecificationCaptureSyntax[];
+    whenClock: SpecificationClockSyntax | null;
+    whenTrigger: SpecificationTriggerSyntax | null;
+    whenCapture: SpecificationCaptureSyntax | null;
+    whenQuery: SpecificationWhenQuerySyntax | null;
+    thenResults: SpecificationQueryResultSyntax[];
+    thenNoResult: SpecificationNoResultSyntax | null;
 }
 
 export function parseSpecification(context: ParserContext, line: SourceLine): SpecificationSyntax {
@@ -47,6 +73,7 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
     const body: SpecificationBody = {
         given: [], givenReadModels: [], when: null, whenAppended: null, whenDeclared: false,
         thenEvents: [], thenEventsInAnyOrder: false, thenReadModels: [], thenErrors: [],
+        givenClock: null, givenCaptures: [], whenClock: null, whenTrigger: null, whenCapture: null, whenQuery: null, thenResults: [], thenNoResult: null,
     };
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
@@ -71,7 +98,19 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
 }
 
 function parseGiven(context: ParserContext, line: SourceLine, body: SpecificationBody): void {
-    if (line.content.startsWith('given caller')) {
+    if (givenClockPrefix.test(line.content)) {
+        if (body.givenClock !== null) {
+            context.error(DiagnosticCodes.InvalidSpecificationClock, 'A specification states its clock at most once.', locationOf(line));
+            context.skipBlock(line.indent);
+        } else {
+            body.givenClock = parseClock(context, line, 'given');
+        }
+    } else if (givenCapturePrefix.test(line.content)) {
+        const capture = parseCapture(context, line, 'given');
+        if (capture !== null) {
+            body.givenCaptures.push(capture);
+        }
+    } else if (line.content.startsWith('given caller')) {
         // The caller fixture is not modeled.
         context.skipOpaqueBlock(line.indent);
     } else if (readModelPrefix.test(line.content)) {
@@ -100,6 +139,24 @@ function parseWhen(context: ParserContext, line: SourceLine, body: Specification
         body.whenAppended = parseEventStep(context, line, whenAppendPattern, 'when append') ?? null;
         return;
     }
+    if (whenClockPrefix.test(line.content)) {
+        body.whenClock = parseClock(context, line, 'when');
+        return;
+    }
+    if (whenTriggerPrefix.test(line.content)) {
+        body.whenTrigger = parseNamedStep(context, line, whenTriggerPattern, DiagnosticCodes.InvalidSpecificationTrigger, 'when trigger', 'when trigger <Trigger>',
+            (trigger, values) => ({ kind: 'SpecificationTriggerSyntax', trigger, values, location: locationOf(line) }));
+        return;
+    }
+    if (whenCapturePrefix.test(line.content)) {
+        body.whenCapture = parseCapture(context, line, 'when');
+        return;
+    }
+    if (whenQueryPrefix.test(line.content)) {
+        body.whenQuery = parseNamedStep(context, line, whenQueryPattern, DiagnosticCodes.InvalidSpecificationQueryAction, 'when query', 'when query <Query>',
+            (query, values) => ({ kind: 'SpecificationWhenQuerySyntax', query, arguments: values, location: locationOf(line) }));
+        return;
+    }
     const match = whenPattern.exec(line.content);
     if (match === null) {
         context.error(DiagnosticCodes.InvalidSpecificationWhen, `Invalid 'when' declaration '${line.content}' - expected 'when <CommandType>' or 'when append <EventType>'`, locationOf(line));
@@ -116,6 +173,19 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
             context.error(DiagnosticCodes.InvalidSpecificationEventOrder, 'Expected one \'then events in any order\' directive.', locationOf(line));
         } else {
             body.thenEventsInAnyOrder = true;
+        }
+        context.skipBlock(line.indent);
+        return;
+    }
+    if (thenResultPrefix.test(line.content)) {
+        parseResult(context, line, body);
+        return;
+    }
+    if (noResultPrefix.test(line.content)) {
+        if (line.content !== 'then no result' || body.thenNoResult !== null) {
+            context.error(DiagnosticCodes.InvalidSpecificationQueryAction, 'Expected one \'then no result\' directive.', locationOf(line));
+        } else {
+            body.thenNoResult = { kind: 'SpecificationNoResultSyntax', location: locationOf(line) };
         }
         context.skipBlock(line.indent);
         return;
@@ -158,6 +228,45 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
     if (event !== undefined) {
         body.thenEvents.push(event);
     }
+}
+
+function parseClock(context: ParserContext, line: SourceLine, keyword: string): SpecificationClockSyntax | null {
+    const match = clockPattern.exec(line.content);
+    context.skipBlock(line.indent);
+    if (match === null || match[1] !== keyword) {
+        context.error(DiagnosticCodes.InvalidSpecificationClock,
+            `Invalid '${keyword} clock' - expected '${keyword} clock "<ISO 8601 instant>"', such as '${keyword} clock "2026-10-05T08:00:00Z"'`, locationOf(line));
+        return null;
+    }
+    return { kind: 'SpecificationClockSyntax', instant: match[2], location: locationOf(line) };
+}
+
+function parseCapture(context: ParserContext, line: SourceLine, keyword: string): SpecificationCaptureSyntax | null {
+    return parseNamedStep(context, line, capturePattern, DiagnosticCodes.InvalidSpecificationCapture, `${keyword} capture`, `${keyword} capture <Capture>`,
+        (capture, record) => ({ kind: 'SpecificationCaptureSyntax', capture, record, location: locationOf(line) }));
+}
+
+// A step naming one thing on its header line, with '<field> = <value>' lines beneath it.
+function parseNamedStep<T>(
+    context: ParserContext, line: SourceLine, regex: RegExp, code: string, keyword: string, expected: string,
+    create: (name: string, values: PropertyMappingSyntax[]) => T): T | null {
+    const match = regex.exec(line.content);
+    if (match === null) {
+        context.error(code, `Invalid '${keyword}' declaration '${line.content}' - expected '${expected}'`, locationOf(line));
+        context.skipBlock(line.indent);
+        return null;
+    }
+    return create(match[1], parseValues(context, line));
+}
+
+function parseResult(context: ParserContext, line: SourceLine, body: SpecificationBody): void {
+    const match = thenResultPattern.exec(line.content);
+    if (match === null) {
+        context.error(DiagnosticCodes.InvalidSpecificationQueryAction, `Invalid 'then result' declaration '${line.content}' - expected 'then result [exactly]'`, locationOf(line));
+        context.skipBlock(line.indent);
+        return;
+    }
+    body.thenResults.push({ kind: 'SpecificationQueryResultSyntax', properties: parseValues(context, line), exactly: match[1] !== undefined, location: locationOf(line) });
 }
 
 function parseReadModelStep(context: ParserContext, line: SourceLine, regex: RegExp, keyword: string): SpecificationReadModelSyntax | undefined {

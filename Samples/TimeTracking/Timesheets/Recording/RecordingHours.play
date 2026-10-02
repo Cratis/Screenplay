@@ -1,0 +1,184 @@
+// The heart of the story: a consultant records the hours worked on one
+// engagement on one day.
+
+slice StateChange RecordTime
+  description "A consultant records the hours worked on one engagement on one day"
+
+  command RecordTime
+    timesheetId  TimesheetId identifier
+    engagementId EngagementId
+    workDate     WorkDate
+    hours        Hours
+    activity     ActivityCode
+    billing      BillingType
+    note         String
+
+    // The engagement lives in another module; one application, so the name
+    // resolves without anything being imported for it.
+    reads EngagementOverview as engagement by engagementId
+
+    validate
+      note max 280  message "Keep the note under 280 characters"
+      require engagement.status == "active"
+        message $strings.timesheets.validation.engagementNotActive
+      // An implication written with 'or': only billable work may run long.
+      // A warning still rejects - severity only changes how it is shown.
+      require billing == "billable" or hours <= 8
+        severity warning
+        message $strings.timesheets.validation.nonBillableCap
+
+    produces TimeRecorded
+      for timesheetId
+      timesheetId  = timesheetId
+      engagementId = engagementId
+      workDate     = workDate
+      hours        = hours
+      activity     = activity
+      billing      = billing
+      note         = note
+
+    produces when hours > 10
+      OvertimeFlagged
+        for timesheetId
+        timesheetId = timesheetId
+        workDate    = workDate
+        hours       = hours
+
+  event TimeRecorded
+    timesheetId  TimesheetId
+    engagementId EngagementId
+    workDate     WorkDate
+    hours        Hours
+    activity     ActivityCode
+    billing      BillingType
+    note         String
+
+  event OvertimeFlagged
+    timesheetId TimesheetId
+    workDate    WorkDate
+    hours       Hours
+
+  // Inline interactions: refresh on arrival, and a quick-save section whose
+  // outcome branches into success and failure continuations.
+  screen RecordTimeScreen
+    on enter
+      refresh TimesheetById
+    template WeekView
+      toolbar
+        action RecordTime
+          label $strings.timesheets.record.action
+      days
+        data TimesheetSummary via query TimesheetById by timesheetId
+        section entry
+          title $strings.timesheets.record.title
+          on click
+            execute RecordTime
+              on success
+                refresh TimesheetById
+                notify info $strings.timesheets.record.saved
+              on failure
+                notify error $strings.timesheets.record.failed
+      totals
+        summary TimesheetSummary
+          field totalHours    label $strings.timesheets.fields.totalHours
+          field billableHours label $strings.timesheets.fields.billableHours
+
+  specification RecordingABillableDay
+    given caller
+      authenticated
+      role "Consultant"
+    when RecordTime
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      workDate     = "2026-09-28"
+      hours        = 7.5
+      activity     = "DEV-01"
+      billing      = "billable"
+      note         = "Data mapping workshop"
+    then TimeRecorded
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      workDate     = "2026-09-28"
+      hours        = 7.5
+      billing      = "billable"
+
+  specification RecordingALongDayFlagsOvertime
+    given caller
+      authenticated
+      role "Consultant"
+    when RecordTime
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      workDate     = "2026-09-29"
+      hours        = 11
+      activity     = "DEV-01"
+      billing      = "billable"
+      note         = "Cut-over weekend preparation"
+    then TimeRecorded
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      hours = 11
+    then OvertimeFlagged
+      for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      workDate = "2026-09-29"
+      hours    = 11
+
+  specification RejectingMoreHoursThanADayHas
+    given caller
+      authenticated
+      role "Consultant"
+    when RecordTime
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      workDate     = "2026-09-28"
+      hours        = 25
+      activity     = "DEV-01"
+      billing      = "billable"
+      note         = "Typo"
+    then error "$strings.timesheets.validation.hoursPerDay"
+
+  specification RejectingALongNonBillableDay
+    given caller
+      authenticated
+      role "Consultant"
+    when RecordTime
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b12"
+      workDate     = "2026-09-30"
+      hours        = 9
+      activity     = "INT-02"
+      billing      = "internal"
+      note         = "Internal guild day"
+    then error "$strings.timesheets.validation.nonBillableCap"
+
+  specification RejectingHoursOnAClosedEngagement
+    given caller
+      authenticated
+      role "Consultant"
+    given EngagementClosed
+      for "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      reason       = "Delivered"
+    when RecordTime
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      workDate     = "2026-10-01"
+      hours        = 4
+      activity     = "DEV-01"
+      billing      = "billable"
+      note         = "Late bug fix"
+    then error "$strings.timesheets.validation.engagementNotActive"
+
+  specification PayrollCannotRecordTime
+    given caller
+      authenticated
+      role "PayrollOfficer"
+      claim "department" = "Finance"
+    when RecordTime
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      workDate     = "2026-09-28"
+      hours        = 7.5
+      activity     = "DEV-01"
+      billing      = "billable"
+      note         = "Data mapping workshop"
+    then denied

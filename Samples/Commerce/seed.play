@@ -1,0 +1,17 @@
+// Seed data is events, appended per event source id - the same facts the
+// RegisterProduct slice produces, so seeded products flow through every
+// projection exactly like registered ones.
+
+seed
+  for "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+    ProductRegistered
+      sku    = "MUG-0042"
+      name   = "Stoneware mug"
+      price  = 12.5
+      weight = 0.4
+  for "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e02"
+    ProductRegistered
+      sku    = "TEE-1001"
+      name   = "Organic cotton tee"
+      price  = 24
+      weight = 0.2

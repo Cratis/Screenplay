@@ -785,6 +785,35 @@ These warnings are returned by `AttachmentFiles.Load` for implementation files t
 | `PLAY0445` | Warning | A v1–v3 flat executable-model projection transition carries deprecated `ZeroOrOne` or `Many` affected-instance cardinality. Chronicle routes one key per transition; use a join for structural many. Returned by `ExecutableSemanticModel.DeprecationDiagnostics` for constructed or deserialized ESM, with a model-level location because ESM does not retain source positions. The source binder produces only `One`; query cardinality is unaffected. |
 | `PLAY0449` | Error | A `given` fact needs a historical event shape (message names the event and revision), which Screenplay does not consume yet; or an event's source revision disagrees with its persisted catalog revision and requires explicit forward advancement. There is no fallback from current to historical properties. |
 
+### File imports
+
+See [Imports](imports.md).
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0454` | Error | An `import` inside a module or feature does not name files as `import "<path or glob>"`. |
+| `PLAY0455` | Warning | A file import pattern with wildcards matches no `.play` file. |
+| `PLAY0456` | Error | A file import names one file, without wildcards, and that file does not exist. |
+| `PLAY0457` | Error | Two imports place the same file in a module or feature where neither lies inside the other. A file belongs in one place. |
+| `PLAY0458` | Error | Imports keep placing a file deeper than 32 levels - they form a cycle. |
+| `PLAY0459` | Error | A file imported into a module or feature declares a module other than the one it is placed in. Restating the module it is placed in is allowed. |
+| `PLAY0460` | Error | The top level of a file imported into a module or feature holds something that scope cannot hold, such as a `screen template` in a file placed in a feature. |
+
+### Specification actions
+
+See [Specifications](specifications.md#clocks-triggers-and-captures).
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0461` | Error | A `given clock` or `when clock` does not state one ISO 8601 instant with an offset or `Z`, or `given clock` is repeated. |
+| `PLAY0462` | Error | A `when trigger` line is not `when trigger <Trigger>`. |
+| `PLAY0463` | Error | A `given capture` or `when capture` line is not `<given\|when> capture <Capture>`. |
+| `PLAY0464` | Error | A `when query` line is not `when query <Query>`, a `then result` line is not `then result [exactly]`, or `then no result` is malformed or repeated. |
+| `PLAY0465` | Error | A query result is asserted without `when query`, `when query` asserts neither a result, `then no result` nor `then denied`, or both results and no result are asserted. |
+| `PLAY0466` | Warning | A `when trigger` names a trigger nothing declares or registers, or a value its declaration does not carry. |
+| `PLAY0467` | Warning | A `given capture` or `when capture` names a capture the application does not declare. |
+| `PLAY0468` | Error | A `when query` argument is not a `by` or `filter` parameter of the query. |
+
 ## Retired codes
 
 A retired code stays out of use forever.

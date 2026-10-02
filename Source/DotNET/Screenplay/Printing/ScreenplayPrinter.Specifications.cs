@@ -61,6 +61,11 @@ public partial class ScreenplayPrinter
                 }
             }
 
+            if (specification.GivenClock is { } clock)
+            {
+                writer.Line($"given clock {StringLiteral.Quote(clock.Instant)}", clock);
+            }
+
             foreach (var given in specification.Given)
             {
                 WriteSpecificationEvent(writer, "given", given);
@@ -69,6 +74,11 @@ public partial class ScreenplayPrinter
             foreach (var given in specification.GivenReadModels ?? [])
             {
                 WriteSpecificationReadModel(writer, "given", given);
+            }
+
+            foreach (var capture in specification.GivenCaptures)
+            {
+                WriteSpecificationBlock(writer, $"given capture {capture.Capture}", capture, capture.Record);
             }
 
             if (specification.When is not null)
@@ -86,6 +96,26 @@ public partial class ScreenplayPrinter
                 WriteSpecificationEvent(writer, "when append", appended);
             }
 
+            if (specification.WhenClock is { } tick)
+            {
+                writer.Line($"when clock {StringLiteral.Quote(tick.Instant)}", tick);
+            }
+
+            if (specification.WhenTrigger is { } trigger)
+            {
+                WriteSpecificationBlock(writer, $"when trigger {trigger.Trigger}", trigger, trigger.Values);
+            }
+
+            if (specification.WhenCapture is { } captured)
+            {
+                WriteSpecificationBlock(writer, $"when capture {captured.Capture}", captured, captured.Record);
+            }
+
+            if (specification.WhenQuery is { } performed)
+            {
+                WriteSpecificationBlock(writer, $"when query {performed.Query}", performed, performed.Arguments);
+            }
+
             if (specification.ThenEventsInAnyOrder) writer.DirectiveLine("then events in any order", specification, "then events in any order");
 
             if (specification.ThenAbsentReadModels.Any())
@@ -98,6 +128,8 @@ public partial class ScreenplayPrinter
                     [.. specification.ThenReadModels ?? []],
                     [.. specification.ThenAbsentReadModels],
                     [.. specification.ThenQueries],
+                    [.. specification.ThenResults],
+                    specification.ThenNoResult is null ? [] : [specification.ThenNoResult],
                     specification.ThenDenied is null ? [] : [specification.ThenDenied],
                     [.. specification.ThenErrors]
                 ];
@@ -113,6 +145,8 @@ public partial class ScreenplayPrinter
                         case SpecificationReadModelSyntax present: WriteSpecificationReadModel(writer, "then", present); break;
                         case SpecificationAbsentReadModelSyntax absent: WriteSpecificationAbsentReadModel(writer, absent); break;
                         case SpecificationQuerySyntax query: WriteSpecificationQuery(writer, query); break;
+                        case SpecificationQueryResultSyntax result: WriteSpecificationResult(writer, result); break;
+                        case SpecificationNoResultSyntax none: writer.Line("then no result", none); break;
                         case SpecificationDeniedSyntax denied: writer.Line("then denied", denied); break;
                         case SpecificationErrorSyntax error: writer.Line(error.Name is null ? "then error" : $"then error {StringLiteral.Quote(error.Name)}", error); break;
                     }
@@ -134,6 +168,13 @@ public partial class ScreenplayPrinter
                 {
                     WriteSpecificationQuery(writer, then);
                 }
+
+                foreach (var result in specification.ThenResults)
+                {
+                    WriteSpecificationResult(writer, result);
+                }
+
+                if (specification.ThenNoResult is { } none) writer.Line("then no result", none);
 
                 if (specification.ThenDenied is { } denied) writer.Line("then denied", denied);
 
@@ -195,6 +236,19 @@ public partial class ScreenplayPrinter
                     WriteSpecificationValues(writer, result.Properties);
                 }
             }
+        }
+    }
+
+    void WriteSpecificationResult(ScreenplayWriter writer, SpecificationQueryResultSyntax result) =>
+        WriteSpecificationBlock(writer, result.Exactly ? "then result exactly" : "then result", result, result.Properties);
+
+    void WriteSpecificationBlock(ScreenplayWriter writer, string header, SyntaxNode node, IEnumerable<PropertyMappingSyntax> values)
+    {
+        using var anchor = writer.Anchor(node);
+        writer.Line(header);
+        using (writer.Indent())
+        {
+            WriteSpecificationValues(writer, values);
         }
     }
 

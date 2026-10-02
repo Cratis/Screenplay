@@ -1,0 +1,65 @@
+// The last step of an engagement: it is closed, and no more hours can be
+// logged against it.
+
+slice StateChange CloseEngagement
+  description "Closes an engagement so no more hours can be logged against it"
+
+  command CloseEngagement
+    engagementId EngagementId identifier
+    reason       String
+
+    authorize IsEngagementManager
+
+    validate
+      reason not empty  message "A closing reason is required"
+      reason max 280    message "Keep the closing reason under 280 characters"
+
+    produces EngagementClosed
+      for engagementId
+      engagementId = engagementId
+      reason       = reason
+
+  event EngagementClosed
+    engagementId EngagementId
+    reason       String
+
+  // The named behavior asks before closing; the attachment fills its parameters.
+  screen CloseEngagementDialog
+    uses ConfirmThenExecute
+      command CloseEngagement
+      message $strings.engagements.close.confirm
+    template EditorDialog
+      body
+        title $strings.engagements.close.title
+      actions
+        action CloseEngagement
+
+  specification ClosingAnEngagement
+    given caller
+      authenticated
+      role "EngagementManager"
+    when CloseEngagement
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      reason       = "Delivered and signed off"
+    then EngagementClosed
+      for "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      reason       = "Delivered and signed off"
+
+  specification RejectingAClosureWithoutAReason
+    given caller
+      authenticated
+      role "EngagementManager"
+    when CloseEngagement
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      reason       = ""
+    then error "A closing reason is required"
+
+  specification ConsultantsCannotCloseEngagements
+    given caller
+      authenticated
+      role "Consultant"
+    when CloseEngagement
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      reason       = "Delivered and signed off"
+    then denied

@@ -108,6 +108,18 @@ internal static class SpecificationValueConsistencyValidator
         return false;
     }
 
+    internal static void ValidateValues(IEnumerable<PropertyMappingSyntax> assignments, IEnumerable<PropertySyntax>? properties, ConsistencyDeclarations declarations, ParserContext context)
+    {
+        foreach (var assignment in assignments)
+        {
+            var property = declarations.Property(properties, assignment.Property, out _);
+            if (property is not null)
+            {
+                ValidateValue(assignment.Source, property.Type, assignment.Property, declarations, context);
+            }
+        }
+    }
+
     internal static void ValidateStructuredMappings(IEnumerable<PropertyMappingSyntax> assignments, IEnumerable<PropertySyntax>? properties, ConsistencyDeclarations declarations, ParserContext context)
     {
         ValidateValues(assignments.Where(assignment => assignment.Source is ObjectExpressionSyntax or ListExpressionSyntax), properties, declarations, context);
@@ -130,18 +142,6 @@ internal static class SpecificationValueConsistencyValidator
             foreach (var result in step.Results)
             {
                 ValidateValues(result.Properties, declarations.ViewProperties(resolved.Node.ReturnType.Name, resolved.Scope), declarations, context);
-            }
-        }
-    }
-
-    static void ValidateValues(IEnumerable<PropertyMappingSyntax> assignments, IEnumerable<PropertySyntax>? properties, ConsistencyDeclarations declarations, ParserContext context)
-    {
-        foreach (var assignment in assignments)
-        {
-            var property = declarations.Property(properties, assignment.Property, out _);
-            if (property is not null)
-            {
-                ValidateValue(assignment.Source, property.Type, assignment.Property, declarations, context);
             }
         }
     }

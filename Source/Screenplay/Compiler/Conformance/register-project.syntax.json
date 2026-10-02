@@ -17,6 +17,7 @@
     }
   ],
   "domain": null,
+  "fileImports": [],
   "imports": [],
   "modules": [
     {
@@ -29,6 +30,8 @@
           "authorize": null,
           "description": null,
           "features": [],
+          "fileImports": [],
+          "isPlacement": false,
           "name": "Registration",
           "slices": [
             {
@@ -146,6 +149,8 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
                   "givenReadModels": [],
                   "name": "RegisteringAProject",
                   "thenErrors": [],
@@ -170,6 +175,7 @@
                     }
                   ],
                   "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -195,6 +201,7 @@
                       ]
                     }
                   ],
+                  "thenResults": [],
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "RegisterProject",
@@ -218,11 +225,17 @@
                       }
                     ]
                   },
-                  "whenAppended": null
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
                 },
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
                   "givenReadModels": [],
                   "name": "RejectingAnEmptyProjectName",
                   "thenErrors": [
@@ -233,7 +246,9 @@
                   ],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
                   "thenReadModels": [],
+                  "thenResults": [],
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "RegisterProject",
@@ -257,7 +272,11 @@
                       }
                     ]
                   },
-                  "whenAppended": null
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
                 }
               ],
               "type": "StateChange"
@@ -362,6 +381,8 @@
           ]
         }
       ],
+      "fileImports": [],
+      "isPlacement": false,
       "name": "Projects"
     }
   ],

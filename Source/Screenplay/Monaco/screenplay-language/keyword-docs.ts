@@ -5,7 +5,7 @@ import { eventContextPaths } from './event-context';
 
 export const keywordDocs: Record<string, string> = {
     domain: 'The domain the file belongs to — optional, at most one per file, before everything else.',
-    import: 'Imports a type from another module; it becomes available by its short name.',
+    import: 'Imports a type from another module by its qualified name — `import Module.Type` — making it available by its short name; or, quoted, other `.play` files by path or glob — `import "Orders/**/*.play"`, relative to this file\'s folder. Written inside a module or feature, a file import places the imported files there: their top level is that module\'s or feature\'s body.',
     concept: 'A formalized value type wrapping a primitive. Attributes such as `@pii` travel with every usage, optionally with a `<attribute> reason "..."` line saying why.',
     type: 'A composite value type — a named shape built from several properties, referenced by events, commands and other types the same way a concept is.',
     reason: 'Records why a concept attribute applies — the purpose, the lawful basis, whose subject the value lives under. Written as `pii reason "..."` in the concept body.',
@@ -71,7 +71,9 @@ export const keywordDocs: Record<string, string> = {
     readmodel: 'Read model state in a specification — `given readmodel` establishes it, `then readmodel` asserts it, `then no readmodel <View> for <key>` asserts keyed absence.',
     no: 'A keyed absence assertion: `then no readmodel <View> for <key>`.',
     arguments: 'The values supplied to a query asserted by `then query`.',
-    result: 'One expected result of a `then query` assertion. Repeat it to assert several results in authored order.',
+    result: 'One expected result - `then result [exactly]` after `when query`, or a `result` block inside `then query`. Repeat it to assert several results in authored order.',
+    clock: 'The instant a specification happens at - `given clock "2026-10-05T08:00:00Z"` fixes when everything occurs; `when clock "<instant>"` is the clock reaching it, as the action.',
+    exactly: 'Requires every property to match, rather than only the ones asserted - on `then readmodel`, `then query` and `then result`.',
     file: 'Delegates the implementation to an external file; the Screenplay contract stays visible.',
     by: 'Introduces the identifying parameter.',
     via: 'Connects screen data to the query that supplies it.',
@@ -105,6 +107,16 @@ export const keywordDocs: Record<string, string> = {
     Date: 'Primitive type — a date without time.',
     DateTime: 'Primitive type — a date and time.',
     Enum: 'An enumeration concept with a fixed set of values.',
+};
+
+// What the words of a specification's steps mean there - where 'trigger', 'capture' and 'query' name what the
+// scenario exercises rather than declare one.
+export const specificationKeywordDocs: Record<string, string> = {
+    clock: keywordDocs.clock,
+    trigger: '`when trigger <Trigger>` - an application trigger fires, as the action, with the values on the lines beneath it.',
+    capture: '`given capture <Capture>` - a record the capture\'s source held before; `when capture <Capture>` - the record it sees now, as the action. The fields go on the lines beneath.',
+    query: '`when query <Query>` - the query is performed, as the action, with its arguments on the lines beneath; assert what it returns with `then result` or `then no result`. `then query` instead asserts a query after another action.',
+    result: '`then result [exactly]` - one result the query performed by `when query` returns, in order; `then no result` - it returns nothing.',
 };
 
 export const attributeDocs: Record<string, string> = {

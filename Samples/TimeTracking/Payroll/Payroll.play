@@ -1,0 +1,35 @@
+// ============================================================
+// Payroll - the module, and the features it is made of
+//
+// Where approved hours leave the application: payroll runs managed
+// by payroll officers, and the automations and translations that
+// connect timesheets to the clock, the payroll provider and the HR
+// system.
+// ============================================================
+
+module Payroll
+  description
+    ```text
+    Payroll runs.
+    A payroll officer opens a run for a week, approved timesheets are queued on
+    it automatically, and the run is exported to the external payroll provider.
+    Absences reported in the HR system flow in as time off.
+    ```
+
+  // The role AND the finance department claim. A payroll officer whose token
+  // says another department is turned away at the module.
+  authorize IsPayrollOfficer and IsFinanceDepartment
+
+  import "Screens.play"
+
+  feature Runs
+    description "Opening, filling and exporting payroll runs"
+    import "Runs/*.play"
+
+  feature Handover
+    description "What happens without anyone pressing a button"
+    import "Handover/*.play"
+
+  feature Absences
+    description "Time off reported in the HR system, in this application's vocabulary"
+    import "Absences/*.play"

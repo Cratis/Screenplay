@@ -1,0 +1,22 @@
+// The closed sets of the domain.
+
+concept EngagementStatus : Enum
+  active
+  onHold
+  closed
+
+concept BillingType : Enum
+  billable
+  nonBillable
+  internal
+
+concept TimesheetStatus : Enum
+  draft
+  submitted
+  approved
+  rejected
+
+concept AbsenceKind : Enum
+  sickLeave
+  vacation
+  parentalLeave

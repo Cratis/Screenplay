@@ -37,6 +37,12 @@
     "kind": "DomainSyntax",
     "name": "Cratis.Conformance"
   },
+  "fileImports": [
+    {
+      "kind": "FileImportSyntax",
+      "pattern": "Shared/**/*.play"
+    }
+  ],
   "imports": [
     {
       "kind": "ImportSyntax",
@@ -79,6 +85,8 @@
               "authorize": null,
               "description": null,
               "features": [],
+              "fileImports": [],
+              "isPlacement": false,
               "name": "Drafts",
               "slices": [
                 {
@@ -153,6 +161,13 @@
               ]
             }
           ],
+          "fileImports": [
+            {
+              "kind": "FileImportSyntax",
+              "pattern": "Onboarding/Slice?.play"
+            }
+          ],
+          "isPlacement": false,
           "name": "Onboarding",
           "slices": [
             {
@@ -482,6 +497,8 @@
                       ]
                     }
                   ],
+                  "givenCaptures": [],
+                  "givenClock": null,
                   "givenReadModels": [],
                   "name": "RegisteringACustomer",
                   "thenErrors": [],
@@ -506,6 +523,7 @@
                     }
                   ],
                   "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -523,6 +541,7 @@
                       ]
                     }
                   ],
+                  "thenResults": [],
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "Register",
@@ -642,11 +661,17 @@
                       }
                     ]
                   },
-                  "whenAppended": null
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
                 },
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
                   "givenReadModels": [],
                   "name": "RejectingAMinor",
                   "thenErrors": [
@@ -661,7 +686,9 @@
                   ],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
                   "thenReadModels": [],
+                  "thenResults": [],
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "Register",
@@ -677,7 +704,258 @@
                       }
                     ]
                   },
-                  "whenAppended": null
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [
+                    {
+                      "kind": "SpecificationCaptureSyntax",
+                      "capture": "LegacyCustomers",
+                      "record": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Ada"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "SpecificationCaptureSyntax",
+                      "capture": "LegacyCustomers",
+                      "record": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Grace"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenClock": {
+                    "kind": "SpecificationClockSyntax",
+                    "instant": "2026-10-05T08:00:00Z"
+                  },
+                  "givenReadModels": [],
+                  "name": "ArchivingWhenTheClockStrikes",
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "CustomerArchived",
+                      "for": null,
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reason",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "expired"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": {
+                    "kind": "SpecificationClockSyntax",
+                    "instant": "2026-10-05T09:30:00.250+02:00"
+                  },
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenReadModels": [],
+                  "name": "ArchivingWhenTriggered",
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "CustomerArchived",
+                      "for": null,
+                      "values": []
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": {
+                    "kind": "SpecificationTriggerSyntax",
+                    "trigger": "NightlySync",
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "batch",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 3
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenReadModels": [],
+                  "name": "RegisteringFromACapture",
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "CustomerRegistered",
+                      "for": null,
+                      "values": []
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": {
+                    "kind": "SpecificationCaptureSyntax",
+                    "capture": "LegacyCustomers",
+                    "record": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "name",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "Ada"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "email",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "ada@example.com"
+                        }
+                      }
+                    ]
+                  },
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenReadModels": [],
+                  "name": "LookingUpACustomer",
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenReadModels": [],
+                  "thenResults": [
+                    {
+                      "kind": "SpecificationQueryResultSyntax",
+                      "exactly": true,
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Ada"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "SpecificationQueryResultSyntax",
+                      "exactly": false,
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "visits",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 2
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": {
+                    "kind": "SpecificationWhenQuerySyntax",
+                    "arguments": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "customerId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                        }
+                      }
+                    ],
+                    "query": "Customers.CustomerById"
+                  },
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenReadModels": [],
+                  "name": "LookingUpNobody",
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": {
+                    "kind": "SpecificationNoResultSyntax"
+                  },
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": {
+                    "kind": "SpecificationWhenQuerySyntax",
+                    "arguments": [],
+                    "query": "AllCustomers"
+                  },
+                  "whenTrigger": null
                 }
               ],
               "type": "StateChange"
@@ -689,6 +967,8 @@
           "authorize": null,
           "description": null,
           "features": [],
+          "fileImports": [],
+          "isPlacement": false,
           "name": "Lookup",
           "slices": [
             {
@@ -1275,6 +1555,13 @@
           ]
         }
       ],
+      "fileImports": [
+        {
+          "kind": "FileImportSyntax",
+          "pattern": "Customers/*.play"
+        }
+      ],
+      "isPlacement": false,
       "name": "Customers"
     }
   ],

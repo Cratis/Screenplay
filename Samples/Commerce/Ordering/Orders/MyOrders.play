@@ -1,0 +1,106 @@
+slice StateView MyOrders
+  description "A customer's own orders and where each one is"
+
+  readmodel OrderSummary
+    description "One row per order in the customer's order list"
+    orderId        OrderId
+    customerId     CustomerId
+    lines          OrderLine[]
+    status         OrderStatus
+    trackingNumber TrackingNumber?
+
+  // 'from' fills the parameter from the query context, so a customer can
+  // never ask for someone else's orders; 'scoped to identity' says so.
+  query OrdersForCustomer => observable OrderSummary[]
+    description "The calling customer's orders, newest first, kept current as they move"
+    filter customerId CustomerId from $context.identity.claims.customerId
+    scoped to identity
+    authorize IsCustomer
+
+  query OrderSummaryById => OrderSummary?
+    description "One of the customer's orders"
+    by orderId OrderId
+    authorize IsCustomer
+
+  // Facts from three modules' worth of files meet here: OrderPaid comes from
+  // the Payments feature, ShipmentDispatched and ShipmentDelivered from the
+  // Fulfillment module. All land on the order's own event source.
+  projection MyOrders => OrderSummary
+    from OrderPlaced
+      orderId    = $eventSourceId
+      customerId = customerId
+      lines      = lines
+      status     = "placed"
+    from OrderPaid key orderId
+      status = "paid"
+    from OrderCancelled
+      status = "cancelled"
+    from ShipmentDispatched
+      status         = "shipped"
+      trackingNumber = trackingNumber
+    from ShipmentDelivered key orderId
+      status = "delivered"
+
+  specification FollowingAnOrderOutTheDoor
+    given caller
+      authenticated
+      role "Customer"
+    given OrderPlaced
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      customerId      = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      lines           = [{"productId":"6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01","sku":"MUG-0042","quantity":2,"unitPrice":12.5}]
+      shippingAddress = {"recipient":"Ada Lovelace","street":"12 Analytical Way","postalCode":"0150","city":"Oslo","country":"NO"}
+    given OrderPaid
+      orderId          = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      amount           = 25.0
+      paymentReference = "PSP-7731-0042"
+    given ShipmentRequested
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      amountPaid = 25.0
+    when append ShipmentDispatched
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      carrier        = "postNord"
+      trackingNumber = "PN00012345NO"
+    then readmodel OrderSummary
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      customerId     = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      status         = "shipped"
+      trackingNumber = "PN00012345NO"
+    then query OrderSummaryById
+      arguments
+        orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      result
+        status         = "shipped"
+        trackingNumber = "PN00012345NO"
+
+  specification SeeingACancelledOrder
+    given caller
+      authenticated
+      role "Customer"
+    given OrderPlaced
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      customerId      = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      lines           = [{"productId":"6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01","sku":"MUG-0042","quantity":2,"unitPrice":12.5}]
+      shippingAddress = {"recipient":"Ada Lovelace","street":"12 Analytical Way","postalCode":"0150","city":"Oslo","country":"NO"}
+    when append OrderCancelled
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      reason      = "Ordered the wrong color"
+      cancelledAt = "2026-10-05T09:15:00.0000000Z"
+    then readmodel OrderSummary
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      status  = "cancelled"
+
+  screen MyOrders
+    title $strings.orders.title
+    data OrderSummary[] via query OrdersForCustomer
+    section orders
+      table OrderSummary
+        column status         label "Status"
+        column trackingNumber label "Tracking"
+        on row-click navigate to CancelOrderScreen by orderId
+    action PlaceOrder
+      label "New order"
+      navigate to PlaceOrderScreen
+    on enter
+      refresh OrdersForCustomer

@@ -1,0 +1,49 @@
+// Who may do what. Policies are referenced by name from module, feature,
+// command and query gates - and from the personas that hold them. The
+// event-model board gives a slice's screens to every persona whose policies
+// satisfy every gate on the way: module AND feature AND command or query.
+
+policy IsAuthenticated
+  require authenticated
+
+policy IsCustomer
+  require role "Customer"
+
+policy IsMerchandiser
+  require role "Merchandiser"
+
+policy IsWarehouseClerk
+  require role "WarehouseClerk"
+
+policy IsSupportAgent
+  require role "SupportAgent"
+
+policy CanCancelOrder
+  require role "Customer"
+    or role "SupportAgent"
+
+persona Customer
+  description "Shops the storefront, places orders and follows them to the door"
+  policy IsAuthenticated
+  policy IsCustomer
+  policy CanCancelOrder
+
+persona Merchandiser
+  description "Curates the catalog - registers products, prices them and retires them"
+  policy IsAuthenticated
+  policy IsMerchandiser
+
+persona WarehouseClerk
+  description "Packs paid orders and hands them to a carrier"
+  policy IsAuthenticated
+  policy IsWarehouseClerk
+
+persona SupportAgent
+  description "Answers customers about their orders and cancels on their behalf"
+  policy IsAuthenticated
+  policy IsSupportAgent
+  policy CanCancelOrder
+
+authentication
+  provider EntraId
+  provider OpenId name Storefront

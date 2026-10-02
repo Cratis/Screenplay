@@ -1,0 +1,142 @@
+// Step 1 of the story: an engagement manager opens an engagement for a client.
+
+slice StateChange OpenEngagement
+  description "An engagement manager opens a new engagement for a client"
+
+  command OpenEngagement
+    description "Opens an engagement that consultants can be staffed on and log hours against"
+    engagementId EngagementId identifier
+    clientName   ClientName
+    name         EngagementName
+    hourlyRate   HourlyRate
+    billing      BillingType
+
+    authorize IsEngagementManager
+
+    // A rule about the command as a whole: only internal work may be free.
+    validate
+      require billing == "internal" or hourlyRate > 0
+        message $strings.engagements.validation.rateRequired
+
+    produces EngagementOpened
+      for engagementId
+      engagementId = engagementId
+      clientName   = clientName
+      name         = name
+      hourlyRate   = hourlyRate
+      billing      = billing
+      openedAt     = $context.occurred
+
+    // A second fact, only when the condition holds.
+    produces when billing == "internal"
+      InternalEngagementOpened
+        for engagementId
+        engagementId = engagementId
+
+  event EngagementOpened
+    engagementId EngagementId
+    clientName   ClientName
+    name         EngagementName
+    hourlyRate   HourlyRate
+    billing      BillingType
+    openedAt     DateTime
+
+  event InternalEngagementOpened
+    engagementId EngagementId
+
+  constraint UniqueEngagementName
+    unique name on EngagementOpened
+    ignore casing
+    message "An engagement with that name already exists"
+
+  screen OpenEngagementDialog
+    template EditorDialog
+      body
+        title $strings.engagements.open.title
+      actions
+        action OpenEngagement
+          label $strings.engagements.open.action
+          navigate to EngagementPortfolioScreen
+
+  // 'given clock' fixes the moment, so the value mapped from $context.occurred
+  // can be asserted.
+  specification OpeningABillableEngagement
+    given caller
+      authenticated
+      role "EngagementManager"
+    given clock "2026-08-31T08:00:00Z"
+    when OpenEngagement
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      clientName   = "Northwind Freight"
+      name         = "ERP migration"
+      hourlyRate   = 1450
+      billing      = "billable"
+    then EngagementOpened
+      for "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      clientName   = "Northwind Freight"
+      name         = "ERP migration"
+      hourlyRate   = 1450
+      billing      = "billable"
+      openedAt     = "2026-08-31T08:00:00Z"
+
+  specification OpeningAnInternalEngagement
+    given caller
+      authenticated
+      role "EngagementManager"
+    when OpenEngagement
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b12"
+      clientName   = "Fjordline Consulting"
+      name         = "Knowledge sharing"
+      hourlyRate   = 0
+      billing      = "internal"
+    then EngagementOpened
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b12"
+      name         = "Knowledge sharing"
+      billing      = "internal"
+    then InternalEngagementOpened
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b12"
+
+  specification RejectingABillableEngagementWithoutARate
+    given caller
+      authenticated
+      role "EngagementManager"
+    when OpenEngagement
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b13"
+      clientName   = "Northwind Freight"
+      name         = "Warehouse audit"
+      hourlyRate   = 0
+      billing      = "billable"
+    then error "$strings.engagements.validation.rateRequired"
+
+  specification RejectingADuplicateEngagementName
+    given caller
+      authenticated
+      role "EngagementManager"
+    given EngagementOpened
+      for "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      clientName   = "Northwind Freight"
+      name         = "ERP migration"
+      hourlyRate   = 1450
+      billing      = "billable"
+      openedAt     = "2026-08-31T08:00:00Z"
+    when OpenEngagement
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b14"
+      clientName   = "Northwind Freight"
+      name         = "erp migration"
+      hourlyRate   = 1500
+      billing      = "billable"
+    then error "An engagement with that name already exists"
+
+  specification ConsultantsCannotOpenEngagements
+    given caller
+      authenticated
+      role "Consultant"
+    when OpenEngagement
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      clientName   = "Northwind Freight"
+      name         = "ERP migration"
+      hourlyRate   = 1450
+      billing      = "billable"
+    then denied

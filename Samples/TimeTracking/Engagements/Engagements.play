@@ -1,0 +1,32 @@
+// ============================================================
+// Engagements - the module, and the features it is made of
+//
+// The module file says what the module is and which features it has.
+// Each feature imports its own folder, so the files in Setup/ and
+// Portfolio/ hold one slice each and nothing above it: this import
+// is what places them. Screens.play is placed in the module itself.
+// ============================================================
+
+module Engagements
+  description
+    ```text
+    Client engagements and who is staffed on them.
+    Engagement managers open an engagement, assign consultants at an agreed
+    hourly rate, and close it when the work is done.
+    ```
+
+  // Every screen in the module is behind this gate, on top of whatever a
+  // feature or a command adds.
+  authorize HasWorkspaceAccess
+
+  // The templates, forms and navigation entry the module's screens share.
+  import "Screens.play"
+
+  feature Setup
+    description "Opening, staffing and closing engagements"
+    authorize IsEngagementManager
+    import "Setup/*.play"
+
+  feature Portfolio
+    description "What is running, for whom, and who is on it"
+    import "Portfolio/*.play"

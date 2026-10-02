@@ -6,6 +6,8 @@
         { "name": "register-project-legacy", "path": "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/RegisterProject/v1-legacy/source/single/RegisterProject.play" },
         { "name": "invoice-removal", "path": "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ReadModelAbsence/v5/source/InvoiceRemoval.play" },
         { "name": "invoicing", "path": "Source/DotNET/Screenplay/for_ScreenplayCompiler/invoicing.play" },
-        { "name": "invoicing-editor-sample", "path": "Source/Screenplay/Monaco/screenplay-editor/samples/invoicing.play" }
+        { "name": "invoicing-editor-sample", "path": "Source/Screenplay/Monaco/screenplay-editor/samples/invoicing.play" },
+        { "name": "library-sample", "path": "Samples/Library/library.play" },
+        { "name": "invoicing-sample", "path": "Samples/Invoicing/invoicing.play" }
     ]
 }

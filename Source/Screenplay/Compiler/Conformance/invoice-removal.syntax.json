@@ -2,6 +2,7 @@
   "kind": "ApplicationSyntax",
   "concepts": [],
   "domain": null,
+  "fileImports": [],
   "imports": [],
   "modules": [
     {
@@ -14,6 +15,8 @@
           "authorize": null,
           "description": null,
           "features": [],
+          "fileImports": [],
+          "isPlacement": false,
           "name": "Invoices",
           "slices": [
             {
@@ -113,6 +116,8 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -149,6 +154,7 @@
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -166,6 +172,7 @@
                       ]
                     }
                   ],
+                  "thenResults": [],
                   "when": null,
                   "whenAppended": {
                     "kind": "SpecificationEventSyntax",
@@ -181,7 +188,11 @@
                         }
                       }
                     ]
-                  }
+                  },
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
                 }
               ],
               "type": "StateView"
@@ -189,6 +200,8 @@
           ]
         }
       ],
+      "fileImports": [],
+      "isPlacement": false,
       "name": "Billing"
     }
   ],

@@ -1,0 +1,80 @@
+slice StateChange DiscontinueProduct
+  description "Retires a product so it can no longer be ordered"
+
+  command DiscontinueProduct
+    productId ProductId identifier
+    reason    String
+
+    authorize IsMerchandiser
+
+    validate
+      reason min 10  message "Say why the product is discontinued, in at least 10 characters"
+
+    produces ProductDiscontinued
+      for productId
+      reason = reason
+
+  event ProductDiscontinued
+    reason String
+
+  // A product is discontinued once - a second attempt violates the constraint.
+  constraint DiscontinuedOnce
+    unique event ProductDiscontinued
+
+  // Prior facts land on the product's own event source with 'for'.
+  specification DiscontinuingAProduct
+    given caller
+      authenticated
+      role "Merchandiser"
+    given ProductRegistered
+      for "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      sku    = "MUG-0042"
+      name   = "Stoneware mug"
+      price  = 12.5
+      weight = 0.4
+    when DiscontinueProduct
+      productId = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      reason    = "Supplier stopped producing the glaze"
+    then ProductDiscontinued
+      for "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      reason = "Supplier stopped producing the glaze"
+
+  specification RejectingAVagueReason
+    given caller
+      authenticated
+      role "Merchandiser"
+    when DiscontinueProduct
+      productId = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      reason    = "Gone"
+    then error "Say why the product is discontinued, in at least 10 characters"
+
+  specification DiscontinuingTwice
+    given caller
+      authenticated
+      role "Merchandiser"
+    given ProductRegistered
+      for "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      sku    = "MUG-0042"
+      name   = "Stoneware mug"
+      price  = 12.5
+      weight = 0.4
+    given ProductDiscontinued
+      for "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      reason = "Supplier stopped producing the glaze"
+    when DiscontinueProduct
+      productId = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      reason    = "Discontinued again by mistake"
+    then error "Constraint 'DiscontinuedOnce' is violated: the event source already has the constrained event."
+
+  // The named behavior from application.play asks before the command runs.
+  screen DiscontinueProductScreen
+    template ProductDialog
+      body
+        title "Discontinue product"
+      actions
+        action DiscontinueProduct
+          label "Discontinue"
+          navigate to ProductList
+    uses ConfirmDestructive
+      command DiscontinueProduct
+      message "Discontinued products cannot be ordered again. Continue?"

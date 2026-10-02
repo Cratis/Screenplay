@@ -1,0 +1,78 @@
+// Nobody should be asked to log hours on a public holiday. The calendar comes
+// from the national calendar service, not from anything this application did.
+
+slice StateView PublicHolidays
+  description "The national calendar's public holidays"
+
+  // No projection or reducer points at this read model - nothing in the event
+  // log knows when Christmas is. The performers read it from the service.
+  readmodel PublicHoliday
+    date    WorkDate
+    country CountryCode
+    name    HolidayName
+
+  // 'scoped to global': the calendar is the same for every tenant.
+  query PublicHolidays => PublicHoliday[]
+    description "The public holidays of one country in one year, in date order"
+    filter year    TimesheetYear
+    filter country CountryCode
+    scoped to global
+    authorize HasWorkspaceAccess
+    performer
+      ```sql
+      select   Date, Country, Name
+      from     PublicHolidays
+      where    Year = @year and Country = @country
+      order by Date
+      ```
+
+  query HolidayOn => PublicHoliday?
+    description "The holiday falling on one date, if any"
+    by date WorkDate
+    scoped to global
+    authorize HasWorkspaceAccess
+    performer
+      ```csharp
+      return await calendar.HolidayOn(context.Arguments.Date);
+      ```
+
+  screen HolidayCalendar
+    title $strings.timesheets.holidays.title
+    data PublicHoliday[] via query PublicHolidays
+    section holidays
+      table holidays
+        column date label $strings.timesheets.fields.date
+        column name label $strings.timesheets.fields.holiday
+
+  // Nothing happens to this state - reading it is the action.
+  specification ListingNorwegianHolidays
+    given caller
+      authenticated
+    given readmodel PublicHoliday
+      date    = "2026-12-25"
+      country = "NO"
+      name    = "Første juledag"
+    given readmodel PublicHoliday
+      date    = "2026-12-26"
+      country = "NO"
+      name    = "Andre juledag"
+    when query PublicHolidays
+      year    = 2026
+      country = "NO"
+    then result
+      date = "2026-12-25"
+      name = "Første juledag"
+    then result
+      date = "2026-12-26"
+      name = "Andre juledag"
+
+  specification FindingNoHolidayOnAWorkingDay
+    given caller
+      authenticated
+    given readmodel PublicHoliday
+      date    = "2026-12-25"
+      country = "NO"
+      name    = "Første juledag"
+    when query HolidayOn
+      date = "2026-12-28"
+    then no result

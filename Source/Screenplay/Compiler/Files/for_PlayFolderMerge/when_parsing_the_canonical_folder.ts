@@ -7,7 +7,7 @@ import { describe, beforeAll, it } from 'vitest';
 import { CompilationResult, parse } from '../../ScreenplayCompiler';
 import { ApplicationSyntax } from '../../Syntax/Structure';
 import { SyntaxJsonValue, toSyntaxJson } from '../../Syntax/SyntaxJson';
-import { parseFolder, PlayFileSource } from '../PlayFolderMerge';
+import { parseFolder, PlayFileSource } from '../PlayApplicationAssembly';
 
 const corpus = resolve(__dirname, '../../../../DotNET/Screenplay.CanonicalCorpus/Corpus/RegisterProject/v2/source');
 

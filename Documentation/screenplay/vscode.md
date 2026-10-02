@@ -57,7 +57,13 @@ A [folder of `.play` files](folders.md) is one application, and a file in it hol
 - The search stays inside the workspace folder.
 - Changes count wherever they are made: unsaved edits to any file of the folder, and files saved, created or deleted on disk.
 
-A file that is not inside a folder application is shown on its own.
+A file that is not inside a folder application is shown on its own - unless it [imports](imports.md) other files, in which case it is the root of an application and the board shows everything it imports.
+
+## One application in the editor
+
+The editor validates a workspace folder's `.play` files as one application, not file by file. A name declared in another file - an event, a policy, a concept, a query - is not reported as unknown, and a file an [import](imports.md) places in a module or feature is checked in that placement, so a focused file that holds only a `slice` validates cleanly. Import problems - a pattern that matches nothing, a file placed in two modules, an import cycle - are reported on the import that causes them. Unsaved edits count, and the folder is recompiled once a burst of edits settles.
+
+Inside the quotes of an `import`, completion offers the `.play` paths of the workspace folder.
 
 ## When the model has errors
 

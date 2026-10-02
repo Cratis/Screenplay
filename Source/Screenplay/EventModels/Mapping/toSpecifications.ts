@@ -33,9 +33,24 @@ export function toSpecifications(
         if (specification.when !== null) {
             const when = { id: at('when', 0), name: specification.when.commandType, values: valuesOf(specification.when.values) };
             document.when = commandId === undefined ? when : { ...when, commandId };
+        } else {
+            const action = actionOf(specification);
+            if (action !== undefined) document.when = { id: at('when', 0), ...action };
         }
         return document;
     });
+}
+
+// What sets a specification off when it is not a command. The board has one place for the action, so the
+// kind is part of its name - 'clock 2026-10-05T08:00:00Z', 'trigger DirectoryChanged' - and the values travel
+// with it as a command's would.
+function actionOf(specification: SpecificationSyntax): { name: string; values: Record<string, unknown> } | undefined {
+    if (specification.whenAppended !== null) return { name: `append ${specification.whenAppended.eventType}`, values: valuesOf(specification.whenAppended.values) };
+    if (specification.whenClock !== null) return { name: `clock ${specification.whenClock.instant}`, values: {} };
+    if (specification.whenTrigger !== null) return { name: `trigger ${specification.whenTrigger.trigger}`, values: valuesOf(specification.whenTrigger.values) };
+    if (specification.whenCapture !== null) return { name: `capture ${specification.whenCapture.capture}`, values: valuesOf(specification.whenCapture.record) };
+    if (specification.whenQuery !== null) return { name: `query ${specification.whenQuery.query}`, values: valuesOf(specification.whenQuery.arguments) };
+    return undefined;
 }
 
 function valuesOf(values: readonly PropertyMappingSyntax[]): Record<string, unknown> {

@@ -266,6 +266,22 @@ export function scanDocument(lines: string[]): DocumentSymbols {
     return symbols;
 }
 
+// The symbols of several documents as one - what an application spread over files declares. Lines refer to
+// the document each symbol came from, so the result names things; it does not locate them.
+export function mergeSymbols(...documents: DocumentSymbols[]): DocumentSymbols {
+    return {
+        imports: documents.flatMap((document) => document.imports),
+        concepts: documents.flatMap((document) => document.concepts),
+        types: documents.flatMap((document) => document.types),
+        policies: documents.flatMap((document) => document.policies),
+        events: documents.flatMap((document) => document.events),
+        commands: documents.flatMap((document) => document.commands),
+        queries: documents.flatMap((document) => document.queries),
+        screens: documents.flatMap((document) => document.screens),
+        triggers: documents.flatMap((document) => document.triggers),
+    };
+}
+
 export function knownEventNames(symbols: DocumentSymbols): string[] {
     return [
         ...symbols.events.map((event) => event.name),

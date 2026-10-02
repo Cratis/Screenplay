@@ -1,0 +1,47 @@
+// The application shell: the theme, the one navigational layout and the ui
+// profiles a build selects from. A screen never names any of them.
+
+theme Fjord
+  compatible with core
+  compatible with Cratis.Components
+
+// 'navigation contributes Navigation' opens the slot to every module - each adds
+// its own entry with 'contribute to Navigation'.
+layout AppShell
+  topbar
+  navigation contributes Navigation
+  content
+  footer
+
+  // The 'when' override replaces the tree on a narrow screen: the navigation
+  // moves below the content as a tab bar.
+  arrangement flow
+    column
+      topbar height 56
+      row
+        navigation width 248
+        content grow
+      footer height 28
+
+    when width compact
+      column
+        topbar height 48
+        content grow
+        navigation height 64
+
+ui profile Desktop
+  target platform web
+  target size expanded
+  layout AppShell
+  theme Fjord
+  packages
+    core
+    Cratis.Components
+
+ui profile Mobile
+  target platform ios, android
+  target size compact
+  layout AppShell
+  theme Fjord
+  packages
+    core

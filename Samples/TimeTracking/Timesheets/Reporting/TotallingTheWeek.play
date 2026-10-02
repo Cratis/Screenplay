@@ -1,0 +1,104 @@
+// As days are recorded, the week keeps a running total - billable hours apart.
+
+slice StateView TimesheetTotals
+  description "Running totals for one week, with billable hours split out"
+
+  readmodel TimesheetSummary
+    description "What a week adds up to so far"
+    timesheetId   TimesheetId
+    consultantId  ConsultantId
+    totalHours    WeeklyHours
+    billableHours WeeklyHours
+    overtimeDays  Int
+
+  query TimesheetById => TimesheetSummary?
+    description "One week's totals - for the consultant recording it and the manager approving it"
+    by timesheetId TimesheetId
+    authorize IsConsultant or IsEngagementManager
+
+  // Why a reducer: billable hours only grow for billable entries. A projection
+  // adds a value unconditionally; here the next state depends on the event.
+  reducer TimesheetTotals => TimesheetSummary
+    description "Folds every recorded day into the week's totals"
+    on TimesheetStarted
+      ```csharp
+      return new(context.Event.TimesheetId, context.Event.ConsultantId, 0, 0, 0);
+      ```
+    on TimeRecorded
+      ```csharp
+      var billable = context.Event.Billing == BillingType.Billable ? context.Event.Hours : 0;
+      return context.State! with
+      {
+          TotalHours = context.State.TotalHours + context.Event.Hours,
+          BillableHours = context.State.BillableHours + billable
+      };
+      ```
+    on OvertimeFlagged
+      ```csharp
+      return context.State! with { OvertimeDays = context.State.OvertimeDays + 1 };
+      ```
+
+  screen TimesheetTotalsScreen
+    template WeekView
+      toolbar
+        action SubmitTimesheet
+          label $strings.timesheets.submit.action
+          navigate to SubmitTimesheetDialog
+      days
+        data TimesheetSummary via query TimesheetById by timesheetId
+      totals
+        summary TimesheetSummary
+          field totalHours    label $strings.timesheets.fields.totalHours
+          field billableHours label $strings.timesheets.fields.billableHours
+          field overtimeDays  label $strings.timesheets.fields.overtimeDays
+
+  specification AddingABillableDayToTheWeek
+    given caller
+      authenticated
+      role "Consultant"
+    given TimesheetStarted
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    when append TimeRecorded
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      workDate     = "2026-09-28"
+      hours        = 7.5
+      activity     = "DEV-01"
+      billing      = "billable"
+      note         = "Data mapping workshop"
+    then readmodel TimesheetSummary
+      timesheetId   = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      totalHours    = 7.5
+      billableHours = 7.5
+      overtimeDays  = 0
+    then query TimesheetById
+      arguments
+        timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      result
+        consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+        totalHours   = 7.5
+
+  specification InternalHoursAreNotBillable
+    given caller
+      authenticated
+      role "EngagementManager"
+    given TimesheetStarted
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    when append TimeRecorded
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b12"
+      workDate     = "2026-09-30"
+      hours        = 6
+      activity     = "INT-02"
+      billing      = "internal"
+      note         = "Internal guild day"
+    then readmodel TimesheetSummary
+      timesheetId   = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      totalHours    = 6
+      billableHours = 0

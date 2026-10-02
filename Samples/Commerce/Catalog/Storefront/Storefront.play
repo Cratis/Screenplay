@@ -1,0 +1,10 @@
+// No feature-wide gate: the storefront's query carries its own.
+feature Storefront
+  description "What customers see when they shop"
+
+  contribute to Navigation
+    navigate to ProductSearch
+    label $strings.navigation.shop
+    order 10
+
+  import "*.play"

@@ -1,0 +1,461 @@
+// ============================================================
+// Library - a first Screenplay
+//
+// A small lending library in one document: the shortest path
+// from "what does the system do" to a model the compiler checks.
+// Two people use it - a librarian who runs the catalog and the
+// members, and a member who borrows books - and every screen is
+// drawn for the one of them whose policies let them use it.
+//
+// Verify it with:  screenplay --warnaserror Samples/Library
+// ============================================================
+
+concept BookId     : Uuid
+concept MemberId   : Uuid
+concept Isbn       : String
+concept BookTitle  : String
+concept AuthorName : String
+
+concept MemberName : String @pii
+  pii reason "The member's name, needed to lend books to them; lawful basis: contract performance."
+
+concept LoanStatus : Enum
+  onLoan
+  returned
+
+policy IsLibrarian
+  require role "Librarian"
+
+policy IsMember
+  require role "Member"
+
+persona Librarian
+  description "Runs the catalog and signs up members"
+  policy IsLibrarian
+
+persona Member
+  description "Borrows and returns books"
+  policy IsMember
+
+module Lending
+  description "Books, the members who borrow them, and the loans between them"
+
+  dialog template Dialog
+    body
+    actions
+
+  feature Catalog
+    description "The books the library owns"
+
+    slice StateChange AddBook
+      description "The librarian adds a newly bought book to the catalog"
+
+      command AddBook
+        bookId BookId identifier
+        isbn   Isbn
+        title  BookTitle
+        author AuthorName
+
+        authorize IsLibrarian
+
+        validate
+          isbn matches "^[0-9]{13}$"  message "An ISBN has 13 digits"
+          title not empty             message "A book needs a title"
+
+        produces BookAdded
+          for bookId
+          isbn   = isbn
+          title  = title
+          author = author
+
+      event BookAdded
+        isbn   Isbn
+        title  BookTitle
+        author AuthorName
+
+      constraint UniqueIsbn
+        unique isbn on BookAdded
+
+      screen AddBook
+        template Dialog
+          body
+            title "Add a book"
+          actions
+            action AddBook
+
+      specification AddingABook
+        given caller
+          authenticated
+          role "Librarian"
+        when AddBook
+          bookId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          isbn   = "9780262033848"
+          title  = "Introduction to Algorithms"
+          author = "Cormen"
+        then BookAdded
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          isbn   = "9780262033848"
+          title  = "Introduction to Algorithms"
+          author = "Cormen"
+
+      specification RejectingAMalformedIsbn
+        given caller
+          authenticated
+          role "Librarian"
+        when AddBook
+          bookId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          isbn   = "12345"
+          title  = "Introduction to Algorithms"
+          author = "Cormen"
+        then error "An ISBN has 13 digits"
+
+      specification RefusingAMemberAddingBooks
+        given caller
+          authenticated
+          role "Member"
+        when AddBook
+          bookId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          isbn   = "9780262033848"
+          title  = "Introduction to Algorithms"
+          author = "Cormen"
+        then denied
+
+    slice StateView BookCatalog
+      description "Every book, and whether it is on the shelf"
+
+      readmodel CatalogEntry
+        bookId    BookId
+        title     BookTitle
+        author    AuthorName
+        available Bool
+
+      query BookById => CatalogEntry?
+        by bookId BookId
+        authorize IsMember or IsLibrarian
+
+      query AllBooks => observable CatalogEntry[]
+        authorize IsMember or IsLibrarian
+
+      projection BookCatalog => CatalogEntry
+        from BookAdded
+          bookId    = $eventSourceId
+          title     = title
+          author    = author
+          available = true
+        from BookBorrowed
+          available = false
+        from BookReturned
+          available = true
+
+      screen BookCatalog
+        title "Catalog"
+        data CatalogEntry[] via query AllBooks
+        table CatalogEntry
+          column title     label "Title"
+          column author    label "Author"
+          column available label "On the shelf"
+        action AddBook
+        action BorrowBook
+
+      specification BorrowingTakesABookOffTheShelf
+        given caller
+          authenticated
+          role "Member"
+        given BookAdded
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          isbn   = "9780262033848"
+          title  = "Introduction to Algorithms"
+          author = "Cormen"
+        when append BookBorrowed
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          memberId = "a3bb189e-8bf9-3888-9912-ace4e6543002"
+          dueDate  = "2026-10-30"
+        then readmodel CatalogEntry
+          bookId    = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          available = false
+        then query BookById
+          arguments
+            bookId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          result
+            title     = "Introduction to Algorithms"
+            available = false
+
+    // Nothing in the library's own history says when it is open - the opening
+    // hours come from the municipality's calendar, so this view has a shape and
+    // a performer, and no events at all.
+    slice StateView OpeningHours
+      description "When the library is open this week"
+
+      readmodel OpeningDay
+        day    String
+        opens  String
+        closes String
+
+      query OpeningHoursFor => OpeningDay?
+        by day String
+        authorize IsMember or IsLibrarian
+        performer
+          file Queries/MunicipalCalendar.cs
+
+      query ThisWeek => OpeningDay[]
+        authorize IsMember or IsLibrarian
+        performer
+          file Queries/MunicipalCalendar.cs
+
+      screen OpeningHours
+        title "Opening hours"
+        data OpeningDay[] via query ThisWeek
+        table OpeningDay
+          column day    label "Day"
+          column opens  label "Opens"
+          column closes label "Closes"
+
+      specification ShowingTodaysOpeningHours
+        given caller
+          authenticated
+          role "Member"
+        given readmodel OpeningDay
+          day    = "Monday"
+          opens  = "10:00"
+          closes = "20:00"
+        when query OpeningHoursFor
+          day = "Monday"
+        then result
+          opens  = "10:00"
+          closes = "20:00"
+
+  feature Members
+    description "The people who may borrow"
+
+    slice StateChange RegisterMember
+
+      command RegisterMember
+        memberId MemberId identifier
+        name     MemberName
+
+        authorize IsLibrarian
+
+        validate
+          name not empty  message "A member needs a name"
+
+        produces MemberRegistered
+          for memberId
+          name = name
+
+      event MemberRegistered
+        name MemberName
+
+      screen RegisterMember
+        template Dialog
+          body
+            title "Register a member"
+          actions
+            action RegisterMember
+
+      specification RegisteringAMember
+        given caller
+          authenticated
+          role "Librarian"
+        when RegisterMember
+          memberId = "a3bb189e-8bf9-3888-9912-ace4e6543002"
+          name     = "Ada Lovelace"
+        then MemberRegistered
+          for "a3bb189e-8bf9-3888-9912-ace4e6543002"
+          name = "Ada Lovelace"
+
+      specification RejectingAMemberWithNoName
+        given caller
+          authenticated
+          role "Librarian"
+        when RegisterMember
+          memberId = "a3bb189e-8bf9-3888-9912-ace4e6543002"
+          name     = ""
+        then error "A member needs a name"
+
+    slice Automation WelcomeNewMembers
+
+      reaction WelcomeLetter
+        description "Sends every new member a welcome letter with their library card"
+        when MemberRegistered
+          name
+          produces WelcomeLetterSent
+            addressedTo = name
+
+      event WelcomeLetterSent
+        addressedTo MemberName
+
+      specification WelcomingANewMember
+        given MemberRegistered
+          for "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+          name = "Grace Hopper"
+        when append MemberRegistered
+          for "a3bb189e-8bf9-3888-9912-ace4e6543002"
+          name = "Ada Lovelace"
+        then WelcomeLetterSent
+          addressedTo = "Ada Lovelace"
+
+  feature Loans
+    description "Borrowing and returning"
+
+    slice StateChange BorrowBook
+
+      command BorrowBook
+        bookId   BookId identifier
+        memberId MemberId
+        dueDate  Date
+
+        reads CatalogEntry as book by bookId
+
+        authorize IsMember
+
+        validate
+          dueDate > today  message "A loan must be due in the future"
+          require book.available == true
+            message "That book is already on loan"
+
+        produces BookBorrowed
+          for bookId
+          memberId = memberId
+          dueDate  = dueDate
+
+      event BookBorrowed
+        memberId MemberId
+        dueDate  Date
+
+      screen BorrowBook
+        template Dialog
+          body
+            title "Borrow"
+          actions
+            action BorrowBook
+              navigate to MyLoans
+
+      specification BorrowingAnAvailableBook
+        given caller
+          authenticated
+          role "Member"
+        given readmodel CatalogEntry
+          bookId    = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          title     = "Introduction to Algorithms"
+          author    = "Cormen"
+          available = true
+        when BorrowBook
+          bookId   = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          memberId = "a3bb189e-8bf9-3888-9912-ace4e6543002"
+          dueDate  = "2026-10-30"
+        then BookBorrowed
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          memberId = "a3bb189e-8bf9-3888-9912-ace4e6543002"
+          dueDate  = "2026-10-30"
+
+      specification RefusingABookThatIsOnLoan
+        given caller
+          authenticated
+          role "Member"
+        given readmodel CatalogEntry
+          bookId    = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          title     = "Introduction to Algorithms"
+          author    = "Cormen"
+          available = false
+        when BorrowBook
+          bookId   = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          memberId = "a3bb189e-8bf9-3888-9912-ace4e6543002"
+          dueDate  = "2026-10-30"
+        then error "That book is already on loan"
+
+    slice StateChange ReturnBook
+
+      command ReturnBook
+        bookId     BookId identifier
+        returnedOn Date
+
+        authorize IsMember
+
+        produces BookReturned
+          for bookId
+          returnedOn = returnedOn
+
+      event BookReturned
+        returnedOn Date
+
+      screen ReturnBook
+        template Dialog
+          body
+            title "Return"
+          actions
+            action ReturnBook
+
+      specification ReturningABook
+        given caller
+          authenticated
+          role "Member"
+        given BookAdded
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          isbn   = "9780262033848"
+          title  = "Introduction to Algorithms"
+          author = "Cormen"
+        given BookBorrowed
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          memberId = "a3bb189e-8bf9-3888-9912-ace4e6543002"
+          dueDate  = "2026-10-30"
+        when ReturnBook
+          bookId     = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          returnedOn = "2026-10-12"
+        then BookReturned
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          returnedOn = "2026-10-12"
+
+    slice StateView MyLoans
+
+      readmodel Loan
+        bookId   BookId
+        memberId MemberId
+        dueDate  Date
+        status   LoanStatus
+
+      query LoanForBook => Loan?
+        by bookId BookId
+        authorize IsMember
+
+      query MyLoans => observable Loan[]
+        filter memberId MemberId from $context.identity.id
+        scoped to identity
+        authorize IsMember
+
+      projection Loans => Loan
+        from BookBorrowed
+          bookId   = $eventSourceId
+          memberId = memberId
+          dueDate  = dueDate
+          status   = "onLoan"
+        from BookReturned
+          status = "returned"
+
+      screen MyLoans
+        title "My loans"
+        data Loan[] via query MyLoans
+        table Loan
+          column bookId  label "Book"
+          column dueDate label "Due"
+          column status  label "Status"
+        action ReturnBook
+
+      specification SeeingAReturnedLoan
+        given caller
+          authenticated
+          role "Member"
+        given BookAdded
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          isbn   = "9780262033848"
+          title  = "Introduction to Algorithms"
+          author = "Cormen"
+        given BookBorrowed
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          memberId = "a3bb189e-8bf9-3888-9912-ace4e6543002"
+          dueDate  = "2026-10-30"
+        when append BookReturned
+          for "0f8fad5b-d9cb-469f-a165-70867728950e"
+          returnedOn = "2026-10-12"
+        then readmodel Loan
+          bookId = "0f8fad5b-d9cb-469f-a165-70867728950e"
+          status = "returned"

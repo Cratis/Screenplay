@@ -1708,6 +1708,202 @@
             "diagnostics": [
                 "PLAY0185@5"
             ]
+        },
+        {
+            "name": "qualified import inside a module",
+            "source": [
+                "module A",
+                "  import Customers.Registered"
+            ],
+            "diagnostics": [
+                "PLAY0454@2"
+            ]
+        },
+        {
+            "name": "qualified import inside a feature",
+            "source": [
+                "module A",
+                "  feature B",
+                "    import Customers.Registered"
+            ],
+            "diagnostics": [
+                "PLAY0454@3"
+            ]
+        },
+        {
+            "name": "malformed file import at the top level",
+            "source": [
+                "import \"Shared\\\\*.play\""
+            ],
+            "diagnostics": [
+                "PLAY0454@1"
+            ]
+        },
+        {
+            "name": "file import before the domain",
+            "source": [
+                "import \"**/*.play\"",
+                "domain A"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "slice at the top level of a whole document",
+            "source": [
+                "slice StateChange Register"
+            ],
+            "diagnostics": [
+                "PLAY0001@1"
+            ]
+        },
+        {
+            "name": "given clock that is not an instant",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange S",
+                "      specification X",
+                "        given clock \"tomorrow\""
+            ],
+            "diagnostics": [
+                "PLAY0461@5"
+            ]
+        },
+        {
+            "name": "given clock stated twice",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange S",
+                "      specification X",
+                "        given clock \"2026-10-05T08:00:00Z\"",
+                "        given clock \"2026-10-06T08:00:00Z\""
+            ],
+            "diagnostics": [
+                "PLAY0461@6"
+            ]
+        },
+        {
+            "name": "when clock without an offset",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange S",
+                "      specification X",
+                "        when clock \"2026-10-05T08:00\""
+            ],
+            "diagnostics": [
+                "PLAY0461@5"
+            ]
+        },
+        {
+            "name": "invalid when trigger",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange S",
+                "      specification X",
+                "        when trigger 1Bad"
+            ],
+            "diagnostics": [
+                "PLAY0462@5"
+            ]
+        },
+        {
+            "name": "invalid given capture",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange S",
+                "      specification X",
+                "        given capture Legacy Customers"
+            ],
+            "diagnostics": [
+                "PLAY0463@5"
+            ]
+        },
+        {
+            "name": "invalid when capture",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange S",
+                "      specification X",
+                "        when capture"
+            ],
+            "diagnostics": [
+                "PLAY0463@5"
+            ]
+        },
+        {
+            "name": "invalid when query",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange S",
+                "      specification X",
+                "        when query Bad-Name"
+            ],
+            "diagnostics": [
+                "PLAY0464@5"
+            ]
+        },
+        {
+            "name": "invalid then result",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange S",
+                "      specification X",
+                "        when query Q",
+                "        then result partly"
+            ],
+            "diagnostics": [
+                "PLAY0464@6"
+            ]
+        },
+        {
+            "name": "then no result stated twice",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange S",
+                "      specification X",
+                "        when query Q",
+                "        then no result",
+                "        then no result"
+            ],
+            "diagnostics": [
+                "PLAY0464@7"
+            ]
+        },
+        {
+            "name": "a second when of another kind",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange S",
+                "      specification X",
+                "        when trigger Nightly",
+                "        when clock \"2026-10-05T08:00:00Z\""
+            ],
+            "diagnostics": [
+                "PLAY0097@6"
+            ]
+        },
+        {
+            "name": "a clock after an appended event",
+            "source": [
+                "module A",
+                "  feature B",
+                "    slice StateChange S",
+                "      specification X",
+                "        when append Happened",
+                "        when clock \"2026-10-05T08:00:00Z\""
+            ],
+            "diagnostics": [
+                "PLAY0358@6"
+            ]
         }
     ]
 }

@@ -3,15 +3,17 @@
 
 import { causedByProperties, contextRoots, identityProperties, primitiveTypes, sliceTypes } from './language';
 import { DiagnosticCode, diagnosticCodes } from './diagnostic-codes';
-import { fenceMap, indentOf } from './document-context';
+import { enclosingChain, fenceMap, indentOf } from './document-context';
 import { resolveEventContextPath } from './event-context';
 import {
     DocumentSymbols,
     PropertySymbol,
     knownEventNames,
     knownTypeNames,
+    mergeSymbols,
     scanDocument,
 } from './symbols';
+import { fileImportOn, isFileImportLine } from './file-imports';
 
 export type ValidationSeverity = 'error' | 'warning';
 
@@ -25,6 +27,14 @@ export interface ValidationIssue {
     // The compiler code for this condition, absent on the structural checks the editor makes and the
     // compiler does not. See ./diagnostic-codes.ts.
     code?: DiagnosticCode;
+}
+
+// What a document is validated against beyond itself.
+export interface ValidationContext {
+    // What the rest of the application declares - the other .play files of a folder, or the files an import
+    // brings in - so a name declared in another file is not reported unknown. Merge the scanned symbols of
+    // those files with mergeSymbols. The document's own declarations are always known.
+    application?: DocumentSymbols;
 }
 
 function issue(
@@ -52,9 +62,9 @@ function tokenIssue(
 
 // Reports every property whose type reference names nothing the document declares, and
 // every command that marks more than one property as its identifier.
-function validateDeclarations(lines: string[], symbols: DocumentSymbols): ValidationIssue[] {
+function validateDeclarations(lines: string[], symbols: DocumentSymbols, application: DocumentSymbols): ValidationIssue[] {
     const issues: ValidationIssue[] = [];
-    const types = new Set(knownTypeNames(symbols, primitiveTypes));
+    const types = new Set([...knownTypeNames(symbols, primitiveTypes), ...knownTypeNames(application, [])]);
 
     const checkProperties = (properties: PropertySymbol[], owner: string) => {
         for (const property of properties.filter(
@@ -118,12 +128,17 @@ function validateDeclarations(lines: string[], symbols: DocumentSymbols): Valida
 
 // Validates a Screenplay document without any editor dependency — both the Monaco
 // service and the VSCode extension adapt these issues to their marker/diagnostic APIs.
-export function validateLines(lines: string[]): ValidationIssue[] {
+//
+// The checks read the document line by line, never as a whole document's top level, so a file an import
+// places in a module or feature - holding slices or features at its top level - validates as it is written.
+// Where it is placed, and whether its imports resolve, is the compiler's to say.
+export function validateLines(lines: string[], context: ValidationContext = {}): ValidationIssue[] {
     const fences = fenceMap(lines);
     const symbols = scanDocument(lines);
-    const events = new Set(knownEventNames(symbols));
-    const policies = new Set(symbols.policies.map((policy) => policy.name));
-    const issues: ValidationIssue[] = validateDeclarations(lines, symbols);
+    const application = context.application ?? mergeSymbols();
+    const events = new Set([...knownEventNames(symbols), ...knownEventNames(application)]);
+    const policies = new Set([...symbols.policies, ...application.policies].map((policy) => policy.name));
+    const issues: ValidationIssue[] = validateDeclarations(lines, symbols, application);
 
     const checkEvent = (line: number, text: string, name: string) => {
         if (!events.has(name)) {
@@ -186,6 +201,9 @@ export function validateLines(lines: string[]): ValidationIssue[] {
             }
             authorizeIndent = -1;
         }
+
+        const fileImportIssue = validateImport(lines, fences, index);
+        if (fileImportIssue) issues.push(fileImportIssue);
 
         const slice = trimmed.match(/^slice\s+(\w+)/);
         if (slice && !sliceTypes.includes(slice[1])) {
@@ -326,6 +344,24 @@ export function validateLines(lines: string[]): ValidationIssue[] {
     }
 
     return issues;
+}
+
+// Inside a module or feature an import names files, and a quoted import anywhere has the compiler's shape.
+function validateImport(lines: string[], fences: boolean[], index: number): ValidationIssue | undefined {
+    const line = lines[index];
+    const trimmed = line.trim().replace(/\s*\/\/.*$/, '');
+    if (!/^import\b/.test(trimmed) || fileImportOn(line, index)) return undefined;
+    const indent = indentOf(line);
+    const inBody = indent > 0 && ['module', 'feature'].includes(enclosingChain(lines, fences, index, indent)[0]);
+    if (!inBody && !isFileImportLine(line)) return undefined;
+    return issue(
+        'error',
+        index,
+        indent + 1,
+        trimmed.length,
+        `Invalid import '${trimmed}' — inside a module or feature, import names files: 'import "<path or glob>"'.`,
+        diagnosticCodes.invalidFileImport,
+    );
 }
 
 // A mapping target: the first word of a mapping line, after the keyword that opens it if there is one.

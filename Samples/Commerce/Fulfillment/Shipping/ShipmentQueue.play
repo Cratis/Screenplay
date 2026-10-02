@@ -1,0 +1,105 @@
+// The queue's own lifecycle - nothing outside this slice uses it.
+concept ShipmentStatus : Enum
+  awaitingDispatch
+  dispatched
+  delivered
+
+slice StateView ShipmentQueue
+  description "What the warehouse has to pack and send today"
+
+  readmodel PendingShipment
+    description "One order waiting for, or already handed to, a carrier"
+    orderId        OrderId
+    amountPaid     Money
+    status         ShipmentStatus
+    carrier        Carrier?
+    trackingNumber TrackingNumber?
+
+  query ShipmentsToDispatch => observable PendingShipment[]
+    description "Paid orders not yet handed to a carrier, oldest first"
+    filter status ShipmentStatus?
+    authorize IsWarehouseClerk
+
+  query ShipmentForOrder => PendingShipment?
+    description "The shipment of one order"
+    by orderId OrderId
+    authorize IsWarehouseClerk
+
+  // Events an automation appends are keyed by the order id they carry.
+  projection ShipmentQueue => PendingShipment
+    from ShipmentRequested key orderId
+      orderId    = orderId
+      amountPaid = amountPaid
+      status     = "awaitingDispatch"
+    from ShipmentDispatched
+      status         = "dispatched"
+      carrier        = carrier
+      trackingNumber = trackingNumber
+    from ShipmentDelivered key orderId
+      status = "delivered"
+
+  specification QueueingAPaidOrder
+    given caller
+      authenticated
+      role "WarehouseClerk"
+    when append ShipmentRequested
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      amountPaid = 25.0
+    then readmodel PendingShipment
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      amountPaid = 25.0
+      status     = "awaitingDispatch"
+    then query ShipmentForOrder
+      arguments
+        orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      result
+        status = "awaitingDispatch"
+
+  specification DispatchingFromTheQueue
+    given caller
+      authenticated
+      role "WarehouseClerk"
+    given OrderPlaced
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      customerId      = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      lines           = [{"productId":"6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01","sku":"MUG-0042","quantity":2,"unitPrice":12.5}]
+      shippingAddress = {"recipient":"Ada Lovelace","street":"12 Analytical Way","postalCode":"0150","city":"Oslo","country":"NO"}
+    given ShipmentRequested
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      amountPaid = 25.0
+    when append ShipmentDispatched
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      carrier        = "postNord"
+      trackingNumber = "PN00012345NO"
+    then readmodel PendingShipment
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      status         = "dispatched"
+      carrier        = "postNord"
+      trackingNumber = "PN00012345NO"
+
+  screen ShipmentQueue
+    template WarehouseBoard
+      queue
+        data PendingShipment[] via query ShipmentsToDispatch
+        section shipments
+          title $strings.shipping.queueTitle
+          table PendingShipment
+            column orderId        label "Order"
+            column status         label "Status"
+            column carrier        label "Carrier"
+            column trackingNumber label "Tracking"
+            on row-click navigate to DispatchShipmentScreen by orderId
+      help
+        section packing
+          ```react
+          export default () => (
+            <aside className="hint">
+              Pack the oldest paid orders first. Pick a row to hand it to a carrier.
+            </aside>
+          );
+          ```
+    // A new paid order appears without anyone asking: the query is
+    // observable, and a fresh visit re-runs it.
+    on enter
+      refresh ShipmentsToDispatch

@@ -1,0 +1,48 @@
+// A known starting state, stated as events: one billable client engagement,
+// one internal one, a consultant staffed on the first, and a week with a day
+// already recorded. Seeded events flow through projections and reducers.
+
+seed
+  for "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+    EngagementOpened
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      clientName   = "Northwind Freight"
+      name         = "ERP migration"
+      hourlyRate   = 1450
+      billing      = "billable"
+      openedAt     = "2026-08-31T08:00:00Z"
+
+  for "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b12"
+    EngagementOpened
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b12"
+      clientName   = "Fjordline Consulting"
+      name         = "Knowledge sharing"
+      hourlyRate   = 0
+      billing      = "internal"
+      openedAt     = "2026-08-31T08:05:00Z"
+    InternalEngagementOpened
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b12"
+
+  for "2c8d4e6f-0a1b-4c3d-8e5f-7a9b0c1d2e31"
+    ConsultantAssigned
+      assignmentId   = "2c8d4e6f-0a1b-4c3d-8e5f-7a9b0c1d2e31"
+      engagementId   = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      consultantId   = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      contact        = {"name":"Ingrid Solberg","email":"ingrid.solberg@fjordline.example"}
+      hourlyRate     = 1300
+      engagementName = "ERP migration"
+
+  for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+    TimesheetStarted
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    TimeRecorded
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      workDate     = "2026-09-28"
+      hours        = 7.5
+      activity     = "DEV-01"
+      billing      = "billable"
+      note         = "Data mapping workshop"

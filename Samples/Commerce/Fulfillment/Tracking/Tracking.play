@@ -1,0 +1,6 @@
+// Automations and translations only: nothing here has a screen, so nothing
+// here contributes to the navigation.
+feature Tracking
+  description "Following parcels to the door and keeping the customer informed"
+
+  import "*.play"
