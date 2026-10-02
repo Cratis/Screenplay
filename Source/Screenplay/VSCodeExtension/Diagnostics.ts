@@ -56,7 +56,8 @@ export function registerDiagnostics(context: vscode.ExtensionContext, index: App
         const file = index.fileOf(document.uri);
         const issues = validateLines(lines, { application: file?.application.symbolsExcept(file.path) }).map(toDiagnostic);
         const compiled = file?.application.diagnosticsFor(file.path).map(diagnostic => fromCompiler(document, diagnostic)) ?? [];
-        collection.set(document.uri, [...issues, ...compiled.filter(diagnostic => !issues.some(issue => issue.code === diagnostic.code && issue.range.start.line === diagnostic.range.start.line))]);
+        const reported = new Set(issues.map(issue => `${issue.code}:${issue.range.start.line}`));
+        collection.set(document.uri, [...issues, ...compiled.filter(diagnostic => !reported.has(`${diagnostic.code}:${diagnostic.range.start.line}`))]);
     };
     const scheduleRefresh = (document: vscode.TextDocument) => {
         if (document.languageId !== languageId) return;

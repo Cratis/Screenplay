@@ -22,6 +22,24 @@ describe('when authoring inline events', () => {
         expect(symbols.commands[0].properties.map(property => property.name)).toEqual(['projectId', 'name']);
     });
     it('should validate its metadata without false positives', () => expect(validateLines(source)).toEqual([]));
+    it.each([
+        ['    documentation "details"'],
+        ['    documentation'],
+        ['    documentation', '      ```text', '      Details', '      ```'],
+        ['    documentation', '    ```markdown', '    Details', '    ```'],
+        ['    documentation', '      ```markdown', '      ', '      ```'],
+        ['    documentation', '      ```markdown', '      Details'],
+    ])('should reject malformed documentation without searching later declarations for its fence', (...body) => {
+        const lines = ['command Rename', '  produces event Renamed', ...body];
+        expect(validateLines(lines).filter(issue => issue.code === 'PLAY0477').map(issue => issue.line)).toEqual([2]);
+    });
+    it('should distinguish adjacent complete documentation blocks from malformed directives', () => {
+        const lines = ['event First', '  documentation "details"', 'event Second', '  documentation',
+            '    ```markdown', '    Details', '    ```', 'event Third', '  documentation',
+            '    ```markdown', '    ', '    ```', 'event Fourth', '  documentation', '',
+            '    ```markdown', '    More details', '    ```'];
+        expect(validateLines(lines).filter(issue => issue.code === 'PLAY0477').map(issue => issue.line)).toEqual([1, 8]);
+    });
     it('should offer event metadata and typed mappings inside the body', () => {
         const plan = planCompletions([...source, '    '], source.length, '    ');
         expect(plan.kind).toBe('entries');

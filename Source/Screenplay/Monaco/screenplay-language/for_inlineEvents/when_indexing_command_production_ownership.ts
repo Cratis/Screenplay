@@ -7,6 +7,45 @@ import { scanDocument } from '../symbols';
 import { validateLines } from '../validation';
 
 describe('when indexing command production ownership', () => {
+    it('should keep the documented multiline authorization out of command properties', () => {
+        const lines = ['policy IsAccountant', '  require role "Accountant"', 'policy IsCustomerSelf', '  require authenticated',
+            'command Rename', '  projectId Uuid identifier',
+            '  authorize IsAccountant', '            or IsCustomerSelf', '  produces event Renamed'];
+        const command = scanDocument(lines).commands[0];
+        expect(command.properties.map(property => property.name)).toEqual(['projectId']);
+        expect(command.produces?.map(production => production.name)).toEqual(['Renamed']);
+        expect(validateLines(lines)).toEqual([]);
+        expect(destinationHints(lines).map(hint => hint.label)).toEqual(['for projectId']);
+    });
+
+    it.each(['or IsCustomerSelf', 'and IsCustomerSelf', 'IsCustomerSelf', '(IsCustomerSelf)', 'or IsCüstomerSelf', 'produces Ghost'])('should consume %s as an authorization continuation', continuation => {
+        const lines = ['command Rename', '  authorize IsAccountant', `    ${continuation}`, '  produces Legacy'];
+        const command = scanDocument(lines).commands[0];
+        expect(command.properties).toEqual([]);
+        expect(command.productionHeaders).toEqual([3]);
+        expect(destinationHints(lines).map(hint => hint.line)).toEqual([3]);
+    });
+
+    it('should end authorization ownership at the first nonmatching line, not merely a dedent', () => {
+        const lines = ['command Rename', '  projectId Uuid identifier', '  authorize IsAccountant',
+            '    or IsCustomerSelf // continuation', '    names String[]', '    produces event Renamed'];
+        const command = scanDocument(lines).commands[0];
+        expect(command.properties.map(property => property.name)).toEqual(['projectId', 'names']);
+        expect(command.productionHeaders).toEqual([5]);
+        expect(destinationHints(lines).map(hint => hint.label)).toEqual(['for projectId']);
+    });
+
+    it.each([
+        [['  description "Rename the project"']],
+        [['  description', '    ```text', '    produces Ghost', '    ```']],
+    ])('should leave deeper syntax after a description in its command', description => {
+        const lines = ['command Rename', '  projectId Uuid identifier', ...description, '    produces event Renamed'];
+        const command = scanDocument(lines).commands[0];
+        expect(command.properties.map(property => property.name)).toEqual(['projectId']);
+        expect(command.produces?.map(production => production.name)).toEqual(['Renamed']);
+        expect(destinationHints(lines).map(hint => hint.label)).toEqual(['for projectId']);
+    });
+
     it.each(['validate', 'handler', 'concurrency', 'name'])('should keep a deeper production after the %s property in its command', name => {
         const lines = ['command Rename', '  projectId Uuid identifier', `  ${name} String`,
             '    produces event Renamed', '      value String = "renamed"'];

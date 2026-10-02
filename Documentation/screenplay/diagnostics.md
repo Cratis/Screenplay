@@ -814,9 +814,9 @@ See [Specifications](specifications.md#clocks-triggers-and-captures).
 | `PLAY0467` | Warning | A `given capture` or `when capture` names a capture the application does not declare. |
 | `PLAY0468` | Error | A `when query` argument is not a `by` or `filter` parameter of the query. |
 
-## Inline event declarations and metadata
+### Inline event declarations and metadata
 
-See [Inline command events](commands.md#declare-an-event-inline) and [Event metadata](events.md#authoring-metadata).
+These codes cover [inline command events](commands.md#declare-an-event-inline) and [event metadata](events.md#authoring-metadata).
 
 | Code | Severity | Reported when |
 |---|---|---|
@@ -831,6 +831,7 @@ See [Inline command events](commands.md#declare-an-event-inline) and [Event meta
 | `PLAY0477` | Error | Event documentation is not one nonempty fenced Markdown block, or is repeated. |
 
 Malformed typed mappings and duplicate destinations retain `PLAY0044` and `PLAY0193`. Descriptions retain their existing diagnostics. Event descriptions, documentation, and rename pins are authoring-only metadata (`PLAY0270`); none changes canonical ESM bytes.
+
 ### Production destination advice and repairs
 
 | Code | Severity | Reported when |

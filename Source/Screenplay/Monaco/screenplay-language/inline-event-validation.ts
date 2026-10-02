@@ -15,6 +15,7 @@ export function validateInlineEvents(lines: string[], symbols: DocumentSymbols, 
     lines = eventAnalysisSource(lines);
     const issues: ValidationIssue[] = [];
     const fences = fenceMap(lines);
+    const documentationBlocks = nonemptyMarkdownBlocks(lines, fences);
     const commandProductions = new Set(symbols.commands.flatMap(command => command.productionHeaders ?? []));
     const eventCounts = new Map<string, number>();
     const importedNames = new Set<string>();
@@ -57,10 +58,8 @@ export function validateInlineEvents(lines: string[], symbols: DocumentSymbols, 
             if (keyword === 'documentation') {
                 let next = index + 1;
                 while (next < lines.length && lines[next].trim().length === 0) next++;
-                let closing = next + 1;
-                while (closing < lines.length && lines[closing].trim() !== '```') closing++;
-                if (hasDocumentation || text !== 'documentation' || lines[next]?.trim() !== '```markdown' || indentOf(lines[next] ?? '') <= indentOf(lines[index]) ||
-                    closing === lines.length || lines.slice(next + 1, closing).join('\n').trim().length === 0) {
+                if (hasDocumentation || text !== 'documentation' || lines[next]?.trim() !== '```markdown' || indentOf(lines[next]) <= indentOf(lines[index]) ||
+                    !documentationBlocks.has(next)) {
                     report(index, diagnosticCodes.invalidEventDocumentation, 'Expected one nonempty fenced markdown documentation block.');
                 }
                 hasDocumentation = true;
@@ -91,4 +90,26 @@ export function validateInlineEvents(lines: string[], symbols: DocumentSymbols, 
         }
     }
     return issues;
+}
+
+// Record complete, nonempty Markdown fences once. Validation must not scan a suffix
+// for every documentation directive, especially while its opener is still being typed.
+function nonemptyMarkdownBlocks(lines: string[], fences: boolean[]): Set<number> {
+    const blocks = new Set<number>();
+    let opening: number | undefined;
+    let content = false;
+    for (let index = 0; index < lines.length; index++) {
+        if (!fences[index]) continue;
+        const text = lines[index].trim();
+        if (opening === undefined) {
+            opening = index;
+            content = false;
+        } else if (text === '```') {
+            if (content && lines[opening].trim() === '```markdown') blocks.add(opening);
+            opening = undefined;
+        } else if (text.length > 0) {
+            content = true;
+        }
+    }
+    return blocks;
 }

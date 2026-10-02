@@ -7,7 +7,7 @@ import { destinationHints } from '../production-destinations';
 import { scanDocument } from '../symbols';
 import { validateLines } from '../validation';
 
-function document(count: number): string[] {
+function document(count: number, malformedDocumentation = false): string[] {
     return ['module Projects', '  feature Naming', ...Array.from({ length: count }, (_, index) => [
         `    slice StateChange Rename${index}`,
         `      command Rename${index}`,
@@ -15,7 +15,7 @@ function document(count: number): string[] {
         '        name String',
         `          produces event Renamed${index}`,
         '            name String = name',
-        '            // mapping complete',
+        malformedDocumentation ? '            documentation "details"' : '            // mapping complete',
     ]).flat()];
 }
 
@@ -25,26 +25,28 @@ function document(count: number): string[] {
 function work(action: () => void): number {
     const indentation = vi.spyOn(context, 'indentOf');
     const replacements = vi.spyOn(String.prototype, 'replace');
+    const trims = vi.spyOn(String.prototype, 'trim');
     const filters = vi.spyOn(Array.prototype, 'filter');
     try {
         action();
-        return indentation.mock.calls.length + replacements.mock.calls.length +
+        return indentation.mock.calls.length + replacements.mock.calls.length + trims.mock.calls.length +
             filters.mock.contexts.reduce<number>((sum, receiver) => sum + (receiver as unknown[]).length, 0);
     } finally {
         indentation.mockRestore();
         replacements.mockRestore();
+        trims.mockRestore();
         filters.mockRestore();
     }
 }
 
 describe('when analyzing many inline events', () => {
-    it.each(['validation', 'destination hints'])('should keep %s work linear', path => {
+    it.each(['validation', 'destination hints', 'malformed documentation'])('should keep %s work linear', path => {
         const measure = (count: number) => {
-            const lines = document(count);
+            const lines = document(count, path === 'malformed documentation');
             const application = scanDocument(Array.from({ length: count }, (_, index) => `import Other.Imported${index}`));
             let results = 0;
             const units = work(() => {
-                results = path === 'validation' ? validateLines(lines, { application }).length : destinationHints(lines).length;
+                results = path === 'destination hints' ? destinationHints(lines).length : validateLines(lines, { application }).length;
             });
             expect(results).toBe(path === 'validation' ? 0 : count);
             return units;

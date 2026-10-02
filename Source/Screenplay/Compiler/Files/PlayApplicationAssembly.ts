@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { validateInlineEvents } from '../Parsing/InlineEventValidator';
 import { LineReader } from '../Parsing/LineReader';
 import { ParserContext } from '../Parsing/ParserContext';
@@ -31,9 +32,13 @@ export function assembleApplication(roots: Iterable<string>, source: PlayDocumen
     const context = new ParserContext(new LineReader([]));
     validateInlineEvents(merged.value, context);
     const existing = [...diagnostics, ...merged.diagnostics];
-    const all = [...existing, ...context.diagnostics.filter(diagnostic => !existing.some(value => value.code === diagnostic.code &&
-        value.location.path === diagnostic.location.path && value.location.line === diagnostic.location.line && value.location.column === diagnostic.location.column))];
+    const reported = new Set(existing.map(diagnosticKey));
+    const all = [...existing, ...context.diagnostics.filter(diagnostic => !reported.has(diagnosticKey(diagnostic)))];
     return { ...merged, documents, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error') };
+}
+
+function diagnosticKey(diagnostic: Diagnostic): string {
+    return JSON.stringify([diagnostic.code, diagnostic.location.path, diagnostic.location.line, diagnostic.location.column]);
 }
 
 // Compiles documents held in memory, keyed by portable path, as one application. Without roots every

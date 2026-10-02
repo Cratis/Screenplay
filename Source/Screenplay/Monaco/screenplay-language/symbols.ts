@@ -89,6 +89,8 @@ const propertyPattern = /^\s*(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?\??)(\s+identifier)
 const attributeReasonPattern = /^([a-z_]\w*)\s+reason\s+"((?:[^"\\]|\\.)*)"\s*$/;
 const readPattern = /^\s*reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?\s*$/;
 const commandReserved = ['authorize', 'produces', 'reads'];
+// AuthorizeParser's continuation pattern, including the compiler's Unicode word characters.
+const authorizationContinuation = /^(?:(?:or|and)\s+)?[A-Za-z_(][\p{L}\p{Mn}\p{Nd}\p{Pc}\s()]*$/u;
 const eventReserved = clauseKeywords.filter(keyword => !['id', 'description', 'documentation'].includes(keyword));
 const queryParameterPattern =
     /^\s*(?:by|filter)\s+([a-z_]\w*)\s+([\w.]+(?:\[\])?\??)(?:\s+from\s+.+)?\s*$/;
@@ -129,13 +131,19 @@ export function directBody(lines: string[], fences: boolean[], start: number, in
     const body = collectBody(lines, fences, start, indent).filter(index => !fences[index] && !/^\s*(?:\/\/|#)/.test(lines[index]));
     if (!/^\s*command\b/.test(lines[start])) return body;
     let blockIndent: number | undefined;
+    let authorization = false;
     return body.filter(index => {
         const childIndent = indentOf(lines[index]);
-        if (blockIndent !== undefined && childIndent > blockIndent) return false;
         const text = lines[index].trim();
+        // AuthorizeParser owns only consecutive deeper lines with requirement shape.
+        // Unlike opaque blocks, a nonmatching line returns control to CommandParser.
+        if (blockIndent !== undefined && childIndent > blockIndent &&
+            (!authorization || authorizationContinuation.test(text))) return false;
         const property = text !== 'validate csharp' && propertiesIn(lines, [index], commandReserved).length > 0;
-        const leaf = property || /^(?:description|authorize)(?:\s|$)/.test(text);
+        // Description consumes only a quoted value or a fence (already excluded above).
+        const leaf = property || /^description(?:\s|$)/.test(text);
         blockIndent = leaf ? undefined : childIndent;
+        authorization = /^authorize(?:\s|$)/.test(text);
         return true;
     });
 }

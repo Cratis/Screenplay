@@ -10,13 +10,15 @@ import { ParserContext } from './ParserContext';
 export function validateInlineEvents(application: ApplicationSyntax, context: ParserContext): void {
     const inFeature = (feature: FeatureSyntax): readonly SliceSyntax[] => [...feature.slices, ...feature.features.flatMap(inFeature)];
     const slices = application.modules.flatMap(module => module.features.flatMap(inFeature));
-    const declarations = slices.flatMap(eventDeclarations);
+    const eventCounts = new Map<string, number>();
+    for (const event of slices.flatMap(eventDeclarations)) eventCounts.set(event.name, (eventCounts.get(event.name) ?? 0) + 1);
+    const importedNames = new Set(application.imports.map(value => value.qualifiedName.split('.').at(-1)));
     for (const command of slices.flatMap(slice => slice.commands)) {
         const identifier = command.properties.find(property => property.isIdentifier)?.name;
         const mixed = requiresExplicitDestinations(command);
         for (const production of command.produces) {
             const inline = production.inlineEvent;
-            if (inline !== null && (declarations.filter(event => event.name === inline.name).length > 1 || application.imports.some(value => value.qualifiedName.split('.').at(-1) === inline.name))) {
+            if (inline !== null && ((eventCounts.get(inline.name) ?? 0) > 1 || importedNames.has(inline.name))) {
                 context.error(DiagnosticCodes.InlineEventCollision, `Inline event '${inline.name}' collides with another event declaration or import`, production.location);
             }
             if (mixed && production.for === null) {
