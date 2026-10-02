@@ -41,6 +41,12 @@ describe('when highlighting event metadata', () => {
                 expect(tokenize('    id "Old"').find(token => token.offset === 4)?.type).toBe('keyword.play');
                 expect(tokenize('    id String').find(token => token.offset === 4)?.type).toBe('identifier.play');
                 expect(tokenize('    documentation String').find(token => token.offset === 4)?.type).toBe('identifier.play');
+                const documentation = tokenize('    documentation // details');
+                expect(documentation.find(token => token.offset === 4)?.type).toBe('keyword.play');
+                expect(documentation.find(token => token.offset === 18)?.type).toBe('comment.play');
+                expect(tokenize('      ```markdown').find(token => token.type === 'string.quote.play')).toBeDefined();
+                expect(tokenize('      event Prose')[0].type).toBe('string.play');
+                tokenize('      ```');
                 tokenize('  command Other');
                 expect(tokenize('    id "NotMetadata"').find(token => token.offset === 4)?.type).toBe('identifier.play');
             }

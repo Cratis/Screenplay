@@ -123,11 +123,20 @@ function collectBody(lines: string[], fences: boolean[], start: number, indent: 
     return body;
 }
 
-// Only direct children can be properties or directives of an owner. Fenced prose is never syntax.
+// Event/production parsers accept every greater indent, not just the smallest child indent.
+// Command block directives own their nested lines; properties do not. Fenced prose is never syntax.
 export function directBody(lines: string[], fences: boolean[], start: number, indent: number): number[] {
     const body = collectBody(lines, fences, start, indent).filter(index => !fences[index] && !/^\s*(?:\/\/|#)/.test(lines[index]));
-    const childIndent = Math.min(...body.map(index => indentOf(lines[index])));
-    return body.filter(index => indentOf(lines[index]) === childIndent);
+    if (!/^\s*command\b/.test(lines[start])) return body;
+    let blockIndent: number | undefined;
+    return body.filter(index => {
+        const childIndent = indentOf(lines[index]);
+        if (blockIndent !== undefined && childIndent > blockIndent) return false;
+        const text = lines[index].trim();
+        const leaf = propertiesIn(lines, [index]).length > 0 || /^(?:description|authorize)(?:\s|$)/.test(text);
+        blockIndent = leaf ? undefined : childIndent;
+        return true;
+    });
 }
 
 export function scanDocument(lines: string[]): DocumentSymbols {
@@ -152,7 +161,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
         const trimmed = line.trim();
         const indent = indentOf(line);
 
-        const importMatch = trimmed.match(/^import\s+([\w.]+)\s*$/);
+        const importMatch = eventLines[index].trim().match(/^import\s+([\w.]+)\s*$/);
         if (importMatch && indent === 0) {
             const qualifiedName = importMatch[1];
             const shortName = qualifiedName.split('.').pop() ?? qualifiedName;
@@ -229,7 +238,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
                     const conditional = /^produces\s+when\b/.test(header);
                     const eventLine = conditional ? directBody(eventLines, eventFences, line, indentOf(eventLines[line]))[0] : line;
                     if (eventLine === undefined) return [];
-                    const name = conditional ? eventLines[eventLine].trim() : header.match(/^produces\s+(?:event\s+)?([A-Za-z_]\w*)(?:\s+generation\s+\d+)?\s*$/)?.[1];
+                    const name = conditional ? eventLines[eventLine].trim() : header.match(inline ? /^produces\s+event\s+([A-Za-z_]\w*)(?:\s+generation\s+\d+)?\s*$/ : /^produces\s+([A-Z]\w*)\s*$/)?.[1];
                     if (name === undefined || !/^[A-Za-z_]\w*$/.test(name)) return [];
                     const children = directBody(eventLines, eventFences, eventLine, indentOf(eventLines[eventLine]));
                     const targets = children.map(index => eventLines[index].trim().match(/^for(?:\s+(.*))?$/)).filter(match => match !== null);

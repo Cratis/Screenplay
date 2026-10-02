@@ -13,6 +13,11 @@ describe('when indexing inline events', () => {
         expect(application.eventDeclarations('Renamed')).toEqual([{ path: 'rename.play', line: 6 }]);
         expect(application.symbolsExcept('other.play').events[0].properties[0].name).toBe('name');
     });
+    it('should expose duplicate inline properties at the repeated mapping', () => {
+        const application = new WorkspaceApplication();
+        application.set('rename.play', `${source}          name Uuid = projectId\n`);
+        expect(application.diagnosticsFor('rename.play').filter(diagnostic => diagnostic.code === 'PLAY0168').map(diagnostic => diagnostic.location.line)).toEqual([9]);
+    });
     it('should expose the compiler diagnostic for a malformed typed mapping', () => {
         const application = new WorkspaceApplication();
         application.set('rename.play', source.replace('name String = name', 'name = name'));

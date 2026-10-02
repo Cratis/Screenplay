@@ -140,6 +140,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
 
         // After a bare description, the only thing allowed before the opening fence is whitespace.
         descriptionBlockPending: [
+            [/\/\/.*$/, 'comment'],
             [/^\s*```(?:text|markdown)?\s*$/, { token: 'string.quote', switchTo: '@descriptionBlock' }],
             [/^\s*[^\s`].*$/, { token: '@rematch', next: '@pop' }],
             [/\s+/, 'white'],

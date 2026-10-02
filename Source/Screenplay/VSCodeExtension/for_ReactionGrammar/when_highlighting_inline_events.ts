@@ -24,6 +24,13 @@ describe('when highlighting inline events', () => {
         expect(new RegExp(block.patterns[0].match).test('    name String = id')).toBe(false);
         expect(new RegExp(grammar.repository['description-block'].begin).test('  documentation')).toBe(false);
     });
+    it('should scope a trailing documentation comment as a comment', () => {
+        const block = grammar.repository['event-description-block'];
+        const match = new RegExp(block.begin).exec('    documentation // details');
+        expect(match?.[2]).toBe('documentation');
+        expect(match?.[3]).toBe('// details');
+        expect(block.beginCaptures['3'].name).toBe('comment.line.double-slash.screenplay');
+    });
     it('should keep markdown inside a documentation fence as prose', () => {
         const block = grammar.repository['event-description-block'];
         expect(new RegExp(block.begin).test('    documentation')).toBe(true);

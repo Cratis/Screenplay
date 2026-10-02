@@ -49,6 +49,51 @@ describe('when authoring inline events', () => {
     it('should suppress legacy allocation hints when a sibling can promote a destination', () => {
         expect(destinationHints(['command Rename', '  projectId Uuid identifier', '  produces First', '    for projectId', '  produces Legacy'])).toEqual([]);
     });
+    it.each([
+        ['  produces First', '    name = name', '      for projectId', '  produces Legacy'],
+        ['  produces First', '      name = name', '    for projectId', '  produces Legacy'],
+        ['    produces First', '      name = name', '        for projectId', '  produces Legacy'],
+        ['  produces when name != ""', '    First', '      name = name', '        for projectId', '  produces Legacy'],
+    ])('should not hint allocation when a differently indented destination is promoted', (...productions) => {
+        const lines = ['command Rename', '  projectId Uuid identifier', '  name String', ...productions];
+        expect(scanDocument(lines).commands[0].produces?.[0].target).toBe('projectId');
+        expect(destinationHints(lines)).toEqual([]);
+    });
+    it('should see deeper destinations after fenced event documentation', () => {
+        const lines = ['command Rename', '  projectId Uuid identifier', '  produces event Renamed',
+            '    documentation', '      ```markdown', '      Details', '      ```', '      for otherId', '  produces Legacy'];
+        expect(scanDocument(lines).commands[0].produces?.[0].target).toBe('otherId');
+        expect(destinationHints(lines)).toEqual([]);
+    });
+    it('should suppress hints when a sibling production cannot be classified', () => {
+        expect(destinationHints(['command Rename', '  projectId Uuid identifier', '  produces First', '  produces event'])).toEqual([]);
+        expect(destinationHints(['command Rename', '  projectId Uuid identifier', '  produces event'])).toEqual([]);
+        expect(destinationHints(['command Rename', '  produces First', '  produces when'])).toEqual([]);
+    });
+    it('should place a destination hint before a trailing comment', () => {
+        const lines = ['command Rename', '  projectId Uuid identifier', '  produces event Renamed // note'];
+        expect(destinationHints(lines)).toEqual([{ line: 2, column: '  produces event Renamed'.length + 1, label: 'for projectId' }]);
+    });
+    it('should report duplicate typed properties at the repeated mapping', () => {
+        const lines = [...source, '      name Uuid = otherId // duplicate'];
+        expect(validateLines(lines).filter(issue => issue.code === 'PLAY0168').map(issue => ({ line: issue.line, severity: issue.severity })))
+            .toEqual([{ line: source.length, severity: 'error' }]);
+    });
+    it('should treat escaped and unescaped inline property names as the same name', () => {
+        expect(validateLines([...source, '    @name String = name']).filter(issue => issue.code === 'PLAY0168').map(issue => issue.line)).toEqual([source.length]);
+    });
+    it('should detect collisions with commented imports in the document', () => {
+        expect(validateLines(['import Other.Renamed // note', ...source]).filter(issue => issue.code === 'PLAY0473').map(issue => issue.line)).toEqual([4]);
+    });
+    it('should detect collisions with commented imports from other files', () => {
+        const application = scanDocument(['import Other.Renamed // note']);
+        expect(validateLines(source, { application }).filter(issue => issue.code === 'PLAY0473').map(issue => issue.line)).toEqual([3]);
+    });
+    it('should not scan imports inside event documentation', () => {
+        const lines = source.map(line => line === '      event NotADeclaration' ? '      import Other.Renamed // prose' : line);
+        expect(scanDocument(lines).imports).toEqual([]);
+        expect(validateLines(lines)).toEqual([]);
+    });
     it('should hint allocation when all plain productions omit destinations', () => {
         expect(destinationHints(['command Rename', '  produces First', '  produces Legacy']).map(hint => hint.label)).toEqual(['for <new event source>', 'for <new event source>']);
     });

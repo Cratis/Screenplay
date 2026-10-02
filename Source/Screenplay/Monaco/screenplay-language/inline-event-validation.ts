@@ -21,6 +21,11 @@ export function validateInlineEvents(lines: string[], symbols: DocumentSymbols, 
     for (const event of symbols.events) {
         const body = directBody(lines, fences, event.line, indentOf(lines[event.line]));
         if (event.inline) {
+            const properties = new Set<string>();
+            for (const property of event.properties) {
+                if (properties.has(property.name)) report(property.line, diagnosticCodes.duplicateDeclaration, `Event '${event.name}' already declares property '${property.name}'.`);
+                properties.add(property.name);
+            }
             const chain = enclosingChain(lines, fences, event.line, indentOf(lines[event.line]));
             if (chain[0] !== 'command') report(event.line, diagnosticCodes.inlineEventOutsideCommand, 'Inline events can only be declared inside commands.');
             if (event.generation !== undefined) report(event.line, diagnosticCodes.inlineEventGeneration, 'Inline events are generation 1; extract the event before declaring generations.');

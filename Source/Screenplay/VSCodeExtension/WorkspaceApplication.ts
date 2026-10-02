@@ -12,6 +12,7 @@ const surfacedCodes = new Set<string>([
     DiagnosticCodes.ProducesWhenWithoutEvent,
     DiagnosticCodes.InvalidPropertyMapping,
     DiagnosticCodes.DuplicateProducesTarget,
+    DiagnosticCodes.DuplicateDeclaration,
     DiagnosticCodes.InvalidDescription,
     DiagnosticCodes.DuplicateDescription,
     DiagnosticCodes.EmptyDescription,

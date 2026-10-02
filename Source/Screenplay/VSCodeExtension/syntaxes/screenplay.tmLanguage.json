@@ -301,8 +301,11 @@
             ]
         },
         "event-description-block": {
-            "begin": "^([ ]*)(description|documentation)[ ]*(?://.*)?$",
-            "beginCaptures": { "2": { "name": "keyword.other.screenplay" } },
+            "begin": "^([ ]*)(description|documentation)[ ]*(//.*)?$",
+            "beginCaptures": {
+                "2": { "name": "keyword.other.screenplay" },
+                "3": { "name": "comment.line.double-slash.screenplay" }
+            },
             "while": "^(?=\\1[ ]+\\S|[ ]*$)",
             "patterns": [
                 {
