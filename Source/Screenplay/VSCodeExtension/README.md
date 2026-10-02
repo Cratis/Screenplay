@@ -4,7 +4,7 @@ Language support for the Cratis **Screenplay** DSL — the modeling language tha
 
 ## Features
 
-- **The event model board** — a `.play` file opens on the Cratis event model board, the board Cratis Studio draws, and redraws as you edit. A file inside a folder application shows the whole application. **Show Source** opens the text beside the board, and **Open Event Model Board** goes back.
+- **The event model board** — a `.play` file opens on the Cratis event model board, the board Cratis Studio draws, and redraws as you edit. A file inside a folder application shows its own share of it, drawn against everything the application declares: a slice file its slices, a feature or module file the slices it imports or that are placed in what it declares, and the folder's `application.play` the whole application. A file with no slice of its own, such as one that only declares concepts or types, shows the whole application. **Show Source** opens the text beside the board, and **Open Event Model Board** goes back.
 - **Syntax highlighting** for all Screenplay constructs, slice types, concept attributes (`@pii`, `@sensitive`), and context variables (`$context.*`, `$env.*`).
 - **Embedded language highlighting** — inline `csharp`, `typescript`, `react`, and `html` blocks between triple backticks are highlighted with their own grammars.
 - **Sub-language highlighting** for the Projection Declaration Language (PDL) inside `projection` blocks and the Change Data Capture Language (CDL) inside `capture` blocks.
