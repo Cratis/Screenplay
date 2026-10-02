@@ -12,6 +12,16 @@ dotnet tool install -g Cratis.Screenplay.Tool
 
 This puts a `screenplay` command on your path. Update it later with `dotnet tool update -g Cratis.Screenplay.Tool`.
 
+### Run it in Docker
+
+The same CLI is published as the `cratis/screenplay` image, for machines without the .NET SDK and for CI. Mount the files you want to verify and pass the mounted path:
+
+```bash
+docker run --rm -v "$PWD/specifications:/work:ro" cratis/screenplay --warnaserror /work
+```
+
+The image also runs the [MCP server](mcp/index.md): `docker run -i --rm -v "$PWD/specifications:/model" cratis/screenplay mcp /model`.
+
 ## Verify your files
 
 Run `screenplay` from the root of your project - it searches for every file matching the `**/*.play` glob pattern beneath the current directory and reports what it finds:
