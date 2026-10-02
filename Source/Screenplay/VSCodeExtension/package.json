@@ -143,12 +143,12 @@
         "@cratis/screenplay-language": "workspace:*"
     },
     "devDependencies": {
-        "@cratis/arc": "22.41.1",
-        "@cratis/arc.react": "22.41.1",
-        "@cratis/components": "4.22.0",
-        "@cratis/event-models": "0.109.0",
+        "@cratis/arc": "22.48.1",
+        "@cratis/arc.react": "22.48.1",
+        "@cratis/components": "4.25.0",
+        "@cratis/event-models": "0.110.0",
         "@cratis/fundamentals": "7.22.0",
-        "@cratis/scene": "0.109.0",
+        "@cratis/scene": "0.110.0",
         "@types/chai": "^5.2.3",
         "@types/node": "26.1.1",
         "@types/react": "19.2.17",
