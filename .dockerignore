@@ -1,0 +1,15 @@
+.git
+.github
+.ai-work
+.vs
+.vscode
+**/node_modules
+**/bin
+**/obj
+**/dist
+**/out
+Artifacts
+artifacts
+Documentation
+Samples
+decisions
