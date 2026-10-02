@@ -15,7 +15,7 @@ import {
 } from './symbols';
 import { fileImportOn, isFileImportLine } from './file-imports';
 
-export type ValidationSeverity = 'error' | 'warning';
+export type ValidationSeverity = 'error' | 'warning' | 'information';
 
 export interface ValidationIssue {
     line: number;
@@ -139,6 +139,7 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
     const events = new Set([...knownEventNames(symbols), ...knownEventNames(application)]);
     const policies = new Set([...symbols.policies, ...application.policies].map((policy) => policy.name));
     const issues: ValidationIssue[] = validateDeclarations(lines, symbols, application);
+    issues.push(...validateProductionDestinations(lines, fences, symbols));
 
     const checkEvent = (line: number, text: string, name: string) => {
         if (!events.has(name)) {
@@ -343,6 +344,37 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
         );
     }
 
+    return issues;
+}
+
+// This is advice, not a semantic default: accepting the typed workspace repair changes routing.
+function validateProductionDestinations(lines: string[], fences: boolean[], symbols: DocumentSymbols): ValidationIssue[] {
+    const issues: ValidationIssue[] = [];
+    for (const command of symbols.commands) {
+        const identifiers = command.properties.filter(property => property.isIdentifier);
+        if (identifiers.length !== 1) continue;
+        const commandIndent = indentOf(lines[command.line]);
+        for (let line = command.line + 1; line < lines.length; line++) {
+            const text = lines[line].trim().replace(/\s*\/\/.*$/, '');
+            if (fences[line] || text.length === 0) continue;
+            const indent = indentOf(lines[line]);
+            if (indent <= commandIndent) break;
+            const produces = text.match(/^produces\s+([A-Z]\w*)$/);
+            if (!produces || enclosingChain(lines, fences, line, indent)[0] !== 'command') continue;
+            let explicit = false;
+            for (let child = line + 1; child < lines.length; child++) {
+                const body = lines[child].trim().replace(/\s*\/\/.*$/, '');
+                if (fences[child] || body.length === 0) continue;
+                if (indentOf(lines[child]) <= indent) break;
+                if (/^for\s+/.test(body)) explicit = true;
+            }
+            if (!explicit) {
+                issues.push(issue('information', line, indent + 1, text.length,
+                    `Plain 'produces ${produces[1]}' omits its destination — use 'for ${identifiers[0].name}' to explicitly select the command's identifier.`,
+                    diagnosticCodes.omittedProductionDestination));
+            }
+        }
+    }
     return issues;
 }
 

@@ -141,6 +141,7 @@ internal sealed partial class McpWorkspaces
                 .Select(repair => (object)new
                 {
                     repair.DiagnosticCode,
+                    repair.RequiredFormatting,
                     diagnostic.Location,
                     subject = McpAstHandles.Describe(repair.Subject),
                     operations = repair.Operations.Select(McpAstOperations.Describe)

@@ -154,14 +154,23 @@ parent/child operations. See [the authoring contract](ast-authoring.md).
 
 ## Fix a diagnostic
 
-Call `read-workspace` with `view: "repairs"` at the current revision. For a
-`PLAY0397` `validate csharp` repair, pass its `diagnosticCode` and `subject` to
-`propose-repair` with both current revisions and
-`formatting: "CanonicalizeTouchedDocuments"`. Its identity replacement reprints
-the entire file canonically, so whitespace and other legacy fences can change;
-a proposal that would drop any comment is refused. No file is written until you
-review the `before`/`after` bytes with `read-proposal` and explicitly call `apply`.
-Other `PLAY0397` forms have no individual repair.
+Call `read-workspace` with `view: "diagnostics"` to inspect source diagnostics,
+then `view: "repairs"` at the same current revision. Available typed repairs include:
+
+| Diagnostic | Proposal |
+| --- | --- |
+| `PLAY0166` on command `produces` | Add an event declaration in the producing slice. Types come from command property paths, retaining concepts, or from `$context.occurred` as `DateTime`. Uncertain types, conflicting producer shapes, imported/already-declared events and cross-file producers have no repair. |
+| `PLAY0478` (Information) | Replace a plain production with an explicit `for <identifier>`. This deliberately selects the identifier rather than preserving allocated-identity routing. Optional or collection identifiers have no repair. |
+| `PLAY0397` on `validate csharp` | Replace the validation with itself so canonical printing migrates its legacy fence. Other legacy forms have no individual repair. |
+
+Pass the selected repair's `diagnosticCode` and `subject` to `propose-repair` with
+both current revisions and `formatting: "CanonicalizeTouchedDocuments"` (also
+returned as `requiredFormatting`). Repairs reprint the entire touched file, so
+whitespace and other legacy fences can change; a proposal that would drop any
+comment is refused. No file is written until you review the `before`/`after` bytes
+with `read-proposal` and explicitly call `apply`. After external edits, reopen and
+rediscover repairs rather than reusing stale handles. Applying a repair uses the
+same [identity state and recovery](mcp-recovery.md) contract as other proposals.
 
 ## Review and apply
 

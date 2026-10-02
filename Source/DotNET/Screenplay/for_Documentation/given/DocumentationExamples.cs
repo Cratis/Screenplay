@@ -169,6 +169,20 @@ public static partial class DocumentationExamples
             return (Wrap(header, body), $"{keyword} in a slice");
         }
 
+        // Command-body examples used to be skipped, although readers copy them verbatim.
+        if (new[] { "validate", "produces", "handler", "authorize" }.Contains(keyword, StringComparer.Ordinal))
+        {
+            var source = Wrap("module Doc\n  feature Doc\n    slice StateChange Doc\n      command Doc", body);
+
+            // Standalone rule fragments assume their subject properties. Supply those declarations,
+            // while still compiling the entire authored validation body rather than skipping it.
+            var properties = body.Select(line => RuleSubjectRegex().Match(line)).Where(match => match.Success)
+                .Select(match => match.Groups[1].Value).Distinct(StringComparer.Ordinal);
+            source = source.Replace("      command Doc\n", "      command Doc\n" + string.Concat(properties.Select(name => $"        {name} String\n")), StringComparison.Ordinal);
+
+            return (source, "command body");
+        }
+
         return null;
     }
 
@@ -192,6 +206,9 @@ public static partial class DocumentationExamples
 
     [GeneratedRegex(@"^(`{3,4})(\w+)\s*$", RegexOptions.None, 1000)]
     private static partial Regex FenceRegex();
+
+    [GeneratedRegex(@"^\s*([a-z_]\w*)\s+(?:not\s+empty|max|min|length|matches|all|rule|[><=!])", RegexOptions.None, 1000)]
+    private static partial Regex RuleSubjectRegex();
 
     [GeneratedRegex(@"^(screen|dialog)\s+template\b", RegexOptions.None, 1000)]
     private static partial Regex ModuleLevelRegex();

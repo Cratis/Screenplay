@@ -98,7 +98,7 @@ public sealed class WorkspaceSyntaxIndex
     public ImmutableArray<WorkspaceSyntaxEntry> Entries { get; }
 
     /// <summary>
-    /// Gets parse diagnostics; erroneous documents are not indexed as editable syntax.
+    /// Gets parse and workspace compilation diagnostics; erroneous documents are not indexed as editable syntax.
     /// </summary>
     public ImmutableArray<Diagnostic> Diagnostics { get; }
 
@@ -123,7 +123,9 @@ public sealed class WorkspaceSyntaxIndex
             }
         }
 
-        return new(entries.ToImmutable(), diagnostics.ToImmutable());
+        diagnostics.AddRange(workspace.Compilation.Diagnostics);
+
+        return new(entries.ToImmutable(), [.. diagnostics.DistinctBy(diagnostic => (diagnostic.Code, diagnostic.Location))]);
     }
 
     /// <summary>

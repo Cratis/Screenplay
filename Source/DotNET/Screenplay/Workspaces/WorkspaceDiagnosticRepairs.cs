@@ -4,6 +4,7 @@
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Workspaces;
 
@@ -30,8 +31,8 @@ public sealed record WorkspaceDiagnosticRepair(
 public static class WorkspaceDiagnosticRepairs
 {
     /// <summary>
-    /// Previews a revision-bound repair without writing files. The identity replacement causes canonical printing
-    /// of the entire touched document; other legacy forms and whitespace may change. Refuses any dropped comment,
+    /// Previews a revision-bound repair without writing files. Canonical printing can change other legacy forms
+    /// and whitespace in the touched document. Refuses any dropped comment,
     /// even outside the repair subject, and refuses formatting other than the repair's required formatting.
     /// </summary>
     /// <param name="workspace">The original workspace.</param>
@@ -58,9 +59,8 @@ public static class WorkspaceDiagnosticRepairs
         var index = WorkspaceSyntaxIndex.Create(workspace);
         var matches = index.Diagnostics.Where(diagnostic => diagnostic.Code == repair.DiagnosticCode)
             .SelectMany(diagnostic => Find(index, workspace.Revision, diagnostic))
-            .Where(candidate => candidate.Subject == repair.Subject).ToArray();
-        if (matches.Length != 1 || repair.Operations.IsDefaultOrEmpty ||
-            repair.Operations.Any(operation => operation is not ReplaceWorkspaceNode replace || replace.Target != repair.Subject || !ReferenceEquals(replace.Expected, replace.Node)))
+            .Where(candidate => candidate.Subject == repair.Subject && Matches(candidate, repair)).ToArray();
+        if (matches.Length != 1 || repair.Operations.IsDefaultOrEmpty)
         {
             return Refuse(WorkspaceConflictKind.InvalidOperation, "The diagnostic repair does not match the original workspace subject.");
         }
@@ -99,7 +99,7 @@ public static class WorkspaceDiagnosticRepairs
     public static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic)
     {
         ArgumentNullException.ThrowIfNull(index);
-        if (diagnostic is null || diagnostic.Code != DiagnosticCodes.LegacyInlineCodeFence)
+        if (diagnostic is null)
         {
             return [];
         }
@@ -107,6 +107,16 @@ public static class WorkspaceDiagnosticRepairs
         // PLAY0397 also covers bare description fences and legacy handler language lines. Only the
         // 'validate csharp' form has a unique CodeValidateSyntax subject at the warning's position.
         if (!index.Diagnostics.Any(item => item.Code == diagnostic.Code && item.Location == diagnostic.Location))
+        {
+            return [];
+        }
+
+        if (diagnostic.Code == DiagnosticCodes.UnknownEvent || diagnostic.Code == DiagnosticCodes.OmittedProductionDestination)
+        {
+            return WorkspaceProductionRepairs.Find(index, revision, diagnostic);
+        }
+
+        if (diagnostic.Code != DiagnosticCodes.LegacyInlineCodeFence)
         {
             return [];
         }
@@ -122,6 +132,33 @@ public static class WorkspaceDiagnosticRepairs
             diagnostic.Code,
             subject.Handle,
             [new ReplaceWorkspaceNode(subject.Handle, subject.Node, subject.Node)])];
+    }
+
+    static bool Matches(WorkspaceDiagnosticRepair candidate, WorkspaceDiagnosticRepair selected)
+    {
+        if (candidate.RequiredFormatting != selected.RequiredFormatting || selected.Operations.IsDefault || candidate.Operations.Length != selected.Operations.Length)
+        {
+            return false;
+        }
+
+        try
+        {
+            return candidate.Operations.Zip(selected.Operations).All(pair => (pair.First, pair.Second) switch
+            {
+                (AddWorkspaceNode left, AddWorkspaceNode right) => left.Parent == right.Parent && left.Member == right.Member && left.Index == right.Index &&
+                    SyntaxJson.StructurallyEqual(left.ExpectedParent, right.ExpectedParent) && SyntaxJson.StructurallyEqual(left.Node, right.Node),
+                (ReplaceWorkspaceNode left, ReplaceWorkspaceNode right) => left.Target == right.Target &&
+                    SyntaxJson.StructurallyEqual(left.Expected, right.Expected) && SyntaxJson.StructurallyEqual(left.Node, right.Node),
+                (RemoveWorkspaceNode left, RemoveWorkspaceNode right) => left.Target == right.Target && SyntaxJson.StructurallyEqual(left.Expected, right.Expected),
+                (MoveWorkspaceNode left, MoveWorkspaceNode right) => left.Target == right.Target && left.Parent == right.Parent && left.Member == right.Member && left.Index == right.Index &&
+                    SyntaxJson.StructurallyEqual(left.Expected, right.Expected) && SyntaxJson.StructurallyEqual(left.ExpectedParent, right.ExpectedParent),
+                _ => false
+            });
+        }
+        catch (InvalidSyntaxJson)
+        {
+            return false;
+        }
     }
 
     static WorkspaceAuthoringResult Refuse(WorkspaceConflictKind kind, string message) => new()

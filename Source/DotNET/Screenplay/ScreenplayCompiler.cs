@@ -41,7 +41,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
         var context = new ParserContext(new(lines), languages: languages);
         var application = SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines), lines);
         ScreenplayValidator.Validate(application, context);
-        return new(application, context.Diagnostics);
+        return new(application, [.. context.Diagnostics, .. ProductionDestinationDiagnostics.In(application)]);
     }
 
     /// <inheritdoc/>

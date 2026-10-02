@@ -1,0 +1,123 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Collections.Immutable;
+using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Captures;
+
+namespace Cratis.Screenplay.Workspaces;
+
+internal static class WorkspaceProductionRepairs
+{
+    internal static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic)
+    {
+        var subjects = index.Entries.Where(entry => entry.Handle.Revision == revision && entry.Node is ProducesSyntax && entry.Location == diagnostic.Location).ToArray();
+        if (subjects.Length != 1 || index.Find(subjects[0].Parent!) is not { Node: CommandSyntax command } commandEntry ||
+            index.Find(commandEntry.Parent!) is not { Node: SliceSyntax } slice)
+        {
+            return [];
+        }
+
+        var subject = subjects[0];
+        var produces = (ProducesSyntax)subject.Node;
+        if (diagnostic.Code == DiagnosticCodes.OmittedProductionDestination)
+        {
+            var identifiers = command.Properties.Where(property => property.IsIdentifier && !property.Type.IsOptional && !property.Type.IsCollection).ToArray();
+            if (produces.When is not null || produces.For is not null || identifiers.Length != 1)
+            {
+                return [];
+            }
+
+            return [new(diagnostic.Code, subject.Handle, [new ReplaceWorkspaceNode(subject.Handle, produces, produces with { For = new PathExpressionSyntax(identifiers[0].Name, produces.Location) })])];
+        }
+
+        // Names resolve application-wide. Never invent a local copy of a declared/imported contract,
+        // or make another file's (or non-command producer's) missing declaration disappear implicitly.
+        if (index.Entries.Any(entry => (entry.Node is EventSyntax declared && declared.Name == produces.Event) ||
+            (entry.Node is ImportSyntax import && import.Name == produces.Event) ||
+            (entry.Node is CaptureAppendSyntax append && append.Event == produces.Event)))
+        {
+            return [];
+        }
+
+        var properties = Infer(index, command, produces);
+        if (properties is null)
+        {
+            return [];
+        }
+
+        foreach (var other in index.Entries.Where(entry => entry.Node is ProducesSyntax production && production.Event == produces.Event))
+        {
+            if (other.Handle.Document != subject.Handle.Document || index.Find(other.Parent!)?.Node is not CommandSyntax producer ||
+                Infer(index, producer, (ProducesSyntax)other.Node) is not { } inferred || !SameShape(properties, inferred))
+            {
+                return [];
+            }
+        }
+
+        return [new(diagnostic.Code, subject.Handle, [new AddWorkspaceNode(slice.Handle, slice.Node, "events", new EventSyntax(produces.Event, properties, produces.Location))])];
+    }
+
+    static PropertySyntax[]? Infer(WorkspaceSyntaxIndex index, CommandSyntax command, ProducesSyntax produces)
+    {
+        var properties = new List<PropertySyntax>();
+        foreach (var mapping in produces.Mappings)
+        {
+            if (mapping.Property.Contains('.', StringComparison.Ordinal) || properties.Exists(property => property.Name == mapping.Property))
+            {
+                return null;
+            }
+
+            var type = mapping.Source switch
+            {
+                ContextExpressionSyntax { Path: "occurred" } => new TypeRefSyntax("DateTime", false, false, mapping.Location),
+                PathExpressionSyntax path => Resolve(index, command.Properties, path.Path),
+                _ => null
+            };
+            if (type is null || !KnownType(index, type.Name))
+            {
+                return null;
+            }
+
+            properties.Add(new(mapping.Property, type, mapping.Location));
+        }
+
+        return [.. properties];
+    }
+
+    static TypeRefSyntax? Resolve(WorkspaceSyntaxIndex index, IEnumerable<PropertySyntax> properties, string path)
+    {
+        var segments = path.Split('.');
+        TypeRefSyntax? result = null;
+        for (var segment = 0; segment < segments.Length; segment++)
+        {
+            var matches = properties.Where(property => property.Name == segments[segment]).ToArray();
+            if (matches.Length != 1)
+            {
+                return null;
+            }
+
+            result = matches[0].Type;
+            if (segment < segments.Length - 1)
+            {
+                var types = index.Entries.Select(entry => entry.Node).OfType<TypeSyntax>().Where(type => type.Name == result.Name).ToArray();
+                if (result.IsCollection || result.IsOptional || types.Length != 1)
+                {
+                    return null;
+                }
+
+                properties = types[0].Properties;
+            }
+        }
+
+        return result;
+    }
+
+    static bool KnownType(WorkspaceSyntaxIndex index, string name) => ConceptSyntax.PrimitiveTypes.Contains(name) ||
+        index.Entries.Count(entry => (entry.Node is ConceptSyntax concept && concept.Name == name) || (entry.Node is TypeSyntax type && type.Name == name)) == 1;
+
+    static bool SameShape(PropertySyntax[] left, PropertySyntax[] right) => left.Length == right.Length && left.All(property =>
+        right.Any(other => other.Name == property.Name && other.Type.Name == property.Type.Name &&
+            other.Type.IsCollection == property.Type.IsCollection && other.Type.IsOptional == property.Type.IsOptional));
+}

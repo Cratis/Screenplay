@@ -2080,4 +2080,7 @@ public static class DiagnosticCodes
 
     /// <summary>A <c>when query</c> argument is not a <c>by</c> or <c>filter</c> parameter of the query.</summary>
     public const string UnknownSpecificationQueryArgument = "PLAY0468";
+
+    /// <summary>A plain production omits its destination although the command has an identifier.</summary>
+    public const string OmittedProductionDestination = "PLAY0478";
 }
