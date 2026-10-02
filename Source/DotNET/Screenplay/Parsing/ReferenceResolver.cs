@@ -84,6 +84,14 @@ internal static class ReferenceResolver
     public static Resolution Resolve(string reference, DeclarationScope from, IReadOnlyList<Declaration> declarations)
     {
         var segments = reference.Split('.', StringSplitOptions.RemoveEmptyEntries);
+
+        // A declaration that failed to parse leaves an empty name behind. It has already been reported where it
+        // was written, and it names nothing.
+        if (segments.Length == 0)
+        {
+            return new(null, []);
+        }
+
         var name = segments[^1];
         var qualifiers = segments[..^1];
 
