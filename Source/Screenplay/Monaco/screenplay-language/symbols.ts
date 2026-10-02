@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { enclosingChain, fenceMap, indentOf, withoutComment } from './document-context';
+import { fenceMap, indentOf, withoutComment } from './document-context';
 import { clauseKeywords } from './language';
 
 export interface PropertySymbol {
@@ -204,11 +204,19 @@ export function scanDocument(lines: string[]): DocumentSymbols {
         const commandMatch = trimmed.match(/^command\s+(\w+)\s*$/);
         if (commandMatch) {
             const body = collectBody(lines, fences, index, indent);
+            // The body is already comment-normalized and fence-free. Track indentation once,
+            // rather than walking back to the document root for every property-shaped line.
+            const ancestors = [indent];
+            const directChildren = body.filter(line => {
+                const childIndent = indentOf(lines[line]);
+                while (ancestors[ancestors.length - 1] >= childIndent) ancestors.pop();
+                const direct = ancestors.length === 1;
+                ancestors.push(childIndent);
+                return direct && lines[line].trim() !== 'validate csharp';
+            });
             symbols.commands.push({
                 name: commandMatch[1],
-                properties: propertiesIn(lines, body.filter(line =>
-                    enclosingChain(lines, fences, line, indentOf(lines[line]))[0] === 'command' &&
-                    lines[line].trim() !== 'validate csharp'), ['authorize', 'produces', 'reads']),
+                properties: propertiesIn(lines, directChildren, ['authorize', 'produces', 'reads']),
                 reads: body.filter((line) => !fences[line])
                     .map((line) => ({ line, match: lines[line].match(readPattern) }))
                     .filter((entry): entry is { line: number; match: RegExpMatchArray } => entry.match !== null)

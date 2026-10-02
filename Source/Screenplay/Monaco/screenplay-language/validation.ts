@@ -350,20 +350,25 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
 // This is advice, not a semantic default: accepting the typed workspace repair changes routing.
 function validateProductionDestinations(lines: string[], fences: boolean[], symbols: DocumentSymbols): ValidationIssue[] {
     const issues: ValidationIssue[] = [];
+    lines = lines.map((line, index) => fences[index] ? line : withoutComment(line));
     for (const command of symbols.commands) {
         const identifiers = command.properties.filter(property => property.isIdentifier && !property.type.endsWith('?') && !property.type.endsWith('[]'));
         if (identifiers.length !== 1) continue;
         const commandIndent = indentOf(lines[command.line]);
+        const ancestors = [commandIndent];
         for (let line = command.line + 1; line < lines.length; line++) {
-            const text = withoutComment(lines[line]).trim();
+            const text = lines[line].trim();
             if (fences[line] || text.length === 0) continue;
             const indent = indentOf(lines[line]);
             if (indent <= commandIndent) break;
+            while (ancestors[ancestors.length - 1] >= indent) ancestors.pop();
+            const direct = ancestors.length === 1;
+            ancestors.push(indent);
             const produces = text.match(/^produces\s+([A-Z]\w*)$/);
-            if (!produces || enclosingChain(lines, fences, line, indent)[0] !== 'command') continue;
+            if (!produces || !direct) continue;
             let explicit = false;
             for (let child = line + 1; child < lines.length; child++) {
-                const body = withoutComment(lines[child]).trim();
+                const body = lines[child].trim();
                 if (fences[child] || body.length === 0) continue;
                 if (indentOf(lines[child]) <= indent) break;
                 if (/^for\s+/.test(body)) explicit = true;
