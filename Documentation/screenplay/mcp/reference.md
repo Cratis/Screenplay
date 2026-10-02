@@ -253,7 +253,7 @@ references and assigned identities. It preserves trivia by default. Ambiguity,
 name capture, opaque text naming the old or new name, unsupported spans or resolver
 disagreement refuse automation. It is not global text replacement or automatic property-schema evolution.
 Event renames retain an existing `id` pin or insert the previous name by default.
-`eventNeverPersisted: true` opts out of a new pin, not an existing one. A rename
+`eventNeverPersisted: true` omits a new pin and removes a redundant pin equal to the current name; a pin naming an earlier identity is kept. A rename
 that inserts a pin also refuses comment loss or duplication.
 
 `propose-extract-inline-event` moves a declaration into its owning slice and makes

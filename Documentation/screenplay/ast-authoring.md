@@ -189,8 +189,8 @@ The default rename formatting is `PreserveTrivia`: verified byte patches retain
 comments, BOM, line endings and every byte outside the proved member spans.
 Unsupported changes require an explicit canonical formatting choice; semantic
 uncertainty cannot be waived by that choice. Event renames retain an existing `id`
-pin or insert the previous name by default. `EventNeverPersisted = true` opts out
-of a new pin only. A pin-inserting rename refuses comment loss or duplication;
+pin or insert the previous name by default. `EventNeverPersisted = true` omits a new
+pin and removes a redundant pin equal to the current name; an earlier identity pin is kept. A pin-inserting rename refuses comment loss or duplication;
 other renames retain the ordinary explicit-canonicalization contract.
 
 ## Identity continuity
