@@ -22,6 +22,12 @@ For an existing application, call `read-workspace` with `view: "documents"` and
 Use `describe-application` for the logical hierarchy rather than reconstructing
 it from directory names.
 
+## Inspect inline event declarations
+
+An event declared with `produces event` appears as an `Event` in declaration queries at its **slice-owned** address, not beneath the command. `declaration-details` exposes its typed properties and authoring documentation; the command's `produces` view retains `InlineEvent`. Reference queries include `declares` relationships from the command and slice, alongside the command's `produces` relationship. The visualization counts and draws the event like a standalone declaration.
+
+Descriptions, documentation, and optional rename-only `id` remain syntax metadata. They do not replace the workspace identity catalog or the portable hashed event contract id. Workspace repair and rename proposals remain separate, explicit transactions; querying or visualizing an inline event never applies a repair.
+
 ## Create the first typed document
 
 Call `syntax-schema` for `ApplicationSyntax`, `ModuleSyntax`, `FeatureSyntax`,

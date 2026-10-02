@@ -11,7 +11,9 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal static class InlineEventValidator
 {
-    /// <summary>Validates declarations and destinations without changing legacy production defaults.</summary>
+    /// <summary>
+    /// Validates declarations and destinations without changing legacy production defaults.
+    /// </summary>
     /// <param name="application">The application and its imports.</param>
     /// <param name="slices">All application slices.</param>
     /// <param name="context">The diagnostic sink.</param>

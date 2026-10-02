@@ -814,6 +814,24 @@ See [Specifications](specifications.md#clocks-triggers-and-captures).
 | `PLAY0467` | Warning | A `given capture` or `when capture` names a capture the application does not declare. |
 | `PLAY0468` | Error | A `when query` argument is not a `by` or `filter` parameter of the query. |
 
+## Inline event declarations and metadata
+
+See [Inline command events](commands.md#declare-an-event-inline) and [Event metadata](events.md#authoring-metadata).
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0469` | Warning (inline), information (plain) | A production copies the command identifier into payload while targeting that same identifier. Review persistence before removing the field or evolving its generation. |
+| `PLAY0470` | Error | A command targets another event source but one or more productions omit `for`. State every destination explicitly; cross-source execution is still unsupported. |
+| `PLAY0471` | Information | An event's `id` equals its current name. Remove the redundant pin. |
+| `PLAY0472` | Error | Event `id` is missing its nonempty quoted value or is repeated. |
+| `PLAY0473` | Error | An inline event name collides with a standalone declaration, import, or another inline declaration. |
+| `PLAY0474` | Error | `produces event` occurs outside a command, such as in a reaction. |
+| `PLAY0475` | Error | An inline event declares `generation` in its header or body. Extract it before evolving generations. |
+| `PLAY0476` | Error | A production supplies unescaped system-assigned `namespace`, `sequence`, `correlation`, `causation`, `causedBy`, or `occurred`, or an inline event supplies `origin`. |
+| `PLAY0477` | Error | Event documentation is not one nonempty fenced Markdown block, or is repeated. |
+
+Malformed typed mappings and duplicate destinations retain `PLAY0044` and `PLAY0193`. Descriptions retain their existing diagnostics. Event descriptions, documentation, and rename pins are authoring-only metadata (`PLAY0270`); none changes canonical ESM bytes.
+
 ## Retired codes
 
 A retired code stays out of use forever.

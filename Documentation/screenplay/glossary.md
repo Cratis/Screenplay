@@ -29,6 +29,8 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Policy** — a named authorization rule (role-based, claim-based, or custom) that commands and queries reference by name via `authorize`.
 - **Command** — an imperative intent with properties, `authorize`, `validate`, and a `produces` block declaring the events it appends.
 - **Event** — a past-tense fact declaration: a named type and its properties.
+- **Inline event** — a slice-owned generation-1 event declared inside a command with `produces event <Name>`, with each payload property typed and mapped on one line. Extracting it to a standalone declaration in the same slice preserves identity.
+- **Event identity pin** — optional `id "<old-name>"` metadata for preserving a previously persisted event name after a rename. New events leave it absent; it does not alter the portable hashed `EventContractId`.
 - **Query** — a read-side entry point mapping identifying and filter parameters to a read-model return type (`=> ReadModel[]`), optionally with a `performer` that performs it.
 - **Observable query** — a query whose return type is qualified with `observable` (`=> observable ReadModel[]`): a live read that keeps pushing as the read model changes, rather than answering once.
 - **Performer** — the code that performs a query — an external `file` or an inline `csharp`/`sql` block. The query's counterpart to a command's `handler`.

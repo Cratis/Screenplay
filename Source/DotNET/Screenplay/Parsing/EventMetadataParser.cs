@@ -18,7 +18,9 @@ internal sealed partial class EventMetadataParser(string name)
     string? _description;
     string? _documentation;
 
-    /// <summary>Reads a metadata directive, leaving property-shaped lines to the caller.</summary>
+    /// <summary>
+    /// Reads a metadata directive, leaving property-shaped lines to the caller.
+    /// </summary>
     /// <param name="context">The parser context.</param>
     /// <param name="line">The consumed line.</param>
     /// <returns>Whether the line was a metadata directive.</returns>
@@ -73,7 +75,9 @@ internal sealed partial class EventMetadataParser(string name)
         }
     }
 
-    /// <summary>Attaches the parsed metadata to its declaration.</summary>
+    /// <summary>
+    /// Attaches the parsed metadata to its declaration.
+    /// </summary>
     /// <param name="declaration">The event declaration.</param>
     /// <returns>The event with its authoring metadata.</returns>
     public EventSyntax Apply(EventSyntax declaration) => declaration with
