@@ -148,6 +148,7 @@ files pleasant:
 | **Samples** | Hand-written applications, from a one-file starter to multi-module folders — every construct in use, all verified by the specs | [`Samples`](Samples) |
 | **`Cratis.Screenplay`** | The .NET compiler — parsing, the shared syntax tree, [visitors and tree traversal](Documentation/screenplay/visitors.md), diagnostics, file/folder compilation, and the versioned executable semantic model foundation | [`Source/DotNET/Screenplay`](Source/DotNET/Screenplay) |
 | **`Cratis.Screenplay.Tool`** | The `screenplay` CLI (a dotnet tool) — verifies `.play` files and exposes syntax and workspace tools over MCP | [`Source/DotNET/Tool`](Source/DotNET/Tool) |
+| **`cratis/screenplay`** | The same CLI and MCP server as a Docker image — `docker run -i --rm -v "$PWD/specifications:/model" cratis/screenplay mcp /model` | [`Dockerfile`](Dockerfile) |
 | **`@cratis/screenplay-language`** | Monaco language service — highlighting (incl. embedded C#/TS/React/HTML and PDL/CDL), IntelliSense, hover, diagnostics | [`Source/Screenplay/Monaco/screenplay-language`](Source/Screenplay/Monaco/screenplay-language) |
 | **`screenplay-editor`** | A standalone editor host for writing `.play` files right in the browser | [`Source/Screenplay/Monaco/screenplay-editor`](Source/Screenplay/Monaco/screenplay-editor) |
 | **`screenplay` (VS Code extension)** | The same language support in VS Code — `.play` files even get the Cratis icon | [`Source/Screenplay/VSCodeExtension`](Source/Screenplay/VSCodeExtension) |
@@ -171,7 +172,7 @@ dotnet add package Cratis.Screenplay
 ```
 
 For AI clients, [install the stdio MCP server](Documentation/screenplay/mcp/install.md) from the
-same tool package and connect Claude Code, Codex, VS Code or Claude Desktop. Navigate large
+`cratis/screenplay` Docker image (or the tool package) and connect Claude Code, Codex, VS Code or Claude Desktop. Navigate large
 split models, inspect dependencies and fixtures, draw the model as an event model board, and
 [create and edit a model with prompts](Documentation/screenplay/mcp/index.md), including
 [typed AST authoring and model-aware rename](Documentation/screenplay/mcp/authoring-tools.md).

@@ -10,11 +10,16 @@ and [Edit a model](edit.md) for prompts.
 
 ## Installation and scope
 
-The server is included in `Cratis.Screenplay.Tool`:
+The server is included in the `cratis/screenplay` Docker image and in the
+`Cratis.Screenplay.Tool` .NET tool. It runs as `screenplay mcp <root>`:
 
 ```bash
-dotnet tool install --global Cratis.Screenplay.Tool
-screenplay --version
+docker run -i --rm -v "$PWD/specifications:/model" cratis/screenplay mcp /model
+```
+
+or, with the tool installed through `dotnet tool install --global Cratis.Screenplay.Tool`:
+
+```bash
 screenplay mcp ./specifications
 ```
 
