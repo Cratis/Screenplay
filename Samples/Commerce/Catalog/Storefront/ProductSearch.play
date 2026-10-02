@@ -1,0 +1,104 @@
+slice StateView ProductSearch
+  description "Free-text product search, answered by the external search index"
+
+  // No projection or reducer points at this read model - nothing in the
+  // document builds it from events. The search index owns it, and the
+  // queries' performers read it from there.
+  readmodel ProductSearchHit
+    description "One product as the search index returns it"
+    productId ProductId
+    sku       Sku
+    name      ProductName
+    price     Money
+    inStock   Bool
+
+  query SearchProducts => ProductSearchHit[]
+    description "Products whose name or SKU matches what the customer typed, best match first"
+    filter text String?
+    authorize IsCustomer
+    performer
+      ```sql
+      select   ProductId, Sku, Name, Price, InStock
+      from     ProductSearchIndex
+      where    contains((Name, Sku), @text)
+      order by rank desc
+      ```
+
+  query SearchHitById => ProductSearchHit?
+    description "One product from the search index, for the product page"
+    by productId ProductId
+    authorize IsCustomer
+    performer
+      ```sql
+      select ProductId, Sku, Name, Price, InStock
+      from   ProductSearchIndex
+      where  ProductId = @productId
+      ```
+
+  // No 'when': the state is established directly, and the query is what is
+  // under test.
+  // Nothing builds this view from events, so reading it is the action:
+  // given what the index holds, when the customer asks, then this comes back.
+  specification OpeningAProductFromTheIndex
+    given caller
+      authenticated
+      role "Customer"
+    given readmodel ProductSearchHit
+      productId = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      sku       = "MUG-0042"
+      name      = "Stoneware mug"
+      price     = 12.5
+      inStock   = true
+    when query SearchHitById
+      productId = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+    then result
+      sku     = "MUG-0042"
+      name    = "Stoneware mug"
+      inStock = true
+
+  specification SearchingByName
+    given caller
+      authenticated
+      role "Customer"
+    given readmodel ProductSearchHit
+      productId = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      sku       = "MUG-0042"
+      name      = "Stoneware mug"
+      price     = 12.5
+      inStock   = true
+    when query SearchProducts
+      text = "mug"
+    then result
+      sku  = "MUG-0042"
+      name = "Stoneware mug"
+
+  specification LookingUpAProductTheIndexDoesNotHold
+    given caller
+      authenticated
+      role "Customer"
+    when query SearchHitById
+      productId = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e09"
+    then no result
+
+  // The storefront is for customers: a warehouse clerk is turned away.
+  specification AWarehouseClerkCannotSearchTheStorefront
+    given caller
+      authenticated
+      role "WarehouseClerk"
+    when query SearchHitById
+      productId = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+    then denied
+
+  // Shoppers land here; picking a product starts an order in the Ordering
+  // module - a navigation across modules, resolved by name.
+  screen ProductSearch
+    title $strings.storefront.title
+    data ProductSearchHit[] via query SearchProducts
+    section results
+      table ProductSearchHit
+        column name    label "Product"
+        column price   label "Price"
+        column inStock label "In stock"
+        on row-click navigate to PlaceOrderScreen by productId
+    on enter
+      refresh SearchProducts

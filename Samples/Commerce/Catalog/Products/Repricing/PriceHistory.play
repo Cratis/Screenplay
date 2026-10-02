@@ -1,0 +1,80 @@
+slice StateView PriceHistory
+  description "How each product's price has moved since it was registered"
+
+  readmodel ProductPricing
+    productId     ProductId
+    name          ProductName
+    launchPrice   Money
+    currentPrice  Money
+    priceChanges  Int
+
+  query PricingOverview => ProductPricing[]
+    description "Every product's launch and current price, for spotting drift"
+    authorize IsMerchandiser
+
+  query PricingForProduct => ProductPricing?
+    description "One product's pricing history"
+    by productId ProductId
+    authorize IsMerchandiser
+
+  // Counters are part of the projection language: 'increment' keeps a
+  // running count without any code.
+  projection PriceHistory => ProductPricing
+    from ProductRegistered
+      productId    = $eventSourceId
+      name         = name
+      launchPrice  = price
+      currentPrice = price
+      priceChanges = 0
+    from ProductPriceChanged
+      currentPrice = newPrice
+      increment priceChanges
+
+  specification CountingPriceChanges
+    given caller
+      authenticated
+      role "Merchandiser"
+    given ProductRegistered
+      for "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      sku    = "MUG-0042"
+      name   = "Stoneware mug"
+      price  = 12.5
+      weight = 0.4
+    given ProductPriceChanged
+      for "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      newPrice = 13.0
+    when append ProductPriceChanged
+      for "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      newPrice = 14.0
+    then readmodel ProductPricing
+      productId    = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      launchPrice  = 12.5
+      currentPrice = 14.0
+      priceChanges = 2
+    then query PricingForProduct
+      arguments
+        productId = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      result
+        name         = "Stoneware mug"
+        currentPrice = 14.0
+        priceChanges = 2
+
+  screen PriceHistory
+    template CatalogWorkspace
+      sidebar
+        section explanation
+          title "Price history"
+          ```html
+          <p>Launch price is what a product was registered at. Drift shows how far it has moved since.</p>
+          ```
+      main
+        data ProductPricing[] via query PricingOverview
+        section pricing
+          table ProductPricing
+            column name         label "Product"
+            column launchPrice  label "Launch price"
+            column currentPrice label "Current price"
+            column priceChanges label "Changes"
+            on row-click navigate to ChangeProductPriceScreen by productId
+    on enter
+      refresh PricingOverview

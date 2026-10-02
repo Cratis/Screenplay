@@ -1,0 +1,12 @@
+// Every query here is for the support desk, so the feature says so once -
+// ANDed with the module gate and each query's own gate.
+feature Support
+  description "The support desk's view of every order"
+  authorize IsSupportAgent
+
+  contribute to Navigation
+    navigate to OrderDetails
+    label $strings.navigation.support
+    order 50
+
+  import "*.play"

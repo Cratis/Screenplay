@@ -1,0 +1,147 @@
+// The manager's board: every week in exactly one column - in progress,
+// waiting for approval, approved, or returned.
+
+slice StateView TimesheetBoard
+  description "Every week on a board, in exactly one column"
+
+  readmodel DraftTimesheet
+    timesheetId  TimesheetId
+    consultantId ConsultantId
+    year         TimesheetYear
+    week         WeekNumber
+    entries      Int
+
+  readmodel SubmittedTimesheet
+    timesheetId  TimesheetId
+    consultantId ConsultantId
+    totalHours   WeeklyHours
+
+  readmodel ApprovedTimesheet
+    timesheetId  TimesheetId
+    consultantId ConsultantId
+    totalHours   WeeklyHours
+    approvedBy   String
+
+  readmodel ReturnedTimesheet
+    timesheetId TimesheetId
+    reason      RejectionReason
+
+  // The first query decides whose row the board's screen is drawn on.
+  query SubmittedTimesheets => observable SubmittedTimesheet[]
+    description "Weeks waiting for approval, kept current as consultants submit"
+    authorize IsEngagementManager
+
+  query DraftTimesheets => observable DraftTimesheet[]
+    authorize IsEngagementManager
+
+  query ApprovedTimesheets => ApprovedTimesheet[]
+    authorize IsEngagementManager
+
+  query ReturnedTimesheets => ReturnedTimesheet[]
+    authorize IsEngagementManager
+
+  query SubmittedTimesheetById => SubmittedTimesheet?
+    by timesheetId TimesheetId
+    authorize IsEngagementManager
+
+  query DraftTimesheetById => DraftTimesheet?
+    by timesheetId TimesheetId
+    authorize IsEngagementManager
+
+  query ApprovedTimesheetById => ApprovedTimesheet?
+    by timesheetId TimesheetId
+    authorize IsEngagementManager
+
+  query ReturnedTimesheetById => ReturnedTimesheet?
+    by timesheetId TimesheetId
+    authorize IsEngagementManager
+
+  // Variants: a week is in one of these at a time. Entering one removes it from
+  // the others - no 'remove with' is written for that.
+  projection TimesheetLifecycle
+    variant DraftTimesheet
+      enters on TimesheetStarted key timesheetId
+      // Update-only: a recorded day never creates a draft on its own.
+      from TimeRecorded key timesheetId
+        increment entries
+
+    variant SubmittedTimesheet
+      enters on TimesheetSubmitted key timesheetId
+
+    variant ApprovedTimesheet
+      enters on TimesheetApproved key timesheetId
+
+    variant ReturnedTimesheet
+      enters on TimesheetRejected key timesheetId
+
+  screen ApprovalBoard
+    title $strings.timesheets.board.title
+    section submitted
+      title $strings.timesheets.board.submitted
+      data SubmittedTimesheet[] via query SubmittedTimesheets
+      table submitted
+        column consultantId label $strings.timesheets.fields.consultant
+        column totalHours   label $strings.timesheets.fields.totalHours
+        on row-click navigate to ApproveTimesheetDialog by timesheetId
+      action RejectTimesheet
+        label $strings.timesheets.reject.action
+        navigate to RejectTimesheetDialog
+    section drafts
+      title $strings.timesheets.board.drafts
+      data DraftTimesheet[] via query DraftTimesheets
+      table drafts
+        column consultantId label $strings.timesheets.fields.consultant
+        column week         label $strings.timesheets.fields.week
+        column entries      label $strings.timesheets.fields.entries
+    section approved
+      title $strings.timesheets.board.approved
+      data ApprovedTimesheet[] via query ApprovedTimesheets
+      table approved
+        column consultantId label $strings.timesheets.fields.consultant
+        column totalHours   label $strings.timesheets.fields.totalHours
+    section returned
+      title $strings.timesheets.board.returned
+      data ReturnedTimesheet[] via query ReturnedTimesheets
+      table returned
+        column reason label $strings.timesheets.fields.reason
+
+  specification SubmittingMovesAWeekIntoReview
+    given caller
+      authenticated
+      role "EngagementManager"
+    given TimesheetStarted
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    when append TimesheetSubmitted
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 37.5
+    then readmodel SubmittedTimesheet
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      totalHours  = 37.5
+    then no readmodel DraftTimesheet for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+    then query SubmittedTimesheetById
+      arguments
+        timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      result
+        consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+
+  specification ApprovingTakesAWeekOffTheQueue
+    given caller
+      authenticated
+      role "EngagementManager"
+    given TimesheetSubmitted
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 37.5
+    when append TimesheetApproved
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      totalHours   = 37.5
+      approvedBy   = "kari.nordmann"
+    then readmodel ApprovedTimesheet
+      timesheetId = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      approvedBy  = "kari.nordmann"
+    then no readmodel SubmittedTimesheet for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"

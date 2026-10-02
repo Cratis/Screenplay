@@ -1,0 +1,67 @@
+// Hours add up per engagement - what managers bill and payroll reconciles.
+
+slice StateView HoursByEngagement
+  description "Hours logged per engagement"
+
+  readmodel EngagementHours
+    engagementId   EngagementId
+    totalHours     Decimal
+    entries        Int
+    lastRecordedOn WorkDate?
+
+  query HoursByEngagement => EngagementHours[]
+    description "Every engagement's logged hours, for invoicing and payroll reconciliation"
+    authorize IsEngagementManager or IsPayrollOfficer
+
+  query EngagementHoursById => EngagementHours?
+    by engagementId EngagementId
+    authorize IsEngagementManager or IsPayrollOfficer
+
+  // Keyed by a property of the event rather than its event source: the facts
+  // land on timesheets, the view is per engagement.
+  projection HoursByEngagement => EngagementHours
+    from TimeRecorded key engagementId
+      add totalHours by hours
+      count entries
+      lastRecordedOn = workDate
+
+  screen EngagementHoursScreen
+    title $strings.timesheets.hours.title
+    data EngagementHours[] via query HoursByEngagement
+    section engagements
+      table engagements
+        column engagementId   label $strings.timesheets.fields.engagement
+        column totalHours     label $strings.timesheets.fields.totalHours
+        column lastRecordedOn label $strings.timesheets.fields.lastRecorded
+
+  specification SummingHoursAcrossTimesheets
+    given caller
+      authenticated
+      role "PayrollOfficer"
+      claim "department" = "Finance"
+    given TimeRecorded
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      workDate     = "2026-09-28"
+      hours        = 7.5
+      activity     = "DEV-01"
+      billing      = "billable"
+      note         = "Data mapping workshop"
+    when append TimeRecorded
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a42"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      workDate     = "2026-09-29"
+      hours        = 2
+      activity     = "QA-01"
+      billing      = "billable"
+      note         = "Test plan review"
+    then readmodel EngagementHours
+      engagementId   = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      totalHours     = 9.5
+      entries        = 2
+      lastRecordedOn = "2026-09-29"
+    then query EngagementHoursById
+      arguments
+        engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      result
+        totalHours = 9.5

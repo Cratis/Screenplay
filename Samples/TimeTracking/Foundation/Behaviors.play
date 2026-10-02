@@ -1,0 +1,19 @@
+// Named behaviors - interaction wiring declared once and attached with 'uses'.
+// Each attachment site fills the parameters.
+
+behavior ConfirmThenExecute
+  description "Asks before running a command that cannot be taken back"
+  parameter command
+  parameter message
+
+  on click
+    confirm message
+      on success
+        execute command
+
+behavior RefreshOnEnter
+  description "Re-reads a query whenever the screen is navigated to"
+  parameter view
+
+  on enter
+    refresh view

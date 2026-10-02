@@ -1,0 +1,21 @@
+// ============================================================
+// TimeTracking - the root of the application
+//
+// A consultancy's time tracking: engagements are opened and staffed,
+// consultants record their hours week by week, managers approve the
+// weeks, and approved hours flow on to payroll.
+//
+// This file is the whole application, and it says so in one line:
+// it imports every .play file beneath it. That glob matches the slice
+// files too, but a file is compiled once however many imports match
+// it, and the deepest placement wins - so each module file's
+// 'feature ... import "<Feature>/*.play"' still places its step files
+// inside that feature. Everything else lands at the top level: the
+// Foundation files and the module files themselves.
+//
+//   screenplay Samples/TimeTracking/timetracking.play
+// ============================================================
+
+domain Consultancy.TimeTracking
+
+import "**/*.play"

@@ -1,0 +1,40 @@
+// The Ordering module. Its gate ANDs onto every command and query beneath
+// it, so every persona here needs IsAuthenticated as well as the policy of
+// the slice it uses.
+module Ordering
+  description
+    ```text
+    Orders from the moment a customer places one until the payment
+    provider settles it - and the support desk that looks after them.
+    ```
+  authorize IsAuthenticated
+
+  screen template OrderWorkspace
+    fits slot content
+
+    summary
+    details
+
+    arrangement flow
+      column gap 12
+        summary
+        details grow
+
+  dialog template OrderDialog
+    body
+    actions
+
+  form PlaceOrderForm for PlaceOrder
+    field lines           label "Items"
+    field shippingAddress label "Deliver to"
+    on submit navigate to MyOrders
+
+  // Opened from a row of an order list, so it starts from that row.
+  form CancelOrderForm for CancelOrder
+    populate from item
+    field reason label "Why are you cancelling?"
+    on submit navigate to MyOrders
+
+  import "Orders/Orders.play"
+  import "Payments/Payments.play"
+  import "Support/Support.play"

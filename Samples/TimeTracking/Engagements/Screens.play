@@ -1,0 +1,65 @@
+// The Engagements module's screen furniture. Placed by the module file's
+// 'import "Screens.play"', so its top level is the module body.
+
+// A responsive list/details shape that fills the shell's 'content' slot.
+screen template Workspace
+  fits slot content
+
+  list
+  details
+
+  arrangement flow
+    row gap 16
+      list width 360
+      details grow
+
+    when width compact
+      column
+        list
+        details
+
+// A pixel-placed dashboard: one variant per size class, purely for placement.
+// The compact variant hides the chart rather than squeezing it.
+screen template PortfolioDashboard
+  fits slot content
+
+  headline
+  utilization
+  roster
+
+  arrangement freeform
+    variant width regular, height regular
+      place headline    at 0,0     size fill,72
+      place utilization at 0,72    size 480,fill
+      place roster      at 480,72  size fill,fill
+
+    variant width compact, height regular
+      place headline    at 0,0   size fill,56
+      place roster      at 0,56  size fill,fill
+      place utilization hidden
+
+dialog template EditorDialog
+  body
+  actions
+
+// A form is the input surface of one command, found wherever that command is
+// an action - no screen names it.
+form OpenEngagementForm for OpenEngagement
+  field clientName label $strings.engagements.fields.client
+  field name       label $strings.engagements.fields.name
+  field hourlyRate label $strings.engagements.fields.rate
+  field billing    label $strings.engagements.fields.billing
+  on submit navigate to EngagementPortfolioScreen
+
+form AssignConsultantForm for AssignConsultant
+  populate via query EngagementById by engagementId
+  field consultantId
+  field contact      compose using BuildConsultantContact
+  field hourlyRate   label $strings.engagements.fields.rate
+  on submit navigate to EngagementPortfolioScreen
+
+// The module's entry in the shell's navigation slot.
+contribute to Navigation
+  navigate to EngagementPortfolioScreen
+  label $strings.navigation.engagements
+  order 10

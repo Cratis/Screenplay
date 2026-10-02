@@ -1,0 +1,97 @@
+slice StateView ProductList
+  description "Every product in the catalog, as merchandisers manage it"
+
+  readmodel ProductListItem
+    description "One row per product in the merchandiser's catalog list"
+    productId    ProductId
+    sku          Sku
+    name         ProductName
+    price        Money
+    discontinued Bool
+
+  // A live list - new products appear without the merchandiser asking again.
+  query AllProducts => observable ProductListItem[]
+    description "Every product, discontinued ones included, for the catalog list"
+    authorize IsMerchandiser
+
+  // The keyed query is what identifies a ProductListItem in specifications.
+  query ProductById => ProductListItem?
+    description "One product, as the price form is populated from it"
+    by productId ProductId
+    authorize IsMerchandiser
+
+  // The price and discontinuation facts come from other slices' files -
+  // the folder merges into one document before anything resolves.
+  projection ProductList => ProductListItem
+    from ProductRegistered
+      productId    = $eventSourceId
+      sku          = sku
+      name         = name
+      price        = price
+      discontinued = false
+    from ProductPriceChanged
+      price = newPrice
+    from ProductDiscontinued
+      discontinued = true
+
+  specification RepricingAListedProduct
+    given caller
+      authenticated
+      role "Merchandiser"
+    given ProductRegistered
+      for "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      sku    = "MUG-0042"
+      name   = "Stoneware mug"
+      price  = 12.5
+      weight = 0.4
+    when append ProductPriceChanged
+      for "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      newPrice = 14.0
+    then readmodel ProductListItem
+      productId    = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      sku          = "MUG-0042"
+      price        = 14.0
+      discontinued = false
+    then query ProductById
+      arguments
+        productId = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01"
+      result
+        name  = "Stoneware mug"
+        price = 14.0
+
+  specification ListingADiscontinuedProduct
+    given caller
+      authenticated
+      role "Merchandiser"
+    given ProductRegistered
+      for "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e02"
+      sku    = "TEE-1001"
+      name   = "Organic cotton tee"
+      price  = 24.0
+      weight = 0.2
+    when append ProductDiscontinued
+      for "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e02"
+      reason = "Replaced by the heavyweight tee"
+    then readmodel ProductListItem
+      productId    = "6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e02"
+      discontinued = true
+
+  screen ProductList
+    template CatalogWorkspace
+      sidebar
+        section actions
+          title "Catalog"
+          action RegisterProduct
+            label "Register product"
+            navigate to RegisterProductScreen
+      main
+        data ProductListItem[] via query AllProducts
+        section products
+          table ProductListItem
+            column sku          label "SKU"
+            column name         label "Product"
+            column price        label "Price"
+            column discontinued label "Discontinued"
+            on row-click navigate to ChangeProductPriceScreen by productId
+    on enter
+      refresh AllProducts

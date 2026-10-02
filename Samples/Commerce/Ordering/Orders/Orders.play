@@ -1,0 +1,9 @@
+feature Orders
+  description "Placing orders, cancelling them, and following their progress"
+
+  contribute to Navigation
+    navigate to MyOrders
+    label $strings.navigation.myOrders
+    order 40
+
+  import "*.play"

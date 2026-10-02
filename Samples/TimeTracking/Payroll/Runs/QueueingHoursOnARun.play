@@ -1,0 +1,75 @@
+// One approved week goes onto a payroll run - by hand here, or from the
+// automation in Handover/QueueingApprovedWeeks.play.
+
+slice StateChange AddHoursToPayroll
+  description "Puts one approved week on a payroll run"
+
+  command AddHoursToPayroll
+    payrollRunId PayrollRunId identifier
+    timesheetId  TimesheetId
+    consultantId ConsultantId
+    hours        WeeklyHours
+
+    validate
+      hours > 0  message "Only hours worked can be paid out"
+
+    produces HoursAddedToPayroll
+      for payrollRunId
+      payrollRunId = payrollRunId
+      timesheetId  = timesheetId
+      consultantId = consultantId
+      hours        = hours
+
+  event HoursAddedToPayroll
+    payrollRunId PayrollRunId
+    timesheetId  TimesheetId
+    consultantId ConsultantId
+    hours        WeeklyHours
+
+  screen AddHoursDialog
+    template PayrollDialog
+      body
+        title $strings.payroll.add.title
+      actions
+        action AddHoursToPayroll
+          label $strings.payroll.add.action
+
+  specification AddingAWeekToARun
+    given caller
+      authenticated
+      role "PayrollOfficer"
+      claim "department" = "Finance"
+    when AddHoursToPayroll
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      hours        = 37.5
+    then HoursAddedToPayroll
+      for "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      hours        = 37.5
+
+  specification RejectingAnEmptyWeek
+    given caller
+      authenticated
+      role "PayrollOfficer"
+      claim "department" = "Finance"
+    when AddHoursToPayroll
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      hours        = 0
+    then error "Only hours worked can be paid out"
+
+  specification ManagersCannotTouchPayroll
+    given caller
+      authenticated
+      role "EngagementManager"
+    when AddHoursToPayroll
+      payrollRunId = "5b3a1c9e-7d2f-4a6b-9c8e-0f1a2b3c4d51"
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      hours        = 37.5
+    then denied

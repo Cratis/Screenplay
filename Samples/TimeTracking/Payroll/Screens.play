@@ -1,0 +1,22 @@
+// The Payroll module's screen furniture, placed in the module by the module
+// file's 'import "Screens.play"'.
+
+screen template Ledger
+  fits slot content
+
+  overview
+  lines
+
+  arrangement flow
+    column gap 16
+      overview height 120
+      lines grow
+
+dialog template PayrollDialog
+  body
+  actions
+
+contribute to Navigation
+  navigate to PayrollRunsScreen
+  label $strings.navigation.payroll
+  order 40

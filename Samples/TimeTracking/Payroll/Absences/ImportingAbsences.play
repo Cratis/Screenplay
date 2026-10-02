@@ -1,0 +1,89 @@
+// The HR system reports an absence; it enters this application as a fact.
+
+slice Translate ImportAbsences
+  description "Reads absences from the HR system as facts of this application"
+
+  // Change data capture: the HR system is polled. A new absence becomes an
+  // AbsenceReported; a change to its length becomes an AbsenceAdjusted.
+  capture HrAbsenceCapture
+    source api
+      api HrSystemApi
+      route /absences
+      poll 15m
+    key id
+    map
+      kind = type translate
+        "sick"     => sickLeave
+        "ferie"    => vacation
+        "foreldre" => parentalLeave
+    append AbsenceReported
+      when added
+        absenceId     = $.id
+        consultantId  = $.employeeId
+        payrollNumber = $.payrollNumber
+        kind          = $.kind
+        firstDay      = $.from
+        days          = $.days
+    append AbsenceAdjusted
+      when days
+        absenceId = $.id
+        days      = $.days
+
+  event AbsenceReported
+    absenceId     AbsenceId
+    consultantId  ConsultantId
+    payrollNumber PayrollNumber
+    kind          AbsenceKind
+    firstDay      WorkDate
+    days          Int
+
+  event AbsenceAdjusted
+    absenceId AbsenceId
+    days      Int
+
+  // The lines under 'when capture' are the source record, named as the HR
+  // system names them - 'type' is translated into an AbsenceKind.
+  specification ImportingReportedSickLeave
+    // Another consultant's vacation is already known - an unchanged record appends nothing.
+    given capture HrAbsenceCapture
+      id            = "5b7d9f1a-3c4e-4a6b-8d0f-1a3c5e7a9b02"
+      employeeId    = "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+      payrollNumber = "PR-10388"
+      type          = "ferie"
+      from          = "2026-10-12"
+      days          = 5
+    when capture HrAbsenceCapture
+      id            = "3d5f7a9b-1c2e-4f6a-8b0c-2d4e6f8a0b61"
+      employeeId    = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      payrollNumber = "PR-10421"
+      type          = "sick"
+      from          = "2026-10-05"
+      days          = 2
+    then AbsenceReported
+      absenceId     = "3d5f7a9b-1c2e-4f6a-8b0c-2d4e6f8a0b61"
+      consultantId  = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      payrollNumber = "PR-10421"
+      kind          = "sickLeave"
+      firstDay      = "2026-10-05"
+      days          = 2
+
+  // 'given capture' is the record the source held before, so the change to
+  // 'days' has something to change from.
+  specification ImportingALongerAbsence
+    given capture HrAbsenceCapture
+      id            = "3d5f7a9b-1c2e-4f6a-8b0c-2d4e6f8a0b61"
+      employeeId    = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      payrollNumber = "PR-10421"
+      type          = "sick"
+      from          = "2026-10-05"
+      days          = 2
+    when capture HrAbsenceCapture
+      id            = "3d5f7a9b-1c2e-4f6a-8b0c-2d4e6f8a0b61"
+      employeeId    = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      payrollNumber = "PR-10421"
+      type          = "sick"
+      from          = "2026-10-05"
+      days          = 4
+    then AbsenceAdjusted
+      absenceId = "3d5f7a9b-1c2e-4f6a-8b0c-2d4e6f8a0b61"
+      days      = 4

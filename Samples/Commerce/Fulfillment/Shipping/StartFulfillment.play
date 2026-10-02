@@ -1,0 +1,32 @@
+slice Automation StartFulfillment
+  description "A paid order goes into the warehouse's queue"
+
+  event ShipmentRequested
+    orderId    OrderId
+    amountPaid Money
+
+  // OrderPaid is declared in the Ordering module's Payments feature - a
+  // different module, a different file, the same application.
+  reaction FulfillmentStarter
+    description "Requests a shipment for every order the moment it is paid"
+    when OrderPaid
+      orderId
+      amount
+      produces ShipmentRequested
+        for orderId
+        orderId    = orderId
+        amountPaid = amount
+
+  specification APaidOrderIsQueuedForShipping
+    given OrderPlaced
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      customerId      = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      lines           = [{"productId":"6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01","sku":"MUG-0042","quantity":2,"unitPrice":12.5}]
+      shippingAddress = {"recipient":"Ada Lovelace","street":"12 Analytical Way","postalCode":"0150","city":"Oslo","country":"NO"}
+    when append OrderPaid
+      orderId          = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      amount           = 25.0
+      paymentReference = "PSP-7731-0042"
+    then ShipmentRequested
+      orderId    = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      amountPaid = 25.0

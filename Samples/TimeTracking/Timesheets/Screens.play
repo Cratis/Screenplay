@@ -1,0 +1,47 @@
+// The Timesheets module's screen furniture, placed in the module by the module
+// file's 'import "Screens.play"'.
+
+// A week on one screen. The toolbar slot is a module-level contribution point:
+// features add their buttons to it without the template knowing them.
+screen template WeekView
+  fits slot content
+
+  toolbar contributes TimesheetActions
+  days
+  totals
+
+  arrangement flow
+    column gap 12
+      toolbar height 48
+      row gap 16
+        days grow
+        totals width 280
+
+    when width compact
+      column gap 8
+        toolbar height 48
+        totals
+        days grow
+
+dialog template TimesheetDialog
+  body
+  actions
+
+form RecordTimeForm for RecordTime
+  populate via query TimesheetById by timesheetId
+  field engagementId label $strings.timesheets.fields.engagement
+  field workDate     label $strings.timesheets.fields.date
+  field hours        label $strings.timesheets.fields.hours
+  field activity     label $strings.timesheets.fields.activity
+  field billing      label $strings.timesheets.fields.billing
+  field note         label $strings.timesheets.fields.note
+
+form RejectTimesheetForm for RejectTimesheet
+  populate from item
+  field reason label $strings.timesheets.fields.reason
+  on submit navigate to ApprovalBoard
+
+contribute to Navigation
+  navigate to MyTimesheetsScreen
+  label $strings.navigation.timesheets
+  order 20

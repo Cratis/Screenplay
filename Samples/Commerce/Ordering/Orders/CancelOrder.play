@@ -1,0 +1,74 @@
+slice StateChange CancelOrder
+  description "Cancels an order before it ships - by the customer, or by support on their behalf"
+
+  command CancelOrder
+    orderId OrderId identifier
+    reason  String
+
+    // One policy that two personas hold: Customer and SupportAgent both see this screen.
+    authorize CanCancelOrder
+
+    validate
+      reason not empty  message "Tell us why the order is cancelled"
+      reason max 500    message "Keep the reason under 500 characters"
+
+    produces OrderCancelled
+      for orderId
+      reason      = reason
+      cancelledAt = $context.occurred
+
+  event OrderCancelled
+    reason      String
+    cancelledAt DateTime
+
+  constraint OrderCancelledOnce
+    unique event OrderCancelled
+
+  specification SupportCancellingOnBehalfOfACustomer
+    given caller
+      authenticated
+      role "SupportAgent"
+    // The clock fixes $context.occurred, so the cancellation time can be asserted.
+    given clock "2026-10-05T09:15:00Z"
+    given OrderPlaced
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      customerId      = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+      lines           = [{"productId":"6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01","sku":"MUG-0042","quantity":2,"unitPrice":12.5}]
+      shippingAddress = {"recipient":"Ada Lovelace","street":"12 Analytical Way","postalCode":"0150","city":"Oslo","country":"NO"}
+    when CancelOrder
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      reason  = "Ordered the wrong color"
+    then OrderCancelled
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      reason      = "Ordered the wrong color"
+      cancelledAt = "2026-10-05T09:15:00.0000000Z"
+
+  specification RejectingACancellationWithoutAReason
+    given caller
+      authenticated
+      role "Customer"
+    when CancelOrder
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      reason  = ""
+    then error "Tell us why the order is cancelled"
+
+  specification AWarehouseClerkCannotCancelOrders
+    given caller
+      authenticated
+      role "WarehouseClerk"
+    when CancelOrder
+      orderId = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      reason  = "Out of stock"
+    then denied
+
+  screen CancelOrderScreen
+    template OrderDialog
+      body
+        title "Cancel order"
+      actions
+        action CancelOrder
+          label "Cancel order"
+          navigate to MyOrders
+    uses ConfirmDestructive
+      command CancelOrder
+      message $strings.orders.confirmCancel

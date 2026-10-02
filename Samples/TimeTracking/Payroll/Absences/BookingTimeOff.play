@@ -1,0 +1,57 @@
+// A reported absence is translated into time off on the consultant's calendar.
+
+slice Translate BookTimeOff
+  description "Books reported absence as time off, in the timesheet's vocabulary"
+
+  reaction BookTimeOff
+    description "Books reported absence as time off on the consultant's calendar"
+    when AbsenceReported
+      absenceId
+      consultantId
+      kind
+      firstDay
+      days
+      produces TimeOffBooked
+        for absenceId
+        absenceId    = absenceId
+        consultantId = consultantId
+        kind         = kind
+        firstDay     = firstDay
+        days         = days
+    // Parental leave is booked by HR directly; only the rest is translated here.
+    where kind != "parentalLeave"
+
+  event TimeOffBooked
+    absenceId    AbsenceId
+    consultantId ConsultantId
+    kind         AbsenceKind
+    firstDay     WorkDate
+    days         Int
+
+  // Driven from the HR system's record: the capture appends AbsenceReported,
+  // and the translation books the time off.
+  specification BookingReportedSickLeave
+    // Another consultant's vacation is already known - an unchanged record appends nothing.
+    given capture HrAbsenceCapture
+      id            = "5b7d9f1a-3c4e-4a6b-8d0f-1a3c5e7a9b02"
+      employeeId    = "6fa459ea-ee8a-4ca4-894e-db77e160355e"
+      payrollNumber = "PR-10388"
+      type          = "ferie"
+      from          = "2026-10-12"
+      days          = 5
+    when capture HrAbsenceCapture
+      id            = "3d5f7a9b-1c2e-4f6a-8b0c-2d4e6f8a0b61"
+      employeeId    = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      payrollNumber = "PR-10421"
+      type          = "sick"
+      from          = "2026-10-05"
+      days          = 2
+    then AbsenceReported
+      absenceId = "3d5f7a9b-1c2e-4f6a-8b0c-2d4e6f8a0b61"
+      kind      = "sickLeave"
+    then TimeOffBooked
+      absenceId    = "3d5f7a9b-1c2e-4f6a-8b0c-2d4e6f8a0b61"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      kind         = "sickLeave"
+      firstDay     = "2026-10-05"
+      days         = 2

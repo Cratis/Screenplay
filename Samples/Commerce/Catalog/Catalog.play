@@ -1,0 +1,48 @@
+// The Catalog module: what it is, the templates its screens fill and the
+// forms its commands take input through. Its features are imported inside
+// the module body, so their files need no 'module Catalog' header.
+module Catalog
+  description
+    ```text
+    What the shop sells. Merchandisers register, price and retire
+    products; customers browse and search the storefront.
+    ```
+
+  // Fits the layout's 'content' slot, declared in Shell/look.play.
+  screen template CatalogWorkspace
+    fits slot content
+
+    sidebar
+    main
+
+    arrangement flow
+      row gap 16
+        sidebar width 280
+        main grow
+
+      when width compact
+        column
+          main
+          sidebar
+
+  // A dialog opens over the application, so it fills no slot.
+  dialog template ProductDialog
+    body
+    actions
+
+  // A form is discovered by its command: any 'action RegisterProduct'
+  // renders it as its input surface.
+  form RegisterProductForm for RegisterProduct
+    field sku    label "SKU"
+    field name   label "Product name"
+    field price  label "Price"
+    field weight label "Shipping weight (kg)"
+    on submit navigate to ProductList
+
+  form ChangeProductPriceForm for ChangeProductPrice
+    populate via query ProductById by productId
+    field newPrice label "New price"
+    on submit navigate to ProductList
+
+  import "Products/Products.play"
+  import "Storefront/Storefront.play"

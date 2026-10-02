@@ -1,0 +1,31 @@
+// Monday morning: consultants who still have a week in draft get a reminder.
+
+slice Automation RemindConsultants
+  description "Nudges consultants who still have a week in draft"
+
+  reaction WeeklyTimesheetReminder
+    description "Reminds consultants with a draft week to submit it"
+    // The clock: every Monday at nine. Clock triggers carry no values.
+    at 09:00 on Monday
+      reads DraftTimesheet
+      produces TimesheetReminderIssued
+        channel    = "email"
+        remindedAt = $context.occurred
+
+  event TimesheetReminderIssued
+    channel    String
+    remindedAt DateTime
+
+  // 2026-10-05 is a Monday. 'given clock' fixes $context.occurred, so the
+  // reminder's time can be asserted; 'when clock' lets the schedule come due.
+  specification RemindingOnMondayMorning
+    given clock "2026-10-05T09:00:00Z"
+    given TimesheetStarted
+      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      year         = 2026
+      week         = 40
+    when clock "2026-10-05T09:00:00Z"
+    then TimesheetReminderIssued
+      channel    = "email"
+      remindedAt = "2026-10-05T09:00:00Z"

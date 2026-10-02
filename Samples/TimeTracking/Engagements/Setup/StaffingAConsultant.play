@@ -1,0 +1,110 @@
+// Step 2: the engagement manager staffs a consultant on the engagement.
+
+slice StateChange AssignConsultant
+  description "Staffs a consultant on an active engagement at an agreed rate"
+
+  command AssignConsultant
+    assignmentId AssignmentId identifier
+    engagementId EngagementId
+    consultantId ConsultantId
+    contact      ConsultantContact
+    hourlyRate   HourlyRate
+
+    // The command decides against state: the engagement it is staffing. The
+    // alias names that state in the rule and in the mapping below.
+    reads EngagementOverview as engagement by engagementId
+
+    authorize IsEngagementManager
+
+    validate
+      require engagement.status == "active"
+        message $strings.engagements.validation.notActive
+
+    produces ConsultantAssigned
+      for assignmentId
+      assignmentId   = assignmentId
+      engagementId   = engagementId
+      consultantId   = consultantId
+      contact        = contact
+      hourlyRate     = hourlyRate
+      engagementName = engagement.name
+
+  event ConsultantAssigned
+    assignmentId   AssignmentId
+    engagementId   EngagementId
+    consultantId   ConsultantId
+    contact        ConsultantContact
+    hourlyRate     HourlyRate
+    engagementName EngagementName
+
+  screen AssignConsultantDialog
+    template EditorDialog
+      body
+        title $strings.engagements.assign.title
+        data EngagementOverview via query EngagementById by engagementId
+      actions
+        action AssignConsultant
+          label $strings.engagements.assign.action
+
+  specification AssigningAConsultant
+    given caller
+      authenticated
+      role "EngagementManager"
+    given EngagementOpened
+      for "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      clientName   = "Northwind Freight"
+      name         = "ERP migration"
+      hourlyRate   = 1450
+      billing      = "billable"
+      openedAt     = "2026-08-31T08:00:00Z"
+    when AssignConsultant
+      assignmentId = "2c8d4e6f-0a1b-4c3d-8e5f-7a9b0c1d2e31"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      contact      = {"name":"Ingrid Solberg","email":"ingrid.solberg@fjordline.example"}
+      hourlyRate   = 1450
+    then ConsultantAssigned
+      for "2c8d4e6f-0a1b-4c3d-8e5f-7a9b0c1d2e31"
+      assignmentId   = "2c8d4e6f-0a1b-4c3d-8e5f-7a9b0c1d2e31"
+      engagementId   = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      consultantId   = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      hourlyRate     = 1450
+      engagementName = "ERP migration"
+
+  specification RejectingAnAssignmentToAClosedEngagement
+    given caller
+      authenticated
+      role "EngagementManager"
+    given EngagementOpened
+      for "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      clientName   = "Northwind Freight"
+      name         = "ERP migration"
+      hourlyRate   = 1450
+      billing      = "billable"
+      openedAt     = "2026-08-31T08:00:00Z"
+    given EngagementClosed
+      for "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      reason       = "Delivered"
+    when AssignConsultant
+      assignmentId = "2c8d4e6f-0a1b-4c3d-8e5f-7a9b0c1d2e32"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e922"
+      contact      = {"name":"Marius Dahl","email":"marius.dahl@fjordline.example"}
+      hourlyRate   = 1300
+    then error "$strings.engagements.validation.notActive"
+
+  specification PayrollCannotStaffEngagements
+    given caller
+      authenticated
+      role "PayrollOfficer"
+      claim "department" = "Finance"
+    when AssignConsultant
+      assignmentId = "2c8d4e6f-0a1b-4c3d-8e5f-7a9b0c1d2e31"
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      consultantId = "9a7e3d2c-1b4f-4e8a-a6d5-c3b2a1f0e921"
+      contact      = {"name":"Ingrid Solberg","email":"ingrid.solberg@fjordline.example"}
+      hourlyRate   = 1450
+    then denied
