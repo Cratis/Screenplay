@@ -37,6 +37,7 @@ export const diagnosticCodes = {
     missingEventContextPath: 'PLAY0298',
     unresolvedDynamicKeySource: 'PLAY0299',
     invalidFileImport: 'PLAY0454',
+    omittedProductionDestination: 'PLAY0478',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];

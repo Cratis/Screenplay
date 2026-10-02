@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Specifications;
@@ -61,8 +62,8 @@ public class when_printing_declarations_that_name_the_file_they_are_realized_by 
 
     void Because() => _roundtrip = RoundTrip(Source);
 
-    [Fact] void should_compile_without_diagnostics() => _roundtrip.Original!.Diagnostics.ShouldBeEmpty();
-    [Fact] void should_reparse_without_diagnostics() => _roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
+    [Fact] void should_compile_without_other_diagnostics() => _roundtrip.Original!.Diagnostics.Where(diagnostic => diagnostic.Code != DiagnosticCodes.OmittedProductionDestination).ShouldBeEmpty();
+    [Fact] void should_reparse_without_other_diagnostics() => _roundtrip.Reparsed.Diagnostics.Where(diagnostic => diagnostic.Code != DiagnosticCodes.OmittedProductionDestination).ShouldBeEmpty();
     [Fact] void should_print_the_same_text_on_a_second_pass() => _roundtrip.PrintedAgain.ShouldEqual(_roundtrip.Printed);
     [Fact] void should_print_every_file_reference_it_was_given() => _roundtrip.Printed.Split('\n').Count(_ => _.TrimStart().StartsWith("file ", StringComparison.Ordinal)).ShouldEqual(8);
     [Fact] void should_print_the_concept_under_its_header() => _roundtrip.Printed.ShouldContain("concept InvoiceId : Uuid\n  file Invoicing/InvoiceId.cs");

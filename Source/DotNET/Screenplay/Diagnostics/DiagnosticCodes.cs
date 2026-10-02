@@ -2125,4 +2125,7 @@ public static class DiagnosticCodes
     /// Event documentation is not a single nonempty fenced Markdown block.
     /// </summary>
     public const string InvalidEventDocumentation = "PLAY0477";
+
+    /// <summary>A plain production omits its destination although the command has an identifier.</summary>
+    public const string OmittedProductionDestination = "PLAY0478";
 }

@@ -78,7 +78,12 @@ public enum WorkspaceConflictKind
     /// <summary>
     /// A diagnostic repair requires explicit canonical formatting consent.
     /// </summary>
-    FormattingConsentRequired = 12
+    FormattingConsentRequired = 12,
+
+    /// <summary>
+    /// No diagnostic repair recipe matches the original workspace subject.
+    /// </summary>
+    UnknownRepair = 13
 }
 
 /// <summary>

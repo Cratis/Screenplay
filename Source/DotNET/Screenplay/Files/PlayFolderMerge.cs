@@ -35,7 +35,7 @@ internal static partial class PlayFolderMerge
         var application = MergeApplications([.. documents.Select(document => document.Value).OfType<ApplicationSyntax>()], context);
         ScreenplayValidator.Validate(application, context, allowUnresolvedPersonaPolicies);
 
-        return new(application, [.. documents.SelectMany(document => document.Diagnostics), .. context.Diagnostics]);
+        return new(application, [.. documents.SelectMany(document => document.Diagnostics), .. context.Diagnostics, .. ProductionDestinationDiagnostics.In(application)]);
     }
 
     static ApplicationSyntax MergeApplications(IReadOnlyList<ApplicationSyntax> applications, ParserContext context)

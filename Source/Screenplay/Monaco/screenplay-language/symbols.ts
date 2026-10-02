@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { fenceMap, indentOf } from './document-context';
+import { fenceMap, indentOf, withoutComment } from './document-context';
 import { eventAnalysisSource } from './event-analysis-source';
 import { clauseKeywords } from './language';
 import { ProductionSymbol } from './ProductionSymbol';
@@ -90,16 +90,14 @@ const readPattern = /^\s*reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([
 const queryParameterPattern =
     /^\s*(?:by|filter)\s+([a-z_]\w*)\s+([\w.]+(?:\[\])?\??)(?:\s+from\s+.+)?\s*$/;
 
-// A body line can only be a genuine PropertyLine when its name is not itself a reserved clause
-// keyword - 'authorize CanManageInvoice', 'produces InvoiceRegistered', 'tag audit', 'validate'
-// and every 'concurrency' dimension ('sourceType Invoice', 'streamType Invoicing', ...) all have the
-// same two-token shape a property line does. The grammar's own keyword escape ('@authorize ...') is
-// the one way a real property may share a name with one of these, so only that form survives here.
-function propertiesIn(lines: string[], body: number[]): PropertySymbol[] {
+// Property-shaped clauses depend on their owner. Commands reserve only authorize,
+// produces and reads; bare directives such as description and handler can be properties.
+// The @ escape always denotes a property, and 'as' keeps its established property meaning.
+function propertiesIn(lines: string[], body: number[], reserved: readonly string[]): PropertySymbol[] {
     return body
         .map((index) => ({ index, match: lines[index].match(propertyPattern) }))
         .filter((entry): entry is { index: number; match: RegExpMatchArray } => entry.match !== null)
-        .filter(({ match }) => match[1].startsWith('@') || ['as', 'id', 'description', 'documentation'].includes(match[1]) || !clauseKeywords.includes(match[1]))
+        .filter(({ match }) => match[1].startsWith('@') || match[1] === 'as' || !reserved.includes(match[1]))
         .map(({ index, match }) => ({
             name: match[1].replace(/^@/, ''),
             type: match[2],
@@ -112,7 +110,6 @@ function collectBody(lines: string[], fences: boolean[], start: number, indent: 
     const body: number[] = [];
     for (let index = start + 1; index < lines.length; index++) {
         if (fences[index]) {
-            body.push(index);
             continue;
         }
         const line = lines[index];
@@ -133,7 +130,7 @@ export function directBody(lines: string[], fences: boolean[], start: number, in
         const childIndent = indentOf(lines[index]);
         if (blockIndent !== undefined && childIndent > blockIndent) return false;
         const text = lines[index].trim();
-        const leaf = propertiesIn(lines, [index]).length > 0 || /^(?:description|authorize)(?:\s|$)/.test(text);
+        const leaf = propertiesIn(lines, [index], clauseKeywords).length > 0 || /^(?:description|authorize)(?:\s|$)/.test(text);
         blockIndent = leaf ? undefined : childIndent;
         return true;
     });
@@ -154,6 +151,8 @@ export function scanDocument(lines: string[]): DocumentSymbols {
     const fences = fenceMap(lines);
     const eventLines = eventAnalysisSource(lines);
     const eventFences = fenceMap(eventLines);
+    // Normalize only structural lines; quoted strings and fenced code retain their contents.
+    lines = lines.map((line, index) => fences[index] ? line : withoutComment(line));
 
     for (let index = 0; index < lines.length; index++) {
         if (fences[index]) continue;
@@ -198,7 +197,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
         if (typeMatch) {
             symbols.types.push({
                 name: typeMatch[1],
-                properties: propertiesIn(lines, collectBody(lines, fences, index, indent)),
+                properties: propertiesIn(lines, collectBody(lines, fences, index, indent), clauseKeywords),
                 line: index,
             });
             continue;
@@ -220,7 +219,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
                 ...(eventMatch[2] ? { generation: Number(eventMatch[2]) } : {}),
                 inline: trimmed.startsWith('produces '),
                 properties: propertiesIn(trimmed.startsWith('produces ') ? eventLines.map(line => line.replace(/\s*=(?!=|>).*/, '')) : eventLines,
-                    directBody(eventLines, eventFences, index, indent)),
+                    directBody(eventLines, eventFences, index, indent), clauseKeywords.filter(keyword => !['id', 'description', 'documentation'].includes(keyword))),
                 line: index,
             });
             continue;
@@ -229,9 +228,19 @@ export function scanDocument(lines: string[]): DocumentSymbols {
         const commandMatch = eventLines[index].trim().match(/^command\s+(\w+)\s*$/);
         if (commandMatch) {
             const body = collectBody(lines, fences, index, indent);
+            // The body is already comment-normalized and fence-free. Track indentation once,
+            // rather than walking back to the document root for every property-shaped line.
+            const ancestors = [indent];
+            const directChildren = body.filter(line => {
+                const childIndent = indentOf(lines[line]);
+                while (ancestors[ancestors.length - 1] >= childIndent) ancestors.pop();
+                const direct = ancestors.length === 1;
+                ancestors.push(childIndent);
+                return direct && lines[line].trim() !== 'validate csharp';
+            });
             symbols.commands.push({
                 name: commandMatch[1],
-                properties: propertiesIn(eventLines, directBody(eventLines, eventFences, index, indent)),
+                properties: propertiesIn(lines, directChildren, ['authorize', 'produces', 'reads']),
                 produces: directBody(eventLines, eventFences, index, indent).filter(line => /^\s*produces\b/.test(eventLines[line])).flatMap(line => {
                     const header = eventLines[line].trim();
                     const inline = /^produces\s+event\b/.test(header);

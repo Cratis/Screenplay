@@ -13,7 +13,9 @@ export function validate(monaco: Monaco, model: editor.ITextModel): editor.IMark
         severity:
             issue.severity === 'error'
                 ? monaco.MarkerSeverity.Error
-                : issue.severity === 'information' ? monaco.MarkerSeverity.Info : monaco.MarkerSeverity.Warning,
+                : issue.severity === 'information'
+                    ? monaco.MarkerSeverity.Info
+                    : monaco.MarkerSeverity.Warning,
         message: issue.message,
         code: issue.code,
         startLineNumber: issue.line + 1,

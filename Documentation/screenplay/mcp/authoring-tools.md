@@ -186,14 +186,38 @@ parent/child operations. See [the authoring contract](../ast-authoring.md).
 
 ## Fix a diagnostic
 
-Call `read-workspace` with `view: "repairs"` at the current revision. For a
-`PLAY0397` `validate csharp` repair, pass its `diagnosticCode` and `subject` to
-`propose-repair` with both current revisions and
-`formatting: "CanonicalizeTouchedDocuments"`. Its identity replacement reprints
-the entire file canonically, so whitespace and other legacy fences can change;
-a proposal that would drop any comment is refused. No file is written until you
-review the `before`/`after` bytes with `read-proposal` and explicitly call `apply`.
-Other `PLAY0397` forms have no individual repair.
+Call `read-workspace` with `view: "diagnostics"` to inspect source diagnostics,
+then `view: "repairs"` at the same current revision. `read-ast` reports parser diagnostics only;
+compilation diagnostics belong to the paged diagnostics view. Available typed repairs include:
+
+| Diagnostic | Proposal |
+| --- | --- |
+| `PLAY0166` on command `produces` | Add an event declaration in the producing slice. Types come from command property paths, retaining concepts, or from `$context.occurred` as `DateTime`. Uncertain types, conflicting producer shapes, imported/already-declared events and cross-file producers have no repair. Parser errors in any workspace document also block inference. |
+| `PLAY0478` (Information) | Replace a plain production with an explicit `for <identifier>`. This deliberately selects the identifier rather than preserving allocated-identity routing. Optional or collection identifiers have no repair. Both models must be executable; a change to the language/semantic version or any other production's effective destination refuses the repair. |
+| `PLAY0397` on `validate csharp` | Replace the validation with itself so canonical printing migrates its legacy fence. Other legacy forms have no individual repair. |
+
+Listed `PLAY0166` and `PLAY0478` repairs are verified, not unchecked suggestions.
+Discovery checks authoring acceptance and comment preservation, plus routing safety
+for `PLAY0478`. For example, an inferred event that conflicts with a specification's
+asserted fields is not listed. Verification is cached per subject on the current
+immutable workspace snapshot. Paging, rereading or proposing the same repair reuses
+the result; a new snapshot requires fresh verification. `propose-repair` verifies
+only the selected subject, with at most one authoring transaction.
+
+An unknown code, subject or recipe returns the `UnknownRepair` argument error.
+A matched repair that fails verification instead returns `success: false` with typed
+`conflicts`, `authoringDiagnostics` and `executableDiagnostics`, without a proposal ID.
+`InvalidOperation` remains a transaction conflict, including refusal to change another
+production's routing or the model version; it does not mean the repair is unknown.
+
+Pass the selected repair's `diagnosticCode` and `subject` to `propose-repair` with
+both current revisions and `formatting: "CanonicalizeTouchedDocuments"` (also
+returned as `requiredFormatting`). Repairs reprint the entire touched file, so
+whitespace and other legacy fences can change; a proposal that would drop any
+comment is refused. No file is written until you review the `before`/`after` bytes
+with `read-proposal` and explicitly call `apply`. After external edits, reopen and
+rediscover repairs rather than reusing stale handles. Applying a repair uses the
+same [identity state and recovery](recovery.md) contract as other proposals.
 
 ## Review and apply
 
