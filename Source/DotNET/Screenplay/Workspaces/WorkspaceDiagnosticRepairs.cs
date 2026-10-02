@@ -124,7 +124,7 @@ public static class WorkspaceDiagnosticRepairs
     /// <param name="index">The original workspace occurrence index.</param>
     /// <param name="revision">The expected workspace revision.</param>
     /// <param name="diagnostic">A diagnostic reported by the index.</param>
-    /// <remarks>PLAY0166 and PLAY0478 verdicts are cached on the immutable workspace snapshot, never shared with a newer revision. Proposals reuse refusals but run one transaction to produce accepted candidates.</remarks>
+    /// <remarks>PLAY0166 and PLAY0478 verdicts (acceptance and conflicts only) are cached on the immutable workspace snapshot for discovery, never shared with a newer revision. Proposals always run one fresh transaction and return its full diagnostics.</remarks>
     /// <returns>Zero or more typed repair proposals.</returns>
     public static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic) =>
         Find(index, revision, diagnostic, true);
