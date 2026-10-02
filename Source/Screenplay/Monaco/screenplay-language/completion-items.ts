@@ -13,6 +13,7 @@ const fenced = (tag: string) => `\`\`\`${tag}\n\${1}\n\`\`\``;
 
 export const topLevelItems: CompletionEntry[] = [
     { label: 'import', insertText: 'import ${1:Module}.${2:Type}', documentation: 'Imports a type from another module by its qualified name.' },
+    { label: 'import "…"', insertText: 'import "${1:**/*.play}"', documentation: 'Imports other `.play` files by path or glob, relative to this file\'s folder, as whole documents of the application.' },
     { label: 'concept', insertText: 'concept ${1:Name} : ${2|Uuid,String,Int,Decimal,Bool,Date,DateTime|}', documentation: 'Declares a formalized value type wrapping a primitive.' },
     { label: 'concept (enum)', insertText: 'concept ${1:Name} : Enum\n    ${2:value}', documentation: 'Declares an enumeration concept with a fixed set of values.' },
     { label: 'concept (@pii with reason)', insertText: 'concept ${1:Name} : ${2|String,Uuid,Int,Decimal,Bool,Date,DateTime|} @pii\n    pii reason "${3:why this is personal data, its purpose and lawful basis}"', documentation: 'Declares a personal-data concept together with the reason it is personal data.' },
@@ -35,11 +36,13 @@ export const typeItems: CompletionEntry[] = [
 ];
 
 export const moduleItems: CompletionEntry[] = [
+    { label: 'import "…"', insertText: 'import "${1:*/*.play}"', documentation: 'Imports `.play` files into this module — their top level is the module\'s body, so they hold features and module members without restating the module.' },
     { label: 'layout', insertText: 'layout ${1:Name}\n    template\n        ${2:slot}', documentation: 'Declares a reusable screen template with named slots.' },
     { label: 'feature', insertText: 'feature ${1:Name}\n    ', documentation: 'Groups related slices into a vertical feature.' },
 ];
 
 export const featureItems: CompletionEntry[] = [
+    { label: 'import "…"', insertText: 'import "${1:*.play}"', documentation: 'Imports `.play` files into this feature — their top level is the feature\'s body, so they hold slices and nested features without restating where they belong.' },
     { label: 'feature', insertText: 'feature ${1:Name}\n    ', documentation: 'Declares a nested sub-feature.' },
     { label: 'slice StateChange', insertText: 'slice StateChange ${1:Name}\n    ', documentation: 'A command → events flow; something that changes the system.' },
     { label: 'slice StateView', insertText: 'slice StateView ${1:Name}\n    ', documentation: 'A query + projection + screen; something that reads the system.' },
@@ -137,7 +140,40 @@ export const specificationItems: CompletionEntry[] = [
     { label: 'then query', insertText: 'then query ${1:QueryName}\n    arguments\n        ${2:argument} = ${3:value}\n    result\n        ${4:property} = ${5:value}', documentation: 'The ordered query results expected for explicit arguments. Remove the result block to assert an empty result.' },
     { label: 'then error', insertText: 'then error', documentation: 'A rejection, for a reason this specification does not name.' },
     { label: 'then error "..."', insertText: 'then error "${1:reason}"', documentation: 'A rejection, for the named reason.' },
+    { label: 'given clock', insertText: 'given clock "${1:2026-10-05T08:00:00Z}"', documentation: 'The instant the scenario happens at - the occurrence time of everything it does. At most once.' },
+    { label: 'given capture', insertText: 'given capture ${1:Capture}\n    ${2:field} = ${3:value}', documentation: 'A record the capture\'s source held before.' },
+    { label: 'when clock', insertText: 'when clock "${1:2026-10-05T09:00:00Z}"', documentation: 'The clock reaches an instant, as the action.' },
+    { label: 'when trigger', insertText: 'when trigger ${1:Trigger}\n    ${2:value} = ${3:value}', documentation: 'An application trigger fires, as the action.' },
+    { label: 'when capture', insertText: 'when capture ${1:Capture}\n    ${2:field} = ${3:value}', documentation: 'The record a capture\'s source holds now, as the action.' },
+    { label: 'when query', insertText: 'when query ${1:Query}\n    ${2:argument} = ${3:value}', documentation: 'Performs a query, as the action.' },
+    { label: 'then result', insertText: 'then result\n    ${1:property} = ${2:value}', documentation: 'One result the query performed by `when query` returns, in order.' },
+    { label: 'then no result', insertText: 'then no result', documentation: 'The query performed by `when query` returns nothing.' },
 ];
+
+// What follows a 'given', 'when' or 'then' already typed in a specification.
+export const specificationStepItems: Record<'given' | 'when' | 'then', CompletionEntry[]> = {
+    given: [
+        { label: 'clock', insertText: 'clock "${1:2026-10-05T08:00:00Z}"', documentation: 'The instant the scenario happens at - the occurrence time of everything it does.' },
+        { label: 'capture', insertText: 'capture ${1:Capture}\n    ${2:field} = ${3:value}', documentation: 'A record the capture\'s source held before. Repeat it for several records.' },
+        { label: 'readmodel', insertText: 'readmodel ${1:ReadModelType}\n    ${2:property} = ${3:value}', documentation: 'Establishes prior read model state directly.' },
+        { label: 'caller', insertText: 'caller\n    ${1:authenticated}', documentation: 'The identity the scenario runs as.' },
+    ],
+    when: [
+        { label: 'clock', insertText: 'clock "${1:2026-10-05T09:00:00Z}"', documentation: 'The clock reaches an instant - what a scheduled reaction responds to.' },
+        { label: 'trigger', insertText: 'trigger ${1:Trigger}\n    ${2:value} = ${3:value}', documentation: 'An application trigger fires, with the values it carries.' },
+        { label: 'capture', insertText: 'capture ${1:Capture}\n    ${2:field} = ${3:value}', documentation: 'The record a capture\'s source holds now.' },
+        { label: 'query', insertText: 'query ${1:Query}\n    ${2:argument} = ${3:value}', documentation: 'Performs a query; assert what it returns with `then result` or `then no result`.' },
+        { label: 'append', insertText: 'append ${1:EventType}\n    ${2:property} = ${3:value}', documentation: 'An event occurs, instead of a command being executed.' },
+    ],
+    then: [
+        { label: 'result', insertText: 'result\n    ${1:property} = ${2:value}', documentation: 'One result the query performed by `when query` returns, in order.' },
+        { label: 'result exactly', insertText: 'result exactly\n    ${1:property} = ${2:value}', documentation: 'One result, with every property asserted.' },
+        { label: 'no result', insertText: 'no result', documentation: 'The query performed by `when query` returns nothing.' },
+        { label: 'readmodel', insertText: 'readmodel ${1:ReadModelType}\n    ${2:property} = ${3:value}', documentation: 'The read model state expected afterwards.' },
+        { label: 'error', insertText: 'error "${1:reason}"', documentation: 'A rejection, for the named reason.' },
+        { label: 'denied', insertText: 'denied', documentation: 'The action is denied to the caller.' },
+    ],
+};
 
 export const ruleItems: CompletionEntry[] = [
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Gives the named predicate its implementation in an external C# file.' },

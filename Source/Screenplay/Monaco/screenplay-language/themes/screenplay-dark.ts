@@ -18,6 +18,7 @@ export const screenplayDark: editor.IStandaloneThemeData = {
         { token: 'annotation.play', foreground: 'DCDCAA' },
         { token: 'variable.predefined.play', foreground: 'D7BA7D' },
         { token: 'string.play', foreground: 'CE9178' },
+        { token: 'string.link.play', foreground: 'CE9178', fontStyle: 'underline' },
         { token: 'string.invalid.play', foreground: 'F44747' },
         { token: 'string.quote.play', foreground: '6A9955' },
         { token: 'number.play', foreground: 'B5CEA8' },

@@ -1,15 +1,22 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import type { languages } from 'monaco-editor';
+import type { editor, languages } from 'monaco-editor';
 import { Monaco, primitiveTypes } from './language';
 import { knownEventNames, knownTriggerNames, scanDocument } from './symbols';
 import { planCompletions } from './completion-planner';
 import { contextVariableItems, producesItems, CompletionEntry } from './completion-items';
 
-export function createCompletionProvider(monaco: Monaco): languages.CompletionItemProvider {
+// What a host knows beyond the one model the editor holds.
+export interface CompletionOptions {
+    // The paths a file import written in the model can name, relative to the model's folder - typically
+    // importablePaths over the host's .play files. Without it, an import path is not completed.
+    playFiles?: (model: editor.ITextModel) => readonly string[];
+}
+
+export function createCompletionProvider(monaco: Monaco, options: CompletionOptions = {}): languages.CompletionItemProvider {
     return {
-        triggerCharacters: [' ', '$', '@', '.'],
+        triggerCharacters: [' ', '$', '@', '.', '"', '/'],
 
         provideCompletionItems(model, position) {
             const lines = model.getLinesContent();
@@ -53,6 +60,22 @@ export function createCompletionProvider(monaco: Monaco): languages.CompletionIt
                 [...new Set(knownEventNames(symbols))].map((name) => symbolItem(name, kinds.Event, 'event'));
 
             switch (plan.kind) {
+                case 'playFiles': {
+                    const pathRange = new monaco.Range(
+                        position.lineNumber,
+                        position.column - plan.replaceLength,
+                        position.lineNumber,
+                        position.column,
+                    );
+                    return {
+                        suggestions: (options.playFiles?.(model) ?? []).map((path) => ({
+                            label: path,
+                            kind: path.includes('*') ? kinds.Folder : kinds.File,
+                            insertText: path,
+                            range: pathRange,
+                        })),
+                    };
+                }
                 case 'contextVariables': {
                     const variableRange = new monaco.Range(
                         position.lineNumber,

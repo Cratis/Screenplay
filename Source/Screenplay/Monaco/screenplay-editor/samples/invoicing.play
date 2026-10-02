@@ -1,48 +1,81 @@
 // ============================================================
-// Invoicing — complete .play file
+// Invoicing - the complete Screenplay language in one document
 //
-// A full-feature showcase of the Screenplay language: strongly
-// typed concepts and composite types, authorization policies and
-// personas, identity providers, vertical slices (state change,
-// view, automation and translation), projections, captures,
-// screens, specifications and seed data — all built around a
-// single invoicing domain.
+// Every construct the language has, used for something an
+// invoicing system actually needs: concepts and composite types,
+// policies and personas, identity providers, triggers, themes,
+// layouts and ui profiles, behaviors, templates, forms and
+// contributions, and every kind of slice - state change, state
+// view, automation and translation - with commands, events,
+// constraints, read models, projections, reducers, queries,
+// captures, reactions, screens and specifications.
+//
+// Conventions this sample keeps, and the other samples follow:
+//   - every state change and state view slice has a screen, and
+//     the policies gating it are ones a persona holds, so the
+//     screen is drawn for that persona on the event model board
+//   - every slice has Given/When/Then specifications
+//   - some state views are built from no events at all - their
+//     query's performer composes them from somewhere else
+//
+// Verify it with:  screenplay --warnaserror Samples/Invoicing
 // ============================================================
 
-domain Sales
+domain Acme.Invoicing
 
+// Facts other bounded contexts own. An import names a contract this application
+// consumes; it never resolves against another file of the same application.
 import Customers.CustomerRegistered
 import Customers.CustomerAccountClosed
 import Shipping.InvoiceShipped
 import Shipping.InvoiceShippingCleared
+import Payments.PaymentSettled
 
-concept InvoiceId        : Uuid
-concept CustomerId       : Uuid
-concept TenantId         : Uuid
-concept InvoiceNumber    : String
-concept CurrencyCode     : String
-concept ProductName      : String
-concept Money            : Decimal
-concept Quantity         : Int
+// ------------------------------------------------------------
+// Concepts - one per domain value, never a raw primitive
+// ------------------------------------------------------------
+
+concept InvoiceId : Uuid
+  // 'file' on a declaration says which file realizes it - realization metadata,
+  // never a replacement for the declaration itself.
+  file Concepts/InvoiceId.cs
+
+concept CustomerId    : Uuid
+concept PaymentId     : Uuid
+concept BatchId       : Uuid
+concept TenantId      : Uuid
+concept InvoiceNumber : String
+concept CurrencyCode  : String
+concept ProductName   : String
+concept InvoiceTag    : String
+concept Money         : Decimal
+concept ExchangeRate  : Decimal
+concept Quantity      : Int
+concept DaysOverdue   : Int
+concept IsProForma    : Bool
+concept InvoiceDate   : Date
+concept OccurredAt    : DateTime
 
 concept PersonName : String @pii
   pii reason "The name of the person to contact about an invoice. Needed to reach them about billing; lawful basis: contract performance. Lives under the customer's subject and is erasable with their key."
 
 concept BankAccount : String @pii @sensitive
   pii reason "Refund payout account. Remits money back to the customer; lawful basis: contract performance / legal obligation. Personal only for sole-proprietor customers."
-  sensitive reason "Fraud-sensitive — a leaked account number enables direct financial harm, so it is never rendered in full and never leaves the payout path."
+  sensitive reason "Fraud-sensitive - a leaked account number enables direct financial harm, so it is never rendered in full and never leaves the payout path."
+  validate
+    rule BeAValidIban message $strings.validation.bankAccount.invalid
+      file Validations/BeAValidIban.cs
 
 concept EmailAddress : String @pii
   pii reason "Billing contact address. Delivers invoices and payment reminders; lawful basis: contract performance. Under the customer's subject, erasable with their key."
   validate
-    not empty          message "Email is required"
-    matches "^.+@.+$"  message "Must be a valid email address"
-    rule BeFromAnAllowedDomain message "Email domain is not allowed"
-      csharp
-        ```
-        string email = context.Value;
-        return !email.EndsWith("@example.com", StringComparison.OrdinalIgnoreCase);
-        ```
+    not empty                                 message "Email is required"
+    matches email                             message "Must be a valid email address"
+    rule BeFromAnAllowedDomain severity warning message "Email domain is not allowed"
+      ```csharp
+      string email = context.Value;
+      return !email.EndsWith("@example.com", StringComparison.OrdinalIgnoreCase);
+      ```
 
 concept DiscountPercentage : Decimal
   validate
@@ -61,9 +94,20 @@ concept PaymentTerms : Enum
   net60
   immediate
 
-// Composite value types — the shapes events and commands carry beyond a single
-// primitive. Declared here, they give `lines InvoiceLine[]` something to resolve
-// against, and give the concepts that only ever appear inside them a home.
+concept PaymentMethod : Enum
+  card
+  transfer
+  cash
+
+concept AgingBucket : Enum
+  current
+  late
+  severe
+
+// ------------------------------------------------------------
+// Composite value types
+// ------------------------------------------------------------
+
 type InvoiceLine
   description "A single billed line of an invoice"
   lineNumber  Int
@@ -74,65 +118,147 @@ type InvoiceLine
 
 type BillingContact
   description "Who to reach about an invoice - the personal data lives here, not on the invoice itself"
+  file Types/BillingContact.cs
   name  PersonName
   email EmailAddress
+
+type InvoiceLineItem
+  description "A line of an invoice as the details view shows it"
+  lineNumber Int
+  quantity   Quantity
+  unitPrice  Money
+  subtotal   Money?
+  itemCount  Int?
+
+type Shipment
+  description "How an invoice travels to the customer"
+  carrier String
+
+type InvoiceLineKey
+  description "One line of one invoice - a composite key"
+  invoiceId  InvoiceId
+  lineNumber Int
+
+type InstallmentPlan
+  description "How a customer would like to split a payment"
+  installments Int
+  firstDueDate Date
+
+// ------------------------------------------------------------
+// Authorization - policies say what, personas say who
+// ------------------------------------------------------------
 
 policy IsAuthenticated
   require authenticated
 
-policy IsAccountant
-  require role "Accountant"
+policy IsInvoicingStaff
+  require role "InvoiceManager" or role "Accountant" or role "FinanceController"
 
 policy CanManageInvoice
   require role "InvoiceManager"
     or role "Accountant"
 
+policy IsAccountant
+  require role "Accountant"
+
 policy IsFinanceDepartment
   require claim "department" matches "Finance"
+
+policy CanWriteOff
+  require ( role "FinanceController" or role "Accountant" and claim "seniority" matches "senior" ) and authenticated
+
+policy IsCustomer
+  require role "Customer"
 
 policy OwnsInvoice
   require claim "customerId" matches subject
 
-policy CanWriteOff
-  require ( role "InvoiceManager" or role "Accountant" ) and authenticated
+policy IsAuditor
+  require role "Auditor" and claim "tenant" matches $context.tenant
 
+// A rule the declarative grammar cannot state is written against PolicyContext,
+// inline or in a file. Both answer the same bool a 'require' does.
 policy IsAdultCustomer
-  csharp
-    ```
-    var dateOfBirth = context.Identity.ClaimValue("dateOfBirth");
-    return dateOfBirth is not null && DateTime.TryParse(dateOfBirth, System.Globalization.CultureInfo.InvariantCulture,
-      System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
-      out var born) && born <= context.Occurred.UtcDateTime.AddYears(-18);
-    ```
+  ```csharp
+  var dateOfBirth = context.Identity.ClaimValue("dateOfBirth");
+  return dateOfBirth is not null && DateTime.TryParse(dateOfBirth, System.Globalization.CultureInfo.InvariantCulture,
+    System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
+    out var born) && born <= context.Occurred.UtcDateTime.AddYears(-18);
+  ```
 
-persona Accountant
-  description "Keeps the books and approves invoices"
-  policy IsAccountant
-  policy CanManageInvoice
+policy IsWithinCreditLimit
+  file Policies/IsWithinCreditLimit.cs
 
 persona InvoiceManager
   description "Registers invoices and manages their lifecycle"
+  policy IsAuthenticated
+  policy IsInvoicingStaff
   policy CanManageInvoice
+
+persona Accountant
+  description "Keeps the books, approves invoices and records payments"
+  policy IsAuthenticated
+  policy IsInvoicingStaff
+  policy CanManageInvoice
+  policy IsAccountant
+  policy IsFinanceDepartment
+
+persona FinanceController
+  description
+    ```text
+    Owns credit risk for the finance department.
+    The only one who writes off what will not be paid.
+    ```
+  policy IsAuthenticated
+  policy IsInvoicingStaff
+  policy IsFinanceDepartment
+  policy CanWriteOff
+
+persona Customer
+  description "Sees and pays their own invoices in the customer portal"
+  policy IsAuthenticated
+  policy IsCustomer
+  policy OwnsInvoice
+  policy IsAdultCustomer
+  policy IsWithinCreditLimit
+
+persona Auditor
+  description "Reviews what happened, never changes it"
+  policy IsAuthenticated
+  policy IsAuditor
 
 authentication
   provider EntraId
   provider GitHub
   provider OpenId name Partner
+  provider OpenId name CustomerPortal
 
-// A trigger the domain does not raise. The compiler knows the name and what an
-// occurrence carries; what makes one occur belongs to whoever provides it.
+// ------------------------------------------------------------
+// Triggers - signals the domain does not raise itself
+// ------------------------------------------------------------
+
 trigger DirectoryChanged
   description "The external billing directory published a change"
+  file Triggers/DirectoryChanged.cs
   entry BillingContact
   changedAt DateTime
+  source
+
+trigger BillingDirectorySyncRequested
+  description "Someone asked for the billing directory to be synchronized now"
+  requestedBy String
+
+// ------------------------------------------------------------
+// Look and shell
+// ------------------------------------------------------------
 
 theme Nordic
   compatible with Cratis.Components
+  compatible with Cratis.Components.Charts
 
-// A 'layout' is the application's base navigational look - the shell everything
-// else renders inside. An application has one and selects it from a 'ui profile'.
-// Its slots are the outermost a template can fit into, which makes the shell the
-// natural home of an application wide contribution point like Navigation.
+theme NordicDark
+  compatible with Cratis.Components
+
 layout AppShell
   topbar
   navigation contributes Navigation
@@ -147,29 +273,105 @@ layout AppShell
         content grow
       footer height 32
 
+    when width compact
+      column
+        topbar height 48
+        content grow
+        navigation height 64
+
+layout PortalShell
+  header
+  content
+
+  arrangement flow
+    column gap 8
+      header height 72
+      content grow
+
 ui profile Desktop
   target platform web
   target size regular
   packages
     Cratis.Components
+    Cratis.Components.Charts
   layout AppShell
   theme Nordic
 
+ui profile Mobile
+  target platform ios, android
+  target size compact
+  packages
+    Cratis.Components
+  layout PortalShell
+  theme NordicDark
+
+// ------------------------------------------------------------
+// Behaviors - named interaction wiring, attached with 'uses'
+// ------------------------------------------------------------
+
+behavior ConfirmThenExecute
+  description "Asks before running a command that cannot be undone"
+  parameter command
+  parameter message String
+  order 10
+
+  on click
+    confirm message
+      on success
+        execute command
+          on success
+            notify info $strings.common.done
+          on failure
+            notify error $strings.common.failed
+
+behavior RefreshOnEnter
+  description "Keeps a screen current whenever someone navigates back to it"
+  parameter query
+
+  on enter
+    refresh query
+
+// ============================================================
+// The module
+// ============================================================
+
 module Invoicing
   description
-    ```
+    ```text
     Everything related to invoicing customers.
-    Registration, lifecycle and payment tracking of invoices.
+    Registration, lifecycle, payment tracking and collection of invoices,
+    plus the self-service portal customers use to see and pay them.
     ```
 
-  // A 'screen template' is a reusable shape that goes inside the shell. 'fits slot'
-  // names the slot of its parent it fills - here the application layout's 'content' -
-  // and is the one rule that lets templates nest arbitrarily deep.
+  // Every screen in the module requires a signed-in caller. Gates compose with
+  // AND all the way down: module, feature, then the command or query itself.
+  authorize IsAuthenticated
+
+  // A module level interaction reaches every screen in the module.
+  on event InvoiceMarkedOverdue
+    notify warning $strings.invoices.notifications.overdue
+
+  contribute to Navigation
+    navigate to InvoiceList
+    label $strings.navigation.invoices
+    order 10
+
+  // Screen templates fit a slot of the shell; dialog templates open over it.
   screen template MasterDetail
     fits slot content
 
     sidebar
     main
+
+    arrangement flow
+      row gap 16
+        sidebar width 320
+        main grow
+
+      when width compact
+        column
+          main
+          sidebar
 
   screen template Dashboard
     fits slot content
@@ -179,22 +381,98 @@ module Invoicing
     right
     footer
 
-  // A 'dialog template' is the same, for content that opens over the application.
-  // It declares no 'fits slot', because it occupies none.
-  dialog template RegisterInvoiceDialog
+    arrangement freeform
+      variant width regular, height regular
+        place header at 0,0     size fill,96
+        place left   at 0,96    size 640,fill
+        place right  at 640,96  size fill,fill
+        place footer at 0,900   size fill,64
+
+      variant width compact, height regular
+        place header at 0,0    size fill,64
+        place left   at 0,64   size fill,fill
+        place right  hidden
+        place footer hidden
+
+  screen template Board
+    fits slot content
+
+    toolbar contributes BoardActions
+    due
+    overdue
+    settled
+
+    arrangement flow
+      column gap 8
+        toolbar height 48
+        grid gap 16
+          due     span 1
+          overdue span 1
+          settled span 1
+
+  screen template List
+    fits slot content
+
+    toolbar
+    items
+
+  dialog template CommandDialog
     body
     actions
 
+    on leave
+      refresh ListInvoices
+
+  // A form is the input surface of a command - discovered wherever the command
+  // is invoked, never named by the screen that invokes it.
+  form RegisterInvoiceForm for RegisterInvoice
+    field invoiceNumber  label $strings.invoices.fields.number
+    field customerId     label "Customer"
+    field lines          compose using BuildInvoiceLines
+    field billingContact label "Billing contact"
+    field currency       from defaultCurrency label "Currency"
+    field paymentTerms
+    field dueDate        label "Due date"
+    field isProForma     label "Pro forma"
+
+    on submit navigate to InvoiceDetails by invoiceId
+
+    on change
+      refresh ListExchangeRates
+
+  form ChangeInvoiceStatusForm for ChangeInvoiceStatus
+    populate via query GetInvoice by invoiceId
+    field status label "New status"
+    field note   label "Note"
+
+  form RecordPaymentForm for RecordPayment
+    populate from item
+    field amount label "Amount received"
+    field method label "Payment method"
+
+    on submit navigate to CollectionsBoard
+
+  // ==========================================================
+  // Invoice management - staff only
+  // ==========================================================
+
   feature InvoiceManagement
     description "Registering and managing the lifecycle of invoices"
+    authorize IsInvoicingStaff
+
+    uses RefreshOnEnter
+      query ListInvoices
+
+    // An interaction can observe a declared application trigger.
+    on DirectoryChanged
+      refresh ListInvoices
 
     slice StateChange RegisterInvoice
       description "Registers a new invoice"
+      file Invoicing/RegisterInvoice/RegisterInvoice.cs
 
       command RegisterInvoice
         description "Registers a new invoice with its lines and payment terms"
-        // 'identifier' marks the property a runtime resolves the event source id
-        // from. At most one per command; without it a new Uuid is generated.
         invoiceId      InvoiceId identifier
         customerId     CustomerId
         invoiceNumber  InvoiceNumber
@@ -206,7 +484,6 @@ module Invoicing
         isProForma     Bool
 
         authorize CanManageInvoice
-                  IsAdultCustomer
 
         validate
           invoiceNumber not empty                  message "Invoice number is required"
@@ -215,23 +492,23 @@ module Invoicing
           lines.quantity all > 0                   message "All line quantities must be positive"
           lines.unitPrice all >= 0                 message "Line prices cannot be negative"
           currency length == 3                     message "Currency must be a 3-letter ISO code"
+          currency != "XXX"                        message "XXX is not a billable currency"
           dueDate > today                          message "Due date must be in the future"
           invoiceNumber rule BeUnusedInvoiceNumber message "Invoice number is already in use"
             file Validations/BeUnusedInvoiceNumber.cs
 
-        validate csharp
-          ```
-          if (context.Artifact.PaymentTerms == "immediate" && context.Artifact.Total > 1_000_000)
+        validate
+          ```csharp
+          if (context.Artifact.PaymentTerms == "immediate" && context.Artifact.Lines.Count > 100)
           {
-              yield return "Invoices over 1,000,000 cannot require immediate payment";
+              yield return "Invoices with more than 100 lines cannot require immediate payment";
           }
           ```
 
-        // Everything the command context carries is reachable from a mapping —
-        // the same values an inline handler compiles against on CommandContext.
+        // Everything the command context carries is reachable from a mapping.
         produces InvoiceRegistered
+          for invoiceId
           tag audit
-          invoiceId      = invoiceId
           customerId     = customerId
           invoiceNumber  = invoiceNumber
           lines          = lines
@@ -239,6 +516,7 @@ module Invoicing
           currency       = currency
           paymentTerms   = paymentTerms
           dueDate        = dueDate
+          total          = lines.sum(l => l.quantity * l.unitPrice)
           registeredAt   = $context.occurred
           registeredBy   = $context.identity.id
           registeredFor  = $context.tenant
@@ -248,22 +526,22 @@ module Invoicing
 
         produces when isProForma == true
           ProFormaInvoiceIssued
-            invoiceId  = invoiceId
-            issuedAt   = $context.occurred
+            for invoiceId
+            issuedAt = $context.occurred
 
-        produces when currency != "NOK"
+        produces when currency != "NOK" and currency != "EUR"
           ForeignCurrencyInvoiceRegistered
-            invoiceId = invoiceId
-            currency  = currency
+            for invoiceId
+            currency = currency
 
         produces when paymentTerms == "immediate"
           ImmediatePaymentInvoiceRegistered
-            invoiceId = invoiceId
-            dueDate   = dueDate
+            for invoiceId
+            dueDate = dueDate
 
-        produces when paymentTerms == "net30" or paymentTerms == "net60"
+        produces when ( paymentTerms == "net30" or paymentTerms == "net60" ) and isProForma == false
           DeferredPaymentInvoiceRegistered
-            invoiceId    = invoiceId
+            for invoiceId
             paymentTerms = paymentTerms
             dueDate      = dueDate
 
@@ -274,11 +552,22 @@ module Invoicing
           streamId Primary
           events InvoiceRegistered, InvoiceCancelled
 
+      // A later revision of a contract is a new generation of the same event,
+      // numbered consecutively from 1 in the slice that owns it.
       event InvoiceRegistered
         tag invoicing
+        customerId     CustomerId
+        invoiceNumber  InvoiceNumber
+        lines          InvoiceLine[]
+        currency       CurrencyCode
+        dueDate        Date
+
+      event InvoiceRegistered generation 2
+        file Invoicing/RegisterInvoice/InvoiceRegistered.cs
+        tag invoicing
         tag "billing"
-        tag $context.identity.id
-        invoiceId      InvoiceId
+        tag $env.SERVICE_NAME
+        tag $context.tenant
         customerId     CustomerId
         invoiceNumber  InvoiceNumber
         lines          InvoiceLine[]
@@ -286,6 +575,7 @@ module Invoicing
         currency       CurrencyCode
         paymentTerms   PaymentTerms
         dueDate        Date
+        total          Money
         registeredAt   DateTime
         registeredBy   String
         registeredFor  TenantId
@@ -294,59 +584,127 @@ module Invoicing
         status         InvoiceStatus
 
       event ProFormaInvoiceIssued
-        invoiceId InvoiceId
-        issuedAt  DateTime
+        issuedAt DateTime
 
       event ForeignCurrencyInvoiceRegistered
-        invoiceId InvoiceId
-        currency  CurrencyCode
+        currency CurrencyCode
 
       event ImmediatePaymentInvoiceRegistered
-        invoiceId InvoiceId
-        dueDate   Date
+        dueDate Date
 
       event DeferredPaymentInvoiceRegistered
-        invoiceId    InvoiceId
         paymentTerms PaymentTerms
         dueDate      Date
 
       constraint UniqueInvoiceNumber
         unique invoiceNumber on InvoiceRegistered
+        released by InvoiceCancelled
+        ignore casing
+        message "$strings.invoices.validation.numberTaken"
 
       constraint OneRegistrationPerInvoice
         unique event InvoiceRegistered
 
+      screen RegisterInvoiceScreen
+        template CommandDialog
+          body
+            title $strings.invoices.register.title
+          actions
+            action RegisterInvoice
+              label $strings.invoices.actions.newInvoice
+              navigate to InvoiceList
+
       specification RegisteringADraftInvoice
+        file Specs/RegisteringADraftInvoice.cs
+        given caller
+          authenticated
+          role "InvoiceManager"
         given CustomerRegistered
-          customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-          name       = "Acme Corp"
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          name = "Acme Corp"
         when RegisterInvoice
-          invoiceId     = "9c858901-8a57-4791-81fe-4c455b099bc9"
-          customerId    = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-          invoiceNumber = "INV-000123"
-          currency      = "USD"
+          invoiceId      = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          customerId     = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          invoiceNumber  = "INV-000123"
+          lines          = [{"lineNumber": 1, "productName": "Consulting", "quantity": 10, "unitPrice": 1200}]
+          billingContact = {"name": "Ada Lovelace", "email": "ada@acme.test"}
+          currency       = "NOK"
+          paymentTerms   = "net30"
+          dueDate        = "2026-12-31"
+          isProForma     = false
+        then events in any order
         then InvoiceRegistered
-          invoiceId     = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
           customerId    = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
           invoiceNumber = "INV-000123"
-          currency      = "USD"
+          currency      = "NOK"
+          status        = "draft"
+        then DeferredPaymentInvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          paymentTerms = "net30"
+          dueDate      = "2026-12-31"
+
+      specification RegisteringAProFormaInvoiceInForeignCurrency
+        given caller
+          authenticated
+          role "Accountant"
+        when RegisterInvoice
+          invoiceId      = "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
+          customerId     = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          invoiceNumber  = "INV-000124"
+          lines          = [{"lineNumber": 1, "productName": "License", "quantity": 1, "unitPrice": 500}]
+          billingContact = {"name": "Ada Lovelace", "email": "ada@acme.test"}
+          currency       = "USD"
+          paymentTerms   = "immediate"
+          dueDate        = "2026-12-31"
+          isProForma     = true
+        then InvoiceRegistered
+          for "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
+          currency = "USD"
+        then ProFormaInvoiceIssued
+          for "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
+        then ForeignCurrencyInvoiceRegistered
+          for "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
+          currency = "USD"
+        then ImmediatePaymentInvoiceRegistered
+          for "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
+          dueDate = "2026-12-31"
 
       specification RejectingAnInvoiceWithNoLines
+        given caller
+          authenticated
+          role "InvoiceManager"
         when RegisterInvoice
-          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceId     = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceNumber = "INV-000123"
+          lines         = []
         then error "An invoice must have at least one line"
 
-      // A bare 'then error' says the command is rejected without naming a reason —
-      // the reason this specification carries in its name, not in an assertion.
-      specification RejectingAnInvoiceWhoseNumberIsAlreadyTaken
+      // A bare 'then error' states a rejection whose reason lives in the name.
+      specification RejectingASecondRegistrationOfTheSameInvoice
+        given caller
+          authenticated
+          role "InvoiceManager"
         given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
           invoiceNumber = "INV-000123"
         when RegisterInvoice
-          invoiceId     = "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceId     = "9c858901-8a57-4791-81fe-4c455b099bc9"
           invoiceNumber = "INV-000123"
         then error
 
+      specification RejectingAnAuditorRegisteringAnInvoice
+        given caller
+          authenticated
+          role "Auditor"
+        when RegisterInvoice
+          invoiceId     = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceNumber = "INV-000123"
+        then denied
+
     slice StateChange CancelInvoice
+      description "Cancels an invoice that will not be paid, optionally refunding it"
 
       command CancelInvoice
         invoiceId     InvoiceId identifier
@@ -360,31 +718,130 @@ module Invoicing
           reason not empty  message $strings.invoices.validation.reasonRequired
           reason min 3      message "A reason must be at least 3 characters"
           reason max 500    message "Reason must be 500 characters or fewer"
+          require refund == false or refundAccount != ""
+            message "A refund needs an account to pay it to"
 
         produces InvoiceCancelled
-          invoiceId   = invoiceId
-          reason      = reason
-          cancelledAt = $context.occurred
-          cancelledBy = $context.identity.id
+          for invoiceId
+          reason       = reason
+          cancelledAt  = $context.occurred
+          cancelledBy  = $context.identity.id
           cancelledVia = $context.causation.type
 
         produces when refund == true
           InvoiceRefundRequested
-            invoiceId     = invoiceId
+            for invoiceId
             requestedAt   = $context.occurred
             refundAccount = refundAccount
 
       event InvoiceCancelled
-        invoiceId    InvoiceId
         reason       String
         cancelledAt  DateTime
         cancelledBy  String
         cancelledVia String
 
       event InvoiceRefundRequested
-        invoiceId     InvoiceId
         requestedAt   DateTime
         refundAccount BankAccount
+
+      // A destructive command asks before it runs - the named behavior carries the
+      // whole confirm-execute-notify chain.
+      screen CancelInvoiceScreen
+        template CommandDialog
+          body
+            title "Cancel invoice"
+          actions
+            action CancelInvoice
+              label $strings.invoices.actions.cancel
+        uses ConfirmThenExecute
+          command CancelInvoice
+          message $strings.invoices.confirm.cancel
+
+      // 'given clock' fixes when the scenario happens, so a value mapped from
+      // $context.occurred can be asserted.
+      specification CancellingAnInvoiceWithARefund
+        given caller
+          authenticated
+          role "InvoiceManager"
+        given clock "2026-10-02T09:00:00Z"
+        given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceNumber = "INV-000123"
+        when CancelInvoice
+          invoiceId     = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason        = "Duplicate of INV-000122"
+          refund        = true
+          refundAccount = "NO9386011117947"
+        then InvoiceCancelled
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason      = "Duplicate of INV-000122"
+          cancelledAt = "2026-10-02T09:00:00Z"
+        then InvoiceRefundRequested
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          requestedAt   = "2026-10-02T09:00:00Z"
+          refundAccount = "NO9386011117947"
+
+      specification RejectingACancellationWithoutAReason
+        given caller
+          authenticated
+          role "InvoiceManager"
+        when CancelInvoice
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason    = ""
+          refund    = false
+        then error "$strings.invoices.validation.reasonRequired"
+
+    slice StateChange TagInvoice
+      description "Labels an invoice so it can be found again - 'tag' is a field here, not a directive"
+
+      command TagInvoice
+        invoiceId InvoiceId identifier
+        tag       InvoiceTag
+
+        authorize CanManageInvoice
+
+        validate
+          tag not empty  message "A tag cannot be empty"
+          tag max 32     severity warning message "Keep tags short"
+          tag matches "^[a-z-]+$" severity information message "Tags are usually lower case"
+
+        // In a mapping block and an event body 'tag' is reserved, so a field of
+        // that name is escaped with '@'.
+        produces InvoiceTagged
+          for invoiceId
+          @tag     = tag
+          taggedAt = $context.occurred
+
+      event InvoiceTagged
+        @tag     InvoiceTag
+        taggedAt DateTime
+
+      screen TagInvoiceScreen
+        template CommandDialog
+          body
+            title "Tag invoice"
+          actions
+            action TagInvoice
+
+      specification TaggingAnInvoice
+        given caller
+          authenticated
+          role "InvoiceManager"
+        when TagInvoice
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          tag       = "priority"
+        then InvoiceTagged
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          tag = "priority"
+
+      specification RejectingAnEmptyTag
+        given caller
+          authenticated
+          role "InvoiceManager"
+        when TagInvoice
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          tag       = ""
+        then error "A tag cannot be empty"
 
     slice StateChange ChangeInvoiceStatus
 
@@ -396,104 +853,184 @@ module Invoicing
         authorize IsAccountant
 
         validate
-          status not empty  message "Status is required"
+          status not empty     message "Status is required"
+          status != cancelled  message "Cancel an invoice with Cancel invoice"
 
         produces when status == "sent"
           InvoiceSent
-            invoiceId = invoiceId
-            sentAt    = $context.occurred
-            note      = note
+            for invoiceId
+            sentAt = $context.occurred
+            note   = note
 
         produces when status == "paid"
           InvoicePaid
-            invoiceId = invoiceId
-            paidAt    = $context.occurred
-            note      = note
+            for invoiceId
+            paidAt = $context.occurred
+            note   = note
 
         produces when status == "overdue"
           InvoiceMarkedOverdue
-            invoiceId = invoiceId
+            for invoiceId
             overdueAt = $context.occurred
 
-        produces when status != "sent" and status != "paid" and status != "overdue"
+        produces when status == "draft"
           InvoiceStatusChanged
-            invoiceId = invoiceId
+            for invoiceId
             status    = status
             changedAt = $context.occurred
 
       event InvoiceSent
-        invoiceId InvoiceId
-        sentAt    DateTime
-        note      String?
+        sentAt DateTime
+        note   String?
 
       event InvoicePaid
-        invoiceId InvoiceId
-        paidAt    DateTime
-        note      String?
+        paidAt DateTime
+        note   String?
 
       event InvoiceMarkedOverdue
-        invoiceId InvoiceId
         overdueAt DateTime
 
       event InvoiceStatusChanged
-        invoiceId InvoiceId
         status    InvoiceStatus
         changedAt DateTime
 
-      constraint InvoiceStatusTransition
-        file Constraints/InvoiceStatusTransitionConstraint.cs
+      // The form for ChangeInvoiceStatus is discovered from the action - this
+      // screen only says where the action lives and what happens around it.
+      screen ChangeInvoiceStatusScreen
+        template CommandDialog
+          body
+            title "Change status"
+          actions
+            action ChangeInvoiceStatus
+        on submit
+          execute ChangeInvoiceStatus
+            on success
+              close dialog
+              refresh ListInvoices
+              notify info "Status changed"
+            on failure
+              notify error "The status could not be changed"
 
       specification SendingADraftInvoice
+        given caller
+          authenticated
+          role "Accountant"
         given readmodel InvoiceListReadModel
           invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
           status    = "draft"
         when ChangeInvoiceStatus
           invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
           status    = "sent"
+          note      = "Sent by email"
         then InvoiceSent
-          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          note = "Sent by email"
         then readmodel InvoiceListReadModel
-          status = "sent"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          status    = "sent"
+
+      specification RefusingToCancelThroughAStatusChange
+        given caller
+          authenticated
+          role "Accountant"
+        when ChangeInvoiceStatus
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          status    = "cancelled"
+        then error "Cancel an invoice with Cancel invoice"
+
+      specification RefusingAStatusChangeByAnInvoiceManager
+        given caller
+          authenticated
+          role "InvoiceManager"
+        when ChangeInvoiceStatus
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          status    = "sent"
+        then denied
 
     slice StateChange ProcessInvoiceBatch
+      description "Sends or cancels many invoices in one go"
 
       command ProcessInvoiceBatch
-        batchId    Uuid identifier
+        batchId    BatchId identifier
         invoiceIds InvoiceId[]
         action     String
 
         authorize IsAccountant
 
         validate
-          invoiceIds not empty  message "Batch must contain at least one invoice"
-          action not empty      message "Action is required"
+          invoiceIds not empty                        message "Batch must contain at least one invoice"
+          action not empty                            message "Action is required"
+          require action == "send" or action == "cancel"
+            severity error
+            message "Action must be send or cancel"
 
+        // The escape hatch when produces cannot say it: an imperative handler
+        // compiled against CommandContext.
         handler
-          csharp
-            ```
-            var events = new List<object>();
-            events.Add(new InvoiceBatchProcessingStarted(BatchId, InvoiceIds.Count, DateTimeOffset.UtcNow));
-            foreach (var id in InvoiceIds)
-                events.Add(Action switch {
-                    "send"   => new InvoiceSent(id, DateTimeOffset.UtcNow, context.Identity.Id, null),
-                    "cancel" => new InvoiceCancelled(id, "Batch", DateTimeOffset.UtcNow, context.Identity.Id),
-                    _        => throw new InvalidOperationException($"Unknown action: {Action}")
-                });
-            events.Add(new InvoiceBatchProcessingCompleted(BatchId, InvoiceIds.Count, DateTimeOffset.UtcNow));
-            return events;
-            ```
+          ```csharp
+          var events = new List<object>();
+          events.Add(new InvoiceBatchProcessingStarted(InvoiceIds.Count, context.Occurred));
+          foreach (var id in InvoiceIds)
+              events.Add(Action switch {
+                  "send"   => new InvoiceSent(context.Occurred, null),
+                  "cancel" => new InvoiceCancelled("Batch", context.Occurred, context.Identity.Id, "Batch"),
+                  _        => throw new InvalidOperationException($"Unknown action: {Action}")
+              });
+          events.Add(new InvoiceBatchProcessingCompleted(InvoiceIds.Count, context.Occurred));
+          return events;
+          ```
 
       event InvoiceBatchProcessingStarted
-        batchId   Uuid
         count     Int
         startedAt DateTime
 
       event InvoiceBatchProcessingCompleted
-        batchId        Uuid
         processedCount Int
         completedAt    DateTime
 
+      screen ProcessInvoiceBatchScreen
+        template CommandDialog
+          body
+            title "Process a batch"
+            section help
+              ```html
+              <p class="hint">Every selected invoice is sent or cancelled in one go.</p>
+              ```
+          actions
+            action ProcessInvoiceBatch
+
+      specification ProcessingABatch
+        given caller
+          authenticated
+          role "Accountant"
+        given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceNumber = "INV-000123"
+        when ProcessInvoiceBatch
+          batchId    = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"
+          invoiceIds = ["9c858901-8a57-4791-81fe-4c455b099bc9"]
+          action     = "send"
+        then InvoiceBatchProcessingStarted
+          for "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"
+          count = 1
+        then InvoiceSent
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+        then InvoiceBatchProcessingCompleted
+          for "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"
+          processedCount = 1
+
+      specification RejectingAnUnknownBatchAction
+        given caller
+          authenticated
+          role "Accountant"
+        when ProcessInvoiceBatch
+          batchId    = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"
+          invoiceIds = ["9c858901-8a57-4791-81fe-4c455b099bc9"]
+          action     = "archive"
+        then error "Action must be send or cancel"
+
     slice StateChange ArchiveOldInvoices
+      description "Archives every invoice older than a date - no identifier, so a new id is allocated"
 
       command ArchiveOldInvoices
         olderThan Date
@@ -506,47 +1043,678 @@ module Invoicing
         handler
           file Handlers/ArchiveOldInvoicesHandler.cs
 
+      event InvoicesArchived
+        olderThan Date
+        count     Int
+
+      screen ArchiveOldInvoicesScreen
+        template CommandDialog
+          body
+            title "Archive old invoices"
+          actions
+            action ArchiveOldInvoices
+              navigate to InvoiceList
+
+      specification ArchivingInvoicesOlderThanAYear
+        given caller
+          authenticated
+          role "Accountant"
+        given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          dueDate = "2024-01-31"
+        when ArchiveOldInvoices
+          olderThan = "2025-01-01"
+        then InvoicesArchived
+          olderThan = "2025-01-01"
+          count     = 1
+
+      specification RejectingAnArchiveDateInTheFuture
+        given caller
+          authenticated
+          role "Accountant"
+        when ArchiveOldInvoices
+          olderThan = "2099-01-01"
+        then error "Can only archive invoices dated before today"
+
+    slice StateChange UpdateBillingContact
+      description "Changes who is contacted about an invoice"
+
+      command UpdateBillingContact
+        invoiceId      InvoiceId identifier
+        billingContact BillingContact
+
+        authorize CanManageInvoice
+
+        validate
+          billingContact.email matches email  message "Must be a valid email address"
+
+        produces BillingContactUpdated
+          for invoiceId
+          email = billingContact.email
+
+      event BillingContactUpdated
+        email EmailAddress
+
+      screen UpdateBillingContactScreen
+        template CommandDialog
+          body
+            title "Billing contact"
+          actions
+            action UpdateBillingContact
+
+      specification UpdatingTheBillingContact
+        given caller
+          authenticated
+          role "InvoiceManager"
+        given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceNumber = "INV-000123"
+        when UpdateBillingContact
+          invoiceId      = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          billingContact = {"name": "Grace Hopper", "email": "grace@acme.test"}
+        then BillingContactUpdated
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          email = "grace@acme.test"
+
+      specification RejectingAMalformedEmail
+        given caller
+          authenticated
+          role "InvoiceManager"
+        when UpdateBillingContact
+          invoiceId      = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          billingContact = {"name": "Grace Hopper", "email": "not-an-email"}
+        then error "Must be a valid email address"
+
+    slice StateView InvoiceList
+      description "The staff's list of every invoice"
+
+      readmodel InvoiceListReadModel
+        description "One row per invoice in the invoice list"
+        file Invoicing/InvoiceList/InvoiceListReadModel.cs
+        invoiceId      InvoiceId
+        customerId     CustomerId
+        invoiceNumber  InvoiceNumber
+        currency       CurrencyCode
+        status         InvoiceStatus
+        lineCount      Int
+        dueDate        Date
+        channel        String
+        touched        Bool?
+        lastActivityAt DateTime?
+
+      // A keyed query is what identifies a read model instance in specifications.
+      query GetInvoiceListEntry => InvoiceListReadModel?
+        description "One row of the invoice list"
+        by invoiceId InvoiceId
+        authorize CanManageInvoice
+
+      // 'from' fills a parameter from the query context instead of the caller.
+      query ListInvoices => observable InvoiceListReadModel[]
+        description "Every invoice the caller may see, narrowed by status and customer"
+        filter status     InvoiceStatus?
+        filter customerId CustomerId?
+        filter tenantId   TenantId from $context.tenant
+        authorize CanManageInvoice
+
+      projection InvoiceList => InvoiceListReadModel
+        every
+          lastActivityAt = $eventContext.occurred
+        from InvoiceRegistered
+          invoiceId     = $eventSourceId
+          customerId    = customerId
+          invoiceNumber = invoiceNumber
+          currency      = currency
+          status        = "draft"
+          lineCount     = 0
+          dueDate       = dueDate
+          channel       = "portal"
+        from InvoiceTagged, BillingContactUpdated
+          touched = true
+        from InvoiceSent
+          status  = "sent"
+          touched = true
+        from InvoicePaid
+          status  = "paid"
+          touched = true
+        from InvoiceMarkedOverdue
+          status = "overdue"
+        from InvoiceStatusChanged
+          status = status
+        remove with InvoiceCancelled
+
+      screen InvoiceList
+        title $strings.invoices.title
+        data InvoiceListReadModel[] via query ListInvoices
+        on load
+          refresh ListInvoices
+        on interval 30 seconds
+          refresh ListInvoices
+        action RegisterInvoice
+          navigate to RegisterInvoiceScreen
+        action ProcessInvoiceBatch
+          navigate to ProcessInvoiceBatchScreen
+        template List
+          toolbar
+            action ArchiveOldInvoices
+              navigate to ArchiveOldInvoicesScreen
+            section sync
+              title "Synchronize directory"
+              on click
+                raise BillingDirectorySyncRequested
+                  on success
+                    notify info "Synchronization requested"
+          items
+            table InvoiceListReadModel
+              column invoiceNumber label $strings.invoices.fields.number
+              column status        label "Status"
+              column dueDate       label "Due"
+              on row-click navigate to InvoiceDetails by invoiceId
+              on select
+                set selectedInvoice to item.invoiceId
+              on double click
+                open dialog CommandDialog
+                  with invoiceId from item.invoiceId
+                  on result
+                    refresh ListInvoices
+        ```typescript
+        export const statusLabel = (status: string) => status.toUpperCase();
+        ```
+
+      specification ListingARegisteredInvoice
+        given caller
+          authenticated
+          role "InvoiceManager"
+        given InvoiceRegistered
+          for "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
+          customerId    = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          invoiceNumber = "INV-000124"
+          currency      = "USD"
+          dueDate       = "2026-11-30"
+        when append InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          customerId    = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          invoiceNumber = "INV-000123"
+          currency      = "NOK"
+          dueDate       = "2026-12-31"
+        then readmodel InvoiceListReadModel
+          invoiceId     = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceNumber = "INV-000123"
+          status        = "draft"
+          channel       = "portal"
+        then query ListInvoices
+          arguments
+            customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          result
+            invoiceId     = "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
+            invoiceNumber = "INV-000124"
+            currency      = "USD"
+            dueDate       = "2026-11-30"
+          result
+            invoiceId     = "9c858901-8a57-4791-81fe-4c455b099bc9"
+            invoiceNumber = "INV-000123"
+            currency      = "NOK"
+            dueDate       = "2026-12-31"
+
+      specification DroppingACancelledInvoiceFromTheList
+        given caller
+          authenticated
+          role "InvoiceManager"
+        given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceNumber = "INV-000123"
+        when append InvoiceCancelled
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason = "Duplicate"
+        then no readmodel InvoiceListReadModel for "9c858901-8a57-4791-81fe-4c455b099bc9"
+
+    slice StateView InvoiceDetails
+
+      readmodel InvoiceDetailsReadModel
+        description "One invoice with its lines, customer and shipping status"
+        invoiceId            InvoiceId
+        customerId           CustomerId
+        invoiceNumber        InvoiceNumber
+        currency             CurrencyCode
+        paymentTerms         PaymentTerms
+        status               InvoiceStatus
+        dueDate              Date
+        registeredAt         DateTime
+        registeredBy         String
+        registeredByUser     String
+        registeredForSubject String
+        displayLabel         String
+        sentAt               DateTime?
+        paidAt               DateTime?
+        overdueAt            DateTime?
+        customerName         String?
+        lineItems            InvoiceLineItem[]
+        shipping             Shipment?
+        lastUpdatedAt        DateTime?
+
+      query GetInvoice => InvoiceDetailsReadModel?
+        description "One invoice with its lines, customer and shipping status"
+        by invoiceId InvoiceId
+        authorize CanManageInvoice
+
+      projection InvoiceDetails => InvoiceDetailsReadModel
+        file Projections/InvoiceDetailsProjection.cs
+        sequence invoicing
+        every
+          lastUpdatedAt = $eventContext.occurred
+          exclude children
+        from InvoiceRegistered key $eventSourceId
+          invoiceId            = $eventSourceId
+          customerId           = customerId
+          invoiceNumber        = invoiceNumber
+          currency             = currency
+          paymentTerms         = paymentTerms
+          status               = "draft"
+          dueDate              = dueDate
+          registeredAt         = $eventContext.occurred
+          registeredBy         = $causedBy.name
+          registeredByUser     = $causedBy.userName
+          registeredForSubject = $causedBy.subject
+          displayLabel         = `${invoiceNumber} (${currency})`
+        from InvoiceSent
+          set status to "sent"
+          sentAt = sentAt
+        from InvoicePaid
+          status = "paid"
+          paidAt = paidAt
+        from InvoiceMarkedOverdue
+          status    = "overdue"
+          overdueAt = overdueAt
+        from InvoiceStatusChanged
+          status = status
+          clear overdueAt
+        join customer on customerId
+          with CustomerRegistered
+            no automap
+            customerName = name
+        children lineItems identified by lineNumber
+          no automap
+          from InvoiceLineItemAdded key lineNumber
+            parent $eventSourceId
+            quantity  = quantity
+            unitPrice = unitPrice
+            add subtotal by unitPrice
+            count itemCount
+          remove with InvoiceLineItemRemoved key lineNumber
+            parent $eventSourceId
+        nested shipping
+          automap
+          from InvoiceShipped
+            carrier = carrier
+          clear with InvoiceShippingCleared
+        remove via join on CustomerAccountClosed
+
+      screen InvoiceLineDetail
+        title "Line item"
+        data InvoiceDetailsReadModel via query GetInvoice by invoiceId
+        section back
+          title "Back to the invoice"
+          on click
+            navigate back
+
+      screen InvoiceDetails
+        data InvoiceDetailsReadModel via query GetInvoice by invoiceId
+        template MasterDetail
+          sidebar
+            summary InvoiceDetailsReadModel
+              field invoiceNumber label $strings.invoices.fields.number
+              field status        label "Status"
+              field customerName  label "Customer"
+            section actions
+              title "Actions"
+              action ChangeInvoiceStatus
+                navigate to ChangeInvoiceStatusScreen
+              action CancelInvoice
+                navigate to CancelInvoiceScreen
+              action TagInvoice
+                navigate to TagInvoiceScreen
+              action UpdateBillingContact
+                navigate to UpdateBillingContactScreen
+          main
+            section lineItems
+              table lineItems
+                column lineNumber label "#"
+                column quantity   label "Qty"
+                column unitPrice  label "Unit Price"
+                column subtotal   label "Subtotal"
+                on row-click navigate to InvoiceLineDetail by lineNumber
+            section help
+              ```html
+              <p class="hint">Line items become read-only once an invoice is paid.</p>
+              ```
+
+      specification ShowingASentInvoiceWithItsCustomer
+        given caller
+          authenticated
+          role "InvoiceManager"
+        given CustomerRegistered
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          name = "Acme Corp"
+        given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          customerId    = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          invoiceNumber = "INV-000123"
+          currency      = "NOK"
+          paymentTerms  = "net30"
+          dueDate       = "2026-12-31"
+        when append InvoiceSent
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          sentAt = "2026-10-02T09:00:00Z"
+        then readmodel InvoiceDetailsReadModel
+          invoiceId     = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceNumber = "INV-000123"
+          status        = "sent"
+          sentAt        = "2026-10-02T09:00:00Z"
+          customerName  = "Acme Corp"
+          displayLabel  = "INV-000123 (NOK)"
+        then query GetInvoice
+          arguments
+            invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          result
+            status = "sent"
+
+    slice StateView InvoiceLineReport
+
+      readmodel InvoiceLineReportReadModel
+        invoiceId  InvoiceId
+        lineNumber Int
+        quantity   Quantity
+        unitPrice  Money
+
+      query GetInvoiceLine => InvoiceLineReportReadModel?
+        by invoiceId InvoiceId
+        authorize IsAccountant
+
+      // The performer is a query's escape hatch, mirroring a command's handler.
+      query ListLineItems => InvoiceLineReportReadModel[]
+        description "Every invoice line, priced, for the accounting line report"
+        filter tenantId TenantId from $context.tenant
+        authorize IsAccountant
+        performer
+          ```sql
+          select   InvoiceId, LineNumber, Quantity, UnitPrice
+          from     InvoiceLineReport
+          where    TenantId = @tenantId
+          order by InvoiceId, LineNumber
+          ```
+
+      projection InvoiceLineReport => InvoiceLineReportReadModel
+        from InvoiceLineItemAdded
+          key InvoiceLineKey
+            invoiceId  = $eventSourceId
+            lineNumber = lineNumber
+          quantity  = quantity
+          unitPrice = unitPrice
+
+      screen InvoiceLineReport
+        file Screens/InvoiceLineReport.tsx
+
+      specification ReportingAnAddedLine
+        given caller
+          authenticated
+          role "Accountant"
+        given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceNumber = "INV-000123"
+        when append InvoiceLineItemAdded
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          lineNumber = 1
+          quantity   = 10
+          unitPrice  = 1200
+        then readmodel InvoiceLineReportReadModel exactly
+          invoiceId  = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          lineNumber = 1
+          quantity   = 10
+          unitPrice  = 1200
+
+    slice StateView InvoiceDashboard
+
+      readmodel InvoiceSummaryReadModel
+        summaryId        String
+        totalCount       Int
+        draftCount       Int
+        sentCount        Int?
+        paidCount        Int?
+        overdueCount     Int?
+        touches          Int
+        writeOffTotal    Money?
+        outstandingTotal Money?
+
+      // Nothing builds this one from events - its performer composes it from
+      // stored invoices, so it declares its shape and no builder points at it.
+      readmodel OverdueInvoicesReadModel
+        invoiceId     InvoiceId
+        tenantId      TenantId
+        invoiceNumber InvoiceNumber
+        status        InvoiceStatus
+        dueDate       Date
+
+      query GetInvoiceSummary => observable InvoiceSummaryReadModel?
+        description "The counters behind the dashboard header"
+        by summaryId String
+        authorize IsAccountant
+
+      query GetOverdueInvoices => OverdueInvoicesReadModel[]
+        description "Invoices past their due date, oldest first"
+        authorize IsAccountant
+        performer
+          ```csharp
+          return readModels
+              .Where(invoice => invoice.Status == InvoiceStatus.Overdue)
+              .Where(invoice => invoice.TenantId == context.Tenant)
+              .OrderBy(invoice => invoice.DueDate);
+          ```
+
+      projection InvoiceSummary => InvoiceSummaryReadModel
+        from InvoiceRegistered
+          key "global"
+          summaryId = "global"
+          increment totalCount
+          increment draftCount
+          count touches
+        from InvoiceSent key "global"
+          decrement draftCount
+          increment sentCount
+        from InvoicePaid key "global"
+          decrement sentCount
+          increment paidCount
+        from InvoiceMarkedOverdue key "global"
+          increment overdueCount
+        from InvoiceWrittenOff key "global"
+          add writeOffTotal by amount
+          subtract outstandingTotal by amount
+        from InvoiceCancelled key "global"
+          decrement totalCount
+
+      screen InvoiceDashboard
+        template Dashboard
+          header
+            section title
+              data InvoiceSummaryReadModel via query GetInvoiceSummary
+              ```react
+              export default ({ data }: Props) => (
+                <header className="dashboard-header">
+                  <h1>Invoice Dashboard</h1>
+                  <span className="badge">{data.totalCount} invoices</span>
+                  {data.overdueCount > 0 && (
+                    <span className="badge badge--warning">{data.overdueCount} overdue</span>
+                  )}
+                </header>
+              );
+              ```
+          left
+            section overdue
+              data OverdueInvoicesReadModel[] via query GetOverdueInvoices
+              table OverdueInvoicesReadModel
+                column invoiceNumber label "Invoice #"
+                column dueDate       label "Due Date"
+                on row-click navigate to InvoiceDetails by invoiceId
+          right
+            section summary
+              data InvoiceSummaryReadModel via query GetInvoiceSummary
+              ```react
+              import { PieChart, Pie, Cell, Tooltip } from 'recharts';
+              const COLORS = ['#94a3b8', '#60a5fa', '#34d399', '#f87171'];
+              export default ({ data }: Props) => (
+                <PieChart width={300} height={300}>
+                  <Pie data={[
+                    { name: 'Draft', value: data.draftCount },
+                    { name: 'Sent',  value: data.sentCount },
+                    { name: 'Paid',  value: data.paidCount },
+                  ]} dataKey="value">
+                    {COLORS.map((c, i) => <Cell key={i} fill={c} />)}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              );
+              ```
+          footer
+            section actions
+              action RegisterInvoice
+                label $strings.invoices.actions.newInvoice
+                navigate to RegisterInvoiceScreen
+
+      specification CountingInvoicesAsTheyMove
+        given caller
+          authenticated
+          role "Accountant"
+        given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceNumber = "INV-000123"
+        given InvoiceRegistered
+          for "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
+          invoiceNumber = "INV-000124"
+        when append InvoiceSent
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          sentAt = "2026-10-02T09:00:00Z"
+        then readmodel InvoiceSummaryReadModel
+          summaryId  = "global"
+          totalCount = 2
+          draftCount = 1
+          sentCount  = 1
+          touches    = 2
+
+      specification ListingOverdueInvoices
+        given caller
+          authenticated
+          role "Accountant"
+        given readmodel OverdueInvoicesReadModel
+          invoiceId     = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          tenantId      = "00000000-0000-0000-0000-000000000000"
+          invoiceNumber = "INV-000123"
+          status        = "overdue"
+          dueDate       = "2026-09-01"
+        // 'then query' is the other spelling of performing a query and asserting
+        // what it returns - the same model as 'when query' and 'then result'.
+        then query GetOverdueInvoices
+          result
+            invoiceNumber = "INV-000123"
+
     feature Adjustments
       description "Discounts and write-offs applied to issued invoices"
+      authorize IsFinanceDepartment
+
+      contribute to BoardActions
+        navigate to WriteOffInvoiceScreen
+        label "Write off"
+        order 20
 
       slice StateChange ApplyDiscount
 
         command ApplyDiscount
-          invoiceId      InvoiceId
+          invoiceId      InvoiceId identifier
           percentage     DiscountPercentage
           reason         String
           requiresReview Bool
 
-          authorize IsAccountant or IsFinanceDepartment
+          authorize IsAccountant
 
           validate
-            percentage >= 0    message "A discount cannot be negative"
-            percentage <= 100  message "A discount cannot exceed 100 percent"
-            reason min 5       message "Give a reason of at least 5 characters"
+            reason min 5  message "Give a reason of at least 5 characters"
+            require reason starts with "Agreed" or requiresReview == true
+              severity warning
+              message "Undocumented discounts must be reviewed"
 
           produces DiscountApplied
-            invoiceId  = invoiceId
+            for invoiceId
             percentage = percentage
+            reason     = $context.command.reason
             appliedAt  = $context.occurred
 
           produces when ( percentage >= 50 ) or requiresReview == true
             DiscountReviewRequested
-              invoiceId = invoiceId
+              for invoiceId
+              percentage = percentage
 
-          produces when percentage < 10
+          produces when percentage < 10 and reason contains "loyalty"
             DiscountAutoApproved
-              invoiceId = invoiceId
+              for invoiceId
 
         event DiscountApplied
-          invoiceId  InvoiceId
           percentage DiscountPercentage
+          reason     String
           appliedAt  DateTime
 
         event DiscountReviewRequested
-          invoiceId InvoiceId
+          percentage DiscountPercentage
 
         event DiscountAutoApproved
-          invoiceId InvoiceId
+
+        screen ApplyDiscountScreen
+          template CommandDialog
+            body
+              title "Apply discount"
+            actions
+              action ApplyDiscount
+
+        specification ApplyingASmallLoyaltyDiscount
+          given caller
+            authenticated
+            role "Accountant"
+            claim "department" = "Finance"
+          when ApplyDiscount
+            invoiceId      = "9c858901-8a57-4791-81fe-4c455b099bc9"
+            percentage     = 5
+            reason         = "Agreed loyalty discount"
+            requiresReview = false
+          then DiscountApplied
+            for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            percentage = 5
+          then DiscountAutoApproved
+            for "9c858901-8a57-4791-81fe-4c455b099bc9"
+
+        specification RequestingReviewOfALargeDiscount
+          given caller
+            authenticated
+            role "Accountant"
+            claim "department" = "Finance"
+          when ApplyDiscount
+            invoiceId      = "9c858901-8a57-4791-81fe-4c455b099bc9"
+            percentage     = 60
+            reason         = "Agreed after complaint"
+            requiresReview = false
+          then DiscountApplied
+            for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            percentage = 60
+          then DiscountReviewRequested
+            for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            percentage = 60
+
+        specification RejectingANegativeDiscount
+          given caller
+            authenticated
+            role "Accountant"
+            claim "department" = "Finance"
+          when ApplyDiscount
+            invoiceId      = "9c858901-8a57-4791-81fe-4c455b099bc9"
+            percentage     = -5
+            reason         = "Agreed by mistake"
+            requiresReview = false
+          then error "A discount cannot be negative"
 
       slice StateChange WriteOffInvoice
 
@@ -565,30 +1733,1013 @@ module Invoicing
             confirmation == "WRITEOFF"  message "Type WRITEOFF to confirm"
 
           produces InvoiceWrittenOff
-            invoiceId    = invoiceId
+            for invoiceId
             amount       = amount
             writtenOffAt = $context.occurred
 
           produces when amount > 10000
             LargeWriteOffFlagged
-              invoiceId = invoiceId
+              for invoiceId
+              amount = amount
 
           produces when amount <= 100
             SmallWriteOffRecorded
-              invoiceId = invoiceId
+              for invoiceId
 
         event InvoiceWrittenOff
-          invoiceId    InvoiceId
           amount       Money
           writtenOffAt DateTime
 
         event LargeWriteOffFlagged
-          invoiceId InvoiceId
+          amount Money
 
         event SmallWriteOffRecorded
-          invoiceId InvoiceId
+
+        screen WriteOffInvoiceScreen
+          template CommandDialog
+            body
+              title "Write off"
+            actions
+              action WriteOffInvoice
+          uses ConfirmThenExecute
+            command WriteOffInvoice
+            message "Writing off cannot be undone"
+
+        specification WritingOffALargeAmount
+          given caller
+            authenticated
+            role "FinanceController"
+            claim "department" = "Finance"
+          when WriteOffInvoice
+            invoiceId    = "9c858901-8a57-4791-81fe-4c455b099bc9"
+            amount       = 25000
+            reason       = "Customer bankrupt"
+            confirmation = "WRITEOFF"
+          then InvoiceWrittenOff
+            for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            amount = 25000
+          then LargeWriteOffFlagged
+            for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            amount = 25000
+
+        specification RejectingAnUnconfirmedWriteOff
+          given caller
+            authenticated
+            role "FinanceController"
+            claim "department" = "Finance"
+          when WriteOffInvoice
+            invoiceId    = "9c858901-8a57-4791-81fe-4c455b099bc9"
+            amount       = 50
+            reason       = "Rounding"
+            confirmation = "yes"
+          then error "Type WRITEOFF to confirm"
+
+        specification RefusingAWriteOffByAJuniorAccountant
+          given caller
+            authenticated
+            role "Accountant"
+            claim "department" = "Finance"
+            claim "seniority" = "junior"
+          when WriteOffInvoice
+            invoiceId    = "9c858901-8a57-4791-81fe-4c455b099bc9"
+            amount       = 50
+            reason       = "Rounding"
+            confirmation = "WRITEOFF"
+          then denied
+
+  // ==========================================================
+  // Payments and collection
+  // ==========================================================
+
+  feature Payments
+    description "Recording what customers pay and chasing what they do not"
+    authorize IsInvoicingStaff
+
+    contribute to Navigation
+      navigate to CollectionsBoard
+      label $strings.navigation.collections
+      order 20
+
+    slice StateChange RecordPayment
+      description "Records money received against an invoice"
+
+      command RecordPayment
+        paymentId PaymentId identifier
+        invoiceId InvoiceId
+        amount    Money
+        method    PaymentMethod
+
+        // The read-model-to-command arrow: the state the command decides against.
+        reads InvoiceBalanceReadModel as balance by invoiceId
+
+        authorize IsAccountant
+
+        validate
+          amount > 0  message "A payment must be positive"
+          require amount <= balance.outstanding
+            message "A payment cannot exceed what is outstanding"
+
+        produces PaymentRecorded
+          for paymentId
+          invoiceId  = invoiceId
+          amount     = amount
+          method     = method
+          receivedAt = $context.occurred
+
+        produces when method == "cash"
+          CashPaymentRecorded
+            for paymentId
+            receivedBy      = $context.identity.name
+            requiresReceipt = true
+
+      event PaymentRecorded
+        invoiceId  InvoiceId
+        amount     Money
+        method     PaymentMethod
+        receivedAt DateTime
+
+      event CashPaymentRecorded
+        receivedBy      String
+        requiresReceipt Bool
+
+      constraint OnePaymentPerAttempt
+        unique event PaymentRecorded
+
+      constraint UniquePaymentPerInvoiceAndMethod
+        unique invoiceId, method on PaymentRecorded
+        released by PaymentReversed
+
+      event PaymentReversed
+        reason String
+
+      screen RecordPaymentScreen
+        template CommandDialog
+          body
+            title "Record payment"
+          actions
+            action RecordPayment
+              navigate to CollectionsBoard
+
+      specification RecordingACardPayment
+        given caller
+          authenticated
+          role "Accountant"
+        given readmodel InvoiceBalanceReadModel
+          invoiceId   = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          total       = 12000
+          paid        = 0
+          outstanding = 12000
+        when RecordPayment
+          paymentId = "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount    = 12000
+          method    = "card"
+        then PaymentRecorded
+          for "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount    = 12000
+          method    = "card"
+
+      specification RejectingAnOverpayment
+        given caller
+          authenticated
+          role "Accountant"
+        given readmodel InvoiceBalanceReadModel
+          invoiceId   = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          total       = 12000
+          paid        = 10000
+          outstanding = 2000
+        when RecordPayment
+          paymentId = "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount    = 5000
+          method    = "transfer"
+        then error "A payment cannot exceed what is outstanding"
+
+      specification RejectingTheSamePaymentTwice
+        given caller
+          authenticated
+          role "Accountant"
+        given readmodel InvoiceBalanceReadModel
+          invoiceId   = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          total       = 200
+          paid        = 100
+          outstanding = 100
+        given PaymentRecorded
+          for "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount    = 100
+          method    = "card"
+        when RecordPayment
+          paymentId = "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount    = 100
+          method    = "card"
+        then error "Constraint 'OnePaymentPerAttempt' is violated: the event source already has the constrained event."
+
+    slice StateView InvoiceBalances
+
+      readmodel InvoiceBalanceReadModel
+        description "What an invoice is worth, and what is still owed on it"
+        invoiceId   InvoiceId
+        total       Money
+        paid        Money
+        outstanding Money
+
+      query GetInvoiceBalance => InvoiceBalanceReadModel?
+        by invoiceId InvoiceId
+        authorize IsAccountant
+
+      projection InvoiceBalance => InvoiceBalanceReadModel
+        from InvoiceRegistered
+          invoiceId   = $eventSourceId
+          total       = total
+          paid        = 0
+          outstanding = total
+        from PaymentRecorded key invoiceId
+          add paid by amount
+          subtract outstanding by amount
+        from InvoiceWrittenOff
+          subtract outstanding by amount
+
+      screen InvoiceBalance
+        data InvoiceBalanceReadModel via query GetInvoiceBalance by invoiceId
+        section balance
+          summary InvoiceBalanceReadModel
+            field total       label "Total"
+            field paid        label "Paid"
+            field outstanding label "Outstanding"
+          action RecordPayment
+            navigate to RecordPaymentScreen
+
+      specification ReducingTheBalanceByAPayment
+        given caller
+          authenticated
+          role "Accountant"
+        given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          total = 12000
+        when append PaymentRecorded
+          for "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount    = 2000
+          method    = "transfer"
+        then readmodel InvoiceBalanceReadModel exactly
+          invoiceId   = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          total       = 12000
+          paid        = 2000
+          outstanding = 10000
+
+    slice StateView InvoiceAging
+      description "How late an invoice is - a state machine a projection cannot express"
+
+      readmodel InvoiceAgingReadModel
+        invoiceId     InvoiceId
+        bucket        AgingBucket
+        reminders     Int
+        lastChangedAt DateTime
+
+      query GetInvoiceAging => InvoiceAgingReadModel?
+        by invoiceId InvoiceId
+        authorize IsAccountant
+
+      // Current state plus an event gives the next state. State is null on the
+      // first event, because nothing built the instance before the first fold.
+      reducer InvoiceAging => InvoiceAgingReadModel
+        description "Moves an invoice through the aging buckets"
+        on InvoiceRegistered
+          ```csharp
+          return new(context.Key, AgingBucket.Current, 0, context.Occurred);
+          ```
+        on InvoiceMarkedOverdue
+          ```csharp
+          return context.State! with { Bucket = AgingBucket.Late, LastChangedAt = context.Occurred };
+          ```
+        on InvoiceReminderSent
+          description "The third reminder moves an invoice to the severe bucket"
+          file Reducers/InvoiceReminderSent.cs
+        on InvoicePaid
+          ```csharp
+          return null;
+          ```
+
+      screen InvoiceAging
+        data InvoiceAgingReadModel via query GetInvoiceAging by invoiceId
+        summary InvoiceAgingReadModel
+          field bucket    label "Aging"
+          field reminders label "Reminders sent"
+
+      specification AgingAnOverdueInvoice
+        given caller
+          authenticated
+          role "Accountant"
+        given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceNumber = "INV-000123"
+        when append InvoiceMarkedOverdue
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          overdueAt = "2026-10-02T00:00:00Z"
+        then readmodel InvoiceAgingReadModel
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          bucket    = "late"
+          reminders = 0
+
+    slice StateView CollectionsBoard
+      description "Every unpaid invoice is exactly one of due, overdue or settled"
+
+      readmodel DueInvoice
+        invoiceId InvoiceId
+        sentAt    DateTime
+        reminders Int
+
+      readmodel OverdueInvoice
+        invoiceId InvoiceId
+        overdueAt DateTime
+        reminders Int
+
+      readmodel SettledInvoice
+        invoiceId InvoiceId
+        paidAt    DateTime
+        reminders Int
+
+      query GetDueInvoice => DueInvoice?
+        by invoiceId InvoiceId
+        authorize IsAccountant
+
+      query GetOverdueInvoice => OverdueInvoice?
+        by invoiceId InvoiceId
+        authorize IsAccountant
+
+      query GetSettledInvoice => SettledInvoice?
+        by invoiceId InvoiceId
+        authorize IsAccountant
+
+      query ListDueInvoices => observable DueInvoice[]
+        authorize IsAccountant
+
+      query ListOverdueInvoices => observable OverdueInvoice[]
+        authorize IsAccountant
+
+      query ListSettledInvoices => SettledInvoice[]
+        authorize IsAccountant
+
+      // A variant group: entering one variant removes the invoice from the others.
+      // The block outside every variant is shared and update-only.
+      projection Collections
+        from InvoiceReminderSent
+          increment reminders
+
+        variant DueInvoice
+          enters on InvoiceSent
+          from InvoiceSent
+            invoiceId = $eventSourceId
+            sentAt    = sentAt
+            reminders = 0
+
+        variant OverdueInvoice
+          enters on InvoiceMarkedOverdue
+          from InvoiceMarkedOverdue
+            invoiceId = $eventSourceId
+            overdueAt = overdueAt
+
+        variant SettledInvoice
+          enters on InvoicePaid
+          from InvoicePaid
+            invoiceId = $eventSourceId
+            paidAt    = paidAt
+
+      screen CollectionsBoard
+        title $strings.collections.title
+        template Board
+          toolbar
+            action RecordPayment
+              navigate to RecordPaymentScreen
+          due
+            data DueInvoice[] via query ListDueInvoices
+            table DueInvoice
+              column invoiceId label "Invoice"
+              column sentAt    label "Sent"
+              on row-click navigate to InvoiceDetails by invoiceId
+          overdue
+            data OverdueInvoice[] via query ListOverdueInvoices
+            table OverdueInvoice
+              column invoiceId label "Invoice"
+              column reminders label "Reminders"
+              on row-click navigate to InvoiceDetails by invoiceId
+          settled
+            data SettledInvoice[] via query ListSettledInvoices
+            table SettledInvoice
+              column invoiceId label "Invoice"
+              column paidAt    label "Paid"
+        on event PaymentRecorded
+          where amount > 0
+          refresh ListSettledInvoices
+
+      specification MovingAnInvoiceFromDueToOverdue
+        given caller
+          authenticated
+          role "Accountant"
+        given InvoiceSent
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          sentAt = "2026-09-01T09:00:00Z"
+        when append InvoiceMarkedOverdue
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          overdueAt = "2026-10-02T00:00:00Z"
+        then readmodel OverdueInvoice
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          overdueAt = "2026-10-02T00:00:00Z"
+        then no readmodel DueInvoice for "9c858901-8a57-4791-81fe-4c455b099bc9"
+
+    // A state view nothing in the document builds: the rates come from the
+    // central bank feed, so the read model has a shape and a performer, no events.
+    slice StateView ExchangeRates
+      description "Today's exchange rates, for invoices in foreign currency"
+
+      readmodel ExchangeRateReadModel
+        currency CurrencyCode
+        rate     ExchangeRate
+        asOf     Date
+
+      query GetExchangeRate => ExchangeRateReadModel?
+        description "The rate for one currency"
+        by currency CurrencyCode
+        authorize IsAccountant
+        performer
+          file Queries/GetExchangeRatePerformer.cs
+
+      query ListExchangeRates => ExchangeRateReadModel[]
+        description "Every rate the central bank publishes"
+        scoped to global
+        authorize IsAccountant
+        performer
+          ```sql
+          select Currency, Rate, AsOf
+          from   CentralBankRates
+          where  AsOf = (select max(AsOf) from CentralBankRates)
+          ```
+
+      screen ExchangeRates
+        title "Exchange rates"
+        data ExchangeRateReadModel[] via query ListExchangeRates
+        table ExchangeRateReadModel
+          column currency label "Currency"
+          column rate     label "Rate"
+          column asOf     label "As of"
+
+      specification LookingUpTheEuroRate
+        given caller
+          authenticated
+          role "Accountant"
+        given readmodel ExchangeRateReadModel
+          currency = "EUR"
+          rate     = 11.52
+          asOf     = "2026-10-02"
+        when query GetExchangeRate
+          currency = "EUR"
+        then result exactly
+          currency = "EUR"
+          rate     = 11.52
+          asOf     = "2026-10-02"
+
+      specification NotFindingAnUnpublishedCurrency
+        given caller
+          authenticated
+          role "Accountant"
+        given readmodel ExchangeRateReadModel
+          currency = "EUR"
+          rate     = 11.52
+          asOf     = "2026-10-02"
+        when query GetExchangeRate
+          currency = "XAU"
+        then no result
+
+    slice Translate PaymentProviderSync
+      description "Turns what the payment provider settles into payments on our invoices"
+
+      reaction PaymentProviderTranslator
+        description "Every settlement from the provider becomes a recorded payment"
+        when PaymentSettled
+          settlementId
+          invoiceId
+          amount
+          produces PaymentRecorded
+            for settlementId
+            invoiceId  = invoiceId
+            amount     = amount
+            method     = "card"
+            receivedAt = $context.occurred
+
+      specification RecordingASettledCardPayment
+        given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          total = 12000
+        when append PaymentSettled
+          for "4e5f6a7b-8c9d-4e0f-a1b2-c3d4e5f6a7b8"
+          settlementId = "4e5f6a7b-8c9d-4e0f-a1b2-c3d4e5f6a7b8"
+          invoiceId    = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount       = 12000
+        then PaymentRecorded
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount    = 12000
+          method    = "card"
+
+    slice Automation ReconcilePayments
+      description "Closes an invoice out once it is paid in full"
+
+      reaction PaymentReconciler
+        description "Marks an invoice paid when a payment covers what is outstanding"
+        when PaymentRecorded
+          description "A payment arrived - is the invoice settled now?"
+          invoiceId
+          amount
+          reads InvoiceBalanceReadModel as balance by invoiceId
+          invokes ChangeInvoiceStatus
+            invoiceId = invoiceId
+            status    = "paid"
+        where amount > 0
+
+      specification ClosingOutAFullyPaidInvoice
+        given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          total = 12000
+        when append PaymentRecorded
+          for "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount    = 12000
+          method    = "transfer"
+        then InvoicePaid
+
+    slice Automation ChaseOverdueInvoices
+      description "Reminds the billing contact while an invoice is late"
+
+      reaction OverdueChaser
+        description "Sends the first reminder at once, then one every morning"
+        when InvoiceMarkedOverdue
+          overdueAt
+          produces InvoiceReminderSent
+            reminderNumber = 1
+            sentAt         = $context.occurred
+        at 08:00
+          description "The daily sweep over everything still overdue"
+          file Reactions/DailyOverdueSweep.cs
+
+      reaction WeeklyCollectionsDigest
+        description "Summarizes the week's collections for the finance department"
+        at 07:30 on Monday
+          produces CollectionsDigestIssued
+            issuedAt = $context.occurred
+
+      reaction MonthlyStatementRun
+        description "Issues every customer a statement on the first of the month"
+        at 06:00 on day 1
+          file Reactions/MonthlyStatementRun.cs
+
+      event InvoiceReminderSent
+        reminderNumber Int
+        sentAt         DateTime
+
+      event CollectionsDigestIssued
+        issuedAt DateTime
+
+      specification RemindingAsSoonAsAnInvoiceIsOverdue
+        given InvoiceSent
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          sentAt = "2026-09-01T09:00:00Z"
+        when append InvoiceMarkedOverdue
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          overdueAt = "2026-10-02T00:00:00Z"
+        then InvoiceReminderSent
+          reminderNumber = 1
+
+      // The clock is an action of its own: it reaches Monday 07:30, so the weekly
+      // digest is due.
+      specification IssuingTheWeeklyDigestOnMondayMorning
+        given clock "2026-10-05T07:00:00Z"
+        given InvoiceMarkedOverdue
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          overdueAt = "2026-10-02T00:00:00Z"
+        when clock "2026-10-05T07:30:00Z"
+        then CollectionsDigestIssued
+          issuedAt = "2026-10-05T07:30:00Z"
+
+  // ==========================================================
+  // The customer portal - customers see only their own
+  // ==========================================================
+
+  feature CustomerPortal
+    description "Where customers see and pay their own invoices"
+    authorize IsCustomer
+
+    contribute to Navigation
+      navigate to MyInvoices
+      label $strings.navigation.myInvoices
+      order 5
+
+    slice StateView MyInvoices
+
+      readmodel CustomerInvoiceReadModel
+        invoiceId     InvoiceId
+        customerId    CustomerId
+        invoiceNumber InvoiceNumber
+        dueDate       Date
+        status        InvoiceStatus
+
+      query GetMyInvoice => CustomerInvoiceReadModel?
+        by invoiceId InvoiceId
+        authorize OwnsInvoice
+
+      // 'scoped to' says what the caller sees, as distinct from who may call.
+      query ListMyInvoices => observable CustomerInvoiceReadModel[]
+        description "The caller's own invoices, kept current"
+        filter customerId CustomerId from $context.identity.claims.customerId
+        scoped to identity
+        authorize OwnsInvoice
+
+      projection CustomerInvoices => CustomerInvoiceReadModel
+        no automap
+        from InvoiceRegistered
+          invoiceId     = $eventSourceId
+          customerId    = customerId
+          invoiceNumber = invoiceNumber
+          dueDate       = dueDate
+          status        = "draft"
+        from InvoiceSent
+          status = "sent"
+        from InvoicePaid
+          status = "paid"
+        remove with InvoiceCancelled
+
+      screen MyInvoices
+        title $strings.portal.title
+        data CustomerInvoiceReadModel[] via query ListMyInvoices
+        table CustomerInvoiceReadModel
+          column invoiceNumber label "Invoice"
+          column dueDate       label "Due"
+          column status        label "Status"
+        action RequestPaymentPlan
+          navigate to RequestPaymentPlanScreen
+        on event InvoiceMarkedOverdue
+          notify warning $strings.portal.overdueNotice
+
+      specification SeeingMyOwnInvoice
+        given caller
+          authenticated
+          role "Customer"
+          claim "customerId" = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          customerId    = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          invoiceNumber = "INV-000123"
+          dueDate       = "2026-12-31"
+        when append InvoiceSent
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          sentAt = "2026-10-02T09:00:00Z"
+        then readmodel CustomerInvoiceReadModel
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          status    = "sent"
+        then query ListMyInvoices
+          arguments
+            customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          result
+            invoiceNumber = "INV-000123"
+            status        = "sent"
+
+    slice StateChange RequestPaymentPlan
+      description "A customer asks to pay an invoice in installments"
+
+      command RequestPaymentPlan
+        invoiceId InvoiceId identifier
+        plan      InstallmentPlan
+
+        authorize OwnsInvoice and IsAdultCustomer
+                  IsWithinCreditLimit
+
+        validate
+          plan.installments min 2   message "A plan has at least two installments"
+          plan.installments max 12  message "A plan has at most twelve installments"
+
+        produces PaymentPlanRequested
+          for invoiceId
+          installments = plan.installments
+          firstDueDate = plan.firstDueDate
+          requestedBy  = $context.identity.userName
+
+      event PaymentPlanRequested
+        installments Int
+        firstDueDate Date
+        requestedBy  String
+
+      screen RequestPaymentPlanScreen
+        template CommandDialog
+          body
+            title "Pay in installments"
+          actions
+            action RequestPaymentPlan
+              navigate to MyInvoices
+
+      specification RequestingAThreeInstallmentPlan
+        given caller
+          authenticated
+          role "Customer"
+          claim "customerId" = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          claim "dateOfBirth" = "1980-01-01"
+        when RequestPaymentPlan
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          plan      = {"installments": 3, "firstDueDate": "2026-11-01"}
+        then PaymentPlanRequested
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          installments = 3
+          firstDueDate = "2026-11-01"
+
+      specification RejectingASingleInstallment
+        given caller
+          authenticated
+          role "Customer"
+          claim "customerId" = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          claim "dateOfBirth" = "1980-01-01"
+        when RequestPaymentPlan
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          plan      = {"installments": 1, "firstDueDate": "2026-11-01"}
+        then error "A plan has at least two installments"
+
+    // Another view with no events behind it - the credit bureau owns the facts.
+    slice StateView CreditStatus
+      description "What the credit bureau says the customer may still owe"
+
+      readmodel CustomerCreditReadModel
+        customerId   CustomerId
+        creditLimit  Money
+        used         Money
+        lastAssessed Date
+
+      query GetMyCreditStatus => CustomerCreditReadModel?
+        by customerId CustomerId from $context.identity.claims.customerId
+        authorize OwnsInvoice
+        performer
+          ```csharp
+          return await creditBureau.Assess(context.Arguments.CustomerId);
+          ```
+
+      screen MyCreditStatus
+        data CustomerCreditReadModel via query GetMyCreditStatus
+        summary CustomerCreditReadModel
+          field creditLimit label "Credit limit"
+          field used        label "In use"
+
+      specification SeeingMyCreditStatus
+        given caller
+          authenticated
+          role "Customer"
+          claim "customerId" = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        given readmodel CustomerCreditReadModel
+          customerId   = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          creditLimit  = 50000
+          used         = 12000
+          lastAssessed = "2026-10-01"
+        when query GetMyCreditStatus
+          customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        then result
+          creditLimit = 50000
+          used        = 12000
+
+  // ==========================================================
+  // Auditing - read only
+  // ==========================================================
+
+  feature Auditing
+    description "What auditors look at - nothing here changes anything"
+    authorize IsAuditor
+
+    contribute to Navigation
+      navigate to CancelledInvoices
+      label "Audit"
+      order 90
+
+    slice StateView CancelledInvoices
+      description "Archive of cancelled invoices - every property auto-maps from the event"
+
+      readmodel CancelledInvoiceReadModel
+        invoiceId    InvoiceId
+        reason       String
+        cancelledAt  DateTime
+        cancelledBy  String
+        cancelledVia String
+
+      query GetCancelledInvoice => CancelledInvoiceReadModel?
+        by invoiceId InvoiceId
+        authorize IsAuditor
+
+      query ListCancelledInvoices => CancelledInvoiceReadModel[]
+        description "Cancelled invoices, kept for audit"
+        authorize IsAuditor
+
+      // AutoMap is on by default and copies every matching property.
+      projection CancelledInvoices => CancelledInvoiceReadModel
+        from InvoiceCancelled
+          invoiceId = $eventSourceId
+
+      screen CancelledInvoices
+        title "Cancelled invoices"
+        data CancelledInvoiceReadModel[] via query ListCancelledInvoices
+        table CancelledInvoiceReadModel
+          column invoiceId   label "Invoice"
+          column reason      label "Reason"
+          column cancelledBy label "Cancelled by"
+
+      specification ArchivingACancelledInvoice
+        given caller
+          authenticated
+          role "Auditor"
+          claim "tenant" = "00000000-0000-0000-0000-000000000000"
+        given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceNumber = "INV-000123"
+        when append InvoiceCancelled
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason       = "Duplicate"
+          cancelledAt  = "2026-10-02T09:00:00Z"
+          cancelledBy  = "ada"
+          cancelledVia = "Command"
+        then readmodel CancelledInvoiceReadModel exactly
+          invoiceId    = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason       = "Duplicate"
+          cancelledAt  = "2026-10-02T09:00:00Z"
+          cancelledBy  = "ada"
+          cancelledVia = "Command"
+
+      specification RefusingANonAuditor
+        given caller
+          authenticated
+          role "InvoiceManager"
+        when query GetCancelledInvoice
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+        then denied
+
+    slice StateView SystemActivity
+      description "How busy each invoice, payment and customer is - every event, per event source"
+
+      readmodel SourceActivityReadModel
+        sourceId     String
+        totalEvents  Int
+        lastOccurred DateTime?
+
+      query GetSourceActivity => observable SourceActivityReadModel?
+        by sourceId String
+        scoped to global
+        authorize IsAuditor
+
+      // 'all' subscribes to every event type in the system, and counts on the
+      // instance keyed by each event's own source.
+      projection SystemActivity => SourceActivityReadModel
+        all
+          sourceId     = $eventSourceId
+          lastOccurred = $eventContext.occurred
+          count totalEvents
+
+      screen SystemActivity
+        title "Activity"
+        data SourceActivityReadModel via query GetSourceActivity by sourceId
+        summary SourceActivityReadModel
+          field totalEvents  label "Events"
+          field lastOccurred label "Last event"
+
+      specification CountingEveryEventOnAnInvoice
+        given caller
+          authenticated
+          role "Auditor"
+          claim "tenant" = "00000000-0000-0000-0000-000000000000"
+        given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceNumber = "INV-000123"
+        when append InvoiceSent
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          sentAt = "2026-10-02T09:00:00Z"
+        then readmodel SourceActivityReadModel
+          sourceId     = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          totalEvents  = 2
+          lastOccurred = "2026-10-02T09:00:00Z"
+
+  // ==========================================================
+  // Integrations - the system talking to others
+  // ==========================================================
+
+  feature Integrations
+    description "Notifications, detection and synchronization with other systems"
+
+    feature Notifications
+      description "Telling customers what happened to their invoices"
+
+      slice Automation NotifyCustomerOnInvoiceRegistered
+
+        reaction NotifyCustomer
+          description "Emails the billing contact once an invoice is registered"
+          when InvoiceRegistered
+            billingContact
+            invoiceNumber
+            produces InvoiceNotificationSent
+              channel  = "email"
+              channels = ["email", "portal"]
+              subject  = $strings.notifications.invoiceRegistered
+              sentAt   = $context.occurred
+            file Reactions/NotifyCustomerReaction.cs
+
+        event InvoiceNotificationSent
+          channel  String
+          channels String[]
+          subject  String
+          sentAt   DateTime
+
+        specification NotifyingTheBillingContact
+          given CustomerRegistered
+            for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+            name = "Acme Corp"
+          when append InvoiceRegistered
+            for "9c858901-8a57-4791-81fe-4c455b099bc9"
+            invoiceNumber  = "INV-000123"
+            billingContact = {"name": "Ada Lovelace", "email": "ada@acme.test"}
+          then InvoiceNotificationSent
+            channel = "email"
+
+    slice Automation DetectOverdueInvoices
+
+      reaction OverdueInvoiceDetector
+        description "Marks a sent invoice overdue once its due date has passed"
+        every 1 day
+        when InvoiceSent
+          sentAt
+          ```csharp
+          if (context.ReadModel<InvoiceDetailsReadModel>().DueDate < DateOnly.FromDateTime(DateTime.UtcNow))
+              return [new InvoiceMarkedOverdue(DateTimeOffset.UtcNow)];
+          ```
+
+      specification MarkingALateInvoiceOverdue
+        given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceNumber = "INV-000123"
+          dueDate       = "2026-09-01"
+        when append InvoiceSent
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          sentAt = "2026-10-02T09:00:00Z"
+        then InvoiceMarkedOverdue
+
+    slice Automation SyncBillingDirectory
+      description "Keeps the external billing directory and our contacts in step"
+
+      // A reaction may have several triggers: the built-in Startup, the clock, a
+      // declared application trigger and a domain event.
+      reaction BillingDirectorySync
+        description "Reconciles the billing contact list against the external directory"
+        when Startup
+        every 15 minutes
+        when BillingDirectorySyncRequested
+          requestedBy
+          produces BillingDirectorySyncStarted
+            requestedBy = requestedBy
+            startedAt   = $context.occurred
+        when DirectoryChanged
+          entry
+          changedAt
+          file Reactions/ApplyDirectoryChange.cs
+        when BillingContactUpdated
+          email
+          produces BillingContactPublished
+            email       = email
+            publishedAt = $context.occurred
+
+      event BillingContactPublished
+        email       EmailAddress
+        publishedAt DateTime
+
+      event BillingDirectorySyncStarted
+        requestedBy String
+        startedAt   DateTime
+
+      // An application trigger is an action too - here the one the invoice list's
+      // "Synchronize directory" button raises.
+      specification SynchronizingWhenSomeoneAsks
+        given clock "2026-10-02T10:00:00Z"
+        given BillingContactPublished
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          email       = "ada@acme.test"
+          publishedAt = "2026-10-01T10:00:00Z"
+        when trigger BillingDirectorySyncRequested
+          requestedBy = "ada"
+        then BillingDirectorySyncStarted
+          requestedBy = "ada"
+          startedAt   = "2026-10-02T10:00:00Z"
+
+      specification PublishingAnUpdatedContact
+        given InvoiceRegistered
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceNumber = "INV-000123"
+        when append BillingContactUpdated
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          email = "grace@acme.test"
+        then BillingContactPublished
+          email = "grace@acme.test"
 
     slice Translate LegacyInvoiceSync
+      description "Brings changes made in the legacy invoicing system into this one"
 
       capture LegacyInvoiceCapture
         source api
@@ -609,375 +2760,122 @@ module Invoicing
         append InvoiceStatusChanged
           tag legacy
           when status
-            invoiceId = $.id
             status    = $.status
             changedAt = $context.occurred
         append InvoicePaidFromSent
           when status from "sent" to "paid"
-            invoiceId = $.id
-            paidAt    = $context.occurred
+            paidAt = $context.occurred
         append InvoiceNeedsAttention
           when status or contactName
-            invoiceId = $.id
+            source = "legacy"
         append InvoiceFullyApproved
           when approvedByFinance and approvedByManager
-            invoiceId = $.id
+            approvedAt = $context.occurred
         append InvoiceFlagged
           when `status == "sent" && overdue == true`
-            invoiceId = $.id
+            flaggedAt = $context.occurred
         children lineItems identified by lineNumber
           map
             productName = name
           append InvoiceLineItemAdded
             when added
-              invoiceId  = $.id
               lineNumber = $.lineNumber
               quantity   = $.quantity
               unitPrice  = $.unitPrice
           append InvoiceLineItemRemoved
             when removed
-              invoiceId  = $.id
               lineNumber = $.lineNumber
         nested billingContact
           map
             contactName = name
           append BillingContactUpdated
             when email
-              invoiceId = $.id
-              email     = $.email
+              email = $.email
 
-    slice StateView InvoiceList
+      // A legacy fact is translated into the domain's own vocabulary.
+      reaction LegacyPaymentTranslator
+        description "A payment the legacy system saw is a payment here too"
+        when InvoicePaidFromSent
+          paidAt
+          produces InvoicePaid
+            paidAt = paidAt
 
-      // A query says what it is for, where each parameter comes from, and — when it
-      // needs one — how it is performed. 'from' fills a parameter from the query
-      // context instead of the caller, so the UI never supplies the tenant.
-      query ListInvoices => InvoiceListReadModel[]
-        description "Every invoice the caller may see, narrowed by status and customer"
-        filter status     InvoiceStatus?
-        filter customerId CustomerId?
-        filter tenantId   TenantId from $context.tenant
-        authorize IsAuthenticated
+      event InvoicePaidFromSent
+        paidAt DateTime
 
-      projection InvoiceList => InvoiceListReadModel
-        every
-          lastActivityAt = $eventContext.occurred
-        from InvoiceRegistered key invoiceId
-          id            = $eventSourceId
-          customerId    = customerId
-          invoiceNumber = invoiceNumber
-          currency      = currency
-          status        = "draft"
-          lineCount     = 0
-          dueDate       = dueDate
-          channel       = "portal"
-        from InvoiceSent, InvoicePaid
-          touched = true
-        from InvoiceMarkedOverdue
-          status = "overdue"
-        from InvoiceStatusChanged
-          status = status
-        remove with InvoiceCancelled
+      event InvoiceNeedsAttention
+        source String
 
-      screen RegisterInvoiceScreen
-        template RegisterInvoiceDialog
-          body
-            title "Register invoice"
-          actions
-            action RegisterInvoice
-              navigate to InvoiceList
+      event InvoiceFullyApproved
+        approvedAt DateTime
 
-      screen InvoiceList
-        title "Invoices"
-        data InvoiceListReadModel[] via query ListInvoices
-        action RegisterInvoice
-          navigate to RegisterInvoiceScreen
-        action CancelInvoice
-        typescript
-          ```
-          export const statusLabel = (status: string) => status.toUpperCase();
-          ```
+      event InvoiceFlagged
+        flaggedAt DateTime
 
-    slice StateView InvoiceDetails
+      event InvoiceLineItemAdded
+        lineNumber Int
+        quantity   Quantity
+        unitPrice  Money
 
-      query GetInvoice => InvoiceDetailsReadModel
-        description "One invoice with its lines, customer and shipping status"
-        by invoiceId InvoiceId
-        authorize OwnsInvoice or IsAuthenticated
+      event InvoiceLineItemRemoved
+        lineNumber Int
 
-      projection InvoiceDetails => InvoiceDetailsReadModel
-        key invoiceId
-        every
-          lastUpdatedAt = $eventContext.occurred
-          exclude children
-        from InvoiceRegistered key invoiceId
-          customerId           = customerId
-          invoiceNumber        = invoiceNumber
-          currency             = currency
-          paymentTerms         = paymentTerms
-          status               = "draft"
-          dueDate              = dueDate
-          registeredAt         = $eventContext.occurred
-          registeredBy         = $causedBy.name
-          registeredByUser     = $causedBy.userName
-          registeredForSubject = $causedBy.subject
-          displayLabel         = `${invoiceNumber} (${currency})`
-        from InvoiceSent
-          status = "sent"
-          sentAt = sentAt
-        from InvoicePaid
-          status = "paid"
-          paidAt = paidAt
-        from InvoiceMarkedOverdue
-          status    = "overdue"
-          overdueAt = overdueAt
-        join customer on customerId
-          with CustomerRegistered
-            no automap
-            customerName = name
-        children lineItems identified by lineNumber
-          from InvoiceLineItemAdded key lineNumber
-            parent invoiceId
-            quantity  = quantity
-            unitPrice = unitPrice
-            add subtotal by unitPrice
-            count itemCount
-          remove with InvoiceLineItemRemoved key lineNumber
-            parent invoiceId
-        nested shipping
-          from InvoiceShipped
-            carrier = carrier
-          clear with InvoiceShippingCleared
-        remove via join on CustomerAccountClosed
+      // A capture is driven by records of its source: 'given capture' is the
+      // record as it was, 'when capture' the record as it is now. Paid in the
+      // legacy system means a status change, a payment from sent, a nudge to look
+      // at the invoice - and, through the translator, a payment here.
+      specification SeeingAnInvoicePaidInTheLegacySystem
+        given clock "2026-10-02T12:00:00Z"
+        given capture LegacyInvoiceCapture
+          id          = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          status      = "sendt"
+          contactName = "Lovelace, Ada"
+        when capture LegacyInvoiceCapture
+          id          = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          status      = "betalt"
+          contactName = "Lovelace, Ada"
+        then events in any order
+        then InvoiceStatusChanged
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          status    = "paid"
+          changedAt = "2026-10-02T12:00:00Z"
+        then InvoicePaidFromSent
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          paidAt = "2026-10-02T12:00:00Z"
+        then InvoiceNeedsAttention
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          source = "legacy"
+        then InvoicePaid
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          paidAt = "2026-10-02T12:00:00Z"
 
-      screen InvoiceLineDetail
-        title "Line item"
-        data InvoiceDetailsReadModel via query GetInvoice by invoiceId
+      specification TranslatingALegacyPayment
+        given InvoiceSent
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          sentAt = "2026-09-01T09:00:00Z"
+        when append InvoicePaidFromSent
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          paidAt = "2026-10-02T12:00:00Z"
+        then InvoicePaid
+          paidAt = "2026-10-02T12:00:00Z"
 
-      screen InvoiceDetails
-        template MasterDetail
-          sidebar
-            data InvoiceDetailsReadModel via query GetInvoice by invoiceId
-            summary InvoiceDetailsReadModel
-              field invoiceNumber label "Invoice #"
-              field status        label "Status"
-            section actions
-              action CancelInvoice
-              action ChangeInvoiceStatus
-          main
-            section lineItems
-              table lineItems
-                column lineNumber  label "#"
-                column quantity    label "Qty"
-                column unitPrice   label "Unit Price"
-                on row-click navigate to InvoiceLineDetail by lineNumber
-            section help
-              html
-                ```
-                <p class="hint">Line items become read-only once an invoice is paid.</p>
-                ```
-
-    slice StateView InvoiceLineReport
-
-      // The performer is the query's escape hatch, mirroring a command's handler —
-      // an inline block in a top level language, or a 'file' reference.
-      query ListLineItems => InvoiceLineReportReadModel[]
-        description "Every invoice line, priced, for the accounting line report"
-        filter tenantId TenantId from $context.tenant
-        authorize IsAccountant
-        performer
-          sql
-            ```
-            select   InvoiceId, LineNumber, Quantity, UnitPrice
-            from     InvoiceLineReport
-            where    TenantId = @tenantId
-            order by InvoiceId, LineNumber
-            ```
-
-      projection InvoiceLineReport => InvoiceLineReportReadModel
-        from InvoiceLineItemAdded
-          key InvoiceLineKey
-            invoiceId  = invoiceId
-            lineNumber = lineNumber
-          quantity  = quantity
-          unitPrice = unitPrice
-
-      screen InvoiceLineReport
-        file Screens/InvoiceLineReport.tsx
-
-    slice StateView CancelledInvoices
-      description "Archive of cancelled invoices - every property auto-maps from the event"
-
-      query ListCancelledInvoices => CancelledInvoiceReadModel[]
-        description "Cancelled invoices, kept for audit"
-        authorize IsAccountant
-
-      // No explicit mappings needed - AutoMap is on by default and copies
-      // every matching property from InvoiceCancelled onto the read model.
-      projection CancelledInvoices => CancelledInvoiceReadModel
-        from InvoiceCancelled
-
-    slice StateView InvoiceDashboard
-
-      query GetInvoiceSummary  => InvoiceSummaryReadModel
-        description "The counters behind the dashboard header"
-        authorize IsAccountant
-        performer
-          file Queries/InvoiceSummaryPerformer.cs
-
-      query GetOverdueInvoices => OverdueInvoicesReadModel[]
-        description "Invoices past their due date, oldest first"
-        authorize IsAccountant
-        performer
-          csharp
-            ```
-            return readModels
-                .Where(invoice => invoice.Status == InvoiceStatus.Overdue)
-                .Where(invoice => invoice.TenantId == context.Tenant)
-                .OrderBy(invoice => invoice.DueDate);
-            ```
-
-      projection InvoiceSummary => InvoiceSummaryReadModel
-        from InvoiceRegistered
-          key "global"
-          increment totalCount
-          increment draftCount
-          count touches
-        from InvoiceSent
-          decrement draftCount
-          increment sentCount
-        from InvoicePaid
-          decrement sentCount
-          increment paidCount
-        from InvoiceMarkedOverdue
-          increment overdueCount
-        from InvoiceWrittenOff
-          add writeOffTotal by amount
-          subtract outstandingTotal by amount
-        from InvoiceCancelled
-          decrement totalCount
-
-      screen InvoiceDashboard
-        template Dashboard
-          header
-            section title
-              data InvoiceSummaryReadModel via query GetInvoiceSummary
-              react
-                ```
-                export default ({ data }: Props) => (
-                  <header className="dashboard-header">
-                    <h1>Invoice Dashboard</h1>
-                    <span className="badge">{data.totalCount} invoices</span>
-                    {data.overdueCount > 0 && (
-                      <span className="badge badge--warning">{data.overdueCount} overdue</span>
-                    )}
-                  </header>
-                );
-                ```
-          left
-            section overdue
-              data OverdueInvoicesReadModel[] via query GetOverdueInvoices
-              table OverdueInvoicesReadModel
-                column invoiceNumber label "Invoice #"
-                column dueDate       label "Due Date"
-                on row-click navigate to InvoiceDetails by invoiceId
-          right
-            section summary
-              data InvoiceSummaryReadModel via query GetInvoiceSummary
-              react
-                ```
-                import { PieChart, Pie, Cell, Tooltip } from 'recharts';
-                const COLORS = ['#94a3b8', '#60a5fa', '#34d399', '#f87171'];
-                export default ({ data }: Props) => (
-                  <PieChart width={300} height={300}>
-                    <Pie data={[
-                      { name: 'Draft', value: data.draftCount },
-                      { name: 'Sent',  value: data.sentCount },
-                      { name: 'Paid',  value: data.paidCount },
-                    ]} dataKey="value">
-                      {COLORS.map((c, i) => <Cell key={i} fill={c} />)}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                );
-                ```
-          footer
-            section actions
-              action RegisterInvoice
-                label $strings.invoices.actions.newInvoice
-                navigate to RegisterInvoiceScreen
-
-    slice StateView SystemActivity
-      description "Counts every event in the system for the activity ticker"
-
-      query GetSystemActivity => SystemActivityReadModel
-        authorize IsAccountant
-
-      projection SystemActivity => SystemActivityReadModel
-        all
-          count totalEvents
-          lastOccurred = $eventContext.occurred
-
-    slice Automation NotifyCustomerOnInvoiceRegistered
-
-      reaction NotifyCustomer
-        description "Emails the billing contact once an invoice is registered"
-        when InvoiceRegistered
-          file Reactions/NotifyCustomerReaction.cs
-
-    slice Automation DetectOverdueInvoices
-
-      reaction OverdueInvoiceDetector
-        when InvoiceRegistered
-          csharp
-            ```
-            if (DueDate < DateTimeOffset.UtcNow)
-                return [new MarkInvoiceOverdue(InvoiceId, DateTimeOffset.UtcNow)];
-            ```
-        when InvoiceSent
-          csharp
-            ```
-            if (DueDate < DateTimeOffset.UtcNow)
-                return [new MarkInvoiceOverdue(InvoiceId, DateTimeOffset.UtcNow)];
-            ```
-
-    slice Automation ReconcilePayments
-      description "Described before any of it is implemented - no 'file' anywhere"
-
-      // A trigger states intent on its own. The 'file' reference and the inline
-      // block are realization metadata a slice gains once it is built, never
-      // something an author must invent to make the document parse.
-      reaction PaymentReconciler
-        description "Matches settled payments against outstanding invoices and closes them out"
-        when InvoicePaid
-        when InvoiceMarkedOverdue
-          description "Re-checks whether a late payment has since arrived"
-
-    slice Automation ChaseOverdueInvoices
-      description "Driven by the clock rather than by an event"
-
-      reaction OverdueChaser
-        description "Reminds the billing contact every morning while an invoice is late"
-        at 08:00
-          produces InvoiceMarkedOverdue
-            overdueAt = $context.occurred
-
-    slice Automation SyncBillingDirectory
-
-      reaction BillingDirectorySync
-        description "Reconciles the billing contact list against the external directory"
-        every 15 minutes
-        when DirectoryChanged
-          entry
-          changedAt
+// ------------------------------------------------------------
+// Seed data - the starting state, declared as events
+// ------------------------------------------------------------
 
 seed
   for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
     CustomerRegistered
       customerId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
       name       = "Acme Corp"
-    InvoiceRegistered
-      invoiceNumber = "INV-000042"
-      status        = "draft"
   for "9c858901-8a57-4791-81fe-4c455b099bc9"
+    InvoiceRegistered
+      customerId    = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+      invoiceNumber = "INV-000042"
+      currency      = "NOK"
+      status        = "draft"
+
+seed
+  for "7d1e5f3a-2b4c-4e6f-8a9b-0c1d2e3f4a5b"
     CustomerRegistered
       name = "Globex"

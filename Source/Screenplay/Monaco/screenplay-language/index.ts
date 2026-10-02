@@ -8,7 +8,7 @@ import {
     languageId,
 } from './language';
 import { createTokensProvider } from './tokens';
-import { createCompletionProvider } from './completions';
+import { CompletionOptions, createCompletionProvider } from './completions';
 import { createHoverProvider } from './hover';
 import { attachDiagnostics } from './diagnostics';
 import {
@@ -38,7 +38,10 @@ export function ensureBuiltInSubLanguages(): void {
     if (!getSubLanguage('capture')) registerSubLanguage('capture', cdl);
 }
 
-export function register(monaco: Monaco): void {
+// What a host can tell the language service beyond the models it holds.
+export type LanguageServiceOptions = CompletionOptions;
+
+export function register(monaco: Monaco, options: LanguageServiceOptions = {}): void {
     if (registeredInstances.has(monaco)) return;
 
     ensureBuiltInSubLanguages();
@@ -48,7 +51,7 @@ export function register(monaco: Monaco): void {
     monaco.languages.register(languageExtensionPoint);
     monaco.languages.setLanguageConfiguration(languageId, languageConfiguration);
     applyTokensProvider(monaco);
-    monaco.languages.registerCompletionItemProvider(languageId, createCompletionProvider(monaco));
+    monaco.languages.registerCompletionItemProvider(languageId, createCompletionProvider(monaco, options));
     monaco.languages.registerHoverProvider(languageId, createHoverProvider());
     monaco.editor.defineTheme(screenplayDarkThemeName, screenplayDark);
     monaco.editor.defineTheme(screenplayLightThemeName, screenplayLight);
@@ -86,7 +89,10 @@ export {
     isAbsoluteFileReferencePath,
 } from './file-references';
 export type { FileReference } from './file-references';
-export { builtInTriggerNames, knownEventNames, knownTriggerNames, knownTypeNames, scanDocument } from './symbols';
+export { fileImportOn, fileImports, importablePaths, isFileImportLine } from './file-imports';
+export type { FileImport } from './file-imports';
+export type { CompletionOptions } from './completions';
+export { builtInTriggerNames, knownEventNames, knownTriggerNames, knownTypeNames, mergeSymbols, scanDocument } from './symbols';
 export type {
     CommandSymbol,
     ConceptSymbol,
@@ -100,15 +106,15 @@ export type {
     QuerySymbol,
     TypeSymbol,
 } from './symbols';
-export { attributeDocs, contextVariableDocs, keywordDocs } from './keyword-docs';
+export { attributeDocs, contextVariableDocs, keywordDocs, specificationKeywordDocs } from './keyword-docs';
 export { eventContextMemberAt, eventContextMembers, eventContextMembersAfter, eventContextPaths, namesEventContextMember } from './event-context';
 export type { EventContextMember, EventContextPath } from './event-context';
-export { contextVariableItems, producesItems } from './completion-items';
+export { contextVariableItems, producesItems, specificationStepItems } from './completion-items';
 export type { CompletionEntry } from './completion-items';
 export { completionEntriesFor, planCompletions } from './completion-planner';
 export type { CompletionPlan } from './completion-planner';
 export { hoverContent } from './hover-content';
 export { validateLines } from './validation';
-export type { ValidationIssue, ValidationSeverity } from './validation';
+export type { ValidationContext, ValidationIssue, ValidationSeverity } from './validation';
 export { diagnosticCodes } from './diagnostic-codes';
 export type { DiagnosticCode } from './diagnostic-codes';

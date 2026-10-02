@@ -53,6 +53,12 @@ export const commonTokenRules: MonarchTokenRules = [
 export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMonarchLanguage {
     const tokenizer: Record<string, MonarchTokenRules> = {
         root: [
+            // A specification's clock, trigger, capture and query steps - matched before a sub-language keyword
+            // can claim 'capture' and read the rest of the specification as change data capture.
+            [/^(\s*)(given|when)(\s+)(clock|capture|trigger|query)\b/, ['white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(then)(\s+)(result|no\s+result)\b/, ['white', 'keyword', 'white', 'keyword']],
+            // A quoted import names .play files rather than a qualified name - the path reads as a link.
+            [/^(\s*)(import)(\s+)("[^"\\]*")/, ['white', 'keyword', 'white', 'string.link']],
             // Only an event header reserves 'generation'; properties and context paths do not.
             [/^(\s*)(event)(\s+)([A-Za-z_]\w*)(\s+)(generation)(?=\s+\d+\s*$)/,
                 ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword']],

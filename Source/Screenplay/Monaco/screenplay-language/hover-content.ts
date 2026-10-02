@@ -4,7 +4,7 @@
 import { enclosingChain, fenceMap, indentOf } from './document-context';
 import { scanDocument } from './symbols';
 import { getSubLanguage } from './sub-language-registry';
-import { attributeDocs, contextVariableDocs, keywordDocs } from './keyword-docs';
+import { attributeDocs, contextVariableDocs, keywordDocs, specificationKeywordDocs } from './keyword-docs';
 
 // Produces the hover markdown for a word at a position, without any editor
 // dependency — the Monaco service and the VSCode extension share this content.
@@ -95,6 +95,11 @@ export function hoverContent(
 
     if (word === 'reads' && (chain[0] === 'every' || chain[0] === 'at') && chain.includes('reaction')) {
         return '**reads** — Declares a whole view this clock trigger consults: `reads <View>`. Clock triggers take no values, so `by` is unavailable.';
+    }
+
+    const step = line.trim().match(/^(given|when|then)\s+(?:no\s+)?(\w+)/);
+    if (step && step[2] === word && chain[0] === 'specification' && specificationKeywordDocs[word]) {
+        return `**${word}** — ${specificationKeywordDocs[word]}`;
     }
 
     const keywordDoc = keywordDocs[word];
