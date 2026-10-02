@@ -17,6 +17,7 @@
         { "include": "#code-block-typescript" },
         { "include": "#code-block-html" },
         { "include": "#code-block-sql" },
+        { "include": "#event-block" },
         { "include": "#description-block" },
         { "include": "#projection-block" },
         { "include": "#capture-block" },
@@ -74,7 +75,7 @@
                     "name": "keyword.other.screenplay"
                 },
                 {
-                    "match": "\\b(authorize|validate|produces|reads|as|handler|performer|observable|identifier|reason|from|require|when|given|then|arguments|result|error|template|data|action|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|released|ignore|casing|file|rule|message|severity|information|warning|matches|all|max|min|length|today|not|no|empty|and|or|authenticated|role|claim|subject|event|query|layout|translate|key|description|documentation|id|concurrency|eventSource|sourceType|streamType|streamId|tag|for|readmodel|provider|nested|exclude|literal|automap)\\b",
+                    "match": "\\b(authorize|validate|produces|reads|as|handler|performer|observable|identifier|reason|from|require|when|given|then|arguments|result|error|template|data|action|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|released|ignore|casing|file|rule|message|severity|information|warning|matches|all|max|min|length|today|not|no|empty|and|or|authenticated|role|claim|subject|event|query|layout|translate|key|description|concurrency|eventSource|sourceType|streamType|streamId|tag|for|readmodel|provider|nested|exclude|literal|automap)\\b",
                     "name": "keyword.other.screenplay"
                 }
             ]
@@ -281,8 +282,40 @@
                 }
             ]
         },
+        "event-block": {
+            "begin": "^([ ]*)((?:produces\\s+)?event)\\s+([A-Za-z_]\\w*)(?:\\s+(generation)\\s+\\d+)?(?=\\s*(?://.*)?$)",
+            "beginCaptures": {
+                "2": { "name": "keyword.control.screenplay" },
+                "3": { "name": "entity.name.type.screenplay" },
+                "4": { "name": "keyword.other.screenplay" }
+            },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [
+                {
+                    "match": "^\\s*(id)(?=\\s+\")",
+                    "captures": { "1": { "name": "keyword.other.screenplay" } }
+                },
+                { "include": "#event-description-block" },
+                { "include": "#keywords" },
+                { "include": "#common" }
+            ]
+        },
+        "event-description-block": {
+            "begin": "^([ ]*)(description|documentation)[ ]*(?://.*)?$",
+            "beginCaptures": { "2": { "name": "keyword.other.screenplay" } },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [
+                {
+                    "begin": "^[ ]*(```)(?:text|markdown)?[ ]*$",
+                    "beginCaptures": { "1": { "name": "punctuation.definition.fence.screenplay" } },
+                    "end": "^[ ]*(```)[ ]*$",
+                    "endCaptures": { "1": { "name": "punctuation.definition.fence.screenplay" } },
+                    "contentName": "string.unquoted.description.screenplay"
+                }
+            ]
+        },
         "description-block": {
-            "begin": "^([ ]*)(description|documentation)[ ]*$",
+            "begin": "^([ ]*)(description)[ ]*$",
             "beginCaptures": {
                 "2": { "name": "keyword.other.screenplay" }
             },

@@ -41,5 +41,46 @@ describe('when authoring inline events', () => {
     });
     it('should warn about identifier duplication', () => expect(validateLines([...source, '    projectId Uuid = projectId']).find(issue => issue.code === 'PLAY0469')?.severity).toBe('warning'));
     it('should reject an inline event in a reaction', () => expect(validateLines(['reaction React', '  every 1 day', '    produces event Done']).map(issue => issue.code)).toContain('PLAY0474'));
+    it('should require explicit destinations for mixed inline and plain omissions', () => {
+        const lines = [...source, '  produces Legacy // retained allocation'];
+        expect(validateLines(lines).filter(issue => issue.code === 'PLAY0470').map(issue => issue.message)).toContain("Production 'Legacy' must state for explicitly when destinations differ.");
+        expect(destinationHints(lines)).toEqual([]);
+    });
+    it('should suppress legacy allocation hints when a sibling can promote a destination', () => {
+        expect(destinationHints(['command Rename', '  projectId Uuid identifier', '  produces First', '    for projectId', '  produces Legacy'])).toEqual([]);
+    });
+    it('should hint allocation when all plain productions omit destinations', () => {
+        expect(destinationHints(['command Rename', '  produces First', '  produces Legacy']).map(hint => hint.label)).toEqual(['for <new event source>', 'for <new event source>']);
+    });
+    it('should analyze commented headers, destinations, mappings and metadata like the compiler', () => {
+        const lines = source.map(line => line === '    documentation' ? `${line} // details` : line);
+        lines.push('    projectId Uuid = projectId // note', '  produces Other // sibling', '    for projectId // same identifier');
+        expect(validateLines(lines).filter(issue => ['PLAY0470', 'PLAY0477'].includes(issue.code ?? ''))).toEqual([]);
+        expect(validateLines(lines).find(issue => issue.code === 'PLAY0469')?.severity).toBe('warning');
+        expect(destinationHints(lines).map(hint => hint.label)).toEqual(['for projectId']);
+    });
+    it('should suppress hints when a commented sibling targets another source', () => {
+        const lines = [...source, '  produces Other // sibling', '    for otherId // other source'];
+        expect(validateLines(lines).some(issue => issue.code === 'PLAY0470')).toBe(true);
+        expect(destinationHints(lines)).toEqual([]);
+    });
+    it('should preserve comment markers inside strings and templates and ignore fences', () => {
+        const lines = [...source, '    url String = "https://example.org" // url', '    template String = `https://{name}` // template'];
+        expect(scanDocument(lines).commands[0].produces?.[0].mappings.map(mapping => mapping.source)).toContain('"https://example.org"');
+        expect(scanDocument(lines).commands[0].produces?.[0].mappings.map(mapping => mapping.source)).toContain('`https://{name}`');
+        expect(destinationHints(lines).map(hint => hint.label)).toEqual(['for projectId']);
+        const fenced = ['command Rename', '  documentation', '    ```markdown', '  produces event Fake', '    for otherId', '    ```'];
+        expect(destinationHints(fenced)).toEqual([]);
+        expect(validateLines(fenced).filter(issue => issue.code?.startsWith('PLAY047'))).toEqual([]);
+    });
+    it('should show metadata hover only on event directives', () => {
+        expect(hoverContent(['event Done', '  id "Old"'], 1, 'id', 3, 5)).toContain('rename');
+        expect(hoverContent(['event Done', '  documentation'], 1, 'documentation', 3, 16)).not.toBeNull();
+        for (const line of ['  id String', '  key id', '  name String = id', '  id String = name']) {
+            const start = line.indexOf('id') + 1;
+            expect(hoverContent(['event Done', line], 1, 'id', start, start + 2)).toBeNull();
+        }
+        expect(hoverContent(['command Done', '  documentation'], 1, 'documentation', 3, 16)).toBeNull();
+    });
     it('should retain standalone property-shaped id and documentation names', () => expect(scanDocument(['event Done', '  id String', '  documentation String']).events[0].properties.map(property => property.name)).toEqual(['id', 'documentation']));
 });

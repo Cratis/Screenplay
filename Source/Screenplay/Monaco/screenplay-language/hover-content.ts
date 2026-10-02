@@ -2,7 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { enclosingChain, fenceMap, indentOf } from './document-context';
-import { scanDocument } from './symbols';
+import { directBody, scanDocument } from './symbols';
+import { eventAnalysisSource } from './event-analysis-source';
 import { getSubLanguage } from './sub-language-registry';
 import { attributeDocs, contextVariableDocs, keywordDocs, specificationKeywordDocs } from './keyword-docs';
 
@@ -100,6 +101,13 @@ export function hoverContent(
     const step = line.trim().match(/^(given|when|then)\s+(?:no\s+)?(\w+)/);
     if (step && step[2] === word && chain[0] === 'specification' && specificationKeywordDocs[word]) {
         return `**${word}** — ${specificationKeywordDocs[word]}`;
+    }
+
+    if (word === 'id' || word === 'documentation') {
+        const source = eventAnalysisSource(lines);
+        const inEvent = symbols.events.some(event => directBody(source, fences, event.line, indentOf(source[event.line])).includes(lineIndex));
+        const directive = word === 'id' ? /^\s*id\s+"/.test(source[lineIndex]) : /^\s*documentation\s*$/.test(source[lineIndex]);
+        if (!inEvent || !directive || startColumn !== indentOf(line) + 1) return null;
     }
 
     const keywordDoc = keywordDocs[word];

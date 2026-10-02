@@ -4,6 +4,7 @@
 import { DiagnosticCode, diagnosticCodes } from './diagnostic-codes';
 import { enclosingChain, fenceMap, indentOf } from './document-context';
 import { productionDestinations } from './production-destinations';
+import { eventAnalysisSource } from './event-analysis-source';
 import { directBody, DocumentSymbols } from './symbols';
 import type { ValidationIssue, ValidationSeverity } from './validation';
 
@@ -11,6 +12,7 @@ const reserved = new Set(['namespace', 'sequence', 'correlation', 'causation', '
 const quotedId = /^id\s+"((?:[^"\\]|\\.)*)"$/;
 
 export function validateInlineEvents(lines: string[], symbols: DocumentSymbols, application: DocumentSymbols): ValidationIssue[] {
+    lines = eventAnalysisSource(lines);
     const issues: ValidationIssue[] = [];
     const fences = fenceMap(lines);
     const report = (line: number, code: DiagnosticCode, message: string, severity: ValidationSeverity = 'error') => {
@@ -65,7 +67,7 @@ export function validateInlineEvents(lines: string[], symbols: DocumentSymbols, 
     for (const command of symbols.commands) {
         const { identifier, mixed } = productionDestinations(command);
         for (const production of command.produces ?? []) {
-            if (mixed && production.target === undefined) report(production.line, diagnosticCodes.explicitProducesTargetsRequired, 'Every production must state for explicitly when the command targets another source.');
+            if (mixed && production.target === undefined) report(production.line, diagnosticCodes.explicitProducesTargetsRequired, `Production '${production.name}' must state for explicitly when destinations differ.`);
             const destination = production.target ?? (production.inline ? identifier : undefined);
             if (identifier === undefined || destination !== identifier) continue;
             for (const mapping of production.mappings.filter(mapping => mapping.source === identifier)) {

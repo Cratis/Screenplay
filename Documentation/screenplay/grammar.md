@@ -382,7 +382,9 @@ ReducerRule    = "on", Ident, NL,
 EventDecl      = "event", Ident, [ "generation", PositiveUInt32 ], NL,
                  INDENT, { FileDirective | EventMetadata | TagDecl | PropertyLine }, DEDENT ;
 
-EventMetadata  = DescriptionDecl | DocumentationDecl | EventIdDecl ;
+EventMetadata  = EventDescriptionDecl | DocumentationDecl | EventIdDecl ;
+
+EventDescriptionDecl = "description", ( StringLiteral | EventFencedText ), NL ;
 EventIdDecl    = "id", StringLiteral, NL ;        (* nonempty old persisted name; at most one *)
 DocumentationDecl = "documentation", NL, INDENT,
                     "```markdown", NL, { AnyLine }, "```", NL, DEDENT ;
@@ -543,8 +545,9 @@ ForDecl        = "for", MappingSource, NL ;
    generation-1 event; origin and generation are forbidden. Tags are event-type tags.
    At most one for, id, description and documentation directive is allowed.
    An inline omission means the command identifier only when no production names
-   another source. Otherwise every destination must be explicit. Plain omission
-   retains legacy allocation semantics. Cross-source execution is not admitted.
+   another source and no plain production omits for. Otherwise every destination
+   must be explicit. Typed payload property names must be unique (PLAY0168).
+   Plain omission retains legacy allocation semantics. Cross-source execution is not admitted.
    Unescaped namespace, sequence, correlation, causation, causedBy and occurred
    are reserved system-assigned metadata in both production forms. *)
 
@@ -917,7 +920,10 @@ WidgetOption   = "column", Ident, [ "label", LocalizableString ], NL
 
 DescriptionDecl = "description", ( StringLiteral | FencedText ), NL ;
 
-FencedText     = NL, INDENT, ( "```text" | "```markdown" ), NL, { AnyLine }, "```", DEDENT ;
+FencedText     = NL, INDENT, ( "```text" | "```" ), NL, { AnyLine }, "```", DEDENT ;
+EventFencedText = NL, INDENT, ( "```text" | "```markdown" | "```" ), NL, { AnyLine }, "```", DEDENT ;
+(* Bare description fences are accepted for compatibility with warning PLAY0397.
+   Only event descriptions accept the markdown tag; documentation requires it. *)
 
 LocalizableString = StringLiteral
                | "$strings.", Path ;
@@ -1081,7 +1087,8 @@ The escape works wherever a name of your choosing meets a reserved first word - 
 | `event` body | `tag` (`id`, `description`, and `documentation` resolve by shape) |
 | inline `produces event` body | `tag`, `for`, `generation`, `origin`, `namespace`, `sequence`, `correlation`, `causation`, `causedBy`, `occurred`; metadata names resolve by shape |
 | reaction trigger body | `description`, `file`, `produces`, `invokes`, `reads` (use `@reads` for a value named `reads`) |
-| mapping block | `tag` |
+| plain `produces` body | `tag`, `for`, `namespace`, `sequence`, `correlation`, `causation`, `causedBy`, `occurred` |
+| other mapping blocks | `tag`; the printer also escapes the production metadata names above |
 | projection `from` block | `key`, `parent` |
 | projection `clear` mapping target | `with` |
 | enumeration `concept` body | `validate` |

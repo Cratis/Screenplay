@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { fenceMap, indentOf } from './document-context';
+import { eventAnalysisSource } from './event-analysis-source';
 import { clauseKeywords } from './language';
 import { ProductionSymbol } from './ProductionSymbol';
 
@@ -142,6 +143,8 @@ export function scanDocument(lines: string[]): DocumentSymbols {
         triggers: [],
     };
     const fences = fenceMap(lines);
+    const eventLines = eventAnalysisSource(lines);
+    const eventFences = fenceMap(eventLines);
 
     for (let index = 0; index < lines.length; index++) {
         if (fences[index]) continue;
@@ -201,39 +204,39 @@ export function scanDocument(lines: string[]): DocumentSymbols {
             continue;
         }
 
-        const eventMatch = trimmed.match(/^(?:produces\s+)?event\s+(\w+)(?:\s+generation\s+(\d+))?\s*$/);
+        const eventMatch = eventLines[index].trim().match(/^(?:produces\s+)?event\s+(\w+)(?:\s+generation\s+(\d+))?\s*$/);
         if (eventMatch) {
             symbols.events.push({
                 name: eventMatch[1],
                 ...(eventMatch[2] ? { generation: Number(eventMatch[2]) } : {}),
                 inline: trimmed.startsWith('produces '),
-                properties: propertiesIn(trimmed.startsWith('produces ') ? lines.map(line => line.replace(/\s*=(?!=|>).*/, '')) : lines,
-                    directBody(lines, fences, index, indent)),
+                properties: propertiesIn(trimmed.startsWith('produces ') ? eventLines.map(line => line.replace(/\s*=(?!=|>).*/, '')) : eventLines,
+                    directBody(eventLines, eventFences, index, indent)),
                 line: index,
             });
             continue;
         }
 
-        const commandMatch = trimmed.match(/^command\s+(\w+)\s*$/);
+        const commandMatch = eventLines[index].trim().match(/^command\s+(\w+)\s*$/);
         if (commandMatch) {
             const body = collectBody(lines, fences, index, indent);
             symbols.commands.push({
                 name: commandMatch[1],
-                properties: propertiesIn(lines, directBody(lines, fences, index, indent)),
-                produces: directBody(lines, fences, index, indent).filter(line => /^\s*produces\b/.test(lines[line])).flatMap(line => {
-                    const header = lines[line].trim();
+                properties: propertiesIn(eventLines, directBody(eventLines, eventFences, index, indent)),
+                produces: directBody(eventLines, eventFences, index, indent).filter(line => /^\s*produces\b/.test(eventLines[line])).flatMap(line => {
+                    const header = eventLines[line].trim();
                     const inline = /^produces\s+event\b/.test(header);
                     const conditional = /^produces\s+when\b/.test(header);
-                    const eventLine = conditional ? directBody(lines, fences, line, indentOf(lines[line]))[0] : line;
+                    const eventLine = conditional ? directBody(eventLines, eventFences, line, indentOf(eventLines[line]))[0] : line;
                     if (eventLine === undefined) return [];
-                    const name = conditional ? lines[eventLine].trim() : header.match(/^produces\s+(?:event\s+)?([A-Za-z_]\w*)(?:\s+generation\s+\d+)?\s*$/)?.[1];
+                    const name = conditional ? eventLines[eventLine].trim() : header.match(/^produces\s+(?:event\s+)?([A-Za-z_]\w*)(?:\s+generation\s+\d+)?\s*$/)?.[1];
                     if (name === undefined || !/^[A-Za-z_]\w*$/.test(name)) return [];
-                    const children = directBody(lines, fences, eventLine, indentOf(lines[eventLine]));
-                    const targets = children.map(index => lines[index].trim().match(/^for(?:\s+(.*))?$/)).filter(match => match !== null);
+                    const children = directBody(eventLines, eventFences, eventLine, indentOf(eventLines[eventLine]));
+                    const targets = children.map(index => eventLines[index].trim().match(/^for(?:\s+(.*))?$/)).filter(match => match !== null);
                     // Empty or repeated targets are uncertain, not implicit destinations.
                     const target = targets.length === 0 ? undefined : targets.length === 1 ? targets[0][1] ?? '' : '';
                     const mappings = children.flatMap(index => {
-                        const match = lines[index].trim().match(inline ? /^(@?[a-z_]\w*)\s+[\w.[\]?]+\s*=(?!=|>)\s*(.+)$/ : /^(@?[\w.]+)\s*=(?!=|>)\s*(.+)$/);
+                        const match = eventLines[index].trim().match(inline ? /^(@?[a-z_]\w*)\s+[\w.[\]?]+\s*=(?!=|>)\s*(.+)$/ : /^(@?[\w.]+)\s*=(?!=|>)\s*(.+)$/);
                         return match === null ? [] : [{ name: match[1].replace(/^@/, ''), source: match[2], line: index }];
                     });
                     return [{ name, inline, line, target, mappings }];

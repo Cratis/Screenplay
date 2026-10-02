@@ -59,9 +59,11 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/^(\s*)(then)(\s+)(result|no\s+result)\b/, ['white', 'keyword', 'white', 'keyword']],
             // A quoted import names .play files rather than a qualified name - the path reads as a link.
             [/^(\s*)(import)(\s+)("[^"\\]*")/, ['white', 'keyword', 'white', 'string.link']],
-            // Only an event header reserves 'generation'; properties and context paths do not.
-            [/^(\s*)(event)(\s+)([A-Za-z_]\w*)(\s+)(generation)(?=\s+\d+\s*$)/,
-                ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword']],
+            // Retain the header indent so event metadata stops at the enclosing block boundary.
+            [/^(\s*)((?:produces\s+)?event)(\s+)([A-Za-z_]\w*)(\s+)(generation)(\s+)(\d+)(?=\s*(?:\/\/.*)?$)/,
+                ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword', 'white', { token: 'number', next: '@eventBody.$1' }]],
+            [/^(\s*)((?:produces\s+)?event)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/,
+                ['white', 'keyword', 'white', { token: 'type.identifier', next: '@eventBody.$1' }]],
             // A tagged opening fence carries the embedded language; legacy tag lines still highlight.
             ...codeBlockTags.map(
                 (tag): MonarchTokenRules[number] => [
@@ -84,7 +86,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
                 ],
             ),
             // A bare description keyword at end of line opens a fenced plain-text block.
-            [/\b(?:description|documentation)\b(?=\s*$)/, { token: 'keyword', next: '@descriptionBlockPending' }],
+            [/\bdescription\b(?=\s*$)/, { token: 'keyword', next: '@descriptionBlockPending' }],
             [/\brow-click\b/, 'keyword'],
             // A leading @ escapes a name that collides with a directive keyword - it is a name, not an attribute.
             [/^\s*@[a-z_]\w*/, 'identifier'],
@@ -109,6 +111,13 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
                 },
             ],
             { include: '@common' },
+        ],
+
+        eventBody: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(id)(?=\s+")/, ['white', 'keyword']],
+            [/^(\s*)(documentation)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@descriptionBlockPending' }]],
+            { include: '@root' },
         ],
 
         common: commonTokenRules,
