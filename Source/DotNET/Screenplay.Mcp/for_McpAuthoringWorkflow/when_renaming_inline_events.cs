@@ -30,6 +30,7 @@ public class when_renaming_inline_events : given.an_authoring_connection
         var candidate = Candidate(proposal);
         var index = WorkspaceSyntaxIndex.Create(candidate);
         var declaration = index.Entries.Single(entry => entry.Node is EventSyntax);
+        ((EventSyntax)declaration.Node).Id.ShouldEqual(kind == "EventSyntax" ? name : null);
         declaration.SemanticId.ShouldNotBeNull();
         declaration.EventContractId.ShouldNotBeNull();
         index.Entries.Single(entry => entry.Node is PropertySyntax && entry.Parent == declaration.Handle).SemanticId.ShouldNotBeNull();

@@ -170,11 +170,23 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             throw new InvalidWorkspaceAuthoring($"Cannot prove a rename while absence key '{debt.Text}' at '{Position(workspace.Documents, debt.Occurrence)}' is unresolved ({debt.Reason}). Repair the absence key with a typed edit first.");
         }
 
+        var generations = index.Entries.Where(entry => target.Address.Equals(entry.Address)).Select(entry => entry.Node).OfType<EventSyntax>().ToArray();
+        if (generations.Select(declaration => declaration.Id ?? declaration.Name).Distinct(StringComparer.Ordinal).Skip(1).Any())
+        {
+            throw new InvalidWorkspaceAuthoring("Event generations have contradictory effective identity pins. Resolve them before renaming.");
+        }
+
         var roots = index.Entries.Where(entry => entry.Parent is null).ToDictionary(entry => entry.Handle.Document, entry => WorkspaceSyntaxMutation.Json(entry.Node));
         var touched = new HashSet<DocumentId>();
         foreach (var entry in index.Entries.Where(entry => target.Address.Equals(entry.Address)).ToArray())
         {
             WorkspaceSyntaxMutation.Set(roots[entry.Handle.Document], $"{entry.Handle.Path}/name", request.NewName);
+            if (entry.Node is EventSyntax declaration && request.NewName != request.ExpectedName)
+            {
+                var pin = declaration.Id ?? (request.EventNeverPersisted ? null : declaration.Name);
+                WorkspaceSyntaxMutation.Set(roots[entry.Handle.Document], $"{entry.Handle.Path}/id", pin == request.NewName ? null : pin);
+            }
+
             touched.Add(entry.Handle.Document);
         }
 
@@ -248,6 +260,12 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             SemanticRenames = [.. semanticRenames.Select(pair => new SemanticIdentityRename(pair.Key, pair.Value))],
             EventRenames = [.. eventRenames.Select(pair => new EventContractIdentityRename(pair.Key, pair.Value))]
         });
+        if (!result.Accepted)
+        {
+            return result;
+        }
+
+        result = WorkspaceRepairVerification.RequireComments(result);
         if (!result.Accepted)
         {
             return result;

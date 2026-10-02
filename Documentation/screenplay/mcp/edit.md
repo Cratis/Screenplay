@@ -60,6 +60,11 @@ You said the rename is blocked. Show me exactly where, and propose the smallest
 change that removes the conflict. Do not do a global replace.
 ```
 
+Event renames also add `id "<previous name>"` by default to preserve stored identity.
+An existing pin stays unchanged; renaming back to that identity removes it. Only
+set `eventNeverPersisted: true` on `propose-rename` when you know no events have
+been stored. That option omits a new pin, not an existing one.
+
 ## Move things between files
 
 ```text

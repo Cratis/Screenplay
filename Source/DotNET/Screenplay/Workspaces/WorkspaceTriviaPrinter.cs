@@ -119,6 +119,11 @@ static class WorkspaceTriviaPrinter
         SyntaxNode before,
         SyntaxNode? after)
     {
+        if (change.Kind == WorkspaceTriviaChangeKind.EventPin && before is EventSyntax declaration && after is EventSyntax changed)
+        {
+            return EventPinPatch(original, declaration, changed);
+        }
+
         var (start, length, text) = (change.Kind, before, after) switch
         {
             (WorkspaceTriviaChangeKind.LiteralValue, LiteralExpressionSyntax literal, LiteralExpressionSyntax replacement) =>
@@ -131,6 +136,34 @@ static class WorkspaceTriviaPrinter
         };
         var range = WorkspaceSourceRanges.Bytes([.. tokensByLine[start.Line]], start, length) ?? throw Unsupported(original, change.Path);
         return (range.Offset, range.Length, Encoding.UTF8.GetBytes(text));
+    }
+
+    static (int Offset, int Length, byte[] Bytes) EventPinPatch(WorkspaceDocument original, EventSyntax before, EventSyntax after)
+    {
+        var tokens = WorkspaceSourceTokenizer.Tokenize(original).Tokens;
+        if (before.Id is not null && after.Id is null && before.DirectiveLocations.TryGetValue("id", out var location))
+        {
+            var token = tokens.Single(value => value.Span.Line == location.Line && value.Kind == WorkspaceSourceTokenKind.Text);
+
+            // Remove only directive text: any trailing comment remains on its original line, exactly once.
+            return (token.Span.ByteOffset, token.Span.ByteLength, []);
+        }
+
+        if (before.Id is not null || after.Id is null)
+        {
+            throw Unsupported(original, "event/id");
+        }
+
+        var header = tokens.Where(value => value.Span.Line == before.Location.Line).ToArray();
+        var ending = header.LastOrDefault(value => value.Kind == WorkspaceSourceTokenKind.LineEnding);
+        var indentation = header.FirstOrDefault(value => value.Kind == WorkspaceSourceTokenKind.Indentation)?.Text ?? string.Empty;
+        var next = tokens.FirstOrDefault(value => value.Span.Line > before.Location.Line && value.Kind == WorkspaceSourceTokenKind.Text);
+        var childIndentation = next is not null && next.Span.Column > indentation.Length + 1
+            ? tokens.FirstOrDefault(value => value.Span.Line == next.Span.Line && value.Kind == WorkspaceSourceTokenKind.Indentation)?.Text ?? (indentation + "  ")
+            : indentation + "  ";
+        var newline = ending?.Text ?? "\n";
+        var text = (ending is null ? newline : string.Empty) + childIndentation + "id " + JsonSerializer.Serialize(after.Id) + newline;
+        return (ending is null ? original.Bytes.Length : ending.Span.ByteOffset + ending.Span.ByteLength, 0, Encoding.UTF8.GetBytes(text));
     }
 
     static InvalidWorkspaceAuthoring Unsupported(WorkspaceDocument document, string path) =>

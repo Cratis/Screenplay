@@ -55,7 +55,11 @@ Markdown description fences are specific to events, including inline declaration
 
 Each directive can appear at most once. These are authoring metadata: binding reports `PLAY0270`, but they add no ESM bytes. The `id` string does **not** replace or rehash the portable `EventContractId`; catalog identity remains authoritative. Rendering documentation into generated XML or TypeScript comments is a separate downstream capability.
 
-Leave `id` absent for a new event. Cratis convention is plain `[EventType]` without arguments; a pin exists to preserve an old persisted name on a rename, not to decorate a new declaration. A pin equal to the current name reports information diagnostic `PLAY0471`.
+Leave `id` absent for a new event. Cratis convention is plain `[EventType]` without arguments; a pin exists to preserve an old persisted name on a rename, not to decorate a new declaration. A pin equal to the current name reports information diagnostic `PLAY0471` with a typed removal repair.
+
+Workspace and MCP event renames pin the previous effective name by default, because an authoring catalog does not prove whether events have been stored. If you know the event has never been persisted, set `EventNeverPersisted` on the rename request (`eventNeverPersisted: true` in MCP) to omit a new pin. Existing pins are never overwritten. Renaming back to the pinned name removes the pin. Generations must agree on their effective identity; contradictory pins refuse the rename. Command, slice and module renames do not add event pins.
+
+Rename preserves trivia by default, including when inserting or removing the pin. Unsupported source edits refuse rather than silently reformatting the document.
 
 ````screenplay
 event Renamed
