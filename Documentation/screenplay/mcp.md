@@ -89,6 +89,16 @@ event references and dependencies carry the `whenAppendedEvent` role, not
 `queryResult`; each role also has a `…Destination` form for explicit `for`
 destinations.
 
+## Event model board
+
+Hosts that render MCP Apps views (`io.modelcontextprotocol/ui`) are also offered
+`visualize-model`, which draws the application as an event model board, and the
+`ui://screenplay/event-model-board.html` resource it is drawn with. With a
+`proposalId` or a `sketch` of whole `.play` documents, the board shows what the
+change would make of the application, and the result lists the drawn declarations
+it adds and removes. Nothing is written. See
+[See a model as an event model board with MCP](mcp-visualization.md).
+
 ## Paging and snapshots
 
 Source queries return `sourceRevision`. When requesting a page after offset zero,
