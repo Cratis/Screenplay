@@ -20,7 +20,7 @@ public class and_the_destination_would_change_other_routing : given.a_command_pr
         var candidate = PreviewDestination();
         candidate.Compilation.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V2);
         candidate.Compilation.Value.Model.Application.Modules[0].Features[0].Slices[0].Commands[1].Destination.ShouldNotBeNull();
-        HasRepair(DiagnosticCodes.OmittedProductionDestination).ShouldBeFalse();
+        AssertRefused();
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public class and_the_destination_would_change_other_routing : given.a_command_pr
         candidate.Compilation.Value!.Model.SemanticVersion.ShouldEqual(before.SemanticVersion);
         before.Application.Modules[0].Features[0].Slices[0].Commands[0].Destination.ShouldBeNull();
         candidate.Compilation.Value.Model.Application.Modules[0].Features[0].Slices[0].Commands[0].Destination.ShouldNotBeNull();
-        HasRepair(DiagnosticCodes.OmittedProductionDestination).ShouldBeFalse();
+        AssertRefused();
     }
 
     [Fact]
@@ -42,7 +42,21 @@ public class and_the_destination_would_change_other_routing : given.a_command_pr
         Create(Source.Replace("          for projectId\n", string.Empty, StringComparison.Ordinal));
         Workspace.Compilation.Value.ShouldBeNull();
         Workspace.Compilation.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.OmittedProductionDestination).ShouldBeTrue();
+        AssertRefused();
+    }
+
+    void AssertRefused()
+    {
         HasRepair(DiagnosticCodes.OmittedProductionDestination).ShouldBeFalse();
+        var subject = WorkspaceSyntaxIndex.Create(Workspace).Entries.First(entry => entry.Node is ProducesSyntax production && production.Event == "ProjectRegistered");
+        var before = WorkspaceProductionRepairs.TransactionCount(Workspace);
+        HasRepair(DiagnosticCodes.OmittedProductionDestination).ShouldBeFalse();
+        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(before);
+        Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, DiagnosticCodes.OmittedProductionDestination, subject.Handle, Request());
+        Result.Accepted.ShouldBeFalse();
+        Result.Workspace.ShouldBeNull();
+        Result.WritePlan.ShouldBeNull();
+        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(before + 1);
     }
 
     ScreenplayWorkspace PreviewDestination()

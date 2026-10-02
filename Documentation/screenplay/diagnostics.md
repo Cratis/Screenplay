@@ -828,6 +828,8 @@ production's explicit destination. The repair is not offered for an optional or
 collection identifier. It is also refused when the original or candidate has no executable model,
 when the repair would change the language or semantic version, or when any other production's
 effective destination would change (including through a command default).
+Discovery verifies these conditions and comment preservation once per subject on an
+immutable workspace snapshot; a new snapshot cannot reuse those verification results.
 
 For `PLAY0166` on a command production, a typed repair can add an `event`
 declaration to the producing slice. Properties follow mapping order; command

@@ -3,7 +3,6 @@
 
 using System.Collections.Immutable;
 using System.Text.Json;
-using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
@@ -33,17 +32,12 @@ internal sealed partial class McpWorkspaces
         root.Verify(workspace);
         var code = McpJson.RequiredString(arguments, "diagnosticCode");
         var subject = McpAstHandles.Read(arguments.GetProperty("subject"));
-        var index = McpWorkspaceAnalysis.For(workspace).Syntax;
-        var repairs = index.RepairableDiagnostics
-            .Where(diagnostic => diagnostic.Code == code)
-            .SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(index, expectedRevision, diagnostic))
-            .Where(repair => repair.Subject == subject).ToArray();
-        if (repairs.Length != 1)
+        var result = WorkspaceDiagnosticRepairs.ProposeRepair(workspace, code, subject, request);
+        if (result.Conflicts.Any(conflict => conflict.Kind == WorkspaceConflictKind.InvalidOperation))
         {
             throw new McpFailure("UnknownRepair: no unambiguous repair for this code and subject.", -32602);
         }
 
-        var result = WorkspaceDiagnosticRepairs.ProposeRepair(workspace, repairs[0], request);
         return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation, request.ReferencePolicy), arguments) : Rejected(result);
     }
 

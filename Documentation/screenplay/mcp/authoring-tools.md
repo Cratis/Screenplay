@@ -190,6 +190,12 @@ compilation diagnostics belong to the paged diagnostics view. Available typed re
 | `PLAY0478` (Information) | Replace a plain production with an explicit `for <identifier>`. This deliberately selects the identifier rather than preserving allocated-identity routing. Optional or collection identifiers have no repair. Both models must be executable; a change to the language/semantic version or any other production's effective destination refuses the repair. |
 | `PLAY0397` on `validate csharp` | Replace the validation with itself so canonical printing migrates its legacy fence. Other legacy forms have no individual repair. |
 
+Listed `PLAY0478` repairs are verified, not unchecked suggestions. Discovery caches
+routing and comment-preservation verification per subject on the current immutable
+workspace snapshot. Paging or rereading repairs does not repeat those transactions;
+a new snapshot requires fresh verification. `propose-repair` verifies only the selected
+subject in one authoring transaction.
+
 Pass the selected repair's `diagnosticCode` and `subject` to `propose-repair` with
 both current revisions and `formatting: "CanonicalizeTouchedDocuments"` (also
 returned as `requiredFormatting`). Repairs reprint the entire touched file, so

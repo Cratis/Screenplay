@@ -1,7 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
@@ -11,7 +13,19 @@ namespace Cratis.Screenplay.Workspaces;
 
 internal static class WorkspaceProductionRepairs
 {
-    internal static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic)
+    // The workspace is immutable and owns its derived compilation. Weak keys keep verification
+    // snapshot-local (including attachments), without retaining old revisions or candidate workspaces.
+    static readonly ConditionalWeakTable<ScreenplayWorkspace, Verification> _verification = [];
+
+    internal static int TransactionCount(ScreenplayWorkspace workspace) => _verification.GetOrCreateValue(workspace).Transactions;
+
+    internal static WorkspaceAuthoringResult Propose(ScreenplayWorkspace workspace, WorkspaceAuthoringRequest request)
+    {
+        Interlocked.Increment(ref _verification.GetOrCreateValue(workspace).Transactions);
+        return workspace.ProposeAuthoring(request);
+    }
+
+    internal static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic, bool verifyDestination)
     {
         var subjects = index.Entries.Where(entry => entry.Handle.Revision == revision && entry.Node is ProducesSyntax && entry.Location == diagnostic.Location).ToArray();
         if (subjects.Length != 1 || index.Find(subjects[0].Parent!) is not { Node: CommandSyntax command } commandEntry ||
@@ -35,7 +49,29 @@ internal static class WorkspaceProductionRepairs
                 subject.Handle,
                 [new ReplaceWorkspaceNode(subject.Handle, produces, produces with { For = new PathExpressionSyntax(identifiers[0].Name, produces.Location) })]);
 
-            return KeepsOtherDestinations(index, commandEntry, subject, repair) ? [repair] : [];
+            if (!verifyDestination)
+            {
+                return [repair];
+            }
+
+            var verified = _verification.GetOrCreateValue(index.Workspace).Subjects.GetOrAdd(
+                subject.Handle,
+                static (_, state) => new Lazy<bool>(() =>
+                {
+                    var workspace = state.Index.Workspace;
+                    var proposal = Propose(workspace, new WorkspaceAuthoringRequest
+                    {
+                        ExpectedRevision = workspace.Revision,
+                        ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
+                        Validation = WorkspaceAuthoringValidation.Authoring,
+                        Formatting = state.Repair.RequiredFormatting,
+                        Operations = state.Repair.Operations
+                    });
+                    return KeepsOtherDestinations(state.Index, state.Subject, proposal) && WorkspaceDroppedComments.In(proposal.WritePlan!).IsEmpty;
+                }),
+                (Index: index, Subject: subject, Repair: repair));
+
+            return verified.Value ? [repair] : [];
         }
 
         // Compilation includes partial ASTs, but editable entries do not. Never infer a contract
@@ -65,29 +101,22 @@ internal static class WorkspaceProductionRepairs
         return [new(diagnostic.Code, subject.Handle, [new AddWorkspaceNode(slice.Handle, slice.Node, "events", new EventSyntax(produces.Event, properties, produces.Location))])];
     }
 
-    static bool KeepsOtherDestinations(WorkspaceSyntaxIndex index, WorkspaceSyntaxEntry command, WorkspaceSyntaxEntry subject, WorkspaceDiagnosticRepair repair)
+    internal static bool KeepsOtherDestinations(WorkspaceSyntaxIndex index, WorkspaceSyntaxEntry subject, WorkspaceAuthoringResult proposal)
     {
         var workspace = index.Workspace;
-        if (workspace.Compilation.Value is not { } original || command.Address is null || subject.Index is null)
+        if (workspace.Compilation.Value is not { } original || subject.Parent is null ||
+            index.Find(subject.Parent) is not { Address: { } address } || subject.Index is null)
         {
             return false;
         }
 
-        var proposal = workspace.ProposeAuthoring(new WorkspaceAuthoringRequest
-        {
-            ExpectedRevision = workspace.Revision,
-            ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
-            Validation = WorkspaceAuthoringValidation.Authoring,
-            Formatting = repair.RequiredFormatting,
-            Operations = repair.Operations
-        });
         if (!proposal.Accepted || proposal.Workspace!.Compilation.Value is not { } candidate ||
             original.Model.LanguageVersion != candidate.Model.LanguageVersion || original.Model.SemanticVersion != candidate.Model.SemanticVersion)
         {
             return false;
         }
 
-        var subjectCommand = original.Documents.IdentityCatalog.ResolveSemantic(command.Address);
+        var subjectCommand = original.Documents.IdentityCatalog.ResolveSemantic(address);
         var before = Commands(original.Model.Application).ToArray();
         var after = Commands(candidate.Model.Application).ToDictionary(value => value.Id);
         if (before.Length != after.Count)
@@ -192,4 +221,10 @@ internal static class WorkspaceProductionRepairs
     static bool SameShape(PropertySyntax[] left, PropertySyntax[] right) => left.Length == right.Length && left.All(property =>
         right.Any(other => other.Name == property.Name && other.Type.Name == property.Type.Name &&
             other.Type.IsCollection == property.Type.IsCollection && other.Type.IsOptional == property.Type.IsOptional));
+
+    sealed class Verification
+    {
+        internal int Transactions;
+        internal ConcurrentDictionary<WorkspaceNodeHandle, Lazy<bool>> Subjects { get; } = [];
+    }
 }

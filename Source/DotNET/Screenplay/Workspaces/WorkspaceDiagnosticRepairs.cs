@@ -57,21 +57,50 @@ public static class WorkspaceDiagnosticRepairs
         }
 
         var index = WorkspaceSyntaxIndex.Create(workspace);
-        var matches = index.RepairableDiagnostics.Where(diagnostic => diagnostic.Code == repair.DiagnosticCode)
-            .SelectMany(diagnostic => Find(index, workspace.Revision, diagnostic))
-            .Where(candidate => candidate.Subject == repair.Subject && Matches(candidate, repair)).ToArray();
+        var matches = ForSubject(index, workspace.Revision, repair.DiagnosticCode, repair.Subject)
+            .Where(candidate => Matches(candidate, repair)).ToArray();
         if (matches.Length != 1 || repair.Operations.IsDefaultOrEmpty)
         {
             return Refuse(WorkspaceConflictKind.InvalidOperation, "The diagnostic repair does not match the original workspace subject.");
         }
 
-        var result = workspace.ProposeAuthoring(request with { Operations = matches[0].Operations });
-        if (result.Accepted && !WorkspaceDroppedComments.In(result.WritePlan!).IsEmpty)
+        return ProposeSelected(workspace, index, matches[0], request);
+    }
+
+    /// <summary>
+    /// Previews the repair for one code and original subject, verifying only that subject in one transaction.
+    /// No discovery transactions are run for other diagnostics in the workspace.
+    /// </summary>
+    /// <param name="workspace">The original workspace.</param>
+    /// <param name="diagnosticCode">The diagnostic code to repair.</param>
+    /// <param name="subject">The original revision-bound syntax occurrence.</param>
+    /// <param name="request">The expected revisions and explicit formatting consent.</param>
+    /// <returns>An accepted candidate and write plan, or typed conflicts without a partial candidate.</returns>
+    public static WorkspaceAuthoringResult ProposeRepair(ScreenplayWorkspace workspace, string diagnosticCode, WorkspaceNodeHandle subject, WorkspaceAuthoringRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(workspace);
+        ArgumentNullException.ThrowIfNull(diagnosticCode);
+        ArgumentNullException.ThrowIfNull(subject);
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (request.ExpectedRevision != workspace.Revision || request.ExpectedCatalogRevision != workspace.IdentityCatalog.Revision)
         {
-            return Refuse(WorkspaceConflictKind.RepairWouldDropComments, "The diagnostic repair would drop comments from the touched document.");
+            return workspace.ProposeAuthoring(request);
         }
 
-        return result;
+        if (request.Formatting != WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments)
+        {
+            return Refuse(WorkspaceConflictKind.FormattingConsentRequired, "Canonical formatting consent is required for this diagnostic repair.");
+        }
+
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var matches = ForSubject(index, workspace.Revision, diagnosticCode, subject).ToArray();
+        if (matches.Length != 1)
+        {
+            return Refuse(WorkspaceConflictKind.InvalidOperation, "The diagnostic repair does not match the original workspace subject.");
+        }
+
+        return ProposeSelected(workspace, index, matches[0], request);
     }
 
     /// <summary>
@@ -95,8 +124,12 @@ public static class WorkspaceDiagnosticRepairs
     /// <param name="index">The original workspace occurrence index.</param>
     /// <param name="revision">The expected workspace revision.</param>
     /// <param name="diagnostic">A diagnostic reported by the index.</param>
+    /// <remarks>PLAY0478 verification is cached on the immutable workspace snapshot, never shared with a newer revision.</remarks>
     /// <returns>Zero or more typed repair proposals.</returns>
-    public static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic)
+    public static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic) =>
+        Find(index, revision, diagnostic, true);
+
+    static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic, bool verifyDestination)
     {
         ArgumentNullException.ThrowIfNull(index);
         if (diagnostic is null)
@@ -113,7 +146,7 @@ public static class WorkspaceDiagnosticRepairs
 
         if (diagnostic.Code == DiagnosticCodes.UnknownEvent || diagnostic.Code == DiagnosticCodes.OmittedProductionDestination)
         {
-            return WorkspaceProductionRepairs.Find(index, revision, diagnostic);
+            return WorkspaceProductionRepairs.Find(index, revision, diagnostic, verifyDestination);
         }
 
         if (diagnostic.Code != DiagnosticCodes.LegacyInlineCodeFence)
@@ -132,6 +165,37 @@ public static class WorkspaceDiagnosticRepairs
             diagnostic.Code,
             subject.Handle,
             [new ReplaceWorkspaceNode(subject.Handle, subject.Node, subject.Node)])];
+    }
+
+    static IEnumerable<WorkspaceDiagnosticRepair> ForSubject(WorkspaceSyntaxIndex index, WorkspaceRevision revision, string code, WorkspaceNodeHandle subject)
+    {
+        if (index.Find(subject) is not { } entry)
+        {
+            return [];
+        }
+
+        // Filter before building or verifying recipes. In particular, PLAY0478 can occur on
+        // every plain production in a workspace, but only the selected occurrence is relevant.
+        return index.RepairableDiagnostics.Where(diagnostic => diagnostic.Code == code && diagnostic.Location == entry.Location)
+            .SelectMany(diagnostic => Find(index, revision, diagnostic, false))
+            .Where(repair => repair.Subject == subject);
+    }
+
+    static WorkspaceAuthoringResult ProposeSelected(ScreenplayWorkspace workspace, WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, WorkspaceAuthoringRequest request)
+    {
+        var result = WorkspaceProductionRepairs.Propose(workspace, request with { Operations = repair.Operations });
+        if (result.Accepted && !WorkspaceDroppedComments.In(result.WritePlan!).IsEmpty)
+        {
+            return Refuse(WorkspaceConflictKind.RepairWouldDropComments, "The diagnostic repair would drop comments from the touched document.");
+        }
+
+        if (result.Accepted && repair.DiagnosticCode == DiagnosticCodes.OmittedProductionDestination &&
+            !WorkspaceProductionRepairs.KeepsOtherDestinations(index, index.Find(repair.Subject)!, result))
+        {
+            return Refuse(WorkspaceConflictKind.InvalidOperation, "The diagnostic repair does not match the original workspace subject.");
+        }
+
+        return result;
     }
 
     static bool Matches(WorkspaceDiagnosticRepair candidate, WorkspaceDiagnosticRepair selected)
