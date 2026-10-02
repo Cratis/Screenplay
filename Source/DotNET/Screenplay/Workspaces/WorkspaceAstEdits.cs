@@ -85,12 +85,18 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
         foreach (var edit in _edits.Where(edit => edit.Destination is not null))
         {
             var inserted = ToJson(edit.Value!);
-            if (edit.Original is not null)
+            if (edit.Target is not null)
             {
-                CarrySourceLocations(edit.Original, inserted);
+                CarrySourceLocations(edit.Original!, inserted);
+                if (edit.Target.Handle.Document != edit.Destination!.Parent.Handle.Document)
+                {
+                    // The moved subtree retains its internal order and comment anchors, but its root
+                    // has no comparable position among the destination document's authored members.
+                    _sourceLocations.Remove(inserted);
+                }
             }
 
-            CarryReplacementMetadata(edit.Value!, inserted);
+            // An add is a new occurrence, even when its value is an existing node or a with-copy.
             Insert(edit.Destination!, inserted);
             if (edit.Target is not null)
             {

@@ -4,6 +4,7 @@
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Projections;
 
 namespace Cratis.Screenplay.Workspaces;
 
@@ -38,7 +39,7 @@ internal static class WorkspaceEventRepairs
         return references.Bindings.Any(binding => binding.Reference.Entry.Handle != production.Handle &&
             (binding.Target?.Entry?.Address?.Equals(declaration.Address) == true ||
                 binding.Reference.Text.Split('.')[^1] == ((EventSyntax)declaration.Node).Name)) ||
-            index.Entries.Any(entry => WorkspaceOpaqueText.Texts(entry.Node) is not null) ||
+            index.Entries.Any(entry => entry.Node is AllSyntax || WorkspaceOpaqueText.Texts(entry.Node) is not null) ||
             !index.Workspace.AttachmentContents.IsEmpty;
     }
 

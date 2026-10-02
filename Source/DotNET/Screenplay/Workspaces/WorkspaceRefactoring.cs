@@ -178,13 +178,16 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
 
         var roots = index.Entries.Where(entry => entry.Parent is null).ToDictionary(entry => entry.Handle.Document, entry => WorkspaceSyntaxMutation.Json(entry.Node));
         var touched = new HashSet<DocumentId>();
+        var insertsEventPin = false;
         foreach (var entry in index.Entries.Where(entry => target.Address.Equals(entry.Address)).ToArray())
         {
             WorkspaceSyntaxMutation.Set(roots[entry.Handle.Document], $"{entry.Handle.Path}/name", request.NewName);
             if (entry.Node is EventSyntax declaration && request.NewName != request.ExpectedName)
             {
                 var pin = declaration.Id ?? (request.EventNeverPersisted ? null : declaration.Name);
-                WorkspaceSyntaxMutation.Set(roots[entry.Handle.Document], $"{entry.Handle.Path}/id", pin == request.NewName ? null : pin);
+                var id = pin == request.NewName ? null : pin;
+                insertsEventPin |= declaration.Id is null && id is not null;
+                WorkspaceSyntaxMutation.Set(roots[entry.Handle.Document], $"{entry.Handle.Path}/id", id);
             }
 
             touched.Add(entry.Handle.Document);
@@ -265,10 +268,13 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             return result;
         }
 
-        result = WorkspaceRepairVerification.RequireComments(result);
-        if (!result.Accepted)
+        if (insertsEventPin)
         {
-            return result;
+            result = WorkspaceRepairVerification.RequireComments(result);
+            if (!result.Accepted)
+            {
+                return result;
+            }
         }
 
         var candidateIndex = WorkspaceSyntaxIndex.Create(result.Workspace!);

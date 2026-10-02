@@ -64,9 +64,9 @@ internal static class WorkspaceRepairVerification
 
     internal static WorkspaceAuthoringResult RequireComments(WorkspaceAuthoringResult result)
     {
-        if (result.Accepted && !WorkspaceDroppedComments.In(result.WritePlan!).IsEmpty)
+        if (result.Accepted && !SameComments(result.WritePlan!))
         {
-            return Refuse(result, WorkspaceConflictKind.RepairWouldDropComments, "The proposal would drop comments from the touched document.");
+            return Refuse(result, WorkspaceConflictKind.RepairWouldDropComments, "The proposal must preserve each comment exactly once; it would drop or duplicate comments in the touched documents.");
         }
 
         return result;
@@ -82,6 +82,15 @@ internal static class WorkspaceRepairVerification
     internal static bool SameModel(ScreenplayWorkspace before, ScreenplayWorkspace after) =>
         before.Compilation.Value is { } original && after.Compilation.Value is { } candidate &&
         SemanticModelSerializer.Serialize(original.Model).AsSpan().SequenceEqual(SemanticModelSerializer.Serialize(candidate.Model));
+
+    static bool SameComments(WorkspaceWritePlan plan)
+    {
+        static IEnumerable<string> Comments(IEnumerable<WorkspaceDocument> documents) => documents
+            .SelectMany(document => WorkspaceSourceTokenizer.Tokenize(document).Tokens)
+            .Where(token => token.Kind == WorkspaceSourceTokenKind.Comment).Select(token => token.Text).Order(StringComparer.Ordinal);
+        return Comments(plan.Entries.Select(entry => entry.Before).OfType<WorkspaceDocument>())
+            .SequenceEqual(Comments(plan.Entries.Select(entry => entry.After).OfType<WorkspaceDocument>()));
+    }
 
     static WorkspaceAuthoringResult VerifyTransaction(WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, WorkspaceAuthoringRequest request)
     {

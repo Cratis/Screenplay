@@ -48,6 +48,32 @@ public class when_extracting_an_inline_event : Specification
         WorkspaceRepairVerification.SameModel(workspace, result.Workspace!).ShouldBeTrue();
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    void should_extract_in_authored_order_with_standalone_siblings(bool earlierSibling)
+    {
+        var source = Source + "      event Later\n        value String\n";
+        if (earlierSibling)
+        {
+            source = source.Replace("      command Rename", "      event Earlier\n        value String\n      command Rename", StringComparison.Ordinal);
+        }
+
+        var workspace = ScreenplayWorkspace.Create("Projects", [WorkspaceDocument.Create("source", PortablePlayPath.Parse("source.play"), Encoding.UTF8.GetBytes(source))], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Projects")));
+        var subject = WorkspaceSyntaxIndex.Create(workspace).Entries.Single(entry => entry.Node is EventSyntax declaration && declaration.Name == "Renamed");
+        var request = Request() with { ExpectedRevision = workspace.Revision, ExpectedCatalogRevision = workspace.IdentityCatalog.Revision };
+        var result = WorkspaceEventRefactorings.ProposeExtractInlineEvent(workspace, subject.Handle, request);
+        result.Conflicts.ShouldBeEmpty();
+        WorkspaceRepairVerification.TransactionCount(workspace).ShouldEqual(1);
+        WorkspaceRepairVerification.SameModel(workspace, result.Workspace!).ShouldBeTrue();
+        result.Workspace!.IdentityCatalog.Revision.ShouldEqual(workspace.IdentityCatalog.Revision);
+        Comments(result.Workspace).ShouldEqual(Comments(workspace));
+        var events = WorkspaceSyntaxIndex.Create(result.Workspace).Entries.Select(entry => entry.Node).OfType<SliceSyntax>().Single().Events;
+        events.Select(@event => @event.Name).ToArray().ShouldEqual(earlierSibling ? ["Earlier", "Renamed", "Later"] : ["Renamed", "Later"]);
+        WorkspaceEventRefactorings.ProposeExtractInlineEvent(workspace, subject.Handle, request).Workspace!.Documents[0].Bytes.AsSpan()
+            .SequenceEqual(result.Workspace.Documents[0].Bytes.AsSpan()).ShouldBeTrue();
+    }
+
     static string[] Comments(ScreenplayWorkspace workspace) => [.. workspace.Documents.SelectMany(document => WorkspaceSourceTokenizer.Tokenize(document).Tokens).Where(value => value.Kind == WorkspaceSourceTokenKind.Comment).Select(value => value.Text).Order(StringComparer.Ordinal)];
 
     WorkspaceAuthoringRequest Request() => new()

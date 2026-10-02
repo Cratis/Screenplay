@@ -38,13 +38,16 @@ public static class WorkspaceEventRefactorings
         if (index.Find(subject) is not { Node: EventSyntax } declaration || declaration.Parent is null ||
             index.Find(declaration.Parent) is not { Node: ProducesSyntax { InlineEvent: not null } produces } production ||
             index.Find(production.Parent!) is not { Node: CommandSyntax command } commandEntry ||
-            index.Find(commandEntry.Parent!) is not { Node: SliceSyntax } slice)
+            index.Find(commandEntry.Parent!) is not { Node: SliceSyntax sliceSyntax } slice)
         {
             return Refuse(WorkspaceConflictKind.InvalidOperation, "The subject must be an inline event declaration in the current workspace.");
         }
 
         var operations = ImmutableArray.CreateBuilder<WorkspaceAstOperation>();
-        operations.Add(new MoveWorkspaceNode(declaration.Handle, declaration.Node, slice.Handle, slice.Node, "events"));
+
+        // Keep the event array aligned with the authored position retained by the moved declaration.
+        var position = sliceSyntax.Events.Count(@event => @event.Location.Line < declaration.Location.Line);
+        operations.Add(new MoveWorkspaceNode(declaration.Handle, declaration.Node, slice.Handle, slice.Node, "events", position));
         if (produces.For is null)
         {
             var identifiers = command.Properties.Where(property => property.IsIdentifier && !property.Type.IsOptional && !property.Type.IsCollection).ToArray();
@@ -63,21 +66,7 @@ public static class WorkspaceEventRefactorings
             return WorkspaceRepairVerification.Refuse(result, WorkspaceConflictKind.InvalidOperation, "Extraction must preserve canonical executable bytes and every catalog assignment.");
         }
 
-        if (result.Accepted && !SameComments(result.WritePlan!))
-        {
-            return WorkspaceRepairVerification.Refuse(result, WorkspaceConflictKind.RepairWouldDropComments, "Extraction must preserve each comment exactly once.");
-        }
-
         return result;
-    }
-
-    static bool SameComments(WorkspaceWritePlan plan)
-    {
-        static IEnumerable<string> Comments(IEnumerable<WorkspaceDocument> documents) => documents
-            .SelectMany(document => WorkspaceSourceTokenizer.Tokenize(document).Tokens)
-            .Where(token => token.Kind == WorkspaceSourceTokenKind.Comment).Select(token => token.Text).Order(StringComparer.Ordinal);
-        return Comments(plan.Entries.Select(entry => entry.Before).OfType<WorkspaceDocument>())
-            .SequenceEqual(Comments(plan.Entries.Select(entry => entry.After).OfType<WorkspaceDocument>()));
     }
 
     static WorkspaceAuthoringResult Refuse(WorkspaceConflictKind kind, string message) => new()

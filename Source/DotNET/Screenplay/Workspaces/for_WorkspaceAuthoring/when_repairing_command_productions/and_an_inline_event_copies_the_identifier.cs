@@ -28,15 +28,26 @@ public class and_an_inline_event_copies_the_identifier : given.a_command_product
     [Fact] void should_keep_the_contract_identity() => Result.Workspace!.IdentityCatalog.EventContracts.Single().Id.ShouldEqual(Workspace.IdentityCatalog.EventContracts.Single().Id);
 
     [Theory]
+    [InlineData("behavior Observe\n  on event Renamed\n    notify info \"Changed\"\n")]
+    [InlineData("      screen Observe\n        on event Renamed\n          notify info \"Changed\"\n")]
+    [InlineData("      readmodel Names\n        name String\n      projection Names => Names\n        all\n          name = \"something\"\n")]
     [InlineData("      readmodel Names\n        projectId Uuid\n      projection Names => Names\n        from Renamed\n          projectId = projectId\n")]
-    [InlineData("      specification Example\n        given Renamed\n          for \"00000000-0000-0000-0000-000000000001\"\n          projectId = \"00000000-0000-0000-0000-000000000001\"\n          name = \"something\"\n        when Rename\n          projectId = \"00000000-0000-0000-0000-000000000001\"\n        then Renamed\n          for \"00000000-0000-0000-0000-000000000001\"\n          projectId = \"00000000-0000-0000-0000-000000000001\"\n          name = \"something\"\n")]
-    [InlineData("      command Other\n        projectId Uuid identifier\n        produces Renamed\n          for projectId\n          projectId = projectId\n          name = \"something\"\n")]
-    void should_not_offer_a_repair_with_consumers(string consumer)
+    [InlineData("      specification Example\n        given Renamed\n          for \"00000000-0000-0000-0000-000000000001\"\n          projectId = \"00000000-0000-0000-0000-000000000001\"\n          name = \"something\"\n        when Rename\n          projectId = \"00000000-0000-0000-0000-000000000001\"\n        then Renamed\n          for \"00000000-0000-0000-0000-000000000001\"\n          projectId = \"00000000-0000-0000-0000-000000000001\"\n          name = \"something\"\n", WorkspaceConflictKind.CompilationFailed)]
+    [InlineData("      command Other\n        projectId Uuid identifier\n        produces Renamed\n          for projectId\n          projectId = projectId\n          name = \"something\"\n", WorkspaceConflictKind.CompilationFailed)]
+    void should_not_offer_a_repair_with_consumers(string consumer, WorkspaceConflictKind expectedConflict = WorkspaceConflictKind.InvalidOperation)
     {
         Create(InlineSource + consumer);
         WorkspaceSyntaxIndex.Create(Workspace).Diagnostics.Any(value => value.Severity == DiagnosticSeverity.Error).ShouldBeFalse();
         WorkspaceSyntaxIndex.Create(Workspace).RepairableDiagnostics.Any(value => value.Code == DiagnosticCodes.EventSourceIdInPayload).ShouldBeTrue();
         HasRepair(DiagnosticCodes.EventSourceIdInPayload).ShouldBeFalse();
+        WorkspaceRepairVerification.TransactionCount(Workspace).ShouldEqual(1);
+        var index = WorkspaceSyntaxIndex.Create(Workspace);
+        var mapping = index.Entries.Single(entry => entry.Node is PropertyMappingSyntax property && property.Property == "projectId" &&
+            index.Find(entry.Parent!)?.Node is ProducesSyntax { InlineEvent: not null });
+        var result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, DiagnosticCodes.EventSourceIdInPayload, mapping.Handle, Request());
+        result.Accepted.ShouldBeFalse();
+        result.Conflicts.Single().Kind.ShouldEqual(expectedConflict);
+        WorkspaceRepairVerification.TransactionCount(Workspace).ShouldEqual(2);
     }
 
     [Fact]

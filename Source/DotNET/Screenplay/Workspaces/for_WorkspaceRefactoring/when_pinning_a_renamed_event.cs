@@ -32,15 +32,19 @@ public class when_pinning_a_renamed_event : Specification
         changed.IdentityCatalog.Semantics.Select(value => value.Id).OrderBy(value => value.ToString()).ShouldEqual(workspace.IdentityCatalog.Semantics.Select(value => value.Id).OrderBy(value => value.ToString()));
     }
 
-    [Fact]
-    void should_keep_a_pin_across_repeated_renames_and_remove_it_on_rename_back()
+    [Theory]
+    [InlineData("\n")]
+    [InlineData("\r\n")]
+    void should_keep_a_pin_across_repeated_renames_and_remove_it_on_rename_back(string newline)
     {
-        var once = Rename(Create(Source), "Renamed", "First").Workspace!;
+        var source = Source.Replace("\n", newline, StringComparison.Ordinal);
+        var once = Rename(Create(source), "Renamed", "First").Workspace!;
         var twice = Rename(once, "First", "Second", true).Workspace!;
         Event(twice).Id.ShouldEqual("Renamed");
         var back = Rename(twice, "Second", "Renamed");
         back.Accepted.ShouldBeTrue();
         Event(back.Workspace!).Id.ShouldBeNull();
+        back.Workspace!.Documents[0].Bytes.ShouldEqual(Encoding.UTF8.GetBytes(source));
         back.AuthoringDiagnostics.Any(value => value.Code == DiagnosticCodes.RedundantEventId).ShouldBeFalse();
     }
 
@@ -51,6 +55,18 @@ public class when_pinning_a_renamed_event : Specification
         var result = Rename(workspace, "First", "Renamed");
         result.Accepted.ShouldBeTrue();
         result.Workspace!.Documents[0].Text.ShouldContain("// pin history");
+    }
+
+    [Theory]
+    [InlineData("behavior Observe\n  on event Renamed\n    notify info \"Changed\"\n")]
+    [InlineData("      screen Observe\n        on event Renamed\n          notify info \"Changed\"\n")]
+    void should_rename_behavior_event_references_with_preserved_trivia(string consumer)
+    {
+        var result = Rename(Create(Source + consumer), "Renamed", "Again");
+        result.Conflicts.ShouldBeEmpty();
+        WorkspaceSyntaxIndex.Create(result.Workspace!).Entries.Select(entry => entry.Node).OfType<EventInteractionTriggerSyntax>()
+            .Single().EventName.ShouldEqual("Again");
+        result.Workspace!.Documents[0].Text.ShouldContain(consumer.Replace("Renamed", "Again", StringComparison.Ordinal));
     }
 
     [Theory]

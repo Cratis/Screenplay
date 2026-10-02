@@ -215,10 +215,13 @@ compilation diagnostics belong to the paged diagnostics view. Available typed re
 
 `PLAY0471` also offers removal of a redundant event `id`, inline or standalone, only when the executable model, catalog and comments are preserved.
 
-Listed repairs are verified, not unchecked suggestions.
-Discovery checks authoring acceptance and comment preservation, plus routing safety
-for `PLAY0478`. For example, an inferred event that conflicts with a specification's
-asserted fields is not listed. Only acceptance and conflicts are cached per subject
+Discovery verifies listed `PLAY0166`, `PLAY0478`, `PLAY0469` and `PLAY0471` repairs.
+It checks authoring acceptance and comment preservation, plus routing safety for
+`PLAY0478`, consumer/routing impact and executable readiness for `PLAY0469`, and
+executable-model/catalog preservation for `PLAY0471`. For example, an inferred
+event that conflicts with a specification's asserted fields is not listed.
+`PLAY0397` discovery identifies the recipe only; its proposal may still be refused.
+Only acceptance and conflicts for verified repairs are cached per subject
 on the current immutable workspace snapshot for discovery reuse; diagnostics are
 never cached. Paging or rereading reuses the verdict; a new snapshot requires fresh
 verification. `propose-repair` always verifies only the selected subject in one fresh
@@ -234,7 +237,7 @@ Pass the selected repair's `diagnosticCode` and `subject` to `propose-repair` wi
 both current revisions and `formatting: "CanonicalizeTouchedDocuments"` (also
 returned as `requiredFormatting`). Repairs reprint the entire touched file, so
 whitespace and other legacy fences can change; a proposal that would drop any
-comment is refused. No file is written until you review the `before`/`after` bytes
+comment, or duplicate one, is refused. No file is written until you review the `before`/`after` bytes
 with `read-proposal` and explicitly call `apply`. After external edits, reopen and
 rediscover repairs rather than reusing stale handles. Applying a repair uses the
 same [identity state and recovery](recovery.md) contract as other proposals.

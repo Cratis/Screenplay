@@ -143,10 +143,17 @@ static class WorkspaceTriviaPrinter
         var tokens = WorkspaceSourceTokenizer.Tokenize(original).Tokens;
         if (before.Id is not null && after.Id is null && before.DirectiveLocations.TryGetValue("id", out var location))
         {
-            var token = tokens.Single(value => value.Span.Line == location.Line && value.Kind == WorkspaceSourceTokenKind.Text);
+            var line = tokens.Where(value => value.Span.Line == location.Line).ToArray();
+            if (line.Any(value => value.Kind == WorkspaceSourceTokenKind.Comment))
+            {
+                // Keep a trailing comment on its original line, exactly once.
+                var token = line.Single(value => value.Kind == WorkspaceSourceTokenKind.Text);
+                return (token.Span.ByteOffset, token.Span.ByteLength, []);
+            }
 
-            // Remove only directive text: any trailing comment remains on its original line, exactly once.
-            return (token.Span.ByteOffset, token.Span.ByteLength, []);
+            var start = line[0].Span.ByteOffset;
+            var end = line[^1].Span;
+            return (start, end.ByteOffset + end.ByteLength - start, []);
         }
 
         if (before.Id is not null || after.Id is null)

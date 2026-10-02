@@ -72,6 +72,7 @@ static class WorkspaceReferenceMembers
         ProducesSyntax or SeedEventSyntax or UniquePropertyConstraintSyntax or UniqueEventConstraintSyntax or EventSpecSyntax or JoinEventSyntax or
             ClearWithSyntax or RemoveWithSyntax or RemoveViaJoinSyntax or ProjectionEntersOnSyntax or CaptureAppendSyntax or ReducerRuleSyntax => [("event", WorkspaceReferenceDomain.Event)],
         SpecificationEventSyntax => [("eventType", WorkspaceReferenceDomain.Event)],
+        EventInteractionTriggerSyntax => [("eventName", WorkspaceReferenceDomain.Event)],
         ConcurrencySyntax => [("eventTypes", WorkspaceReferenceDomain.Event)],
         SpecificationCommandSyntax => [("commandType", WorkspaceReferenceDomain.Command)],
         InvokesSyntax or ScreenActionSyntax => [("command", WorkspaceReferenceDomain.Command)],

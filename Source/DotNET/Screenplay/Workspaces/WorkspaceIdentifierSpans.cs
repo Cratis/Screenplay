@@ -36,6 +36,7 @@ static class WorkspaceIdentifierSpans
             (RemoveWithSyntax or RemoveViaJoinSyntax, "event") => keyword == "remove",
             (ProjectionEntersOnSyntax, "event") => keyword == "enters",
             (ReducerRuleSyntax, "event") => keyword == "on",
+            (EventInteractionTriggerSyntax, "eventName") => keyword == "on",
             (UniquePropertyConstraintSyntax or UniqueEventConstraintSyntax, "event") => keyword == "unique",
             (SpecificationEventSyntax, "eventType") => keyword == "given" || keyword == "then" || keyword == "and",
             (SpecificationCommandSyntax, "commandType") => keyword == "when",

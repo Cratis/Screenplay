@@ -34,7 +34,7 @@ internal sealed partial class McpWorkspaces
             Target = arguments.TryGetProperty("target", out var target) ? McpAstHandles.Read(target) : throw new McpFailure("Rename requires a target handle.", -32602),
             ExpectedName = McpJson.RequiredString(arguments, "expectedName"),
             NewName = McpJson.RequiredString(arguments, "newName"),
-            EventNeverPersisted = arguments.TryGetProperty("eventNeverPersisted", out var neverPersisted) && neverPersisted.GetBoolean(),
+            EventNeverPersisted = McpJson.Boolean(arguments, "eventNeverPersisted"),
             Formatting = McpJson.Enumeration(arguments, "formatting", WorkspaceAuthoringFormatting.PreserveTrivia),
             Validation = McpJson.Enumeration(arguments, "validation", WorkspaceAuthoringValidation.Authoring)
         };
