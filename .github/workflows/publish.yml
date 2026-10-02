@@ -226,6 +226,19 @@ jobs:
       - name: Remove any existing artifacts
         run: rm -rf ${{ env.NUGET_OUTPUT }}
 
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23.x
+
+      - name: Yarn install
+        run: yarn
+
+      # The MCP server embeds the event model board page, and the tool package carries the server, so the
+      # page is built before the assemblies that embed it.
+      - name: Build event model board
+        run: yarn workspaces foreach -Rt --from @cratis/screenplay-mcp-app run build
+
       - name: Build
         run: dotnet build --configuration Release -p:Version=${{ needs.release.outputs.version }}
 
