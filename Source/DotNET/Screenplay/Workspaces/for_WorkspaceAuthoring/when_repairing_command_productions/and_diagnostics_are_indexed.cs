@@ -47,6 +47,36 @@ public class and_diagnostics_are_indexed : given.a_command_production
         Workspace.Compilation.Diagnostics.Count(diagnostic => diagnostic.Code == DiagnosticCodes.OmittedProductionDestination).ShouldEqual(1);
     }
 
+    [Theory]
+    [InlineData("// outside")]
+    [InlineData("      // beside the command")]
+    [InlineData("        // beside the production")]
+    void should_skip_comment_only_ancestry_lines(string comment)
+    {
+        Create(DestinationSource.Replace("        produces ProjectRegistered", $"{comment}\n        produces ProjectRegistered", StringComparison.Ordinal));
+        WorkspaceSyntaxIndex.Create(Workspace).Diagnostics.ShouldBeEmpty();
+        Workspace.Compilation.Diagnostics.Count(diagnostic => diagnostic.Code == DiagnosticCodes.OmittedProductionDestination).ShouldEqual(1);
+    }
+
+    [Theory]
+    [InlineData("description")]
+    [InlineData("handler")]
+    [InlineData("concurrency")]
+    [InlineData("validate")]
+    [InlineData("template")]
+    [InlineData("profile")]
+    [InlineData("when")]
+    [InlineData("identifier")]
+    [InlineData("sourceType")]
+    [InlineData("streamType")]
+    void should_advise_for_command_properties_named_like_keywords(string name)
+    {
+        Create(DestinationSource.Replace("projectId", name, StringComparison.Ordinal));
+        WorkspaceSyntaxIndex.Create(Workspace).Diagnostics.ShouldBeEmpty();
+        Workspace.Compilation.Diagnostics.Count(diagnostic => diagnostic.Code == DiagnosticCodes.OmittedProductionDestination).ShouldEqual(1);
+        Find(DiagnosticCodes.OmittedProductionDestination).ShouldNotBeNull();
+    }
+
     [Fact]
     void should_not_discover_an_identifier_inside_a_fence()
     {

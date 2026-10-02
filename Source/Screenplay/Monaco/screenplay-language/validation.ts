@@ -3,7 +3,7 @@
 
 import { causedByProperties, contextRoots, identityProperties, primitiveTypes, sliceTypes } from './language';
 import { DiagnosticCode, diagnosticCodes } from './diagnostic-codes';
-import { enclosingChain, fenceMap, indentOf } from './document-context';
+import { enclosingChain, fenceMap, indentOf, withoutComment } from './document-context';
 import { resolveEventContextPath } from './event-context';
 import {
     DocumentSymbols,
@@ -355,7 +355,7 @@ function validateProductionDestinations(lines: string[], fences: boolean[], symb
         if (identifiers.length !== 1) continue;
         const commandIndent = indentOf(lines[command.line]);
         for (let line = command.line + 1; line < lines.length; line++) {
-            const text = lines[line].trim().replace(/\s*\/\/.*$/, '');
+            const text = withoutComment(lines[line]).trim();
             if (fences[line] || text.length === 0) continue;
             const indent = indentOf(lines[line]);
             if (indent <= commandIndent) break;
@@ -363,7 +363,7 @@ function validateProductionDestinations(lines: string[], fences: boolean[], symb
             if (!produces || enclosingChain(lines, fences, line, indent)[0] !== 'command') continue;
             let explicit = false;
             for (let child = line + 1; child < lines.length; child++) {
-                const body = lines[child].trim().replace(/\s*\/\/.*$/, '');
+                const body = withoutComment(lines[child]).trim();
                 if (fences[child] || body.length === 0) continue;
                 if (indentOf(lines[child]) <= indent) break;
                 if (/^for\s+/.test(body)) explicit = true;

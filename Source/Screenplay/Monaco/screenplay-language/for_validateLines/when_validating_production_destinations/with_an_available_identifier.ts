@@ -57,6 +57,29 @@ describe('when validating production destinations with an available identifier',
             .map(issue => issue.line).should.deep.equal([5]);
     });
 
+    it.each(['// outside', '      // beside the command', '        // beside the production'])(
+        'should skip comment-only ancestry lines: %s', (comment) => {
+            destinations([...source.slice(0, 5), comment, ...source.slice(5)])
+                .map(issue => issue.line).should.deep.equal([6]);
+        });
+
+    it.each(['description', 'handler', 'concurrency', 'validate', 'template', 'profile', 'when', 'identifier', 'sourceType', 'streamType'])(
+        'should follow command property rules for %s', (name) => {
+            const issues = destinations(source.map(line => line.replaceAll('projectId', name)));
+            issues.map(issue => issue.line).should.deep.equal([5]);
+            issues[0].message.should.contain(`for ${name}`);
+        });
+
+    it('should not treat a nested concurrency dimension as a command identifier', () => {
+        destinations([
+            ...source.slice(0, 4),
+            '        concurrency',
+            '          sourceType Uuid identifier',
+            '        produces ProjectRegistered',
+            '      event ProjectRegistered',
+        ]).should.have.lengthOf(0);
+    });
+
     it('should not discover an identifier inside a fence', () => {
         destinations([
             ...source.slice(0, 4),
