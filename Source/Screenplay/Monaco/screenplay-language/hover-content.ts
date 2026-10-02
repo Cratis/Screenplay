@@ -40,7 +40,10 @@ export function hoverContent(
 
     // Do not mistake a property/type named optional for the contextual modifier.
     const prefix = line.slice(0, startColumn - 1);
-    const followsPropertyType = /^\s*(?:(?:by|filter)\s+)?@?[a-z_]\w*\s+[\w.]+(?:\[\])?\s+$/.test(prefix);
+    // Commit to query-parameter context before matching the name and type.
+    const followsPropertyType = /^\s*(?:by|filter)\s+/.test(prefix)
+        ? /^\s*(?:by|filter)\s+[a-z_]\w*\s+[\w.]+(?:\[\])?\s+$/.test(prefix)
+        : /^\s*@?[a-z_]\w*\s+[\w.]+(?:\[\])?\s+$/.test(prefix);
     const followsQueryType = /^\s*query\s+\w+\s*=>\s*(?:observable\s+)?[\w.]+(?:\[\])?\s+$/.test(prefix) &&
         !/^\s*query\s+\w+\s*=>\s*observable\s+$/.test(prefix);
     if (word === 'optional' && (followsPropertyType || followsQueryType)) {

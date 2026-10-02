@@ -53,6 +53,28 @@ describe('when editing optional values', () => {
         expect(hoverContent(['type T', '  value optional'], 1, 'optional', 9, 17)).toBeNull();
     });
 
+    it.each([
+        ['by id optional', false],
+        ['filter id optional', false],
+        ['by id optional optional', true],
+        ['filter id optional optional', true],
+        ['filter status InvoiceStatus optional from status', true],
+    ] as const)('should distinguish the query parameter type from its modifier in %s', (parameter, isOptional) => {
+        const line = `        ${parameter}`;
+        const lines = ['query Q => View', line];
+        const modifierColumn = line.lastIndexOf('optional') + 1;
+        const hover = hoverContent(lines, 1, 'optional', modifierColumn, modifierColumn + 8);
+        if (isOptional) {
+            expect(hover).toContain('Allows a value to be absent');
+        } else {
+            expect(hover).toBeNull();
+        }
+        if (parameter.includes('id optional')) {
+            const typeColumn = line.indexOf('optional') + 1;
+            expect(hoverContent(lines, 1, 'optional', typeColumn, typeColumn + 8)).toBeNull();
+        }
+    });
+
     it.each(['triggers', 'constraints', 'identifiers', 'attributes'])('should keep compiler validation linear for growing %s', shape => {
         const measure = (count: number) => {
             const lines = shape === 'triggers'

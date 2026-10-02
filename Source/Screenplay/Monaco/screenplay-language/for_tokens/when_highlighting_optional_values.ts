@@ -24,6 +24,11 @@ describe('when highlighting optional values', () => {
                 ['  name String optional = name', true],
                 ['  optional String', false],
                 ['  value optional', false],
+                ['  by id optional', false],
+                ['  filter id optional', false],
+                ['  by id optional optional', true],
+                ['  filter id optional optional', true],
+                ['  filter status InvoiceStatus optional from status', true],
                 ['query Q => observable optional', false],
                 ['query Q => observable View optional', true],
             ] as const) {
@@ -31,6 +36,11 @@ describe('when highlighting optional values', () => {
                 const offset = line.lastIndexOf('optional');
                 const token = tokens.filter(token => token.offset <= offset).at(-1)!;
                 expect(token.type === 'keyword.play', line).toBe(keyword);
+                if (line.includes('id optional optional')) {
+                    const typeOffset = line.indexOf('optional');
+                    const typeToken = tokens.filter(token => token.offset <= typeOffset).at(-1)!;
+                    expect(typeToken.type, line).toBe('type.identifier.play');
+                }
             }
         } finally {
             tokenizer.dispose();

@@ -54,7 +54,10 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
     const tokenizer: Record<string, MonarchTokenRules> = {
         root: [
             // A modifier only after a complete type; names called optional remain ordinary names.
-            [/^(\s*(?:(?:by|filter)\s+)?@?[a-z_]\w*\s+)([\w.]+(?:\[\])?)(\s+)(optional)\b(?=\s*(?:identifier\b|from\b|=(?!=|>)|\/\/|$))/,
+            [/^(\s*(?:by|filter)\s+[a-z_]\w*\s+)([\w.]+(?:\[\])?)(\s+)(optional)\b(?=\s*(?:from\b|\/\/|$))/,
+                ['identifier', 'type.identifier', 'white', 'keyword']],
+            // Query prefixes cannot fall back to being property names.
+            [/^(?!\s*(?:by|filter)\s+)(\s*@?[a-z_]\w*\s+)([\w.]+(?:\[\])?)(\s+)(optional)\b(?=\s*(?:identifier\b|from\b|=(?!=|>)|\/\/|$))/,
                 ['identifier', 'type.identifier', 'white', 'keyword']],
             [/^(\s*query\s+[A-Za-z_]\w*\s*=>\s*(?!observable\s+optional\s*(?:\/\/.*)?$)(?:observable\s+)?)([\w.]+(?:\[\])?)(\s+)(optional)\b(?=\s*(?:\/\/.*)?$)/,
                 ['keyword', 'type.identifier', 'white', 'keyword']],
