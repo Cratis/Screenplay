@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Workspaces.for_WorkspaceAuthoring.when_repairing_command_productions;
 
@@ -33,7 +34,12 @@ public class and_the_contract_is_not_local : given.a_command_production
     [Fact]
     void should_not_infer_for_an_agreeing_reaction_alongside_a_command()
     {
-        Create(Source + "\n      reaction React\n        on Unknown\n        produces ProjectRegistered\n          name = name\n          registeredAt = $context.occurred\n");
+        Create(Source + "\n      reaction React\n        when Startup\n          produces ProjectRegistered\n            name = name\n            registeredAt = $context.occurred\n");
+        var index = WorkspaceSyntaxIndex.Create(Workspace);
+        index.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).ShouldBeFalse();
+        var reaction = index.Entries.Single(entry => entry.Node is ReactionSyntax);
+        var trigger = index.Entries.Single(entry => entry.Parent == reaction.Handle && entry.Node is ReactionTriggerSyntax);
+        index.Entries.Any(entry => entry.Parent == trigger.Handle && entry.Node is ProducesSyntax production && production.Event == "ProjectRegistered").ShouldBeTrue();
         AssertMissingEventWithoutRepair();
     }
 
