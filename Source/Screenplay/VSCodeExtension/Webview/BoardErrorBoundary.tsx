@@ -16,8 +16,8 @@ interface BoardErrorBoundaryState {
 }
 
 // Keeps a failure while drawing the board from emptying the whole webview: it says what failed, so it can
-// be reported, while the view options stay usable - choosing another tries the board again - and offers
-// to show the board as it first appears.
+// be reported, and offers to show the board as it first appears. A change of presentation from elsewhere
+// - another open board - tries the board again.
 export class BoardErrorBoundary extends Component<BoardErrorBoundaryProps, BoardErrorBoundaryState> {
     override state: BoardErrorBoundaryState = {};
 

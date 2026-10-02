@@ -8,7 +8,6 @@ import { BoardErrorBoundary } from './BoardErrorBoundary';
 import { BoardProblem, ExtensionToBoardMessage } from './BoardMessage';
 import { Problems } from './Problems';
 import { defaultPresentation, usePresentation } from './usePresentation';
-import { ViewOptions } from './ViewOptions';
 import { vscode } from './vscodeApi';
 
 interface Board {
@@ -56,15 +55,13 @@ export const BoardApp = () => {
                     ? <div className='screenplay-board__message'>The board could not read this model: {model.message}</div>
                     : (
                         <MenuDropdownOpenProvider>
-                            <EventModelPresentationProvider presentation={presentation}>
-                                <BoardErrorBoundary resetWhenChanged={presentation} onReset={() => changePresentation(() => defaultPresentation)}>
-                                    <EventModelBoard document={model} readOnly canvas={{ chrome: boardChrome }} />
+                            <EventModelPresentationProvider presentation={presentation} onChange={changePresentation}>
+                                <BoardErrorBoundary resetWhenChanged={presentation} onReset={() => changePresentation(defaultPresentation)}>
+                                    <EventModelBoard document={model} readOnly showLogo showViewOptions canvas={{ chrome: boardChrome }} />
                                 </BoardErrorBoundary>
-                                <ViewOptions presentation={presentation} onChange={changePresentation} />
                             </EventModelPresentationProvider>
                         </MenuDropdownOpenProvider>
                     )}
-                <div className='screenplay-board__watermark' role='img' aria-label='Cratis' />
             </div>
         </div>
     );

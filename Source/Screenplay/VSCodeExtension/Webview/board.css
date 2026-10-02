@@ -50,31 +50,6 @@ body {
     font: inherit;
 }
 
-/* The Cratis logo, white, watermarking the upper left of the board. It never takes a pointer from the board. */
-.screenplay-board__watermark {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
-    width: 7.5rem;
-    aspect-ratio: 600 / 328;
-    background-color: #fff;
-    mask: url('./cratis-logo.svg') no-repeat center / contain;
-    -webkit-mask: url('./cratis-logo.svg') no-repeat center / contain;
-    opacity: 0.85;
-    pointer-events: none;
-    z-index: 10;
-}
-
-/* The view options, in the upper right of the board as Cratis Studio has them. */
-.screenplay-board__toolbar {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    display: flex;
-    gap: 0.5rem;
-    z-index: 10;
-}
-
 /* What the webview shows instead of a board that failed to draw. */
 .screenplay-board__failure pre {
     white-space: pre-wrap;
