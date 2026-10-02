@@ -1,6 +1,72 @@
 {
-    "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone.",
+    "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
+        {
+            "name": "documented multiline command authorization before an inline event",
+            "source": ["policy IsAccountant", "  require role \"Accountant\"", "policy IsCustomerSelf", "  require authenticated", "module M", "  feature F", "    slice StateChange S", "      command C", "        projectId Uuid identifier", "        authorize IsAccountant", "                  or IsCustomerSelf", "        produces event Renamed"],
+            "diagnostics": []
+        },
+        {
+            "name": "nonmatching deeper line ends command authorization continuations",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        projectId Uuid identifier", "        authorize IsAccountant", "          and IsCustomerSelf", "          names String[]", "          produces event Renamed"],
+            "diagnostics": []
+        },
+        {
+            "name": "deeper inline event after a command property",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        projectId Uuid identifier", "        name String", "          produces event Renamed", "            value String = name"],
+            "diagnostics": []
+        },
+        {
+            "name": "deeper productions after a validate property",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        projectId Uuid identifier", "        validate String", "          produces First", "            for projectId", "        produces Legacy", "        produces event Renamed", "          for projectId", "          value String = validate", "      event First", "      event Legacy"],
+            "diagnostics": []
+        },
+        {
+            "name": "deeper productions after a handler property",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        projectId Uuid identifier", "        handler String", "          produces First", "            for projectId", "        produces Legacy", "        produces event Renamed", "          for projectId", "          value String = handler", "      event First", "      event Legacy"],
+            "diagnostics": []
+        },
+        {
+            "name": "deeper productions after a concurrency property",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        projectId Uuid identifier", "        concurrency String", "          produces First", "            for projectId", "        produces Legacy", "        produces event Renamed", "          for projectId", "          value String = concurrency", "      event First", "      event Legacy"],
+            "diagnostics": []
+        },
+        {
+            "name": "inline and plain productions both omit destinations without an identifier",
+            "validate": true,
+            "source": ["module Projects", "  feature Naming", "    slice StateChange Rename", "      command Rename", "        projectId Uuid", "        otherId Uuid", "        name String", "        produces event Renamed", "        produces Legacy", "      event Legacy"],
+            "diagnostics": ["PLAY0470@8", "PLAY0470@9"]
+        },
+        {
+            "name": "duplicate inline typed property",
+            "source": ["module Projects", "  feature Naming", "    slice StateChange Rename", "      command Rename", "        projectId Uuid identifier", "        otherId Uuid", "        name String", "        produces event Renamed", "          name String = name", "          name Uuid = otherId"],
+            "diagnostics": ["PLAY0168@10"]
+        },
+        {
+            "name": "inline generation and system metadata",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        produces event Created generation 2", "          sequence 3", "          origin External", "          name = name"],
+            "diagnostics": ["PLAY0475@5", "PLAY0476@6", "PLAY0476@7", "PLAY0044@8"]
+        },
+        {
+            "name": "inline event in a reaction",
+            "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        every 1 day", "          produces event Created"],
+            "diagnostics": ["PLAY0474@6"]
+        },
+        {
+            "name": "inline malformed metadata",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        produces event Created", "          id \"\"", "          documentation \"not fenced\"", "          for key", "          for key"],
+            "diagnostics": ["PLAY0472@6", "PLAY0477@7", "PLAY0193@9"]
+        },
+        {
+            "name": "redundant standalone event pin",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      event Created", "        id \"Created\""],
+            "diagnostics": ["PLAY0471@5"]
+        },
+        {
+            "name": "duplicate event documentation",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      event Created", "        documentation", "          ```markdown", "          One", "          ```", "        documentation", "          ```markdown", "          Two", "          ```"],
+            "diagnostics": ["PLAY0477@9"]
+        },
         {
             "name": "invalid import",
             "source": [

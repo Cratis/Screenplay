@@ -15,6 +15,8 @@ static class McpReferenceKinds
 
     internal static IEnumerable<(string Name, string[] Kinds, string Role)> For(SyntaxNode node, SyntaxNode? owner = null) => node switch
     {
+        SliceSyntax value => EventDeclarations.In(value).Except(value.Events).Select(@event => (@event.Name, _eventKinds, "declares")),
+        ProducesSyntax { InlineEvent: not null } value => [(value.Event, ["Event"], "declares"), (value.Event, ["Event"], "produces")],
         ProducesSyntax value => [(value.Event, ["Event"], "produces")],
         InvokesSyntax value => [(value.Command, ["Command"], "invokes")],
         ReadsSyntax value => [(value.ReadModel, ["ReadModel"], "reads")],

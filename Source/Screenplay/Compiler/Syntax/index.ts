@@ -3,6 +3,8 @@
 
 export * from './SyntaxNode';
 export * from './Declarations';
+export * from './EventDeclarations';
+export * from './ProductionDestinations';
 export * from './Expressions';
 export * from './Commands';
 export * from './Queries';

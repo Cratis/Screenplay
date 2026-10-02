@@ -380,7 +380,14 @@ ReducerRule    = "on", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 EventDecl      = "event", Ident, [ "generation", PositiveUInt32 ], NL,
-                 INDENT, [ FileDirective ], { TagDecl }, { PropertyLine }, DEDENT ;
+                 INDENT, { FileDirective | EventMetadata | TagDecl | PropertyLine }, DEDENT ;
+
+EventMetadata  = EventDescriptionDecl | DocumentationDecl | EventIdDecl ;
+
+EventDescriptionDecl = "description", ( StringLiteral | EventFencedText ), NL ;
+EventIdDecl    = "id", StringLiteral, NL ;        (* nonempty old persisted name; at most one *)
+DocumentationDecl = "documentation", NL, INDENT,
+                    "```markdown", NL, { AnyLine }, "```", NL, DEDENT ;
 
 (* Without a marker the generation is 1. Declarations of the same event name in
    the same slice are complete, distinct revisions and must be numbered from 1
@@ -526,14 +533,23 @@ ProducesDecl   = "produces", Ident, NL,
                | "produces", "when", Condition, NL,
                    INDENT, Ident, NL,
                    [ INDENT, [ ForDecl ], { TagDecl }, { PropertyMapping }, DEDENT ],
-                   DEDENT ;
+                   DEDENT
+               | InlineEventProduction ;
 
+InlineEventProduction = "produces", "event", Ident, NL,
+                        [ INDENT, { ForDecl | TagDecl | EventMetadata | TypedMapping }, DEDENT ] ;
+TypedMapping   = [ "@" ], Ident, TypeRef, "=", MappingSource, NL ;
 ForDecl        = "for", MappingSource, NL ;
 
-(* Where the event lands. Absent, it lands on the command's own event source,
-   which is the common case and stays unstated. A decision that appends to
-   several event sources is several "produces", each saying where it goes -
-   which is what the handler doing it already looks like.                    *)
+(* InlineEventProduction is allowed only inside commands. It declares a slice-owned
+   generation-1 event; origin and generation are forbidden. Tags are event-type tags.
+   At most one for, id, description and documentation directive is allowed.
+   An inline omission means the command identifier only when no production names
+   another source and no plain production omits for. Otherwise every destination
+   must be explicit. Typed payload property names must be unique (PLAY0168).
+   Plain omission retains legacy allocation semantics. Cross-source execution is not admitted.
+   Unescaped namespace, sequence, correlation, causation, causedBy and occurred
+   are reserved system-assigned metadata in both production forms. *)
 
 (* Combines exactly as a policy condition does - see the note under Policies. *)
 
@@ -835,8 +851,8 @@ TriggerDecl    = "trigger", Ident, NL,
 InvokesDecl    = "invokes", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ] ;
 
-(* What the reaction sets off. "produces" is the same declaration a command
-   carries, because appending an event is the same act wherever it happens.
+(* What the reaction sets off. Plain "produces" has the same form as on a command;
+   InlineEventProduction is not allowed inside reactions.
    A command is not produced but asked for, so it is "invokes" - an event is a
    fact the reaction appends, a command is an intent it hands on, and something
    else may still reject it. One word for both would say those are the same
@@ -904,7 +920,10 @@ WidgetOption   = "column", Ident, [ "label", LocalizableString ], NL
 
 DescriptionDecl = "description", ( StringLiteral | FencedText ), NL ;
 
-FencedText     = NL, "```", NL, { AnyLine }, "```" ;
+FencedText     = NL, INDENT, ( "```text" | "```" ), NL, { AnyLine }, "```", DEDENT ;
+EventFencedText = NL, INDENT, ( "```text" | "```markdown" | "```" ), NL, { AnyLine }, "```", DEDENT ;
+(* Bare description fences are accepted for compatibility with warning PLAY0397.
+   Only event descriptions accept the markdown tag; documentation requires it. *)
 
 LocalizableString = StringLiteral
                | "$strings.", Path ;
@@ -1065,9 +1084,11 @@ The escape works wherever a name of your choosing meets a reserved first word - 
 | Block | Reserved first words |
 |---|---|
 | `command` body | `authorize`, `produces` (`description`, `validate`, `handler` and `concurrency` resolve by shape) |
-| `event` body | `tag` |
+| `event` body | `tag` (`id`, `description`, and `documentation` resolve by shape) |
+| inline `produces event` body | `tag`, `for`, `generation`, `origin`, `namespace`, `sequence`, `correlation`, `causation`, `causedBy`, `occurred`; metadata names resolve by shape |
 | reaction trigger body | `description`, `file`, `produces`, `invokes`, `reads` (use `@reads` for a value named `reads`) |
-| mapping block | `tag` |
+| plain `produces` body | `tag`, `for`, `namespace`, `sequence`, `correlation`, `causation`, `causedBy`, `occurred` |
+| other mapping blocks | `tag`; the printer also escapes the production metadata names above |
 | projection `from` block | `key`, `parent` |
 | projection `clear` mapping target | `with` |
 | enumeration `concept` body | `validate` |

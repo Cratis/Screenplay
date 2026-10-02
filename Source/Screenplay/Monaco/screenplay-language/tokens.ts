@@ -59,9 +59,11 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/^(\s*)(then)(\s+)(result|no\s+result)\b/, ['white', 'keyword', 'white', 'keyword']],
             // A quoted import names .play files rather than a qualified name - the path reads as a link.
             [/^(\s*)(import)(\s+)("[^"\\]*")/, ['white', 'keyword', 'white', 'string.link']],
-            // Only an event header reserves 'generation'; properties and context paths do not.
-            [/^(\s*)(event)(\s+)([A-Za-z_]\w*)(\s+)(generation)(?=\s+\d+\s*$)/,
-                ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword']],
+            // Retain the header indent so event metadata stops at the enclosing block boundary.
+            [/^(\s*)((?:produces\s+)?event)(\s+)([A-Za-z_]\w*)(\s+)(generation)(\s+)(\d+)(?=\s*(?:\/\/.*)?$)/,
+                ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword', 'white', { token: 'number', next: '@eventBody.$1' }]],
+            [/^(\s*)((?:produces\s+)?event)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/,
+                ['white', 'keyword', 'white', { token: 'type.identifier', next: '@eventBody.$1' }]],
             // A tagged opening fence carries the embedded language; legacy tag lines still highlight.
             ...codeBlockTags.map(
                 (tag): MonarchTokenRules[number] => [
@@ -111,6 +113,13 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             { include: '@common' },
         ],
 
+        eventBody: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(id)(?=\s+")/, ['white', 'keyword']],
+            [/^(\s*)(documentation)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@descriptionBlockPending' }]],
+            { include: '@root' },
+        ],
+
         common: commonTokenRules,
 
         // After a code tag, the only thing allowed before the opening fence is whitespace.
@@ -131,7 +140,8 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
 
         // After a bare description, the only thing allowed before the opening fence is whitespace.
         descriptionBlockPending: [
-            [/^\s*```(?:text)?\s*$/, { token: 'string.quote', switchTo: '@descriptionBlock' }],
+            [/\/\/.*$/, 'comment'],
+            [/^\s*```(?:text|markdown)?\s*$/, { token: 'string.quote', switchTo: '@descriptionBlock' }],
             [/^\s*[^\s`].*$/, { token: '@rematch', next: '@pop' }],
             [/\s+/, 'white'],
         ],

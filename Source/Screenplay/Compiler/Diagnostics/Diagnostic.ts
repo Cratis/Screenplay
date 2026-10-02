@@ -3,7 +3,7 @@
 
 import { SourceLocation } from './SourceLocation';
 
-export type DiagnosticSeverity = 'error' | 'warning';
+export type DiagnosticSeverity = 'error' | 'warning' | 'information';
 
 // A problem the parser found. Codes are the C# compiler's PLAYnnnn codes, so a diagnostic means the same
 // thing whichever compiler reported it.

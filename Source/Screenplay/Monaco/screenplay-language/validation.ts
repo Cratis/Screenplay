@@ -1,9 +1,11 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { validateInlineEvents } from './inline-event-validation';
 import { causedByProperties, contextRoots, identityProperties, primitiveTypes, sliceTypes } from './language';
 import { DiagnosticCode, diagnosticCodes } from './diagnostic-codes';
-import { enclosingChain, fenceMap, indentOf, withoutComment } from './document-context';
+import { enclosingChain, fenceMap, indentOf } from './document-context';
+import { eventAnalysisSource } from './event-analysis-source';
 import { resolveEventContextPath } from './event-context';
 import {
     DocumentSymbols,
@@ -139,7 +141,7 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
     const events = new Set([...knownEventNames(symbols), ...knownEventNames(application)]);
     const policies = new Set([...symbols.policies, ...application.policies].map((policy) => policy.name));
     const issues: ValidationIssue[] = validateDeclarations(lines, symbols, application);
-    issues.push(...validateProductionDestinations(lines, fences, symbols));
+    issues.push(...validateProductionDestinations(lines, symbols));
 
     const checkEvent = (line: number, text: string, name: string) => {
         if (!events.has(name)) {
@@ -326,6 +328,7 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
     }
 
     issues.push(...validateEventContextPaths(lines, fences));
+    issues.push(...validateInlineEvents(lines, symbols, application));
 
     const fenceLines = lines
         .map((line, index) => ({ line, index }))
@@ -348,36 +351,18 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
 }
 
 // This is advice, not a semantic default: accepting the typed workspace repair changes routing.
-function validateProductionDestinations(lines: string[], fences: boolean[], symbols: DocumentSymbols): ValidationIssue[] {
+function validateProductionDestinations(lines: string[], symbols: DocumentSymbols): ValidationIssue[] {
     const issues: ValidationIssue[] = [];
-    lines = lines.map((line, index) => fences[index] ? line : withoutComment(line));
+    lines = eventAnalysisSource(lines);
     for (const command of symbols.commands) {
         const identifiers = command.properties.filter(property => property.isIdentifier && !property.type.endsWith('?') && !property.type.endsWith('[]'));
         if (identifiers.length !== 1) continue;
-        const commandIndent = indentOf(lines[command.line]);
-        const ancestors = [commandIndent];
-        for (let line = command.line + 1; line < lines.length; line++) {
-            const text = lines[line].trim();
-            if (fences[line] || text.length === 0) continue;
-            const indent = indentOf(lines[line]);
-            if (indent <= commandIndent) break;
-            while (ancestors[ancestors.length - 1] >= indent) ancestors.pop();
-            const direct = ancestors.length === 1;
-            ancestors.push(indent);
-            const produces = text.match(/^produces\s+([A-Z]\w*)$/);
-            if (!produces || !direct) continue;
-            let explicit = false;
-            for (let child = line + 1; child < lines.length; child++) {
-                const body = lines[child].trim();
-                if (fences[child] || body.length === 0) continue;
-                if (indentOf(lines[child]) <= indent) break;
-                if (/^for\s+/.test(body)) explicit = true;
-            }
-            if (!explicit) {
-                issues.push(issue('information', line, indent + 1, text.length,
-                    `Plain 'produces ${produces[1]}' omits its destination — use 'for ${identifiers[0].name}' to explicitly select the command's identifier.`,
-                    diagnosticCodes.omittedProductionDestination));
-            }
+        for (const production of command.produces ?? []) {
+            if (production.inline || production.conditional || production.target !== undefined) continue;
+            const line = production.line;
+            issues.push(issue('information', line, indentOf(lines[line]) + 1, lines[line].trim().length,
+                `Plain 'produces ${production.name}' omits its destination — use 'for ${identifiers[0].name}' to explicitly select the command's identifier.`,
+                diagnosticCodes.omittedProductionDestination));
         }
     }
     return issues;

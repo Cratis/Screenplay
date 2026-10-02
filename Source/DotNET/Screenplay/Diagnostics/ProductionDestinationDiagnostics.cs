@@ -24,7 +24,7 @@ internal static class ProductionDestinationDiagnostics
             return [];
         }
 
-        return command.Produces.Where(produces => produces.When is null && produces.For is null)
+        return command.Produces.Where(produces => produces.InlineEvent is null && produces.When is null && produces.For is null)
             .Select(produces => new Diagnostic(
                 DiagnosticSeverity.Information,
                 DiagnosticCodes.OmittedProductionDestination,

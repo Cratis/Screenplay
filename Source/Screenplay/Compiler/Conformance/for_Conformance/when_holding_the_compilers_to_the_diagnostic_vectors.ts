@@ -15,7 +15,8 @@ interface DiagnosticVector {
 const vectors = (JSON.parse(readFileSync(join(resolve(__dirname, '..'), 'diagnostics.json'), 'utf8')) as { cases: DiagnosticVector[] }).cases;
 
 // Every invalid document in the vectors is reported with the same codes, on the same lines and in the same
-// order as the C# compiler reports it - the C# compiler is held to the same file.
+// order as the C# compiler reports it - the C# compiler is held to the same file. Its validate cases
+// use Compile; TypeScript parse always includes the validation checks this compiler models.
 describe('when holding the compilers to the diagnostic vectors', () => {
     it('should hold vectors', () => {
         vectors.length.should.be.greaterThan(100);

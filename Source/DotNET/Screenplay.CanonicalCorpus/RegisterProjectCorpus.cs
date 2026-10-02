@@ -42,6 +42,11 @@ public static class RegisterProjectCorpus
         [
             new CanonicalCorpusDiagnosticExpectation
             {
+                Code = "PLAY0469",
+                Message = "Event 'ProjectRegistered' copies command identifier 'projectId' into payload property 'projectId' although it already identifies the event source"
+            },
+            new CanonicalCorpusDiagnosticExpectation
+            {
                 Code = "PLAY0268",
                 Message = "Projection 'ProjectSummaryProjection' sequence is not portable ESM v1 behavior: which event sequence a projection observes is a realization concern."
             }

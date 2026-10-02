@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.CanonicalCorpus;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Semantics.Execution;
 
@@ -30,7 +31,8 @@ public class when_loading_the_legacy_v1_source : Specification
                     _corpus.ApplicationName,
                     SemanticDocumentSet.Create([.. documents], catalog));
                 result.Success.ShouldBeTrue();
-                result.Diagnostics.ShouldBeEmpty();
+                result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.EventSourceIdInPayload);
+                result.Diagnostics.Single().Severity.ShouldEqual(DiagnosticSeverity.Information);
                 return result.Value!;
             })
         ];

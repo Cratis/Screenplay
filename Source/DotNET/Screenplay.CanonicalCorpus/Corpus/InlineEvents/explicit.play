@@ -1,0 +1,12 @@
+module Projects
+  feature Naming
+    slice StateChange Rename
+      event Renamed
+        tag audit
+        name String
+      command Rename
+        projectId Uuid identifier
+        name String
+        produces Renamed
+          for projectId
+          name = name

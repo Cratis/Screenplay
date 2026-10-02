@@ -363,7 +363,7 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0165` | Warning | A property names a type nothing in the document or its imports declares. |
 | `PLAY0166` | Warning | An event is referred to that nothing in the document or its imports declares. |
 | `PLAY0167` | Warning or error | A policy is referred to that nothing in the document declares. A persona's unknown policy is an error during compilation, Safe authoring, and executable binding. Draft authoring retains it as a warning with explicit unresolved-reference debt; other unresolved policy references are warnings. |
-| `PLAY0168` | Error | A concept and a type, or two of either, are declared under one name. |
+| `PLAY0168` | Error | A concept and a type, or two of either, are declared under one name; also reused when an inline event repeats a typed payload property name. |
 | `PLAY0169` | Error | An authentication block declares two providers under one name. |
 | `PLAY0170` | Error | A seed block seeds nothing. |
 | `PLAY0171` | Error | A concurrency block narrows nothing. |
@@ -813,6 +813,24 @@ See [Specifications](specifications.md#clocks-triggers-and-captures).
 | `PLAY0466` | Warning | A `when trigger` names a trigger nothing declares or registers, or a value its declaration does not carry. |
 | `PLAY0467` | Warning | A `given capture` or `when capture` names a capture the application does not declare. |
 | `PLAY0468` | Error | A `when query` argument is not a `by` or `filter` parameter of the query. |
+
+### Inline event declarations and metadata
+
+These codes cover [inline command events](commands.md#declare-an-event-inline) and [event metadata](events.md#authoring-metadata).
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0469` | Warning (inline), information (plain) | A production copies the command identifier into payload while targeting that same identifier. Review persistence before removing the field or evolving its generation. |
+| `PLAY0470` | Error | A command targets another event source but one or more productions omit `for`, or both an inline and a plain production omit `for` and therefore have different defaults. The diagnostic names the production. State every destination explicitly; cross-source execution is still unsupported. |
+| `PLAY0471` | Information | An event's `id` equals its current name. Remove the redundant pin. |
+| `PLAY0472` | Error | Event `id` is missing its nonempty quoted value or is repeated. |
+| `PLAY0473` | Error | An inline event name collides with a standalone declaration, import, or another inline declaration. |
+| `PLAY0474` | Error | `produces event` occurs outside a command, such as in a reaction. |
+| `PLAY0475` | Error | An inline event declares `generation` in its header or body. Extract it before evolving generations. |
+| `PLAY0476` | Error | A production supplies unescaped system-assigned `namespace`, `sequence`, `correlation`, `causation`, `causedBy`, or `occurred`, or an inline event supplies `origin`. |
+| `PLAY0477` | Error | Event documentation is not one nonempty fenced Markdown block, or is repeated. |
+
+Malformed typed mappings and duplicate destinations retain `PLAY0044` and `PLAY0193`. Descriptions retain their existing diagnostics. Event descriptions, documentation, and rename pins are authoring-only metadata (`PLAY0270`); none changes canonical ESM bytes.
 
 ### Production destination advice and repairs
 

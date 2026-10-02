@@ -11,6 +11,8 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        readonly HashSet<SemanticAddress> _persistedEventAddresses = [.. documents.IdentityCatalog.EventContracts.Select(value => value.Address)];
+
         SemanticModule BindModule(ModuleSyntax module)
         {
             if (module.Description is not null)
@@ -89,7 +91,7 @@ public sealed partial class SemanticModelBinder
 
             var address = SemanticAddress.ForSlice(_applicationIdentity, module, featurePath, slice.Name);
             var id = ResolveSlice(address, slice.Location, slice.DescriptionLocation, slice.DescriptionRawLength);
-            var events = slice.Events.Select(value => _eventDeclarations[value]).Distinct().ToArray();
+            var events = EventDeclarations.In(slice).Select(value => _eventDeclarations[value]).Distinct().ToArray();
             var commands = slice.Commands.Select(value =>
             {
                 var bound = BindCommand(address, value, _events);
@@ -124,7 +126,7 @@ public sealed partial class SemanticModelBinder
             var semanticAssignment = documents.IdentityCatalog.ResolveSemanticAssignment(address);
             var contractAssignment = documents.IdentityCatalog.ResolveEventContract(address);
             var revision = new EventContractRevision(current.Generation);
-            if (documents.IdentityCatalog.EventContracts.Any(value => value.Address.Equals(address)) && contractAssignment.Revision != revision)
+            if (_persistedEventAddresses.Contains(address) && contractAssignment.Revision != revision)
             {
                 Error(
                     DiagnosticCodes.UnsupportedEventGenerationSemantics,
@@ -138,6 +140,11 @@ public sealed partial class SemanticModelBinder
             var revisions = new List<(EventSyntax Syntax, ImmutableArray<SemanticProperty> Properties, ImmutableArray<string> Tags)>();
             foreach (var declaration in declarations)
             {
+                if (declaration.Description is not null || declaration.Documentation is not null || declaration.Id is not null)
+                {
+                    Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Event '{declaration.Name}' description, documentation and id are authoring metadata.", declaration.Location);
+                }
+
                 if (declaration.File is not null)
                 {
                     Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Event '{declaration.Name}' file reference is realization provenance.", declaration.File.Location);

@@ -1,0 +1,14 @@
+module Projects
+  feature Naming
+    slice StateChange Rename
+      command Rename
+        projectId Uuid identifier
+        name String
+        produces event Renamed
+          description "The project acquired another name"
+          documentation
+            ```markdown
+            The project keeps its event source identity.
+            ```
+          tag audit
+          name String = name

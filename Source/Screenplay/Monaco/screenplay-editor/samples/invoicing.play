@@ -807,14 +807,14 @@ module Invoicing
 
         // In a mapping block and an event body 'tag' is reserved, so a field of
         // that name is escaped with '@'.
-        produces InvoiceTagged
-          for invoiceId
-          @tag     = tag
-          taggedAt = $context.occurred
-
-      event InvoiceTagged
-        @tag     InvoiceTag
-        taggedAt DateTime
+        produces event InvoiceTagged
+          description "An invoice was labeled for follow-up"
+          documentation
+            ```markdown
+            The label belongs to the invoice's event source, not its payload identity.
+            ```
+          @tag     InvoiceTag = tag
+          taggedAt DateTime   = $context.occurred
 
       screen TagInvoiceScreen
         template CommandDialog

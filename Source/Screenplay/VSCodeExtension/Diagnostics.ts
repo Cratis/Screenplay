@@ -34,7 +34,7 @@ function toDiagnostic(issue: ValidationIssue): vscode.Diagnostic {
 function fromCompiler(document: vscode.TextDocument, compiled: CompilerDiagnostic): vscode.Diagnostic {
     const line = Math.min(compiled.location.line - 1, document.lineCount - 1);
     const range = new vscode.Range(line, compiled.location.column - 1, line, document.lineAt(line).text.length);
-    const severity = compiled.severity === 'error' ? vscode.DiagnosticSeverity.Error : vscode.DiagnosticSeverity.Warning;
+    const severity = compiled.severity === 'error' ? vscode.DiagnosticSeverity.Error : compiled.severity === 'information' ? vscode.DiagnosticSeverity.Information : vscode.DiagnosticSeverity.Warning;
     const diagnostic = new vscode.Diagnostic(range, compiled.message, severity);
     diagnostic.source = languageId;
     diagnostic.code = compiled.code;
@@ -56,7 +56,8 @@ export function registerDiagnostics(context: vscode.ExtensionContext, index: App
         const file = index.fileOf(document.uri);
         const issues = validateLines(lines, { application: file?.application.symbolsExcept(file.path) }).map(toDiagnostic);
         const compiled = file?.application.diagnosticsFor(file.path).map(diagnostic => fromCompiler(document, diagnostic)) ?? [];
-        collection.set(document.uri, [...issues, ...compiled]);
+        const reported = new Set(issues.map(issue => `${issue.code}:${issue.range.start.line}`));
+        collection.set(document.uri, [...issues, ...compiled.filter(diagnostic => !reported.has(`${diagnostic.code}:${diagnostic.range.start.line}`))]);
     };
     const scheduleRefresh = (document: vscode.TextDocument) => {
         if (document.languageId !== languageId) return;

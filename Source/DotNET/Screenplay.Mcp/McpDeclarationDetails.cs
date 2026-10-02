@@ -17,6 +17,9 @@ static class McpDeclarationDetails
             "summary" => new
             {
                 propertyCount = Properties(declaration.Syntax).Count(),
+                eventCount = declaration.Syntax is SliceSyntax eventOwner ? EventDeclarations.In(eventOwner).Count() : 0,
+                eventId = (declaration.Syntax as EventSyntax)?.Id,
+                documentation = (declaration.Syntax as EventSyntax)?.Documentation,
                 partCount = declaration.Parts.Count,
                 commandCount = declaration.Syntax is SliceSyntax slice ? slice.Commands.Count() : 0,
                 specificationCount = declaration.Syntax is SliceSyntax described ? described.Specifications.Count() : 0,

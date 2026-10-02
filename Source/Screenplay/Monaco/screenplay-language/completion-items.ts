@@ -65,6 +65,7 @@ export const sliceItems: CompletionEntry[] = [
 ];
 
 export const commandItems: CompletionEntry[] = [
+    { label: 'produces event', insertText: 'produces event ${1:Name}\n    ${2:property} ${3:Type} = ${4:source}', documentation: 'Declares a slice-owned generation-1 event and maps its properties. An omitted for uses the command identifier.' },
     { label: 'identifier property', insertText: '${1:property} ${2:Type} identifier', documentation: 'Marks the property a runtime resolves the event source id from. At most one per command.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'References the policies that must pass for the command to execute.' },
     { label: 'reads', insertText: 'reads ${1:View} by ${2:property}', documentation: 'Declares a view the command consults. Executable binding is not yet supported.' },
@@ -74,6 +75,19 @@ export const commandItems: CompletionEntry[] = [
     { label: 'produces', insertText: 'produces ${1:EventType}\n    ${2:property} = ${3:source}', documentation: 'Declares the event the command emits, with property mappings.' },
     { label: 'produces when', insertText: 'produces when ${1:condition}\n    ${2:EventType}\n        ${3:property} = ${4:source}', documentation: 'Conditionally emits an event when the condition holds.' },
     { label: 'handler', insertText: 'handler\n    ', documentation: 'Fully imperative command implementation — file reference or inline C#, instead of produces.' },
+];
+
+export const eventItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:what happened}"', documentation: 'Authoring metadata, as one line or a text/markdown fence.' },
+    { label: 'documentation', insertText: 'documentation\n    ```markdown\n    ${1:Details}\n    ```', documentation: 'Authoring-only Markdown documentation.' },
+    { label: 'id', insertText: 'id "${1:OldName}"', documentation: 'Preserves a previous persisted event name after a rename. Leave absent for new events.' },
+    { label: 'tag', insertText: 'tag ${1:audit}', documentation: 'An event-type tag stamped on every occurrence.' },
+];
+
+export const inlineEventItems: CompletionEntry[] = [
+    ...eventItems,
+    { label: 'for', insertText: 'for ${1:identifier}', documentation: 'Explicitly names the command identifier used as the event source.' },
+    { label: 'property mapping', insertText: '${1:property} ${2:Type} = ${3:source}', documentation: 'Declares and maps an event property on one line.' },
 ];
 
 export const producesItems: CompletionEntry[] = [

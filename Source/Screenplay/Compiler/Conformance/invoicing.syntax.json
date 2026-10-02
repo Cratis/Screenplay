@@ -199,6 +199,75 @@
                       },
                       "description": null,
                       "name": "ApplyDiscount",
+                      "produces": [
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "DiscountApplied",
+                          "for": null,
+                          "inlineEvent": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "invoiceId",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "invoiceId"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "percentage",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "percentage"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "appliedAt",
+                              "source": {
+                                "kind": "ContextExpressionSyntax",
+                                "path": "occurred"
+                              }
+                            }
+                          ],
+                          "tags": []
+                        },
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "DiscountReviewRequested",
+                          "for": null,
+                          "inlineEvent": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "invoiceId",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "invoiceId"
+                              }
+                            }
+                          ],
+                          "tags": []
+                        },
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "DiscountAutoApproved",
+                          "for": null,
+                          "inlineEvent": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "invoiceId",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "invoiceId"
+                              }
+                            }
+                          ],
+                          "tags": []
+                        }
+                      ],
                       "properties": [
                         {
                           "kind": "PropertySyntax",
@@ -292,8 +361,11 @@
                   "events": [
                     {
                       "kind": "EventSyntax",
+                      "description": null,
+                      "documentation": null,
                       "generation": 1,
                       "hasGenerationMarker": false,
+                      "id": null,
                       "name": "DiscountApplied",
                       "properties": [
                         {
@@ -334,8 +406,11 @@
                     },
                     {
                       "kind": "EventSyntax",
+                      "description": null,
+                      "documentation": null,
                       "generation": 1,
                       "hasGenerationMarker": false,
+                      "id": null,
                       "name": "DiscountReviewRequested",
                       "properties": [
                         {
@@ -354,8 +429,11 @@
                     },
                     {
                       "kind": "EventSyntax",
+                      "description": null,
+                      "documentation": null,
                       "generation": 1,
                       "hasGenerationMarker": false,
+                      "id": null,
                       "name": "DiscountAutoApproved",
                       "properties": [
                         {
@@ -397,6 +475,75 @@
                       },
                       "description": null,
                       "name": "WriteOffInvoice",
+                      "produces": [
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "InvoiceWrittenOff",
+                          "for": null,
+                          "inlineEvent": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "invoiceId",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "invoiceId"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "amount",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "amount"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "writtenOffAt",
+                              "source": {
+                                "kind": "ContextExpressionSyntax",
+                                "path": "occurred"
+                              }
+                            }
+                          ],
+                          "tags": []
+                        },
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "LargeWriteOffFlagged",
+                          "for": null,
+                          "inlineEvent": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "invoiceId",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "invoiceId"
+                              }
+                            }
+                          ],
+                          "tags": []
+                        },
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "SmallWriteOffRecorded",
+                          "for": null,
+                          "inlineEvent": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "invoiceId",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "invoiceId"
+                              }
+                            }
+                          ],
+                          "tags": []
+                        }
+                      ],
                       "properties": [
                         {
                           "kind": "PropertySyntax",
@@ -498,8 +645,11 @@
                   "events": [
                     {
                       "kind": "EventSyntax",
+                      "description": null,
+                      "documentation": null,
                       "generation": 1,
                       "hasGenerationMarker": false,
+                      "id": null,
                       "name": "InvoiceWrittenOff",
                       "properties": [
                         {
@@ -540,8 +690,11 @@
                     },
                     {
                       "kind": "EventSyntax",
+                      "description": null,
+                      "documentation": null,
                       "generation": 1,
                       "hasGenerationMarker": false,
+                      "id": null,
                       "name": "LargeWriteOffFlagged",
                       "properties": [
                         {
@@ -560,8 +713,11 @@
                     },
                     {
                       "kind": "EventSyntax",
+                      "description": null,
+                      "documentation": null,
                       "generation": 1,
                       "hasGenerationMarker": false,
+                      "id": null,
                       "name": "SmallWriteOffRecorded",
                       "properties": [
                         {
@@ -618,6 +774,245 @@
                   },
                   "description": "Registers a new invoice with its lines and payment terms",
                   "name": "RegisterInvoice",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceRegistered",
+                      "for": null,
+                      "inlineEvent": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "customerId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "customerId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceNumber",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceNumber"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "lines",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "lines"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "billingContact",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "billingContact"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "currency",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "currency"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "paymentTerms",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "paymentTerms"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "dueDate",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "dueDate"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "registeredAt",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "occurred"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "registeredBy",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "identity.id"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "registeredFor",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "tenant"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "registeredByOn",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "causedBy.subject"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "source",
+                          "source": {
+                            "kind": "EnvironmentExpressionSyntax",
+                            "name": "SERVICE_NAME"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "draft"
+                          }
+                        }
+                      ],
+                      "tags": [
+                        {
+                          "kind": "TagSyntax",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "audit"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "ProFormaInvoiceIssued",
+                      "for": null,
+                      "inlineEvent": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "issuedAt",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "occurred"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    },
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "ForeignCurrencyInvoiceRegistered",
+                      "for": null,
+                      "inlineEvent": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "currency",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "currency"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    },
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "ImmediatePaymentInvoiceRegistered",
+                      "for": null,
+                      "inlineEvent": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "dueDate",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "dueDate"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    },
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "DeferredPaymentInvoiceRegistered",
+                      "for": null,
+                      "inlineEvent": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "paymentTerms",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "paymentTerms"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "dueDate",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "dueDate"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
@@ -839,8 +1234,11 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceRegistered",
                   "properties": [
                     {
@@ -1024,8 +1422,11 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "ProFormaInvoiceIssued",
                   "properties": [
                     {
@@ -1055,8 +1456,11 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "ForeignCurrencyInvoiceRegistered",
                   "properties": [
                     {
@@ -1086,8 +1490,11 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "ImmediatePaymentInvoiceRegistered",
                   "properties": [
                     {
@@ -1117,8 +1524,11 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "DeferredPaymentInvoiceRegistered",
                   "properties": [
                     {
@@ -1407,6 +1817,90 @@
                   },
                   "description": null,
                   "name": "CancelInvoice",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceCancelled",
+                      "for": null,
+                      "inlineEvent": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reason",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "reason"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "cancelledAt",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "occurred"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "cancelledBy",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "identity.id"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "cancelledVia",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "causation.type"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    },
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceRefundRequested",
+                      "for": null,
+                      "inlineEvent": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "requestedAt",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "occurred"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "refundAccount",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "refundAccount"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
@@ -1497,8 +1991,11 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceCancelled",
                   "properties": [
                     {
@@ -1561,8 +2058,11 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceRefundRequested",
                   "properties": [
                     {
@@ -1626,6 +2126,132 @@
                   },
                   "description": null,
                   "name": "ChangeInvoiceStatus",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceSent",
+                      "for": null,
+                      "inlineEvent": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "sentAt",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "occurred"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "note",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "note"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    },
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoicePaid",
+                      "for": null,
+                      "inlineEvent": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "paidAt",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "occurred"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "note",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "note"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    },
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceMarkedOverdue",
+                      "for": null,
+                      "inlineEvent": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "overdueAt",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "occurred"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    },
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceStatusChanged",
+                      "for": null,
+                      "inlineEvent": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "status"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "changedAt",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "occurred"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
@@ -1696,8 +2322,11 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceSent",
                   "properties": [
                     {
@@ -1738,8 +2367,11 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoicePaid",
                   "properties": [
                     {
@@ -1780,8 +2412,11 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceMarkedOverdue",
                   "properties": [
                     {
@@ -1811,8 +2446,11 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceStatusChanged",
                   "properties": [
                     {
@@ -1975,6 +2613,7 @@
                   },
                   "description": null,
                   "name": "ProcessInvoiceBatch",
+                  "produces": [],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
@@ -2040,8 +2679,11 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceBatchProcessingStarted",
                   "properties": [
                     {
@@ -2082,8 +2724,11 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceBatchProcessingCompleted",
                   "properties": [
                     {
@@ -2147,6 +2792,7 @@
                   },
                   "description": null,
                   "name": "ArchiveOldInvoices",
+                  "produces": [],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
@@ -2279,8 +2925,11 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoicePaidFromSent",
                   "properties": [
                     {
@@ -2310,8 +2959,11 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceNeedsAttention",
                   "properties": [
                     {
@@ -2330,8 +2982,11 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceFullyApproved",
                   "properties": [
                     {
@@ -2350,8 +3005,11 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceFlagged",
                   "properties": [
                     {
@@ -2370,8 +3028,11 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceLineItemAdded",
                   "properties": [
                     {
@@ -2423,8 +3084,11 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceLineItemRemoved",
                   "properties": [
                     {
@@ -2454,8 +3118,11 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "BillingContactUpdated",
                   "properties": [
                     {
@@ -4518,7 +5185,20 @@
                       "produces": [
                         {
                           "kind": "ProducesSyntax",
-                          "event": "InvoiceMarkedOverdue"
+                          "event": "InvoiceMarkedOverdue",
+                          "for": null,
+                          "inlineEvent": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "overdueAt",
+                              "source": {
+                                "kind": "ContextExpressionSyntax",
+                                "path": "occurred"
+                              }
+                            }
+                          ],
+                          "tags": []
                         }
                       ],
                       "source": {

@@ -12,15 +12,17 @@ namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 public class when_holding_the_typescript_compiler_to_its_diagnostics : Specification
 {
     readonly List<string> _mismatches = [];
-    List<(string Name, string Source, string[] Expected)> _vectors;
+    List<(string Name, string Source, string[] Expected, bool Validate)> _vectors;
 
     void Establish() => _vectors = [.. Vectors()];
 
     void Because()
     {
-        foreach (var (name, source, expected) in _vectors)
+        foreach (var (name, source, expected, validate) in _vectors)
         {
-            var reported = new ScreenplayCompiler().Parse(source).Diagnostics.Select(diagnostic => $"{diagnostic.Code}@{diagnostic.Location.Line}").ToArray();
+            var compiler = new ScreenplayCompiler();
+            var result = validate ? compiler.Compile(source) : compiler.Parse(source);
+            var reported = result.Diagnostics.Select(diagnostic => $"{diagnostic.Code}@{diagnostic.Location.Line}").ToArray();
             if (!reported.SequenceEqual(expected, StringComparer.Ordinal))
             {
                 _mismatches.Add($"{name}: expected [{string.Join(", ", expected)}], C# reports [{string.Join(", ", reported)}]");
@@ -45,13 +47,14 @@ public class when_holding_the_typescript_compiler_to_its_diagnostics : Specifica
         return directory!.FullName;
     }
 
-    static IEnumerable<(string Name, string Source, string[] Expected)> Vectors()
+    static IEnumerable<(string Name, string Source, string[] Expected, bool Validate)> Vectors()
     {
         var file = Path.Combine(Root(), "Source", "Screenplay", "Compiler", "Conformance", "diagnostics.json");
         using var document = JsonDocument.Parse(File.ReadAllText(file));
         return [.. document.RootElement.GetProperty("cases").EnumerateArray().Select(vector => (
             vector.GetProperty("name").GetString()!,
             string.Join('\n', vector.GetProperty("source").EnumerateArray().Select(line => line.GetString())),
-            vector.GetProperty("diagnostics").EnumerateArray().Select(diagnostic => diagnostic.GetString()!).ToArray()))];
+            vector.GetProperty("diagnostics").EnumerateArray().Select(diagnostic => diagnostic.GetString()!).ToArray(),
+            vector.TryGetProperty("validate", out var validate) && validate.GetBoolean()))];
     }
 }

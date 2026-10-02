@@ -207,6 +207,11 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
 
+        if (syntax.InlineEvent is not null)
+        {
+            VisitEvent(syntax.InlineEvent);
+        }
+
         if (syntax.When is not null)
         {
             VisitCondition(syntax.When);

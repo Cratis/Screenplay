@@ -68,7 +68,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         {
             case CommandSyntax value: Declare("Command", value.Name, value, value.Description, new { produces = value.Produces.Select(produces => produces.Event) }); break;
             case QuerySyntax value: Declare("Query", value.Name, value); break;
-            case EventSyntax value: Declare("Event", value.Name, value); break;
+            case EventSyntax value: Declare("Event", value.Name, value, value.Description); break;
             case ReadModelSyntax value: Declare("ReadModel", value.Name, value); break;
             case ScreenSyntax value: Declare("Screen", value.Name, value); break;
             case ConceptSyntax value: Declare("Concept", value.Name, value); break;

@@ -74,7 +74,7 @@ internal static partial class CommandParser
 
                     break;
                 case "produces":
-                    if (ProducesParser.Parse(context, line) is { } production)
+                    if (ProducesParser.Parse(context, line, true) is { } production)
                     {
                         produces.Add(production);
                     }

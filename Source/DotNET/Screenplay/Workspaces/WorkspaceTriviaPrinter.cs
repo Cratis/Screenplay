@@ -1,7 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Collections.Immutable;
 using System.Text;
 using System.Text.Json;
 using Cratis.Screenplay.Printing;
@@ -27,26 +26,39 @@ static class WorkspaceTriviaPrinter
         var intendedNodes = changes.Any(change => change.Kind != WorkspaceTriviaChangeKind.Identifier)
             ? WorkspaceSyntaxIndex.ForSyntax(intended, SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("trivia"))).ToDictionary(entry => entry.Handle.Path, entry => entry.Node, StringComparer.Ordinal)
             : [];
-        var tokens = WorkspaceSourceTokenizer.Tokenize(original).Tokens;
-        var patches = changes.Select(change => change.Kind == WorkspaceTriviaChangeKind.Identifier
-            ? IdentifierPatch(original, entries, tokens, change)
-            : SpanPatch(original, tokens, change, originals[change.Path], intendedNodes.GetValueOrDefault(change.Path))).ToList();
+        var tokensByLine = WorkspaceSourceTokenizer.Tokenize(original).Tokens.Where(token => token.Kind == WorkspaceSourceTokenKind.Text).ToLookup(token => token.Span.Line);
 
-        var bytes = original.Bytes.ToArray().ToList();
-        var previousStart = bytes.Count;
-        foreach (var patch in patches.OrderByDescending(patch => patch.Offset))
+        // An inline event's declaration and production share one authored identifier.
+        // Coalesce only byte-identical edits; conflicting or partial overlaps still fail closed.
+        var patches = changes.Select(change => change.Kind == WorkspaceTriviaChangeKind.Identifier
+            ? IdentifierPatch(original, originals, tokensByLine, change)
+            : SpanPatch(original, tokensByLine, change, originals[change.Path], intendedNodes.GetValueOrDefault(change.Path)))
+            .DistinctBy(patch => (patch.Offset, patch.Length, Convert.ToHexString(patch.Bytes)))
+            .OrderByDescending(patch => patch.Offset).ToArray();
+        var previousStart = original.Bytes.Length;
+        foreach (var patch in patches)
         {
             if (patch.Offset + patch.Length > previousStart)
             {
                 throw new InvalidWorkspaceAuthoring($"Overlapping identifier spans in '{original.Path}'. No source was changed.");
             }
 
-            bytes.RemoveRange(patch.Offset, patch.Length);
-            bytes.InsertRange(patch.Offset, patch.Bytes);
             previousStart = patch.Offset;
         }
 
-        var candidate = WorkspaceDocument.Create(original.Id, original.StableKey, original.Path, [.. bytes]);
+        // Copy each unchanged range once rather than shifting the document for every edit.
+        using var bytes = new MemoryStream();
+        var start = 0;
+        for (var index = patches.Length - 1; index >= 0; index--)
+        {
+            var patch = patches[index];
+            bytes.Write(original.Bytes.AsSpan(start, patch.Offset - start));
+            bytes.Write(patch.Bytes);
+            start = patch.Offset + patch.Length;
+        }
+
+        bytes.Write(original.Bytes.AsSpan(start..));
+        var candidate = WorkspaceDocument.Create(original.Id, original.StableKey, original.Path, bytes.ToArray());
         var reparsed = new ScreenplayCompiler().Parse(candidate.Text, candidate.Path.Value);
         if (!reparsed.Success || reparsed.Value is null || !SyntaxJson.StructurallyEqual(intended, reparsed.Value))
         {
@@ -58,16 +70,23 @@ static class WorkspaceTriviaPrinter
 
     static (int Offset, int Length, byte[] Bytes) IdentifierPatch(
         WorkspaceDocument original,
-        ImmutableArray<WorkspaceSyntaxEntry> entries,
-        ImmutableArray<WorkspaceSourceToken> tokens,
+        Dictionary<string, SyntaxNode> originals,
+        ILookup<int, WorkspaceSourceToken> tokensByLine,
         WorkspaceTriviaChange change)
     {
-        var owner = entries.Where(entry => change.Path.StartsWith($"{entry.Handle.Path}/", StringComparison.Ordinal))
-            .MaxBy(entry => entry.Handle.Path.Length)!;
-        var member = change.Path[(owner.Handle.Path.Length + 1)..];
-        if (owner.Node is ObjectMemberSyntax { RawLocation: { } keyStart, RawLength: { } keyLength } && member == "name")
+        var ownerPath = change.Path;
+        SyntaxNode? owner = null;
+        for (var separator = ownerPath.LastIndexOf('/'); separator >= 0; separator = ownerPath.LastIndexOf('/'))
         {
-            var range = WorkspaceSourceRanges.Bytes(tokens, keyStart, keyLength) ?? throw Unsupported(original, change.Path);
+            ownerPath = ownerPath[..separator];
+            if (originals.TryGetValue(ownerPath, out owner)) break;
+        }
+
+        if (owner is null) throw Unsupported(original, change.Path);
+        var member = change.Path[(ownerPath.Length + 1)..];
+        if (owner is ObjectMemberSyntax { RawLocation: { } keyStart, RawLength: { } keyLength } && member == "name")
+        {
+            var range = WorkspaceSourceRanges.Bytes([.. tokensByLine[keyStart.Line]], keyStart, keyLength) ?? throw Unsupported(original, change.Path);
             var authored = Encoding.UTF8.GetString(original.Bytes.AsSpan(range.Offset, range.Length));
             if (JsonSerializer.Deserialize<string>(authored) != change.Before)
             {
@@ -77,8 +96,8 @@ static class WorkspaceTriviaPrinter
             return (range.Offset, range.Length, Encoding.UTF8.GetBytes(JsonSerializer.Serialize(change.After)));
         }
 
-        var token = tokens.SingleOrDefault(candidate => candidate.Kind == WorkspaceSourceTokenKind.Text && candidate.Span.Line == owner.Location.Line);
-        if (token is null || !WorkspaceIdentifierSpans.Supports(owner.Node, member, token.Text))
+        var token = tokensByLine[owner.Location.Line].SingleOrDefault();
+        if (token is null || !WorkspaceIdentifierSpans.Supports(owner, member, token.Text))
         {
             throw Unsupported(original, change.Path);
         }
@@ -95,7 +114,7 @@ static class WorkspaceTriviaPrinter
 
     static (int Offset, int Length, byte[] Bytes) SpanPatch(
         WorkspaceDocument original,
-        ImmutableArray<WorkspaceSourceToken> tokens,
+        ILookup<int, WorkspaceSourceToken> tokensByLine,
         WorkspaceTriviaChange change,
         SyntaxNode before,
         SyntaxNode? after)
@@ -110,7 +129,7 @@ static class WorkspaceTriviaPrinter
                 (mapping.Location, mapping.SourceLocation.Column - mapping.Location.Column + mapping.SourceLength!.Value, $"{replacement.Property} = {ScreenplaySyntaxText.Expression(replacement.Source)}"),
             _ => throw Unsupported(original, change.Path)
         };
-        var range = WorkspaceSourceRanges.Bytes(tokens, start, length) ?? throw Unsupported(original, change.Path);
+        var range = WorkspaceSourceRanges.Bytes([.. tokensByLine[start.Line]], start, length) ?? throw Unsupported(original, change.Path);
         return (range.Offset, range.Length, Encoding.UTF8.GetBytes(text));
     }
 

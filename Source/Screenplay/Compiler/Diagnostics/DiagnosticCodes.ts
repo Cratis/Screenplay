@@ -4,6 +4,19 @@
 // The subset of the C# compiler's DiagnosticCodes this compiler reports. The values are the same, so a
 // code means the same thing whichever compiler reported it.
 export const DiagnosticCodes = {
+    InvalidProducesDeclaration: 'PLAY0042',
+    ProducesWhenWithoutEvent: 'PLAY0043',
+    InvalidPropertyMapping: 'PLAY0044',
+    DuplicateProducesTarget: 'PLAY0193',
+    EventSourceIdInPayload: 'PLAY0469',
+    ExplicitProducesTargetsRequired: 'PLAY0470',
+    RedundantEventId: 'PLAY0471',
+    InvalidEventId: 'PLAY0472',
+    InlineEventCollision: 'PLAY0473',
+    InlineEventOutsideCommand: 'PLAY0474',
+    InlineEventGeneration: 'PLAY0475',
+    ReservedProductionMetadata: 'PLAY0476',
+    InvalidEventDocumentation: 'PLAY0477',
     UnknownTopLevelConstruct: 'PLAY0001',
     InvalidDomainDeclaration: 'PLAY0002',
     DuplicateDomain: 'PLAY0003',
@@ -94,6 +107,7 @@ export const DiagnosticCodes = {
     UnknownContextIdentityProperty: 'PLAY0155',
     ExpectedCodeFence: 'PLAY0163',
     UnclosedCodeBlock: 'PLAY0164',
+    DuplicateDeclaration: 'PLAY0168',
     RepeatedSingularDeclarationAcrossFiles: 'PLAY0172',
     RepeatedDeclarationAcrossFiles: 'PLAY0173',
     ConflictingDescriptionAcrossFiles: 'PLAY0174',

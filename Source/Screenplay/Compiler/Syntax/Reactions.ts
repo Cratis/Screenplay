@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { EventSyntax, TagSyntax } from './Declarations';
+import { ExpressionSyntax, PropertyMappingSyntax } from './Expressions';
 import { SyntaxNode } from './SyntaxNode';
 
 // 'when <Name>' - an event, a declared trigger, or one a consumer registered.
@@ -36,6 +38,10 @@ export type TriggerSourceSyntax = NamedTriggerSourceSyntax | IntervalTriggerSour
 export interface ProducesSyntax extends SyntaxNode {
     readonly kind: 'ProducesSyntax';
     readonly event: string;
+    readonly inlineEvent: EventSyntax | null;
+    readonly for: ExpressionSyntax | null;
+    readonly mappings: readonly PropertyMappingSyntax[];
+    readonly tags: readonly TagSyntax[];
 }
 
 // 'invokes <Command>' - a command a trigger runs. What it passes the command is not modeled.

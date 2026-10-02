@@ -321,7 +321,13 @@ public record ProducesSyntax(
     IEnumerable<PropertyMappingSyntax> Mappings,
     SourceLocation Location,
     IEnumerable<TagSyntax>? Tags = null,
-    ExpressionSyntax? For = null) : SyntaxNode(Location);
+    ExpressionSyntax? For = null) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the event declared by this production, owned by the containing slice.
+    /// </summary>
+    public EventSyntax? InlineEvent { get; init; }
+}
 
 /// <summary>
 /// Represents a mapping of a target property to a source expression, such as <c>status = "draft"</c>.

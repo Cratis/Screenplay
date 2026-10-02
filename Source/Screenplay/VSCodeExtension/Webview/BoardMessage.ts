@@ -6,7 +6,7 @@
 
 // One problem the compiler found, as the webview lists it.
 export interface BoardProblem {
-    readonly severity: 'error' | 'warning';
+    readonly severity: 'error' | 'warning' | 'information';
     readonly code: string;
     readonly message: string;
     readonly line: number;

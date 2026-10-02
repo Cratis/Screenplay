@@ -10,6 +10,7 @@ import {
 import { createTokensProvider } from './tokens';
 import { CompletionOptions, createCompletionProvider } from './completions';
 import { createHoverProvider } from './hover';
+import { createInlayHintsProvider } from './inlay-hints';
 import { attachDiagnostics } from './diagnostics';
 import {
     getSubLanguage,
@@ -53,6 +54,7 @@ export function register(monaco: Monaco, options: LanguageServiceOptions = {}): 
     applyTokensProvider(monaco);
     monaco.languages.registerCompletionItemProvider(languageId, createCompletionProvider(monaco, options));
     monaco.languages.registerHoverProvider(languageId, createHoverProvider());
+    monaco.languages.registerInlayHintsProvider(languageId, createInlayHintsProvider());
     monaco.editor.defineTheme(screenplayDarkThemeName, screenplayDark);
     monaco.editor.defineTheme(screenplayLightThemeName, screenplayLight);
     attachDiagnostics(monaco);
@@ -115,6 +117,9 @@ export { completionEntriesFor, planCompletions } from './completion-planner';
 export type { CompletionPlan } from './completion-planner';
 export { hoverContent } from './hover-content';
 export { validateLines } from './validation';
+export { destinationHints, productionDestinations } from './production-destinations';
+export type { DestinationHint } from './DestinationHint';
+export type { ProductionSymbol } from './ProductionSymbol';
 export type { ValidationContext, ValidationIssue, ValidationSeverity } from './validation';
 export { diagnosticCodes } from './diagnostic-codes';
 export type { DiagnosticCode } from './diagnostic-codes';

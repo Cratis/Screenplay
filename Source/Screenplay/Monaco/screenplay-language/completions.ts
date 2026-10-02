@@ -56,8 +56,10 @@ export function createCompletionProvider(monaco: Monaco, options: CompletionOpti
                 detail,
                 range,
             });
-            const eventNames = () =>
-                [...new Set(knownEventNames(symbols))].map((name) => symbolItem(name, kinds.Event, 'event'));
+            const eventNames = () => {
+                const inlineNames = new Set(symbols.events.filter(event => event.inline).map(event => event.name));
+                return [...new Set(knownEventNames(symbols))].map((name) => symbolItem(name, kinds.Event, inlineNames.has(name) ? 'inline event' : 'event'));
+            };
 
             switch (plan.kind) {
                 case 'playFiles': {

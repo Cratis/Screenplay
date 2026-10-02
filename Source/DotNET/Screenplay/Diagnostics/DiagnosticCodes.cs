@@ -908,7 +908,7 @@ public static class DiagnosticCodes
     public const string UnknownPolicy = "PLAY0167";
 
     /// <summary>
-    /// A concept and a type, or two of either, are declared under one name.
+    /// A concept and a type, or two of either, are declared under one name, or an inline event repeats a payload property name.
     /// </summary>
     public const string DuplicateDeclaration = "PLAY0168";
 
@@ -2080,6 +2080,51 @@ public static class DiagnosticCodes
 
     /// <summary>A <c>when query</c> argument is not a <c>by</c> or <c>filter</c> parameter of the query.</summary>
     public const string UnknownSpecificationQueryArgument = "PLAY0468";
+
+    /// <summary>
+    /// The command identifier is also copied into its same-source event payload.
+    /// </summary>
+    public const string EventSourceIdInPayload = "PLAY0469";
+
+    /// <summary>
+    /// Mixed event sources require explicit destinations on every production.
+    /// </summary>
+    public const string ExplicitProducesTargetsRequired = "PLAY0470";
+
+    /// <summary>
+    /// An event identity pin repeats the current name.
+    /// </summary>
+    public const string RedundantEventId = "PLAY0471";
+
+    /// <summary>
+    /// An event identity pin is malformed or duplicated.
+    /// </summary>
+    public const string InvalidEventId = "PLAY0472";
+
+    /// <summary>
+    /// An inline event collides with another declaration or import.
+    /// </summary>
+    public const string InlineEventCollision = "PLAY0473";
+
+    /// <summary>
+    /// An inline event is declared outside a command.
+    /// </summary>
+    public const string InlineEventOutsideCommand = "PLAY0474";
+
+    /// <summary>
+    /// An inline event declares a generation instead of being extracted first.
+    /// </summary>
+    public const string InlineEventGeneration = "PLAY0475";
+
+    /// <summary>
+    /// A production supplies system-assigned metadata or an inline origin.
+    /// </summary>
+    public const string ReservedProductionMetadata = "PLAY0476";
+
+    /// <summary>
+    /// Event documentation is not a single nonempty fenced Markdown block.
+    /// </summary>
+    public const string InvalidEventDocumentation = "PLAY0477";
 
     /// <summary>A plain production omits its destination although the command has an identifier.</summary>
     public const string OmittedProductionDestination = "PLAY0478";

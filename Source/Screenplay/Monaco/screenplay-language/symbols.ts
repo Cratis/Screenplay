@@ -1,8 +1,10 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { fenceMap, indentOf, withoutComment } from './document-context';
+import { fenceMap, indentOf } from './document-context';
+import { eventAnalysisSource } from './event-analysis-source';
 import { clauseKeywords } from './language';
+import { ProductionSymbol } from './ProductionSymbol';
 
 export interface PropertySymbol {
     name: string;
@@ -35,6 +37,7 @@ export interface PolicySymbol {
 export interface EventSymbol {
     name: string;
     generation?: number;
+    inline?: boolean;
     properties: PropertySymbol[];
     line: number;
 }
@@ -42,6 +45,8 @@ export interface EventSymbol {
 export interface CommandSymbol extends NamedSymbol {
     properties: PropertySymbol[];
     reads?: ReadSymbol[];
+    produces?: ProductionSymbol[];
+    productionHeaders?: number[];
 }
 
 export interface ReadSymbol {
@@ -83,6 +88,10 @@ const conceptPattern = /^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@\w+)*)\s*$/;
 const propertyPattern = /^\s*(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?\??)(\s+identifier)?\s*$/;
 const attributeReasonPattern = /^([a-z_]\w*)\s+reason\s+"((?:[^"\\]|\\.)*)"\s*$/;
 const readPattern = /^\s*reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?\s*$/;
+const commandReserved = ['authorize', 'produces', 'reads'];
+// AuthorizeParser's continuation pattern, including the compiler's Unicode word characters.
+const authorizationContinuation = /^(?:(?:or|and)\s+)?[A-Za-z_(][\p{L}\p{Mn}\p{Nd}\p{Pc}\s()]*$/u;
+const eventReserved = clauseKeywords.filter(keyword => !['id', 'description', 'documentation'].includes(keyword));
 const queryParameterPattern =
     /^\s*(?:by|filter)\s+([a-z_]\w*)\s+([\w.]+(?:\[\])?\??)(?:\s+from\s+.+)?\s*$/;
 
@@ -116,6 +125,29 @@ function collectBody(lines: string[], fences: boolean[], start: number, indent: 
     return body;
 }
 
+// Event/production parsers accept every greater indent, not just the smallest child indent.
+// Command block directives own their nested lines; properties do not. Fenced prose is never syntax.
+export function directBody(lines: string[], fences: boolean[], start: number, indent: number): number[] {
+    const body = collectBody(lines, fences, start, indent).filter(index => !fences[index] && !/^\s*(?:\/\/|#)/.test(lines[index]));
+    if (!/^\s*command\b/.test(lines[start])) return body;
+    let blockIndent: number | undefined;
+    let authorization = false;
+    return body.filter(index => {
+        const childIndent = indentOf(lines[index]);
+        const text = lines[index].trim();
+        // AuthorizeParser owns only consecutive deeper lines with requirement shape.
+        // Unlike opaque blocks, a nonmatching line returns control to CommandParser.
+        if (blockIndent !== undefined && childIndent > blockIndent &&
+            (!authorization || authorizationContinuation.test(text))) return false;
+        const property = text !== 'validate csharp' && propertiesIn(lines, [index], commandReserved).length > 0;
+        // Description consumes only a quoted value or a fence (already excluded above).
+        const leaf = property || /^description(?:\s|$)/.test(text);
+        blockIndent = leaf ? undefined : childIndent;
+        authorization = /^authorize(?:\s|$)/.test(text);
+        return true;
+    });
+}
+
 export function scanDocument(lines: string[]): DocumentSymbols {
     const symbols: DocumentSymbols = {
         imports: [],
@@ -128,9 +160,14 @@ export function scanDocument(lines: string[]): DocumentSymbols {
         screens: [],
         triggers: [],
     };
+    // One normalization pass for every declaration, including comments on fence openers.
+    lines = eventAnalysisSource(lines);
     const fences = fenceMap(lines);
-    // Normalize only structural lines; quoted strings and fenced code retain their contents.
-    lines = lines.map((line, index) => fences[index] ? line : withoutComment(line));
+    const eventLines = lines;
+    const eventFences = fences;
+    // Typed inline mappings share property syntax once their source expression is removed.
+    // Do this once, never once per inline event.
+    const eventPropertyLines = lines.map(line => line.replace(/\s*=(?!=|>).*/, ''));
 
     for (let index = 0; index < lines.length; index++) {
         if (fences[index]) continue;
@@ -138,7 +175,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
         const trimmed = line.trim();
         const indent = indentOf(line);
 
-        const importMatch = trimmed.match(/^import\s+([\w.]+)\s*$/);
+        const importMatch = eventLines[index].trim().match(/^import\s+([\w.]+)\s*$/);
         if (importMatch && indent === 0) {
             const qualifiedName = importMatch[1];
             const shortName = qualifiedName.split('.').pop() ?? qualifiedName;
@@ -190,33 +227,47 @@ export function scanDocument(lines: string[]): DocumentSymbols {
             continue;
         }
 
-        const eventMatch = trimmed.match(/^event\s+(\w+)(?:\s+generation\s+(\d+))?\s*$/);
+        const eventMatch = eventLines[index].trim().match(/^(?:produces\s+)?event\s+(\w+)(?:\s+generation\s+(\d+))?\s*$/);
         if (eventMatch) {
             symbols.events.push({
                 name: eventMatch[1],
                 ...(eventMatch[2] ? { generation: Number(eventMatch[2]) } : {}),
-                properties: propertiesIn(lines, collectBody(lines, fences, index, indent), clauseKeywords),
+                inline: trimmed.startsWith('produces '),
+                properties: propertiesIn(trimmed.startsWith('produces ') ? eventPropertyLines : eventLines,
+                    directBody(eventLines, eventFences, index, indent), eventReserved),
                 line: index,
             });
             continue;
         }
 
-        const commandMatch = trimmed.match(/^command\s+(\w+)\s*$/);
+        const commandMatch = eventLines[index].trim().match(/^command\s+(\w+)\s*$/);
         if (commandMatch) {
-            const body = collectBody(lines, fences, index, indent);
-            // The body is already comment-normalized and fence-free. Track indentation once,
-            // rather than walking back to the document root for every property-shaped line.
-            const ancestors = [indent];
-            const directChildren = body.filter(line => {
-                const childIndent = indentOf(lines[line]);
-                while (ancestors[ancestors.length - 1] >= childIndent) ancestors.pop();
-                const direct = ancestors.length === 1;
-                ancestors.push(childIndent);
-                return direct && lines[line].trim() !== 'validate csharp';
-            });
+            // A command property is a leaf, not an indentation owner. Share the parser-shaped
+            // body with properties, productions, advice and destination hints.
+            const body = directBody(lines, fences, index, indent);
+            const productionHeaders = body.filter(line => /^\s*produces\b/.test(lines[line]));
             symbols.commands.push({
                 name: commandMatch[1],
-                properties: propertiesIn(lines, directChildren, ['authorize', 'produces', 'reads']),
+                properties: propertiesIn(lines, body.filter(line => lines[line].trim() !== 'validate csharp'), commandReserved),
+                productionHeaders,
+                produces: productionHeaders.flatMap(line => {
+                    const header = eventLines[line].trim();
+                    const inline = /^produces\s+event\b/.test(header);
+                    const conditional = /^produces\s+when\b/.test(header);
+                    const eventLine = conditional ? directBody(eventLines, eventFences, line, indentOf(eventLines[line]))[0] : line;
+                    if (eventLine === undefined) return [];
+                    const name = conditional ? eventLines[eventLine].trim() : header.match(inline ? /^produces\s+event\s+([A-Za-z_]\w*)(?:\s+generation\s+\d+)?\s*$/ : /^produces\s+([A-Z]\w*)\s*$/)?.[1];
+                    if (name === undefined || !/^[A-Za-z_]\w*$/.test(name)) return [];
+                    const children = directBody(eventLines, eventFences, eventLine, indentOf(eventLines[eventLine]));
+                    const targets = children.map(index => eventLines[index].trim().match(/^for(?:\s+(.*))?$/)).filter(match => match !== null);
+                    // Empty or repeated targets are uncertain, not implicit destinations.
+                    const target = targets.length === 0 ? undefined : targets.length === 1 ? targets[0][1] ?? '' : '';
+                    const mappings = children.flatMap(index => {
+                        const match = eventLines[index].trim().match(inline ? /^(@?[a-z_]\w*)\s+[\w.[\]?]+\s*=(?!=|>)\s*(.+)$/ : /^(@?[\w.]+)\s*=(?!=|>)\s*(.+)$/);
+                        return match === null ? [] : [{ name: match[1].replace(/^@/, ''), source: match[2], line: index }];
+                    });
+                    return [{ name, inline, conditional, line, target, mappings }];
+                }),
                 reads: body.filter((line) => !fences[line])
                     .map((line) => ({ line, match: lines[line].match(readPattern) }))
                     .filter((entry): entry is { line: number; match: RegExpMatchArray } => entry.match !== null)

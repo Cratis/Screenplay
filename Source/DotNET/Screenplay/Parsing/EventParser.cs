@@ -34,6 +34,7 @@ internal static partial class EventParser
             generation = 1;
         }
 
+        var metadata = new EventMetadataParser(name.Groups[1].Value);
         var properties = new List<PropertySyntax>();
         var tags = new List<TagSyntax>();
         var directiveLocations = new Dictionary<string, SourceLocation>();
@@ -63,13 +64,13 @@ internal static partial class EventParser
 
                 properties.Add(property);
             }
-            else
+            else if (!metadata.TryParse(context, line))
             {
                 context.Error(DiagnosticCodes.InvalidPropertyDeclaration, $"Invalid property '{line.Content}' - expected '<name> <Type>'", line.Location);
             }
         }
 
-        return new(name.Groups[1].Value, properties, header.Location, tags) { File = file, Generation = generation, HasGenerationMarker = hasGenerationMarker, DirectiveLocations = directiveLocations };
+        return metadata.Apply(new(name.Groups[1].Value, properties, header.Location, tags) { File = file, Generation = generation, HasGenerationMarker = hasGenerationMarker, DirectiveLocations = directiveLocations });
     }
 
     /// <summary>
