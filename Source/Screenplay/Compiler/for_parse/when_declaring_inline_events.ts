@@ -78,7 +78,7 @@ describe('when declaring inline events', () => {
     });
 
     it('should reject duplicate inline properties', () => {
-        expect(parse(`${inline}          name String = name\n          name Uuid = otherId\n`).diagnostics.map(value => value.code)).toContain('PLAY0168');
+        expect(parse(`${inline}          name String = name\n          name Uuid = otherId\n`).diagnostics.map(value => `${value.code}@${value.location.line}`)).toEqual(['PLAY0168@10']);
     });
 
     it.each(['      event Described\n', '      command Rename\n        produces event Described\n'])('should allow event markdown descriptions', declaration => {
