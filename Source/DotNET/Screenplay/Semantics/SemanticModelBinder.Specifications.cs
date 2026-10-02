@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using System.Globalization;
+using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
@@ -12,6 +14,9 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$", RegexOptions.None, 1000)]
+        private static partial Regex IsoInstant();
+
         static IEnumerable<SliceSyntax> AllSlices(FeatureSyntax feature) =>
             feature.Slices.Concat(feature.Features.SelectMany(AllSlices));
 
@@ -345,7 +350,19 @@ public sealed partial class SemanticModelBinder
 
             if (expression is LiteralExpressionSyntax literal)
             {
-                return BindLiteral(literal);
+                return literal.Value is string text && IsDateTime(target) && IsoInstant().IsMatch(text) &&
+                    DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out var instant)
+                        ? SemanticValue.Text(instant.Offset == TimeSpan.Zero
+                            ? instant.UtcDateTime.ToString("O", CultureInfo.InvariantCulture)
+                            : instant.ToString("O", CultureInfo.InvariantCulture))
+                        : BindLiteral(literal);
+            }
+
+            // An enumeration member may be written bare or qualified by its concept, exactly as the compiler accepts
+            // it - both name the same member as its quoted spelling and bind to the same value.
+            if (expression is PathExpressionSyntax path && EnumerationMember(path.Path, target) is { } member)
+            {
+                return SemanticValue.Text(member);
             }
 
             Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"The {description} requires a concrete portable value in Program v1.", expression.Location);
@@ -410,6 +427,36 @@ public sealed partial class SemanticModelBinder
             }
 
             return valid ? SemanticValue.Composite(properties.ToImmutable()) : null;
+        }
+
+        // An instant may be written the way people write one - "2026-10-05T08:00:00Z" - and binds to the same
+        // round-trip value as its fully written form, so the canonical bytes do not depend on the spelling.
+        bool IsDateTime(SemanticTypeReference target) => target.Kind switch
+        {
+            SemanticTypeReferenceKind.Primitive => target.Primitive == SemanticPrimitiveType.DateTime,
+            SemanticTypeReferenceKind.Concept => ConceptShape(target.Target).Primitive == SemanticPrimitiveType.DateTime,
+            _ => false
+        };
+
+        string? EnumerationMember(string path, SemanticTypeReference target)
+        {
+            if (target.Kind != SemanticTypeReferenceKind.Concept)
+            {
+                return null;
+            }
+
+            var concept = syntax.Concepts.First(_ => _concepts[_.Name].Id == target.Target);
+            if (!concept.IsEnum)
+            {
+                return null;
+            }
+
+            var separator = path.LastIndexOf('.');
+            var member = separator < 0 ? path : path[(separator + 1)..];
+            var qualifier = separator < 0 ? null : path[..separator];
+            return (qualifier is null || string.Equals(qualifier, concept.Name, StringComparison.Ordinal)) && concept.Values.Contains(member, StringComparer.Ordinal)
+                ? member
+                : null;
         }
 
         SemanticValue? InvalidShape(ExpressionSyntax expression, string description, string expected)

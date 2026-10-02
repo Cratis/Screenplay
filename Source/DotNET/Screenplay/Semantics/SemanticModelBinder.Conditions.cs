@@ -37,6 +37,10 @@ public sealed partial class SemanticModelBinder
             {
                 LiteralExpressionSyntax literal => new(default, BindLiteral(literal)),
                 PathExpressionSyntax path when properties.TryGetValue(path.Path, out var other) => new(other.Id, null),
+
+                // A bare name that is no property of the command but a member of the compared enumeration is that
+                // member - 'status == sent' means the same as 'status == "sent"', as it does in a validation rule.
+                PathExpressionSyntax path when subject.Values.Contains(path.Path, StringComparer.Ordinal) => new(default, SemanticValue.Text(path.Path)),
                 _ => null
             };
             if (right is null)
