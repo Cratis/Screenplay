@@ -61,7 +61,7 @@ public static class WorkspaceDiagnosticRepairs
             .Where(candidate => Matches(candidate, repair)).ToArray();
         if (matches.Length != 1 || repair.Operations.IsDefaultOrEmpty)
         {
-            return Refuse(WorkspaceConflictKind.InvalidOperation, "The diagnostic repair does not match the original workspace subject.");
+            return Refuse(WorkspaceConflictKind.UnknownRepair, "The diagnostic repair does not match the original workspace subject.");
         }
 
         return ProposeSelected(workspace, index, matches[0], request);
@@ -97,7 +97,7 @@ public static class WorkspaceDiagnosticRepairs
         var matches = ForSubject(index, workspace.Revision, diagnosticCode, subject).ToArray();
         if (matches.Length != 1)
         {
-            return Refuse(WorkspaceConflictKind.InvalidOperation, "The diagnostic repair does not match the original workspace subject.");
+            return Refuse(WorkspaceConflictKind.UnknownRepair, "The diagnostic repair does not match the original workspace subject.");
         }
 
         return ProposeSelected(workspace, index, matches[0], request);
@@ -124,12 +124,12 @@ public static class WorkspaceDiagnosticRepairs
     /// <param name="index">The original workspace occurrence index.</param>
     /// <param name="revision">The expected workspace revision.</param>
     /// <param name="diagnostic">A diagnostic reported by the index.</param>
-    /// <remarks>PLAY0478 verification is cached on the immutable workspace snapshot, never shared with a newer revision.</remarks>
+    /// <remarks>PLAY0166 and PLAY0478 verification is cached on the immutable workspace snapshot and reused by proposals, never shared with a newer revision.</remarks>
     /// <returns>Zero or more typed repair proposals.</returns>
     public static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic) =>
         Find(index, revision, diagnostic, true);
 
-    static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic, bool verifyDestination)
+    static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic, bool verifyRepair)
     {
         ArgumentNullException.ThrowIfNull(index);
         if (diagnostic is null)
@@ -146,7 +146,7 @@ public static class WorkspaceDiagnosticRepairs
 
         if (diagnostic.Code == DiagnosticCodes.UnknownEvent || diagnostic.Code == DiagnosticCodes.OmittedProductionDestination)
         {
-            return WorkspaceProductionRepairs.Find(index, revision, diagnostic, verifyDestination);
+            return WorkspaceProductionRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
 
         if (diagnostic.Code != DiagnosticCodes.LegacyInlineCodeFence)
@@ -181,22 +181,8 @@ public static class WorkspaceDiagnosticRepairs
             .Where(repair => repair.Subject == subject);
     }
 
-    static WorkspaceAuthoringResult ProposeSelected(ScreenplayWorkspace workspace, WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, WorkspaceAuthoringRequest request)
-    {
-        var result = WorkspaceProductionRepairs.Propose(workspace, request with { Operations = repair.Operations });
-        if (result.Accepted && !WorkspaceDroppedComments.In(result.WritePlan!).IsEmpty)
-        {
-            return Refuse(WorkspaceConflictKind.RepairWouldDropComments, "The diagnostic repair would drop comments from the touched document.");
-        }
-
-        if (result.Accepted && repair.DiagnosticCode == DiagnosticCodes.OmittedProductionDestination &&
-            !WorkspaceProductionRepairs.KeepsOtherDestinations(index, index.Find(repair.Subject)!, result))
-        {
-            return Refuse(WorkspaceConflictKind.InvalidOperation, "The diagnostic repair does not match the original workspace subject.");
-        }
-
-        return result;
-    }
+    static WorkspaceAuthoringResult ProposeSelected(ScreenplayWorkspace workspace, WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, WorkspaceAuthoringRequest request) =>
+        WorkspaceProductionRepairs.Verify(index, repair, request);
 
     static bool Matches(WorkspaceDiagnosticRepair candidate, WorkspaceDiagnosticRepair selected)
     {

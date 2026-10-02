@@ -33,7 +33,7 @@ internal sealed partial class McpWorkspaces
         var code = McpJson.RequiredString(arguments, "diagnosticCode");
         var subject = McpAstHandles.Read(arguments.GetProperty("subject"));
         var result = WorkspaceDiagnosticRepairs.ProposeRepair(workspace, code, subject, request);
-        if (result.Conflicts.Any(conflict => conflict.Kind == WorkspaceConflictKind.InvalidOperation))
+        if (result.Conflicts.Any(conflict => conflict.Kind == WorkspaceConflictKind.UnknownRepair))
         {
             throw new McpFailure("UnknownRepair: no unambiguous repair for this code and subject.", -32602);
         }

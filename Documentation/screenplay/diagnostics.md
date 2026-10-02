@@ -841,6 +841,11 @@ repair. Any workspace document with parser errors also blocks inference, because
 syntax may hide a contract or another producer. Reaction and capture producers are not inferred.
 
 Both repairs require canonical formatting consent and refuse any dropped comment.
+Discovery verifies authoring acceptance for `PLAY0166` too: an inferred event whose
+fields conflict with a specification is not offered. Discovery and proposals reuse
+the verification result on the same immutable workspace snapshot. A matched repair
+that fails returns its typed transaction conflicts and diagnostics; `UnknownRepair`
+means no recipe matches the code and original subject, not a verification failure.
 Discovery and preview never write source. Review the write plan and explicitly
 accept it through the [workspace authoring contract](ast-authoring.md) or
 [MCP repair workflow](mcp/authoring-tools.md#fix-a-diagnostic). Stale workspace or catalog

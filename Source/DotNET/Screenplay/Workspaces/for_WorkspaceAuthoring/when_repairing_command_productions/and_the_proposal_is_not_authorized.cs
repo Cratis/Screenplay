@@ -65,7 +65,7 @@ public class and_the_proposal_is_not_authorized : given.a_command_production
         var add = (AddWorkspaceNode)Repair.Operations.Single();
         Repair = Repair with { Operations = [add with { Node = ((EventSyntax)add.Node) with { Name = "Tampered" } }] };
         Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, Repair, Request());
-        Result.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.InvalidOperation);
+        Result.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.UnknownRepair);
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public class and_the_proposal_is_not_authorized : given.a_command_production
         var replace = (ReplaceWorkspaceNode)Repair.Operations.Single();
         Repair = Repair with { Operations = [replace with { Node = ((ProducesSyntax)replace.Node) with { For = new LiteralExpressionSyntax("tampered", replace.Node.Location) } }] };
         Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, Repair, Request());
-        Result.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.InvalidOperation);
+        Result.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.UnknownRepair);
     }
 
     [Theory]

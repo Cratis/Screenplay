@@ -36,7 +36,7 @@ public class and_many_destinations_are_omitted : given.a_command_production
         WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(1);
         Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, Repair, Request());
         Result.Accepted.ShouldBeTrue();
-        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(2);
+        WorkspaceProductionRepairs.TransactionCount(Workspace).ShouldEqual(1);
     }
 
     [Fact]

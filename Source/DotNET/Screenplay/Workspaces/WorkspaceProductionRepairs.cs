@@ -25,7 +25,7 @@ internal static class WorkspaceProductionRepairs
         return workspace.ProposeAuthoring(request);
     }
 
-    internal static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic, bool verifyDestination)
+    internal static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic, bool verifyRepair)
     {
         var subjects = index.Entries.Where(entry => entry.Handle.Revision == revision && entry.Node is ProducesSyntax && entry.Location == diagnostic.Location).ToArray();
         if (subjects.Length != 1 || index.Find(subjects[0].Parent!) is not { Node: CommandSyntax command } commandEntry ||
@@ -49,29 +49,7 @@ internal static class WorkspaceProductionRepairs
                 subject.Handle,
                 [new ReplaceWorkspaceNode(subject.Handle, produces, produces with { For = new PathExpressionSyntax(identifiers[0].Name, produces.Location) })]);
 
-            if (!verifyDestination)
-            {
-                return [repair];
-            }
-
-            var verified = _verification.GetOrCreateValue(index.Workspace).Subjects.GetOrAdd(
-                subject.Handle,
-                static (_, state) => new Lazy<bool>(() =>
-                {
-                    var workspace = state.Index.Workspace;
-                    var proposal = Propose(workspace, new WorkspaceAuthoringRequest
-                    {
-                        ExpectedRevision = workspace.Revision,
-                        ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
-                        Validation = WorkspaceAuthoringValidation.Authoring,
-                        Formatting = state.Repair.RequiredFormatting,
-                        Operations = state.Repair.Operations
-                    });
-                    return KeepsOtherDestinations(state.Index, state.Subject, proposal) && WorkspaceDroppedComments.In(proposal.WritePlan!).IsEmpty;
-                }),
-                (Index: index, Subject: subject, Repair: repair));
-
-            return verified.Value ? [repair] : [];
+            return Discover(index, repair, verifyRepair);
         }
 
         // Compilation includes partial ASTs, but editable entries do not. Never infer a contract
@@ -98,10 +76,68 @@ internal static class WorkspaceProductionRepairs
             }
         }
 
-        return [new(diagnostic.Code, subject.Handle, [new AddWorkspaceNode(slice.Handle, slice.Node, "events", new EventSyntax(produces.Event, properties, produces.Location))])];
+        return Discover(index, new(diagnostic.Code, subject.Handle, [new AddWorkspaceNode(slice.Handle, slice.Node, "events", new EventSyntax(produces.Event, properties, produces.Location))]), verifyRepair);
     }
 
-    internal static bool KeepsOtherDestinations(WorkspaceSyntaxIndex index, WorkspaceSyntaxEntry subject, WorkspaceAuthoringResult proposal)
+    internal static WorkspaceAuthoringResult Verify(WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, WorkspaceAuthoringRequest request)
+    {
+        // Auxiliary edits and migrations belong to the full request, not a cached repair recipe.
+        // Do not let a cached success admit non-default arrays or bypass their validation.
+        if (request.Documents.IsDefaultOrEmpty && !request.Documents.IsDefault &&
+            request.SemanticRenames.IsDefaultOrEmpty && !request.SemanticRenames.IsDefault &&
+            request.EventRenames.IsDefaultOrEmpty && !request.EventRenames.IsDefault &&
+            request.RetiredSemanticAddresses.IsDefaultOrEmpty && !request.RetiredSemanticAddresses.IsDefault &&
+            request.RetiredEventAddresses.IsDefaultOrEmpty && !request.RetiredEventAddresses.IsDefault)
+        {
+            return _verification.GetOrCreateValue(index.Workspace).Subjects.GetOrAdd(
+                (repair.Subject, repair.DiagnosticCode, request.Validation, request.ReferencePolicy),
+                static (_, state) => new Lazy<WorkspaceAuthoringResult>(() => VerifyTransaction(state.Index, state.Repair, state.Request)),
+                (Index: index, Repair: repair, Request: request)).Value;
+        }
+
+        return VerifyTransaction(index, repair, request);
+    }
+
+    static ImmutableArray<WorkspaceDiagnosticRepair> Discover(WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, bool verifyRepair)
+    {
+        var workspace = index.Workspace;
+        return !verifyRepair || Verify(index, repair, new WorkspaceAuthoringRequest
+        {
+            ExpectedRevision = workspace.Revision,
+            ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
+            Validation = WorkspaceAuthoringValidation.Authoring,
+            Formatting = repair.RequiredFormatting
+        }).Accepted ? [repair] : [];
+    }
+
+    static WorkspaceAuthoringResult VerifyTransaction(WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, WorkspaceAuthoringRequest request)
+    {
+        var result = Propose(index.Workspace, request with { Operations = repair.Operations });
+        if (result.Accepted && !WorkspaceDroppedComments.In(result.WritePlan!).IsEmpty)
+        {
+            return result with
+            {
+                Workspace = null,
+                WritePlan = null,
+                Conflicts = [new WorkspaceConflict { Kind = WorkspaceConflictKind.RepairWouldDropComments, Message = "The diagnostic repair would drop comments from the touched document." }]
+            };
+        }
+
+        if (result.Accepted && repair.DiagnosticCode == DiagnosticCodes.OmittedProductionDestination &&
+            !KeepsOtherDestinations(index, index.Find(repair.Subject)!, result))
+        {
+            return result with
+            {
+                Workspace = null,
+                WritePlan = null,
+                Conflicts = [new WorkspaceConflict { Kind = WorkspaceConflictKind.InvalidOperation, Message = "The diagnostic repair would change language or semantic version, or another production's destination." }]
+            };
+        }
+
+        return result;
+    }
+
+    static bool KeepsOtherDestinations(WorkspaceSyntaxIndex index, WorkspaceSyntaxEntry subject, WorkspaceAuthoringResult proposal)
     {
         var workspace = index.Workspace;
         if (workspace.Compilation.Value is not { } original || subject.Parent is null ||
@@ -225,6 +261,6 @@ internal static class WorkspaceProductionRepairs
     sealed class Verification
     {
         internal int Transactions;
-        internal ConcurrentDictionary<WorkspaceNodeHandle, Lazy<bool>> Subjects { get; } = [];
+        internal ConcurrentDictionary<(WorkspaceNodeHandle Subject, string Code, WorkspaceAuthoringValidation Validation, WorkspaceAuthoringReferencePolicy ReferencePolicy), Lazy<WorkspaceAuthoringResult>> Subjects { get; } = [];
     }
 }
