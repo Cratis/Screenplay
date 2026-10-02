@@ -2035,4 +2035,25 @@ public static class DiagnosticCodes
 
     /// <summary>An absent read-model assertion is malformed or has child mappings.</summary>
     public const string InvalidAbsentReadModelStep = "PLAY0453";
+
+    /// <summary>An <c>import</c> inside a module or feature does not name files as <c>import "&lt;path or glob&gt;"</c>.</summary>
+    public const string InvalidFileImport = "PLAY0454";
+
+    /// <summary>A file import pattern with wildcards matches no <c>.play</c> file.</summary>
+    public const string FileImportMatchesNothing = "PLAY0455";
+
+    /// <summary>A file import names one file, without wildcards, and that file does not exist.</summary>
+    public const string ImportedFileNotFound = "PLAY0456";
+
+    /// <summary>Two imports place the same file in scopes where neither lies inside the other.</summary>
+    public const string ConflictingImportPlacement = "PLAY0457";
+
+    /// <summary>Imports place a file inside itself, so its placement never settles.</summary>
+    public const string ImportCycle = "PLAY0458";
+
+    /// <summary>A file imported into a module or feature declares a module other than the one it is placed in.</summary>
+    public const string ModuleInPlacedFile = "PLAY0459";
+
+    /// <summary>The top level of a file imported into a module or feature holds something that scope cannot.</summary>
+    public const string UnexpectedInPlacedFile = "PLAY0460";
 }

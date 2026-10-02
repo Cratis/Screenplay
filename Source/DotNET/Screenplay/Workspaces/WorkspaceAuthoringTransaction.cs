@@ -194,9 +194,8 @@ sealed class WorkspaceAuthoringTransaction(
 
         var compiler = new ScreenplayCompiler();
         var draftAuthoring = request.Validation == WorkspaceAuthoringValidation.Authoring && request.ReferencePolicy == WorkspaceAuthoringReferencePolicy.Draft;
-        var merged = PlayFolderMerge.Merge(
-            [.. ordered.OrderBy(document => document.Path.Value, StringComparer.Ordinal).Select(document => compiler.Parse(document.Text, document.Path.Value))],
-            allowUnresolvedPersonaPolicies: draftAuthoring);
+        var texts = ordered.OrderBy(document => document.Path.Value, StringComparer.Ordinal).ToDictionary(document => document.Path.Value, document => document.Text, StringComparer.Ordinal);
+        var (_, merged) = PlayApplicationAssembly.Compile(compiler, texts.Keys, new InMemoryPlayDocumentSource(texts), draftAuthoring);
         _diagnostics.AddRange(merged.Diagnostics);
         if (!merged.Success || merged.Value is null)
         {

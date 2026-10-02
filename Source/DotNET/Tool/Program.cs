@@ -46,8 +46,13 @@ IEnumerable<Diagnostic> diagnostics;
 
 if (isFile)
 {
-    var compilation = playFileCompiler.CompileFile(target);
-    sources[compilation.File.RelativePath] = compilation.Source;
+    // A file is the root of an application: it compiles with everything its imports bring in.
+    var compilation = playFileCompiler.CompileApplication(target);
+    foreach (var source in compilation.Sources)
+    {
+        sources[source.File.RelativePath] = source.Source;
+    }
+
     diagnostics = compilation.Result.Diagnostics;
 }
 else

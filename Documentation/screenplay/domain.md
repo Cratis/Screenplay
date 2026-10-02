@@ -24,3 +24,5 @@ import Customers.CustomerRegistered
 module Invoicing
   ...
 ```
+
+An `import` with an unquoted, qualified name names a contract from another bounded context. To bring in other `.play` files of the same application, quote a path or glob instead - see [Imports](imports.md).

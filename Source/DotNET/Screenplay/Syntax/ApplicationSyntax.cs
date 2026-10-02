@@ -42,6 +42,11 @@ public record ApplicationSyntax(
     /// Gets the named behaviors the document declares, attached where a <c>uses</c> clause references them.
     /// </summary>
     public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the files the document imports at its top level - whole documents, merged into the application.
+    /// </summary>
+    public IEnumerable<FileImportSyntax> FileImports { get; init; } = [];
 }
 
 /// <summary>

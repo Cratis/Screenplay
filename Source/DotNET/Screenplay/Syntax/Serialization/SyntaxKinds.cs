@@ -71,6 +71,7 @@ internal static class SyntaxKinds
         typeof(ExpressionKeySyntax),
         typeof(FeatureSyntax),
         typeof(FileConstraintSyntax),
+        typeof(FileImportSyntax),
         typeof(FileReferenceSyntax),
         typeof(FormFieldSyntax),
         typeof(FormPopulateFromItemSyntax),

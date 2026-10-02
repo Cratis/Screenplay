@@ -785,6 +785,20 @@ These warnings are returned by `AttachmentFiles.Load` for implementation files t
 | `PLAY0445` | Warning | A v1–v3 flat executable-model projection transition carries deprecated `ZeroOrOne` or `Many` affected-instance cardinality. Chronicle routes one key per transition; use a join for structural many. Returned by `ExecutableSemanticModel.DeprecationDiagnostics` for constructed or deserialized ESM, with a model-level location because ESM does not retain source positions. The source binder produces only `One`; query cardinality is unaffected. |
 | `PLAY0449` | Error | A `given` fact needs a historical event shape (message names the event and revision), which Screenplay does not consume yet; or an event's source revision disagrees with its persisted catalog revision and requires explicit forward advancement. There is no fallback from current to historical properties. |
 
+### File imports
+
+See [Imports](imports.md).
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0454` | Error | An `import` inside a module or feature does not name files as `import "<path or glob>"`. |
+| `PLAY0455` | Warning | A file import pattern with wildcards matches no `.play` file. |
+| `PLAY0456` | Error | A file import names one file, without wildcards, and that file does not exist. |
+| `PLAY0457` | Error | Two imports place the same file in a module or feature where neither lies inside the other. A file belongs in one place. |
+| `PLAY0458` | Error | Imports keep placing a file deeper than 32 levels - they form a cycle. |
+| `PLAY0459` | Error | A file imported into a module or feature declares a module other than the one it is placed in. Restating the module it is placed in is allowed. |
+| `PLAY0460` | Error | The top level of a file imported into a module or feature holds something that scope cannot hold, such as a `screen template` in a file placed in a feature. |
+
 ## Retired codes
 
 A retired code stays out of use forever.

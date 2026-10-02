@@ -45,6 +45,22 @@ public interface IScreenplayCompiler
     CompilationResult<ApplicationSyntax> Parse(string source, string? path = null);
 
     /// <summary>
+    /// Parses Screenplay source text whose top level belongs to a module or feature an import placed it in.
+    /// </summary>
+    /// <param name="source">The source text to parse.</param>
+    /// <param name="path">The path to attribute every <see cref="Diagnostics.SourceLocation"/> in the tree to.</param>
+    /// <param name="placement">The <see cref="Files.PlayPlacement"/> saying where the top level belongs.</param>
+    /// <returns>A <see cref="CompilationResult{TResult}"/> holding the <see cref="ApplicationSyntax"/> and any syntax diagnostics.</returns>
+    /// <remarks>
+    /// The module and feature the document is placed in are in the tree, marked
+    /// <see cref="ModuleSyntax.IsPlacement"/> and <see cref="FeatureSyntax.IsPlacement"/>, holding what the
+    /// document declares at its top level. A <see cref="Files.PlayPlacement.Document"/> placement is
+    /// <see cref="Parse(string, string?)"/>.
+    /// </remarks>
+    CompilationResult<ApplicationSyntax> Parse(string source, string? path, Files.PlayPlacement placement) =>
+        ScreenplayCompiler.ParsePlaced(source, path, placement, Languages.ScreenplayLanguageRegistry.Default);
+
+    /// <summary>
     /// Compiles a standalone projection document - source rooted at a <c>projection</c> declaration.
     /// </summary>
     /// <param name="source">The source text to compile.</param>

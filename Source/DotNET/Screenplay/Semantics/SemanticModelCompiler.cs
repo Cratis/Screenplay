@@ -23,10 +23,8 @@ public sealed class SemanticModelCompiler(IScreenplayCompiler compiler, ISemanti
     /// <inheritdoc/>
     public CompilationResult<SemanticCompilation> Compile(string applicationName, SemanticDocumentSet documents)
     {
-        var parsed = documents.Documents
-            .Select(document => compiler.Parse(document.Text, document.DisplayPath))
-            .ToArray();
-        var syntax = PlayFolderMerge.Merge(parsed);
+        var texts = documents.Documents.ToDictionary(document => document.DisplayPath, document => document.Text, StringComparer.Ordinal);
+        var (_, syntax) = PlayApplicationAssembly.Compile(compiler, texts.Keys, new InMemoryPlayDocumentSource(texts));
         if (!syntax.Success)
         {
             return CompilationResult<SemanticCompilation>.Failed(syntax.Diagnostics);

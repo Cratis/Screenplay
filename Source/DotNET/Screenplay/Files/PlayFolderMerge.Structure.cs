@@ -24,14 +24,18 @@ internal static partial class PlayFolderMerge
 
     static ModuleSyntax Combine(IGrouping<string, ModuleSyntax> group, ParserContext context)
     {
-        var parts = group.ToList();
+        // Where the module is written comes before files merely placed in it, so the merged module is located
+        // at its declaration. Within each kind, path order is kept.
+        var parts = group.OrderBy(part => part.IsPlacement).ToList();
         if (parts.Count == 1)
         {
-            return parts[0];
+            return parts[0] with { IsPlacement = false, Features = [.. parts[0].Features.Select(Unplaced)] };
         }
 
         return parts[0] with
         {
+            IsPlacement = false,
+            FileImports = [.. parts.SelectMany(part => part.FileImports)],
             SourceComments = [.. parts.SelectMany(part => part.SourceComments).Distinct()],
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"module '{group.Key}'", context),
             Authorize = CombineAuthorization(parts.Select(part => part.Authorize), $"module '{group.Key}'", context),
@@ -68,14 +72,18 @@ internal static partial class PlayFolderMerge
 
     static FeatureSyntax Combine(IGrouping<string, FeatureSyntax> group, ParserContext context)
     {
-        var parts = group.ToList();
+        // Where the feature is written comes before files merely placed in it, so the merged feature is located
+        // at its declaration. Within each kind, path order is kept.
+        var parts = group.OrderBy(part => part.IsPlacement).ToList();
         if (parts.Count == 1)
         {
-            return parts[0];
+            return Unplaced(parts[0]);
         }
 
         return parts[0] with
         {
+            IsPlacement = false,
+            FileImports = [.. parts.SelectMany(part => part.FileImports)],
             SourceComments = [.. parts.SelectMany(part => part.SourceComments).Distinct()],
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"feature '{group.Key}'", context),
             Authorize = CombineAuthorization(parts.Select(part => part.Authorize), $"feature '{group.Key}'", context),
@@ -96,6 +104,10 @@ internal static partial class PlayFolderMerge
     /// <summary>
     /// Combines distinct authorization gates across files without ever weakening an earlier gate.
     /// </summary>
+    // Once merged, a feature is the feature - whether a file was placed in it no longer says anything.
+    static FeatureSyntax Unplaced(FeatureSyntax feature) =>
+        feature with { IsPlacement = false, Features = [.. feature.Features.Select(Unplaced)] };
+
     static AuthorizeSyntax? CombineAuthorization(IEnumerable<AuthorizeSyntax?> declarations, string owner, ParserContext context)
     {
         var kept = new List<AuthorizeSyntax>();

@@ -100,6 +100,8 @@
   href: ast-compatibility.md
 - name: Folders
   href: folders.md
+- name: Imports
+  href: imports.md
 - name: Glossary
   href: glossary.md
 - name: Frequently asked questions

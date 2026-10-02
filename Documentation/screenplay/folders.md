@@ -10,6 +10,8 @@ flowchart LR
     B -- "IPlayFileCompiler.CompileFolder" --> A
 ```
 
+A folder says nothing about *what* the application is made of, and every slice file in it restates the module and feature it belongs to. [Imports](imports.md) let a root file name the files of the application, and let a module or feature file place the files it imports - so a focused file holds only its own part of the story.
+
 ## Compile a folder as one application
 
 `CompileFolder` discovers every `.play` file beneath a folder, merges them into the one application they describe, and resolves the whole:

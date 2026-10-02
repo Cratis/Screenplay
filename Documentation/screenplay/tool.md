@@ -28,7 +28,7 @@ screenplay path/to/screenplays
 
 A directory is verified as **one application**: the files are merged before anything is resolved, so an event declared in one file and produced in another resolves rather than looking missing. See [Folders](folders.md) for what that means and how the files fit together.
 
-Or point it at a single file, which is what you want when a generator just produced one and you only care about that one. A single file is verified on its own, so a name it uses but does not declare is reported:
+Or point it at a single file. A file is the root of an application: it is verified together with every file its [imports](imports.md) bring in, and a file without imports is verified on its own, so a name it uses but does not declare is reported:
 
 ```bash
 screenplay path/to/invoicing.play
@@ -98,6 +98,12 @@ A single file is a single call too:
 
 ```csharp
 var compilation = new PlayFileCompiler().CompileFile(path);
+```
+
+`CompileFile` compiles that one document. `CompileApplication(path)` compiles the application the file is the root of - the file and everything its [imports](imports.md) bring in - which is what the CLI does:
+
+```csharp
+var compilation = new PlayFileCompiler().CompileApplication("application.play");
 ```
 
 `CompileIn(rootDirectory)` is the third option: it compiles every discovered file as a document in its own right and hands back one result per file. Reach for it only when the files genuinely are separate documents that happen to share a directory - see [Folders](folders.md) for why a folder is normally one application.

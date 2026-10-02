@@ -57,10 +57,12 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
         var parsing = Path.Combine(Directory.GetParent(DocumentationExamples.Root())!.FullName, "Source", "DotNET", "Screenplay", "Parsing");
         var document = File.ReadAllText(Path.Combine(parsing, "ScreenplayParser.cs"));
         var slices = File.ReadAllText(Path.Combine(parsing, "SliceParser.cs"));
+        var module = File.ReadAllText(Path.Combine(parsing, "ModuleBody.cs"));
+        var feature = File.ReadAllText(Path.Combine(parsing, "FeatureBody.cs"));
         _dispatched = [];
         AddCases(document, "switch (LineText.FirstWord(line.Content))", "static void AddLayout", "document", _dispatched);
-        AddCases(document, "static ModuleSyntax ParseModule", "static void AddForm", "module", _dispatched);
-        AddCases(document, "static FeatureSyntax ParseFeature", "[GeneratedRegex", "feature", _dispatched);
+        AddCases(module, "switch (LineText.FirstWord(line.Content))", "public ModuleSyntax Build", "module", _dispatched);
+        AddCases(feature, "switch (LineText.FirstWord(line.Content))", "public FeatureSyntax Build", "feature", _dispatched);
         AddCases(slices, "switch (LineText.FirstWord(line.Content))", "return new(type, name", "slice", _dispatched);
     }
 

@@ -18,14 +18,8 @@ static class WorkspaceReferenceLayout
 
     static ApplicationSyntax? Merge(ScreenplayWorkspace workspace)
     {
-        var parsed = workspace.Documents.OrderBy(document => document.Path.Value, StringComparer.Ordinal)
-            .Select(document => new ScreenplayCompiler().Parse(document.Text, document.Path.Value)).ToArray();
-        if (parsed.Any(document => !document.Success))
-        {
-            return null;
-        }
-
-        var merged = PlayFolderMerge.Merge(parsed);
+        var texts = workspace.Documents.OrderBy(document => document.Path.Value, StringComparer.Ordinal).ToDictionary(document => document.Path.Value, document => document.Text, StringComparer.Ordinal);
+        var (_, merged) = PlayApplicationAssembly.Compile(new ScreenplayCompiler(), texts.Keys, new InMemoryPlayDocumentSource(texts));
         return merged.Success ? merged.Value : null;
     }
 
