@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import * as esbuild from 'esbuild';
+import { fileURLToPath } from 'node:url';
 
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
@@ -17,6 +18,8 @@ const extension = {
     platform: 'node',
     outfile: 'out/extension.js',
     external: ['vscode'],
+    // Use workspace sources in this bundle so the extension and language service share one compiler.
+    alias: { '@cratis/screenplay-language': fileURLToPath(new URL('../Monaco/screenplay-language/index.ts', import.meta.url)) },
     logLevel: 'info',
 };
 
