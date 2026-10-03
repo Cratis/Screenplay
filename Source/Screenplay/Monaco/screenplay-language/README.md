@@ -38,7 +38,7 @@ The registered code-action provider offers verified edits against the current bu
 - `PLAY0479`: replace one legacy `?` suffix with `optional`, or migrate the document.
 - `PLAY0471`: remove a redundant event `id` line. Trailing comments prevent removal.
 
-Redundant id removal remains available in placed and multi-document applications.
+Redundant id removal works in placed and multi-document applications.
 Actions respect the requested diagnostic and kind, cache analysis per model version,
 and pin edits to that version. Range requests return every eligible intersecting occurrence, without duplicate
 actions. Independent recipes are verified together once per version to check the intended

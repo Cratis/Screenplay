@@ -107,7 +107,7 @@ The lightbulb in VS Code and Monaco also offers this occurrence-only action:
 | --- | --- |
 | `PLAY0471` | **Remove the redundant event id** deletes the complete `id` line, including its indentation and line ending, for inline or standalone events. A trailing comment prevents the action; move the comment to its own line first. |
 
-Redundant id removal remains available in placed and multi-document applications.
+Redundant id removal works in placed and multi-document applications.
 It reparses the edited buffer and verifies that only the intended syntax changes
 and the diagnostic disappears. Analysis is cached for the current document version;
 range requests return every eligible intersecting occurrence, verifying the
@@ -121,11 +121,11 @@ The board is drawn by the extension's own [TypeScript compiler](typescript-compi
 
 The text editor also reports `PLAY0478` as information when a plain production
 omits `for` and its command has an identifier. This is advice, not a new routing
-default. Monaco and VS Code use their own TypeScript validation and offer the
-conservative [event quick fixes](#event-quick-fixes) above; they do not host the C#
-workspace repair transaction. Use the [MCP repair workflow](mcp/authoring-tools.md#fix-a-diagnostic)
-for executable-model verification or to declare a missing produced event, then
-review and apply the typed proposal.
+default. Monaco and VS Code offer no quick fix for `PLAY0478`, because stating `for`
+can change where events land and the editors do not host the C# workspace repair
+transaction. Use the [MCP repair workflow](mcp/authoring-tools.md#fix-a-diagnostic)
+to preview an explicit `for` (or to declare a missing produced event), then review
+and apply the typed proposal.
 
 ## Theme
 
