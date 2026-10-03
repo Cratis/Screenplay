@@ -26,11 +26,28 @@ export function toCommand(command: CommandSyntax, scope: SliceScope, schemas: Sc
     return {
         id: scope.idOf('command', command.name),
         name: command.name,
-        schema: schemas.forProperties(command.properties),
+        schema: schemas.forProperties(command.properties.filter(property => !property.isGenerated)),
         stateSchema: {},
-        logicDescription: command.description ?? '',
+        logicDescription: detailsOf(command),
         rules: rulesOf(command),
     };
+}
+
+function detailsOf(command: CommandSyntax): string {
+    const generated = command.properties.filter(property => property.isGenerated);
+    if (generated.length === 0 && command.response == null) return command.description ?? '';
+    const sections = [command.description ?? '', 'Syntax-only: execution unavailable until ESM v8 (PLAY0268).'];
+    if (generated.length > 0) sections.push(`Generated values (not request inputs)\n${generated.map(property => `${property.name}: ${property.type.name}${property.isIdentifier ? ' (identifier)' : ''}`).join('\n')}`);
+    const response = command.response;
+    if (response?.kind === 'ScalarCommandResponseSyntax') sections.push(`Returns\n${response.source.property}`);
+    if (response?.kind === 'RecordCommandResponseSyntax') {
+        const properties = new Map(command.properties.map(property => [property.name, property]));
+        sections.push(`Returns\n${response.fields.map(field => {
+            const type = field.type ?? properties.get(field.source.property)?.type;
+            return `${field.name}${type ? `: ${type.name}${type.isOptional ? ' optional' : ''}` : ''} = ${field.source.property}`;
+        }).join('\n')}`);
+    }
+    return sections.filter(Boolean).join('\n\n');
 }
 
 function rulesOf(command: CommandSyntax): CommandItemDocument['rules'] {

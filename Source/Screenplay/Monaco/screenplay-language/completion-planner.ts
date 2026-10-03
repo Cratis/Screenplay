@@ -1,7 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { enclosingChain, fenceMap, indentOf, nearestEnclosingLine } from './document-context';
+import { enclosingChain, fenceMap, indentOf, nearestEnclosingLine, withoutComment } from './document-context';
+import { responseCompletions } from './response-completions';
+import { scanDocument } from './symbols';
 import { getSubLanguage } from './sub-language-registry';
 import * as items from './completion-items';
 import { CompletionEntry } from './completion-items';
@@ -94,7 +96,9 @@ export function planCompletions(
     textBefore: string,
 ): CompletionPlan {
     const fences = fenceMap(lines);
-    if (fences[lineIndex]) return { kind: 'none' };
+    if (fences[lineIndex] || withoutComment(textBefore).length < textBefore.length) return { kind: 'none' };
+    const responseEntries = responseCompletions(lines, lineIndex, textBefore, scanDocument(lines));
+    if (responseEntries !== null) return { kind: 'entries', entries: responseEntries };
 
     // Inside the quotes of a file import, what is wanted is a path - replacing what has been typed so far.
     const importPath = textBefore.match(/^\s*import\s+"([^"]*)$/);

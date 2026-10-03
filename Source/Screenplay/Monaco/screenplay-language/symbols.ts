@@ -4,6 +4,7 @@
 import { eventBodyReservedWords } from '@cratis/screenplay-compiler';
 import { fenceMap, indentOf } from './document-context';
 import { eventAnalysisSource } from './event-analysis-source';
+import { CommandResponseSymbol, responseAnalysis } from './response-analysis';
 import { fileReferenceOn } from './file-references';
 import { clauseKeywords } from './language';
 import { ProductionSymbol } from './ProductionSymbol';
@@ -14,6 +15,7 @@ export interface PropertySymbol {
     type: string;
     typeReference?: TypeReferenceSymbol;
     isIdentifier: boolean;
+    isGenerated?: boolean;
     line: number;
 }
 
@@ -51,6 +53,7 @@ export interface CommandSymbol extends NamedSymbol {
     reads?: ReadSymbol[];
     produces?: ProductionSymbol[];
     productionHeaders?: number[];
+    response?: CommandResponseSymbol | null;
 }
 
 export interface ReadSymbol {
@@ -78,6 +81,7 @@ export interface ImportSymbol {
 }
 
 export interface DocumentSymbols {
+    authoringSources?: readonly string[];
     imports: ImportSymbol[];
     concepts: ConceptSymbol[];
     types: TypeSymbol[];
@@ -90,7 +94,7 @@ export interface DocumentSymbols {
 }
 
 const conceptPattern = /^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@\w+)*)\s*$/;
-const propertyPattern = /^\s*(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(\s+identifier)?\s*$/;
+const propertyPattern = /^\s*(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(\s+generated)?(\s+identifier)?\s*$/;
 const attributeReasonPattern = /^([a-z_]\w*)\s+reason\s+"((?:[^"\\]|\\.)*)"\s*$/;
 const readPattern = /^\s*reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?\s*$/;
 const commandReserved = ['authorize', 'produces', 'reads'];
@@ -118,7 +122,8 @@ function propertiesIn(lines: string[], body: number[], reserved: readonly string
             name: match[1].replace(/^@/, ''),
             type: match[2],
             typeReference: typeReferenceSymbol(match[2]),
-            isIdentifier: match[3] !== undefined,
+            isIdentifier: match[4] !== undefined,
+            ...(match[3] !== undefined ? { isGenerated: true } : {}),
             line: index,
         }));
 }
@@ -160,8 +165,15 @@ export function directBody(lines: string[], fences: boolean[], start: number, in
     });
 }
 
+const symbolRevisions = new Map<string, DocumentSymbols>();
+
 export function scanDocument(lines: string[]): DocumentSymbols {
+    const source = lines.join('\n');
+    const cached = symbolRevisions.get(source);
+    if (cached) return cached;
+    const analysis = responseAnalysis(lines);
     const symbols: DocumentSymbols = {
+        authoringSources: [source],
         imports: [],
         concepts: [],
         types: [],
@@ -264,7 +276,15 @@ export function scanDocument(lines: string[]): DocumentSymbols {
             const productionHeaders = body.filter(line => /^\s*produces\b/.test(lines[line]));
             symbols.commands.push({
                 name: commandMatch[1],
-                properties: propertiesIn(lines, body.filter(line => lines[line].trim() !== 'validate csharp'), commandReserved),
+                properties: analysis.commands.get(index)?.properties.map(property => ({
+                    name: property.name,
+                    type: `${property.type.name}${property.type.isCollection ? '[]' : ''}${property.type.isOptional ? ' optional' : ''}`,
+                    typeReference: { name: property.type.name, isCollection: property.type.isCollection, isOptional: property.type.isOptional },
+                    isIdentifier: property.isIdentifier || /\sidentifier\s*$/.test(lines[property.location.line - 1]),
+                    ...(property.isGenerated ? { isGenerated: true } : {}),
+                    line: property.location.line - 1,
+                })) ?? propertiesIn(lines, body.filter(line => lines[line].trim() !== 'validate csharp'), commandReserved),
+                response: analysis.commands.get(index)?.response,
                 productionHeaders,
                 produces: productionHeaders.flatMap(line => {
                     const header = eventLines[line].trim();
@@ -341,6 +361,8 @@ export function scanDocument(lines: string[]): DocumentSymbols {
         }
     }
 
+    if (symbolRevisions.size >= 16) symbolRevisions.delete(symbolRevisions.keys().next().value!);
+    symbolRevisions.set(source, symbols);
     return symbols;
 }
 
@@ -348,6 +370,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
 // the document each symbol came from, so the result names things; it does not locate them.
 export function mergeSymbols(...documents: DocumentSymbols[]): DocumentSymbols {
     return {
+        authoringSources: documents.flatMap(document => document.authoringSources ?? []),
         imports: documents.flatMap((document) => document.imports),
         concepts: documents.flatMap((document) => document.concepts),
         types: documents.flatMap((document) => document.types),

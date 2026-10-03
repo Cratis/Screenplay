@@ -41,6 +41,17 @@ export const diagnosticCodes = {
     legacyOptionalSuffix: 'PLAY0479',
     invalidOptionalModifierOrder: 'PLAY0480',
     optionalReadsNotSupported: 'PLAY0481',
+    unavailableResponseExecution: 'PLAY0268',
+    generatedPropertyOutsideCommand: 'PLAY0482',
+    invalidGeneratedType: 'PLAY0483',
+    invalidGeneratedModifierOrder: 'PLAY0484',
+    generatedPropertyInput: 'PLAY0485',
+    invalidCommandResponse: 'PLAY0486',
+    invalidResponseSource: 'PLAY0487',
+    duplicateResponseField: 'PLAY0488',
+    invalidResponseShape: 'PLAY0489',
+    invalidGeneratedFixture: 'PLAY0490',
+    invalidReturnExpectation: 'PLAY0491',
 } as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[keyof typeof diagnosticCodes];
