@@ -900,6 +900,8 @@ for one occurrence or the entire document, without requiring .NET.
 
 Generated properties, command responses, generated fixtures and return expectations are syntax-only. Binding reports `PLAY0268` until ESM v8 admits these constructs.
 
+For response and generated-fixture compatibility checks only, `Date` values must be quoted `yyyy-MM-dd` calendar dates. `DateTime` values must be quoted `yyyy-MM-ddTHH:mm:ss`, optionally followed by a decimal fraction of 1–7 digits, and always end in uppercase `Z` or an explicit `+HH:mm` / `-HH:mm` offset. Years range from 0001 to 9999; calendar days must exist, hours range from 00 to 23, and minutes and seconds from 00 to 59. Offsets range from `-14:00` to `+14:00`; at 14 hours the minutes must be 00. These checks do not change general literal parsing. Imported or unresolved value shapes remain unknown rather than being inferred from their names.
+
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0482` | Error | A generated property is declared outside a command. |

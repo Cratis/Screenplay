@@ -67,6 +67,10 @@ internal static partial class CommandParser
                     {
                         AddProperty(context, properties, returnsProperty, name.Groups[1].Value, line);
                     }
+                    else if (PropertyLineParser.ReportInvalidModifierOrder(context, line))
+                    {
+                        context.SkipBlock(line.Indent);
+                    }
                     else
                     {
                         responses.Add((line, null, ParseResponse(context, line)));

@@ -64,13 +64,16 @@ export function reportLegacyOptionalSuffix(context: ParserContext, type: TypeRef
     }
 }
 
-export function reportInvalidModifierOrder(context: ParserContext, line: SourceLine): void {
+export function reportInvalidModifierOrder(context: ParserContext, line: SourceLine): boolean {
     if (reversedModifiers.test(line.content)) {
         context.error(DiagnosticCodes.InvalidOptionalModifierOrder, "Write 'optional' before 'identifier': '<name> <Type> optional identifier'.", locationOf(line));
+        return true;
     } else {
         const modifiers = invalidGeneratedModifiers.exec(line.content);
         if (modifiers !== null && modifiers[1].split(/\s+/).some(modifier => modifier === 'generated' || modifier === 'identifier')) {
             context.error(DiagnosticCodes.InvalidGeneratedModifierOrder, "Write each modifier once in order: '<name> <Type> optional generated identifier'.", locationOf(line));
+            return true;
         }
     }
+    return false;
 }

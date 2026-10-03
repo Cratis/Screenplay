@@ -3,6 +3,7 @@
 
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { pattern } from '../Text/patterns';
+import { firstWord, unescapeIdentifier } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 
@@ -12,29 +13,38 @@ export interface InputUse {
     readonly property: string;
     readonly scope: readonly string[];
     readonly location: SourceLocation;
+    readonly isParameter?: boolean;
 }
 
-interface InputOwner { command: string; kind: 'form' | 'execute' | 'invokes'; indent: number }
+interface InputOwner { command: string; kind: 'form' | 'execute' | 'invokes' | 'other'; indent: number }
 const form = pattern('^form\\s+[A-Za-z_]\\w*\\s+for\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)$');
 const execution = pattern('^(execute|invokes)\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)$');
 const field = pattern('^field\\s+([\\w.]+)(?:\\s|$)');
 const argument = pattern('^with\\s+([A-Za-z_]\\w*)\\s+from\\s+.+$');
-const mapping = pattern('^([\\w.]+)\\s*=(?!=|>)\\s*.+$');
+const mapping = pattern('^(@?[\\w.]+)\\s*=(?!=|>)\\s*.+$');
+const parameter = pattern('^parameter\\s+([A-Za-z_]\\w*)(?:\\s+([\\w.]+(?:\\[\\])?))?$');
+const actionBoundaries = new Set(['refresh', 'navigate', 'open', 'close', 'set', 'notify', 'confirm', 'raise', 'on']);
 
 // A single forward walk, tracking owners by indentation and skipping fences as opaque text.
 export function collectInputUses(context: ParserContext, header: SourceLine): void {
     const owners: InputOwner[] = [];
+    const parameters = new Set<string>();
+    const inputs: InputUse[] = [];
+    const isBehavior = firstWord(header.content) === 'behavior';
     const recognize = (line: SourceLine): void => {
         while (owners.length > 0 && owners[owners.length - 1].indent >= line.indent) owners.pop();
+        const declared = isBehavior && owners.length === 0 ? parameter.exec(line.content) : null;
+        if (declared !== null) parameters.add(declared[1]);
         const formMatch = form.exec(line.content);
         const execute = execution.exec(line.content);
         if (formMatch !== null) owners.push({ command: formMatch[1], kind: 'form', indent: line.indent });
         else if (execute !== null) owners.push({ command: execute[2], kind: execute[1] as 'execute' | 'invokes', indent: line.indent });
+        else if (actionBoundaries.has(firstWord(line.content))) owners.push({ command: '', kind: 'other', indent: line.indent });
         else {
             const owner = owners.at(-1);
-            if (owner === undefined) return;
+            if (owner === undefined || owner.kind === 'other') return;
             const supplied = (owner.kind === 'form' ? field : owner.kind === 'execute' ? argument : mapping).exec(line.content);
-            if (supplied !== null) context.inputUses.push({ command: owner.command, property: supplied[1], scope: [...context.scope], location: locationOf(line) });
+            if (supplied !== null) inputs.push({ command: owner.command, property: unescapeIdentifier(supplied[1]), scope: context.scope, location: locationOf(line) });
         }
     };
     recognize(header);
@@ -43,4 +53,6 @@ export function collectInputUses(context: ParserContext, header: SourceLine): vo
         if (child.content.startsWith('```')) context.skipFencedBody();
         else recognize(child);
     }
+    // Parameters may be declared after their bindings; commit facts once their scope is complete.
+    for (const input of inputs) context.inputUses.push(parameters.has(input.command) ? { ...input, isParameter: true } : input);
 }

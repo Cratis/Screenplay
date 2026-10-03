@@ -83,6 +83,8 @@ export function parseCommand(context: ParserContext, line: SourceLine): CommandS
                 }
             } else if (asProperty !== undefined) {
                 identifier = addProperty(context, properties, asProperty, name, child, identifier);
+            } else if (reportInvalidModifierOrder(context, child)) {
+                context.skipBlock(child.indent);
             } else {
                 responses.push({ line: child, candidate: null, response: parseCommandResponse(context, child) });
             }

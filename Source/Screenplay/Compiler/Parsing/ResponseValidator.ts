@@ -5,11 +5,12 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { CommandSyntax } from '../Syntax/Commands';
 import { ConceptSyntax, PropertySyntax, TypeRefSyntax } from '../Syntax/Declarations';
 import { ExpressionSyntax } from '../Syntax/Expressions';
-import { PropertyResponseSourceSyntax } from '../Syntax/Responses';
+import { PropertyResponseSourceSyntax, ResponseFieldSyntax } from '../Syntax/Responses';
 import { SpecificationSyntax } from '../Syntax/Specifications';
 import { ApplicationSyntax, FeatureSyntax, SliceSyntax } from '../Syntax/Structure';
 import { InputUse } from './InputUses';
 import { ParserContext } from './ParserContext';
+import { responseDateValue } from './ResponseDateValues';
 
 const primitiveTypes = new Set(['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime']);
 interface ScopedCommand { command: CommandSyntax; scope: readonly string[] }
@@ -24,12 +25,14 @@ export function validateResponses(application: ApplicationSyntax, context: Parse
     application.modules.forEach(module => module.features.forEach(feature => collect(feature, [module.name])));
     const commands = new Map<string, ScopedCommand[]>();
     const properties = new Map<CommandSyntax, Map<string, PropertySyntax>>();
+    const responseFields = new Map<CommandSyntax, Map<string, ResponseFieldSyntax>>();
     for (const { slice, scope } of slices) {
         for (const command of slice.commands) {
             const entries = commands.get(command.name) ?? [];
             entries.push({ command, scope });
             commands.set(command.name, entries);
             properties.set(command, uniqueByName(command.properties));
+            if (command.response?.kind === 'RecordCommandResponseSyntax') responseFields.set(command, uniqueByName(command.response.fields));
         }
     }
     const imports = new Map<string, string[]>();
@@ -141,7 +144,7 @@ export function validateResponses(application: ApplicationSyntax, context: Parse
             if (!compatibleValue(expectation.value, declared.get(response.source.property)!.type, concepts, composites)) context.error(DiagnosticCodes.InvalidReturnExpectation, "The expected return value must match the response source's type.", expectation.location);
         } else if (expectation.kind === 'RecordSpecificationReturnSyntax' && response?.kind === 'RecordCommandResponseSyntax') {
             if (expectation.fields.length === 0) context.error(DiagnosticCodes.InvalidReturnExpectation, 'A record return expectation requires at least one field.', expectation.location);
-            const fields = uniqueByName(response.fields);
+            const fields = responseFields.get(command)!;
             const asserted = new Set<string>();
             for (const field of expectation.fields) {
                 const contract = fields.get(field.property);
@@ -155,6 +158,7 @@ export function validateResponses(application: ApplicationSyntax, context: Parse
     };
     for (const { slice, scope } of slices) slice.specifications.forEach(specification => validateSpecification(specification, scope));
     for (const input of inputs) {
+        if (input.isParameter === true) continue;
         const command = resolve(input.command, input.scope);
         if (command !== null && properties.get(command)!.get(input.property.split('.')[0])?.isGenerated) context.error(DiagnosticCodes.GeneratedPropertySuppliedAsInput, `Generated property '${input.property}' cannot be supplied as request or form input.`, input.location);
     }
@@ -181,7 +185,7 @@ function compatibleValue(value: ExpressionSyntax, type: TypeRefSyntax, concepts:
     });
     const concept = concepts.get(type.name);
     const primitive = concept?.type ?? type.name;
-    if (primitive === 'Enum') return value.kind === 'LiteralExpressionSyntax' && typeof value.value === 'string' && concept!.values.includes(value.value);
+    if (concept?.type === 'Enum') return value.kind === 'LiteralExpressionSyntax' && typeof value.value === 'string' && concept.values.includes(value.value);
     if (value.kind === 'LiteralExpressionSyntax') {
         switch (primitive) {
             case 'Uuid': return typeof value.value === 'string' && uuidValue(value.value);
@@ -189,8 +193,8 @@ function compatibleValue(value: ExpressionSyntax, type: TypeRefSyntax, concepts:
             case 'Bool': return typeof value.value === 'boolean';
             case 'Int': return typeof value.value === 'number' && Number.isFinite(value.value) && Number.isInteger(value.value);
             case 'Decimal': return typeof value.value === 'number' && Number.isFinite(value.value);
-            case 'Date': return typeof value.value === 'string' && dateValue(value.value, false);
-            case 'DateTime': return typeof value.value === 'string' && dateValue(value.value, true);
+            case 'Date': return typeof value.value === 'string' && responseDateValue(value.value, false);
+            case 'DateTime': return typeof value.value === 'string' && responseDateValue(value.value, true);
             default: return !primitiveTypes.has(primitive);
         }
     }
@@ -205,21 +209,4 @@ function uuidValue(text: string): boolean {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value) ||
         (!braces && !parentheses && /^[0-9a-f]{32}$/i.test(value)) ||
         (braces && /^0x[0-9a-f]{1,8}\s*,\s*0x[0-9a-f]{1,4}\s*,\s*0x[0-9a-f]{1,4}\s*,\s*\{\s*0x[0-9a-f]{1,2}(?:\s*,\s*0x[0-9a-f]{1,2}){7}\s*\}$/i.test(value));
-}
-
-function dateValue(text: string, includeTime: boolean): boolean {
-    // JavaScript rolls invalid calendar days into the next month; .NET rejects them.
-    if (!includeTime && /(?:T\d|\d:)/.test(text)) return false;
-    const calendar = /^(\d{4})-(\d{2})-(\d{2})(?:$|[T\s])/.exec(text);
-    if (calendar !== null) {
-        const year = Number(calendar[1]);
-        const month = Number(calendar[2]);
-        const day = Number(calendar[3]);
-        const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
-        const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-        if (year < 1 || month < 1 || month > 12 || day < 1 || day > days[month - 1]) return false;
-    }
-    const offset = /[+-](\d{2}):(\d{2})$/.exec(text);
-    if (offset !== null && (Number(offset[1]) > 14 || Number(offset[2]) > 59 || (Number(offset[1]) === 14 && Number(offset[2]) !== 0))) return false;
-    return !Number.isNaN(Date.parse(text));
 }

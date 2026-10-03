@@ -190,6 +190,8 @@ function parseTable(context: ParserContext, line: SourceLine): ScreenTableSyntax
             columns.push({ kind: 'ScreenColumnSyntax', property: columnMatch[1], label: labelled ? operandText(columnMatch, 2) : null, location: locationOf(child) });
         } else if (clickMatch !== null) {
             click = parseNavigate(context, clickMatch[1], child) ?? null;
+        } else if (firstWord(child.content) === 'on') {
+            collectInputUses(context, child);
         } else if (isInteraction(child)) {
             context.skipOpaqueBlock(child.indent);
         } else {

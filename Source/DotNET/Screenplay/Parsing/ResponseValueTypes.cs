@@ -1,7 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Globalization;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
@@ -39,7 +38,7 @@ internal sealed class ResponseValueTypes
 
         var concept = _concepts.GetValueOrDefault(type.Name);
         var primitive = concept?.Type ?? type.Name;
-        if (primitive == "Enum") return value is LiteralExpressionSyntax { Value: string text } && concept?.Values.Contains(text, StringComparer.Ordinal) == true;
+        if (concept?.Type == "Enum") return value is LiteralExpressionSyntax { Value: string text } && concept.Values.Contains(text, StringComparer.Ordinal);
         if (value is not LiteralExpressionSyntax literal) return !_known.Contains(type.Name);
 
         return primitive switch
@@ -49,8 +48,8 @@ internal sealed class ResponseValueTypes
             "Bool" => literal.Value is bool,
             "Int" => literal.Value is double integer && double.IsFinite(integer) && Math.Truncate(integer) == integer,
             "Decimal" => literal.Value is double number && double.IsFinite(number),
-            "Date" => literal.Value is string date && DateOnly.TryParse(date, CultureInfo.InvariantCulture, DateTimeStyles.None, out _),
-            "DateTime" => literal.Value is string instant && DateTimeOffset.TryParse(instant, CultureInfo.InvariantCulture, DateTimeStyles.None, out _),
+            "Date" => literal.Value is string date && ResponseDateValues.Compatible(date, false),
+            "DateTime" => literal.Value is string instant && ResponseDateValues.Compatible(instant, true),
             _ => !_known.Contains(type.Name) // Imported shapes stay unknown; never infer their type from the value.
         };
     }
