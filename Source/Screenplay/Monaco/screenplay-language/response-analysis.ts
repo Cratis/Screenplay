@@ -95,9 +95,12 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
         return original?.line ? [{ ...diagnostic, location: { ...diagnostic.location, line: original.line, column: Math.max(1, diagnostic.location.column - original.column) } }] : [];
     });
     const productions = new AuthoringProductionResolver(parsed.value);
-    const operationProductionLines = new Set(productions.slices.flatMap(({ slice }) => slice.commands.flatMap(command => command.produces)
+    const operationProductionLines = new Set(productions.slices.flatMap(({ slice }) => [...slice.commands.flatMap(command => command.produces), ...slice.reactions.flatMap(reaction => reaction.triggers).flatMap(trigger => trigger.produces)]
         .filter(production => production.location.path === path && !productions.isEventProduction(production, slice))
         .map(production => production.location.line - 1)));
+    // Rejected inline operation declarations have no syntax node, but the core parser still owns
+    // the command-only kind fact. Retain it rather than suggesting an event declaration repair.
+    for (const diagnostic of diagnostics) if (diagnostic.code === 'PLAY0499') operationProductionLines.add(diagnostic.location.line - 1);
     return { commands, specifications, diagnostics, operationProductionLines };
 }
 
