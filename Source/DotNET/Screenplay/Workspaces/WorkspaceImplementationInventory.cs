@@ -34,6 +34,12 @@ public sealed record WorkspaceImplementationEntry(
     /// Gets whether the requirement identity depends on provisional legacy naming.
     /// </summary>
     public bool IsProvisional => IdentityOrigin == SemanticIdentityOrigin.LegacyBootstrap;
+
+    /// <summary>
+    /// Gets whether multiple handler occurrences share this requirement identity.
+    /// Such entries cannot be selected uniquely by requirement identity alone.
+    /// </summary>
+    public bool IsAmbiguous { get; init; }
 }
 
 /// <summary>
@@ -66,13 +72,16 @@ public sealed class WorkspaceImplementationInventory
     /// </summary>
     /// <param name="index">The original syntax index.</param>
     /// <returns>The handler inventory.</returns>
-    public static WorkspaceImplementationInventory Create(WorkspaceSyntaxIndex index)
+    public static WorkspaceImplementationInventory Create(WorkspaceSyntaxIndex index) => Create(index, index.Workspace.IdentityCatalog.Semantics);
+
+    internal static WorkspaceImplementationInventory Create(WorkspaceSyntaxIndex index, IEnumerable<SemanticIdentityAssignment> catalogSemantics)
     {
+        var assignments = catalogSemantics.ToDictionary(assignment => assignment.Address);
         var entries = ImmutableArray.CreateBuilder<WorkspaceImplementationEntry>();
         foreach (var entry in index.Entries)
         {
             if (entry.Node is not HandlerSyntax handler || entry.Parent is not { } parent || index.Find(parent)?.Address is not { } owner) continue;
-            var assignment = index.Workspace.IdentityCatalog.ResolveSemanticAssignment(owner);
+            var assignment = assignments.GetValueOrDefault(owner) ?? new(owner, SemanticId.Create(owner), SemanticIdentityOrigin.LegacyBootstrap);
             var state = handler switch
             {
                 { File: not null } => "file",
@@ -91,6 +100,9 @@ public sealed class WorkspaceImplementationInventory
                 assignment.Origin));
         }
 
-        return new(entries.ToImmutable());
+        var ambiguous = entries.GroupBy(entry => entry.RequirementId, StringComparer.Ordinal)
+            .Where(group => group.Skip(1).Any()).Select(group => group.Key).ToHashSet(StringComparer.Ordinal);
+
+        return new([.. entries.Select(entry => entry with { IsAmbiguous = ambiguous.Contains(entry.RequirementId) })]);
     }
 }

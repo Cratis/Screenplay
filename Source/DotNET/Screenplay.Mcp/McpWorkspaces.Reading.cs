@@ -62,11 +62,17 @@ internal sealed partial class McpWorkspaces
         if (view == "handler-intents" || view == "handler-intent-details")
         {
             CheckContinuation(arguments, "expectedCatalogRevision", workspace.IdentityCatalog.Revision.ToString());
-            var inventory = WorkspaceImplementationInventory.Create(McpWorkspaceAnalysis.For(workspace).Syntax);
+            var inventory = McpWorkspaceAnalysis.For(workspace).HandlerIntents;
             if (view == "handler-intent-details")
             {
                 var id = McpJson.RequiredString(arguments, "requirementId");
-                var entry = inventory.Entries.SingleOrDefault(value => value.RequirementId == id)
+                var matches = inventory.Entries.Where(value => value.RequirementId == id).Take(2).ToArray();
+                if (matches.Length > 1)
+                {
+                    throw new McpFailure("AmbiguousRequirement: multiple handler occurrences share that identity. Read handler-intents for their occurrence handles and repair duplicate declarations before requesting details.");
+                }
+
+                var entry = matches.SingleOrDefault()
                     ?? throw new McpFailure("UnknownRequirement: no handler intent has that identity.");
                 return McpJson.ToolResult(new
                 {
@@ -311,6 +317,7 @@ internal sealed partial class McpWorkspaces
         requirementId = entry.RequirementId,
         identityOrigin = entry.IdentityOrigin.ToString(),
         provisional = entry.IsProvisional,
+        ambiguous = entry.IsAmbiguous,
         hintCount = entry.Hints.Length,
         file = entry.File,
         language = entry.Language,
