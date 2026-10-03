@@ -849,12 +849,9 @@ effective destination would change (including through a command default).
 Discovery verifies these conditions and comment preservation once per subject on an
 immutable workspace snapshot; a new snapshot cannot reuse those verification results.
 
-Monaco and VS Code offer the occurrence-only [editor quick fix](vscode.md#event-quick-fixes)
-**State the destination: for projectId** for a conservative subset of `PLAY0478`.
-It requires a locally provable command/event document with known types and complete,
-compatible mappings, checks version and sibling-routing safety, reparses the edit,
-and never participates in fix-all. Richer or unbindable models are left to the
-workspace repair workflow. No editor quick fix is offered for `PLAY0470`.
+The verified `PLAY0478` repair is available through the
+[MCP repair workflow](mcp/authoring-tools.md#fix-a-diagnostic).
+Monaco and VS Code do not offer a quick fix for `PLAY0478` or `PLAY0470`.
 
 For `PLAY0166` on a command production, a typed repair can add an `event`
 declaration to the producing slice. Properties follow mapping order; command

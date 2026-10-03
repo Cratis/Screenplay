@@ -17,7 +17,6 @@ export const DiagnosticCodes = {
     InlineEventGeneration: 'PLAY0475',
     ReservedProductionMetadata: 'PLAY0476',
     InvalidEventDocumentation: 'PLAY0477',
-    OmittedProductionDestination: 'PLAY0478',
     UnknownTopLevelConstruct: 'PLAY0001',
     InvalidDomainDeclaration: 'PLAY0002',
     DuplicateDomain: 'PLAY0003',

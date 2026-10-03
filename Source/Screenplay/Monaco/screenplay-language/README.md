@@ -37,28 +37,14 @@ The registered code-action provider offers verified edits against the current bu
 
 - `PLAY0479`: replace one legacy `?` suffix with `optional`, or migrate the document.
 - `PLAY0471`: remove a redundant event `id` line. Trailing comments prevent removal.
-- `PLAY0478`: **State the destination: for projectId** inserts an explicit destination
-  directly after the production header, before mappings, when local syntax proves version
-  and sibling-routing safety. The model must be the entire application: no placement,
-  no other documents known to the host, and no imports. A standalone model qualifies by
-  default; hosts with application context supply `placement` and `otherDocuments` callbacks
-  through the registration options (or the second argument to `createCodeActionProvider`).
-  The existing `playFiles` callback also suppresses this fix when it reports other files.
-  Redundant id removal remains available in placed and multi-document applications.
-  Unresolved contracts, tags, generation markers, other omitted siblings, and
-  uncertain version promotion prevent the action. Eligibility is restricted to local
-  state-change command/event documents with known primitive or primitive-backed concept
-  types and complete, compatible property mappings (or `$context.occurred` to `DateTime`).
-  Other constructs and opaque implementations require the C# workspace repair workflow.
-  This routing choice is never a fix-all.
 
-`PLAY0470` has no quick fix. Actions respect the requested diagnostic and kind,
-cache analysis per model version and whole-application eligibility, and pin edits to that
-version. Range requests return every eligible intersecting occurrence, without duplicate
+Redundant id removal remains available in placed and multi-document applications.
+Actions respect the requested diagnostic and kind, cache analysis per model version,
+and pin edits to that version. Range requests return every eligible intersecting occurrence, without duplicate
 actions. Independent recipes are verified together once per version to check the intended
 syntax changes and diagnostic removal without reparsing per marker; no .NET process is
 required. See [editor quick fixes](../../../../Documentation/screenplay/vscode.md#event-quick-fixes)
-for the destination safety limits.
+for the redundant id removal behavior.
 
 ## Extending with new sub-languages
 

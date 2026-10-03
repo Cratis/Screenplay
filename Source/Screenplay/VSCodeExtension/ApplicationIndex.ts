@@ -22,8 +22,6 @@ export interface ApplicationFile {
 // is what is held - and says when any of them changed, once the edits have settled.
 export class ApplicationIndex implements vscode.Disposable {
     readonly #applications = new Map<string, WorkspaceApplication>();
-    readonly #discovered = new WeakSet<WorkspaceApplication>();
-    #loadVersion = 0;
     readonly #changed = new vscode.EventEmitter<void>();
     readonly #subscriptions: vscode.Disposable[] = [];
     #pending: ReturnType<typeof setTimeout> | undefined;
@@ -47,17 +45,13 @@ export class ApplicationIndex implements vscode.Disposable {
 
     // Reads every .play file of every workspace folder.
     async load(): Promise<void> {
-        const version = ++this.#loadVersion;
         this.#applications.clear();
         for (const folder of vscode.workspace.workspaceFolders ?? []) {
             const application = new WorkspaceApplication();
             this.#applications.set(folder.uri.fsPath, application);
             const files = await vscode.workspace.findFiles(new vscode.RelativePattern(folder, playFiles), excluded);
-            if (version !== this.#loadVersion) return;
             const texts = await Promise.all(files.map(file => textOf(file)));
-            if (version !== this.#loadVersion) return;
             files.forEach((file, index) => application.set(relativePath(folder.uri.fsPath, file.fsPath), texts[index]));
-            this.#discovered.add(application);
         }
         this.#changed.fire();
     }
@@ -67,12 +61,6 @@ export class ApplicationIndex implements vscode.Disposable {
         const folder = uri.scheme === 'file' ? vscode.workspace.getWorkspaceFolder(uri) : undefined;
         const application = folder === undefined ? undefined : this.#applications.get(folder.uri.fsPath);
         return application === undefined || folder === undefined ? undefined : { application, path: relativePath(folder.uri.fsPath, uri.fsPath) };
-    }
-
-    // Buffered documents do not prove that all sibling files have been discovered and read.
-    isDiscoveryComplete(uri: vscode.Uri): boolean {
-        const file = this.fileOf(uri);
-        return file !== undefined && this.#discovered.has(file.application);
     }
 
     eventDefinitions(uri: vscode.Uri, name: string): vscode.Location[] {

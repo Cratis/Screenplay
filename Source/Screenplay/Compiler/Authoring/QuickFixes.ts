@@ -7,8 +7,7 @@ import { PlayPlacement } from '../Files/PlayPlacement';
 import { commentStart, splitLines } from '../Parsing/SourceLineSplitter';
 import { parseForAuthoring } from '../ScreenplayCompiler';
 import { EventSyntax } from '../Syntax/Declarations';
-import { ProductionBindingProof } from './ProductionBindingProof';
-import { ProductionQuickFixes } from './ProductionQuickFixes';
+import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
 import { QuickFixCandidate } from './QuickFixCandidate';
 
 export interface QuickFixEdit {
@@ -22,20 +21,16 @@ export interface QuickFix {
     readonly title: string;
     readonly scope: 'occurrence' | 'document';
     readonly edits: readonly QuickFixEdit[];
-    /** Diagnostic line, which can differ from the inserted text's line. */
-    readonly line?: number;
 }
 
 export interface QuickFixOptions {
     readonly line?: number;
     readonly placement?: PlayPlacement;
-    /** Host proof that this unplaced buffer is the entire application. Defaults to false. */
-    readonly isWholeApplication?: boolean;
     readonly diagnosticCode?: string;
 }
 
 export function isQuickFixDiagnostic(code: unknown): code is string {
-    return code === DiagnosticCodes.LegacyOptionalSuffix || code === DiagnosticCodes.RedundantEventId || code === DiagnosticCodes.OmittedProductionDestination;
+    return code === DiagnosticCodes.LegacyOptionalSuffix || code === DiagnosticCodes.RedundantEventId;
 }
 
 // Diagnostics point at the complete type, not at the suffix. Never derive edits from message text.
@@ -51,21 +46,25 @@ export function findQuickFixes(source: string, options: QuickFixOptions = {}): Q
 // One immutable buffer version owns the analysis and document verdict. Cursor moves reuse them;
 // single-occurrence verdicts have a bounded cache. Range requests verify the independent recipes
 // together once per version, rather than reparsing N times for N intersecting markers.
-export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions, 'placement' | 'isWholeApplication'> = {}): (line?: number | readonly { line: number; diagnosticCode: string }[], diagnosticCode?: string) => QuickFix[] {
+export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions, 'placement'> = {}): (line?: number | readonly { line: number; diagnosticCode: string }[], diagnosticCode?: string) => QuickFix[] {
     const original = parseForAuthoring(source, undefined, options.placement);
     if (!original.success) return () => [];
     const lines = splitLines(source);
-    const productions = new ProductionQuickFixes(original.value, lines);
-    const diagnostics = [...original.diagnostics, ...productions.diagnostics];
+    const eventsByLine = new Map<number, EventSyntax>();
+    // Index inline and standalone declarations once, without scanning the tree per diagnostic.
+    const walker = new class extends ScreenplaySyntaxWalker {
+        override visitEvent(event: EventSyntax): void { eventsByLine.set(event.location.line, event); }
+    }();
+    walker.visitApplication(original.value);
     const counts = new Map<string, number>();
     const byLine = new Map<number, QuickFixCandidate>();
     const events = new Map<number, EventSyntax>();
     let event: EventSyntax | undefined;
     for (const line of lines) {
-        event = productions.eventsByLine.get(line.number) ?? event;
+        event = eventsByLine.get(line.number) ?? event;
         if (event !== undefined) events.set(line.number, event);
     }
-    for (const diagnostic of diagnostics) {
+    for (const diagnostic of original.diagnostics) {
         counts.set(diagnostic.code, (counts.get(diagnostic.code) ?? 0) + 1);
         const line = lines[diagnostic.location.line - 1];
         const length = legacyOptionalTypeLength(line.raw, diagnostic);
@@ -78,11 +77,6 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
                 change: { node: declaration, replacement: { ...declaration, id: null } as EventSyntax } });
         }
     }
-    // The shared C# vectors contain one source only, with no host/application-completeness field.
-    // Placed and multi-document applications cannot reach the local binding proof from any host.
-    if (options.isWholeApplication === true && (options.placement?.length ?? 0) === 0 && productions.diagnostics.length > 0 && new ProductionBindingProof(original.value).permits(lines)) {
-        for (const candidate of productions.candidates(source, lines)) byLine.set(candidate.line, candidate);
-    }
     const optional = [...byLine.values()].filter(candidate => candidate.fix.diagnosticCode === DiagnosticCodes.LegacyOptionalSuffix);
     const syntax = verificationShape(original);
     const verified = new Map<number, QuickFix | undefined>();
@@ -94,8 +88,7 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
         if (candidate === undefined) return undefined;
         const parsed = parseForAuthoring(candidate, undefined, options.placement);
         if (!parsed.success || verificationShape(parsed) !== (change === undefined ? syntax : verificationShape(original, [change]))) return undefined;
-        const reported = fix.diagnosticCode === DiagnosticCodes.OmittedProductionDestination ? new ProductionQuickFixes(parsed.value, splitLines(candidate)).diagnostics : parsed.diagnostics;
-        return reported.filter(diagnostic => diagnostic.code === fix.diagnosticCode).length === (counts.get(fix.diagnosticCode) ?? 0) - fix.edits.length ? fix : undefined;
+        return parsed.diagnostics.filter(diagnostic => diagnostic.code === fix.diagnosticCode).length === (counts.get(fix.diagnosticCode) ?? 0) - fix.edits.length ? fix : undefined;
     };
     return (line, diagnosticCode) => {
         const requests = typeof line === 'number' || line === undefined ? undefined : line;
@@ -117,13 +110,12 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
                     const parsed = parseForAuthoring(candidateSource, undefined, options.placement);
                     const changes = candidates.flatMap(candidate => candidate.change === undefined ? [] : [candidate.change]);
                     if (parsed.success && verificationShape(parsed) === verificationShape(original, changes)) {
-                        const reported = [...parsed.diagnostics, ...new ProductionQuickFixes(parsed.value, splitLines(candidateSource)).diagnostics];
                         const remaining = new Map<string, number>();
                         const removed = new Map<string, number>();
-                        for (const diagnostic of reported) remaining.set(diagnostic.code, (remaining.get(diagnostic.code) ?? 0) + 1);
+                        for (const diagnostic of parsed.diagnostics) remaining.set(diagnostic.code, (remaining.get(diagnostic.code) ?? 0) + 1);
                         for (const candidate of candidates) removed.set(candidate.fix.diagnosticCode, (removed.get(candidate.fix.diagnosticCode) ?? 0) + candidate.fix.edits.length);
                         if ([...removed].every(([code, count]) => (remaining.get(code) ?? 0) === (counts.get(code) ?? 0) - count)) {
-                            for (const candidate of candidates) rangeVerdicts.set(candidate.line, { ...candidate.fix, line: candidate.line });
+                            for (const candidate of candidates) rangeVerdicts.set(candidate.line, candidate.fix);
                         }
                     }
                 }
@@ -141,7 +133,7 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
         if (selected !== undefined && occurrenceLine !== undefined && (diagnosticCode === undefined || selected.fix.diagnosticCode === diagnosticCode)) {
             if (!verified.has(occurrenceLine)) {
                 if (verified.size === 32) verified.delete(verified.keys().next().value!);
-                verified.set(occurrenceLine, verify({ ...selected.fix, line: occurrenceLine }, selected.change));
+                verified.set(occurrenceLine, verify(selected.fix, selected.change));
             }
             occurrenceFix = verified.get(occurrenceLine);
         }

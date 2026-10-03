@@ -101,40 +101,17 @@ the same verified fixes; neither editor needs a .NET process.
 
 ## Event quick fixes
 
-The lightbulb in VS Code and Monaco also offers these occurrence-only actions:
+The lightbulb in VS Code and Monaco also offers this occurrence-only action:
 
 | Diagnostic | Action |
 | --- | --- |
 | `PLAY0471` | **Remove the redundant event id** deletes the complete `id` line, including its indentation and line ending, for inline or standalone events. A trailing comment prevents the action; move the comment to its own line first. |
-| `PLAY0478` | **State the destination: for projectId** inserts `for <identifier>` directly after the production header, before its mappings. Choose it only when the event should address that identifier rather than a newly allocated identity. |
 
-Destination fixes never participate in fix-all or save actions. The active document must
-be the entire application: no placement, no other application documents known to the host,
-and no imports. VS Code checks that the workspace application contains only this document;
-Monaco treats a standalone model as the whole application unless the host supplies placement
-or other documents. Redundant id removal remains available in placed and multi-document
-applications. Destination fixes also require a local, unique event contract, one required scalar command identifier, no other omitted
-production in that command, and explicit siblings targeting the same identifier.
-The editor also requires proof that adding `for` cannot promote the model's version:
-the event already has a payload property with that name, or a local typed destination
-already establishes the newer routing rules. Imports, generation markers, and version
-evidence requiring executable binding are conservatively refused. This means the
-workspace repair workflow can offer repairs the editor cannot prove safe.
-
-Because parsing alone does not prove executable readiness, destination fixes currently
-require a document made only of modules, features, state-change slices, commands,
-events, and simple primitive-backed concepts. Properties must use known types; mappings
-must copy compatible command properties or map `$context.occurred` to `DateTime`, and
-supply every required event property. Tags, other constructs, opaque implementations, and
-unresolved or inconsistent mappings suppress the action for the document. Use the
-workspace repair workflow for richer models.
-
-Both actions reparse the edited buffer and verify that only the intended syntax
-changes and the diagnostic disappears. Analysis is cached for the current document
-version and whole-application eligibility; range requests return every eligible intersecting
-occurrence, verifying the independent recipes together rather than reparsing per marker.
-Stale edits are refused. `PLAY0470` has no quick fix: state the intended
-destinations explicitly and resolve the binding errors first.
+Redundant id removal remains available in placed and multi-document applications.
+It reparses the edited buffer and verifies that only the intended syntax changes
+and the diagnostic disappears. Analysis is cached for the current document version;
+range requests return every eligible intersecting occurrence, verifying the
+independent recipes together rather than reparsing per marker. Stale edits are refused.
 
 ## When the model has errors
 

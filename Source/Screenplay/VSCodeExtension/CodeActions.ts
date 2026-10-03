@@ -16,7 +16,7 @@ interface PendingQuickFix {
 }
 
 export function registerCodeActions(context: vscode.ExtensionContext, index: ApplicationIndex): void {
-    const cache = new WeakMap<vscode.TextDocument, { version: number; placement: string; isWholeApplication: boolean; fixes: ReturnType<typeof prepareQuickFixes> }>();
+    const cache = new WeakMap<vscode.TextDocument, { version: number; placement: string; fixes: ReturnType<typeof prepareQuickFixes> }>();
     context.subscriptions.push(vscode.languages.registerCodeActionsProvider(languageId, {
         provideCodeActions(document, range, request, token) {
             const migrationRequested = request.only?.contains(migrateOptional) === true;
@@ -30,11 +30,10 @@ export function registerCodeActions(context: vscode.ExtensionContext, index: App
             const file = index.fileOf(document.uri);
             const placement = file?.application.placementOf(file.path);
             const placementKey = JSON.stringify(placement);
-            const isWholeApplication = (placement?.length ?? 0) === 0 && (file === undefined ? vscode.workspace.getWorkspaceFolder(document.uri) === undefined : index.isDiscoveryComplete(document.uri) && file.application.paths.length === 1 && file.application.paths[0] === file.path);
             const version = document.version;
             let analysis = cache.get(document);
-            if (analysis?.version !== version || analysis.placement !== placementKey || analysis.isWholeApplication !== isWholeApplication) {
-                analysis = { version, placement: placementKey, isWholeApplication, fixes: prepareQuickFixes(document.getText(), { placement, isWholeApplication }) };
+            if (analysis?.version !== version || analysis.placement !== placementKey) {
+                analysis = { version, placement: placementKey, fixes: prepareQuickFixes(document.getText(), { placement }) };
                 cache.set(document, analysis);
             }
             const occurrences = migrationOnly ? [] : analysis.fixes(diagnostics.map(diagnostic => ({
@@ -46,7 +45,7 @@ export function registerCodeActions(context: vscode.ExtensionContext, index: App
             if (token.isCancellationRequested || document.version !== version) return [];
             return fixes.map(fix => {
                 const action = new vscode.CodeAction(fix.title, fix.scope === 'document' ? migrateOptional : vscode.CodeActionKind.QuickFix);
-                action.isPreferred = fix.scope === 'occurrence' && fix.diagnosticCode !== DiagnosticCodes.OmittedProductionDestination;
+                action.isPreferred = fix.scope === 'occurrence';
                 action.command = { command: applyCommand, title: fix.title, arguments: [{ uri: document.uri, version, fix } satisfies PendingQuickFix] };
                 return action;
             });
@@ -63,9 +62,7 @@ export function registerCodeActions(context: vscode.ExtensionContext, index: App
         const file = index.fileOf(document.uri);
         const first = pending.fix.edits[0];
         if (first === undefined) return false;
-        const placement = file?.application.placementOf(file.path);
-        const isWholeApplication = (placement?.length ?? 0) === 0 && (file === undefined ? vscode.workspace.getWorkspaceFolder(document.uri) === undefined : index.isDiscoveryComplete(document.uri) && file.application.paths.length === 1 && file.application.paths[0] === file.path);
-        const verified = findQuickFixes(document.getText(), { line: pending.fix.line ?? document.positionAt(first.start).line + 1, diagnosticCode: pending.fix.diagnosticCode, placement, isWholeApplication })
+        const verified = findQuickFixes(document.getText(), { line: document.positionAt(first.start).line + 1, diagnosticCode: pending.fix.diagnosticCode, placement: file?.application.placementOf(file.path) })
             .find(fix => fix.scope === pending.fix.scope && fix.diagnosticCode === pending.fix.diagnosticCode && JSON.stringify(fix.edits) === JSON.stringify(pending.fix.edits));
         if (verified === undefined) return false;
         const edit = new vscode.WorkspaceEdit();
