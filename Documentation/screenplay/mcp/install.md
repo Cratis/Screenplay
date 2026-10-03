@@ -46,7 +46,9 @@ Download `screenplay-VERSION-RID-plugin.zip` and its `.sha256`. Use the same nat
 macOS/Windows RID choices, and a ChatGPT Desktop version/account that exposes local
 **Plugins** and stdio MCP. An empty model starts in the plugin's persistent data
 folder. To choose an existing model without authoring JSON, use the coordinated
-CLI desktop installer once available:
+CLI desktop installer (Cratis CLI 3.25.0 or later). First,
+[install the Cratis CLI][cli-installation]; you do not need a running Chronicle
+store for these desktop commands:
 
 ```bash
 cratis screenplay mcp install --clients chatgpt --model-root /absolute/path/to/specifications
@@ -64,7 +66,10 @@ Never copy files into an undocumented host-internal cache.
 
 ### Install and manage with the Cratis CLI
 
-Once the coordinated CLI release is available:
+[Install the Cratis CLI][cli-installation] using the procedure for your operating
+system, then check `cratis --version`. Desktop management requires CLI 3.25.0 or
+later. These commands do not require a Chronicle connection. For all options and
+recovery steps, see [Screenplay desktop MCP lifecycle][cli-desktop-mcp].
 
 ```bash
 cratis screenplay mcp install --clients claude,chatgpt --model-root /absolute/path/to/specifications
@@ -369,3 +374,6 @@ See [identity state and recovery](recovery.md).
 - **Pending operation:** inspect recovery status before opening or editing the model.
 
 The [MCP reference](reference.md) lists tools, validation policies and limits.
+
+[cli-installation]: /cli/getting-started/#install-it
+[cli-desktop-mcp]: /cli/reference/screenplay-desktop-mcp/
