@@ -16,28 +16,30 @@ interface PendingQuickFix {
 }
 
 export function registerCodeActions(context: vscode.ExtensionContext, index: ApplicationIndex): void {
-    const cache = new WeakMap<vscode.TextDocument, { version: number; placement: string; fixes: ReturnType<typeof prepareQuickFixes> }>();
+    const cache = new WeakMap<vscode.TextDocument, { version: number; placement: string; isWholeApplication: boolean; fixes: ReturnType<typeof prepareQuickFixes> }>();
     context.subscriptions.push(vscode.languages.registerCodeActionsProvider(languageId, {
         provideCodeActions(document, range, request, token) {
             const migrationRequested = request.only?.contains(migrateOptional) === true;
             if (request.only !== undefined && !migrationRequested && !request.only.contains(vscode.CodeActionKind.QuickFix)) return [];
-            const diagnostic = request.diagnostics.find(diagnostic => {
+            const diagnostics = request.diagnostics.filter(diagnostic => {
                 const code = typeof diagnostic.code === 'object' ? diagnostic.code.value : diagnostic.code;
                 return isQuickFixDiagnostic(code) && diagnostic.range.intersection(range) !== undefined;
             });
-            if (token.isCancellationRequested || (!migrationRequested && diagnostic === undefined)) return [];
+            if (token.isCancellationRequested || (!migrationRequested && diagnostics.length === 0)) return [];
             const file = index.fileOf(document.uri);
             const placement = file?.application.placementOf(file.path);
             const placementKey = JSON.stringify(placement);
+            const isWholeApplication = (placement?.length ?? 0) === 0 && (file === undefined ? vscode.workspace.getWorkspaceFolder(document.uri) === undefined : file.application.paths.length === 1 && file.application.paths[0] === file.path);
             const version = document.version;
             let analysis = cache.get(document);
-            if (analysis?.version !== version || analysis.placement !== placementKey) {
-                analysis = { version, placement: placementKey, fixes: prepareQuickFixes(document.getText(), { placement }) };
+            if (analysis?.version !== version || analysis.placement !== placementKey || analysis.isWholeApplication !== isWholeApplication) {
+                analysis = { version, placement: placementKey, isWholeApplication, fixes: prepareQuickFixes(document.getText(), { placement, isWholeApplication }) };
                 cache.set(document, analysis);
             }
-            // A multiline request still verifies only one occurrence, not every diagnostic in the file.
-            const requested = analysis.fixes(migrationRequested || diagnostic === undefined ? undefined : diagnostic.range.start.line + 1,
-                migrationRequested ? DiagnosticCodes.LegacyOptionalSuffix : String(typeof diagnostic?.code === 'object' ? diagnostic.code.value : diagnostic?.code));
+            const requested = migrationRequested ? analysis.fixes(undefined, DiagnosticCodes.LegacyOptionalSuffix) : analysis.fixes(diagnostics.map(diagnostic => ({
+                line: diagnostic.range.start.line + 1,
+                diagnosticCode: String(typeof diagnostic.code === 'object' ? diagnostic.code.value : diagnostic.code),
+            })));
             const fixes = requested.filter(fix => request.only === undefined || request.only.contains(fix.scope === 'document' ? migrateOptional : vscode.CodeActionKind.QuickFix));
             if (token.isCancellationRequested || document.version !== version) return [];
             return fixes.map(fix => {
@@ -59,7 +61,9 @@ export function registerCodeActions(context: vscode.ExtensionContext, index: App
         const file = index.fileOf(document.uri);
         const first = pending.fix.edits[0];
         if (first === undefined) return false;
-        const verified = findQuickFixes(document.getText(), { line: pending.fix.line ?? document.positionAt(first.start).line + 1, diagnosticCode: pending.fix.diagnosticCode, placement: file?.application.placementOf(file.path) })
+        const placement = file?.application.placementOf(file.path);
+        const isWholeApplication = (placement?.length ?? 0) === 0 && (file === undefined ? vscode.workspace.getWorkspaceFolder(document.uri) === undefined : file.application.paths.length === 1 && file.application.paths[0] === file.path);
+        const verified = findQuickFixes(document.getText(), { line: pending.fix.line ?? document.positionAt(first.start).line + 1, diagnosticCode: pending.fix.diagnosticCode, placement, isWholeApplication })
             .find(fix => fix.scope === pending.fix.scope && fix.diagnosticCode === pending.fix.diagnosticCode && JSON.stringify(fix.edits) === JSON.stringify(pending.fix.edits));
         if (verified === undefined) return false;
         const edit = new vscode.WorkspaceEdit();

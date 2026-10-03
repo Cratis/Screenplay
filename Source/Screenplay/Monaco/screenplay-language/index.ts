@@ -12,6 +12,7 @@ import { CompletionOptions, createCompletionProvider } from './completions';
 import { createHoverProvider } from './hover';
 import { createInlayHintsProvider } from './inlay-hints';
 import { createCodeActionProvider } from './code-actions';
+import { CodeActionOptions } from './CodeActionOptions';
 import { attachDiagnostics } from './diagnostics';
 import {
     getSubLanguage,
@@ -41,7 +42,7 @@ export function ensureBuiltInSubLanguages(): void {
 }
 
 // What a host can tell the language service beyond the models it holds.
-export type LanguageServiceOptions = CompletionOptions;
+export type LanguageServiceOptions = CompletionOptions & CodeActionOptions;
 
 export function register(monaco: Monaco, options: LanguageServiceOptions = {}): void {
     if (registeredInstances.has(monaco)) return;
@@ -56,7 +57,7 @@ export function register(monaco: Monaco, options: LanguageServiceOptions = {}): 
     monaco.languages.registerCompletionItemProvider(languageId, createCompletionProvider(monaco, options));
     monaco.languages.registerHoverProvider(languageId, createHoverProvider());
     monaco.languages.registerInlayHintsProvider(languageId, createInlayHintsProvider());
-    monaco.languages.registerCodeActionProvider(languageId, createCodeActionProvider());
+    monaco.languages.registerCodeActionProvider(languageId, createCodeActionProvider(undefined, { ...options, otherDocuments: options.otherDocuments ?? options.playFiles }));
     monaco.editor.defineTheme(screenplayDarkThemeName, screenplayDark);
     monaco.editor.defineTheme(screenplayLightThemeName, screenplayLight);
     attachDiagnostics(monaco);
@@ -124,6 +125,7 @@ export type { DestinationHint } from './DestinationHint';
 export type { ProductionSymbol } from './ProductionSymbol';
 export type { ValidationContext, ValidationIssue, ValidationSeverity } from './validation';
 export { createCodeActionProvider } from './code-actions';
+export type { CodeActionOptions } from './CodeActionOptions';
 export { typeReferenceSymbol, typeReferenceText } from './TypeReferenceSymbol';
 export type { TypeReferenceSymbol } from './TypeReferenceSymbol';
 export { diagnosticCodes } from './diagnostic-codes';

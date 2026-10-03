@@ -38,7 +38,7 @@ export class ProductionBindingProof extends ScreenplaySyntaxWalker {
 
     override visitNode(node: SyntaxNode): void {
         if (!admitted.has(node.kind)) this.valid = false;
-        if (node.kind !== 'ApplicationSyntax') this.committedLines.add(node.location.line);
+        if (node.kind !== 'ApplicationSyntax' && !('isPlacement' in node && node.isPlacement)) this.committedLines.add(node.location.line);
     }
 
     override visitConcept(concept: ConceptSyntax): void {

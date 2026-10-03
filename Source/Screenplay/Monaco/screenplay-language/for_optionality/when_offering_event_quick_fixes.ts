@@ -52,11 +52,32 @@ describe('when offering event quick fixes in Monaco', () => {
         expect((await provider.provideCodeActions(document, range(6), context('PLAY0471', 6), token))?.actions).toEqual([]);
     });
 
-    it('should bound a multiline request to one selected occurrence', async () => {
+    it('should offer every eligible intersecting occurrence without duplicating markers', async () => {
         const document = model(prefix + '      event E\n        id "E"\n        note String?');
         const markers = [...context('PLAY0471', 5).markers, ...context('PLAY0479', 6).markers];
         const result = await createCodeActionProvider().provideCodeActions(document, { ...range(5), endLineNumber: 6 } as Range, { markers: [...markers, ...markers], trigger: 1, only: 'quickfix' }, token);
-        expect(result?.actions.map(action => action.title)).toEqual(['Remove the redundant event id']);
+        expect(result?.actions.map(action => action.title)).toEqual(['Remove the redundant event id', "Use 'optional' instead of '?'"]);
+    });
+
+    it('should not hide later optional or redundant id fixes behind an ineligible destination', async () => {
+        const document = model(prefix + '      command C\n        projectId Uuid identifier\n        produces E\n      event E\n        id "E"\n        note String?');
+        const markers = [...context('PLAY0478', 6).markers, ...context('PLAY0471', 8).markers, ...context('PLAY0479', 9).markers];
+        const result = await createCodeActionProvider().provideCodeActions(document, { ...range(6), endLineNumber: 9 } as Range, { markers, trigger: 1 }, token);
+        expect(result?.actions.map(action => action.title)).toEqual(['Remove the redundant event id', "Use 'optional' instead of '?'", "Use 'optional' throughout this document"]);
+    });
+
+    it('should refuse placed and multi-document destinations and invalidate completeness without a model edit', async () => {
+        const document = model(prefix + '      command C\n        projectId Uuid identifier\n        produces E\n          projectId = projectId\n      event E\n        projectId Uuid');
+        let otherDocuments: string[] = [];
+        const provider = createCodeActionProvider(undefined, { otherDocuments: () => otherDocuments });
+        expect((await provider.provideCodeActions(document, range(6), context('PLAY0478', 6), token))?.actions).toHaveLength(1);
+        otherDocuments = ['sibling.play'];
+        expect((await provider.provideCodeActions(document, range(6), context('PLAY0478', 6), token))?.actions).toEqual([]);
+        otherDocuments = [];
+        expect((await provider.provideCodeActions(document, range(6), context('PLAY0478', 6), token))?.actions).toHaveLength(1);
+        expect((await createCodeActionProvider(['M', 'F']).provideCodeActions(document, range(6), context('PLAY0478', 6), token))?.actions).toEqual([]);
+        const placed = model('slice StateChange S\n  event E\n    id "E"');
+        expect((await createCodeActionProvider(['M', 'F'], { otherDocuments: () => ['sibling.play'] }).provideCodeActions(placed, range(3), context('PLAY0471', 3), token))?.actions).toHaveLength(1);
     });
 
     it('should not offer a version-changing destination or a fix for PLAY0470', async () => {

@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import * as compiler from '@cratis/screenplay-compiler';
 import { ApplicationIndex } from '../ApplicationIndex';
 import { registerCodeActions } from '../CodeActions';
+import { WorkspaceApplication } from '../WorkspaceApplication';
 
 const editor = vi.hoisted(() => ({
     provider: undefined as vscode.CodeActionProvider | undefined,
@@ -34,6 +35,7 @@ vi.mock('vscode', async importOriginal => {
         window: { showWarningMessage() {} },
         workspace: {
             get textDocuments() { return editor.documents; },
+            getWorkspaceFolder: () => undefined,
             applyEdit: async () => { editor.applied++; return true; },
         },
     };
@@ -126,6 +128,58 @@ describe('when migrating optional spelling in VS Code', () => {
         expect(fixes.map(fix => fix.kind?.value)).toEqual(['quickfix']);
         expect(await request({ diagnostics: [{ ...diagnostic, code: 'PLAY0471' }] })).toEqual([]);
         expect(await request({ diagnostics: [{ ...diagnostic, code: 'PLAY0470' }] })).toEqual([]);
+    });
+
+    it('should gate destinations on workspace completeness and recheck it at the write boundary', async () => {
+        const text = 'module M\n  feature F\n    slice StateChange S\n      command C\n        projectId Uuid identifier\n        produces E\n          projectId = projectId\n      event E\n        projectId Uuid';
+        await actions({ diagnostics: [] }, text);
+        const application = new WorkspaceApplication();
+        application.set('model.play', text);
+        registerCodeActions({ subscriptions: [] } as unknown as vscode.ExtensionContext, { fileOf: () => ({ application, path: 'model.play' }) } as unknown as ApplicationIndex);
+        const diagnostic = { code: 'PLAY0478', range: new vscode.Range(5, 0, 5, 25) } as vscode.Diagnostic;
+        const fixes = await request({ diagnostics: [diagnostic] }, 5);
+        expect(fixes).toHaveLength(1);
+        application.set('sibling.play', 'trigger Tick');
+        expect(await request({ diagnostics: [diagnostic] }, 5)).toEqual([]);
+        expect(await editor.apply!(...fixes[0].command!.arguments!)).toBe(false);
+        application.delete('sibling.play');
+        expect(await request({ diagnostics: [diagnostic] }, 5)).toHaveLength(1);
+        const placement = vi.spyOn(application, 'placementOf').mockReturnValue(['M', 'F']);
+        expect(await request({ diagnostics: [diagnostic] }, 5)).toEqual([]);
+        placement.mockRestore();
+    });
+
+    it('should refuse destination offers when a folder application has not loaded', async () => {
+        const text = 'module M\n  feature F\n    slice StateChange S\n      command C\n        projectId Uuid identifier\n        produces E\n          projectId = projectId\n      event E\n        projectId Uuid';
+        await actions({ diagnostics: [] }, text);
+        const folder = vi.spyOn(vscode.workspace, 'getWorkspaceFolder').mockReturnValue({ uri: vscode.Uri.file('/workspace') } as vscode.WorkspaceFolder);
+        try {
+            expect(await request({ diagnostics: [{ code: 'PLAY0478', range: new vscode.Range(5, 0, 5, 25) } as vscode.Diagnostic] }, 5)).toEqual([]);
+        } finally {
+            folder.mockRestore();
+        }
+    });
+
+    it('should keep redundant ids available in multi-document applications', async () => {
+        const text = 'module M\n  feature F\n    slice StateChange S\n      event E\n        id "E"';
+        await actions({ diagnostics: [] }, text);
+        const application = new WorkspaceApplication();
+        application.set('model.play', text);
+        application.set('sibling.play', 'trigger Tick');
+        registerCodeActions({ subscriptions: [] } as unknown as vscode.ExtensionContext, { fileOf: () => ({ application, path: 'model.play' }) } as unknown as ApplicationIndex);
+        expect(await request({ diagnostics: [{ code: 'PLAY0471', range: new vscode.Range(4, 0, 4, 25) } as vscode.Diagnostic] }, 4)).toHaveLength(1);
+    });
+
+    it('should offer all later intersecting fixes after an ineligible destination', async () => {
+        const text = 'module M\n  feature F\n    slice StateChange S\n      command C\n        projectId Uuid identifier\n        produces E\n      event E\n        id "E"\n        note String?';
+        await actions({ diagnostics: [] }, text);
+        const diagnostics = [
+            { code: 'PLAY0478', range: new vscode.Range(5, 0, 5, 25) },
+            { code: 'PLAY0471', range: new vscode.Range(7, 0, 7, 25) },
+            { code: 'PLAY0479', range: new vscode.Range(8, 0, 8, 25) },
+        ] as vscode.Diagnostic[];
+        const result = await editor.provider!.provideCodeActions(editor.documents[0], new vscode.Range(5, 0, 8, 25), { diagnostics: [...diagnostics, ...diagnostics] } as unknown as vscode.CodeActionContext, {} as vscode.CancellationToken) as vscode.CodeAction[];
+        expect(result.map(action => action.title)).toEqual(['Remove the redundant event id', "Use 'optional' instead of '?'", "Use 'optional' throughout this document"]);
     });
 
     it('should reverify a command instead of trusting supplied edits', async () => {

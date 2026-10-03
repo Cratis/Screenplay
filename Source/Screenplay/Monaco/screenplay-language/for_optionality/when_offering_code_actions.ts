@@ -103,7 +103,7 @@ describe('when offering Monaco code actions', () => {
         const provider = createCodeActionProvider(placement);
         const result = await provider.provideCodeActions(document, range, { ...context, markers: [], only: migrationKind }, token);
         expect(result?.actions).toHaveLength(1);
-        expect(prepare).toHaveBeenCalledWith(document.getValue(), { placement });
+        expect(prepare).toHaveBeenCalledWith(document.getValue(), { placement, isWholeApplication: false });
         placement[1] = 'Other';
         await provider.provideCodeActions(document, range, { ...context, markers: [], only: migrationKind }, token);
         expect(prepare).toHaveBeenCalledTimes(2);

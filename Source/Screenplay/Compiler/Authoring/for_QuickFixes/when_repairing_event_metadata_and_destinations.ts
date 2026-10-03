@@ -4,6 +4,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import vectors from '../../Conformance/production-quick-fixes.json';
 import * as compiler from '../../ScreenplayCompiler';
+import { splitLines } from '../../Parsing/SourceLineSplitter';
+import { ProductionBindingProof } from '../ProductionBindingProof';
 import { applyQuickFixEdits, findQuickFixes, prepareQuickFixes } from '../QuickFixes';
 
 const prefix = 'module M\n  feature F\n    slice StateChange S\n';
@@ -12,7 +14,7 @@ const source = prefix + '      command Register\n        projectId Uuid identifi
 describe('when repairing event metadata and destinations', () => {
     it.each(vectors.cases)('should honor shared eligibility: $name', vector => {
         const source = vector.source.join('\n');
-        const fixes = prepareQuickFixes(source);
+        const fixes = prepareQuickFixes(source, { isWholeApplication: true });
         const offered = vector.source.flatMap((_text, index) => fixes(index + 1, 'PLAY0478'));
         expect(offered.map(fix => fix.line)).toEqual(vector.eligibleLines);
         for (const fix of offered) {
@@ -20,7 +22,7 @@ describe('when repairing event metadata and destinations', () => {
             expect(fix.title).toBe('State the destination: for projectId');
             const candidate = applyQuickFixEdits(source, fix.edits)!;
             expect(compiler.parse(candidate).success).toBe(true);
-            expect(findQuickFixes(candidate, { line: fix.line, diagnosticCode: 'PLAY0478' })).toEqual([]);
+            expect(findQuickFixes(candidate, { line: fix.line, diagnosticCode: 'PLAY0478', isWholeApplication: true })).toEqual([]);
         }
     });
 
@@ -56,32 +58,65 @@ describe('when repairing event metadata and destinations', () => {
 
     it.each(['\n', '\r\n'])('should put the destination before mappings and preserve header comments with %j', ending => {
         const text = source.replace('produces Registered', 'produces Registered // keep').replaceAll('\n', ending);
-        const fix = findQuickFixes(text, { line: 6, diagnosticCode: 'PLAY0478' })[0];
+        const fix = findQuickFixes(text, { line: 6, diagnosticCode: 'PLAY0478', isWholeApplication: true })[0];
         expect(applyQuickFixEdits(text, fix.edits)).toBe(text.replace(`produces Registered // keep${ending}`, `produces Registered // keep${ending}          for projectId${ending}`));
     });
 
     it('should insert at EOF without moving the diagnostic anchor to the edit line', () => {
         const source = prefix + '      command Anchor\n        anchorId Uuid identifier\n        produces Anchored\n          for anchorId\n      event Anchored\n      event Registered\n      command Register\n        projectId Uuid identifier\n        produces Registered';
-        const fix = findQuickFixes(source, { line: 12 })[0];
+        const fix = findQuickFixes(source, { line: 12, isWholeApplication: true })[0];
         expect(fix.line).toBe(12);
         expect(applyQuickFixEdits(source, fix.edits)).toBe(source + '\n          for projectId');
     });
 
-    it('should respect placement for a local imported slice without inferring external contracts', () => {
-        const source = 'slice StateChange S\n  command Register\n    projectId Uuid identifier\n    produces Registered\n      projectId = projectId\n  event Registered\n    projectId Uuid';
-        expect(findQuickFixes(source, { line: 4, placement: ['M', 'F'] })).toHaveLength(1);
-        expect(findQuickFixes(source.replace('  event Registered\n    projectId Uuid', ''), { line: 4, placement: ['M', 'F'] })).toEqual([]);
+    it('should require explicit whole-application proof even for locally bindable destinations', () => {
+        expect(findQuickFixes(source, { line: 6, diagnosticCode: 'PLAY0478' })).toEqual([]);
+        expect(findQuickFixes(source, { line: 6, diagnosticCode: 'PLAY0478', isWholeApplication: false })).toEqual([]);
+        expect(findQuickFixes(source, { line: 6, diagnosticCode: 'PLAY0478', isWholeApplication: true })).toHaveLength(1);
+        expect(findQuickFixes(source, { line: 6, diagnosticCode: 'PLAY0478', isWholeApplication: true, placement: [] })).toHaveLength(1);
+    });
+
+    it.each(['', 'trigger Tick\n', '\ntrigger Tick\n'])('should never offer destinations for a placed document with prefix %j', before => {
+        const source = before + 'slice StateChange S\n  command Register\n    projectId Uuid identifier\n    produces Registered\n      projectId = projectId\n  event Registered\n    projectId Uuid';
+        const line = before.split('\n').length + 3;
+        expect(findQuickFixes(source, { line, placement: ['M', 'F'], isWholeApplication: true })).toEqual([]);
+    });
+
+    it('should not count synthetic placement nodes as proof of an opaque first line', () => {
+        const source = 'trigger Tick\nslice StateChange S\n  command Register\n    projectId Uuid identifier\n    produces Registered\n      projectId = projectId\n  event Registered\n    projectId Uuid';
+        const parsed = compiler.parseForAuthoring(source, undefined, ['M', 'F']);
+        expect(parsed.success).toBe(true);
+        expect(new ProductionBindingProof(parsed.value).permits(splitLines(source))).toBe(false);
+    });
+
+    it('should keep redundant id removal available in incomplete placed applications', () => {
+        expect(findQuickFixes('slice StateChange S\n  event E\n    id "E"', { line: 3, placement: ['M', 'F'], isWholeApplication: false })).toHaveLength(1);
     });
 
     it('should verify only the requested occurrence and cache it rather than reparse every production', () => {
         const source = prefix + Array.from({ length: 2000 }, (_value, index) => `      command C${index}\n        id Uuid identifier\n        produces E${index}\n          id = id\n      event E${index}\n        id Uuid\n`).join('');
         const spy = vi.spyOn(compiler, 'parseForAuthoring');
         try {
-            const fixes = prepareQuickFixes(source);
+            const fixes = prepareQuickFixes(source, { isWholeApplication: true });
             expect(spy).toHaveBeenCalledTimes(1);
             expect(fixes(6, 'PLAY0478')).toHaveLength(1);
             expect(fixes(6, 'PLAY0478')).toHaveLength(1);
             expect(spy).toHaveBeenCalledTimes(2);
+        } finally {
+            spy.mockRestore();
+        }
+    });
+
+    it('should verify all range occurrences in one linear batch and cache the verdict', () => {
+        const source = prefix + Array.from({ length: 200 }, (_value, index) => `      command C${index}\n        id Uuid identifier\n        produces E${index}\n          id = id\n      event E${index}\n        id Uuid\n`).join('');
+        const requests = Array.from({ length: 200 }, (_value, index) => ({ line: 6 + index * 6, diagnosticCode: 'PLAY0478' }));
+        const spy = vi.spyOn(compiler, 'parseForAuthoring');
+        try {
+            const fixes = prepareQuickFixes(source, { isWholeApplication: true });
+            expect(fixes([...requests, ...requests])).toHaveLength(200);
+            expect(fixes(requests)).toHaveLength(200);
+            expect(spy).toHaveBeenCalledTimes(2);
+            for (const request of requests) expect(fixes(request.line, request.diagnosticCode)).toHaveLength(1);
         } finally {
             spy.mockRestore();
         }
@@ -100,7 +135,7 @@ describe('when repairing event metadata and destinations', () => {
         }
         const spy = vi.spyOn(compiler, 'parseForAuthoring').mockReturnValue(parsed);
         try {
-            prepareQuickFixes(source);
+            prepareQuickFixes(source, { isWholeApplication: true });
             expect(visits).toBeLessThan(properties.length * 8);
         } finally {
             spy.mockRestore();
@@ -114,7 +149,8 @@ describe('when repairing event metadata and destinations', () => {
             return text.includes('for projectId') ? { ...parsed, value: { ...parsed.value, modules: [] } } : parsed;
         });
         try {
-            expect(findQuickFixes(source, { line: 6 })).toEqual([]);
+            expect(findQuickFixes(source, { line: 6, isWholeApplication: true })).toEqual([]);
+            expect(prepareQuickFixes(source, { isWholeApplication: true })([{ line: 6, diagnosticCode: 'PLAY0478' }])).toEqual([]);
         } finally {
             spy.mockRestore();
         }
