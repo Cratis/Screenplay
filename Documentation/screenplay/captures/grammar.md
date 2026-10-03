@@ -318,7 +318,7 @@ WhenExpr = "added"
 
 `or` and `and` cannot be mixed within a single property-change `when` clause - `when a or b and c` is a compile error. These forms test changes, not Boolean comparisons.
 
-A backtick guard is a separate, opaque implementation expression. For example, ``when `status == "sent" && overdue == true` `` is valid authoring syntax: the C# compiler stores the entire guard verbatim, including backticks (the TypeScript compiler treats capture bodies as opaque), without parsing its operators or assigning it a language. It is not the `and`/`or` condition grammar used by `produces when`. A target implementation must interpret it; parsing alone does not establish portable execution.
+A backtick guard is a separate, opaque implementation expression. For example, ``when `status == "sent" && overdue == true` `` is valid authoring syntax: the C# compiler stores the entire guard verbatim, including backticks, without parsing its operators or assigning it a language. The TypeScript compiler reads a capture's source, key and appends but skips each append's body, including its `when` guard. It is not the `and`/`or` condition grammar used by `produces when`. A target implementation must interpret it; parsing alone does not establish portable execution.
 
 ### Children Block
 
