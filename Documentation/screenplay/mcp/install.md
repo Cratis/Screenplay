@@ -340,10 +340,11 @@ Use the screenplay server to describe the application: how many modules,
 features and slices does it have, and are there any diagnostics?
 ```
 
-You should receive compact model counts and a `sourceRevision`, not the entire
-model text. For an empty model directory, the answer is an empty application;
-continue with [Create a model](create.md). No source is written until an accepted
-proposal is applied.
+For an existing model, you should receive compact model counts and a
+`sourceRevision`, not the entire model text. Application-read tools can report
+that an empty root contains no `.play` files; continue with
+[Create a model](create.md) to open a workspace and propose its first documents.
+No source is written until an accepted proposal is applied.
 
 ## Keep the model's identity state
 
