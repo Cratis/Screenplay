@@ -2,7 +2,7 @@
 
 The Screenplay syntax reference in EBNF. `INDENT`/`DEDENT` represent indented bodies: parsers read lines at greater indentation until the body ends. PDL and CDL have their own [sub-grammars](sub-languages.md). The C# compiler validates the full language; the TypeScript compiler models a subset and recognizes the remaining shipped constructs as opaque bodies.
 
-Declarations and body directives can appear in any order unless a rule below states otherwise. Repeated alternatives describe ordering, not permission to repeat singleton metadata. References may name declarations later in the document; scope and semantic checks still apply.
+Declarations and body directives can appear in any order unless a rule below states otherwise. A repeated group such as { A | B } means its members may appear in any order; it does not allow repeating singleton directives such as description, for or where. References may name declarations later in the document; scope and semantic checks still apply.
 
 ```ebnf
 (* ============================================================ *)
@@ -443,7 +443,7 @@ RequiredTypeRef = QualifiedName, [ "[]" ] ;
 
 (* "optional" follows the complete type, including any collection marker.
    It is case-sensitive and contextual, not a reserved name. The attached ?
-   suffix still parses with warning PLAY0479; prefer optional. Modifiers cannot
+   suffix still parses, with information diagnostic PLAY0479; prefer optional. Modifiers cannot
    be repeated. Optional reads are not yet supported. *)
 
 (* -------------------------------------------------------------- *)

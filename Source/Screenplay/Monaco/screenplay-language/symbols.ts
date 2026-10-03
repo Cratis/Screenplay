@@ -4,6 +4,7 @@
 import { eventBodyReservedWords } from '@cratis/screenplay-compiler';
 import { fenceMap, indentOf } from './document-context';
 import { eventAnalysisSource } from './event-analysis-source';
+import { fileReferenceOn } from './file-references';
 import { clauseKeywords } from './language';
 import { ProductionSymbol } from './ProductionSymbol';
 import { TypeReferenceSymbol, typeReferenceSymbol } from './TypeReferenceSymbol';
@@ -240,12 +241,16 @@ export function scanDocument(lines: string[]): DocumentSymbols {
 
         const eventMatch = eventLines[index].trim().match(/^(?:produces\s+)?event\s+(\w+)(?:\s+generation\s+(\d+))?\s*$/);
         if (eventMatch) {
+            const inline = trimmed.startsWith('produces ');
+            const body = directBody(eventLines, eventFences, index, indent);
+            // Standalone events distinguish file metadata from properties by path shape.
+            const propertyBody = inline ? body : body.filter(line => fileReferenceOn(eventLines[line], line) === undefined);
             symbols.events.push({
                 name: eventMatch[1],
                 ...(eventMatch[2] ? { generation: Number(eventMatch[2]) } : {}),
-                inline: trimmed.startsWith('produces '),
-                properties: propertiesIn(trimmed.startsWith('produces ') ? eventPropertyLines : eventLines,
-                    directBody(eventLines, eventFences, index, indent), trimmed.startsWith('produces ') ? inlineEventReserved : eventReserved),
+                inline,
+                properties: propertiesIn(inline ? eventPropertyLines : eventLines,
+                    propertyBody, inline ? inlineEventReserved : eventReserved),
                 line: index,
             });
             continue;

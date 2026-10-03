@@ -41,7 +41,7 @@ An editor extension registers a construct keyword together with its token rules,
 
 The editor can highlight the registered construct's indented body as a sub-language. This does not add a production to the [Screenplay grammar](grammar.md).
 
-An unknown construct reports a compiler error; the parser then skips its body to recover and read later declarations. It is not silently discarded as valid syntax. Editor registration is a reading aid, not compiler acceptance. The TypeScript compiler also skips some *known, shipped* constructs that it does not yet model; those are not extension keywords.
+An unregistered construct keyword inside a slice produces warning PLAY0029, and the parser skips its body so later declarations still parse; the document still compiles, but the construct contributes nothing to the model. Unknown words at the top level or in a module or feature body are errors. Editor registration is a reading aid, not compiler acceptance. The TypeScript compiler also skips some *known, shipped* constructs that it does not yet model; those are not extension keywords.
 
 ## The Monaco registration API
 
