@@ -6,7 +6,6 @@ import { PropertySyntax, TagSyntax } from '../Syntax/Declarations';
 import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
 import { ProducesSyntax } from '../Syntax/Reactions';
 import { pattern } from '../Text/patterns';
-import { checkConditionTokens } from './ConditionTokens';
 import { parseTag } from './DeclarationParsers';
 import { EventMetadataParser } from './EventMetadataParser';
 import { parseMappingSource } from './ExpressionParser';
@@ -39,7 +38,6 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
         }
         name = inline[1];
     } else if (conditional.test(header.content)) {
-        checkConditionTokens(context, conditional.exec(header.content)![1], header);
         const child = context.peekChild(header.indent);
         if (child === undefined || !eventName.test(child.content)) {
             context.error(DiagnosticCodes.ProducesWhenWithoutEvent, "Expected an event name on the line after 'produces when'", locationOf(header));

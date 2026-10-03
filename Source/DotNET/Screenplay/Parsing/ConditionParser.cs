@@ -25,17 +25,14 @@ internal static partial class ConditionParser
     /// <param name="text">The condition text.</param>
     /// <param name="location">The <see cref="SourceLocation"/> of the condition.</param>
     /// <returns>The parsed <see cref="ConditionSyntax"/>, or <c>null</c> when the condition is malformed.</returns>
-    public static ConditionSyntax? Parse(ParserContext context, string text, SourceLocation location)
-    {
-        var tokens = ConditionTokens.Read(context, text, TokenRegex(), location, DiagnosticCodes.UnexpectedTokenInCondition, "condition");
-        return tokens is null ? null : LogicalConditionParser.Parse<ConditionSyntax>(
+    public static ConditionSyntax? Parse(ParserContext context, string text, SourceLocation location) =>
+        LogicalConditionParser.Parse<ConditionSyntax>(
             context,
-            tokens,
+            Tokenize(text),
             location,
             ParseComparison,
             static (left, @operator, right, location) => new LogicalConditionSyntax(left, @operator, right, location),
             _diagnostics);
-    }
 
     static ConditionSyntax? ParseComparison(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
     {
@@ -96,6 +93,9 @@ internal static partial class ConditionParser
             _ => null
         };
     }
+
+    static List<string> Tokenize(string text) =>
+        [.. TokenRegex().Matches(text).Select(_ => _.Value)];
 
     [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|[\\w.$-]+", RegexOptions.None, 1000)]
     private static partial Regex TokenRegex();

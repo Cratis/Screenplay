@@ -316,12 +316,7 @@ internal static partial class CaptureParser
 
     static CaptureWhenSyntax? ParseWhenPropertyClause(ParserContext context, SourceLine line, string trigger)
     {
-        var tokens = ConditionTokens.Read(context, trigger, WhenTokenRegex(), line.Location, DiagnosticCodes.InvalidWhenClause, "'when' clause");
-        if (tokens is null)
-        {
-            return null;
-        }
-
+        var tokens = WhenTokenRegex().Matches(trigger).Select(_ => _.Value).ToList();
         if (tokens.Count == 0)
         {
             context.Error(DiagnosticCodes.InvalidWhenClause, $"Invalid 'when' clause '{line.Content}'", line.Location);
@@ -499,7 +494,7 @@ internal static partial class CaptureParser
     [GeneratedRegex(@"^append\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex AppendRegex();
 
-    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|-?\\d+(?:\\.\\d+)?|[\\w.]+", RegexOptions.None, 1000)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|[\\w.]+", RegexOptions.None, 1000)]
     private static partial Regex WhenTokenRegex();
 
     [GeneratedRegex(@"^(@?[\w.]+)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]

@@ -3,7 +3,6 @@
 
 import { CaptureAppendSyntax, CaptureChildrenSyntax, CaptureNestedSyntax, CaptureSourceSettingSyntax, CaptureSourceSyntax, CaptureSyntax } from '../Syntax/Captures';
 import { pattern } from '../Text/patterns';
-import { checkCaptureWhenTokens } from './ConditionTokens';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
@@ -14,8 +13,8 @@ const childrenPattern = pattern('^children\\s+([a-z_]\\w*)\\s+identified\\s+by\\
 const nestedPattern = pattern('^nested\\s+([\\w.]+)$');
 
 // The port of the C# CaptureParser, narrowed to what a capture reads from and the events it appends. How it
-// maps what it reads, and when each event is appended, are not modeled. Guard token coverage is checked;
-// the C# compiler remains the authority on their full grammar.
+// maps what it reads, and when each event is appended, are skipped - the C# compiler remains the authority
+// on whether they are valid.
 export function parseCapture(context: ParserContext, line: SourceLine): CaptureSyntax {
     const name = header.exec(line.content)?.[1] ?? '';
     let source: CaptureSourceSyntax | null = null;
@@ -84,11 +83,7 @@ function appendsOf(context: ParserContext, line: SourceLine): CaptureAppendSynta
 
 function pushAppend(context: ParserContext, line: SourceLine, appends: CaptureAppendSyntax[]): void {
     const match = appendPattern.exec(line.content);
-    for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
-        context.reader.takeSignificant();
-        if (firstWord(child.content) === 'when') checkCaptureWhenTokens(context, child);
-        context.skipOpaqueBlock(child.indent);
-    }
+    context.skipOpaqueBlock(line.indent);
     if (match !== null) {
         appends.push({ kind: 'CaptureAppendSyntax', event: match[1], location: locationOf(line) });
     }

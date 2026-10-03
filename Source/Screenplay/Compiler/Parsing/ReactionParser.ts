@@ -4,7 +4,6 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { DayOfWeek, IntervalUnit, InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from '../Syntax/Reactions';
 import { pattern } from '../Text/patterns';
-import { checkConditionTokens } from './ConditionTokens';
 import { parseDescription } from './DescriptionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
@@ -39,8 +38,7 @@ export function parseReaction(context: ParserContext, line: SourceLine): Reactio
             continue;
         }
         if (keyword === 'where') {
-            // Conditions are not modeled, but unmatched fragments must not disappear.
-            checkConditionTokens(context, child.content.substring('where'.length).trim(), child);
+            // Conditions are not modeled.
             continue;
         }
         if (!clauseKeywords.has(keyword)) {
