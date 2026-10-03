@@ -27,6 +27,7 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "handler": null,
                   "name": "Record",
                   "produces": [
                     {

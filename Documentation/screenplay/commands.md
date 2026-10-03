@@ -548,6 +548,27 @@ A command uses either `produces` blocks or a `handler` — not both. Keep handle
 
 Inside either form, `context` is the [`CommandContext`](context.md) — the command itself, the tenant, the caller, the identity recorded as having caused it, the causation, and when the command was received. An inline block and a `file` reference compile against exactly the same type.
 
+### Implementation intent (handlers only)
+
+You can keep implementation guidance beside the handler's existing attachment:
+
+```screenplay
+handler
+  implementation
+    hint "Archive only invoices dated before the requested cutoff"
+    file Handlers/ArchiveOldInvoicesHandler.cs
+```
+
+This is the handler from [Invoicing](https://github.com/Cratis/Screenplay/blob/main/Samples/Invoicing/invoicing.play). The wrapper also accepts an existing tagged fence instead of `file`. Omit the payload to record **pending** intent; bare `implementation` is valid too. Hints are ordered, nonblank quoted strings, with the usual string escaping. Their decoded text is retained without trimming. A handler allows one wrapper and at most one payload. Unknown children, duplicate wrappers, multiple payloads and mixed direct/wrapped sources are errors.
+
+| Owner | `implementation` wrapper |
+| --- | --- |
+| Command handler | Supported; direct file/fence forms remain supported |
+| Query performer, validation rule, reducer rule, policy, reaction trigger | Deferred; existing direct forms only |
+| Operations, provisioning | Not introduced by this feature |
+
+`implementation` and `hint` are contextual, not globally reserved property names. Intent authoring does not execute, confirm or regenerate code. Command handlers still fail executable admission with `PLAY0268`, including when attached. There is no lock, drift checker, confirmation or AI action in this slice. See [AST authoring](ast-authoring.md#handler-intent-edits) and [MCP inventory](mcp/reference.md#handler-intent-inventory).
+
 ## Concurrency
 
 An optional `concurrency` block declares the concurrency scope enforced when the command's events are appended — mirroring Chronicle's `ConcurrencyScope`. When two commands race, the append fails for the loser instead of silently letting both win.

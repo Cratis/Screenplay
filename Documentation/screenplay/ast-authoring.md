@@ -30,6 +30,14 @@ An intentional edit to a valid reference target is different from an untouched
 reference silently changing meaning. Acceptance never proves business correctness
 or executes specifications.
 
+## Handler intent edits
+
+`HandlerSyntax.Implementation` is a nullable init-only member; existing positional constructors and deconstruction are unchanged. `ImplementationSyntax` holds ordered `ImplementationHintSyntax` children, each with `text` and its own source/comment anchor. It stores no payload or lifecycle state. The handler's existing `file`/`code` is the only payload; structural paths remain `handler.file`/`handler.code` even when printing nests them under the wrapper.
+
+Use ordinary typed add/replace/remove operations with **Authoring** validation to edit hints, payloads or the wrapper. Switch file/inline sources atomically in one proposal. Parsed and typed authoring candidates reject multiple payloads and blank hints. Wrapped printing refuses conflicting sources rather than choosing one; the legacy direct printer retains its explicit omission comments for old structural trees. Removing attached metadata unwraps while retaining its payload. Removing pending metadata creates an invalid bare handler and is refused. Revision and expected-node checks remain mandatory; authoring acceptance does not confirm implementation behavior.
+
+Old handler JSON without `implementation` reads as null. New metadata needs a capable syntax reader: strict older readers reject unknown kinds/members. Schema discovery includes both new kinds; no ESM version or canonical bytes change.
+
 ## Typed syntax JSON
 
 The public codec lives in `Cratis.Screenplay.Syntax.Serialization`.

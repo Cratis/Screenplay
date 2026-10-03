@@ -79,6 +79,8 @@ internal static class SyntaxKinds
         typeof(FormSyntax),
         typeof(FromSyntax),
         typeof(HandlerSyntax),
+        typeof(ImplementationSyntax),
+        typeof(ImplementationHintSyntax),
         typeof(ImportSyntax),
         typeof(IncrementMappingSyntax),
         typeof(InteractionArgumentSyntax),

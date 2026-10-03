@@ -2,6 +2,31 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "Handler wrapper rejects invalid hint and unknown children",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        handler", "          implementation", "            hint unquoted", "            hint \" \"", "            provider csharp"],
+            "diagnostics": ["PLAY0493@7", "PLAY0493@8", "PLAY0492@9"]
+        },
+        {
+            "name": "Handler wrapper rejects duplicate wrapper",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        handler", "          implementation", "          implementation"],
+            "diagnostics": ["PLAY0492@7"]
+        },
+        {
+            "name": "Handler wrapper rejects multiple sources",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        handler", "          implementation", "            file One.cs", "            file Two.cs"],
+            "diagnostics": ["PLAY0494@8"]
+        },
+        {
+            "name": "Handler wrapper rejects wrapped then direct source",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        handler", "          implementation", "          file Direct.cs"],
+            "diagnostics": ["PLAY0494@7"]
+        },
+        {
+            "name": "Handler wrapper rejects direct then wrapped source",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        handler", "          file Direct.cs", "          implementation"],
+            "diagnostics": ["PLAY0494@7"]
+        },
+        {
             "name": "Generated identifier for fixtures accept strict N D B P UUID literals",
             "validate": true,
             "source": [

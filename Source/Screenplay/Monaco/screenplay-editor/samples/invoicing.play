@@ -1041,7 +1041,9 @@ module Invoicing
           olderThan < today  message "Can only archive invoices dated before today"
 
         handler
-          file Handlers/ArchiveOldInvoicesHandler.cs
+          implementation
+            hint "Archive only invoices dated before the requested cutoff"
+            file Handlers/ArchiveOldInvoicesHandler.cs
 
       event InvoicesArchived
         olderThan Date

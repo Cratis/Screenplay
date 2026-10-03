@@ -23,6 +23,7 @@ static class WorkspaceAuthoringPrinter
         ImmutableArray<Diagnostic>.Builder diagnostics,
         WorkspaceDocument? original = null)
     {
+        ImplementationInvariants.ValidateAuthoring(intended);
         if (formatting == WorkspaceAuthoringFormatting.PreserveTrivia && original is not null)
         {
             return WorkspaceTriviaPrinter.Print(original, intended);

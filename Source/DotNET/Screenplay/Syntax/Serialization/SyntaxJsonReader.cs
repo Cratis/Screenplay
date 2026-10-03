@@ -38,7 +38,9 @@ internal static class SyntaxJsonReader
             member => ReadMember(properties, member, $"{path}.{member.Name}", depth + 1),
             StringComparer.Ordinal);
 
-        return descriptor.Create(values);
+        var node = descriptor.Create(values);
+        ImplementationInvariants.Validate(node);
+        return node;
     }
 
     static Dictionary<string, JsonElement> Properties(JsonElement value, string path)

@@ -59,6 +59,32 @@ internal sealed partial class McpWorkspaces
             });
         }
 
+        if (view == "handler-intents" || view == "handler-intent-details")
+        {
+            CheckContinuation(arguments, "expectedCatalogRevision", workspace.IdentityCatalog.Revision.ToString());
+            var inventory = WorkspaceImplementationInventory.Create(McpWorkspaceAnalysis.For(workspace).Syntax);
+            if (view == "handler-intent-details")
+            {
+                var id = McpJson.RequiredString(arguments, "requirementId");
+                var entry = inventory.Entries.SingleOrDefault(value => value.RequirementId == id)
+                    ?? throw new McpFailure("UnknownRequirement: no handler intent has that identity.");
+                return McpJson.ToolResult(new
+                {
+                    workspace = McpWorkspaceTransport.Describe(workspace), view,
+                    coverage = WorkspaceImplementationInventory.Coverage,
+                    handler = DescribeHandlerIntent(entry),
+                    page = McpPaging.Page(entry.Hints, arguments, workspace.Revision.ToString())
+                });
+            }
+
+            return McpJson.ToolResult(new
+            {
+                workspace = McpWorkspaceTransport.Describe(workspace), view,
+                coverage = WorkspaceImplementationInventory.Coverage,
+                page = McpPaging.Page(inventory.Entries, DescribeHandlerIntent, arguments, workspace.Revision.ToString())
+            });
+        }
+
         if (view == "implementation-requirements")
         {
             var manifestRevision = McpAttachmentManifest.Revision(workspace.Compilation.ImplementationRequirements);
@@ -276,6 +302,21 @@ internal sealed partial class McpWorkspaces
         _proposals.Remove(McpJson.RequiredString(arguments, "proposalId"));
         return McpJson.ToolResult(new { discarded = true, remainingCount = _proposals.Count });
     }
+
+    static object DescribeHandlerIntent(WorkspaceImplementationEntry entry) => new
+    {
+        handle = McpAstHandles.Describe(entry.Handle),
+        owner = McpSemanticAddresses.Describe(entry.Owner),
+        ownerId = entry.OwnerId.ToString(),
+        requirementId = entry.RequirementId,
+        identityOrigin = entry.IdentityOrigin.ToString(),
+        provisional = entry.IsProvisional,
+        hintCount = entry.Hints.Length,
+        file = entry.File,
+        language = entry.Language,
+        state = entry.State,
+        executableReady = false
+    };
 
     static void CheckContinuation(JsonElement arguments, string name, string revision, bool requireOnContinuation = true)
     {

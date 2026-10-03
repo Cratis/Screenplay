@@ -28,6 +28,8 @@ One keyword covers both because the construct already decides which is meant. A 
 
 A file-backed implementation uses the same typed context descriptor as its inline counterpart. The descriptor is derived from the declared command, concept, policy use site or reducer transition, not from the file path or its code. Unresolved file content can still have a descriptor when its model shape resolves; this does not mean the attachment can execute. Command handlers remain unbound even when their context is described. See [Contexts](context.md#typed-context-sidecars).
 
+A command handler may nest this same `file` under an [`implementation` wrapper](commands.md#implementation-intent-handlers-only), alongside ordered hints. The wrapper does not select another file, change the path convention or introduce a provider/language selector. It has at most one file or tagged fence; without either it is pending intent. Other attachment owners retain their existing direct forms.
+
 ## A worked example
 
 ```screenplay

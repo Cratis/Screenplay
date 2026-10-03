@@ -53,6 +53,8 @@ export function completionEntriesFor(chain: string[]): CompletionEntry[] {
             return items.producesItems;
         case 'handler':
             return items.handlerItems;
+        case 'implementation':
+            return chain[1] === 'handler' ? items.implementationItems : [];
         case 'query':
             return items.queryItems;
         case 'performer':

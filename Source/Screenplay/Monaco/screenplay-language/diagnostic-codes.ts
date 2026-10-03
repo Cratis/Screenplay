@@ -10,6 +10,9 @@
 // and those stay codeless deliberately: minting a PLAY number for something no compiler run can emit
 // would make the catalogue describe two different tools.
 export const diagnosticCodes = {
+    invalidImplementationBlock: 'PLAY0492',
+    invalidImplementationHint: 'PLAY0493',
+    conflictingImplementationSources: 'PLAY0494',
     eventSourceIdInPayload: 'PLAY0469',
     explicitProducesTargetsRequired: 'PLAY0470',
     redundantEventId: 'PLAY0471',

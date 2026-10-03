@@ -156,7 +156,7 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0042` | Error | A `produces` line is neither `produces <EventType>` nor `produces when <condition>`. |
 | `PLAY0043` | Error | A `produces when` condition is followed by no event to produce. |
 | `PLAY0044` | Error | A mapping line is not `<property> = <source>`. |
-| `PLAY0045` | Error | A handler names neither a `file` nor an inline code block. |
+| `PLAY0045` | Error | A handler names neither a `file`, an inline code block nor an explicit `implementation` wrapper. |
 | `PLAY0046` | Error | A line in a handler body opens with a word a handler declares nothing by. |
 
 ### Queries
@@ -914,6 +914,16 @@ For response and generated-fixture compatibility checks only, `Date` values must
 | `PLAY0489` | Error | A response uses a collection or whole read model, or an explicit field type differs from its source's type, collection shape or optionality. |
 | `PLAY0490` | Error | A generated fixture repeats a target, names an unknown, nongenerated or identifier property, or supplies an incompatible or nonconcrete value. |
 | `PLAY0491` | Error | A return expectation is malformed, repeated, incompatible with the response contract, lacks a command action, or accompanies an error or denial. |
+
+### Handler implementation intent
+
+| Code | Severity | Reported when |
+| --- | --- | --- |
+| `PLAY0492` | Error | An implementation wrapper has an operand, duplicate wrapper, unknown child or nested file child. |
+| `PLAY0493` | Error | A hint is not one nonblank quoted string, or has children. |
+| `PLAY0494` | Error | A handler mixes direct/wrapped sources, or a wrapper selects more than one file/inline payload. |
+
+These are syntax diagnostics. A valid pending or attached handler still has unsupported executable admission (`PLAY0268`).
 
 ## Retired codes
 

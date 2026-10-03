@@ -15,6 +15,12 @@ The editor recognizes [generated command values and response contracts](commands
 
 The board leaves generated values out of command request schemas and lists generated values and returns in command details. It does not create response events or emit official response types. TextMate highlighting treats ambiguous two-token `returns` lines conservatively; `returns @name` makes response intent explicit.
 
+## Handler implementation intent
+
+Both Monaco and VS Code offer `implementation` beneath a command handler, then ordered `hint` lines, `file` or existing tagged fences within its wrapper. Completion and hover describe pending intent and unavailable handler execution. New words stay ordinary property names outside those contexts. Parser diagnostics `PLAY0492`–`PLAY0494` retain original source locations; fenced code is isolated from DSL analysis and completion.
+
+The board does not show handler execution outputs or confirmation status. This authoring feature adds no AI, lock or confirmation command. See [supported owners](commands.md#implementation-intent-handlers-only).
+
 ## Screens
 
 Each slice that declares [screens](screens.md) gets a prototype in the board's **User** row. The prototype is a sketch of what the screen holds, laid out top to bottom:

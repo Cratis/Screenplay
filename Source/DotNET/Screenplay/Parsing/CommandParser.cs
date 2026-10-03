@@ -367,15 +367,31 @@ internal static partial class CommandParser
         }
 
         context.Reader.TakeSignificant();
-        if (FileReferenceParser.IsDirective(body))
+        if (LineText.FirstWord(body.Content) == "implementation")
         {
-            return new(FileReferenceParser.Parse(context, body), null, line.Location);
+            return ImplementationParser.Parse(context, line, body);
         }
 
-        if (CodeBlockParser.IsCodeLine(context, body))
+        HandlerSyntax? result = null;
+        if (FileReferenceParser.IsDirective(body))
+        {
+            result = new(FileReferenceParser.Parse(context, body), null, line.Location);
+        }
+        else if (CodeBlockParser.IsCodeLine(context, body))
         {
             var code = CodeBlockParser.Parse(context, body);
-            return code is null ? null : new HandlerSyntax(null, code, line.Location);
+            result = code is null ? null : new HandlerSyntax(null, code, line.Location);
+        }
+
+        if (result is not null)
+        {
+            if (context.TryPeekChild(line.Indent, out var extra) && LineText.FirstWord(extra.Content) == "implementation")
+            {
+                context.Error(DiagnosticCodes.ConflictingImplementationSources, "A handler cannot mix wrapped and direct sources.", extra.Location);
+                context.SkipBlock(line.Indent);
+            }
+
+            return result;
         }
 
         context.Error(DiagnosticCodes.UnknownHandlerDirective, $"Unexpected '{body.Content}' in handler - expected 'file <path>' or an inline code block", body.Location);

@@ -198,6 +198,7 @@
                         }
                       },
                       "description": null,
+                      "handler": null,
                       "name": "ApplyDiscount",
                       "produces": [
                         {
@@ -484,6 +485,7 @@
                         }
                       },
                       "description": null,
+                      "handler": null,
                       "name": "WriteOffInvoice",
                       "produces": [
                         {
@@ -793,6 +795,7 @@
                     }
                   },
                   "description": "Registers a new invoice with its lines and payment terms",
+                  "handler": null,
                   "name": "RegisterInvoice",
                   "produces": [
                     {
@@ -1878,6 +1881,7 @@
                     }
                   },
                   "description": null,
+                  "handler": null,
                   "name": "CancelInvoice",
                   "produces": [
                     {
@@ -2200,6 +2204,7 @@
                     }
                   },
                   "description": null,
+                  "handler": null,
                   "name": "ChangeInvoiceStatus",
                   "produces": [
                     {
@@ -2705,6 +2710,16 @@
                     }
                   },
                   "description": null,
+                  "handler": {
+                    "kind": "HandlerSyntax",
+                    "code": {
+                      "kind": "CodeBlockSyntax",
+                      "code": "var events = new List<object>();\nevents.Add(new InvoiceBatchProcessingStarted(BatchId, InvoiceIds.Count, DateTimeOffset.UtcNow));\nforeach (var id in InvoiceIds)\n    events.Add(Action switch {\n        \"send\"   => new InvoiceSent(id, DateTimeOffset.UtcNow, context.Identity.Id, null),\n        \"cancel\" => new InvoiceCancelled(id, \"Batch\", DateTimeOffset.UtcNow, context.Identity.Id),\n        _        => throw new InvalidOperationException($\"Unknown action: {Action}\")\n    });\nevents.Add(new InvoiceBatchProcessingCompleted(BatchId, InvoiceIds.Count, DateTimeOffset.UtcNow));\nreturn events;",
+                      "language": "csharp"
+                    },
+                    "file": null,
+                    "implementation": null
+                  },
                   "name": "ProcessInvoiceBatch",
                   "produces": [],
                   "properties": [
@@ -2894,6 +2909,15 @@
                     }
                   },
                   "description": null,
+                  "handler": {
+                    "kind": "HandlerSyntax",
+                    "code": null,
+                    "file": {
+                      "kind": "FileReferenceSyntax",
+                      "path": "Handlers/ArchiveOldInvoicesHandler.cs"
+                    },
+                    "implementation": null
+                  },
                   "name": "ArchiveOldInvoices",
                   "produces": [],
                   "properties": [

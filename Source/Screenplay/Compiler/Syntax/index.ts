@@ -7,6 +7,7 @@ export * from './EventDeclarations';
 export * from './ProductionDestinations';
 export * from './Expressions';
 export * from './Commands';
+export * from './Implementations';
 export * from './Queries';
 export * from './Projections';
 export * from './Reactions';
