@@ -299,6 +299,14 @@ jobs:
           build-args: |
             VERSION=${{ needs.release.outputs.version }}
 
+  publish-desktop:
+    if: needs.release.outputs.publish == 'true'
+    needs: [release]
+    uses: ./.github/workflows/mcp-desktop.yml
+    with:
+      version: ${{ needs.release.outputs.version }}
+      release: true
+
   verify-published:
     # A merge that publishes nothing is the failure mode that silently costs a release: the release job
     # succeeds, every publish job is skipped for want of should-publish, and the whole run reports green. Fail

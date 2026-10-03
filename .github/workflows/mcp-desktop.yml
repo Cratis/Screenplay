@@ -1,0 +1,104 @@
+name: MCP desktop packages
+
+on:
+  pull_request:
+    paths:
+      - 'Source/DotNET/**'
+      - 'Source/Screenplay/**'
+      - '*.props'
+      - '.github/workflows/mcp-desktop.yml'
+      - '.github/workflows/publish.yml'
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      release:
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { rid: osx-arm64, runner: macos-15 }
+          - { rid: osx-x64, runner: macos-15-intel }
+          - { rid: win-x64, runner: windows-latest }
+          - { rid: linux-x64, runner: ubuntu-latest }
+          - { rid: linux-arm64, runner: ubuntu-24.04-arm }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install packaging validators
+        run: |
+          npm install -g @anthropic-ai/mcpb@2.1.2
+          python -m pip install jsonschema==4.26.0
+      - name: Check portable plugin schemas and platform metadata
+        run: python -m unittest discover -s Source/DotNET/Screenplay.Mcp/Packaging -p 'test_*.py'
+      - name: Build embedded event model board
+        run: |
+          corepack enable
+          yarn install
+          yarn workspaces foreach -Rt --from @cratis/screenplay-mcp-app run build
+      - name: Build self-contained server and packages
+        env:
+          VERSION: ${{ inputs.version || '0.0.0-desktop-ci' }}
+          RID: ${{ matrix.rid }}
+        run: |
+          dotnet publish Source/DotNET/Tool/Tool.csproj -c Release -r "$RID" --self-contained true -p:PackAsTool=false -p:Version="$VERSION" -o Artifacts/Desktop/publish
+          python Source/DotNET/Screenplay.Mcp/Packaging/build.py --publish Artifacts/Desktop/publish --output Artifacts/Desktop/packages --version "$VERSION" --rid "$RID"
+      - name: Smoke test both unpacked packages on the native OS
+        run: python Source/DotNET/Screenplay.Mcp/Packaging/smoke.py Artifacts/Desktop/packages/*.mcpb Artifacts/Desktop/packages/*-plugin.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screenplay-desktop-${{ matrix.rid }}
+          path: |
+            Artifacts/Desktop/packages/*.mcpb
+            Artifacts/Desktop/packages/*-plugin.zip
+            Artifacts/Desktop/packages/*.sha256
+          if-no-files-found: error
+
+  attach:
+    if: inputs.release
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: screenplay-desktop-*
+          merge-multiple: true
+          path: desktop
+      - name: Attach verified native packages to the matching release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          cd desktop
+          sha256sum -c ./*.sha256
+          gh release upload "v$VERSION" ./*.mcpb ./*-plugin.zip ./*.sha256 --clobber
