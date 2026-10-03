@@ -2,6 +2,46 @@
     "description": "Shared PLAY0478 editor eligibility vectors. TypeScript must offer exactly eligibleLines. C# must accept every offered line and refuse refusedLines; conservative TS-only refusals are permitted. Lines are one-based.",
     "cases": [
         {
+            "name": "a primitive-backed concept is locally bindable",
+            "source": ["concept ProjectId : Uuid", "module M", "  feature F", "    slice StateChange S", "      command Register", "        projectId ProjectId identifier", "        produces Registered", "          projectId = projectId", "      event Registered", "        projectId ProjectId"],
+            "eligibleLines": [7], "refusedLines": []
+        },
+        {
+            "name": "a missing required payload mapping prevents executable binding",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command Register", "        projectId Uuid identifier", "        produces Registered", "      event Registered", "        projectId Uuid"],
+            "eligibleLines": [], "refusedLines": [6]
+        },
+        {
+            "name": "unknown property types cannot prove executable binding",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command Register", "        projectId Missing identifier", "        produces Registered", "          projectId = projectId", "      event Registered", "        projectId Missing"],
+            "eligibleLines": [], "refusedLines": [6]
+        },
+        {
+            "name": "an opaque handler cannot prove executable binding",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command Register", "        projectId Uuid identifier", "        produces Registered", "          projectId = projectId", "        handler", "          ```csharp", "          return null;", "          ```", "      event Registered", "        projectId Uuid"],
+            "eligibleLines": [], "refusedLines": [6]
+        },
+        {
+            "name": "an unknown mapping source prevents executable binding",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command Register", "        projectId Uuid identifier", "        produces Registered", "          projectId = missing", "      event Registered", "        projectId Uuid"],
+            "eligibleLines": [], "refusedLines": [6]
+        },
+        {
+            "name": "a mapping type mismatch prevents executable binding",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command Register", "        projectId Uuid identifier", "        produces Registered", "          projectId = projectId", "      event Registered", "        projectId String"],
+            "eligibleLines": [], "refusedLines": [6]
+        },
+        {
+            "name": "an unresolved sibling prevents executable binding even without promotion",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command Register", "        projectId Uuid identifier", "        produces Registered", "          projectId = projectId", "        produces Missing", "          for projectId", "      event Registered", "        projectId Uuid"],
+            "eligibleLines": [], "refusedLines": [6]
+        },
+        {
+            "name": "an empty production at EOF is safe with a bindable version anchor",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command Anchor", "        anchorId Uuid identifier", "        produces Anchored", "          for anchorId", "      event Anchored", "      event Registered", "      command Register", "        projectId Uuid identifier", "        produces Registered"],
+            "eligibleLines": [12], "refusedLines": []
+        },
+        {
             "name": "would promote v1 to v2",
             "source": ["module M", "  feature F", "    slice StateChange S", "      command Register", "        projectId Uuid identifier", "        produces Registered", "      event Registered"],
             "eligibleLines": [], "refusedLines": [6]

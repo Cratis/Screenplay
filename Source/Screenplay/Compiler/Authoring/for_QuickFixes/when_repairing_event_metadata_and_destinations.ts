@@ -61,20 +61,20 @@ describe('when repairing event metadata and destinations', () => {
     });
 
     it('should insert at EOF without moving the diagnostic anchor to the edit line', () => {
-        const source = prefix + '      event Registered\n        projectId Uuid\n      command Register\n        projectId Uuid identifier\n        produces Registered';
-        const fix = findQuickFixes(source, { line: 8 })[0];
-        expect(fix.line).toBe(8);
+        const source = prefix + '      command Anchor\n        anchorId Uuid identifier\n        produces Anchored\n          for anchorId\n      event Anchored\n      event Registered\n      command Register\n        projectId Uuid identifier\n        produces Registered';
+        const fix = findQuickFixes(source, { line: 12 })[0];
+        expect(fix.line).toBe(12);
         expect(applyQuickFixEdits(source, fix.edits)).toBe(source + '\n          for projectId');
     });
 
     it('should respect placement for a local imported slice without inferring external contracts', () => {
-        const source = 'slice StateChange S\n  command Register\n    projectId Uuid identifier\n    produces Registered\n  event Registered\n    projectId Uuid';
+        const source = 'slice StateChange S\n  command Register\n    projectId Uuid identifier\n    produces Registered\n      projectId = projectId\n  event Registered\n    projectId Uuid';
         expect(findQuickFixes(source, { line: 4, placement: ['M', 'F'] })).toHaveLength(1);
         expect(findQuickFixes(source.replace('  event Registered\n    projectId Uuid', ''), { line: 4, placement: ['M', 'F'] })).toEqual([]);
     });
 
     it('should verify only the requested occurrence and cache it rather than reparse every production', () => {
-        const source = prefix + Array.from({ length: 2000 }, (_value, index) => `      command C${index}\n        id Uuid identifier\n        produces E${index}\n      event E${index}\n        id Uuid\n`).join('');
+        const source = prefix + Array.from({ length: 2000 }, (_value, index) => `      command C${index}\n        id Uuid identifier\n        produces E${index}\n          id = id\n      event E${index}\n        id Uuid\n`).join('');
         const spy = vi.spyOn(compiler, 'parseForAuthoring');
         try {
             const fixes = prepareQuickFixes(source);
@@ -89,7 +89,8 @@ describe('when repairing event metadata and destinations', () => {
 
     it('should index a wide command without rescanning its properties for every production', () => {
         const source = prefix + '      command C\n' + Array.from({ length: 2000 }, (_value, index) => `        p${index} String\n`).join('') +
-            '        projectId Uuid identifier\n' + Array.from({ length: 2000 }, (_value, index) => `        produces E${index}\n`).join('');
+            '        projectId Uuid identifier\n' + Array.from({ length: 2000 }, (_value, index) => `        produces E${index}\n`).join('') +
+            Array.from({ length: 2000 }, (_value, index) => `      event E${index}\n`).join('');
         const parsed = compiler.parseForAuthoring(source);
         const properties = parsed.value.modules[0].features[0].slices[0].commands[0].properties;
         let visits = 0;

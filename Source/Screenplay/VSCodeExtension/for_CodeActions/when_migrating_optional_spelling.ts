@@ -105,7 +105,7 @@ describe('when migrating optional spelling in VS Code', () => {
 
     it.each([
         { code: 'PLAY0471', line: 4, text: 'module M\n  feature F\n    slice StateChange S\n      event E\n        id "E"' },
-        { code: 'PLAY0478', line: 7, text: 'module M\n  feature F\n    slice StateChange S\n      event E\n        projectId Uuid\n      command C\n        projectId Uuid identifier\n        produces E' },
+        { code: 'PLAY0478', line: 11, text: 'module M\n  feature F\n    slice StateChange S\n      command Anchor\n        anchorId Uuid identifier\n        produces Anchored\n          for anchorId\n      event Anchored\n      event E\n      command C\n        projectId Uuid identifier\n        produces E' },
     ])('should apply a verified $code occurrence from its diagnostic line', async ({ code, line, text }) => {
         await actions({ diagnostics: [] }, text);
         const diagnostic = { code: { value: code }, range: new vscode.Range(line, 0, line, 25) } as vscode.Diagnostic;

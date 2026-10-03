@@ -851,8 +851,10 @@ immutable workspace snapshot; a new snapshot cannot reuse those verification res
 
 Monaco and VS Code offer the occurrence-only [editor quick fix](vscode.md#event-quick-fixes)
 **State the destination: for projectId** for a conservative subset of `PLAY0478`.
-It checks local syntax for version and sibling-routing safety, reparses the edit,
-and never participates in fix-all. No editor quick fix is offered for `PLAY0470`.
+It requires a locally provable command/event document with known types and complete,
+compatible mappings, checks version and sibling-routing safety, reparses the edit,
+and never participates in fix-all. Richer or unbindable models are left to the
+workspace repair workflow. No editor quick fix is offered for `PLAY0470`.
 
 For `PLAY0166` on a command production, a typed repair can add an `event`
 declaration to the producing slice. Properties follow mapping order; command

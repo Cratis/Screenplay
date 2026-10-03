@@ -40,7 +40,11 @@ The registered code-action provider offers verified edits against the current bu
 - `PLAY0478`: **State the destination: for projectId** inserts an explicit destination
   before tags and mappings when local syntax proves version and sibling-routing safety.
   Unresolved contracts, imports, generation markers, other omitted siblings, and
-  uncertain version promotion prevent the action. This routing choice is never a fix-all.
+  uncertain version promotion prevent the action. Eligibility is restricted to local
+  state-change command/event documents with known primitive or primitive-backed concept
+  types and complete, compatible property mappings (or `$context.occurred` to `DateTime`).
+  Other constructs and opaque implementations require the C# workspace repair workflow.
+  This routing choice is never a fix-all.
 
 `PLAY0470` has no quick fix. Actions respect the requested diagnostic and kind,
 cache analysis per model version, and pin edits to that version. Each candidate

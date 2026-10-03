@@ -26,7 +26,7 @@ const context = (code: string, line: number, only?: string): languages.CodeActio
 describe('when offering event quick fixes in Monaco', () => {
     it.each([
         { code: 'PLAY0471', line: 5, source: prefix + '      event E\n        id "E"' },
-        { code: 'PLAY0478', line: 8, source: prefix + '      event E\n        projectId Uuid\n      command C\n        projectId Uuid identifier\n        produces E' },
+        { code: 'PLAY0478', line: 12, source: prefix + '      command Anchor\n        anchorId Uuid identifier\n        produces Anchored\n          for anchorId\n      event Anchored\n      event E\n      command C\n        projectId Uuid identifier\n        produces E' },
     ])('should pin $code to a buffer version and keep it out of source actions', async ({ code, line, source }) => {
         const provider = createCodeActionProvider();
         const document = model(source);

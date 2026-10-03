@@ -117,6 +117,14 @@ already establishes the newer routing rules. Imports, generation markers, and ve
 evidence requiring executable binding are conservatively refused. This means the
 workspace repair workflow can offer repairs the editor cannot prove safe.
 
+Because parsing alone does not prove executable readiness, destination fixes currently
+require a document made only of modules, features, state-change slices, commands,
+events, and simple primitive-backed concepts. Properties must use known types; mappings
+must copy compatible command properties or map `$context.occurred` to `DateTime`, and
+supply every required event property. Other constructs, opaque implementations, and
+unresolved or inconsistent mappings suppress the action for the document. Use the
+workspace repair workflow for richer models.
+
 Both actions reparse the edited buffer and verify that only the intended syntax
 changes and the diagnostic disappears. Analysis is cached for the current document
 version; stale edits are refused. `PLAY0470` has no quick fix: state the intended

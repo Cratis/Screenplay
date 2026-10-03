@@ -7,6 +7,7 @@ import { PlayPlacement } from '../Files/PlayPlacement';
 import { commentStart, splitLines } from '../Parsing/SourceLineSplitter';
 import { parseForAuthoring } from '../ScreenplayCompiler';
 import { EventSyntax } from '../Syntax/Declarations';
+import { ProductionBindingProof } from './ProductionBindingProof';
 import { ProductionQuickFixes } from './ProductionQuickFixes';
 import { QuickFixCandidate } from './QuickFixCandidate';
 
@@ -74,7 +75,9 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
                 change: { node: declaration, replacement: { ...declaration, id: null } as EventSyntax } });
         }
     }
-    for (const candidate of productions.candidates(source, lines)) byLine.set(candidate.line, candidate);
+    if (productions.diagnostics.length > 0 && new ProductionBindingProof(original.value).permits(lines)) {
+        for (const candidate of productions.candidates(source, lines)) byLine.set(candidate.line, candidate);
+    }
     const optional = [...byLine.values()].filter(candidate => candidate.fix.diagnosticCode === DiagnosticCodes.LegacyOptionalSuffix);
     const syntax = verificationShape(original);
     const verified = new Map<number, QuickFix | undefined>();
