@@ -3,7 +3,7 @@
 
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { hoverContent, mergeSymbols, responseAnalysis, responseCompletions, responseTokens, scanDocument, validateLines } from '@cratis/screenplay-language';
+import { hoverContent, mergeSymbols, planCompletions, responseAnalysis, responseCompletions, responseTokens, scanDocument, validateLines } from '@cratis/screenplay-language';
 import { WorkspaceApplication } from '../WorkspaceApplication';
 
 const grammar = JSON.parse(readFileSync(new URL('../syntaxes/screenplay.tmLanguage.json', import.meta.url), 'utf8'));
@@ -67,6 +67,84 @@ describe('when authoring syntax-only responses across files', () => {
         const diagnostics = application.diagnosticsFor('slice.play');
         expect(diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0490')).toHaveLength(1);
         expect(validateLines(source.split('\n'), { application: application.symbolsExcept('slice.play'), placement: application.placementOf('slice.play'), path: 'slice.play', compilerDiagnostics: diagnostics }).filter(issue => issue.code === 'PLAY0490')).toHaveLength(1);
+    });
+    it.each([
+        ['"01234567-89ab-cdef-0123-456789abcdef"', []],
+        ['42', ['PLAY0490']],
+    ])('should validate isolated unsaved specifications against split commands for %s', (value, codes) => {
+        const application = new WorkspaceApplication();
+        application.set('types.play', 'concept Id : Uuid');
+        application.set('command.play', 'command C\n  id Id generated identifier');
+        application.set('other.play', 'command Other\n  value String');
+        application.set('spec.play', 'specification Old');
+        const lines = ['specification S', '  when C', `    for ${value}`];
+        const context = { application: application.symbolsExcept('spec.play'), placement: application.placementOf('spec.play'), path: 'spec.play' };
+        const analysis = responseAnalysis(lines, context.application.authoringDocuments, context.placement, context.path);
+        expect(analysis.diagnostics.map(diagnostic => diagnostic.code)).toEqual(codes);
+        expect(analysis.specifications.get(0)?.location).toEqual({ path: 'spec.play', line: 1, column: 1 });
+        expect(validateLines(lines, context).filter(issue => issue.severity !== 'information').map(issue => issue.code)).toEqual(codes);
+    });
+    it('should resolve generated fixtures and return assertions across isolated unsaved documents', () => {
+        const application = new WorkspaceApplication();
+        application.set('types.play', 'concept Id : Uuid');
+        application.set('command.play', 'command C\n  receipt Id generated\n  returns\n    result = receipt');
+        const lines = ['specification S', '  when C', '    generated receipt = 42', '  then returns', '    result = 42'];
+        const context = { application: application.symbolsExcept('spec.play'), path: 'spec.play' };
+        expect(validateLines(lines, context).filter(issue => issue.severity !== 'information').map(issue => issue.code)).toEqual(['PLAY0490', 'PLAY0491']);
+        expect(validateLines(lines.map(line => line.replace('42', '"01234567-89ab-cdef-0123-456789abcdef"')), context).filter(issue => issue.severity !== 'information')).toEqual([]);
+    });
+    it('should honor imported placements when commands share a name across features', () => {
+        const application = new WorkspaceApplication();
+        application.set('application.play', 'import "types.play"\nmodule M\n  feature F1\n    import "generated.play"\n  feature F2\n    import "local.play"\n    import "spec.play"');
+        application.set('types.play', 'concept Id : Uuid');
+        application.set('generated.play', 'slice StateChange Generated\n  command C\n    id Id generated identifier\n    returns @id');
+        application.set('local.play', 'slice StateChange Local\n  command C\n    id Int identifier\n    returns @id');
+        application.set('spec.play', 'slice StateChange S');
+        const lines = ['slice StateChange S', '  specification Check', '    when C', '      for 42', '    then returns 42'];
+        const context = { application: application.symbolsExcept('spec.play'), placement: application.placementOf('spec.play'), path: 'spec.play' };
+        expect(context.placement).toEqual(['M', 'F2']);
+        expect(validateLines(lines, context).filter(issue => issue.severity !== 'information')).toEqual([]);
+        application.set('application.play', 'import "types.play"\nmodule M\n  feature F1\n    import "generated.play"\n    import "spec.play"\n  feature F2\n    import "local.play"');
+        const moved = { application: application.symbolsExcept('spec.play'), placement: application.placementOf('spec.play'), path: 'spec.play' };
+        expect(moved.placement).toEqual(['M', 'F1']);
+        expect(validateLines(lines, moved).filter(issue => issue.severity !== 'information').map(issue => issue.code)).toEqual(['PLAY0490', 'PLAY0491']);
+    });
+    it('should preserve real duplicate errors rather than renaming supplied slices', () => {
+        const application = new WorkspaceApplication();
+        application.set('other.play', 'slice StateChange S\n  command Other');
+        const lines = ['slice StateChange S', '  command C', '    value String'];
+        expect(validateLines(lines, { application: application.symbolsExcept('current.play'), path: 'current.play' }).map(issue => issue.code)).toContain('PLAY0173');
+    });
+    it.each(['command', '@command'])('should complete and hover response sources from the typed owner for %s', name => {
+        const application = new WorkspaceApplication();
+        application.set('other.play', 'command Other\n  foreign String');
+        const lines = ['command C', `  ${name} String`, '  returns @command'];
+        const symbols = mergeSymbols(scanDocument(lines), application.symbolsExcept('current.play'));
+        expect(symbols.commands.map(command => command.name)).toEqual(['C', 'Other']);
+        expect(responseCompletions(lines, 2, '  returns @', symbols)?.map(entry => entry.insertText)).toEqual(['command']);
+        expect(hoverContent(lines, 2, 'returns', 3, 10)).toContain('String');
+        expect(hoverContent(lines, 2, 'command', 12, 19)).toContain('String');
+        const record = ['command C', `  ${name} String`, '  returns', '    @result = @command'];
+        expect(responseCompletions(record, 3, '    result = ', mergeSymbols(scanDocument(record), symbols))?.map(entry => entry.label)).toEqual(['command']);
+        expect(hoverContent(record, 3, 'result', 6, 12)).toContain('String (inferred)');
+    });
+    it.each(['String optional', 'String[] optional'])('should share full explicit and inferred response type wording for %s', type => {
+        for (const explicit of [false, true]) {
+            const lines = ['command C', `  value ${type}`, '  returns', `    result ${explicit ? `${type} ` : ''}= value`, 'specification S', '  when C', '  then returns', '    '];
+            expect(responseCompletions(lines, 7, lines[7], scanDocument(lines))?.[0].documentation).toContain(`${type}. Syntax-only`);
+            expect(hoverContent(lines, 3, 'result', 5, 11)).toContain(`${type} (${explicit ? 'explicit' : 'inferred'})`);
+        }
+    });
+    it('should preserve ordinary optional suggestions alongside eligible generation modifiers', () => {
+        const completions = (before: string) => {
+            const plan = planCompletions(['concept Id : Uuid', 'command C', before], 2, before);
+            return plan.kind === 'entries' ? plan.entries.map(entry => entry.label) : [];
+        };
+        expect(completions('  id Id ')).toEqual(['optional', 'generated', 'generated identifier', 'identifier']);
+        expect(completions('  id Id o')).toEqual(['optional']);
+        expect(completions('  id Id generated ')).toEqual(['identifier']);
+        expect(completions('  id Id optional ')).not.toContain('generated');
+        expect(completions('  id Id generated identifier ')).not.toContain('optional');
     });
     it('should keep TextMate contextual words and use typed overlays for scalar ambiguity', () => {
         const generated = patterns.find(pattern => pattern.comment?.startsWith('Generated is'))!;

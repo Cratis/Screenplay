@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { enclosingChain, fenceMap, indentOf, nearestEnclosingLine, withoutComment } from './document-context';
-import { CompletionEntry } from './completion-items';
+import { CompletionEntry, optionalTypeItems } from './completion-items';
 import { DocumentSymbols, PropertySymbol, propertyTypeReference, scanDocument } from './symbols';
 import { typeReferenceText } from './TypeReferenceSymbol';
 import { responseAvailability, responseAnalysis } from './response-analysis';
@@ -36,6 +36,7 @@ export function responseCompletions(lines: string[], line: number, before: strin
             if (modifier && ['generated', 'identifier'].some(word => word.startsWith(modifier[2]))) {
                 const concept = symbols.concepts.find(concept => concept.name === modifier[1]);
                 if (concept?.primitive === 'Uuid') return [
+                    ...('optional'.startsWith(modifier[2]) ? optionalTypeItems : []),
                     { label: 'generated', insertText: 'generated', documentation: `Required scalar Uuid concept; not a request/form input. ${responseAvailability}` },
                     { label: 'generated identifier', insertText: 'generated identifier', documentation: `Specification fixture uses an indented for value. ${responseAvailability}` },
                     { label: 'identifier', insertText: 'identifier', documentation: 'Names the event source identifier.' },
@@ -70,7 +71,11 @@ export function responseCompletions(lines: string[], line: number, before: strin
             const command = namedCommand(specification?.when?.commandType);
             if (command?.response?.kind === 'RecordCommandResponseSyntax') {
                 const properties = new Map(command.properties.map(property => [property.name, property]));
-                return command.response.fields.map(field => ({ label: field.name, insertText: `${field.name} = \${1:value}`, documentation: `${field.type?.name ?? properties.get(field.source.property)?.type ?? 'Unresolved type'}. ${responseAvailability}` }));
+                return command.response.fields.map(field => {
+                    const source = properties.get(field.source.property);
+                    const type = field.type ?? (source ? propertyTypeReference(source) : undefined);
+                    return { label: field.name, insertText: `${field.name} = \${1:value}`, documentation: `${type ? typeReferenceText(type) : 'Unresolved type'}. ${responseAvailability}` };
+                });
             }
         }
     }

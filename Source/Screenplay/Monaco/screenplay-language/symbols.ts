@@ -270,23 +270,23 @@ export function scanDocument(lines: string[]): DocumentSymbols {
             continue;
         }
 
-        const commandMatch = eventLines[index].trim().match(/^command\s+(\w+)\s*$/);
-        if (commandMatch) {
+        const command = analysis.commands.get(index);
+        if (command) {
             // A command property is a leaf, not an indentation owner. Share the parser-shaped
             // body with properties, productions, advice and destination hints.
             const body = directBody(lines, fences, index, indent);
             const productionHeaders = body.filter(line => /^\s*produces\b/.test(lines[line]));
             symbols.commands.push({
-                name: commandMatch[1],
-                properties: analysis.commands.get(index)?.properties.map(property => ({
+                name: command.name,
+                properties: command.properties.map(property => ({
                     name: property.name,
                     type: `${property.type.name}${property.type.isCollection ? '[]' : ''}${property.type.isOptional ? ' optional' : ''}`,
                     typeReference: { name: property.type.name, isCollection: property.type.isCollection, isOptional: property.type.isOptional },
                     isIdentifier: property.isIdentifier || /\sidentifier\s*$/.test(lines[property.location.line - 1]),
                     ...(property.isGenerated ? { isGenerated: true } : {}),
                     line: property.location.line - 1,
-                })) ?? propertiesIn(lines, body.filter(line => lines[line].trim() !== 'validate csharp'), commandReserved),
-                response: analysis.commands.get(index)?.response,
+                })),
+                response: command.response,
                 productionHeaders,
                 produces: productionHeaders.flatMap(line => {
                     const header = eventLines[line].trim();

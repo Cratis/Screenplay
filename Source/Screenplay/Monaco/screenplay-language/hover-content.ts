@@ -73,13 +73,13 @@ export function hoverContent(
     const response = owner?.response;
     if (response?.location.line === lineIndex + 1 && (tokenAt(response.location.column, 'returns') || (response.kind === 'ScalarCommandResponseSyntax' && tokenAt(response.source.location.column, response.source.property)))) {
         const source = response.kind === 'ScalarCommandResponseSyntax' ? owner?.properties.find(property => property.name === response.source.property) : undefined;
-        return `**returns**${source ? ` — ${source.type}` : ' — unnamed record response'}. ${responseAvailability}`;
+        return `**returns**${source ? ` — ${typeReferenceText(propertyTypeReference(source))}` : ' — unnamed record response'}. ${responseAvailability}`;
     }
     if (response?.kind === 'RecordCommandResponseSyntax') {
         const field = response.fields.find(field => field.location.line === lineIndex + 1 && (tokenAt(field.location.column, field.name) || tokenAt(field.source.location.column, field.source.property)));
         if (field) {
             const source = owner?.properties.find(property => property.name === field.source.property);
-            const type = field.type ? typeReferenceText(field.type) : source?.type ?? 'Unresolved type';
+            const type = field.type ? typeReferenceText(field.type) : source ? typeReferenceText(propertyTypeReference(source)) : 'Unresolved type';
             return `**${field.name}** — ${type}${field.type ? ' (explicit)' : ' (inferred)'} = ${field.source.property}. ${source?.isGenerated ? 'Generated source, not request input. ' : ''}${responseAvailability}`;
         }
     }

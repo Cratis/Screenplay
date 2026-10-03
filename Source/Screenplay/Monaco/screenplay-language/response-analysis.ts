@@ -24,7 +24,7 @@ export const responseAvailability = 'Syntax-only; execution unavailable until ES
 // once, not by reparsing the document for each command or response field.
 const revisions = new Map<string, ReturnType<typeof analyze>>();
 
-function authoringSource(lines: string[]) {
+function authoringSource(lines: string[], headers: readonly string[]) {
     const fences = fenceMap(lines);
     const roots = lines.flatMap((line, index) => !fences[index] && indentOf(line) === 0 && /^\w/.test(line) ? [line.split(/\s+/)[0]] : []);
     if (roots.includes('module') || !roots.some(root => ['feature', 'slice', 'command', 'event', 'specification'].includes(root))) {
@@ -39,21 +39,39 @@ function authoringSource(lines: string[]) {
         (global ? globals : body).push(index);
     });
     const depth = roots.includes('feature') ? 1 : roots.includes('slice') ? 2 : 3;
-    const headers = ['module Editor', '  feature Authoring', '    slice StateChange Fragment'].slice(0, depth);
-    const source = [...globals.map(index => lines[index]), ...headers, ...body.map(index => ' '.repeat(depth * 2) + lines[index])].join('\n');
-    const locations = [...globals.map(index => ({ line: index + 1, column: 0 })), ...headers.map(() => ({ line: 0, column: 0 })), ...body.map(index => ({ line: index + 1, column: depth * 2 }))];
+    const wrappers = headers.slice(0, depth);
+    const source = [...globals.map(index => lines[index]), ...wrappers, ...body.map(index => ' '.repeat(depth * 2) + lines[index])].join('\n');
+    const locations = [...globals.map(index => ({ line: index + 1, column: 0 })), ...wrappers.map(() => ({ line: 0, column: 0 })), ...body.map(index => ({ line: index + 1, column: depth * 2 }))];
     return { source, locations };
 }
 
 function analyze(lines: string[], otherSources: readonly (string | AuthoringDocument)[], placement?: readonly string[], path = 'current.play'): ResponseAnalysis {
-    const prepared = placement?.length ? { source: lines.join('\n'), locations: lines.map((_, index) => ({ line: index + 1, column: 0 })) } : authoringSource(lines);
-    const parsed = otherSources.length === 0 ? parse(prepared.source, path, placement) : parsePlacedDocuments([
-        { path, source: prepared.source, placement: placement ?? [] },
-        ...otherSources.map((document, index) => {
-            const other = typeof document === 'string' ? { path: `other-${index}.play`, source: document } : document;
-            return { path: other.path, source: other.placement?.length ? other.source : authoringSource(other.source.split('\n')).source, placement: other.placement ?? [] };
-        }).filter(document => document.path !== path),
-    ]);
+    const others = otherSources.map((document, index) => typeof document === 'string' ? { path: `other-${index}.play`, source: document } : document).filter(document => document.path !== path);
+    const documents: AuthoringDocument[] = [{ path, source: lines.join('\n'), placement }, ...others];
+    // Modules/features merge, but slices are real declarations: equal slice names discard later
+    // documents. Share only fresh synthetic module/feature names, with a distinct synthetic slice
+    // per fragment. This retains all commands for normal (including ambiguous) scope resolution,
+    // without combining source texts or renaming real declarations/explicit placements. Reserve
+    // source/placement names once so even a real Editor.Authoring.Fragment cannot collide.
+    const names = new Set(documents.flatMap(document => [...document.source.matchAll(/\w+/g)].map(match => match[0]).concat(document.placement ?? [])));
+    const fresh = (prefix: string): string => {
+        let name = prefix;
+        for (let suffix = 1; names.has(name); suffix++) name = `${prefix}${suffix}`;
+        names.add(name);
+        return name;
+    };
+    const module = fresh('EditorAuthoring');
+    const feature = fresh('FragmentFeature');
+    const preparedDocuments = documents.map((document, index) => {
+        const sourceLines = index === 0 ? lines : document.source.split('\n');
+        const prepared = document.placement?.length ? { source: document.source, locations: sourceLines.map((_, line) => ({ line: line + 1, column: 0 })) }
+            : authoringSource(sourceLines, [`module ${module}`, `  feature ${feature}`, `    slice StateChange ${fresh(`Fragment${index}`)}`]);
+        return { ...document, ...prepared, placement: document.placement ?? [] };
+    });
+    const prepared = preparedDocuments[0];
+    // Put the buffer after its supplied context so duplicate real declarations are reported at
+    // the current source, not silently dropped from its source-local diagnostic view.
+    const parsed = others.length === 0 ? parse(prepared.source, path, placement) : parsePlacedDocuments([...preparedDocuments.slice(1), prepared]);
     const commands = new Map<number, CommandSyntax>();
     const specifications = new Map<number, SpecificationSyntax>();
     const walk = (value: unknown): void => {

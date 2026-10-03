@@ -155,7 +155,7 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
     const optionalCodes = new Set<string>([DiagnosticCodes.LegacyOptionalSuffix, DiagnosticCodes.InvalidOptionalModifierOrder, DiagnosticCodes.OptionalReadsNotSupported]);
     const analysis = responseAnalysis(lines, application.authoringDocuments ?? application.authoringSources, context.placement, context.path);
     for (const diagnostic of context.compilerDiagnostics ?? analysis.diagnostics) {
-        if (!optionalCodes.has(diagnostic.code) && !/^PLAY049[01]$|^PLAY048[2-9]$/.test(diagnostic.code)) continue;
+        if (!optionalCodes.has(diagnostic.code) && diagnostic.code !== DiagnosticCodes.RepeatedDeclarationAcrossFiles && !/^PLAY049[01]$|^PLAY048[2-9]$/.test(diagnostic.code)) continue;
         const line = diagnostic.location.line - 1;
         const length = legacyOptionalTypeLength(lines[line], diagnostic) || lines[line].length - diagnostic.location.column + 1;
         issues.push(issue(diagnostic.severity, line, diagnostic.location.column, length, diagnostic.message, diagnostic.code as DiagnosticCode));

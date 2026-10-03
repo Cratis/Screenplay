@@ -124,6 +124,99 @@ describe('when authoring syntax-only responses', () => {
         expect(hoverContent(source, 5, 'result', 21, 27)).toBeNull();
         expect(hoverContent(source, 7, 'result', 5, 11)).toBeNull();
     });
+    it.each([
+        ['"01234567-89ab-cdef-0123-456789abcdef"', []],
+        ['42', ['PLAY0490']],
+    ])('should validate an isolated specification against all sibling fragments for %s', (value, codes) => {
+        const current = ['specification S', '  when C', `    for ${value}`];
+        const other = [{ path: 'types.play', source: 'concept Id : Uuid' }, { path: 'command.play', source: 'command C\n  id Id generated identifier' }];
+        const analysis = responseAnalysis(current, other, undefined, 'spec.play');
+        expect(analysis.diagnostics.map(diagnostic => diagnostic.code)).toEqual(codes);
+        expect(analysis.specifications.get(0)?.location).toEqual({ path: 'spec.play', line: 1, column: 1 });
+        expect(analysis.diagnostics.every(diagnostic => diagnostic.location.path === 'spec.play' && diagnostic.location.line === 3)).toBe(true);
+        expect(validateLines(current, { application: mergeSymbols(...other.map(document => scanDocument(document.source.split('\n')))), path: 'spec.play' }).filter(issue => issue.severity !== 'information').map(issue => issue.code)).toEqual(codes);
+    });
+    it('should retain split generated fixtures and response references at equal source line numbers', () => {
+        const command = 'command C\n  receipt Id generated\n  returns\n    result = receipt';
+        const other = [{ path: 'types.play', source: 'concept Id : Uuid' }, { path: 'command.play', source: command }, { path: 'unrelated.play', source: 'command Other\n  value String' }];
+        const source = ['specification S', '  when C', '    generated receipt = 42', '  then returns', '    result = 42'];
+        expect(responseAnalysis(source, other, undefined, 'spec.play').diagnostics.map(diagnostic => diagnostic.code)).toEqual(['PLAY0490', 'PLAY0491']);
+        const valid = source.map(line => line.replace('42', '"01234567-89ab-cdef-0123-456789abcdef"'));
+        expect(responseAnalysis(valid, other, undefined, 'spec.play').diagnostics).toEqual([]);
+        const invalidCommand = command.replace('result = receipt', 'result = missing').split('\n');
+        const analysis = responseAnalysis(invalidCommand, [other[0], { path: 'spec.play', source: valid.join('\n') }, other[2]], undefined, 'command.play');
+        expect([...analysis.commands.values()].map(command => command.name)).toEqual(['C']);
+        expect(analysis.commands.get(0)?.response?.location.path).toBe('command.play');
+        expect(analysis.diagnostics.map(diagnostic => diagnostic.code)).toEqual(['PLAY0487']);
+        expect(analysis.diagnostics[0].location).toEqual({ path: 'command.play', line: 4, column: 14 });
+    });
+    it('should refuse ambiguous sibling commands rather than inventing a fixture relationship', () => {
+        const source = ['specification S', '  when C', '    generated value = 42'];
+        const other = ['concept Id : Uuid', 'command C\n  value Id generated', 'command C\n  value String'];
+        expect(responseAnalysis(source, other).diagnostics).toEqual([]);
+        const symbols = mergeSymbols(scanDocument(source), ...other.map(source => scanDocument(source.split('\n'))));
+        expect(responseCompletions([...source, '    generated '], 3, '    generated ', symbols)).toBeNull();
+    });
+    it('should leave real duplicate declarations and explicit placement checks to the compiler', () => {
+        const source = ['slice StateChange S', '  command C', '    id Id generated'];
+        const sibling = ['slice StateChange S', '  command Other'];
+        const other = ['concept Id : Uuid', sibling.join('\n')];
+        expect(responseAnalysis(source, other).diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0173');
+        expect(validateLines(source, { application: mergeSymbols(...other.map(source => scanDocument(source.split('\n')))) }).map(issue => issue.code)).toContain('PLAY0173');
+        const placed = ['command C', '  id Id generated'];
+        expect(responseAnalysis(placed, ['concept Id : Uuid'], ['M', 'F'], 'placed.play').diagnostics.length).toBeGreaterThan(0);
+        expect([...responseAnalysis(placed, ['concept Id : Uuid'], ['M', 'F'], 'placed.play').commands.values()]).toEqual([]);
+    });
+    it('should honor explicit scopes rather than tying equally named placed commands to fragments', () => {
+        const source = ['slice StateChange S', '  specification Check', '    when C', '      for 42', '    then returns 42'];
+        const other = [
+            { path: 'types.play', source: 'concept Id : Uuid' },
+            { path: 'generated.play', source: 'slice StateChange Generated\n  command C\n    id Id generated identifier\n    returns @id', placement: ['M', 'F1'] },
+            { path: 'local.play', source: 'slice StateChange Local\n  command C\n    id Int identifier\n    returns @id', placement: ['M', 'F2'] },
+        ];
+        expect(responseAnalysis(source, other, ['M', 'F2'], 'spec.play').diagnostics).toEqual([]);
+        expect(responseAnalysis(source, other, ['M', 'F1'], 'spec.play').diagnostics.map(diagnostic => diagnostic.code)).toEqual(['PLAY0490', 'PLAY0491']);
+    });
+    it('should not collide with real declarations using synthetic wrapper names', () => {
+        const source = ['specification S', '  when C', '    for 42'];
+        const real = 'module EditorAuthoring\n  feature FragmentFeature\n    slice StateChange Fragment0\n      command Other\n        value String';
+        expect(responseAnalysis(source, ['concept Id : Uuid', 'command C\n  id Id generated identifier', real]).diagnostics.map(diagnostic => diagnostic.code)).toEqual(['PLAY0490']);
+    });
+    it.each(['command', '@command'])('should own responses with a keyword-shaped property %s', name => {
+        const source = ['command C', `  ${name} String`, '  returns @command'];
+        expect(scanDocument(source).commands.map(command => command.name)).toEqual(['C']);
+        expect(labels(source.slice(0, 2), '  returns @')).toEqual(['command']);
+        expect(hoverContent(source, 2, 'returns', 3, 10)).toContain('String');
+        expect(hoverContent(source, 2, 'command', 12, 19)).toContain('String');
+        const record = ['command C', `  ${name} String`, '  returns', '    @result = @command'];
+        expect(labels(record.slice(0, 3), '    result = ')).toEqual(['command']);
+        expect(hoverContent(record, 3, 'result', 6, 12)).toContain('String (inferred)');
+    });
+    it.each([
+        ['String optional', 'String optional'],
+        ['String[]', 'String[]'],
+        ['String[] optional', 'String[] optional'],
+        ['String?', 'String optional'],
+    ])('should render complete response types in assertion completions and hover for %s', (declared, rendered) => {
+        for (const explicit of [false, true]) {
+            const source = ['command C', `  value ${declared}`, '  returns', `    result ${explicit ? `${declared} ` : ''}= value`, 'specification S', '  when C', '  then returns', '    '];
+            const completion = responseCompletions(source, 7, source[7], scanDocument(source));
+            expect(completion?.[0].documentation).toBe(`${rendered}. Syntax-only; execution unavailable until ESM v8 (PLAY0268). No response type is emitted.`);
+            expect(hoverContent(source, 3, 'result', 5, 11)).toContain(`${rendered} (${explicit ? 'explicit' : 'inferred'})`);
+        }
+    });
+    it('should combine ordinary optional and required generation suggestions without invalid combinations', () => {
+        const source = ['concept Id : Uuid', 'command C'];
+        expect(labels(source, '  id Id ')).toEqual(['optional', 'generated', 'generated identifier', 'identifier']);
+        expect(labels(source, '  id Id o')).toEqual(['optional']);
+        expect(labels(source, '  id Id generated ')).toEqual(['identifier']);
+        for (const modifier of ['optional ', 'optional identifier ', 'identifier ', 'generated identifier ']) {
+            const suggestions = labels(source, `  id Id ${modifier}`);
+            expect(suggestions).not.toContain('optional');
+            expect(suggestions).not.toContain('generated');
+        }
+        expect(validateLines([...source, '  id Id optional']).filter(issue => issue.severity !== 'information')).toEqual([]);
+    });
     it('should ignore comments and fences and keep keyword-shaped input mappings', () => {
         const source = ['command C', '  generated String // request name', '  @returns String', '  description', '    ```text', '    returns', '      fake = generated', '    ```'];
         expect(scanDocument(source).commands[0].properties.map(property => property.name)).toEqual(['generated', 'returns']);
