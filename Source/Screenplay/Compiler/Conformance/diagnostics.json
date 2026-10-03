@@ -2,6 +2,112 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "unavailable imported Enum fixture shape stays unknown",
+            "validate": true,
+            "source": ["import External.Enum", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Enum generated", "      specification Accepts", "        when C", "          generated receipt = \"text\""],
+            "diagnostics": []
+        },
+        {
+            "name": "unavailable imported Enum response shape stays unknown",
+            "validate": true,
+            "source": ["import External.Enum", "module M", "  feature F", "    slice StateChange S", "      command C", "        value Enum", "        returns value", "      specification Accepts", "        when C", "        then returns \"text\""],
+            "diagnostics": []
+        },
+        {
+            "name": "unresolved Enum does not crash response parsing",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        value Enum", "        returns value", "      specification Accepts", "        when C", "        then returns \"text\""],
+            "diagnostics": []
+        },
+        {
+            "name": "property shaped returns retain optional modifier diagnostics",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        returns Foo identifier optional"],
+            "diagnostics": ["PLAY0480@5"]
+        },
+        {
+            "name": "property shaped returns retain generated modifier diagnostics",
+            "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        returns Id generated optional"],
+            "diagnostics": ["PLAY0484@6"]
+        },
+        {
+            "name": "tab separated returns retains legacy declaration meaning even with a matching property",
+            "validate": true,
+            "source": ["concept id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        id id identifier", "        returns\tid"],
+            "diagnostics": []
+        },
+        {
+            "name": "escaped invocation mappings cannot supply generated properties",
+            "validate": true,
+            "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated", "      event Recorded", "      reaction R", "        when Recorded", "          invokes C", "            @receipt = \"ignored\""],
+            "diagnostics": ["PLAY0485@11"]
+        },
+        {
+            "name": "table behaviors cannot supply generated properties",
+            "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated", "      screen Entry", "        table items", "          column name", "          on select", "            execute C", "              with receipt from $row.receipt"],
+            "validate": true,
+            "diagnostics": ["PLAY0485@12"]
+        },
+        {
+            "name": "arguments belong to refresh navigation and dialog actions not their enclosing execute",
+            "source": ["behavior B", "  parameter Q", "  parameter Dialog", "  on submit", "    execute C", "      on success", "        refresh Q", "          with receipt from $form.receipt", "        open dialog Dialog", "          with receipt from $form.receipt", "          on result", "            close dialog", "              with receipt from $result.receipt", "        navigate to Entry", "          with receipt from $form.receipt", "concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated", "      screen Entry"],
+            "validate": true,
+            "diagnostics": []
+        },
+        {
+            "name": "behavior parameters shadow commands even when declared after bindings",
+            "source": ["behavior B", "  on submit", "    execute C", "      with receipt from $form.receipt", "  parameter C", "concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated", "      command D", "        receipt Id", "      screen Entry", "        uses B", "          C D"],
+            "validate": true,
+            "diagnostics": []
+        },
+        {
+            "name": "Date return compatibility requires a strict valid calendar date",
+            "validate": true,
+            "source": [
+                "module M", "  feature F", "    slice StateChange S", "      command C", "        value Date", "        returns value",
+                "      specification Leap", "        when C", "        then returns \"2024-02-29\"",
+                "      specification Century", "        when C", "        then returns \"2000-02-29\"",
+                "      specification Minimum", "        when C", "        then returns \"0001-01-01\"",
+                "      specification Maximum", "        when C", "        then returns \"9999-12-31\"",
+                "      specification InvalidLeap", "        when C", "        then returns \"2023-02-29\"",
+                "      specification InvalidCentury", "        when C", "        then returns \"1900-02-29\"",
+                "      specification Slash", "        when C", "        then returns \"2023/02/29\"",
+                "      specification WithTime", "        when C", "        then returns \"2024-01-02T00:00\"",
+                "      specification Dotted", "        when C", "        then returns \"02.01.2024\"",
+                "      specification Named", "        when C", "        then returns \"Jan 2 2024\"",
+                "      specification ZeroYear", "        when C", "        then returns \"0000-01-01\"",
+                "      specification InvalidMonth", "        when C", "        then returns \"2024-13-01\"",
+                "      specification InvalidDay", "        when C", "        then returns \"2024-04-31\""
+            ],
+            "diagnostics": ["PLAY0491@21", "PLAY0491@24", "PLAY0491@27", "PLAY0491@30", "PLAY0491@33", "PLAY0491@36", "PLAY0491@39", "PLAY0491@42", "PLAY0491@45"]
+        },
+        {
+            "name": "DateTime return compatibility requires a calendar time and explicit valid zone",
+            "validate": true,
+            "source": [
+                "module M", "  feature F", "    slice StateChange S", "      command C", "        value DateTime", "        returns value",
+                "      specification Zulu", "        when C", "        then returns \"2024-02-29T12:30:59Z\"",
+                "      specification Fraction", "        when C", "        then returns \"2024-02-29T12:30:59.1234567Z\"",
+                "      specification MaximumPositiveOffset", "        when C", "        then returns \"2024-01-01T00:00:00+14:00\"",
+                "      specification MaximumNegativeOffset", "        when C", "        then returns \"2024-01-01T00:00:00-14:00\"",
+                "      specification OffsetMinutes", "        when C", "        then returns \"2024-01-01T00:00:00+13:59\"",
+                "      specification TimeOnly", "        when C", "        then returns \"10:00\"",
+                "      specification DateOnly", "        when C", "        then returns \"2024-01-01\"",
+                "      specification MissingZone", "        when C", "        then returns \"2024-01-01T00:00:00\"",
+                "      specification LowercaseT", "        when C", "        then returns \"2023-02-29t12:00:00Z\"",
+                "      specification LowercaseZ", "        when C", "        then returns \"2024-01-01T00:00:00z\"",
+                "      specification CompactOffset", "        when C", "        then returns \"2023-01-01T12:00:00+1500\"",
+                "      specification OffsetHour", "        when C", "        then returns \"2024-01-01T00:00:00+15:00\"",
+                "      specification OffsetMinute", "        when C", "        then returns \"2024-01-01T00:00:00-14:01\"",
+                "      specification OffsetSixty", "        when C", "        then returns \"2024-01-01T00:00:00+01:60\"",
+                "      specification InvalidCalendar", "        when C", "        then returns \"2023-02-29T12:00:00Z\"",
+                "      specification InvalidHour", "        when C", "        then returns \"2024-01-01T24:00:00Z\"",
+                "      specification InvalidMinute", "        when C", "        then returns \"2024-01-01T00:60:00Z\"",
+                "      specification LeapSecond", "        when C", "        then returns \"2024-01-01T00:00:60Z\"",
+                "      specification ExcessFraction", "        when C", "        then returns \"2024-01-01T00:00:00.12345678Z\"",
+                "      specification SpaceSeparator", "        when C", "        then returns \"2024-01-01 00:00:00Z\""
+            ],
+            "diagnostics": ["PLAY0491@24", "PLAY0491@27", "PLAY0491@30", "PLAY0491@33", "PLAY0491@36", "PLAY0491@39", "PLAY0491@42", "PLAY0491@45", "PLAY0491@48", "PLAY0491@51", "PLAY0491@54", "PLAY0491@57", "PLAY0491@60", "PLAY0491@63", "PLAY0491@66"]
+        },
+        {
             "name": "optional modifiers cannot repeat before generated",
             "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id optional optional generated"],
             "diagnostics": ["PLAY0484@6", "PLAY0034@6"]

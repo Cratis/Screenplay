@@ -30,6 +30,19 @@ public class when_rejecting_syntax_only_responses : given.a_semantic_binder
     }
 
     [Fact]
+    void should_admit_the_legacy_tab_separated_property_without_creating_a_response()
+    {
+        const string Source = "concept id : Uuid\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        id id identifier\n        returns\tid";
+        var syntax = new ScreenplayCompiler().Compile(Source);
+        syntax.Success.ShouldBeTrue();
+        syntax.Value!.Modules.Single().Features.Single().Slices.Single().Commands.Single().Response.ShouldBeNull();
+        var result = Bind(Source);
+        result.Success.ShouldBeTrue();
+        result.Value.ShouldNotBeNull();
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268").ShouldBeFalse();
+    }
+
+    [Fact]
     void should_reject_programmatically_constructed_trees()
     {
         var syntax = new ScreenplayCompiler().Parse(Prefix + "      command C\n        id Id").Value!;
