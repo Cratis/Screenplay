@@ -56,6 +56,7 @@ public sealed class AuthoringProductionResolver
     readonly ILookup<string, AuthoringProductionDeclaration> _byName;
     readonly Dictionary<(DeclarationScope Scope, string Reference), AuthoringProductionResolution> _cache = [];
     readonly IReadOnlyList<(SliceSyntax Slice, DeclarationScope Scope)> _slices;
+    readonly Dictionary<SliceSyntax, DeclarationScope> _scopes = new(ReferenceEqualityComparer.Instance);
 
     /// <summary>
     /// Initializes an explicit declaration inventory.
@@ -64,6 +65,7 @@ public sealed class AuthoringProductionResolver
     public AuthoringProductionResolver(ApplicationSyntax application)
     {
         _slices = [.. application.Modules.SelectMany(module => Features(module.Features, [module.Name]))];
+        foreach (var (slice, scope) in _slices) _scopes.Add(slice, scope);
         Declarations = [.. _slices.SelectMany(entry => EventDeclarations.In(entry.Slice)
             .GroupBy(node => node.Name, StringComparer.Ordinal)
             .Select(group => new AuthoringProductionDeclaration(AuthoringProductionKind.Event, group.Key, entry.Scope.Segments, group.OrderByDescending(node => node.Generation).First()))
@@ -84,15 +86,16 @@ public sealed class AuthoringProductionResolver
     /// <returns>The resolved kind, declaration and ambiguity evidence.</returns>
     public AuthoringProductionResolution Resolve(string reference, SliceSyntax slice)
     {
-        var scope = _slices.FirstOrDefault(entry => ReferenceEquals(entry.Slice, slice)).Scope;
-        if (scope is null) return new(AuthoringProductionKind.Unresolved, null, []);
+        if (!_scopes.TryGetValue(slice, out var scope)) return new(AuthoringProductionKind.Unresolved, null, []);
         if (_cache.TryGetValue((scope, reference), out var cached)) return cached;
         var candidates = _byName[reference.Split('.').LastOrDefault() ?? string.Empty].ToArray();
         var entries = candidates.Select(entry => new Declaration(entry.Name, new(entry.Scope))).ToArray();
+        var occurrences = new Dictionary<Declaration, AuthoringProductionDeclaration>(ReferenceEqualityComparer.Instance);
+        for (var index = 0; index < entries.Length; index++) occurrences.Add(entries[index], candidates[index]);
         var result = ReferenceResolver.Resolve(reference, scope, entries);
         if (result.Resolved is { } resolved)
         {
-            var declaration = candidates[Array.IndexOf(entries, resolved)];
+            var declaration = occurrences[resolved];
             var found = new AuthoringProductionResolution(declaration.Kind, declaration, []);
             _cache[(scope, reference)] = found;
             return found;
@@ -101,7 +104,7 @@ public sealed class AuthoringProductionResolver
         var outcome = new AuthoringProductionResolution(
             result.IsUnresolved ? AuthoringProductionKind.Unresolved : AuthoringProductionKind.Ambiguous,
             null,
-            [.. result.Ambiguous.Select(candidate => candidates[Array.IndexOf(entries, candidate)])]);
+            [.. result.Ambiguous.Select(candidate => occurrences[candidate])]);
         _cache[(scope, reference)] = outcome;
 
         return outcome;

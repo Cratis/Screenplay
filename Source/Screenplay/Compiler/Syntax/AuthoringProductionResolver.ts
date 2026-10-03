@@ -19,6 +19,8 @@ export class AuthoringProductionResolver {
     readonly declarations: AuthoringProductionDeclaration[] = [];
     readonly slices: { slice: SliceSyntax; scope: readonly string[] }[] = [];
     private readonly byName = new Map<string, AuthoringProductionDeclaration[]>();
+    private readonly scopes = new Map<SliceSyntax, readonly string[]>();
+    private readonly resolutions = new Map<SliceSyntax, Map<string, AuthoringProductionResolution>>();
 
     constructor(application: ApplicationSyntax) {
         const collect = (features: readonly FeatureSyntax[], parent: readonly string[]): void => {
@@ -30,6 +32,7 @@ export class AuthoringProductionResolver {
         };
         application.modules.forEach(module => collect(module.features, [module.name]));
         for (const { slice, scope } of this.slices) {
+            this.scopes.set(slice, scope);
             const events = new Map<string, EventSyntax>();
             for (const event of eventDeclarations(slice)) {
                 if ((events.get(event.name)?.generation ?? 0) <= event.generation) events.set(event.name, event);
@@ -37,16 +40,26 @@ export class AuthoringProductionResolver {
             this.declarations.push(...[...events.values()].map(node => ({ kind: AuthoringProductionKind.Event as const, name: node.name, node, scope })),
                 ...operationDeclarations(slice).map(node => ({ kind: AuthoringProductionKind.Operation as const, name: node.name, node, scope })));
         }
-        for (const entry of this.declarations) this.byName.set(entry.name, [...this.byName.get(entry.name) ?? [], entry]);
+        for (const entry of this.declarations) {
+            const named = this.byName.get(entry.name) ?? [];
+            named.push(entry);
+            this.byName.set(entry.name, named);
+        }
     }
 
     resolve(reference: string, slice: SliceSyntax): AuthoringProductionResolution {
-        const entry = this.slices.find(entry => entry.slice === slice);
-        if (entry === undefined) return { kind: AuthoringProductionKind.Unresolved, declaration: null, candidates: [] };
-        const candidates = this.candidates(reference, entry.scope);
-        return candidates.length === 1
+        const scope = this.scopes.get(slice);
+        if (scope === undefined) return { kind: AuthoringProductionKind.Unresolved, declaration: null, candidates: [] };
+        const cache = this.resolutions.get(slice) ?? new Map<string, AuthoringProductionResolution>();
+        const cached = cache.get(reference);
+        if (cached !== undefined) return cached;
+        const candidates = this.candidates(reference, scope);
+        const resolution = candidates.length === 1
             ? { kind: candidates[0].kind, declaration: candidates[0], candidates: [] }
             : { kind: candidates.length === 0 ? AuthoringProductionKind.Unresolved : AuthoringProductionKind.Ambiguous, declaration: null, candidates };
+        cache.set(reference, resolution);
+        this.resolutions.set(slice, cache);
+        return resolution;
     }
 
     isOperation(production: ProducesSyntax, slice: SliceSyntax): boolean {

@@ -71,6 +71,13 @@ internal static class OperationValidator
                 var duplicates = new HashSet<(Type Kind, SyntaxNode Operation)>();
                 foreach (var step in steps)
                 {
+                    if (step.Node is SpecificationOperationSyntax concreteAssertion)
+                    {
+                        foreach (var mapping in concreteAssertion.Values.Where(mapping => !Concrete(mapping.Source)))
+                        {
+                            context.Error(DiagnosticCodes.InvalidOperationSpecification, "Operation assertions require concrete input values.", mapping.Source.Location);
+                        }
+                    }
                     var resolution = resolver.Resolve(step.Operation, slice);
                     if (resolution.Declaration?.Node is not OperationSyntax operation)
                     {
@@ -97,12 +104,27 @@ internal static class OperationValidator
     {
         var mappings = source.ToArray();
         var names = new HashSet<string>(StringComparer.Ordinal);
+        var allNames = mappings.Select(mapping => mapping.Property).ToHashSet(StringComparer.Ordinal);
+        var suppliedPaths = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var mapping in mappings)
+        {
+            var segments = mapping.Property.Split('.');
+            for (var depth = 1; depth <= segments.Length; depth++) suppliedPaths.Add(string.Join('.', segments.Take(depth)));
+        }
         foreach (var mapping in mappings)
         {
             if (!names.Add(mapping.Property)) context.Error(DiagnosticCodes.InvalidOperationMapping, $"Duplicate operation input mapping '{mapping.Property}'.", mapping.Location);
-            var target = PathType(operation.Inputs, mapping.Property, declarations, out var missing);
+            var target = PathType(operation.Inputs, mapping.Property, declarations, out var missing, inheritOptionality: false);
             if (missing) context.Error(DiagnosticCodes.InvalidOperationMapping, $"Operation '{operation.Name}' declares no input '{mapping.Property}'.", mapping.Location);
             if (target is null) continue;
+            var targetSegments = mapping.Property.Split('.');
+            for (var depth = 1; depth < targetSegments.Length; depth++)
+            {
+                if (allNames.Contains(string.Join('.', targetSegments.Take(depth))))
+                {
+                    context.Error(DiagnosticCodes.InvalidOperationMapping, $"Operation input mapping '{mapping.Property}' overlaps a whole input mapping.", mapping.Location);
+                }
+            }
             if (command is not null && mapping.Source is PathExpressionSyntax path)
             {
                 var supplied = PathType(command.Properties, path.Path, declarations, out var sourceMissing);
@@ -122,15 +144,11 @@ internal static class OperationValidator
             {
                 if (!values.Compatible(mapping.Source, target) || (required && !CompleteValue(mapping.Source, target, declarations))) context.Error(DiagnosticCodes.InvalidOperationMapping, $"Value is incompatible with input '{mapping.Property}' of operation '{operation.Name}'.", mapping.Source.Location);
             }
-            else if (command is null)
-            {
-                context.Error(DiagnosticCodes.InvalidOperationSpecification, "Operation assertions require concrete input values.", mapping.Source.Location);
-            }
         }
         if (!required) return;
-        foreach (var input in operation.Inputs.Where(input => !input.Type.IsOptional))
+        foreach (var input in operation.Inputs)
         {
-            if (!Covered(input.Type, input.Name, names, declarations, new HashSet<string>(StringComparer.Ordinal)))
+            if (!Covered(input.Type, input.Name, names, suppliedPaths, declarations, new HashSet<string>(StringComparer.Ordinal)))
                 context.Error(DiagnosticCodes.InvalidOperationMapping, $"Production of operation '{operation.Name}' supplies no value for required input '{input.Name}'.", operation.Location);
         }
     }
@@ -147,15 +165,26 @@ internal static class OperationValidator
             members[property.Name].All(member => CompleteValue(member.Value, property.Type, declarations)));
     }
 
-    static bool Covered(TypeRefSyntax type, string path, HashSet<string> mappings, ConsistencyDeclarations declarations, HashSet<string> seen)
+    static bool Concrete(ExpressionSyntax expression) => expression switch
     {
-        if (type.IsOptional || mappings.Contains(path)) return true;
-        if (type.IsCollection || !seen.Add(type.Name) || declarations.TypeProperties(type.Name) is not { } properties) return false;
+        LiteralExpressionSyntax { Value: double number } => double.IsFinite(number),
+        LiteralExpressionSyntax => true,
+        ObjectExpressionSyntax obj => obj.Members.All(member => Concrete(member.Value)),
+        ListExpressionSyntax list => list.Items.All(Concrete),
+        _ => false
+    };
 
-        return properties.All(property => Covered(property.Type, $"{path}.{property.Name}", mappings, declarations, new(seen, StringComparer.Ordinal)));
+    static bool Covered(TypeRefSyntax type, string path, HashSet<string> mappings, HashSet<string> suppliedPaths, ConsistencyDeclarations declarations, HashSet<string> seen)
+    {
+        if (mappings.Contains(path) || (type.IsOptional && !suppliedPaths.Contains(path))) return true;
+        if (type.IsCollection || !seen.Add(type.Name)) return false;
+        if (declarations.TypeProperties(type.Name) is not { } properties)
+            return suppliedPaths.Contains(path) && declarations.Compatible(type, type) is null;
+
+        return properties.All(property => Covered(property.Type, $"{path}.{property.Name}", mappings, suppliedPaths, declarations, new(seen, StringComparer.Ordinal)));
     }
 
-    static TypeRefSyntax? PathType(IEnumerable<PropertySyntax> properties, string path, ConsistencyDeclarations declarations, out bool missing)
+    static TypeRefSyntax? PathType(IEnumerable<PropertySyntax> properties, string path, ConsistencyDeclarations declarations, out bool missing, bool inheritOptionality = true)
     {
         var property = declarations.Property(properties, path, out missing);
         if (property is null) return null;
@@ -164,7 +193,7 @@ internal static class OperationValidator
         for (var index = 0; index < segments.Length - 1; index++)
         {
             var parent = declarations.Property(properties, string.Join('.', segments.Take(index + 1)), out _);
-            if (parent is not null) type = type with { IsOptional = type.IsOptional || parent.Type.IsOptional, IsCollection = type.IsCollection || parent.Type.IsCollection };
+            if (parent is not null) type = type with { IsOptional = type.IsOptional || (inheritOptionality && parent.Type.IsOptional), IsCollection = type.IsCollection || parent.Type.IsCollection };
         }
 
         return type;

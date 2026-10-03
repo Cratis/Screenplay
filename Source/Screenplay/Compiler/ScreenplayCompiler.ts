@@ -40,9 +40,9 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
     const context = new ParserContext(new LineReader(lines), path);
     context.scope = placement;
     const value = parseApplication(context, lines, placement);
-    validateInlineEvents(value, context);
-    // Folder assembly validates response references once against the merged declaration inventory.
+    // Folder assembly validates declaration-dependent contracts once against the merged inventory.
     if (validateResponseContracts) {
+        validateInlineEvents(value, context);
         validateOperations(value, context);
         validateResponses(value, context);
     }

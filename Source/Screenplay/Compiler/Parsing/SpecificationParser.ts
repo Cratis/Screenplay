@@ -116,7 +116,13 @@ function parseOperationStep(context: ParserContext, line: SourceLine, body: Spec
         context.error(DiagnosticCodes.InvalidOperationSpecification, "Expected 'given operation <Name> fails', 'then operation <Name>' or 'then compensated <Name>'.", locationOf(line));
         context.skipBlock(line.indent);
     } else if (match[1] === 'then operation') {
-        body.thenOperations.push({ kind: 'SpecificationOperationSyntax', operation: match[2], values: parseValues(context, line), location: locationOf(line) });
+        const values: PropertyMappingSyntax[] = [];
+        for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
+            context.reader.takeSignificant();
+            const value = parseConcreteMapping(context, child, mappingPattern, DiagnosticCodes.InvalidOperationSpecification);
+            if (value !== null) values.push(value);
+        }
+        body.thenOperations.push({ kind: 'SpecificationOperationSyntax', operation: match[2], values, location: locationOf(line) });
     } else {
         rejectOperationChildren(context, line, DiagnosticCodes.InvalidOperationSpecification, 'Failure and compensation assertions cannot have children.');
         if (match[1] === 'given operation') body.givenOperationFailures.push({ kind: 'SpecificationOperationFailureSyntax', operation: match[2], location: locationOf(line) });

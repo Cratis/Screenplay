@@ -3,6 +3,7 @@
 
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Parsing;
@@ -23,7 +24,23 @@ internal static partial class SpecificationParser
         var name = match.Groups[2].Value;
         if (match.Groups[1].Value == "then operation")
         {
-            operations.Add(new(name, ParseValues(context, line), line.Location));
+            var values = new List<PropertyMappingSyntax>();
+            while (context.TryPeekChild(line.Indent, out var child))
+            {
+                context.Reader.TakeSignificant();
+                if (ParseConcreteMapping(context, child, MappingRegex(), DiagnosticCodes.InvalidOperationSpecification) is { } value)
+                {
+                    var source = MappingRegex().Match(child.Content).Groups[2];
+                    var location = child.LocationAt(source.Index);
+                    values.Add(value with
+                    {
+                        SourceLocation = location,
+                        SourceLength = source.Length,
+                        Source = value.Source is LiteralExpressionSyntax literal ? literal with { RawLocation = location, RawLength = source.Length } : value.Source
+                    });
+                }
+            }
+            operations.Add(new(name, values, line.Location));
         }
         else
         {

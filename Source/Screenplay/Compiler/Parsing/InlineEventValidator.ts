@@ -22,7 +22,7 @@ export function validateInlineEvents(application: ApplicationSyntax, context: Pa
     for (const { slice, command } of slices.flatMap(slice => slice.commands.map(command => ({ slice, command })))) {
         const events = command.produces.filter(production => resolver.isEventProduction(production, slice));
         const identifier = command.properties.find(property => property.isIdentifier)?.name;
-        const mixed = requiresExplicitDestinations({ ...command, produces: events });
+        const mixed = requiresExplicitDestinations(command, { resolver, slice });
         for (const production of events) {
             const inline = production.inlineEvent;
             if (inline !== null && ((eventCounts.get(inline.name) ?? 0) > 1 || importedNames.has(inline.name))) {
