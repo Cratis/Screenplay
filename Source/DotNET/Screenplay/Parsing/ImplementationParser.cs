@@ -12,6 +12,23 @@ internal static partial class ImplementationParser
 {
     internal static HandlerSyntax Parse(ParserContext context, SourceLine handler, SourceLine wrapper)
     {
+        var source = ParseWrapper(context, wrapper);
+        while (context.TryPeekChild(handler.Indent, out var extra))
+        {
+            context.Reader.TakeSignificant();
+            context.Error(
+                LineText.FirstWord(extra.Content) == "implementation" ? DiagnosticCodes.InvalidImplementationBlock : DiagnosticCodes.ConflictingImplementationSources,
+                "A handler has one implementation wrapper and cannot mix wrapped and direct sources.",
+                extra.Location);
+            if (CodeBlockParser.IsCodeLine(context, extra)) CodeBlockParser.Parse(context, extra);
+            else context.SkipBlock(extra.Indent);
+        }
+
+        return new(source.File, source.Code, handler.Location) { Implementation = source.Implementation };
+    }
+
+    internal static (FileReferenceSyntax? File, CodeBlockSyntax? Code, ImplementationSyntax Implementation) ParseWrapper(ParserContext context, SourceLine wrapper)
+    {
         var hints = new List<ImplementationHintSyntax>();
         FileReferenceSyntax? file = null;
         CodeBlockSyntax? code = null;
@@ -72,18 +89,7 @@ internal static partial class ImplementationParser
             }
         }
 
-        while (context.TryPeekChild(handler.Indent, out var extra))
-        {
-            context.Reader.TakeSignificant();
-            context.Error(
-                LineText.FirstWord(extra.Content) == "implementation" ? DiagnosticCodes.InvalidImplementationBlock : DiagnosticCodes.ConflictingImplementationSources,
-                "A handler has one implementation wrapper and cannot mix wrapped and direct sources.",
-                extra.Location);
-            if (CodeBlockParser.IsCodeLine(context, extra)) CodeBlockParser.Parse(context, extra);
-            else context.SkipBlock(extra.Indent);
-        }
-
-        return new(file, code, handler.Location) { Implementation = new(hints, wrapper.Location) };
+        return (file, code, new(hints, wrapper.Location));
     }
 
     // Match ImplementationHintText's White_Space set explicitly. A hint stays on one CR/LF-delimited source line.
