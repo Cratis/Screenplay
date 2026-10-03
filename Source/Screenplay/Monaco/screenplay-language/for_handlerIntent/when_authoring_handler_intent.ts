@@ -25,6 +25,23 @@ describe('when authoring handler implementation intent', () => {
         expect(hoverContent(lines, 3, 'hint', 7, 11)).toContain('nonblank');
         expect(hoverContent(['command C', '  implementation String'], 1, 'implementation', 3, 17)).toBeNull();
     });
+    it.each(['hint', 'implementation'])('should retain property and response hover for ordinary names %s', word => {
+        const ordinary = ['command C', `  ${word} String`, `  returns @${word}`];
+        expect(hoverContent(ordinary, 1, word, 3, 3 + word.length)).toBeNull();
+        expect(hoverContent(ordinary, 2, word, 12, 12 + word.length)).toContain('**returns** — String');
+        const generated = ['command C', `  ${word} String generated`, `  returns @${word}`];
+        expect(hoverContent(generated, 1, word, 3, 3 + word.length)).toContain('Generated value');
+        expect(hoverContent(generated, 2, word, 12, 12 + word.length)).toContain('**returns** — String');
+        const record = ['command C', `  ${word} String generated`, '  returns', `    ${word} = @${word}`];
+        expect(hoverContent(record, 3, word, 5, 5 + word.length)).toContain('Generated source');
+        const sourceColumn = 9 + word.length;
+        expect(hoverContent(record, 3, word, sourceColumn, sourceColumn + word.length)).toContain('Generated source');
+    });
+    it('should not hover directive words in comments or quoted hints', () => {
+        const source = ['command C', '  handler', '    implementation', '      // hint "fake"', '      hint "implementation"'];
+        expect(hoverContent(source, 3, 'hint', 10, 14)).toBeNull();
+        expect(hoverContent(source, 4, 'implementation', 13, 27)).toBeNull();
+    });
     it('should share parser diagnostics at original source locations', () => {
         const source = ['command C', '  handler', '    implementation', '      hint " "'];
         const issue = validateLines(source).find(issue => issue.code === 'PLAY0493');

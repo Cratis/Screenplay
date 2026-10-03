@@ -72,7 +72,6 @@ export function hoverContent(
         if (word === 'hint' && chain[0] === 'implementation' && chain[1] === 'handler' && /^\s*hint\s+"/.test(line)) {
             return `**hint** — ${handlerIntentDocs.hint}`;
         }
-        return null;
     }
 
     const symbols = scanDocument(lines);
