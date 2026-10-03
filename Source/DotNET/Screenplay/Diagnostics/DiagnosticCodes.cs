@@ -2128,4 +2128,19 @@ public static class DiagnosticCodes
 
     /// <summary>A plain production omits its destination although the command has an identifier.</summary>
     public const string OmittedProductionDestination = "PLAY0478";
+
+    /// <summary>
+    /// A type reference uses the legacy optional suffix.
+    /// </summary>
+    public const string LegacyOptionalSuffix = "PLAY0479";
+
+    /// <summary>
+    /// The optional modifier follows identifier instead of the type.
+    /// </summary>
+    public const string InvalidOptionalModifierOrder = "PLAY0480";
+
+    /// <summary>
+    /// An optional read requests absence semantics that are not yet supported.
+    /// </summary>
+    public const string OptionalReadsNotSupported = "PLAY0481";
 }

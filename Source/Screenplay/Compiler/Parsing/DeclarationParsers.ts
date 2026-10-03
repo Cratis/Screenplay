@@ -10,14 +10,14 @@ import { parseMappingSource } from './ExpressionParser';
 import { isFileDirectiveAmongProperties } from './FileReferences';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
-import { tryParseProperty } from './PropertyLineParser';
+import { parseProperty, tryParseProperty } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
 
 const typeHeader = pattern('^type\\s+([A-Za-z_]\\w*)$');
 const eventHeader = pattern('^event\\s+([A-Za-z_]\\w*)(?:\\s+generation\\s+([0-9]+))?$');
 const readModelHeader = pattern('^readmodel\\s+([A-Za-z_]\\w*)$');
 const maximumGeneration = 4294967295;
-const typeShapedPattern = pattern('^[A-Z]\\w*(?:\\[\\])?\\??$');
+const typeShapedPattern = pattern('^[A-Z]\\w*(?:\\[\\])?(?:\\?|\\s+optional)?$');
 const tagIdentifierPattern = pattern('^[A-Za-z_]\\w*$');
 
 // 'description' takes no type reference, so a line with property shape is a property named description.
@@ -47,7 +47,7 @@ export function parseType(context: ParserContext, header: SourceLine): TypeSynta
         if (isFileDirectiveAmongProperties(line)) {
             continue;
         }
-        const property = tryParseProperty(line);
+        const property = parseProperty(context, line);
         if (property === undefined) {
             context.error(DiagnosticCodes.InvalidPropertyDeclaration, `Invalid property '${line.content}' - expected '<name> <Type>'`, locationOf(line));
             continue;
@@ -92,7 +92,7 @@ export function parseEvent(context: ParserContext, header: SourceLine): EventSyn
             }
             continue;
         }
-        const property = tryParseProperty(line);
+        const property = parseProperty(context, line);
         if (property === undefined) {
             if (!metadata.tryParse(context, line)) {
                 context.error(DiagnosticCodes.InvalidPropertyDeclaration, `Invalid property '${line.content}' - expected '<name> <Type>'`, locationOf(line));
@@ -143,7 +143,7 @@ export function parseReadModel(context: ParserContext, header: SourceLine): Read
         } else if (isFileDirectiveAmongProperties(line)) {
             continue;
         } else {
-            const property = tryParseProperty(line);
+            const property = parseProperty(context, line);
             if (property === undefined) {
                 context.error(DiagnosticCodes.InvalidPropertyDeclaration, `Invalid property '${line.content}' - expected '<name> <Type>'`, locationOf(line));
                 continue;

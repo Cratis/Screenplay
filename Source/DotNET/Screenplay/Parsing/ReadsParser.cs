@@ -21,6 +21,12 @@ internal static partial class ReadsParser
     public static ReadsSyntax? Parse(ParserContext context, SourceLine line)
     {
         RejectChildren(context, line);
+        if (OptionalReadsRegex().IsMatch(line.Content))
+        {
+            context.Error(DiagnosticCodes.OptionalReadsNotSupported, "Optional reads are not yet supported (see #308).", line.Location);
+            return null;
+        }
+
         var match = ReadsRegex().Match(line.Content);
         if (!match.Success)
         {
@@ -59,4 +65,7 @@ internal static partial class ReadsParser
 
     [GeneratedRegex(@"^reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?$", RegexOptions.None, 1000)]
     private static partial Regex ReadsRegex();
+
+    [GeneratedRegex(@"^reads\s+[A-Z]\w*\s+optional(?:\s|$)", RegexOptions.None, 1000)]
+    private static partial Regex OptionalReadsRegex();
 }

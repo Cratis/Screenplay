@@ -5,10 +5,12 @@ import { fenceMap, indentOf } from './document-context';
 import { eventAnalysisSource } from './event-analysis-source';
 import { clauseKeywords } from './language';
 import { ProductionSymbol } from './ProductionSymbol';
+import { TypeReferenceSymbol, typeReferenceSymbol } from './TypeReferenceSymbol';
 
 export interface PropertySymbol {
     name: string;
     type: string;
+    typeReference?: TypeReferenceSymbol;
     isIdentifier: boolean;
     line: number;
 }
@@ -63,6 +65,7 @@ export interface NamedSymbol {
 
 export interface QuerySymbol extends NamedSymbol {
     returnType: string;
+    returnTypeReference?: TypeReferenceSymbol;
     parameters: PropertySymbol[];
 }
 
@@ -85,7 +88,7 @@ export interface DocumentSymbols {
 }
 
 const conceptPattern = /^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@\w+)*)\s*$/;
-const propertyPattern = /^\s*(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?\??)(\s+identifier)?\s*$/;
+const propertyPattern = /^\s*(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(\s+identifier)?\s*$/;
 const attributeReasonPattern = /^([a-z_]\w*)\s+reason\s+"((?:[^"\\]|\\.)*)"\s*$/;
 const readPattern = /^\s*reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?\s*$/;
 const commandReserved = ['authorize', 'produces', 'reads'];
@@ -93,11 +96,15 @@ const commandReserved = ['authorize', 'produces', 'reads'];
 const authorizationContinuation = /^(?:(?:or|and)\s+)?[A-Za-z_(][\p{L}\p{Mn}\p{Nd}\p{Pc}\s()]*$/u;
 const eventReserved = clauseKeywords.filter(keyword => !['id', 'description', 'documentation'].includes(keyword));
 const queryParameterPattern =
-    /^\s*(?:by|filter)\s+([a-z_]\w*)\s+([\w.]+(?:\[\])?\??)(?:\s+from\s+.+)?\s*$/;
+    /^\s*(?:by|filter)\s+([a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(?:\s+from\s+.+)?\s*$/;
 
 // Property-shaped clauses depend on their owner. Commands reserve only authorize,
 // produces and reads; bare directives such as description and handler can be properties.
 // The @ escape always denotes a property, and 'as' keeps its established property meaning.
+export function propertyTypeReference(property: PropertySymbol): TypeReferenceSymbol {
+    return property.typeReference ?? typeReferenceSymbol(property.type);
+}
+
 function propertiesIn(lines: string[], body: number[], reserved: readonly string[]): PropertySymbol[] {
     return body
         .map((index) => ({ index, match: lines[index].match(propertyPattern) }))
@@ -106,6 +113,7 @@ function propertiesIn(lines: string[], body: number[], reserved: readonly string
         .map(({ index, match }) => ({
             name: match[1].replace(/^@/, ''),
             type: match[2],
+            typeReference: typeReferenceSymbol(match[2]),
             isIdentifier: match[3] !== undefined,
             line: index,
         }));
@@ -263,7 +271,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
                     // Empty or repeated targets are uncertain, not implicit destinations.
                     const target = targets.length === 0 ? undefined : targets.length === 1 ? targets[0][1] ?? '' : '';
                     const mappings = children.flatMap(index => {
-                        const match = eventLines[index].trim().match(inline ? /^(@?[a-z_]\w*)\s+[\w.[\]?]+\s*=(?!=|>)\s*(.+)$/ : /^(@?[\w.]+)\s*=(?!=|>)\s*(.+)$/);
+                        const match = eventLines[index].trim().match(inline ? /^(@?[a-z_]\w*)\s+[\w.]+(?:\[\])?(?:\?|\s+optional)?\s*=(?!=|>)\s*(.+)$/ : /^(@?[\w.]+)\s*=(?!=|>)\s*(.+)$/);
                         return match === null ? [] : [{ name: match[1].replace(/^@/, ''), source: match[2], line: index }];
                     });
                     return [{ name, inline, conditional, line, target, mappings }];
@@ -286,7 +294,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
         // ^query\s+([A-Za-z_]\w*)\s*=>\s*(observable\s+)?([\w.]+(?:\[\])?\??)$. A narrower one here
         // silently drops the query from the symbol table, and with it every check and completion that
         // reads from it.
-        const queryMatch = trimmed.match(/^query\s+(\w+)\s*=>\s*(?:observable\s+)?([\w.]+(?:\[\])?\??)\s*$/);
+        const queryMatch = trimmed.match(/^query\s+(\w+)\s*=>\s*(?:observable\s+)?([\w.]+(?:\[\])?(?:\?|\s+optional)?)\s*$/);
         if (queryMatch) {
             // The return type names a read model, which no construct declares — only the
             // 'by' and 'filter' parameters resolve against the document's own types.
@@ -299,12 +307,14 @@ export function scanDocument(lines: string[]): DocumentSymbols {
                 .map(({ index: line, match }) => ({
                     name: match[1],
                     type: match[2],
+                    typeReference: typeReferenceSymbol(match[2]),
                     isIdentifier: false,
                     line,
                 }));
             symbols.queries.push({
                 name: queryMatch[1],
                 returnType: queryMatch[2],
+                returnTypeReference: typeReferenceSymbol(queryMatch[2]),
                 parameters,
                 line: index,
             });

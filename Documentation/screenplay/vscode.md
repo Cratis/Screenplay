@@ -84,6 +84,21 @@ Inlay hints show `for <identifier>` on an inline production that omits its desti
 
 The editor reports mixed-source omissions, declaration collisions, forbidden inline generations and origins, reserved system metadata, malformed documentation and identity pins. Redundant pins are information diagnostics, not warnings. Keep `id` absent for new events. Highlighting and hover treat `id` and `documentation` as directives only at the start of an event-body line with directive syntax; properties named `id` and projection keys such as `key id` remain names. Trailing comments and fenced prose do not change destination analysis.
 
+## Optional values and quick fixes
+
+Write `optional` after the type, as in `note String optional` or
+`lines InvoiceLine[] optional`. Completion suggests this spelling and hover explains
+that it allows the whole value to be absent. A property or type named `optional`
+remains a name, not a keyword.
+
+The [compatibility spelling](types.md#compatibility-note) receives information
+diagnostic `PLAY0479`, marked deprecated rather than a warning. Use the lightbulb
+to migrate one occurrence, or the document action to migrate all occurrences.
+The fixes change only the spelling, retaining comments and spacing. They reparse
+the current buffer and verify that its meaning is unchanged before offering edits.
+Nothing is saved automatically. Stale buffer versions are refused. Monaco provides
+the same verified fixes; neither editor needs a .NET process.
+
 ## When the model has errors
 
 The board draws everything that could be read, so a typo in one slice does not empty it. The errors are listed above the board. Select one to open the file at its line.
@@ -93,7 +108,7 @@ The board is drawn by the extension's own [TypeScript compiler](typescript-compi
 The text editor also reports `PLAY0478` as information when a plain production
 omits `for` and its command has an identifier. This is advice, not a new routing
 default. Monaco and VS Code use their own TypeScript validation; they do not host
-the C# workspace repair transaction or offer these repairs as editor quick fixes.
+the C# workspace repair transaction or offer production repairs as editor quick fixes.
 Use the [MCP repair workflow](mcp/authoring-tools.md#fix-a-diagnostic) to preview an explicit
 `for` or declare a missing produced event, then review and apply the typed proposal.
 

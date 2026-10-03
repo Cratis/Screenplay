@@ -19,7 +19,7 @@ describe('when parsing declarations', () => {
             '  @validate',
             'type Address',
             '  street String',
-            '  lines String[]?',
+            '  lines String[] optional',
             'module Projects',
             '  feature Registration',
             '    slice StateChange RegisterProject',

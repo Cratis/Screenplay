@@ -84,7 +84,7 @@ Property-shaped lines remain properties: `id String`, `description String`, and 
 | Modifier | Syntax | Example |
 | --- | --- | --- |
 | Collection | `<Type>[]` | `lines InvoiceLine[]` |
-| Optional | `<Type>?` | `note String?` |
+| Optional | `<Type> optional` | `note String optional` |
 
 ## Tags
 

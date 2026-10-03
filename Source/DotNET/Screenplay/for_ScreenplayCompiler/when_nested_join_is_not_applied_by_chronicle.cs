@@ -22,7 +22,7 @@ public class when_nested_join_is_not_applied_by_chronicle : given.a_compiler
                 name String
                 autoName String
               readmodel EntryView
-                detail Detail?
+                detail Detail optional
               projection Entries => EntryView
                 nested detail
                   from DetailAdded

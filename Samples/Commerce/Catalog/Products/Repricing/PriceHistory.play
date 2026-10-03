@@ -12,7 +12,7 @@ slice StateView PriceHistory
     description "Every product's launch and current price, for spotting drift"
     authorize IsMerchandiser
 
-  query PricingForProduct => ProductPricing?
+  query PricingForProduct => ProductPricing optional
     description "One product's pricing history"
     by productId ProductId
     authorize IsMerchandiser

@@ -20,7 +20,7 @@ export interface FileReference {
 // told apart by shape, the way the compiler tells them apart: a type reference is a bare identifier,
 // so anything carrying a separator or an extension is a path and nothing else. The property wins the
 // tie, because a document that used the name before the directive existed keeps meaning what it meant.
-const typeReferencePattern = /^[A-Za-z_]\w*(?:\[\])?\??$/;
+const typeReferencePattern = /^[A-Za-z_]\w*(?:\[\])?(?:\?|\s+optional)?$/;
 
 // A path naming a place on one machine rather than a place in the repository. The compiler warns about
 // these; nothing here rejects one, so a resolver can still probe it and come up empty on other machines.

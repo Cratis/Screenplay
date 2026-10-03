@@ -91,6 +91,7 @@ public sealed class WorkspaceSyntaxIndex
         Entries = entries;
         Diagnostics = diagnostics;
         RepairableDiagnostics = [.. diagnostics.Concat(workspace.Compilation.Diagnostics).Distinct()];
+        RepairableDiagnosticSet = RepairableDiagnostics.ToHashSet();
         _handles = entries.ToDictionary(entry => entry.Handle);
     }
 
@@ -110,6 +111,8 @@ public sealed class WorkspaceSyntaxIndex
     public ImmutableArray<Diagnostic> RepairableDiagnostics { get; }
 
     internal ScreenplayWorkspace Workspace { get; }
+
+    internal IReadOnlySet<Diagnostic> RepairableDiagnosticSet { get; }
 
     /// <summary>
     /// Creates an index from exact source without requiring ESM binding.

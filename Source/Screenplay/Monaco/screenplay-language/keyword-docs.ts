@@ -9,6 +9,7 @@ export const keywordDocs: Record<string, string> = {
     concept: 'A formalized value type wrapping a primitive. Attributes such as `@pii` travel with every usage, optionally with a `<attribute> reason "..."` line saying why.',
     type: 'A composite value type — a named shape built from several properties, referenced by events, commands and other types the same way a concept is.',
     reason: 'Records why a concept attribute applies — the purpose, the lawful basis, whose subject the value lives under. Written as `pii reason "..."` in the concept body.',
+    optional: 'Allows a value to be absent. Write it after the type: `note String optional` or `lines InvoiceLine[] optional`. The collection itself may be absent; its items keep their declared type.',
     identifier: 'Marks the command property a runtime resolves the event source id from. At most one per command; without it a new Uuid is generated.',
     policy: 'A named authorization rule referenced by commands and queries. Multiple policies AND together.',
     persona: 'A named role interacting with the application, with an optional description and its associated policies.',

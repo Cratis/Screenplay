@@ -114,6 +114,7 @@ export const DiagnosticCodes = {
     UnexpectedTokenInAuthorize: 'PLAY0184',
     UnclosedAuthorizeGroup: 'PLAY0185',
     InvalidReadModelDeclaration: 'PLAY0186',
+    InvalidInvokesDeclaration: 'PLAY0194',
     InvalidScopeDeclaration: 'PLAY0199',
     DuplicateScope: 'PLAY0200',
     InvalidIntervalTrigger: 'PLAY0249',
@@ -148,4 +149,8 @@ export const DiagnosticCodes = {
     InvalidSpecificationTrigger: 'PLAY0462',
     InvalidSpecificationCapture: 'PLAY0463',
     InvalidSpecificationQueryAction: 'PLAY0464',
+    LegacyOptionalSuffix: 'PLAY0479',
+    InvalidOptionalModifierOrder: 'PLAY0480',
+    OptionalReadsNotSupported: 'PLAY0481',
+    InvalidTriggerData: 'PLAY0246',
 } as const;

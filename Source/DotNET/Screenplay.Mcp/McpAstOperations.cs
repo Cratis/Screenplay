@@ -14,6 +14,7 @@ static class McpAstOperations
 {
     internal static object Describe(WorkspaceAstOperation operation) => operation switch
     {
+        MigrateOptionalTypeSpelling migrate => new { operation = "migrate-optional-type", target = McpAstHandles.Describe(migrate.Target) },
         AddWorkspaceNode add => new { operation = "add", parent = McpAstHandles.Describe(add.Parent), add.Member, add.Index },
         ReplaceWorkspaceNode replace => new { operation = "replace", target = McpAstHandles.Describe(replace.Target) },
         RemoveWorkspaceNode remove => new { operation = "remove", target = McpAstHandles.Describe(remove.Target) },

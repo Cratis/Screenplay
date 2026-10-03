@@ -18,7 +18,7 @@ public class when_compiling_a_query_with_a_performer : given.a_compiler
             slice StateView InvoiceList
               query ListInvoices => InvoiceListReadModel[]
                 description "Every invoice the caller may see"
-                filter status   InvoiceStatus?
+                filter status   InvoiceStatus optional
                 filter tenantId TenantId from $context.tenant
                 performer
                   ```sql

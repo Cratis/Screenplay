@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import * as vscode from 'vscode';
-import { Diagnostic as CompilerDiagnostic } from '@cratis/screenplay-compiler';
+import { Diagnostic as CompilerDiagnostic, DiagnosticCodes, legacyOptionalTypeLength } from '@cratis/screenplay-compiler';
 import { languageId, validateLines, ValidationIssue } from '@cratis/screenplay-language';
 import { ApplicationIndex } from './ApplicationIndex';
 
@@ -26,6 +26,7 @@ function toDiagnostic(issue: ValidationIssue): vscode.Diagnostic {
     if (issue.code) {
         diagnostic.code = issue.code;
     }
+    if (issue.code === DiagnosticCodes.LegacyOptionalSuffix) diagnostic.tags = [vscode.DiagnosticTag.Deprecated];
 
     return diagnostic;
 }
@@ -33,11 +34,13 @@ function toDiagnostic(issue: ValidationIssue): vscode.Diagnostic {
 // A compiler diagnostic carries where it starts; it covers the rest of that line.
 function fromCompiler(document: vscode.TextDocument, compiled: CompilerDiagnostic): vscode.Diagnostic {
     const line = Math.min(compiled.location.line - 1, document.lineCount - 1);
-    const range = new vscode.Range(line, compiled.location.column - 1, line, document.lineAt(line).text.length);
+    const length = legacyOptionalTypeLength(document.lineAt(line).text, compiled);
+    const range = new vscode.Range(line, compiled.location.column - 1, line, length > 0 ? compiled.location.column - 1 + length : document.lineAt(line).text.length);
     const severity = compiled.severity === 'error' ? vscode.DiagnosticSeverity.Error : compiled.severity === 'information' ? vscode.DiagnosticSeverity.Information : vscode.DiagnosticSeverity.Warning;
     const diagnostic = new vscode.Diagnostic(range, compiled.message, severity);
     diagnostic.source = languageId;
     diagnostic.code = compiled.code;
+    if (compiled.code === DiagnosticCodes.LegacyOptionalSuffix) diagnostic.tags = [vscode.DiagnosticTag.Deprecated];
     return diagnostic;
 }
 
@@ -54,7 +57,7 @@ export function registerDiagnostics(context: vscode.ExtensionContext, index: App
         if (document.languageId !== languageId || document.isClosed) return;
         const lines = document.getText().split(/\r?\n/);
         const file = index.fileOf(document.uri);
-        const issues = validateLines(lines, { application: file?.application.symbolsExcept(file.path) }).map(toDiagnostic);
+        const issues = validateLines(lines, { application: file?.application.symbolsExcept(file.path), placement: file?.application.placementOf(file.path) }).map(toDiagnostic);
         const compiled = file?.application.diagnosticsFor(file.path).map(diagnostic => fromCompiler(document, diagnostic)) ?? [];
         const reported = new Set(issues.map(issue => `${issue.code}:${issue.range.start.line}`));
         collection.set(document.uri, [...issues, ...compiled.filter(diagnostic => !reported.has(`${diagnostic.code}:${diagnostic.range.start.line}`))]);

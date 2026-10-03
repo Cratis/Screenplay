@@ -16,7 +16,7 @@ public class when_resolving_a_specification_query : given.a_compiler
               readmodel ProjectSummary
                 projectId Uuid
                 name String
-              query ProjectById => ProjectSummary?
+              query ProjectById => ProjectSummary optional
                 by projectId Uuid
             slice StateChange RegisterProject
               specification LookingUpAProject

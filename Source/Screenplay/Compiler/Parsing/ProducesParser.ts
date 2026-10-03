@@ -11,7 +11,7 @@ import { EventMetadataParser } from './EventMetadataParser';
 import { parseMappingSource } from './ExpressionParser';
 import { firstWord, unescapeIdentifier } from './LineText';
 import { ParserContext } from './ParserContext';
-import { tryParseProperty } from './PropertyLineParser';
+import { parseProperty } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
 
 const inlineHeader = pattern('^produces\\s+event\\s+([A-Za-z_]\\w*)(?:\\s+(generation)(?:\\s+.*)?)?$');
@@ -92,7 +92,7 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
             continue;
         }
         const match = (inline === null ? mappingPattern : typedMappingPattern).exec(line.content);
-        let property = match === null || inline === null ? undefined : tryParseProperty({ ...line, content: match[1].trimEnd() });
+        let property = match === null || inline === null ? undefined : parseProperty(context, { ...line, content: match[1].trimEnd() });
         if (match !== null && (inline === null || property !== undefined)) {
             if (property !== undefined) {
                 if (property.isIdentifier) {

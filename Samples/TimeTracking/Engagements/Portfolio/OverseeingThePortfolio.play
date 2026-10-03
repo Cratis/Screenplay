@@ -15,10 +15,10 @@ slice StateView EngagementPortfolio
   // Observable: the dashboard keeps current while a colleague staffs an engagement.
   query AllEngagements => observable EngagementOverview[]
     description "Every engagement in the consultancy, narrowed by status, kept current"
-    filter status EngagementStatus?
+    filter status EngagementStatus optional
     authorize IsEngagementManager or IsPayrollOfficer
 
-  query EngagementById => EngagementOverview?
+  query EngagementById => EngagementOverview optional
     description "One engagement"
     by engagementId EngagementId
     authorize IsEngagementManager or IsPayrollOfficer

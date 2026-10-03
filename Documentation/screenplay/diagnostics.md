@@ -872,6 +872,26 @@ revisions are rejected. Source authoring and executable readiness remain separat
 for example, compliance attributes and nested mapping paths can require capabilities
 the executable model does not yet admit.
 
+### Optional values and spelling repairs
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0479` | Information | A type uses the [legacy optional suffix](types.md#compatibility-note). Write `optional` after the type. This does not fail `--warnaserror`. |
+| `PLAY0480` | Error | `optional` follows `identifier`. Write the modifiers in the order `Type optional identifier`; command identifiers must still be required and scalar. |
+| `PLAY0481` | Error | A read uses `optional`. Optional reads are not yet supported; their absence behavior is reserved for #308. |
+
+`query Q => observable?` is the sole exception: its `?` is the only spelling that preserves a one-shot query returning an optional scalar type named `observable`. It produces no `PLAY0479` and is excluded from occurrence repairs and document migrations. See [Queries](queries.md#observable-queries).
+
+`PLAY0479` points at the complete type reference. VS Code marks it deprecated.
+Its workspace repair replaces only the spelling at that occurrence; a document
+repair combines all such replacements in one verified transaction. Both reparse
+the result, require unchanged syntax structure, and check that the selected
+information diagnostics disappear. Use `PreserveTrivia` to keep comments, alignment,
+line endings and encoding. Canonical reprinting is a separate explicit choice.
+Discovery and preview never write files; acceptance still requires current workspace
+and catalog revisions. Monaco and VS Code also offer verified TypeScript quick fixes
+for one occurrence or the entire document, without requiring .NET.
+
 ## Retired codes
 
 A retired code stays out of use forever.

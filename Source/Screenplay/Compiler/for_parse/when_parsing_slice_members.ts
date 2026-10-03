@@ -41,7 +41,7 @@ describe('when parsing slice members', () => {
             '    slice StateView ProjectLookup',
             '      readmodel ProjectSummary',
             '        name ProjectName',
-            '      query ProjectById => observable ProjectSummary?',
+            '      query ProjectById => observable ProjectSummary optional',
             '        by projectId ProjectId',
             '        filter name ProjectName',
             '      projection ProjectSummaryProjection => ProjectSummary',

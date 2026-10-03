@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.CanonicalCorpus;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 
 namespace Cratis.Screenplay.CanonicalVectors.for_RegisterProjectCorpus;
@@ -25,6 +26,6 @@ public class when_loading_the_unsupported_sequence : Specification
     [Fact] void should_keep_the_application_identity() => _corpus.ApplicationIdentity.ToString().ShouldEqual("app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994");
     [Fact] void should_fail_compilation() => _result.Success.ShouldBeFalse();
     [Fact] void should_produce_no_executable_model() => _result.Value.ShouldBeNull();
-    [Fact] void should_match_the_expected_diagnostics() => _result.Diagnostics.Select(diagnostic => (diagnostic.Code, diagnostic.Message)).ShouldEqual(_corpus.Diagnostics.Select(expected => (expected.Code, expected.Message)));
+    [Fact] void should_match_the_expected_diagnostics() => _result.Diagnostics.Where(diagnostic => diagnostic.Code != DiagnosticCodes.LegacyOptionalSuffix).Select(diagnostic => (diagnostic.Code, diagnostic.Message)).ShouldEqual(_corpus.Diagnostics.Select(expected => (expected.Code, expected.Message)));
     [Fact] void should_publish_zero_artifacts() => _corpus.ArtifactPaths.ShouldBeEmpty();
 }

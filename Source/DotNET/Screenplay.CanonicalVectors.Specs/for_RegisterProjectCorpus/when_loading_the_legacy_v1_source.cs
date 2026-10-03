@@ -31,8 +31,8 @@ public class when_loading_the_legacy_v1_source : Specification
                     _corpus.ApplicationName,
                     SemanticDocumentSet.Create([.. documents], catalog));
                 result.Success.ShouldBeTrue();
-                result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.EventSourceIdInPayload);
-                result.Diagnostics.Single().Severity.ShouldEqual(DiagnosticSeverity.Information);
+                result.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldContainOnly(DiagnosticCodes.EventSourceIdInPayload, DiagnosticCodes.LegacyOptionalSuffix);
+                result.Diagnostics.ShouldEachConformTo(diagnostic => diagnostic.Severity == DiagnosticSeverity.Information);
                 return result.Value!;
             })
         ];

@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { DiagnosticCodes, legacyOptionalTypeLength, parse } from '@cratis/screenplay-compiler';
 import { validateInlineEvents } from './inline-event-validation';
 import { causedByProperties, contextRoots, identityProperties, primitiveTypes, sliceTypes } from './language';
 import { DiagnosticCode, diagnosticCodes } from './diagnostic-codes';
@@ -10,6 +11,7 @@ import { resolveEventContextPath } from './event-context';
 import {
     DocumentSymbols,
     PropertySymbol,
+    propertyTypeReference,
     knownEventNames,
     knownTypeNames,
     mergeSymbols,
@@ -37,6 +39,7 @@ export interface ValidationContext {
     // brings in - so a name declared in another file is not reported unknown. Merge the scanned symbols of
     // those files with mergeSymbols. The document's own declarations are always known.
     application?: DocumentSymbols;
+    placement?: readonly string[];
 }
 
 function issue(
@@ -70,16 +73,18 @@ function validateDeclarations(lines: string[], symbols: DocumentSymbols, applica
 
     const checkProperties = (properties: PropertySymbol[], owner: string) => {
         for (const property of properties.filter(
-            (candidate) => !types.has(candidate.type.replace(/[[\]?]/g, '')),
+            (candidate) => !types.has(propertyTypeReference(candidate).name),
         )) {
-            const bare = property.type.replace(/[[\]?]/g, '');
+            const bare = propertyTypeReference(property).name;
             issues.push(
                 tokenIssue(
                     'warning',
                     property.line,
                     lines[property.line],
                     property.type,
-                    `Unknown type '${bare}' on '${property.name}' of ${owner} — declare it with 'concept ${bare} : <Primitive>' or 'type ${bare}'.`,
+                    bare === 'optional'
+                        ? `Unknown type 'optional' on '${property.name}' of ${owner} — did you forget the type before 'optional'?`
+                        : `Unknown type '${bare}' on '${property.name}' of ${owner} — declare it with 'concept ${bare} : <Primitive>' or 'type ${bare}'.`,
                     diagnosticCodes.unknownType,
                 ),
             );
@@ -142,6 +147,15 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
     const policies = new Set([...symbols.policies, ...application.policies].map((policy) => policy.name));
     const issues: ValidationIssue[] = validateDeclarations(lines, symbols, application);
     issues.push(...validateProductionDestinations(lines, symbols));
+    // One parser pass covers committed types, including query results and trigger data, without
+    // speculative property scans mistaking tags, paths, strings or code for optionality.
+    const optionalCodes = new Set<string>([DiagnosticCodes.LegacyOptionalSuffix, DiagnosticCodes.InvalidOptionalModifierOrder, DiagnosticCodes.OptionalReadsNotSupported]);
+    for (const diagnostic of parse(lines.join('\n'), undefined, context.placement).diagnostics) {
+        if (!optionalCodes.has(diagnostic.code)) continue;
+        const line = diagnostic.location.line - 1;
+        const length = legacyOptionalTypeLength(lines[line], diagnostic) || lines[line].length - diagnostic.location.column + 1;
+        issues.push(issue(diagnostic.severity, line, diagnostic.location.column, length, diagnostic.message, diagnostic.code as DiagnosticCode));
+    }
 
     const checkEvent = (line: number, text: string, name: string) => {
         if (!events.has(name)) {
@@ -355,7 +369,7 @@ function validateProductionDestinations(lines: string[], symbols: DocumentSymbol
     const issues: ValidationIssue[] = [];
     lines = eventAnalysisSource(lines);
     for (const command of symbols.commands) {
-        const identifiers = command.properties.filter(property => property.isIdentifier && !property.type.endsWith('?') && !property.type.endsWith('[]'));
+        const identifiers = command.properties.filter(property => property.isIdentifier && !propertyTypeReference(property).isOptional && !propertyTypeReference(property).isCollection);
         if (identifiers.length !== 1) continue;
         for (const production of command.produces ?? []) {
             if (production.inline || production.conditional || production.target !== undefined) continue;

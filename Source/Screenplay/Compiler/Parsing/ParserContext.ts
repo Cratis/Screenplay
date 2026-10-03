@@ -3,6 +3,7 @@
 
 import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { SourceLocation, sourceLocation } from '../Diagnostics/SourceLocation';
+import { PropertySyntax } from '../Syntax/Declarations';
 import { LineReader } from './LineReader';
 import { SourceLine } from './SourceLine';
 
@@ -10,6 +11,8 @@ import { SourceLine } from './SourceLine';
 // the file the document came from.
 export class ParserContext {
     readonly #diagnostics: Diagnostic[] = [];
+    // Authoring verification needs these committed values even though SyntaxJson omits them.
+    readonly triggerData: PropertySyntax[] = [];
 
     constructor(readonly reader: LineReader, readonly path?: string) {}
 

@@ -138,17 +138,21 @@ internal sealed partial class McpWorkspaces
             }),
             "diagnostics" => McpWorkspaceAnalysis.For(workspace).Source.Compilation.Diagnostics,
             "repairs" => syntax!.RepairableDiagnostics.SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(syntax, workspace.Revision, diagnostic)
-                .Select(repair => (object)new
+                    .Select(repair => (Repair: repair, diagnostic.Location)))
+                .Concat(syntax.Entries.Where(entry => entry.Node is ApplicationSyntax).SelectMany(entry => WorkspaceDiagnosticRepairs.FindDocumentOptionality(syntax, entry.Handle)
+                    .Select(repair => (Repair: repair, entry.Location))))
+                .Select(item => (object)new
                 {
-                    repair.DiagnosticCode,
-                    repair.RequiredFormatting,
-                    repair.Title,
-                    repair.CanFixAll,
-                    retiredSemanticAddresses = repair.RetiredSemanticAddresses.Select(McpSemanticAddresses.Describe),
-                    diagnostic.Location,
-                    subject = McpAstHandles.Describe(repair.Subject),
-                    operations = repair.Operations.Select(McpAstOperations.Describe)
-                })),
+                    item.Repair.DiagnosticCode,
+                    item.Repair.RequiredFormatting,
+                    item.Repair.Title,
+                    item.Repair.CanFixAll,
+                    retiredSemanticAddresses = item.Repair.RetiredSemanticAddresses.Select(McpSemanticAddresses.Describe),
+                    item.Location,
+                    scope = item.Repair.Subject.Path.Length == 0 ? "document" : "occurrence",
+                    subject = McpAstHandles.Describe(item.Repair.Subject),
+                    operations = item.Repair.Operations.Select(McpAstOperations.Describe)
+                }),
             "executable-diagnostics" => workspace.Compilation.Diagnostics,
             _ => throw new McpFailure("Unknown workspace view.", -32602)
         };

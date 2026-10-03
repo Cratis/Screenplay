@@ -3,6 +3,10 @@
 
 import { eventContextPaths } from './event-context';
 
+export const optionalTypeItems: CompletionEntry[] = [
+    { label: 'optional', insertText: 'optional', documentation: 'Allows the complete value, including a collection, to be absent.' },
+];
+
 export interface CompletionEntry {
     label: string;
     insertText: string;
@@ -102,7 +106,7 @@ export const handlerItems: CompletionEntry[] = [
 export const queryItems: CompletionEntry[] = [
     { label: 'description', insertText: 'description "${1:what this query is trying to accomplish}"', documentation: 'What the query is for, in prose — what a generator or reviewer works from.' },
     { label: 'by', insertText: 'by ${1:param} ${2:Type}', documentation: 'Declares the identifying parameter of the query.' },
-    { label: 'filter', insertText: 'filter ${1:param} ${2:Type}?', documentation: 'Declares an optional filter parameter supplied by the caller.' },
+    { label: 'filter', insertText: 'filter ${1:param} ${2:Type} optional', documentation: 'Declares an optional filter parameter supplied by the caller.' },
     { label: 'filter from context', insertText: 'filter ${1:param} ${2:Type} from $context.${3|tenant,causedBy.subject,occurred|}', documentation: 'Declares a parameter filled from the query context instead of the caller.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'References the policies that must pass for the query to execute.' },
     { label: 'performer', insertText: 'performer\n    ', documentation: 'The code that performs the query — a file reference or an inline csharp/sql block.' },

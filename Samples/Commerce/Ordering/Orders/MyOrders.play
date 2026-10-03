@@ -7,7 +7,7 @@ slice StateView MyOrders
     customerId     CustomerId
     lines          OrderLine[]
     status         OrderStatus
-    trackingNumber TrackingNumber?
+    trackingNumber TrackingNumber optional
 
   // 'from' fills the parameter from the query context, so a customer can
   // never ask for someone else's orders; 'scoped to identity' says so.
@@ -17,7 +17,7 @@ slice StateView MyOrders
     scoped to identity
     authorize IsCustomer
 
-  query OrderSummaryById => OrderSummary?
+  query OrderSummaryById => OrderSummary optional
     description "One of the customer's orders"
     by orderId OrderId
     authorize IsCustomer

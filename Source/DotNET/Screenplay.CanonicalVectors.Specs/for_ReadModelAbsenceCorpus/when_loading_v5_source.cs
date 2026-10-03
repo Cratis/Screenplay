@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.CanonicalCorpus;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Semantics.Execution;
 
@@ -22,7 +23,7 @@ public class when_loading_v5_source : Specification
                 catalog.ResolveDocument(document.StableKey), document.StableKey, document.DisplayPath, document.Text));
             var result = new SemanticModelCompiler().Compile(_vector.ApplicationName, SemanticDocumentSet.Create([.. documents], catalog));
             result.Success.ShouldBeTrue();
-            result.Diagnostics.ShouldBeEmpty();
+            result.Diagnostics.ShouldEachConformTo(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyOptionalSuffix && diagnostic.Severity == DiagnosticSeverity.Information);
             var model = result.Value!.Model;
             model.SemanticVersion.ShouldEqual(SemanticVersion.V5);
             model.Revision.ShouldEqual(_vector.SemanticRevision);

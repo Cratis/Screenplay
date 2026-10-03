@@ -26,7 +26,10 @@ internal static class WorkspaceRepairVerification
     internal static WorkspaceAuthoringResult Verify(WorkspaceSyntaxIndex index, WorkspaceDiagnosticRepair repair, WorkspaceAuthoringRequest request)
     {
         var result = VerifyTransaction(index, repair, request);
-        if (request.Documents is { IsDefault: false, Length: 0 } && request.SemanticRenames is { IsDefault: false, Length: 0 } &&
+
+        // Only publish verdicts for the discovery recipe, not auxiliary edits or alternate formatting.
+        if (request.Formatting == repair.RequiredFormatting &&
+            request.Documents is { IsDefault: false, Length: 0 } && request.SemanticRenames is { IsDefault: false, Length: 0 } &&
             request.EventRenames is { IsDefault: false, Length: 0 } && request.RetiredSemanticAddresses is { IsDefault: false, Length: 0 } &&
             request.RetiredEventAddresses is { IsDefault: false, Length: 0 } && Enum.IsDefined(request.Validation) && Enum.IsDefined(request.ReferencePolicy))
         {

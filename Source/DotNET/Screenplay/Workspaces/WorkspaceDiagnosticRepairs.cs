@@ -21,7 +21,7 @@ public sealed record WorkspaceDiagnosticRepair(
     ImmutableArray<WorkspaceAstOperation> Operations)
 {
     /// <summary>
-    /// Gets the formatting required to make this repair effective. PreserveTrivia cannot migrate this warning.
+    /// Gets the least disruptive formatting that makes this repair effective. Optionality spelling repairs preserve trivia.
     /// </summary>
     public WorkspaceAuthoringFormatting RequiredFormatting { get; init; } = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments;
 
@@ -49,7 +49,7 @@ public static class WorkspaceDiagnosticRepairs
     /// <summary>
     /// Previews a revision-bound repair without writing files. Canonical printing can change other legacy forms
     /// and whitespace in the touched document. Refuses any dropped comment,
-    /// even outside the repair subject, and refuses formatting other than the repair's required formatting.
+    /// even outside the repair subject. Optionality spelling repairs also accept explicit canonical formatting consent.
     /// </summary>
     /// <param name="workspace">The original workspace.</param>
     /// <param name="repair">A repair discovered for this workspace revision.</param>
@@ -67,7 +67,7 @@ public static class WorkspaceDiagnosticRepairs
             return workspace.ProposeAuthoring(request with { Operations = repair.Operations });
         }
 
-        if (request.Formatting != repair.RequiredFormatting || request.Formatting != WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments)
+        if (!PermitsFormatting(repair.DiagnosticCode, request.Formatting))
         {
             return Refuse(WorkspaceConflictKind.FormattingConsentRequired, "Canonical formatting consent is required for this diagnostic repair.");
         }
@@ -104,7 +104,7 @@ public static class WorkspaceDiagnosticRepairs
             return workspace.ProposeAuthoring(request);
         }
 
-        if (request.Formatting != WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments)
+        if (!PermitsFormatting(diagnosticCode, request.Formatting))
         {
             return Refuse(WorkspaceConflictKind.FormattingConsentRequired, "Canonical formatting consent is required for this diagnostic repair.");
         }
@@ -140,10 +140,19 @@ public static class WorkspaceDiagnosticRepairs
     /// <param name="index">The original workspace occurrence index.</param>
     /// <param name="revision">The expected workspace revision.</param>
     /// <param name="diagnostic">A diagnostic reported by the index.</param>
-    /// <remarks>PLAY0166, PLAY0478, PLAY0469 and PLAY0471 verdicts (acceptance and conflicts only) are cached on the immutable workspace snapshot for discovery, never shared with a newer revision. Proposals always run one fresh transaction and return its full diagnostics.</remarks>
+    /// <remarks>PLAY0166, PLAY0478, PLAY0469, PLAY0471 and PLAY0479 verdicts (acceptance and conflicts only) are cached on the immutable workspace snapshot for discovery, never shared with a newer revision. PLAY0479 verifies once per document; occurrence discovery conservatively requires that document migration to pass. Proposals always run one fresh transaction and return its full diagnostics.</remarks>
     /// <returns>Zero or more typed repair proposals.</returns>
     public static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic) =>
         Find(index, revision, diagnostic, true);
+
+    /// <summary>
+    /// Finds a verified, document-wide optionality migration as one typed proposal.
+    /// </summary>
+    /// <param name="index">The original occurrence index.</param>
+    /// <param name="subject">The revision-bound document root.</param>
+    /// <returns>A single proposal containing every legacy type splice, or none when it cannot be verified.</returns>
+    public static ImmutableArray<WorkspaceDiagnosticRepair> FindDocumentOptionality(WorkspaceSyntaxIndex index, WorkspaceNodeHandle subject) =>
+        WorkspaceOptionalityRepairs.ForDocument(index, subject, true);
 
     static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic, bool verifyRepair)
     {
@@ -155,7 +164,7 @@ public static class WorkspaceDiagnosticRepairs
 
         // PLAY0397 also covers bare description fences and legacy handler language lines. Only the
         // 'validate csharp' form has a unique CodeValidateSyntax subject at the warning's position.
-        if (!index.RepairableDiagnostics.Contains(diagnostic))
+        if (!index.RepairableDiagnosticSet.Contains(diagnostic))
         {
             return [];
         }
@@ -163,6 +172,11 @@ public static class WorkspaceDiagnosticRepairs
         if (diagnostic.Code == DiagnosticCodes.UnknownEvent || diagnostic.Code == DiagnosticCodes.OmittedProductionDestination)
         {
             return WorkspaceProductionRepairs.Find(index, revision, diagnostic, verifyRepair);
+        }
+
+        if (diagnostic.Code == DiagnosticCodes.LegacyOptionalSuffix)
+        {
+            return WorkspaceOptionalityRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
 
         if (diagnostic.Code == DiagnosticCodes.RedundantEventId || diagnostic.Code == DiagnosticCodes.EventSourceIdInPayload)
@@ -195,6 +209,11 @@ public static class WorkspaceDiagnosticRepairs
             return [];
         }
 
+        if (code == DiagnosticCodes.LegacyOptionalSuffix && entry.Node is ApplicationSyntax)
+        {
+            return WorkspaceOptionalityRepairs.ForDocument(index, subject, false);
+        }
+
         // Filter before building or verifying recipes. In particular, PLAY0478 can occur on
         // every plain production in a workspace, but only the selected occurrence is relevant.
         return index.RepairableDiagnostics.Where(diagnostic => diagnostic.Code == code && (diagnostic.Location == entry.Location ||
@@ -219,6 +238,7 @@ public static class WorkspaceDiagnosticRepairs
         {
             return candidate.Operations.Zip(selected.Operations).All(pair => (pair.First, pair.Second) switch
             {
+                (MigrateOptionalTypeSpelling left, MigrateOptionalTypeSpelling right) => left.Target == right.Target && SyntaxJson.StructurallyEqual(left.Expected, right.Expected),
                 (AddWorkspaceNode left, AddWorkspaceNode right) => left.Parent == right.Parent && left.Member == right.Member && left.Index == right.Index &&
                     SyntaxJson.StructurallyEqual(left.ExpectedParent, right.ExpectedParent) && SyntaxJson.StructurallyEqual(left.Node, right.Node),
                 (ReplaceWorkspaceNode left, ReplaceWorkspaceNode right) => left.Target == right.Target &&
@@ -234,6 +254,10 @@ public static class WorkspaceDiagnosticRepairs
             return false;
         }
     }
+
+    static bool PermitsFormatting(string code, WorkspaceAuthoringFormatting formatting) =>
+        formatting == WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments ||
+        (code == DiagnosticCodes.LegacyOptionalSuffix && formatting == WorkspaceAuthoringFormatting.PreserveTrivia);
 
     static WorkspaceAuthoringResult Refuse(WorkspaceConflictKind kind, string message) => new()
     {

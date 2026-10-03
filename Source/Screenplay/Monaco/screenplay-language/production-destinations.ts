@@ -3,10 +3,10 @@
 
 import { DestinationHint } from './DestinationHint';
 import { eventAnalysisSource } from './event-analysis-source';
-import { CommandSymbol, scanDocument } from './symbols';
+import { CommandSymbol, propertyTypeReference, scanDocument } from './symbols';
 
 export function productionDestinations(command: CommandSymbol): { identifier?: string; mixed: boolean } {
-    const identifiers = command.properties.filter(property => property.isIdentifier && !property.type.includes('?') && !property.type.includes('[]'));
+    const identifiers = command.properties.filter(property => property.isIdentifier && !propertyTypeReference(property).isOptional && !propertyTypeReference(property).isCollection);
     const identifier = identifiers.length === 1 ? identifiers[0].name : undefined;
     const productions = command.produces ?? [];
     const mixed = productions.some(production => production.target !== undefined && production.target !== identifier) ||

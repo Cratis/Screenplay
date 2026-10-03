@@ -17,7 +17,7 @@ public class when_compiling_an_observable_query : given.a_compiler
               query LiveInvoices => observable InvoiceListReadModel[]
                 description "Every invoice, kept current while the board is open"
 
-              query LiveInvoice => observable InvoiceDetailsReadModel?
+              query LiveInvoice => observable InvoiceDetailsReadModel optional
                 by invoiceId InvoiceId
 
               query ListInvoices => InvoiceListReadModel[]

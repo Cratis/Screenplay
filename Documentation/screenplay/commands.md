@@ -8,7 +8,7 @@ Commands are input definitions — imperative intents. A command declares its pr
 command <Name>
   [description "<text>"]
 
-  <property> <Type>[?] [identifier]
+  <property> <Type> [optional] [identifier]
   ...
 
   [reads <ReadModel> [as <alias>] [by <property>]]   ← state the command decides against

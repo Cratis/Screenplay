@@ -212,15 +212,17 @@ compilation diagnostics belong to the paged diagnostics view. Available typed re
 | `PLAY0166` on command `produces` | Add an event declaration in the producing slice. Types come from command property paths, retaining concepts, or from `$context.occurred` as `DateTime`. Uncertain types, conflicting producer shapes, imported/already-declared events and cross-file producers have no repair. Parser errors in any workspace document also block inference. |
 | `PLAY0478` (Information) | Replace a plain production with an explicit `for <identifier>`. This deliberately selects the identifier rather than preserving allocated-identity routing. Optional or collection identifiers have no repair. Both models must be executable; a change to the language/semantic version or any other production's effective destination refuses the repair. |
 | `PLAY0469` on an inline mapping | Remove the payload property and its mapping together, retiring the property address. The label says “changes the event contract”; `canFixAll` is false. This narrow repair requires an executable model without other consumers of that event (including constraint releases, projection subscriptions and `on event` triggers) or opaque syntax/attachments. It refuses changed routing or lost comments. Plain productions receive guidance only. |
-| `PLAY0397` on `validate csharp` | Replace the validation with itself so canonical printing migrates its legacy fence. Other legacy forms have no individual repair. |
+| `PLAY0471` | Remove a redundant event `id`, inline or standalone, only when the executable model, catalog and comments are preserved. |
+| `PLAY0397` on `validate csharp` | Replace the validation with itself so canonical printing migrates its legacy fence. Other forms of `PLAY0397` have no individual repair. |
+| `PLAY0479` (Information) | Write `optional` after the type. An occurrence repair changes one type; a document repair contains all spelling changes in one transaction. Both preserve syntax structure. |
 
-`PLAY0471` also offers removal of a redundant event `id`, inline or standalone, only when the executable model, catalog and comments are preserved.
-
-Discovery verifies listed `PLAY0166`, `PLAY0478`, `PLAY0469` and `PLAY0471` repairs.
+Discovery verifies listed `PLAY0166`, `PLAY0478`, `PLAY0469`, `PLAY0471` and `PLAY0479` repairs.
 It checks authoring acceptance and comment preservation, plus routing safety for
 `PLAY0478`, consumer/routing impact and executable readiness for `PLAY0469`, and
 executable-model/catalog preservation for `PLAY0471`. For example, an inferred
 event that conflicts with a specification's asserted fields is not listed.
+`PLAY0479` verifies all spellings together once per document and snapshot; occurrence
+repairs are offered only when that document migration passes.
 `PLAY0397` discovery identifies the recipe only; its proposal may still be refused.
 Only acceptance and conflicts for verified repairs are cached per subject
 on the current immutable workspace snapshot for discovery reuse; diagnostics are
@@ -235,10 +237,18 @@ A matched repair that fails verification instead returns `success: false` with t
 production's routing or the model version; it does not mean the repair is unknown.
 
 Pass the selected repair's `diagnosticCode` and `subject` to `propose-repair` with
-both current revisions and `formatting: "CanonicalizeTouchedDocuments"` (also
-returned as `requiredFormatting`). Repairs reprint the entire touched file, so
-whitespace and other legacy fences can change; a proposal that would drop any
-comment, or duplicate one, is refused. No file is written until you review the `before`/`after` bytes
+both current revisions and the returned `requiredFormatting`.
+For `PLAY0479`, this is `"PreserveTrivia"`: only the selected type spellings change.
+Choose `scope: "document"` in the discovered results to migrate the whole document
+using its root `subject` handle; pass that handle, not a scope argument, to
+`propose-repair`. All splices are verified together in one transaction. The server
+reparses the candidate, requires unchanged syntax structure, and checks that the
+selected diagnostics have disappeared. Comments, alignment, line endings and the
+UTF-8 BOM are retained. `"CanonicalizeTouchedDocuments"` remains an explicit opt-in.
+
+Other listed repairs require `"CanonicalizeTouchedDocuments"` and reprint the entire
+touched file, so whitespace and other legacy fences can change. A proposal that
+would drop any comment, or duplicate one, is refused. No file is written until you review the `before`/`after` bytes
 with `read-proposal` and explicitly call `apply`. After external edits, reopen and
 rediscover repairs rather than reusing stale handles. Applying a repair uses the
 same [identity state and recovery](recovery.md) contract as other proposals.

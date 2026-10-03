@@ -11,6 +11,7 @@ import { createTokensProvider } from './tokens';
 import { CompletionOptions, createCompletionProvider } from './completions';
 import { createHoverProvider } from './hover';
 import { createInlayHintsProvider } from './inlay-hints';
+import { createCodeActionProvider } from './code-actions';
 import { attachDiagnostics } from './diagnostics';
 import {
     getSubLanguage,
@@ -55,6 +56,7 @@ export function register(monaco: Monaco, options: LanguageServiceOptions = {}): 
     monaco.languages.registerCompletionItemProvider(languageId, createCompletionProvider(monaco, options));
     monaco.languages.registerHoverProvider(languageId, createHoverProvider());
     monaco.languages.registerInlayHintsProvider(languageId, createInlayHintsProvider());
+    monaco.languages.registerCodeActionProvider(languageId, createCodeActionProvider());
     monaco.editor.defineTheme(screenplayDarkThemeName, screenplayDark);
     monaco.editor.defineTheme(screenplayLightThemeName, screenplayLight);
     attachDiagnostics(monaco);
@@ -121,5 +123,8 @@ export { destinationHints, productionDestinations } from './production-destinati
 export type { DestinationHint } from './DestinationHint';
 export type { ProductionSymbol } from './ProductionSymbol';
 export type { ValidationContext, ValidationIssue, ValidationSeverity } from './validation';
+export { createCodeActionProvider } from './code-actions';
+export { typeReferenceSymbol, typeReferenceText } from './TypeReferenceSymbol';
+export type { TypeReferenceSymbol } from './TypeReferenceSymbol';
 export { diagnosticCodes } from './diagnostic-codes';
 export type { DiagnosticCode } from './diagnostic-codes';

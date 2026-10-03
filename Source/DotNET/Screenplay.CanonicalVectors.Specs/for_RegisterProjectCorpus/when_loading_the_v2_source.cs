@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.CanonicalCorpus;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Semantics.Execution;
 
@@ -23,7 +24,8 @@ public class when_loading_the_v2_source : Specification
         var result = new SemanticModelCompiler().Compile(
             _corpus.ApplicationName, SemanticDocumentSet.Create([.. documents], catalog));
         result.Success.ShouldBeTrue();
-        result.Diagnostics.ShouldBeEmpty();
+        result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.LegacyOptionalSuffix);
+        result.Diagnostics.Single().Severity.ShouldEqual(DiagnosticSeverity.Information);
         _compilation = result.Value!;
         var plan = SemanticExecutionPlan.Compile(_compilation.Model).Plan!;
         _runs = [.. _corpus.SpecificationExpectations.Select(expectation => new SemanticSpecificationRunner().Run(plan, expectation.Specification))];

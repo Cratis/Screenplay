@@ -50,6 +50,9 @@ export const constructKeywords = [
     'behavior',
 ];
 
+// Type modifiers are contextual, never excluded from property or declaration names.
+export const typeModifierKeywords = ['optional'];
+
 export const clauseKeywords = [
     'description',
     'template',

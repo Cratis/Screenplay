@@ -7,6 +7,7 @@ import { registerCompletions } from './Completions';
 import { registerHover } from './Hover';
 import { registerInlayHints } from './InlayHints';
 import { registerDefinitions } from './Definitions';
+import { registerCodeActions } from './CodeActions';
 import { registerDiagnostics } from './Diagnostics';
 import { registerFileLinks } from './FileLinks';
 import { registerEventModelBoard } from './EventModelBoard/registerEventModelBoard';
@@ -23,6 +24,7 @@ export function activate(context: vscode.ExtensionContext): void {
     registerInlayHints(context);
     registerDefinitions(context, index);
     registerDiagnostics(context, index);
+    registerCodeActions(context, index);
     registerFileLinks(context);
     registerEventModelBoard(context);
     void index.load();

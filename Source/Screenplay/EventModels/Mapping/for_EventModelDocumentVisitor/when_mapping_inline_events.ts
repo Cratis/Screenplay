@@ -34,6 +34,14 @@ describe('when mapping inline events', () => {
         expect(large).toBeLessThan(small * 2.2);
     });
 
+    it('should keep board mappings and required fields identical for both optionality spellings', () => {
+        const source = prefix + command + '        tags String[]?\n        produces event Renamed\n          note String? = name\n          tags String[]? = tags\n';
+        const legacy = toEventModelDocument(parse(source).value, 'Projects');
+        const canonical = toEventModelDocument(parse(source.replaceAll('?', ' optional')).value, 'Projects');
+        expect(canonical).toEqual(legacy);
+        expect(slice_named(canonical, 'Rename').events[0].schema.required ?? []).toEqual([]);
+    });
+
     it('should draw the same event identity and shape as an extracted declaration', () => {
         const inline = toEventModelDocument(parse(prefix + command + '        produces event Renamed\n          name String = name\n').value, 'Projects');
         const explicit = toEventModelDocument(parse(prefix + command + '        produces Renamed\n          for projectId\n          name = name\n      event Renamed\n        name String\n').value, 'Projects');

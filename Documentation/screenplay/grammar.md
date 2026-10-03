@@ -208,7 +208,7 @@ Module         = "module", Ident, NL,
 
 BehaviorDecl   = "behavior", Ident, NL,
                  [ INDENT, [ DescriptionDecl ], [ FileDirective ],
-                   { "parameter", Ident, [ TypeRef ], NL | "order", SignedInteger, NL | InteractionBinding }, DEDENT ] ;
+                   { "parameter", Ident, [ RequiredTypeRef ], NL | "order", SignedInteger, NL | InteractionBinding }, DEDENT ] ;
 
 InteractionBinding = "on", InteractionTrigger, NL,
                  INDENT, { "where", Condition, NL | InteractionAction }, DEDENT ;
@@ -409,7 +409,12 @@ PropertyLine   = [ "@" ], Ident, TypeRef, [ "identifier" ], NL ;
 (* "identifier" is only accepted on a command property, and on at most one of
    them - it marks the property a runtime resolves the event source id from.  *)
 
-TypeRef        = Ident, [ "[]" ], [ "?" ] ;
+TypeRef        = QualifiedName, [ "[]" ], [ "optional" ] ;
+RequiredTypeRef = QualifiedName, [ "[]" ] ;
+
+(* "optional" follows the complete type, including any collection marker.
+   It is case-sensitive and contextual, not a reserved name. Modifiers cannot
+   be repeated. Optional reads are not yet supported. *)
 
 (* -------------------------------------------------------------- *)
 (* Commands                                                        *)
@@ -886,7 +891,7 @@ ScreenDirective = DataDecl
 (* A screen, a section and a filled slot attach interactions the same way a
    module or feature does - see interactions.md.                              *)
 
-DataDecl       = "data", TypeRef, "via", "query", QualifiedName,
+DataDecl       = "data", RequiredTypeRef, "via", "query", QualifiedName,
                  [ "by", Ident ], NL ;
 
 ActionDecl     = "action", QualifiedName, NL,

@@ -48,7 +48,7 @@ export function validateInlineEvents(lines: string[], symbols: DocumentSymbols, 
             if (event.inline && keyword === 'generation') report(index, diagnosticCodes.inlineEventGeneration, 'Inline events are generation 1; extract the event before declaring generations.');
             if (event.inline && keyword === 'origin') report(index, diagnosticCodes.reservedProductionMetadata, 'An inline event is local to its command and cannot declare origin.');
             // Property-shaped metadata names stay properties, whether standalone or typed mappings.
-            if (/^(?:id|description|documentation)\s+[\w.]+(?:\[\])?\??(?:\s*=.*)?$/.test(text)) continue;
+            if (/^(?:id|description|documentation)\s+[\w.]+(?:\[\])?(?:\?|\s+optional)?(?:\s*=.*)?$/.test(text)) continue;
             if (keyword === 'id') {
                 const match = text.match(quotedId);
                 if (hasId || match === null || match[1].trim().length === 0) report(index, diagnosticCodes.invalidEventId, 'Expected one nonempty id "<old-name>".');

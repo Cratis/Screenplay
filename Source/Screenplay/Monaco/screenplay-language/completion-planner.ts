@@ -115,6 +115,18 @@ export function planCompletions(
         textBefore.trim().length === 0 ? textBefore.length : indentOf(currentLine);
     const chain = enclosingChain(lines, fences, lineIndex, effectiveIndent);
 
+    const propertyOwner = ['event', 'command', 'type', 'readmodel', 'trigger', 'when', 'every', 'at'].includes(chain[0]) ||
+        (chain[0] === 'produces' && /^produces\s+event\b/.test(nearestEnclosingLine(lines, fences, lineIndex, effectiveIndent) ?? ''));
+    const propertyName = textBefore.trimStart().split(/\s+/)[0];
+    const reservedProperty = (chain[0] === 'command' && ['reads', 'authorize', 'produces'].includes(propertyName)) ||
+        (chain[0] === 'event' && propertyName === 'tag') ||
+        (['trigger', 'when', 'every', 'at'].includes(chain[0]) && ['description', 'file', 'reads', 'produces', 'invokes'].includes(propertyName));
+    const optionalPrefix = (match: RegExpMatchArray | null) => match !== null && 'optional'.startsWith(match[1]);
+    const afterPropertyType = propertyOwner && !reservedProperty && optionalPrefix(textBefore.match(/^\s*@?[a-z_]\w*\s+[\w.]+(?:\[\])?\s+(\w*)$/));
+    const afterQueryType = (chain[0] === 'query' && optionalPrefix(textBefore.match(/^\s*(?:by|filter)\s+[a-z_]\w*\s+[\w.]+(?:\[\])?\s+(\w*)$/))) ||
+        optionalPrefix(textBefore.match(/^\s*query\s+[A-Za-z_]\w*\s*=>\s*(?:observable\s+)?[\w.]+(?:\[\])?\s+(\w*)$/));
+    if ((afterPropertyType || afterQueryType) && !/=>\s*observable\s+$/.test(textBefore)) return { kind: 'entries', entries: items.optionalTypeItems };
+
     if (/\bauthorize\s+[\w\s]*$/.test(textBefore) || chain[0] === 'authorize') {
         return { kind: 'policies' };
     }
