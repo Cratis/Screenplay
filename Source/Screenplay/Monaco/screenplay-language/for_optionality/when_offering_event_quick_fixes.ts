@@ -42,14 +42,14 @@ describe('when offering event quick fixes in Monaco', () => {
         expect((await provider.provideCodeActions(document, range(line), context(code, line), token))?.actions).toEqual([]);
     });
 
-    it('should only offer fixes for intersecting diagnostics, not other codes in the buffer', async () => {
+    it('should restrict quickfix-only requests to intersecting diagnostics, not other codes in the buffer', async () => {
         const document = model(prefix + '      event E\n        id "E"\n        note String?');
         const provider = createCodeActionProvider();
-        const result = await provider.provideCodeActions(document, range(5), context('PLAY0471', 5), token);
+        const result = await provider.provideCodeActions(document, range(5), context('PLAY0471', 5, 'quickfix'), token);
         expect(result?.actions.map(action => action.title)).toEqual(['Remove the redundant event id']);
-        expect((await provider.provideCodeActions(document, range(6), context('PLAY0471', 5), token))?.actions).toEqual([]);
-        expect((await provider.provideCodeActions(document, range(5), context('PLAY0470', 5), token))?.actions).toEqual([]);
-        expect((await provider.provideCodeActions(document, range(6), context('PLAY0471', 6), token))?.actions).toEqual([]);
+        expect((await provider.provideCodeActions(document, range(6), context('PLAY0471', 5, 'quickfix'), token))?.actions).toEqual([]);
+        expect((await provider.provideCodeActions(document, range(5), context('PLAY0470', 5, 'quickfix'), token))?.actions).toEqual([]);
+        expect((await provider.provideCodeActions(document, range(6), context('PLAY0471', 6, 'quickfix'), token))?.actions).toEqual([]);
     });
 
     it('should offer every eligible intersecting occurrence without duplicating markers', async () => {

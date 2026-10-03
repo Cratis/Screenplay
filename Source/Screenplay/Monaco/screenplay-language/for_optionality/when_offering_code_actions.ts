@@ -35,6 +35,24 @@ describe('when offering Monaco code actions', () => {
         expect(result?.actions[1].edit?.edits.every(edit => 'versionId' in edit && edit.versionId === 1)).toBe(true);
     });
 
+    it.each([undefined, ''])('should keep occurrence and document actions for unrestricted kind %j', async only => {
+        const result = await createCodeActionProvider().provideCodeActions(model(), range, { ...context, only }, token);
+        expect(result?.actions.map(action => action.kind)).toEqual(['quickfix', migrationKind]);
+    });
+
+    it('should keep marker-free document migration for the root kind', async () => {
+        const result = await createCodeActionProvider().provideCodeActions(model(), range, { ...context, markers: [], only: '' }, token);
+        expect(result?.actions.map(action => action.kind)).toEqual([migrationKind]);
+    });
+
+    it.each([undefined, ''])('should keep redundant-id occurrences and migration for unrestricted kind %j', async only => {
+        const document = model('module M\n  feature F\n    slice StateChange S\n      event E\n        id "E"\n        note String?');
+        const range = { startLineNumber: 5, startColumn: 1, endLineNumber: 5, endColumn: 15 } as Range;
+        const markers = [{ ...marker, ...range, code: 'PLAY0471' }];
+        const result = await createCodeActionProvider().provideCodeActions(document, range, { ...context, markers, only }, token);
+        expect(result?.actions.map(action => action.kind)).toEqual(['quickfix', migrationKind]);
+    });
+
     it('should refuse stale analysis', async () => {
         const document = model();
         let version = 0;

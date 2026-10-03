@@ -20,6 +20,7 @@ export function registerCodeActions(context: vscode.ExtensionContext, index: App
     context.subscriptions.push(vscode.languages.registerCodeActionsProvider(languageId, {
         provideCodeActions(document, range, request, token) {
             const migrationRequested = request.only?.contains(migrateOptional) === true;
+            const migrationOnly = migrationRequested && !request.only?.contains(vscode.CodeActionKind.QuickFix);
             if (request.only !== undefined && !migrationRequested && !request.only.contains(vscode.CodeActionKind.QuickFix)) return [];
             const diagnostics = request.diagnostics.filter(diagnostic => {
                 const code = typeof diagnostic.code === 'object' ? diagnostic.code.value : diagnostic.code;
@@ -29,17 +30,18 @@ export function registerCodeActions(context: vscode.ExtensionContext, index: App
             const file = index.fileOf(document.uri);
             const placement = file?.application.placementOf(file.path);
             const placementKey = JSON.stringify(placement);
-            const isWholeApplication = (placement?.length ?? 0) === 0 && (file === undefined ? vscode.workspace.getWorkspaceFolder(document.uri) === undefined : file.application.paths.length === 1 && file.application.paths[0] === file.path);
+            const isWholeApplication = (placement?.length ?? 0) === 0 && (file === undefined ? vscode.workspace.getWorkspaceFolder(document.uri) === undefined : index.isDiscoveryComplete(document.uri) && file.application.paths.length === 1 && file.application.paths[0] === file.path);
             const version = document.version;
             let analysis = cache.get(document);
             if (analysis?.version !== version || analysis.placement !== placementKey || analysis.isWholeApplication !== isWholeApplication) {
                 analysis = { version, placement: placementKey, isWholeApplication, fixes: prepareQuickFixes(document.getText(), { placement, isWholeApplication }) };
                 cache.set(document, analysis);
             }
-            const requested = migrationRequested ? analysis.fixes(undefined, DiagnosticCodes.LegacyOptionalSuffix) : analysis.fixes(diagnostics.map(diagnostic => ({
+            const occurrences = migrationOnly ? [] : analysis.fixes(diagnostics.map(diagnostic => ({
                 line: diagnostic.range.start.line + 1,
                 diagnosticCode: String(typeof diagnostic.code === 'object' ? diagnostic.code.value : diagnostic.code),
-            })));
+            }))).filter(fix => fix.scope === 'occurrence');
+            const requested = [...occurrences, ...(request.only === undefined || migrationRequested ? analysis.fixes(undefined, DiagnosticCodes.LegacyOptionalSuffix) : [])];
             const fixes = requested.filter(fix => request.only === undefined || request.only.contains(fix.scope === 'document' ? migrateOptional : vscode.CodeActionKind.QuickFix));
             if (token.isCancellationRequested || document.version !== version) return [];
             return fixes.map(fix => {
@@ -62,7 +64,7 @@ export function registerCodeActions(context: vscode.ExtensionContext, index: App
         const first = pending.fix.edits[0];
         if (first === undefined) return false;
         const placement = file?.application.placementOf(file.path);
-        const isWholeApplication = (placement?.length ?? 0) === 0 && (file === undefined ? vscode.workspace.getWorkspaceFolder(document.uri) === undefined : file.application.paths.length === 1 && file.application.paths[0] === file.path);
+        const isWholeApplication = (placement?.length ?? 0) === 0 && (file === undefined ? vscode.workspace.getWorkspaceFolder(document.uri) === undefined : index.isDiscoveryComplete(document.uri) && file.application.paths.length === 1 && file.application.paths[0] === file.path);
         const verified = findQuickFixes(document.getText(), { line: pending.fix.line ?? document.positionAt(first.start).line + 1, diagnosticCode: pending.fix.diagnosticCode, placement, isWholeApplication })
             .find(fix => fix.scope === pending.fix.scope && fix.diagnosticCode === pending.fix.diagnosticCode && JSON.stringify(fix.edits) === JSON.stringify(pending.fix.edits));
         if (verified === undefined) return false;

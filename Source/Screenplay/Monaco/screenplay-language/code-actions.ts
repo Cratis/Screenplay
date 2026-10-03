@@ -20,6 +20,7 @@ export function createCodeActionProvider(placement?: readonly string[], options:
     return {
         provideCodeActions(model, range, context, token) {
             const migrationRequested = context.only !== undefined && containsKind(context.only, migrateOptional);
+            const migrationOnly = context.only !== undefined && migrationRequested && !containsKind(context.only, 'quickfix');
             if (token.isCancellationRequested || (context.only !== undefined && !migrationRequested && !containsKind(context.only, 'quickfix'))) return { actions: [], dispose() {} };
             const diagnostics = context.markers.filter(marker => {
                 const code = typeof marker.code === 'object' ? marker.code.value : marker.code;
@@ -35,10 +36,11 @@ export function createCodeActionProvider(placement?: readonly string[], options:
                 analysis = { version, placement: placementKey, isWholeApplication, fixes: prepareQuickFixes(model.getValue(), { placement: modelPlacement, isWholeApplication }) };
                 cache.set(model, analysis);
             }
-            const requested = migrationRequested ? analysis.fixes(undefined, DiagnosticCodes.LegacyOptionalSuffix) : analysis.fixes(diagnostics.map(diagnostic => ({
+            const occurrences = migrationOnly ? [] : analysis.fixes(diagnostics.map(diagnostic => ({
                 line: diagnostic.startLineNumber,
                 diagnosticCode: String(typeof diagnostic.code === 'object' ? diagnostic.code.value : diagnostic.code),
-            })));
+            }))).filter(fix => fix.scope === 'occurrence');
+            const requested = [...occurrences, ...(context.only === undefined || migrationRequested ? analysis.fixes(undefined, DiagnosticCodes.LegacyOptionalSuffix) : [])];
             const fixes = requested.filter(fix => context.only === undefined || containsKind(context.only, fix.scope === 'document' ? migrateOptional : 'quickfix'));
             if (token.isCancellationRequested || model.getVersionId() !== version) return { actions: [], dispose() {} };
             return {
