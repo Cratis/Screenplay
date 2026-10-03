@@ -4,6 +4,8 @@
 // The subset of the C# compiler's DiagnosticCodes this compiler reports. The values are the same, so a
 // code means the same thing whichever compiler reported it.
 export const DiagnosticCodes = {
+    UnexpectedTokenInCondition: 'PLAY0158',
+    InvalidWhenClause: 'PLAY0087',
     InvalidProducesDeclaration: 'PLAY0042',
     ProducesWhenWithoutEvent: 'PLAY0043',
     InvalidPropertyMapping: 'PLAY0044',

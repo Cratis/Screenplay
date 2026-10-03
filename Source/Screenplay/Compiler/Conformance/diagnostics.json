@@ -2,6 +2,71 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "complete token coverage preserves Unicode whitespace",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        produces when status\u0085==\u0085\"sent\"", "          E", "      capture Capture", "        append E", "          when balance from\u0085-1 to -2"],
+            "diagnostics": []
+        },
+        {
+            "name": "a condition cannot discard an interior byte order mark",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        produces when status\uFEFF==\"sent\"", "          E"],
+            "diagnostics": ["PLAY0158@5"]
+        },
+        {
+            "name": "a capture path cannot discard an interior byte order mark",
+            "source": ["module M", "  feature F", "    slice Translate S", "      capture C", "        append E", "          when status\uFEFF or overdue"],
+            "diagnostics": ["PLAY0087@6"]
+        },
+        {
+            "name": "a condition cannot discard trailing punctuation",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        produces when status == \"sent\"!", "          E"],
+            "diagnostics": ["PLAY0158@5"]
+        },
+        {
+            "name": "a condition cannot discard leading punctuation",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        produces when !status == \"sent\"", "          E"],
+            "diagnostics": ["PLAY0158@5"]
+        },
+        {
+            "name": "a condition cannot discard raw logical operators",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        produces when status == \"sent\" &&", "          E"],
+            "diagnostics": ["PLAY0158@5"]
+        },
+        {
+            "name": "a requirement cannot discard punctuation between tokens",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        validate", "          require status == %\"sent\""],
+            "diagnostics": ["PLAY0158@6"]
+        },
+        {
+            "name": "a reaction condition cannot discard trailing punctuation",
+            "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        when E", "        where status == \"sent\"!"],
+            "diagnostics": ["PLAY0158@6"]
+        },
+        {
+            "name": "a capture path cannot discard leading punctuation",
+            "source": ["module M", "  feature F", "    slice Translate S", "      capture C", "        append E", "          when !status"],
+            "diagnostics": ["PLAY0087@6"]
+        },
+        {
+            "name": "a capture path cannot discard trailing punctuation",
+            "source": ["module M", "  feature F", "    slice Translate S", "      capture C", "        append E", "          when status!"],
+            "diagnostics": ["PLAY0087@6"]
+        },
+        {
+            "name": "a capture path chain cannot discard punctuation",
+            "source": ["module M", "  feature F", "    slice Translate S", "      capture C", "        append E", "          when status or !overdue"],
+            "diagnostics": ["PLAY0087@6"]
+        },
+        {
+            "name": "a capture transition cannot discard punctuation",
+            "source": ["module M", "  feature F", "    slice Translate S", "      capture C", "        append E", "          when status from !\"sent\" to \"paid\""],
+            "diagnostics": ["PLAY0087@6"]
+        },
+        {
+            "name": "condition strings and opaque capture guards retain punctuation",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        produces when status == \"sent && !paid\"", "          E", "      capture Capture", "        append E", "          when `status == \"sent\" && overdue == true`", "        append E", "          when balance from -1.5 to -2"],
+            "diagnostics": []
+        },
+        {
             "name": "reaction data named csharp is not a code language directive",
             "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        when T", "          csharp String?", "          note String?"],
             "diagnostics": ["PLAY0479@6", "PLAY0479@7"]

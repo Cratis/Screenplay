@@ -10,6 +10,7 @@ import { ProducesSyntax } from '../Syntax/Reactions';
 import { pattern } from '../Text/patterns';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
+import { checkConditionTokens } from './ConditionTokens';
 import { parseDescription } from './DescriptionParser';
 import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
@@ -120,6 +121,7 @@ export function parseValidate(context: ParserContext, line: SourceLine): Validat
             context.reader.takeSignificant();
             // 'require' states a rule about the whole artifact. Requirements are not modeled.
             if (firstWord(child.content) === 'require') {
+                checkConditionTokens(context, child.content.substring('require'.length).trim(), child);
                 context.skipOpaqueBlock(child.indent);
                 continue;
             }
