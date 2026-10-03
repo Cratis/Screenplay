@@ -31,7 +31,8 @@ def smoke(artifact):
             {"jsonrpc": "2.0", "method": "notifications/initialized"},
             {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
             {"jsonrpc": "2.0", "id": 3, "method": "resources/list", "params": {}},
-            {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "describe-application", "arguments": {}}}
+            {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "describe-application", "arguments": {}}},
+            {"jsonrpc": "2.0", "id": 5, "method": "resources/read", "params": {"uri": "ui://screenplay/event-model-board.html"}}
         ]
         model = Path(arguments[-1])
         if artifact.suffix != ".mcpb":
@@ -42,11 +43,13 @@ def smoke(artifact):
         result = subprocess.run([str(command), *arguments], input="".join(json.dumps(m) + "\n" for m in messages), text=True, capture_output=True, timeout=60)
         assert result.returncode == 0, result.stderr
         replies = {m["id"]: m for m in map(json.loads, result.stdout.splitlines()) if "id" in m}
-        assert set(replies) == {1, 2, 3, 4}, replies
+        assert set(replies) == {1, 2, 3, 4, 5}, list(replies)
         assert all("error" not in m for m in replies.values()), replies
         assert replies[1]["result"]["serverInfo"]["name"], replies[1]
         assert "describe-application" in {tool["name"] for tool in replies[2]["result"]["tools"]}, replies[2]
-        assert "resources" in replies[3]["result"], replies[3]
+        assert "ui://screenplay/event-model-board.html" in {resource["uri"] for resource in replies[3]["result"]["resources"]}, replies[3]
+        assert replies[5]["result"]["contents"][0]["mimeType"] == "text/html;profile=mcp-app"
+        assert "<html" in replies[5]["result"]["contents"][0]["text"].lower()
         assert not replies[4]["result"].get("isError", False), replies[4]
         print(f"MCP initialization, tools, resources, and application read passed: {artifact.name}")
 
