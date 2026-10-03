@@ -99,6 +99,29 @@ the current buffer and verify that its meaning is unchanged before offering edit
 Nothing is saved automatically. Stale buffer versions are refused. Monaco provides
 the same verified fixes; neither editor needs a .NET process.
 
+## Event quick fixes
+
+The lightbulb in VS Code and Monaco also offers these occurrence-only actions:
+
+| Diagnostic | Action |
+| --- | --- |
+| `PLAY0471` | **Remove the redundant event id** deletes the complete `id` line, including its indentation and line ending, for inline or standalone events. A trailing comment prevents the action; move the comment to its own line first. |
+| `PLAY0478` | **State the destination: for projectId** inserts `for <identifier>` before the production's tags and mappings. Choose it only when the event should address that identifier rather than a newly allocated identity. |
+
+Destination fixes never participate in fix-all or save actions. They require a local,
+unique event contract, one required scalar command identifier, no other omitted
+production in that command, and explicit siblings targeting the same identifier.
+The editor also requires proof that adding `for` cannot promote the model's version:
+the event already has a payload property with that name, or a local typed destination
+already establishes the newer routing rules. Imports, generation markers, and version
+evidence requiring executable binding are conservatively refused. This means the
+workspace repair workflow can offer repairs the editor cannot prove safe.
+
+Both actions reparse the edited buffer and verify that only the intended syntax
+changes and the diagnostic disappears. Analysis is cached for the current document
+version; stale edits are refused. `PLAY0470` has no quick fix: state the intended
+destinations explicitly and resolve the binding errors first.
+
 ## When the model has errors
 
 The board draws everything that could be read, so a typo in one slice does not empty it. The errors are listed above the board. Select one to open the file at its line.
@@ -107,10 +130,11 @@ The board is drawn by the extension's own [TypeScript compiler](typescript-compi
 
 The text editor also reports `PLAY0478` as information when a plain production
 omits `for` and its command has an identifier. This is advice, not a new routing
-default. Monaco and VS Code use their own TypeScript validation; they do not host
-the C# workspace repair transaction or offer production repairs as editor quick fixes.
-Use the [MCP repair workflow](mcp/authoring-tools.md#fix-a-diagnostic) to preview an explicit
-`for` or declare a missing produced event, then review and apply the typed proposal.
+default. Monaco and VS Code use their own TypeScript validation and offer the
+conservative [event quick fixes](#event-quick-fixes) above; they do not host the C#
+workspace repair transaction. Use the [MCP repair workflow](mcp/authoring-tools.md#fix-a-diagnostic)
+for executable-model verification or to declare a missing produced event, then
+review and apply the typed proposal.
 
 ## Theme
 

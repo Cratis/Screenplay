@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import type { editor, IRange, languages } from 'monaco-editor';
-import { DiagnosticCodes, prepareQuickFixes } from '@cratis/screenplay-compiler';
+import { DiagnosticCodes, isQuickFixDiagnostic, prepareQuickFixes } from '@cratis/screenplay-compiler';
 
 const migrateOptional = 'source.screenplay.migrateOptional';
 const containsKind = (requested: string, kind: string) => requested === '' || requested === kind || kind.startsWith(`${requested}.`);
@@ -22,7 +22,7 @@ export function createCodeActionProvider(placement?: readonly string[]): languag
             if (token.isCancellationRequested || (context.only !== undefined && !migrationRequested && !containsKind(context.only, 'quickfix'))) return { actions: [], dispose() {} };
             const diagnostic = context.markers.find(marker => {
                 const code = typeof marker.code === 'object' ? marker.code.value : marker.code;
-                return code === DiagnosticCodes.LegacyOptionalSuffix && intersects(marker, range);
+                return isQuickFixDiagnostic(code) && intersects(marker, range);
             });
             if (!migrationRequested && diagnostic === undefined) return { actions: [], dispose() {} };
             const version = model.getVersionId();
@@ -32,14 +32,16 @@ export function createCodeActionProvider(placement?: readonly string[]): languag
                 analysis = { version, placement: placementKey, fixes: prepareQuickFixes(model.getValue(), { placement }) };
                 cache.set(model, analysis);
             }
-            const fixes = analysis.fixes(diagnostic?.startLineNumber)
-                .filter(fix => context.only === undefined || containsKind(context.only, fix.scope === 'document' ? migrateOptional : 'quickfix'));
+            // Verify one selected occurrence, never reparse the document for every marker in a range.
+            const requested = analysis.fixes(migrationRequested ? undefined : diagnostic?.startLineNumber,
+                migrationRequested ? DiagnosticCodes.LegacyOptionalSuffix : String(typeof diagnostic?.code === 'object' ? diagnostic.code.value : diagnostic?.code));
+            const fixes = requested.filter(fix => context.only === undefined || containsKind(context.only, fix.scope === 'document' ? migrateOptional : 'quickfix'));
             if (token.isCancellationRequested || model.getVersionId() !== version) return { actions: [], dispose() {} };
             return {
                 actions: fixes.map(fix => ({
                     title: fix.title,
                     kind: fix.scope === 'document' ? migrateOptional : 'quickfix',
-                    isPreferred: fix.scope === 'occurrence',
+                    isPreferred: fix.scope === 'occurrence' && fix.diagnosticCode !== DiagnosticCodes.OmittedProductionDestination,
                     edit: { edits: fix.edits.map(edit => {
                         const start = model.getPositionAt(edit.start);
                         const end = model.getPositionAt(edit.start + edit.length);

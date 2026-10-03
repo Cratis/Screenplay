@@ -31,6 +31,23 @@ monaco.editor.create(element, {
 - **Hover** — keyword documentation, concept definitions (primitive + attributes), policy require expressions, and event property lists.
 - **Diagnostics** — unknown slice types, unknown primitive types, references to undeclared policies and events, tab indentation, and unclosed code fences. Every one of them carries the compiler's own `PLAY` code (`diagnosticCodes`), so a squiggle and a CLI diagnostic for the same condition are the same code.
 
+## Quick fixes
+
+The registered code-action provider offers verified edits against the current buffer:
+
+- `PLAY0479`: replace one legacy `?` suffix with `optional`, or migrate the document.
+- `PLAY0471`: remove a redundant event `id` line. Trailing comments prevent removal.
+- `PLAY0478`: **State the destination: for projectId** inserts an explicit destination
+  before tags and mappings when local syntax proves version and sibling-routing safety.
+  Unresolved contracts, imports, generation markers, other omitted siblings, and
+  uncertain version promotion prevent the action. This routing choice is never a fix-all.
+
+`PLAY0470` has no quick fix. Actions respect the requested diagnostic and kind,
+cache analysis per model version, and pin edits to that version. Each candidate
+is reparsed to check the intended syntax change and diagnostic removal; no .NET
+process is required. See [editor quick fixes](../../../../Documentation/screenplay/vscode.md#event-quick-fixes)
+for the destination safety limits.
+
 ## Extending with new sub-languages
 
 ```typescript

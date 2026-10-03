@@ -822,7 +822,7 @@ These codes cover [inline command events](commands.md#declare-an-event-inline) a
 |---|---|---|
 | `PLAY0469` | Warning (inline), information (plain) | A production copies the command identifier into payload while targeting that same identifier. The inline-only repair removes the property and mapping, explicitly changes the event contract, retires its property address, and is excluded from fix-all. Consumers, opaque implementation impact or comment loss refuse the repair. Plain/standalone contracts receive guidance only: review persistence and generation evolution before changing their shape. |
 | `PLAY0470` | Error | A command targets another event source but one or more productions omit `for`, or both an inline and a plain production omit `for` and therefore have different defaults. The diagnostic names the production. State every destination explicitly; cross-source execution is still unsupported. |
-| `PLAY0471` | Information | An event's `id` equals its current name. The typed removal repair covers inline and standalone declarations, preserves the executable model and catalog, and refuses comment loss. |
+| `PLAY0471` | Information | An event's `id` equals its current name. The typed removal repair covers inline and standalone declarations, preserves the executable model and catalog, and refuses comment loss. Monaco and VS Code also offer an [editor quick fix](vscode.md#event-quick-fixes) to remove the complete line unless it has a trailing comment. |
 | `PLAY0472` | Error | Event `id` is missing its nonempty quoted value or is repeated. |
 | `PLAY0473` | Error | An inline event name collides with a standalone declaration, import, or another inline declaration. |
 | `PLAY0474` | Error | `produces event` occurs outside a command, such as in a reaction. |
@@ -848,6 +848,11 @@ when the repair would change the language or semantic version, or when any other
 effective destination would change (including through a command default).
 Discovery verifies these conditions and comment preservation once per subject on an
 immutable workspace snapshot; a new snapshot cannot reuse those verification results.
+
+Monaco and VS Code offer the occurrence-only [editor quick fix](vscode.md#event-quick-fixes)
+**State the destination: for projectId** for a conservative subset of `PLAY0478`.
+It checks local syntax for version and sibling-routing safety, reparses the edit,
+and never participates in fix-all. No editor quick fix is offered for `PLAY0470`.
 
 For `PLAY0166` on a command production, a typed repair can add an `event`
 declaration to the producing slice. Properties follow mapping order; command

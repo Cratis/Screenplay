@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import * as vscode from 'vscode';
-import { DiagnosticCodes, findQuickFixes, prepareQuickFixes, QuickFix } from '@cratis/screenplay-compiler';
+import { DiagnosticCodes, findQuickFixes, isQuickFixDiagnostic, prepareQuickFixes, QuickFix } from '@cratis/screenplay-compiler';
 import { languageId } from '@cratis/screenplay-language';
 import { ApplicationIndex } from './ApplicationIndex';
 
@@ -23,7 +23,7 @@ export function registerCodeActions(context: vscode.ExtensionContext, index: App
             if (request.only !== undefined && !migrationRequested && !request.only.contains(vscode.CodeActionKind.QuickFix)) return [];
             const diagnostic = request.diagnostics.find(diagnostic => {
                 const code = typeof diagnostic.code === 'object' ? diagnostic.code.value : diagnostic.code;
-                return code === DiagnosticCodes.LegacyOptionalSuffix && diagnostic.range.intersection(range) !== undefined;
+                return isQuickFixDiagnostic(code) && diagnostic.range.intersection(range) !== undefined;
             });
             if (token.isCancellationRequested || (!migrationRequested && diagnostic === undefined)) return [];
             const file = index.fileOf(document.uri);
@@ -35,11 +35,14 @@ export function registerCodeActions(context: vscode.ExtensionContext, index: App
                 analysis = { version, placement: placementKey, fixes: prepareQuickFixes(document.getText(), { placement }) };
                 cache.set(document, analysis);
             }
-            const fixes = analysis.fixes(diagnostic === undefined ? undefined : diagnostic.range.start.line + 1);
+            // A multiline request still verifies only one occurrence, not every diagnostic in the file.
+            const requested = analysis.fixes(migrationRequested || diagnostic === undefined ? undefined : diagnostic.range.start.line + 1,
+                migrationRequested ? DiagnosticCodes.LegacyOptionalSuffix : String(typeof diagnostic?.code === 'object' ? diagnostic.code.value : diagnostic?.code));
+            const fixes = requested.filter(fix => request.only === undefined || request.only.contains(fix.scope === 'document' ? migrateOptional : vscode.CodeActionKind.QuickFix));
             if (token.isCancellationRequested || document.version !== version) return [];
             return fixes.map(fix => {
                 const action = new vscode.CodeAction(fix.title, fix.scope === 'document' ? migrateOptional : vscode.CodeActionKind.QuickFix);
-                action.isPreferred = fix.scope === 'occurrence';
+                action.isPreferred = fix.scope === 'occurrence' && fix.diagnosticCode !== DiagnosticCodes.OmittedProductionDestination;
                 action.command = { command: applyCommand, title: fix.title, arguments: [{ uri: document.uri, version, fix } satisfies PendingQuickFix] };
                 return action;
             });
@@ -56,7 +59,7 @@ export function registerCodeActions(context: vscode.ExtensionContext, index: App
         const file = index.fileOf(document.uri);
         const first = pending.fix.edits[0];
         if (first === undefined) return false;
-        const verified = findQuickFixes(document.getText(), { line: document.positionAt(first.start).line + 1, placement: file?.application.placementOf(file.path) })
+        const verified = findQuickFixes(document.getText(), { line: pending.fix.line ?? document.positionAt(first.start).line + 1, diagnosticCode: pending.fix.diagnosticCode, placement: file?.application.placementOf(file.path) })
             .find(fix => fix.scope === pending.fix.scope && fix.diagnosticCode === pending.fix.diagnosticCode && JSON.stringify(fix.edits) === JSON.stringify(pending.fix.edits));
         if (verified === undefined) return false;
         const edit = new vscode.WorkspaceEdit();

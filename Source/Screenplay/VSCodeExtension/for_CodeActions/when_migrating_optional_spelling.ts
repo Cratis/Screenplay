@@ -47,12 +47,12 @@ async function request(context: Partial<vscode.CodeActionContext> = { diagnostic
     return await editor.provider!.provideCodeActions(editor.documents[0], new vscode.Range(line, 0, line, 16), { diagnostics: [], ...context } as vscode.CodeActionContext, {} as vscode.CancellationToken) as vscode.CodeAction[];
 }
 
-async function actions(context?: Partial<vscode.CodeActionContext>): Promise<vscode.CodeAction[]> {
+async function actions(context?: Partial<vscode.CodeActionContext>, text = source): Promise<vscode.CodeAction[]> {
     const document = {
         uri: vscode.Uri.file('/model.play'), version: 1,
-        getText: () => source,
+        getText: () => text,
         positionAt: (offset: number) => {
-            const lines = source.slice(0, offset).split('\n');
+            const lines = text.slice(0, offset).split('\n');
             return new vscode.Position(lines.length - 1, lines.at(-1)!.length);
         },
     } as unknown as vscode.TextDocument;
@@ -101,6 +101,31 @@ describe('when migrating optional spelling in VS Code', () => {
         editor.documents = [{ ...editor.documents[0], version: 2 }];
         expect(await editor.apply!(...fixes[0].command!.arguments!)).toBe(false);
         expect(editor.applied).toBe(0);
+    });
+
+    it.each([
+        { code: 'PLAY0471', line: 4, text: 'module M\n  feature F\n    slice StateChange S\n      event E\n        id "E"' },
+        { code: 'PLAY0478', line: 7, text: 'module M\n  feature F\n    slice StateChange S\n      event E\n        projectId Uuid\n      command C\n        projectId Uuid identifier\n        produces E' },
+    ])('should apply a verified $code occurrence from its diagnostic line', async ({ code, line, text }) => {
+        await actions({ diagnostics: [] }, text);
+        const diagnostic = { code: { value: code }, range: new vscode.Range(line, 0, line, 25) } as vscode.Diagnostic;
+        const fixes = await request({ diagnostics: [diagnostic], only: vscode.CodeActionKind.QuickFix }, line);
+        expect(fixes).toHaveLength(1);
+        expect(fixes[0].kind?.value).toBe('quickfix');
+        expect(fixes[0].isPreferred).toBe(code !== 'PLAY0478');
+        expect(await editor.apply!(...fixes[0].command!.arguments!)).toBe(true);
+        expect(editor.applied).toBe(1);
+        expect(await request({ diagnostics: [diagnostic], only: vscode.CodeActionKind.SourceFixAll }, line)).toEqual([]);
+        Object.assign(editor.documents[0], { version: 2 });
+        expect(await editor.apply!(...fixes[0].command!.arguments!)).toBe(false);
+        expect(editor.applied).toBe(1);
+    });
+
+    it('should filter quickfix-only requests and exclude other diagnostics on the same line', async () => {
+        const fixes = await actions({ diagnostics: [diagnostic], only: vscode.CodeActionKind.QuickFix });
+        expect(fixes.map(fix => fix.kind?.value)).toEqual(['quickfix']);
+        expect(await request({ diagnostics: [{ ...diagnostic, code: 'PLAY0471' }] })).toEqual([]);
+        expect(await request({ diagnostics: [{ ...diagnostic, code: 'PLAY0470' }] })).toEqual([]);
     });
 
     it('should reverify a command instead of trusting supplied edits', async () => {
