@@ -4,6 +4,8 @@
 import { Diagnostic } from './Diagnostics/Diagnostic';
 import { documentPlacement, PlayPlacement } from './Files/PlayPlacement';
 import { DiscoveredImport, discoverImports as discoverImportsIn } from './Parsing/ImportDiscovery';
+import { InputUse } from './Parsing/InputUses';
+import { validateResponses } from './Parsing/ResponseValidator';
 import { LineReader } from './Parsing/LineReader';
 import { validateInlineEvents } from './Parsing/InlineEventValidator';
 import { ParserContext } from './Parsing/ParserContext';
@@ -32,15 +34,19 @@ export function parse(source: string, path?: string, placement: PlayPlacement = 
 }
 
 // Additive authoring view: do not widen TypeRefSyntax or the cross-compiler SyntaxJson projection.
-export function parseForAuthoring(source: string, path?: string, placement: PlayPlacement = documentPlacement): CompilationResult<ApplicationSyntax> & { readonly triggerData: readonly PropertySyntax[] } {
+export function parseForAuthoring(source: string, path?: string, placement: PlayPlacement = documentPlacement, validateResponseContracts = true): CompilationResult<ApplicationSyntax> & { readonly triggerData: readonly PropertySyntax[]; readonly inputUses: readonly InputUse[] } {
     const lines = splitLines(source, false, path);
     const context = new ParserContext(new LineReader(lines), path);
+    context.scope = placement;
     const value = parseApplication(context, lines, placement);
     validateInlineEvents(value, context);
+    // Folder assembly validates response references once against the merged declaration inventory.
+    if (validateResponseContracts) validateResponses(value, context);
     return {
         value,
         diagnostics: context.diagnostics,
         triggerData: context.triggerData,
+        inputUses: context.inputUses,
         success: !context.diagnostics.some(diagnostic => diagnostic.severity === 'error'),
     };
 }

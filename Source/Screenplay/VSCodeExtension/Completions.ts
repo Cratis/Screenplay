@@ -13,6 +13,7 @@ import {
     planCompletions,
     primitiveTypes,
     producesItems,
+    responseCompletions,
     scanDocument,
     typeReferenceSymbol,
     typeReferenceText,
@@ -45,11 +46,11 @@ const providerFor = (index: ApplicationIndex): vscode.CompletionItemProvider => 
         const lines = document.getText().split(/\r?\n/);
         const currentLine = lines[position.line] ?? '';
         const textBefore = currentLine.substring(0, position.character);
-        const plan = planCompletions(lines, position.line, textBefore);
-        if (plan.kind === 'none') return [];
-
         const file = index.fileOf(document.uri);
         const symbols = file === undefined ? scanDocument(lines) : mergeSymbols(scanDocument(lines), file.application.symbolsExcept(file.path));
+        const responseEntries = responseCompletions(lines, position.line, textBefore, symbols);
+        const plan = responseEntries === null ? planCompletions(lines, position.line, textBefore) : { kind: 'entries' as const, entries: responseEntries };
+        if (plan.kind === 'none') return [];
         const eventNames = () => {
             const inlineNames = new Set(symbols.events.filter(event => event.inline).map(event => event.name));
             return [...new Set(knownEventNames(symbols))].map((name) =>

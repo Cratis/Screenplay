@@ -18,6 +18,12 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         ApplicationSyntax syntax,
         SemanticDocumentSet documents)
     {
+        var admission = CommandProductionAdmission(syntax);
+        if (admission.Count > 0)
+        {
+            return CompilationResult<SemanticCompilation>.Failed(admission);
+        }
+
         var context = new BindingContext(applicationName, syntax, documents);
         try
         {

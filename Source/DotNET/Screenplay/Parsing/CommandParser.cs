@@ -20,6 +20,15 @@ internal static partial class CommandParser
     /// <returns>The parsed <see cref="CommandSyntax"/>.</returns>
     public static CommandSyntax Parse(ParserContext context, SourceLine header)
     {
+        // Ordinary properties are leaves even when later members have a greater indent.
+        // Resolve ambiguous scalar spelling using a noncommitting command-body pass first.
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        ParseBody(new(context.Reader.Fork(), context.Start.Path, context.Languages), header, null, names);
+        return ParseBody(context, header, names, null);
+    }
+
+    static CommandSyntax ParseBody(ParserContext context, SourceLine header, HashSet<string>? responseNames, HashSet<string>? discoveredNames)
+    {
         var name = HeaderRegex().Match(header.Content);
         if (!name.Success)
         {
@@ -27,6 +36,7 @@ internal static partial class CommandParser
         }
 
         var properties = new List<PropertySyntax>();
+        var responses = new List<(SourceLine Line, PropertySyntax? Candidate, CommandResponseSyntax? Response)>();
         AuthorizeSyntax? authorize = null;
         var validations = new List<ValidateSyntax>();
         var produces = new List<ProducesSyntax>();
@@ -50,6 +60,37 @@ internal static partial class CommandParser
                     break;
                 case "validate" when line.Content != "validate csharp" && PropertyLineParser.TryParse(line) is { } validated:
                     AddProperty(context, properties, validated, name.Groups[1].Value, line);
+                    break;
+                case "returns":
+                    if (ScalarResponseRegex().Match(line.Content) is { Success: true } scalar && !scalar.Groups[1].Value.StartsWith('@') && PropertyLineParser.TryParse(line) is { } candidate)
+                    {
+                        if (responseNames is null)
+                        {
+                            properties.Add(candidate);
+                            responses.Add((line, candidate, null));
+                        }
+                        else if (responseNames.Contains(candidate.Type.Name))
+                        {
+                            responses.Add((line, null, ParseResponse(context, line)));
+                        }
+                        else
+                        {
+                            AddProperty(context, properties, candidate, name.Groups[1].Value, line);
+                        }
+                    }
+                    else if (PropertyLineParser.TryParse(line) is { } returnsProperty)
+                    {
+                        AddProperty(context, properties, returnsProperty, name.Groups[1].Value, line);
+                    }
+                    else if (PropertyLineParser.ReportInvalidModifierOrder(context, line))
+                    {
+                        context.SkipBlock(line.Indent);
+                    }
+                    else
+                    {
+                        responses.Add((line, null, ParseResponse(context, line)));
+                    }
+
                     break;
                 case "description":
                     var previousDescription = description;
@@ -124,6 +165,38 @@ internal static partial class CommandParser
             }
         }
 
+        var candidates = responses.Where(entry => entry.Candidate is not null).Select(entry => entry.Candidate).ToHashSet();
+        var names = properties.Where(property => !candidates.Contains(property)).Select(property => property.Name).ToHashSet(StringComparer.Ordinal);
+        if (responses.Exists(entry => entry.Candidate is { } candidate && !names.Contains(candidate.Type.Name) && candidate.Type.Name != "returns"))
+        {
+            names.Add("returns");
+        }
+
+        discoveredNames?.UnionWith(names);
+        CommandResponseSyntax? response = null;
+        var removed = new HashSet<PropertySyntax>();
+        foreach (var entry in responses)
+        {
+            var parsed = entry.Response;
+            if (entry.Candidate is { } candidate)
+            {
+                if (!names.Contains(candidate.Type.Name)) continue;
+                removed.Add(candidate);
+                parsed = new ScalarCommandResponseSyntax(new(candidate.Type.Name, candidate.Type.Location), entry.Line.Location);
+            }
+
+            if (parsed is null) continue;
+            if (response is not null)
+            {
+                context.Error(DiagnosticCodes.InvalidCommandResponse, "A command declares at most one unconditional response.", entry.Line.Location);
+            }
+            else
+            {
+                response = parsed;
+            }
+        }
+
+        properties = [.. properties.Where(property => !removed.Contains(property))];
         if (handler is not null && produces.Count > 0)
         {
             context.Error(DiagnosticCodes.CommandWithProducesAndHandler, $"Command '{name.Groups[1].Value}' cannot declare both 'produces' and 'handler'", header.Location);
@@ -131,7 +204,8 @@ internal static partial class CommandParser
 
         return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency, description, reads)
         {
-            DirectiveLocations = directiveLocations
+            DirectiveLocations = directiveLocations,
+            Response = response
         };
     }
 

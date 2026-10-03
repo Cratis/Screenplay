@@ -37,6 +37,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -102,6 +103,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -154,6 +156,7 @@
                     }
                   ],
                   "name": "RemovingOneOfTwoInvoices",
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
@@ -176,6 +179,7 @@
                     }
                   ],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": {
                     "kind": "SpecificationEventSyntax",

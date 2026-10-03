@@ -68,6 +68,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": true,
                       "name": "projectId",
                       "type": {
@@ -79,6 +80,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "name",
                       "type": {
@@ -89,6 +91,7 @@
                       }
                     }
                   ],
+                  "response": null,
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -120,6 +123,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "projectId",
                       "type": {
@@ -131,6 +135,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "name",
                       "type": {
@@ -154,6 +159,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "name",
                       "type": {
@@ -181,6 +187,7 @@
                   "givenClock": null,
                   "givenReadModels": [],
                   "name": "RegisteringAProject",
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -230,10 +237,12 @@
                     }
                   ],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "RegisterProject",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -266,6 +275,7 @@
                   "givenClock": null,
                   "givenReadModels": [],
                   "name": "RejectingAnEmptyProjectName",
+                  "thenDenied": null,
                   "thenErrors": [
                     {
                       "kind": "SpecificationErrorSyntax",
@@ -277,10 +287,12 @@
                   "thenNoResult": null,
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "RegisterProject",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -379,6 +391,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "projectId",
                       "type": {
@@ -390,6 +403,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "name",
                       "type": {

@@ -4,8 +4,10 @@
 import { eventBodyReservedWords } from '@cratis/screenplay-compiler';
 import { fenceMap, indentOf } from './document-context';
 import { eventAnalysisSource } from './event-analysis-source';
+import { CommandResponseSymbol, responseAnalysis } from './response-analysis';
 import { fileReferenceOn } from './file-references';
 import { clauseKeywords } from './language';
+import { AuthoringDocument } from './AuthoringDocument';
 import { ProductionSymbol } from './ProductionSymbol';
 import { TypeReferenceSymbol, typeReferenceSymbol } from './TypeReferenceSymbol';
 
@@ -13,7 +15,10 @@ export interface PropertySymbol {
     name: string;
     type: string;
     typeReference?: TypeReferenceSymbol;
+    // Exact spelling and UTF-16 columns in the authoring source, independent of normalization.
+    sourceType?: { text: string; startColumn: number; endColumn: number };
     isIdentifier: boolean;
+    isGenerated?: boolean;
     line: number;
 }
 
@@ -51,6 +56,7 @@ export interface CommandSymbol extends NamedSymbol {
     reads?: ReadSymbol[];
     produces?: ProductionSymbol[];
     productionHeaders?: number[];
+    response?: CommandResponseSymbol | null;
 }
 
 export interface ReadSymbol {
@@ -78,6 +84,8 @@ export interface ImportSymbol {
 }
 
 export interface DocumentSymbols {
+    authoringSources?: readonly string[];
+    authoringDocuments?: readonly AuthoringDocument[];
     imports: ImportSymbol[];
     concepts: ConceptSymbol[];
     types: TypeSymbol[];
@@ -90,7 +98,7 @@ export interface DocumentSymbols {
 }
 
 const conceptPattern = /^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@\w+)*)\s*$/;
-const propertyPattern = /^\s*(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(\s+identifier)?\s*$/;
+const propertyPattern = /^\s*(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(\s+generated)?(\s+identifier)?\s*$/;
 const attributeReasonPattern = /^([a-z_]\w*)\s+reason\s+"((?:[^"\\]|\\.)*)"\s*$/;
 const readPattern = /^\s*reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?\s*$/;
 const commandReserved = ['authorize', 'produces', 'reads'];
@@ -109,6 +117,11 @@ export function propertyTypeReference(property: PropertySymbol): TypeReferenceSy
     return property.typeReference ?? typeReferenceSymbol(property.type);
 }
 
+function sourceTypeAt(line: string, startColumn: number): NonNullable<PropertySymbol['sourceType']> {
+    const text = line.slice(startColumn - 1).match(/^[\p{L}\p{Mn}\p{Nd}\p{Pc}.]+(?:\[\])?(?:\?|\s+optional\b)?/u)?.[0] ?? '';
+    return { text, startColumn, endColumn: startColumn + text.length };
+}
+
 function propertiesIn(lines: string[], body: number[], reserved: readonly string[]): PropertySymbol[] {
     return body
         .map((index) => ({ index, match: lines[index].match(propertyPattern) }))
@@ -118,7 +131,9 @@ function propertiesIn(lines: string[], body: number[], reserved: readonly string
             name: match[1].replace(/^@/, ''),
             type: match[2],
             typeReference: typeReferenceSymbol(match[2]),
-            isIdentifier: match[3] !== undefined,
+            sourceType: sourceTypeAt(lines[index], lines[index].match(/^\s*\S+\s+/)![0].length + 1),
+            isIdentifier: match[4] !== undefined,
+            ...(match[3] !== undefined ? { isGenerated: true } : {}),
             line: index,
         }));
 }
@@ -160,8 +175,15 @@ export function directBody(lines: string[], fences: boolean[], start: number, in
     });
 }
 
+const symbolRevisions = new Map<string, DocumentSymbols>();
+
 export function scanDocument(lines: string[]): DocumentSymbols {
+    const source = lines.join('\n');
+    const cached = symbolRevisions.get(source);
+    if (cached) return cached;
+    const analysis = responseAnalysis(lines);
     const symbols: DocumentSymbols = {
+        authoringSources: [source],
         imports: [],
         concepts: [],
         types: [],
@@ -256,15 +278,24 @@ export function scanDocument(lines: string[]): DocumentSymbols {
             continue;
         }
 
-        const commandMatch = eventLines[index].trim().match(/^command\s+(\w+)\s*$/);
-        if (commandMatch) {
+        const command = analysis.commands.get(index);
+        if (command) {
             // A command property is a leaf, not an indentation owner. Share the parser-shaped
             // body with properties, productions, advice and destination hints.
             const body = directBody(lines, fences, index, indent);
             const productionHeaders = body.filter(line => /^\s*produces\b/.test(lines[line]));
             symbols.commands.push({
-                name: commandMatch[1],
-                properties: propertiesIn(lines, body.filter(line => lines[line].trim() !== 'validate csharp'), commandReserved),
+                name: command.name,
+                properties: command.properties.map(property => ({
+                    name: property.name,
+                    type: `${property.type.name}${property.type.isCollection ? '[]' : ''}${property.type.isOptional ? ' optional' : ''}`,
+                    typeReference: { name: property.type.name, isCollection: property.type.isCollection, isOptional: property.type.isOptional },
+                    sourceType: sourceTypeAt(lines[property.type.location.line - 1], property.type.location.column),
+                    isIdentifier: property.isIdentifier || /\sidentifier\s*$/.test(lines[property.location.line - 1]),
+                    ...(property.isGenerated ? { isGenerated: true } : {}),
+                    line: property.location.line - 1,
+                })),
+                response: command.response,
                 productionHeaders,
                 produces: productionHeaders.flatMap(line => {
                     const header = eventLines[line].trim();
@@ -316,6 +347,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
                     name: match[1],
                     type: match[2],
                     typeReference: typeReferenceSymbol(match[2]),
+                    sourceType: sourceTypeAt(lines[line], lines[line].match(/^\s*(?:by|filter)\s+\S+\s+/)![0].length + 1),
                     isIdentifier: false,
                     line,
                 }));
@@ -341,6 +373,8 @@ export function scanDocument(lines: string[]): DocumentSymbols {
         }
     }
 
+    if (symbolRevisions.size >= 16) symbolRevisions.delete(symbolRevisions.keys().next().value!);
+    symbolRevisions.set(source, symbols);
     return symbols;
 }
 
@@ -348,6 +382,8 @@ export function scanDocument(lines: string[]): DocumentSymbols {
 // the document each symbol came from, so the result names things; it does not locate them.
 export function mergeSymbols(...documents: DocumentSymbols[]): DocumentSymbols {
     return {
+        authoringSources: documents.flatMap(document => document.authoringSources ?? []),
+        ...(documents.some(document => document.authoringDocuments) ? { authoringDocuments: documents.flatMap(document => document.authoringDocuments ?? (document.authoringSources ?? []).map((source, index) => ({ path: `other-${index}.play`, source }))) } : {}),
         imports: documents.flatMap((document) => document.imports),
         concepts: documents.flatMap((document) => document.concepts),
         types: documents.flatMap((document) => document.types),

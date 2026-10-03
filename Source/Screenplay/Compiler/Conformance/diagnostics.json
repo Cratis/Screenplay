@@ -2,6 +2,331 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "Generated identifier for fixtures accept strict N D B P UUID literals",
+            "validate": true,
+            "source": [
+                "concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        id Id generated identifier",
+                "      specification N", "        when C", "          for \"abcdef0123456789abcdef0123456789\"",
+                "      specification D", "        when C", "          for \"ABCDEF01-2345-6789-ABCD-EF0123456789\"",
+                "      specification B", "        when C", "          for \"{abcdef01-2345-6789-abcd-ef0123456789}\"",
+                "      specification P", "        when C", "          for \"(abcdef01-2345-6789-abcd-ef0123456789)\""
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "Generated identifier for fixtures reject incompatible literals expressions and multiple tokens once",
+            "validate": true,
+            "source": [
+                "concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        id Id generated identifier",
+                "      specification Number", "        when C", "          for 42",
+                "      specification Text", "        when C", "          for \"not-a-uuid\"",
+                "      specification Path", "        when C", "          for id",
+                "      specification Expression", "        when C", "          for id + other",
+                "      specification Multiple", "        when C", "          for \"abcdef01-2345-6789-abcd-ef0123456789\" \"abcdef01-2345-6789-abcd-ef0123456789\"",
+                "      specification Whitespace", "        when C", "          for \" abcdef01-2345-6789-abcd-ef0123456789\"",
+                "      specification X", "        when C", "          for \"{0xabcdef01,0x2345,0x6789,{0xab,0xcd,0xef,0x01,0x23,0x45,0x67,0x89}}\""
+            ],
+            "diagnostics": ["PLAY0490@9", "PLAY0490@12", "PLAY0490@15", "PLAY0490@18", "PLAY0490@21", "PLAY0490@24", "PLAY0490@27"]
+        },
+        {
+            "name": "Generated identifier for fixture shape stays unresolved for imported unknown concepts",
+            "validate": true,
+            "source": ["import External.Id", "module M", "  feature F", "    slice StateChange S", "      command C", "        id Id generated identifier", "      specification Unknown", "        when C", "          for id + other"],
+            "diagnostics": []
+        },
+        {
+            "name": "Legacy identifier for expressions remain unchanged and generated fixture completeness stays deferred",
+            "validate": true,
+            "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command Legacy", "        id Id identifier", "      command Generated", "        id Id generated identifier", "      specification LegacyExpression", "        when Legacy", "          for id + other", "      specification Deferred", "        when Generated"],
+            "diagnostics": []
+        },
+        {
+            "name": "UUID return and generated fixture checks accept ordinary N D B P forms with case insensitive hex",
+            "validate": true,
+            "source": [
+                "concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated", "        returns receipt",
+                "      specification LowerD", "        when C", "          generated receipt = \"abcdef01-2345-6789-abcd-ef0123456789\"", "        then returns \"abcdef01-2345-6789-abcd-ef0123456789\"",
+                "      specification UpperD", "        when C", "          generated receipt = \"ABCDEF01-2345-6789-ABCD-EF0123456789\"", "        then returns \"ABCDEF01-2345-6789-ABCD-EF0123456789\"",
+                "      specification LowerN", "        when C", "          generated receipt = \"abcdef0123456789abcdef0123456789\"", "        then returns \"abcdef0123456789abcdef0123456789\"",
+                "      specification UpperN", "        when C", "          generated receipt = \"ABCDEF0123456789ABCDEF0123456789\"", "        then returns \"ABCDEF0123456789ABCDEF0123456789\"",
+                "      specification Braces", "        when C", "          generated receipt = \"{abcdef01-2345-6789-abcd-ef0123456789}\"", "        then returns \"{abcdef01-2345-6789-abcd-ef0123456789}\"",
+                "      specification UpperBraces", "        when C", "          generated receipt = \"{ABCDEF01-2345-6789-ABCD-EF0123456789}\"", "        then returns \"{ABCDEF01-2345-6789-ABCD-EF0123456789}\"",
+                "      specification Parentheses", "        when C", "          generated receipt = \"(abcdef01-2345-6789-abcd-ef0123456789)\"", "        then returns \"(abcdef01-2345-6789-abcd-ef0123456789)\"",
+                "      specification UpperParentheses", "        when C", "          generated receipt = \"(ABCDEF01-2345-6789-ABCD-EF0123456789)\"", "        then returns \"(ABCDEF01-2345-6789-ABCD-EF0123456789)\""
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "UUID return and generated fixture checks reject whitespace invalid delimiters lengths hex and X initializer notation",
+            "validate": true,
+            "source": [
+                "concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated", "        returns receipt",
+                "      specification BracesSpaces", "        when C", "          generated receipt = \"{ 11111111-1111-1111-1111-111111111111 }\"", "        then returns \"{ 11111111-1111-1111-1111-111111111111 }\"",
+                "      specification ParenthesesSpaces", "        when C", "          generated receipt = \"( 11111111-1111-1111-1111-111111111111 )\"", "        then returns \"( 11111111-1111-1111-1111-111111111111 )\"",
+                "      specification LeadingSpace", "        when C", "          generated receipt = \" 11111111-1111-1111-1111-111111111111\"", "        then returns \" 11111111-1111-1111-1111-111111111111\"",
+                "      specification TrailingSpace", "        when C", "          generated receipt = \"11111111-1111-1111-1111-111111111111 \"", "        then returns \"11111111-1111-1111-1111-111111111111 \"",
+                "      specification InteriorSpace", "        when C", "          generated receipt = \"11111111-1111-1111-1111-11111111111 1\"", "        then returns \"11111111-1111-1111-1111-11111111111 1\"",
+                "      specification TrailingNewline", "        when C", "          generated receipt = \"11111111-1111-1111-1111-111111111111\\n\"", "        then returns \"11111111-1111-1111-1111-111111111111\\n\"",
+                "      specification ShortN", "        when C", "          generated receipt = \"1111111111111111111111111111111\"", "        then returns \"1111111111111111111111111111111\"",
+                "      specification LongN", "        when C", "          generated receipt = \"111111111111111111111111111111111\"", "        then returns \"111111111111111111111111111111111\"",
+                "      specification ShortD", "        when C", "          generated receipt = \"11111111-1111-1111-1111-11111111111\"", "        then returns \"11111111-1111-1111-1111-11111111111\"",
+                "      specification LongD", "        when C", "          generated receipt = \"11111111-1111-1111-1111-1111111111111\"", "        then returns \"11111111-1111-1111-1111-1111111111111\"",
+                "      specification NonHex", "        when C", "          generated receipt = \"G1111111-1111-1111-1111-111111111111\"", "        then returns \"G1111111-1111-1111-1111-111111111111\"",
+                "      specification CompactBraces", "        when C", "          generated receipt = \"{11111111111111111111111111111111}\"", "        then returns \"{11111111111111111111111111111111}\"",
+                "      specification CompactParentheses", "        when C", "          generated receipt = \"(11111111111111111111111111111111)\"", "        then returns \"(11111111111111111111111111111111)\"",
+                "      specification MismatchedDelimiters", "        when C", "          generated receipt = \"{11111111-1111-1111-1111-111111111111)\"", "        then returns \"{11111111-1111-1111-1111-111111111111)\"",
+                "      specification XInitializer", "        when C", "          generated receipt = \"{0x11111111,0x1111,0x1111,{0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11}}\"", "        then returns \"{0x11111111,0x1111,0x1111,{0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11}}\"",
+                "      specification ExoticXInitializer", "        when C", "          generated receipt = \"{0x0000000011111111,0x00001111,0x00001111,{0x0011,0x0011,0x0011,0x0011,0x0011,0x0011,0x0011,0x0011}}\"", "        then returns \"{0x0000000011111111,0x00001111,0x00001111,{0x0011,0x0011,0x0011,0x0011,0x0011,0x0011,0x0011,0x0011}}\""
+            ],
+            "diagnostics": ["PLAY0490@10", "PLAY0491@11", "PLAY0490@14", "PLAY0491@15", "PLAY0490@18", "PLAY0491@19", "PLAY0490@22", "PLAY0491@23", "PLAY0490@26", "PLAY0491@27", "PLAY0490@30", "PLAY0491@31", "PLAY0490@34", "PLAY0491@35", "PLAY0490@38", "PLAY0491@39", "PLAY0490@42", "PLAY0491@43", "PLAY0490@46", "PLAY0491@47", "PLAY0490@50", "PLAY0491@51", "PLAY0490@54", "PLAY0491@55", "PLAY0490@58", "PLAY0491@59", "PLAY0490@62", "PLAY0491@63", "PLAY0490@66", "PLAY0491@67", "PLAY0490@70", "PLAY0491@71"]
+        },
+        {
+            "name": "unavailable imported Enum fixture shape stays unknown",
+            "validate": true,
+            "source": ["import External.Enum", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Enum generated", "      specification Accepts", "        when C", "          generated receipt = \"text\""],
+            "diagnostics": []
+        },
+        {
+            "name": "unavailable imported Enum response shape stays unknown",
+            "validate": true,
+            "source": ["import External.Enum", "module M", "  feature F", "    slice StateChange S", "      command C", "        value Enum", "        returns value", "      specification Accepts", "        when C", "        then returns \"text\""],
+            "diagnostics": []
+        },
+        {
+            "name": "unresolved Enum does not crash response parsing",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        value Enum", "        returns value", "      specification Accepts", "        when C", "        then returns \"text\""],
+            "diagnostics": []
+        },
+        {
+            "name": "property shaped returns retain optional modifier diagnostics",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        returns Foo identifier optional"],
+            "diagnostics": ["PLAY0480@5"]
+        },
+        {
+            "name": "property shaped returns retain generated modifier diagnostics",
+            "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        returns Id generated optional"],
+            "diagnostics": ["PLAY0484@6"]
+        },
+        {
+            "name": "tab separated returns retains legacy declaration meaning even with a matching property",
+            "validate": true,
+            "source": ["concept id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        id id identifier", "        returns\tid"],
+            "diagnostics": []
+        },
+        {
+            "name": "escaped invocation mappings cannot supply generated properties",
+            "validate": true,
+            "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated", "      event Recorded", "      reaction R", "        when Recorded", "          invokes C", "            @receipt = \"ignored\""],
+            "diagnostics": ["PLAY0485@11"]
+        },
+        {
+            "name": "table behaviors cannot supply generated properties",
+            "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated", "      screen Entry", "        table items", "          column name", "          on select", "            execute C", "              with receipt from $row.receipt"],
+            "validate": true,
+            "diagnostics": ["PLAY0485@12"]
+        },
+        {
+            "name": "arguments belong to refresh navigation and dialog actions not their enclosing execute",
+            "source": ["behavior B", "  parameter Q", "  parameter Dialog", "  on submit", "    execute C", "      on success", "        refresh Q", "          with receipt from $form.receipt", "        open dialog Dialog", "          with receipt from $form.receipt", "          on result", "            close dialog", "              with receipt from $result.receipt", "        navigate to Entry", "          with receipt from $form.receipt", "concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated", "      screen Entry"],
+            "validate": true,
+            "diagnostics": []
+        },
+        {
+            "name": "behavior parameters shadow commands even when declared after bindings",
+            "source": ["behavior B", "  on submit", "    execute C", "      with receipt from $form.receipt", "  parameter C", "concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated", "      command D", "        receipt Id", "      screen Entry", "        uses B", "          C D"],
+            "validate": true,
+            "diagnostics": []
+        },
+        {
+            "name": "Date return compatibility requires a strict valid calendar date",
+            "validate": true,
+            "source": [
+                "module M", "  feature F", "    slice StateChange S", "      command C", "        value Date", "        returns value",
+                "      specification Leap", "        when C", "        then returns \"2024-02-29\"",
+                "      specification Century", "        when C", "        then returns \"2000-02-29\"",
+                "      specification Minimum", "        when C", "        then returns \"0001-01-01\"",
+                "      specification Maximum", "        when C", "        then returns \"9999-12-31\"",
+                "      specification InvalidLeap", "        when C", "        then returns \"2023-02-29\"",
+                "      specification InvalidCentury", "        when C", "        then returns \"1900-02-29\"",
+                "      specification Slash", "        when C", "        then returns \"2023/02/29\"",
+                "      specification WithTime", "        when C", "        then returns \"2024-01-02T00:00\"",
+                "      specification Dotted", "        when C", "        then returns \"02.01.2024\"",
+                "      specification Named", "        when C", "        then returns \"Jan 2 2024\"",
+                "      specification ZeroYear", "        when C", "        then returns \"0000-01-01\"",
+                "      specification InvalidMonth", "        when C", "        then returns \"2024-13-01\"",
+                "      specification InvalidDay", "        when C", "        then returns \"2024-04-31\""
+            ],
+            "diagnostics": ["PLAY0491@21", "PLAY0491@24", "PLAY0491@27", "PLAY0491@30", "PLAY0491@33", "PLAY0491@36", "PLAY0491@39", "PLAY0491@42", "PLAY0491@45"]
+        },
+        {
+            "name": "DateTime return compatibility requires a calendar time and explicit valid zone",
+            "validate": true,
+            "source": [
+                "module M", "  feature F", "    slice StateChange S", "      command C", "        value DateTime", "        returns value",
+                "      specification Zulu", "        when C", "        then returns \"2024-02-29T12:30:59Z\"",
+                "      specification Fraction", "        when C", "        then returns \"2024-02-29T12:30:59.1234567Z\"",
+                "      specification MaximumPositiveOffset", "        when C", "        then returns \"2024-01-01T00:00:00+14:00\"",
+                "      specification MaximumNegativeOffset", "        when C", "        then returns \"2024-01-01T00:00:00-14:00\"",
+                "      specification OffsetMinutes", "        when C", "        then returns \"2024-01-01T00:00:00+13:59\"",
+                "      specification TimeOnly", "        when C", "        then returns \"10:00\"",
+                "      specification DateOnly", "        when C", "        then returns \"2024-01-01\"",
+                "      specification MissingZone", "        when C", "        then returns \"2024-01-01T00:00:00\"",
+                "      specification LowercaseT", "        when C", "        then returns \"2023-02-29t12:00:00Z\"",
+                "      specification LowercaseZ", "        when C", "        then returns \"2024-01-01T00:00:00z\"",
+                "      specification CompactOffset", "        when C", "        then returns \"2023-01-01T12:00:00+1500\"",
+                "      specification OffsetHour", "        when C", "        then returns \"2024-01-01T00:00:00+15:00\"",
+                "      specification OffsetMinute", "        when C", "        then returns \"2024-01-01T00:00:00-14:01\"",
+                "      specification OffsetSixty", "        when C", "        then returns \"2024-01-01T00:00:00+01:60\"",
+                "      specification InvalidCalendar", "        when C", "        then returns \"2023-02-29T12:00:00Z\"",
+                "      specification InvalidHour", "        when C", "        then returns \"2024-01-01T24:00:00Z\"",
+                "      specification InvalidMinute", "        when C", "        then returns \"2024-01-01T00:60:00Z\"",
+                "      specification LeapSecond", "        when C", "        then returns \"2024-01-01T00:00:60Z\"",
+                "      specification ExcessFraction", "        when C", "        then returns \"2024-01-01T00:00:00.12345678Z\"",
+                "      specification SpaceSeparator", "        when C", "        then returns \"2024-01-01 00:00:00Z\""
+            ],
+            "diagnostics": ["PLAY0491@24", "PLAY0491@27", "PLAY0491@30", "PLAY0491@33", "PLAY0491@36", "PLAY0491@39", "PLAY0491@42", "PLAY0491@45", "PLAY0491@48", "PLAY0491@51", "PLAY0491@54", "PLAY0491@57", "PLAY0491@60", "PLAY0491@63", "PLAY0491@66"]
+        },
+        {
+            "name": "optional modifiers cannot repeat before generated",
+            "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id optional optional generated"],
+            "diagnostics": ["PLAY0484@6", "PLAY0034@6"]
+        },
+        {
+            "name": "scalar responses cannot contain nested directives",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        name String", "        returns name", "          nested String"],
+            "diagnostics": ["PLAY0486@7"]
+        },
+        {
+            "name": "a known composite is not a generated Uuid concept",
+            "validate": true,
+            "source": ["type Payload", "  name String", "module M", "  feature F", "    slice StateChange S", "      command C", "        value Payload generated"],
+            "diagnostics": ["PLAY0483@7"]
+        },
+        {
+            "name": "a composite return expectation must be an object",
+            "validate": true,
+            "source": ["type Payload", "  name String", "module M", "  feature F", "    slice StateChange S", "      command C", "        value Payload", "        returns value", "      specification Invalid", "        when C", "        then returns \"not an object\""],
+            "diagnostics": ["PLAY0491@11"]
+        },
+        {
+            "name": "record return assertions cannot be empty",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        name String", "        returns", "          value = name", "      specification Invalid", "        when C", "        then returns"],
+            "diagnostics": ["PLAY0491@10"]
+        },
+        {
+            "name": "generated fixtures must consume their whole concrete value",
+            "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated", "      specification Invalid", "        when C", "          generated receipt = \"one\" \"two\""],
+            "diagnostics": ["PLAY0490@9"]
+        },
+        {
+            "name": "generated properties are command only",
+            "validate": true,
+            "source": ["concept Id : Uuid", "type T", "  receipt Id generated"],
+            "diagnostics": ["PLAY0482@3"]
+        },
+        {
+            "name": "generated values require concepts rather than bare Uuid",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Uuid generated"],
+            "diagnostics": ["PLAY0483@5"]
+        },
+        {
+            "name": "generated values cannot be optional or collections",
+            "validate": true,
+            "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id optional generated", "        ids Id[] generated"],
+            "diagnostics": ["PLAY0483@6", "PLAY0483@7"]
+        },
+        {
+            "name": "a response block cannot be empty",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        returns"],
+            "diagnostics": ["PLAY0486@5"]
+        },
+        {
+            "name": "a command declares one unconditional response",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        name String", "        returns name", "        returns name"],
+            "diagnostics": ["PLAY0486@7"]
+        },
+        {
+            "name": "forced responses still require a known source",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        returns @unknown"],
+            "diagnostics": ["PLAY0487@5"]
+        },
+        {
+            "name": "response fields must be unique",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        name String", "        returns", "          value = name", "          value = name"],
+            "diagnostics": ["PLAY0488@8"]
+        },
+        {
+            "name": "response types are nominal without concept conversion",
+            "validate": true,
+            "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        id Id", "        returns", "          value Uuid = id"],
+            "diagnostics": ["PLAY0489@8"]
+        },
+        {
+            "name": "collection responses remain deferred",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        names String[]", "        returns names"],
+            "diagnostics": ["PLAY0489@6"]
+        },
+        {
+            "name": "generated request values are not input fixtures",
+            "validate": true,
+            "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated", "      specification Invalid", "        when C", "          receipt = \"22222222-2222-2222-2222-222222222222\""],
+            "diagnostics": ["PLAY0485@9"]
+        },
+        {
+            "name": "generated identifier fixtures use for rather than generated",
+            "validate": true,
+            "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        id Id generated identifier", "      specification Invalid", "        when C", "          generated id = \"22222222-2222-2222-2222-222222222222\""],
+            "diagnostics": ["PLAY0490@9"]
+        },
+        {
+            "name": "generated fixtures must contain compatible values",
+            "validate": true,
+            "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated", "      specification Invalid", "        when C", "          generated receipt = \"not a uuid\""],
+            "diagnostics": ["PLAY0490@9"]
+        },
+        {
+            "name": "generated fixture names cannot repeat",
+            "validate": true,
+            "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated", "      specification Invalid", "        when C", "          generated receipt = \"22222222-2222-2222-2222-222222222222\"", "          generated receipt = \"22222222-2222-2222-2222-222222222222\""],
+            "diagnostics": ["PLAY0490@10"]
+        },
+        {
+            "name": "a return expectation cannot accompany denial",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        name String", "        returns name", "      specification Invalid", "        when C", "        then returns \"accepted\"", "        then denied"],
+            "diagnostics": ["PLAY0491@9"]
+        },
+        {
+            "name": "return expectations preserve record shape even for one field",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        name String", "        returns", "          value = name", "      specification Invalid", "        when C", "        then returns \"accepted\""],
+            "diagnostics": ["PLAY0491@10"]
+        },
+        {
+            "name": "generated form values cannot be submitted",
+            "validate": true,
+            "source": ["concept Id : Uuid", "module M", "  form Entry for C", "    field receipt", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated"],
+            "diagnostics": ["PLAY0485@4"]
+        },
+        {
+            "name": "generated execution arguments are not request input",
+            "validate": true,
+            "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated", "      screen Entry", "        on submit", "          execute C", "            with receipt from $form.receipt"],
+            "diagnostics": ["PLAY0485@10"]
+        },
+        {
+            "name": "repeated generated modifiers are rejected rather than normalized",
+            "source": ["concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated generated"],
+            "diagnostics": ["PLAY0484@6", "PLAY0034@6"]
+        },
+        {
             "name": "reaction data named csharp is not a code language directive",
             "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        when T", "          csharp String?", "          note String?"],
             "diagnostics": ["PLAY0479@6", "PLAY0479@7"]

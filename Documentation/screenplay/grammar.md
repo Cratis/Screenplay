@@ -433,7 +433,10 @@ TagValue       = Ident
 
 Path           = Ident, { ".", Ident } ;
 
-PropertyLine   = [ "@" ], Ident, TypeRef, [ "identifier" ], NL ;
+PropertyLine   = [ "@" ], Ident, TypeRef, [ "generated" ], [ "identifier" ], NL ;
+
+(* "generated" is command-only and requires a required scalar Uuid-backed concept.
+   Generated values and responses are syntax-only: binding reports PLAY0268. *)
 
 (* "identifier" is only accepted on a command property, and on at most one of
    them - it marks the property a runtime resolves the event source id from.  *)
@@ -453,11 +456,19 @@ RequiredTypeRef = QualifiedName, [ "[]" ] ;
 CommandDecl    = "command", Ident, NL,
                  INDENT,
                    { DescriptionDecl | PropertyLine | ReadsDecl | AuthorizeDecl
-                   | ValidateDecl | ProducesDecl | HandlerDecl | ConcurrencyDecl },
+                   | ValidateDecl | ProducesDecl | HandlerDecl | ConcurrencyDecl | CommandResponse },
                  DEDENT ;
 
 (* A command cannot have both produces and handler. At most one concurrency
    block; repeated authorize lines combine with and in authored order. *)
+
+CommandResponse = "returns", [ "@" ], Ident, NL
+                | "returns", NL, INDENT, ResponseField, { ResponseField }, DEDENT ;
+ResponseField  = [ "@" ], LowerIdent, [ TypeRef ], "=", [ "@" ], LowerIdent, NL ;
+(* At most one unconditional response. A two-token returns line refers to a source
+   only when that source is another property of the same command. Otherwise it is
+   a property declaration. @returns Type forces a property; returns @name forces
+   a response. Types are inferred or must exactly match the direct source. *)
 
 ReadsDecl      = "reads", Ident, [ "as", LowerIdent ], [ "by", LowerIdent ], NL ;
 
@@ -726,7 +737,9 @@ SpecificationGiven = "given", "caller", NL,
    occurrence time of everything it does. "given capture" states an earlier record
    of a capture's source, so a value transition has something to transition from. *)
 
-SpecificationWhen = "when", ( Ident | "append", Ident ), NL,
+SpecificationWhen = "when", Ident, NL,
+                 [ INDENT, { SpecificationEventSource | PropertyMapping | GeneratedFixture }, DEDENT ]
+               | "when", "append", Ident, NL,
                  [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ]
                | "when", "clock", StringLiteral, NL
                | "when", "trigger", Ident, NL,
@@ -742,7 +755,17 @@ SpecificationWhen = "when", ( Ident | "append", Ident ), NL,
    one record of its source. "when query" performs a query with its arguments;
    its outcome is "then result", "then no result" or "then denied".           *)
 
-SpecificationThen = "then", "readmodel", Ident, [ "exactly" ], NL,
+GeneratedFixture = "generated", LowerIdent, "=", ConcreteValue, NL ;
+ReturnExpectation = "then", "returns", ConcreteValue, NL
+                  | "then", "returns", NL, INDENT, ReturnField, { ReturnField }, DEDENT ;
+ReturnField    = LowerIdent, "=", ConcreteValue, NL ;
+ConcreteValue  = ? a completely consumed literal, list or object, without raw expressions ? ;
+(* Fixtures and return expectations are syntax-only, unavailable until ESM v8.
+   Generated identifiers use SpecificationEventSource, not GeneratedFixture.
+   Return expectations require a command and cannot accompany errors or denial. *)
+
+SpecificationThen = ReturnExpectation
+               | "then", "readmodel", Ident, [ "exactly" ], NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
                | "then", "no", "readmodel", Ident, "for", Expression, NL
                | "then", "query", QualifiedName, [ "exactly" ], NL,

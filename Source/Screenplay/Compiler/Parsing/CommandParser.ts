@@ -7,9 +7,11 @@ import { CommandSyntax, ValidateSyntax, ValidationRuleKind, ValidationRuleSyntax
 import { PropertySyntax } from '../Syntax/Declarations';
 import { ExpressionSyntax } from '../Syntax/Expressions';
 import { ProducesSyntax } from '../Syntax/Reactions';
+import { CommandResponseSyntax } from '../Syntax/Responses';
 import { pattern } from '../Text/patterns';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
+import { parseCommandResponse, scalarResponsePattern } from './CommandResponseParser';
 import { parseDescription } from './DescriptionParser';
 import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
@@ -52,11 +54,20 @@ const opaqueDirectives = new Set(['reads', 'handler', 'concurrency']);
 const propertyShapedDirectives = new Set(['description', 'handler', 'concurrency']);
 
 export function parseCommand(context: ParserContext, line: SourceLine): CommandSyntax {
+    // Properties are leaves, not indentation owners. Resolve ambiguous returns spelling
+    // before the committed pass decides whether its deeper lines belong to a response.
+    const names = new Set<string>();
+    parseCommandBody(new ParserContext(context.reader.fork(), context.path), line, undefined, names);
+    return parseCommandBody(context, line, names);
+}
+
+function parseCommandBody(context: ParserContext, line: SourceLine, responseNames?: ReadonlySet<string>, discoveredNames?: Set<string>): CommandSyntax {
     const name = header.exec(line.content)?.[1] ?? '';
     if (name === '') {
         context.error(DiagnosticCodes.InvalidCommandDeclaration, `Invalid command declaration '${line.content}' - expected 'command <Name>'`, locationOf(line));
     }
     const properties: PropertySyntax[] = [];
+    const responses: { line: SourceLine; candidate: PropertySyntax | null; response: CommandResponseSyntax | null }[] = [];
     let identifier: PropertySyntax | undefined;
     const validations: ValidateSyntax[] = [];
     const produces: ProducesSyntax[] = [];
@@ -68,6 +79,24 @@ export function parseCommand(context: ParserContext, line: SourceLine): CommandS
         const asProperty = tryParseProperty(child);
         if (asProperty !== undefined && (propertyShapedDirectives.has(keyword) || (keyword === 'validate' && child.content !== 'validate csharp'))) {
             identifier = addProperty(context, properties, asProperty, name, child, identifier);
+        } else if (keyword === 'returns') {
+            const scalar = scalarResponsePattern.exec(child.content);
+            if (scalar !== null && !scalar[1].startsWith('@') && asProperty !== undefined) {
+                if (responseNames === undefined) {
+                    properties.push(asProperty);
+                    responses.push({ line: child, candidate: asProperty, response: null });
+                } else if (responseNames.has(asProperty.type.name)) {
+                    responses.push({ line: child, candidate: null, response: parseCommandResponse(context, child) });
+                } else {
+                    identifier = addProperty(context, properties, asProperty, name, child, identifier);
+                }
+            } else if (asProperty !== undefined) {
+                identifier = addProperty(context, properties, asProperty, name, child, identifier);
+            } else if (reportInvalidModifierOrder(context, child)) {
+                context.skipBlock(child.indent);
+            } else {
+                responses.push({ line: child, candidate: null, response: parseCommandResponse(context, child) });
+            }
         } else if (keyword === 'description') {
             description = parseDescription(context, child, description, `Command '${name}'`);
         } else if (keyword === 'authorize') {
@@ -93,7 +122,27 @@ export function parseCommand(context: ParserContext, line: SourceLine): CommandS
             context.skipBlock(child.indent);
         }
     }
-    return { kind: 'CommandSyntax', name, description, authorize, properties, validations, produces, location: locationOf(line) };
+    const candidates = new Set(responses.flatMap(entry => entry.candidate === null ? [] : [entry.candidate]));
+    const names = new Set(properties.filter(property => !candidates.has(property)).map(property => property.name));
+    if (responses.some(entry => entry.candidate !== null && !names.has(entry.candidate.type.name) && entry.candidate.type.name !== 'returns')) names.add('returns');
+    for (const name of names) discoveredNames?.add(name);
+    let response: CommandResponseSyntax | null = null;
+    const removed = new Set<PropertySyntax>();
+    for (const entry of responses) {
+        let parsed = entry.response;
+        if (entry.candidate !== null) {
+            if (!names.has(entry.candidate.type.name)) continue;
+            removed.add(entry.candidate);
+            parsed = { kind: 'ScalarCommandResponseSyntax', source: { kind: 'PropertyResponseSourceSyntax', property: entry.candidate.type.name, location: entry.candidate.type.location }, location: locationOf(entry.line) };
+        }
+        if (parsed === null) continue;
+        if (response !== null) {
+            context.error(DiagnosticCodes.InvalidCommandResponse, 'A command declares at most one unconditional response.', locationOf(entry.line));
+        } else {
+            response = parsed;
+        }
+    }
+    return { kind: 'CommandSyntax', name, description, authorize, properties: properties.filter(property => !removed.has(property)), validations, produces, response, location: locationOf(line) };
 }
 
 function addProperty(context: ParserContext, properties: PropertySyntax[], property: PropertySyntax, commandName: string, line: SourceLine, identifier: PropertySyntax | undefined): PropertySyntax | undefined {

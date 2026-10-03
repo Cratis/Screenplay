@@ -93,6 +93,7 @@ internal static partial class TriggerParser
     {
         if (PropertyLineParser.Parse(context, line) is { } property)
         {
+            if (property.IsGenerated) context.Error(DiagnosticCodes.GeneratedPropertyOutsideCommand, "Generated properties can only be declared on commands.", property.Location);
             return new(property.Name, property.Type, line.Location);
         }
 

@@ -150,7 +150,13 @@ public record CommandSyntax(
     SourceLocation Location,
     ConcurrencySyntax? Concurrency = null,
     string? Description = null,
-    IEnumerable<ReadsSyntax>? Reads = null) : SyntaxNode(Location);
+    IEnumerable<ReadsSyntax>? Reads = null) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the unconditional syntax-only response contract, if declared.
+    /// </summary>
+    public CommandResponseSyntax? Response { get; init; }
+}
 
 /// <summary>
 /// Represents a <c>reads &lt;ReadModel&gt; [as &lt;alias&gt;] [by &lt;property&gt;]</c> declaration on a command.

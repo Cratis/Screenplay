@@ -326,6 +326,24 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `then denied` | A typed authorization denial (`Unauthorized`). |
 | `<property> = <value>` | A property value, using the same expression grammar as `produces`/`capture` mappings. |
 
+## Generated fixtures and return expectations (syntax-only)
+
+These additions describe [generated values and responses](commands.md#generated-values-and-responses-syntax-only); **they do not execute**. Binding reports `PLAY0268` with no semantic model until ESM v8. See the [complete authoring fixture](fixtures/generated-responses.play).
+
+```screenplay
+specification RegisteringReturnsIdentifiers
+  when RegisterProject
+    for "11111111-1111-1111-1111-111111111111"
+    generated receiptId = "22222222-2222-2222-2222-222222222222"
+    name = "Apollo"
+  then returns
+    receiptId = "22222222-2222-2222-2222-222222222222"
+```
+
+`for` supplies the generated identifier. An indented `generated <name> = <value>` supplies a nonidentifier generated command property, separately from request mappings. Do not put either on the `when` header. Ordinary `generated = <value>` remains an input mapping for a property named `generated`.
+
+A scalar response uses `then returns <value>`; a record uses `then returns` with a nonempty subset of its named fields. The expectation must match the response shape and types. Values must be concrete literals or structured values, with no raw-expression fallback or trailing tokens. Duplicate, unknown, nongenerated or identifier fixture targets are rejected. A return expectation requires a command action, occurs at most once and cannot accompany `then error` or `then denied`; successful event/state assertions may coexist. Mandatory allocation-fixture completeness and relational runtime assertions are deferred, not silently executed.
+
 ## Compiling specifications
 
 Specifications compile as part of a full application document via `IScreenplayCompiler.Compile`, or standalone — source rooted at a `specification` declaration — via `IScreenplayCompiler.CompileSpecification`, mirroring `CompileProjection` for the [Projection Declaration Language](projections/index.md).

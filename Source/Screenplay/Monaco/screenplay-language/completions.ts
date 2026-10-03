@@ -4,7 +4,8 @@
 import type { editor, languages } from 'monaco-editor';
 import { typeReferenceSymbol, typeReferenceText } from './TypeReferenceSymbol';
 import { Monaco, primitiveTypes } from './language';
-import { knownEventNames, knownTriggerNames, scanDocument } from './symbols';
+import { DocumentSymbols, knownEventNames, knownTriggerNames, mergeSymbols, scanDocument } from './symbols';
+import { responseCompletions } from './response-completions';
 import { planCompletions } from './completion-planner';
 import { contextVariableItems, producesItems, CompletionEntry } from './completion-items';
 
@@ -13,6 +14,7 @@ export interface CompletionOptions {
     // The paths a file import written in the model can name, relative to the model's folder - typically
     // importablePaths over the host's .play files. Without it, an import path is not completed.
     playFiles?: (model: editor.ITextModel) => readonly string[];
+    application?: (model: editor.ITextModel) => DocumentSymbols;
 }
 
 export function createCompletionProvider(monaco: Monaco, options: CompletionOptions = {}): languages.CompletionItemProvider {
@@ -24,10 +26,11 @@ export function createCompletionProvider(monaco: Monaco, options: CompletionOpti
             const lineIndex = position.lineNumber - 1;
             const currentLine = lines[lineIndex] ?? '';
             const textBefore = currentLine.substring(0, position.column - 1);
-            const plan = planCompletions(lines, lineIndex, textBefore);
+            const symbols = mergeSymbols(scanDocument(lines), options.application?.(model) ?? mergeSymbols());
+            const responseEntries = responseCompletions(lines, lineIndex, textBefore, symbols);
+            const plan = responseEntries === null ? planCompletions(lines, lineIndex, textBefore) : { kind: 'entries' as const, entries: responseEntries };
             if (plan.kind === 'none') return { suggestions: [] };
 
-            const symbols = scanDocument(lines);
             const word = model.getWordUntilPosition(position);
             const range = new monaco.Range(
                 position.lineNumber,

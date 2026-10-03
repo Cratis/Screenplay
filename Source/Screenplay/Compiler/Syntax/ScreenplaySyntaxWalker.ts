@@ -16,6 +16,7 @@ import {
     SpecificationReadModelSyntax, SpecificationSyntax, SpecificationTriggerSyntax, SpecificationWhenQuerySyntax,
 } from './Specifications';
 import { ApplicationSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax, SliceSyntax } from './Structure';
+import { CommandResponseSyntax, PropertyResponseSourceSyntax, RecordCommandResponseSyntax, RecordSpecificationReturnSyntax, ResponseFieldSyntax, ScalarCommandResponseSyntax, ScalarSpecificationReturnSyntax, SpecificationReturnSyntax } from './Responses';
 import { SyntaxNode } from './SyntaxNode';
 
 // Walks a whole syntax tree, depth first, in the order the C# ScreenplaySyntaxWalker does. Every visit
@@ -109,6 +110,47 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         syntax.validations.forEach(node => this.visitValidate(node));
         syntax.produces.forEach(node => this.visitProduces(node));
+        if (syntax.response != null) this.visitCommandResponse(syntax.response);
+    }
+
+    visitCommandResponse(syntax: CommandResponseSyntax): void {
+        if (syntax.kind === 'ScalarCommandResponseSyntax') this.visitScalarCommandResponse(syntax);
+        else this.visitRecordCommandResponse(syntax);
+    }
+
+    visitScalarCommandResponse(syntax: ScalarCommandResponseSyntax): void {
+        this.visitNode(syntax);
+        this.visitPropertyResponseSource(syntax.source);
+    }
+
+    visitRecordCommandResponse(syntax: RecordCommandResponseSyntax): void {
+        this.visitNode(syntax);
+        syntax.fields.forEach(field => this.visitResponseField(field));
+    }
+
+    visitResponseField(syntax: ResponseFieldSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.type !== null) this.visitTypeRef(syntax.type);
+        this.visitPropertyResponseSource(syntax.source);
+    }
+
+    visitPropertyResponseSource(syntax: PropertyResponseSourceSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitSpecificationReturn(syntax: SpecificationReturnSyntax): void {
+        if (syntax.kind === 'ScalarSpecificationReturnSyntax') this.visitScalarSpecificationReturn(syntax);
+        else this.visitRecordSpecificationReturn(syntax);
+    }
+
+    visitScalarSpecificationReturn(syntax: ScalarSpecificationReturnSyntax): void {
+        this.visitNode(syntax);
+        this.visitExpression(syntax.value);
+    }
+
+    visitRecordSpecificationReturn(syntax: RecordSpecificationReturnSyntax): void {
+        this.visitNode(syntax);
+        syntax.fields.forEach(field => this.visitPropertyMapping(field));
     }
 
     visitValidate(syntax: ValidateSyntax): void {
@@ -306,6 +348,8 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.thenReadModels.forEach(node => this.visitSpecificationReadModel(node));
         syntax.thenResults.forEach(node => this.visitSpecificationQueryResult(node));
         if (syntax.thenNoResult !== null) this.visitNode(syntax.thenNoResult);
+        if (syntax.thenDenied != null) this.visitNode(syntax.thenDenied);
+        if (syntax.thenReturns != null) this.visitSpecificationReturn(syntax.thenReturns);
         syntax.thenErrors.forEach(node => this.visitNode(node));
     }
 
@@ -341,6 +385,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitSpecificationCommand(syntax: SpecificationCommandSyntax): void {
         this.visitNode(syntax);
+        (syntax.generatedValues ?? []).forEach(fixture => this.visitPropertyMapping(fixture));
         syntax.values.forEach(node => this.visitPropertyMapping(node));
         if (syntax.for !== null) this.visitExpression(syntax.for);
     }

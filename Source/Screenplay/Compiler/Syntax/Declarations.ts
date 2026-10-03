@@ -16,6 +16,7 @@ export interface PropertySyntax extends SyntaxNode {
     readonly name: string;
     readonly type: TypeRefSyntax;
     readonly isIdentifier: boolean;
+    readonly isGenerated?: boolean;
 }
 
 export interface DomainSyntax extends SyntaxNode {

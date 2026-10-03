@@ -896,6 +896,25 @@ Discovery and preview never write files; acceptance still requires current works
 and catalog revisions. Monaco and VS Code also offer verified TypeScript quick fixes
 for one occurrence or the entire document, without requiring .NET.
 
+### Generated values and command responses
+
+Generated properties, command responses, generated fixtures and return expectations are syntax-only. Binding any one reports `PLAY0268` and produces no semantic model until ESM v8 admits these constructs. Editors surface this unavailability alongside compiler syntax diagnostics; MCP `Authoring` acceptance does not establish executable readiness. See [commands](commands.md#generated-values-and-responses-syntax-only) and [fixtures](specifications.md#generated-fixtures-and-return-expectations-syntax-only).
+
+For response and generated-fixture compatibility checks only, `Date` values must be quoted `yyyy-MM-dd` calendar dates. `DateTime` values must be quoted `yyyy-MM-ddTHH:mm:ss`, optionally followed by a decimal fraction of 1–7 digits, and always end in uppercase `Z` or an explicit `+HH:mm` / `-HH:mm` offset. Years range from 0001 to 9999; calendar days must exist, hours range from 00 to 23, and minutes and seconds from 00 to 59. Offsets range from `-14:00` to `+14:00`; at 14 hours the minutes must be 00. These checks do not change general literal parsing. Imported or unresolved value shapes remain unknown rather than being inferred from their names.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0482` | Error | A generated property is declared outside a command. |
+| `PLAY0483` | Error | A generated property is not a required, noncollection concept backed by `Uuid`. |
+| `PLAY0484` | Error | Property modifiers repeat or are out of order. Write `Type optional generated identifier`. |
+| `PLAY0485` | Error | A generated property is supplied as request or form input. |
+| `PLAY0486` | Error | A command response is malformed, empty, repeated or conditional. |
+| `PLAY0487` | Error | A response source does not reference one direct command property. |
+| `PLAY0488` | Error | A response block repeats a field name. |
+| `PLAY0489` | Error | A response uses a collection or whole read model, or an explicit field type differs from its source's type, collection shape or optionality. |
+| `PLAY0490` | Error | A generated fixture repeats a target, names an unknown, nongenerated or identifier property, or supplies an incompatible or nonconcrete value. |
+| `PLAY0491` | Error | A return expectation is malformed, repeated, incompatible with the response contract, lacks a command action, or accompanies an error or denial. |
+
 ## Retired codes
 
 A retired code stays out of use forever.

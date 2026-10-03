@@ -9,7 +9,8 @@ import { ParserContext } from './ParserContext';
 import { unescapeIdentifier } from './LineText';
 import { locationOf, SourceLine } from './SourceLine';
 
-const propertyPattern = pattern('^(@?[a-z_]\\w*)\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)(?:\\s+(identifier))?$');
+const propertyPattern = pattern('^(@?[a-z_]\\w*)\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)(?:\\s+(generated))?(?:\\s+(identifier))?$');
+const invalidGeneratedModifiers = pattern('^@?[a-z_]\\w*\\s+[\\w.]+(?:\\[\\])?\\??\\s+((?:optional|generated|identifier)(?:\\s+(?:optional|generated|identifier))*)$');
 const reversedModifiers = pattern('^@?[a-z_]\\w*\\s+[\\w.]+(?:\\[\\])?\\s+identifier\\s+optional(?:\\s*=.*)?$');
 
 // A '<name> <Type>[[]][?] [identifier]' line, or undefined when the line does not have that shape.
@@ -23,7 +24,8 @@ export function tryParseProperty(line: SourceLine): PropertySyntax | undefined {
         kind: 'PropertySyntax',
         name: unescapeIdentifier(match[1]),
         type: parseTypeRef(match[2], { ...location, column: location.column + line.content.indexOf(match[2], match[1].length) }),
-        isIdentifier: match[3] !== undefined,
+        isGenerated: match[3] !== undefined,
+        isIdentifier: match[4] !== undefined,
         location,
     };
 }
@@ -62,8 +64,16 @@ export function reportLegacyOptionalSuffix(context: ParserContext, type: TypeRef
     }
 }
 
-export function reportInvalidModifierOrder(context: ParserContext, line: SourceLine): void {
+export function reportInvalidModifierOrder(context: ParserContext, line: SourceLine): boolean {
     if (reversedModifiers.test(line.content)) {
         context.error(DiagnosticCodes.InvalidOptionalModifierOrder, "Write 'optional' before 'identifier': '<name> <Type> optional identifier'.", locationOf(line));
+        return true;
+    } else {
+        const modifiers = invalidGeneratedModifiers.exec(line.content);
+        if (modifiers !== null && modifiers[1].split(/\s+/).some(modifier => modifier === 'generated' || modifier === 'identifier')) {
+            context.error(DiagnosticCodes.InvalidGeneratedModifierOrder, "Write each modifier once in order: '<name> <Type> optional generated identifier'.", locationOf(line));
+            return true;
+        }
     }
+    return false;
 }

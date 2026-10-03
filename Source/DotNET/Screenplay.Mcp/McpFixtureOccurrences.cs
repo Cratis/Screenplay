@@ -61,6 +61,19 @@ static class McpFixtureOccurrences
         if (specification.When is { } when)
         {
             yield return Occurrence(when.CommandType, "Command", "whenCommand", when, when.Values, when.For);
+            if (when.GeneratedValues.Any())
+            {
+                yield return Occurrence(when.CommandType, "Command", "generatedValues", when, when.GeneratedValues);
+            }
+
+            if (specification.ThenReturns is RecordSpecificationReturnSyntax record)
+            {
+                yield return Occurrence(when.CommandType, "Command", "thenReturns", record, record.Fields);
+            }
+            else if (specification.ThenReturns is ScalarSpecificationReturnSyntax scalar)
+            {
+                yield return Occurrence(when.CommandType, "Command", "thenReturns", scalar, [new PropertyMappingSyntax("returns", scalar.Value, scalar.Location)]);
+            }
         }
 
         foreach (var item in (specification.GivenReadModels ?? []).Concat(specification.ThenReadModels ?? []))

@@ -9,6 +9,7 @@ import { pattern } from '../Text/patterns';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseDescription } from './DescriptionParser';
 import { parseFileImport } from './FileImportParser';
+import { collectInputUses } from './InputUses';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseSlice } from './SliceParser';
@@ -55,7 +56,7 @@ export class FeatureBody {
                 return true;
             default:
                 if (opaqueFeatureMembers.has(keyword)) {
-                    context.skipOpaqueBlock(line.indent);
+                    collectInputUses(context, line);
                     return true;
                 }
                 return false;
@@ -85,6 +86,8 @@ export function parseFeature(context: ParserContext, line: SourceLine): FeatureS
         context.error(DiagnosticCodes.InvalidFeatureDeclaration, `Invalid feature declaration '${line.content}' - expected 'feature <Name>'`, locationOf(line));
     }
     const body = new FeatureBody(name);
+    const previous = context.scope;
+    context.scope = [...previous, name];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         if (!body.tryParse(context, child)) {
@@ -92,5 +95,6 @@ export function parseFeature(context: ParserContext, line: SourceLine): FeatureS
             context.skipBlock(child.indent);
         }
     }
+    context.scope = previous;
     return body.build(locationOf(line));
 }

@@ -1,7 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { enclosingChain, fenceMap, indentOf } from './document-context';
+import { responseAnalysis, responseAvailability } from './response-analysis';
+import { enclosingChain, fenceMap, indentOf, withoutComment } from './document-context';
 import { directBody, propertyTypeReference, scanDocument } from './symbols';
 import { typeReferenceText } from './TypeReferenceSymbol';
 import { eventAnalysisSource } from './event-analysis-source';
@@ -22,6 +23,19 @@ export function hoverContent(
     if (fences[lineIndex]) return null;
 
     const line = lines[lineIndex] ?? '';
+    if (endColumn - 1 > withoutComment(line).length) return null;
+    let inString = false;
+    let inTemplate = false;
+    for (let index = 0; index < startColumn - 1; index++) {
+        if (line[index] === '\\' && inString) index++;
+        else if (line[index] === '"' && !inTemplate) inString = !inString;
+        else if (line[index] === '`' && !inString) inTemplate = !inTemplate;
+    }
+    if (inString || inTemplate) return null;
+    const tokenAt = (column: number, name: string): boolean => {
+        const start = column + (line[column - 1] === '@' ? 1 : 0);
+        return word === name && startColumn === start && endColumn === start + name.length && line.slice(start - 1, endColumn - 1) === name;
+    };
     const before = line.charAt(startColumn - 2);
 
     if (before === '@') {
@@ -51,6 +65,27 @@ export function hoverContent(
     }
 
     const symbols = scanDocument(lines);
+    const owner = symbols.commands.filter(command => command.line < lineIndex).at(-1);
+    const property = owner?.properties.find(property => property.name === word && property.line === lineIndex);
+    if (property?.isGenerated || (word === 'generated' && owner?.properties.some(property => property.isGenerated && property.line === lineIndex) && followsPropertyType)) {
+        return `**${property?.name ?? 'generated'}** — ${property ? typeReferenceText(propertyTypeReference(property)) + '. ' : ''}Generated value, not a request or form input. ${responseAvailability}`;
+    }
+    const response = owner?.response;
+    if (response?.location.line === lineIndex + 1 && (tokenAt(response.location.column, 'returns') || (response.kind === 'ScalarCommandResponseSyntax' && tokenAt(response.source.location.column, response.source.property)))) {
+        const source = response.kind === 'ScalarCommandResponseSyntax' ? owner?.properties.find(property => property.name === response.source.property) : undefined;
+        return `**returns**${source ? ` — ${typeReferenceText(propertyTypeReference(source))}` : ' — unnamed record response'}. ${responseAvailability}`;
+    }
+    if (response?.kind === 'RecordCommandResponseSyntax') {
+        const field = response.fields.find(field => field.location.line === lineIndex + 1 && (tokenAt(field.location.column, field.name) || tokenAt(field.source.location.column, field.source.property)));
+        if (field) {
+            const source = owner?.properties.find(property => property.name === field.source.property);
+            const type = field.type ? typeReferenceText(field.type) : source ? typeReferenceText(propertyTypeReference(source)) : 'Unresolved type';
+            return `**${field.name}** — ${type}${field.type ? ' (explicit)' : ' (inferred)'} = ${field.source.property}. ${source?.isGenerated ? 'Generated source, not request input. ' : ''}${responseAvailability}`;
+        }
+    }
+    for (const specification of responseAnalysis(lines).specifications.values()) {
+        if ((word === 'returns' && specification.thenReturns?.location.line === lineIndex + 1) || (word === 'generated' && specification.when?.generatedValues?.some(value => value.location.line === lineIndex + 1))) return responseAvailability;
+    }
 
     const concept = symbols.concepts.find((candidate) => candidate.name === word);
     if (concept) {
@@ -93,10 +128,10 @@ export function hoverContent(
         const properties = command.properties
             .map(
                 (property) =>
-                    `${property.name} ${typeReferenceText(propertyTypeReference(property))}${property.isIdentifier ? ' identifier' : ''}`,
+                    `${property.name} ${typeReferenceText(propertyTypeReference(property))}${property.isGenerated ? ' generated' : ''}${property.isIdentifier ? ' identifier' : ''}`,
             )
             .join('\n');
-        return `\`\`\`screenplay\ncommand ${command.name}\n${properties}\n\`\`\``;
+        return `\`\`\`screenplay\ncommand ${command.name}\n${properties}\n\`\`\`${command.response || command.properties.some(property => property.isGenerated) ? `\n\n${responseAvailability}` : ''}`;
     }
 
     // Sub-language keywords take precedence inside their construct.
@@ -123,7 +158,7 @@ export function hoverContent(
         if (!inEvent || !directive || startColumn !== indentOf(line) + 1) return null;
     }
 
-    if (word === 'optional') return null;
+    if (word === 'optional' || word === 'generated' || word === 'returns') return null;
     const keywordDoc = keywordDocs[word];
     if (keywordDoc) return `**${word}** — ${keywordDoc}`;
 

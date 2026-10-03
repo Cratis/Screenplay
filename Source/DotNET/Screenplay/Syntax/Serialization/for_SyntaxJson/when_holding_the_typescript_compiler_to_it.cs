@@ -67,6 +67,24 @@ public class when_holding_the_typescript_compiler_to_it : Specification
         switch (golden.ValueKind)
         {
             case JsonValueKind.Object when actual.ValueKind == JsonValueKind.Object:
+                if (actual.TryGetProperty("kind", out var actualKind))
+                {
+                    string[] required = actualKind.GetString() switch
+                    {
+                        "PropertySyntax" => ["isGenerated"],
+                        "CommandSyntax" => ["response"],
+                        "SpecificationCommandSyntax" => ["generatedValues"],
+                        "SpecificationSyntax" => ["thenReturns", "thenDenied"],
+                        "ScalarCommandResponseSyntax" or "RecordCommandResponseSyntax" or "ResponseFieldSyntax" or "PropertyResponseSourceSyntax" or "ScalarSpecificationReturnSyntax" or "RecordSpecificationReturnSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
+                        _ => []
+                    };
+                    foreach (var member in required)
+                    {
+                        if (!golden.TryGetProperty(member, out _)) _mismatches.Add($"{path}.{member}: the TypeScript syntax omits a required response member");
+                        if (!actual.TryGetProperty(member, out _)) _mismatches.Add($"{path}.{member}: the C# syntax omits a required response member");
+                    }
+                }
+
                 foreach (var member in golden.EnumerateObject())
                 {
                     _compared++;

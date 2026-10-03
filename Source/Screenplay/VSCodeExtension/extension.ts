@@ -4,6 +4,7 @@
 import * as vscode from 'vscode';
 import { ensureBuiltInSubLanguages } from '@cratis/screenplay-language';
 import { registerCompletions } from './Completions';
+import { registerResponseTokens } from './ResponseTokens';
 import { registerHover } from './Hover';
 import { registerInlayHints } from './InlayHints';
 import { registerDefinitions } from './Definitions';
@@ -21,6 +22,7 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(index);
     registerCompletions(context, index);
     registerHover(context);
+    registerResponseTokens(context);
     registerInlayHints(context);
     registerDefinitions(context, index);
     registerDiagnostics(context, index);

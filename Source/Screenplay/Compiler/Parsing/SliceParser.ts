@@ -48,6 +48,8 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
             context.error(DiagnosticCodes.UnknownSliceType, `Unknown slice type '${match[1]}' - expected StateChange, StateView, Automation or Translate`, locationOf(line));
         }
     }
+    const previous = context.scope;
+    context.scope = [...previous, name];
     let description: string | null = null;
     const events: EventSyntax[] = [];
     const commands: CommandSyntax[] = [];
@@ -94,6 +96,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
             context.skipBlock(child.indent);
         }
     }
+    context.scope = previous;
     return {
         kind: 'SliceSyntax', type, name, description, events, commands, queries, projections, captures, reactions, constraints, specifications, readModels, screens,
         location: locationOf(line),

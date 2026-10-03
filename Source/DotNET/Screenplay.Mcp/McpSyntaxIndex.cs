@@ -66,7 +66,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     {
         switch (node)
         {
-            case CommandSyntax value: Declare("Command", value.Name, value, value.Description, new { produces = value.Produces.Select(produces => produces.Event) }); break;
+            case CommandSyntax value: Declare("Command", value.Name, value, value.Description, new { produces = value.Produces.Select(produces => produces.Event), generatedProperties = value.Properties.Where(property => property.IsGenerated).Select(property => property.Name), response = value.Response, syntaxOnly = value.Response is not null || value.Properties.Any(property => property.IsGenerated), executionReadiness = value.Response is not null || value.Properties.Any(property => property.IsGenerated) ? "Unavailable until ESM v8 (PLAY0268)." : null }); break;
             case QuerySyntax value: Declare("Query", value.Name, value); break;
             case EventSyntax value: Declare("Event", value.Name, value, value.Description); break;
             case ReadModelSyntax value: Declare("ReadModel", value.Name, value); break;
@@ -91,6 +91,9 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
             case SpecificationSyntax value:
                 Declare("Specification", value.Name, value, details: new
                 {
+                    generatedValues = value.When?.GeneratedValues,
+                    thenReturns = value.ThenReturns,
+                    syntaxOnly = value.ThenReturns is not null || (value.When?.GeneratedValues.Any() ?? false),
                     given = value.Given.Select(item => item.EventType),
                     when = value.When?.CommandType,
                     whenAppendedEvent = value.WhenAppended?.EventType,

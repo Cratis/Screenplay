@@ -69,6 +69,8 @@ export const sliceItems: CompletionEntry[] = [
 ];
 
 export const commandItems: CompletionEntry[] = [
+    { label: 'returns property', insertText: 'returns @${1:property}', documentation: 'Syntax-only scalar response from a direct command property; execution unavailable until ESM v8 (PLAY0268).' },
+    { label: 'returns block', insertText: 'returns\n    ${1:field} = ${2:property}', documentation: 'Syntax-only unnamed record response with inferred or explicit field types; execution unavailable until ESM v8 (PLAY0268). No response type is emitted.' },
     { label: 'produces event', insertText: 'produces event ${1:Name}\n    ${2:property} ${3:Type} = ${4:source}', documentation: 'Declares a slice-owned generation-1 event and maps its properties. An omitted for uses the command identifier.' },
     { label: 'identifier property', insertText: '${1:property} ${2:Type} identifier', documentation: 'Marks the property a runtime resolves the event source id from. At most one per command.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'References the policies that must pass for the command to execute.' },
@@ -184,6 +186,8 @@ export const specificationStepItems: Record<'given' | 'when' | 'then', Completio
         { label: 'append', insertText: 'append ${1:EventType}\n    ${2:property} = ${3:value}', documentation: 'An event occurs, instead of a command being executed.' },
     ],
     then: [
+        { label: 'returns value', insertText: 'returns ${1:value}', documentation: 'Syntax-only scalar response expectation. Execution unavailable until ESM v8 (PLAY0268).' },
+        { label: 'returns block', insertText: 'returns\n    ${1:field} = ${2:value}', documentation: 'Syntax-only nonempty subset of response fields. Execution unavailable until ESM v8 (PLAY0268).' },
         { label: 'result', insertText: 'result\n    ${1:property} = ${2:value}', documentation: 'One result the query performed by `when query` returns, in order.' },
         { label: 'result exactly', insertText: 'result exactly\n    ${1:property} = ${2:value}', documentation: 'One result, with every property asserted.' },
         { label: 'no result', insertText: 'no result', documentation: 'The query performed by `when query` returns nothing.' },

@@ -9,6 +9,7 @@ import {
 } from './language';
 import { createTokensProvider } from './tokens';
 import { CompletionOptions, createCompletionProvider } from './completions';
+import { responseTokens, responseTokenTypes } from './response-tokens';
 import { createHoverProvider } from './hover';
 import { createInlayHintsProvider } from './inlay-hints';
 import { createCodeActionProvider } from './code-actions';
@@ -55,6 +56,21 @@ export function register(monaco: Monaco, options: LanguageServiceOptions = {}): 
     applyTokensProvider(monaco);
     monaco.languages.registerCompletionItemProvider(languageId, createCompletionProvider(monaco, options));
     monaco.languages.registerHoverProvider(languageId, createHoverProvider());
+    monaco.languages.registerDocumentSemanticTokensProvider(languageId, {
+        getLegend: () => ({ tokenTypes: [...responseTokenTypes], tokenModifiers: [] }),
+        provideDocumentSemanticTokens(model) {
+            const data: number[] = [];
+            let previousLine = 0;
+            let previousColumn = 0;
+            for (const token of responseTokens(model.getLinesContent())) {
+                data.push(token.line - previousLine, token.line === previousLine ? token.column - previousColumn : token.column, token.length, token.type, 0);
+                previousLine = token.line;
+                previousColumn = token.column;
+            }
+            return { data: new Uint32Array(data) };
+        },
+        releaseDocumentSemanticTokens() {},
+    });
     monaco.languages.registerInlayHintsProvider(languageId, createInlayHintsProvider());
     monaco.languages.registerCodeActionProvider(languageId, createCodeActionProvider());
     monaco.editor.defineTheme(screenplayDarkThemeName, screenplayDark);
@@ -117,6 +133,9 @@ export { contextVariableItems, producesItems, specificationStepItems } from './c
 export type { CompletionEntry } from './completion-items';
 export { completionEntriesFor, planCompletions } from './completion-planner';
 export type { CompletionPlan } from './completion-planner';
+export { responseTokens, responseTokenTypes } from './response-tokens';
+export { responseCompletions } from './response-completions';
+export { responseAvailability, responseAnalysis } from './response-analysis';
 export { hoverContent } from './hover-content';
 export { validateLines } from './validation';
 export { destinationHints, productionDestinations } from './production-destinations';

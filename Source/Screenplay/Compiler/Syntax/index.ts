@@ -14,6 +14,7 @@ export * from './Captures';
 export * from './Authorization';
 export * from './Constraints';
 export * from './Specifications';
+export * from './Responses';
 export * from './Screens';
 export * from './Structure';
 export * from './SyntaxJson';

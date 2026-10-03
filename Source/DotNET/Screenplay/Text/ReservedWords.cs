@@ -23,7 +23,7 @@ internal static class ReservedWords
     /// The keywords a <c>command</c> body reserves, and so the property names that need escaping.
     /// </summary>
     public static readonly IReadOnlySet<string> CommandBody =
-        new HashSet<string>(StringComparer.Ordinal) { "authorize", "produces", "reads" };
+        new HashSet<string>(StringComparer.Ordinal) { "authorize", "produces", "reads", "returns" };
 
     /// <summary>
     /// The keywords a <c>readmodel</c> body reserves, and so the property names that need escaping.

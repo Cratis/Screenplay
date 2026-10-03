@@ -53,6 +53,12 @@ export const commonTokenRules: MonarchTokenRules = [
 export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMonarchLanguage {
     const tokenizer: Record<string, MonarchTokenRules> = {
         root: [
+            [/^(\s*@?[a-z_]\w*\s+)([\w.]+(?:\[\])?(?:\?|\s+optional)?)(\s+)(generated)(\s+identifier)?(?=\s*(?:\/\/.*)?$)/,
+                ['identifier', 'type.identifier', 'white', 'keyword', 'keyword']],
+            [/^(\s*)(generated)(\s+)([a-z_]\w*)(\s*=(?!=|>))/, ['white', 'keyword', 'white', 'identifier', 'operator']],
+            [/^(\s*)(then)(\s+)(returns)\b/, ['white', 'keyword', 'white', 'keyword']],
+            // Only unambiguous response headers: two-token property declarations keep their names.
+            [/^(\s*)(returns)(?=\s*(?:\/\/.*)?$|\s+@\w+\s*(?:\/\/.*)?$)/, ['white', 'keyword']],
             // A modifier only after a complete type; names called optional remain ordinary names.
             [/^(\s*(?:by|filter)\s+[a-z_]\w*\s+)([\w.]+(?:\[\])?)(\s+)(optional)\b(?=\s*(?:from\b|\/\/|$))/,
                 ['identifier', 'type.identifier', 'white', 'keyword']],

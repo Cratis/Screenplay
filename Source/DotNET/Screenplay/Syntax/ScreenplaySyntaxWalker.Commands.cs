@@ -50,6 +50,11 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitHandler(syntax.Handler);
         }
+
+        if (syntax.Response is not null)
+        {
+            VisitCommandResponse(syntax.Response);
+        }
     }
 
     /// <summary>

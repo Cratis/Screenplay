@@ -79,6 +79,7 @@ internal static partial class SpecificationParser
         var thenErrors = new List<SpecificationErrorSyntax>();
         SpecificationCallerSyntax? caller = null;
         SpecificationDeniedSyntax? denied = null;
+        SpecificationReturnSyntax? thenReturns = null;
         FileReferenceSyntax? file = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
         SpecificationClockSyntax? givenClock = null;
@@ -186,7 +187,19 @@ internal static partial class SpecificationParser
                     }
                     break;
                 case "then":
-                    if (line.Content.StartsWith("then events", StringComparison.Ordinal))
+                    if (ThenReturnsPrefixRegex().IsMatch(line.Content))
+                    {
+                        var expectation = ParseReturn(context, line);
+                        if (thenReturns is not null)
+                        {
+                            context.Error(DiagnosticCodes.InvalidReturnExpectation, "A specification declares at most one return expectation.", line.Location);
+                        }
+                        else
+                        {
+                            thenReturns = expectation;
+                        }
+                    }
+                    else if (line.Content.StartsWith("then events", StringComparison.Ordinal))
                     {
                         if (line.Content != "then events in any order" || eventsInAnyOrder)
                         {
@@ -254,6 +267,7 @@ internal static partial class SpecificationParser
             ThenAbsentReadModels = thenAbsentReadModels,
             GivenCaller = caller,
             ThenDenied = denied,
+            ThenReturns = thenReturns,
             WhenAppended = whenAppended,
             ThenEventsInAnyOrder = eventsInAnyOrder,
             GivenClock = givenClock,
@@ -414,10 +428,12 @@ internal static partial class SpecificationParser
             return null;
         }
 
-        var body = ParseValuesWithEventSource(context, line);
+        var generated = new List<PropertyMappingSyntax>();
+        var body = ParseValuesWithEventSource(context, line, generated);
         return new SpecificationCommandSyntax(match.Groups[1].Value, body.Values, line.Location)
         {
-            For = body.For
+            For = body.For,
+            GeneratedValues = generated
         };
     }
 
@@ -607,13 +623,24 @@ internal static partial class SpecificationParser
 
     static (List<PropertyMappingSyntax> Values, ExpressionSyntax? For) ParseValuesWithEventSource(
         ParserContext context,
-        SourceLine parent)
+        SourceLine parent,
+        List<PropertyMappingSyntax>? generated = null)
     {
         var values = new List<PropertyMappingSyntax>();
         ExpressionSyntax? eventSource = null;
         while (context.TryPeekChild(parent.Indent, out var child))
         {
             context.Reader.TakeSignificant();
+            if (generated is not null && GeneratedFixturePrefixRegex().IsMatch(child.Content))
+            {
+                if (ParseConcreteMapping(context, child, GeneratedFixtureRegex(), DiagnosticCodes.InvalidGeneratedFixture) is { } fixture)
+                {
+                    generated.Add(fixture);
+                }
+
+                continue;
+            }
+
             var mapping = MappingRegex().Match(child.Content);
             if (mapping.Success)
             {

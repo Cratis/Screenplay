@@ -12,6 +12,12 @@ internal sealed class LineReader(IReadOnlyList<SourceLine> lines)
     int _index;
 
     /// <summary>
+    /// Creates an independent reader at the current position for parser lookahead.
+    /// </summary>
+    /// <returns>The independent reader.</returns>
+    public LineReader Fork() => new(lines) { _index = _index };
+
+    /// <summary>
     /// Gets the next significant line without consuming it, skipping blank lines.
     /// </summary>
     /// <returns>The next significant <see cref="SourceLine"/>, or <c>null</c> at the end of input.</returns>

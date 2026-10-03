@@ -30,6 +30,14 @@ Symbolic links are rejected. An empty root can be opened to create its first mod
 Only `apply` and `recover-workspace` mutate files. Keep client approval enabled
 for both. Source queries, schemas, proposals and status checks are read-only.
 
+## Generated values and responses (syntax-only)
+
+`declaration-details` exposes `isGenerated` on property pages and a command `response` view with typed scalar/block syntax, source property names, declared and inferred field types, and explicit syntax-only execution readiness. Generated values are not request/form inputs. Specification details and `find-fixtures` distinguish `generatedValues` and `thenReturns` from ordinary `whenCommand` values. These are syntax facts, not evaluated results.
+
+Discover `CommandSyntax.response`, `RecordCommandResponseSyntax.fields`, `ScalarCommandResponseSyntax.source`, `ResponseFieldSyntax` and `PropertyResponseSourceSyntax` with `syntax-schema`. Use the existing `read-ast` handles and typed Add/Replace/Remove operations under `propose-ast`, with `validation: "Authoring"`. Add a response to the command's `response` member, replace or remove its node to change or clear it, and add/replace/remove record fields through `fields`. Field types are nullable for inference. Source locations remain server-owned; response fields have no ESM identities.
+
+Workspace and catalog revisions, expected nodes, preview and explicit acceptance still apply. Inspect `read-proposal` before `apply`; discovery and preview never write. Executable validation refuses every generated/response construct with `PLAY0268` and no semantic model. Execution, form response scopes and an official renderer response type remain unavailable until ESM v8. The inline-event extraction tool refuses response-bearing commands because it cannot prove its canonical executable-byte invariant without a semantic model; use explicit typed authoring edits instead. Rename with `PreserveTrivia` to retain response comments; canonical rename can refuse a proposal that would drop comments. See the [syntax-only contract](../commands.md#generated-values-and-responses-syntax-only).
+
 ## Embedding API
 
 The `Cratis.Screenplay.Mcp` library targets .NET 10 and references the Screenplay

@@ -72,6 +72,13 @@ describe('when validating a document with a problem of every coded kind', () => 
 
     beforeEach(() => {
         issues = validateLines(document);
+        const responses = [
+            ['type Outside', '  id Uuid generated'],
+            ['concept Id : Uuid', 'command C', '  id Id generated', '  generated String', '  value String generated', '  other Id identifier generated', '  returns', '    id String = id', '    id = unknown'],
+            ['concept Id : Uuid', 'command C', '  id Id generated', '  returns @id', '  returns'],
+            ['concept Id : Uuid', 'command C', '  id Id generated', '  returns @id', 'specification S', '  when C', '    id = "wrong input"', '    generated nope = "wrong fixture"', '  then returns', '    nope = "wrong shape"'],
+        ];
+        issues.push(...responses.flatMap(lines => validateLines(lines)));
     });
 
     it('should give every issue it reports a code', () => {

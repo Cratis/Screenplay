@@ -102,6 +102,7 @@
                       "properties": [
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": true,
                           "name": "customerId",
                           "type": {
@@ -113,6 +114,7 @@
                         },
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "name",
                           "type": {
@@ -123,6 +125,7 @@
                           }
                         }
                       ],
+                      "response": null,
                       "validations": []
                     }
                   ],
@@ -140,6 +143,7 @@
                       "properties": [
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "name",
                           "type": {
@@ -246,6 +250,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": true,
                       "name": "customerId",
                       "type": {
@@ -257,6 +262,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "name",
                       "type": {
@@ -268,6 +274,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "email",
                       "type": {
@@ -279,6 +286,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "age",
                       "type": {
@@ -290,6 +298,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "tags",
                       "type": {
@@ -300,6 +309,7 @@
                       }
                     }
                   ],
+                  "response": null,
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -434,6 +444,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "name",
                       "type": {
@@ -445,6 +456,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "email",
                       "type": {
@@ -490,6 +502,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "reason",
                       "type": {
@@ -533,6 +546,7 @@
                   "givenClock": null,
                   "givenReadModels": [],
                   "name": "RegisteringACustomer",
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -574,10 +588,12 @@
                     }
                   ],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "Register",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -706,6 +722,7 @@
                   "givenClock": null,
                   "givenReadModels": [],
                   "name": "RejectingAMinor",
+                  "thenDenied": null,
                   "thenErrors": [
                     {
                       "kind": "SpecificationErrorSyntax",
@@ -721,10 +738,12 @@
                   "thenNoResult": null,
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "Register",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -781,6 +800,7 @@
                   },
                   "givenReadModels": [],
                   "name": "ArchivingWhenTheClockStrikes",
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -803,6 +823,7 @@
                   "thenNoResult": null,
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": null,
                   "whenCapture": null,
@@ -820,6 +841,7 @@
                   "givenClock": null,
                   "givenReadModels": [],
                   "name": "ArchivingWhenTriggered",
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -833,6 +855,7 @@
                   "thenNoResult": null,
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": null,
                   "whenCapture": null,
@@ -860,6 +883,7 @@
                   "givenClock": null,
                   "givenReadModels": [],
                   "name": "RegisteringFromACapture",
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -873,6 +897,7 @@
                   "thenNoResult": null,
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": null,
                   "whenCapture": {
@@ -908,6 +933,7 @@
                   "givenClock": null,
                   "givenReadModels": [],
                   "name": "LookingUpACustomer",
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
@@ -943,6 +969,7 @@
                       ]
                     }
                   ],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": null,
                   "whenCapture": null,
@@ -970,6 +997,7 @@
                   "givenClock": null,
                   "givenReadModels": [],
                   "name": "LookingUpNobody",
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
@@ -978,6 +1006,7 @@
                   },
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": null,
                   "whenCapture": null,
@@ -1260,6 +1289,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "customerId",
                       "type": {
@@ -1271,6 +1301,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "name",
                       "type": {
@@ -1282,6 +1313,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "visits",
                       "type": {
@@ -1634,6 +1666,7 @@
       "properties": [
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "street",
           "type": {
@@ -1645,6 +1678,7 @@
         },
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "lines",
           "type": {

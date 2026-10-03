@@ -8,7 +8,7 @@ Commands are input definitions — imperative intents. A command declares its pr
 command <Name>
   [description "<text>"]
 
-  <property> <Type> [optional] [identifier]
+  <property> <Type> [optional] [generated] [identifier]
   ...
 
   [reads <ReadModel> [as <alias>] [by <property>]]   ← state the command decides against
@@ -84,6 +84,32 @@ If any production targets a source other than the command identifier, **every pr
 Plain `produces <Name>` retains its legacy omission behavior; it does not acquire the inline default. Copying an identifier into a same-source payload reports `PLAY0469`: warning for inline declarations, information for plain productions with explicit `for`. Review the persisted contract before removing a payload field. The inline-only typed repair removes the property and mapping together, retires the property's semantic address, and is labeled “changes the event contract”. It is excluded from fix-all. The narrow repair refuses other consumers of that event, opaque implementation impact, routing changes and comment loss; standalone/plain contracts receive guidance only, not an automatic shape change.
 
 The unescaped directives `namespace`, `sequence`, `correlation`, `causation`, `causedBy`, and `occurred` are reserved system-assigned metadata in production bodies. Escape a genuine payload field, for example `@sequence String = name`; `occurred at` is not supported yet.
+
+## Generated values and responses (syntax-only)
+
+You can author generated values and a response contract, but **execution is unavailable until ESM v8**. Binding any generated property, response, generated fixture or return expectation reports `PLAY0268` and produces no semantic model. Syntax validation and editor or MCP acceptance are not proof of execution.
+
+```screenplay
+command RegisterProject
+  projectId ProjectId generated identifier
+  receiptId ReceiptId generated
+  name ProjectName
+  returns
+    projectId = projectId
+    receiptId ReceiptId = receiptId
+```
+
+This fragment assumes `ProjectId` and `ReceiptId` are concepts backed by `Uuid`, and `ProjectName` is a concept backed by `String`. The [complete syntax-only example](fixtures/generated-responses.play) includes their declarations and specification fixtures. Executable samples deliberately do not use this syntax yet.
+
+- `generated` is command-only and requires a required, scalar concept backed by `Uuid`; bare `Uuid`, optional values and collections are invalid. Generated values are not request inputs, form fields, invocation arguments or ordinary specification inputs.
+- Modifier order is `Type optional generated identifier`. This order does not permit an optional generated value or optional identifier. `generated String` still declares a property named `generated`.
+- `returns <property>` declares one scalar response. Bare `returns` opens an unnamed record, even when it has just one field. Declare at most one unconditional response, as a command sibling, not inside a production.
+- Each record field is `<name> [<Type>] = <property>`. Its type is inferred from a direct command property, or explicitly annotated with exactly the same type identity and optionality. Fields are unique and stay in authored order. Arithmetic, read aliases, collections and whole read-model responses are not supported.
+- A two-token `returns name` is a response when `name` identifies another property of **this command**, regardless of declaration order; otherwise it remains a property named `returns` whose type is `name`. This is a local property lookup, not a type-inventory or capitalization rule. Use `returns @name` to force a source reference, including an unknown source that needs a diagnostic; use `@returns Type` to force a property declaration. Returning a property named `returns` uses `returns @returns`.
+
+Responses also parse beside a handler; they do not add handler-return semantics. Future renderers favor an official `<Command>Response` type, but no such type is emitted here. Form `on submit` and interaction `on success` response-name scopes, failure clearing and response execution remain unavailable until their coordinated v8 implementation.
+
+The board excludes generated properties from the request schema and shows generated/response details in the existing command description. It creates no response event or response identity. See [syntax-only specification fixtures](specifications.md#generated-fixtures-and-return-expectations-syntax-only).
 
 ## The identifier
 

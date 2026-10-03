@@ -33,10 +33,28 @@ static class McpFixtureTypes
             target = models[0];
         }
 
+        if (occurrence.Role == "thenReturns" && target.Syntax is CommandSyntax command)
+        {
+            var source = command.Response switch
+            {
+                ScalarCommandResponseSyntax scalar when property == "returns" => scalar.Source.Property,
+                RecordCommandResponseSyntax record => Source(record, property),
+                _ => null
+            };
+            var sources = command.Properties.Where(field => field.Name == source).ToArray();
+            return sources.Length == 1 ? sources[0].Type : null;
+        }
+
         // A field belongs to this declaration, never to a global dictionary keyed by its spelling.
         var fields = Properties(target.Syntax).Where(field => field.Name == property).ToArray();
 
         return fields.Length == 1 ? fields[0].Type : null;
+    }
+
+    static string? Source(RecordCommandResponseSyntax response, string property)
+    {
+        var fields = response.Fields.Where(field => field.Name == property).ToArray();
+        return fields.Length == 1 ? fields[0].Source.Property : null;
     }
 
     static IEnumerable<PropertySyntax> Properties(SyntaxNode node) => node switch
