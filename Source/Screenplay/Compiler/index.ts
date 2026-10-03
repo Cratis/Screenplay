@@ -5,6 +5,7 @@ export * from './Authoring/QuickFixes';
 export * from './Diagnostics';
 export * from './Syntax';
 export * from './ScreenplayCompiler';
+export { eventBodyReservedWords } from './Text/ReservedWords';
 export * from './Files/PlayFolderMerge';
 export * from './Files/PlayApplicationAssembly';
 export * from './Files/PlayDocumentSource';

@@ -4,6 +4,7 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { EventSyntax, PropertySyntax, ReadModelSyntax, TagSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { pattern } from '../Text/patterns';
+import { eventBodyReservedWords } from '../Text/ReservedWords';
 import { parseDescription } from './DescriptionParser';
 import { EventMetadataParser } from './EventMetadataParser';
 import { parseMappingSource } from './ExpressionParser';
@@ -85,7 +86,7 @@ export function parseEvent(context: ParserContext, header: SourceLine): EventSyn
         if (isFileDirectiveAmongProperties(line)) {
             continue;
         }
-        if (firstWord(line.content) === 'tag') {
+        if (eventBodyReservedWords.includes(firstWord(line.content))) {
             const tag = parseTag(context, line);
             if (tag !== undefined) {
                 tags.push(tag);

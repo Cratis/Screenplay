@@ -1,13 +1,20 @@
 # Grammar
 
-The full EBNF grammar of the Screenplay DSL. `INDENT`/`DEDENT` are synthesized by the lexer from changes in indentation (offside rule), as in Python. The PDL and CDL bodies are built-in first-class sub-grammars — see [Sub-languages and inline code](sub-languages.md).
+The Screenplay syntax reference in EBNF. `INDENT`/`DEDENT` represent indented bodies: parsers read lines at greater indentation until the body ends. PDL and CDL have their own [sub-grammars](sub-languages.md). The C# compiler validates the full language; the TypeScript compiler models a subset and recognizes the remaining shipped constructs as opaque bodies.
+
+Declarations and body directives can appear in any order unless a rule below states otherwise. A repeated group such as { A | B } means its members may appear in any order; it does not allow repeating singleton directives such as description, for or where. References may name declarations later in the document; scope and semantic checks still apply.
 
 ```ebnf
 (* ============================================================ *)
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { TypeDecl }, { PolicyDecl }, { PersonaDecl }, [ AuthenticationDecl ], { TriggerDecl }, { ThemeDecl }, { LayoutDecl }, { UiProfileDecl }, { BehaviorDecl }, { Module }, { SeedDecl } ;
+Document       = [ DomainDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl
+               | PersonaDecl | AuthenticationDecl | TriggerDecl | ThemeDecl
+               | LayoutDecl | UiProfileDecl | BehaviorDecl | Module | SeedDecl } ;
+
+(* At most one domain and authentication block. Put domain first; the compiler
+   reports PLAY0004 when it follows another application declaration. *)
 
 (* A document a FileImport placed in a module or feature holds, besides the
    declarations above, the body of that module or feature at its top level - see
@@ -43,9 +50,9 @@ ImportPattern  = ? a path or glob relative to the importing file's folder -
 (* -------------------------------------------------------------- *)
 
 ConceptDecl    = "concept", Ident, ":", PrimitiveType, { Attribute }, NL,
-                   [ INDENT, [ FileDirective ], { AttributeReason }, { ConceptValidate }, DEDENT ]
+                   [ INDENT, { FileDirective | AttributeReason | ConceptValidate }, DEDENT ]
                | "concept", Ident, ":", "Enum", { Attribute }, NL,
-                   INDENT, [ FileDirective ], { AttributeReason }, { [ "@" ], Ident, NL }, { ConceptValidate }, DEDENT ;
+                   INDENT, { FileDirective | AttributeReason | [ "@" ], LowerIdent, NL | ConceptValidate }, DEDENT ;
 
 AttributeReason = AttributeName, "reason", StringLiteral, NL ;
 
@@ -66,7 +73,8 @@ AttributeName  = "pii" | "sensitive" ;
 (* -------------------------------------------------------------- *)
 
 TypeDecl       = "type", Ident, NL,
-                 INDENT, [ DescriptionDecl ], [ FileDirective ], PropertyLine, { PropertyLine }, DEDENT ;
+                 INDENT, { DescriptionDecl | FileDirective | PropertyLine }, DEDENT ;
+(* A type must have at least one property. *)
 
 (* -------------------------------------------------------------- *)
 (* Policies                                                        *)
@@ -115,8 +123,7 @@ ClaimTarget    = "subject"
 
 PersonaDecl    = "persona", Ident, NL,
                  INDENT,
-                   [ DescriptionDecl ],
-                   { "policy", Ident, NL },
+                   { DescriptionDecl | "policy", Ident, NL },
                  DEDENT ;
 
 (* -------------------------------------------------------------- *)
@@ -148,11 +155,8 @@ CompatibleWithDecl = "compatible", "with", PackageName, NL ;
 
 UiProfileDecl  = "ui", "profile", Ident, NL,
                  INDENT,
-                   [ TargetPlatformDecl ],
-                   [ TargetSizeDecl ],
-                   [ PackagesBlock ],
-                   [ ProfileLayoutDecl ],
-                   [ ProfileThemeDecl ],
+                   { TargetPlatformDecl | TargetSizeDecl | PackagesBlock
+                   | ProfileLayoutDecl | ProfileThemeDecl },
                  DEDENT ;
 
 TargetPlatformDecl = "target", "platform", PlatformName, { ",", PlatformName }, NL ;
@@ -207,22 +211,45 @@ Module         = "module", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 BehaviorDecl   = "behavior", Ident, NL,
-                 [ INDENT, [ DescriptionDecl ], [ FileDirective ],
-                   { "parameter", Ident, [ RequiredTypeRef ], NL | "order", SignedInteger, NL | InteractionBinding }, DEDENT ] ;
+                 [ INDENT, { DescriptionDecl | FileDirective
+                   | "parameter", Ident, [ RequiredTypeRef ], NL
+                   | "order", SignedInteger, NL | InteractionBinding }, DEDENT ] ;
 
 InteractionBinding = "on", InteractionTrigger, NL,
-                 INDENT, { "where", Condition, NL | InteractionAction }, DEDENT ;
+                 INDENT, { "where", BindingText, NL | InteractionAction }, DEDENT ;
 
 UsesBehaviorDecl = "uses", Ident, NL,
                  [ INDENT, { Ident, BehaviorArgument, NL }, DEDENT ] ;
 BehaviorArgument = ? nonempty argument text (literal, binding or parameter) ? ;
 SignedInteger  = [ "-" ], Integer ;
 
-(* Interaction triggers, actions and continuations are described in
-   interactions.md; the same attachments also occur in layouts, templates,
-   forms and screens. *)
-InteractionTrigger = ? built-in kind or declared application trigger ? ;
-InteractionAction = ? interaction action with optional continuation ? ;
+InteractionTrigger = "click" | "double", "click" | "select" | "submit"
+                   | "change" | "load" | "unload" | "enter" | "leave"
+                   | "event", QualifiedName
+                   | "interval", Integer, IntervalUnit
+                   | Ident ; (* declared application trigger; starts uppercase *)
+
+InteractionAction = InteractionActionHeader, NL,
+                    [ INDENT, { InteractionArgument | InteractionContinuation }, DEDENT ] ;
+InteractionActionHeader = "execute", QualifiedName
+                        | "navigate", "to", QualifiedName | "navigate", "back"
+                        | "open", "dialog", QualifiedName | "close", "dialog"
+                        | "refresh", QualifiedName
+                        | "set", Path, "to", BindingText
+                        | "notify", ( "info" | "warning" | "error" ), InteractionMessage
+                        | "confirm", InteractionMessage
+                        | "raise", QualifiedName ;
+InteractionArgument = "with", Ident, "from", BindingText, NL ;
+InteractionMessage = LocalizableString | Path ;
+InteractionContinuation = "on", ( "success" | "failure" | "result" ), NL,
+                          INDENT, { InteractionAction }, DEDENT ;
+BindingText    = ? nonempty remainder of the line, stored verbatim ? ;
+
+(* A binding needs at least one action and at most one where guard. Guards,
+   set values and argument bindings are opaque text, not Condition operands.
+   on success/failure are allowed only on execute, refresh, confirm, open dialog
+   and raise; on result only on open dialog. Continuations nest up to 16 action
+   levels. An interval below 5 seconds warns. See interactions.md. *)
 
 (* -------------------------------------------------------------- *)
 (* Forms and contributions                                         *)
@@ -233,7 +260,7 @@ FormDecl       = "form", Ident, "for", QualifiedName, NL,
 
 FormDirective  = FormPopulateDecl
                | FormFieldDecl
-               | FormSubmitDecl ;
+               | FormSubmitDecl | InteractionBinding | UsesBehaviorDecl ;
 
 FormPopulateDecl = "populate", "via", "query", QualifiedName, [ "by", Ident ], NL
                  | "populate", "from", "item", NL ;
@@ -268,14 +295,16 @@ LayoutDecl     = "layout", Ident, NL,
                  INDENT, StructureBody, DEDENT ;
 
 ScreenTemplateDecl = "screen", "template", Ident, NL,
-                 INDENT, [ FitsSlotDecl ], StructureBody, DEDENT ;
+                 INDENT, { FitsSlotDecl | SlotDecl | ArrangementDecl
+                         | InteractionBinding | UsesBehaviorDecl }, DEDENT ;
 
 DialogTemplateDecl = "dialog", "template", Ident, NL,
                  INDENT, StructureBody, DEDENT ;
 
 FitsSlotDecl   = "fits", "slot", Ident, NL ;
 
-StructureBody  = { SlotDecl }, [ ArrangementDecl ] ;
+StructureBody  = { SlotDecl | ArrangementDecl | InteractionBinding | UsesBehaviorDecl } ;
+(* At most one arrangement; a screen template has at most one fits slot. *)
 
 SlotDecl       = Ident, [ "contributes", Ident ], NL ;
 
@@ -339,7 +368,7 @@ Feature        = "feature", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 SliceDecl      = "slice", SliceType, Ident, NL,
-                 INDENT, [ DescriptionDecl ], [ FileDirective ], { SliceBody }, DEDENT ;
+                 INDENT, { DescriptionDecl | FileDirective | SliceBody }, DEDENT ;
 
 SliceType      = "StateChange" | "StateView" | "Automation" | "Translate" ;
 
@@ -356,10 +385,10 @@ SliceBody      = EventDecl
                | ConstraintDecl ;
 
 ReadModelDecl  = "readmodel", Ident, NL,
-                 INDENT, [ DescriptionDecl ], [ FileDirective ], { PropertyLine }, DEDENT ;
+                 INDENT, { DescriptionDecl | FileDirective | PropertyLine }, DEDENT ;
 
 ReducerDecl    = "reducer", Ident, "=>", Ident, NL,
-                 INDENT, [ DescriptionDecl ], { ReducerRule }, DEDENT ;
+                 INDENT, { DescriptionDecl | ReducerRule }, DEDENT ;
 
 ReducerRule    = "on", Ident, NL,
                  [ INDENT, [ DescriptionDecl ], [ FileDirective | InlineBlock ], DEDENT ] ;
@@ -409,11 +438,12 @@ PropertyLine   = [ "@" ], Ident, TypeRef, [ "identifier" ], NL ;
 (* "identifier" is only accepted on a command property, and on at most one of
    them - it marks the property a runtime resolves the event source id from.  *)
 
-TypeRef        = QualifiedName, [ "[]" ], [ "optional" ] ;
+TypeRef        = QualifiedName, [ "[]" ], [ "optional" | "?" ] ;
 RequiredTypeRef = QualifiedName, [ "[]" ] ;
 
 (* "optional" follows the complete type, including any collection marker.
-   It is case-sensitive and contextual, not a reserved name. Modifiers cannot
+   It is case-sensitive and contextual, not a reserved name. The attached ?
+   suffix still parses, with information diagnostic PLAY0479; prefer optional. Modifiers cannot
    be repeated. Optional reads are not yet supported. *)
 
 (* -------------------------------------------------------------- *)
@@ -422,14 +452,12 @@ RequiredTypeRef = QualifiedName, [ "[]" ] ;
 
 CommandDecl    = "command", Ident, NL,
                  INDENT,
-                   [ DescriptionDecl ],
-                   { PropertyLine },
-                   { ReadsDecl },
-                   [ AuthorizeDecl ],
-                   { ValidateDecl },
-                   ( { ProducesDecl } | HandlerDecl ),
-                   [ ConcurrencyDecl ],
+                   { DescriptionDecl | PropertyLine | ReadsDecl | AuthorizeDecl
+                   | ValidateDecl | ProducesDecl | HandlerDecl | ConcurrencyDecl },
                  DEDENT ;
+
+(* A command cannot have both produces and handler. At most one concurrency
+   block; repeated authorize lines combine with and in authored order. *)
 
 ReadsDecl      = "reads", Ident, [ "as", LowerIdent ], [ "by", LowerIdent ], NL ;
 
@@ -457,9 +485,9 @@ AuthorizeDecl  = "authorize", PolicyRequirement, NL ;
 
 PolicyRequirement = PolicyAll, { "or", PolicyAll } ;
 
-PolicyAll      = PolicyOperand, { [ "and" ], PolicyOperand } ;
+PolicyAll      = PolicyRequirementOperand, { [ "and" ], PolicyRequirementOperand } ;
 
-PolicyOperand  = PolicyRef
+PolicyRequirementOperand = PolicyRef
                | "(", PolicyRequirement, ")" ;
 
 PolicyRef      = Ident ;
@@ -478,8 +506,9 @@ ValidationRule = Path, RuleOp, [ "severity", ValidationSeverity ], [ "message", 
                    [ INDENT, RuleImplementation, DEDENT ] ;
 
 RequireRule    = "require", Condition, NL,
-                   [ INDENT, [ "severity", ValidationSeverity, NL ],
-                     [ "message", LocalizableString, NL ], DEDENT ] ;
+                   [ INDENT, { "severity", ValidationSeverity, NL
+                             | "message", LocalizableString, NL }, DEDENT ] ;
+(* At most one severity directive per require. *)
 
 ValidationSeverity = "information" | "warning" | "error" ;
 
@@ -522,7 +551,7 @@ RuleImplementation = FileDirective
    block yields the message of every rule the artifact breaks -
    see Documentation/screenplay/context.md.                                  *)
 
-Value          = Number | StringLiteral | "today" | "true" | "false" | Path ;
+Value          = Number | StringLiteral | "today" | "true" | "false" | "null" | Path ;
 
 (* "max" and "min" take their meaning from the property type: a text length or
    a number's value. In a ValidationRule a Path operand names a member of an
@@ -534,10 +563,10 @@ Value          = Number | StringLiteral | "today" | "true" | "false" | Path ;
 (* -------------------------------------------------------------- *)
 
 ProducesDecl   = "produces", Ident, NL,
-                   [ INDENT, [ ForDecl ], { TagDecl }, { PropertyMapping }, DEDENT ]
+                   [ INDENT, { ForDecl | TagDecl | PropertyMapping }, DEDENT ]
                | "produces", "when", Condition, NL,
                    INDENT, Ident, NL,
-                   [ INDENT, [ ForDecl ], { TagDecl }, { PropertyMapping }, DEDENT ],
+                   [ INDENT, { ForDecl | TagDecl | PropertyMapping }, DEDENT ],
                    DEDENT
                | InlineEventProduction ;
 
@@ -556,14 +585,15 @@ ForDecl        = "for", MappingSource, NL ;
    Unescaped namespace, sequence, correlation, causation, causedBy and occurred
    are reserved system-assigned metadata in both production forms. *)
 
-(* Combines exactly as a policy condition does - see the note under Policies. *)
+(* At most one for directive in each production. A conditional production has
+   one event child, not a list of alternative events. Conditions combine as
+   policy conditions do - see the note under Policies. *)
 
 Condition      = ConditionAnd, { "or", ConditionAnd } ;
 
 ConditionAnd   = ConditionOperand, { "and", ConditionOperand } ;
 
-ConditionOperand = Ident, CompOp, Value
-               | Ident, CompOp, Ident
+ConditionOperand = Path, CompOp, Value
                | "(", Condition, ")" ;
 
 CompOp         = "==" | "!=" | ">" | ">=" | "<" | "<="
@@ -622,12 +652,8 @@ HandlerDecl    = "handler", NL,
 
 QueryDecl      = "query", Ident, "=>", [ "observable" ], TypeRef, NL,
                  [ INDENT,
-                     [ DescriptionDecl ],
-                     [ ByClause ],
-                     { FilterClause },
-                     [ ScopeDecl ],
-                     [ AuthorizeDecl ],
-                     [ PerformerDecl ],
+                     { DescriptionDecl | ByClause | FilterClause | ScopeDecl
+                     | AuthorizeDecl | PerformerDecl },
                    DEDENT ] ;
 
 (* "observable" qualifies the return type as a live read - the query keeps
@@ -655,8 +681,12 @@ PerformerDecl  = "performer", NL,
 (* Projections — PDL sub-language                                  *)
 (* -------------------------------------------------------------- *)
 
-ProjectionDecl = "projection", Ident, "=>", Ident, NL,
+ProjectionDecl = "projection", QualifiedName, [ "=>", QualifiedName ], NL,
                  INDENT, PDLBody, DEDENT ;
+
+(* Variant groups omit the target: each variant names its read model.
+   A non-variant projection in a Screenplay application needs a target to bind
+   its read model. Standalone PDL also accepts a targetless header. *)
 
 PDLBody        = (* Projection Declaration Language grammar - covers the projection
                     directives (automap, sequence, file, key), the from/every/join/
@@ -799,23 +829,18 @@ ConstraintOption = "released", "by", Ident, NL
 
 ReactionDecl   = "reaction", Ident, NL,
                  INDENT,
-                   [ DescriptionDecl ],
-                   TriggerClause, { TriggerClause },
-                   [ WhereDecl ],
+                   { DescriptionDecl | TriggerClause | WhereDecl },
                  DEDENT ;
 
-(* A trigger with no body is a complete statement of intent - the reaction runs
+(* A reaction needs at least one trigger and at most one where condition.
+   A trigger with no body is a complete statement of intent - the reaction runs
    when that happens. The file reference and the inline block are optional
    realization metadata.                                                      *)
 
 TriggerClause  = TriggerSource, NL,
                  [ INDENT,
-                     [ DescriptionDecl ],
-                     { TriggerValue },
-                     { ReadsDecl },
-                     { ProducesDecl },
-                     { InvokesDecl },
-                     [ FileDirective | InlineBlock ],
+                     { DescriptionDecl | TriggerValue | ReadsDecl | ProducesDecl
+                     | InvokesDecl | FileDirective | InlineBlock },
                    DEDENT ] ;
 
 TriggerSource  = "when", Ident                      (* event, declared or registered trigger *)
@@ -851,7 +876,7 @@ WhereDecl      = "where", Condition, NL ;
    it. That boundary is what lets the set of triggers be open.                *)
 
 TriggerDecl    = "trigger", Ident, NL,
-                 INDENT, [ DescriptionDecl ], [ FileDirective ], { TriggerValue }, DEDENT ;
+                 INDENT, { DescriptionDecl | FileDirective | TriggerValue }, DEDENT ;
 
 InvokesDecl    = "invokes", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ] ;
@@ -1088,7 +1113,7 @@ The escape works wherever a name of your choosing meets a reserved first word - 
 
 | Block | Reserved first words |
 |---|---|
-| `command` body | `authorize`, `produces` (`description`, `validate`, `handler` and `concurrency` resolve by shape) |
+| `command` body | `authorize`, `produces`, `reads` (`description`, `validate`, `handler` and `concurrency` resolve by shape) |
 | `event` body | `tag` (`id`, `description`, and `documentation` resolve by shape) |
 | inline `produces event` body | `tag`, `for`, `generation`, `origin`, `namespace`, `sequence`, `correlation`, `causation`, `causedBy`, `occurred`; metadata names resolve by shape |
 | reaction trigger body | `description`, `file`, `produces`, `invokes`, `reads` (use `@reads` for a value named `reads`) |

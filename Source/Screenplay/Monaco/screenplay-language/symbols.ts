@@ -1,8 +1,10 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { eventBodyReservedWords } from '@cratis/screenplay-compiler';
 import { fenceMap, indentOf } from './document-context';
 import { eventAnalysisSource } from './event-analysis-source';
+import { fileReferenceOn } from './file-references';
 import { clauseKeywords } from './language';
 import { ProductionSymbol } from './ProductionSymbol';
 import { TypeReferenceSymbol, typeReferenceSymbol } from './TypeReferenceSymbol';
@@ -94,7 +96,9 @@ const readPattern = /^\s*reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([
 const commandReserved = ['authorize', 'produces', 'reads'];
 // AuthorizeParser's continuation pattern, including the compiler's Unicode word characters.
 const authorizationContinuation = /^(?:(?:or|and)\s+)?[A-Za-z_(][\p{L}\p{Mn}\p{Nd}\p{Pc}\s()]*$/u;
-const eventReserved = clauseKeywords.filter(keyword => !['id', 'description', 'documentation'].includes(keyword));
+// Use the compiler's contextual inventory, not the global completion vocabulary.
+const eventReserved = eventBodyReservedWords;
+const inlineEventReserved = ['tag', 'for', 'generation', 'origin', 'namespace', 'sequence', 'correlation', 'causation', 'causedBy', 'occurred'];
 const queryParameterPattern =
     /^\s*(?:by|filter)\s+([a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(?:\s+from\s+.+)?\s*$/;
 
@@ -237,12 +241,16 @@ export function scanDocument(lines: string[]): DocumentSymbols {
 
         const eventMatch = eventLines[index].trim().match(/^(?:produces\s+)?event\s+(\w+)(?:\s+generation\s+(\d+))?\s*$/);
         if (eventMatch) {
+            const inline = trimmed.startsWith('produces ');
+            const body = directBody(eventLines, eventFences, index, indent);
+            // Standalone events distinguish file metadata from properties by path shape.
+            const propertyBody = inline ? body : body.filter(line => fileReferenceOn(eventLines[line], line) === undefined);
             symbols.events.push({
                 name: eventMatch[1],
                 ...(eventMatch[2] ? { generation: Number(eventMatch[2]) } : {}),
-                inline: trimmed.startsWith('produces '),
-                properties: propertiesIn(trimmed.startsWith('produces ') ? eventPropertyLines : eventLines,
-                    directBody(eventLines, eventFences, index, indent), eventReserved),
+                inline,
+                properties: propertiesIn(inline ? eventPropertyLines : eventLines,
+                    propertyBody, inline ? inlineEventReserved : eventReserved),
                 line: index,
             });
             continue;

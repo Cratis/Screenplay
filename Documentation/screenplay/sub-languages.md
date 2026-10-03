@@ -39,9 +39,9 @@ this mapping data; the host owns the virtual document and language service.
 
 An editor extension registers a construct keyword together with its token rules, completions and hover documentation, so highlighting and IntelliSense compose cleanly.
 
-The construct's body is opaque to the Screenplay grammar: from the host's perspective it is `ExtensionConstruct = Ident, Ident, NL, [ INDENT, { AnyLine }, DEDENT ]` (see [Grammar](grammar.md)). The block ends where the indentation returns to the level of the construct keyword.
+The editor can highlight the registered construct's indented body as a sub-language. This does not add a production to the [Screenplay grammar](grammar.md).
 
-Be aware of what this does and does not buy: a construct registered here highlights correctly and is then **discarded by the compiler**, because the compiler's set of construct keywords is closed. Until that set opens too, an editor extension is a reading aid rather than a language extension.
+A construct keyword the compiler does not know inside a slice, including one registered only in the editor, produces warning PLAY0029, and the parser skips its body so later declarations still parse; the document still compiles, but the construct contributes nothing to the model. Unknown words at the top level or in a module or feature body are errors. Editor registration is a reading aid, not compiler acceptance. The TypeScript compiler also skips some *known, shipped* constructs that it does not yet model; those are not extension keywords.
 
 ## The Monaco registration API
 
