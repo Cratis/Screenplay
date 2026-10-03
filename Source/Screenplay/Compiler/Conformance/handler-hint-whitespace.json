@@ -14,5 +14,12 @@
     { "name": "literal-bom", "authored": "﻿", "decoded": "﻿", "blank": false },
     { "name": "literal-zero-width-space", "authored": "​", "decoded": "​", "blank": false },
     { "name": "unknown-unicode-escape", "authored": "\\u0085", "decoded": "\\u0085", "blank": false },
-    { "name": "authored-nonblank-spacing", "authored": " Keep \\t\\n", "decoded": " Keep \t\n", "blank": false }
+    { "name": "authored-nonblank-spacing", "authored": " Keep \\t\\n", "decoded": " Keep \t\n", "blank": false },
+    { "name": "plain-unicode-line-characters", "authored": "Keep   ﻿ text", "decoded": "Keep   ﻿ text", "blank": false },
+    { "name": "escaped-next-line", "authored": "\\", "decoded": "\\", "blank": false },
+    { "name": "escaped-line-separator", "authored": "\\ ", "decoded": "\\ ", "blank": false },
+    { "name": "escaped-paragraph-separator", "authored": "\\ ", "decoded": "\\ ", "blank": false },
+    { "name": "escaped-bom", "authored": "\\﻿", "decoded": "\\﻿", "blank": false },
+    { "name": "escaped-edge-controls", "authored": "\\\u0000\\\t\\\u000b\\\f", "decoded": "\\\u0000\\\t\\\u000b\\\f", "blank": false },
+    { "name": "escaped-edge-unicode", "authored": "\\\u001f\\￿\\𝄞", "decoded": "\\\u001f\\￿\\𝄞", "blank": false }
 ]

@@ -86,6 +86,7 @@ internal static partial class ImplementationParser
         return new(file, code, handler.Location) { Implementation = new(hints, wrapper.Location) };
     }
 
-    [GeneratedRegex("^hint\\s+\"((?:[^\"\\\\]|\\\\.)*)\"$", RegexOptions.None, 1000)]
+    // Match ImplementationHintText's White_Space set explicitly. A hint stays on one CR/LF-delimited source line.
+    [GeneratedRegex("""^hint[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+"((?:[^"\\\r\n]|\\[^\r\n])*)"$""", RegexOptions.None, 1000)]
     private static partial Regex HintRegex();
 }

@@ -2,6 +2,36 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "Handler hints accept the shared intertoken whitespace set including NEL",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        handler", "          implementation", "            hint \"Keep\"", "            hint \t\u000b\f                 　\"Keep\""],
+            "diagnostics": []
+        },
+        {
+            "name": "Handler hints reject BOM and zero width space as intertoken whitespace",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        handler", "          implementation", "            hint ﻿\"Keep\"", "            hint ​\"Keep\""],
+            "diagnostics": ["PLAY0493@7", "PLAY0493@8"]
+        },
+        {
+            "name": "Handler hints accept plain and escaped non CR LF source line characters",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        handler", "          implementation", "            hint \"Keep   ﻿ text\"", "            hint \"\\\\ \\ \\﻿\\\u0000\\\t\\\u000b\\\f\\￿\\𝄞\""],
+            "diagnostics": []
+        },
+        {
+            "name": "Handler hints reject plain and escaped interior carriage returns",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        handler", "          implementation", "            hint \"Keep\rtext\"", "            hint \"Keep\\\rtext\""],
+            "diagnostics": ["PLAY0493@7", "PLAY0493@8"]
+        },
+        {
+            "name": "Handler hints cannot escape physical LF source boundaries",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        handler", "          implementation", "            hint \"Keep\\\n            hint \"After\""],
+            "diagnostics": ["PLAY0493@7"]
+        },
+        {
+            "name": "Handler hints cannot escape physical CRLF source boundaries",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        handler", "          implementation", "            hint \"Keep\\\r\n            hint \"After\""],
+            "diagnostics": ["PLAY0493@7"]
+        },
+        {
             "name": "Handler wrapper rejects invalid hint and unknown children",
             "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        handler", "          implementation", "            hint unquoted", "            hint \" \"", "            provider csharp"],
             "diagnostics": ["PLAY0493@7", "PLAY0493@8", "PLAY0492@9"]

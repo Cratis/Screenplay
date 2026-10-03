@@ -4,13 +4,15 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationHintSyntax } from '../Syntax/Implementations';
 import { isBlankImplementationHint } from '../Text/ImplementationHintText';
-import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
+import { unescapeString } from '../Text/StringLiteral';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 
 const languages = new Set(['csharp', 'typescript', 'react', 'html', 'sql']);
-const hintPattern = new RegExp(`^hint\\s+"(${stringBodyPattern})"$`);
+// Match ImplementationHintText's White_Space set, not ECMAScript \s. A hint stays on one CR/LF-delimited source line.
+// eslint-disable-next-line no-control-regex -- The shared whitespace set deliberately includes U+0009 through U+000D.
+const hintPattern = new RegExp('^hint[\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]+"((?:[^"\\\\\\r\\n]|\\\\[^\\r\\n])*)"$');
 const isFile = (line: SourceLine): boolean => firstWord(line.content) === 'file' && line.content.substring(4).trim().length > 0;
 const isCode = (line: SourceLine): boolean => line.content.startsWith('```') || languages.has(line.content);
 
