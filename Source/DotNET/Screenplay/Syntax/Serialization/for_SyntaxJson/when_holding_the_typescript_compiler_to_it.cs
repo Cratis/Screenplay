@@ -72,7 +72,8 @@ public class when_holding_the_typescript_compiler_to_it : Specification
                     string[] required = actualKind.GetString() switch
                     {
                         "PropertySyntax" => ["isGenerated"],
-                        "CommandSyntax" => ["response"],
+                        "CommandSyntax" => ["response", "handler"],
+                        "HandlerSyntax" or "ImplementationSyntax" or "ImplementationHintSyntax" or "FileReferenceSyntax" or "CodeBlockSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "SpecificationCommandSyntax" => ["generatedValues"],
                         "SpecificationSyntax" => ["thenReturns", "thenDenied"],
                         "ScalarCommandResponseSyntax" or "RecordCommandResponseSyntax" or "ResponseFieldSyntax" or "PropertyResponseSourceSyntax" or "ScalarSpecificationReturnSyntax" or "RecordSpecificationReturnSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],

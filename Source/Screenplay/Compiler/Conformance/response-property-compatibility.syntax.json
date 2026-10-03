@@ -42,6 +42,7 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "handler": null,
                   "name": "Legacy",
                   "produces": [],
                   "properties": [
@@ -77,6 +78,7 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "handler": null,
                   "name": "LowerCase",
                   "produces": [],
                   "properties": [
@@ -112,6 +114,7 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "handler": null,
                   "name": "Escaped",
                   "produces": [],
                   "properties": [
@@ -147,6 +150,7 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "handler": null,
                   "name": "ResponseBeforeSource",
                   "produces": [],
                   "properties": [
@@ -176,6 +180,7 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "handler": null,
                   "name": "ResponseAfterSource",
                   "produces": [],
                   "properties": [
@@ -205,6 +210,7 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "handler": null,
                   "name": "ExplicitSource",
                   "produces": [],
                   "properties": [
@@ -234,6 +240,7 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "handler": null,
                   "name": "ReturnsSource",
                   "produces": [],
                   "properties": [

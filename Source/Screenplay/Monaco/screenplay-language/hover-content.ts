@@ -7,7 +7,7 @@ import { directBody, propertyTypeReference, scanDocument } from './symbols';
 import { typeReferenceText } from './TypeReferenceSymbol';
 import { eventAnalysisSource } from './event-analysis-source';
 import { getSubLanguage } from './sub-language-registry';
-import { attributeDocs, contextVariableDocs, keywordDocs, specificationKeywordDocs } from './keyword-docs';
+import { attributeDocs, contextVariableDocs, handlerIntentDocs, keywordDocs, specificationKeywordDocs } from './keyword-docs';
 
 // Produces the hover markdown for a word at a position, without any editor
 // dependency — the Monaco service and the VSCode extension share this content.
@@ -62,6 +62,16 @@ export function hoverContent(
         !/^\s*query\s+\w+\s*=>\s*observable\s+$/.test(prefix);
     if (word === 'optional' && (followsPropertyType || followsQueryType)) {
         return `**optional** — ${keywordDocs.optional}`;
+    }
+
+    if (word === 'implementation' || word === 'hint') {
+        const chain = enclosingChain(lines, fences, lineIndex, indentOf(line));
+        if (word === 'implementation' && chain[0] === 'handler' && /^\s*implementation\s*$/.test(withoutComment(line))) {
+            return `**implementation** — ${handlerIntentDocs.implementation}`;
+        }
+        if (word === 'hint' && chain[0] === 'implementation' && chain[1] === 'handler' && /^\s*hint\s+"/.test(line)) {
+            return `**hint** — ${handlerIntentDocs.hint}`;
+        }
     }
 
     const symbols = scanDocument(lines);

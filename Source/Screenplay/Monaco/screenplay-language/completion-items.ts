@@ -100,7 +100,14 @@ export const producesItems: CompletionEntry[] = [
     { label: 'when', insertText: 'when ${1:condition}', documentation: 'Guards the produced event with a condition.' },
 ];
 
+export const implementationItems: CompletionEntry[] = [
+    { label: 'hint', insertText: 'hint "${1:implementation guidance}"', documentation: 'Ordered nonblank guidance for a handler implementation. Not an execution guarantee.' },
+    { label: 'file', insertText: 'file ${1:Path}', documentation: 'Selects one existing model-relative attachment.' },
+    ...['csharp', 'typescript', 'react', 'html', 'sql'].map(language => ({ label: language, insertText: fenced(language), documentation: 'Selects one inline payload. Handler execution remains unsupported.' })),
+];
+
 export const handlerItems: CompletionEntry[] = [
+    { label: 'implementation', insertText: 'implementation\n    hint "${1:implementation guidance}"', documentation: 'Handler-only implementation intent with optional file or tagged fence. With no payload it is pending.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Delegates the command implementation to an external C# file.' },
     { label: 'csharp', insertText: fenced('csharp'), documentation: 'Inline C# returning the events to append.' },
 ];

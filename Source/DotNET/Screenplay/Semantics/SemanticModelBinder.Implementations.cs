@@ -99,7 +99,7 @@ public sealed partial class SemanticModelBinder
             var repeated = _implementationRequirements.Count(value => value.Role == role && Equals(value.Owner, owner) &&
                 (value.Member == member || value.Member?.StartsWith($"{member}#", StringComparison.Ordinal) == true));
             var distinctMember = repeated == 0 ? member : $"{member}#{repeated}";
-            var identity = Hash($"{assignment.Id}|{role}|{distinctMember?.Length ?? 0}:{distinctMember}");
+            var identity = ImplementationRequirementIdentity.Create(assignment.Id, role, distinctMember);
             var requirement = new SemanticImplementationRequirement(role, owner, distinctMember, code?.Language, file?.Path, hash, source)
             {
                 RequirementId = identity,

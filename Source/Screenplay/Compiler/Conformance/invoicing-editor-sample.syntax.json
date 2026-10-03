@@ -290,6 +290,7 @@
                         }
                       },
                       "description": null,
+                      "handler": null,
                       "name": "ApplyDiscount",
                       "produces": [
                         {
@@ -830,6 +831,7 @@
                         }
                       },
                       "description": null,
+                      "handler": null,
                       "name": "WriteOffInvoice",
                       "produces": [
                         {
@@ -1364,6 +1366,7 @@
                     }
                   },
                   "description": "Registers a new invoice with its lines and payment terms",
+                  "handler": null,
                   "name": "RegisterInvoice",
                   "produces": [
                     {
@@ -2931,6 +2934,7 @@
                     }
                   },
                   "description": null,
+                  "handler": null,
                   "name": "CancelInvoice",
                   "produces": [
                     {
@@ -3452,6 +3456,7 @@
                     }
                   },
                   "description": null,
+                  "handler": null,
                   "name": "TagInvoice",
                   "produces": [
                     {
@@ -3757,6 +3762,7 @@
                     }
                   },
                   "description": null,
+                  "handler": null,
                   "name": "ChangeInvoiceStatus",
                   "produces": [
                     {
@@ -4346,6 +4352,16 @@
                     }
                   },
                   "description": null,
+                  "handler": {
+                    "kind": "HandlerSyntax",
+                    "code": {
+                      "kind": "CodeBlockSyntax",
+                      "code": "var events = new List<object>();\nevents.Add(new InvoiceBatchProcessingStarted(InvoiceIds.Count, context.Occurred));\nforeach (var id in InvoiceIds)\n    events.Add(Action switch {\n        \"send\"   => new InvoiceSent(context.Occurred, null),\n        \"cancel\" => new InvoiceCancelled(\"Batch\", context.Occurred, context.Identity.Id, \"Batch\"),\n        _        => throw new InvalidOperationException($\"Unknown action: {Action}\")\n    });\nevents.Add(new InvoiceBatchProcessingCompleted(InvoiceIds.Count, context.Occurred));\nreturn events;",
+                      "language": "csharp"
+                    },
+                    "file": null,
+                    "implementation": null
+                  },
                   "name": "ProcessInvoiceBatch",
                   "produces": [],
                   "properties": [
@@ -4747,6 +4763,23 @@
                     }
                   },
                   "description": null,
+                  "handler": {
+                    "kind": "HandlerSyntax",
+                    "code": null,
+                    "file": {
+                      "kind": "FileReferenceSyntax",
+                      "path": "Handlers/ArchiveOldInvoicesHandler.cs"
+                    },
+                    "implementation": {
+                      "kind": "ImplementationSyntax",
+                      "hints": [
+                        {
+                          "kind": "ImplementationHintSyntax",
+                          "text": "Archive only invoices dated before the requested cutoff"
+                        }
+                      ]
+                    }
+                  },
                   "name": "ArchiveOldInvoices",
                   "produces": [],
                   "properties": [
@@ -5009,6 +5042,7 @@
                     }
                   },
                   "description": null,
+                  "handler": null,
                   "name": "UpdateBillingContact",
                   "produces": [
                     {
@@ -7945,6 +7979,7 @@
                     }
                   },
                   "description": null,
+                  "handler": null,
                   "name": "RecordPayment",
                   "produces": [
                     {
@@ -11290,6 +11325,7 @@
                     }
                   },
                   "description": null,
+                  "handler": null,
                   "name": "RequestPaymentPlan",
                   "produces": [
                     {

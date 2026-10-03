@@ -163,5 +163,12 @@ export const DiagnosticCodes = {
     InvalidResponseShape: 'PLAY0489',
     InvalidGeneratedFixture: 'PLAY0490',
     InvalidReturnExpectation: 'PLAY0491',
+    InvalidImplementationBlock: 'PLAY0492',
+    InvalidImplementationHint: 'PLAY0493',
+    ConflictingImplementationSources: 'PLAY0494',
+    HandlerWithoutImplementation: 'PLAY0045',
+    UnknownHandlerDirective: 'PLAY0046',
+    CommandWithProducesAndHandler: 'PLAY0035',
+    AbsoluteFileReference: 'PLAY0264',
     InvalidTriggerData: 'PLAY0246',
 } as const;

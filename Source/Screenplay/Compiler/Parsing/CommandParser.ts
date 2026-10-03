@@ -13,6 +13,8 @@ import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseCommandResponse, scalarResponsePattern } from './CommandResponseParser';
 import { parseDescription } from './DescriptionParser';
+import { parseHandler } from './ImplementationParser';
+import { HandlerSyntax } from '../Syntax/Implementations';
 import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
@@ -47,7 +49,7 @@ const operandKinds: Record<string, ValidationRuleKind> = {
 const severities: Record<string, ValidationSeverity> = { information: 'Information', warning: 'Warning', error: 'Error' };
 
 // Command directives this compiler does not model. They are skipped whole.
-const opaqueDirectives = new Set(['reads', 'handler', 'concurrency']);
+const opaqueDirectives = new Set(['reads', 'concurrency']);
 
 // The bare directives cannot take a type reference, so a line with property shape is a property whatever
 // keyword it starts with - 'description String' declares a property called description.
@@ -73,6 +75,7 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
     const produces: ProducesSyntax[] = [];
     let description: string | null = null;
     let authorize: AuthorizeSyntax | null = null;
+    let handler: HandlerSyntax | null = null;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const keyword = firstWord(child.content);
@@ -109,6 +112,8 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
         } else if (keyword === 'produces') {
             const production = parseProduces(context, child, true);
             if (production !== undefined) produces.push(production);
+        } else if (keyword === 'handler') {
+            handler = parseHandler(context, child);
         } else if (opaqueDirectives.has(keyword)) {
             if (optionalReads.test(child.content)) {
                 context.error(DiagnosticCodes.OptionalReadsNotSupported, 'Optional reads are not yet supported (see #308).', locationOf(child));
@@ -142,7 +147,10 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
             response = parsed;
         }
     }
-    return { kind: 'CommandSyntax', name, description, authorize, properties: properties.filter(property => !removed.has(property)), validations, produces, response, location: locationOf(line) };
+    if (handler !== null && produces.length > 0) {
+        context.error(DiagnosticCodes.CommandWithProducesAndHandler, `Command '${name}' cannot declare both 'produces' and 'handler'`, locationOf(line));
+    }
+    return { kind: 'CommandSyntax', name, description, authorize, properties: properties.filter(property => !removed.has(property)), validations, produces, handler, response, location: locationOf(line) };
 }
 
 function addProperty(context: ParserContext, properties: PropertySyntax[], property: PropertySyntax, commandName: string, line: SourceLine, identifier: PropertySyntax | undefined): PropertySyntax | undefined {

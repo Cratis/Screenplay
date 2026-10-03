@@ -18,6 +18,7 @@ import {
 import { ApplicationSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax, SliceSyntax } from './Structure';
 import { CommandResponseSyntax, PropertyResponseSourceSyntax, RecordCommandResponseSyntax, RecordSpecificationReturnSyntax, ResponseFieldSyntax, ScalarCommandResponseSyntax, ScalarSpecificationReturnSyntax, SpecificationReturnSyntax } from './Responses';
 import { SyntaxNode } from './SyntaxNode';
+import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSyntax, ImplementationHintSyntax } from './Implementations';
 
 // Walks a whole syntax tree, depth first, in the order the C# ScreenplaySyntaxWalker does. Every visit
 // method calls visitNode and then walks the node's children, so an emitter overrides only the nodes it
@@ -110,8 +111,25 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         syntax.validations.forEach(node => this.visitValidate(node));
         syntax.produces.forEach(node => this.visitProduces(node));
+        if (syntax.handler != null) this.visitHandler(syntax.handler);
         if (syntax.response != null) this.visitCommandResponse(syntax.response);
     }
+
+    visitHandler(syntax: HandlerSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.implementation != null) this.visitImplementation(syntax.implementation);
+        if (syntax.file !== null) this.visitFileReference(syntax.file);
+        if (syntax.code !== null) this.visitCodeBlock(syntax.code);
+    }
+
+    visitImplementation(syntax: ImplementationSyntax): void {
+        this.visitNode(syntax);
+        syntax.hints.forEach(hint => this.visitImplementationHint(hint));
+    }
+
+    visitImplementationHint(syntax: ImplementationHintSyntax): void { this.visitNode(syntax); }
+    visitFileReference(syntax: FileReferenceSyntax): void { this.visitNode(syntax); }
+    visitCodeBlock(syntax: CodeBlockSyntax): void { this.visitNode(syntax); }
 
     visitCommandResponse(syntax: CommandResponseSyntax): void {
         if (syntax.kind === 'ScalarCommandResponseSyntax') this.visitScalarCommandResponse(syntax);

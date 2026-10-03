@@ -112,7 +112,8 @@ internal static class WorkspaceOptionalityRepairs
 
         text.Append(document.Text, start, document.Text.Length - start);
         var candidate = text.ToString();
-        var parsed = new ScreenplayCompiler().Parse(candidate, document.Path.Value);
+        var placement = index.Placement(document);
+        var parsed = new ScreenplayCompiler().Parse(candidate, document.Path.Value, placement);
         if (!parsed.Success || parsed.Value is null || !SyntaxJson.StructurallyEqual(root, parsed.Value) ||
             parsed.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyOptionalSuffix &&
                 (migrations.Count == legacy.Count || repairedLocations.Contains(diagnostic.Location))))
@@ -122,7 +123,7 @@ internal static class WorkspaceOptionalityRepairs
 
         if (formatting == WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments)
         {
-            return WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, document.Encoding, parsed.Value, formatting, diagnostics, document);
+            return WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, document.Encoding, parsed.Value, formatting, diagnostics, document, placement);
         }
 
         var bytes = Encoding.UTF8.GetBytes(candidate);

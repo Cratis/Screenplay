@@ -53,6 +53,7 @@ export const commonTokenRules: MonarchTokenRules = [
 export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMonarchLanguage {
     const tokenizer: Record<string, MonarchTokenRules> = {
         root: [
+            [/^(\s*)(handler)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@handlerBody.$1' }]],
             [/^(\s*@?[a-z_]\w*\s+)([\w.]+(?:\[\])?(?:\?|\s+optional)?)(\s+)(generated)(\s+identifier)?(?=\s*(?:\/\/.*)?$)/,
                 ['identifier', 'type.identifier', 'white', 'keyword', 'keyword']],
             [/^(\s*)(generated)(\s+)([a-z_]\w*)(\s*=(?!=|>))/, ['white', 'keyword', 'white', 'identifier', 'operator']],
@@ -125,6 +126,18 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
                 },
             ],
             { include: '@common' },
+        ],
+
+        handlerBody: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(implementation)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@implementationBody.$1' }]],
+            { include: '@root' },
+        ],
+
+        implementationBody: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(hint)(?=\s+")/, ['white', 'keyword']],
+            { include: '@root' },
         ],
 
         eventBody: [

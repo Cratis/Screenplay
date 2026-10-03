@@ -17,6 +17,7 @@
         { "include": "#code-block-typescript" },
         { "include": "#code-block-html" },
         { "include": "#code-block-sql" },
+        { "include": "#handler-block" },
         { "include": "#event-block" },
         { "include": "#description-block" },
         { "include": "#projection-block" },
@@ -341,6 +342,36 @@
                         { "include": "text.html.basic" }
                     ]
                 }
+            ]
+        },
+        "handler-block": {
+            "begin": "^([ ]*)(handler)(?=\\s*(?://.*)?$)",
+            "beginCaptures": { "2": { "name": "keyword.control.screenplay" } },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [
+                { "include": "#handler-implementation" },
+                { "include": "#fenced-csharp" },
+                { "include": "#fenced-react" },
+                { "include": "#fenced-typescript" },
+                { "include": "#fenced-html" },
+                { "include": "#fenced-sql" },
+                { "include": "#keywords" },
+                { "include": "#common" }
+            ]
+        },
+        "handler-implementation": {
+            "begin": "^([ ]*)(implementation)(?=\\s*(?://.*)?$)",
+            "beginCaptures": { "2": { "name": "keyword.other.screenplay" } },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [
+                { "include": "#fenced-csharp" },
+                { "include": "#fenced-react" },
+                { "include": "#fenced-typescript" },
+                { "include": "#fenced-html" },
+                { "include": "#fenced-sql" },
+                { "match": "^\\s*(hint)(?=\\s+\")", "captures": { "1": { "name": "keyword.other.screenplay" } } },
+                { "include": "#keywords" },
+                { "include": "#common" }
             ]
         },
         "event-block": {

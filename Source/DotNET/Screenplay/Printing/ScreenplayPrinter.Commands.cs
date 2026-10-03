@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Serialization;
 using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Printing;
@@ -471,26 +472,44 @@ public partial class ScreenplayPrinter
         }
     }
 
+    void WriteHandlerPayload(ScreenplayWriter writer, HandlerSyntax handler)
+    {
+        if (handler.File is not null) writer.Line($"file {handler.File.Path}", handler.File);
+        if (handler.Code is not null) WriteCodeBlock(writer, handler.Code);
+    }
+
     void WriteHandler(ScreenplayWriter writer, HandlerSyntax handler)
     {
+        ImplementationInvariants.Validate(handler);
         using var anchor = writer.Anchor(handler);
         writer.Line("handler");
         using (writer.Indent())
         {
-            if (handler.File is null)
+            if (handler.Implementation is { } implementation)
             {
-                if (handler.Code is not null)
+                ImplementationInvariants.Validate(implementation);
+                using var implementationAnchor = writer.Anchor(implementation);
+                writer.Line("implementation");
+                using (writer.Indent())
                 {
-                    WriteCodeBlock(writer, handler.Code);
+                    foreach (var hint in implementation.Hints)
+                    {
+                        if (hint is null) throw new InvalidSyntaxJson("Implementation hints cannot contain null.");
+                        ImplementationInvariants.Validate(hint);
+                        writer.Line($"hint {StringLiteral.Quote(hint.Text)}", hint);
+                    }
+
+                    WriteHandlerPayload(writer, handler);
                 }
-
-                return;
             }
-
-            writer.Line($"file {handler.File.Path}", handler.File);
-            if (handler.Code is not null)
+            else if (handler.File is null)
             {
-                WriteOmittedCode(writer, handler.Code, ReadsOneImplementation("a handler"));
+                if (handler.Code is not null) WriteCodeBlock(writer, handler.Code);
+            }
+            else
+            {
+                writer.Line($"file {handler.File.Path}", handler.File);
+                if (handler.Code is not null) WriteOmittedCode(writer, handler.Code, ReadsOneImplementation("a handler"));
             }
         }
     }

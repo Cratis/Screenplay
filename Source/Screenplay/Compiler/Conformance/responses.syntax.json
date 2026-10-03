@@ -56,6 +56,7 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "handler": null,
                   "name": "RegisterProject",
                   "produces": [
                     {
@@ -150,6 +151,7 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "handler": null,
                   "name": "RegisterWithReceipt",
                   "produces": [],
                   "properties": [
@@ -238,6 +240,7 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "handler": null,
                   "name": "ReturnOneFieldRecord",
                   "produces": [],
                   "properties": [
@@ -274,6 +277,7 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "handler": null,
                   "name": "ContextualNames",
                   "produces": [],
                   "properties": [
@@ -321,6 +325,7 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "handler": null,
                   "name": "ReturnPropertyNamedReturns",
                   "produces": [],
                   "properties": [
@@ -350,6 +355,7 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "handler": null,
                   "name": "TypeNamedLikeProperty",
                   "produces": [],
                   "properties": [
@@ -379,6 +385,7 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "handler": null,
                   "name": "ForcedResponse",
                   "produces": [],
                   "properties": [
@@ -408,6 +415,7 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "handler": null,
                   "name": "ReturnDetails",
                   "produces": [],
                   "properties": [
@@ -449,6 +457,16 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "handler": {
+                    "kind": "HandlerSyntax",
+                    "code": {
+                      "kind": "CodeBlockSyntax",
+                      "code": "return name;",
+                      "language": "csharp"
+                    },
+                    "file": null,
+                    "implementation": null
+                  },
                   "name": "HandlerWithResponse",
                   "produces": [],
                   "properties": [

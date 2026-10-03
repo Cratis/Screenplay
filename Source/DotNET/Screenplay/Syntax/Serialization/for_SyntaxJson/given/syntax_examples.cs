@@ -29,7 +29,9 @@ internal static class syntax_examples
             property.SetValue(node, Value(property.PropertyType, depth + 1));
         }
 
-        return node;
+        // Implementation intent adds a single authoritative payload invariant; keep this example valid
+        // while still independently populating every other structural member.
+        return node is HandlerSyntax handler ? handler with { Code = null } : node;
     }
 
     internal static bool SameValues(object? left, object? right)

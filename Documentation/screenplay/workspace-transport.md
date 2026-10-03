@@ -24,6 +24,12 @@ The API performs no filesystem, process, or network access. Hosts transfer the
 returned bytes; neither host needs to infer identities from paths. This API does
 not itself add Studio export or CLI import commands.
 
+## Handler implementation inventory
+
+`WorkspaceImplementationInventory.Create(workspace)` (or an existing `WorkspaceSyntaxIndex`) reads syntax and the identity catalog, independently of executable binding. Coverage is explicitly **CommandHandler** only. Entries contain the revision-local handle, owner address/identity, ordered hints, model file link or inline language, derived pending/file/inline state, requirement ID and identity origin. It reads no implementation files and exposes no confirmed/freshness state.
+
+The requirement ID uses the existing SHA-256 owner/role/null-member encoding. Direct and wrapped selections share an ID, and pending → attached keeps it on the same catalog. Existing attachment allocation and manifests are unchanged. `LegacyBootstrap` identities are provisional; preserving an ID through a command rename requires the existing catalog migration, not a manual source rename. Workspace serialization preserves that catalog across restarts. A handler inventory remains available when responses/generated-value admission prevents the binder's attachment pass.
+
 ## Version 1 envelope
 
 All members are required, in the following canonical order:

@@ -92,6 +92,7 @@
                     }
                   },
                   "description": null,
+                  "handler": null,
                   "name": "AddBook",
                   "produces": [
                     {
@@ -1206,6 +1207,7 @@
                     }
                   },
                   "description": null,
+                  "handler": null,
                   "name": "RegisterMember",
                   "produces": [
                     {
@@ -1637,6 +1639,7 @@
                     }
                   },
                   "description": null,
+                  "handler": null,
                   "name": "BorrowBook",
                   "produces": [
                     {
@@ -2048,6 +2051,7 @@
                     }
                   },
                   "description": null,
+                  "handler": null,
                   "name": "ReturnBook",
                   "produces": [
                     {

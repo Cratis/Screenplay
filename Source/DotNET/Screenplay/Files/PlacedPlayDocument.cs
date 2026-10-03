@@ -9,4 +9,11 @@ namespace Cratis.Screenplay.Files;
 /// <param name="Path">The portable path of the document.</param>
 /// <param name="Source">The source text of the document.</param>
 /// <param name="Placement">The <see cref="PlayPlacement"/> its imports settled on.</param>
-public record PlacedPlayDocument(string Path, string Source, PlayPlacement Placement);
+public record PlacedPlayDocument(string Path, string Source, PlayPlacement Placement)
+{
+    /// <summary>
+    /// Gets whether import resolution proved a unique placement, including the placements of importers.
+    /// When false, <see cref="Placement"/> is only a resolver working value, not an authoritative owner.
+    /// </summary>
+    public bool IsPlacementResolved { get; init; } = true;
+}

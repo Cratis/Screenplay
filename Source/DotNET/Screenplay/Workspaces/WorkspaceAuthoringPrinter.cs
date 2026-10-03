@@ -4,6 +4,7 @@
 using System.Collections.Immutable;
 using System.Text;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Printing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
@@ -21,11 +22,14 @@ static class WorkspaceAuthoringPrinter
         ApplicationSyntax intended,
         WorkspaceAuthoringFormatting formatting,
         ImmutableArray<Diagnostic>.Builder diagnostics,
-        WorkspaceDocument? original = null)
+        WorkspaceDocument? original = null,
+        PlayPlacement? placement = null,
+        bool validatePlacement = true)
     {
+        ImplementationInvariants.ValidateAuthoring(intended);
         if (formatting == WorkspaceAuthoringFormatting.PreserveTrivia && original is not null)
         {
-            return WorkspaceTriviaPrinter.Print(original, intended);
+            return WorkspaceTriviaPrinter.Print(original, intended, placement, validatePlacement);
         }
 
         if (formatting != WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments)
@@ -46,11 +50,9 @@ static class WorkspaceAuthoringPrinter
         // The codec validates structural content, but omits server-owned source positions. Print the
         // admitted original so authoring edits can retain locations carried from the parsed document.
         var text = new ScreenplayPrinter().Print(intended);
-        var parsed = new ScreenplayCompiler().Parse(text, path.Value);
-        diagnostics.AddRange(parsed.Diagnostics);
-        if (!parsed.Success || parsed.Value is null || !SyntaxJson.StructurallyEqual(checkedSyntax, parsed.Value))
+        if (validatePlacement)
         {
-            throw new InvalidWorkspaceAuthoring($"Printing '{path}' did not reparse to the intended typed AST. A printer omission, unrepresentable value, or malformed syntax cannot be committed.");
+            Validate(text, path, checkedSyntax, placement ?? PlayPlacement.Document, diagnostics);
         }
 
         var utf8 = new UTF8Encoding(false, true);
@@ -64,6 +66,18 @@ static class WorkspaceAuthoringPrinter
             $"'{path}' was canonically printed and {Dropped(dropped)}. Whitespace trivia is normalized; parsed declaration order is retained where source positions are comparable. Its UTF-8 BOM policy is preserved. Untouched documents remain byte-exact.",
             SourceLocation.Start.In(path.Value)));
         return printed;
+    }
+
+    internal static void Validate(string text, PortablePlayPath path, ApplicationSyntax intended, PlayPlacement placement, ImmutableArray<Diagnostic>.Builder diagnostics, WorkspaceAuthoringFormatting formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments)
+    {
+        var parsed = new ScreenplayCompiler().Parse(text, path.Value, placement);
+        diagnostics.AddRange(parsed.Diagnostics);
+        if (!parsed.Success || parsed.Value is null || !SyntaxJson.StructurallyEqual(intended, parsed.Value))
+        {
+            throw new InvalidWorkspaceAuthoring(formatting == WorkspaceAuthoringFormatting.PreserveTrivia
+                ? $"Trivia-preserving patches in '{path}' did not reparse to the intended AST. Use explicit CanonicalizeTouchedDocuments or coordinated typed edits."
+                : $"Printing '{path}' did not reparse to the intended typed AST. A printer omission, unrepresentable value, or malformed syntax cannot be committed.");
+        }
     }
 
     static string Dropped(ImmutableArray<WorkspaceDroppedComment> dropped) => dropped.Length switch

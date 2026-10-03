@@ -361,7 +361,13 @@ public record PropertyMappingSyntax(string Property, ExpressionSyntax Source, So
 /// <param name="File">The <see cref="FileReferenceSyntax"/> when the handler lives in an external file.</param>
 /// <param name="Code">The <see cref="CodeBlockSyntax"/> when the handler is declared inline.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record HandlerSyntax(FileReferenceSyntax? File, CodeBlockSyntax? Code, SourceLocation Location) : SyntaxNode(Location);
+public record HandlerSyntax(FileReferenceSyntax? File, CodeBlockSyntax? Code, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the optional implementation intent. The payload remains on this handler.
+    /// </summary>
+    public ImplementationSyntax? Implementation { get; init; }
+}
 
 /// <summary>
 /// Represents the base of a <c>produces when</c> condition.

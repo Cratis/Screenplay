@@ -7,6 +7,7 @@ import { ExpressionSyntax } from './Expressions';
 import { ProducesSyntax } from './Reactions';
 import { CommandResponseSyntax } from './Responses';
 import { SyntaxNode } from './SyntaxNode';
+import { HandlerSyntax } from './Implementations';
 
 // The C# ValidationRuleKind members.
 export type ValidationRuleKind =
@@ -45,4 +46,5 @@ export interface CommandSyntax extends SyntaxNode {
     readonly validations: readonly ValidateSyntax[];
     readonly produces: readonly ProducesSyntax[];
     readonly response?: CommandResponseSyntax | null;
+    readonly handler?: HandlerSyntax | null;
 }

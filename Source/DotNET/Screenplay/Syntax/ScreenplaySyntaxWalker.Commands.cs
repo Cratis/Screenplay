@@ -269,6 +269,10 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitHandler(HandlerSyntax syntax)
     {
         VisitNode(syntax);
+        if (syntax.Implementation is not null)
+        {
+            VisitImplementation(syntax.Implementation);
+        }
 
         if (syntax.File is not null)
         {
@@ -280,6 +284,22 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitCodeBlock(syntax.Code);
         }
     }
+
+    /// <summary>
+    /// Visits an implementation wrapper and its ordered hints.
+    /// </summary>
+    /// <param name="syntax">The wrapper to visit.</param>
+    public virtual void VisitImplementation(ImplementationSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var hint in syntax.Hints) VisitImplementationHint(hint);
+    }
+
+    /// <summary>
+    /// Visits one implementation hint.
+    /// </summary>
+    /// <param name="syntax">The hint to visit.</param>
+    public virtual void VisitImplementationHint(ImplementationHintSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="ConditionSyntax"/> node by dispatching to the method for its kind.

@@ -59,6 +59,49 @@ internal sealed partial class McpWorkspaces
             });
         }
 
+        if (view == "handler-intents" || view == "handler-intent-details")
+        {
+            CheckContinuation(arguments, "expectedCatalogRevision", workspace.IdentityCatalog.Revision.ToString());
+            var inventory = McpWorkspaceAnalysis.For(workspace).HandlerIntents;
+            if (view == "handler-intent-details")
+            {
+                var id = McpJson.RequiredString(arguments, "requirementId");
+                var matches = inventory.Entries.Where(value => value.RequirementId == id).Take(2).ToArray();
+                if (matches.Length > 1)
+                {
+                    throw new McpFailure("AmbiguousRequirement: multiple handler occurrences share that identity. Read handler-intents for their occurrence handles and repair duplicate declarations before requesting details.");
+                }
+
+                var entry = matches.SingleOrDefault()
+                    ?? throw new McpFailure(inventory.UnresolvedPlacementDocuments.IsEmpty
+                        ? "UnknownRequirement: no handler intent has that identity."
+                        : "UnresolvedPlacement: no uniquely placed handler has that identity. Read handler-intents for unresolved documents and repair conflicting or cyclic imports before requesting details.");
+                return McpJson.ToolResult(new
+                {
+                    workspace = McpWorkspaceTransport.Describe(workspace), view,
+                    coverage = WorkspaceImplementationInventory.Coverage,
+                    handler = DescribeHandlerIntent(entry),
+                    page = McpPaging.Page(entry.Hints, arguments, workspace.Revision.ToString())
+                });
+            }
+
+            var unresolved = inventory.UnresolvedPlacementDocuments.Select(document => (object)new
+            {
+                placementStatus = "unresolved",
+                conflictKind = "UnresolvedPlacement",
+                documentId = document.Id.ToString(),
+                path = document.Path.Value,
+                action = "Repair conflicting or cyclic imports before selecting a handler owner or requirement identity."
+            });
+            return McpJson.ToolResult(new
+            {
+                workspace = McpWorkspaceTransport.Describe(workspace), view,
+                coverage = WorkspaceImplementationInventory.Coverage,
+                unresolvedPlacementCount = inventory.UnresolvedPlacementDocuments.Length,
+                page = McpPaging.Page(inventory.Entries.Select(DescribeHandlerIntent).Concat(unresolved), arguments, workspace.Revision.ToString())
+            });
+        }
+
         if (view == "implementation-requirements")
         {
             var manifestRevision = McpAttachmentManifest.Revision(workspace.Compilation.ImplementationRequirements);
@@ -276,6 +319,23 @@ internal sealed partial class McpWorkspaces
         _proposals.Remove(McpJson.RequiredString(arguments, "proposalId"));
         return McpJson.ToolResult(new { discarded = true, remainingCount = _proposals.Count });
     }
+
+    static object DescribeHandlerIntent(WorkspaceImplementationEntry entry) => new
+    {
+        placementStatus = "resolved",
+        handle = McpAstHandles.Describe(entry.Handle),
+        owner = McpSemanticAddresses.Describe(entry.Owner),
+        ownerId = entry.OwnerId.ToString(),
+        requirementId = entry.RequirementId,
+        identityOrigin = entry.IdentityOrigin.ToString(),
+        provisional = entry.IsProvisional,
+        ambiguous = entry.IsAmbiguous,
+        hintCount = entry.Hints.Length,
+        file = entry.File,
+        language = entry.Language,
+        state = entry.State,
+        executableReady = false
+    };
 
     static void CheckContinuation(JsonElement arguments, string name, string revision, bool requireOnContinuation = true)
     {

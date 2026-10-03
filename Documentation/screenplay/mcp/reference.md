@@ -158,7 +158,7 @@ is canonicalized.
 from the server; do not infer them from names or line numbers.
 
 `read-workspace` views: documents, semantics, eventContracts, diagnostics,
-executable-diagnostics, source-map, repairs, implementation-requirements, typed-contexts and executable-model. The `source-map`
+executable-diagnostics, source-map, repairs, implementation-requirements, handler-intents, handler-intent-details, typed-contexts and executable-model. The `source-map`
 view pages the compiler's semantic entries ordered by semantic ID: `semanticId`,
 `role` (Declaration or Description), identity `origin`, `documentId`, `path`,
 and exact `span` (zero-based UTF-16 start/length and one-based start/end
@@ -192,6 +192,14 @@ bodied reducers no longer block binding. The `implementation-requirements` respo
 attachments without admitting an executable model. Document results contain root handles. `read-ast` returns
 original occurrences, names, child counts and existing identities. Its `children`
 view selects a parent document/path. Typed content is opt-in.
+
+## Handler intent inventory
+
+Call `read-workspace` with the current `expectedRevision` and `view: "handler-intents"`. Coverage is **CommandHandler** only, independent of ESM readiness. Paged entries expose owner address/ID, requirement ID, identity origin and explicit provisional status, hint count, file/language, derived pending/file/inline state, and the handler AST handle. `executableReady` remains false. The inventory selects links from syntax; it does not read implementation files or report confirmation/freshness.
+
+For ordered hints, use `view: "handler-intent-details"` with `requirementId`, `offset` and `limit`. Both views require the returned catalog revision as `expectedCatalogRevision` on continuation, as well as `expectedRevision`. Stale workspace/catalog revisions refuse rather than mixing snapshots. No attachment-manifest pin is needed for these model-only views.
+
+Discover `HandlerSyntax`, `ImplementationSyntax` and `ImplementationHintSyntax` with `syntax-schema`. Existing `propose-ast` operations edit hints, wrapper and payload under `validation: "Authoring"`; preview with `read-proposal`, then explicitly apply. Unwrapping retains an attachment, while unwrapping pending metadata is refused. No tool confirms code or invokes AI. Other owners' wrappers and the lock/drift lifecycle remain deferred. See [AST edits](../ast-authoring.md#handler-intent-edits).
 
 ## Canonical executable model export
 

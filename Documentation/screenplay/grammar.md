@@ -655,7 +655,14 @@ Expression     = (* arithmetic / method-call expression — freeform *) ;
 (* -------------------------------------------------------------- *)
 
 HandlerDecl    = "handler", NL,
-                 INDENT, ( FileDirective | InlineBlock ), DEDENT ;
+                 INDENT, ( FileDirective | InlineBlock | HandlerImplementation ), DEDENT ;
+HandlerImplementation = "implementation", NL,
+                        [ INDENT, { ImplementationHint | FileDirective | InlineBlock }, DEDENT ] ;
+ImplementationHint = "hint", StringLiteral, NL ;
+(* Handler-only wrapper: hints are ordered, nonblank quoted strings.
+   At most one payload (file OR tagged fence); direct and wrapped sources cannot mix.
+   A bare or hints-only implementation is pending, not executable.
+   Wrapper forms on all other owners are deferred. *)
 
 (* -------------------------------------------------------------- *)
 (* Queries                                                         *)

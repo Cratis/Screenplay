@@ -97,6 +97,7 @@
                       "kind": "CommandSyntax",
                       "authorize": null,
                       "description": null,
+                      "handler": null,
                       "name": "SaveDraft",
                       "produces": [],
                       "properties": [
@@ -224,6 +225,7 @@
                     }
                   },
                   "description": "Register a customer",
+                  "handler": null,
                   "name": "Register",
                   "produces": [
                     {

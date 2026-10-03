@@ -2193,4 +2193,19 @@ public static class DiagnosticCodes
     /// A return expectation is invalid or conflicts with another outcome.
     /// </summary>
     public const string InvalidReturnExpectation = "PLAY0491";
+
+    /// <summary>
+    /// Implementation wrapper syntax is invalid.
+    /// </summary>
+    public const string InvalidImplementationBlock = "PLAY0492";
+
+    /// <summary>
+    /// An implementation hint is not one nonblank quoted string.
+    /// </summary>
+    public const string InvalidImplementationHint = "PLAY0493";
+
+    /// <summary>
+    /// Wrapped and direct sources conflict, or multiple payloads were supplied.
+    /// </summary>
+    public const string ConflictingImplementationSources = "PLAY0494";
 }

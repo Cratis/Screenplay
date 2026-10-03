@@ -4,6 +4,7 @@
 using System.Collections;
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
@@ -84,10 +85,12 @@ public sealed class WorkspaceSyntaxIndex
             .ToArray());
 
     readonly IReadOnlyDictionary<WorkspaceNodeHandle, WorkspaceSyntaxEntry> _handles;
+    readonly IReadOnlyDictionary<string, PlacedPlayDocument> _placements;
 
-    WorkspaceSyntaxIndex(ScreenplayWorkspace workspace, ImmutableArray<WorkspaceSyntaxEntry> entries, ImmutableArray<Diagnostic> diagnostics)
+    WorkspaceSyntaxIndex(ScreenplayWorkspace workspace, ImmutableArray<WorkspaceSyntaxEntry> entries, ImmutableArray<Diagnostic> diagnostics, IReadOnlyDictionary<string, PlacedPlayDocument> placements)
     {
         Workspace = workspace;
+        _placements = placements;
         Entries = entries;
         Diagnostics = diagnostics;
         RepairableDiagnostics = [.. diagnostics.Concat(workspace.Compilation.Diagnostics).Distinct()];
@@ -104,6 +107,13 @@ public sealed class WorkspaceSyntaxIndex
     /// Gets parser diagnostics; erroneous documents are not indexed as editable syntax.
     /// </summary>
     public ImmutableArray<Diagnostic> Diagnostics { get; }
+
+    /// <summary>
+    /// Gets documents whose import placement is unresolved. They have no indexed semantic owner or identity.
+    /// Repair their conflicting or cyclic imports before selecting handlers or editing their AST.
+    /// </summary>
+    public ImmutableArray<WorkspaceDocument> UnresolvedPlacementDocuments =>
+        [.. Workspace.Documents.Where(document => !_placements[document.Path.Value].IsPlacementResolved)];
 
     /// <summary>
     /// Gets parser and compilation diagnostics for revision-bound repair discovery, preserving distinct messages.
@@ -125,9 +135,18 @@ public sealed class WorkspaceSyntaxIndex
         var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
         var semantics = workspace.IdentityCatalog.Semantics.ToDictionary(assignment => assignment.Address, assignment => assignment.Id);
         var events = workspace.IdentityCatalog.EventContracts.ToDictionary(assignment => assignment.Address, assignment => assignment.Id);
+
+        // Use the same roots, source and placement resolution as workspace compilation. Index each
+        // original tree once, never the merged application; structural handles remain document-local.
+        var texts = workspace.Documents.ToDictionary(document => document.Path.Value, document => document.Text, StringComparer.Ordinal);
+        var (placed, importDiagnostics) = PlayImports.Resolve(texts.Keys, new InMemoryPlayDocumentSource(texts));
+        var placements = placed.ToDictionary(document => document.Path, StringComparer.Ordinal);
+        diagnostics.AddRange(importDiagnostics);
         foreach (var document in workspace.Documents)
         {
-            var parsed = new ScreenplayCompiler().Parse(document.Text, document.Path.Value);
+            var placement = placements[document.Path.Value];
+            if (!placement.IsPlacementResolved) continue;
+            var parsed = new ScreenplayCompiler().Parse(document.Text, document.Path.Value, placement.Placement);
             diagnostics.AddRange(parsed.Diagnostics);
             if (parsed.Success && parsed.Value is not null)
             {
@@ -135,7 +154,7 @@ public sealed class WorkspaceSyntaxIndex
             }
         }
 
-        return new(workspace, entries.ToImmutable(), diagnostics.ToImmutable());
+        return new(workspace, entries.ToImmutable(), diagnostics.ToImmutable(), placements);
     }
 
     /// <summary>
@@ -161,6 +180,10 @@ public sealed class WorkspaceSyntaxIndex
             entries);
         return entries.ToImmutable();
     }
+
+    internal PlayPlacement Placement(WorkspaceDocument document) => _placements[document.Path.Value].IsPlacementResolved
+        ? _placements[document.Path.Value].Placement
+        : throw new InvalidWorkspaceAuthoring($"UnresolvedPlacement: repair conflicting or cyclic imports for '{document.Path}' before editing its syntax.");
 
     static void Visit(
         SyntaxNode node,

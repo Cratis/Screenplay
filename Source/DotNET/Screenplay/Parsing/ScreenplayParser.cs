@@ -229,6 +229,7 @@ internal static partial class ScreenplayParser
         // Restating the module a file is placed in says nothing new, so its body simply joins the placement.
         if (moduleBody is not null && string.Equals(name, placement.Scope[0], StringComparison.Ordinal))
         {
+            moduleBody.RecordRestatedHeader(line.Location);
             while (context.TryPeekChild(line.Indent, out var child))
             {
                 context.Reader.TakeSignificant();

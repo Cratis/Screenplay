@@ -177,23 +177,30 @@ sealed class WorkspaceAuthoringTransaction(
 
         edits.ValidateFragmentRenames(replacements);
 
+        // Printing uses the original placement to identify authored tokens. Structural validation waits
+        // until all source edits and document moves have settled the final import placements.
+        var intendedDocuments = new Dictionary<DocumentId, ApplicationSyntax>();
+
         // Every handle, expectation, typed slot, overlap and original anchor has now been validated.
         foreach (var (id, syntax) in edits.Apply())
         {
             var document = candidates[id];
-            candidates[id] = WorkspaceAuthoringPrinter.Print(id, document.StableKey, document.Path, document.Encoding, syntax, request.Formatting, _diagnostics, document);
+            intendedDocuments[id] = syntax;
+            candidates[id] = WorkspaceAuthoringPrinter.Print(id, document.StableKey, document.Path, document.Encoding, syntax, request.Formatting, _diagnostics, document, index.Placement(workspace.Documents.Single(original => original.Id == id)), validatePlacement: false);
         }
 
         foreach (var replacement in replacements)
         {
             var document = candidates[replacement.Document];
-            candidates[document.Id] = WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, document.Encoding, replacement.Syntax, request.Formatting, _diagnostics, document);
+            intendedDocuments[document.Id] = replacement.Syntax;
+            candidates[document.Id] = WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, document.Encoding, replacement.Syntax, request.Formatting, _diagnostics, document, index.Placement(workspace.Documents.Single(original => original.Id == document.Id)), validatePlacement: false);
         }
 
         foreach (var creation in creations)
         {
             var document = WorkspaceDocument.Create(creation.StableKey, creation.Path, []);
-            candidates[document.Id] = WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, creation.Encoding, creation.Syntax, request.Formatting, _diagnostics);
+            intendedDocuments[document.Id] = creation.Syntax;
+            candidates[document.Id] = WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, creation.Encoding, creation.Syntax, request.Formatting, _diagnostics, validatePlacement: false);
         }
 
         var ordered = candidates.Values.OrderBy(document => document.Id.ToString(), StringComparer.Ordinal).ToImmutableArray();
@@ -211,6 +218,19 @@ sealed class WorkspaceAuthoringTransaction(
         var compiler = new ScreenplayCompiler();
         var draftAuthoring = request.Validation == WorkspaceAuthoringValidation.Authoring && request.ReferencePolicy == WorkspaceAuthoringReferencePolicy.Draft;
         var texts = ordered.OrderBy(document => document.Path.Value, StringComparer.Ordinal).ToDictionary(document => document.Path.Value, document => document.Text, StringComparer.Ordinal);
+        var (placed, placementDiagnostics) = PlayImports.Resolve(texts.Keys, new InMemoryPlayDocumentSource(texts));
+        if (placed.Any(document => !document.IsPlacementResolved))
+        {
+            _diagnostics.AddRange(placementDiagnostics);
+            return Failure(WorkspaceConflictKind.CompilationFailed, "UnresolvedPlacement: repair conflicting or cyclic imports in the final document set before committing syntax edits.");
+        }
+
+        var placements = placed.ToDictionary(document => document.Path, document => document.Placement, StringComparer.Ordinal);
+        foreach (var document in ordered.Where(document => intendedDocuments.ContainsKey(document.Id)))
+        {
+            WorkspaceAuthoringPrinter.Validate(document.Text, document.Path, intendedDocuments[document.Id], placements[document.Path.Value], _diagnostics, request.Formatting);
+        }
+
         var (_, merged) = PlayApplicationAssembly.Compile(compiler, texts.Keys, new InMemoryPlayDocumentSource(texts), draftAuthoring);
         _diagnostics.AddRange(merged.Diagnostics);
         if (!merged.Success || merged.Value is null)

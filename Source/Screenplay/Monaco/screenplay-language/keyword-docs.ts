@@ -3,6 +3,12 @@
 
 import { eventContextPaths } from './event-context';
 
+// These words are contextual beneath a handler, never global property keywords.
+export const handlerIntentDocs = {
+    implementation: 'Handler-only intent with ordered hints and at most one file or tagged fence. No payload means pending. Handler execution is unsupported; this is not confirmation.',
+    hint: 'One nonblank quoted implementation hint. Order and decoded text are retained; hints do not execute or confirm code.',
+};
+
 export const keywordDocs: Record<string, string> = {
     domain: 'The domain the file belongs to — optional, at most one per file, before everything else.',
     import: 'Imports a type from another module by its qualified name — `import Module.Type` — making it available by its short name; or, quoted, other `.play` files by path or glob — `import "Orders/**/*.play"`, relative to this file\'s folder. Written inside a module or feature, a file import places the imported files there: their top level is that module\'s or feature\'s body.',
