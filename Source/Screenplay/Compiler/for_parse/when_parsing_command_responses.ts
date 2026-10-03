@@ -133,7 +133,7 @@ describe('when parsing command responses', () => {
         ['Id', '"11111111111111111111111111111111"', true],
         ['Id', '"{11111111-1111-1111-1111-111111111111}"', true],
         ['Id', '"(11111111-1111-1111-1111-111111111111)"', true],
-        ['Id', '"{0x11111111,0x1111,0x1111,{0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11}}"', true],
+        ['Id', '"{0x11111111,0x1111,0x1111,{0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11}}"', false],
         ['String optional', 'null', true], ['String', 'null', false],
         ['Unknown', '"opaque"', true], ['Unknown', '{"opaque": true}', true],
         ['String', '{"opaque": true}', false], ['slug', '{"opaque": true}', false],

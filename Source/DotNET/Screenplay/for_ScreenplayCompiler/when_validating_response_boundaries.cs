@@ -91,6 +91,34 @@ public class when_validating_response_boundaries : given.a_compiler
     }
 
     [Fact]
+    void should_round_trip_the_smallest_and_largest_finite_double_generated_fixtures()
+    {
+        should_round_trip_numeric_generated_fixtures_for_imported_unknown_shapes("0." + new string('0', 323) + "5");
+        should_round_trip_numeric_generated_fixtures_for_imported_unknown_shapes("17976931348623157" + new string('0', 292));
+    }
+
+    [Theory]
+    [InlineData("0.0000001")]
+    [InlineData("-0.0000001")]
+    [InlineData("1000000000000000000000000000000")]
+    [InlineData("123456789012345678901234567890.5")]
+    void should_round_trip_numeric_generated_fixtures_for_imported_unknown_shapes(string number)
+    {
+        foreach (var value in new[] { number, "[" + number + "]", "{\"amount\":" + number + ",\"amounts\":[" + number + "]}" })
+        {
+            var parsed = _compiler.Parse("import External.Id\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        receipt Id generated\n      specification Accepts\n        when C\n          generated receipt = " + value);
+            parsed.Success.ShouldBeTrue();
+            var printed = new ScreenplayPrinter().Print(parsed.Value!);
+            printed.ShouldNotContain("E-");
+            printed.ShouldNotContain("E+");
+            var reparsed = _compiler.Parse(printed);
+            reparsed.Success.ShouldBeTrue();
+            SyntaxJson.StructurallyEqual(parsed.Value!, reparsed.Value!).ShouldBeTrue();
+            _compiler.Compile(printed).Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0490").ShouldBeFalse();
+        }
+    }
+
+    [Fact]
     void should_keep_imported_enum_fixture_shapes_unknown()
     {
         var parsed = _compiler.Compile("import External.Enum\n" + Prefix + "      command C\n        receipt Enum generated\n      specification Accepts\n        when C\n          generated receipt = \"text\"");

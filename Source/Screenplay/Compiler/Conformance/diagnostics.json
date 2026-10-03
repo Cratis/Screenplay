@@ -2,6 +2,46 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "UUID return and generated fixture checks accept ordinary N D B P forms with case insensitive hex",
+            "validate": true,
+            "source": [
+                "concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated", "        returns receipt",
+                "      specification LowerD", "        when C", "          generated receipt = \"abcdef01-2345-6789-abcd-ef0123456789\"", "        then returns \"abcdef01-2345-6789-abcd-ef0123456789\"",
+                "      specification UpperD", "        when C", "          generated receipt = \"ABCDEF01-2345-6789-ABCD-EF0123456789\"", "        then returns \"ABCDEF01-2345-6789-ABCD-EF0123456789\"",
+                "      specification LowerN", "        when C", "          generated receipt = \"abcdef0123456789abcdef0123456789\"", "        then returns \"abcdef0123456789abcdef0123456789\"",
+                "      specification UpperN", "        when C", "          generated receipt = \"ABCDEF0123456789ABCDEF0123456789\"", "        then returns \"ABCDEF0123456789ABCDEF0123456789\"",
+                "      specification Braces", "        when C", "          generated receipt = \"{abcdef01-2345-6789-abcd-ef0123456789}\"", "        then returns \"{abcdef01-2345-6789-abcd-ef0123456789}\"",
+                "      specification UpperBraces", "        when C", "          generated receipt = \"{ABCDEF01-2345-6789-ABCD-EF0123456789}\"", "        then returns \"{ABCDEF01-2345-6789-ABCD-EF0123456789}\"",
+                "      specification Parentheses", "        when C", "          generated receipt = \"(abcdef01-2345-6789-abcd-ef0123456789)\"", "        then returns \"(abcdef01-2345-6789-abcd-ef0123456789)\"",
+                "      specification UpperParentheses", "        when C", "          generated receipt = \"(ABCDEF01-2345-6789-ABCD-EF0123456789)\"", "        then returns \"(ABCDEF01-2345-6789-ABCD-EF0123456789)\""
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "UUID return and generated fixture checks reject whitespace invalid delimiters lengths hex and X initializer notation",
+            "validate": true,
+            "source": [
+                "concept Id : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Id generated", "        returns receipt",
+                "      specification BracesSpaces", "        when C", "          generated receipt = \"{ 11111111-1111-1111-1111-111111111111 }\"", "        then returns \"{ 11111111-1111-1111-1111-111111111111 }\"",
+                "      specification ParenthesesSpaces", "        when C", "          generated receipt = \"( 11111111-1111-1111-1111-111111111111 )\"", "        then returns \"( 11111111-1111-1111-1111-111111111111 )\"",
+                "      specification LeadingSpace", "        when C", "          generated receipt = \" 11111111-1111-1111-1111-111111111111\"", "        then returns \" 11111111-1111-1111-1111-111111111111\"",
+                "      specification TrailingSpace", "        when C", "          generated receipt = \"11111111-1111-1111-1111-111111111111 \"", "        then returns \"11111111-1111-1111-1111-111111111111 \"",
+                "      specification InteriorSpace", "        when C", "          generated receipt = \"11111111-1111-1111-1111-11111111111 1\"", "        then returns \"11111111-1111-1111-1111-11111111111 1\"",
+                "      specification TrailingNewline", "        when C", "          generated receipt = \"11111111-1111-1111-1111-111111111111\\n\"", "        then returns \"11111111-1111-1111-1111-111111111111\\n\"",
+                "      specification ShortN", "        when C", "          generated receipt = \"1111111111111111111111111111111\"", "        then returns \"1111111111111111111111111111111\"",
+                "      specification LongN", "        when C", "          generated receipt = \"111111111111111111111111111111111\"", "        then returns \"111111111111111111111111111111111\"",
+                "      specification ShortD", "        when C", "          generated receipt = \"11111111-1111-1111-1111-11111111111\"", "        then returns \"11111111-1111-1111-1111-11111111111\"",
+                "      specification LongD", "        when C", "          generated receipt = \"11111111-1111-1111-1111-1111111111111\"", "        then returns \"11111111-1111-1111-1111-1111111111111\"",
+                "      specification NonHex", "        when C", "          generated receipt = \"G1111111-1111-1111-1111-111111111111\"", "        then returns \"G1111111-1111-1111-1111-111111111111\"",
+                "      specification CompactBraces", "        when C", "          generated receipt = \"{11111111111111111111111111111111}\"", "        then returns \"{11111111111111111111111111111111}\"",
+                "      specification CompactParentheses", "        when C", "          generated receipt = \"(11111111111111111111111111111111)\"", "        then returns \"(11111111111111111111111111111111)\"",
+                "      specification MismatchedDelimiters", "        when C", "          generated receipt = \"{11111111-1111-1111-1111-111111111111)\"", "        then returns \"{11111111-1111-1111-1111-111111111111)\"",
+                "      specification XInitializer", "        when C", "          generated receipt = \"{0x11111111,0x1111,0x1111,{0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11}}\"", "        then returns \"{0x11111111,0x1111,0x1111,{0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11}}\"",
+                "      specification ExoticXInitializer", "        when C", "          generated receipt = \"{0x0000000011111111,0x00001111,0x00001111,{0x0011,0x0011,0x0011,0x0011,0x0011,0x0011,0x0011,0x0011}}\"", "        then returns \"{0x0000000011111111,0x00001111,0x00001111,{0x0011,0x0011,0x0011,0x0011,0x0011,0x0011,0x0011,0x0011}}\""
+            ],
+            "diagnostics": ["PLAY0490@10", "PLAY0491@11", "PLAY0490@14", "PLAY0491@15", "PLAY0490@18", "PLAY0491@19", "PLAY0490@22", "PLAY0491@23", "PLAY0490@26", "PLAY0491@27", "PLAY0490@30", "PLAY0491@31", "PLAY0490@34", "PLAY0491@35", "PLAY0490@38", "PLAY0491@39", "PLAY0490@42", "PLAY0491@43", "PLAY0490@46", "PLAY0491@47", "PLAY0490@50", "PLAY0491@51", "PLAY0490@54", "PLAY0491@55", "PLAY0490@58", "PLAY0491@59", "PLAY0490@62", "PLAY0491@63", "PLAY0490@66", "PLAY0491@67", "PLAY0490@70", "PLAY0491@71"]
+        },
+        {
             "name": "unavailable imported Enum fixture shape stays unknown",
             "validate": true,
             "source": ["import External.Enum", "module M", "  feature F", "    slice StateChange S", "      command C", "        receipt Enum generated", "      specification Accepts", "        when C", "          generated receipt = \"text\""],

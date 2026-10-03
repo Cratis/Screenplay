@@ -89,7 +89,7 @@ public partial class ScreenplayPrinter
                     WriteSpecificationEventSource(writer, specification.When.For);
                     foreach (var fixture in specification.When.GeneratedValues)
                     {
-                        writer.Line($"generated {fixture.Property} = {ScreenplaySyntaxText.Expression(fixture.Source)}", fixture);
+                        writer.Line($"generated {fixture.Property} = {ScreenplaySyntaxText.ResponseValue(fixture.Source)}", fixture);
                     }
 
                     WriteSpecificationValues(writer, specification.When.Values);

@@ -64,7 +64,7 @@ public class when_validating_command_responses : given.a_compiler
     [InlineData("Id", "\"11111111111111111111111111111111\"", true)]
     [InlineData("Id", "\"{11111111-1111-1111-1111-111111111111}\"", true)]
     [InlineData("Id", "\"(11111111-1111-1111-1111-111111111111)\"", true)]
-    [InlineData("Id", "\"{0x11111111,0x1111,0x1111,{0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11}}\"", true)]
+    [InlineData("Id", "\"{0x11111111,0x1111,0x1111,{0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11}}\"", false)]
     [InlineData("String optional", "null", true)]
     [InlineData("String", "null", false)]
     [InlineData("Status", "\"accepted\"", true)]

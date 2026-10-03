@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Text.RegularExpressions;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
@@ -8,7 +9,7 @@ namespace Cratis.Screenplay.Parsing;
 /// <summary>
 /// Indexes known syntax value shapes once for generated fixtures and return assertions.
 /// </summary>
-internal sealed class ResponseValueTypes
+internal sealed partial class ResponseValueTypes
 {
     readonly Dictionary<string, ConceptSyntax> _concepts;
     readonly Dictionary<string, Dictionary<string, PropertySyntax>> _types;
@@ -43,7 +44,7 @@ internal sealed class ResponseValueTypes
 
         return primitive switch
         {
-            "Uuid" => literal.Value is string uuid && Guid.TryParse(uuid, out _),
+            "Uuid" => literal.Value is string uuid && UuidValueRegex().IsMatch(uuid),
             "String" => literal.Value is string,
             "Bool" => literal.Value is bool,
             "Int" => literal.Value is double integer && double.IsFinite(integer) && Math.Truncate(integer) == integer,
@@ -53,4 +54,10 @@ internal sealed class ResponseValueTypes
             _ => !_known.Contains(type.Name) // Imported shapes stay unknown; never infer their type from the value.
         };
     }
+
+    // Shared with ResponseValidator.ts: 32 hex digits (N), hyphenated UUIDs (D), or D wrapped in
+    // braces (B) / parentheses (P). Hex is case-insensitive; whitespace and X initializer notation
+    // are not admitted in response/fixture values. The lookahead requires the true end, even after a newline.
+    [GeneratedRegex(@"^(?:[0-9a-f]{32}|[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}|\{[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\}|\([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\))(?![\s\S])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 1000)]
+    private static partial Regex UuidValueRegex();
 }

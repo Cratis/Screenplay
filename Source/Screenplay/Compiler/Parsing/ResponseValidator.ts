@@ -201,12 +201,11 @@ function compatibleValue(value: ExpressionSyntax, type: TypeRefSyntax, concepts:
     return !primitiveTypes.has(primitive) && concept === undefined;
 }
 
+// Shared with ResponseValueTypes.cs: 32 hex digits (N), hyphenated UUIDs (D), or D wrapped in
+// braces (B) / parentheses (P). Hex is case-insensitive; whitespace and X initializer notation
+// are not admitted in response/fixture values. The lookahead requires the true end, even after a newline.
+const uuidValuePattern = /^(?:[0-9a-f]{32}|[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}|\{[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\}|\([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\))(?![\s\S])/i;
+
 function uuidValue(text: string): boolean {
-    const trimmed = text.trim();
-    const braces = trimmed.startsWith('{') && trimmed.endsWith('}');
-    const parentheses = trimmed.startsWith('(') && trimmed.endsWith(')');
-    const value = braces || parentheses ? trimmed.slice(1, -1).trim() : trimmed;
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value) ||
-        (!braces && !parentheses && /^[0-9a-f]{32}$/i.test(value)) ||
-        (braces && /^0x[0-9a-f]{1,8}\s*,\s*0x[0-9a-f]{1,4}\s*,\s*0x[0-9a-f]{1,4}\s*,\s*\{\s*0x[0-9a-f]{1,2}(?:\s*,\s*0x[0-9a-f]{1,2}){7}\s*\}$/i.test(value));
+    return uuidValuePattern.test(text);
 }
