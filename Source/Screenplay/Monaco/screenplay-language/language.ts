@@ -33,6 +33,8 @@ export const constructKeywords = [
     'feature',
     'slice',
     'event',
+    'system',
+    'operation',
     'command',
     'query',
     'projection',

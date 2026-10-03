@@ -12,6 +12,10 @@ import {
 import { MonarchTokenRules, SubLanguage } from './sub-language-registry';
 
 // Maps a Screenplay inline code tag to the Monaco language id used for embedded highlighting.
+// Declaration registration must not globally reserve existing property names.
+// Contextual operation/system highlighting is deferred with the richer editor surface.
+const contextualConstructs = new Set(['operation', 'system']);
+
 const embeddedLanguages: Record<string, string> = {
     csharp: 'csharp',
     typescript: 'typescript',
@@ -26,7 +30,7 @@ function subLanguageState(keyword: string): string {
 
 // A construct keyword at the start of a line ends any indented sub-language block.
 function subLanguageExitRule(subLanguages: SubLanguage[]): MonarchTokenRules[number] {
-    const exitKeywords = [...constructKeywords, ...subLanguages.map((subLanguage) => subLanguage.keyword)];
+    const exitKeywords = [...constructKeywords.filter(keyword => !contextualConstructs.has(keyword)), ...subLanguages.map((subLanguage) => subLanguage.keyword)];
     return [
         new RegExp(`^\\s*(?:${exitKeywords.join('|')})\\b`),
         { token: '@rematch', next: '@pop' },
@@ -193,7 +197,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
         defaultToken: '',
         tokenPostfix: '.play',
         ignoreCase: false,
-        keywords: [...constructKeywords, ...clauseKeywords, ...codeBlockTags],
+        keywords: [...constructKeywords.filter(keyword => !contextualConstructs.has(keyword)), ...clauseKeywords, ...codeBlockTags],
         sliceTypes,
         primitiveTypes,
         tokenizer,
