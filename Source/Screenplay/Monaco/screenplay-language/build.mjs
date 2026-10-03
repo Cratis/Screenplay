@@ -31,6 +31,9 @@ await build({
     target: 'es2022',
     external: ['monaco-editor'],
     sourcemap: true,
+    // Whitespace and syntax are minified for size; identifiers are kept so stack traces stay readable.
+    minifyWhitespace: true,
+    minifySyntax: true,
 });
 
 await checkPackage();
