@@ -45,7 +45,7 @@ public partial class ScreenplayPrinter
         switch (expectation)
         {
             case ScalarSpecificationReturnSyntax scalar:
-                writer.Line($"then returns {ScreenplaySyntaxText.Expression(scalar.Value)}", scalar);
+                writer.Line($"then returns {ScreenplaySyntaxText.ResponseValue(scalar.Value)}", scalar);
                 break;
             case RecordSpecificationReturnSyntax record:
                 writer.Line("then returns", record);
@@ -53,7 +53,7 @@ public partial class ScreenplayPrinter
                 {
                     foreach (var field in record.Fields)
                     {
-                        writer.Line($"{field.Property} = {ScreenplaySyntaxText.Expression(field.Source)}", field);
+                        writer.Line($"{field.Property} = {ScreenplaySyntaxText.ResponseValue(field.Source)}", field);
                     }
                 }
 
