@@ -14,7 +14,7 @@ namespace Cratis.Screenplay.Workspaces;
 
 static class WorkspaceTriviaPrinter
 {
-    internal static WorkspaceDocument Print(WorkspaceDocument original, ApplicationSyntax intended, PlayPlacement? placement = null)
+    internal static WorkspaceDocument Print(WorkspaceDocument original, ApplicationSyntax intended, PlayPlacement? placement = null, bool validatePlacement = true)
     {
         var parsed = new ScreenplayCompiler().Parse(original.Text, original.Path.Value, placement ?? PlayPlacement.Document);
         if (!parsed.Success || parsed.Value is null)
@@ -32,9 +32,9 @@ static class WorkspaceTriviaPrinter
 
         // An inline event's declaration and production share one authored identifier.
         // Coalesce only byte-identical edits; conflicting or partial overlaps still fail closed.
-        var patches = changes.Select(change => change.Kind == WorkspaceTriviaChangeKind.Identifier
-            ? IdentifierPatch(original, originals, tokensByLine, change)
-            : SpanPatch(original, tokensByLine, change, originals[change.Path], intendedNodes.GetValueOrDefault(change.Path)))
+        var patches = changes.SelectMany(change => change.Kind == WorkspaceTriviaChangeKind.Identifier
+            ? IdentifierPatches(original, originals, tokensByLine, change)
+            : [SpanPatch(original, tokensByLine, change, originals[change.Path], intendedNodes.GetValueOrDefault(change.Path))])
             .DistinctBy(patch => (patch.Offset, patch.Length, Convert.ToHexString(patch.Bytes)))
             .OrderByDescending(patch => patch.Offset).ToArray();
         var previousStart = original.Bytes.Length;
@@ -61,13 +61,46 @@ static class WorkspaceTriviaPrinter
 
         bytes.Write(original.Bytes.AsSpan(start..));
         var candidate = WorkspaceDocument.Create(original.Id, original.StableKey, original.Path, bytes.ToArray());
-        var reparsed = new ScreenplayCompiler().Parse(candidate.Text, candidate.Path.Value, placement ?? PlayPlacement.Document);
-        if (!reparsed.Success || reparsed.Value is null || !SyntaxJson.StructurallyEqual(intended, reparsed.Value))
+        if (validatePlacement)
         {
-            throw new InvalidWorkspaceAuthoring($"Trivia-preserving patches in '{original.Path}' did not reparse to the intended AST. Use explicit CanonicalizeTouchedDocuments or coordinated typed edits.");
+            var reparsed = new ScreenplayCompiler().Parse(candidate.Text, candidate.Path.Value, placement ?? PlayPlacement.Document);
+            if (!reparsed.Success || reparsed.Value is null || !SyntaxJson.StructurallyEqual(intended, reparsed.Value))
+            {
+                throw new InvalidWorkspaceAuthoring($"Trivia-preserving patches in '{original.Path}' did not reparse to the intended AST. Use explicit CanonicalizeTouchedDocuments or coordinated typed edits.");
+            }
         }
 
         return candidate;
+    }
+
+    static IEnumerable<(int Offset, int Length, byte[] Bytes)> IdentifierPatches(
+        WorkspaceDocument original,
+        Dictionary<string, SyntaxNode> originals,
+        ILookup<int, WorkspaceSourceToken> tokensByLine,
+        WorkspaceTriviaChange change)
+    {
+        var ownerPath = change.Path[..change.Path.LastIndexOf('/')];
+        if (change.Path.EndsWith("/name", StringComparison.Ordinal) && originals.GetValueOrDefault(ownerPath) is { } owner &&
+            owner is ModuleSyntax { IsPlacement: true } or FeatureSyntax { IsPlacement: true })
+        {
+            // Placement ancestors have no authored token. A placed module can also absorb one or more
+            // explicit restatements of its header; patch those actual headers, never the synthetic location.
+            if (owner is ModuleSyntax module)
+            {
+                foreach (var location in module.DirectiveLocations.Where(pair => pair.Key.StartsWith(DirectiveLocationKeys.PlacementHeaderPrefix, StringComparison.Ordinal)).Select(pair => pair.Value))
+                {
+                    var token = tokensByLine[location.Line].SingleOrDefault();
+                    if (token is null || !WorkspaceIdentifierSpans.Supports(owner, "name", token.Text)) throw Unsupported(original, change.Path);
+                    var spans = WorkspaceIdentifierSpans.Find(token.Text, change.Before!).ToArray();
+                    if (spans.Length != 1) throw Unsupported(original, change.Path);
+                    yield return (token.Span.ByteOffset + Encoding.UTF8.GetByteCount(token.Text.AsSpan(0, spans[0].Offset)), Encoding.UTF8.GetByteCount(change.Before!), Encoding.UTF8.GetBytes(change.After!));
+                }
+            }
+
+            yield break;
+        }
+
+        yield return IdentifierPatch(original, originals, tokensByLine, change);
     }
 
     static (int Offset, int Length, byte[] Bytes) IdentifierPatch(
