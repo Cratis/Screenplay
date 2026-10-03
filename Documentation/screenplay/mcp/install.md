@@ -1,13 +1,92 @@
 ---
 title: Install the MCP server
-description: Install the screenplay tool and connect Claude Code, Codex, VS Code, Claude Desktop or another MCP client to one Screenplay application.
+description: Install Screenplay desktop bundles or a local ChatGPT plugin, with Docker and .NET options for advanced and headless clients.
 ---
 
-Use this guide to connect an MCP client to a Screenplay application. You need
-Docker (or the .NET 10 SDK), an MCP client that supports local stdio servers, and a
-model directory you own.
+Use this guide to connect an MCP client to a Screenplay application. Screenplay
+runs **locally**, against a model directory you own. Desktop packages include their
+runtime: you do not need Docker, a .NET SDK, or a separately installed `cratis`
+executable to run a downloaded bundle.
 
-## Get the server
+## Desktop installation
+
+Choose the simplest supported channel, in this order:
+
+1. **Curated directory:** when Screenplay is listed, install it from Claude Desktop
+   **Settings → Extensions → Browse extensions** or ChatGPT **Plugins**. Directory
+   submissions require publisher review; this release does **not** claim an
+   approved listing. OpenAI public local-MCP distribution still requires OpenAI's
+   explicit support. Until a listing is live, use the download below.
+2. **Desktop download:** get the native package from the
+   [Screenplay releases](https://github.com/Cratis/Screenplay/releases).
+3. **Advanced/headless clients:** use Docker, the .NET tool, or manual stdio
+   registration below. These options remain supported.
+
+### Claude Desktop bundle
+
+Download `screenplay-VERSION-RID.mcpb` and its matching `.sha256` file. Select
+`osx-arm64` for Apple Silicon, `osx-x64` for Intel macOS, or `win-x64` for Windows
+x64. Verify the checksum before opening it. Bundles currently are unsigned;
+checksums from the Cratis-owned HTTPS release verify integrity, not publisher
+signing. Review the package's permissions and origin.
+
+Open the MCPB in an up-to-date Claude Desktop. If your OS does not associate the
+file, use **Settings → Extensions → Advanced settings → Extension Developer →
+Install Extension**. Review the trust dialog and choose an **existing physical
+model folder**. Complete installation and enable the extension. Check its tools
+and version in **Settings → Extensions**. Enterprise device policies can restrict
+installation; do not bypass them.
+
+Install an updated bundle to update a privately downloaded extension; remove it
+in Claude's Extensions UI. The CLI cannot verify this host-owned state.
+
+### ChatGPT Desktop plugin
+
+Download `screenplay-VERSION-RID-plugin.zip` and its `.sha256`. Use the same native
+macOS/Windows RID choices, and a ChatGPT Desktop version/account that exposes local
+**Plugins** and stdio MCP. An empty model starts in the plugin's persistent data
+folder. To choose an existing model without authoring JSON, use the coordinated
+CLI desktop installer once available:
+
+```bash
+cratis screenplay mcp install --clients chatgpt --model-root /absolute/path/to/specifications
+```
+
+It registers a source in your **personal marketplace**, preserving unrelated
+plugins. Restart ChatGPT, open **Plugins**, and install/enable Screenplay from the
+local marketplace. This is source registration, not an unattended host install.
+Keep confirmation enabled for tools that change files. Local plugins are not a
+hosted Screenplay service and are not automatically in the public directory.
+
+For manual local/repository marketplace development, follow the
+[maintainer packaging guide](https://github.com/Cratis/Screenplay/blob/main/Source/DotNET/Screenplay.Mcp/README.md#personal-or-repository-marketplace-testing).
+Never copy files into an undocumented host-internal cache.
+
+### Install and manage with the Cratis CLI
+
+Once the coordinated CLI release is available:
+
+```bash
+cratis screenplay mcp install --clients claude,chatgpt --model-root /absolute/path/to/specifications
+cratis screenplay mcp status
+cratis screenplay mcp update --clients claude,chatgpt
+cratis screenplay mcp uninstall --clients chatgpt
+```
+
+Omit `--clients` in an interactive terminal to choose detected supported hosts.
+Noninteractive management requires explicit clients. Add `--dry-run` to preview
+without downloading, writing or launching; release metadata may still be checked.
+`--version VERSION` pins a Screenplay release independently of the CLI version.
+Claude's model folder is selected in its host dialog; `--model-root` configures
+the ChatGPT source. Status distinguishes source registration/handoff from a
+verified host install and reports available updates when the release check works.
+Host-owned removal still happens in each host's UI.
+
+Linux self-contained packages are available for compatible local MCP clients,
+but Claude/ChatGPT Desktop support on Linux is not claimed. Windows arm64 is not
+packaged. Docker and the .NET tool below are the portable/headless alternatives.
+
+## Get the server for advanced clients
 
 The server ships in the `cratis/screenplay` Docker image, and in the .NET tool
 `Cratis.Screenplay.Tool`. Both contain the same `screenplay` program, including
@@ -27,12 +106,11 @@ docker pull cratis/screenplay
 `latest` follows the newest stable release. To stay on a version, use its tag, for
 example `cratis/screenplay:1.2.3`, in every configuration below.
 
-Cratis CLI hosting and AI-distribution integration are coming in a coordinated
-release. They will use the embeddable `Cratis.Screenplay.Mcp` library rather than
-require a separate Screenplay installation. Until that release is available,
-use the setup below; installing AI guidance alone does not install the server. The
-existing `cratis screenplay generate` command generates source models, not an MCP
-server.
+The Cratis CLI also hosts the embeddable `Cratis.Screenplay.Mcp` library with
+`cratis screenplay mcp ROOT`; project-local AI registration and user-level desktop
+installation are separate operations. Installing AI guidance alone does not install
+a desktop extension. `cratis screenplay generate` generates source models, not an
+MCP server.
 
 Host developers can consult the [embedding API](reference.md#embedding-api).
 
