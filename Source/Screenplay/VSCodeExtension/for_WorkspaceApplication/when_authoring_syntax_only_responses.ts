@@ -58,6 +58,19 @@ describe('when authoring syntax-only responses across files', () => {
         const comment = lines[3].lastIndexOf('result') + 1;
         expect(hoverContent(lines, 3, 'result', comment, comment + 6)).toBeNull();
     });
+    it.each(['s', 'return', 'turn', 'returns', 'name', '@s', '@return', '@turn', '@returns', '@name'])('should share precise scalar operand hover and semantic tokens for %s', operand => {
+        const property = operand.replace('@', '');
+        for (const separator of [' ', ' \u2003\t']) {
+            const lines = ['command C', `  ${operand} String`, `  returns${separator}${operand}`];
+            const column = 9 + separator.length + (operand.startsWith('@') ? 1 : 0);
+            expect(responseTokens(lines).filter(token => token.line === 2)).toEqual([
+                { line: 2, column: 2, length: 7, type: 0 },
+                { line: 2, column, length: property.length, type: 1 },
+            ]);
+            expect(hoverContent(lines, 2, 'returns', 3, 10)).toContain('String');
+            expect(hoverContent(lines, 2, property, column + 1, column + 1 + property.length)).toContain('String');
+        }
+    });
     it('should surface one invalid generated identifier fixture diagnostic', () => {
         const application = new WorkspaceApplication();
         application.set('application.play', 'module M\n  feature F\n    import "slice.play"');

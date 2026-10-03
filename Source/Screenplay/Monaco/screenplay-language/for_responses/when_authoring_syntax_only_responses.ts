@@ -39,6 +39,21 @@ describe('when authoring syntax-only responses', () => {
         expect(responseTokens(['command C', '  returns lower'])).toEqual([]);
         expect(responseTokens(['command C', '  generated String'])).toEqual([]);
     });
+    it.each(['s', 'return', 'turn', 'returns', 'name', '@s', '@return', '@turn', '@returns', '@name'])('should hover and tokenize scalar operand %s without overlapping the keyword', operand => {
+        const property = operand.replace('@', '');
+        for (const separator of [' ', ' \u2003\t']) {
+            const source = ['command C', `  ${operand} String`, `  returns${separator}${operand} // ${operand}`];
+            const column = 9 + separator.length + (operand.startsWith('@') ? 1 : 0);
+            expect(responseTokens(source).filter(token => token.line === 2)).toEqual([
+                { line: 2, column: 2, length: 7, type: 0 },
+                { line: 2, column, length: property.length, type: 1 },
+            ]);
+            expect(hoverContent(source, 2, 'returns', 3, 10)).toContain('String');
+            expect(hoverContent(source, 2, property, column + 1, column + 1 + property.length)).toContain('String');
+            const commentColumn = source[2].lastIndexOf(operand) + 1 + (operand.startsWith('@') ? 1 : 0);
+            expect(hoverContent(source, 2, property, commentColumn, commentColumn + property.length)).toBeNull();
+        }
+    });
     it('should not offer generated form fields', () => {
         const source = ['concept Id : Uuid', 'command C', '  id Id generated identifier', '  name String', 'form F for C'];
         expect(labels(source, '  field ')).toEqual(['name']);

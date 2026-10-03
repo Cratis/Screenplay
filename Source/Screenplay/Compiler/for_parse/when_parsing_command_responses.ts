@@ -51,6 +51,23 @@ describe('when parsing command responses', () => {
         expect(command.properties.map(property => property.name)).toEqual(['slug']);
     });
 
+    it.each(['s', 'return', 'turn', 'returns', 'name', '@s', '@return', '@turn', '@returns', '@name'])('should locate scalar response operand %s after the keyword', operand => {
+        const property = operand.replace('@', '');
+        for (const separator of [' ', ' \u2003\t']) {
+            for (const type of ['String', 'String[]']) {
+                const result = parse(prefix + `      command C\n        ${operand} ${type}\n        returns${separator}${operand}`, 'response.play');
+                const response = result.value.modules[0].features[0].slices[0].commands[0].response;
+                const location = { path: 'response.play', line: 9, column: 16 + separator.length };
+                expect(response?.kind).toBe('ScalarCommandResponseSyntax');
+                if (response?.kind !== 'ScalarCommandResponseSyntax') return;
+                expect(response.source.property).toBe(property);
+                expect(response.source.location).toEqual(location);
+                expect(result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0489').map(diagnostic => diagnostic.location)).toEqual(type === 'String[]' ? [location] : []);
+                expect(result.success).toBe(type === 'String');
+            }
+        }
+    });
+
     it('should keep generated contextual', () => expect(commandOf('generated String').properties[0].isGenerated).toBe(false));
     it('should preserve a one-field record', () => expect(commandOf('name String\n        returns\n          value = name').response?.kind).toBe('RecordCommandResponseSyntax'));
     it.each(['generated generated', 'identifier generated', 'generated optional', 'generated identifier generated', 'optional optional generated', 'optional generated optional', 'identifier identifier generated'])('should reject %s', modifiers => {

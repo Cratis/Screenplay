@@ -26,7 +26,9 @@ export function parseCommandResponse(context: ParserContext, line: SourceLine): 
             context.error(DiagnosticCodes.InvalidCommandResponse, 'A scalar response cannot have child directives.', locationOf(child));
             context.skipBlock(line.indent);
         }
-        return { kind: 'ScalarCommandResponseSyntax', source: { kind: 'PropertyResponseSourceSyntax', property: unescapeIdentifier(match[1]), location: { ...location, column: location.column + line.content.indexOf(match[1]) } }, location };
+        // The operand capture ends the anchored match, so its offset cannot resolve inside 'returns'.
+        const sourceOffset = match.index + match[0].length - match[1].length;
+        return { kind: 'ScalarCommandResponseSyntax', source: { kind: 'PropertyResponseSourceSyntax', property: unescapeIdentifier(match[1]), location: { ...location, column: location.column + sourceOffset } }, location };
     }
     const fields: ResponseFieldSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
