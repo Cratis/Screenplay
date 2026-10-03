@@ -58,7 +58,7 @@ export function registerDiagnostics(context: vscode.ExtensionContext, index: App
         const lines = document.getText().split(/\r?\n/);
         const file = index.fileOf(document.uri);
         const compilerDiagnostics = file?.application.diagnosticsFor(file.path);
-        const issues = validateLines(lines, { application: file?.application.symbolsExcept(file.path), placement: file?.application.placementOf(file.path), compilerDiagnostics }).map(toDiagnostic);
+        const issues = validateLines(lines, { application: file?.application.symbolsExcept(file.path), placement: file?.application.placementOf(file.path), path: file?.path, compilerDiagnostics }).map(toDiagnostic);
         const compiled = compilerDiagnostics?.map(diagnostic => fromCompiler(document, diagnostic)) ?? [];
         const reported = new Set(issues.map(issue => `${issue.code}:${issue.range.start.line}`));
         collection.set(document.uri, [...issues, ...compiled.filter(diagnostic => !reported.has(`${diagnostic.code}:${diagnostic.range.start.line}`))]);

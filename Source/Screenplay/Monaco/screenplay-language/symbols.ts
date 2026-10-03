@@ -7,6 +7,7 @@ import { eventAnalysisSource } from './event-analysis-source';
 import { CommandResponseSymbol, responseAnalysis } from './response-analysis';
 import { fileReferenceOn } from './file-references';
 import { clauseKeywords } from './language';
+import { AuthoringDocument } from './AuthoringDocument';
 import { ProductionSymbol } from './ProductionSymbol';
 import { TypeReferenceSymbol, typeReferenceSymbol } from './TypeReferenceSymbol';
 
@@ -82,6 +83,7 @@ export interface ImportSymbol {
 
 export interface DocumentSymbols {
     authoringSources?: readonly string[];
+    authoringDocuments?: readonly AuthoringDocument[];
     imports: ImportSymbol[];
     concepts: ConceptSymbol[];
     types: TypeSymbol[];
@@ -371,6 +373,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
 export function mergeSymbols(...documents: DocumentSymbols[]): DocumentSymbols {
     return {
         authoringSources: documents.flatMap(document => document.authoringSources ?? []),
+        ...(documents.some(document => document.authoringDocuments) ? { authoringDocuments: documents.flatMap(document => document.authoringDocuments ?? (document.authoringSources ?? []).map((source, index) => ({ path: `other-${index}.play`, source }))) } : {}),
         imports: documents.flatMap((document) => document.imports),
         concepts: documents.flatMap((document) => document.concepts),
         types: documents.flatMap((document) => document.types),

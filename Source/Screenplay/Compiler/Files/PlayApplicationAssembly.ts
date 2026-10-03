@@ -29,15 +29,23 @@ export interface ApplicationCompilation extends CompilationResult<ApplicationSyn
 // placed, and merging the lot. The port of the C# PlayApplicationAssembly.Compile.
 export function assembleApplication(roots: Iterable<string>, source: PlayDocumentSource): ApplicationCompilation {
     const { documents, diagnostics } = resolveImports(roots, source);
+    const merged = parsePlacedDocuments(documents);
+    const all = [...diagnostics, ...merged.diagnostics];
+    return { ...merged, documents, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error') };
+}
+
+// Parses documents whose source identities and placements are already known (for example unsaved
+// editor buffers), then validates contracts against the merged declaration inventory.
+export function parsePlacedDocuments(documents: readonly PlacedPlayDocument[]): CompilationResult<ApplicationSyntax> {
     const parsed = documents.map(document => parseForAuthoring(document.source, document.path, document.placement, false));
     const merged = mergeDocuments(parsed);
     const context = new ParserContext(new LineReader([]));
     validateInlineEvents(merged.value, context);
     validateResponses(merged.value, context, parsed.flatMap(document => document.inputUses));
-    const existing = [...diagnostics, ...merged.diagnostics];
+    const existing = merged.diagnostics;
     const reported = new Set(existing.map(diagnosticKey));
     const all = [...existing, ...context.diagnostics.filter(diagnostic => !reported.has(diagnosticKey(diagnostic)))];
-    return { ...merged, documents, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error') };
+    return { ...merged, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error') };
 }
 
 function diagnosticKey(diagnostic: Diagnostic): string {

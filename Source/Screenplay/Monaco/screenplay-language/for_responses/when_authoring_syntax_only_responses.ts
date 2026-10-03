@@ -84,6 +84,46 @@ describe('when authoring syntax-only responses', () => {
         expect(responseCompletions(current, 3, current[3], mergeSymbols(scanDocument(current), application))?.map(entry => entry.label)).toContain('generated');
         expect(validateLines(source, { application: scanDocument(['concept Imported : String']) }).map(issue => issue.code)).toContain('PLAY0483');
     });
+    it.each([0, 2])('should own source completions from the unsaved current document with foreign offset %s', offset => {
+        const current = ['command Current', '  mine String', '  returns '];
+        const foreign = [...Array<string>(offset).fill(''), 'command Other', '  foreign String'];
+        const symbols = mergeSymbols(scanDocument(current), scanDocument(foreign));
+        expect(responseCompletions(current, 2, current[2], symbols)?.map(entry => entry.insertText)).toEqual(['@mine']);
+        const block = ['command Current', '  mine String', '  returns', '    result = '];
+        expect(responseCompletions(block, 3, block[3], mergeSymbols(scanDocument(block), scanDocument(foreign)))?.map(entry => entry.label)).toEqual(['mine']);
+    });
+    it('should retain placement and source identities while merging sibling declarations', () => {
+        const current = ['slice StateChange S', '  command C', '    id Id generated identifier', '    returns @missing'];
+        const siblings = [{ path: 'types.play', source: 'concept Id : Uuid' }, { path: 'other.play', source: 'slice StateChange Other\n  command C\n    foreign String', placement: ['M', 'Other'] }];
+        const alone = responseAnalysis(current, [], ['M', 'F'], 'slice.play');
+        const merged = responseAnalysis(current, siblings, ['M', 'F'], 'slice.play');
+        expect([...merged.commands.values()].map(command => command.name)).toEqual(['C']);
+        expect(merged.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0487')).toEqual(alone.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0487'));
+        expect(merged.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0483')).toEqual([]);
+        expect(merged.commands.get(1)?.properties[0].name).toBe('id');
+        expect(responseAnalysis(current.map(line => line.replace('@missing', '@id')), siblings, ['M', 'F'], 'slice.play').diagnostics).toEqual([]);
+    });
+    it('should show the complete explicit declared type without admitting collection responses', () => {
+        const source = ['command C', '  values String[] optional', '  returns', '    result String[] optional = values'];
+        expect(hoverContent(source, 3, 'result', 5, 11)).toContain('String[] optional (explicit)');
+        expect(validateLines(source).filter(issue => issue.code === 'PLAY0489')).toHaveLength(1);
+    });
+    it.each([['result', 'id'], ['résultat', 'idé'], ['@result', '@id']])('should hover only actual response tokens for %s and %s', (field, sourceName) => {
+        const source = ['command C', `  ${sourceName} String`, '  returns', `    ${field} = ${sourceName} // ${field} ${sourceName}`];
+        const hoverAt = (token: string, column: number) => hoverContent(source, 3, token.replace('@', ''), column + (token.startsWith('@') ? 1 : 0), column + token.length);
+        expect(hoverAt(field, 5)).toContain('(inferred)');
+        const valueColumn = source[3].indexOf('= ') + 3;
+        expect(hoverAt(sourceName, valueColumn)).toContain('(inferred)');
+        expect(hoverAt(field, source[3].lastIndexOf(field) + 1)).toBeNull();
+        expect(hoverAt(sourceName, source[3].lastIndexOf(sourceName) + 1)).toBeNull();
+    });
+    it('should respect quoted and escaped comment delimiters without hovering string occurrences', () => {
+        const source = ['command C', '  id String', '  returns', '    result = id // "result"', '  description', '    "escaped \\" // result"', '    ```text', '    result = id', '    ```'];
+        expect(hoverContent(source, 3, 'result', 5, 11)).toContain('(inferred)');
+        expect(hoverContent(source, 3, 'result', 21, 27)).toBeNull();
+        expect(hoverContent(source, 5, 'result', 21, 27)).toBeNull();
+        expect(hoverContent(source, 7, 'result', 5, 11)).toBeNull();
+    });
     it('should ignore comments and fences and keep keyword-shaped input mappings', () => {
         const source = ['command C', '  generated String // request name', '  @returns String', '  description', '    ```text', '    returns', '      fake = generated', '    ```'];
         expect(scanDocument(source).commands[0].properties.map(property => property.name)).toEqual(['generated', 'returns']);

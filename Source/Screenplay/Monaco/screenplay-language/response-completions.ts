@@ -3,7 +3,7 @@
 
 import { enclosingChain, fenceMap, indentOf, nearestEnclosingLine, withoutComment } from './document-context';
 import { CompletionEntry } from './completion-items';
-import { DocumentSymbols, PropertySymbol, propertyTypeReference } from './symbols';
+import { DocumentSymbols, PropertySymbol, propertyTypeReference, scanDocument } from './symbols';
 import { typeReferenceText } from './TypeReferenceSymbol';
 import { responseAvailability, responseAnalysis } from './response-analysis';
 import { primitiveTypes } from './language';
@@ -23,7 +23,9 @@ export function responseCompletions(lines: string[], line: number, before: strin
         documentation: `${typeReferenceText(propertyTypeReference(property))}${property.isGenerated ? ' — generated, not request/form input' : ''}. ${responseAvailability}`,
     });
     if (chain.includes('command')) {
-        const command = symbols.commands.filter(command => command.line < line).at(-1);
+        // Merged symbol line offsets belong to different documents. Only the current (possibly
+        // unsaved) source can own the cursor; application symbols are for external lookup.
+        const command = scanDocument(lines).commands.filter(command => command.line < line).at(-1);
         if (!command) return null;
         if (chain[0] === 'command') {
             if (/^\s*returns\s+@?\w*$/.test(before)) {

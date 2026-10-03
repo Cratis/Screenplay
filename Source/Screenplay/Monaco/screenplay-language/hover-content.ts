@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { responseAnalysis, responseAvailability } from './response-analysis';
-import { enclosingChain, fenceMap, indentOf } from './document-context';
+import { enclosingChain, fenceMap, indentOf, withoutComment } from './document-context';
 import { directBody, propertyTypeReference, scanDocument } from './symbols';
 import { typeReferenceText } from './TypeReferenceSymbol';
 import { eventAnalysisSource } from './event-analysis-source';
@@ -23,6 +23,19 @@ export function hoverContent(
     if (fences[lineIndex]) return null;
 
     const line = lines[lineIndex] ?? '';
+    if (endColumn - 1 > withoutComment(line).length) return null;
+    let inString = false;
+    let inTemplate = false;
+    for (let index = 0; index < startColumn - 1; index++) {
+        if (line[index] === '\\' && inString) index++;
+        else if (line[index] === '"' && !inTemplate) inString = !inString;
+        else if (line[index] === '`' && !inString) inTemplate = !inTemplate;
+    }
+    if (inString || inTemplate) return null;
+    const tokenAt = (column: number, name: string): boolean => {
+        const start = column + (line[column - 1] === '@' ? 1 : 0);
+        return word === name && startColumn === start && endColumn === start + name.length && line.slice(start - 1, endColumn - 1) === name;
+    };
     const before = line.charAt(startColumn - 2);
 
     if (before === '@') {
@@ -58,15 +71,15 @@ export function hoverContent(
         return `**${property?.name ?? 'generated'}** — ${property ? typeReferenceText(propertyTypeReference(property)) + '. ' : ''}Generated value, not a request or form input. ${responseAvailability}`;
     }
     const response = owner?.response;
-    if (response?.location.line === lineIndex + 1 && (word === 'returns' || (response.kind === 'ScalarCommandResponseSyntax' && word === response.source.property))) {
+    if (response?.location.line === lineIndex + 1 && (tokenAt(response.location.column, 'returns') || (response.kind === 'ScalarCommandResponseSyntax' && tokenAt(response.source.location.column, response.source.property)))) {
         const source = response.kind === 'ScalarCommandResponseSyntax' ? owner?.properties.find(property => property.name === response.source.property) : undefined;
         return `**returns**${source ? ` — ${source.type}` : ' — unnamed record response'}. ${responseAvailability}`;
     }
     if (response?.kind === 'RecordCommandResponseSyntax') {
-        const field = response.fields.find(field => field.location.line === lineIndex + 1 && (field.name === word || field.source.property === word));
+        const field = response.fields.find(field => field.location.line === lineIndex + 1 && (tokenAt(field.location.column, field.name) || tokenAt(field.source.location.column, field.source.property)));
         if (field) {
             const source = owner?.properties.find(property => property.name === field.source.property);
-            const type = field.type ? `${field.type.name}${field.type.isOptional ? ' optional' : ''}` : source?.type ?? 'Unresolved type';
+            const type = field.type ? typeReferenceText(field.type) : source?.type ?? 'Unresolved type';
             return `**${field.name}** — ${type}${field.type ? ' (explicit)' : ' (inferred)'} = ${field.source.property}. ${source?.isGenerated ? 'Generated source, not request input. ' : ''}${responseAvailability}`;
         }
     }

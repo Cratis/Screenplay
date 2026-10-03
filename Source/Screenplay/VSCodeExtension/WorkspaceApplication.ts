@@ -82,7 +82,8 @@ export class WorkspaceApplication {
     // What every other file of the application declares - the file's own names are its own to scan.
     symbolsExcept(path: string): DocumentSymbols {
         const key = normalizePlayPath(path);
-        return mergeSymbols(...[...this.#symbols].filter(([other]) => other !== key).map(([, symbols]) => symbols));
+        const symbols = mergeSymbols(...[...this.#symbols].filter(([other]) => other !== key).map(([, symbols]) => symbols));
+        return { ...symbols, authoringDocuments: this.#compiled().documents.filter(document => document.path !== key) };
     }
 
     // Inline events are scanned with their slice-owned declarations, so navigation is independent of syntax form.

@@ -41,6 +41,7 @@ export interface ValidationContext {
     // those files with mergeSymbols. The document's own declarations are always known.
     application?: DocumentSymbols;
     placement?: readonly string[];
+    path?: string;
     compilerDiagnostics?: readonly AnalysisDiagnostic[];
 }
 
@@ -152,7 +153,7 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
     // One parser pass covers committed types, including query results and trigger data, without
     // speculative property scans mistaking tags, paths, strings or code for optionality.
     const optionalCodes = new Set<string>([DiagnosticCodes.LegacyOptionalSuffix, DiagnosticCodes.InvalidOptionalModifierOrder, DiagnosticCodes.OptionalReadsNotSupported]);
-    const analysis = context.compilerDiagnostics ? responseAnalysis(lines) : responseAnalysis(lines, application.authoringSources, context.placement);
+    const analysis = responseAnalysis(lines, application.authoringDocuments ?? application.authoringSources, context.placement, context.path);
     for (const diagnostic of context.compilerDiagnostics ?? analysis.diagnostics) {
         if (!optionalCodes.has(diagnostic.code) && !/^PLAY049[01]$|^PLAY048[2-9]$/.test(diagnostic.code)) continue;
         const line = diagnostic.location.line - 1;
