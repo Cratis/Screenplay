@@ -316,7 +316,9 @@ WhenExpr = "added"
 | `when <Path> or <Path> { or <Path> }` | Appends when any of the named properties change. |
 | `when <Path> and <Path> { and <Path> }` | Appends when all of the named properties change. |
 
-`or` and `and` cannot be mixed within a single `when` clause - `when a or b and c` is a compile error.
+`or` and `and` cannot be mixed within a single property-change `when` clause - `when a or b and c` is a compile error. These forms test changes, not Boolean comparisons.
+
+A backtick guard is a separate, opaque implementation expression. For example, ``when `status == "sent" && overdue == true` `` is valid authoring syntax: the compiler stores the entire guard, including backticks, without parsing its operators or assigning it a language. It is not the `and`/`or` condition grammar used by `produces when`. A target implementation must interpret it; parsing alone does not establish portable execution.
 
 ### Children Block
 
