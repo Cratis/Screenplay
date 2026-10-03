@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { eventBodyReservedWords } from '@cratis/screenplay-compiler';
 import { fenceMap, indentOf } from './document-context';
 import { eventAnalysisSource } from './event-analysis-source';
 import { clauseKeywords } from './language';
@@ -94,7 +95,9 @@ const readPattern = /^\s*reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([
 const commandReserved = ['authorize', 'produces', 'reads'];
 // AuthorizeParser's continuation pattern, including the compiler's Unicode word characters.
 const authorizationContinuation = /^(?:(?:or|and)\s+)?[A-Za-z_(][\p{L}\p{Mn}\p{Nd}\p{Pc}\s()]*$/u;
-const eventReserved = clauseKeywords.filter(keyword => !['id', 'description', 'documentation'].includes(keyword));
+// Use the compiler's contextual inventory, not the global completion vocabulary.
+const eventReserved = eventBodyReservedWords;
+const inlineEventReserved = ['tag', 'for', 'generation', 'origin', 'namespace', 'sequence', 'correlation', 'causation', 'causedBy', 'occurred'];
 const queryParameterPattern =
     /^\s*(?:by|filter)\s+([a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(?:\s+from\s+.+)?\s*$/;
 
@@ -242,7 +245,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
                 ...(eventMatch[2] ? { generation: Number(eventMatch[2]) } : {}),
                 inline: trimmed.startsWith('produces '),
                 properties: propertiesIn(trimmed.startsWith('produces ') ? eventPropertyLines : eventLines,
-                    directBody(eventLines, eventFences, index, indent), eventReserved),
+                    directBody(eventLines, eventFences, index, indent), trimmed.startsWith('produces ') ? inlineEventReserved : eventReserved),
                 line: index,
             });
             continue;
