@@ -67,6 +67,7 @@ public static class PlayImports
         readonly Queue<string> _pending = new();
         readonly Dictionary<string, int> _changes = new(StringComparer.Ordinal);
         readonly List<Diagnostic> _diagnostics = [];
+        readonly HashSet<string> _unresolved = new(StringComparer.Ordinal);
 
         public IReadOnlyList<Diagnostic> Diagnostics => _diagnostics;
 
@@ -86,10 +87,23 @@ public static class PlayImports
             }
 
             ReportConflicts();
+
+            // A child cannot acquire an authoritative scope through an unresolved importer.
+            var unresolved = new Queue<string>(_unresolved);
+            while (unresolved.TryDequeue(out var importer))
+            {
+                foreach (var target in _imports[importer].SelectMany(import => import.Targets))
+                {
+                    if (_unresolved.Add(target)) unresolved.Enqueue(target);
+                }
+            }
         }
 
         public IReadOnlyList<PlacedPlayDocument> Documents() =>
-            [.. _found.Select(path => new PlacedPlayDocument(path, _sources[path], Placement(path) ?? PlayPlacement.Document))];
+            [.. _found.Select(path => new PlacedPlayDocument(path, _sources[path], Placement(path) ?? PlayPlacement.Document)
+            {
+                IsPlacementResolved = !_unresolved.Contains(path)
+            })];
 
         void Find(string file)
         {
@@ -135,6 +149,7 @@ public static class PlayImports
                 if (target?.Scope.Count > MaximumDepth)
                 {
                     Report(Diagnostic.Error(DiagnosticCodes.ImportCycle, $"Import '{import.Import.Pattern}' places files deeper than {MaximumDepth} levels - the imports form a cycle", import.Import.Location));
+                    _unresolved.Add(file);
                     target = null;
                 }
 
@@ -177,6 +192,7 @@ public static class PlayImports
                 _changes[file] = _changes.GetValueOrDefault(file) + 1;
                 if (_changes[file] > MaximumDepth)
                 {
+                    _unresolved.Add(file);
                     foreach (var import in _imports[file].Select(entry => entry.Import.Import))
                     {
                         Report(Diagnostic.Error(DiagnosticCodes.ImportCycle, $"Import '{import.Pattern}' is part of imports that keep placing each other - the imports form a cycle", import.Location));
@@ -234,6 +250,7 @@ public static class PlayImports
                 {
                     if (!placement.IsWithinOrSame(contribution))
                     {
+                        _unresolved.Add(file);
                         Report(Diagnostic.Error(
                             DiagnosticCodes.ConflictingImportPlacement,
                             $"'{file}' is imported into both {placement.Description} and {contribution.Description} - a file belongs in one place",

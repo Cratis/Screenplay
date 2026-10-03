@@ -73,7 +73,9 @@ internal sealed partial class McpWorkspaces
                 }
 
                 var entry = matches.SingleOrDefault()
-                    ?? throw new McpFailure("UnknownRequirement: no handler intent has that identity.");
+                    ?? throw new McpFailure(inventory.UnresolvedPlacementDocuments.IsEmpty
+                        ? "UnknownRequirement: no handler intent has that identity."
+                        : "UnresolvedPlacement: no uniquely placed handler has that identity. Read handler-intents for unresolved documents and repair conflicting or cyclic imports before requesting details.");
                 return McpJson.ToolResult(new
                 {
                     workspace = McpWorkspaceTransport.Describe(workspace), view,
@@ -83,11 +85,20 @@ internal sealed partial class McpWorkspaces
                 });
             }
 
+            var unresolved = inventory.UnresolvedPlacementDocuments.Select(document => (object)new
+            {
+                placementStatus = "unresolved",
+                conflictKind = "UnresolvedPlacement",
+                documentId = document.Id.ToString(),
+                path = document.Path.Value,
+                action = "Repair conflicting or cyclic imports before selecting a handler owner or requirement identity."
+            });
             return McpJson.ToolResult(new
             {
                 workspace = McpWorkspaceTransport.Describe(workspace), view,
                 coverage = WorkspaceImplementationInventory.Coverage,
-                page = McpPaging.Page(inventory.Entries, DescribeHandlerIntent, arguments, workspace.Revision.ToString())
+                unresolvedPlacementCount = inventory.UnresolvedPlacementDocuments.Length,
+                page = McpPaging.Page(inventory.Entries.Select(DescribeHandlerIntent).Concat(unresolved), arguments, workspace.Revision.ToString())
             });
         }
 
@@ -311,6 +322,7 @@ internal sealed partial class McpWorkspaces
 
     static object DescribeHandlerIntent(WorkspaceImplementationEntry entry) => new
     {
+        placementStatus = "resolved",
         handle = McpAstHandles.Describe(entry.Handle),
         owner = McpSemanticAddresses.Describe(entry.Owner),
         ownerId = entry.OwnerId.ToString(),

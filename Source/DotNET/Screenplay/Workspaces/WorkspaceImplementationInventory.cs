@@ -48,7 +48,11 @@ public sealed record WorkspaceImplementationEntry(
 /// </summary>
 public sealed class WorkspaceImplementationInventory
 {
-    WorkspaceImplementationInventory(ImmutableArray<WorkspaceImplementationEntry> entries) => Entries = entries;
+    WorkspaceImplementationInventory(ImmutableArray<WorkspaceImplementationEntry> entries, ImmutableArray<WorkspaceDocument> unresolvedPlacementDocuments)
+    {
+        Entries = entries;
+        UnresolvedPlacementDocuments = unresolvedPlacementDocuments;
+    }
 
     /// <summary>
     /// Gets the supported owner role.
@@ -59,6 +63,11 @@ public sealed class WorkspaceImplementationInventory
     /// Gets the handler entries in syntax occurrence order.
     /// </summary>
     public ImmutableArray<WorkspaceImplementationEntry> Entries { get; }
+
+    /// <summary>
+    /// Gets documents excluded because no unique import placement, semantic owner, or requirement identity is proven.
+    /// </summary>
+    public ImmutableArray<WorkspaceDocument> UnresolvedPlacementDocuments { get; }
 
     /// <summary>
     /// Creates a model-only inventory, including explicit pending wrappers.
@@ -103,6 +112,6 @@ public sealed class WorkspaceImplementationInventory
         var ambiguous = entries.GroupBy(entry => entry.RequirementId, StringComparer.Ordinal)
             .Where(group => group.Skip(1).Any()).Select(group => group.Key).ToHashSet(StringComparer.Ordinal);
 
-        return new([.. entries.Select(entry => entry with { IsAmbiguous = ambiguous.Contains(entry.RequirementId) })]);
+        return new([.. entries.Select(entry => entry with { IsAmbiguous = ambiguous.Contains(entry.RequirementId) })], index.UnresolvedPlacementDocuments);
     }
 }
