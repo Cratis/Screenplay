@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import * as vscode from 'vscode';
-import { DiagnosticCodes, findQuickFixes, prepareQuickFixes, QuickFix } from '@cratis/screenplay-compiler';
+import { DiagnosticCodes, findQuickFixes, isQuickFixDiagnostic, prepareQuickFixes, QuickFix } from '@cratis/screenplay-compiler';
 import { languageId } from '@cratis/screenplay-language';
 import { ApplicationIndex } from './ApplicationIndex';
 
@@ -20,12 +20,13 @@ export function registerCodeActions(context: vscode.ExtensionContext, index: App
     context.subscriptions.push(vscode.languages.registerCodeActionsProvider(languageId, {
         provideCodeActions(document, range, request, token) {
             const migrationRequested = request.only?.contains(migrateOptional) === true;
+            const migrationOnly = migrationRequested && !request.only?.contains(vscode.CodeActionKind.QuickFix);
             if (request.only !== undefined && !migrationRequested && !request.only.contains(vscode.CodeActionKind.QuickFix)) return [];
-            const diagnostic = request.diagnostics.find(diagnostic => {
+            const diagnostics = request.diagnostics.filter(diagnostic => {
                 const code = typeof diagnostic.code === 'object' ? diagnostic.code.value : diagnostic.code;
-                return code === DiagnosticCodes.LegacyOptionalSuffix && diagnostic.range.intersection(range) !== undefined;
+                return isQuickFixDiagnostic(code) && diagnostic.range.intersection(range) !== undefined;
             });
-            if (token.isCancellationRequested || (!migrationRequested && diagnostic === undefined)) return [];
+            if (token.isCancellationRequested || (!migrationRequested && diagnostics.length === 0)) return [];
             const file = index.fileOf(document.uri);
             const placement = file?.application.placementOf(file.path);
             const placementKey = JSON.stringify(placement);
@@ -35,7 +36,12 @@ export function registerCodeActions(context: vscode.ExtensionContext, index: App
                 analysis = { version, placement: placementKey, fixes: prepareQuickFixes(document.getText(), { placement }) };
                 cache.set(document, analysis);
             }
-            const fixes = analysis.fixes(diagnostic === undefined ? undefined : diagnostic.range.start.line + 1);
+            const occurrences = migrationOnly ? [] : analysis.fixes(diagnostics.map(diagnostic => ({
+                line: diagnostic.range.start.line + 1,
+                diagnosticCode: String(typeof diagnostic.code === 'object' ? diagnostic.code.value : diagnostic.code),
+            }))).filter(fix => fix.scope === 'occurrence');
+            const requested = [...occurrences, ...(request.only === undefined || migrationRequested ? analysis.fixes(undefined, DiagnosticCodes.LegacyOptionalSuffix) : [])];
+            const fixes = requested.filter(fix => request.only === undefined || request.only.contains(fix.scope === 'document' ? migrateOptional : vscode.CodeActionKind.QuickFix));
             if (token.isCancellationRequested || document.version !== version) return [];
             return fixes.map(fix => {
                 const action = new vscode.CodeAction(fix.title, fix.scope === 'document' ? migrateOptional : vscode.CodeActionKind.QuickFix);
@@ -56,7 +62,7 @@ export function registerCodeActions(context: vscode.ExtensionContext, index: App
         const file = index.fileOf(document.uri);
         const first = pending.fix.edits[0];
         if (first === undefined) return false;
-        const verified = findQuickFixes(document.getText(), { line: document.positionAt(first.start).line + 1, placement: file?.application.placementOf(file.path) })
+        const verified = findQuickFixes(document.getText(), { line: document.positionAt(first.start).line + 1, diagnosticCode: pending.fix.diagnosticCode, placement: file?.application.placementOf(file.path) })
             .find(fix => fix.scope === pending.fix.scope && fix.diagnosticCode === pending.fix.diagnosticCode && JSON.stringify(fix.edits) === JSON.stringify(pending.fix.edits));
         if (verified === undefined) return false;
         const edit = new vscode.WorkspaceEdit();
