@@ -6,6 +6,7 @@ using System.Text;
 using Cratis.Screenplay.Printing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Workspaces;
 
@@ -28,15 +29,29 @@ static class ProducedEventMappingSourcePatch
             return Unsupported("The command must have exactly one source owner.");
         }
 
-        var parsed = new ScreenplayCompiler().Parse(document.Text, document.Path.Value);
-        if (!parsed.Success)
+        // Resolve and parse the original snapshot once. Source-map positions and mapping spans must
+        // refer to that exact document, never a standalone parse that discards its import placement.
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        if (index.UnresolvedPlacementDocuments.Any(value => value.Id == document.Id))
         {
-            return Unsupported("The owning document cannot be parsed independently.");
+            return Unsupported("UnresolvedPlacement: repair conflicting or cyclic imports before patching the owning document.");
+        }
+
+        var original = workspace.Documents.Single(value => value.Id == document.Id);
+        if (!document.Bytes.AsSpan().SequenceEqual(original.Bytes.AsSpan()))
+        {
+            return Unsupported("The owning document no longer matches the original source snapshot.");
+        }
+
+        if (index.Find(new(workspace.Revision, document.Id, string.Empty))?.Node is not ApplicationSyntax)
+        {
+            return Unsupported("The owning document cannot be parsed at its resolved import placement.");
         }
 
         var owner = owners[0].Span;
-        var commands = Commands(parsed.Value!.Modules.SelectMany(module => module.Features))
-            .Where(value => value.Name == command.Name && value.Location.Line == owner.StartLine && value.Location.Column == owner.StartColumn).ToArray();
+        var commands = index.Entries.Where(entry => entry.Handle.Document == document.Id && entry.SemanticId == operation.Command &&
+                entry.Node is CommandSyntax && entry.Location.Line == owner.StartLine && entry.Location.Column == owner.StartColumn)
+            .Select(entry => (CommandSyntax)entry.Node).Where(value => value.Name == command.Name).ToArray();
         if (commands.Length != 1)
         {
             return Unsupported("The semantic command source owner cannot be matched to one parser declaration.");
@@ -84,16 +99,27 @@ static class ProducedEventMappingSourcePatch
 
     internal static WorkspaceConflict? VerifyCanonical(ScreenplayWorkspace candidate)
     {
+        var index = WorkspaceSyntaxIndex.Create(candidate);
+        if (!index.UnresolvedPlacementDocuments.IsEmpty)
+        {
+            return Unsupported("UnresolvedPlacement: repair conflicting or cyclic imports before canonical equivalence verification.");
+        }
+
         var documents = ImmutableArray.CreateBuilder<SemanticSourceDocument>();
         foreach (var document in candidate.Documents)
         {
-            var syntax = new ScreenplayCompiler().Parse(document.Text, document.Path.Value);
-            if (!syntax.Success)
+            if (index.Find(new(candidate.Revision, document.Id, string.Empty))?.Node is not ApplicationSyntax syntax)
             {
                 return Unsupported("The candidate cannot be parsed for canonical equivalence verification.");
             }
 
-            var printed = new ScreenplayPrinter().Print(syntax.Value!);
+            var printed = new ScreenplayPrinter().Print(syntax);
+            var reparsed = new ScreenplayCompiler().Parse(printed, document.Path.Value, index.Placement(document));
+            if (!reparsed.Success || reparsed.Value is null || !SyntaxJson.StructurallyEqual(syntax, reparsed.Value))
+            {
+                return Unsupported("Canonical printing does not preserve the document syntax at its resolved import placement.");
+            }
+
             documents.Add(SemanticSourceDocument.Create(document.Id, document.StableKey, document.Path.Value, printed));
         }
 
@@ -108,9 +134,6 @@ static class ProducedEventMappingSourcePatch
 
         return null;
     }
-
-    static IEnumerable<CommandSyntax> Commands(IEnumerable<FeatureSyntax> features) =>
-        features.SelectMany(feature => feature.Slices.SelectMany(slice => slice.Commands).Concat(Commands(feature.Features)));
 
     static WorkspaceConflict Unsupported(string message) => ProducedEventMappingPatch.Conflict(WorkspaceConflictKind.UnsupportedSemanticField, message);
 }
