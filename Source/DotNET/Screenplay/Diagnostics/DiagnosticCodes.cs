@@ -2143,4 +2143,54 @@ public static class DiagnosticCodes
     /// An optional read requests absence semantics that are not yet supported.
     /// </summary>
     public const string OptionalReadsNotSupported = "PLAY0481";
+
+    /// <summary>
+    /// A generated property is declared outside a command.
+    /// </summary>
+    public const string GeneratedPropertyOutsideCommand = "PLAY0482";
+
+    /// <summary>
+    /// A generated property is not a required scalar Uuid-backed concept.
+    /// </summary>
+    public const string InvalidGeneratedType = "PLAY0483";
+
+    /// <summary>
+    /// Property modifiers are repeated or out of order.
+    /// </summary>
+    public const string InvalidGeneratedModifierOrder = "PLAY0484";
+
+    /// <summary>
+    /// A generated property is supplied as request or form input.
+    /// </summary>
+    public const string GeneratedPropertySuppliedAsInput = "PLAY0485";
+
+    /// <summary>
+    /// A response is malformed, empty, repeated or conditional.
+    /// </summary>
+    public const string InvalidCommandResponse = "PLAY0486";
+
+    /// <summary>
+    /// A response source is unknown or is not a direct command property.
+    /// </summary>
+    public const string InvalidResponseSource = "PLAY0487";
+
+    /// <summary>
+    /// A record response repeats a field name.
+    /// </summary>
+    public const string DuplicateResponseField = "PLAY0488";
+
+    /// <summary>
+    /// A response has an unsupported shape or mismatched explicit type.
+    /// </summary>
+    public const string InvalidResponseShape = "PLAY0489";
+
+    /// <summary>
+    /// A generated fixture is invalid.
+    /// </summary>
+    public const string InvalidGeneratedFixture = "PLAY0490";
+
+    /// <summary>
+    /// A return expectation is invalid or conflicts with another outcome.
+    /// </summary>
+    public const string InvalidReturnExpectation = "PLAY0491";
 }

@@ -15,6 +15,7 @@ import { parseDescription } from './DescriptionParser';
 import { FeatureBody, featureBodyExpected } from './FeatureBody';
 import { isFileImport, parseFileImport } from './FileImportParser';
 import { isFileDirective } from './FileReferences';
+import { collectInputUses } from './InputUses';
 import { firstWord, unescapeIdentifier } from './LineText';
 import { ModuleBody, moduleBodyExpected, modulePattern, parseModule } from './ModuleBody';
 import { ParserContext } from './ParserContext';
@@ -90,7 +91,8 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
         } else if (keyword === 'trigger') {
             parseTriggerDeclaration(context, line);
         } else if (opaqueTopLevel.has(keyword)) {
-            context.skipOpaqueBlock(line.indent);
+            if (keyword === 'behavior' || keyword === 'layout') collectInputUses(context, line);
+            else context.skipOpaqueBlock(line.indent);
         } else if (placedBody?.tryParse(context, line) !== true) {
             reportUnexpectedTopLevel(context, line, placement);
         }

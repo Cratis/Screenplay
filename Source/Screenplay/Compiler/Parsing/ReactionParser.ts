@@ -5,6 +5,7 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { DayOfWeek, IntervalUnit, InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from '../Syntax/Reactions';
 import { pattern } from '../Text/patterns';
 import { parseDescription } from './DescriptionParser';
+import { collectInputUses } from './InputUses';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseTriggerData } from './TriggerDataParser';
@@ -90,7 +91,7 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
                 context.skipBlock(child.indent);
             } else {
                 invokes.push({ kind: 'InvokesSyntax', command: match[1], location: locationOf(child) });
-                context.skipOpaqueBlock(child.indent);
+                collectInputUses(context, child);
             }
         } else if (keyword === 'reads' || keyword === 'file' || child.content === 'csharp' || child.content.startsWith('```')) {
             if (optionalReads.test(child.content)) {

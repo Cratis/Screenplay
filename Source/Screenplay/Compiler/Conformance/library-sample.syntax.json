@@ -134,6 +134,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": true,
                       "name": "bookId",
                       "type": {
@@ -145,6 +146,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "isbn",
                       "type": {
@@ -156,6 +158,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "title",
                       "type": {
@@ -167,6 +170,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "author",
                       "type": {
@@ -177,6 +181,7 @@
                       }
                     }
                   ],
+                  "response": null,
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -231,6 +236,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "isbn",
                       "type": {
@@ -242,6 +248,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "title",
                       "type": {
@@ -253,6 +260,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "author",
                       "type": {
@@ -315,6 +323,7 @@
                   "givenClock": null,
                   "givenReadModels": [],
                   "name": "AddingABook",
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -356,10 +365,12 @@
                   "thenNoResult": null,
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "AddBook",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -408,6 +419,7 @@
                   "givenClock": null,
                   "givenReadModels": [],
                   "name": "RejectingAMalformedIsbn",
+                  "thenDenied": null,
                   "thenErrors": [
                     {
                       "kind": "SpecificationErrorSyntax",
@@ -419,10 +431,12 @@
                   "thenNoResult": null,
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "AddBook",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -471,16 +485,21 @@
                   "givenClock": null,
                   "givenReadModels": [],
                   "name": "RefusingAMemberAddingBooks",
+                  "thenDenied": {
+                    "kind": "SpecificationDeniedSyntax"
+                  },
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "AddBook",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -681,6 +700,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "bookId",
                       "type": {
@@ -692,6 +712,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "title",
                       "type": {
@@ -703,6 +724,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "author",
                       "type": {
@@ -714,6 +736,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "available",
                       "type": {
@@ -826,6 +849,7 @@
                   "givenClock": null,
                   "givenReadModels": [],
                   "name": "BorrowingTakesABookOffTheShelf",
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
@@ -856,6 +880,7 @@
                     }
                   ],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": {
                     "kind": "SpecificationEventSyntax",
@@ -980,6 +1005,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "day",
                       "type": {
@@ -991,6 +1017,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "opens",
                       "type": {
@@ -1002,6 +1029,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "closes",
                       "type": {
@@ -1099,6 +1127,7 @@
                     }
                   ],
                   "name": "ShowingTodaysOpeningHours",
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
@@ -1128,6 +1157,7 @@
                       ]
                     }
                   ],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": null,
                   "whenCapture": null,
@@ -1202,6 +1232,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": true,
                       "name": "memberId",
                       "type": {
@@ -1213,6 +1244,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "name",
                       "type": {
@@ -1223,6 +1255,7 @@
                       }
                     }
                   ],
+                  "response": null,
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -1254,6 +1287,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "name",
                       "type": {
@@ -1316,6 +1350,7 @@
                   "givenClock": null,
                   "givenReadModels": [],
                   "name": "RegisteringAMember",
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -1341,10 +1376,12 @@
                   "thenNoResult": null,
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "RegisterMember",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -1377,6 +1414,7 @@
                   "givenClock": null,
                   "givenReadModels": [],
                   "name": "RejectingAMemberWithNoName",
+                  "thenDenied": null,
                   "thenErrors": [
                     {
                       "kind": "SpecificationErrorSyntax",
@@ -1388,10 +1426,12 @@
                   "thenNoResult": null,
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "RegisterMember",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -1438,6 +1478,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "addressedTo",
                       "type": {
@@ -1520,6 +1561,7 @@
                   "givenClock": null,
                   "givenReadModels": [],
                   "name": "WelcomingANewMember",
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -1542,6 +1584,7 @@
                   "thenNoResult": null,
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": {
                     "kind": "SpecificationEventSyntax",
@@ -1628,6 +1671,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": true,
                       "name": "bookId",
                       "type": {
@@ -1639,6 +1683,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "memberId",
                       "type": {
@@ -1650,6 +1695,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "dueDate",
                       "type": {
@@ -1660,6 +1706,7 @@
                       }
                     }
                   ],
+                  "response": null,
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -1694,6 +1741,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "memberId",
                       "type": {
@@ -1705,6 +1753,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "dueDate",
                       "type": {
@@ -1811,6 +1860,7 @@
                     }
                   ],
                   "name": "BorrowingAnAvailableBook",
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -1844,10 +1894,12 @@
                   "thenNoResult": null,
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "BorrowBook",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -1928,6 +1980,7 @@
                     }
                   ],
                   "name": "RefusingABookThatIsOnLoan",
+                  "thenDenied": null,
                   "thenErrors": [
                     {
                       "kind": "SpecificationErrorSyntax",
@@ -1939,10 +1992,12 @@
                   "thenNoResult": null,
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "BorrowBook",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -2019,6 +2074,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": true,
                       "name": "bookId",
                       "type": {
@@ -2030,6 +2086,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "returnedOn",
                       "type": {
@@ -2040,6 +2097,7 @@
                       }
                     }
                   ],
+                  "response": null,
                   "validations": []
                 }
               ],
@@ -2057,6 +2115,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "returnedOn",
                       "type": {
@@ -2180,6 +2239,7 @@
                   "givenClock": null,
                   "givenReadModels": [],
                   "name": "ReturningABook",
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -2205,10 +2265,12 @@
                   "thenNoResult": null,
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "ReturnBook",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -2373,6 +2435,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "bookId",
                       "type": {
@@ -2384,6 +2447,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "memberId",
                       "type": {
@@ -2395,6 +2459,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "dueDate",
                       "type": {
@@ -2406,6 +2471,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "status",
                       "type": {
@@ -2538,6 +2604,7 @@
                   "givenClock": null,
                   "givenReadModels": [],
                   "name": "SeeingAReturnedLoan",
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
@@ -2568,6 +2635,7 @@
                     }
                   ],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": {
                     "kind": "SpecificationEventSyntax",

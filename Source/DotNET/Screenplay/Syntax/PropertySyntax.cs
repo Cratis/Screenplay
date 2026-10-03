@@ -23,4 +23,9 @@ public record PropertySyntax(
     /// The modifier that marks a command property as the event source id of the command.
     /// </summary>
     public const string IdentifierModifier = "identifier";
+
+    /// <summary>
+    /// Gets whether the command allocates this value rather than accepting it as input.
+    /// </summary>
+    public bool IsGenerated { get; init; }
 }

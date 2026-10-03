@@ -17,6 +17,7 @@ const typedValue = pattern('^@?[a-z_]\\w*\\s+[\\w.]+');
 export function parseTriggerData(context: ParserContext, line: SourceLine): void {
     const property = parseProperty(context, line);
     if (property !== undefined) {
+        if (property.isGenerated) context.error(DiagnosticCodes.GeneratedPropertyOutsideCommand, 'Generated properties can only be declared on commands.', property.location);
         context.triggerData.push(property);
         return;
     }

@@ -87,6 +87,7 @@ public abstract partial class ScreenplaySyntaxWalker
 
         if (syntax.ThenNoResult is not null) VisitSpecificationNoResult(syntax.ThenNoResult);
         if (syntax.ThenDenied is not null) VisitSpecificationDenied(syntax.ThenDenied);
+        if (syntax.ThenReturns is not null) VisitSpecificationReturn(syntax.ThenReturns);
 
         foreach (var error in syntax.ThenErrors)
         {
@@ -136,6 +137,11 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitSpecificationCommand(SpecificationCommandSyntax syntax)
     {
         VisitNode(syntax);
+
+        foreach (var fixture in syntax.GeneratedValues)
+        {
+            VisitPropertyMapping(fixture);
+        }
 
         if (syntax.For is not null)
         {

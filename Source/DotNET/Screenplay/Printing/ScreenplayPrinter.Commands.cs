@@ -51,6 +51,8 @@ public partial class ScreenplayPrinter
             {
                 WriteConcurrency(writer, command.Concurrency);
             }
+
+            WriteCommandResponse(writer, command);
         }
     }
 
@@ -289,7 +291,7 @@ public partial class ScreenplayPrinter
     {
         foreach (var property in properties)
         {
-            var modifier = property.IsIdentifier ? $" {PropertySyntax.IdentifierModifier}" : string.Empty;
+            var modifier = (property.IsGenerated ? " generated" : string.Empty) + (property.IsIdentifier ? $" {PropertySyntax.IdentifierModifier}" : string.Empty);
             writer.Line($"{ReservedWords.Escape(property.Name, reserved)} {ScreenplaySyntaxText.TypeRef(property.Type)}{modifier}", property);
         }
     }

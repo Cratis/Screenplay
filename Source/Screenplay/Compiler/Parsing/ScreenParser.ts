@@ -11,6 +11,7 @@ import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { pattern } from '../Text/patterns';
 import { parseFencedText } from './CodeBlockParser';
 import { isFileDirective } from './FileReferences';
+import { collectInputUses } from './InputUses';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseTypeRef } from './PropertyLineParser';
@@ -91,7 +92,7 @@ function parseDirective(context: ParserContext, line: SourceLine): ScreenDirecti
         case 'navigate':
             return parseNavigate(context, line.content, line);
         case 'on':
-            context.skipOpaqueBlock(line.indent);
+            collectInputUses(context, line);
             return { kind: 'ScreenBehaviorSyntax', location: locationOf(line) };
         case 'uses':
             context.skipOpaqueBlock(line.indent);

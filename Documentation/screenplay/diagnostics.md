@@ -892,6 +892,23 @@ Discovery and preview never write files; acceptance still requires current works
 and catalog revisions. Monaco and VS Code also offer verified TypeScript quick fixes
 for one occurrence or the entire document, without requiring .NET.
 
+### Generated values and command responses
+
+Generated properties, command responses, generated fixtures and return expectations are syntax-only. Binding reports `PLAY0268` until ESM v8 admits these constructs.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0482` | Error | A generated property is declared outside a command. |
+| `PLAY0483` | Error | A generated property is not a required, noncollection concept backed by `Uuid`. |
+| `PLAY0484` | Error | Property modifiers repeat or are out of order. Write `Type optional generated identifier`. |
+| `PLAY0485` | Error | A generated property is supplied as request or form input. |
+| `PLAY0486` | Error | A command response is malformed, empty, repeated or conditional. |
+| `PLAY0487` | Error | A response source does not reference one direct command property. |
+| `PLAY0488` | Error | A response block repeats a field name. |
+| `PLAY0489` | Error | A response uses a collection or whole read model, or an explicit field type differs from its source's type, collection shape or optionality. |
+| `PLAY0490` | Error | A generated fixture repeats a target, names an unknown, nongenerated or identifier property, or supplies an incompatible or nonconcrete value. |
+| `PLAY0491` | Error | A return expectation is malformed, repeated, incompatible with the response contract, lacks a command action, or accompanies an error or denial. |
+
 ## Retired codes
 
 A retired code stays out of use forever.

@@ -34,7 +34,10 @@ internal static partial class PropertyLineParser
             LineText.Unescape(match.Groups[1].Value),
             ParseTypeRef(match.Groups[2].Value, line.LocationAt(match.Groups[2].Index)),
             line.Location,
-            match.Groups[3].Success);
+            match.Groups[4].Success)
+        {
+            IsGenerated = match.Groups[3].Success
+        };
     }
 
     /// <summary>
@@ -114,11 +117,19 @@ internal static partial class PropertyLineParser
         {
             context.Error(DiagnosticCodes.InvalidOptionalModifierOrder, "Write 'optional' before 'identifier': '<name> <Type> optional identifier'.", line.Location);
         }
+        else if (InvalidGeneratedModifiersRegex().Match(line.Content) is { Success: true } modifiers &&
+            modifiers.Groups[1].Value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Any(modifier => modifier == "generated" || modifier == "identifier"))
+        {
+            context.Error(DiagnosticCodes.InvalidGeneratedModifierOrder, "Write each modifier once in order: '<name> <Type> optional generated identifier'.", line.Location);
+        }
     }
 
-    [GeneratedRegex(@"^(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(?:\s+(identifier))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(?:\s+(generated))?(?:\s+(identifier))?$", RegexOptions.None, 1000)]
     private static partial Regex PropertyRegex();
 
     [GeneratedRegex(@"^@?[a-z_]\w*\s+[\w.]+(?:\[\])?\s+identifier\s+optional(?:\s*=.*)?$", RegexOptions.None, 1000)]
     private static partial Regex ReversedModifiersRegex();
+
+    [GeneratedRegex(@"^@?[a-z_]\w*\s+[\w.]+(?:\[\])?\??\s+((?:optional|generated|identifier)(?:\s+(?:optional|generated|identifier))*)$", RegexOptions.None, 1000)]
+    private static partial Regex InvalidGeneratedModifiersRegex();
 }

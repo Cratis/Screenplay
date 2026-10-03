@@ -5,7 +5,8 @@ import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { validateInlineEvents } from '../Parsing/InlineEventValidator';
 import { LineReader } from '../Parsing/LineReader';
 import { ParserContext } from '../Parsing/ParserContext';
-import { CompilationResult, parse } from '../ScreenplayCompiler';
+import { validateResponses } from '../Parsing/ResponseValidator';
+import { CompilationResult, parseForAuthoring } from '../ScreenplayCompiler';
 import { ApplicationSyntax } from '../Syntax/Structure';
 import { mergeDocuments } from './PlayFolderMerge';
 import { inMemoryDocumentSource, PlacedPlayDocument, PlayDocumentSource } from './PlayDocumentSource';
@@ -28,9 +29,11 @@ export interface ApplicationCompilation extends CompilationResult<ApplicationSyn
 // placed, and merging the lot. The port of the C# PlayApplicationAssembly.Compile.
 export function assembleApplication(roots: Iterable<string>, source: PlayDocumentSource): ApplicationCompilation {
     const { documents, diagnostics } = resolveImports(roots, source);
-    const merged = mergeDocuments(documents.map(document => parse(document.source, document.path, document.placement)));
+    const parsed = documents.map(document => parseForAuthoring(document.source, document.path, document.placement, false));
+    const merged = mergeDocuments(parsed);
     const context = new ParserContext(new LineReader([]));
     validateInlineEvents(merged.value, context);
+    validateResponses(merged.value, context, parsed.flatMap(document => document.inputUses));
     const existing = [...diagnostics, ...merged.diagnostics];
     const reported = new Set(existing.map(diagnosticKey));
     const all = [...existing, ...context.diagnostics.filter(diagnostic => !reported.has(diagnosticKey(diagnostic)))];

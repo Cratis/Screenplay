@@ -87,6 +87,11 @@ public partial class ScreenplayPrinter
                 using (writer.Indent())
                 {
                     WriteSpecificationEventSource(writer, specification.When.For);
+                    foreach (var fixture in specification.When.GeneratedValues)
+                    {
+                        writer.Line($"generated {fixture.Property} = {ScreenplaySyntaxText.Expression(fixture.Source)}", fixture);
+                    }
+
                     WriteSpecificationValues(writer, specification.When.Values);
                 }
             }
@@ -115,6 +120,8 @@ public partial class ScreenplayPrinter
             {
                 WriteSpecificationBlock(writer, $"when query {performed.Query}", performed, performed.Arguments);
             }
+
+            WriteSpecificationReturn(writer, specification.ThenReturns);
 
             if (specification.ThenEventsInAnyOrder) writer.DirectiveLine("then events in any order", specification, "then events in any order");
 
