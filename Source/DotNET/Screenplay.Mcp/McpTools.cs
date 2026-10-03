@@ -65,7 +65,11 @@ sealed class McpTools
     object Read(string name, JsonElement arguments)
     {
         McpRecoveryJournal.RefusePending(_root);
-        var documents = _root.Read();
+
+        // Health and overview queries answer for a brand-new empty root too; every other read needs documents.
+        var allowEmpty = string.Equals(name, "diagnostics", StringComparison.Ordinal) ||
+            string.Equals(name, "describe-application", StringComparison.Ordinal);
+        var documents = _root.Read(allowEmpty);
         var snapshot = _sources.Read(documents);
         McpRecoveryJournal.RefusePending(_root);
         var expectedSource = McpJson.OptionalString(arguments, "expectedSourceRevision");

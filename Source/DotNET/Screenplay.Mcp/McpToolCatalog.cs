@@ -91,6 +91,8 @@ static class McpToolCatalog
         }
     }
 
+    // Apply and recover write only journaled, rollback-able proposal plans; they are not destructive in the
+    // host sense, so hosts need not confirm every call. The model still invokes them explicitly.
     static object Annotations(McpToolDefinition tool) =>
-        new { readOnlyHint = tool.Name != "apply" && tool.Name != "recover-workspace", destructiveHint = tool.Name == "apply" || tool.Name == "recover-workspace", openWorldHint = false };
+        new { readOnlyHint = tool.Name != "apply" && tool.Name != "recover-workspace", destructiveHint = false, openWorldHint = false };
 }

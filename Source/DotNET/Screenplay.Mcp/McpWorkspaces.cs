@@ -126,9 +126,14 @@ internal sealed partial class McpWorkspaces(McpRoot root)
             _ = root.PathFor(document.Path);
         }
 
-        if (!proposal.Accepted || !McpWorkspaceAnalysis.For(candidate).Source.Compilation.Success)
+        // The rejection carries the exact diagnostics so a caller can correct the candidate instead of guessing.
+        var analysis = McpWorkspaceAnalysis.For(candidate);
+        if (!proposal.Accepted || !analysis.Source.Compilation.Success)
         {
-            throw new McpFailure("Candidate compilation failed; no proposal was created.");
+            var issues = string.Join(" | ", analysis.Source.Compilation.Diagnostics.Concat(candidate.Compilation.Diagnostics)
+                .Select(diagnostic => $"{diagnostic.Code} {diagnostic.Location.Line}:{diagnostic.Location.Column} {diagnostic.Message}")
+                .Take(8));
+            throw new McpFailure($"Candidate compilation failed; no proposal was created. {(issues.Length == 0 ? "No diagnostics were reported." : issues)}");
         }
 
         if (_proposals.Count >= 16)

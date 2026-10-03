@@ -164,7 +164,7 @@ sealed class McpConnection(McpTools tools, McpAppResources apps)
                     }
                     : new Dictionary<string, object> { ["tools"] = new { listChanged = false } },
                 serverInfo = new { name = "cratis.screenplay", version = typeof(McpConnection).Assembly.GetName().Version!.ToString() },
-                instructions = "Read full Screenplay syntax, discover syntax-schema, open a revision-bound workspace, and use read-ast handles with propose-ast for typed edits. Source authoring acceptance is separate from executable readiness. Review exact bytes with read-proposal; identity state persists on apply, and export-workspace is optional for portable transfer or backup. Only apply and explicit recover-workspace may write source. The root must be trusted and exclusively owned during apply or recovery; rollback is not crash-atomic." + (_visual ? VisualInstructions : string.Empty)
+                instructions = "Read full Screenplay syntax, discover syntax-schema, open a revision-bound workspace, and use read-ast handles with propose-ast for typed edits. Readiness separates verdicts: readiness.state empty is a valid start, readiness.authoringAccepted is the authoring verdict, and executableReady describes the current ESM executable subset only. Source authoring acceptance is separate from executable readiness. Review exact bytes with read-proposal; identity state persists on apply, and export-workspace is optional for portable transfer or backup. Only apply and explicit recover-workspace may write source. The root must be trusted and exclusively owned during apply or recovery; rollback is not crash-atomic." + (_visual ? VisualInstructions : string.Empty)
             };
         }
 
