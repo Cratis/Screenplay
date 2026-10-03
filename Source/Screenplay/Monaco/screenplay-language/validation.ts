@@ -80,11 +80,11 @@ function validateDeclarations(lines: string[], symbols: DocumentSymbols, applica
         )) {
             const bare = propertyTypeReference(property).name;
             issues.push(
-                tokenIssue(
+                issue(
                     'warning',
                     property.line,
-                    lines[property.line],
-                    property.type,
+                    property.sourceType!.startColumn,
+                    property.sourceType!.text.length,
                     bare === 'optional'
                         ? `Unknown type 'optional' on '${property.name}' of ${owner} — did you forget the type before 'optional'?`
                         : `Unknown type '${bare}' on '${property.name}' of ${owner} — declare it with 'concept ${bare} : <Primitive>' or 'type ${bare}'.`,

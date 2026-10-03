@@ -15,6 +15,8 @@ export interface PropertySymbol {
     name: string;
     type: string;
     typeReference?: TypeReferenceSymbol;
+    // Exact spelling and UTF-16 columns in the authoring source, independent of normalization.
+    sourceType?: { text: string; startColumn: number; endColumn: number };
     isIdentifier: boolean;
     isGenerated?: boolean;
     line: number;
@@ -115,6 +117,11 @@ export function propertyTypeReference(property: PropertySymbol): TypeReferenceSy
     return property.typeReference ?? typeReferenceSymbol(property.type);
 }
 
+function sourceTypeAt(line: string, startColumn: number): NonNullable<PropertySymbol['sourceType']> {
+    const text = line.slice(startColumn - 1).match(/^[\p{L}\p{Mn}\p{Nd}\p{Pc}.]+(?:\[\])?(?:\?|\s+optional\b)?/u)?.[0] ?? '';
+    return { text, startColumn, endColumn: startColumn + text.length };
+}
+
 function propertiesIn(lines: string[], body: number[], reserved: readonly string[]): PropertySymbol[] {
     return body
         .map((index) => ({ index, match: lines[index].match(propertyPattern) }))
@@ -124,6 +131,7 @@ function propertiesIn(lines: string[], body: number[], reserved: readonly string
             name: match[1].replace(/^@/, ''),
             type: match[2],
             typeReference: typeReferenceSymbol(match[2]),
+            sourceType: sourceTypeAt(lines[index], lines[index].match(/^\s*\S+\s+/)![0].length + 1),
             isIdentifier: match[4] !== undefined,
             ...(match[3] !== undefined ? { isGenerated: true } : {}),
             line: index,
@@ -282,6 +290,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
                     name: property.name,
                     type: `${property.type.name}${property.type.isCollection ? '[]' : ''}${property.type.isOptional ? ' optional' : ''}`,
                     typeReference: { name: property.type.name, isCollection: property.type.isCollection, isOptional: property.type.isOptional },
+                    sourceType: sourceTypeAt(lines[property.type.location.line - 1], property.type.location.column),
                     isIdentifier: property.isIdentifier || /\sidentifier\s*$/.test(lines[property.location.line - 1]),
                     ...(property.isGenerated ? { isGenerated: true } : {}),
                     line: property.location.line - 1,
@@ -338,6 +347,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
                     name: match[1],
                     type: match[2],
                     typeReference: typeReferenceSymbol(match[2]),
+                    sourceType: sourceTypeAt(lines[line], lines[line].match(/^\s*(?:by|filter)\s+\S+\s+/)![0].length + 1),
                     isIdentifier: false,
                     line,
                 }));

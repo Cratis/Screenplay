@@ -13,6 +13,12 @@ vi.mock('vscode', async importOriginal => {
     const original = await importOriginal<typeof import('../vscode.stub')>();
     return {
         ...original,
+        Range: class extends original.Range {
+            constructor(startLine: number, startCharacter: number, endLine: number, endCharacter: number) {
+                if ([startLine, startCharacter, endLine, endCharacter].some(value => value < 0)) throw new Error('Invalid negative diagnostic position');
+                super(startLine, startCharacter, endLine, endCharacter);
+            }
+        },
         DiagnosticSeverity: { Error: 0, Warning: 1, Information: 2 },
         DiagnosticTag: { Deprecated: 2 },
         Diagnostic: class {
@@ -106,6 +112,29 @@ describe('when validating many inline events in the workspace', () => {
         expect(editor.diagnostics[0].severity).toBe(vscode.DiagnosticSeverity.Information);
         expect(editor.diagnostics[0].range.start).toEqual(new vscode.Position(1, 7));
         expect(editor.diagnostics[0].range.end).toEqual(new vscode.Position(1, 14));
+    });
+
+    it.each([
+        ['command C', '  value Missing?', 'Missing?'],
+        ['command C', '  value Missing   optional', 'Missing   optional'],
+        ['command C', '\tvalue\tMissing\toptional', 'Missing\toptional'],
+        ['command C', '  value Inconnué?', 'Inconnué?'],
+        ['command C', '  value Missing', 'Missing'],
+        ['command C\n  produces event Recorded', '    value Missing? = input', 'Missing?'],
+        ['command C\n  produces event Recorded', '    value Missing   optional = input', 'Missing   optional'],
+    ])('should refresh exact source ranges for %s / %s without negative positions', (header, line, spelling) => {
+        const source = header + '\n' + line;
+        const application = new WorkspaceApplication();
+        application.set('model.play', source);
+        expect(() => refresh(application, source)).not.toThrow();
+        const diagnostic = editor.diagnostics.find(item => item.code === 'PLAY0165');
+        expect(diagnostic).toBeDefined();
+        expect(diagnostic?.range.start).toEqual(new vscode.Position(header.split('\n').length, line.indexOf(spelling)));
+        expect(diagnostic?.range.end).toEqual(new vscode.Position(header.split('\n').length, line.indexOf(spelling) + spelling.length));
+        for (const item of editor.diagnostics) {
+            expect(item.range.start.character).toBeGreaterThanOrEqual(0);
+            expect(item.range.end.character).toBeGreaterThan(item.range.start.character);
+        }
     });
 
     it('should preserve editor precedence and distinct codes or lines when merging diagnostics', () => {
