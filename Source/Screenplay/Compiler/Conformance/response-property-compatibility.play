@@ -1,0 +1,26 @@
+concept lowerCaseConcept : String
+concept slug : String
+module M
+  feature F
+    slice StateChange S
+      command Legacy
+        returns String
+          value Int
+      command LowerCase
+        returns lowerCaseConcept
+          value Int
+      command Escaped
+        @returns String
+          value Int
+      command ResponseBeforeSource
+        returns slug
+        slug slug
+      command ResponseAfterSource
+        slug slug
+        returns slug
+      command ExplicitSource
+        returns @slug
+        slug slug
+      command ReturnsSource
+        @returns String
+        returns returns

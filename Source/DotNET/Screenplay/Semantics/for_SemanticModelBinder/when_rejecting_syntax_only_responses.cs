@@ -43,6 +43,19 @@ public class when_rejecting_syntax_only_responses : given.a_semantic_binder
     }
 
     [Theory]
+    [InlineData("returns String")]
+    [InlineData("@returns String")]
+    void should_preserve_the_legacy_model_for_deeper_members_after_a_returns_property(string property)
+    {
+        var nested = Bind(Prefix + "      command C\n        " + property + "\n          value Int");
+        var ordinary = Bind(Prefix + "      command C\n        @returns String\n        value Int");
+        nested.Success.ShouldBeTrue();
+        ordinary.Success.ShouldBeTrue();
+        Serialization.SemanticModelSerializer.Serialize(nested.Value!.Model)
+            .SequenceEqual(Serialization.SemanticModelSerializer.Serialize(ordinary.Value!.Model)).ShouldBeTrue();
+    }
+
+    [Theory]
     [InlineData("42")]
     [InlineData("\"11111111-1111-1111-1111-111111111111\"")]
     void should_not_admit_generated_identifier_fixtures_through_binding(string value)

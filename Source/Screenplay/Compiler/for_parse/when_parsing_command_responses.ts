@@ -25,6 +25,32 @@ describe('when parsing command responses', () => {
         expect(commandOf(body).response !== null).toBe(response);
     });
 
+    it.each([
+        ['returns String\n          value Int', ['returns', 'value']],
+        ['returns lowerCaseConcept\n          value Int', ['returns', 'value']],
+        ['@returns String\n          value Int', ['returns', 'value']],
+        ['returns String\n          returns Int\n            value Int', ['returns', 'returns', 'value']],
+        ['value Int\n        returns String\n          other String', ['value', 'returns', 'other']],
+    ])('should preserve ordinary deeper command members after property %s', (body, names) => {
+        const result = parse(prefix + '      command C\n        ' + body);
+        expect(result.success).toBe(true);
+        const command = result.value.modules[0].features[0].slices[0].commands[0];
+        expect(command.response).toBeNull();
+        expect(command.properties.map(property => property.name)).toEqual(names);
+    });
+
+    it.each([
+        'returns slug\n          extra Int\n        slug slug',
+        'slug slug\n        returns slug\n          extra Int',
+        'returns @slug\n          extra Int\n        slug slug',
+    ])('should restrict nested members only after scalar resolution: %s', body => {
+        const result = parse(prefix + '      command C\n        ' + body);
+        expect(result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0486')).toHaveLength(1);
+        const command = result.value.modules[0].features[0].slices[0].commands[0];
+        expect(command.response?.kind).toBe('ScalarCommandResponseSyntax');
+        expect(command.properties.map(property => property.name)).toEqual(['slug']);
+    });
+
     it('should keep generated contextual', () => expect(commandOf('generated String').properties[0].isGenerated).toBe(false));
     it('should preserve a one-field record', () => expect(commandOf('name String\n        returns\n          value = name').response?.kind).toBe('RecordCommandResponseSyntax'));
     it.each(['generated generated', 'identifier generated', 'generated optional', 'generated identifier generated', 'optional optional generated', 'optional generated optional', 'identifier identifier generated'])('should reject %s', modifiers => {

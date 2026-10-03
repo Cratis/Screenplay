@@ -20,6 +20,15 @@ internal static partial class CommandParser
     /// <returns>The parsed <see cref="CommandSyntax"/>.</returns>
     public static CommandSyntax Parse(ParserContext context, SourceLine header)
     {
+        // Ordinary properties are leaves even when later members have a greater indent.
+        // Resolve ambiguous scalar spelling using a noncommitting command-body pass first.
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        ParseBody(new(context.Reader.Fork(), context.Start.Path, context.Languages), header, null, names);
+        return ParseBody(context, header, names, null);
+    }
+
+    static CommandSyntax ParseBody(ParserContext context, SourceLine header, HashSet<string>? responseNames, HashSet<string>? discoveredNames)
+    {
         var name = HeaderRegex().Match(header.Content);
         if (!name.Success)
         {
@@ -55,12 +64,18 @@ internal static partial class CommandParser
                 case "returns":
                     if (ScalarResponseRegex().Match(line.Content) is { Success: true } scalar && !scalar.Groups[1].Value.StartsWith('@') && PropertyLineParser.TryParse(line) is { } candidate)
                     {
-                        properties.Add(candidate);
-                        responses.Add((line, candidate, null));
-                        if (context.TryPeekChild(line.Indent, out var child))
+                        if (responseNames is null)
                         {
-                            context.Error(DiagnosticCodes.InvalidCommandResponse, "A scalar response or property declaration cannot have child directives.", child.Location);
-                            context.SkipBlock(line.Indent);
+                            properties.Add(candidate);
+                            responses.Add((line, candidate, null));
+                        }
+                        else if (responseNames.Contains(candidate.Type.Name))
+                        {
+                            responses.Add((line, null, ParseResponse(context, line)));
+                        }
+                        else
+                        {
+                            AddProperty(context, properties, candidate, name.Groups[1].Value, line);
                         }
                     }
                     else if (PropertyLineParser.TryParse(line) is { } returnsProperty)
@@ -157,6 +172,7 @@ internal static partial class CommandParser
             names.Add("returns");
         }
 
+        discoveredNames?.UnionWith(names);
         CommandResponseSyntax? response = null;
         var removed = new HashSet<PropertySyntax>();
         foreach (var entry in responses)

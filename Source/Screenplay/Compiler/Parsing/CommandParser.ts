@@ -54,6 +54,14 @@ const opaqueDirectives = new Set(['reads', 'handler', 'concurrency']);
 const propertyShapedDirectives = new Set(['description', 'handler', 'concurrency']);
 
 export function parseCommand(context: ParserContext, line: SourceLine): CommandSyntax {
+    // Properties are leaves, not indentation owners. Resolve ambiguous returns spelling
+    // before the committed pass decides whether its deeper lines belong to a response.
+    const names = new Set<string>();
+    parseCommandBody(new ParserContext(context.reader.fork(), context.path), line, undefined, names);
+    return parseCommandBody(context, line, names);
+}
+
+function parseCommandBody(context: ParserContext, line: SourceLine, responseNames?: ReadonlySet<string>, discoveredNames?: Set<string>): CommandSyntax {
     const name = header.exec(line.content)?.[1] ?? '';
     if (name === '') {
         context.error(DiagnosticCodes.InvalidCommandDeclaration, `Invalid command declaration '${line.content}' - expected 'command <Name>'`, locationOf(line));
@@ -74,12 +82,13 @@ export function parseCommand(context: ParserContext, line: SourceLine): CommandS
         } else if (keyword === 'returns') {
             const scalar = scalarResponsePattern.exec(child.content);
             if (scalar !== null && !scalar[1].startsWith('@') && asProperty !== undefined) {
-                properties.push(asProperty);
-                responses.push({ line: child, candidate: asProperty, response: null });
-                const nested = context.peekChild(child.indent);
-                if (nested !== undefined) {
-                    context.error(DiagnosticCodes.InvalidCommandResponse, 'A scalar response or property declaration cannot have child directives.', locationOf(nested));
-                    context.skipBlock(child.indent);
+                if (responseNames === undefined) {
+                    properties.push(asProperty);
+                    responses.push({ line: child, candidate: asProperty, response: null });
+                } else if (responseNames.has(asProperty.type.name)) {
+                    responses.push({ line: child, candidate: null, response: parseCommandResponse(context, child) });
+                } else {
+                    identifier = addProperty(context, properties, asProperty, name, child, identifier);
                 }
             } else if (asProperty !== undefined) {
                 identifier = addProperty(context, properties, asProperty, name, child, identifier);
@@ -116,6 +125,7 @@ export function parseCommand(context: ParserContext, line: SourceLine): CommandS
     const candidates = new Set(responses.flatMap(entry => entry.candidate === null ? [] : [entry.candidate]));
     const names = new Set(properties.filter(property => !candidates.has(property)).map(property => property.name));
     if (responses.some(entry => entry.candidate !== null && !names.has(entry.candidate.type.name) && entry.candidate.type.name !== 'returns')) names.add('returns');
+    for (const name of names) discoveredNames?.add(name);
     let response: CommandResponseSyntax | null = null;
     const removed = new Set<PropertySyntax>();
     for (const entry of responses) {

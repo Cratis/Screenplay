@@ -31,6 +31,36 @@ public class when_parsing_command_responses : given.a_compiler
         if (command.Properties.Any(property => property.Name == "returns")) printed.ShouldContain("@returns");
     }
 
+    [Theory]
+    [InlineData("returns String\n          value Int", "returns,value")]
+    [InlineData("returns lowerCaseConcept\n          value Int", "returns,value")]
+    [InlineData("@returns String\n          value Int", "returns,value")]
+    [InlineData("returns String\n          returns Int\n            value Int", "returns,returns,value")]
+    [InlineData("value Int\n        returns String\n          other String", "value,returns,other")]
+    void should_preserve_ordinary_deeper_command_members_after_a_property(string body, string names)
+    {
+        var parsed = _compiler.Parse(Prefix + "      command C\n        " + body);
+        parsed.Success.ShouldBeTrue();
+        var command = Command(parsed.Value!);
+        command.Response.ShouldBeNull();
+        string.Join(',', command.Properties.Select(property => property.Name)).ShouldEqual(names);
+        var printed = new ScreenplayPrinter().Print(parsed.Value!);
+        SyntaxJson.StructurallyEqual(parsed.Value!, _compiler.Parse(printed).Value!).ShouldBeTrue();
+    }
+
+    [Theory]
+    [InlineData("returns slug\n          extra Int\n        slug slug")]
+    [InlineData("slug slug\n        returns slug\n          extra Int")]
+    [InlineData("returns @slug\n          extra Int\n        slug slug")]
+    void should_restrict_nested_members_only_after_scalar_resolution(string body)
+    {
+        var parsed = _compiler.Parse(Prefix + "      command C\n        " + body);
+        parsed.Diagnostics.Count(diagnostic => diagnostic.Code == "PLAY0486").ShouldEqual(1);
+        var command = Command(parsed.Value!);
+        command.Response.ShouldBeOfExactType<ScalarCommandResponseSyntax>();
+        command.Properties.Single().Name.ShouldEqual("slug");
+    }
+
     [Fact]
     void should_keep_generated_contextual() => Command(_compiler.Parse(Prefix + "      command C\n        generated String").Value!).Properties.Single().IsGenerated.ShouldBeFalse();
 
