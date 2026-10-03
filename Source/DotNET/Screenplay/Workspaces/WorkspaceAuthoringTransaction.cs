@@ -181,13 +181,13 @@ sealed class WorkspaceAuthoringTransaction(
         foreach (var (id, syntax) in edits.Apply())
         {
             var document = candidates[id];
-            candidates[id] = WorkspaceAuthoringPrinter.Print(id, document.StableKey, document.Path, document.Encoding, syntax, request.Formatting, _diagnostics, document);
+            candidates[id] = WorkspaceAuthoringPrinter.Print(id, document.StableKey, document.Path, document.Encoding, syntax, request.Formatting, _diagnostics, document, index.Placement(workspace.Documents.Single(original => original.Id == id)));
         }
 
         foreach (var replacement in replacements)
         {
             var document = candidates[replacement.Document];
-            candidates[document.Id] = WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, document.Encoding, replacement.Syntax, request.Formatting, _diagnostics, document);
+            candidates[document.Id] = WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, document.Encoding, replacement.Syntax, request.Formatting, _diagnostics, document, index.Placement(workspace.Documents.Single(original => original.Id == document.Id)));
         }
 
         foreach (var creation in creations)

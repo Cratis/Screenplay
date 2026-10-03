@@ -4,6 +4,7 @@
 using System.Collections;
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
@@ -84,10 +85,12 @@ public sealed class WorkspaceSyntaxIndex
             .ToArray());
 
     readonly IReadOnlyDictionary<WorkspaceNodeHandle, WorkspaceSyntaxEntry> _handles;
+    readonly IReadOnlyDictionary<string, PlayPlacement> _placements;
 
-    WorkspaceSyntaxIndex(ScreenplayWorkspace workspace, ImmutableArray<WorkspaceSyntaxEntry> entries, ImmutableArray<Diagnostic> diagnostics)
+    WorkspaceSyntaxIndex(ScreenplayWorkspace workspace, ImmutableArray<WorkspaceSyntaxEntry> entries, ImmutableArray<Diagnostic> diagnostics, IReadOnlyDictionary<string, PlayPlacement> placements)
     {
         Workspace = workspace;
+        _placements = placements;
         Entries = entries;
         Diagnostics = diagnostics;
         RepairableDiagnostics = [.. diagnostics.Concat(workspace.Compilation.Diagnostics).Distinct()];
@@ -125,9 +128,16 @@ public sealed class WorkspaceSyntaxIndex
         var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
         var semantics = workspace.IdentityCatalog.Semantics.ToDictionary(assignment => assignment.Address, assignment => assignment.Id);
         var events = workspace.IdentityCatalog.EventContracts.ToDictionary(assignment => assignment.Address, assignment => assignment.Id);
+
+        // Use the same roots, source and placement resolution as workspace compilation. Index each
+        // original tree once, never the merged application; structural handles remain document-local.
+        var texts = workspace.Documents.ToDictionary(document => document.Path.Value, document => document.Text, StringComparer.Ordinal);
+        var (placed, importDiagnostics) = PlayImports.Resolve(texts.Keys, new InMemoryPlayDocumentSource(texts));
+        var placements = placed.ToDictionary(document => document.Path, document => document.Placement, StringComparer.Ordinal);
+        diagnostics.AddRange(importDiagnostics);
         foreach (var document in workspace.Documents)
         {
-            var parsed = new ScreenplayCompiler().Parse(document.Text, document.Path.Value);
+            var parsed = new ScreenplayCompiler().Parse(document.Text, document.Path.Value, placements[document.Path.Value]);
             diagnostics.AddRange(parsed.Diagnostics);
             if (parsed.Success && parsed.Value is not null)
             {
@@ -135,7 +145,7 @@ public sealed class WorkspaceSyntaxIndex
             }
         }
 
-        return new(workspace, entries.ToImmutable(), diagnostics.ToImmutable());
+        return new(workspace, entries.ToImmutable(), diagnostics.ToImmutable(), placements);
     }
 
     /// <summary>
@@ -161,6 +171,8 @@ public sealed class WorkspaceSyntaxIndex
             entries);
         return entries.ToImmutable();
     }
+
+    internal PlayPlacement Placement(WorkspaceDocument document) => _placements[document.Path.Value];
 
     static void Visit(
         SyntaxNode node,

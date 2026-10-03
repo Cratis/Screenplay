@@ -4,6 +4,7 @@
 using System.Collections.Immutable;
 using System.Text;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Printing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
@@ -21,12 +22,13 @@ static class WorkspaceAuthoringPrinter
         ApplicationSyntax intended,
         WorkspaceAuthoringFormatting formatting,
         ImmutableArray<Diagnostic>.Builder diagnostics,
-        WorkspaceDocument? original = null)
+        WorkspaceDocument? original = null,
+        PlayPlacement? placement = null)
     {
         ImplementationInvariants.ValidateAuthoring(intended);
         if (formatting == WorkspaceAuthoringFormatting.PreserveTrivia && original is not null)
         {
-            return WorkspaceTriviaPrinter.Print(original, intended);
+            return WorkspaceTriviaPrinter.Print(original, intended, placement);
         }
 
         if (formatting != WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments)
@@ -47,7 +49,7 @@ static class WorkspaceAuthoringPrinter
         // The codec validates structural content, but omits server-owned source positions. Print the
         // admitted original so authoring edits can retain locations carried from the parsed document.
         var text = new ScreenplayPrinter().Print(intended);
-        var parsed = new ScreenplayCompiler().Parse(text, path.Value);
+        var parsed = new ScreenplayCompiler().Parse(text, path.Value, placement ?? PlayPlacement.Document);
         diagnostics.AddRange(parsed.Diagnostics);
         if (!parsed.Success || parsed.Value is null || !SyntaxJson.StructurallyEqual(checkedSyntax, parsed.Value))
         {

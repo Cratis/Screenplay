@@ -3,6 +3,7 @@
 
 using System.Text;
 using System.Text.Json;
+using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Printing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
@@ -13,9 +14,9 @@ namespace Cratis.Screenplay.Workspaces;
 
 static class WorkspaceTriviaPrinter
 {
-    internal static WorkspaceDocument Print(WorkspaceDocument original, ApplicationSyntax intended)
+    internal static WorkspaceDocument Print(WorkspaceDocument original, ApplicationSyntax intended, PlayPlacement? placement = null)
     {
-        var parsed = new ScreenplayCompiler().Parse(original.Text, original.Path.Value);
+        var parsed = new ScreenplayCompiler().Parse(original.Text, original.Path.Value, placement ?? PlayPlacement.Document);
         if (!parsed.Success || parsed.Value is null)
         {
             throw new InvalidWorkspaceAuthoring($"Cannot preserve trivia in unparseable document '{original.Path}'.");
@@ -60,7 +61,7 @@ static class WorkspaceTriviaPrinter
 
         bytes.Write(original.Bytes.AsSpan(start..));
         var candidate = WorkspaceDocument.Create(original.Id, original.StableKey, original.Path, bytes.ToArray());
-        var reparsed = new ScreenplayCompiler().Parse(candidate.Text, candidate.Path.Value);
+        var reparsed = new ScreenplayCompiler().Parse(candidate.Text, candidate.Path.Value, placement ?? PlayPlacement.Document);
         if (!reparsed.Success || reparsed.Value is null || !SyntaxJson.StructurallyEqual(intended, reparsed.Value))
         {
             throw new InvalidWorkspaceAuthoring($"Trivia-preserving patches in '{original.Path}' did not reparse to the intended AST. Use explicit CanonicalizeTouchedDocuments or coordinated typed edits.");
