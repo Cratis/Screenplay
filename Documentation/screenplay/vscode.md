@@ -9,6 +9,19 @@ The Screenplay extension for Visual Studio Code (`cratis.screenplay`) opens a `.
 
 The text stays the source of truth. The board redraws as you edit, and the language support (highlighting, completion, hover and diagnostics) is one click away.
 
+```bash
+code --install-extension cratis.screenplay
+```
+
+Open your model folder, then a `.play` file. Choose **Show Source** to edit beside
+its board. For other places to open the same board, see
+[See your event model](see-your-event-model.md).
+
+![The Screenplay extension displays Commerce's Ordering board beside the PlaceOrder source. The board includes order summaries, a checkout command, payment settlement, and given–when–then specifications.](images/vscode-source-and-board.png)
+
+*Extension 4.48.1 in code-server, showing Commerce. Newer versions focus the board
+on the open file's slices; open `application.play` for the whole application.*
+
 ## Screens
 
 Each slice that declares [screens](screens.md) gets a prototype in the board's **User** row. The prototype is a sketch of what the screen holds, laid out top to bottom:

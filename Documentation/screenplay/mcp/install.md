@@ -27,12 +27,23 @@ docker pull cratis/screenplay
 `latest` follows the newest stable release. To stay on a version, use its tag, for
 example `cratis/screenplay:1.2.3`, in every configuration below.
 
-Cratis CLI hosting and AI-distribution integration are coming in a coordinated
-release. They will use the embeddable `Cratis.Screenplay.Mcp` library rather than
-require a separate Screenplay installation. Until that release is available,
-use the setup below; installing AI guidance alone does not install the server. The
-existing `cratis screenplay generate` command generates source models, not an MCP
-server.
+Cratis CLI hosting shipped in **CLI 3.11.0**. If you have the CLI installed,
+use its bundled server without installing a second tool:
+
+```bash
+cratis screenplay mcp ./specifications
+```
+
+For the MCP App board (`visualize-model`), use **CLI versions that bundle
+Screenplay 4.47.0 or later**, or the standalone **Cratis.Screenplay.Tool 4.47.0
+or later**. CLI hosting and board support are separate requirements. The host
+must also support MCP Apps. See [View a model](view.md).
+
+In a client configuration, use `"command": "cratis"` and
+`"args": ["screenplay", "mcp", "/Users/you/work/shop/specifications"]`.
+Installing AI guidance alone does not install the server.
+`cratis screenplay generate` generates source models; `cratis screenplay mcp`
+hosts the MCP server.
 
 Host developers can consult the [embedding API](reference.md#embedding-api).
 
