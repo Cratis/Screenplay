@@ -1,0 +1,18 @@
+[
+    { "name": "empty", "authored": "", "decoded": "", "blank": true },
+    { "name": "literal-space", "authored": " ", "decoded": " ", "blank": true },
+    { "name": "literal-tab", "authored": "\t", "decoded": "\t", "blank": true },
+    { "name": "literal-next-line", "authored": "", "decoded": "", "blank": true },
+    { "name": "literal-no-break-space", "authored": " ", "decoded": " ", "blank": true },
+    { "name": "literal-unicode-spaces", "authored": "                　", "decoded": "                　", "blank": true },
+    { "name": "literal-form-feed", "authored": "\f", "decoded": "\f", "blank": true },
+    { "name": "literal-vertical-tab", "authored": "\u000b", "decoded": "\u000b", "blank": true },
+    { "name": "escaped-tab", "authored": "\\t", "decoded": "\t", "blank": true },
+    { "name": "escaped-newline", "authored": "\\n", "decoded": "\n", "blank": true },
+    { "name": "escaped-carriage-return", "authored": "\\r", "decoded": "\r", "blank": true },
+    { "name": "mixed-whitespace", "authored": " \\t\\n\\r ", "decoded": " \t\n\r ", "blank": true },
+    { "name": "literal-bom", "authored": "﻿", "decoded": "﻿", "blank": false },
+    { "name": "literal-zero-width-space", "authored": "​", "decoded": "​", "blank": false },
+    { "name": "unknown-unicode-escape", "authored": "\\u0085", "decoded": "\\u0085", "blank": false },
+    { "name": "authored-nonblank-spacing", "authored": " Keep \\t\\n", "decoded": " Keep \t\n", "blank": false }
+]

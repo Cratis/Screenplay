@@ -28,13 +28,13 @@ internal static partial class ImplementationParser
             {
                 var match = HintRegex().Match(child.Content);
                 var text = match.Success ? StringLiteral.Unescape(match.Groups[1].Value) : null;
-                if (string.IsNullOrWhiteSpace(text))
+                if (ImplementationHintText.IsBlank(text))
                 {
                     context.Error(DiagnosticCodes.InvalidImplementationHint, "Expected 'hint' followed by one nonblank quoted string.", child.Location);
                 }
                 else
                 {
-                    hints.Add(new(text, child.Location));
+                    hints.Add(new(text!, child.Location));
                 }
 
                 if (context.TryPeekChild(child.Indent, out var nested))

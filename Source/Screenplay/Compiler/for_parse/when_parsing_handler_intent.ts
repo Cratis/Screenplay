@@ -1,12 +1,14 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { parse } from '../ScreenplayCompiler';
 import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
 import { SyntaxNode } from '../Syntax/SyntaxNode';
 
 const prefix = 'module M\n  feature F\n    slice StateChange S\n      command C\n        handler\n';
+const whitespaceVectors: { name: string; authored: string; decoded: string; blank: boolean }[] = JSON.parse(readFileSync(new URL('../Conformance/handler-hint-whitespace.json', import.meta.url), 'utf8'));
 
 describe('when parsing handler intent', () => {
     it.each(['          implementation', '          implementation\n            hint " Keep whitespace "', '          file C.cs', '          implementation\n            file C.cs', '          implementation\n            ```csharp\n            hint file implementation\n            ```'])('should model %s', body => {
@@ -44,6 +46,11 @@ describe('when parsing handler intent', () => {
         ['          implementation\n          unknown\n            nested', ['PLAY0494']],
     ])('should retain precise handler diagnostics for %s', (body, codes) => {
         expect(parse(prefix + body).diagnostics.map(diagnostic => diagnostic.code)).toEqual(codes);
+    });
+    it.each(whitespaceVectors)('should match shared hint whitespace vector $name', ({ authored, decoded, blank }) => {
+        const result = parse(prefix + `          implementation\n            hint "${authored}"`);
+        expect(result.diagnostics.map(diagnostic => diagnostic.code)).toEqual(blank ? ['PLAY0493'] : []);
+        if (!blank) expect(result.value.modules[0].features[0].slices[0].commands[0].handler?.implementation?.hints[0].text).toBe(decoded);
     });
     it('should retain last-handler legacy behavior and refuse mixing produces', () => {
         const result = parse(prefix + '          file Old.cs\n        handler\n          file New.cs\n        produces Registered\n      event Registered');

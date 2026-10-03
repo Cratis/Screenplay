@@ -3,6 +3,7 @@
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationHintSyntax } from '../Syntax/Implementations';
+import { isBlankImplementationHint } from '../Text/ImplementationHintText';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
@@ -86,8 +87,8 @@ function parseImplementation(context: ParserContext, handler: SourceLine, wrappe
         if (firstWord(child.content) === 'hint') {
             const match = hintPattern.exec(child.content);
             const text = match === null ? null : unescapeString(match[1]);
-            if (text === null || text.trim().length === 0) context.error(DiagnosticCodes.InvalidImplementationHint, "Expected 'hint' followed by one nonblank quoted string.", locationOf(child));
-            else hints.push({ kind: 'ImplementationHintSyntax', text, location: locationOf(child) });
+            if (isBlankImplementationHint(text)) context.error(DiagnosticCodes.InvalidImplementationHint, "Expected 'hint' followed by one nonblank quoted string.", locationOf(child));
+            else hints.push({ kind: 'ImplementationHintSyntax', text: text!, location: locationOf(child) });
             const nested = context.peekChild(child.indent);
             if (nested !== undefined) {
                 context.error(DiagnosticCodes.InvalidImplementationHint, 'A hint cannot have children.', locationOf(nested));

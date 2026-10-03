@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Syntax.Serialization;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Syntax;
 
@@ -21,7 +22,7 @@ internal static class ImplementationInvariants
             throw new InvalidSyntaxJson("Implementation hints must be a collection.");
         }
 
-        if (node is ImplementationHintSyntax hintNode && string.IsNullOrWhiteSpace(hintNode.Text))
+        if (node is ImplementationHintSyntax hintNode && ImplementationHintText.IsBlank(hintNode.Text))
         {
             throw new InvalidSyntaxJson("An implementation hint must be nonblank.");
         }
