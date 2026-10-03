@@ -28,6 +28,13 @@ internal sealed partial class ResponseValueTypes
         _known = ConceptSyntax.PrimitiveTypes.Concat(_concepts.Keys).Concat(_types.Keys).ToHashSet(StringComparer.Ordinal);
     }
 
+    internal bool CompatibleGeneratedIdentifier(ExpressionSyntax value, TypeRefSyntax type)
+    {
+        if (!_known.Contains(type.Name)) return true; // Unavailable imported shapes remain unresolved.
+
+        return !type.IsOptional && !type.IsCollection && _concepts.GetValueOrDefault(type.Name)?.Type == "Uuid" && value is LiteralExpressionSyntax { Value: string uuid } && UuidValueRegex().IsMatch(uuid);
+    }
+
     internal bool Compatible(ExpressionSyntax value, TypeRefSyntax type)
     {
         if (value is LiteralExpressionSyntax { Value: null }) return type.IsOptional;

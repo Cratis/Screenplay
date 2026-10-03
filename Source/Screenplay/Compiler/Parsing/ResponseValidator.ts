@@ -127,6 +127,14 @@ export function validateResponses(application: ApplicationSyntax, context: Parse
             for (const input of action.values) {
                 if (declared.get(input.property.split('.')[0])?.isGenerated) context.error(DiagnosticCodes.GeneratedPropertySuppliedAsInput, `Generated property '${input.property}' cannot be supplied as request or form input.`, input.location);
             }
+            const identifiers = [...declared.values()].filter(property => property.isIdentifier);
+            if (action.for !== null && identifiers.length === 1 && identifiers[0].isGenerated) {
+                const type = identifiers[0].type;
+                const known = primitiveTypes.has(type.name) || concepts.has(type.name) || composites.has(type.name);
+                if (known && (type.isOptional || type.isCollection || concepts.get(type.name)?.type !== 'Uuid' || action.for.kind !== 'LiteralExpressionSyntax' || typeof action.for.value !== 'string' || !uuidValue(action.for.value))) {
+                    context.error(DiagnosticCodes.InvalidGeneratedFixture, "A generated identifier fixture must supply one compatible concrete UUID value through 'for'.", action.for.location);
+                }
+            }
             const names = new Set<string>();
             for (const fixture of action.generatedValues ?? []) {
                 const property = declared.get(fixture.property);

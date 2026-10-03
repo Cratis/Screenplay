@@ -34,6 +34,47 @@ public class when_validating_response_boundaries : given.a_compiler
         parsed.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0491").ShouldEqual(!valid);
     }
 
+    [Theory]
+    [InlineData("\"abcdef0123456789abcdef0123456789\"", true)]
+    [InlineData("\"ABCDEF01-2345-6789-ABCD-EF0123456789\"", true)]
+    [InlineData("\"{abcdef01-2345-6789-abcd-ef0123456789}\"", true)]
+    [InlineData("\"(abcdef01-2345-6789-abcd-ef0123456789)\"", true)]
+    [InlineData("42", false)]
+    [InlineData("\"not-a-uuid\"", false)]
+    [InlineData("id", false)]
+    [InlineData("id + other", false)]
+    [InlineData("\"11111111-1111-1111-1111-111111111111\" \"22222222-2222-2222-2222-222222222222\"", false)]
+    [InlineData("\" abcdef01-2345-6789-abcd-ef0123456789\"", false)]
+    [InlineData("\"{0xabcdef01,0x2345,0x6789,{0xab,0xcd,0xef,0x01,0x23,0x45,0x67,0x89}}\"", false)]
+    void should_validate_generated_identifier_for_as_one_concrete_uuid(string value, bool valid)
+    {
+        var result = _compiler.Compile(Prefix + $"      command C\n        id Id generated identifier\n      specification Fixture\n        when C\n          for {value}");
+        var diagnostics = result.Diagnostics.Where(diagnostic => diagnostic.Code == "PLAY0490").ToArray();
+        diagnostics.Length.ShouldEqual(valid ? 0 : 1);
+        if (!valid)
+        {
+            diagnostics.Single().Location.Line.ShouldEqual(9);
+            diagnostics.Single().Location.Column.ShouldEqual(11);
+        }
+    }
+
+    [Theory]
+    [InlineData("id Id identifier")]
+    [InlineData("id Id")]
+    [InlineData("id External generated identifier")]
+    void should_leave_legacy_and_unresolved_for_values_unchanged(string declaration)
+    {
+        var result = _compiler.Compile("import Outside.External\n" + Prefix + $"      command C\n        {declaration}\n      specification Fixture\n        when C\n          for id + other");
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0490").ShouldBeFalse();
+    }
+
+    [Fact]
+    void should_defer_missing_generated_identifier_completeness()
+    {
+        var result = _compiler.Compile(Prefix + "      command C\n        id Id generated identifier\n      specification Fixture\n        when C");
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0490").ShouldBeFalse();
+    }
+
     [Fact]
     void should_not_tighten_general_literal_parsing()
     {

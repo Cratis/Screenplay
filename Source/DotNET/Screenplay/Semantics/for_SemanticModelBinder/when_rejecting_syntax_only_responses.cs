@@ -42,6 +42,17 @@ public class when_rejecting_syntax_only_responses : given.a_semantic_binder
         result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268").ShouldBeFalse();
     }
 
+    [Theory]
+    [InlineData("42")]
+    [InlineData("\"11111111-1111-1111-1111-111111111111\"")]
+    void should_not_admit_generated_identifier_fixtures_through_binding(string value)
+    {
+        var result = Bind(Prefix + $"      command C\n        id Id generated identifier\n      specification Fixture\n        when C\n          for {value}");
+        result.Success.ShouldBeFalse();
+        result.Value.ShouldBeNull();
+        result.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldContain(DiagnosticCodes.UnsupportedSemanticSyntax);
+    }
+
     [Fact]
     void should_reject_programmatically_constructed_trees()
     {

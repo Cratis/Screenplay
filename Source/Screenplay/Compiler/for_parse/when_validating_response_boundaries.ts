@@ -26,6 +26,26 @@ describe('when validating response boundaries', () => {
         expect(codes(prefix + `      command C\n        value ${type}\n        returns value\n      specification Accepts\n        when C\n        then returns "${value}"`).includes('PLAY0491')).toBe(!valid);
     });
 
+    it.each([
+        ['"abcdef0123456789abcdef0123456789"', true],
+        ['"ABCDEF01-2345-6789-ABCD-EF0123456789"', true],
+        ['"{abcdef01-2345-6789-abcd-ef0123456789}"', true],
+        ['"(abcdef01-2345-6789-abcd-ef0123456789)"', true],
+        ['42', false], ['"not-a-uuid"', false], ['id', false], ['id + other', false],
+        ['"11111111-1111-1111-1111-111111111111" "22222222-2222-2222-2222-222222222222"', false],
+        ['" abcdef01-2345-6789-abcd-ef0123456789"', false],
+        ['"{0xabcdef01,0x2345,0x6789,{0xab,0xcd,0xef,0x01,0x23,0x45,0x67,0x89}}"', false],
+    ])('should validate generated identifier for %s as one concrete UUID', (value, valid) => {
+        const diagnostics = parse(prefix + `      command C\n        id Id generated identifier\n      specification Fixture\n        when C\n          for ${value}`, 'fixture.play').diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0490');
+        expect(diagnostics).toHaveLength(valid ? 0 : 1);
+        if (!valid) expect(diagnostics[0].location).toEqual({ path: 'fixture.play', line: 9, column: 11 });
+    });
+    it.each(['id Id identifier', 'id Id', 'id External generated identifier'])('should leave legacy and unresolved for values unchanged for %s', declaration => {
+        expect(codes('import Outside.External\n' + prefix + `      command C\n        ${declaration}\n      specification Fixture\n        when C\n          for id + other`)).not.toContain('PLAY0490');
+    });
+    it('should defer missing generated identifier completeness', () => {
+        expect(codes(prefix + '      command C\n        id Id generated identifier\n      specification Fixture\n        when C')).not.toContain('PLAY0490');
+    });
     it('should not tighten general literal parsing', () => {
         expect(parse(prefix + '      command C\n        value Date\n      specification Accepts\n        when C\n          value = "Jan 2 2024"').success).toBe(true);
     });

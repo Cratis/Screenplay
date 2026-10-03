@@ -24,6 +24,12 @@ internal static class SpecificationResponseValidator
                 if (specification.When is { } action && command is not null)
                 {
                     RejectInputs(action.Values.Select(value => (value.Property, value.Location)), index.Generated(command), context);
+                    var identifiers = index.Properties(command).Values.Where(property => property.IsIdentifier).ToArray();
+                    if (action.For is { } identifierValue && identifiers is [{ IsGenerated: true } identifier] && !values.CompatibleGeneratedIdentifier(identifierValue, identifier.Type))
+                    {
+                        context.Error(DiagnosticCodes.InvalidGeneratedFixture, "A generated identifier fixture must supply one compatible concrete UUID value through 'for'.", identifierValue.Location);
+                    }
+
                     var names = new HashSet<string>(StringComparer.Ordinal);
                     foreach (var fixture in action.GeneratedValues)
                     {
