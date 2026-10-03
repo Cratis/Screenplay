@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import type { editor, IRange, languages } from 'monaco-editor';
-import { DiagnosticCodes, prepareQuickFixes } from '@cratis/screenplay-compiler';
+import { DiagnosticCodes, isQuickFixDiagnostic, prepareQuickFixes } from '@cratis/screenplay-compiler';
 
 const migrateOptional = 'source.screenplay.migrateOptional';
 const containsKind = (requested: string, kind: string) => requested === '' || requested === kind || kind.startsWith(`${requested}.`);
@@ -19,12 +19,13 @@ export function createCodeActionProvider(placement?: readonly string[]): languag
     return {
         provideCodeActions(model, range, context, token) {
             const migrationRequested = context.only !== undefined && containsKind(context.only, migrateOptional);
+            const migrationOnly = context.only !== undefined && migrationRequested && !containsKind(context.only, 'quickfix');
             if (token.isCancellationRequested || (context.only !== undefined && !migrationRequested && !containsKind(context.only, 'quickfix'))) return { actions: [], dispose() {} };
-            const diagnostic = context.markers.find(marker => {
+            const diagnostics = context.markers.filter(marker => {
                 const code = typeof marker.code === 'object' ? marker.code.value : marker.code;
-                return code === DiagnosticCodes.LegacyOptionalSuffix && intersects(marker, range);
+                return isQuickFixDiagnostic(code) && intersects(marker, range);
             });
-            if (!migrationRequested && diagnostic === undefined) return { actions: [], dispose() {} };
+            if (!migrationRequested && diagnostics.length === 0) return { actions: [], dispose() {} };
             const version = model.getVersionId();
             const placementKey = JSON.stringify(placement) ?? '';
             let analysis = cache.get(model);
@@ -32,8 +33,12 @@ export function createCodeActionProvider(placement?: readonly string[]): languag
                 analysis = { version, placement: placementKey, fixes: prepareQuickFixes(model.getValue(), { placement }) };
                 cache.set(model, analysis);
             }
-            const fixes = analysis.fixes(diagnostic?.startLineNumber)
-                .filter(fix => context.only === undefined || containsKind(context.only, fix.scope === 'document' ? migrateOptional : 'quickfix'));
+            const occurrences = migrationOnly ? [] : analysis.fixes(diagnostics.map(diagnostic => ({
+                line: diagnostic.startLineNumber,
+                diagnosticCode: String(typeof diagnostic.code === 'object' ? diagnostic.code.value : diagnostic.code),
+            }))).filter(fix => fix.scope === 'occurrence');
+            const requested = [...occurrences, ...(context.only === undefined || migrationRequested ? analysis.fixes(undefined, DiagnosticCodes.LegacyOptionalSuffix) : [])];
+            const fixes = requested.filter(fix => context.only === undefined || containsKind(context.only, fix.scope === 'document' ? migrateOptional : 'quickfix'));
             if (token.isCancellationRequested || model.getVersionId() !== version) return { actions: [], dispose() {} };
             return {
                 actions: fixes.map(fix => ({
