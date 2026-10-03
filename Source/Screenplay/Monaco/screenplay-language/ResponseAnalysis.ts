@@ -9,4 +9,5 @@ export interface ResponseAnalysis {
     readonly commands: ReadonlyMap<number, AnalysisCommand>;
     readonly specifications: ReadonlyMap<number, AnalysisSpecification>;
     readonly diagnostics: readonly AnalysisDiagnostic[];
+    readonly operationProductionLines?: ReadonlySet<number>;
 }

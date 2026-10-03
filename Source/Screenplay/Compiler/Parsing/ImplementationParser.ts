@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
-import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationHintSyntax } from '../Syntax/Implementations';
+import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationHintSyntax, ImplementationSyntax } from '../Syntax/Implementations';
 import { isBlankImplementationHint } from '../Text/ImplementationHintText';
 import { unescapeString } from '../Text/StringLiteral';
 import { firstWord } from './LineText';
@@ -90,7 +90,7 @@ function parseImplementation(context: ParserContext, handler: SourceLine, wrappe
     return { kind: 'HandlerSyntax', ...source, location: locationOf(handler) };
 }
 
-export function parseImplementationWrapper(context: ParserContext, wrapper: SourceLine): Pick<HandlerSyntax, 'file' | 'code' | 'implementation'> {
+export function parseImplementationWrapper(context: ParserContext, wrapper: SourceLine): { file: FileReferenceSyntax | null; code: CodeBlockSyntax | null; implementation: ImplementationSyntax } {
     const hints: ImplementationHintSyntax[] = [];
     let file: FileReferenceSyntax | null = null;
     let code: CodeBlockSyntax | null = null;

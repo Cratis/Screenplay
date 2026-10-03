@@ -23,6 +23,13 @@ public sealed partial class SemanticModelBinder
 
         public override void VisitNode(SyntaxNode node)
         {
+            if (node is SystemSyntax or OperationSyntax or OperationPhaseSyntax or SpecificationOperationFailureSyntax or SpecificationOperationSyntax or SpecificationCompensatedSyntax)
+            {
+                Diagnostics.Add(Diagnostic.Error(
+                    DiagnosticCodes.UnsupportedSemanticSyntax,
+                    "This authoring construct is not admitted by any supported ESM version; decision 0023 allocates operations and systems to ESM v9.",
+                    node.Location));
+            }
             if (node is PropertySyntax { IsGenerated: true } or CommandResponseSyntax or SpecificationReturnSyntax)
             {
                 Reject(node.Location);

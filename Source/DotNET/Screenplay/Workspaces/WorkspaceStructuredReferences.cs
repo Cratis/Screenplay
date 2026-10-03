@@ -27,7 +27,7 @@ static class WorkspaceStructuredReferences
         }
 
         var mapping = (PropertyMappingSyntax)ancestors[mappingIndex].Node;
-        var step = ancestors.Skip(mappingIndex + 1).FirstOrDefault(ancestor => ancestor.Node is SpecificationCommandSyntax or SpecificationEventSyntax or SpecificationReadModelSyntax or SpecificationQuerySyntax or SpecificationQueryResultSyntax or ProducesSyntax or CaptureAppendSyntax);
+        var step = ancestors.Skip(mappingIndex + 1).FirstOrDefault(ancestor => ancestor.Node is SpecificationOperationSyntax or SpecificationCommandSyntax or SpecificationEventSyntax or SpecificationReadModelSyntax or SpecificationQuerySyntax or SpecificationQueryResultSyntax or ProducesSyntax or CaptureAppendSyntax);
         if (step is null)
         {
             return null;
@@ -36,7 +36,9 @@ static class WorkspaceStructuredReferences
         var declarations = index.Entries.Select(item => item.Node).ToArray();
         var properties = step.Node switch
         {
+            ProducesSyntax produced when index.OwningSlice(step) is { } slice && !index.Productions.IsEventProduction(produced, slice) => (index.Productions.Resolve(produced.Event, slice).Declaration?.Node as OperationSyntax)?.Inputs,
             ProducesSyntax produced => Unique(declarations.OfType<EventSyntax>(), produced.Event)?.Properties,
+            SpecificationOperationSyntax operation when index.OwningSlice(step) is { } slice => (index.Productions.Resolve(operation.Operation, slice).Declaration?.Node as OperationSyntax)?.Inputs,
             CaptureAppendSyntax appended => Unique(declarations.OfType<EventSyntax>(), appended.Event)?.Properties,
             SpecificationCommandSyntax command => Unique(declarations.OfType<CommandSyntax>(), command.CommandType)?.Properties,
             SpecificationEventSyntax @event => Unique(declarations.OfType<EventSyntax>(), @event.EventType)?.Properties,

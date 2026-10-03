@@ -144,8 +144,13 @@ function validateDeclarations(lines: string[], symbols: DocumentSymbols, applica
 // Where it is placed, and whether its imports resolve, is the compiler's to say.
 export function validateLines(lines: string[], context: ValidationContext = {}): ValidationIssue[] {
     const fences = fenceMap(lines);
-    const symbols = scanDocument(lines);
+    const scanned = scanDocument(lines);
     const application = context.application ?? mergeSymbols();
+    const analysis = responseAnalysis(lines, application.authoringDocuments ?? application.authoringSources, context.placement, context.path);
+    const symbols = { ...scanned, commands: scanned.commands.map(command => ({ ...command,
+        produces: command.produces?.filter(production => !analysis.operationProductionLines?.has(production.line)),
+        productionHeaders: command.productionHeaders?.filter(line => !analysis.operationProductionLines?.has(line)),
+    })) };
     const events = new Set([...knownEventNames(symbols), ...knownEventNames(application)]);
     const policies = new Set([...symbols.policies, ...application.policies].map((policy) => policy.name));
     const issues: ValidationIssue[] = validateDeclarations(lines, symbols, application);
@@ -153,7 +158,6 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
     // One parser pass covers committed types, including query results and trigger data, without
     // speculative property scans mistaking tags, paths, strings or code for optionality.
     const optionalCodes = new Set<string>([DiagnosticCodes.LegacyOptionalSuffix, DiagnosticCodes.InvalidOptionalModifierOrder, DiagnosticCodes.OptionalReadsNotSupported]);
-    const analysis = responseAnalysis(lines, application.authoringDocuments ?? application.authoringSources, context.placement, context.path);
     for (const diagnostic of context.compilerDiagnostics ?? analysis.diagnostics) {
         if (!optionalCodes.has(diagnostic.code) && diagnostic.code !== DiagnosticCodes.RepeatedDeclarationAcrossFiles && !/^PLAY049[0-4]$|^PLAY048[2-9]$|^PLAY004[56]$/.test(diagnostic.code)) continue;
         const line = diagnostic.location.line - 1;
@@ -288,9 +292,9 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
         if (reactsOn) checkEvent(index, line, reactsOn[1]);
 
         const produces = trimmed.match(/^produces\s+([A-Z]\w*)\s*$/);
-        if (produces) checkEvent(index, line, produces[1]);
+        if (produces && !analysis.operationProductionLines?.has(index)) checkEvent(index, line, produces[1]);
 
-        if (/^produces\s+when\b/.test(trimmed)) {
+        if (/^produces\s+when\b/.test(trimmed) && !analysis.operationProductionLines?.has(index)) {
             for (let next = index + 1; next < lines.length; next++) {
                 const candidate = lines[next];
                 if (fences[next] || candidate.trim().length === 0) continue;

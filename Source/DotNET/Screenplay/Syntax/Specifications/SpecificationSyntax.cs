@@ -110,6 +110,21 @@ public record SpecificationSyntax(
     /// Gets the syntax-only scalar or record response expectation.
     /// </summary>
     public SpecificationReturnSyntax? ThenReturns { get; init; }
+
+    /// <summary>
+    /// Gets the explicitly failing operation fixtures.
+    /// </summary>
+    public IEnumerable<SpecificationOperationFailureSyntax> GivenOperationFailures { get; init; } = [];
+
+    /// <summary>
+    /// Gets the requested operation value assertions.
+    /// </summary>
+    public IEnumerable<SpecificationOperationSyntax> ThenOperations { get; init; } = [];
+
+    /// <summary>
+    /// Gets the compensation assertions.
+    /// </summary>
+    public IEnumerable<SpecificationCompensatedSyntax> ThenCompensated { get; init; } = [];
 }
 
 /// <summary>

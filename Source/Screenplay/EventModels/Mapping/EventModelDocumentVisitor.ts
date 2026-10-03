@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { ApplicationSyntax, ApplicationSyntaxVisitor, FeatureSyntax, ModuleSyntax } from '@cratis/screenplay-compiler';
+import { AuthoringProductionResolver, ApplicationSyntax, ApplicationSyntaxVisitor, FeatureSyntax, ModuleSyntax } from '@cratis/screenplay-compiler';
 import { EventModelDocument, FeatureDocument, ModuleDocument } from '../Document/EventModelDocument';
 import { guidFor } from '../Document/identity';
 import { SchemaSynthesizer } from '../Schemas/SchemaSynthesizer';
@@ -22,7 +22,7 @@ export class EventModelDocumentVisitor implements ApplicationSyntaxVisitor<Event
     constructor(private readonly name: string) {}
 
     visit(syntax: ApplicationSyntax): EventModelDocument {
-        const owners = new EventOwners(syntax.modules, new SchemaSynthesizer(syntax));
+        const owners = new EventOwners(syntax.modules, new SchemaSynthesizer(syntax), new AuthoringProductionResolver(syntax));
         const audience = Audience.of(syntax.personas);
         const modules = syntax.modules.map((module, index) => toModule(module, index, owners, audience));
         return {

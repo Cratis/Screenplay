@@ -172,7 +172,7 @@ export function validateResponses(application: ApplicationSyntax, context: Parse
     }
 }
 
-function uniqueByName<T extends { readonly name: string }>(items: readonly T[]): Map<string, T> {
+export function uniqueByName<T extends { readonly name: string }>(items: readonly T[]): Map<string, T> {
     const result = new Map<string, T>();
     const duplicates = new Set<string>();
     for (const item of items) {
@@ -183,7 +183,7 @@ function uniqueByName<T extends { readonly name: string }>(items: readonly T[]):
     return result;
 }
 
-function compatibleValue(value: ExpressionSyntax, type: TypeRefSyntax, concepts: ReadonlyMap<string, ConceptSyntax>, composites: ReadonlyMap<string, ReadonlyMap<string, PropertySyntax>>): boolean {
+export function compatibleValue(value: ExpressionSyntax, type: TypeRefSyntax, concepts: ReadonlyMap<string, ConceptSyntax>, composites: ReadonlyMap<string, ReadonlyMap<string, PropertySyntax>>): boolean {
     if (value.kind === 'LiteralExpressionSyntax' && value.value === null) return type.isOptional;
     if (type.isCollection) return value.kind === 'ListExpressionSyntax' && value.items.every(item => compatibleValue(item, { ...type, isCollection: false, isOptional: false }, concepts, composites));
     const properties = composites.get(type.name);

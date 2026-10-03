@@ -29,6 +29,8 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
     /// </summary>
     public IReadOnlyList<(SliceSyntax Slice, DeclarationScope Scope)> Slices => slices;
 
+    internal AuthoringProductionResolver Productions { get; } = new(application);
+
     /// <summary>
     /// Resolves one declaration without guessing between ambiguous candidates.
     /// </summary>

@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { CommandSyntax, Diagnostic, parse, parsePlacedDocuments, SpecificationSyntax } from '@cratis/screenplay-compiler';
+import { AuthoringProductionResolver, CommandSyntax, Diagnostic, parse, parsePlacedDocuments, SpecificationSyntax } from '@cratis/screenplay-compiler';
 import { fenceMap, indentOf } from './document-context';
 import { ResponseAnalysis } from './ResponseAnalysis';
 import { AuthoringDocument } from './AuthoringDocument';
@@ -27,7 +27,7 @@ const revisions = new Map<string, ReturnType<typeof analyze>>();
 function authoringSource(lines: string[], headers: readonly string[]) {
     const fences = fenceMap(lines);
     const roots = lines.flatMap((line, index) => !fences[index] && indentOf(line) === 0 && /^\w/.test(line) ? [line.split(/\s+/)[0]] : []);
-    if (roots.includes('module') || !roots.some(root => ['feature', 'slice', 'command', 'event', 'specification'].includes(root))) {
+    if (roots.includes('module') || !roots.some(root => ['feature', 'slice', 'command', 'event', 'operation', 'specification'].includes(root))) {
         return { source: lines.join('\n'), locations: lines.map((_, index) => ({ line: index + 1, column: 0 })) };
     }
     // Isolated slice/command fragments are a supported editor input. Global declarations stay global.
@@ -35,7 +35,7 @@ function authoringSource(lines: string[], headers: readonly string[]) {
     const body: number[] = [];
     let global = false;
     lines.forEach((line, index) => {
-        if (!fences[index] && indentOf(line) === 0 && /^\w/.test(line)) global = /^(?:concept|type|import|domain)\b/.test(line);
+        if (!fences[index] && indentOf(line) === 0 && /^\w/.test(line)) global = /^(?:concept|type|import|domain|system)\b/.test(line);
         (global ? globals : body).push(index);
     });
     const depth = roots.includes('feature') ? 1 : roots.includes('slice') ? 2 : 3;
@@ -94,7 +94,11 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
         const original = prepared.locations[diagnostic.location.line - 1];
         return original?.line ? [{ ...diagnostic, location: { ...diagnostic.location, line: original.line, column: Math.max(1, diagnostic.location.column - original.column) } }] : [];
     });
-    return { commands, specifications, diagnostics };
+    const productions = new AuthoringProductionResolver(parsed.value);
+    const operationProductionLines = new Set(productions.slices.flatMap(({ slice }) => slice.commands.flatMap(command => command.produces)
+        .filter(production => production.location.path === path && !productions.isEventProduction(production, slice))
+        .map(production => production.location.line - 1)));
+    return { commands, specifications, diagnostics, operationProductionLines };
 }
 
 export function responseAnalysis(lines: string[], otherSources: readonly (string | AuthoringDocument)[] = [], placement?: readonly string[], path = 'current.play'): ResponseAnalysis {

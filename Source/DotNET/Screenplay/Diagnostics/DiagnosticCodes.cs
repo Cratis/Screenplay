@@ -2208,4 +2208,44 @@ public static class DiagnosticCodes
     /// Wrapped and direct sources conflict, or multiple payloads were supplied.
     /// </summary>
     public const string ConflictingImplementationSources = "PLAY0494";
+
+    /// <summary>
+    /// A system declaration is malformed.
+    /// </summary>
+    public const string InvalidSystemDeclaration = "PLAY0495";
+
+    /// <summary>
+    /// An operation declaration is malformed.
+    /// </summary>
+    public const string InvalidOperationDeclaration = "PLAY0496";
+
+    /// <summary>
+    /// A production reference is unresolved, ambiguous or qualifies an event.
+    /// </summary>
+    public const string InvalidProductionReference = "PLAY0497";
+
+    /// <summary>
+    /// Event and operation declarations collide in a slice.
+    /// </summary>
+    public const string ProductionDeclarationCollision = "PLAY0498";
+
+    /// <summary>
+    /// An operation production appears outside a command.
+    /// </summary>
+    public const string OperationOutsideCommand = "PLAY0499";
+
+    /// <summary>
+    /// An operation's system reference is missing, repeated or unknown.
+    /// </summary>
+    public const string InvalidSystemReference = "PLAY0500";
+
+    /// <summary>
+    /// An operation input mapping is invalid.
+    /// </summary>
+    public const string InvalidOperationMapping = "PLAY0501";
+
+    /// <summary>
+    /// An operation specification step is invalid.
+    /// </summary>
+    public const string InvalidOperationSpecification = "PLAY0502";
 }

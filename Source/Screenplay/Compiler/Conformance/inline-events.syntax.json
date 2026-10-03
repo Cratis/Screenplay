@@ -66,6 +66,7 @@
                           }
                         ]
                       },
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -113,6 +114,7 @@
               "description": null,
               "events": [],
               "name": "Rename",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -130,5 +132,6 @@
     }
   ],
   "personas": [],
+  "systems": [],
   "types": []
 }

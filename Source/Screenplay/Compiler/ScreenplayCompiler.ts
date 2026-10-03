@@ -8,6 +8,7 @@ import { InputUse } from './Parsing/InputUses';
 import { validateResponses } from './Parsing/ResponseValidator';
 import { LineReader } from './Parsing/LineReader';
 import { validateInlineEvents } from './Parsing/InlineEventValidator';
+import { validateOperations } from './Parsing/OperationValidator';
 import { ParserContext } from './Parsing/ParserContext';
 import { parseApplication } from './Parsing/ScreenplayParser';
 import { splitLines } from './Parsing/SourceLineSplitter';
@@ -41,7 +42,10 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
     const value = parseApplication(context, lines, placement);
     validateInlineEvents(value, context);
     // Folder assembly validates response references once against the merged declaration inventory.
-    if (validateResponseContracts) validateResponses(value, context);
+    if (validateResponseContracts) {
+        validateOperations(value, context);
+        validateResponses(value, context);
+    }
     return {
         value,
         diagnostics: context.diagnostics,

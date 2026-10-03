@@ -283,7 +283,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
             // A command property is a leaf, not an indentation owner. Share the parser-shaped
             // body with properties, productions, advice and destination hints.
             const body = directBody(lines, fences, index, indent);
-            const productionHeaders = body.filter(line => /^\s*produces\b/.test(lines[line]));
+            const productionHeaders = body.filter(line => /^\s*produces\b/.test(lines[line]) && !analysis.operationProductionLines?.has(line));
             symbols.commands.push({
                 name: command.name,
                 properties: command.properties.map(property => ({

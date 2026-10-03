@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { eventDeclarations, CommandSyntax, EventSyntax, FeatureSyntax, ModuleSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
+import { AuthoringProductionResolver, eventDeclarations, CommandSyntax, EventSyntax, FeatureSyntax, ModuleSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
 import { JsonSchemaObject } from '../Document/EventModelDocument';
 import { SchemaSynthesizer } from '../Schemas/SchemaSynthesizer';
 import { SliceScope } from './SliceScope';
@@ -18,7 +18,7 @@ export class EventOwners {
     readonly #owned = new Map<string, Owned>();
     readonly #commands = new Map<string, CommandSyntax>();
 
-    constructor(modules: readonly ModuleSyntax[], readonly schemas: SchemaSynthesizer) {
+    constructor(modules: readonly ModuleSyntax[], readonly schemas: SchemaSynthesizer, readonly productions?: AuthoringProductionResolver) {
         for (const module of modules) {
             for (const feature of module.features) {
                 this.#register(SliceScope.module(module.name).feature(feature.name), feature);

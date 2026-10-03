@@ -11,19 +11,30 @@ import { EventMetadataParser } from './EventMetadataParser';
 import { parseMappingSource } from './ExpressionParser';
 import { firstWord, unescapeIdentifier } from './LineText';
 import { ParserContext } from './ParserContext';
+import { parseOperation } from './OperationParser';
 import { parseProperty } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
 
+const inlineOperationPrefix = pattern('^produces\\s+operation(?:\\s|$)');
 const inlineHeader = pattern('^produces\\s+event\\s+([A-Za-z_]\\w*)(?:\\s+(generation)(?:\\s+.*)?)?$');
-const plainHeader = pattern('^produces\\s+([A-Z]\\w*)$');
+const plainHeader = pattern('^produces\\s+([A-Z]\\w*(?:\\.[A-Za-z_]\\w*)*)$');
 const conditional = pattern('^produces\\s+when\\s+(.+)$');
-const eventName = pattern('^[A-Z]\\w*$');
+const eventName = pattern('^[A-Z]\\w*(?:\\.[A-Za-z_]\\w*)*$');
 const targetPattern = pattern('^for\\s+(\\S.*)$');
 const mappingPattern = pattern('^(@?[\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
 const typedMappingPattern = pattern('^(.+?)\\s*=(?!=|>)\\s*(.+)$');
 const reserved = new Set(['namespace', 'sequence', 'correlation', 'causation', 'causedBy', 'occurred']);
 
 export function parseProduces(context: ParserContext, header: SourceLine, inCommand = false): ProducesSyntax | undefined {
+    if (inlineOperationPrefix.test(header.content)) {
+        if (!inCommand) {
+            context.error(DiagnosticCodes.OperationOutsideCommand, 'Operations can only be produced by commands.', locationOf(header));
+            context.skipOpaqueBlock(header.indent);
+            return undefined;
+        }
+        const parsed = parseOperation(context, header, true);
+        return { kind: 'ProducesSyntax', event: parsed.operation.name, inlineEvent: null, inlineOperation: parsed.operation, mappings: parsed.mappings, for: null, tags: [], location: locationOf(header) };
+    }
     const inline = inlineHeader.exec(header.content);
     let parent = header;
     let name: string;
@@ -113,7 +124,7 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
     }
     if (parent !== header) context.skipBlock(header.indent);
     return {
-        kind: 'ProducesSyntax', event: name, mappings, for: target, tags: inline === null ? tags : [], location: locationOf(header),
+        kind: 'ProducesSyntax', event: name, inlineOperation: null, mappings, for: target, tags: inline === null ? tags : [], location: locationOf(header),
         inlineEvent: inline === null ? null : { kind: 'EventSyntax', name, properties, tags, generation: 1, hasGenerationMarker: false, ...metadata.value, location: locationOf(header) },
     };
 }

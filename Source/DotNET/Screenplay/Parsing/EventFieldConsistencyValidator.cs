@@ -22,7 +22,7 @@ internal static class EventFieldConsistencyValidator
         {
             var producers = slice.Commands.SelectMany(command => command.Produces)
                 .Concat(slice.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(trigger => trigger.Produces ?? []));
-            foreach (var producer in producers)
+            foreach (var producer in producers.Where(producer => declarations.Productions.IsEventProduction(producer, slice)))
             {
                 ValidateAssignments(producer.Event, producer.Mappings, scope, declarations, context);
                 SpecificationValueConsistencyValidator.ValidateStructuredMappings(producer.Mappings, declarations.Event(producer.Event, scope)?.Properties, declarations, context);

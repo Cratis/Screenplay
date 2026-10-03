@@ -159,6 +159,7 @@
                     }
                   ],
                   "name": "SaveDraft",
+                  "operations": [],
                   "projections": [],
                   "queries": [],
                   "reactions": [],
@@ -236,6 +237,7 @@
                         "path": "customerId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -519,6 +521,7 @@
                 }
               ],
               "name": "Register",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -546,8 +549,10 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegisteringACustomer",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -572,6 +577,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -722,8 +728,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAMinor",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
                     {
@@ -738,6 +746,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -800,8 +809,10 @@
                     "kind": "SpecificationClockSyntax",
                     "instant": "2026-10-05T08:00:00Z"
                   },
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ArchivingWhenTheClockStrikes",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -823,6 +834,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -841,8 +853,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ArchivingWhenTriggered",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -855,6 +869,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -883,8 +898,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegisteringFromACapture",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -897,6 +914,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -933,13 +951,16 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "LookingUpACustomer",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [
                     {
@@ -997,8 +1018,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "LookingUpNobody",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
@@ -1006,6 +1029,7 @@
                   "thenNoResult": {
                     "kind": "SpecificationNoResultSyntax"
                   },
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -1042,6 +1066,7 @@
               "description": null,
               "events": [],
               "name": "CustomerList",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -1498,6 +1523,7 @@
               "description": null,
               "events": [],
               "name": "Reminders",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -1572,6 +1598,7 @@
               "description": null,
               "events": [],
               "name": "Mirroring",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -1590,6 +1617,7 @@
                           "event": "CustomerMirrored",
                           "for": null,
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -1660,6 +1688,7 @@
       "policies": []
     }
   ],
+  "systems": [],
   "types": [
     {
       "kind": "TypeSyntax",

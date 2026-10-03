@@ -66,6 +66,9 @@ internal static partial class SpecificationParser
         }
 
         var given = new List<SpecificationEventSyntax>();
+        var givenOperationFailures = new List<SpecificationOperationFailureSyntax>();
+        var thenOperations = new List<SpecificationOperationSyntax>();
+        var thenCompensated = new List<SpecificationCompensatedSyntax>();
         var givenReadModels = new List<SpecificationReadModelSyntax>();
         SpecificationCommandSyntax? when = null;
         SpecificationEventSyntax? whenAppended = null;
@@ -99,6 +102,8 @@ internal static partial class SpecificationParser
                 file = FileReferenceParser.ParseReplacing(context, line, file, directiveLocations);
                 continue;
             }
+
+            if (TryParseOperationStep(context, line, givenOperationFailures, thenOperations, thenCompensated)) continue;
 
             // Absence assertions admit any whitespace after 'then'; every other directive keeps its space-separated first word.
             switch (ThenNoPrefixRegex().IsMatch(line.Content) ? "then" : LineText.FirstWord(line.Content))
@@ -268,6 +273,9 @@ internal static partial class SpecificationParser
             GivenCaller = caller,
             ThenDenied = denied,
             ThenReturns = thenReturns,
+            GivenOperationFailures = givenOperationFailures,
+            ThenOperations = thenOperations,
+            ThenCompensated = thenCompensated,
             WhenAppended = whenAppended,
             ThenEventsInAnyOrder = eventsInAnyOrder,
             GivenClock = givenClock,

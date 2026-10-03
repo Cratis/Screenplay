@@ -301,6 +301,7 @@
                             "path": "invoiceId"
                           },
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -337,6 +338,7 @@
                             "path": "invoiceId"
                           },
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -357,6 +359,7 @@
                             "path": "invoiceId"
                           },
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [],
                           "tags": []
                         }
@@ -520,6 +523,7 @@
                     }
                   ],
                   "name": "ApplyDiscount",
+                  "operations": [],
                   "projections": [],
                   "queries": [],
                   "reactions": [],
@@ -566,8 +570,10 @@
                       "given": [],
                       "givenCaptures": [],
                       "givenClock": null,
+                      "givenOperationFailures": [],
                       "givenReadModels": [],
                       "name": "ApplyingASmallLoyaltyDiscount",
+                      "thenCompensated": [],
                       "thenDenied": null,
                       "thenErrors": [],
                       "thenEvents": [
@@ -601,6 +607,7 @@
                       ],
                       "thenEventsInAnyOrder": false,
                       "thenNoResult": null,
+                      "thenOperations": [],
                       "thenReadModels": [],
                       "thenResults": [],
                       "thenReturns": null,
@@ -655,8 +662,10 @@
                       "given": [],
                       "givenCaptures": [],
                       "givenClock": null,
+                      "givenOperationFailures": [],
                       "givenReadModels": [],
                       "name": "RequestingReviewOfALargeDiscount",
+                      "thenCompensated": [],
                       "thenDenied": null,
                       "thenErrors": [],
                       "thenEvents": [
@@ -699,6 +708,7 @@
                       ],
                       "thenEventsInAnyOrder": false,
                       "thenNoResult": null,
+                      "thenOperations": [],
                       "thenReadModels": [],
                       "thenResults": [],
                       "thenReturns": null,
@@ -753,8 +763,10 @@
                       "given": [],
                       "givenCaptures": [],
                       "givenClock": null,
+                      "givenOperationFailures": [],
                       "givenReadModels": [],
                       "name": "RejectingANegativeDiscount",
+                      "thenCompensated": [],
                       "thenDenied": null,
                       "thenErrors": [
                         {
@@ -765,6 +777,7 @@
                       "thenEvents": [],
                       "thenEventsInAnyOrder": false,
                       "thenNoResult": null,
+                      "thenOperations": [],
                       "thenReadModels": [],
                       "thenResults": [],
                       "thenReturns": null,
@@ -842,6 +855,7 @@
                             "path": "invoiceId"
                           },
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -870,6 +884,7 @@
                             "path": "invoiceId"
                           },
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -890,6 +905,7 @@
                             "path": "invoiceId"
                           },
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [],
                           "tags": []
                         }
@@ -1071,6 +1087,7 @@
                     }
                   ],
                   "name": "WriteOffInvoice",
+                  "operations": [],
                   "projections": [],
                   "queries": [],
                   "reactions": [],
@@ -1120,8 +1137,10 @@
                       "given": [],
                       "givenCaptures": [],
                       "givenClock": null,
+                      "givenOperationFailures": [],
                       "givenReadModels": [],
                       "name": "WritingOffALargeAmount",
+                      "thenCompensated": [],
                       "thenDenied": null,
                       "thenErrors": [],
                       "thenEvents": [
@@ -1164,6 +1183,7 @@
                       ],
                       "thenEventsInAnyOrder": false,
                       "thenNoResult": null,
+                      "thenOperations": [],
                       "thenReadModels": [],
                       "thenResults": [],
                       "thenReturns": null,
@@ -1218,8 +1238,10 @@
                       "given": [],
                       "givenCaptures": [],
                       "givenClock": null,
+                      "givenOperationFailures": [],
                       "givenReadModels": [],
                       "name": "RejectingAnUnconfirmedWriteOff",
+                      "thenCompensated": [],
                       "thenDenied": null,
                       "thenErrors": [
                         {
@@ -1230,6 +1252,7 @@
                       "thenEvents": [],
                       "thenEventsInAnyOrder": false,
                       "thenNoResult": null,
+                      "thenOperations": [],
                       "thenReadModels": [],
                       "thenResults": [],
                       "thenReturns": null,
@@ -1284,8 +1307,10 @@
                       "given": [],
                       "givenCaptures": [],
                       "givenClock": null,
+                      "givenOperationFailures": [],
                       "givenReadModels": [],
                       "name": "RefusingAWriteOffByAJuniorAccountant",
+                      "thenCompensated": [],
                       "thenDenied": {
                         "kind": "SpecificationDeniedSyntax"
                       },
@@ -1293,6 +1318,7 @@
                       "thenEvents": [],
                       "thenEventsInAnyOrder": false,
                       "thenNoResult": null,
+                      "thenOperations": [],
                       "thenReadModels": [],
                       "thenResults": [],
                       "thenReturns": null,
@@ -1377,6 +1403,7 @@
                         "path": "invoiceId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -1509,6 +1536,7 @@
                         "path": "invoiceId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -1529,6 +1557,7 @@
                         "path": "invoiceId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -1549,6 +1578,7 @@
                         "path": "invoiceId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -1569,6 +1599,7 @@
                         "path": "invoiceId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -2231,6 +2262,7 @@
                 }
               ],
               "name": "RegisterInvoice",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -2300,8 +2332,10 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegisteringADraftInvoice",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -2376,6 +2410,7 @@
                   ],
                   "thenEventsInAnyOrder": true,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -2525,8 +2560,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegisteringAProFormaInvoiceInForeignCurrency",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -2596,6 +2633,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -2745,8 +2783,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAnInvoiceWithNoLines",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
                     {
@@ -2757,6 +2797,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -2822,8 +2863,10 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingASecondRegistrationOfTheSameInvoice",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
                     {
@@ -2834,6 +2877,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -2875,8 +2919,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAnAuditorRegisteringAnInvoice",
+                  "thenCompensated": [],
                   "thenDenied": {
                     "kind": "SpecificationDeniedSyntax"
                   },
@@ -2884,6 +2930,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -2945,6 +2992,7 @@
                         "path": "invoiceId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -2989,6 +3037,7 @@
                         "path": "invoiceId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -3201,6 +3250,7 @@
                 }
               ],
               "name": "CancelInvoice",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -3272,8 +3322,10 @@
                     "kind": "SpecificationClockSyntax",
                     "instant": "2026-10-02T09:00:00Z"
                   },
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "CancellingAnInvoiceWithARefund",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -3332,6 +3384,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -3386,8 +3439,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingACancellationWithoutAReason",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
                     {
@@ -3398,6 +3453,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -3499,6 +3555,7 @@
                         ],
                         "tags": []
                       },
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -3590,6 +3647,7 @@
               "description": "Labels an invoice so it can be found again - 'tag' is a field here, not a directive",
               "events": [],
               "name": "TagInvoice",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -3636,8 +3694,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "TaggingAnInvoice",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -3662,6 +3722,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -3700,8 +3761,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAnEmptyTag",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
                     {
@@ -3712,6 +3775,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -3773,6 +3837,7 @@
                         "path": "invoiceId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -3801,6 +3866,7 @@
                         "path": "invoiceId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -3829,6 +3895,7 @@
                         "path": "invoiceId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -3849,6 +3916,7 @@
                         "path": "invoiceId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -4074,6 +4142,7 @@
                 }
               ],
               "name": "ChangeInvoiceStatus",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -4123,6 +4192,7 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -4149,6 +4219,7 @@
                     }
                   ],
                   "name": "SendingADraftInvoice",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -4173,6 +4244,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -4243,8 +4315,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RefusingToCancelThroughAStatusChange",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
                     {
@@ -4255,6 +4329,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -4293,8 +4368,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RefusingAStatusChangeByAnInvoiceManager",
+                  "thenCompensated": [],
                   "thenDenied": {
                     "kind": "SpecificationDeniedSyntax"
                   },
@@ -4302,6 +4379,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -4505,6 +4583,7 @@
                 }
               ],
               "name": "ProcessInvoiceBatch",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -4584,8 +4663,10 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ProcessingABatch",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -4637,6 +4718,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -4688,8 +4770,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAnUnknownBatchAction",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
                     {
@@ -4700,6 +4784,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -4858,6 +4943,7 @@
                 }
               ],
               "name": "ArchiveOldInvoices",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -4927,8 +5013,10 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ArchivingInvoicesOlderThanAYear",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -4958,6 +5046,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -4988,8 +5077,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAnArchiveDateInTheFuture",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
                     {
@@ -5000,6 +5091,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -5053,6 +5145,7 @@
                         "path": "invoiceId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -5142,6 +5235,7 @@
                 }
               ],
               "name": "UpdateBillingContact",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -5207,8 +5301,10 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "UpdatingTheBillingContact",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -5233,6 +5329,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -5288,8 +5385,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAMalformedEmail",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
                     {
@@ -5300,6 +5399,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -5361,6 +5461,7 @@
               "description": "The staff's list of every invoice",
               "events": [],
               "name": "InvoiceList",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -5906,13 +6007,16 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ListingARegisteredInvoice",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -6028,13 +6132,16 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "DroppingACancelledInvoiceFromTheList",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -6073,6 +6180,7 @@
               "description": null,
               "events": [],
               "name": "InvoiceDetails",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -6855,13 +6963,16 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ShowingASentInvoiceWithItsCustomer",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -6956,6 +7067,7 @@
               "description": null,
               "events": [],
               "name": "InvoiceLineReport",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -7142,13 +7254,16 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ReportingAnAddedLine",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -7243,6 +7358,7 @@
               "description": null,
               "events": [],
               "name": "InvoiceDashboard",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -7793,13 +7909,16 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "CountingInvoicesAsTheyMove",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -7880,6 +7999,7 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -7930,11 +8050,13 @@
                     }
                   ],
                   "name": "ListingOverdueInvoices",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -7990,6 +8112,7 @@
                         "path": "paymentId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -8034,6 +8157,7 @@
                         "path": "paymentId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -8276,6 +8400,7 @@
                 }
               ],
               "name": "RecordPayment",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -8326,6 +8451,7 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -8368,6 +8494,7 @@
                     }
                   ],
                   "name": "RecordingACardPayment",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -8408,6 +8535,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -8462,6 +8590,7 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -8504,6 +8633,7 @@
                     }
                   ],
                   "name": "RejectingAnOverpayment",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
                     {
@@ -8514,6 +8644,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -8603,6 +8734,7 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -8645,6 +8777,7 @@
                     }
                   ],
                   "name": "RejectingTheSamePaymentTwice",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
                     {
@@ -8655,6 +8788,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -8715,6 +8849,7 @@
               "description": null,
               "events": [],
               "name": "InvoiceBalances",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -8959,13 +9094,16 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ReducingTheBalanceByAPayment",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -9060,6 +9198,7 @@
               "description": "How late an invoice is - a state machine a projection cannot express",
               "events": [],
               "name": "InvoiceAging",
+              "operations": [],
               "projections": [],
               "queries": [
                 {
@@ -9212,13 +9351,16 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "AgingAnOverdueInvoice",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -9289,6 +9431,7 @@
               "description": "Every unpaid invoice is exactly one of due, overdue or settled",
               "events": [],
               "name": "CollectionsBoard",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -9877,13 +10020,16 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "MovingAnInvoiceFromDueToOverdue",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -9946,6 +10092,7 @@
               "description": "Today's exchange rates, for invoices in foreign currency",
               "events": [],
               "name": "ExchangeRates",
+              "operations": [],
               "projections": [],
               "queries": [
                 {
@@ -10099,6 +10246,7 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -10133,11 +10281,13 @@
                     }
                   ],
                   "name": "LookingUpTheEuroRate",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [
                     {
@@ -10197,6 +10347,7 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -10231,6 +10382,7 @@
                     }
                   ],
                   "name": "NotFindingAnUnpublishedCurrency",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
@@ -10238,6 +10390,7 @@
                   "thenNoResult": {
                     "kind": "SpecificationNoResultSyntax"
                   },
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -10272,6 +10425,7 @@
               "description": "Turns what the payment provider settles into payments on our invoices",
               "events": [],
               "name": "PaymentProviderSync",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -10293,6 +10447,7 @@
                             "path": "settlementId"
                           },
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -10365,8 +10520,10 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RecordingASettledCardPayment",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -10404,6 +10561,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -10458,6 +10616,7 @@
               "description": "Closes an invoice out once it is paid in full",
               "events": [],
               "name": "ReconcilePayments",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -10511,8 +10670,10 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ClosingOutAFullyPaidInvoice",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -10525,6 +10686,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -10640,6 +10802,7 @@
                 }
               ],
               "name": "ChaseOverdueInvoices",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -10658,6 +10821,7 @@
                           "event": "InvoiceReminderSent",
                           "for": null,
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -10713,6 +10877,7 @@
                           "event": "CollectionsDigestIssued",
                           "for": null,
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -10782,8 +10947,10 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RemindingAsSoonAsAnInvoiceIsOverdue",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -10805,6 +10972,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -10859,8 +11027,10 @@
                     "kind": "SpecificationClockSyntax",
                     "instant": "2026-10-05T07:00:00Z"
                   },
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "IssuingTheWeeklyDigestOnMondayMorning",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -10882,6 +11052,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -10923,6 +11094,7 @@
               "description": null,
               "events": [],
               "name": "MyInvoices",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -11234,13 +11406,16 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "SeeingMyOwnInvoice",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -11336,6 +11511,7 @@
                         "path": "invoiceId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -11476,6 +11652,7 @@
                 }
               ],
               "name": "RequestPaymentPlan",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -11526,8 +11703,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RequestingAThreeInstallmentPlan",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -11560,6 +11739,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -11615,8 +11795,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingASingleInstallment",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
                     {
@@ -11627,6 +11809,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -11688,6 +11871,7 @@
               "description": "What the credit bureau says the customer may still owe",
               "events": [],
               "name": "CreditStatus",
+              "operations": [],
               "projections": [],
               "queries": [
                 {
@@ -11821,6 +12005,7 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -11863,11 +12048,13 @@
                     }
                   ],
                   "name": "SeeingMyCreditStatus",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [
                     {
@@ -11942,6 +12129,7 @@
               "description": "Archive of cancelled invoices - every property auto-maps from the event",
               "events": [],
               "name": "CancelledInvoices",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -12163,13 +12351,16 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ArchivingACancelledInvoice",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -12274,8 +12465,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RefusingANonAuditor",
+                  "thenCompensated": [],
                   "thenDenied": {
                     "kind": "SpecificationDeniedSyntax"
                   },
@@ -12283,6 +12476,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -12317,6 +12511,7 @@
               "description": "How busy each invoice, payment and customer is - every event, per event source",
               "events": [],
               "name": "SystemActivity",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -12489,13 +12684,16 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "CountingEveryEventOnAnInvoice",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -12643,6 +12841,7 @@
                     }
                   ],
                   "name": "NotifyCustomerOnInvoiceRegistered",
+                  "operations": [],
                   "projections": [],
                   "queries": [],
                   "reactions": [
@@ -12661,6 +12860,7 @@
                               "event": "InvoiceNotificationSent",
                               "for": null,
                               "inlineEvent": null,
+                              "inlineOperation": null,
                               "mappings": [
                                 {
                                   "kind": "PropertyMappingSyntax",
@@ -12742,8 +12942,10 @@
                       ],
                       "givenCaptures": [],
                       "givenClock": null,
+                      "givenOperationFailures": [],
                       "givenReadModels": [],
                       "name": "NotifyingTheBillingContact",
+                      "thenCompensated": [],
                       "thenDenied": null,
                       "thenErrors": [],
                       "thenEvents": [
@@ -12765,6 +12967,7 @@
                       ],
                       "thenEventsInAnyOrder": false,
                       "thenNoResult": null,
+                      "thenOperations": [],
                       "thenReadModels": [],
                       "thenResults": [],
                       "thenReturns": null,
@@ -12835,6 +13038,7 @@
               "description": null,
               "events": [],
               "name": "DetectOverdueInvoices",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -12902,8 +13106,10 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "MarkingALateInvoiceOverdue",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -12916,6 +13122,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -13027,6 +13234,7 @@
                 }
               ],
               "name": "SyncBillingDirectory",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -13066,6 +13274,7 @@
                           "event": "BillingDirectorySyncStarted",
                           "for": null,
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -13112,6 +13321,7 @@
                           "event": "BillingContactPublished",
                           "for": null,
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -13179,8 +13389,10 @@
                     "kind": "SpecificationClockSyntax",
                     "instant": "2026-10-02T10:00:00Z"
                   },
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "SynchronizingWhenSomeoneAsks",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -13210,6 +13422,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -13257,8 +13470,10 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "PublishingAnUpdatedContact",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -13280,6 +13495,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -13565,6 +13781,7 @@
                 }
               ],
               "name": "LegacyInvoiceSync",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -13583,6 +13800,7 @@
                           "event": "InvoicePaid",
                           "for": null,
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -13646,8 +13864,10 @@
                     "kind": "SpecificationClockSyntax",
                     "instant": "2026-10-02T12:00:00Z"
                   },
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "SeeingAnInvoicePaidInTheLegacySystem",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -13734,6 +13954,7 @@
                   ],
                   "thenEventsInAnyOrder": true,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -13797,8 +14018,10 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "TranslatingALegacyPayment",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -13820,6 +14043,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -13914,6 +14138,7 @@
       ]
     }
   ],
+  "systems": [],
   "types": [
     {
       "kind": "TypeSyntax",

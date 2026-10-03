@@ -38,6 +38,7 @@
                         "path": "projectId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -118,6 +119,7 @@
                 }
               ],
               "name": "Rename",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -135,5 +137,6 @@
     }
   ],
   "personas": [],
+  "systems": [],
   "types": []
 }

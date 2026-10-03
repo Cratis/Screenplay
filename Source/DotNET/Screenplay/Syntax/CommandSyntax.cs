@@ -333,6 +333,11 @@ public record ProducesSyntax(
     /// Gets the event declared by this production, owned by the containing slice.
     /// </summary>
     public EventSyntax? InlineEvent { get; init; }
+
+    /// <summary>
+    /// Gets the operation declared by this production, owned by the containing slice.
+    /// </summary>
+    public OperationSyntax? InlineOperation { get; init; }
 }
 
 /// <summary>
