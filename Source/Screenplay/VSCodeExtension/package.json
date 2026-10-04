@@ -24,6 +24,25 @@
     "categories": [
         "Programming Languages"
     ],
+    "extensionKind": [
+        "workspace"
+    ],
+    "capabilities": {
+        "untrustedWorkspaces": {
+            "supported": "limited",
+            "description": "Local language assistance remains available. C# repair processes require workspace trust and explicit User configuration.",
+            "restrictedConfigurations": [
+                "screenplay.repairs.enabled",
+                "screenplay.repairs.executable",
+                "screenplay.repairs.arguments",
+                "screenplay.repairs.modelRoot"
+            ]
+        },
+        "virtualWorkspaces": {
+            "supported": "limited",
+            "description": "C# repairs require a physical filesystem workspace and native extension host."
+        }
+    },
     "activationEvents": [],
     "main": "./out/extension.js",
     "contributes": {
@@ -61,6 +80,35 @@
         "configuration": {
             "title": "Screenplay",
             "properties": {
+                "screenplay.repairs.enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "scope": "machine",
+                    "markdownDescription": "Opt in to saved-file C# repairs with a user-installed server. Requires a trusted physical workspace and repair contract v1. Nothing is installed or saved automatically."
+                },
+                "screenplay.repairs.executable": {
+                    "type": "string",
+                    "default": "",
+                    "scope": "machine",
+                    "markdownDescription": "Absolute path to an explicitly approved executable on this extension host (including remote hosts). User settings only; no shell or project discovery."
+                },
+                "screenplay.repairs.arguments": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [
+                        "mcp"
+                    ],
+                    "scope": "machine",
+                    "markdownDescription": "Separate argument-prefix strings, for example `[\"mcp\"]` for screenplay or `[\"screenplay\", \"mcp\"]` for cratis. The approved model root is appended as one argument; do not quote shell strings."
+                },
+                "screenplay.repairs.modelRoot": {
+                    "type": "string",
+                    "default": "",
+                    "scope": "machine",
+                    "markdownDescription": "Absolute existing physical application directory inside the trusted filesystem workspace. Changing it closes the old connection and invalidates all proposals."
+                },
                 "screenplay.sourceRoot": {
                     "type": [
                         "string",
@@ -88,6 +136,16 @@
             }
         ],
         "commands": [
+            {
+                "command": "screenplay.repair.refresh",
+                "title": "Discover Saved-File C# Repairs",
+                "category": "Screenplay"
+            },
+            {
+                "command": "screenplay.repair.inspectState",
+                "title": "Inspect C# Repair Identity and Recovery State",
+                "category": "Screenplay"
+            },
             {
                 "command": "screenplay.showSource",
                 "title": "Show Source",
@@ -135,7 +193,10 @@
         "package": "vsce package --no-dependencies",
         "lint": "yarn g:lint",
         "lint:ci": "yarn g:lint:ci",
-        "test": "vitest run"
+        "test": "vitest run",
+        "test:repair-process": "node tests/runProcessTests.mjs",
+        "build:test-host": "node tests/buildHostTests.mjs",
+        "test:host": "node tests/runHostTests.mjs"
     },
     "dependencies": {
         "@cratis/screenplay-compiler": "workspace:*",
@@ -154,6 +215,7 @@
         "@types/react": "19.2.17",
         "@types/react-dom": "19.2.3",
         "@types/vscode": "^1.85.0",
+        "@vscode/test-electron": "^2.5.2",
         "@vscode/vsce": "^3.9.2",
         "chai": "^6.2.2",
         "esbuild": "^0.28.1",

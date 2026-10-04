@@ -13,6 +13,7 @@ import { registerDiagnostics } from './Diagnostics';
 import { registerFileLinks } from './FileLinks';
 import { registerEventModelBoard } from './EventModelBoard/registerEventModelBoard';
 import { ApplicationIndex } from './ApplicationIndex';
+import { registerRepairCodeActions } from './RepairCodeActions';
 
 export function activate(context: vscode.ExtensionContext): void {
     ensureBuiltInSubLanguages();
@@ -27,6 +28,7 @@ export function activate(context: vscode.ExtensionContext): void {
     registerDefinitions(context, index);
     registerDiagnostics(context, index);
     registerCodeActions(context, index);
+    registerRepairCodeActions(context, index);
     registerFileLinks(context);
     registerEventModelBoard(context);
     void index.load();

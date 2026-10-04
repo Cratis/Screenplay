@@ -1,0 +1,92 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+import * as vscode from 'vscode';
+import { createHash } from 'node:crypto';
+import { RepairFailure } from './RepairClient';
+import { RepairPreview } from './RepairSession';
+
+export class RepairPreviewProvider implements vscode.FileSystemProvider, vscode.Disposable {
+    readonly #changed = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
+    readonly onDidChangeFile = this.#changed.event;
+    watch(): vscode.Disposable { return { dispose() {} }; }
+    stat(uri: vscode.Uri): vscode.FileStat {
+        const bytes = this.readFile(uri);
+        return { type: vscode.FileType.File, ctime: 0, mtime: 0, size: bytes.length, permissions: vscode.FilePermission.Readonly };
+    }
+    readFile(uri: vscode.Uri): Uint8Array { return Buffer.from(this.provideTextDocumentContent(uri), 'utf8'); }
+    readDirectory(): [string, vscode.FileType][] { return []; }
+    createDirectory(): never { throw vscode.FileSystemError.NoPermissions('Repair previews are read-only.'); }
+    writeFile(): never { throw vscode.FileSystemError.NoPermissions('Repair previews are read-only.'); }
+    delete(): never { throw vscode.FileSystemError.NoPermissions('Repair previews are read-only.'); }
+    rename(): never { throw vscode.FileSystemError.NoPermissions('Repair previews are read-only.'); }
+    static readonly scheme = 'screenplay-repair';
+    readonly #documents = new Map<string, string>();
+    #token?: string;
+    #preview?: RepairPreview;
+    #generation = 0;
+    constructor(readonly scheme = RepairPreviewProvider.scheme) {}
+    get token(): string | undefined { return this.#token; }
+    review(token: string): RepairPreview {
+        if (this.#token !== token || !this.#preview) throw new RepairFailure('PreviewExpired', 'Review expired.');
+        // VS Code can accept a programmatic WorkspaceEdit even on a read-only model.
+        // Such an edit must never count as the exact byte review issued by the server.
+        for (const [uri, content] of this.#documents) {
+            const document = vscode.workspace.textDocuments.find(document => document.uri.toString() === uri);
+            if (!document || document.isDirty || document.getText() !== content.replace(/^\uFEFF/, '')) {
+                this.clear();
+                throw new RepairFailure('PreviewModified', 'A preview buffer was changed or closed. Rediscover and review the exact bytes.');
+            }
+        }
+        return this.#preview;
+    }
+
+    provideTextDocumentContent(uri: vscode.Uri): string {
+        const content = this.#documents.get(uri.toString());
+        if (content === undefined) throw new RepairFailure('PreviewExpired', 'This repair preview has expired. Rediscover and review it.');
+        return content;
+    }
+    clear(): void { ++this.#generation; this.#documents.clear(); this.#token = undefined; this.#preview = undefined; }
+    dispose(): void { this.clear(); this.#changed.dispose(); }
+    closed(uri: vscode.Uri): boolean {
+        if (!this.#documents.has(uri.toString())) return false;
+        this.clear();
+        return true;
+    }
+    async show(preview: RepairPreview): Promise<void> {
+        this.clear();
+        const generation = this.#generation;
+        const check = () => { if (generation !== this.#generation) throw new RepairFailure('PreviewExpired', 'Workspace changed or preview closed during review.'); };
+        const add = (name: string, content: string) => {
+            check();
+            const uri = vscode.Uri.from({ scheme: this.scheme, path: `/${preview.token}/${name}` });
+            this.#documents.set(uri.toString(), content);
+            return uri;
+        };
+        const details = (bytes: Buffer | null) => bytes === null ? 'absent' : `${bytes.length} bytes; SHA-256 ${createHash('sha256').update(bytes).digest('hex')}; BOM ${bytes.subarray(0, 3).equals(Buffer.from([239, 187, 191])) ? 'yes' : 'no'}; CRLF ${bytes.includes(Buffer.from('\r\n')) ? 'yes' : 'no'}`;
+        for (let index = 0; index < preview.files.length; index++) {
+            const file = preview.files[index];
+            const before = add(`${index}/before/${file.path}`, file.before?.toString('utf8') ?? '');
+            const after = add(`${index}/after/${file.path}`, file.after?.toString('utf8') ?? '');
+            await vscode.commands.executeCommand('vscode.diff', before, after, `${preview.title}: ${file.path}`, { preview: false });
+        }
+        const summary = [
+            `# ${preview.title}`, '',
+            preview.code === 'PLAY0478' ? '**Routing change:** events will explicitly target the command identifier. This is not a cleanup.' : 'Declare the produced event only where the C# compiler has proved the repair eligible.', '',
+            '**Whole-document formatting:** all touched sources are canonically reprinted. Inspect every source diff and the identity-state diff.',
+            '**Apply writes outside the editor.** It is not normal editor Undo. Use an exclusive writer; journaled rollback does not provide crash-atomic visibility across files.',
+            'No AI, build, implementation execution or runtime confirmation is performed.', '',
+            `Executable readiness (compiler subset only): **${preview.executableReady ? 'ready' : 'not ready'}**. Authoring acceptance does not mean runtime confirmation.`, '',
+            '## Exact byte review',
+            ...preview.files.flatMap(file => [`### ${file.path}`, `Before: ${details(file.before)}`, `After: ${details(file.after)}`, '']),
+            '## Authoring diagnostics', '```json', JSON.stringify(preview.authoring, null, 2), '```', '',
+            '## Executable diagnostics', '```json', JSON.stringify(preview.executable, null, 2), '```', '',
+            '## Dropped comments', '```json', JSON.stringify(preview.droppedComments, null, 2), '```', '',
+            'Apply is offered only after all source and identity byte pages have been collected. Closing a preview or changing the workspace invalidates it.',
+        ].join('\n');
+        await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(add('review.md', summary)), { preview: false });
+        check();
+        this.#preview = preview;
+        this.#token = preview.token;
+    }
+}
