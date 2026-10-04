@@ -333,15 +333,17 @@ public class when_editing_named_rule_intent
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void should_require_original_removal_provenance_for_ambiguous_decoded_duplicates(bool pendingSurvivor)
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void should_require_original_removal_provenance_for_ambiguous_decoded_duplicates(bool pendingSurvivor, bool editHints)
     {
         var workspace = Workspace(Prefix + "            implementation\n              hint \"Keep\"\n          label rule Check" + (pendingSurvivor ? "\n            implementation\n              hint \"Keep\"" : ""));
         var index = WorkspaceSyntaxIndex.Create(workspace);
         var root = index.Entries.Single(entry => entry.Parent is null);
         var first = index.Entries.First(entry => entry.Node is ValidationRuleSyntax);
-        var replacement = SyntaxJson.Deserialize(SyntaxJson.Serialize(new ScreenplayCompiler().Parse(Prefix + (pendingSurvivor ? "            implementation\n              hint \"Keep\"" : "")).Value!));
+        var source = Prefix + (pendingSurvivor ? $"            implementation\n              hint \"{(editHints ? "Edited" : "Keep")}\"" : "");
+        var replacement = SyntaxJson.Deserialize(SyntaxJson.Serialize(new ScreenplayCompiler().Parse(source).Value!));
         Propose(workspace, WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments, new ReplaceWorkspaceNode(root.Handle, root.Node, replacement)).Accepted.ShouldBeFalse();
         workspace.ProposeAuthoring(Request(workspace) with { Operations = [new RemoveWorkspaceNode(first.Handle, first.Node), new ReplaceWorkspaceNode(root.Handle, root.Node, replacement)] }).Accepted.ShouldBeTrue();
     }

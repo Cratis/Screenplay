@@ -56,11 +56,12 @@ static class WorkspacePendingRuleTransitions
         }
 
         // Partial deletion of indistinguishable pending duplicates is not an ordinal match either.
-        if (originals.Exists(entry => Pending(entry.Node) && candidates.Exists(current => SameOwner(entry, current) && RetainsMetadata(entry.Node, current.Node))))
+        if (originals.Exists(entry => Pending(entry.Node) && candidates.Exists(current => SameOwner(entry, current) && !Bare(current.Node) && MayCorrespond(entry.Node, current.Node))))
         {
             var pending = originals.Where(entry => Pending(entry.Node)).ToArray();
-            if (pending.Any(entry => candidates.Count(current => SameOwner(entry, current) && RetainsMetadata(entry.Node, current.Node)) <
-                pending.Count(other => Owner(before, other)?.Handle == Owner(before, entry)?.Handle && RetainsMetadata(other.Node, entry.Node))))
+            if (pending.Any(entry => candidates.Exists(current => SameOwner(entry, current) && !Bare(current.Node) && MayCorrespond(entry.Node, current.Node)) &&
+                candidates.Count(current => SameOwner(entry, current) && !Bare(current.Node) && MayCorrespond(entry.Node, current.Node)) <
+                pending.Count(other => Owner(before, other)?.Handle == Owner(before, entry)?.Handle && MayCorrespond(other.Node, entry.Node))))
             {
                 throw new InvalidWorkspaceAuthoring("Deleting an ambiguous pending named-rule occurrence requires its original validated RemoveWorkspaceNode handle.");
             }
@@ -96,6 +97,8 @@ static class WorkspacePendingRuleTransitions
     static bool SameHeader(SyntaxNode previous, SyntaxNode current) => previous is ValidationRuleSyntax prior && current is ValidationRuleSyntax rule &&
         prior.Property == rule.Property && prior.Rule == rule.Rule &&
         (prior.Value is null ? rule.Value is null : rule.Value is not null && SyntaxJson.StructurallyEqual(prior.Value, rule.Value));
+
+    static bool MayCorrespond(SyntaxNode previous, SyntaxNode current) => SameHeader(previous, current) || RetainsMetadata(previous, current);
 
     static bool RetainsMetadata(SyntaxNode previous, SyntaxNode current) => previous is ValidationRuleSyntax prior && current is ValidationRuleSyntax rule &&
         rule.Rule == ValidationRuleKind.Rule && prior.Implementation is not null && rule.Implementation is not null &&
