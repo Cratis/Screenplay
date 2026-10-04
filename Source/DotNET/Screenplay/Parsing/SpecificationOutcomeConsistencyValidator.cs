@@ -55,6 +55,13 @@ internal static class SpecificationOutcomeConsistencyValidator
             return;
         }
 
+        // An event the command does not produce can still follow it: a reaction may append it, or invoke a command
+        // that does. Which reactions run is execution, not declaration, so only the command's own events are decided here.
+        if (candidates.Count == 0 && declarations.Slices.Any(entry => entry.Slice.Reactions.Any()))
+        {
+            return;
+        }
+
         if (candidates.TrueForAll(producer => Contradicts(producer, when, expected, command, eventType, declarations)))
         {
             context.Error(

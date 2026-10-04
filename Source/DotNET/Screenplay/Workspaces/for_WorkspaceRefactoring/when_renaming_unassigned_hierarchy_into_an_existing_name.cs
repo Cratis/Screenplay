@@ -14,7 +14,7 @@ public class when_renaming_unassigned_hierarchy_into_an_existing_name
     [InlineData("module App\n  feature Parent\n    feature Left\n    feature Right", SemanticKind.Feature)]
     public void should_refuse_to_collapse_distinct_logical_declarations(string hierarchy, SemanticKind kind)
     {
-        var document = WorkspaceDocument.Create("model", PortablePlayPath.Parse("model.play"), Encoding.UTF8.GetBytes($"trigger Tick\n{hierarchy}"));
+        var document = WorkspaceDocument.Create("model", PortablePlayPath.Parse("model.play"), Encoding.UTF8.GetBytes($"import Other.Thing\n{hierarchy}"));
         var workspace = ScreenplayWorkspace.Create("App", [document], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("App")));
         var target = WorkspaceSyntaxIndex.Create(workspace).Entries.Single(entry => entry.Address?.Kind == kind && entry.Address.Name == "Left");
         target.SemanticId.ShouldBeNull();

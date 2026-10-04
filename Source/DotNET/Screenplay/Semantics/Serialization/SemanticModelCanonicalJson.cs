@@ -95,6 +95,7 @@ public static partial class SemanticModelCanonicalJson
         WriteArray(writer, "types", application.Types.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteCompositeType);
         WriteArray(writer, "modules", application.Modules.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, module) => WriteModule(output, module, version));
         if (!application.Policies.IsDefaultOrEmpty) WriteArray(writer, "policies", application.Policies.OrderBy(_ => _.Name, StringComparer.Ordinal), WritePolicy);
+        if (!application.Triggers.IsDefaultOrEmpty) WriteArray(writer, "triggers", application.Triggers.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteTrigger);
         writer.WriteEndObject();
     }
 
@@ -151,6 +152,8 @@ public static partial class SemanticModelCanonicalJson
         WriteArray(writer, "queries", slice.Queries.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteQuery);
         WriteArray(writer, "specifications", slice.Specifications.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, specification) => WriteSpecification(output, specification, version));
         WriteConstraints(writer, slice.Constraints);
+        if (!slice.Reactions.IsDefaultOrEmpty) WriteArray(writer, "reactions", slice.Reactions.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteReaction);
+        if (!slice.Captures.IsDefaultOrEmpty) WriteArray(writer, "captures", slice.Captures.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteCapture);
         writer.WriteEndObject();
     }
 
@@ -228,7 +231,7 @@ public static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", eventContract.Name);
         WriteArray(writer, "properties", eventContract.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProperty);
         if (!eventContract.Tags.IsDefaultOrEmpty) WriteStringArray(writer, "tags", eventContract.Tags);
-        if ((version == SemanticVersion.V4 || version == SemanticVersion.V5) && !eventContract.PriorRevisions.IsDefaultOrEmpty)
+        if (version.IsAtLeast(SemanticVersion.V4) && !eventContract.PriorRevisions.IsDefaultOrEmpty)
         {
             writer.WriteNumber("predecessor", eventContract.Predecessor!.Value.Value);
             WriteArray(writer, "priorRevisions", eventContract.PriorRevisions, (output, prior) =>
@@ -294,6 +297,12 @@ public static partial class SemanticModelCanonicalJson
         }
 
         if (!produced.Tags.IsDefaultOrEmpty) WriteStringArray(writer, "tags", produced.Tags);
+        if (produced.DestinationType is not null)
+        {
+            writer.WritePropertyName("destinationType");
+            WriteTypeReference(writer, produced.DestinationType);
+        }
+
         writer.WriteEndObject();
     }
 
@@ -332,7 +341,7 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteString("eventContract", transition.EventContract.ToString());
         writer.WritePropertyName("affectedInstance");
         writer.WriteStartObject();
-        if (version != SemanticVersion.V4 && version != SemanticVersion.V5) writer.WriteString("cardinality", AffectedCardinality(transition.AffectedInstance.Cardinality));
+        if (!version.IsAtLeast(SemanticVersion.V4)) writer.WriteString("cardinality", AffectedCardinality(transition.AffectedInstance.Cardinality));
         writer.WritePropertyName("key");
         WriteExpression(writer, transition.AffectedInstance.Key);
         writer.WriteEndObject();
@@ -389,10 +398,11 @@ public static partial class SemanticModelCanonicalJson
         WriteArray(writer, "thenEvents", specification.ThenEvents, WriteSpecificationEvent);
         if (specification.ThenEventsInAnyOrder) writer.WriteBoolean("thenEventsInAnyOrder", true);
         WriteArray(writer, "thenReadModels", specification.ThenReadModels, WriteSpecificationReadModel);
-        if (version == SemanticVersion.V5) WriteArray(writer, "thenAbsentReadModels", specification.ThenAbsentReadModels, WriteSpecificationAbsentReadModel);
+        if (version.IsAtLeast(SemanticVersion.V5)) WriteArray(writer, "thenAbsentReadModels", specification.ThenAbsentReadModels, WriteSpecificationAbsentReadModel);
         WriteArray(writer, "thenQueries", specification.ThenQueries, WriteSpecificationQuery);
         WriteArray(writer, "thenErrors", specification.ThenErrors, WriteSpecificationError);
         if (specification.ThenDenied) writer.WriteBoolean("thenDenied", true);
+        WriteAutomationSpecification(writer, specification);
         writer.WriteEndObject();
     }
 
@@ -635,6 +645,8 @@ public static partial class SemanticModelCanonicalJson
     {
         SemanticSliceKind.StateChange => "stateChange",
         SemanticSliceKind.StateView => "stateView",
+        SemanticSliceKind.Automation => "automation",
+        SemanticSliceKind.Translate => "translate",
         _ => throw Unknown(nameof(SemanticSliceKind), value)
     };
 
@@ -711,6 +723,7 @@ public static partial class SemanticModelCanonicalJson
     {
         SemanticExpressionRootKind.Command => "command",
         SemanticExpressionRootKind.Event => "event",
+        SemanticExpressionRootKind.Trigger => "trigger",
         _ => throw Unknown(nameof(SemanticExpressionRootKind), value)
     };
 

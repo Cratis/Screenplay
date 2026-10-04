@@ -269,7 +269,7 @@ public sealed record SemanticEventRevision(
 }
 
 /// <summary>
-/// Represents one event a command can produce.
+/// Represents one event a command or a reaction can produce.
 /// </summary>
 /// <param name="EventContract">The event declaration semantic identity.</param>
 /// <param name="Condition">The optional production condition.</param>
@@ -293,6 +293,12 @@ public sealed record SemanticProducedEvent(
     /// Gets literal tags appended only with this production.
     /// </summary>
     public ImmutableArray<string> Tags { get; init; } = [];
+
+    /// <summary>
+    /// Gets the type of the event source a reaction appends to; <c>null</c> for a command, whose destination is typed by the
+    /// command, and for a reaction that appends to the event source of the event that set it off.
+    /// </summary>
+    public SemanticTypeReference? DestinationType { get; init; }
 }
 
 /// <summary>

@@ -92,6 +92,17 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         }
 
         var queries = expected.ThenQueries.Select(value => new SemanticQueryRequest(value.Query, value.Key)).ToImmutableArray();
+
+        // Since ESM v6 an action sets reactions off, and a specification can act through the clock, a trigger or a capture.
+        var acts = expected.When is not null || expected.WhenAppended is not null || expected.WhenClock is not null ||
+            expected.WhenTrigger is not null || expected.WhenCapture is not null;
+        if (plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V6) && acts)
+        {
+            var performed = SemanticScenario.Perform(evaluator, plan, world, expected, queries, out var actionFacts);
+            var compared = Compare(expected, performed, actionFacts);
+            return new(specification, compared.IsEmpty, performed, compared);
+        }
+
         var request = expected.When is null
             ? SemanticExecutionRequest.ForQueries(queries)
             : SemanticExecutionRequest.Create(expected.When.Command, expected.When.Values, queries) with
@@ -103,7 +114,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             };
 
         // An append is an occurrence, not a command: enforce append constraints, project, then query.
-        // Reactions are not part of the ESM and are deliberately not executed here.
+        // Models before ESM v6 have no reactions to run.
         var execution = expected.WhenAppended is { } appended
             ? SemanticEvaluator.Append(
                 plan,
@@ -168,9 +179,11 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         }
     }
 
+    // actionFacts is how many leading facts the action itself appended, in ESM v6; before v6 it is -1 and every fact is the action's.
     static ImmutableArray<string> Compare(
         SemanticSpecification expected,
-        SemanticExecutionResult execution)
+        SemanticExecutionResult execution,
+        int actionFacts = -1)
     {
         var failures = ImmutableArray.CreateBuilder<string>();
         if (expected.ThenDenied)
@@ -195,11 +208,15 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             return failures.ToImmutable();
         }
 
+        // In ESM v6 the appended event is the action itself, like a command's input: 'then' events are what followed it.
+        var following = actionFacts >= 0 && expected.WhenAppended is not null ? accepted.Facts[actionFacts..] : accepted.Facts;
         if (expected.WhenAppended is null || expected.ThenEvents.Length > 0)
         {
-            CompareFacts(expected.ThenEvents, accepted.Facts, failures, expected.ThenEventsInAnyOrder);
+            CompareFacts(expected.ThenEvents, following, failures, expected.ThenEventsInAnyOrder);
         }
-        if (expected.When?.EventSource is { } commandSource && accepted.Facts.Any(fact => !SemanticValueRules.AreEqual(fact.Destination, commandSource.Value)))
+
+        var commandFacts = actionFacts >= 0 ? accepted.Facts[..actionFacts] : accepted.Facts;
+        if (expected.When?.EventSource is { } commandSource && commandFacts.Any(fact => !SemanticValueRules.AreEqual(fact.Destination, commandSource.Value)))
         {
             failures.Add("Produced fact destination does not match the specification command event source.");
         }

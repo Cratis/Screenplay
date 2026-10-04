@@ -107,8 +107,9 @@ reaction HandleOrder
 the same view more than once, every read needs a distinct alias; aliases must be unique within the
 trigger and must not match a trigger value. `by` must name a value taken by that trigger. Clock triggers (`every` and `at`) take no values,
 so they can use `reads <View>` but not `by`. An unknown view is reported. A reaction that invokes a
-command leaves the command's decision to that command and its own reads. Reactions are not yet bound
-in the executable semantic model; these declarations do not currently provide runtime protection.
+command leaves the command's decision to that command and its own reads. The executable semantic model
+does not consult a declared view: a reaction's values come from its occurrence, so `reads` documents the
+decision and provides no runtime protection there.
 
 `for each <View>` is reserved for a future view-driven trigger, not part of this grammar.
 
@@ -193,6 +194,23 @@ consequence, and they are not.
 
 Both are declarations of *what happens*, not of how — a trigger can state its consequences and still carry a
 `file` or an inline block that implements them.
+
+## In the executable semantic model
+
+Reactions bind to the executable semantic model as ESM v6 ([decision 0022](https://github.com/Cratis/Screenplay/blob/main/decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md)),
+so a specification can assert what a reaction does. In the reference evaluator:
+
+- After every accepted fact, the reactions to its event run: their `produces` first, then their `invokes`,
+  in the order the trigger states them. Facts are reacted to in the order they were appended.
+- A `produces` without `for` appends to the event source of the event that set the reaction off. A clock,
+  application or built-in trigger has no such event, so what it produces needs `for` - a value it carries, or
+  literal text.
+- An `invokes` runs the command through its full pipeline - authorization, validation, constraints - with no
+  caller. A command that requires one rejects the reaction, and the rejection ends the scenario.
+- `where` narrows the occurrences that carry the values it names. A trigger that carries none of them, such as
+  the clock, is not narrowed; one that carries only some of them is an error.
+- A body in code - a `file` or an inline block - is a target's to run. Reaching one returns `SemanticUnsupported`,
+  never a guessed result.
 
 ## Examples
 

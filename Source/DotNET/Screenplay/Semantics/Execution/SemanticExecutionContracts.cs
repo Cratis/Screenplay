@@ -90,7 +90,12 @@ public enum SemanticExecutionCapability
     /// <summary>
     /// Authorization depends on a policy predicate that requires a target provider.
     /// </summary>
-    Authorization = 5
+    Authorization = 5,
+
+    /// <summary>
+    /// A reaction: its body, or a cascade of reactions that does not settle.
+    /// </summary>
+    Reaction = 6
 }
 
 /// <summary>

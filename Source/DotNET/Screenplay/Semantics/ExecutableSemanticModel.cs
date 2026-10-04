@@ -78,7 +78,7 @@ public sealed record ExecutableSemanticModel
         SemanticVersion semanticVersion,
         SemanticApplication application)
     {
-        EsmSchemaV5Support.EnsureSupported(languageVersion, semanticVersion);
+        EsmSchemaV6Support.EnsureSupported(languageVersion, semanticVersion);
         SemanticModelValidator.Validate(application, semanticVersion);
         var withoutRevision = SemanticModelCanonicalJson.SerializeWithoutRevision(languageVersion, semanticVersion, application);
         var revision = SemanticRevision.Compute(withoutRevision);
@@ -120,7 +120,7 @@ internal static partial class SemanticModelValidator
             throw new InvalidSemanticContract("An ESM v4 model must contain a multi-generation event contract.");
         }
 
-        if (semanticVersion != SemanticVersion.V4 && semanticVersion != SemanticVersion.V5 && evolved)
+        if (!semanticVersion.IsAtLeast(SemanticVersion.V4) && evolved)
         {
             throw new InvalidSemanticContract("Event contract lineage requires ESM v4.");
         }
@@ -132,11 +132,12 @@ internal static partial class SemanticModelValidator
             throw new InvalidSemanticContract("An ESM v5 model must contain a keyed read-model absence assertion.");
         }
 
-        if (semanticVersion != SemanticVersion.V5 && absent)
+        if (!semanticVersion.IsAtLeast(SemanticVersion.V5) && absent)
         {
             throw new InvalidSemanticContract("A keyed read-model absence assertion requires ESM v5.");
         }
 
+        ValidateAutomationVersion(application, semanticVersion);
         if (semanticVersion == SemanticVersion.V3 && !application.Policies.Any(policy => policy.Condition is SemanticOpaquePolicyCondition) &&
             !application.Concepts.Any(concept => concept.Validations.Any(validation => validation.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation)) &&
             application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices).All(slice => slice.Reducers.IsEmpty &&
@@ -146,12 +147,19 @@ internal static partial class SemanticModelValidator
         }
     }
 
-    internal static SemanticTypeReference DeclaredEventSourceType(IEnumerable<SemanticCommand> commands, SemanticId eventContract)
+    internal static SemanticTypeReference DeclaredEventSourceType(IEnumerable<SemanticCommand> commands, SemanticId eventContract) =>
+        DeclaredEventSourceType(commands, [], [], eventContract);
+
+    // Since ESM v6 a reaction or a capture can append an event too: a reaction to the event source its 'for' names, or
+    // to that of the event that set it off, and a capture to the one its record key names.
+    internal static SemanticTypeReference DeclaredEventSourceType(
+        IEnumerable<SemanticCommand> commands,
+        IEnumerable<SemanticReaction> reactions,
+        IEnumerable<SemanticCapture> captures,
+        SemanticId eventContract)
     {
-        var producerTypes = commands.SelectMany(command => command.Produces
-            .Where(produced => produced.EventContract == eventContract)
-            .Select(_ => command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type))
-            .OfType<SemanticTypeReference>().Distinct().ToArray();
+        var producerTypes = ProducerTypes([.. commands], [.. reactions], [.. captures], eventContract, [])
+            .Distinct().ToArray();
         if (producerTypes.Length != 1)
         {
             throw new InvalidSemanticContract("A specification event source needs one unambiguous declared producer destination type.");
@@ -159,6 +167,44 @@ internal static partial class SemanticModelValidator
 
         return producerTypes[0];
     }
+
+    static List<SemanticTypeReference> ProducerTypes(
+        SemanticCommand[] commands,
+        SemanticReaction[] reactions,
+        SemanticCapture[] captures,
+        SemanticId eventContract,
+        HashSet<SemanticId> visited)
+    {
+        var types = commands.SelectMany(command => command.Produces
+            .Where(produced => produced.EventContract == eventContract)
+            .Select(_ => command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type))
+            .OfType<SemanticTypeReference>().ToList();
+        visited.Add(eventContract);
+        foreach (var trigger in reactions.SelectMany(reaction => reaction.Triggers))
+        {
+            foreach (var produced in trigger.Produces.Where(produced => produced.EventContract == eventContract))
+            {
+                if (produced.DestinationType is { } type)
+                {
+                    types.Add(type);
+                }
+                else if (trigger.Kind == SemanticReactionTriggerKind.Event && !visited.Contains(trigger.Source))
+                {
+                    types.AddRange(ProducerTypes(commands, reactions, captures, trigger.Source, visited));
+                }
+            }
+        }
+
+        types.AddRange(captures.SelectMany(CaptureAppends)
+            .Where(append => append.EventContract == eventContract)
+            .Select(append => append.EventSourceType));
+        return types;
+    }
+
+    static IEnumerable<SemanticCaptureAppend> CaptureAppends(SemanticCapture capture) =>
+        capture.Appends
+            .Concat(capture.Children.SelectMany(children => children.Appends))
+            .Concat(capture.Nested.SelectMany(nested => nested.Appends));
 
     static void RejectDuplicateRequirementIds(IEnumerable<string?> requirementIds, string owner)
     {
@@ -215,6 +261,7 @@ internal static partial class SemanticModelValidator
                 RegisterType(type);
             }
 
+            RegisterTriggers(application);
             foreach (var module in application.Modules)
             {
                 RegisterModule(module);
@@ -245,6 +292,7 @@ internal static partial class SemanticModelValidator
                 ValidateProperties(type.Properties);
             }
 
+            ValidateTriggers();
             foreach (var slice in AllSlices(application))
             {
                 ValidateSlice(slice);
@@ -352,6 +400,7 @@ internal static partial class SemanticModelValidator
             }
 
             RegisterConstraints(slice);
+            RegisterAutomation(slice);
         }
 
         void RegisterEvent(SemanticEventContract eventContract)
@@ -461,6 +510,7 @@ internal static partial class SemanticModelValidator
             }
 
             ValidateConstraints(slice);
+            ValidateAutomation(slice);
         }
 
         void ValidateCommand(SemanticCommand command)
@@ -493,7 +543,7 @@ internal static partial class SemanticModelValidator
             }
 
             if (command.CodeValidations.IsDefault || command.CodeValidations.Any(block => block is null || string.IsNullOrWhiteSpace(block.RequirementId)) ||
-                (command.CodeValidations.Length > 0 && _semanticVersion != SemanticVersion.V3 && _semanticVersion != SemanticVersion.V4 && _semanticVersion != SemanticVersion.V5))
+                (command.CodeValidations.Length > 0 && !_semanticVersion.IsAtLeast(SemanticVersion.V3)))
             {
                 throw new InvalidSemanticContract("Command code validation requires ESM v3 and a requirement identity.");
             }
@@ -563,7 +613,7 @@ internal static partial class SemanticModelValidator
 
             if (validation.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation)
             {
-                if ((_semanticVersion != SemanticVersion.V3 && _semanticVersion != SemanticVersion.V4 && _semanticVersion != SemanticVersion.V5) || validation.Operand is not null ||
+                if (!_semanticVersion.IsAtLeast(SemanticVersion.V3) || validation.Operand is not null ||
                     (validation.Kind == SemanticValidationRuleKind.CodeValidation && !isConcept) ||
                     string.IsNullOrWhiteSpace(validation.Name) || string.IsNullOrWhiteSpace(validation.RequirementId))
                 {
@@ -719,7 +769,7 @@ internal static partial class SemanticModelValidator
 
                 RejectNull(transition.AffectedInstance, "affected instance");
                 ValidateEnum(transition.AffectedInstance.Cardinality, AffectedInstanceCardinality.Unknown, "affected instance cardinality");
-                if ((_semanticVersion == SemanticVersion.V4 || _semanticVersion == SemanticVersion.V5) && transition.AffectedInstance.Cardinality != AffectedInstanceCardinality.One)
+                if (_semanticVersion.IsAtLeast(SemanticVersion.V4) && transition.AffectedInstance.Cardinality != AffectedInstanceCardinality.One)
                 {
                     throw new InvalidSemanticContract("ESM v4 does not admit zeroOrOne or many projection transition cardinality.");
                 }
@@ -740,7 +790,7 @@ internal static partial class SemanticModelValidator
 
         void ValidateReducer(SemanticReducer reducer)
         {
-            if ((_semanticVersion != SemanticVersion.V3 && _semanticVersion != SemanticVersion.V4 && _semanticVersion != SemanticVersion.V5) || string.IsNullOrWhiteSpace(reducer.Name) ||
+            if (!_semanticVersion.IsAtLeast(SemanticVersion.V3) || string.IsNullOrWhiteSpace(reducer.Name) ||
                 !_readModels.ContainsKey(reducer.ReadModel) || reducer.Transitions.IsDefaultOrEmpty)
             {
                 throw new InvalidSemanticContract($"Reducer '{reducer.Name}' requires ESM v3, a read model, and transitions.");
@@ -787,6 +837,7 @@ internal static partial class SemanticModelValidator
 
         void ValidateSpecification(SemanticSpecification specification)
         {
+            ValidateAutomationSpecification(specification);
             SemanticCommand? command = null;
             if (specification.When is not null)
             {
@@ -814,12 +865,17 @@ internal static partial class SemanticModelValidator
                 if (appended.EventSource is not null)
                 {
                     if (_semanticVersion == SemanticVersion.V1) throw new InvalidSemanticContract("An appended event source requires ESM v2.");
-                    var destinationTypes = _commands.Values.SelectMany(value => value.Produces
-                        .Where(produced => produced.EventContract == appended.EventContract)
-                        .Select(_ => value.Destination?.Type ?? value.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type))
-                        .OfType<SemanticTypeReference>().Distinct().ToArray();
-                    if (destinationTypes.Length != 1) throw new InvalidSemanticContract("An appended event source requires one unambiguous scalar destination type.");
-                    ValidateEventSource(appended.EventSource, destinationTypes[0]);
+                    SemanticTypeReference destinationType;
+                    try
+                    {
+                        destinationType = DeclaredEventSourceType(_commands.Values, _reactions, _captures.Values, appended.EventContract);
+                    }
+                    catch (InvalidSemanticContract)
+                    {
+                        throw new InvalidSemanticContract("An appended event source requires one unambiguous scalar destination type.");
+                    }
+
+                    ValidateEventSource(appended.EventSource, destinationType);
                 }
             }
 
@@ -831,7 +887,9 @@ internal static partial class SemanticModelValidator
 
             foreach (var value in specification.ThenEvents)
             {
-                if (producedEvents?.Contains(value.EventContract) != true && specification.WhenAppended?.EventContract != value.EventContract)
+                // Since ESM v6 reactions and captures append too, so any event can follow an action.
+                if (!_semanticVersion.IsAtLeast(SemanticVersion.V6) &&
+                    producedEvents?.Contains(value.EventContract) != true && specification.WhenAppended?.EventContract != value.EventContract)
                 {
                     throw new InvalidSemanticContract("A specification expects an event the command does not produce.");
                 }
@@ -887,7 +945,9 @@ internal static partial class SemanticModelValidator
                 RequireObjects(caller.Claims, nameof(caller.Claims), "caller claim");
             }
 
-            var deniedQuery = specification.ThenDenied && specification.When is null && specification.WhenAppended is null &&
+            var acted = specification.When is not null || specification.WhenAppended is not null || specification.WhenClock is not null ||
+                specification.WhenTrigger is not null || specification.WhenCapture is not null;
+            var deniedQuery = specification.ThenDenied && !acted &&
                 specification.ThenQueries.Length == 1 && specification.ThenQueries[0].Results.IsEmpty;
             var hasRejection = specification.ThenErrors.Length > 0 || specification.ThenDenied;
             var hasSuccessOutcome = specification.ThenEvents.Length > 0 || specification.ThenReadModels.Length > 0 || specification.ThenAbsentReadModels.Length > 0 ||
@@ -897,7 +957,7 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract("A rejection specification must contain exactly one rejection and no success outcomes.");
             }
 
-            if (specification.When is null && specification.WhenAppended is null && (specification.ThenErrors.Length > 0 || specification.ThenEvents.Length > 0 ||
+            if (!acted && (specification.ThenErrors.Length > 0 || specification.ThenEvents.Length > 0 ||
                 (specification.ThenDenied && !deniedQuery) ||
                 (specification.ThenReadModels.Length == 0 && specification.ThenAbsentReadModels.Length == 0 && specification.ThenQueries.Length == 0)))
             {
@@ -925,7 +985,7 @@ internal static partial class SemanticModelValidator
             ValidatePropertyValues(value.Values, eventContract.Properties, true);
             if (value.EventSource is not null)
             {
-                ValidateEventSource(value.EventSource, DeclaredEventSourceType(_commands.Values, value.EventContract));
+                ValidateEventSource(value.EventSource, DeclaredEventSourceType(_commands.Values, _reactions, _captures.Values, value.EventContract));
             }
         }
 
@@ -1090,7 +1150,8 @@ internal static partial class SemanticModelValidator
                     ValidateValueVariant(value.Value);
                     return TypeOf(value.Value);
                 case SemanticEventContextExpression context when expression.Kind == SemanticExpressionKind.EventContext:
-                    if (_semanticVersion == SemanticVersion.V1 || expectedRoot != SemanticExpressionRootKind.Command ||
+                    if (_semanticVersion == SemanticVersion.V1 ||
+                        (expectedRoot != SemanticExpressionRootKind.Command && !_occurrenceRoots) ||
                         context.Value is not (SemanticEventContextValueKind.Occurred or SemanticEventContextValueKind.CausedBySubject or
                             SemanticEventContextValueKind.CausedByName or SemanticEventContextValueKind.CausedByUserName) ||
                         context.Type.IsCollection || context.Type.IsOptional)

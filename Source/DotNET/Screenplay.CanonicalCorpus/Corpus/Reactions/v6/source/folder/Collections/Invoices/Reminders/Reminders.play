@@ -1,0 +1,38 @@
+module Collections
+  feature Invoices
+    slice Automation Reminders
+      reaction ReminderScheduler
+        when InvoiceSent
+          invoiceId
+          produces ReminderScheduled
+            scheduledAt = $context.occurred
+      reaction PaymentImporter
+        when PaymentFileArrived
+          invoiceId
+          amount
+          invokes CloseInvoice
+            invoiceId = invoiceId
+            reason = "paid"
+        where amount > 0
+      reaction WeeklyDigest
+        at 07:30 on Monday
+          produces DigestIssued
+            for "weekly"
+            issuedAt = $context.occurred
+      event ReminderScheduled
+        scheduledAt DateTime
+      event DigestIssued
+        issuedAt DateTime
+      specification ClosingAPaidInvoice
+        when trigger PaymentFileArrived
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount = 120
+        then InvoiceClosed
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason = "paid"
+      specification IssuingTheWeeklyDigest
+        given clock "2026-10-05T07:00:00Z"
+        when clock "2026-10-05T07:30:00Z"
+        then DigestIssued
+          for "weekly"
+          issuedAt = "2026-10-05T07:30:00Z"

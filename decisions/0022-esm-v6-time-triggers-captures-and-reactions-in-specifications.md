@@ -1,8 +1,10 @@
 ---
 id: 0022
 title: Admit clocks, application triggers, capture records and reactions into specifications as ESM v6
-status: proposed
-stage: none
+status: accepted
+stage: implemented
+decided: 2026-10-02
+decider: Einar Ingebrigtsen
 class: contract
 reversibility: costly
 applies-to:
@@ -63,3 +65,40 @@ Automation and translate slices become specifiable and executable. In exchange, 
 ## Related
 
 Decisions [0004](0004-admission-and-governance-of-portable-executable-semantics.md), [0006](0006-reaction-triggers-declare-reads.md), [0009](0009-external-event-origin-and-translation-slices.md), [0020](0020-keyed-read-model-absence-in-esm-v5.md).
+
+## Status notes
+
+**2026-10-02 - accepted.** Accepted by Einar Ingebrigtsen. Two points the decision text leaves open are settled
+for the implementation, without changing the choice:
+
+- `when clock` advances from the instant `given clock` states, so a specification using `when clock` states
+  `given clock` too. Starting from the Unix epoch would make every daily schedule due tens of thousands of times.
+- After `when append`, the appended event is the action itself, like a command's input. `then` events compare
+  the facts that follow it - what reactions appended. After every other action, `then` events compare every new
+  fact, the ones the action produced and the ones reactions appended. Models before v6 keep their rule: after
+  `when append`, `then` events equal the appended fact.
+
+**2026-10-02 - implemented.** ESM v6 is in the tree: the model, binder, validator, canonical JSON reader and writer,
+reference evaluator, `Semantics/Serialization/Golden/full-esm-v6.json` and `ReactionsCorpus.V6` in
+`Cratis.Screenplay.CanonicalCorpus`. v1-v5 golden vectors are byte-identical. The implementation settles these
+points the decision text leaves open, without changing the choice:
+
+- A reaction appending from a clock, application or built-in trigger states `for` - a value the trigger carries,
+  or literal text. Only an event's reaction appends to that event's source by default.
+- `where` narrows the occurrences that carry the values it names. A trigger carrying none of them, such as the
+  clock, is not narrowed; one carrying only some of them does not bind.
+- An invoked command runs with no caller, so a command requiring one rejects the reaction, and that rejection
+  ends the scenario. A reaction's `reads` are not consulted by the reference evaluator.
+- The reactions to one fact run in semantic-identity order, which canonical form preserves. Clock occurrences at
+  the same instant follow the same order. An interval counts from the Unix epoch, and schedules are UTC.
+- `given clock` states a time, not a caller: a mapping from `$context.causedBy` in a scenario that states one is
+  Unsupported. A scenario appending more than 1 000 facts, or a clock advance making more than 10 000
+  occurrences due, is Unsupported rather than run.
+- A capture appends to the event source its key names, typed as the event's commands type it, or as text.
+  `` when `<expression>` `` admits a small portable grammar of fields, literals, comparisons, `&&`, `||`, `!` and
+  parentheses.
+
+`Samples/Invoicing` uses imported events, PII concepts and other constructs the ESM does not admit, so it does
+not bind as a whole. The verification the decision names for it runs on `ReactionsCorpus.V6` and the
+specifications under `Semantics/Execution/for_SemanticSpecificationRunner/when_running_reactions` instead, which
+cover each of the five forms. The tracking issues in Stage, CLI, Studio and Generation are not opened yet.

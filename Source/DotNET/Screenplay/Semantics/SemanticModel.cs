@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 namespace Cratis.Screenplay.Semantics;
 
 /// <summary>
-/// Defines the portable slice kinds admitted by ESM v1.
+/// Defines the portable slice kinds: state change and state view since ESM v1, automation and translate since ESM v6.
 /// </summary>
 public enum SemanticSliceKind
 {
@@ -23,7 +23,17 @@ public enum SemanticSliceKind
     /// <summary>
     /// A state view behavior.
     /// </summary>
-    StateView = 1
+    StateView = 1,
+
+    /// <summary>
+    /// Behavior that runs when something happens, through reactions.
+    /// </summary>
+    Automation = 2,
+
+    /// <summary>
+    /// Outside data that becomes events, through captures and the reactions that translate them.
+    /// </summary>
+    Translate = 3
 }
 
 /// <summary>
@@ -75,6 +85,11 @@ public sealed record SemanticApplication(
 {
     /// <summary>Gets the named declarative policies of the application.</summary>
     public ImmutableArray<SemanticPolicy> Policies { get; init; } = [];
+
+    /// <summary>
+    /// Gets the application triggers the document declares; empty for models before ESM v6.
+    /// </summary>
+    public ImmutableArray<SemanticApplicationTrigger> Triggers { get; init; } = [];
 }
 
 /// <summary>
@@ -128,4 +143,14 @@ public sealed record SemanticSlice(
 
     /// <summary>Gets opaque reducer contracts; empty for models without reducer bodies.</summary>
     public ImmutableArray<SemanticReducer> Reducers { get; init; } = [];
+
+    /// <summary>
+    /// Gets the reactions the slice declares; empty for models before ESM v6.
+    /// </summary>
+    public ImmutableArray<SemanticReaction> Reactions { get; init; } = [];
+
+    /// <summary>
+    /// Gets the captures the slice declares; empty for models before ESM v6.
+    /// </summary>
+    public ImmutableArray<SemanticCapture> Captures { get; init; } = [];
 }
