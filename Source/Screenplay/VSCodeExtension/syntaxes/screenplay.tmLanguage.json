@@ -7,6 +7,7 @@
     ],
     "patterns": [
         { "include": "#comment" },
+        { "include": "#numeric-preamble" },
         { "include": "#fenced-csharp" },
         { "include": "#fenced-react" },
         { "include": "#fenced-typescript" },
@@ -28,6 +29,10 @@
         { "include": "#common" }
     ],
     "repository": {
+        "numeric-preamble": {
+            "match": "^(?:\\uFEFF)?(numbers)([ \\t]+)(exact)(?=[ \\t]*(?:(?://|#).*)?$)",
+            "captures": { "1": { "name": "keyword.control.screenplay" }, "3": { "name": "keyword.other.screenplay" } }
+        },
         "command-block": {
             "begin": "^([ ]*)(command)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
             "beginCaptures": { "2": { "name": "keyword.control.screenplay" }, "3": { "name": "entity.name.type.screenplay" } },
