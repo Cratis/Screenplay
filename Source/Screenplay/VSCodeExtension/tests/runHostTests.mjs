@@ -6,6 +6,7 @@ import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
+import { createRequire } from 'node:module';
 
 // Never download/start a guessed browser runtime. Use an explicit native VS Code installation.
 const executable = process.env.VSCODE_EXECUTABLE_PATH;
@@ -24,16 +25,14 @@ const evidence = fs.mkdtempSync(path.join(retained, 'native-host-'));
 const temporary = fs.realpathSync.native(os.tmpdir());
 const testRoot = fs.mkdtempSync(path.join(temporary, 'sp-host-'));
 const model = fs.mkdtempSync(path.join(temporary, 'screenplay-repair-host-'));
+createRequire(import.meta.url)('../out/tests/prepareHostFixtures.cjs').prepareHostFixtures(model);
 fs.writeFileSync(path.join(evidence, 'workspace-location.json'), JSON.stringify({ model, testRoot, synthetic: true }));
 console.log(`Native synthetic workspace: ${model}; native host data: ${testRoot}; retained evidence: ${evidence}`);
 const userData = path.join(testRoot, 'u');
 fs.mkdirSync(path.join(userData, 'User'), { recursive: true });
 fs.writeFileSync(path.join(userData, 'User/settings.json'), JSON.stringify({
-    'screenplay.repairs.enabled': true, 'screenplay.repairs.executable': server, 'screenplay.repairs.arguments': ['mcp'], 'screenplay.repairs.modelRoot': model,
+    'screenplay.repairs.enabled': true, 'screenplay.repairs.executable': server, 'screenplay.repairs.arguments': ['mcp'], 'screenplay.repairs.modelRoot': path.join(model, 'direct'),
     'workbench.editorAssociations': { '*.play': 'default' }, 'files.autoSave': 'off', 'window.restoreWindows': 'none',
-    // Explicit provider commands drive these tests; background lightbulb probes
-    // would race those calls for the intentionally single-flight C# session.
-    'editor.lightbulb.enabled': 'off',
     'extensions.autoUpdate': false, 'extensions.autoCheckUpdates': false, 'update.mode': 'none',
     'chat.disableAIFeatures': true,
 }));

@@ -219,19 +219,39 @@ there is no silent VS Code-only fallback or automatic retry. Local language
 assistance and read-only recovery inspection remain available. Linux can allocate
 per-entry kernel watches even though the connection owns one watcher object.
 
-Every root notification invalidates review. Rename notifications (including
-creation), reported watcher errors and unexpected closure require deliberate
-reconnect through **Screenplay: Discover Saved-File C# Repairs**. Watching never
-writes readiness probes and does not prove that all filesystem changes have been
-delivered; Node does not report every possible event loss. C# still checks exact
-source, catalog, state and frozen base/candidate evidence. These actions are never
-preferred, fix-all or on-save.
+Every root notification immediately invalidates review, including ordinary child
+creation, deletion, atomic replacement and the repair's own writes. With a healthy
+watch on the same approved physical root, fresh C#-validated discovery does not
+restart the connection. The watcher captures native device/volume and inode/file
+identity using BigInt; it checks root identity and nonlinked path components after
+notifications and before granting new authority. Missing, replaced, linked or
+unprovable roots, reported watcher errors (including overflow) and unexpected
+closure latch `WatchInvalidated` and require deliberate reconnect through
+**Screenplay: Discover Saved-File C# Repairs**. An unavailable or zero native file
+identity is refused, never replaced with a lexical-path comparison.
+
+These bounded root checks do not scan content. Watching never writes readiness
+probes, ignores filenames or suppresses self-writes, and does not prove that all
+filesystem changes have been delivered; Node does not report every possible event
+loss. C# still checks exact source, catalog, state and frozen base/candidate
+evidence. These actions are never preferred, fix-all or on-save.
+
+Concurrent provider and manual discovery share one validated read only within the
+same connection, invalidation epoch and saved-buffer decision. Cancelling one
+consumer does not cancel another; the underlying read keeps its transport deadline.
+Invalidated results cannot issue fresh tokens. Review, Apply and uncertain recovery
+are not shared or queued as discovery; finish the review or inspect the outcome
+before asking for another operation.
 
 Root/configuration changes retire the old connection and watchers. A dispatched
 Apply keeps its process until the outcome is known; replacement proposals stay
 blocked during that interval. Notifications from its own installation invalidate
 review but do not cancel Apply. Verified installation remains installed even if
 watching subsequently requires reconnect; buffer reconciliation is separate.
+Dispatch itself sets a reconnect barrier, without waiting for filesystem events:
+no new repair authority is available until the outcome is classified and you
+choose **Screenplay: Discover Saved-File C# Repairs** to reconnect. A replaced root
+cannot be inspected as though it were an uncertain transaction's original root.
 
 Apply writes outside the editor and is **not normal editor Undo**. Use an exclusive
 writer while applying. Journaled rollback does not guarantee crash-atomic visibility
@@ -296,9 +316,14 @@ dirty-buffer preservation. Dialog replies and the timing of the real subprocess
 reply are controlled. Human keyboard/mouse modal interaction and uncontrolled
 keyboard race timing are **not** exercised by these tests; do not describe them
 as manual native coverage. The harness records `process.versions` inside the
-actual extension host and modifies one preexisting nested fixture file to
-preflight the installed product watcher retained through review. Nested creation
-is tested separately as reconnect-required, within the same five-second event
-limit. No repeated root-level probes or harness-only watcher stand in for the
-product. CI lane definitions alone do not establish a platform
+actual extension host. The launcher prepares all baseline fixtures before host
+startup. One modification of a preexisting nested file must produce its actual
+nested-path callback within five seconds on the installed product watcher retained
+through review; root-only notifications cannot satisfy readiness. The test driver
+observes actual installed provider entry and holds a real C# discovery response to
+exercise concurrent provider/manual reads. Child creation/deletion must invalidate
+old authority while preserving healthy-root discovery; actual root replacement
+must require reconnect. Filenames are test attribution only, never product
+authorization. No repeated probes, simulated callbacks or harness-only watcher
+stand in for the product. CI lane definitions alone do not establish a platform
 pass: run each native lane before claiming that platform is verified.

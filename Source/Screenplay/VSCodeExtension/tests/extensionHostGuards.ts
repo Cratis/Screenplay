@@ -10,11 +10,12 @@ import childProcess from 'node:child_process';
 import { createRequire } from 'node:module';
 import { userRepairConfiguration } from '../RepairCodeActions';
 import { repairSource } from './repairFixture';
+import { NativeTestController } from './nativeTestController';
 
 // Guard integration, NOT UI automation: only the dialog responses and the timing
 // of a real subprocess reply are controlled. Real registered commands, native
 // buffers/watchers, preview filesystem and C# RPC/installation remain in use.
-export async function runCommandGuards(root: string): Promise<void> {
+export async function runCommandGuards(root: string, controller: NativeTestController): Promise<void> {
     const warnings: string[] = [];
     let propose: string | undefined = 'Propose and preview';
     let finalConsent: () => Promise<string | undefined> = async () => 'Apply';
@@ -22,6 +23,8 @@ export async function runCommandGuards(root: string): Promise<void> {
     let dispatched = 0;
     let onDispatched: (() => Promise<void>) | undefined;
     let race: Promise<void> | undefined;
+    const rpc: { root: string; name: string; at: number }[] = [];
+    let discoveryGate: { entered(): void; release: Promise<void> } | undefined;
     // VS Code gives an installed extension its own API object. Control only its
     // modal replies, not a different API belonging to the development test driver.
     const productionApi = createRequire(path.join(vscode.extensions.getExtension('cratis.screenplay')!.extensionPath, 'package.json'))('vscode') as typeof vscode;
@@ -29,7 +32,8 @@ export async function runCommandGuards(root: string): Promise<void> {
     const originalInformation = productionApi.window.showInformationMessage;
     const originalSpawn = childProcess.spawn;
     const originalWatch = nativeFs.watch;
-    type ProductWatch = { root: string; watcher: fs.FSWatcher; events: number; closed: boolean; preflight: boolean; listeners: Set<(event: string) => void> };
+    type ProductEvent = { event: string; filename: string | null; at: number };
+    type ProductWatch = { root: string; watcher: fs.FSWatcher; events: number; closed: boolean; preflight: boolean; identity: fs.BigIntStats; listeners: Set<(event: ProductEvent) => void> };
     const productWatches: ProductWatch[] = [];
     nativeFs.watch = ((file: fs.PathLike, options: fs.WatchOptions, listener: fs.WatchListener<string | Buffer>) => {
         let record: ProductWatch;
@@ -38,12 +42,13 @@ export async function runCommandGuards(root: string): Promise<void> {
             if (!record) return;
             ++record.events;
             console.log(`PRODUCT ROOT WATCH: ${JSON.stringify({ root: record.root, event, filename, at: Date.now(), events: record.events })}`);
-            for (const observed of [...record.listeners]) observed(event);
+            for (const observed of [...record.listeners]) observed({ event, filename: filename === null ? null : filename.toString().replaceAll('\\', '/'), at: Date.now() });
         });
         if (options?.recursive) {
-            record = { root: String(file), watcher, events: 0, closed: false, preflight: false, listeners: new Set() };
+            record = { root: String(file), watcher, events: 0, closed: false, preflight: false, identity: fs.statSync(file, { bigint: true }), listeners: new Set() };
+            console.log(`PRODUCT WATCH REGISTER: ${JSON.stringify({ root: record.root, at: Date.now(), dev: String(record.identity.dev), ino: String(record.identity.ino) })}`);
             productWatches.push(record);
-            watcher.on('close', () => { record.closed = true; });
+            watcher.on('close', () => { record.closed = true; console.log(`PRODUCT WATCH CLOSE: ${JSON.stringify({ root: record.root, at: Date.now() })}`); });
         }
         return watcher;
     }) as typeof nativeFs.watch;
@@ -52,9 +57,18 @@ export async function runCommandGuards(root: string): Promise<void> {
         assert.ok(record, 'The installed product registered its native recursive watcher before discovery');
         return record;
     };
-    const observeProduct = (record: ProductWatch, write: () => void) => new Promise<string>((resolve, reject) => {
+    const live = (record: ProductWatch) => {
+        assert.equal(record.closed, false, 'The SAME registered native product watcher remains live');
+        const identity = fs.statSync(record.root, { bigint: true });
+        assert.equal(identity.dev, record.identity.dev); assert.equal(identity.ino, record.identity.ino, 'Approved physical root is unchanged');
+    };
+    const observeProduct = (record: ProductWatch, filename: string, write: () => void) => new Promise<ProductEvent>((resolve, reject) => {
         const started = Date.now();
-        const observed = (event: string) => { clearTimeout(timer); record.listeners.delete(observed); console.log(`PRODUCT WATCH DELIVERY ${Date.now() - started}ms`); resolve(event); };
+        const observed = (event: ProductEvent) => {
+            if (event.filename !== filename) return; // Test attribution ONLY; production already received EVERY event.
+            clearTimeout(timer); record.listeners.delete(observed);
+            console.log(`PRODUCT NESTED DELIVERY: ${JSON.stringify({ root: record.root, ...event, elapsed: Date.now() - started })}`); resolve(event);
+        };
         const timer = setTimeout(() => { record.listeners.delete(observed); reject(new Error(`Installed product watcher did not notify within 5 seconds: ${JSON.stringify({ root: record.root, events: record.events, closed: record.closed, versions: process.versions })}`)); }, 5_000);
         record.listeners.add(observed);
         write();
@@ -91,6 +105,15 @@ export async function runCommandGuards(root: string): Promise<void> {
         input.write = ((chunk: string | Uint8Array, ...rest: unknown[]) => {
             const accepted = Reflect.apply(write, input, [chunk, ...rest]) as boolean;
             const frame = JSON.parse(chunk.toString()) as { method?: string; params?: { name?: string } };
+            if (frame.method === 'tools/call' && frame.params?.name) {
+                rpc.push({ root: String(args[2]?.cwd), name: frame.params.name, at: Date.now() });
+                console.log(`PRODUCT RPC: ${JSON.stringify(rpc.at(-1))}`);
+                if (frame.params.name === 'open-workspace' && discoveryGate) {
+                    const gate = discoveryGate; discoveryGate = undefined;
+                    output.pause(); gate.entered();
+                    void gate.release.then(() => output.resume());
+                }
+            }
             if (frame.method === 'tools/call' && frame.params?.name === 'apply') {
                 ++dispatched;
                 if (onDispatched) {
@@ -106,18 +129,14 @@ export async function runCommandGuards(root: string): Promise<void> {
         }) as typeof input.write;
         return child;
     }) as typeof originalSpawn;
-    const fixtureReady = async (model: string) => {
-        // Synthetic fixture only: preexist BEFORE the product connection is created.
-        fs.mkdirSync(path.join(model, 'nested'));
-        fs.writeFileSync(path.join(model, 'nested', 'watcher-existing.txt'), 'baseline');
+    const fixtureReady = (model: string) => {
+        assert.equal(fs.readFileSync(path.join(model, 'nested', 'watcher-existing.txt'), 'utf8'), 'baseline', 'Launcher prepared nested baseline BEFORE native host startup');
+        assert.equal(fs.readFileSync(path.join(model, 'application.play'), 'utf8'), repairSource);
     };
     try {
         let model = path.join(root, 'command-guards');
-        fs.mkdirSync(model);
         let source = path.join(model, 'application.play');
-        fs.writeFileSync(source, repairSource);
-        fs.writeFileSync(path.join(model, 'Handler.cs'), '// attachment\n');
-        await fixtureReady(model);
+        fixtureReady(model);
         await vscode.workspace.getConfiguration('screenplay.repairs').update('modelRoot', model, vscode.ConfigurationTarget.Global);
         const configuration = vscode.workspace.getConfiguration('screenplay.repairs');
         assert.equal(configuration.inspect<string>('modelRoot')?.globalValue, model, 'Actual native User setting is visible');
@@ -144,8 +163,7 @@ export async function runCommandGuards(root: string): Promise<void> {
         // Native model creation may itself invalidate an existing review; load
         // the saved attachment BEFORE discovery so this case reaches consent.
         const attachment = await vscode.workspace.openTextDocument(vscode.Uri.file(path.join(model, 'Handler.cs')));
-        // Keep it hidden until review completes, avoiding passive lightbulb
-        // discovery racing the explicit provider command below.
+        // The saved attachment is loaded before discovery; passive probes remain enabled.
         let original = fs.readFileSync(source);
         const command = async (target = document) => {
             // Keep the saved root document alive. A hidden unreferenced native
@@ -153,16 +171,51 @@ export async function runCommandGuards(root: string): Promise<void> {
             await vscode.window.showTextDocument(target, { preview: false, viewColumn: vscode.ViewColumn.Two, preserveFocus: true });
             await vscode.commands.executeCommand('screenplay.repair.refresh');
             const record = productWatch(path.dirname(target.uri.fsPath));
+            const provide = () => vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', target.uri, new vscode.Range(0, 0, target.lineCount - 1, 0));
+            let actions: vscode.CodeAction[];
             if (!record.preflight) {
-                assert.equal(record.closed, false);
-                // ONE modification to a preexisting NESTED file. No root readiness loop,
-                // temporary watcher or harness-only backend is accepted as proof.
-                const event = await observeProduct(record, () => fs.writeFileSync(path.join(record.root, 'nested', 'watcher-existing.txt'), 'one nested change'));
-                assert.equal(event, 'change', 'A preexisting nested fixture modification keeps the current connection');
+                live(record);
+                const old = (await provide()).find(action => action.title.startsWith('Change routing:'))?.command;
+                assert.ok(old, 'A verified old token exists before native invalidation');
+                // ONE modification of a PREEXISTING nested file. Root-only notifications
+                // cannot satisfy attribution; every callback still reaches production first.
+                const event = await observeProduct(record, 'nested/watcher-existing.txt', () => fs.writeFileSync(path.join(record.root, 'nested', 'watcher-existing.txt'), 'one nested change'));
+                assert.equal(event.event, 'change'); live(record);
+                const previous = propose; propose = 'Propose and preview';
+                const writes = dispatched;
+                await vscode.commands.executeCommand(old.command, ...(old.arguments ?? []));
+                propose = previous;
+                assert.ok(warnings.some(message => /StaleSelection|StaleEpoch/.test(message)), 'Old discovery token is refused after the actual native event');
+                assert.equal(dispatched, writes); warnings.length = 0;
+
+                // Hold a REAL open-workspace response while the ACTUAL installed provider
+                // enters. Both consumers must join the same newly validated RPC read.
+                let release!: () => void;
+                let entered!: () => void;
+                const sent = new Promise<void>((resolve, reject) => {
+                    const timer = setTimeout(() => reject(new Error('Actual discovery RPC did not dispatch within 5 seconds.')), 5_000);
+                    entered = () => { clearTimeout(timer); resolve(); };
+                });
+                discoveryGate = { entered, release: new Promise<void>(resolve => { release = resolve; }) };
+                const start = rpc.length;
+                const manual = vscode.commands.executeCommand('screenplay.repair.refresh');
+                try {
+                    await sent;
+                    const observation = controller.entered(target.uri);
+                    const provider = provide();
+                    try { await observation.promise; await new Promise<void>(resolve => setImmediate(resolve)); }
+                    finally { observation.dispose(); release(); }
+                    await manual; actions = await provider;
+                } finally { discoveryGate = undefined; release(); }
+                const reads = rpc.slice(start).filter(frame => frame.root === record.root);
+                assert.equal(reads.filter(frame => frame.name === 'open-workspace').length, 1, 'Provider/manual overlap shares ONE actual discovery');
+                assert.equal(reads.filter(frame => frame.name === 'read-workspace').length, 3, 'One complete server-validated document/diagnostic/repair read');
+                assert.ok(!warnings.some(message => /SessionBusy/.test(message)), `Concurrent read-only consumers do not report Busy: ${warnings.join('; ')}`);
+                live(record);
+                assert.equal(productWatches.filter(watch => watch.root === record.root).length, 1, 'No watcher/connection restart from child events');
                 record.preflight = true;
-                assert.equal(productWatch(record.root), record, 'Same product watcher survives preflight');
-            }
-            const actions = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', target.uri, new vscode.Range(0, 0, target.lineCount - 1, 0));
+                console.log(`PRODUCT PROVIDER/MANUAL OVERLAP: ${JSON.stringify({ root: record.root, reads, provider: controller.trace.filter(item => item.uri === target.uri.toString()) })}`);
+            } else { live(record); actions = await provide(); }
             const action = actions.find(action => action.title.startsWith('Change routing:'));
             assert.ok(action?.command, `Actual registered C# provider supplies a fresh preview command: ${JSON.stringify({ titles: actions.map(action => action.title), warnings, diagnostics: vscode.languages.getDiagnostics(target.uri).map(issue => ({ code: issue.code, source: issue.source, message: issue.message })) })}`);
             return action.command;
@@ -194,7 +247,7 @@ export async function runCommandGuards(root: string): Promise<void> {
             await review(target);
             if (propose !== 'Propose and preview') return;
             await navigateReview();
-            assert.equal(productWatch(path.dirname(target.uri.fsPath)).closed, false, 'Preflighted product watcher remains installed throughout review');
+            live(productWatch(path.dirname(target.uri.fsPath)));
             await vscode.commands.executeCommand('screenplay.repair.apply');
         };
         await vscode.commands.executeCommand('screenplay.repair.apply', 'forged-token');
@@ -241,10 +294,8 @@ export async function runCommandGuards(root: string): Promise<void> {
         for (const relative of ['sibling.play', 'Handler.cs', '.screenplay/identities.json']) {
             for (const timing of ['before-discovery', 'after-review']) {
                 model = path.join(root, `untitled-${relative.replaceAll('/', '-')}-${timing}`);
-                fs.mkdirSync(model);
                 source = path.join(model, 'application.play');
-                fs.writeFileSync(source, repairSource);
-                await fixtureReady(model);
+                fixtureReady(model);
                 await configuration.update('modelRoot', model, vscode.ConfigurationTarget.Global);
                 document = await vscode.workspace.openTextDocument(vscode.Uri.file(source));
                 if (timing === 'after-review') { await review(); await navigateReview(); }
@@ -254,6 +305,7 @@ export async function runCommandGuards(root: string): Promise<void> {
                 assert.equal(await vscode.workspace.applyEdit(edit), true);
                 assert.equal(unsaved.isDirty, true);
                 const before: number = dispatched;
+                const buffers = vscode.workspace.textDocuments.map(document => ({ document, text: document.getText(), version: document.version, dirty: document.isDirty }));
                 warnings.length = 0;
                 if (timing === 'before-discovery') {
                     await vscode.commands.executeCommand('screenplay.repair.refresh');
@@ -263,16 +315,18 @@ export async function runCommandGuards(root: string): Promise<void> {
                     assert.ok(warnings.some(message => /UnauthorizedApply|PreviewExpired|DirtyBuffer|Stale/.test(message)), warnings.join('; '));
                 }
                 assert.equal(dispatched, before, `${relative} ${timing} sends ZERO Apply frames`);
+                for (const buffer of buffers) {
+                    assert.equal(buffer.document.getText(), buffer.text, 'Refusal never changes ANY existing buffer text');
+                    assert.equal(buffer.document.version, buffer.version, 'Refusal never edits ANY existing buffer');
+                    assert.equal(buffer.document.isDirty, buffer.dirty, 'Refusal never saves/reverts ANY existing buffer');
+                }
                 assert.equal(unsaved.isDirty, true, 'Associated buffer is never saved or reverted');
                 assert.equal(fs.readFileSync(source, 'utf8'), repairSource);
             }
         }
         model = path.join(root, 'watcher-guards');
-        fs.mkdirSync(model);
         source = path.join(model, 'application.play');
-        fs.writeFileSync(source, repairSource);
-        fs.writeFileSync(path.join(model, 'Handler.cs'), '// attachment\n');
-        await fixtureReady(model);
+        fixtureReady(model);
         await configuration.update('modelRoot', model, vscode.ConfigurationTarget.Global);
         document = await vscode.workspace.openTextDocument(vscode.Uri.file(source));
         original = fs.readFileSync(source);
@@ -284,8 +338,9 @@ export async function runCommandGuards(root: string): Promise<void> {
         finalConsent = async () => {
             const sibling = path.join(model, 'nested', 'new-attachment.cs');
             const record = productWatch(model);
-            const event = await observeProduct(record, () => fs.writeFileSync(sibling, '// newly discovered attachment\n'));
-            assert.equal(event, 'rename', 'Nested creation conservatively requires reconnect');
+            const event = await observeProduct(record, 'nested/new-attachment.cs', () => fs.writeFileSync(sibling, '// newly discovered attachment\n'));
+            assert.equal(event.event, 'rename', 'Ordinary nested creation expires review, not the healthy root watch');
+            live(record);
             return 'Apply';
         };
         await preview();
@@ -294,6 +349,12 @@ export async function runCommandGuards(root: string): Promise<void> {
         assert.deepEqual(fs.readFileSync(source), original);
         assert.ok(warnings.some(message => /PreviewExpired|Stale|WatchInvalidated/.test(message)), `Native watcher invalidation refusal: ${warnings.join('; ')}`);
         warnings.length = 0;
+        const sameWatch = productWatch(model);
+        await vscode.commands.executeCommand('screenplay.repair.refresh');
+        live(sameWatch);
+        assert.equal(productWatches.filter(watch => watch.root === model).length, 1, 'Healthy nested creation permits fresh discovery WITHOUT reconnect');
+        await observeProduct(sameWatch, 'nested/new-attachment.cs', () => fs.unlinkSync(path.join(model, 'nested', 'new-attachment.cs')));
+        live(sameWatch);
 
         const currentAfterPages = () => {
             const summary = vscode.window.activeTextEditor!.document.uri;
@@ -302,12 +363,22 @@ export async function runCommandGuards(root: string): Promise<void> {
             const prefix = `/${summary.path.split('/')[1]}/`;
             return vscode.workspace.textDocuments.filter(page => page.uri.scheme === summary.scheme && page.uri.path.startsWith(prefix) && page.uri.path.includes('/after/'));
         };
-        const expected = new Map<string, string>();
+        const expected = new Map<string, Buffer>();
+        const reviewedBefore = new Map<string, Buffer>();
         finalConsent = async () => {
             for (const page of currentAfterPages()) {
                 const relative = page.uri.path.split('/after/')[1];
-                expected.set(relative, page.getText());
+                expected.set(relative, Buffer.from(await vscode.workspace.fs.readFile(page.uri)));
             }
+            const summary = vscode.window.activeTextEditor!.document.uri;
+            const prefix = `/${summary.path.split('/')[1]}/`;
+            for (const page of vscode.workspace.textDocuments.filter(page => page.uri.scheme === 'screenplay-repair' && page.uri.path.startsWith(prefix) && page.uri.path.includes('/before/'))) {
+                reviewedBefore.set(page.uri.path.split('/before/')[1], Buffer.from(await vscode.workspace.fs.readFile(page.uri)));
+            }
+            assert.ok(reviewedBefore.has('application.play') && reviewedBefore.has('.screenplay/identities.json'), 'Both native before-side diffs were loaded');
+            assert.deepEqual(reviewedBefore.get('application.play'), original, 'Before-side source is byte-exact');
+            assert.equal(reviewedBefore.get('.screenplay/identities.json')!.length, 0, 'Before-side identity bytes represent absent state');
+            assert.equal(fs.existsSync(path.join(model, '.screenplay')), false, 'Absent identity state remains absent through review');
             assert.ok(expected.has('application.play') && expected.has('.screenplay/identities.json'), 'Complete native source AND state review loaded before consent');
             assert.deepEqual(fs.readFileSync(source), original, 'Review is write-free');
             await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two, preserveFocus: true });
@@ -315,18 +386,21 @@ export async function runCommandGuards(root: string): Promise<void> {
         };
         await preview();
         assert.equal(dispatched, 1, 'Exactly one real C# apply frame follows explicit consent');
-        for (const [file, bytes] of expected) assert.equal(fs.readFileSync(path.join(model, file), 'utf8'), bytes);
-        assert.equal(document.getText(), expected.get('application.play'), 'Production reload reconciles a native saved source buffer');
+        for (const [file, bytes] of expected) assert.deepEqual(fs.readFileSync(path.join(model, file)), bytes);
+        assert.equal(document.getText(), expected.get('application.play')!.toString('utf8'), 'Production reload reconciles a native saved source buffer');
         assert.equal(document.isDirty, false);
         assert.equal(warnings.length, 0, `Verified installation was not mislabeled as an Apply failure: ${warnings.join('; ')}`);
 
+        const afterInstall = rpc.length;
+        const blocked = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', document.uri, new vscode.Range(0, 0, document.lineCount - 1, 0));
+        assert.deepEqual(blocked, [], 'Dispatched Apply requires deliberate reconnect before any new proposals');
+        assert.equal(rpc.slice(afterInstall).filter(frame => ['open-workspace', 'propose-repair'].includes(frame.name)).length, 0);
+        live(sameWatch);
+
         // New root, no hand-written identity state or reuse of old authority.
         const raceRoot = path.join(root, 'post-dispatch');
-        fs.mkdirSync(raceRoot);
         const raceSource = path.join(raceRoot, 'application.play');
-        fs.writeFileSync(raceSource, repairSource);
-        fs.writeFileSync(path.join(raceRoot, 'Handler.cs'), '// attachment\n');
-        await fixtureReady(raceRoot);
+        fixtureReady(raceRoot);
         await configuration.update('modelRoot', raceRoot, vscode.ConfigurationTarget.Global);
         const raceDocument = await vscode.workspace.openTextDocument(vscode.Uri.file(raceSource));
         let reviewed = '';
@@ -358,7 +432,29 @@ export async function runCommandGuards(root: string): Promise<void> {
         const refused = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', raceDocument.uri, new vscode.Range(0, 0, 0, 0));
         assert.deepEqual(refused, [], 'Dirty reconciliation cannot silently issue fresh authority');
         assert.equal(dispatched, 2, 'Unknown/dirty outcome is never retried');
-        console.log('NATIVE GUARD INTEGRATION: production preview/Apply commands, separately controlled consent, forged token refusal, dirty-at-consent refusal, actual sibling watcher invalidation, exact installed source/state, saved-buffer reload and controlled post-dispatch native dirty edit passed. Native source/state tab switching and scrolling occurred before explicit contributed Apply. Notification dismissal retained review. Associated untitled source/attachment/state refusals and post-dispatch preservation passed. Final modal responses were simulated; human keyboard/mouse interaction remains UNVERIFIED.');
+        model = path.join(root, 'root-replacement');
+        fixtureReady(model);
+        await configuration.update('modelRoot', model, vscode.ConfigurationTarget.Global);
+        document = await vscode.workspace.openTextDocument(vscode.Uri.file(path.join(model, 'application.play')));
+        const oldAction = await command();
+        const oldWatch = productWatch(model);
+        const beforeReplace = rpc.length, writes = dispatched;
+        fs.renameSync(model, model + '-retired');
+        fs.renameSync(path.join(root, 'root-replacement-next'), model);
+        assert.notEqual(fs.statSync(model, { bigint: true }).ino, oldWatch.identity.ino, 'ACTUAL approved physical root inode was replaced');
+        warnings.length = 0;
+        await vscode.commands.executeCommand(oldAction.command, ...(oldAction.arguments ?? []));
+        assert.ok(warnings.some(message => /WatchInvalidated/.test(message)), 'Physical replacement latches typed reconnect-required refusal');
+        const oldRootActions = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', document.uri, new vscode.Range(0, 0, document.lineCount - 1, 0));
+        assert.deepEqual(oldRootActions, []);
+        assert.equal(dispatched, writes);
+        assert.equal(rpc.slice(beforeReplace).filter(frame => ['open-workspace', 'propose-repair', 'apply'].includes(frame.name)).length, 0, 'Replacement cannot reuse any old root authority');
+        await vscode.commands.executeCommand('screenplay.repair.refresh');
+        const replacementActions = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', document.uri, new vscode.Range(0, 0, document.lineCount - 1, 0));
+        assert.ok(replacementActions.some(action => action.title.startsWith('Change routing:')), 'Only deliberate reconnect can authorize the actual replacement root');
+        assert.equal(productWatches.filter(watch => watch.root === model).length, 2);
+        assert.notEqual(productWatch(model).watcher, oldWatch.watcher);
+        console.log('NATIVE GUARD INTEGRATION: actual attributable nested-preexisting modification, old token refusal, same-physical-root fresh discovery, controlled overlapping actual provider/manual discovery, healthy nested create/delete, actual physical-root replacement refusal, persistent native before/after source/state diff navigation and exact installation passed. Associated untitled/all-existing-buffer refusal preservation, dispatched reconnect barrier and controlled post-dispatch typing passed. Actual native callbacks and RPC operations were observed, never synthesized. Final modal responses were separately controlled; human keyboard/mouse interaction remains UNVERIFIED.');
     } finally {
         nativeFs.watch = originalWatch;
         childProcess.spawn = originalSpawn;
