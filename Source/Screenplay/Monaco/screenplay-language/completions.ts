@@ -7,6 +7,7 @@ import { Monaco, primitiveTypes } from './language';
 import { DocumentSymbols, knownEventNames, knownTriggerNames, mergeSymbols, scanDocument } from './symbols';
 import { responseCompletions } from './response-completions';
 import { operationCompletions } from './operation-authoring';
+import { eventSourceCompletions } from './event-source-authoring';
 import { planCompletions } from './completion-planner';
 import { contextVariableItems, producesItems, CompletionEntry } from './completion-items';
 
@@ -28,8 +29,8 @@ export function createCompletionProvider(monaco: Monaco, options: CompletionOpti
             const currentLine = lines[lineIndex] ?? '';
             const textBefore = currentLine.substring(0, position.column - 1);
             const application = options.application?.(model);
-            const symbols = { ...mergeSymbols(scanDocument(lines), application ?? mergeSymbols()), authoringPath: application?.authoringPath, authoringPlacement: application?.authoringPlacement };
-            const responseEntries = operationCompletions(lines, lineIndex, textBefore, symbols) ?? responseCompletions(lines, lineIndex, textBefore, symbols);
+            const symbols = { ...mergeSymbols(scanDocument(lines), application ?? mergeSymbols()), authoringPath: application?.authoringPath, authoringPlacement: application?.authoringPlacement, authoringPlacementResolved: application?.authoringPlacementResolved };
+            const responseEntries = eventSourceCompletions(lines, lineIndex, textBefore, symbols) ?? operationCompletions(lines, lineIndex, textBefore, symbols) ?? responseCompletions(lines, lineIndex, textBefore, symbols);
             const plan = responseEntries === null ? planCompletions(lines, lineIndex, textBefore) : { kind: 'entries' as const, entries: responseEntries };
             if (plan.kind === 'none') return { suggestions: [] };
 

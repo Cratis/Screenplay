@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { eventSourceHover } from './event-source-authoring';
 import { operationHover } from './operation-authoring';
 import { DocumentSymbols } from './symbols';
 import { responseAnalysis, responseAvailability } from './response-analysis';
@@ -35,6 +36,8 @@ export function hoverContent(
         else if (line[index] === '`' && !inString) inTemplate = !inTemplate;
     }
     if (inString || inTemplate) return null;
+    const sourceHover = eventSourceHover(lines, lineIndex, startColumn, endColumn, application);
+    if (sourceHover) return sourceHover;
     const operation = operationHover(lines, lineIndex, startColumn, endColumn, application);
     if (operation) return operation;
     const tokenAt = (column: number, name: string): boolean => {

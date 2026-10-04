@@ -45,6 +45,14 @@ Discover `CommandSyntax.response`, `RecordCommandResponseSyntax.fields`, `Scalar
 
 Workspace and catalog revisions, expected nodes, preview and explicit acceptance still apply. Inspect `read-proposal` before `apply`; discovery and preview never write. Executable validation refuses every generated/response construct with `PLAY0268` and no semantic model. Execution, form response scopes and an official renderer response type remain unavailable until ESM v8. The inline-event extraction tool refuses response-bearing commands because it cannot prove its canonical executable-byte invariant without a semantic model; use explicit typed authoring edits instead. Rename with `PreserveTrivia` to retain response comments; canonical rename can refuse a proposal that would drop comments. See the [syntax-only contract](../commands.md#generated-values-and-responses-syntax-only).
 
+## Event source and stream inventories (syntax-only)
+
+`read-workspace` offers `event-sources`, `event-streams`, `event-source-details`, `event-stream-details` and `command-routes`. Supply `expectedRevision`; continuation pages also pin `expectedCatalogRevision`. Detail views require the exact `authoringKey` from the matching kind's inventory. Keys include application, kind, full owner path and name; physical handles remain separate. Duplicate sources make every child owner ambiguous, even if one duplicate alone declares that child. Detail requests return typed refusal rather than selecting a survivor. Unresolved import placement is reported without an authoritative owner.
+
+`declaration-details` adds source `streams` and command `route` views. The route view retains `authoredRoute` and every `ambiguousStreamCandidates` node; it does not claim effective routing. Dependencies include `commandEventSource`, `commandStream` and nominal identifier/key type links. Source references are application-exact; stream references are exactly `Source.Stream`, without suffix guessing.
+
+All new inventories disclose syntax-only ESM v10 readiness and `executionAvailable: false`, without source/stream semantic or requirement IDs. Old syntax JSON omissions retain additive defaults. Use [typed authoring edits](authoring-tools.md#event-source-and-stream-authoring), not automatic source/stream renames or routing repairs. Strict malformed draft syntax content or merged syntax export refuses with `InvalidSyntaxJson`; a compact `read-ast` query can still expose replacement handles. `export-workspace` preserves exact original bytes, including invalid-but-editable drafts, rather than converting them to typed syntax.
+
 ## Embedding API
 
 The `Cratis.Screenplay.Mcp` library targets .NET 10 and references the Screenplay

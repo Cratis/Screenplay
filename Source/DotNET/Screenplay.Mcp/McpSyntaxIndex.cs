@@ -78,7 +78,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     {
         switch (node)
         {
-            case CommandSyntax value: Declare("Command", value.Name, value, value.Description, new { produces = Readiness.ProducedEvents(value), generatedProperties = value.Properties.Where(property => property.IsGenerated).Select(property => property.Name), response = value.Response, syntaxOnly = Readiness.SyntaxOnly(value), executionReadiness = Readiness.ExecutionReadiness(value, null) }); break;
+            case CommandSyntax value: Declare("Command", value.Name, value, value.Description, new { produces = Readiness.ProducedEvents(value), generatedProperties = value.Properties.Where(property => property.IsGenerated).Select(property => property.Name), response = value.Response, authoredRoute = value.Stream, ambiguousStreamCandidates = value.StreamCandidates, syntaxOnly = Readiness.SyntaxOnly(value), executionReadiness = Readiness.ExecutionReadiness(value, null) }); break;
             case EventStreamSyntax value: Declare("EventStream", value.Name, value, value.Description, new { syntaxOnly = true, executionReadiness = Readiness.ExecutionReadiness(value) }); break;
             case SystemSyntax value: Declare("System", value.Name, value, value.Description, new { syntaxOnly = true, executionReadiness = Readiness.ExecutionReadiness(value) }); break;
             case OperationSyntax value: Declare("Operation", value.Name, value, value.Description, new { syntaxOnly = true, executionReadiness = Readiness.ExecutionReadiness(value) }); break;
@@ -126,9 +126,10 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         foreach (var reference in McpReferenceKinds.For(node, owningSyntax))
         {
             var role = owner?.Syntax is SpecificationSyntax specification ? McpFixtureOccurrences.Role(specification, node, reference.Role) : reference.Role;
-            _references.Add(new(reference.Name, reference.Kinds, [.. _scope], node.Location, role, owner?.Owner)
+            _references.Add(new(reference.Name, reference.Kinds, [.. _scope], node is CommandStreamSyntax route ? route.ReferenceLocation : node.Location, role, owner?.Owner)
             {
-                UseProductionCandidates = node is ProducesSyntax or SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax
+                UseProductionCandidates = node is ProducesSyntax or SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax,
+                AmbiguousSourceOwner = node is CommandStreamSyntax { PropertyCandidate: not null }
             });
         }
     }
@@ -144,6 +145,17 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
 
         _declarations.AddRange([.. McpLogicalReadModels.From(_declarations)]);
         var productions = new McpProductionInventory([.. _declarations]);
+        var sources = _declarations.Where(declaration => declaration.Kind == "EventSource" && declaration.Scope.Length == 0)
+            .ToLookup(declaration => declaration.Name, StringComparer.Ordinal);
+        for (var referenceIndex = 0; referenceIndex < _references.Count; referenceIndex++)
+        {
+            var reference = _references[referenceIndex];
+            if (reference.Role == "commandStream")
+            {
+                var parent = reference.Name.Split('.')[0];
+                _references[referenceIndex] = reference with { AmbiguousSourceOwner = reference.AmbiguousSourceOwner || sources[parent].Count() > 1 };
+            }
+        }
         for (var index = 0; index < _references.Count; index++)
         {
             var reference = _references[index];

@@ -28,6 +28,8 @@
   href: slices.md
 - name: Events
   href: events.md
+- name: Event sources and streams
+  href: event-sources.md
 - name: Commands
   href: commands.md
 - name: Operations and external systems

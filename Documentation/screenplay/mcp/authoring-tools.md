@@ -33,6 +33,23 @@ An event declared with `produces event` appears as an `Event` in declaration que
 
 Descriptions, documentation, and optional rename-only `id` remain syntax metadata. They do not replace the workspace identity catalog or the portable hashed event contract id. Workspace repair and rename proposals remain separate, explicit transactions; querying or visualizing an inline event never applies a repair.
 
+## Event source and stream authoring
+
+After opening the workspace, use these paged `read-workspace` views with `expectedRevision`:
+
+| View | Contents |
+| --- | --- |
+| `event-sources` | Application-owned source keys, identifier types, pins and physical handles |
+| `event-streams` | Exact source-owned stream keys, key types, pins and ownership status |
+| `event-source-details`, `event-stream-details` | Supply the exact inventory `authoringKey`; rejects duplicate physical owners, including duplicate parents |
+| `command-routes` | Authored routes and all retained ambiguity candidates, never inferred effective routing |
+
+Continuation also requires `expectedCatalogRevision`. Unresolved-placement entries name refused documents rather than fabricated owners. Keys include application, declaration kind, full owner path and name; they are not persistent semantic identities. All these entries disclose ESM v10 execution unavailability. A command/specification/slice readiness message describes that member's constructs and command dependencies; model readiness also includes unrelated source declarations.
+
+Generic `EventSource`/`EventStream` declaration queries and dependencies include source identifier/stream-id type references and separate `commandEventSource`/`commandStream` links. Stream references accept exactly `Source.Stream`, not arbitrary suffixes. Combined type/declaration collisions remain blocking and are not navigated confidently.
+
+For edits, read the actual `read-ast` handles and `syntax-schema` kinds, then use Authoring Add/Replace/Remove with preview and explicit apply. The member paths and candidate-selection rules are in [AST authoring](../ast-authoring.md#source-and-stream-edits-syntax-only). No source or stream rename, semantic catalog enrollment or new routing quick fix is automatic. Executable validation still refuses with `PLAY0268`, and `PLAY0470`/`PLAY0478` repairs require unavailable before/after executable proof.
+
 ## Operation and system intent
 
 Systems and operations are **syntax-only**, with execution unavailable until ESM v9 (`PLAY0268`). After `open-workspace`, call `read-workspace` with the current `expectedRevision`:

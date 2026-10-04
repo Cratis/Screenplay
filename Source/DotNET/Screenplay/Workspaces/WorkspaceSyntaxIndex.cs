@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
@@ -87,10 +88,11 @@ public sealed class WorkspaceSyntaxIndex
     readonly IReadOnlyDictionary<WorkspaceNodeHandle, WorkspaceSyntaxEntry> _handles;
     readonly IReadOnlyDictionary<string, PlacedPlayDocument> _placements;
 
-    WorkspaceSyntaxIndex(ScreenplayWorkspace workspace, ImmutableArray<WorkspaceSyntaxEntry> entries, ImmutableArray<Diagnostic> diagnostics, IReadOnlyDictionary<string, PlacedPlayDocument> placements)
+    WorkspaceSyntaxIndex(ScreenplayWorkspace workspace, ImmutableArray<WorkspaceSyntaxEntry> entries, ImmutableArray<Diagnostic> diagnostics, IReadOnlyDictionary<string, PlacedPlayDocument> placements, CommandStreamCandidates candidates)
     {
         Workspace = workspace;
         _placements = placements;
+        StreamCandidates = candidates;
         Entries = entries;
         Diagnostics = diagnostics;
         RepairableDiagnostics = [.. diagnostics.Concat(workspace.Compilation.Diagnostics).Distinct()];
@@ -107,7 +109,8 @@ public sealed class WorkspaceSyntaxIndex
     public ImmutableArray<WorkspaceSyntaxEntry> Entries { get; }
 
     /// <summary>
-    /// Gets parser diagnostics; erroneous documents are not indexed as editable syntax.
+    /// Gets parser diagnostics. Erroneous documents are not indexed as editable syntax except
+    /// fully retained command stream/property ambiguity candidates.
     /// </summary>
     public ImmutableArray<Diagnostic> Diagnostics { get; }
 
@@ -126,6 +129,8 @@ public sealed class WorkspaceSyntaxIndex
     internal ScreenplayWorkspace Workspace { get; }
 
     internal AuthoringProductionResolver Productions { get; }
+
+    internal CommandStreamCandidates StreamCandidates { get; }
 
     internal IReadOnlySet<Diagnostic> RepairableDiagnosticSet { get; }
 
@@ -147,19 +152,22 @@ public sealed class WorkspaceSyntaxIndex
         var (placed, importDiagnostics) = PlayImports.Resolve(texts.Keys, new InMemoryPlayDocumentSource(texts));
         var placements = placed.ToDictionary(document => document.Path, StringComparer.Ordinal);
         diagnostics.AddRange(importDiagnostics);
+        var compiler = new ScreenplayCompiler();
+        var candidates = ((ICommandStreamCandidateParser)compiler).CaptureCandidates(placed.Where(document => document.IsPlacementResolved)
+            .Select(document => (SourceLineSplitter.Split(document.Source, path: document.Path), document.Placement)));
         foreach (var document in workspace.Documents)
         {
             var placement = placements[document.Path.Value];
             if (!placement.IsPlacementResolved) continue;
-            var parsed = new ScreenplayCompiler().Parse(document.Text, document.Path.Value, placement.Placement);
+            var parsed = compiler.ParseWithCandidates(document.Text, document.Path.Value, placement.Placement, candidates);
             diagnostics.AddRange(parsed.Diagnostics);
-            if (parsed.Success && parsed.Value is not null)
+            if (parsed.Value is not null && (parsed.Success || parsed.Diagnostics.All(diagnostic => diagnostic.Severity != DiagnosticSeverity.Error || diagnostic.Code == DiagnosticCodes.AmbiguousCommandStream)))
             {
                 Visit(parsed.Value, new(workspace.Revision, document.Id, string.Empty), null, null, null, [], workspace.IdentityCatalog.Application, semantics, events, entries);
             }
         }
 
-        return new(workspace, entries.ToImmutable(), diagnostics.ToImmutable(), placements);
+        return new(workspace, entries.ToImmutable(), diagnostics.ToImmutable(), placements, candidates);
     }
 
     /// <summary>

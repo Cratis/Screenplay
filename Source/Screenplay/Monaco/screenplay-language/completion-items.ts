@@ -16,6 +16,7 @@ export interface CompletionEntry {
 const fenced = (tag: string) => `\`\`\`${tag}\n\${1}\n\`\`\``;
 
 export const topLevelItems: CompletionEntry[] = [
+    { label: 'eventsource', insertText: 'eventsource ${1:Name}\n    identifier ${2:Type}\n    stream ${3:Name}', documentation: 'Application-owned source with nested streams; authoring only until ESM v10 (PLAY0268).' },
     { label: 'system', insertText: 'system ${1:Name}\n    description "${2:external system}"', documentation: 'Application-scoped external system; syntax-only until ESM v9.' },
     { label: 'import', insertText: 'import ${1:Module}.${2:Type}', documentation: 'Imports a type from another module by its qualified name.' },
     { label: 'import "…"', insertText: 'import "${1:**/*.play}"', documentation: 'Imports other `.play` files by path or glob, relative to this file\'s folder, as whole documents of the application.' },

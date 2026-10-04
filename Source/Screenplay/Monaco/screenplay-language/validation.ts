@@ -147,7 +147,9 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
     const scanned = scanDocument(lines);
     const application = context.application ?? mergeSymbols();
     const analysis = responseAnalysis(lines, application.authoringDocuments ?? application.authoringSources, context.placement, context.path);
+    const routeLines = new Set(analysis.eventSources.routes.map(route => route.location.line - 1));
     const symbols = { ...scanned, commands: scanned.commands.map(command => ({ ...command,
+        properties: command.properties.filter(property => !routeLines.has(property.line)),
         produces: command.produces?.filter(production => !analysis.operationProductionLines?.has(production.line)),
         productionHeaders: command.productionHeaders?.filter(line => !analysis.operationProductionLines?.has(line)),
     })) };
@@ -159,7 +161,7 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
     // speculative property scans mistaking tags, paths, strings or code for optionality.
     const optionalCodes = new Set<string>([DiagnosticCodes.LegacyOptionalSuffix, DiagnosticCodes.InvalidOptionalModifierOrder, DiagnosticCodes.OptionalReadsNotSupported]);
     for (const diagnostic of context.compilerDiagnostics ?? analysis.diagnostics) {
-        if (!optionalCodes.has(diagnostic.code) && diagnostic.code !== DiagnosticCodes.RepeatedDeclarationAcrossFiles && !/^PLAY049[0-9]$|^PLAY050[0-2]$|^PLAY048[2-9]$|^PLAY004[56]$/.test(diagnostic.code)) continue;
+        if (!optionalCodes.has(diagnostic.code) && diagnostic.code !== DiagnosticCodes.RepeatedDeclarationAcrossFiles && !/^PLAY049[0-9]$|^PLAY050[0-7]$|^PLAY048[2-9]$|^PLAY004[56]$/.test(diagnostic.code)) continue;
         const line = diagnostic.location.line - 1;
         const length = legacyOptionalTypeLength(lines[line], diagnostic) || lines[line].length - diagnostic.location.column + 1;
         issues.push(issue(diagnostic.severity, line, diagnostic.location.column, length, diagnostic.message, diagnostic.code as DiagnosticCode));

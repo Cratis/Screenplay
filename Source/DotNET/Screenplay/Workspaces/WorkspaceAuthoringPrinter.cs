@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Text;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Printing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
@@ -24,12 +25,13 @@ static class WorkspaceAuthoringPrinter
         ImmutableArray<Diagnostic>.Builder diagnostics,
         WorkspaceDocument? original = null,
         PlayPlacement? placement = null,
-        bool validatePlacement = true)
+        bool validatePlacement = true,
+        CommandStreamCandidates? candidates = null)
     {
         ImplementationInvariants.ValidateAuthoring(intended);
         if (formatting == WorkspaceAuthoringFormatting.PreserveTrivia && original is not null)
         {
-            return WorkspaceTriviaPrinter.Print(original, intended, placement, validatePlacement);
+            return WorkspaceTriviaPrinter.Print(original, intended, placement, validatePlacement, candidates);
         }
 
         if (formatting != WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments)
@@ -68,9 +70,10 @@ static class WorkspaceAuthoringPrinter
         return printed;
     }
 
-    internal static void Validate(string text, PortablePlayPath path, ApplicationSyntax intended, PlayPlacement placement, ImmutableArray<Diagnostic>.Builder diagnostics, WorkspaceAuthoringFormatting formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments)
+    internal static void Validate(string text, PortablePlayPath path, ApplicationSyntax intended, PlayPlacement placement, ImmutableArray<Diagnostic>.Builder diagnostics, WorkspaceAuthoringFormatting formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments, CommandStreamCandidates? candidates = null)
     {
-        var parsed = new ScreenplayCompiler().Parse(text, path.Value, placement);
+        var compiler = new ScreenplayCompiler();
+        var parsed = candidates is null ? compiler.Parse(text, path.Value, placement) : compiler.ParseWithCandidates(text, path.Value, placement, candidates);
         diagnostics.AddRange(parsed.Diagnostics);
         if (!parsed.Success || parsed.Value is null || !SyntaxJson.StructurallyEqual(intended, parsed.Value))
         {

@@ -972,6 +972,18 @@ These wrapper diagnostics also apply to operation phases. Pending or attached in
 
 These are syntax diagnostics. A valid system, operation or operation specification still cannot bind: `PLAY0268` names unavailable ESM v9 admission. [Operations](operations.md) do not trigger event destination or payload-identity diagnostics. A valid pending or attached handler remains unsupported independently. Diagnostic repairs for `PLAY0471` and `PLAY0479` are unchanged.
 
+### Event sources and command streams
+
+| Code | Condition |
+| --- | --- |
+| `PLAY0503` | Invalid or duplicate source/stream declaration, including non-scalar identifier/key types |
+| `PLAY0504` | Missing or ambiguous source-owned stream, invalid key mapping, or known incompatible command identifier/key type |
+| `PLAY0505` | Both the route and qualified value-property interpretations are viable; neither is selected |
+| `PLAY0506` | Known stream-id type needs an unsupported portable formatter; bare `Int` is not supported |
+| `PLAY0507` | Redundant rename-only stored-name pin |
+
+Valid [source/stream authoring](event-sources.md) still refuses executable binding with `PLAY0268` for ESM v10. Editors and MCP preserve original source evidence; unknown imported type shapes are not guessed. There is no new routing or source-pin quick fix. Existing `PLAY0470`/`PLAY0478` repairs still refuse when executable before/after routing proof is unavailable.
+
 ## Retired codes
 
 A retired code stays out of use forever.

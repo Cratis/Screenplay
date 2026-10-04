@@ -2,7 +2,7 @@
 
 > Systems, operations, operation phases and their specification forms below are syntax-only authoring. Execution is unavailable until ESM v9 (`PLAY0268`); see [Operations and external systems](operations.md). A phase source or wrapper is not an admitted executable implementation role.
 
-> Event sources, source-owned streams and command stream routes are authoring-only. Binding reports `PLAY0268`, naming their allocated ESM v10. Per-event overrides, observer filters, new concurrency flags, occurrence time and constraint scopes are not part of this increment.
+> [Event sources, source-owned streams and command stream routes](event-sources.md) are authoring-only. Binding reports `PLAY0268`, naming their allocated ESM v10. Per-event overrides, observer filters, new concurrency flags, occurrence time and constraint scopes are not part of this increment.
 
 The Screenplay syntax reference in EBNF. `INDENT`/`DEDENT` represent indented bodies: parsers read lines at greater indentation until the body ends. PDL and CDL have their own [sub-grammars](sub-languages.md). The C# compiler validates the full language; the TypeScript compiler models a subset and recognizes the remaining shipped constructs as opaque bodies.
 

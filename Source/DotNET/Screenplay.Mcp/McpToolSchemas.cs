@@ -43,7 +43,7 @@ static class McpToolSchemas
                 },
                 new JsonObject
                 {
-                    ["if"] = new JsonObject { ["properties"] = new JsonObject { ["view"] = McpAstSchemas.Choice("operation-intent-details", "system-intent-details") }, ["required"] = new JsonArray("view") },
+                    ["if"] = new JsonObject { ["properties"] = new JsonObject { ["view"] = McpAstSchemas.Choice("operation-intent-details", "system-intent-details", "event-source-details", "event-stream-details") }, ["required"] = new JsonArray("view") },
                     ["then"] = new JsonObject { ["required"] = new JsonArray("authoringKey") }
                 });
         }
@@ -81,9 +81,9 @@ static class McpToolSchemas
         "match" => McpAstSchemas.Choice("exact", "prefix", "contains"),
         "direction" => McpAstSchemas.Choice("incoming", "outgoing"),
         "view" when tool == "describe-application" => McpAstSchemas.Choice("summary", "children", "declarations"),
-        "view" when tool == "declaration-details" => McpAstSchemas.Choice("summary", "properties", "occurrences", "commands", "specifications", "produces", "response", "inputs", "phases", "values", "syntax"),
+        "view" when tool == "declaration-details" => McpAstSchemas.Choice("summary", "properties", "occurrences", "commands", "specifications", "produces", "response", "inputs", "phases", "values", "streams", "route", "syntax"),
         "view" when tool == "merged-document" => McpAstSchemas.Choice("source", "syntax", "both"),
-        "view" when tool == "read-workspace" => McpAstSchemas.Choice("documents", "semantics", "eventContracts", "diagnostics", "executable-diagnostics", "implementation-requirements", "handler-intents", "handler-intent-details", "operation-intents", "operation-intent-details", "system-intents", "system-intent-details", "ordered-productions", "typed-contexts", "source-map", "repairs", "executable-model"),
+        "view" when tool == "read-workspace" => McpAstSchemas.Choice("documents", "semantics", "eventContracts", "diagnostics", "executable-diagnostics", "implementation-requirements", "handler-intents", "handler-intent-details", "operation-intents", "operation-intent-details", "system-intents", "system-intent-details", "ordered-productions", "event-sources", "event-streams", "event-source-details", "event-stream-details", "command-routes", "typed-contexts", "source-map", "repairs", "executable-model"),
         "view" when tool == "read-proposal" => McpAstSchemas.Choice("changes", "before", "after", "diagnostics", "executable-diagnostics", "implementation-requirements", "typed-contexts", "dropped-comments"),
         "view" when tool == "read-ast" => McpAstSchemas.Choice("nodes", "children"),
         _ => McpAstSchemas.String()

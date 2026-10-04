@@ -8,6 +8,7 @@ import { CommandResponseSymbol, responseAnalysis } from './response-analysis';
 import { fileReferenceOn } from './file-references';
 import { clauseKeywords } from './language';
 import { AuthoringDocument } from './AuthoringDocument';
+import { AuthoredEventSource } from './EventSourceAnalysis';
 import { ProductionSymbol } from './ProductionSymbol';
 import { TypeReferenceSymbol, typeReferenceSymbol } from './TypeReferenceSymbol';
 
@@ -87,7 +88,9 @@ export interface DocumentSymbols {
     authoringSources?: readonly string[];
     authoringPath?: string;
     authoringPlacement?: readonly string[];
+    authoringPlacementResolved?: boolean;
     authoringDocuments?: readonly AuthoringDocument[];
+    eventSources?: readonly AuthoredEventSource[];
     imports: ImportSymbol[];
     concepts: ConceptSymbol[];
     types: TypeSymbol[];
@@ -186,6 +189,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
     const analysis = responseAnalysis(lines);
     const symbols: DocumentSymbols = {
         authoringSources: [source],
+        eventSources: analysis.eventSources.declarations,
         imports: [],
         concepts: [],
         types: [],
@@ -386,6 +390,7 @@ export function mergeSymbols(...documents: DocumentSymbols[]): DocumentSymbols {
     return {
         authoringSources: documents.flatMap(document => document.authoringSources ?? []),
         ...(documents.some(document => document.authoringDocuments) ? { authoringDocuments: documents.flatMap(document => document.authoringDocuments ?? (document.authoringSources ?? []).map((source, index) => ({ path: `other-${index}.play`, source }))) } : {}),
+        eventSources: documents.flatMap(document => document.eventSources ?? []),
         imports: documents.flatMap((document) => document.imports),
         concepts: documents.flatMap((document) => document.concepts),
         types: documents.flatMap((document) => document.types),

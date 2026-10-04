@@ -4,6 +4,7 @@
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
+using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Workspaces;
@@ -31,7 +32,8 @@ static class WorkspaceAuthoringReferences
             migrations[rename.PreviousAddress] = rename.CurrentAddress;
         }
         var previousBindings = new WorkspaceReferenceBindings(previousIndex).Bindings;
-        var previous = previousBindings.GroupBy(binding => Occurrence(binding.Reference, previousIndex, migrations))
+        var promotions = PropertyCandidatePromotions(previousIndex, currentIndex, request);
+        var previous = previousBindings.GroupBy(binding => promotions.GetValueOrDefault(binding.Reference.Entry.Handle) ?? Occurrence(binding.Reference, previousIndex, migrations))
             .ToDictionary(group => group.Key, group => group.ToArray());
         var matched = new HashSet<string>(StringComparer.Ordinal);
         var introduced = new List<WorkspaceReferenceBinding>();
@@ -84,6 +86,48 @@ static class WorkspaceAuthoringReferences
         {
             throw new InvalidWorkspaceAuthoring("Reference occurrence correspondence cannot be proven for simultaneous removal/reordering and insertion. Split explicit removals and additions, or preserve the existing occurrence owners with semantic migrations.");
         }
+    }
+
+    // A command replacement may explicitly select one retained property candidate. Prove the
+    // exact structural relocation, without weakening correspondence for arbitrary removals/additions
+    // or changing source/stream identities. All existing binding/debt checks still run afterward.
+    static Dictionary<WorkspaceNodeHandle, ReferenceOccurrence> PropertyCandidatePromotions(
+        WorkspaceSyntaxIndex before, WorkspaceSyntaxIndex after, WorkspaceAuthoringRequest request)
+    {
+        var result = new Dictionary<WorkspaceNodeHandle, ReferenceOccurrence>();
+        var comparer = (IEqualityComparer<SyntaxNode>)ReferenceEqualityComparer.Instance;
+        var originalNodes = before.Entries.ToLookup(entry => entry.Node, comparer);
+        var currentNodes = after.Entries.ToLookup(entry => entry.Node, comparer);
+        var commandOwners = after.Entries.Where(entry => entry.Node is CommandSyntax && entry.Address is not null)
+            .ToLookup(entry => (entry.Handle.Document, entry.Address));
+        foreach (var operation in request.Operations.OfType<ReplaceWorkspaceNode>())
+        {
+            var entry = before.Find(operation.Target);
+            if (entry?.Node is not CommandSyntax command || entry.Address is null || operation.Node is not CommandSyntax replacement) continue;
+            foreach (var candidate in command.StreamCandidates.Where(candidate => candidate.PropertyCandidate is not null))
+            {
+                var property = candidate.PropertyCandidate!;
+                var intended = command with
+                {
+                    Properties = [.. command.Properties, property],
+                    StreamCandidates = [.. command.StreamCandidates.Where(value => !ReferenceEquals(value, candidate))]
+                };
+                if (!SyntaxJson.StructurallyEqual(intended, replacement)) continue;
+                var owners = commandOwners[(entry.Handle.Document, entry.Address)].Take(2).ToArray();
+                if (owners is not [var owner] || owner.Node is not CommandSyntax current) continue;
+                var properties = current.Properties.Where(value => SyntaxJson.StructurallyEqual(value, property)).Take(2).ToArray();
+                if (properties is not [var selected]) continue;
+                var originalTypes = originalNodes[property.Type].Take(2).ToArray();
+                var selectedTypes = currentNodes[selected.Type].Take(2).ToArray();
+                if (originalTypes is [var original] && selectedTypes is [var target])
+                {
+                    var reference = new WorkspaceReferenceMember(target, "name", null, selected.Type.Name, WorkspaceReferenceDomain.Type);
+                    result[original.Handle] = Occurrence(reference, after, []);
+                }
+            }
+        }
+
+        return result;
     }
 
     static void ReportDebt(WorkspaceReferenceBinding binding, ImmutableArray<Diagnostic>.Builder diagnostics) => diagnostics.Add(Diagnostic.Warning(

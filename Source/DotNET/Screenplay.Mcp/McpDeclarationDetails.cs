@@ -24,6 +24,11 @@ static class McpDeclarationDetails
                 eventId = (declaration.Syntax as EventSyntax)?.Id,
                 documentation = (declaration.Syntax as EventSyntax)?.Documentation,
                 uses = (declaration.Syntax as OperationSyntax)?.Uses,
+                identifier = (declaration.Syntax as EventSourceSyntax)?.Identifier,
+                streamId = (declaration.Syntax as EventStreamSyntax)?.StreamId,
+                renameOnlyId = declaration.Syntax switch { EventSourceSyntax source => source.Id, EventStreamSyntax stream => stream.Id, _ => null },
+                authoredRoute = (declaration.Syntax as CommandSyntax)?.Stream,
+                ambiguousStreamCandidates = (declaration.Syntax as CommandSyntax)?.StreamCandidates,
                 operationInputCount = (declaration.Syntax as OperationSyntax)?.Inputs.Count() ?? 0,
                 partCount = declaration.Parts.Count,
                 commandCount = declaration.Syntax is SliceSyntax slice ? slice.Commands.Count() : 0,
@@ -99,6 +104,8 @@ static class McpDeclarationDetails
                 },
                 arguments,
                 snapshot.SourceRevision),
+            "streams" when declaration.Syntax is EventSourceSyntax source => McpPaging.Page(source.Streams, arguments, snapshot.SourceRevision),
+            "route" when declaration.Syntax is CommandSyntax routed => new { authoredRoute = routed.Stream, ambiguousStreamCandidates = routed.StreamCandidates, executionAvailable = false, executionReadiness = readiness.ExecutionReadiness(routed) },
             "response" when declaration.Syntax is CommandSyntax responseOwner => Response(responseOwner, readiness),
             "produces" when declaration.Syntax is CommandSyntax command => McpPaging.Page(command.Produces, arguments, snapshot.SourceRevision),
             "values" when declaration.Syntax is ConceptSyntax concept => McpPaging.Page(concept.Values, arguments, snapshot.SourceRevision),
@@ -121,13 +128,16 @@ static class McpDeclarationDetails
         var address = McpJson.RequiredString(arguments, "address");
         var kind = McpJson.RequiredString(arguments, "kind");
         var matches = snapshot.Index.Find(address, kind);
+        if (kind == "EventStream" && matches.Length == 1 && snapshot.Index.Find(string.Join('.', matches[0].Scope), "EventSource").Length != 1)
+            throw new McpFailure("AmbiguousDeclaration: a stream's physical parent source must be unique.");
         return matches.Length == 1 ? matches[0] : throw new McpFailure($"Declaration target must identify exactly one logical declaration; found {matches.Length}.");
     }
 
     static IEnumerable<string> Views(SyntaxNode node) => node switch
     {
         SliceSyntax => ["summary", "occurrences", "commands", "specifications", "syntax"],
-        CommandSyntax => ["summary", "properties", "occurrences", "produces", "response", "syntax"],
+        CommandSyntax => ["summary", "properties", "occurrences", "produces", "response", "route", "syntax"],
+        EventSourceSyntax => ["summary", "streams", "occurrences", "syntax"],
         OperationSyntax => ["summary", "inputs", "phases", "occurrences", "syntax"],
         EventSyntax or ReadModelSyntax or TypeSyntax => ["summary", "properties", "occurrences", "syntax"],
         ConceptSyntax => ["summary", "values", "occurrences", "syntax"],
