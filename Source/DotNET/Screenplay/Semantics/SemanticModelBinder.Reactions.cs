@@ -4,6 +4,7 @@
 using System.Collections.Immutable;
 using System.Globalization;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Languages;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Semantics;
@@ -208,6 +209,7 @@ public sealed partial class SemanticModelBinder
                 case NamedTriggerSourceSyntax named when _triggerDeclarations.TryGetValue(named.Name, out var declared):
                     return (new(SemanticReactionTriggerKind.ApplicationTrigger) { Source = declared.Trigger.Id }, SemanticExpressionRootKind.Trigger, declared.Properties);
                 case NamedTriggerSourceSyntax { Name: Startup or Shutdown } named:
+                    if (!AdmitBuiltInTrigger(named.Name, trigger.Location)) return null;
                     return (new(named.Name == Startup ? SemanticReactionTriggerKind.Startup : SemanticReactionTriggerKind.Shutdown), SemanticExpressionRootKind.Trigger, []);
                 case IntervalTriggerSourceSyntax interval when interval.Amount > 0:
                     var unit = interval.Unit switch
@@ -232,6 +234,15 @@ public sealed partial class SemanticModelBinder
                     Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Reaction '{reaction.Name}' has a trigger the executable model cannot schedule.", trigger.Location);
                     return null;
             }
+        }
+
+        bool AdmitBuiltInTrigger(string name, SourceLocation location)
+        {
+            var registrations = syntax.RegisteredTriggers ?? ScreenplayLanguageRegistry.Default.Triggers;
+            if (registrations.TryGetValue(name, out var definition) && definition.Values is { Count: 0 }) return true;
+
+            Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Registered trigger '{name}' does not state an empty shape; ESM v6 cannot admit its host-provided values without a typed declaration.", location);
+            return false;
         }
 
         SemanticProducedEvent? BindReactionProduces(

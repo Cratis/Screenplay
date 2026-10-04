@@ -40,6 +40,7 @@ public sealed partial class SemanticModelBinder
 
             if (string.Equals(fired.Trigger, Startup, StringComparison.Ordinal) || string.Equals(fired.Trigger, Shutdown, StringComparison.Ordinal))
             {
+                if (!AdmitBuiltInTrigger(fired.Trigger, fired.Location)) return null;
                 if (fired.Values.Any())
                 {
                     Error(DiagnosticCodes.InvalidSemanticBinding, $"The built-in trigger '{fired.Trigger}' carries no values.", fired.Location);
