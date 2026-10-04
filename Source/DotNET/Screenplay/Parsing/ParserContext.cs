@@ -4,6 +4,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Languages;
+using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -16,6 +17,11 @@ namespace Cratis.Screenplay.Parsing;
 internal sealed class ParserContext(LineReader reader, string? path = null, IScreenplayLanguageRegistry? languages = null)
 {
     readonly List<Diagnostic> _diagnostics = [];
+
+    /// <summary>
+    /// Gets the immutable options established before reading document values.
+    /// </summary>
+    public SourceOptions SourceOptions { get; internal set; } = SourceOptions.Legacy;
 
     /// <summary>
     /// Gets the <see cref="LineReader"/> providing the source lines.

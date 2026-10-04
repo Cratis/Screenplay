@@ -937,6 +937,12 @@ These wrapper diagnostics also apply to operation phases. Pending or attached in
 | `PLAY0500` | Error | An operation must reference exactly one uniquely declared external system. |
 | `PLAY0501` | Error | An operation input mapping is missing, repeated, unknown or incompatible with its declared type. |
 | `PLAY0502` | Error | An operation specification step is malformed, unresolved, duplicated, incompatible with its command action or asserts undeclared compensation. |
+| `PLAY0508` | Error | A numeric preamble has an unknown or malformed spelling; only `numbers exact` is recognized. |
+| `PLAY0509` | Error | A physical document repeats its numeric preamble. |
+| `PLAY0510` | Error | A numeric preamble follows domain, imports or declarations. |
+| `PLAY0511` | Error | A complete number cannot be represented exactly in the bounded Decimal domain. |
+| `PLAY0512` | Error | Declaration-bearing physical documents or marked import barrels disagree on numeric mode. |
+| `PLAY0513` | Error | Source options or inserted numeric values disagree with their owning mode. |
 
 These are syntax diagnostics. A valid system, operation or operation specification still cannot bind: `PLAY0268` names unavailable ESM v9 admission. [Operations](operations.md) do not trigger event destination or payload-identity diagnostics. A valid pending or attached handler remains unsupported independently. Diagnostic repairs for `PLAY0471` and `PLAY0479` are unchanged.
 

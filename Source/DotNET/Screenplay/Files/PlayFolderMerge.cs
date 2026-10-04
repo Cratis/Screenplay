@@ -35,7 +35,7 @@ internal static partial class PlayFolderMerge
     {
         var context = ParserContext.ForDiagnostics();
         var application = MergeApplications([.. documents.Select(document => document.Value).OfType<ApplicationSyntax>()], context);
-        var validation = new ParserContext(new([]), languages: new ScreenplayLanguageRegistry(triggers: application.RegisteredTriggers?.Values));
+        var validation = new ParserContext(new([]), languages: new ScreenplayLanguageRegistry(triggers: application.RegisteredTriggers?.Values)) { SourceOptions = application.SourceOptions };
         ScreenplayValidator.Validate(application, validation, allowUnresolvedPersonaPolicies);
 
         return new(application, [.. documents.SelectMany(document => document.Diagnostics), .. context.Diagnostics, .. validation.Diagnostics, .. ProductionDestinationDiagnostics.In(application)]);
@@ -70,6 +70,7 @@ internal static partial class PlayFolderMerge
             // A behavior is declared at the top level, so it merges and is name-checked across the folder the
             // same way a layout or a theme is. Without this a 'uses' in one file cannot see a behavior declared
             // in another - and the folder is one application.
+            SourceOptions = SourceNumericModes.Consensus(applications, context.Add),
             Systems = [.. applications.SelectMany(application => application.Systems)],
             Behaviors = DeclaredInOneFile(applications.SelectMany(application => application.Behaviors), behavior => behavior.Name ?? string.Empty, behavior => behavior.Location, "behavior", context),
             SourceComments = [.. applications.SelectMany(application => application.SourceComments)],

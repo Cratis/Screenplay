@@ -57,7 +57,7 @@ internal static partial class ProjectionParser
         {
             context.Error(DiagnosticCodes.InvalidProjectionDeclaration, $"Invalid projection declaration '{header.Content}' - expected 'projection <Name> [=> <ReadModel>]'", header.Location);
             context.SkipBlock(header.Indent);
-            return new(FirstWord(header.Content), null, null, AutoMapMode.Inherit, null, [], header.Location);
+            return new(FirstWord(header.Content), null, null, AutoMapMode.Inherit, null, [], header.Location) { SourceOptions = context.SourceOptions };
         }
 
         var name = match.Groups[1].Value;
@@ -137,6 +137,7 @@ internal static partial class ProjectionParser
 
         return new(name, readModel, sequence, autoMap, key, blocks, header.Location)
         {
+            SourceOptions = context.SourceOptions,
             File = file,
             DirectiveLocations = AddSequenceLocation(directiveLocations, sequenceLocation),
             ParsedAutoMapMode = autoMap

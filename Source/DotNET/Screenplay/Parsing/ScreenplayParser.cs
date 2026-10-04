@@ -147,6 +147,7 @@ internal static partial class ScreenplayParser
 
         return new(imports, concepts, policies, modules, context.Start, domain, personas, seeds, authentication, types, uiProfiles, themes, triggers, layouts)
         {
+            SourceOptions = context.SourceOptions,
             Systems = systems,
             Behaviors = behaviors,
             FileImports = fileImports

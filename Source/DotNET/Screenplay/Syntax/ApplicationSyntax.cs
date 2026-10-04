@@ -37,8 +37,13 @@ public record ApplicationSyntax(
     IEnumerable<UiProfileSyntax>? UiProfiles = null,
     IEnumerable<ThemeSyntax>? Themes = null,
     IEnumerable<TriggerSyntax>? Triggers = null,
-    IEnumerable<LayoutSyntax>? Layouts = null) : SyntaxNode(Location)
+    IEnumerable<LayoutSyntax>? Layouts = null) : SyntaxNode(Location), ISourceSyntax
 {
+    /// <summary>
+    /// Gets the immutable numeric interpretation of this document.
+    /// </summary>
+    public SourceOptions SourceOptions { get; init; } = SourceOptions.Legacy;
+
     /// <summary>
     /// Gets the named behaviors the document declares, attached where a <c>uses</c> clause references them.
     /// </summary>

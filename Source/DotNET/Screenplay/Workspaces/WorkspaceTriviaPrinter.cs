@@ -34,7 +34,7 @@ static class WorkspaceTriviaPrinter
         // Coalesce only byte-identical edits; conflicting or partial overlaps still fail closed.
         var patches = changes.SelectMany(change => change.Kind == WorkspaceTriviaChangeKind.Identifier
             ? IdentifierPatches(original, originals, tokensByLine, change)
-            : [SpanPatch(original, tokensByLine, change, originals[change.Path], intendedNodes.GetValueOrDefault(change.Path))])
+            : [SpanPatch(original, tokensByLine, change, originals[change.Path], intendedNodes.GetValueOrDefault(change.Path), intended.SourceOptions.NumericMode)])
             .DistinctBy(patch => (patch.Offset, patch.Length, Convert.ToHexString(patch.Bytes)))
             .OrderByDescending(patch => patch.Offset).ToArray();
         var previousStart = original.Bytes.Length;
@@ -163,7 +163,8 @@ static class WorkspaceTriviaPrinter
         ILookup<int, WorkspaceSourceToken> tokensByLine,
         WorkspaceTriviaChange change,
         SyntaxNode before,
-        SyntaxNode? after)
+        SyntaxNode? after,
+        NumericMode mode)
     {
         if (change.Kind == WorkspaceTriviaChangeKind.EventPin && before is EventSyntax declaration && after is EventSyntax changed)
         {
@@ -173,11 +174,11 @@ static class WorkspaceTriviaPrinter
         var (start, length, text) = (change.Kind, before, after) switch
         {
             (WorkspaceTriviaChangeKind.LiteralValue, LiteralExpressionSyntax literal, LiteralExpressionSyntax replacement) =>
-                (literal.RawLocation!, literal.RawLength!.Value, ScreenplaySyntaxText.Expression(replacement)),
+                (literal.RawLocation!, literal.RawLength!.Value, ScreenplaySyntaxText.Expression(replacement, mode)),
             (WorkspaceTriviaChangeKind.MappingSource, PropertyMappingSyntax mapping, PropertyMappingSyntax replacement) =>
-                (mapping.SourceLocation!, mapping.SourceLength!.Value, ScreenplaySyntaxText.Expression(replacement.Source)),
+                (mapping.SourceLocation!, mapping.SourceLength!.Value, ScreenplaySyntaxText.Expression(replacement.Source, mode)),
             (WorkspaceTriviaChangeKind.Mapping, PropertyMappingSyntax mapping, PropertyMappingSyntax replacement) when mapping.SourceLocation!.Line == mapping.Location.Line =>
-                (mapping.Location, mapping.SourceLocation.Column - mapping.Location.Column + mapping.SourceLength!.Value, $"{replacement.Property} = {ScreenplaySyntaxText.Expression(replacement.Source)}"),
+                (mapping.Location, mapping.SourceLocation.Column - mapping.Location.Column + mapping.SourceLength!.Value, $"{replacement.Property} = {ScreenplaySyntaxText.Expression(replacement.Source, mode)}"),
             _ => throw Unsupported(original, change.Path)
         };
         var range = WorkspaceSourceRanges.Bytes([.. tokensByLine[start.Line]], start, length) ?? throw Unsupported(original, change.Path);

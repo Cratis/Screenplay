@@ -267,6 +267,7 @@ internal static partial class SpecificationParser
 
         return new(name, given, when, thenEvents, thenErrors, header.Location, givenReadModels, thenReadModels)
         {
+            SourceOptions = context.SourceOptions,
             File = file,
             ThenQueries = thenQueries,
             ThenAbsentReadModels = thenAbsentReadModels,

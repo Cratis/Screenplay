@@ -28,7 +28,7 @@ public sealed partial class ScreenplayPrinter :
     /// <inheritdoc/>
     public string Print(ApplicationSyntax application)
     {
-        var writer = new ScreenplayWriter();
+        var writer = DocumentWriter(application);
         WriteApplication(writer, application);
         return PrintComments(application, writer);
     }
@@ -36,7 +36,7 @@ public sealed partial class ScreenplayPrinter :
     /// <inheritdoc/>
     public string Print(ProjectionSyntax projection)
     {
-        var writer = new ScreenplayWriter();
+        var writer = DocumentWriter(projection);
         WriteProjection(writer, projection);
         return PrintComments(projection, writer);
     }
@@ -44,7 +44,7 @@ public sealed partial class ScreenplayPrinter :
     /// <inheritdoc/>
     public string Print(SpecificationSyntax specification)
     {
-        var writer = new ScreenplayWriter();
+        var writer = DocumentWriter(specification);
         WriteSpecification(writer, specification);
         return PrintComments(specification, writer);
     }
@@ -52,7 +52,7 @@ public sealed partial class ScreenplayPrinter :
     /// <inheritdoc/>
     public string Print(CaptureSyntax capture)
     {
-        var writer = new ScreenplayWriter();
+        var writer = DocumentWriter(capture);
         WriteCapture(writer, capture);
         return PrintComments(capture, writer);
     }
@@ -68,6 +68,15 @@ public sealed partial class ScreenplayPrinter :
 
     /// <inheritdoc/>
     string ICaptureSyntaxVisitor<string>.Visit(CaptureSyntax syntax) => Print(syntax);
+
+    static ScreenplayWriter DocumentWriter(SyntaxNode root)
+    {
+        SourceNumericModes.Validate(root);
+        var source = (ISourceSyntax)root;
+        var writer = new ScreenplayWriter { NumericMode = source.SourceOptions.NumericMode };
+        if (writer.NumericMode == NumericMode.Exact) writer.Line("numbers exact");
+        return writer;
+    }
 
     void WriteApplication(ScreenplayWriter writer, ApplicationSyntax application)
     {

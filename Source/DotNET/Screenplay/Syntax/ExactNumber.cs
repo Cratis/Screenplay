@@ -14,7 +14,7 @@ namespace Cratis.Screenplay.Syntax;
 /// Literal ingestion does not round or underflow. This value does not introduce arbitrary-precision arithmetic
 /// or opt a document into exact mode. Canonical text is invariant fixed-point text, with zero normalized.
 /// </remarks>
-internal sealed record ExactNumber
+public sealed record ExactNumber
 {
     const string MaximumCoefficient = "79228162514264337593543950335";
 

@@ -28,7 +28,10 @@ public static class SyntaxJson
     /// <returns>A detached canonical JSON value.</returns>
     /// <exception cref="InvalidSyntaxJson">A node or value cannot be represented by the typed contract.</exception>
     public static JsonElement Serialize(SyntaxNode node) => AtBoundary(() =>
-        JsonSerializer.SerializeToElement(SyntaxJsonWriter.Write(node, "$", 0), _options));
+    {
+        SourceNumericModes.Validate(node);
+        return JsonSerializer.SerializeToElement(SyntaxJsonWriter.Write(node, "$", 0), _options);
+    });
 
     /// <summary>
     /// Admits a well-typed syntax tree, rejecting unknown fields and invalid values.
@@ -36,7 +39,12 @@ public static class SyntaxJson
     /// <param name="value">The typed JSON syntax object.</param>
     /// <returns>The immutable syntax tree, with source locations assigned to the start of the document.</returns>
     /// <exception cref="InvalidSyntaxJson">The JSON is not a supported, well-typed syntax tree.</exception>
-    public static SyntaxNode Deserialize(JsonElement value) => AtBoundary(() => SyntaxJsonReader.Read(value, typeof(SyntaxNode), "$", 0));
+    public static SyntaxNode Deserialize(JsonElement value) => AtBoundary(() =>
+    {
+        var node = SyntaxJsonReader.Read(value, typeof(SyntaxNode), "$", 0);
+        SourceNumericModes.Validate(node);
+        return node;
+    });
 
     /// <summary>
     /// Compares all structural values and collection order, excluding server-owned source metadata.

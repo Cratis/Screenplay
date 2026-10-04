@@ -18,6 +18,16 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         ApplicationSyntax syntax,
         SemanticDocumentSet documents)
     {
+        var numeric = SourceNumericModes.Errors(syntax);
+        if (numeric.Count > 0) return CompilationResult<SemanticCompilation>.Failed(numeric);
+        if (syntax.SourceOptions.NumericMode == NumericMode.Exact)
+        {
+            return CompilationResult<SemanticCompilation>.Failed([Diagnostic.Error(
+                DiagnosticCodes.UnsupportedSemanticSyntax,
+                "Exact numeric source mode requires ESM v7 semantic admission; this source/syntax implementation does not execute exact documents.",
+                syntax.Location)]);
+        }
+
         var admission = CommandProductionAdmission(syntax);
         if (admission.Count > 0)
         {

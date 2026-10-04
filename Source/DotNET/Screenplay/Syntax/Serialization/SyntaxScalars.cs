@@ -13,6 +13,22 @@ internal static class SyntaxScalars
     internal static object Read(JsonElement value, Type type, string path)
     {
         type = Nullable.GetUnderlyingType(type) ?? type;
+        if (type == typeof(SourceOptions))
+        {
+            if (value.ValueKind != JsonValueKind.Object || value.EnumerateObject().Count() != 1 ||
+                !value.TryGetProperty("numericMode", out var mode) || mode.ValueKind != JsonValueKind.String)
+            {
+                throw new InvalidSyntaxJson($"{path}: source options require exactly one string numericMode.");
+            }
+
+            return mode.GetString() switch
+            {
+                "legacy" => SourceOptions.Legacy,
+                "exact" => SourceOptions.Exact,
+                _ => throw new InvalidSyntaxJson($"{path}: unknown source numeric mode.")
+            };
+        }
+
         if (type == typeof(string) && value.ValueKind == JsonValueKind.String)
         {
             return value.GetString()!;
@@ -55,6 +71,11 @@ internal static class SyntaxScalars
     internal static object Write(object value, Type type, string path)
     {
         type = Nullable.GetUnderlyingType(type) ?? type;
+        if (type == typeof(SourceOptions) && value is SourceOptions source && Enum.IsDefined(source.NumericMode))
+        {
+            return new Dictionary<string, object?> { ["numericMode"] = source.NumericMode == NumericMode.Exact ? "exact" : "legacy" };
+        }
+
         if (type == typeof(object))
         {
             return SyntaxLiterals.Write(value, path);

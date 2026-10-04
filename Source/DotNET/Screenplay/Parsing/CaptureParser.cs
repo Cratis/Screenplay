@@ -114,6 +114,7 @@ internal static partial class CaptureParser
 
         return new(name.Groups[1].Value, source, key, map, appends, children, nested, header.Location)
         {
+            SourceOptions = context.SourceOptions,
             DirectiveLocations = MapLocations(keyLocation, mapLocation)
         };
     }

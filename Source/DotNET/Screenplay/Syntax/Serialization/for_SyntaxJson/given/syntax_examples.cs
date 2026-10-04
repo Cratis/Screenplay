@@ -72,6 +72,8 @@ internal static class syntax_examples
     static object? Value(Type type, int depth)
     {
         type = Nullable.GetUnderlyingType(type) ?? type;
+        if (type == typeof(SourceOptions)) return SourceOptions.Legacy;
+
         if (type == typeof(SourceLocation))
         {
             return new SourceLocation(12, 4, "examples.play");

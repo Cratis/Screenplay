@@ -39,7 +39,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     public CompilationResult<ApplicationSyntax> Compile(string source)
     {
         var lines = SourceLineSplitter.Split(source);
-        var context = new ParserContext(new(lines), languages: languages);
+        var context = SourceOptionsParser.Create(lines, languages: languages);
         var application = SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines), lines) with { RegisteredTriggers = SnapshotTriggers(languages) };
         ScreenplayValidator.Validate(application, context);
         return new(application, [.. context.Diagnostics, .. ProductionDestinationDiagnostics.In(application)]);
@@ -66,7 +66,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     public CompilationResult<ProjectionSyntax> CompileProjection(string source)
     {
         var lines = SourceLineSplitter.Split(source, hashComments: true);
-        var context = new ParserContext(new(lines), languages: languages);
+        var context = SourceOptionsParser.Create(lines, languages: languages, hashComments: true);
         var projections = ProjectionParser.ParseDocument(context);
         return new(projections.Count > 0 ? SourceCommentCapture.Attach(projections[0], lines, hashComments: true) : null, context.Diagnostics);
     }
@@ -84,7 +84,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     public CompilationResult<SpecificationSyntax> CompileSpecification(string source)
     {
         var lines = SourceLineSplitter.Split(source, hashComments: true);
-        var context = new ParserContext(new(lines), languages: languages);
+        var context = SourceOptionsParser.Create(lines, languages: languages, hashComments: true);
         var specifications = SpecificationParser.ParseDocument(context);
         return new(specifications.Count > 0 ? SourceCommentCapture.Attach(specifications[0], lines, hashComments: true) : null, context.Diagnostics);
     }
@@ -102,7 +102,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     public CompilationResult<CaptureSyntax> CompileCapture(string source)
     {
         var lines = SourceLineSplitter.Split(source, hashComments: true);
-        var context = new ParserContext(new(lines), languages: languages);
+        var context = SourceOptionsParser.Create(lines, languages: languages, hashComments: true);
         var captures = CaptureParser.ParseDocument(context);
         return new(captures.Count > 0 ? SourceCommentCapture.Attach(captures[0], lines, hashComments: true) : null, context.Diagnostics);
     }
@@ -127,7 +127,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     internal static CompilationResult<ApplicationSyntax> ParsePlaced(string source, string? path, PlayPlacement placement, IScreenplayLanguageRegistry languages)
     {
         var lines = SourceLineSplitter.Split(source, path: path);
-        var context = new ParserContext(new(lines), path, languages);
+        var context = SourceOptionsParser.Create(lines, path, languages);
         return new(SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines, placement), lines) with { RegisteredTriggers = SnapshotTriggers(languages) }, context.Diagnostics);
     }
 
@@ -140,7 +140,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     internal static IReadOnlyList<DiscoveredFileImport> DiscoverImports(string source, string? path)
     {
         var lines = SourceLineSplitter.Split(source, path: path);
-        return ScreenplayParser.DiscoverImports(new ParserContext(new(lines), path));
+        return ScreenplayParser.DiscoverImports(SourceOptionsParser.Create(lines, path));
     }
 
     static ImmutableDictionary<string, TriggerDefinition> SnapshotTriggers(IScreenplayLanguageRegistry registry) =>

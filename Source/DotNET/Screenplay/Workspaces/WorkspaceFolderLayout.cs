@@ -23,9 +23,9 @@ internal static class WorkspaceFolderLayout
             var folder = module.Name;
             files.Add(
                 System.IO.Path.Combine(folder, module.Name + PlayFileWriter.Extension),
-                printer.Print(PlayFileDocument.ForModule(module)));
+                printer.Print(PlayFileDocument.ForModule(module) with { SourceOptions = application.SourceOptions }));
 
-            ExpandFeatures(files, printer, module, [], module.Features, folder);
+            ExpandFeatures(files, printer, module, [], module.Features, folder, application.SourceOptions);
         }
 
         return files.Files;
@@ -37,22 +37,23 @@ internal static class WorkspaceFolderLayout
         ModuleSyntax module,
         IReadOnlyList<FeatureSyntax> ancestors,
         IEnumerable<FeatureSyntax> features,
-        string folder)
+        string folder,
+        SourceOptions options)
     {
         foreach (var feature in features)
         {
             var featureFolder = System.IO.Path.Combine(folder, feature.Name);
             files.Add(
                 System.IO.Path.Combine(featureFolder, feature.Name + PlayFileWriter.Extension),
-                printer.Print(PlayFileDocument.ForFeature(module, ancestors, feature)));
+                printer.Print(PlayFileDocument.ForFeature(module, ancestors, feature) with { SourceOptions = options }));
 
-            ExpandFeatures(files, printer, module, [.. ancestors, feature], feature.Features, featureFolder);
+            ExpandFeatures(files, printer, module, [.. ancestors, feature], feature.Features, featureFolder, options);
 
             foreach (var slice in feature.Slices)
             {
                 files.Add(
                     System.IO.Path.Combine(featureFolder, slice.Name, slice.Name + PlayFileWriter.Extension),
-                    printer.Print(PlayFileDocument.ForSlice(module, ancestors, feature, slice)));
+                    printer.Print(PlayFileDocument.ForSlice(module, ancestors, feature, slice) with { SourceOptions = options }));
             }
         }
     }
