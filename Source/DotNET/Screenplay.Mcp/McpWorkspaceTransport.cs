@@ -40,7 +40,7 @@ static class McpWorkspaceTransport
             },
             identityPersistence = "root-local-on-apply",
             identityStatePath = ".screenplay/identities.json",
-            readiness = Readiness(workspace, sourceDiagnosticCount, diagnostics.Length)
+            readiness = Readiness(workspace, source?.Success ?? true, sourceDiagnosticCount, diagnostics.Length)
         };
     }
 
@@ -84,10 +84,10 @@ static class McpWorkspaceTransport
 
     // Authoring acceptance and executable readiness are separate verdicts: a full-language model the compiler
     // accepts authoring-side reports executable debt without being called broken, and an empty root is a valid start.
-    static object Readiness(ScreenplayWorkspace workspace, int authoringDiagnosticCount, int executableDiagnosticCount)
+    static object Readiness(ScreenplayWorkspace workspace, bool sourceSuccess, int authoringDiagnosticCount, int executableDiagnosticCount)
     {
         var empty = workspace.Documents.IsEmpty;
-        var authoringAccepted = empty || authoringDiagnosticCount == 0;
+        var authoringAccepted = empty || sourceSuccess;
         var state = "invalid";
         if (empty)
         {

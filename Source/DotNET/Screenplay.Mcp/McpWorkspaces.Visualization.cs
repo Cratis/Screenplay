@@ -12,7 +12,7 @@ internal sealed partial class McpWorkspaces
 {
     internal object Visualize(JsonElement arguments)
     {
-        McpRecoveryJournal.RefusePending(root);
+        McpRecoveryJournal.RefusePending(Root);
         var proposalId = McpJson.OptionalString(arguments, "proposalId");
         var hasSketch = arguments.TryGetProperty("sketch", out var sketch);
         if (proposalId is not null && hasSketch)
@@ -23,13 +23,13 @@ internal sealed partial class McpWorkspaces
         if (proposalId is not null)
         {
             var proposal = Proposal(arguments);
-            return McpVisualization.Result(root.ApplicationName, proposal.Before.Documents, proposal.Workspace.Documents, proposalId);
+            return McpVisualization.Result(Root.ApplicationName, proposal.Before.Documents, proposal.Workspace.Documents, proposalId);
         }
 
-        var documents = root.Read(allowEmpty: true);
+        var documents = Root.Read(allowEmpty: true);
         return hasSketch
-            ? McpVisualization.Result(root.ApplicationName, documents, Sketch(documents, sketch), null)
-            : McpVisualization.Result(root.ApplicationName, documents, null, null);
+            ? McpVisualization.Result(Root.ApplicationName, documents, Sketch(documents, sketch), null)
+            : McpVisualization.Result(Root.ApplicationName, documents, null, null);
     }
 
     static ImmutableArray<WorkspaceDocument> Sketch(ImmutableArray<WorkspaceDocument> documents, JsonElement sketch)

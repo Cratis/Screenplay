@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using System.Text.Json;
 using Cratis.Screenplay.Syntax.Serialization;
 
@@ -8,15 +9,32 @@ namespace Cratis.Screenplay.Mcp;
 
 sealed class McpTools
 {
-    readonly McpRoot _root;
     readonly McpWorkspaces _workspaces;
     readonly McpSourceCache _sources = new();
 
-    internal McpTools(McpRoot root)
+    internal McpTools(McpRoot? root = null) => _workspaces = new(root);
+
+    // Whether the server was started without a fixed root and chooses one per workspace.
+    internal bool DynamicRoot => _workspaces.DynamicRoot;
+
+    // The client roots a host advertises; the connection sets them once the host has answered roots/list.
+    internal ImmutableArray<string> ClientRoots
     {
-        _root = root;
-        _workspaces = new(root);
+        get => _workspaces.ClientRoots;
+        set => _workspaces.ClientRoots = value;
     }
+
+    // The working directory a dynamic server falls back to; null means the process working directory.
+    internal string? CurrentDirectoryHint
+    {
+        get => _workspaces.CurrentDirectoryHint;
+        set => _workspaces.CurrentDirectoryHint = value;
+    }
+
+    // The root currently bound from a single client root, when it came from the host rather than a path.
+    internal string? ClientDerivedRootPath => _workspaces.ClientDerivedRootPath;
+
+    internal void UnbindClientRoot(string directoryPath) => _workspaces.UnbindClientRoot(directoryPath);
 
     internal object Call(JsonElement parameters, bool visual = false)
     {
@@ -64,14 +82,15 @@ sealed class McpTools
 
     object Read(string name, JsonElement arguments)
     {
-        McpRecoveryJournal.RefusePending(_root);
+        var root = _workspaces.ReadRoot();
+        McpRecoveryJournal.RefusePending(root);
 
         // Health and overview queries answer for a brand-new empty root too; every other read needs documents.
         var allowEmpty = string.Equals(name, "diagnostics", StringComparison.Ordinal) ||
             string.Equals(name, "describe-application", StringComparison.Ordinal);
-        var documents = _root.Read(allowEmpty);
+        var documents = root.Read(allowEmpty);
         var snapshot = _sources.Read(documents);
-        McpRecoveryJournal.RefusePending(_root);
+        McpRecoveryJournal.RefusePending(root);
         var expectedSource = McpJson.OptionalString(arguments, "expectedSourceRevision");
         if (McpJson.Integer(arguments, "offset", 0, 0, int.MaxValue) > 0 && expectedSource is null)
         {
@@ -113,7 +132,7 @@ sealed class McpTools
             _ => McpModelQueries.Describe(snapshot, documents.Length, arguments)
         };
         var result = McpJson.ToolResult(value);
-        McpRecoveryJournal.RefusePending(_root);
+        McpRecoveryJournal.RefusePending(root);
         return result;
     }
 }

@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Cratis.Screenplay.Diagnostics;
@@ -9,36 +10,77 @@ using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
 
-internal sealed partial class McpWorkspaces(McpRoot root)
+internal sealed partial class McpWorkspaces
 {
     readonly Dictionary<string, IMcpProposal> _proposals = new(StringComparer.Ordinal);
     readonly ConditionalWeakTable<IMcpProposal, McpStatePlan> _statePlans = [];
+    readonly bool _staticRoot;
+    McpRoot? _root;
     ScreenplayWorkspace? _workspace;
     byte[]? _stateBytes;
 
+    internal McpWorkspaces(McpRoot? root = null)
+    {
+        _staticRoot = root is not null;
+        _root = root;
+    }
+
+    // The client roots a host advertises through the MCP roots capability; empty until the host answers.
+    internal ImmutableArray<string> ClientRoots { get; set; } = [];
+
+    // The working directory a dynamic server falls back to when it binds no root itself; specs replace it.
+    internal string? CurrentDirectoryHint { get; set; }
+
+    // Whether the server was started without a fixed root and chooses one per workspace.
+    internal bool DynamicRoot => !_staticRoot;
+
+    // The path of a root bound from a single client root, null when unbound or chosen by path.
+    internal string? ClientDerivedRootPath { get; private set; }
+
+    // The bound root; dynamic servers refuse workspace work until a root has been chosen.
+    McpRoot Root => _root ?? throw new McpFailure(
+        "No Screenplay root is bound. Pass open-workspace with a path to the folder holding the model, or restart the server inside one.");
+
+    internal McpRoot ReadRoot() => Root;
+
     internal object Open(JsonElement arguments)
     {
+        // A dynamic server chooses its root here: an explicit path wins, then a single client root,
+        // then the working directory when it already holds Screenplay source. A static root stays bound.
+        var requestedPath = McpJson.OptionalString(arguments, "path");
+        if (requestedPath is not null)
+        {
+            ClientDerivedRootPath = null;
+            BindRoot(new McpRoot(Path.GetFullPath(requestedPath, CurrentDirectoryHint ?? Environment.CurrentDirectory)));
+        }
+        else if (_root is null)
+        {
+            var resolved = ResolveDefaultRoot();
+            ClientDerivedRootPath = ClientRoots.Length == 1 ? resolved.DirectoryPath : null;
+            BindRoot(resolved);
+        }
+
         var serialized = McpJson.OptionalString(arguments, "workspaceJson");
-        McpRecoveryJournal.RefusePending(root);
-        var persisted = new McpManagedFiles(root).Read(McpState.FileName);
+        McpRecoveryJournal.RefusePending(Root);
+        var persisted = new McpManagedFiles(Root).Read(McpState.FileName);
         var state = persisted is null ? null : McpState.Deserialize(persisted);
-        var name = McpJson.OptionalString(arguments, "applicationName") ?? state?.ApplicationName ?? root.ApplicationName;
+        var name = McpJson.OptionalString(arguments, "applicationName") ?? state?.ApplicationName ?? Root.ApplicationName;
         if (state is not null && name != state.ApplicationName)
         {
             throw new McpFailure("IdentityStateConflict: applicationName differs from the persisted application. Reopen without overriding its name.");
         }
 
         var candidate = serialized is null
-            ? state?.Open(root) ?? OpenFromDisk(name)
-            : McpAttachmentContents.Refresh(root, McpWorkspaceTransport.Restore(serialized));
+            ? state?.Open(Root) ?? OpenFromDisk(name)
+            : McpAttachmentContents.Refresh(Root, McpWorkspaceTransport.Restore(serialized));
         if (persisted is not null && !McpManagedFiles.Equal(persisted, McpState.Serialize(candidate)))
         {
             throw new McpFailure("IdentityImportConflict: workspaceJson cannot replace a different persisted identity catalog or document mapping.");
         }
 
-        root.Verify(candidate);
-        new McpManagedFiles(root).Verify(McpState.FileName, persisted);
-        McpRecoveryJournal.RefusePending(root);
+        Root.Verify(candidate);
+        new McpManagedFiles(Root).Verify(McpState.FileName, persisted);
+        McpRecoveryJournal.RefusePending(Root);
         _ = McpWorkspaceTransport.ExportBytes(candidate);
         var result = McpJson.ToolResult(McpWorkspaceTransport.Describe(candidate, McpJson.Boolean(arguments, "includeContent")));
         _workspace = candidate;
@@ -59,7 +101,7 @@ internal sealed partial class McpWorkspaces(McpRoot root)
             return McpJson.ToolResult(new { success = false, stale.Conflicts, stale.Diagnostics }, true);
         }
 
-        root.Verify(workspace);
+        Root.Verify(workspace);
         var request = new WorkspaceTransactionRequest
         {
             ExpectedRevision = expectedRevision,
@@ -93,10 +135,10 @@ internal sealed partial class McpWorkspaces(McpRoot root)
         var includeContent = McpJson.Boolean(arguments, "includeContent");
         var beforeDescription = JsonSerializer.SerializeToElement(McpWorkspaceTransport.Describe(workspace, includeContent), McpJson.Options);
         var afterDescription = JsonSerializer.SerializeToElement(McpWorkspaceTransport.Describe(proposal.Workspace, includeContent), McpJson.Options);
-        var result = new McpDisk(root).Apply(proposal, statePlan);
+        var result = new McpDisk(Root).Apply(proposal, statePlan);
         if (result.Success)
         {
-            _workspace = McpAttachmentContents.Refresh(root, proposal.Workspace);
+            _workspace = McpAttachmentContents.Refresh(Root, proposal.Workspace);
             _stateBytes = statePlan.After;
             _proposals.Clear();
             _statePlans.Clear();
@@ -116,6 +158,59 @@ internal sealed partial class McpWorkspaces(McpRoot root)
         return McpJson.ToolResult(response, !result.Success, enforceBudget: false);
     }
 
+    // Drops a binding that came from client roots after the host reports the roots changed; an explicit
+    // path the caller chose survives.
+    internal void UnbindClientRoot(string directoryPath)
+    {
+        if (_staticRoot || _root is null || !string.Equals(_root.DirectoryPath, directoryPath, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _root = null;
+        _workspace = null;
+        _stateBytes = null;
+        _proposals.Clear();
+        _statePlans.Clear();
+    }
+
+    static McpRoot RootFromClientUri(string uri)
+    {
+        if (!Uri.TryCreate(uri, UriKind.Absolute, out var parsed) || !string.Equals(parsed.Scheme, "file", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new McpFailure($"A client root must be a file URI: '{uri}'.");
+        }
+
+        return new McpRoot(Uri.UnescapeDataString(parsed.AbsolutePath));
+    }
+
+    // A shallow, bounded check: .play files at the top or one level down, or an existing identity-state folder.
+    static bool LooksLikeScreenplayRoot(string directory)
+    {
+        if (Directory.Exists(Path.Combine(directory, ".screenplay")) || Directory.EnumerateFiles(directory, "*.play").Any())
+        {
+            return true;
+        }
+
+        foreach (var child in Directory.EnumerateDirectories(directory))
+        {
+            var name = Path.GetFileName(child);
+            if (name.Equals(".git", StringComparison.Ordinal) || name.Equals(".ai-work", StringComparison.Ordinal) ||
+                name.Equals("bin", StringComparison.OrdinalIgnoreCase) || name.Equals("obj", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("node_modules", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (Directory.EnumerateFiles(child, "*.play").Any())
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     object Store(IMcpProposal proposal, JsonElement arguments)
     {
         proposal = RefreshProposal(proposal);
@@ -123,7 +218,7 @@ internal sealed partial class McpWorkspaces(McpRoot root)
         McpRoot.CheckDocuments(candidate.Documents);
         foreach (var document in candidate.Documents)
         {
-            _ = root.PathFor(document.Path);
+            _ = Root.PathFor(document.Path);
         }
 
         // The rejection carries the exact diagnostics so a caller can correct the candidate instead of guessing.
@@ -167,6 +262,43 @@ internal sealed partial class McpWorkspaces(McpRoot root)
         return response;
     }
 
+    void BindRoot(McpRoot candidate)
+    {
+        if (_root is not null && string.Equals(_root.DirectoryPath, candidate.DirectoryPath, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _root = candidate;
+        _workspace = null;
+        _stateBytes = null;
+        _proposals.Clear();
+        _statePlans.Clear();
+    }
+
+    McpRoot ResolveDefaultRoot()
+    {
+        if (ClientRoots.Length == 1)
+        {
+            return RootFromClientUri(ClientRoots[0]);
+        }
+
+        if (ClientRoots.Length > 1)
+        {
+            throw new McpFailure(
+                $"The client offers {ClientRoots.Length} roots; pass open-workspace with a path to choose one: {string.Join(", ", ClientRoots)}");
+        }
+
+        var directory = CurrentDirectoryHint ?? Environment.CurrentDirectory;
+        if (LooksLikeScreenplayRoot(directory))
+        {
+            return new McpRoot(directory);
+        }
+
+        throw new McpFailure(
+            "No Screenplay root was given and the current directory holds no .play files. Pass open-workspace with a path to the folder holding the model.");
+    }
+
     IMcpProposal Proposal(JsonElement arguments)
     {
         var id = McpJson.RequiredString(arguments, "proposalId");
@@ -191,7 +323,7 @@ internal sealed partial class McpWorkspaces(McpRoot root)
 
     IMcpProposal RefreshProposal(IMcpProposal proposal)
     {
-        var refreshed = McpAttachmentContents.Refresh(root, proposal.Workspace);
+        var refreshed = McpAttachmentContents.Refresh(Root, proposal.Workspace);
         if (ReferenceEquals(refreshed, proposal.Workspace))
         {
             return proposal;
@@ -213,29 +345,29 @@ internal sealed partial class McpWorkspaces(McpRoot root)
             throw new McpFailure("StaleRevision: reopen the workspace before continuing.");
         }
 
-        root.Verify(workspace);
+        Root.Verify(workspace);
         return workspace;
     }
 
     ScreenplayWorkspace OpenFromDisk(string name)
     {
-        var documents = root.Read(allowEmpty: true);
+        var documents = Root.Read(allowEmpty: true);
         var identity = ApplicationIdentity.Create(name);
         if (documents.IsEmpty)
         {
             return ScreenplayWorkspace.CreateEmpty(identity, name);
         }
 
-        var loaded = McpAttachmentContents.Load(root, documents);
+        var loaded = McpAttachmentContents.Load(Root, documents);
         return ScreenplayWorkspace.Create(identity, name, documents, SemanticIdentityCatalog.Empty(identity), loaded.Contents, loaded.Diagnostics);
     }
 
     ScreenplayWorkspace Current()
     {
-        McpRecoveryJournal.RefusePending(root);
+        McpRecoveryJournal.RefusePending(Root);
         var workspace = _workspace ?? throw new McpFailure("Open a workspace first.");
-        new McpManagedFiles(root).Verify(McpState.FileName, _stateBytes);
-        var refreshed = McpAttachmentContents.Refresh(root, workspace);
+        new McpManagedFiles(Root).Verify(McpState.FileName, _stateBytes);
+        var refreshed = McpAttachmentContents.Refresh(Root, workspace);
         if (!ReferenceEquals(workspace, refreshed))
         {
             _workspace = refreshed;
