@@ -8,6 +8,7 @@ import { CommandResponseSymbol, responseAnalysis } from './response-analysis';
 import { fileReferenceOn } from './file-references';
 import { clauseKeywords } from './language';
 import { AuthoringDocument } from './AuthoringDocument';
+import { AuthoredEventSource } from './AuthoredEventSource';
 import { ProductionSymbol } from './ProductionSymbol';
 import { TypeReferenceSymbol, typeReferenceSymbol } from './TypeReferenceSymbol';
 
@@ -87,7 +88,9 @@ export interface DocumentSymbols {
     authoringSources?: readonly string[];
     authoringPath?: string;
     authoringPlacement?: readonly string[];
+    authoringPlacementResolved?: boolean;
     authoringDocuments?: readonly AuthoringDocument[];
+    eventSources?: readonly AuthoredEventSource[];
     imports: ImportSymbol[];
     concepts: ConceptSymbol[];
     types: TypeSymbol[];
@@ -186,6 +189,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
     const analysis = responseAnalysis(lines);
     const symbols: DocumentSymbols = {
         authoringSources: [source],
+        eventSources: analysis.eventSources.declarations,
         imports: [],
         concepts: [],
         types: [],
@@ -385,7 +389,8 @@ export function scanDocument(lines: string[]): DocumentSymbols {
 export function mergeSymbols(...documents: DocumentSymbols[]): DocumentSymbols {
     return {
         authoringSources: documents.flatMap(document => document.authoringSources ?? []),
-        ...(documents.some(document => document.authoringDocuments) ? { authoringDocuments: documents.flatMap(document => document.authoringDocuments ?? (document.authoringSources ?? []).map((source, index) => ({ path: `other-${index}.play`, source }))) } : {}),
+        ...(documents.some(document => document.authoringDocuments) ? { authoringDocuments: documents.flatMap(document => document.authoringDocuments ?? []) } : {}),
+        eventSources: documents.flatMap(document => document.eventSources ?? []),
         imports: documents.flatMap((document) => document.imports),
         concepts: documents.flatMap((document) => document.concepts),
         types: documents.flatMap((document) => document.types),
@@ -395,6 +400,19 @@ export function mergeSymbols(...documents: DocumentSymbols[]): DocumentSymbols {
         queries: documents.flatMap((document) => document.queries),
         screens: documents.flatMap((document) => document.screens),
         triggers: documents.flatMap((document) => document.triggers),
+    };
+}
+
+// Name scans are not physical input documents. Keep the host's authoritative paths separate,
+// and let responseAnalysis replace the current document with this buffer exactly once.
+export function symbolsForBuffer(lines: string[], application?: DocumentSymbols): DocumentSymbols {
+    const path = application?.authoringPath ?? 'current.play';
+    const current = application?.authoringDocuments?.find(document => document.path === path);
+    return { ...mergeSymbols(scanDocument(lines), application ?? mergeSymbols()),
+        authoringDocuments: application?.authoringDocuments,
+        authoringPath: path,
+        authoringPlacement: application?.authoringPlacement ?? current?.placement,
+        authoringPlacementResolved: application?.authoringPlacementResolved ?? current?.isPlacementResolved,
     };
 }
 

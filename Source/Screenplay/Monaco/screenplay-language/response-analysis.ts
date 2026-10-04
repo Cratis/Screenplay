@@ -1,9 +1,11 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { AuthoringProductionKind, AuthoringProductionResolver, CommandSyntax, Diagnostic, OperationSyntax, parse, parsePlacedDocuments, SpecificationSyntax } from '@cratis/screenplay-compiler';
+import { AuthoringProductionKind, AuthoringProductionResolver, CommandSyntax, Diagnostic, EventSourceReadConfidence, OperationSyntax, parsePlacedDocuments, SpecificationSyntax } from '@cratis/screenplay-compiler';
 import { fenceMap, indentOf, withoutComment } from './document-context';
 import { ResponseAnalysis } from './ResponseAnalysis';
+import { EventSourceAnalysis } from './EventSourceAnalysis';
+import { AuthoredCommandRoute } from './AuthoredCommandRoute';
 import { AuthoringDocument } from './AuthoringDocument';
 import { OperationAnalysis, OperationDeclaration, OperationReference } from './OperationAnalysis';
 
@@ -36,7 +38,7 @@ function authoringSource(lines: string[], headers: readonly string[]) {
     const body: number[] = [];
     let global = false;
     lines.forEach((line, index) => {
-        if (!fences[index] && indentOf(line) === 0 && /^\w/.test(line)) global = /^(?:concept|type|import|domain|system)\b/.test(line);
+        if (!fences[index] && indentOf(line) === 0 && /^\w/.test(line)) global = /^(?:concept|type|import|domain|system|eventsource)\b/.test(line);
         (global ? globals : body).push(index);
     });
     const depth = roots.includes('feature') ? 1 : roots.includes('slice') ? 2 : 3;
@@ -46,9 +48,9 @@ function authoringSource(lines: string[], headers: readonly string[]) {
     return { source, locations };
 }
 
-function analyze(lines: string[], otherSources: readonly (string | AuthoringDocument)[], placement?: readonly string[], path = 'current.play'): ResponseAnalysis & { readonly operations: OperationAnalysis } {
+function analyze(lines: string[], otherSources: readonly (string | AuthoringDocument)[], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis } {
     const others = otherSources.map((document, index) => typeof document === 'string' ? { path: `other-${index}.play`, source: document } : document).filter(document => document.path !== path);
-    const documents: AuthoringDocument[] = [{ path, source: lines.join('\n'), placement }, ...others];
+    const documents: AuthoringDocument[] = [{ path, source: lines.join('\n'), placement, isPlacementResolved }, ...others];
     // Modules/features merge, but slices are real declarations: equal slice names discard later
     // documents. Share only fresh synthetic module/feature names, with a distinct synthetic slice
     // per fragment. This retains all commands for normal (including ambiguous) scope resolution,
@@ -76,7 +78,7 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
     const locations = new Map(preparedDocuments.map(document => [document.path, document.locations]));
     // Put the buffer after its supplied context so duplicate real declarations are reported at
     // the current source, not silently dropped from its source-local diagnostic view.
-    const parsed = others.length === 0 ? parse(prepared.source, path, placement) : parsePlacedDocuments([...preparedDocuments.slice(1), prepared]);
+    const parsed = parsePlacedDocuments([...preparedDocuments.slice(1), prepared]);
     const commands = new Map<number, CommandSyntax>();
     const specifications = new Map<number, SpecificationSyntax>();
     const visited = new WeakSet<object>();
@@ -99,6 +101,16 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
         }
     };
     walk(parsed.value);
+    walk(parsed.physicalEventSources);
+    // Fragment wrappers must not turn an unread original root into confidence evidence.
+    // Retain the parser's unknown-owner diagnostic at its original physical root location.
+    for (const diagnostic of parsed.diagnostics) walk(diagnostic.location);
+    const unknownFragmentExtent = parsed.diagnostics.some(diagnostic => {
+        if (!['PLAY0022', 'PLAY0024', 'PLAY0029'].includes(diagnostic.code)) return false;
+        const document = preparedDocuments.find(document => document.path === diagnostic.location.path);
+        const original = documents.find(document => document.path === diagnostic.location.path)?.source.split('\n')[diagnostic.location.line - 1];
+        return document?.locations.some(location => location.line === 0) && original !== undefined && indentOf(original) === 0;
+    });
     const diagnostics: Diagnostic[] = parsed.diagnostics.filter(diagnostic => diagnostic.location.path === path).flatMap(diagnostic => {
         walk(diagnostic.location);
         return diagnostic.location.line > 0 ? [diagnostic] : [];
@@ -183,14 +195,45 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
             });
         }
     };
-    return { commands, specifications, diagnostics, operationProductionLines, operations };
+    const sourceDeclarations = parsed.physicalEventSources.map(entry => entry.source);
+    const sourceCatalog = new EventSourceReadConfidence(parsed.physicalEventSources, parsed.sourceInventoryComplete && !unknownFragmentExtent);
+    const resolutions = new Map<string, ReturnType<EventSourceReadConfidence['resolve']>>();
+    const resolve = (source: string, stream?: string) => {
+        const key = JSON.stringify([source, stream]);
+        let result = resolutions.get(key);
+        if (!result) { result = sourceCatalog.resolve(source, stream); resolutions.set(key, result); }
+        return { ...result, source: result.state === 'unique' ? result.sources[0] : undefined, stream: result.state === 'unique' ? result.streams[0] : undefined };
+    };
+    const importedTypeReferences = new Set(parsed.value.imports.map(imported => imported.qualifiedName));
+    const targets = sourceDeclarations.flatMap(source => {
+        return source.streams.filter(stream => resolve(source.name, stream.name).state === 'unique' && !importedTypeReferences.has(`${source.name}.${stream.name}`)).map(stream => ({ name: `${source.name}.${stream.name}`, source, stream }));
+    });
+    const sourceContexts = new Map<number, { command?: CommandSyntax; route?: AuthoredCommandRoute; source?: typeof sourceDeclarations[number]; stream?: typeof sourceDeclarations[number]['streams'][number] }>();
+    const routes: AuthoredCommandRoute[] = [];
+    for (const command of commands.values()) {
+        for (const line of range(command.location.line - 1)) sourceContexts.set(line, { command });
+        for (const member of [...command.produces, ...command.validations, ...(command.handler ? [command.handler] : [])])
+            for (const line of range(member.location.line - 1)) sourceContexts.delete(line);
+        // Retained ambiguity candidates are not selected authored routes.
+        if (command.stream) {
+            routes.push(command.stream);
+            for (const line of range(command.stream.location.line - 1)) sourceContexts.set(line, { command, route: command.stream });
+        }
+    }
+    for (const source of sourceDeclarations.filter(source => source.location.path === path)) {
+        for (const line of range(source.location.line - 1)) sourceContexts.set(line, { source });
+        for (const stream of source.streams) for (const line of range(stream.location.line - 1)) sourceContexts.set(line, { source, stream });
+    }
+    const ambiguousCandidates = [...commands.values()].flatMap(command => command.streamCandidates ?? []).filter(candidate => candidate.propertyCandidate !== null);
+    const eventSources: EventSourceAnalysis = { declarations: sourceDeclarations, routes, ambiguousCandidates, contexts: sourceContexts, targets, resolve };
+    return { commands, specifications, diagnostics, operationProductionLines, operations, eventSources };
 }
 
-export function responseAnalysis(lines: string[], otherSources: readonly (string | AuthoringDocument)[] = [], placement?: readonly string[], path = 'current.play'): ResponseAnalysis & { readonly operations: OperationAnalysis } {
-    const key = JSON.stringify([lines, otherSources, placement, path]);
+export function responseAnalysis(lines: string[], otherSources: readonly (string | AuthoringDocument)[] = [], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis } {
+    const key = JSON.stringify([lines, otherSources, placement, path, isPlacementResolved]);
     let analysis = revisions.get(key);
     if (analysis === undefined) {
-        analysis = analyze(lines, otherSources, placement, path);
+        analysis = analyze(lines, otherSources, placement, path, isPlacementResolved);
         if (revisions.size >= 16) revisions.delete(revisions.keys().next().value!);
         revisions.set(key, analysis);
     }

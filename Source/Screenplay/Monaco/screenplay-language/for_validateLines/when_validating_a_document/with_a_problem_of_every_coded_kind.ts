@@ -80,6 +80,14 @@ describe('when validating a document with a problem of every coded kind', () => 
             ['concept Id : Uuid', 'command C', '  id Id generated', '  returns @id', 'specification S', '  when C', '    id = "wrong input"', '    generated nope = "wrong fixture"', '  then returns', '    nope = "wrong shape"'],
         ];
         issues.push(...responses.flatMap(lines => validateLines(lines)));
+        const sources = [
+            ['eventsource Account', '  identifier Uuid optional'],
+            ['eventsource Account', '  stream Other', 'command C', '  stream Account.Missing'],
+            ['import Account.Transactions', 'type Transactions', '  value String', 'eventsource Account', '  stream Transactions', 'command C', '  stream Account.Transactions'],
+            ['eventsource Account', '  stream Transactions', '    streamId Int'],
+            ['eventsource Account', '  id "Account"'],
+        ];
+        issues.push(...sources.flatMap(lines => validateLines(lines)));
     });
 
     it('should give every issue it reports a code', () => {

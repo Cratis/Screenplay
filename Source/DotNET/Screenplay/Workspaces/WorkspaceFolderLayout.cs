@@ -15,6 +15,7 @@ internal static class WorkspaceFolderLayout
 {
     internal static IEnumerable<PlayFileContent> Expand(ApplicationSyntax application, IScreenplayPrinter printer)
     {
+        ScreenplayPrinter.ValidateEventSourceExport(application);
         var files = new Structure();
         files.Add(PlayFileWriter.RootFileName, printer.Print(application with { Modules = [] }));
 

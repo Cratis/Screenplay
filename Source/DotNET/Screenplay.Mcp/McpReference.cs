@@ -12,4 +12,12 @@ sealed record McpReference(string Name, string[] Kinds, string[] Scope, SourceLo
     // Use the snapshot's complete physical candidate view, not an assembled selection.
     [JsonIgnore]
     internal bool UseProductionCandidates { get; init; }
+
+    [JsonIgnore]
+    internal bool AmbiguousSourceOwner { get; init; }
+
+    [JsonIgnore]
+    internal bool IncompleteSourceOwner { get; init; }
+
+    internal string[] SourceConfidenceReasons { get; init; } = [];
 }

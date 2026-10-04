@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Files;
@@ -26,9 +27,18 @@ internal static class PlayApplicationAssembly
         bool allowUnresolvedPersonaPolicies = false)
     {
         var (documents, diagnostics) = PlayImports.Resolve(roots, source);
-        var parsed = documents.Select(document => document.Placement.IsDocument
-            ? compiler.Parse(document.Source, document.Path)
-            : compiler.Parse(document.Source, document.Path, document.Placement));
+        var candidates = (compiler as ICommandStreamCandidateParser)?.CaptureCandidates(documents.Where(document => document.IsPlacementResolved)
+            .Select(document => (SourceLineSplitter.Split(document.Source, path: document.Path), document.Placement)));
+        var parsed = documents.Select(document =>
+        {
+            CompilationResult<ApplicationSyntax> result;
+            if (compiler is ICommandStreamCandidateParser native) result = native.ParseWithCandidates(document.Source, document.Path, document.Placement, candidates!);
+            else if (document.Placement.IsDocument) result = compiler.Parse(document.Source, document.Path);
+            else result = compiler.Parse(document.Source, document.Path, document.Placement);
+            return !document.IsPlacementResolved && result.Value is { } application
+                ? result with { Value = application with { EventSources = [] } }
+                : result;
+        });
         var merged = PlayFolderMerge.Merge([.. parsed], allowUnresolvedPersonaPolicies);
         return (documents, merged with { Diagnostics = [.. diagnostics, .. merged.Diagnostics] });
     }

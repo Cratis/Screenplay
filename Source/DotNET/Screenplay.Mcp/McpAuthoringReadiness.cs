@@ -16,16 +16,16 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
         .SelectMany(entry => entry.Key.Commands.Select(command => (Command: command, Scope: entry.Value))).ToLookup(entry => entry.Command.Name, StringComparer.Ordinal);
     readonly ILookup<string, ImportSyntax> _imports = application.Imports.ToLookup(import => import.Name, StringComparer.Ordinal);
 
-    internal bool SyntaxOnly(SyntaxNode node) => Operations(node) || node switch
-    {
-        CommandSyntax command => command.Response is not null || command.Properties.Any(property => property.IsGenerated),
-        SpecificationSyntax specification => specification.ThenReturns is not null || (specification.When?.GeneratedValues.Any() ?? false),
-        SliceSyntax slice => slice.Commands.Any(SyntaxOnly) || slice.Specifications.Any(SyntaxOnly),
-        _ => false
-    };
+    // Member readiness describes its own constructs and referenced command actions, not unrelated
+    // application declarations. Model readiness separately includes every physical declaration.
+    internal bool ModelSyntaxOnly => SyntaxOnly(application);
+
+    internal string? ModelExecutionReadiness => ExecutionReadiness(application);
+
+    internal bool SyntaxOnly(SyntaxNode node) => RequiredVersion(node) > 0;
 
     internal string? ExecutionReadiness(SyntaxNode node, string? suffix = "use Authoring validation.") =>
-        SyntaxOnly(node) ? $"Unavailable until ESM v{(Operations(node) ? 9 : 8)} (PLAY0268){(suffix is null ? "." : $"; {suffix}")}" : null;
+        RequiredVersion(node) is var version && version > 0 ? $"Unavailable until ESM v{version} (PLAY0268){(suffix is null ? "." : $"; {suffix}")}" : null;
 
     internal IEnumerable<string> ProducedEvents(CommandSyntax command) => command.Produces
         .Where(production => _owners.TryGetValue(command, out var slice) && _productions.IsEventProduction(production, slice))
@@ -70,9 +70,27 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
         return scopes;
     }
 
-    bool ActionOperations(SpecificationSyntax specification)
+    int RequiredVersion(SyntaxNode node)
     {
-        if (specification.When is null || !_owners.TryGetValue(specification, out var slice)) return false;
+        var local = node switch
+        {
+            EventSourceSyntax or EventStreamSyntax or CommandStreamSyntax => 10,
+            CommandSyntax command when command.Stream is not null || command.StreamCandidates.Any() => 10,
+            CommandSyntax command when command.Response is not null || command.Properties.Any(property => property.IsGenerated) => 8,
+            SpecificationSyntax specification => Math.Max(
+                specification.ThenReturns is not null || (specification.When?.GeneratedValues.Any() ?? false) ? 8 : 0,
+                ActionCommands(specification).Select(entry => RequiredVersion(entry.Command)).DefaultIfEmpty().Max()),
+            SliceSyntax slice => slice.Commands.Cast<SyntaxNode>().Concat(slice.Specifications).Select(RequiredVersion).DefaultIfEmpty().Max(),
+            ApplicationSyntax => Math.Max(application.EventSources.Any() ? 10 : 0, _owners.Keys.OfType<SliceSyntax>().Select(RequiredVersion).DefaultIfEmpty().Max()),
+            _ => 0
+        };
+
+        return Math.Max(local, Operations(node) ? 9 : 0);
+    }
+
+    (CommandSyntax Command, string[] Scope)[] ActionCommands(SpecificationSyntax specification)
+    {
+        if (specification.When is null || !_owners.TryGetValue(specification, out var slice)) return [];
         var from = _scopes[slice];
         (CommandSyntax Command, string[] Scope)[] Candidates(string reference)
         {
@@ -92,7 +110,7 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
         var candidates = Candidates(specification.When.CommandType);
         if (candidates.Length == 0 && _imports[specification.When.CommandType].ToArray() is [var imported]) candidates = Candidates(imported.QualifiedName);
 
-        return candidates.Any(entry => Operations(entry.Command));
+        return candidates;
     }
 
     bool Operations(SyntaxNode node)
@@ -103,7 +121,7 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
             SystemSyntax or OperationSyntax => true,
             ApplicationSyntax => application.Systems.Any() || _owners.Keys.OfType<SliceSyntax>().Any(Operations),
             CommandSyntax command => _owners.TryGetValue(command, out var slice) && command.Produces.Any(production => !_productions.IsEventProduction(production, slice)),
-            SpecificationSyntax specification => specification.GivenOperationFailures.Any() || specification.ThenOperations.Any() || specification.ThenCompensated.Any() || ActionOperations(specification),
+            SpecificationSyntax specification => specification.GivenOperationFailures.Any() || specification.ThenOperations.Any() || specification.ThenCompensated.Any() || ActionCommands(specification).Any(entry => Operations(entry.Command)),
             SliceSyntax slice => OperationDeclarations.In(slice).Any() || slice.Commands.Any(Operations) || slice.Specifications.Any(Operations) || slice.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(trigger => trigger.Produces ?? []).Any(production => !_productions.IsEventProduction(production, slice)),
             _ => false
         };

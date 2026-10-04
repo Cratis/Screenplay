@@ -60,6 +60,74 @@ internal sealed partial class McpWorkspaces
             });
         }
 
+        if (new[] { "event-sources", "event-streams", "event-source-details", "event-stream-details", "command-routes", "event-source-diagnostics" }.Contains(view, StringComparer.Ordinal))
+        {
+            CheckContinuation(arguments, "expectedCatalogRevision", workspace.IdentityCatalog.Revision.ToString());
+            var analysis = McpWorkspaceAnalysis.For(workspace);
+            var inventory = analysis.EventSources;
+            IEnumerable<object> values;
+            if (view == "event-source-diagnostics")
+            {
+                values = inventory.View.Diagnostics.Cast<object>();
+            }
+            else if (view == "command-routes")
+            {
+                values = inventory.Routes();
+            }
+            else
+            {
+                var streams = view.StartsWith("event-stream", StringComparison.Ordinal);
+                var entries = inventory.Entries.Where(entry => streams ? entry.Node is EventStreamSyntax : entry.Node is EventSourceSyntax).ToArray();
+                if (view.EndsWith("details", StringComparison.Ordinal))
+                {
+                    var key = McpJson.RequiredString(arguments, "authoringKey");
+                    var matches = entries.Where(entry => inventory.Key(entry) == key).Take(2).ToArray();
+                    if (matches.Length > 1 || (matches.Length == 1 && inventory.AmbiguousOwner(matches[0])))
+                    {
+                        throw new McpFailure("AmbiguousDeclaration: source or stream has multiple physical owners; select read-ast handles after repairing the collision.") { FailureKind = "AmbiguousDeclaration" };
+                    }
+                    if (matches.Length == 0)
+                    {
+                        throw new McpFailure(analysis.Syntax.UnresolvedPlacementDocuments.IsEmpty
+                            ? "UnknownDeclaration: no declaration has that exact kind and authoring key."
+                            : "UnresolvedPlacement: repair conflicting or cyclic imports before selecting an owner.")
+                        {
+                            FailureKind = analysis.Syntax.UnresolvedPlacementDocuments.IsEmpty ? "UnknownDeclaration" : "UnresolvedPlacement"
+                        };
+                    }
+                    if (!inventory.View.IsComplete)
+                    {
+                        throw new McpFailure("IncompleteSource: source extent or placement is unresolved; repair source diagnostics before selecting a confident authoring owner.") { FailureKind = "IncompleteSource" };
+                    }
+                    values = inventory.Details(matches[0]);
+                }
+                else
+                {
+                    values = entries.Select(inventory.Summary);
+                }
+            }
+            if (view != "event-source-diagnostics")
+            {
+                values = values.Concat(inventory.View.UnresolvedPlacementDocuments.Select(document => (object)new
+                {
+                    kind = "unresolved-placement", documentId = document.Id.ToString(), path = document.Path.Value,
+                    executionAvailable = false, action = "Repair conflicting or cyclic imports before selecting an authoring owner."
+                }));
+            }
+
+            return McpJson.ToolResult(new
+            {
+                workspace = McpWorkspaceTransport.Describe(workspace), view, syntaxOnly = true,
+                executionAvailable = false, executionReadiness = "Unavailable until ESM v10 (PLAY0268).",
+                inventoryComplete = inventory.View.IsComplete,
+                authoringDiagnosticsCount = inventory.View.Diagnostics.Length,
+                authoringDiagnosticsView = "event-source-diagnostics",
+                unresolvedPlacementCount = inventory.View.UnresolvedPlacementDocuments.Length,
+                detailShape = view.EndsWith("details", StringComparison.Ordinal) ? "compact-header-v1" : null,
+                page = McpPaging.BoundedSourcePage(values, arguments, workspace.Revision.ToString())
+            });
+        }
+
         if (new[] { "operation-intents", "system-intents", "operation-intent-details", "system-intent-details", "ordered-productions" }.Contains(view, StringComparer.Ordinal))
         {
             var analysis = McpWorkspaceAnalysis.For(workspace);

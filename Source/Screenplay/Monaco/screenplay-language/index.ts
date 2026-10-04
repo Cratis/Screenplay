@@ -12,6 +12,7 @@ import { CompletionOptions, createCompletionProvider } from './completions';
 import { responseTokens, responseTokenTypes } from './response-tokens';
 import { createHoverProvider } from './hover';
 import { createInlayHintsProvider } from './inlay-hints';
+import { eventSourceIdentifier, eventSourceReferenceAt } from './event-source-authoring';
 import { createCodeActionProvider } from './code-actions';
 import { attachDiagnostics } from './diagnostics';
 import {
@@ -56,13 +57,33 @@ export function register(monaco: Monaco, options: LanguageServiceOptions = {}): 
     applyTokensProvider(monaco);
     monaco.languages.registerCompletionItemProvider(languageId, createCompletionProvider(monaco, options));
     monaco.languages.registerHoverProvider(languageId, createHoverProvider(options));
+    monaco.languages.registerDefinitionProvider(languageId, {
+        provideDefinition(model, position) {
+            const word = model.getWordAtPosition(position);
+            if (!word) return [];
+            const symbols = options.application?.(model);
+            const reference = eventSourceReferenceAt(model.getLinesContent(), position.lineNumber - 1, word.startColumn, word.endColumn, symbols);
+            const target = reference?.target;
+            if (!target) return [];
+            const current = symbols?.authoringPath ?? 'current.play';
+            const source = target.location.path === current ? model.getValue() : symbols?.authoringDocuments?.find(document => document.path === target.location.path)?.source;
+            const location = source && eventSourceIdentifier(target.location, target.name, source);
+            if (!location) return [];
+            // Foreign navigation requires an actual host model, not a guessed path or merged line.
+            const targetUri = target.location.path && model.uri.path.endsWith(`/${current}`)
+                ? model.uri.with({ path: model.uri.path.slice(0, -current.length) + target.location.path }) : undefined;
+            const targetModels = targetUri ? monaco.editor.getModels().filter(candidate => candidate.uri.toString() === targetUri.toString()) : [];
+            const targetModel = target.location.path === current ? model : targetModels.length === 1 ? targetModels[0] : undefined;
+            return targetModel ? [{ uri: targetModel.uri, range: new monaco.Range(location.line, location.column, location.line, location.column + target.name.length) }] : [];
+        }
+    });
     monaco.languages.registerDocumentSemanticTokensProvider(languageId, {
         getLegend: () => ({ tokenTypes: [...responseTokenTypes], tokenModifiers: [] }),
         provideDocumentSemanticTokens(model) {
             const data: number[] = [];
             let previousLine = 0;
             let previousColumn = 0;
-            for (const token of responseTokens(model.getLinesContent())) {
+            for (const token of responseTokens(model.getLinesContent(), options.application?.(model))) {
                 data.push(token.line - previousLine, token.line === previousLine ? token.column - previousColumn : token.column, token.length, token.type, 0);
                 previousLine = token.line;
                 previousColumn = token.column;
@@ -75,7 +96,7 @@ export function register(monaco: Monaco, options: LanguageServiceOptions = {}): 
     monaco.languages.registerCodeActionProvider(languageId, createCodeActionProvider());
     monaco.editor.defineTheme(screenplayDarkThemeName, screenplayDark);
     monaco.editor.defineTheme(screenplayLightThemeName, screenplayLight);
-    attachDiagnostics(monaco);
+    attachDiagnostics(monaco, options);
 }
 
 export {
@@ -112,7 +133,7 @@ export type { FileReference } from './file-references';
 export { fileImportOn, fileImports, importablePaths, isFileImportLine } from './file-imports';
 export type { FileImport } from './file-imports';
 export type { CompletionOptions } from './completions';
-export { builtInTriggerNames, knownEventNames, knownTriggerNames, knownTypeNames, mergeSymbols, scanDocument } from './symbols';
+export { builtInTriggerNames, knownEventNames, knownTriggerNames, knownTypeNames, mergeSymbols, scanDocument, symbolsForBuffer } from './symbols';
 export type {
     CommandSymbol,
     ConceptSymbol,
@@ -135,6 +156,11 @@ export { completionEntriesFor, planCompletions } from './completion-planner';
 export type { CompletionPlan } from './completion-planner';
 export { responseTokens, responseTokenTypes } from './response-tokens';
 export { responseCompletions } from './response-completions';
+export { analyzeEventSources, eventSourceAvailability, eventSourceCompletions, eventSourceDetails, eventSourceHover, eventSourceIdentifier, eventSourceReferenceAt } from './event-source-authoring';
+export type { EventSourceAnalysis } from './EventSourceAnalysis';
+export type { AuthoredEventSource } from './AuthoredEventSource';
+export type { AuthoredStream } from './AuthoredStream';
+export type { AuthoredCommandRoute } from './AuthoredCommandRoute';
 export { analyzeOperations, operationCompletions, operationDetails, operationAvailability, operationHover, operationReferenceAt, phaseState } from './operation-authoring';
 export type { OperationAnalysis, OperationDeclaration, OperationInput, OperationPhase, OperationReference, SystemDeclaration } from './OperationAnalysis';
 export { responseAvailability, responseAnalysis } from './response-analysis';

@@ -21,7 +21,9 @@ enum WorkspaceReferenceDomain
     Trigger,
     Property,
     Operation,
-    System
+    System,
+    EventSource,
+    EventStream
 }
 
 sealed record WorkspaceReferenceMember(WorkspaceSyntaxEntry Entry, string Member, int? Index, string Text, WorkspaceReferenceDomain Domain, string? Owner = null)
@@ -42,7 +44,12 @@ static class WorkspaceReferenceMembers
                 var value = property.GetValue(entry.Node);
                 if (value is string text && text.Length > 0)
                 {
-                    var owner = domain == WorkspaceReferenceDomain.Property ? WorkspaceStructuredReferences.Owner(entry, index) : null;
+                    var owner = domain switch
+                    {
+                        WorkspaceReferenceDomain.Property => WorkspaceStructuredReferences.Owner(entry, index),
+                        WorkspaceReferenceDomain.EventStream when entry.Node is CommandStreamSyntax route => route.EventSource,
+                        _ => null
+                    };
                     if (domain != WorkspaceReferenceDomain.Property || owner is not null)
                     {
                         yield return new(entry, member, null, text, domain, owner);
@@ -92,6 +99,7 @@ static class WorkspaceReferenceMembers
 
     static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> OtherMembers(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index) => entry.Node switch
     {
+        CommandStreamSyntax { PropertyCandidate: null } => [("eventSource", WorkspaceReferenceDomain.EventSource), ("stream", WorkspaceReferenceDomain.EventStream)],
         OperationSyntax => [("uses", WorkspaceReferenceDomain.System)],
         SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax => [("operation", WorkspaceReferenceDomain.Operation)],
         ObjectMemberSyntax => [("name", WorkspaceReferenceDomain.Property)],
