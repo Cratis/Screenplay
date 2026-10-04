@@ -11,6 +11,12 @@ namespace Cratis.Screenplay.Workspaces;
 
 internal sealed partial class WorkspaceAstEdits
 {
+    static bool IsRule(JsonNode? node) => node is JsonObject rule && rule["kind"]?.GetValue<string>() == "ValidationRuleSyntax";
+
+    static bool AmbiguousBareRule(JsonArray originals, JsonNode? candidate) => IsRule(candidate) && candidate!["implementation"] is null && candidate["file"] is null && candidate["code"] is null &&
+        originals.Any(previous => IsRule(previous) && previous!["implementation"] is not null && previous["file"] is null && previous["code"] is null &&
+            JsonNode.DeepEquals(previous["property"], candidate["property"]) && JsonNode.DeepEquals(previous["rule"], candidate["rule"]) && JsonNode.DeepEquals(previous["value"], candidate["value"]));
+
     /// <summary>
     /// Carries locations across replacement JSON, without adding source metadata to the typed JSON contract.
     /// Unchanged JSON objects retain their own locations in the map. For a replaced subtree, match equal
@@ -87,12 +93,6 @@ internal sealed partial class WorkspaceAstEdits
             }
         }
     }
-
-    static bool IsRule(JsonNode? node) => node is JsonObject rule && rule["kind"]?.GetValue<string>() == "ValidationRuleSyntax";
-
-    static bool AmbiguousBareRule(JsonArray originals, JsonNode? candidate) => IsRule(candidate) && candidate!["implementation"] is null && candidate["file"] is null && candidate["code"] is null &&
-        originals.Any(previous => IsRule(previous) && previous!["implementation"] is not null && previous["file"] is null && previous["code"] is null &&
-            JsonNode.DeepEquals(previous["property"], candidate["property"]) && JsonNode.DeepEquals(previous["rule"], candidate["rule"]) && JsonNode.DeepEquals(previous["value"], candidate["value"]));
 
     // A reused typed rule or its actual value child establishes occurrence lineage. A coincident source
     // coordinate cannot override a structural match (or establish lineage for a newly parsed document).

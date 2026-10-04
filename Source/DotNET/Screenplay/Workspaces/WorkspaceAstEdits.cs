@@ -37,12 +37,10 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
 
     internal IEnumerable<WorkspaceSyntaxEntry> PendingRuleRemovals => _edits.Where(IsPendingRuleRemoval).Select(edit => edit.Target!);
 
-    internal bool OnlyPendingRuleRemovals(DocumentId document) => _edits.Where(edit => edit.Target?.Handle.Document == document || edit.Destination?.Parent.Handle.Document == document).All(IsPendingRuleRemoval);
-
-    static bool IsPendingRuleRemoval(Edit edit) => edit is { Target.Node: ValidationRuleSyntax { Implementation: not null, File: null, Code: null }, Destination: null, Value: null };
-
     internal static bool Contains(WorkspaceNodeHandle ancestor, WorkspaceNodeHandle descendant) => ancestor.Document == descendant.Document &&
         (ancestor.Path == descendant.Path || descendant.Path.StartsWith($"{ancestor.Path}/", StringComparison.Ordinal));
+
+    internal bool OnlyPendingRuleRemovals(DocumentId document) => _edits.Where(edit => edit.Target?.Handle.Document == document || edit.Destination?.Parent.Handle.Document == document).All(IsPendingRuleRemoval);
 
     internal void Prepare(ImmutableArray<WorkspaceAstOperation> operations)
     {
@@ -89,7 +87,7 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
         {
             // The original removal handle is validated, but its ancestor replacement supplies final source.
             // Do not mutate the captured original subtree: other correspondence still uses original paths.
-            if (IsPendingRuleRemoval(edit) && _edits.Any(other => other.Value is not null && other.Destination is null && other.Target is not null && Contains(other.Target.Handle, edit.Target!.Handle)))
+            if (IsPendingRuleRemoval(edit) && _edits.Exists(other => other.Value is not null && other.Destination is null && other.Target is not null && Contains(other.Target.Handle, edit.Target!.Handle)))
             {
                 continue;
             }
@@ -205,8 +203,7 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
             Walk(root, replacement.Document, string.Empty, positions);
         }
 
-        var surviving = _ruleOrigins.Where(pair => positions.ContainsKey(pair.Key)).GroupBy(pair => pair.Value.Handle);
-        foreach (var group in surviving)
+        foreach (var group in _ruleOrigins.Where(pair => positions.ContainsKey(pair.Key)).GroupBy(pair => pair.Value.Handle))
         {
             // Reusing one original value in several candidates does not prove which occurrence survived.
             var matches = group.ToArray();
@@ -224,6 +221,8 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
             }
         }
     }
+
+    static bool IsPendingRuleRemoval(Edit edit) => edit is { Target.Node: ValidationRuleSyntax { Implementation: not null, File: null, Code: null }, Destination: null, Value: null };
 
     static void Walk(JsonNode? node, DocumentId document, string path, Dictionary<JsonNode, (DocumentId Document, string Path)> positions)
     {
