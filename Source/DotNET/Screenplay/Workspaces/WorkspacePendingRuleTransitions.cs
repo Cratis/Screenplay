@@ -33,7 +33,13 @@ static class WorkspacePendingRuleTransitions
         IReadOnlySet<WorkspaceNodeHandle> removals)
     {
         var originals = Under(before, original).Where(entry => entry.Node is ValidationRuleSyntax && sources.Image(entry) is null && !removals.Contains(entry.Handle)).ToList();
-        var candidates = Under(after, candidate).Where(entry => entry.Node is ValidationRuleSyntax && sources.Origin(entry) is null).ToList();
+
+        // Take one stable whole-owner view before matching consumes candidates. A copied block
+        // must not hide a bare survivor in another block, including outside this edit region.
+        // Validated node/member lineage is already claimed and is not heuristic competition.
+        var occurrences = after.Entries.Where(entry => entry.Node is ValidationRuleSyntax && sources.Origin(entry) is null).ToArray();
+        var candidates = occurrences.Where(entry => WorkspaceAstEdits.Contains(candidate, entry.Handle) || originals.Exists(previous => SameOwner(previous, entry))).ToList();
+        var obligations = originals.Where(entry => Pending(entry.Node)).ToArray();
 
         // Only mutual, unique structural matches prove unchanged occurrences. Along with operation
         // provenance, these can prove absence: every final rule belongs to an unchanged original and
@@ -49,7 +55,6 @@ static class WorkspacePendingRuleTransitions
         // member over copied guidance, and apply the competing-bare safeguard at every strength.
         Match((previous, current) => Pending(previous.Node) && SameOwner(previous, current) && SameHeader(previous.Node, current.Node) && !Bare(current.Node));
         Match((previous, current) => Pending(previous.Node) && SameOwner(previous, current) && RetainsMetadata(previous.Node, current.Node));
-        Match((previous, current) => Pending(previous.Node) && RetainsMetadata(previous.Node, current.Node));
 
         // Names and hints may both change, including on reordered equal pending predicates. Conserve
         // their multiplicity within the proven owner, without assigning pending IDs or claiming an
@@ -66,7 +71,7 @@ static class WorkspacePendingRuleTransitions
         bool Conserve(WorkspaceSyntaxEntry previous, HashSet<WorkspaceSyntaxEntry> visited)
         {
             foreach (var current in candidates.Where(entry => !Bare(entry.Node) && SameOwner(previous, entry) && Safe(previous, entry) &&
-                !candidates.Exists(other => Bare(other.Node))))
+                !occurrences.Any(other => Bare(other.Node) && SameCommand(entry, other))))
             {
                 if (visited.Add(current) && (!conserved.TryGetValue(current, out var occupant) || Conserve(occupant, visited)))
                 {
@@ -92,8 +97,11 @@ static class WorkspacePendingRuleTransitions
         }
 
         bool Safe(WorkspaceSyntaxEntry previous, WorkspaceSyntaxEntry current) => !sources.IsAmbiguous(current) &&
-            !(Bare(current.Node) && originals.Exists(other => Pending(other.Node) && SameHeader(other.Node, current.Node))) &&
-            !(Pending(previous.Node) && candidates.Exists(other => Bare(other.Node) && SameHeader(previous.Node, other.Node)));
+            !(Bare(current.Node) && obligations.Any(other => SameOwner(other, current) && SameHeader(other.Node, current.Node))) &&
+            !(Pending(previous.Node) && occurrences.Any(other => Bare(other.Node) && SameCommand(current, other) && SameHeader(previous.Node, other.Node)));
+
+        bool SameCommand(WorkspaceSyntaxEntry current, WorkspaceSyntaxEntry other) =>
+            Owner(after, current)?.Handle is { } owner && owner == Owner(after, other)?.Handle;
 
         bool SameOwner(WorkspaceSyntaxEntry previous, WorkspaceSyntaxEntry current)
         {

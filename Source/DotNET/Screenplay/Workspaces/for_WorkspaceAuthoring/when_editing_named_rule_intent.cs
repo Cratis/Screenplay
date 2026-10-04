@@ -478,6 +478,110 @@ public class when_editing_named_rule_intent
         }).Accepted.ShouldBeTrue();
     }
 
+    [Theory]
+    [InlineData("command")]
+    [InlineData("root")]
+    [InlineData("document")]
+    public void should_refuse_split_block_guidance_copies_across_the_whole_owner(string scope)
+    {
+        foreach (var (reverse, duplicate, metadata) in
+            from reverse in new[] { false, true }
+            from duplicate in new[] { false, true }
+            from metadata in new[] { "decoded", "same-path", "changed-owner" }
+            select (reverse, duplicate, metadata))
+        {
+            var workspace = Workspace(Prefix + "            implementation\n              hint \"Keep\"");
+            var index = WorkspaceSyntaxIndex.Create(workspace);
+            var pending = index.Entries.Single(entry => entry.Node is ValidationRuleSyntax);
+            var target = index.Entries.Single(entry => scope == "command" ? entry.Node is CommandSyntax : entry.Parent is null);
+            const string bare = "        validate\n          label rule Check\n";
+            const string copy = bare + "            implementation\n              hint \"Keep\"\n";
+            var source = Prefix[..Prefix.IndexOf("        validate", StringComparison.Ordinal)] +
+                (reverse ? copy + bare : bare + copy) + (duplicate ? copy : "");
+            if (metadata == "changed-owner") source = source.Replace("command C", "command Renamed", StringComparison.Ordinal);
+            var parsed = new ScreenplayCompiler().Parse(source, metadata == "same-path" ? "model.play" : "different.play").Value!;
+            SyntaxNode replacement = scope == "command" ? parsed.Modules.Single().Features.Single().Slices.Single().Commands.Single() : parsed;
+            if (metadata == "decoded") replacement = SyntaxJson.Deserialize(SyntaxJson.Serialize(replacement));
+            var request = Request(workspace) with
+            {
+                Operations = scope == "document" ? [] : [new ReplaceWorkspaceNode(target.Handle, target.Node, replacement)],
+                Documents = scope == "document" ? [new ReplaceWorkspaceSyntaxDocument(target.Handle.Document, (ApplicationSyntax)replacement)] : []
+            };
+            var refused = workspace.ProposeAuthoring(request);
+            Assert.False(refused.Accepted, $"{scope}/{reverse}/{duplicate}/{metadata}");
+            if (metadata != "changed-owner")
+            {
+                refused.Conflicts.Single().Message.Contains("pending", StringComparison.OrdinalIgnoreCase).ShouldBeTrue();
+                var removed = workspace.ProposeAuthoring(request with
+                {
+                    Operations = scope == "document" ? [new RemoveWorkspaceNode(pending.Handle, pending.Node)] :
+                        [new RemoveWorkspaceNode(pending.Handle, pending.Node), new ReplaceWorkspaceNode(target.Handle, target.Node, replacement)]
+                });
+                Assert.True(removed.Accepted, string.Join("; ", removed.Conflicts.Select(conflict => conflict.Message)));
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void should_distinguish_validated_ancestor_lineage_from_document_split_block_inference(bool document)
+    {
+        var workspace = Workspace(Prefix + "            implementation\n              hint \"Keep\"");
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var root = index.Entries.Single(entry => entry.Parent is null);
+        var application = (ApplicationSyntax)root.Node;
+        var module = application.Modules.Single();
+        var feature = module.Features.Single();
+        var slice = feature.Slices.Single();
+        var command = slice.Commands.Single();
+        var block = (DeclarativeValidateSyntax)command.Validations.Single();
+        var original = block.Rules.Single();
+        var decoded = (DeclarativeValidateSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(block));
+        foreach (var keepOriginal in new[] { false, true })
+        {
+            // A with-copy retains the actual value child; a separately decoded copy does not.
+            var bare = original with { Implementation = null };
+            DeclarativeValidateSyntax[] validations = keepOriginal ? [block, decoded with { Rules = [decoded.Rules.Single() with { Implementation = null, Location = original.Location }] }] :
+                [block with { Rules = [bare] }, decoded];
+            var replacement = application with { Modules = [module with { Features = [feature with { Slices = [slice with { Commands = [command with { Validations = validations }] }] }] }] };
+            var result = workspace.ProposeAuthoring(Request(workspace) with
+            {
+                Operations = document ? [] : [new ReplaceWorkspaceNode(root.Handle, root.Node, replacement)],
+                Documents = document ? [new ReplaceWorkspaceSyntaxDocument(root.Handle.Document, replacement)] : []
+            });
+
+            // Only the ancestor operation validates the caller's original subtree expectation.
+            // A document replacement supplies no expectation: matching metadata is not lineage.
+            var accepted = keepOriginal && !document;
+            Assert.True(result.Accepted == accepted, string.Join("; ", result.Conflicts.Select(conflict => conflict.Message)));
+            if (accepted) WorkspaceNamedRuleIntentInventory.Create(result.Workspace!).Entries.Single(entry => entry.State == "pending").RequirementId.ShouldBeNull();
+        }
+    }
+
+    [Fact]
+    public void should_include_new_sibling_blocks_outside_the_replaced_validation_region()
+    {
+        var workspace = Workspace(Prefix + "            implementation\n              hint \"Keep\"");
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var command = index.Entries.Single(entry => entry.Node is CommandSyntax);
+        var block = index.Entries.Single(entry => entry.Node is DeclarativeValidateSyntax);
+        var rule = index.Entries.Single(entry => entry.Node is ValidationRuleSyntax);
+        var decoded = (DeclarativeValidateSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(block.Node));
+        var bare = decoded with { Rules = [decoded.Rules.Single() with { Implementation = null }] };
+        foreach (var bareInside in new[] { false, true })
+        {
+            var replacement = new ReplaceWorkspaceNode(block.Handle, block.Node, bareInside ? bare : decoded with { Rules = [] });
+            var added = new AddWorkspaceNode(command.Handle, command.Node, "validations", bareInside ? decoded : decoded with { Rules = [bare.Rules.Single(), decoded.Rules.Single()] });
+            workspace.ProposeAuthoring(Request(workspace) with { Operations = [replacement, added] }).Accepted.ShouldBeFalse();
+            workspace.ProposeAuthoring(Request(workspace) with { Operations = [new RemoveWorkspaceNode(rule.Handle, rule.Node), replacement, added] }).Accepted.ShouldBeTrue();
+        }
+
+        var emptied = new ReplaceWorkspaceNode(block.Handle, block.Node, decoded with { Rules = [] });
+        workspace.ProposeAuthoring(Request(workspace) with { Operations = [emptied] }).Accepted.ShouldBeTrue();
+        workspace.ProposeAuthoring(Request(workspace) with { Operations = [emptied, new AddWorkspaceNode(command.Handle, command.Node, "validations", decoded)] }).Accepted.ShouldBeTrue();
+    }
+
     static ScreenplayWorkspace Workspace(string source) => ScreenplayWorkspace.Create("A", [Document("model.play", source)], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("A")));
     static WorkspaceDocument Document(string path, string source) => WorkspaceDocument.Create(path.Replace('/', '-'), PortablePlayPath.Parse(path), Encoding.UTF8.GetBytes(source));
     static WorkspaceAuthoringRequest Request(ScreenplayWorkspace workspace) => new()

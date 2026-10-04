@@ -29,9 +29,11 @@ internal sealed partial class WorkspaceAstEdits
     /// Unchanged JSON objects retain their own locations in the map. For a replaced subtree, match equal
     /// siblings first, then same-kind named siblings, and only use indexes when collection lengths agree.
     /// </summary>
-    void CarrySourceLocations(JsonNode original, JsonNode replacement)
+    void CarrySourceLocations(JsonNode original, JsonNode replacement, bool ruleLineage = false)
     {
-        if (_ruleOrigins.TryGetValue(original, out var origin))
+        // Container matching carries printer metadata, not rule-occurrence proof. Descendant
+        // obligations are compared together in the final command owner by Region instead.
+        if (ruleLineage && _ruleOrigins.TryGetValue(original, out var origin))
         {
             _ruleOrigins[replacement] = origin;
         }
@@ -62,7 +64,7 @@ internal sealed partial class WorkspaceAstEdits
             {
                 if (child is not null && oldObject[name] is { } previous)
                 {
-                    CarrySourceLocations(previous, child);
+                    CarrySourceLocations(previous, child, ruleLineage);
                 }
             }
         }
@@ -83,7 +85,7 @@ internal sealed partial class WorkspaceAstEdits
                 if (!carried.Contains(position) && !matched.Contains(position) && oldArray[position] is JsonObject previous &&
                     newArray[position] is JsonObject current && !IsRule(current) && JsonNode.DeepEquals(previous["kind"], current["kind"]))
                 {
-                    CarrySourceLocations(previous, current);
+                    CarrySourceLocations(previous, current, ruleLineage);
                 }
             }
 
@@ -97,7 +99,7 @@ internal sealed partial class WorkspaceAstEdits
                     {
                         matched.Add(candidates[0]);
                         carried.Add(position);
-                        CarrySourceLocations(oldArray[candidates[0]]!, newArray[position]!);
+                        CarrySourceLocations(oldArray[candidates[0]]!, newArray[position]!, ruleLineage);
                     }
                 }
             }

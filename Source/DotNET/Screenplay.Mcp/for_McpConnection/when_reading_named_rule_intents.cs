@@ -288,5 +288,57 @@ public class when_reading_named_rule_intents : given.a_connection
         Assert.False(result.TryGetProperty("isError", out var error) && error.GetBoolean(), result.GetRawText());
     }
 
+    [Theory]
+    [InlineData("CommandSyntax")]
+    [InlineData("ApplicationSyntax")]
+    [InlineData("document")]
+    void should_refuse_transport_split_blocks_even_when_an_equal_guidance_block_survives(string scope)
+    {
+        File.WriteAllText(Path.Combine(RootPath, "model.play"), Prefix + "            implementation\n              hint \"Keep\"");
+        var opened = Content(Call("open-workspace", new { applicationName = "Projects" }));
+        var revision = opened.GetProperty("revision").GetString();
+        var documentId = _page.GetProperty("page").GetProperty("items")[0].GetProperty("handle").GetProperty("documentId").GetString();
+        var kind = scope == "document" ? "ApplicationSyntax" : scope;
+        var target = Content(Call("read-ast", new { expectedRevision = revision, kind, includeContent = true })).GetProperty("page").GetProperty("items").EnumerateArray().Single(item => item.GetProperty("handle").GetProperty("documentId").GetString() == documentId);
+        var pending = Content(Call("read-workspace", new { expectedRevision = revision, view = "named-rule-intents" })).GetProperty("page").GetProperty("items")[0].GetProperty("handle");
+        foreach (var (reverse, duplicate, renameOwner) in
+            from reverse in new[] { false, true }
+            from duplicate in new[] { false, true }
+            from renameOwner in new[] { false, true }
+            select (reverse, duplicate, renameOwner))
+        {
+            const string bare = "        validate\n          label rule Check\n";
+            const string copy = bare + "            implementation\n              hint \"Keep\"\n";
+            var source = Prefix[..Prefix.IndexOf("        validate", StringComparison.Ordinal)] +
+                (reverse ? copy + bare : bare + copy) + (duplicate ? copy : "");
+            if (renameOwner) source = source.Replace("command C", "command Renamed", StringComparison.Ordinal);
+            var parsed = new ScreenplayCompiler().Parse(source, "different.play").Value!;
+            var node = SyntaxJson.Serialize(kind == "CommandSyntax" ? parsed.Modules.Single().Features.Single().Slices.Single().Commands.Single() : parsed);
+            JsonElement Propose(bool remove)
+            {
+                object[] operations = scope == "document" ? [] : [new { operation = "replace", target = target.GetProperty("handle"), node }];
+                if (remove) operations = [new { operation = "remove", target = pending }, .. operations];
+
+                return Call("propose-ast", new
+                {
+                    expectedRevision = revision,
+                    expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+                    formatting = "CanonicalizeTouchedDocuments",
+                    validation = "Authoring",
+                    operations,
+                    documents = scope == "document" ? new object[] { new { operation = "replace-document", documentId = target.GetProperty("handle").GetProperty("documentId"), node } } : []
+                }).GetProperty("result");
+            }
+            var refused = Propose(false);
+            Assert.True(refused.TryGetProperty("isError", out var error) && error.GetBoolean(), $"{scope}/{reverse}/{duplicate}/{renameOwner}: {refused.GetRawText()}");
+            if (!renameOwner)
+            {
+                refused.GetProperty("structuredContent").GetProperty("conflicts")[0].GetProperty("message").GetString()!.Contains("pending", StringComparison.OrdinalIgnoreCase).ShouldBeTrue();
+                var accepted = Propose(true);
+                Assert.False(accepted.TryGetProperty("isError", out var removalError) && removalError.GetBoolean(), accepted.GetRawText());
+            }
+        }
+    }
+
     static JsonElement Content(JsonElement response) => response.GetProperty("result").GetProperty("structuredContent");
 }
