@@ -1,0 +1,119 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using Cratis.Screenplay.Printing;
+using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Serialization;
+
+namespace Cratis.Screenplay.for_ScreenplayCompiler;
+
+public class when_classifying_command_streams : given.a_compiler
+{
+    const string Prefix = "module M\n  feature F\n    slice StateChange S\n      command C\n        ";
+    const string Source = "\neventsource Account\n  identifier AccountId\n  stream Transactions\n    streamId Month\nconcept AccountId : Uuid\nconcept Month : String\n";
+
+    [Theory]
+    [InlineData("stream String", "stream")]
+    [InlineData("stream Account.Transactions optional", "stream")]
+    [InlineData("stream Account.Transactions[]", "stream")]
+    [InlineData("stream Account.Transactions generated identifier", "stream")]
+    [InlineData("@stream Account.Transactions", "stream")]
+    [InlineData("identifier String", "identifier")]
+    [InlineData("eventsource String", "eventsource")]
+    [InlineData("from String", "from")]
+    [InlineData("streamId String", "streamId")]
+    void should_keep_property_forms_even_with_a_source(string body, string name)
+    {
+        var parsed = _compiler.Parse(Prefix + body + Source);
+        parsed.Success.ShouldBeTrue();
+        var command = Command(parsed.Value!);
+        command.Stream.ShouldBeNull();
+        command.Properties.Single().Name.ShouldEqual(name);
+        SyntaxJson.StructurallyEqual(parsed.Value!, _compiler.Parse(new ScreenplayPrinter().Print(parsed.Value!)).Value!).ShouldBeTrue();
+    }
+
+    [Theory]
+    [InlineData("stream Missing.Transactions\n          deeper String")]
+    [InlineData("@stream Account.Transactions\n          deeper String")]
+    void should_not_steal_deeper_legacy_members(string body)
+    {
+        var parsed = _compiler.Compile(Prefix + body + Source);
+        Command(parsed.Value!).Stream.ShouldBeNull();
+        string.Join(',', Command(parsed.Value!).Properties.Select(property => property.Name)).ShouldEqual("stream,deeper");
+        parsed.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0504").ShouldBeFalse();
+    }
+
+    [Fact]
+    void should_resolve_forward_source_declarations()
+    {
+        var parsed = _compiler.Parse(Prefix + "month Month\n        stream Account.Transactions\n          streamId = month" + Source);
+        parsed.Success.ShouldBeTrue();
+        Command(parsed.Value!).Stream!.StreamId!.Property.ShouldEqual("streamId");
+        Command(parsed.Value!).Properties.Single().Name.ShouldEqual("month");
+    }
+
+    [Fact]
+    void should_retain_both_interpretations_when_a_real_imported_type_also_resolves()
+    {
+        var parsed = _compiler.Parse("import Account.Transactions\ntype Transactions\n  value String\n" + Prefix + "stream Account.Transactions" + Source);
+        parsed.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeTrue();
+        var command = Command(parsed.Value!);
+        command.Properties.ShouldBeEmpty();
+        command.Stream.ShouldBeNull();
+        command.StreamCandidates.Single().PropertyCandidate!.Type.Name.ShouldEqual("Account.Transactions");
+        Catch.Exception(() => new ScreenplayPrinter().Print(parsed.Value!)).ShouldBeOfExactType<InvalidSyntaxJson>();
+    }
+
+    [Fact]
+    void should_keep_a_qualified_imported_type_without_a_source()
+    {
+        var parsed = _compiler.Compile("import Account.Transactions\ntype Transactions\n  value String\n" + Prefix + "stream Account.Transactions\n          deeper String");
+        Command(parsed.Value!).Stream.ShouldBeNull();
+        Command(parsed.Value!).Properties.Count().ShouldEqual(2);
+        parsed.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeFalse();
+    }
+
+    [Fact]
+    void should_retain_an_explicit_escape_when_printing_before_external_declarations_are_assembled()
+    {
+        var parsed = _compiler.Parse(Prefix + "@stream Account.Transactions\n          deeper String");
+        var printed = new ScreenplayPrinter().Print(parsed.Value!);
+        printed.ShouldContain("@stream Account.Transactions");
+        Command(_compiler.Parse(printed + Source).Value!).Stream.ShouldBeNull();
+        Command(_compiler.Parse(printed + Source).Value!).Properties.Count().ShouldEqual(2);
+    }
+
+    [Theory]
+    [InlineData("domain Example\nimport Account.Transactions\n  type Transactions\n    value String\n")]
+    [InlineData("import Account.Transactions\nimport \"other.play\"\n    type Transactions\n      value String\n")]
+    [InlineData("import Account.Transactions\n  domain Example\n    type Transactions\n      value String\n")]
+    [InlineData("import Account.Transactions\n\ttype Transactions\n\t  value String\n")]
+    void should_use_real_document_leaf_ownership_without_stealing_legacy_members(string declarations)
+    {
+        foreach (var text in new[] { declarations + Prefix + "stream Account.Transactions\n          deeper String" + Source, declarations + Source + Prefix + "stream Account.Transactions\n          deeper String" })
+        {
+            var parsed = _compiler.Parse(text);
+            parsed.Success.ShouldBeFalse();
+            parsed.Value!.Types!.Single().Name.ShouldEqual("Transactions");
+            parsed.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeTrue();
+            var command = Command(parsed.Value!);
+            command.StreamCandidates.Single().PropertyCandidate!.Type.Name.ShouldEqual("Account.Transactions");
+            command.Properties.Select(property => property.Name).SequenceEqual(["deeper"]).ShouldBeTrue();
+            Catch.Exception(() => new ScreenplayPrinter().Print(parsed.Value!)).ShouldBeOfExactType<InvalidSyntaxJson>();
+            var escaped = _compiler.Parse(text.Replace("stream Account.Transactions", "@stream Account.Transactions", StringComparison.Ordinal));
+            Command(escaped.Value!).Stream.ShouldBeNull();
+            Command(escaped.Value!).Properties.Count().ShouldEqual(2);
+        }
+    }
+
+    [Fact]
+    void should_not_inventory_keyword_properties_or_fenced_declarations()
+    {
+        var parsed = _compiler.Parse(Prefix + "eventsource String\n          type String\n        handler\n          ```csharp\ntype Transactions\neventsource Account\n  stream Transactions\n          ```\n");
+        Command(parsed.Value!).Properties.Select(property => property.Name).SequenceEqual(["eventsource", "type"]).ShouldBeTrue();
+        parsed.Value!.Types!.ShouldBeEmpty();
+        parsed.Value!.EventSources.ShouldBeEmpty();
+    }
+
+    static CommandSyntax Command(ApplicationSyntax application) => application.Modules.Single().Features.Single().Slices.Single().Commands.Single();
+}

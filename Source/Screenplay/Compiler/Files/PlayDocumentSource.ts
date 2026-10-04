@@ -19,6 +19,8 @@ export interface PlacedPlayDocument {
     readonly path: string;
     readonly source: string;
     readonly placement: PlayPlacement;
+    // False for conflicting/cyclic placement and every descendant of such an importer.
+    readonly isPlacementResolved?: boolean;
 }
 
 // A document source over documents held in memory, keyed by portable path.

@@ -17,6 +17,8 @@ export interface PropertySyntax extends SyntaxNode {
     readonly type: TypeRefSyntax;
     readonly isIdentifier: boolean;
     readonly isGenerated?: boolean;
+    // Parser-owned escape evidence, excluded from structural JSON.
+    readonly nameWasEscaped?: boolean;
 }
 
 export interface DomainSyntax extends SyntaxNode {

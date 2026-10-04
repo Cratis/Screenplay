@@ -15,6 +15,12 @@ The editor recognizes [generated command values and response contracts](commands
 
 The board leaves generated values out of command request schemas and lists generated values and returns in command details. It does not create response events or emit official response types. TextMate highlighting treats ambiguous two-token `returns` lines conservatively; `returns @name` makes response intent explicit.
 
+## Event source and stream authoring (syntax-only)
+
+Monaco and VS Code use typed source declarations and command routes from the complete input, including current unsaved buffers. They offer exact `Source.Stream` references and proven compatible command sources for `streamId`, with nominal types preserved. Source/stream hover describes authored identifier/key types; contextual tokens do not globally reserve property names. Navigation requires a unique physical source and stream plus authoritative placement, and points to the actual identifier in its original document. Duplicate parents, competing value-type interpretations, comments and fences do not become guessed links.
+
+Routing remains unavailable until ESM v10 (`PLAY0268`). Existing command details show the authored stream and readable key expression, never inferred effective destinations, new event cards or successful execution states. No source/stream automatic rename, routing quick fix or inferred-routing inlay is provided. See [the source/stream support matrix](event-sources.md#tooling-support).
+
 ## Operation and system intent (syntax-only)
 
 Both Monaco and VS Code recognize [systems and operations](operations.md), inline/standalone declarations and operation specification steps. Assistance resolves explicit declaration kinds over the assembled application and uses the current typed source for command inputs, including unsaved and import-placed files. Input/source suggestions retain concept, composite, optional and collection shapes; ambiguous references are not linked to an arbitrary declaration. Phase hover distinguishes pending, file and inline sources and ordered hints. Existing attachment navigation applies to phase files.

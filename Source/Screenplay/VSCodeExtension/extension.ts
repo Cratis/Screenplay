@@ -22,7 +22,7 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(index);
     registerCompletions(context, index);
     registerHover(context, index);
-    registerResponseTokens(context);
+    registerResponseTokens(context, index);
     registerInlayHints(context, index);
     registerDefinitions(context, index);
     registerDiagnostics(context, index);

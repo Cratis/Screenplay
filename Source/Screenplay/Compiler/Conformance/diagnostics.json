@@ -2,6 +2,47 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "Bare integer stream ids require a later formatting contract",
+            "validate": true,
+            "source": ["eventsource A", "  stream S", "    streamId Int"],
+            "diagnostics": ["PLAY0506@3"]
+        },
+        {
+            "name": "Integer-backed concepts remain nominal stream id types",
+            "validate": true,
+            "source": ["concept Month : Int", "eventsource A", "  stream S", "    streamId Month", "module M", "  feature F", "    slice StateChange S", "      command C", "        month Month", "        stream A.S", "          streamId = month"],
+            "diagnostics": []
+        },
+        {
+            "name": "Integer literals retain existing concept value compatibility",
+            "validate": true,
+            "source": ["concept Month : Int", "eventsource A", "  stream S", "    streamId Month", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S", "          streamId = 42"],
+            "diagnostics": []
+        },
+        {
+            "name": "Bare integer command properties do not coerce into stream id concepts",
+            "validate": true,
+            "source": ["concept Month : Int", "eventsource A", "  stream S", "    streamId Month", "module M", "  feature F", "    slice StateChange S", "      command C", "        month Int", "        stream A.S", "          streamId = month"],
+            "diagnostics": ["PLAY0504@11"]
+        },
+        {
+            "name": "Text UUID and their concepts remain portable stream ids",
+            "validate": true,
+            "source": ["concept Label : String", "concept Key : Uuid", "eventsource A", "  stream Text", "    streamId String", "  stream Uuid", "    streamId Uuid", "  stream Label", "    streamId Label", "  stream Key", "    streamId Key"],
+            "diagnostics": []
+        },
+        {
+            "name": "Unavailable imported stream id shapes remain unresolved",
+            "validate": true,
+            "source": ["import Contracts.Unknown", "eventsource A", "  stream S", "    streamId Unknown"],
+            "diagnostics": []
+        },
+        {
+            "name": "Escaped qualified stream properties retain a viable imported type",
+            "source": ["import Account.Transactions", "type Transactions", "  value String", "eventsource Account", "  stream Transactions", "module M", "  feature F", "    slice StateChange S", "      command C", "        @stream Account.Transactions"],
+            "diagnostics": []
+        },
+        {
             "name": "Operation declarations and inputs retain Unicode word characters and UTF16 values",
             "validate": true,
             "source": ["system Mailér", "module M", "  feature F", "    slice StateChange S", "      operation SendÅ", "        uses Mailér", "        recipientÉ String", "      command C", "        recipientÉ String", "        produces SendÅ", "          recipientÉ = recipientÉ", "      specification T", "        when C", "        then operation SendÅ", "          recipientÉ = \"α𝄞\""],

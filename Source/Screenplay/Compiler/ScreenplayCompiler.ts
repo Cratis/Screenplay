@@ -10,6 +10,8 @@ import { LineReader } from './Parsing/LineReader';
 import { validateInlineEvents } from './Parsing/InlineEventValidator';
 import { validateOperations } from './Parsing/OperationValidator';
 import { ParserContext } from './Parsing/ParserContext';
+import { CommandStreamCandidates } from './Parsing/CommandStreamCandidates';
+import { validateEventSources } from './Parsing/EventSourceValidator';
 import { parseApplication } from './Parsing/ScreenplayParser';
 import { splitLines } from './Parsing/SourceLineSplitter';
 import { PropertySyntax } from './Syntax/Declarations';
@@ -35,16 +37,18 @@ export function parse(source: string, path?: string, placement: PlayPlacement = 
 }
 
 // Additive authoring view: do not widen TypeRefSyntax or the cross-compiler SyntaxJson projection.
-export function parseForAuthoring(source: string, path?: string, placement: PlayPlacement = documentPlacement, validateResponseContracts = true): CompilationResult<ApplicationSyntax> & { readonly triggerData: readonly PropertySyntax[]; readonly inputUses: readonly InputUse[] } {
+export function parseForAuthoring(source: string, path?: string, placement: PlayPlacement = documentPlacement, validateResponseContracts = true, streamCandidates?: CommandStreamCandidates): CompilationResult<ApplicationSyntax> & { readonly triggerData: readonly PropertySyntax[]; readonly inputUses: readonly InputUse[] } {
     const lines = splitLines(source, false, path);
     const context = new ParserContext(new LineReader(lines), path);
     context.scope = placement;
+    context.streamCandidates = streamCandidates ?? CommandStreamCandidates.capture([lines], placement);
     const value = parseApplication(context, lines, placement);
     // Folder assembly validates declaration-dependent contracts once against the merged inventory.
     if (validateResponseContracts) {
         validateInlineEvents(value, context);
         validateOperations(value, context);
         validateResponses(value, context);
+        validateEventSources(value, context);
     }
     return {
         value,

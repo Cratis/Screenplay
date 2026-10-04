@@ -1,0 +1,352 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [
+    {
+      "kind": "EventSourceSyntax",
+      "description": null,
+      "id": null,
+      "identifier": null,
+      "name": "Account",
+      "streams": [
+        {
+          "kind": "EventStreamSyntax",
+          "description": null,
+          "id": null,
+          "name": "Onboarding",
+          "streamId": null
+        },
+        {
+          "kind": "EventStreamSyntax",
+          "description": null,
+          "id": null,
+          "name": "Transactions",
+          "streamId": null
+        }
+      ]
+    }
+  ],
+  "fileImports": [],
+  "imports": [
+    {
+      "kind": "ImportSyntax",
+      "qualifiedName": "Account.Transactions"
+    }
+  ],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "F",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "ResolvedFirst",
+                  "produces": [],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "deeper",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": {
+                    "kind": "CommandStreamSyntax",
+                    "eventSource": "Account",
+                    "propertyCandidate": null,
+                    "stream": "Onboarding",
+                    "streamId": null
+                  },
+                  "streamCandidates": [
+                    {
+                      "kind": "CommandStreamSyntax",
+                      "eventSource": "Account",
+                      "propertyCandidate": {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "name": "stream",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "Account.Transactions"
+                        }
+                      },
+                      "stream": "Transactions",
+                      "streamId": null
+                    }
+                  ],
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "AmbiguousFirst",
+                  "produces": [],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "deeper",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": {
+                    "kind": "CommandStreamSyntax",
+                    "eventSource": "Account",
+                    "propertyCandidate": null,
+                    "stream": "Onboarding",
+                    "streamId": null
+                  },
+                  "streamCandidates": [
+                    {
+                      "kind": "CommandStreamSyntax",
+                      "eventSource": "Account",
+                      "propertyCandidate": {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "name": "stream",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "Account.Transactions"
+                        }
+                      },
+                      "stream": "Transactions",
+                      "streamId": null
+                    }
+                  ],
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "MultipleAmbiguities",
+                  "produces": [],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "first",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "second",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [
+                    {
+                      "kind": "CommandStreamSyntax",
+                      "eventSource": "Account",
+                      "propertyCandidate": {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "name": "stream",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "Account.Transactions"
+                        }
+                      },
+                      "stream": "Transactions",
+                      "streamId": null
+                    },
+                    {
+                      "kind": "CommandStreamSyntax",
+                      "eventSource": "Account",
+                      "propertyCandidate": {
+                        "kind": "PropertySyntax",
+                        "isGenerated": false,
+                        "isIdentifier": false,
+                        "name": "stream",
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "Account.Transactions"
+                        }
+                      },
+                      "stream": "Transactions",
+                      "streamId": null
+                    }
+                  ],
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "DuplicateRoutes",
+                  "produces": [],
+                  "properties": [],
+                  "response": null,
+                  "stream": {
+                    "kind": "CommandStreamSyntax",
+                    "eventSource": "Account",
+                    "propertyCandidate": null,
+                    "stream": "Onboarding",
+                    "streamId": null
+                  },
+                  "streamCandidates": [
+                    {
+                      "kind": "CommandStreamSyntax",
+                      "eventSource": "Account",
+                      "propertyCandidate": null,
+                      "stream": "Onboarding",
+                      "streamId": null
+                    }
+                  ],
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": {
+                    "kind": "HandlerSyntax",
+                    "code": {
+                      "kind": "CodeBlockSyntax",
+                      "code": "eventsource Fake\nstream S\ntype S\nvalue String\nimport Fake.S\n// JSON escaped token: `",
+                      "language": "csharp"
+                    },
+                    "file": null,
+                    "implementation": null
+                  },
+                  "name": "Code",
+                  "produces": [],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "stream",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Fake.S"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "deeper",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "S",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "M"
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": [
+    {
+      "kind": "TypeSyntax",
+      "description": null,
+      "name": "Transactions",
+      "properties": [
+        {
+          "kind": "PropertySyntax",
+          "isGenerated": false,
+          "isIdentifier": false,
+          "name": "value",
+          "type": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "String"
+          }
+        }
+      ]
+    }
+  ]
+}

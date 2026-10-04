@@ -25,6 +25,9 @@ command <Name>
 
   [validate <inline csharp block yielding messages for broken rules>]
 
+  [stream <EventSource>.<Stream>   ← syntax-only authored classification
+    [streamId = <value>]]
+
   [produces ...]                  ← declarative — repeatable
 
   [handler                        ← imperative fallback — instead of produces
@@ -84,6 +87,12 @@ If any production targets a source other than the command identifier, **every pr
 Plain `produces <Name>` retains its legacy omission behavior; it does not acquire the inline default. Copying an identifier into a same-source payload reports `PLAY0469`: warning for inline declarations, information for plain productions with explicit `for`. Review the persisted contract before removing a payload field. The inline-only typed repair removes the property and mapping together, retires the property's semantic address, and is labeled “changes the event contract”. It is excluded from fix-all. The narrow repair refuses other consumers of that event, opaque implementation impact, routing changes and comment loss; standalone/plain contracts receive guidance only, not an automatic shape change.
 
 The unescaped directives `namespace`, `sequence`, `correlation`, `causation`, `causedBy`, and `occurred` are reserved system-assigned metadata in production bodies. Escape a genuine payload field, for example `@sequence String = name`; `occurred at` is not supported yet.
+
+## Command stream routing (syntax-only)
+
+Use `stream Source.Stream` to select a declared [event source and stream](event-sources.md). Map a keyed stream with nested `streamId = <value>`. This route never supplies the event's `for` destination and does not change plain-production allocation or inline defaults. Handler commands may author routing without statically declared events; `handler` with `produces` is still prohibited.
+
+Both viable stream/property interpretations remain blocking `PLAY0505` candidates, never a guessed route. Source/stream declarations and routed commands remain unavailable until ESM v10 (`PLAY0268`). Per-production overrides, reaction/reducer filters and new concurrency flags are not supported. The board shows only the authored route and readable key expression in existing command details.
 
 ## Operations and external systems (syntax-only)
 

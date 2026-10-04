@@ -14,12 +14,14 @@ public partial class ScreenplayPrinter
 {
     void WriteCommand(ScreenplayWriter writer, CommandSyntax command)
     {
+        EventSourceInvariants.Validate(command);
+        if (command.StreamCandidates.Any()) throw new InvalidSyntaxJson("Ambiguous or duplicate command stream headers cannot be exported as .play text; repair the draft or retain syntax JSON.");
         using var anchor = writer.Anchor(command);
         writer.Line($"command {command.Name}");
         using (writer.Indent())
         {
             WriteDescription(writer, command.Description, command);
-            WriteProperties(writer, command.Properties, ReservedWords.CommandBody);
+            WriteCommandProperties(writer, command);
 
             // What the command reads comes before what references it - a mapping fed from state and a rule
             // stated against state both read as though the read model were already in scope, because it is.
@@ -37,6 +39,8 @@ public partial class ScreenplayPrinter
             {
                 WriteValidate(writer, validation);
             }
+
+            if (command.Stream is not null) WriteCommandStream(writer, command.Stream);
 
             foreach (var produces in command.Produces)
             {

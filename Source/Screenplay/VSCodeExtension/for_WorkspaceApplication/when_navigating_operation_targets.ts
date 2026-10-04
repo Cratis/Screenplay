@@ -80,6 +80,23 @@ describe('when navigating operation targets', () => {
         expect(navigation.at(10, 18)).toEqual([]);
         expect(navigation.eventDefinitions).not.toHaveBeenCalled();
     });
+    it.each(['𐐀', '\uD801', '\uDC00', 'ß', '\u0301', '\u0661', '\u203F'])('should navigate only compiler-supported source stream declarations %s', suffix => {
+        const application = new WorkspaceApplication();
+        application.set('sources.play', `eventsource Account${suffix}\n  stream Transactions${suffix}`);
+        const source = `command C\n  stream Account${suffix}.Transactions${suffix}`;
+        const navigation = definitions(source, application);
+        // There is no legacy event declaration to fall back to in this source-only fixture.
+        navigation.eventDefinitions.mockReturnValue([]);
+        const result = navigation.at(1, source.split('\n')[1].indexOf('Transactions'));
+        expect(result).toHaveLength(/[\uD800-\uDFFF]/.test(suffix) ? 0 : 1);
+        if (result.length) expect(result[0]).toMatchObject({ uri: { fsPath: '/workspace/sources.play' }, range: { start: { line: 1, character: 9 } } });
+    });
+    it.each([false, true])('should navigate a surviving stream only when physical fences are closed %s', closed => {
+        const application = new WorkspaceApplication();
+        application.set('sources.play', 'eventsource Account\n  stream Transactions');
+        application.set('other.play', 'module Broken\n  description\n    ```text\neventsource Account\n  stream Other' + (closed ? '\n    ```' : ''));
+        expect(definitions('command C\n  stream Account.Transactions', application).at(1, 18)).toHaveLength(closed ? 1 : 0);
+    });
     it('should retain completion and source hover across unindented and indented comment-only lines', () => {
         for (const comment of ['// note', '  // note', '    // note', '        // note']) {
             const source = `system Mailer\noperation Send\n  uses Mailer\n  recipient String\ncommand C\n  text String\n  produces Send\n${comment}\n    recipient = text`;

@@ -8,6 +8,11 @@ import { analyzeOperations, DocumentSymbols, importablePaths, mergeSymbols, scan
 // imports resolve, and whether it holds what the module or feature it is placed in can. An import with the
 // wrong shape is left out - the editor reports that itself, as it is typed.
 const surfacedCodes = new Set<string>([
+    DiagnosticCodes.InvalidEventSourceDeclaration,
+    DiagnosticCodes.InvalidCommandStream,
+    DiagnosticCodes.AmbiguousCommandStream,
+    DiagnosticCodes.UnsupportedStreamIdType,
+    DiagnosticCodes.RedundantSourceStreamId,
     DiagnosticCodes.InvalidSystemDeclaration,
     DiagnosticCodes.InvalidOperationDeclaration,
     DiagnosticCodes.InvalidProductionReference,
@@ -91,7 +96,7 @@ export class WorkspaceApplication {
     symbolsExcept(path: string): DocumentSymbols {
         const key = normalizePlayPath(path);
         const symbols = mergeSymbols(...[...this.#symbols].filter(([other]) => other !== key).map(([, symbols]) => symbols));
-        return { ...symbols, authoringDocuments: this.#compiled().documents.filter(document => document.path !== key), authoringPath: key, authoringPlacement: this.placementOf(key) };
+        return { ...symbols, authoringDocuments: this.#compiled().documents.filter(document => document.path !== key), authoringPath: key, authoringPlacement: this.placementOf(key), authoringPlacementResolved: this.#compiled().documents.find(document => document.path === key)?.isPlacementResolved };
     }
 
     // Inline events are scanned with their slice-owned declarations, so navigation is independent of syntax form.

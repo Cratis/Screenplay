@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { Diagnostic } from '../Diagnostics/Diagnostic';
+import { CommandStreamCandidates } from './CommandStreamCandidates';
 import { SourceLocation, sourceLocation } from '../Diagnostics/SourceLocation';
 import { PropertySyntax } from '../Syntax/Declarations';
 import { InputUse } from './InputUses';
@@ -16,6 +17,7 @@ export class ParserContext {
     readonly triggerData: PropertySyntax[] = [];
     readonly inputUses: InputUse[] = [];
     scope: readonly string[] = [];
+    streamCandidates?: CommandStreamCandidates;
 
     constructor(readonly reader: LineReader, readonly path?: string) {}
 

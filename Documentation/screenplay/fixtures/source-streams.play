@@ -1,0 +1,21 @@
+concept AccountId : Uuid
+concept Month : Int
+
+eventsource Account
+  description "A customer account"
+  identifier AccountId
+  stream Transactions
+    description "Account activity for one month"
+    streamId Month
+
+module Banking
+  feature Deposits
+    slice StateChange Deposit
+      command Deposit
+        accountId AccountId identifier
+        month Month
+        amount Decimal
+        stream Account.Transactions
+          streamId = month
+        produces event Deposited
+          amount Decimal = amount
