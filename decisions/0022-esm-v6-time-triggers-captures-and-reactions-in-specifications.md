@@ -130,3 +130,13 @@ package verification remain integration checkpoints, not implied by a merge. Sta
 remain open for rendering and shared execution; the bounded CLI ESM issue search found no open v6
 admission ticket. CLI, Studio and Generation admission/tracking remain follow-ups before release.
 The record remains `stage: implemented`, not `verified`.
+
+**2026-10-04 — consumer tracking established.** Explicit consumer admission is tracked separately in
+[Stage rendering #79](https://github.com/Cratis/Stage/issues/79),
+[Stage shared execution #15](https://github.com/Cratis/Stage/issues/15),
+[CLI #239](https://github.com/Cratis/cli/issues/239),
+[Studio #475](https://github.com/Cratis/StudioIssues/issues/475) and
+[Generation #66](https://github.com/Cratis/Screenplay.Generation/issues/66).
+A dependency update does not admit v6 reading, rendering or execution. Providers must retain blocking
+unsupported diagnostics until their own admission criteria are met. Screenplay's controlled occurrence
+implements the reference-runtime portion of #304; Stage realization remains separate.
