@@ -81,7 +81,7 @@ function validateSourceStream(node: SyntaxNode): void {
             if (rejected == null) throw new Error('Command stream candidates cannot contain null.');
             validateSourceStream(rejected);
             if (rejected.propertyCandidate === null && command.stream == null) throw new Error('A duplicate route candidate requires an authoritative route.');
-            if (rejected.propertyCandidate !== null && command.properties.some(property => JSON.stringify(toSyntaxJson(property)) === JSON.stringify(toSyntaxJson(rejected.propertyCandidate!)))) throw new Error('An ambiguous property is owned only by its stream candidate.');
+            if (rejected.propertyCandidate !== null && command.properties.some(property => property === rejected.propertyCandidate)) throw new Error('An ambiguous property is owned only by its stream candidate.');
         }
     }
     if (node.kind === 'CommandStreamSyntax') {

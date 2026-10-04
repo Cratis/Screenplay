@@ -50,6 +50,54 @@ describe('when retaining every rejected command stream header', () => {
             expect(() => toSyntaxJson(duplicatedProperty)).toThrow();
         }
     });
+    it.each([false, true])('should transport independent equal properties in reverse header order %s', reverse => {
+        const escaped = '        @stream Account.Transactions\n';
+        const bare = '        stream Account.Transactions\n';
+        const result = parse(declarations + prefix + (reverse ? bare + escaped : escaped + bare));
+        expect(result.success).toBe(false);
+        expect(result.diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0505');
+        const command = result.value.modules[0].features[0].slices[0].commands[0];
+        expect(command.stream).toBeNull();
+        expect(command.properties).toHaveLength(1);
+        expect(command.streamCandidates).toHaveLength(1);
+        const property = command.properties[0];
+        const candidate = command.streamCandidates![0].propertyCandidate!;
+        expect(property).not.toBe(candidate);
+        expect(property.nameWasEscaped).toBe(true);
+        expect(toSyntaxJson(property)).toEqual(toSyntaxJson(candidate));
+        const json = toSyntaxJson(result.value);
+        expect(JSON.stringify(json)).not.toContain('nameWasEscaped');
+        expect(toSyntaxJson(JSON.parse(JSON.stringify(json)))).toEqual(json);
+        const independent = { ...command, properties: [{ ...candidate }] };
+        expect(independent.properties[0]).not.toBe(candidate);
+        expect(independent.properties[0]).toEqual(candidate);
+        expect(() => toSyntaxJson(independent)).not.toThrow();
+        // Validation must see the original graph before the codec detaches each JSON path.
+        const aliased = { ...command, properties: [candidate] };
+        expect(() => toSyntaxJson(aliased)).toThrow('An ambiguous property is owned only by its stream candidate.');
+    });
+    it.each([false, true])('should preserve repeated candidates without deduplication for the same instance %s', sameInstance => {
+        const result = parse(declarations + prefix + ambiguous + ambiguous);
+        expect(result.success).toBe(false);
+        expect(result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0505')).toHaveLength(2);
+        const command = result.value.modules[0].features[0].slices[0].commands[0];
+        const candidates = command.streamCandidates!;
+        expect(candidates[0]).not.toBe(candidates[1]);
+        expect(candidates[0].propertyCandidate).not.toBe(candidates[1].propertyCandidate);
+        expect(toSyntaxJson(candidates[0])).toEqual(toSyntaxJson(candidates[1]));
+        const repeated = {
+            ...command,
+            properties: [{ ...candidates[0].propertyCandidate! }],
+            streamCandidates: [candidates[0], sameInstance ? candidates[0] : { ...candidates[0], propertyCandidate: { ...candidates[0].propertyCandidate! } }],
+        };
+        const json = toSyntaxJson(repeated);
+        const decoded = JSON.parse(JSON.stringify(json));
+        expect(decoded.stream).toBeNull();
+        expect(decoded.streamCandidates).toHaveLength(2);
+        expect(decoded.streamCandidates[0]).not.toBe(decoded.streamCandidates[1]);
+        expect(decoded.streamCandidates[0].propertyCandidate).not.toBe(decoded.properties[0]);
+        expect(toSyntaxJson(decoded)).toEqual(json);
+    });
     it('should reject malformed programmatic candidate ownership', () => {
         const command = parse(declarations + prefix + resolved).value.modules[0].features[0].slices[0].commands[0];
         for (const invalid of [

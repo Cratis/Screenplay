@@ -20,7 +20,7 @@ internal static partial class EventSourceInvariants
                     if (rejected is null) throw new InvalidSyntaxJson("Command stream candidates cannot contain null.");
                     Validate(rejected);
                     if (rejected.PropertyCandidate is null && command.Stream is null) throw new InvalidSyntaxJson("A duplicate route candidate requires an authoritative route.");
-                    if (rejected.PropertyCandidate is { } property && command.Properties.Any(member => SyntaxJson.StructurallyEqual(member, property))) throw new InvalidSyntaxJson("An ambiguous property is owned only by its stream candidate.");
+                    if (rejected.PropertyCandidate is { } property && command.Properties.Any(member => ReferenceEquals(member, property))) throw new InvalidSyntaxJson("An ambiguous property is owned only by its stream candidate.");
                 }
                 if (command.Stream is not null) Validate(command.Stream);
                 break;
