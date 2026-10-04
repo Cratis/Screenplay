@@ -10,6 +10,7 @@ sealed class McpQueryIndex
     readonly Dictionary<(string Name, string Scope), List<McpDeclaration>> _prefixes = [];
     readonly Dictionary<(string Name, string Scope), List<McpDeclaration>> _suffixes = [];
     readonly Dictionary<(string Kind, string Address), McpDeclaration[]> _addresses;
+    readonly Dictionary<(string Kind, string Scope, string Name, Cratis.Screenplay.Diagnostics.SourceLocation Location), McpDeclaration[]> _productionDeclarations;
     readonly Dictionary<McpReference, McpDeclaration[]> _resolutions = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<(string Name, string Kinds, string Scope), McpDeclaration[]> _names = [];
     readonly Lock _resolutionLock = new();
@@ -22,6 +23,9 @@ sealed class McpQueryIndex
     {
         var declared = declarations.ToArray();
         _addresses = declared.GroupBy(declaration => (declaration.Kind, declaration.Address)).ToDictionary(group => group.Key, group => group.ToArray());
+        _productionDeclarations = declared.Where(declaration => declaration.Kind == "Event" || declaration.Kind == "Operation")
+            .GroupBy(declaration => (declaration.Kind, Scope: ScopeKey(declaration.Scope), declaration.Name, declaration.Location))
+            .ToDictionary(group => group.Key, group => group.ToArray());
         foreach (var declaration in declared)
         {
             for (var depth = 0; depth <= declaration.Scope.Length; depth++)
@@ -71,6 +75,14 @@ sealed class McpQueryIndex
         if (_resolutions.TryGetValue(reference, out var resolved))
         {
             return resolved;
+        }
+
+        if (reference.ProductionResolution is { } production)
+        {
+            var declarations = production.Declaration is { } declaration ? [declaration] : production.Candidates;
+
+            return [.. declarations.SelectMany(candidate => _productionDeclarations.GetValueOrDefault(
+                (candidate.Kind.ToString(), ScopeKey(candidate.Scope), candidate.Name, candidate.Node.Location)) ?? [])];
         }
 
         // Fixture queries also construct equivalent references on demand. Cache those

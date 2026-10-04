@@ -116,7 +116,11 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         foreach (var reference in McpReferenceKinds.For(node, owningSyntax, node is ProducesSyntax production ? Readiness.ProductionKinds(production, owningSyntax) : null))
         {
             var role = owner?.Syntax is SpecificationSyntax specification ? McpFixtureOccurrences.Role(specification, node, reference.Role) : reference.Role;
-            _references.Add(new(reference.Name, reference.Kinds, [.. _scope], node.Location, role, owner?.Owner));
+            _references.Add(new(reference.Name, reference.Kinds, [.. _scope], node.Location, role, owner?.Owner)
+            {
+                ProductionResolution = node is SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax
+                    ? Readiness.ResolveProduction(reference.Name, [.. _scope]) : null
+            });
         }
     }
 
