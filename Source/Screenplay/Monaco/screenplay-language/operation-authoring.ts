@@ -49,13 +49,18 @@ export function operationCompletions(lines: string[], line: number, before: stri
         ...symbols.events.map(event => ({ label: event.name, insertText: event.name, documentation: 'Declared event.' })), ...targets()
     ] : null;
     if (context?.commandLine !== undefined && chain[0] === 'produces' && /^produces\s+when\b/.test(enclosing) && /^\s*[\w.]*$/.test(before)) return targets();
-    const operation = context?.operation;
+    const ownedOperation = context?.operation;
+    const operation = ownedOperation && (line === ownedOperation.location.line - 1 || indent > indentOf(lines[ownedOperation.location.line - 1])) ? ownedOperation : undefined;
     if (operation && /^\s*uses\s+\w*$/.test(before) && !operation.inputs.some(input => input.location.line === line + 1)) return operations.systems.map(system => ({ label: system.name, insertText: system.name, documentation: `${system.description ?? 'External system'}. ${operationAvailability}` }));
     if (chain[0] === 'implementation' && ['execute', 'compensate'].includes(chain[1])) return operationImplementationItems;
     if (['execute', 'compensate'].includes(chain[0]) && operation) return operationPhaseItems;
-    const mappedOperation = operation ?? context?.production?.declaration;
-    // Source-local typed ownership covers conditional target lines and nested mappings,
-    // even when the target itself spells a keyword. Ancestor text does not own mappings.
+    const production = context?.production;
+    const targetLine = (production?.targetLocation ?? production?.location)?.line;
+    const inProductionBody = targetLine !== undefined && line > targetLine - 1 && indent > indentOf(lines[targetLine - 1]);
+    const mappedOperation = operation ?? (inProductionBody ? production?.declaration : undefined);
+    // Typed ranges include blank lines and comments. The caret must still be inside
+    // the target's body, not dedented to a command member or conditional target line.
+    // Ancestor keywords cannot own mappings, including deeper composite paths.
     if (mappedOperation) {
         const rhs = before.match(/=\s*([\w.]*)$/);
         if (rhs && context?.commandLine !== undefined) {
