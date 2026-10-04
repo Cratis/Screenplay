@@ -74,20 +74,24 @@ sealed class McpOperationInventory
     internal IEnumerable<object> Productions()
     {
         var source = McpWorkspaceAnalysis.For(_workspace).Source.Index;
+        var commands = source.Declarations.Where(declaration => declaration.Kind == "Command")
+            .ToLookup(declaration => (declaration.Name, Scope: string.Join('\0', declaration.Scope)));
         foreach (var entry in _index.Entries.Where(entry => entry.Node is CommandSyntax))
         {
             var command = (CommandSyntax)entry.Node;
             var scope = Scope(entry);
-            var matches = source.Declarations.Where(declaration => declaration.Kind == "Command" && declaration.Name == command.Name && declaration.Scope.SequenceEqual(scope)).Take(2).ToArray();
+            var owners = commands[(command.Name, string.Join('\0', scope))].Take(2).ToArray();
             foreach (var (production, order) in command.Produces.Select((production, order) => (production, order)))
             {
-                var resolution = matches.Length == 1 ? source.Resolve(new(production.Event, ["Event", "Operation"], scope, production.Location, "produces", matches[0].Owner)) : [];
+                var resolution = owners is [var owner] && owner.Location == command.Location
+                    ? source.Readiness.ResolveProduction(production.Event, scope) : new(AuthoringProductionKind.Unresolved, null, []);
+                var candidates = resolution.Declaration is { } declaration ? [declaration] : resolution.Candidates;
                 yield return new
                 {
                     kind = "production", command = command.Name, scope, commandHandle = McpAstHandles.Describe(entry.Handle), order,
                     target = production.Event,
-                    targetKind = resolution.Length switch { 0 => "Unresolved", 1 => resolution[0].Kind, _ => "Ambiguous" },
-                    candidates = resolution.Select(candidate => new { candidate.Kind, candidate.Address }),
+                    targetKind = resolution.Kind.ToString(),
+                    candidates = candidates.Select(candidate => new { Kind = candidate.Kind.ToString(), Address = string.Join('.', candidate.Scope.Append(candidate.Name)) }),
                     handle = Handle(production), production.Location, production.When, production.Mappings,
                     executionAvailable = false
                 };

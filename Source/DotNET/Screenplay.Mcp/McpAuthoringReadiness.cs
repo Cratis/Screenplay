@@ -12,6 +12,7 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
     readonly Dictionary<SyntaxNode, SliceSyntax> _owners = Owners(application);
     readonly Dictionary<SyntaxNode, bool> _operations = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<SliceSyntax, string[]> _scopes = Scopes(application);
+    readonly ILookup<string, SliceSyntax> _slicesByScope = Scopes(application).ToLookup(entry => string.Join('\0', entry.Value), entry => entry.Key, StringComparer.Ordinal);
     readonly ILookup<string, (CommandSyntax Command, string[] Scope)> _commands = Scopes(application)
         .SelectMany(entry => entry.Key.Commands.Select(command => (Command: command, Scope: entry.Value))).ToLookup(entry => entry.Command.Name, StringComparer.Ordinal);
     readonly ILookup<string, ImportSyntax> _imports = application.Imports.ToLookup(import => import.Name, StringComparer.Ordinal);
@@ -30,6 +31,10 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
     internal IEnumerable<string> ProducedEvents(CommandSyntax command) => command.Produces
         .Where(production => _owners.TryGetValue(command, out var slice) && _productions.IsEventProduction(production, slice))
         .Select(production => production.Event);
+
+    internal AuthoringProductionResolution ResolveProduction(string reference, string[] scope) =>
+        _slicesByScope[string.Join('\0', scope)].ToArray() is [var slice]
+            ? _productions.Resolve(reference, slice) : new(AuthoringProductionKind.Unresolved, null, []);
 
     internal string[] ProductionKinds(ProducesSyntax production, SyntaxNode? owner)
     {
