@@ -8,7 +8,7 @@ import { CommandResponseSymbol, responseAnalysis } from './response-analysis';
 import { fileReferenceOn } from './file-references';
 import { clauseKeywords } from './language';
 import { AuthoringDocument } from './AuthoringDocument';
-import { AuthoredEventSource } from './EventSourceAnalysis';
+import { AuthoredEventSource } from './AuthoredEventSource';
 import { ProductionSymbol } from './ProductionSymbol';
 import { TypeReferenceSymbol, typeReferenceSymbol } from './TypeReferenceSymbol';
 

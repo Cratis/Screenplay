@@ -3,7 +3,8 @@
 
 import { CompletionEntry } from './completion-items';
 import { fenceMap, indentOf, withoutComment } from './document-context';
-import { AuthoredEventSource, AuthoredStream } from './EventSourceAnalysis';
+import { AuthoredEventSource } from './AuthoredEventSource';
+import { AuthoredStream } from './AuthoredStream';
 import { DocumentSymbols } from './symbols';
 import { responseAnalysis } from './response-analysis';
 import { typeReferenceText } from './TypeReferenceSymbol';

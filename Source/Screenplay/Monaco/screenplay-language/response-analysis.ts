@@ -4,7 +4,8 @@
 import { AuthoringProductionKind, AuthoringProductionResolver, CommandSyntax, Diagnostic, EventSourceCatalog, OperationSyntax, parse, parsePlacedDocuments, SpecificationSyntax } from '@cratis/screenplay-compiler';
 import { fenceMap, indentOf, withoutComment } from './document-context';
 import { ResponseAnalysis } from './ResponseAnalysis';
-import { EventSourceAnalysis, AuthoredCommandRoute } from './EventSourceAnalysis';
+import { EventSourceAnalysis } from './EventSourceAnalysis';
+import { AuthoredCommandRoute } from './AuthoredCommandRoute';
 import { AuthoringDocument } from './AuthoringDocument';
 import { OperationAnalysis, OperationDeclaration, OperationReference } from './OperationAnalysis';
 
