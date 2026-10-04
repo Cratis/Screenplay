@@ -13,6 +13,10 @@ const executable = process.env.VSCODE_EXECUTABLE_PATH;
 if (!executable || !path.isAbsolute(executable) || !fs.existsSync(executable)) throw new Error('Set VSCODE_EXECUTABLE_PATH to the installed native VS Code executable. Host coverage is unverified without it.');
 const server = process.env.SCREENPLAY_REPAIR_SERVER ?? path.resolve('../../DotNET/Tool/bin/Debug/net10.0/Cratis.Screenplay.Tool' + (process.platform === 'win32' ? '.exe' : ''));
 if (!fs.existsSync(server)) throw new Error('Build the native C# MCP tool first or set SCREENPLAY_REPAIR_SERVER.');
+// TWO independent installed-client lifetimes, not a root switch to escape
+// uncertain authority. The dirty case is classified/disposed first; only then
+// may a separately approved clean fixture prove its own recovery barrier.
+async function runHost(caseName) {
 const tasks = path.resolve('../../..', '.ai-work');
 fs.mkdirSync(tasks, { recursive: true });
 const retained = process.env.AI_WORK_KEEP ?? tasks;
@@ -27,11 +31,11 @@ const testRoot = fs.mkdtempSync(path.join(temporary, 'sp-host-'));
 const model = fs.mkdtempSync(path.join(temporary, 'screenplay-repair-host-'));
 createRequire(import.meta.url)('../out/tests/prepareHostFixtures.cjs').prepareHostFixtures(model);
 fs.writeFileSync(path.join(evidence, 'workspace-location.json'), JSON.stringify({ model, testRoot, synthetic: true }));
-console.log(`Native synthetic workspace: ${model}; native host data: ${testRoot}; retained evidence: ${evidence}`);
+console.log(`Native ${caseName} synthetic workspace: ${model}; native host data: ${testRoot}; retained evidence: ${evidence}; independently approved NEW installed client lifetime`);
 const userData = path.join(testRoot, 'u');
 fs.mkdirSync(path.join(userData, 'User'), { recursive: true });
 fs.writeFileSync(path.join(userData, 'User/settings.json'), JSON.stringify({
-    'screenplay.repairs.enabled': true, 'screenplay.repairs.executable': server, 'screenplay.repairs.arguments': ['mcp'], 'screenplay.repairs.modelRoot': path.join(model, 'direct'),
+    'screenplay.repairs.enabled': true, 'screenplay.repairs.executable': server, 'screenplay.repairs.arguments': ['mcp'], 'screenplay.repairs.modelRoot': path.join(model, caseName === 'clean' ? 'clean-unknown' : 'direct'),
     'workbench.editorAssociations': { '*.play': 'default' }, 'files.autoSave': 'off', 'window.restoreWindows': 'none',
     'extensions.autoUpdate': false, 'extensions.autoCheckUpdates': false, 'update.mode': 'none',
     'chat.disableAIFeatures': true,
@@ -57,7 +61,7 @@ try { await runTests({
     vscodeExecutablePath: executable,
     extensionDevelopmentPath: development, extensionTestsPath: path.resolve('out/tests/extensionHost.cjs'),
     launchArgs: [model, '--user-data-dir', userData, '--extensions-dir', extensions, '--disable-workspace-trust', '--skip-welcome', '--skip-release-notes', '--disable-gpu', '--disable-extension', 'github.copilot', '--disable-extension', 'github.copilot-chat', '--log', 'info'],
-    extensionTestsEnv: { SCREENPLAY_REPAIR_SERVER: server, SCREENPLAY_REPAIR_HOST_ROOT: model, SCREENPLAY_REPAIR_INSTALLED_EXTENSIONS: vsix ? extensions : '', SCREENPLAY_REPAIR_OBSERVE_SYNTHETIC_ROOT: process.env.SCREENPLAY_REPAIR_OBSERVE === '1' ? path.join(model, 'command-guards') : '', SCREENPLAY_REPAIR_TEARDOWN_EVIDENCE: teardownEvidence },
+    extensionTestsEnv: { SCREENPLAY_REPAIR_SERVER: server, SCREENPLAY_REPAIR_HOST_ROOT: model, SCREENPLAY_REPAIR_INSTALLED_EXTENSIONS: vsix ? extensions : '', SCREENPLAY_REPAIR_OBSERVE_SYNTHETIC_ROOT: process.env.SCREENPLAY_REPAIR_OBSERVE === '1' ? path.join(model, 'command-guards') : '', SCREENPLAY_REPAIR_TEARDOWN_EVIDENCE: teardownEvidence, SCREENPLAY_REPAIR_NATIVE_LOGS: path.join(userData, 'logs'), SCREENPLAY_REPAIR_HOST_CASE: caseName },
 }); suitesPassed = true; } finally {
     const logs = path.join(userData, 'logs');
     if (fs.existsSync(logs)) {
@@ -81,7 +85,7 @@ try { await runTests({
     // late completion and zero installed UI calls; unsupported Windows roots skip.
     if (suitesPassed && fs.existsSync(teardownEvidence)) {
         const teardown = JSON.parse(fs.readFileSync(teardownEvidence, 'utf8'));
-        if (teardown.pending || teardown.error || teardown.timedOut !== false || teardown.actualStateQueryDispatched !== true || teardown.actualRootWatchClosed !== true || teardown.pendingAtClose !== true || teardown.actualInspectionSettled !== true || teardown.exactBuffersAndDiskPreserved !== true || teardown.lateUi?.length !== 0 || teardown.applyFrames !== 2) {
+        if (teardown.pending || teardown.error || teardown.timedOut !== false || teardown.actualStateQueryDispatched !== true || teardown.genuineReadResponseHeld !== true || teardown.actualRootWatchClosed !== true || teardown.pendingAtClose !== true || teardown.actualInspectionSettled !== true || teardown.exactBuffersAndDiskPreserved !== true || teardown.lateUi?.length !== 0 || teardown.applyFrames !== (caseName === 'clean' ? 1 : 2)) {
             shutdownFailure = `Pending native inspection teardown is incomplete or unsafe: ${JSON.stringify(teardown)}; inspect ${evidence}`;
         } else console.log(`NATIVE PENDING INSPECTION TEARDOWN VERIFIED: ${JSON.stringify(teardown)}`);
     } else if (suitesPassed && !(process.platform === 'win32' && fs.statSync(path.join(model, 'command-guards'), { bigint: true }).dev === 0n)) {
@@ -90,3 +94,7 @@ try { await runTests({
     // Keep synthetic paths for diagnosis; no blanket cleanup of unregistered outputs.
 }
 if (shutdownFailure) throw new Error(shutdownFailure);
+}
+
+await runHost('dirty');
+await runHost('clean');

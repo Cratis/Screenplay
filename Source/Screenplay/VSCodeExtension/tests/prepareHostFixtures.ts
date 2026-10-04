@@ -15,13 +15,13 @@ export function prepareHostFixtures(root: string): void {
     fs.mkdirSync(direct);
     fs.writeFileSync(path.join(direct, 'application.play'), '\uFEFF// 😀 native byte review\r\n' + repairSource.replaceAll('\n', '\r\n'));
     fs.writeFileSync(path.join(direct, 'Handler.cs'), '// attachment\n');
-    for (const name of ['refused', 'command-guards', 'watcher-guards', 'post-dispatch', 'root-replacement', 'root-replacement-next', ...associatedUntitledTargets.flatMap(relative => ['before-discovery', 'after-review'].map(timing => `untitled-${relative.replaceAll('/', '-')}-${timing}`))]) {
+    for (const name of ['refused', 'command-guards', 'watcher-guards', 'post-dispatch', 'clean-unknown', 'root-replacement', 'root-replacement-next', ...associatedUntitledTargets.flatMap(relative => ['before-discovery', 'after-review'].map(timing => `untitled-${relative.replaceAll('/', '-')}-${timing}`))]) {
         const model = path.join(root, name);
         fs.mkdirSync(path.join(model, 'nested'), { recursive: true });
         fs.writeFileSync(path.join(model, 'application.play'), name === 'refused' ? refusedEventSource : repairSource);
         fs.writeFileSync(path.join(model, 'Handler.cs'), '// attachment\n');
         fs.writeFileSync(path.join(model, 'nested', 'watcher-existing.txt'), 'baseline');
-        if (name.startsWith('untitled-') || name === 'post-dispatch') {
+        if (name.startsWith('untitled-') || name === 'post-dispatch' || name === 'clean-unknown') {
             // VS Code only permits path-associated untitled documents for targets
             // that do not exist. Prepare their parent BEFORE the product watches;
             // never remove the real attachment or identity/review preimages.

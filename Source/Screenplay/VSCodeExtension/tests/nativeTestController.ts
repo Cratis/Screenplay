@@ -11,10 +11,29 @@ export class NativeTestController {
     readonly #api: typeof vscode;
     readonly #register: typeof vscode.languages.registerCodeActionsProvider;
     readonly #listeners = new Set<(uri: string) => void>();
+    readonly #createDiagnostics: typeof vscode.languages.createDiagnosticCollection;
+    readonly diagnostics: { method: string; afterDispose: boolean }[] = [];
     readonly trace: { uri: string; at: number; phase: string }[] = [];
     constructor(extensionPath: string) {
         this.#api = createRequire(path.join(extensionPath, 'package.json'))('vscode') as typeof vscode;
         this.#register = this.#api.languages.registerCodeActionsProvider;
+        this.#createDiagnostics = this.#api.languages.createDiagnosticCollection;
+        this.#api.languages.createDiagnosticCollection = (name => {
+            const collection = this.#createDiagnostics(name);
+            if (name === 'screenplay-csharp') {
+                let disposed = false;
+                for (const method of ['clear', 'set', 'dispose'] as const) {
+                    const original = collection[method];
+                    Object.assign(collection, { [method]: (...args: unknown[]) => {
+                        this.diagnostics.push({ method, afterDispose: disposed });
+                        if (this.diagnostics.length > 512) this.diagnostics.shift();
+                        if (method === 'dispose') disposed = true;
+                        return Reflect.apply(original, collection, args);
+                    } });
+                }
+            }
+            return collection;
+        }) as typeof vscode.languages.createDiagnosticCollection;
         this.#api.languages.registerCodeActionsProvider = ((selector, provider, metadata) => {
             if (typeof selector !== 'object' || !('language' in selector) || !('scheme' in selector) || selector.language !== 'screenplay' || selector.scheme !== 'file') return this.#register(selector, provider, metadata);
             const original = provider.provideCodeActions.bind(provider);
@@ -44,5 +63,10 @@ export class NativeTestController {
         if (!exported?.repairObservation) throw new Error('Installed extension has no passive repair observation reader.');
         return exported.repairObservation.read();
     }
-    dispose(): void { this.#api.languages.registerCodeActionsProvider = this.#register; }
+    dispose(): void {
+        this.#api.languages.registerCodeActionsProvider = this.#register;
+        // Keep method observers on the already-created real collection through
+        // native disposal; restoring this factory never changes that collection.
+        this.#api.languages.createDiagnosticCollection = this.#createDiagnostics;
+    }
 }

@@ -15,6 +15,7 @@ import { associatedUntitledTargets } from './prepareHostFixtures';
 import { repairSource } from './repairFixture';
 import { NativeTestController } from './nativeTestController';
 import { userRevertCleanFile, userSaveDirtyFile } from './nativeSavedBuffer';
+import { pendingInspectionTeardown } from './nativePendingInspection';
 
 // Guard integration, NOT UI automation: only the dialog responses and the timing
 // of a real subprocess reply are controlled. Real registered commands, native
@@ -610,97 +611,40 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         assert.deepEqual(refused, [], 'Dirty reconciliation cannot silently issue fresh authority');
         assert.equal(dispatched, 2, 'Unknown dispatched outcome is never retried');
 
-        // Explicit TEST USER disposition, not automatic repair reconciliation or
-        // transaction recovery. Save the preserved typing only in our synthetic
-        // model; do not switch roots, cancel unknown authority or close dirty tabs.
+        // One separately consented native TEST USER Save attempt. FileModifiedSince
+        // is the protected expected outcome, never a reason to Overwrite/retry or
+        // save the associated state. The dirty scenario ends WITHOUT clearing it.
         await userSaveDirtyFile(raceDocument, { uri: vscode.Uri.file(raceSource), version: typedVersion, text: typedSource, root: raceRoot, target: raceSource }, async () => 'Save File');
-        const savedStatePath = path.join(raceRoot, '.screenplay/pending-identities.json');
-        const savedState = await userSaveDirtyFile(postDispatchUntitled!, { uri: vscode.Uri.file(savedStatePath).with({ scheme: 'untitled' }), version: stateVersion, text: typedState, root: raceRoot, target: savedStatePath }, async () => 'Save File');
-        assert.equal(raceDocument.isDirty, false);
-        assert.equal(savedState.isDirty, false);
         warnings.length = 0;
-        const cleanUnknownReads = rpc.length;
+        const conflictReads = rpc.length;
         await vscode.commands.executeCommand('screenplay.repair.refresh');
-        assert.ok(warnings.some(message => message.startsWith('RecoveryRequired:')), 'Resolving dirty buffers does NOT clear the unknown-outcome recovery barrier, even after read-only inspection');
-        assert.equal(rpc.length, cleanUnknownReads, 'Recovery refusal sends no discovery/proposal/Apply RPC');
-        assert.equal(dispatched, 2);
-        assert.equal(fs.readFileSync(raceSource, 'utf8'), typedSource, 'Only the separately logged test user save writes preserved typing');
-        assert.equal(fs.readFileSync(savedState.uri.fsPath, 'utf8'), typedState);
-        console.log('NATIVE UNKNOWN OUTCOME PASSED: actual response lost after exact installation, typing preserved through dirty refusal and real read-only recovery inspection; separate TEST USER saves do not clear RecoveryRequired or authorize retry.');
-        let teardownEntered!: () => void;
-        const teardownSent = new Promise<void>((resolve, reject) => {
-            const timer = setTimeout(() => reject(new Error('Native teardown inspection RPC did not dispatch within 5 seconds.')), 5_000);
-            teardownEntered = () => { clearTimeout(timer); resolve(); };
-        });
-        const teardownEvidence = process.env.SCREENPLAY_REPAIR_TEARDOWN_EVIDENCE;
-        assert.ok(teardownEvidence && !teardownEvidence.startsWith(root + path.sep), 'Shutdown evidence belongs outside every watched synthetic model');
-        let releaseTeardown!: () => void;
-        discoveryGate = { name: 'workspace-state', entered: teardownEntered, release: new Promise<void>(resolve => { releaseTeardown = resolve; }) };
-        let closed = false;
-        let inspectionSettled = false;
-        let pendingAtClose = false;
-        let timedOut = false;
-        const teardownReads = rpc.length;
-        const lateUi: string[] = [];
-        const retainedBuffers = vscode.workspace.textDocuments.map(document => ({ document, text: document.getText(), version: document.version, dirty: document.isDirty }));
-        const teardownTimer = setTimeout(() => {
-            timedOut = true;
-            fs.writeFileSync(teardownEvidence, JSON.stringify({ pending: !inspectionSettled, actualRootWatchClosed: closed, pendingAtClose, timedOut, lateUi, applyFrames: dispatched }));
-        }, 5_000);
-        const originalOpen = productionApi.workspace.openTextDocument;
-        const originalShow = productionApi.window.showTextDocument;
-        productionApi.workspace.openTextDocument = ((...args: Parameters<typeof originalOpen>) => {
-            if (closed) lateUi.push('openTextDocument');
-            return Reflect.apply(originalOpen, productionApi.workspace, args);
-        }) as typeof originalOpen;
-        productionApi.window.showTextDocument = ((...args: Parameters<typeof originalShow>) => {
-            if (closed) lateUi.push('showTextDocument');
-            return Reflect.apply(originalShow, productionApi.window, args);
-        }) as typeof originalShow;
-        productionApi.window.showWarningMessage = ((...args: Parameters<typeof originalWarning>) => {
-            if (closed) lateUi.push('showWarningMessage');
-            return Reflect.apply(originalWarning, productionApi.window, args);
-        }) as typeof originalWarning;
-        productWatch(raceRoot).watcher.once('close', () => {
-            // Actual native watcher closure follows installed context teardown.
-            // Release the REAL server response only after disposal, never invoke
-            // product callbacks or create a replacement owner in the harness.
-            pendingAtClose = !inspectionSettled;
-            closed = true;
-            console.log(`NATIVE TEARDOWN CLOSED: ${JSON.stringify({ actualRetainedRootWatcherClosed: true, pendingAtClose, releasingRealStateResponse: true })}`);
-            releaseTeardown();
-        });
+        assert.ok(warnings.some(message => message.startsWith('DirtyBuffer:')));
+        assert.equal(rpc.length, conflictReads, 'Expected Save conflict grants no recovery/proposal authority');
+        await vscode.commands.executeCommand('screenplay.repair.inspectState');
+        const afterConflict = JSON.parse(vscode.window.activeTextEditor!.document.getText()) as typeof inspection;
+        assert.equal(afterConflict.state.stateRevision, inspection.state.stateRevision);
+        assert.equal(afterConflict.uncertainApply, inspection.uncertainApply, 'Inspection STILL works while conflict/typing is unresolved');
+        const verifyProtected = () => {
+            assert.equal(raceDocument.isDirty, true);
+            assert.equal(postDispatchUntitled!.isDirty, true);
+            assert.equal(raceDocument.getText(), typedSource);
+            assert.equal(postDispatchUntitled!.getText(), typedState);
+            assert.equal(raceDocument.version, typedVersion);
+            assert.equal(postDispatchUntitled!.version, stateVersion);
+            assert.equal(fs.existsSync(path.join(raceRoot, '.screenplay/pending-identities.json')), false);
+            for (const [relative, bytes] of raceExpected) assert.deepEqual(fs.readFileSync(path.join(raceRoot, relative)), bytes);
+            assert.equal(rpc.filter(frame => frame.root === raceRoot && frame.name === 'apply').length, 1, 'Exactly ONE unknown-case Apply; no retry');
+            assert.equal(rpc.slice(conflictReads).filter(frame => ['open-workspace', 'propose-repair', 'apply'].includes(frame.name)).length, 0);
+        };
+        verifyProtected();
+        console.log('NATIVE DIRTY UNKNOWN PROTECTED: native Save conflict evidenced, UNSAVED typing preserved, no overwrite/retry/authority, actual read-only inspection still works.');
         teardownPending = true;
-        void Promise.resolve(vscode.commands.executeCommand('screenplay.repair.inspectState')).then(() => {
-            inspectionSettled = true;
-            for (const buffer of retainedBuffers) {
-                assert.equal(buffer.document.getText(), buffer.text, 'Late inspection preserves every exact native buffer');
-                assert.equal(buffer.document.version, buffer.version);
-                assert.equal(buffer.document.isDirty, buffer.dirty);
-            }
-            assert.equal(fs.readFileSync(raceSource, 'utf8'), typedSource);
-            assert.equal(fs.readFileSync(savedStatePath, 'utf8'), typedState);
-            assert.deepEqual(fs.readFileSync(path.join(raceRoot, '.screenplay/identities.json')), reviewedIdentities, 'Pending read/disposal never changes exact installed identities');
-            assert.equal(rpc.slice(teardownReads).filter(frame => ['open-workspace', 'propose-repair', 'apply'].includes(frame.name)).length, 0, 'Late inspection publishes no new proposal epoch or Apply authority');
-            fs.writeFileSync(teardownEvidence, JSON.stringify({ pending: false, actualStateQueryDispatched: true, actualRootWatchClosed: closed, pendingAtClose, actualInspectionSettled: true, timedOut, exactBuffersAndDiskPreserved: true, lateUi, applyFrames: dispatched }));
-            console.log(`NATIVE TEARDOWN SETTLED: ${JSON.stringify({ closed, pendingAtClose, timedOut, lateUi, applyFrames: dispatched })}`);
-        }).catch(error => {
-            inspectionSettled = true;
-            fs.writeFileSync(teardownEvidence, JSON.stringify({ pending: false, error: String(error), actualRootWatchClosed: closed, pendingAtClose, timedOut, lateUi }));
-        }).finally(() => {
-            clearTimeout(teardownTimer);
-            productionApi.workspace.openTextDocument = originalOpen;
-            productionApi.window.showTextDocument = originalShow;
-            productionApi.window.showWarningMessage = originalWarning;
-        });
-        await teardownSent;
-        fs.writeFileSync(teardownEvidence, JSON.stringify({ pending: true, actualStateQueryDispatched: true }));
-        console.log('NATIVE TEARDOWN PENDING: actual installed read-only inspection RPC held for host shutdown; completion evidence required, not just absence of a logged exception.');
+        await pendingInspectionTeardown(productionApi, controller, productWatch(raceRoot).watcher, raceRoot, verifyProtected, () => dispatched);
         console.log('NATIVE GUARD INTEGRATION: actual attributable nested-preexisting modification, old token refusal, same-physical-root fresh discovery, controlled overlapping actual provider/manual discovery, healthy nested create/delete, actual physical-root replacement refusal, persistent native before/after source/state diff navigation and exact installation passed. Associated untitled/all-existing-buffer refusal preservation, real-file identity dirty guard, dispatched reconnect barrier, controlled post-dispatch typing and unknown-outcome recovery inspection passed. Actual native callbacks and RPC operations were observed, never synthesized. Final modal responses were separately controlled; human keyboard/mouse interaction remains UNVERIFIED.');
     } finally {
         nativeFs.watch = originalWatch;
         childProcess.spawn = originalSpawn;
         if (!teardownPending) productionApi.window.showWarningMessage = originalWarning;
-        productionApi.window.showInformationMessage = originalInformation;
+        if (!teardownPending) productionApi.window.showInformationMessage = originalInformation;
     }
 }

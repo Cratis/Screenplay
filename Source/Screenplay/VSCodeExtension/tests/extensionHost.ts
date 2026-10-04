@@ -10,6 +10,7 @@ import { RepairPreviewProvider } from '../RepairPreviewProvider';
 import { checkRepairEnvironment, userRepairConfiguration, repairBuffersSynchronized } from '../RepairCodeActions';
 import { runCommandGuards } from './extensionHostGuards';
 import { NativeTestController } from './nativeTestController';
+import { runCleanUnknown } from './nativeCleanUnknown';
 
 import { observeSavedReload } from './nativeSavedBuffer';
 
@@ -35,6 +36,10 @@ async function runSuites(): Promise<void> {
     }
     const controller = new NativeTestController(extension.extensionPath);
     await extension.activate();
+    if (process.env.SCREENPLAY_REPAIR_HOST_CASE === 'clean') {
+        try { await runCleanUnknown(root, controller); } finally { controller.dispose(); }
+        return;
+    }
     const document = await vscode.workspace.openTextDocument(vscode.Uri.file(source));
     // Keep the source visible beside the native preview. VS Code may lazily
     // reload hidden models; this suite requires an actual visible-buffer event.
