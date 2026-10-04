@@ -95,7 +95,8 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return RejectWithMessage(world, SemanticRejectionCategory.Validation, null, message) with { ValidationFailures = failures.ToImmutable() };
         }
 
-        if (command.Produces.Any(produced => produced.Mappings.Any(mapping => mapping.Source is SemanticEventContextExpression)) && request.Occurrence is null)
+        if (!plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V6) &&
+            command.Produces.Any(produced => produced.Mappings.Any(mapping => mapping.Source is SemanticEventContextExpression)) && request.Occurrence is null)
         {
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A v2 command using $context needs an occurrence supplied by the execution request.");
         }
@@ -107,6 +108,11 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                 (produced.Condition is not null && Evaluate(produced.Condition, SemanticExpressionRootKind.Command, commandValues) is SemanticBooleanValue { Value: false }))
             {
                 continue;
+            }
+
+            if (request.Occurrence is null && produced.Mappings.Any(mapping => mapping.Source is SemanticEventContextExpression))
+            {
+                return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A v2 command using $context needs an occurrence supplied by the execution request.");
             }
 
             if (request.Occurrence is { IsTimeOnly: true } && produced.Mappings.Any(mapping =>

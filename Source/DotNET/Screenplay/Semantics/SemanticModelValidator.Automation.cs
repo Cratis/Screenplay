@@ -400,7 +400,18 @@ internal static partial class SemanticModelValidator
 
             RequireObjects(specification.GivenCaptures, nameof(specification.GivenCaptures), "given capture record");
             var seen = new HashSet<(SemanticId, SemanticValue)>();
-            foreach (var record in specification.GivenCaptures.Append(specification.WhenCapture).OfType<SemanticSpecificationCapture>())
+            foreach (var record in specification.GivenCaptures)
+            {
+                var (capture, key) = ValidatePresentedRecord(record);
+                if (!seen.Add((record.Capture, key)))
+                {
+                    throw new InvalidSemanticContract($"Specification '{specification.Name}' gives capture '{capture.Name}' two records for one key.");
+                }
+            }
+
+            if (specification.WhenCapture is { } presented) ValidatePresentedRecord(presented);
+
+            (SemanticCapture Capture, SemanticValue Key) ValidatePresentedRecord(SemanticSpecificationCapture record)
             {
                 if (!_captures.TryGetValue(record.Capture, out var capture))
                 {
@@ -414,10 +425,7 @@ internal static partial class SemanticModelValidator
                     throw new InvalidSemanticContract($"A record presented to capture '{capture.Name}' must carry its key '{capture.Key}' as text or a number.");
                 }
 
-                if (!ReferenceEquals(record, specification.WhenCapture) && !seen.Add((record.Capture, key.Value)))
-                {
-                    throw new InvalidSemanticContract($"Specification '{specification.Name}' gives capture '{capture.Name}' two records for one key.");
-                }
+                return (capture, key.Value);
             }
         }
 
