@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Languages;
@@ -39,7 +40,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     {
         var lines = SourceLineSplitter.Split(source);
         var context = new ParserContext(new(lines), languages: languages) { StreamCandidates = CommandStreamCandidates.Capture([lines], languages) };
-        var application = SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines), lines);
+        var application = SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines), lines) with { RegisteredTriggers = SnapshotTriggers(languages) };
         ScreenplayValidator.Validate(application, context);
         return new(application, [.. context.Diagnostics, .. ProductionDestinationDiagnostics.In(application)]);
     }
@@ -153,6 +154,12 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     static CompilationResult<ApplicationSyntax> ParseWithCandidates(IReadOnlyList<SourceLine> lines, string? path, PlayPlacement placement, IScreenplayLanguageRegistry languages, CommandStreamCandidates candidates)
     {
         var context = new ParserContext(new(lines), path, languages) { StreamCandidates = candidates };
-        return new(SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines, placement), lines), context.Diagnostics);
+        return new(SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines, placement), lines) with { RegisteredTriggers = SnapshotTriggers(languages) }, context.Diagnostics);
     }
+
+    static ImmutableDictionary<string, TriggerDefinition> SnapshotTriggers(IScreenplayLanguageRegistry registry) =>
+        registry.Triggers.ToImmutableDictionary(
+            entry => entry.Key,
+            entry => entry.Value with { Values = entry.Value.Values is { } values ? values.ToImmutableArray() : null },
+            StringComparer.Ordinal);
 }

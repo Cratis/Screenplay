@@ -76,28 +76,6 @@ public sealed partial class SemanticModelBinder
 
         void ReportUnsupportedSliceMembers(SemanticAddress owner, SliceSyntax slice)
         {
-            foreach (var reaction in slice.Reactions)
-            {
-                foreach (var trigger in reaction.Triggers)
-                {
-                    var source = trigger.Source switch
-                    {
-                        NamedTriggerSourceSyntax named => $"when {named.Name}",
-                        IntervalTriggerSourceSyntax interval => $"every {interval.Amount.ToString(CultureInfo.InvariantCulture)} {interval.Unit}",
-                        ScheduleTriggerSourceSyntax schedule => $"at {schedule.Time.ToString("HH':'mm", CultureInfo.InvariantCulture)}/{schedule.DayOfWeek}/{schedule.DayOfMonth?.ToString(CultureInfo.InvariantCulture)}",
-                        _ => throw new InvalidSemanticContract("An unknown reaction trigger source cannot identify an implementation.")
-                    };
-                    RequireImplementation(SemanticImplementationRole.ReactionEffect, owner, trigger.File, trigger.Code, $"{reaction.Name}/{source}");
-                }
-
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Reaction '{reaction.Name}' requires portable occurrence and effect semantics.", reaction.Location);
-            }
-
-            foreach (var capture in slice.Captures)
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Capture '{capture.Name}' requires a portable compiled CDL plan.", capture.Location);
-            }
-
             foreach (var screen in slice.Screens)
             {
                 Information(DiagnosticCodes.DeferredSemanticSyntax, $"Screen '{screen.Name}' is explicitly deferred from the backend ESM v1 profile.", screen.Location);

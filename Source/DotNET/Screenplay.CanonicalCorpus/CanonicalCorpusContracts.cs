@@ -81,6 +81,26 @@ public sealed record CanonicalCorpusSpecificationExpectation
     /// Gets the expected rejection message, or <see langword="null"/> for an accepted scenario.
     /// </summary>
     public string? RejectionMessage { get; init; }
+
+    /// <summary>
+    /// Gets whether the authored assertions match. Unsupported execution can never pass.
+    /// </summary>
+    public bool Passed { get; init; } = true;
+
+    /// <summary>
+    /// Gets the expected typed rejection category, when specified.
+    /// </summary>
+    public SemanticRejectionCategory? RejectionCategory { get; init; }
+
+    /// <summary>
+    /// Gets the expected missing capability, when specified.
+    /// </summary>
+    public SemanticExecutionCapability? UnsupportedCapability { get; init; }
+
+    /// <summary>
+    /// Gets the expected resulting fact-world size, when specified.
+    /// </summary>
+    public int? WorldFactCount { get; init; }
 }
 
 /// <summary>
