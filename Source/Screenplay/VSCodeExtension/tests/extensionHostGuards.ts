@@ -4,6 +4,7 @@
 import * as vscode from 'vscode';
 import * as assert from 'node:assert/strict';
 import * as fs from 'node:fs';
+import nativeFs from 'node:fs';
 import * as path from 'node:path';
 import childProcess from 'node:child_process';
 import { createRequire } from 'node:module';
@@ -27,6 +28,37 @@ export async function runCommandGuards(root: string): Promise<void> {
     const originalWarning = productionApi.window.showWarningMessage;
     const originalInformation = productionApi.window.showInformationMessage;
     const originalSpawn = childProcess.spawn;
+    const originalWatch = nativeFs.watch;
+    type ProductWatch = { root: string; watcher: fs.FSWatcher; events: number; closed: boolean; preflight: boolean; listeners: Set<(event: string) => void> };
+    const productWatches: ProductWatch[] = [];
+    nativeFs.watch = ((file: fs.PathLike, options: fs.WatchOptions, listener: fs.WatchListener<string | Buffer>) => {
+        let record: ProductWatch;
+        const watcher = originalWatch(file, options, (event, filename) => {
+            listener(event, filename); // The actual installed product callback runs first.
+            if (!record) return;
+            ++record.events;
+            console.log(`PRODUCT ROOT WATCH: ${JSON.stringify({ root: record.root, event, filename, at: Date.now(), events: record.events })}`);
+            for (const observed of [...record.listeners]) observed(event);
+        });
+        if (options?.recursive) {
+            record = { root: String(file), watcher, events: 0, closed: false, preflight: false, listeners: new Set() };
+            productWatches.push(record);
+            watcher.on('close', () => { record.closed = true; });
+        }
+        return watcher;
+    }) as typeof nativeFs.watch;
+    const productWatch = (model: string) => {
+        const record = [...productWatches].reverse().find(record => record.root === fs.realpathSync.native(model));
+        assert.ok(record, 'The installed product registered its native recursive watcher before discovery');
+        return record;
+    };
+    const observeProduct = (record: ProductWatch, write: () => void) => new Promise<string>((resolve, reject) => {
+        const started = Date.now();
+        const observed = (event: string) => { clearTimeout(timer); record.listeners.delete(observed); console.log(`PRODUCT WATCH DELIVERY ${Date.now() - started}ms`); resolve(event); };
+        const timer = setTimeout(() => { record.listeners.delete(observed); reject(new Error(`Installed product watcher did not notify within 5 seconds: ${JSON.stringify({ root: record.root, events: record.events, closed: record.closed, versions: process.versions })}`)); }, 5_000);
+        record.listeners.add(observed);
+        write();
+    });
     // The production extension reads this same native vscode API object. No test
     // command, alternate apply implementation, token fabrication or UI bypass.
     productionApi.window.showWarningMessage = (async (message: string, ...items: unknown[]) => {
@@ -75,19 +107,9 @@ export async function runCommandGuards(root: string): Promise<void> {
         return child;
     }) as typeof originalSpawn;
     const fixtureReady = async (model: string) => {
-        const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(vscode.Uri.file(model), '**/*'));
-        try {
-            await new Promise<void>((resolve, reject) => {
-                const probe = path.join(model, 'watcher-ready.txt');
-                let counter = 0;
-                const listeners: vscode.Disposable[] = [];
-                const cleanup = () => { clearTimeout(timer); clearInterval(ticks); listeners.forEach(listener => listener.dispose()); };
-                const observed = (uri: vscode.Uri) => { if (uri.fsPath === probe) { cleanup(); resolve(); } };
-                const timer = setTimeout(() => { cleanup(); reject(new Error('Native fixture watcher did not settle within 5 seconds.')); }, 5_000);
-                const ticks = setInterval(() => fs.writeFileSync(probe, `synthetic fixture readiness ${++counter}`), 100);
-                listeners.push(watcher.onDidCreate(observed), watcher.onDidChange(observed));
-            });
-        } finally { watcher.dispose(); }
+        // Synthetic fixture only: preexist BEFORE the product connection is created.
+        fs.mkdirSync(path.join(model, 'nested'));
+        fs.writeFileSync(path.join(model, 'nested', 'watcher-existing.txt'), 'baseline');
     };
     try {
         let model = path.join(root, 'command-guards');
@@ -130,6 +152,16 @@ export async function runCommandGuards(root: string): Promise<void> {
             // model may legitimately close, which now correctly expires authority.
             await vscode.window.showTextDocument(target, { preview: false, viewColumn: vscode.ViewColumn.Two, preserveFocus: true });
             await vscode.commands.executeCommand('screenplay.repair.refresh');
+            const record = productWatch(path.dirname(target.uri.fsPath));
+            if (!record.preflight) {
+                assert.equal(record.closed, false);
+                // ONE modification to a preexisting NESTED file. No root readiness loop,
+                // temporary watcher or harness-only backend is accepted as proof.
+                const event = await observeProduct(record, () => fs.writeFileSync(path.join(record.root, 'nested', 'watcher-existing.txt'), 'one nested change'));
+                assert.equal(event, 'change', 'A preexisting nested fixture modification keeps the current connection');
+                record.preflight = true;
+                assert.equal(productWatch(record.root), record, 'Same product watcher survives preflight');
+            }
             const actions = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', target.uri, new vscode.Range(0, 0, target.lineCount - 1, 0));
             const action = actions.find(action => action.title.startsWith('Change routing:'));
             assert.ok(action?.command, `Actual registered C# provider supplies a fresh preview command: ${JSON.stringify({ titles: actions.map(action => action.title), warnings, diagnostics: vscode.languages.getDiagnostics(target.uri).map(issue => ({ code: issue.code, source: issue.source, message: issue.message })) })}`);
@@ -162,6 +194,7 @@ export async function runCommandGuards(root: string): Promise<void> {
             await review(target);
             if (propose !== 'Propose and preview') return;
             await navigateReview();
+            assert.equal(productWatch(path.dirname(target.uri.fsPath)).closed, false, 'Preflighted product watcher remains installed throughout review');
             await vscode.commands.executeCommand('screenplay.repair.apply');
         };
         await vscode.commands.executeCommand('screenplay.repair.apply', 'forged-token');
@@ -249,24 +282,17 @@ export async function runCommandGuards(root: string): Promise<void> {
         // The production all-file watcher, not a timeout sleep, must expire the
         // review when a previously unindexed sibling arrives during consent.
         finalConsent = async () => {
-            const sibling = path.join(model, 'new-attachment.cs');
-            const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(vscode.Uri.file(model), '**/*'));
-            try {
-                await new Promise<void>((resolve, reject) => {
-                    const timer = setTimeout(() => { listener.dispose(); reject(new Error('No native sibling create event within 5 seconds.')); }, 5_000);
-                    const listener = watcher.onDidCreate(uri => {
-                        if (uri.fsPath === sibling) { clearTimeout(timer); listener.dispose(); resolve(); }
-                    });
-                    fs.writeFileSync(sibling, '// newly discovered attachment\n');
-                });
-            } finally { watcher.dispose(); }
+            const sibling = path.join(model, 'nested', 'new-attachment.cs');
+            const record = productWatch(model);
+            const event = await observeProduct(record, () => fs.writeFileSync(sibling, '// newly discovered attachment\n'));
+            assert.equal(event, 'rename', 'Nested creation conservatively requires reconnect');
             return 'Apply';
         };
         await preview();
         assert.equal(applyPrompts, beforeSiblingPrompts + 1, `Sibling mutation ran inside the actual final Apply consent: ${warnings.join('; ')}`);
         assert.equal(dispatched, 0, 'Native all-file create event expires the production preview');
         assert.deepEqual(fs.readFileSync(source), original);
-        assert.ok(warnings.some(message => /PreviewExpired|Stale/.test(message)), `Native watcher invalidation refusal: ${warnings.join('; ')}`);
+        assert.ok(warnings.some(message => /PreviewExpired|Stale|WatchInvalidated/.test(message)), `Native watcher invalidation refusal: ${warnings.join('; ')}`);
         warnings.length = 0;
 
         const currentAfterPages = () => {
@@ -292,7 +318,7 @@ export async function runCommandGuards(root: string): Promise<void> {
         for (const [file, bytes] of expected) assert.equal(fs.readFileSync(path.join(model, file), 'utf8'), bytes);
         assert.equal(document.getText(), expected.get('application.play'), 'Production reload reconciles a native saved source buffer');
         assert.equal(document.isDirty, false);
-        assert.equal(warnings.length, 0, `Successful command did not hide a reconciliation/refresh failure: ${warnings.join('; ')}`);
+        assert.equal(warnings.length, 0, `Verified installation was not mislabeled as an Apply failure: ${warnings.join('; ')}`);
 
         // New root, no hand-written identity state or reuse of old authority.
         const raceRoot = path.join(root, 'post-dispatch');
@@ -334,6 +360,7 @@ export async function runCommandGuards(root: string): Promise<void> {
         assert.equal(dispatched, 2, 'Unknown/dirty outcome is never retried');
         console.log('NATIVE GUARD INTEGRATION: production preview/Apply commands, separately controlled consent, forged token refusal, dirty-at-consent refusal, actual sibling watcher invalidation, exact installed source/state, saved-buffer reload and controlled post-dispatch native dirty edit passed. Native source/state tab switching and scrolling occurred before explicit contributed Apply. Notification dismissal retained review. Associated untitled source/attachment/state refusals and post-dispatch preservation passed. Final modal responses were simulated; human keyboard/mouse interaction remains UNVERIFIED.');
     } finally {
+        nativeFs.watch = originalWatch;
         childProcess.spawn = originalSpawn;
         productionApi.window.showWarningMessage = originalWarning;
         productionApi.window.showInformationMessage = originalInformation;

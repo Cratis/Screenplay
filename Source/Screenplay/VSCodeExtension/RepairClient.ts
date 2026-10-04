@@ -73,11 +73,11 @@ export class RepairClient {
         validateCapabilities(await this.tool('repair-capabilities', {}));
     }
 
-    async tool(name: string, args: Record<string, unknown>, signal?: AbortSignal, beforeSend?: () => void): Promise<Record<string, unknown>> {
+    async tool(name: string, args: Record<string, unknown>, signal?: AbortSignal, beforeSend?: () => void, writeAttempt?: () => void): Promise<Record<string, unknown>> {
         const envelope = object(await this.request('tools/call', { name, arguments: args }, signal, beforeSend, name === 'propose-repair' ? value => {
             const late = object(object(value).structuredContent);
             if (late.success === true && typeof late.proposalId === 'string') void this.tool('discard-proposal', { proposalId: late.proposalId }).catch(() => {});
-        } : undefined));
+        } : undefined, writeAttempt));
         const result = object(envelope.structuredContent);
         if (boolean(envelope.isError)) {
             // Unknown failures after an apply are conservatively interpreted by the session, not by text prefixes.
@@ -86,12 +86,12 @@ export class RepairClient {
         return result;
     }
 
-    request(method: string, params: unknown, signal?: AbortSignal, beforeSend?: () => void, discarded?: (value: unknown) => void): Promise<unknown> {
+    request(method: string, params: unknown, signal?: AbortSignal, beforeSend?: () => void, discarded?: (value: unknown) => void, writeAttempt?: () => void): Promise<unknown> {
         if (this.#closed) return Promise.reject(this.#closed);
         if (signal?.aborted) return Promise.reject(new RepairFailure('Cancelled', 'Repair request cancelled before dispatch.'));
         if (this.#queue.length >= 16) return Promise.reject(new RepairFailure('QueueFull', 'Repair request queue is full.'));
         return new Promise((resolve, reject) => {
-            const request: RepairRequest = { id: ++this.#nextId, method, params, resolve, reject, cancelled: false, signal, beforeSend, discarded };
+            const request: RepairRequest = { id: ++this.#nextId, method, params, resolve, reject, cancelled: false, signal, beforeSend, discarded, writeAttempt };
             request.abort = () => {
                 const queued = this.#queue.indexOf(request);
                 request.cancelled = true;
@@ -125,10 +125,18 @@ export class RepairClient {
         if (this.#active || this.#closed) return;
         const request = this.#queue.shift();
         if (!request) return;
-        try { request.beforeSend?.(); } catch (error) { this.#release(request); request.reject(error); this.#pump(); return; }
+        let frame: string;
+        try {
+            // Serialization can throw or run caller code. It must precede final authorization.
+            frame = JSON.stringify({ jsonrpc: '2.0', id: request.id, method: request.method, params: request.params }) + '\n';
+            request.beforeSend?.();
+        } catch (error) { this.#release(request); request.reject(error); this.#pump(); return; }
         this.#active = request;
         request.timer = setTimeout(() => this.close(new RepairFailure('DeadlineExceeded', 'Repair server deadline exceeded.')), this.timeoutMs);
-        this.#process.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: request.id, method: request.method, params: request.params }) + '\n');
+        try {
+            request.writeAttempt?.(); // May have been sent, NOT acknowledgement or installation.
+            this.#process.stdin.write(frame);
+        } catch (error) { this.close(new RepairFailure('ProcessClosed', `Repair write failed: ${String(error)}`)); }
     }
 
     #receive(chunk: Buffer): void {

@@ -60,6 +60,7 @@ export class RepairSession {
     get available(): boolean { return this.#available && !this.#disposed; }
     get epoch(): number { return this.#epoch; }
     get recoveryRequired(): boolean { return this.#uncertain; }
+    get applyDispatched(): boolean { return this.#retained?.dispatched === true; }
 
     constructor(readonly launch: RepairLaunch, readonly environment: RepairEnvironment, readonly changed: () => void = () => {}) {
         environment.check();
@@ -223,9 +224,8 @@ export class RepairSession {
             const result = await this.#client.tool('apply', {
                 proposalId: retained.proposalId, expectedRevision: snapshot.revision, expectedCatalogRevision: snapshot.catalog,
                 expectedRepairEvidenceRevision: retained.beforeEvidence,
-            }, undefined, () => {
-                this.#check(snapshot.epoch, snapshot.versions);
-                retained.dispatched = true; // No cancellation or retry after this boundary.
+            }, undefined, () => this.#check(snapshot.epoch, snapshot.versions), () => {
+                retained.dispatched = true; // Write attempt: no cancellation or retry after this boundary.
             });
             const installed = revisions(result.workspace);
             if (result.success !== true || result.validation !== 'Authoring' || installed.revision !== retained.afterRevision || installed.catalog !== retained.afterCatalog || integer(result.plannedChanges) !== retained.changeCount || integer(result.installedDocuments) !== retained.changeCount) throw new RepairFailure('ApplyOutcomeUnknown', 'Apply did not report a verified installation.', result);

@@ -17,8 +17,9 @@ fs.mkdirSync(tasks, { recursive: true });
 const retained = process.env.AI_WORK_KEEP ?? tasks;
 fs.mkdirSync(retained, { recursive: true });
 const evidence = fs.mkdtempSync(path.join(retained, 'native-host-'));
-// Native sockets have short path limits and macOS refuses /Volumes watchers.
-// Both synthetic inputs and host data use the supported physical temporary FS;
+// Native sockets have short path limits; avoid /var symlink aliases and
+// VS Code's nonrecursive /Volumes watcher policy. Recursive watching is tested separately.
+// Both synthetic inputs and host data use the physical temporary FS;
 // preserve their locations and copy native logs to retained evidence on exit.
 const temporary = fs.realpathSync.native(os.tmpdir());
 const testRoot = fs.mkdtempSync(path.join(temporary, 'sp-host-'));

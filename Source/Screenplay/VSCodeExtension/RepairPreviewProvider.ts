@@ -53,18 +53,22 @@ export class RepairPreviewProvider implements vscode.FileSystemProvider, vscode.
         this.clear();
         return true;
     }
-    async showFailure(kind: string, details: unknown): Promise<void> {
+    async showFailure(kind: string, details: unknown, relevant: () => boolean = () => true): Promise<void> {
+        if (!relevant()) return;
         this.clear();
+        const generation = this.#generation;
         const content = JSON.stringify({ failureKind: kind, details, note: 'This is a refused or uncertain operation, not an accepted proposal or runtime confirmation. No Apply authority is issued. Inspect recovery separately if Apply was dispatched.' }, null, 2);
         if (Buffer.byteLength(content, 'utf8') > 16 * 1024 * 1024) throw new RepairFailure('PreviewTooLarge', 'Conflict details exceed the read-only review budget.');
         const uri = vscode.Uri.from({ scheme: this.scheme, path: `/${randomUUID()}/failure.json` });
         this.#documents.set(uri.toString(), content);
-        await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri), { preview: false });
+        const document = await vscode.workspace.openTextDocument(uri);
+        if (relevant() && generation === this.#generation) await vscode.window.showTextDocument(document, { preview: false });
     }
-    async show(preview: RepairPreview): Promise<void> {
+    async show(preview: RepairPreview, authorize: () => void = () => {}): Promise<void> {
+        authorize();
         this.clear();
         const generation = this.#generation;
-        const check = () => { if (generation !== this.#generation) throw new RepairFailure('PreviewExpired', 'Workspace changed or preview closed during review.'); };
+        const check = () => { authorize(); if (generation !== this.#generation) throw new RepairFailure('PreviewExpired', 'Workspace changed or preview closed during review.'); };
         const add = (name: string, content: string) => {
             check();
             const uri = vscode.Uri.from({ scheme: this.scheme, path: `/${preview.token}/${name}` });
@@ -77,6 +81,7 @@ export class RepairPreviewProvider implements vscode.FileSystemProvider, vscode.
             const before = add(`${index}/before/${file.path}`, file.before?.toString('utf8') ?? '');
             const after = add(`${index}/after/${file.path}`, file.after?.toString('utf8') ?? '');
             await vscode.commands.executeCommand('vscode.diff', before, after, `${preview.title}: ${file.path}`, { preview: false });
+            check();
         }
         const summary = [
             `# ${preview.title}`, '',
@@ -94,7 +99,9 @@ export class RepairPreviewProvider implements vscode.FileSystemProvider, vscode.
             'Navigate and scroll every diff before choosing Screenplay: Apply Reviewed C# Repair in the command palette, editor title or status bar. Only that explicit command opens final Apply confirmation. Screenplay: Discard C# Repair releases this review. Dismissing the nonmodal notice does neither.',
             'Apply is offered only after all source and identity byte pages have been collected. Closing a preview or changing the workspace invalidates it.',
         ].join('\n');
-        await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(add('review.md', summary)), { preview: false });
+        const document = await vscode.workspace.openTextDocument(add('review.md', summary));
+        check();
+        await vscode.window.showTextDocument(document, { preview: false });
         check();
         this.#preview = preview;
         this.#token = preview.token;

@@ -12,5 +12,6 @@ export interface RepairRequest {
     signal?: AbortSignal;
     cancelled: boolean;
     beforeSend?: () => void;
+    writeAttempt?: () => void;
     discarded?: (value: unknown) => void;
 }

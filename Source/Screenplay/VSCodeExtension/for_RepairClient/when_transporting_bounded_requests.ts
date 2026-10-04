@@ -68,6 +68,29 @@ it('does not dispatch a queued request after its guard becomes stale', async () 
     const rejected = expect(guarded).rejects.toThrow('stale epoch');
     await first; await rejected;
 });
+it('serializes before authorization and marks only the immediate write attempt', async () => {
+    const transport = client();
+    const order: string[] = [];
+    await transport.request('ping', { toJSON() { order.push('serialize'); return {}; } }, undefined, () => { order.push('authorize'); }, undefined, () => { order.push('write'); });
+    expect(order).toEqual(['serialize', 'authorize', 'write']);
+});
+it('serialization failure never marks dispatch and does not strand the queue', async () => {
+    const transport = client();
+    let attempted = false, guarded = false;
+    await expect(transport.request('ping', { toJSON() { throw new Error('serialize failed'); } }, undefined, () => { guarded = true; }, undefined, () => { attempted = true; })).rejects.toThrow('serialize failed');
+    expect(guarded).toBe(false); expect(attempted).toBe(false);
+    expect(await transport.request('ping', {})).toMatchObject({ text: '😀' });
+});
+it('invalidation during serialization prevents a queued Apply write attempt', async () => {
+    const transport = client();
+    const first = transport.request('ping', { mode: 'slow' });
+    let epoch = 0, attempted = false;
+    const apply = transport.request('tools/call', { toJSON() { ++epoch; return { name: 'apply' }; } }, undefined, () => { if (epoch) throw new Error('stale epoch'); }, undefined, () => { attempted = true; });
+    const rejected = expect(apply).rejects.toThrow('stale epoch');
+    await first; await rejected;
+    expect(attempted).toBe(false);
+    expect(await transport.request('ping', {})).toMatchObject({ text: '😀' });
+});
 it('reports a missing executable without searching the project', async () => {
     const transport = new RepairClient({ executable: path.resolve('/no-such-approved-server'), arguments: ['mcp'], root: process.cwd() });
     clients.push(transport);

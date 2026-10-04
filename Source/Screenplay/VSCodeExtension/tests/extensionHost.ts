@@ -27,6 +27,10 @@ async function eventuallyDocument(document: vscode.TextDocument, expected: strin
 async function runSuites(): Promise<void> {
     const root = process.env.SCREENPLAY_REPAIR_HOST_ROOT!;
     assert.ok(root);
+    const [major, minor] = process.versions.node.split('.').map(Number);
+    assert.ok(['darwin', 'win32', 'linux'].includes(process.platform));
+    assert.ok(process.platform !== 'linux' || major > 19 || (major === 19 && minor >= 1), 'Actual extension-host Node supports recursive fs.watch');
+    console.log(`NATIVE EXTENSION HOST RUNTIME: ${JSON.stringify({ platform: process.platform, vscode: vscode.version, versions: process.versions })}`);
     const source = path.join(root, 'application.play');
     fs.writeFileSync(source, '\uFEFF// 😀 native byte review\r\n' + repairSource.replaceAll('\n', '\r\n'));
     fs.writeFileSync(path.join(root, 'Handler.cs'), '// attachment\n');
@@ -43,24 +47,8 @@ async function runSuites(): Promise<void> {
     // reload hidden models; this suite requires an actual visible-buffer event.
     await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two });
     await vscode.commands.executeCommand('workbench.action.focusFirstEditorGroup');
-    // Establish a real native watcher before fast subprocess transactions; startup
-    // registration is asynchronous and must not be replaced by an arbitrary sleep.
-    const readiness = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(vscode.Uri.file(root), '**/*'));
-    try {
-        await new Promise<void>((resolve, reject) => {
-            const probe = path.join(root, 'watcher-ready.txt');
-            let counter = 0;
-            const listeners: vscode.Disposable[] = [];
-            const cleanup = () => { clearTimeout(timer); clearInterval(ticks); listeners.forEach(listener => listener.dispose()); };
-            const observed = (uri: vscode.Uri) => { if (uri.fsPath === probe) { cleanup(); resolve(); } };
-            const timer = setTimeout(() => { cleanup(); reject(new Error('Native filesystem watcher not ready within 5 seconds.')); }, 5_000);
-            // Watcher subscription registration is async. A one-shot write can
-            // precede its initial snapshot; bounded probe changes establish an
-            // actual native event, never a sleep or assumed readiness.
-            const ticks = setInterval(() => fs.writeFileSync(probe, `synthetic watcher readiness ${++counter}`), 100);
-            listeners.push(readiness.onDidCreate(observed), readiness.onDidChange(observed));
-        });
-    } finally { readiness.dispose(); }
+    // The direct transaction suite does not pretend to prove production watching.
+    // Command guards below preflight the actual installed connection's retained watcher.
     const launch = userRepairConfiguration();
     const session = new RepairSession(launch, { check: () => checkRepairEnvironment(launch) });
     const provider = new RepairPreviewProvider('screenplay-repair-test');
@@ -111,9 +99,8 @@ async function runSuites(): Promise<void> {
     } finally { session.dispose(); registration.dispose(); provider.dispose(); }
 
     // Exercise the extension's real registered provider and all-file watcher on C# refusals/new siblings.
-    fs.writeFileSync(source, refusedEventSource);
-    await eventuallyDocument(document, refusedEventSource);
     // Persisted state describes another model; use a NEW explicit physical root for the refused fixture.
+    // Do not rewrite the completed suite's old source or wait for an unrelated backend reload.
     const refusedRoot = path.join(root, 'refused');
     fs.mkdirSync(refusedRoot);
     fs.writeFileSync(path.join(refusedRoot, 'application.play'), refusedEventSource);

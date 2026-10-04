@@ -35,8 +35,8 @@ function bytes(value: Buffer, args: Record<string, unknown>, revision: string) {
 beforeEach(async () => {
     malformed = ''; version = 1; dirty = false; applied = false; calls = []; dispatchedArgs = undefined;
     vi.spyOn(RepairClient.prototype, 'initialize').mockResolvedValue();
-    vi.spyOn(RepairClient.prototype, 'tool').mockImplementation(async (name, args, _signal, guard) => {
-        guard?.(); calls.push(name);
+    vi.spyOn(RepairClient.prototype, 'tool').mockImplementation(async (name, args, _signal, guard, writeAttempt) => {
+        guard?.(); writeAttempt?.(); calls.push(name);
         const binding = { before: base, after: candidate, repairEvidence: { beforeRevision: pin, candidateRevision: nextPin } };
         if (name === 'open-workspace') return base;
         if (name === 'discard-proposal') return { discarded: true };
@@ -71,6 +71,7 @@ beforeEach(async () => {
             dispatchedArgs = args;
             if (malformed === 'processFailure') throw new RepairFailure('ProcessClosed', 'EOF');
             if (malformed === 'dirtyAfterDispatch') dirty = true;
+            if (malformed === 'ownRename') session.invalidate();
             applied = true;
             return { success: true, validation: 'Authoring', workspace: candidate, plannedChanges: 1, installedDocuments: 1, status: 'human-readable, not a discriminator' };
         }
@@ -118,6 +119,16 @@ it('does not reinterpret post-dispatch dirty typing as cancellation or replay bu
     await session.apply(preview.token);
     expect(dirty).toBe(true); expect(applied).toBe(true);
     await expect(session.discover()).rejects.toMatchObject({ kind: 'DirtyBuffer' });
+});
+it('accepts verified own-write success without rechecking the invalidated epoch', async () => {
+    const choice = (await session.discover()).choices[0]; const preview = await session.preview(choice.token);
+    const epoch = session.epoch;
+    malformed = 'ownRename';
+    await session.apply(preview.token);
+    expect(session.epoch).toBeGreaterThan(epoch);
+    expect(session.recoveryRequired).toBe(false);
+    expect(session.applyDispatched).toBe(false);
+    expect(applied).toBe(true);
 });
 it('retains unknown Apply and refuses automatic retry while allowing read-only state inspection', async () => {
     const choice = (await session.discover()).choices[0]; const preview = await session.preview(choice.token);

@@ -210,10 +210,28 @@ When C# returns a refusal, **Inspect conflict details** opens its structured
 failure, conflict kinds and diagnostics in a read-only view. A refused operation
 has no Apply authority.
 
-Each root has one persistent connection. Root/configuration changes close the old
-connection; file creation, imports, attachments and identity changes invalidate
-outstanding selections. C# also checks exact source, catalog, state and frozen
-base/candidate evidence. These actions are never preferred, fix-all or on-save.
+Each approved root has one persistent connection and one Node recursive watcher
+on the extension host, alongside VS Code and buffer observers. The actual host
+must support recursive `fs.watch` (Linux requires Node 19.1 or newer); setup-tool
+Node versions do not establish the embedded runtime. Registration failures,
+including watch-resource exhaustion, refuse repairs with `WatchUnavailable`;
+there is no silent VS Code-only fallback or automatic retry. Local language
+assistance and read-only recovery inspection remain available. Linux can allocate
+per-entry kernel watches even though the connection owns one watcher object.
+
+Every root notification invalidates review. Rename notifications (including
+creation), reported watcher errors and unexpected closure require deliberate
+reconnect through **Screenplay: Discover Saved-File C# Repairs**. Watching never
+writes readiness probes and does not prove that all filesystem changes have been
+delivered; Node does not report every possible event loss. C# still checks exact
+source, catalog, state and frozen base/candidate evidence. These actions are never
+preferred, fix-all or on-save.
+
+Root/configuration changes retire the old connection and watchers. A dispatched
+Apply keeps its process until the outcome is known; replacement proposals stay
+blocked during that interval. Notifications from its own installation invalidate
+review but do not cancel Apply. Verified installation remains installed even if
+watching subsequently requires reconnect; buffer reconciliation is separate.
 
 Apply writes outside the editor and is **not normal editor Undo**. Use an exclusive
 writer while applying. Journaled rollback does not guarantee crash-atomic visibility
@@ -277,5 +295,10 @@ review, exact-byte installation, saved-buffer reload and controlled post-dispatc
 dirty-buffer preservation. Dialog replies and the timing of the real subprocess
 reply are controlled. Human keyboard/mouse modal interaction and uncontrolled
 keyboard race timing are **not** exercised by these tests; do not describe them
-as manual native coverage. CI lane definitions alone do not establish a platform
+as manual native coverage. The harness records `process.versions` inside the
+actual extension host and modifies one preexisting nested fixture file to
+preflight the installed product watcher retained through review. Nested creation
+is tested separately as reconnect-required, within the same five-second event
+limit. No repeated root-level probes or harness-only watcher stand in for the
+product. CI lane definitions alone do not establish a platform
 pass: run each native lane before claiming that platform is verified.
