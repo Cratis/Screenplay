@@ -10,7 +10,8 @@ import { AuthorizeSyntax, PersonaSyntax } from '../Syntax/Authorization';
 import { ConceptSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { ApplicationSyntax, FeatureSyntax, ModuleSyntax } from '../Syntax/Structure';
 import { toSyntaxJson } from '../Syntax/SyntaxJson';
-import { isAuthoredDocument, legacySourceOptions, NumericMode } from '../Syntax/SourceOptions';
+import { invalidSourceOptions, isAuthoredDocument, legacySourceOptions, SourceOptions, validatedSourceOptions } from '../Syntax/SourceOptions';
+import { InvalidSyntaxJson } from '../Syntax/InvalidSyntaxJson';
 
 // "The documents of a folder are one document": modules and features with the same name combine, and a
 // name declared in two files is reported - the port of the C# PlayFolderMerge for what this compiler
@@ -18,16 +19,26 @@ import { isAuthoredDocument, legacySourceOptions, NumericMode } from '../Syntax/
 export function mergeDocuments(documents: readonly CompilationResult<ApplicationSyntax>[]): CompilationResult<ApplicationSyntax> {
     const diagnostics: Diagnostic[] = [];
     const applications = documents.map(document => document.value);
-    const asserted = applications.filter(application => Object.hasOwn(application, 'sourceOptions') && application.sourceOptions?.numericMode !== 'legacy' || hasDeclarations(application));
-    let sourceOptions = asserted[0]?.sourceOptions ?? legacySourceOptions;
-    let invalid = asserted.some(application => Object.hasOwn(application, 'sourceOptions') && (application.sourceOptions == null || Object.keys(application.sourceOptions).length !== 1 || !['legacy', 'exact'].includes(application.sourceOptions.numericMode)));
+    const options = new Map<ApplicationSyntax, SourceOptions>();
+    let invalid = false;
+    for (const application of applications) {
+        try {
+            options.set(application, Object.hasOwn(application, 'sourceOptions') ? validatedSourceOptions(application.sourceOptions) : legacySourceOptions);
+        } catch (failure) {
+            if (!(failure instanceof InvalidSyntaxJson)) throw failure;
+            invalid = true;
+            diagnostics.push(error(DiagnosticCodes.IncompatibleNumericSource, failure.message, application.location));
+        }
+    }
+    const asserted = applications.filter(application => options.get(application)?.numericMode === 'exact' || hasDeclarations(application));
+    let sourceOptions = options.get(asserted[0]) ?? legacySourceOptions;
     for (const application of asserted.slice(1)) {
-        if ((application.sourceOptions ?? legacySourceOptions).numericMode !== sourceOptions.numericMode) {
+        if (options.get(application)?.numericMode !== sourceOptions.numericMode) {
             invalid = true;
             diagnostics.push(error(DiagnosticCodes.MixedNumericModes, 'Declaration-bearing documents and marked import barrels must independently select the same numeric mode.', application.location));
         }
     }
-    if (invalid) sourceOptions = Object.freeze({ numericMode: 'invalid' as NumericMode });
+    if (invalid) sourceOptions = invalidSourceOptions;
     const named = new Map<string, SourceLocation>();
     const concepts = declaredInOneFile<ConceptSyntax>(applications.flatMap(application => application.concepts), 'declaration of', diagnostics, undefined, named);
     const types = declaredInOneFile<TypeSyntax>(applications.flatMap(application => application.types), 'declaration of', diagnostics, undefined, named);
