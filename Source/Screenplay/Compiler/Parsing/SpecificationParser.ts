@@ -50,6 +50,8 @@ const whenTriggerPattern = pattern('^when\\s+trigger\\s+([A-Za-z_]\\w*)$');
 const capturePattern = pattern('^(?:given|when)\\s+capture\\s+([A-Za-z_]\\w*)$');
 const whenQueryPattern = pattern('^when\\s+query\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)$');
 const thenResultPattern = pattern('^then\\s+result(\\s+exactly)?$');
+const thenAbsentReadModelPattern = pattern('^then\\s+no\\s+readmodel\\s+([A-Z]\\w*)\\s+for\\s+(.+)$');
+const thenQueryPattern = pattern('^then\\s+query\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)(\\s+exactly)?$');
 
 interface SpecificationBody {
     given: SpecificationEventSyntax[];
@@ -263,7 +265,7 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
         return;
     }
     if (thenNoPrefix.test(line.content)) {
-        const match = /^then\s+no\s+readmodel\s+([A-Z]\w*)\s+for\s+(.+)$/.exec(line.content);
+        const match = thenAbsentReadModelPattern.exec(line.content);
         if (match !== null && !match[2].endsWith(' exactly')) {
             const key = parseMappingSource(match[2].trim(), locationOf(line), context.valueContext);
             if (key.kind === 'LiteralExpressionSyntax' || key.kind === 'ObjectExpressionSyntax') body.thenAbsentReadModels.push({ kind: 'SpecificationAbsentReadModelSyntax', name: match[1], key, location: locationOf(line) });
@@ -272,7 +274,7 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
         return;
     }
     if (thenQueryPrefix.test(line.content)) {
-        const match = /^then\s+query\s+([A-Za-z_]\w*(?:\.\w+)*)(\s+exactly)?$/.exec(line.content);
+        const match = thenQueryPattern.exec(line.content);
         if (match === null) { context.skipOpaqueBlock(line.indent); return; }
         const args: PropertyMappingSyntax[] = [];
         const results: SpecificationQueryResultSyntax[] = [];

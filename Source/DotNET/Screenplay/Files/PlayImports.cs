@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Languages;
 
 namespace Cratis.Screenplay.Files;
 
@@ -41,9 +42,21 @@ public static class PlayImports
     /// <returns>Every document - the roots in the order given, then what they import - with the diagnostics resolving them produced.</returns>
     public static (IReadOnlyList<PlacedPlayDocument> Documents, IReadOnlyList<Diagnostic> Diagnostics) Resolve(
         IEnumerable<string> roots,
-        IPlayDocumentSource source)
+        IPlayDocumentSource source) => Resolve(roots, source, ScreenplayLanguageRegistry.Default);
+
+    /// <summary>
+    /// Resolves application documents using the same language registry as their parser.
+    /// </summary>
+    /// <param name="roots">The portable paths of the root documents, each a whole document.</param>
+    /// <param name="source">The source used to find and read documents.</param>
+    /// <param name="languages">The caller's registry defining inline fence ownership.</param>
+    /// <returns>The resolved documents and import diagnostics.</returns>
+    public static (IReadOnlyList<PlacedPlayDocument> Documents, IReadOnlyList<Diagnostic> Diagnostics) Resolve(
+        IEnumerable<string> roots,
+        IPlayDocumentSource source,
+        IScreenplayLanguageRegistry languages)
     {
-        var resolution = new Resolution(source);
+        var resolution = new Resolution(source, languages);
         foreach (var root in roots.Select(PlayGlob.Normalize).Distinct(StringComparer.Ordinal))
         {
             resolution.AddRoot(root);
@@ -53,7 +66,7 @@ public static class PlayImports
         return (resolution.Documents(), resolution.Diagnostics);
     }
 
-    sealed class Resolution(IPlayDocumentSource source)
+    sealed class Resolution(IPlayDocumentSource source, IScreenplayLanguageRegistry languages)
     {
         // Found order is the order documents are returned in: roots as given, then what they import.
         readonly List<string> _found = [];
@@ -114,7 +127,7 @@ public static class PlayImports
 
             _found.Add(file);
             _sources[file] = source.Read(file);
-            _imports[file] = [.. ScreenplayCompiler.DiscoverImports(_sources[file], file).Select(import => (import, Targets(file, import)))];
+            _imports[file] = [.. ScreenplayCompiler.DiscoverImports(_sources[file], file, languages).Select(import => (import, Targets(file, import)))];
             _pending.Enqueue(file);
         }
 

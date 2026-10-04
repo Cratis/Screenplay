@@ -6,6 +6,7 @@ import { isExactNumberToken, parseExactNumber } from './ExactNumber';
 import { validateSyntaxInvariants } from './SyntaxInvariants';
 import { syntaxDefinitions } from './SyntaxDefinitions';
 import { SyntaxNode } from './SyntaxNode';
+import { validatedSourceOptions } from './SourceOptions';
 
 import { InvalidSyntaxJson } from './InvalidSyntaxJson';
 export { InvalidSyntaxJson } from './InvalidSyntaxJson';
@@ -96,6 +97,7 @@ function restore(value: Value, schema: Schema, path: string, depth: number): Val
             else if (member.default !== undefined) result[name] = restore(member.default, member, `${path}.${name}`, depth + 1);
         }
         if (typeof result.kind === 'string') {
+            if (roots.has(result.kind)) result.sourceOptions = validatedSourceOptions(result.sourceOptions) as unknown as Value;
             // Source positions are server-owned. No raw spans or authored token lengths are invented.
             (result as unknown as { location: ReturnType<typeof sourceLocation> }).location = sourceLocation(1, 1);
             validateSyntaxInvariants(result as unknown as SyntaxNode);
@@ -108,7 +110,10 @@ function restore(value: Value, schema: Schema, path: string, depth: number): Val
 function validateExactNumbers(value: Value, path: string): void {
     if (Array.isArray(value)) { value.forEach((item, index) => validateExactNumbers(item, `${path}[${index}]`)); return; }
     if (!object(value)) return;
-    if (Object.hasOwn(value, 'sourceOptions') && (!object(value.sourceOptions) || value.sourceOptions.numericMode !== 'exact')) fail(path, 'conflicting source numeric options.');
+    if (Object.hasOwn(value, 'sourceOptions')) {
+        const options = validatedSourceOptions(value.sourceOptions);
+        if (options.numericMode !== 'exact') fail(path, 'conflicting source numeric options.');
+    }
     if (value.kind === 'RawExpressionSyntax' && typeof value.text === 'string' && isExactNumberToken(value.text)) fail(path, 'an exact numeric operand cannot be opaque numeric text.');
     if (value.kind === 'LiteralExpressionSyntax') {
         if (typeof value.value === 'number') fail(path, 'ordinary numeric tokens are Double; construct an explicit ExactNumber.');

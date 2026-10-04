@@ -315,11 +315,19 @@ function parseKey(context: ParserContext, line: SourceLine): KeySyntax {
     const parts: KeyPartSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
+        if (child.content === '}') continue;
         const match = assignmentPattern.exec(child.content);
-        if (match !== null) parts.push({ kind: 'KeyPartSyntax', property: unescapeIdentifier(match[1]), expression: parseProjectionExpression(match[2], locationOf(child), context), location: locationOf(child) });
+        if (match === null) {
+            if (context.sourceOptions.numericMode === 'exact') context.error(DiagnosticCodes.InvalidCompositeKeyPart, `Invalid composite key part '${child.content}' - expected '<property> = <expression>'`, locationOf(child));
+            continue;
+        }
+        const expression = parseProjectionExpression(match[2], locationOf(child), context);
+        if (context.sourceOptions.numericMode === 'exact' && expression.kind === 'TemplateExpressionSyntax') context.error(DiagnosticCodes.TemplateInCompositeKey, 'Template expressions are not allowed in composite keys', locationOf(child));
+        parts.push({ kind: 'KeyPartSyntax', property: unescapeIdentifier(match[1]), expression, location: locationOf(child) });
     }
     const closing = context.reader.peekSignificant();
     if (closing !== undefined && closing.indent === line.indent && closing.content === '}') context.reader.takeSignificant();
+    if (context.sourceOptions.numericMode === 'exact' && parts.length === 0) context.error(DiagnosticCodes.EmptyCompositeKey, 'Composite keys must contain at least one part', locationOf(line));
     return { kind: 'CompositeKeySyntax', type: text.replace(/\{$/, '').trim(), parts, location: locationOf(line) };
 }
 
@@ -341,14 +349,16 @@ function parseMappingBlock(context: ParserContext, line: SourceLine, extra: (chi
     return { autoMap, mappings };
 }
 
-// The property one mapping line sets, and how - the port of the C# ParseMappingLine. A line that is no
-// mapping is left to the C# compiler to report.
+// The property one mapping line sets, and how - the port of the C# ParseMappingLine. Exact reports
+// malformed mappings; Legacy keeps the existing skip behavior.
 function pushMapping(context: ParserContext, line: SourceLine, mappings: MappingSyntax[]): void {
     const location = locationOf(line);
     const keyword = keywordMappingPattern.exec(line.content);
     if (keyword !== null) {
         if (keyword[1] !== 'clear' || keyword[2] !== 'with') {
             mappings.push({ kind: keywordMappings[keyword[1]], property: unescapeIdentifier(keyword[2]), location });
+        } else if (context.sourceOptions.numericMode === 'exact') {
+            context.error(DiagnosticCodes.InvalidProjectionMapping, `Invalid mapping '${line.content}' - 'clear with' is a block directive and needs an event type; to clear a property named 'with', write 'clear @with'`, location);
         }
         return;
     }
@@ -360,5 +370,7 @@ function pushMapping(context: ParserContext, line: SourceLine, mappings: Mapping
     const assigned = setPattern.exec(line.content) ?? assignmentPattern.exec(line.content);
     if (assigned !== null) {
         mappings.push({ kind: 'SetMappingSyntax', property: unescapeIdentifier(assigned[1]), source: parseProjectionExpression(assigned[2], location, context), location });
+    } else if (context.sourceOptions.numericMode === 'exact') {
+        context.error(DiagnosticCodes.InvalidProjectionMapping, `Invalid mapping '${line.content}'`, location);
     }
 }

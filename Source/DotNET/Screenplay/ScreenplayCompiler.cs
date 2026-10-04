@@ -17,7 +17,7 @@ namespace Cratis.Screenplay;
 /// Represents an implementation of <see cref="IScreenplayCompiler"/>.
 /// </summary>
 /// <param name="languages">The <see cref="IScreenplayLanguageRegistry"/> saying what to recognize beyond the built-in constructs.</param>
-public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreenplayCompiler, ICommandStreamCandidateParser
+public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreenplayCompiler, ICommandStreamCandidateParser, ILanguageRegistryOwner
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ScreenplayCompiler"/> class recognizing only what the
@@ -34,6 +34,10 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
         : this(ScreenplayLanguageRegistry.Default)
     {
     }
+
+    IScreenplayLanguageRegistry ILanguageRegistryOwner.Languages => languages;
+
+    internal IScreenplayLanguageRegistry Languages => languages;
 
     /// <inheritdoc/>
     public CompilationResult<ApplicationSyntax> Compile(string source)
@@ -142,10 +146,13 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     /// <param name="source">The source text.</param>
     /// <param name="path">The path to attribute locations to.</param>
     /// <returns>Each import with the module and feature names around it, outermost first.</returns>
-    internal static IReadOnlyList<DiscoveredFileImport> DiscoverImports(string source, string? path)
+    internal static IReadOnlyList<DiscoveredFileImport> DiscoverImports(string source, string? path) =>
+        DiscoverImports(source, path, ScreenplayLanguageRegistry.Default);
+
+    internal static IReadOnlyList<DiscoveredFileImport> DiscoverImports(string source, string? path, IScreenplayLanguageRegistry languages)
     {
         var lines = SourceLineSplitter.Split(source, path: path);
-        return ScreenplayParser.DiscoverImports(SourceOptionsParser.Create(lines, path));
+        return ScreenplayParser.DiscoverImports(SourceOptionsParser.Create(lines, path, languages));
     }
 
     internal CompilationResult<ApplicationSyntax> ParseWithCandidates(string source, string? path, PlayPlacement placement, CommandStreamCandidates candidates) =>

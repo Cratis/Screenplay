@@ -6,14 +6,17 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { CodeBlockSyntax, FileReferenceSyntax } from '../Syntax/Implementations';
 import { PolicyConditionSyntax, PolicySyntax } from '../Syntax/Policies';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
+import { pattern } from '../Text/patterns';
 import { parseMappingSource } from './ExpressionParser';
 import { parseCode, parseFile } from './ImplementationParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 
+const headerPattern = pattern('^policy\\s+([A-Za-z_]\\w*)$');
+
 export function parsePolicy(context: ParserContext, header: SourceLine): PolicySyntax {
-    const name = /^policy\s+([A-Za-z_]\w*)$/.exec(header.content)?.[1] ?? '';
+    const name = headerPattern.exec(header.content)?.[1] ?? '';
     let condition: PolicyConditionSyntax | null = null;
     let code: CodeBlockSyntax | null = null;
     let file: FileReferenceSyntax | null = null;
@@ -42,7 +45,7 @@ export function parsePolicy(context: ParserContext, header: SourceLine): PolicyS
 
 function parsePolicyCondition(context: ParserContext, text: string, location: SourceLocation): PolicyConditionSyntax | null {
     const numeric = context.sourceOptions.numericMode === 'exact' ? '-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|[\\p{L}\\p{Mn}\\p{Nd}\\p{Pc}.$-]+|[^\\s]' : '[\\w.$]+';
-    const tokens: string[] = [...(text.match(new RegExp(`"${stringBodyPattern}"|\\(|\\)|${numeric}`, 'gu')) ?? [])];
+    const tokens: string[] = [...(text.match(new RegExp(pattern(`"${stringBodyPattern}"|\\(|\\)|${numeric}`).source, 'gu')) ?? [])];
     let position = 0;
     const quoted = (token: string | undefined): token is string => token !== undefined && token.startsWith('"') && token.endsWith('"');
     const unquote = (token: string): string => unescapeString(token.substring(1, token.length - 1));

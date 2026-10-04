@@ -32,6 +32,7 @@
     }
   ],
   "domain": null,
+  "eventSources": [],
   "fileImports": [],
   "imports": [],
   "modules": [
@@ -315,6 +316,8 @@
                       "property": "amount"
                     }
                   },
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -371,6 +374,52 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Changé",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "Sénd",
+                      "for": null,
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "café",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "café"
+                          }
+                        }
+                      ],
+                      "tags": [],
+                      "when": null
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "café",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Decimal"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
                 }
               ],
               "constraints": [],
@@ -402,7 +451,30 @@
                 }
               ],
               "name": "Change",
-              "operations": [],
+              "operations": [
+                {
+                  "kind": "OperationSyntax",
+                  "compensate": null,
+                  "description": null,
+                  "execute": null,
+                  "inputs": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "café",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Decimal"
+                      }
+                    }
+                  ],
+                  "name": "Sénd",
+                  "uses": "Remote"
+                }
+              ],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -769,6 +841,71 @@
                       }
                     }
                   }
+                },
+                {
+                  "kind": "ReactionSyntax",
+                  "description": null,
+                  "name": "Réact",
+                  "triggers": [
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "invokes": [
+                        {
+                          "kind": "InvokesSyntax",
+                          "command": "Changé",
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "café",
+                              "source": {
+                                "kind": "ObjectExpressionSyntax",
+                                "members": [
+                                  {
+                                    "kind": "ObjectMemberSyntax",
+                                    "name": "literalType",
+                                    "value": {
+                                      "kind": "LiteralExpressionSyntax",
+                                      "value": "ExactNumber"
+                                    }
+                                  },
+                                  {
+                                    "kind": "ObjectMemberSyntax",
+                                    "name": "value",
+                                    "value": {
+                                      "kind": "ListExpressionSyntax",
+                                      "items": [
+                                        {
+                                          "kind": "LiteralExpressionSyntax",
+                                          "value": {
+                                            "literalType": "ExactNumber",
+                                            "value": "9007199254740993"
+                                          }
+                                        },
+                                        {
+                                          "kind": "LiteralExpressionSyntax",
+                                          "value": {
+                                            "literalType": "ExactNumber",
+                                            "value": "0.0000000000000000000000000001"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ],
+                      "produces": [],
+                      "source": {
+                        "kind": "NamedTriggerSourceSyntax",
+                        "name": "Addéd"
+                      }
+                    }
+                  ],
+                  "where": null
                 }
               ],
               "readModels": [
@@ -1230,6 +1367,190 @@
                       }
                     ]
                   }
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Addéd",
+                      "for": null,
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "café",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "9007199254740993"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "Unicodé",
+                  "sourceOptions": {
+                    "numericMode": "exact"
+                  },
+                  "thenAbsentReadModels": [
+                    {
+                      "kind": "SpecificationAbsentReadModelSyntax",
+                      "key": {
+                        "kind": "ObjectExpressionSyntax",
+                        "members": [
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "café",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": {
+                                "literalType": "ExactNumber",
+                                "value": "9007199254740993"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "name": "Viéw"
+                    }
+                  ],
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Addéd",
+                      "for": null,
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "café",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "0.0000000000000000000000000001"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [
+                    {
+                      "kind": "SpecificationOperationSyntax",
+                      "operation": "Sénd",
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "café",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "9007199254740993"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenQueries": [
+                    {
+                      "kind": "SpecificationQuerySyntax",
+                      "arguments": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "café",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "9007199254740993"
+                            }
+                          }
+                        }
+                      ],
+                      "exactly": true,
+                      "query": "ViéwBy",
+                      "results": [
+                        {
+                          "kind": "SpecificationQueryResultSyntax",
+                          "exactly": false,
+                          "properties": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "café",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": {
+                                  "literalType": "ExactNumber",
+                                  "value": "0.0000000000000000000000000001"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "Changé",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "café",
+                        "source": {
+                          "kind": "ObjectExpressionSyntax",
+                          "members": [
+                            {
+                              "kind": "ObjectMemberSyntax",
+                              "name": "nested",
+                              "value": {
+                                "kind": "ListExpressionSyntax",
+                                "items": [
+                                  {
+                                    "kind": "LiteralExpressionSyntax",
+                                    "value": {
+                                      "literalType": "ExactNumber",
+                                      "value": "9007199254740993"
+                                    }
+                                  },
+                                  {
+                                    "kind": "LiteralExpressionSyntax",
+                                    "value": {
+                                      "literalType": "ExactNumber",
+                                      "value": "0.0000000000000000000000000001"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
                 }
               ],
               "type": "StateChange"
@@ -1261,6 +1582,24 @@
       },
       "file": null,
       "name": "Limit"
+    },
+    {
+      "kind": "PolicySyntax",
+      "code": null,
+      "condition": {
+        "kind": "ClaimConditionSyntax",
+        "claim": "café",
+        "matches": {
+          "kind": "LiteralExpressionSyntax",
+          "value": {
+            "literalType": "ExactNumber",
+            "value": "9007199254740993"
+          }
+        },
+        "matchesSubject": false
+      },
+      "file": null,
+      "name": "Café"
     }
   ],
   "seeds": [
@@ -1271,6 +1610,52 @@
           "kind": "SeedGroupSyntax",
           "eventSourceId": "global",
           "events": [
+            {
+              "kind": "SeedEventSyntax",
+              "event": "Addéd",
+              "properties": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "café",
+                  "source": {
+                    "kind": "ObjectExpressionSyntax",
+                    "members": [
+                      {
+                        "kind": "ObjectMemberSyntax",
+                        "name": "literalType",
+                        "value": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "ExactNumber"
+                        }
+                      },
+                      {
+                        "kind": "ObjectMemberSyntax",
+                        "name": "value",
+                        "value": {
+                          "kind": "ListExpressionSyntax",
+                          "items": [
+                            {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": {
+                                "literalType": "ExactNumber",
+                                "value": "9007199254740993"
+                              }
+                            },
+                            {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": {
+                                "literalType": "ExactNumber",
+                                "value": "0.0000000000000000000000000001"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
             {
               "kind": "SeedEventSyntax",
               "event": "Added",
@@ -1340,6 +1725,12 @@
   "sourceOptions": {
     "numericMode": "exact"
   },
-  "systems": [],
+  "systems": [
+    {
+      "kind": "SystemSyntax",
+      "description": null,
+      "name": "Remote"
+    }
+  ],
   "types": []
 }

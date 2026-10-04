@@ -4,11 +4,14 @@
 import { PropertyMappingSyntax } from '../Syntax/Expressions';
 import { SeedEventSyntax, SeedGroupSyntax, SeedSyntax } from '../Syntax/Seeds';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
+import { pattern } from '../Text/patterns';
 import { parseMappingSource } from './ExpressionParser';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 
 const forPattern = new RegExp(`^for\\s+"(${stringBodyPattern})"$`, 'u');
+const eventPattern = pattern('^[A-Z]\\w*$');
+const mappingPattern = pattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
 
 export function parseSeed(context: ParserContext, header: SourceLine): SeedSyntax {
     const groups: SeedGroupSyntax[] = [];
@@ -20,11 +23,11 @@ export function parseSeed(context: ParserContext, header: SourceLine): SeedSynta
         const events: SeedEventSyntax[] = [];
         for (let event = context.peekChild(group.indent); event !== undefined; event = context.peekChild(group.indent)) {
             context.reader.takeSignificant();
-            if (!/^[A-Z]\w*$/.test(event.content)) { context.skipOpaqueBlock(event.indent); continue; }
+            if (!eventPattern.test(event.content)) { context.skipOpaqueBlock(event.indent); continue; }
             const properties: PropertyMappingSyntax[] = [];
             for (let property = context.peekChild(event.indent); property !== undefined; property = context.peekChild(event.indent)) {
                 context.reader.takeSignificant();
-                const mapped = /^([\w.]+)\s*=(?!=|>)\s*(.+)$/.exec(property.content);
+                const mapped = mappingPattern.exec(property.content);
                 if (mapped !== null) properties.push({ kind: 'PropertyMappingSyntax', property: mapped[1], source: parseMappingSource(mapped[2], locationOf(property), context), location: locationOf(property) });
             }
             events.push({ kind: 'SeedEventSyntax', event: event.content, properties, location: locationOf(event) });

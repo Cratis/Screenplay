@@ -1,11 +1,16 @@
 numbers exact
+system Remote
 policy Limit
     require claim "limit" matches 9007199254740993e0
 concept Whole : Int
     validate
         min 9223372036854775808
+policy Café
+    require claim "café" matches 9007199254740993
 seed
     for "global"
+        Addéd
+            café = {"literalType":"ExactNumber","value":[9007199254740993,1e-28]}
         Added
             amount = {"literalType":"ExactNumber","value":9007199254740993,"items":[0e999999999999999999999,1e-28,"1e999999"]}
 module Numbers
@@ -111,3 +116,29 @@ module Numbers
                     amount = 9007199254740993
                 then Added
                     amount = 9007199254740993
+            command Changé
+                café Decimal
+                produces Sénd
+                    café = café
+            operation Sénd
+                uses Remote
+                café Decimal
+            reaction Réact
+                when Addéd
+                    invokes Changé
+                        @café = {"literalType":"ExactNumber","value":[9007199254740993,1e-28]}
+            specification Unicodé
+                given Addéd
+                    café = 9007199254740993
+                when Changé
+                    café = {"nested":[9007199254740993,1e-28]}
+                then Addéd
+                    café = 1e-28
+                then no readmodel Viéw for {"café":9007199254740993}
+                then query ViéwBy exactly
+                    arguments
+                        café = 9007199254740993
+                    result
+                        café = 1e-28
+                then operation Sénd
+                    café = 9007199254740993

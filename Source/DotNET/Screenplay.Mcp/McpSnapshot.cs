@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Cratis.Screenplay.Files;
+using Cratis.Screenplay.Languages;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
 
@@ -12,12 +13,18 @@ sealed class McpSnapshot : IPlayFiles
 {
     readonly ImmutableArray<WorkspaceDocument> _documents;
     readonly Dictionary<string, WorkspaceDocument> _documentsByPath;
-    readonly McpAnalysisCompiler _compiler = new();
+    readonly McpAnalysisCompiler _compiler;
     readonly Lazy<CompilationResult<ApplicationSyntax>> _compilation;
     readonly Lazy<McpSyntaxIndex> _index;
 
     internal McpSnapshot(ImmutableArray<WorkspaceDocument> documents)
+        : this(documents, ScreenplayLanguageRegistry.Default)
     {
+    }
+
+    internal McpSnapshot(ImmutableArray<WorkspaceDocument> documents, IScreenplayLanguageRegistry languages)
+    {
+        _compiler = new(languages);
         _documents = documents;
         _documentsByPath = documents.ToDictionary(document => document.Path.Value, StringComparer.Ordinal);
         SourceRevision = McpSourceRevision.For(documents);
@@ -65,7 +72,8 @@ sealed class McpSnapshot : IPlayFiles
         // require an authoritative placement, including descendants of conflicting barrels.
         var (placements, _) = PlayImports.Resolve(
             _documentsByPath.Keys,
-            new InMemoryPlayDocumentSource(_documentsByPath.ToDictionary(entry => entry.Key, entry => entry.Value.Text, StringComparer.Ordinal)));
+            new InMemoryPlayDocumentSource(_documentsByPath.ToDictionary(entry => entry.Key, entry => entry.Value.Text, StringComparer.Ordinal)),
+            _compiler.Languages);
         var resolvedPaths = placements.Where(document => document.IsPlacementResolved).Select(document => document.Path).ToHashSet(StringComparer.Ordinal);
         var physical = _compiler.Documents.Select(document =>
         {
@@ -73,7 +81,7 @@ sealed class McpSnapshot : IPlayFiles
 
             // Never parse a conflicting placement as a guessed owner. Read its literal root
             // to retain physical source candidates, independently of navigation authority.
-            var result = resolved ? document.Result : new ScreenplayCompiler().Parse(_documentsByPath[document.Path!].Text, document.Path);
+            var result = resolved ? document.Result : new ScreenplayCompiler(_compiler.Languages).Parse(_documentsByPath[document.Path!].Text, document.Path);
             return (Result: result, Resolved: resolved);
         }).ToArray();
         var complete = placements.All(document => document.IsPlacementResolved) && physical.All(document => !EventSourceReadConfidence.HasUnknownExtent(document.Result.Diagnostics));

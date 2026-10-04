@@ -22,6 +22,7 @@ const everyPattern = pattern('^every\\s+(\\d+)\\s+(seconds?|minutes?|hours?|days
 const atPattern = pattern('^at\\s+(\\d{2}:\\d{2})(?:\\s+on\\s+(?:(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)|day\\s+(\\d{1,2})))?$');
 const clauseKeywords = new Set(['when', 'every', 'at']);
 const invokesPattern = pattern('^invokes\\s+([A-Z]\\w*)$');
+const mappingPattern = pattern('^(@?[\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
 const optionalReads = pattern('^reads\\s+[A-Z]\\w*\\s+optional(?:\\s|$)');
 
 export function parseReaction(context: ParserContext, line: SourceLine): ReactionSyntax {
@@ -103,7 +104,7 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
                 const mappings: PropertyMappingSyntax[] = [];
                 for (let value = context.peekChild(child.indent); value !== undefined; value = context.peekChild(child.indent)) {
                     context.reader.takeSignificant();
-                    const mapped = /^(@?[\w.]+)\s*=(?!=|>)\s*(.+)$/.exec(value.content);
+                    const mapped = mappingPattern.exec(value.content);
                     if (mapped !== null) mappings.push({ kind: 'PropertyMappingSyntax', property: mapped[1].replaceAll('@', ''), source: parseMappingSource(mapped[2], locationOf(value), context.valueContext), location: locationOf(value) });
                     else context.skipOpaqueBlock(value.indent);
                 }

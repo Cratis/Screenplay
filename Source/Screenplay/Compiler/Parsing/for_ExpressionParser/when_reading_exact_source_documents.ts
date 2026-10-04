@@ -23,6 +23,11 @@ class Numbers extends ScreenplaySyntaxWalker {
 const model = (token: string): string => `module M\n  feature F\n    slice StateChange S\n      command C\n        produces E\n          amount = ${token}\n`;
 
 describe('when reading exact source documents', () => {
+    it('should match every restored member of the complete native Exact fixture, including Unicode names', () => {
+        const golden = readFileSync(resolve(__dirname, '../../Conformance/exact-numbers.syntax.json'), 'utf8');
+        const sourceWire = JSON.stringify(toSyntaxJson(parse(source).value));
+        JSON.stringify(toSyntaxJson(decodeExactSyntaxJson(sourceWire))).should.equal(JSON.stringify(toSyntaxJson(decodeExactSyntaxJson(golden))));
+    });
     it('should retain exact values in every shared numeric-bearing family', () => {
         const parsed = parse(source);
         parsed.diagnostics.filter(diagnostic => diagnostic.severity === 'error').should.deep.equal([]);

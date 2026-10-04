@@ -190,7 +190,7 @@ internal static partial class ScreenplayParser
                     found.AddRange(ImportsIn(ParseFeature(context, line), [], false));
                     break;
                 default:
-                    context.SkipBlock(line.Indent);
+                    SkipDiscoveryBlock(context, line.Indent);
                     break;
             }
         }
@@ -224,6 +224,23 @@ internal static partial class ScreenplayParser
         }
 
         return body.Build(line.Location);
+    }
+
+    static void SkipDiscoveryBlock(ParserContext context, int parentIndent)
+    {
+        while (context.TryPeekChild(parentIndent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            if (child.Content.StartsWith("```", StringComparison.Ordinal) &&
+                (child.Content == "```" || child.Content == "```text" || child.Content == "```markdown" || context.Languages.InlineLanguages.Contains(child.Content[3..])))
+            {
+                _ = CodeBlockParser.ParseFencedBody(context, child.Content[3..], child);
+            }
+            else if (context.Languages.InlineLanguages.Contains(child.Content))
+            {
+                _ = CodeBlockParser.Parse(context, child);
+            }
+        }
     }
 
     static IEnumerable<DiscoveredFileImport> ImportsIn(FeatureSyntax feature, IReadOnlyList<string> outer, bool startsAtModule)
