@@ -12,31 +12,32 @@ namespace Cratis.Screenplay.Mcp;
 sealed class McpEventSourceInventory
 {
     readonly ScreenplayWorkspace _workspace;
-    readonly WorkspaceSyntaxIndex _index;
     readonly Dictionary<WorkspaceNodeHandle, WorkspaceSyntaxEntry> _entries;
     readonly Dictionary<SyntaxNode, WorkspaceSyntaxEntry> _nodes;
     readonly Dictionary<string, int> _sourceCounts;
     readonly Dictionary<(string Source, string Stream), int> _streamCounts;
 
-    internal McpEventSourceInventory(ScreenplayWorkspace workspace, WorkspaceSyntaxIndex index)
+    internal McpEventSourceInventory(ScreenplayWorkspace workspace, WorkspacePhysicalReadView view)
     {
         _workspace = workspace;
-        _index = index;
-        _entries = index.Entries.ToDictionary(entry => entry.Handle);
+        View = view;
+        _entries = view.Entries.ToDictionary(entry => entry.Handle);
         var comparer = (IEqualityComparer<SyntaxNode>)ReferenceEqualityComparer.Instance;
-        _nodes = index.Entries.GroupBy(entry => entry.Node, comparer).Where(group => group.Count() == 1)
+        _nodes = view.Entries.GroupBy(entry => entry.Node, comparer).Where(group => group.Count() == 1)
             .ToDictionary(group => group.Key, group => group.Single(), comparer);
-        Entries = [.. index.Entries.Where(entry => entry.Node is EventSourceSyntax or EventStreamSyntax)];
+        Entries = [.. view.Entries.Where(entry => entry.Node is EventSourceSyntax or EventStreamSyntax)];
         _sourceCounts = Entries.Select(entry => entry.Node).OfType<EventSourceSyntax>().GroupBy(source => source.Name, StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
         _streamCounts = Entries.Where(entry => entry.Node is EventStreamSyntax).GroupBy(entry => (Source: Scope(entry).FirstOrDefault() ?? string.Empty, Stream: ((EventStreamSyntax)entry.Node).Name)).ToDictionary(group => group.Key, group => group.Count());
     }
 
     internal WorkspaceSyntaxEntry[] Entries { get; }
 
-    internal string Key(WorkspaceSyntaxEntry entry) => JsonSerializer.Serialize(new
+    internal WorkspacePhysicalReadView View { get; }
+
+    internal string? Key(WorkspaceSyntaxEntry entry) => View.HasResolvedPlacement(entry) ? JsonSerializer.Serialize(new
     {
         application = _workspace.IdentityCatalog.Application.ToString(), kind = Kind(entry), scope = Scope(entry), name = Name(entry)
-    });
+    }) : null;
 
     internal bool AmbiguousOwner(WorkspaceSyntaxEntry entry)
     {
@@ -49,7 +50,8 @@ sealed class McpEventSourceInventory
     internal object Summary(WorkspaceSyntaxEntry entry) => new
     {
         authoringKey = Key(entry), keyKind = "logical-authoring-only", kind = Kind(entry), name = Name(entry), scope = Scope(entry),
-        handle = McpAstHandles.Describe(entry.Handle), entry.Location, ownership = AmbiguousOwner(entry) ? "ambiguous" : "unique",
+        handle = McpAstHandles.Describe(entry.Handle), entry.Location, ownership = Ownership(entry),
+        placementResolved = View.HasResolvedPlacement(entry), inventoryComplete = View.IsComplete, readOnly = true,
         identifier = (entry.Node as EventSourceSyntax)?.Identifier, streamId = (entry.Node as EventStreamSyntax)?.StreamId,
         id = entry.Node is EventSourceSyntax source ? source.Id : ((EventStreamSyntax)entry.Node).Id,
         syntaxOnly = true, executionAvailable = false, executionReadiness = "Unavailable until ESM v10 (PLAY0268). Pins are rename-only authored metadata, not semantic identities."
@@ -69,7 +71,7 @@ sealed class McpEventSourceInventory
 
     internal IEnumerable<object> Routes()
     {
-        foreach (var entry in _index.Entries.Where(entry => entry.Node is CommandSyntax))
+        foreach (var entry in View.Entries.Where(entry => entry.Node is CommandSyntax))
         {
             var command = (CommandSyntax)entry.Node;
             if (command.Stream is null && !command.StreamCandidates.Any()) continue;
@@ -77,6 +79,7 @@ sealed class McpEventSourceInventory
             {
                 kind = "command-route", command = command.Name, scope = Scope(entry), handle = McpAstHandles.Describe(entry.Handle),
                 authoredRoute = command.Stream, ambiguousStreamCandidates = command.StreamCandidates,
+                placementResolved = View.HasResolvedPlacement(entry), inventoryComplete = View.IsComplete,
                 syntaxOnly = true, executionAvailable = false, executionReadiness = "Unavailable until ESM v10 (PLAY0268). Authored routing does not infer identity destinations."
             };
         }
@@ -84,6 +87,13 @@ sealed class McpEventSourceInventory
 
     static string Kind(WorkspaceSyntaxEntry entry) => entry.Node is EventSourceSyntax ? "EventSource" : "EventStream";
     static string Name(WorkspaceSyntaxEntry entry) => entry.Node is EventSourceSyntax source ? source.Name : ((EventStreamSyntax)entry.Node).Name;
+
+    string Ownership(WorkspaceSyntaxEntry entry)
+    {
+        if (AmbiguousOwner(entry)) return "ambiguous";
+
+        return View.IsComplete ? "unique" : "incomplete";
+    }
 
     string[] Scope(WorkspaceSyntaxEntry entry)
     {

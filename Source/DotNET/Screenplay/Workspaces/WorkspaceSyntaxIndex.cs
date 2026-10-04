@@ -194,6 +194,14 @@ public sealed class WorkspaceSyntaxIndex
         return entries.ToImmutable();
     }
 
+    // Read traversal does not confer edit eligibility, semantic identities or resolved placement.
+    internal static ImmutableArray<WorkspaceSyntaxEntry> PhysicalEntries(ApplicationSyntax syntax, ScreenplayWorkspace workspace, WorkspaceDocument document)
+    {
+        var entries = ImmutableArray.CreateBuilder<WorkspaceSyntaxEntry>();
+        Visit(syntax, new(workspace.Revision, document.Id, string.Empty), null, null, null, [], workspace.IdentityCatalog.Application, new Dictionary<SemanticAddress, SemanticId>(), new Dictionary<SemanticAddress, EventContractId>(), entries);
+        return entries.ToImmutable();
+    }
+
     internal SliceSyntax? OwningSlice(WorkspaceSyntaxEntry entry)
     {
         for (var current = entry; current is not null; current = current.Parent is { } parent ? Find(parent) : null)

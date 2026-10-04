@@ -11,6 +11,7 @@ sealed class McpWorkspaceAnalysis
     static readonly ConditionalWeakTable<ScreenplayWorkspace, McpWorkspaceAnalysis> _analyses = [];
     readonly Lazy<McpSnapshot> _source;
     readonly Lazy<WorkspaceSyntaxIndex> _syntax;
+    readonly Lazy<WorkspacePhysicalReadView> _physical;
     readonly Lazy<WorkspaceImplementationInventory> _handlerIntents;
     readonly Lazy<McpOperationInventory> _operationIntents;
     readonly Lazy<McpEventSourceInventory> _eventSources;
@@ -21,9 +22,10 @@ sealed class McpWorkspaceAnalysis
     {
         _source = new(() => new McpSnapshot(workspace.Documents));
         _syntax = new(() => WorkspaceSyntaxIndex.Create(workspace));
+        _physical = new(() => WorkspacePhysicalReadView.Create(workspace));
         _handlerIntents = new(() => WorkspaceImplementationInventory.Create(Syntax));
         _operationIntents = new(() => new(workspace, Syntax));
-        _eventSources = new(() => new(workspace, Syntax));
+        _eventSources = new(() => new(workspace, _physical.Value));
         _export = new(() => ScreenplayWorkspaceSerializer.Serialize(workspace));
         _childCounts = new(() => Syntax.Entries.Where(entry => entry.Parent is not null).GroupBy(entry => entry.Parent!).ToDictionary(group => group.Key, group => group.Count()));
     }

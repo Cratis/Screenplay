@@ -60,13 +60,17 @@ internal sealed partial class McpWorkspaces
             });
         }
 
-        if (new[] { "event-sources", "event-streams", "event-source-details", "event-stream-details", "command-routes" }.Contains(view, StringComparer.Ordinal))
+        if (new[] { "event-sources", "event-streams", "event-source-details", "event-stream-details", "command-routes", "event-source-diagnostics" }.Contains(view, StringComparer.Ordinal))
         {
             CheckContinuation(arguments, "expectedCatalogRevision", workspace.IdentityCatalog.Revision.ToString());
             var analysis = McpWorkspaceAnalysis.For(workspace);
             var inventory = analysis.EventSources;
             IEnumerable<object> values;
-            if (view == "command-routes")
+            if (view == "event-source-diagnostics")
+            {
+                values = inventory.View.Diagnostics.Cast<object>();
+            }
+            else if (view == "command-routes")
             {
                 values = inventory.Routes();
             }
@@ -91,6 +95,10 @@ internal sealed partial class McpWorkspaces
                             FailureKind = analysis.Syntax.UnresolvedPlacementDocuments.IsEmpty ? "UnknownDeclaration" : "UnresolvedPlacement"
                         };
                     }
+                    if (!inventory.View.IsComplete)
+                    {
+                        throw new McpFailure("IncompleteSource: source extent or placement is unresolved; repair source diagnostics before selecting a confident authoring owner.") { FailureKind = "IncompleteSource" };
+                    }
                     values = inventory.Details(matches[0]);
                 }
                 else
@@ -98,18 +106,23 @@ internal sealed partial class McpWorkspaces
                     values = entries.Select(inventory.Summary);
                 }
             }
-            values = values.Concat(analysis.Syntax.UnresolvedPlacementDocuments.Select(document => (object)new
+            if (view != "event-source-diagnostics")
             {
-                kind = "unresolved-placement", documentId = document.Id.ToString(), path = document.Path.Value,
-                executionAvailable = false, action = "Repair conflicting or cyclic imports before selecting an authoring owner."
-            }));
+                values = values.Concat(inventory.View.UnresolvedPlacementDocuments.Select(document => (object)new
+                {
+                    kind = "unresolved-placement", documentId = document.Id.ToString(), path = document.Path.Value,
+                    executionAvailable = false, action = "Repair conflicting or cyclic imports before selecting an authoring owner."
+                }));
+            }
 
             return McpJson.ToolResult(new
             {
                 workspace = McpWorkspaceTransport.Describe(workspace), view, syntaxOnly = true,
                 executionAvailable = false, executionReadiness = "Unavailable until ESM v10 (PLAY0268).",
-                authoringDiagnosticsCount = analysis.Syntax.Diagnostics.Length,
-                unresolvedPlacementCount = analysis.Syntax.UnresolvedPlacementDocuments.Length,
+                inventoryComplete = inventory.View.IsComplete,
+                authoringDiagnosticsCount = inventory.View.Diagnostics.Length,
+                authoringDiagnosticsView = "event-source-diagnostics",
+                unresolvedPlacementCount = inventory.View.UnresolvedPlacementDocuments.Length,
                 page = McpPaging.Page(values, arguments, workspace.Revision.ToString())
             });
         }
