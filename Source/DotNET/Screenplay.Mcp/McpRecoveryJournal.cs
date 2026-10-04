@@ -68,8 +68,8 @@ internal sealed partial class McpRecoveryJournal
     internal ScreenplayWorkspace Before { get; }
     internal ScreenplayWorkspace After { get; }
     internal McpDiskChange[] Changes { get; }
-    internal string StateStage => _files.PathFor($"{Record.OperationId}.stage");
-    internal string StateBackup => _files.PathFor($"{Record.OperationId}.backup");
+    internal string StateStage => OperationPath(_root, Record.OperationId, "stage");
+    internal string StateBackup => OperationPath(_root, Record.OperationId, "backup");
 
     internal static void RefusePending(McpRoot root)
     {
@@ -125,7 +125,7 @@ internal sealed partial class McpRecoveryJournal
         var journal = new McpRecoveryJournal(root, record, bytes);
         files.Verify(McpState.FileName, state.Before);
         root.Verify(proposal.Before);
-        var temporary = files.PathFor($"{record.OperationId}.journal", create: true);
+        var temporary = OperationPath(root, record.OperationId, "journal", create: true);
         McpManagedFiles.WritePrivate(temporary, bytes);
         File.Move(temporary, files.PathFor(FileName));
         journal.VerifyMarker();

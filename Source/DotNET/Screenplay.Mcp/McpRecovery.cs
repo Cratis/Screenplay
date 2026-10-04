@@ -59,7 +59,7 @@ sealed class McpRecovery(McpRoot root, McpRecoveryJournal journal)
                 throw new McpFailure($"RecoveryConflict: '{document.Path}' changed during rollback.");
             }
 
-            var temporary = RestoreStage(index);
+            var temporary = journal.RestoreStage(index);
             StageOriginal(temporary, before);
             journal.Record.Access.Single(access => access.Path == document.Path.Value).Restore(temporary);
             File.Move(temporary, root.PathFor(document.Path));
@@ -135,10 +135,10 @@ sealed class McpRecovery(McpRoot root, McpRecoveryJournal journal)
         CheckArtifact(journal.StateBackup, journal.Record.BeforeState);
         for (var index = 0; index < journal.Before.Documents.Length; index++)
         {
-            CheckArtifact(RestoreStage(index), [.. journal.Before.Documents[index].Bytes]);
+            CheckArtifact(journal.RestoreStage(index), [.. journal.Before.Documents[index].Bytes]);
         }
 
-        CheckArtifact(StateRestoreStage(), journal.Record.BeforeState);
+        CheckArtifact(journal.StateRestoreStage, journal.Record.BeforeState);
         journal.VerifyMarker();
     }
 
@@ -160,9 +160,9 @@ sealed class McpRecovery(McpRoot root, McpRecoveryJournal journal)
 
         if (journal.Record.BeforeState is not null)
         {
-            StageOriginal(StateRestoreStage(), journal.Record.BeforeState);
-            journal.Record.StateAccess!.Restore(StateRestoreStage());
-            File.Move(StateRestoreStage(), _files.PathFor(McpState.FileName));
+            StageOriginal(journal.StateRestoreStage, journal.Record.BeforeState);
+            journal.Record.StateAccess!.Restore(journal.StateRestoreStage);
+            File.Move(journal.StateRestoreStage, _files.PathFor(McpState.FileName));
         }
     }
 
@@ -170,10 +170,10 @@ sealed class McpRecovery(McpRoot root, McpRecoveryJournal journal)
     {
         for (var index = 0; index < journal.Before.Documents.Length; index++)
         {
-            McpRecoveryJournal.DeleteKnown(RestoreStage(index), [.. journal.Before.Documents[index].Bytes]);
+            McpRecoveryJournal.DeleteKnown(journal.RestoreStage(index), [.. journal.Before.Documents[index].Bytes]);
         }
 
-        McpRecoveryJournal.DeleteKnown(StateRestoreStage(), journal.Record.BeforeState);
+        McpRecoveryJournal.DeleteKnown(journal.StateRestoreStage, journal.Record.BeforeState);
     }
 
     (byte[] Before, byte[] After)? CaseOnlyAlias(string path)
@@ -193,7 +193,5 @@ sealed class McpRecovery(McpRoot root, McpRecoveryJournal journal)
         return null;
     }
 
-    string RestoreStage(int index) => _files.PathFor($"{journal.Record.OperationId}-{index}.rollback");
-    string StateRestoreStage() => _files.PathFor($"{journal.Record.OperationId}.state-rollback");
     IEnumerable<string> Paths() => journal.Before.Documents.Concat(journal.After.Documents).Select(document => document.Path.Value).Distinct(StringComparer.Ordinal);
 }

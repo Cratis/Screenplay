@@ -62,6 +62,7 @@ internal sealed partial class McpWorkspaces
             {
                 success = false,
                 status = "RecoveryRequired",
+                failureKind = "RecoveryRequired",
                 operationId,
                 conflict = exception.Message,
                 recovery = "Marker and remaining backups retained. Restore unexpected external files separately, inspect workspace-state, then explicitly retry rollback."

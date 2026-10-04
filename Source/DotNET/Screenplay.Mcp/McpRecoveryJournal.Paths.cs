@@ -8,13 +8,29 @@ namespace Cratis.Screenplay.Mcp;
 
 internal sealed partial class McpRecoveryJournal
 {
+    internal string StateRestoreStage => OperationPath(_root, Record.OperationId, "state-rollback");
+
     internal static IEnumerable<string> PlannedPaths(McpRoot root, IMcpProposal proposal, string operationId)
     {
-        foreach (var name in new[] { McpState.FileName, FileName, $"{operationId}.stage", $"{operationId}.backup", $"{operationId}.journal" })
+        foreach (var path in new[]
         {
-            var path = new McpManagedFiles(root).PathFor(name);
+            new McpManagedFiles(root).PathFor(McpState.FileName),
+            new McpManagedFiles(root).PathFor(FileName),
+            OperationPath(root, operationId, "stage"),
+            OperationPath(root, operationId, "backup"),
+            OperationPath(root, operationId, "journal"),
+            OperationPath(root, operationId, "state-rollback")
+        })
+        {
             yield return path;
             if (!Directory.Exists(Path.GetDirectoryName(path))) yield return Path.GetDirectoryName(path)!;
+        }
+
+        // Rollback visits every original, including unchanged documents (and restores their access rules).
+        for (var index = 0; index < proposal.Before.Documents.Length; index++)
+        {
+            yield return root.PathFor(proposal.Before.Documents[index].Path);
+            yield return RestorePath(root, operationId, index);
         }
 
         foreach (var entry in Differences(proposal.Before, proposal.Workspace))
@@ -38,6 +54,14 @@ internal sealed partial class McpRecoveryJournal
             }
         }
     }
+
+    internal static string OperationPath(McpRoot root, string operationId, string kind, bool create = false) =>
+        new McpManagedFiles(root).PathFor($"{operationId}.{kind}", create);
+
+    internal static string RestorePath(McpRoot root, string operationId, int index) =>
+        new McpManagedFiles(root).PathFor($"{operationId}-{index}.rollback");
+
+    internal string RestoreStage(int index) => RestorePath(_root, Record.OperationId, index);
 
     static IEnumerable<WorkspaceWriteEntry> Differences(ScreenplayWorkspace before, ScreenplayWorkspace after)
     {

@@ -103,14 +103,24 @@ public class when_pinning_repair_evidence : given.an_authoring_connection
     }
 
     [Fact]
-    void should_not_ban_an_unmodified_play_attachment()
+    void should_not_ban_a_play_attachment_outside_the_recovery_owned_source_set()
     {
-        File.WriteAllText(Path.Combine(RootPath, "Unchanged.play"), "concept Unchanged : String\n");
-        var (opened, discovery) = Discover("PLAY0478", attachment: "Unchanged.play");
+        Directory.CreateDirectory(Path.Combine(RootPath, "bin"));
+        File.WriteAllText(Path.Combine(RootPath, "bin/Unchanged.play"), "concept Unchanged : String\n");
+        var (opened, discovery) = Discover("PLAY0478", attachment: "bin/Unchanged.play");
         var proposal = Propose(opened, discovery);
         Apply(opened, proposal).GetProperty("success").GetBoolean().ShouldBeTrue();
         var actual = Result("read-workspace", new { expectedRevision = proposal.GetProperty("after").GetProperty("revision").GetString(), view = "diagnostics" });
         actual.GetProperty("repairEvidenceRevision").GetString().ShouldEqual(proposal.GetProperty("repairEvidence").GetProperty("candidateRevision").GetString());
+    }
+
+    [Fact]
+    void should_refuse_an_unchanged_source_whose_access_rules_rollback_restores()
+    {
+        File.WriteAllText(Path.Combine(RootPath, "Unchanged.play"), "concept Unchanged : String\n");
+        var (opened, discovery) = Discover("PLAY0478", attachment: "Unchanged.play");
+        Failure(Call("propose-repair", Request(opened, discovery))).ShouldEqual("RepairEvidenceWriteConflict");
+        Directory.Exists(Path.Combine(RootPath, ".screenplay")).ShouldBeFalse();
     }
 
     [Fact]

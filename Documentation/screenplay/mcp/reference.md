@@ -284,14 +284,23 @@ by a refresh.
 
 A pin also requires disjoint attachment inputs and planned writes. The server checks
 all model-selected base and candidate references, including absent or unreadable
-files, against source changes, identity state, the recovery journal and the selected
-operation's staging/backup paths. Overlap returns `RepairEvidenceWriteConflict`
+files, against source and parent-directory writes, identity state, the recovery
+journal and the server-selected operation's staging, backup and rollback paths.
+Rollback paths include every original document index, even unchanged documents;
+the original sources also belong to recovery because rollback restores their
+access settings. Overlap returns `RepairEvidenceWriteConflict`
 before any accepted preview is retained. Existing hard links and filesystem-resolved
 case aliases count as overlap; uncertain missing-path aliases fail closed with the
-same kind. This is not a ban on `.play` attachments: an unchanged, unrelated source
-file remains eligible. No attachment, implementation lock or directory is written
-to establish disjointness. Capabilities advertise `evidence.plannedWriteOverlap`
-and `evidence.plannedWriteOverlapFailureKind` for this opt-in refusal.
+same kind. On Windows, plausible DOS 8.3 tilde aliases also fail closed when a
+planned long-file creation or replacement, or parent-directory creation, could
+generate the missing name and filesystem metadata cannot prove separation. This
+can conservatively refuse a name that the volume would not actually generate; unrelated missing
+names remain eligible. The server does not impose Windows short-name rules on
+Unix filesystems. This is not a ban on `.play` attachments: a file outside the
+recovery-owned source set remains eligible if otherwise disjoint. No attachment,
+implementation lock or directory is written to establish disjointness.
+Capabilities advertise `evidence.plannedWriteOverlap` and
+`evidence.plannedWriteOverlapFailureKind` for this opt-in refusal.
 
 All proposal-backed previews recheck both snapshots under the approved root, as
 does the final pre-install check after staging, including write-overlap admission.
@@ -311,8 +320,10 @@ conflicts and recovery fields where already present. JSON-RPC errors preserve
 `RepairEvidenceDrift`, `RepairEvidenceWriteConflict` and `LimitExceeded`. `ProposalRejected` retains its detailed
 conflicts; `PendingOperation` requires workspace-state inspection. Apply failures
 report `ApplyRolledBack`, a specific refusal kind, or `RecoveryRequired` as
-appropriate. `RequestFailed` and an unfamiliar kind must not be interpreted as
-proof that an apply made no changes. Never parse message prefixes.
+appropriate. A failed explicit `recover-workspace` also returns
+`failureKind: "RecoveryRequired"` with its existing status, conflict and retained
+recovery instructions. `RequestFailed` and an unfamiliar kind must not be
+interpreted as proof that an apply made no changes. Never parse message prefixes.
 
 Cancellation notifications are ignored (`cancellation.supported: false`). EOF,
 process failure or `ApplyOutcomeUnknown` after dispatch leaves the outcome unknown;

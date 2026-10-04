@@ -90,9 +90,10 @@ or after image; unexpected third-party content is never overwritten. It restores
 and verifies original source bytes, identity state and preserved access settings.
 The marker is removed only after verification and safe cleanup.
 
-On conflict or uncertainty, the result remains `RecoveryRequired`; the marker
-and remaining backups stay in place. Preserve them. Move or restore competing
-external edits deliberately before requesting recovery again. Do not delete the
+On conflict or uncertainty, the result remains `RecoveryRequired` and adds
+`failureKind: "RecoveryRequired"`; the marker and remaining backups stay in place.
+Preserve them. Move or restore competing external edits deliberately before
+requesting recovery again. Do not delete the
 marker merely to unblock the server.
 
 ## Boundaries

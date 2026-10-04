@@ -79,6 +79,19 @@
         "candidateRevision": { "$ref": "#/$defs/repairEvidenceRevision" }
       }
     },
+    "recoveryFailure": {
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/failure" }],
+      "required": ["success", "status", "failureKind", "operationId", "conflict", "recovery"],
+      "properties": {
+        "success": { "const": false },
+        "status": { "const": "RecoveryRequired" },
+        "failureKind": { "const": "RecoveryRequired" },
+        "operationId": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
+        "conflict": { "type": "string" },
+        "recovery": { "type": "string" }
+      }
+    },
     "failure": {
       "type": "object",
       "required": ["failureKind"],
