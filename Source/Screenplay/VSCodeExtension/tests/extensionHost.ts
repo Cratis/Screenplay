@@ -7,19 +7,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { RepairSession } from '../RepairSession';
 import { RepairPreviewProvider } from '../RepairPreviewProvider';
-import { checkRepairEnvironment, userRepairConfiguration } from '../RepairCodeActions';
+import { checkRepairEnvironment, userRepairConfiguration, repairBuffersSynchronized } from '../RepairCodeActions';
 import { runCommandGuards } from './extensionHostGuards';
 import { NativeTestController } from './nativeTestController';
 
-async function eventuallyDocument(document: vscode.TextDocument, expected: string): Promise<void> {
-    if (document.getText() === expected) return;
-    await new Promise<void>((resolve, reject) => {
-        const timer = setTimeout(() => { listener.dispose(); reject(new Error(`Native VS Code did not reload the externally changed source within 5 seconds: ${JSON.stringify({ uri: document.uri.toString(), dirty: document.isDirty, visible: vscode.window.visibleTextEditors.some(editor => editor.document === document), actual: document.getText(), expected })}`)); }, 5_000);
-        const listener = vscode.workspace.onDidChangeTextDocument(() => {
-            if (document.getText() === expected) { clearTimeout(timer); listener.dispose(); resolve(); }
-        });
-    });
-}
+import { observeSavedReload, userCloseAndReopen } from './nativeSavedBuffer';
 
 // Runs inside the REAL extension host: no vscode alias and no transport mock.
 // This first suite drives the transaction directly; the second exercises actual
@@ -93,8 +85,12 @@ async function runSuites(): Promise<void> {
         const reviewed = await session.preview(refreshed.choices.find(choice => choice.code === 'PLAY0478')!.token);
         await session.apply(reviewed.token);
         for (const file of reviewed.files) assert.deepEqual(fs.readFileSync(path.join(direct, file.path)), file.after);
-        await eventuallyDocument(document, reviewed.files[0].after!.toString('utf8').replace(/^\uFEFF/, ''));
-        assert.equal(document.isDirty, false, 'External install reloaded a saved native buffer');
+        const expected = reviewed.files.find(file => file.path === 'application.play')!.after!.toString('utf8').replace(/^\uFEFF/, '');
+        const synchronized = await observeSavedReload(document, expected);
+        assert.equal(repairBuffersSynchronized(direct, reviewed), synchronized, 'Direct RPC helper truthfully classifies the actual saved-buffer state');
+        assert.equal(document.isDirty, false, 'Direct transaction never edits or saves the clean buffer');
+        if (!synchronized) await userCloseAndReopen(document, expected);
+        assert.equal(repairBuffersSynchronized(direct, reviewed), true, 'Controlled user fresh read establishes actual synchronization');
         assert.equal((await session.inspectState()).exists, true);
         provider.clear();
     } finally { session.dispose(); registration.dispose(); provider.dispose(); }
@@ -107,7 +103,7 @@ async function runSuites(): Promise<void> {
     const refused = await vscode.workspace.openTextDocument(vscode.Uri.file(path.join(refusedRoot, 'application.play')));
     const actions = await vscode.commands.executeCommand<(vscode.CodeAction | vscode.Command)[]>('vscode.executeCodeActionProvider', refused.uri, new vscode.Range(0, 0, refused.lineCount - 1, 0));
     assert.ok(!actions.some(action => action.title.includes('Declare the missing produced event')), 'Native provider retains the C# PLAY0166 refusal');
-    console.log('REAL VS CODE HOST: read-only source/state diffs, explicit transaction, dirty attachment refusal, external saved-buffer reload, root reauthorization and PLAY0166 refusal passed.');
+    console.log('REAL VS CODE HOST: read-only source/state diffs, direct RPC transaction (NOT installed-client Apply), dirty attachment refusal, bounded saved-buffer reload/pending classification with explicit user close/reopen, root reauthorization and PLAY0166 refusal passed.');
     try { await runCommandGuards(root, controller); } finally { controller.dispose(); }
 }
 

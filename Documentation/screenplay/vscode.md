@@ -228,7 +228,12 @@ notifications and before granting new authority. Missing, replaced, linked or
 unprovable roots, reported watcher errors (including overflow) and unexpected
 closure latch `WatchInvalidated` and require deliberate reconnect through
 **Screenplay: Discover Saved-File C# Repairs**. An unavailable or zero native file
-identity is refused, never replaced with a lexical-path comparison.
+identity is refused, never replaced with a lexical-path comparison. On Windows,
+zero volume identity is also refused: libuv can report zero when native volume
+information is unavailable, indistinguishable from a genuine zero serial. These
+filesystems have limited support (`WatchUnavailable`), not working editor repairs;
+use a supported host/filesystem exposing provable native identity. Unix device zero
+is not this Windows sentinel and is not refused merely for being zero.
 
 These bounded root checks do not scan content. Watching never writes readiness
 probes, ignores filenames or suppresses self-writes, and does not prove that all
@@ -255,10 +260,14 @@ cannot be inspected as though it were an uncertain transaction's original root.
 
 Apply writes outside the editor and is **not normal editor Undo**. Use an exclusive
 writer while applying. Journaled rollback does not guarantee crash-atomic visibility
-across files. The extension awaits ordinary saved-buffer reloads; if you type after
-Apply dispatch, it preserves your buffer and asks you to reconcile it with disk.
-Further repairs stay blocked until affected buffers are synchronized, reconciled
-or closed. It never force-reverts or replays source edits.
+across files. After verified installation, the extension observes ordinary
+saved-buffer reloads for five seconds. If an editor still shows old content, or you
+type after dispatch, it reports **Disk repair installed; editor synchronization
+pending**. That is a successful disk installation with pending editor reconciliation,
+not an Apply failure. Dirty buffers are preserved. Further proposals, including
+explicit reconnects, stay blocked until affected buffers actually match the reviewed
+content or you close them yourself. For a clean stale buffer, close and reopen its
+tab to read the installed content. Nothing is autosaved, force-reverted or replayed.
 
 Cancellation discards queued reads or drains an in-flight read within its deadline.
 Once Apply is dispatched, a timeout, disconnect or unrecognized failure means the
@@ -306,13 +315,21 @@ and installed-VSIX host gate against self-contained servers on Linux, Windows
 and macOS. It explicitly provisions pinned native VS Code with the existing
 `@vscode/test-electron` dependency; Linux runs `xvfb-run --auto-servernum yarn
 workspace screenplay test:host`. A failing or unavailable safety case fails the
-lane, rather than silently skipping it.
+lane, rather than silently skipping it. When Windows exposes ambiguous zero-volume
+identity, the lane instead requires actual installed-client `WatchUnavailable`
+refusal with no server discovery or Apply; it does not claim working repair support.
 
 Host tests switch and scroll actual source and identity diffs before invoking the
 contributed Apply command. They cover notification dismissal, explicit discard,
 associated untitled source/attachment/state refusal before discovery and after
-review, exact-byte installation, saved-buffer reload and controlled post-dispatch
-dirty-buffer preservation. Dialog replies and the timing of the real subprocess
+review, exact-byte installation, truthful bounded saved-buffer synchronization or
+pending warnings, blocked proposals while pending, explicit user-level clean-tab
+close/reopen and controlled post-dispatch dirty-buffer preservation. The direct RPC
+suite covers server transaction behavior; installed command tests separately require
+the real client reconciliation UI and authority barriers. Backend reload lag alone
+is not a failed installation, but neither is it silently counted as synchronization.
+Native shutdown logs must contain no disposed-resource exception after a real
+read-only inspection is left pending. Dialog replies and the timing of the real subprocess
 reply are controlled. Human keyboard/mouse modal interaction and uncontrolled
 keyboard race timing are **not** exercised by these tests; do not describe them
 as manual native coverage. The harness records `process.versions` inside the

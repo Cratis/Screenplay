@@ -50,6 +50,7 @@ if (vsix) {
     fs.mkdirSync(development);
     fs.writeFileSync(path.join(development, 'package.json'), JSON.stringify({ name: 'screenplay-repair-test-driver', publisher: 'cratis-tests', version: '0.0.0', engines: { vscode: '^1.85.0' } }));
 }
+let shutdownFailure;
 try { await runTests({
     vscodeExecutablePath: executable,
     extensionDevelopmentPath: development, extensionTestsPath: path.resolve('out/tests/extensionHost.cjs'),
@@ -57,6 +58,22 @@ try { await runTests({
     extensionTestsEnv: { SCREENPLAY_REPAIR_SERVER: server, SCREENPLAY_REPAIR_HOST_ROOT: model, SCREENPLAY_REPAIR_INSTALLED_EXTENSIONS: vsix ? extensions : '' },
 }); } finally {
     const logs = path.join(userData, 'logs');
-    if (fs.existsSync(logs)) fs.cpSync(logs, path.join(evidence, 'logs'), { recursive: true });
+    if (fs.existsSync(logs)) {
+        fs.cpSync(logs, path.join(evidence, 'logs'), { recursive: true });
+        const shutdownLogs = [];
+        const inspectLogs = directory => {
+            for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+                const file = path.join(directory, entry.name);
+                if (entry.isDirectory()) inspectLogs(file);
+                else if (entry.name === 'exthost.log') shutdownLogs.push(fs.readFileSync(file, 'utf8'));
+            }
+        };
+        inspectLogs(logs);
+        if (shutdownLogs.some(log => log.includes('illegal state - object is disposed'))) {
+            shutdownFailure = `Native extension teardown touched disposed resources; inspect ${evidence}`;
+            console.error(shutdownFailure);
+        } else console.log(`NATIVE TEARDOWN LOG CHECK: no disposed-resource exception in ${shutdownLogs.length} extension-host logs; ${evidence}`);
+    }
     // Keep synthetic paths for diagnosis; no blanket cleanup of unregistered outputs.
 }
+if (shutdownFailure) throw new Error(shutdownFailure);

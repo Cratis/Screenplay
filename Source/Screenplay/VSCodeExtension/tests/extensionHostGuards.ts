@@ -11,6 +11,7 @@ import { createRequire } from 'node:module';
 import { userRepairConfiguration } from '../RepairCodeActions';
 import { repairSource } from './repairFixture';
 import { NativeTestController } from './nativeTestController';
+import { userCloseAndReopen } from './nativeSavedBuffer';
 
 // Guard integration, NOT UI automation: only the dialog responses and the timing
 // of a real subprocess reply are controlled. Real registered commands, native
@@ -24,7 +25,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
     let onDispatched: (() => Promise<void>) | undefined;
     let race: Promise<void> | undefined;
     const rpc: { root: string; name: string; at: number }[] = [];
-    let discoveryGate: { entered(): void; release: Promise<void> } | undefined;
+    let discoveryGate: { name?: string; entered(): void; release: Promise<void> } | undefined;
     // VS Code gives an installed extension its own API object. Control only its
     // modal replies, not a different API belonging to the development test driver.
     const productionApi = createRequire(path.join(vscode.extensions.getExtension('cratis.screenplay')!.extensionPath, 'package.json'))('vscode') as typeof vscode;
@@ -108,7 +109,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
             if (frame.method === 'tools/call' && frame.params?.name) {
                 rpc.push({ root: String(args[2]?.cwd), name: frame.params.name, at: Date.now() });
                 console.log(`PRODUCT RPC: ${JSON.stringify(rpc.at(-1))}`);
-                if (frame.params.name === 'open-workspace' && discoveryGate) {
+                if (discoveryGate && frame.params.name === (discoveryGate.name ?? 'open-workspace')) {
                     const gate = discoveryGate; discoveryGate = undefined;
                     output.pause(); gate.entered();
                     void gate.release.then(() => output.resume());
@@ -159,6 +160,15 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         assert.equal(configuration.inspect<string>('executable')?.workspaceValue, undefined);
         assert.equal(userRepairConfiguration().executable, approvedExecutable);
         console.log(`NATIVE SETTINGS: ${JSON.stringify({ workspaceUpdateRefused, workspaceOverrideVisible: workspaceOverride !== undefined, approvedUserExecutableUnchanged: true })}`);
+        if (process.platform === 'win32' && fs.statSync(model, { bigint: true }).dev === 0n) {
+            await vscode.commands.executeCommand('screenplay.repair.refresh');
+            assert.ok(warnings.some(message => /WatchUnavailable/.test(message)), 'Actual installed client refuses ambiguous zero-volume identity');
+            assert.equal(productWatches.length, 0, 'No unprovable root watcher is registered');
+            assert.equal(rpc.length, 0, 'Refusal precedes server discovery and proposal authority');
+            assert.equal(dispatched, 0);
+            console.log('NATIVE WINDOWS LIMITED SUPPORT: actual installed WatchUnavailable refusal for zero-volume identity passed; working editor repair support is NOT claimed on this filesystem.');
+            return;
+        }
         let document = await vscode.workspace.openTextDocument(vscode.Uri.file(source));
         // Native model creation may itself invalidate an existing review; load
         // the saved attachment BEFORE discovery so this case reaches consent.
@@ -387,17 +397,56 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         await preview();
         assert.equal(dispatched, 1, 'Exactly one real C# apply frame follows explicit consent');
         for (const [file, bytes] of expected) assert.deepEqual(fs.readFileSync(path.join(model, file)), bytes);
-        assert.equal(document.getText(), expected.get('application.play')!.toString('utf8'), 'Production reload reconciles a native saved source buffer');
+        const installedText = expected.get('application.play')!.toString('utf8');
         assert.equal(document.isDirty, false);
-        assert.equal(warnings.length, 0, `Verified installation was not mislabeled as an Apply failure: ${warnings.join('; ')}`);
+        const pending = document.getText() !== installedText;
+        assert.ok(!warnings.some(message => /RepairFailed|ApplyOutcomeUnknown|ApplyFailed/.test(message)), `Verified installation is not an Apply failure: ${warnings.join('; ')}`);
+        assert.equal(warnings.some(message => message.startsWith('Disk repair installed; editor synchronization pending.')), pending, 'Actual installed-client UI reports the bounded saved-buffer state truthfully');
+        if (pending) {
+            const reads = rpc.length;
+            await vscode.commands.executeCommand('screenplay.repair.refresh');
+            assert.ok(warnings.some(message => message.startsWith('ReconciliationRequired')), 'Explicit refresh cannot bypass pending reconciliation');
+            assert.equal(rpc.slice(reads).filter(frame => ['open-workspace', 'propose-repair', 'apply'].includes(frame.name)).length, 0);
+        }
 
         const afterInstall = rpc.length;
         const blocked = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', document.uri, new vscode.Range(0, 0, document.lineCount - 1, 0));
         assert.deepEqual(blocked, [], 'Dispatched Apply requires deliberate reconnect before any new proposals');
         assert.equal(rpc.slice(afterInstall).filter(frame => ['open-workspace', 'propose-repair'].includes(frame.name)).length, 0);
         live(sameWatch);
+        if (pending) document = await userCloseAndReopen(document, installedText);
+        assert.equal(document.getText(), installedText, 'Clean saved buffer is actually synchronized before renewed authority');
+        warnings.length = 0;
+        await vscode.commands.executeCommand('screenplay.repair.refresh');
+        assert.ok(!warnings.some(message => /ReconciliationRequired/.test(message)), 'User fresh read permits deliberate reconnect');
+        assert.ok(rpc.slice(afterInstall).some(frame => frame.name === 'open-workspace'), 'Renewed readiness is an actual server-validated read');
+        console.log(`INSTALLED CLIENT SAVED RECONCILIATION: ${JSON.stringify({ pendingAtBound: pending, userFreshRead: pending, exactDiskSourceAndState: true })}`);
 
-        // New root, no hand-written identity state or reuse of old authority.
+        model = path.join(root, 'root-replacement');
+        fixtureReady(model);
+        await configuration.update('modelRoot', model, vscode.ConfigurationTarget.Global);
+        document = await vscode.workspace.openTextDocument(vscode.Uri.file(path.join(model, 'application.play')));
+        const oldAction = await command();
+        const oldWatch = productWatch(model);
+        const beforeReplace = rpc.length, writes = dispatched;
+        fs.renameSync(model, model + '-retired');
+        fs.renameSync(path.join(root, 'root-replacement-next'), model);
+        assert.notEqual(fs.statSync(model, { bigint: true }).ino, oldWatch.identity.ino, 'ACTUAL approved physical root inode was replaced');
+        warnings.length = 0;
+        await vscode.commands.executeCommand(oldAction.command, ...(oldAction.arguments ?? []));
+        assert.ok(warnings.some(message => /WatchInvalidated/.test(message)), 'Physical replacement latches typed reconnect-required refusal');
+        const oldRootActions = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', document.uri, new vscode.Range(0, 0, document.lineCount - 1, 0));
+        assert.deepEqual(oldRootActions, []);
+        assert.equal(dispatched, writes);
+        assert.equal(rpc.slice(beforeReplace).filter(frame => ['open-workspace', 'propose-repair', 'apply'].includes(frame.name)).length, 0, 'Replacement cannot reuse any old root authority');
+        await vscode.commands.executeCommand('screenplay.repair.refresh');
+        const replacementActions = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', document.uri, new vscode.Range(0, 0, document.lineCount - 1, 0));
+        assert.ok(replacementActions.some(action => action.title.startsWith('Change routing:')), 'Only deliberate reconnect can authorize the actual replacement root');
+        assert.equal(productWatches.filter(watch => watch.root === model).length, 2);
+        assert.notEqual(productWatch(model).watcher, oldWatch.watcher);
+
+        // Run the unreconciled dirty case LAST: its global pending barrier must
+        // not be bypassed by switching to a new root for another proposal.
         const raceRoot = path.join(root, 'post-dispatch');
         const raceSource = path.join(raceRoot, 'application.play');
         fixtureReady(raceRoot);
@@ -426,34 +475,23 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         assert.ok(postDispatchUntitled?.getText().startsWith('// preserve associated identity buffer'));
         assert.equal(raceDocument.isDirty, true, 'Post-dispatch editor changes were not reverted or autosaved');
         assert.ok(raceDocument.getText().startsWith('// native post-dispatch edit\n'));
-        assert.ok(warnings.some(message => message.startsWith('Disk repair applied, but an open buffer is dirty')));
+        assert.ok(warnings.some(message => message.startsWith('Disk repair installed; editor synchronization pending.')));
         onDispatched = undefined;
         warnings.length = 0;
         const refused = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', raceDocument.uri, new vscode.Range(0, 0, 0, 0));
         assert.deepEqual(refused, [], 'Dirty reconciliation cannot silently issue fresh authority');
-        assert.equal(dispatched, 2, 'Unknown/dirty outcome is never retried');
-        model = path.join(root, 'root-replacement');
-        fixtureReady(model);
-        await configuration.update('modelRoot', model, vscode.ConfigurationTarget.Global);
-        document = await vscode.workspace.openTextDocument(vscode.Uri.file(path.join(model, 'application.play')));
-        const oldAction = await command();
-        const oldWatch = productWatch(model);
-        const beforeReplace = rpc.length, writes = dispatched;
-        fs.renameSync(model, model + '-retired');
-        fs.renameSync(path.join(root, 'root-replacement-next'), model);
-        assert.notEqual(fs.statSync(model, { bigint: true }).ino, oldWatch.identity.ino, 'ACTUAL approved physical root inode was replaced');
-        warnings.length = 0;
-        await vscode.commands.executeCommand(oldAction.command, ...(oldAction.arguments ?? []));
-        assert.ok(warnings.some(message => /WatchInvalidated/.test(message)), 'Physical replacement latches typed reconnect-required refusal');
-        const oldRootActions = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', document.uri, new vscode.Range(0, 0, document.lineCount - 1, 0));
-        assert.deepEqual(oldRootActions, []);
-        assert.equal(dispatched, writes);
-        assert.equal(rpc.slice(beforeReplace).filter(frame => ['open-workspace', 'propose-repair', 'apply'].includes(frame.name)).length, 0, 'Replacement cannot reuse any old root authority');
-        await vscode.commands.executeCommand('screenplay.repair.refresh');
-        const replacementActions = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', document.uri, new vscode.Range(0, 0, document.lineCount - 1, 0));
-        assert.ok(replacementActions.some(action => action.title.startsWith('Change routing:')), 'Only deliberate reconnect can authorize the actual replacement root');
-        assert.equal(productWatches.filter(watch => watch.root === model).length, 2);
-        assert.notEqual(productWatch(model).watcher, oldWatch.watcher);
+        assert.equal(dispatched, 2, 'Verified installed/dirty outcome is never retried');
+        let teardownEntered!: () => void;
+        const teardownSent = new Promise<void>((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error('Native teardown inspection RPC did not dispatch within 5 seconds.')), 5_000);
+            teardownEntered = () => { clearTimeout(timer); resolve(); };
+        });
+        discoveryGate = { name: 'workspace-state', entered: teardownEntered, release: new Promise<void>(() => {}) };
+        // The native host will dispose the ACTUAL installed extension with this
+        // real read-only response pending. Launcher checks retained shutdown logs.
+        void vscode.commands.executeCommand('screenplay.repair.inspectState');
+        await teardownSent;
+        console.log('NATIVE TEARDOWN PENDING: actual installed read-only inspection RPC held for host shutdown.');
         console.log('NATIVE GUARD INTEGRATION: actual attributable nested-preexisting modification, old token refusal, same-physical-root fresh discovery, controlled overlapping actual provider/manual discovery, healthy nested create/delete, actual physical-root replacement refusal, persistent native before/after source/state diff navigation and exact installation passed. Associated untitled/all-existing-buffer refusal preservation, dispatched reconnect barrier and controlled post-dispatch typing passed. Actual native callbacks and RPC operations were observed, never synthesized. Final modal responses were separately controlled; human keyboard/mouse interaction remains UNVERIFIED.');
     } finally {
         nativeFs.watch = originalWatch;
