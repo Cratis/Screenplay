@@ -33,7 +33,7 @@ module Projects
           projectId = projectId
 ````
 
-The [complete source fixture](fixtures/operations.play) includes inline and standalone declarations, composite input sources, optional collections, failure and compensation specifications, and a cross-slice reference. It is intentionally outside executable `Samples/`: those samples remain runnable until v9 admission. This is the syntax-only exception to the samples policy, not an executable integration example.
+The [complete source fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/operations.play) includes inline and standalone declarations, composite input sources, optional collections, failure and compensation specifications, and a cross-slice reference. It is intentionally outside executable `Samples/`: those samples remain runnable until v9 admission. This is the syntax-only exception to the samples policy, not an executable integration example.
 
 ## Declare inline or reference a declaration
 

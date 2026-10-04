@@ -6,7 +6,7 @@
 
 For a command producing declared [operations](operations.md), `given operation NotifyAccounting fails` requests a failure fixture, `then operation SendWelcomeEmail` asserts a requested operation with optional **partial** input values, and `then compensated SendWelcomeEmail` asserts declared compensation. Failure and compensation lines are leaves: they cannot have children. Requested-operation fields must be unique and have compatible concrete values, including quoted enum values. All references must resolve to the operation kind, not an event with the same spelling, and require a command action. Static checks do not prove reachability, rollback success or repeated-invocation matching.
 
-The [complete source fixture](fixtures/operations.play) shows success and compensation intent with their declarations and command inputs. These assertions express desired future behavior, not passing execution today.
+The [complete source fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/operations.play) shows success and compensation intent with their declarations and command inputs. These assertions express desired future behavior, not passing execution today.
 
 
 Specifications express Given/When/Then scenarios against a slice's behavior, or read-only Given/Then scenarios against established state — executable documentation for the behavior a slice implements. A `specification` block lives inside a `slice`, alongside its `command`, `event`, `projection` and other constructs, and is compiled by the Screenplay compiler like every other sub-language.
@@ -337,7 +337,7 @@ Tags are append metadata: `then` event assertions compare payload properties and
 
 ## Generated fixtures and return expectations (syntax-only)
 
-These additions describe [generated values and responses](commands.md#generated-values-and-responses-syntax-only); **they do not execute**. Binding reports `PLAY0268` with no semantic model until ESM v8. See the [complete authoring fixture](fixtures/generated-responses.play).
+These additions describe [generated values and responses](commands.md#generated-values-and-responses-syntax-only); **they do not execute**. Binding reports `PLAY0268` with no semantic model until ESM v8. See the [complete authoring fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/generated-responses.play).
 
 ```screenplay
 specification RegisteringReturnsIdentifiers
