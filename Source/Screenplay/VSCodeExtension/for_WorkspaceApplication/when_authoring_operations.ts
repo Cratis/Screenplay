@@ -7,6 +7,7 @@ import { destinationHints, hoverContent, operationCompletions, responseTokens, s
 import { WorkspaceApplication } from '../WorkspaceApplication';
 
 const grammar = JSON.parse(readFileSync(new URL('../syntaxes/screenplay.tmLanguage.json', import.meta.url), 'utf8'));
+const vectors = JSON.parse(readFileSync(new URL('../../Monaco/screenplay-language/for_operations/conditional-mapping-vectors.json', import.meta.url), 'utf8'));
 
 describe('when authoring operations across workspace files', () => {
     it('should use placed typed declarations for unsaved sources and suppress operation destination hints', () => {
@@ -25,6 +26,23 @@ describe('when authoring operations across workspace files', () => {
         application.set('intent.slice.play', 'system Mailer\nslice StateChange Shared\n  operation Deliver\n    uses Mailer');
         expect(application.diagnosticsFor('current.slice.play').map(diagnostic => diagnostic.code)).toContain('PLAY0497');
         expect(destinationHints(source.split('\n'), application.symbolsExcept('current.slice.play'))).toEqual([]);
+    });
+    it('should complete conditional mappings from unsaved placed typed sources using the shared editor vectors', () => {
+        for (const target of vectors.targets as string[]) for (const conditional of [false, true]) for (const mapping of vectors.mappings as { text: string; labels: string[] }[]) {
+            const application = new WorkspaceApplication();
+            application.set('application.play', 'module M\n  feature F\n    import "*.slice.play"');
+            application.set('intent.slice.play', vectors.intent.replace('TARGET', target.split('.').at(-1)));
+            application.set('current.slice.play', 'slice StateChange Here\n  command C\n    stale String');
+            const header = conditional ? `    produces when text == "yes"\n      ${target} // target` : `    produces ${target} // target`;
+            const before = `${conditional ? '        ' : '      '}${mapping.text}`;
+            const lines = `${vectors.command}${header}\n// comment does not end ownership\n${before}`.split('\n');
+            // The live buffer replaces the on-disk workspace document without a save.
+            const symbols = { ...scanDocument(lines), ...application.symbolsExcept('current.slice.play') };
+            const entries = operationCompletions(lines, lines.length - 1, before, symbols);
+            expect(entries?.map(entry => entry.label)).toEqual(mapping.labels);
+            expect(entries?.some(entry => entry.documentation?.includes('ESM v9 (PLAY0268)'))).toBe(true);
+            expect(destinationHints(lines, symbols)).toEqual([]);
+        }
     });
     it('should surface command-only diagnostics for placed and isolated reactions without event repair advice', () => {
         const application = new WorkspaceApplication();

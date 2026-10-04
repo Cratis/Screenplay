@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { parse, AuthoringProductionResolver } from '@cratis/screenplay-compiler';
 import { responseAnalysis } from '../response-analysis';
@@ -9,6 +10,7 @@ import { operationCompletions, operationHover, operationReferenceAt } from '../o
 import { scanDocument } from '../symbols';
 
 const fragment = ['system Mailer', 'operation Send', '  uses Mailer'];
+const vectors = JSON.parse(readFileSync(new URL('./conditional-mapping-vectors.json', import.meta.url), 'utf8'));
 
 describe('when preserving operation source spans', () => {
     it('should remap standalone location members and emit only valid token ranges', () => {
@@ -44,6 +46,22 @@ describe('when preserving operation source spans', () => {
             expect(operationCompletions(lines, 8, '    recipient = te', symbols)?.map(entry => entry.label)).toEqual(['text']);
             expect(operationHover(lines, 8, 17, 21, symbols)).toContain('Command source');
             expect(responseAnalysis(lines).operations.references[0].mappings[0].source.location).toEqual({ path: 'current.play', line: 9, column: 17 });
+        }
+    });
+    it('should use typed conditional ownership for recipients and nested optional source paths', () => {
+        for (const target of vectors.targets as string[]) for (const conditional of [false, true]) for (const mapping of vectors.mappings as { text: string; labels: string[] }[]) {
+            const intent = { path: 'intent.slice.play', source: vectors.intent.replace('TARGET', target.split('.').at(-1)), placement: ['M', 'F'] };
+            const header = conditional ? `    produces when text == "yes"\n      ${target} // target` : `    produces ${target} // target`;
+            const before = `${conditional ? '        ' : '      '}${mapping.text}`;
+            const lines = `${vectors.command}${header}\n// comment does not end ownership\n${before}`.split('\n');
+            const symbols = { ...scanDocument(lines), authoringDocuments: [intent], authoringPath: 'current.slice.play', authoringPlacement: ['M', 'F'] };
+            const entries = operationCompletions(lines, lines.length - 1, before, symbols);
+            expect(entries?.map(entry => entry.label), `${target}: ${conditional}: ${mapping.text}`).toEqual(mapping.labels);
+            expect(entries?.some(entry => entry.documentation?.includes('ESM v9 (PLAY0268)'))).toBe(true);
+            expect(entries?.some(entry => entry.documentation?.includes('event'))).toBe(false);
+            const reference = responseAnalysis(lines, [intent], ['M', 'F'], 'current.slice.play').operations.references[0];
+            expect(reference.declaration?.location.path).toBe('intent.slice.play');
+            expect(reference.targetLocation?.line).toBe(conditional ? 6 : 5);
         }
     });
     it('should bind conditional, qualified and inline targets only at their parser-owned spans', () => {

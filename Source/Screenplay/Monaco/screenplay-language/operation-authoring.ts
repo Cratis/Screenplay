@@ -54,7 +54,9 @@ export function operationCompletions(lines: string[], line: number, before: stri
     if (chain[0] === 'implementation' && ['execute', 'compensate'].includes(chain[1])) return operationImplementationItems;
     if (['execute', 'compensate'].includes(chain[0]) && operation) return operationPhaseItems;
     const mappedOperation = operation ?? context?.production?.declaration;
-    if (mappedOperation && (chain[0] === 'operation' || chain[0] === 'produces')) {
+    // Source-local typed ownership covers conditional target lines and nested mappings,
+    // even when the target itself spells a keyword. Ancestor text does not own mappings.
+    if (mappedOperation) {
         const rhs = before.match(/=\s*([\w.]*)$/);
         if (rhs && context?.commandLine !== undefined) {
             const command = analysis.commands.get(context.commandLine);
