@@ -52,6 +52,9 @@ sealed class McpOperationInventory
         executionReadiness = "Unavailable until ESM v9 (PLAY0268). Authoring intent is not an executable implementation role."
     };
 
+    internal bool AmbiguousOwner(WorkspaceSyntaxEntry entry) => entry.Node is OperationSyntax operation &&
+        McpWorkspaceAnalysis.For(_workspace).Source.Index.ResolveProduction(string.Join('.', Scope(entry).Append(operation.Name)), Scope(entry)).Resolution == "ambiguous";
+
     internal IEnumerable<object> Details(WorkspaceSyntaxEntry entry)
     {
         yield return new { kind = "declaration", declaration = Summary(entry), description = entry.Node is SystemSyntax system ? system.Description : ((OperationSyntax)entry.Node).Description };
@@ -83,15 +86,16 @@ sealed class McpOperationInventory
             var owners = commands[(command.Name, string.Join('\0', scope))].Take(2).ToArray();
             foreach (var (production, order) in command.Produces.Select((production, order) => (production, order)))
             {
-                var resolution = owners is [var owner] && owner.Location == command.Location
-                    ? source.Readiness.ResolveProduction(production.Event, scope) : new(AuthoringProductionKind.Unresolved, null, []);
-                var candidates = resolution.Declaration is { } declaration ? [declaration] : resolution.Candidates;
+                var resolution = source.ResolveProduction(production.Event, scope);
+                var targetKind = "Unresolved";
+                if (resolution.Resolution == "ambiguous") targetKind = "Ambiguous";
+                else if (owners is [var owner] && owner.Location == command.Location && resolution.Resolution == "resolved") targetKind = resolution.Targets.Single().Kind;
                 yield return new
                 {
                     kind = "production", command = command.Name, scope, commandHandle = McpAstHandles.Describe(entry.Handle), order,
                     target = production.Event,
-                    targetKind = resolution.Kind.ToString(),
-                    candidates = candidates.Select(candidate => new { Kind = candidate.Kind.ToString(), Address = string.Join('.', candidate.Scope.Append(candidate.Name)) }),
+                    targetKind,
+                    candidates = resolution.Targets.Select(McpReadResults.Summary),
                     handle = Handle(production), production.Location, production.When, production.Mappings,
                     executionAvailable = false
                 };

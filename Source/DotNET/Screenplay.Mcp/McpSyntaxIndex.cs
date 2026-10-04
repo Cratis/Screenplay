@@ -118,7 +118,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
             var role = owner?.Syntax is SpecificationSyntax specification ? McpFixtureOccurrences.Role(specification, node, reference.Role) : reference.Role;
             _references.Add(new(reference.Name, reference.Kinds, [.. _scope], node.Location, role, owner?.Owner)
             {
-                ProductionResolution = node is SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax
+                ProductionResolution = node is ProducesSyntax or SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax
                     ? Readiness.ResolveProduction(reference.Name, [.. _scope]) : null
             });
         }
@@ -138,6 +138,16 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     }
 
     internal McpDeclaration[] Resolve(McpReference reference) => _queries.Resolve(reference);
+
+    internal McpReferenceEdge ResolveProduction(string name, string[] scope)
+    {
+        var reference = new McpReference(name, ["Event", "Operation"], scope, new(0, 0, string.Empty), "production", null)
+        {
+            ProductionResolution = Readiness.ResolveProduction(name, scope)
+        };
+
+        return new(reference, Resolve(reference));
+    }
 
     internal McpDeclaration[] Find(string address, string kind) => _queries.Find(address, kind);
 

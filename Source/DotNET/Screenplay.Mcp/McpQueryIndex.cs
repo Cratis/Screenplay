@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Syntax;
+
 namespace Cratis.Screenplay.Mcp;
 
 // Built only after merged scaffolds and implicit read models have their final meaning.
@@ -10,9 +12,11 @@ sealed class McpQueryIndex
     readonly Dictionary<(string Name, string Scope), List<McpDeclaration>> _prefixes = [];
     readonly Dictionary<(string Name, string Scope), List<McpDeclaration>> _suffixes = [];
     readonly Dictionary<(string Kind, string Address), McpDeclaration[]> _addresses;
+    readonly Dictionary<(string Kind, string Address), McpDeclaration[]> _productionCollisions = [];
     readonly Dictionary<(string Kind, string Scope, string Name, Cratis.Screenplay.Diagnostics.SourceLocation Location), McpDeclaration[]> _productionDeclarations;
     readonly Dictionary<McpReference, McpDeclaration[]> _resolutions = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<(string Name, string Kinds, string Scope), McpDeclaration[]> _names = [];
+    readonly Dictionary<(string Name, string Kinds, string Scope), McpDeclaration[]> _productionNames = [];
     readonly Lock _resolutionLock = new();
     readonly Dictionary<McpDeclaration, List<McpQueryIndexResolution>> _incoming = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<McpReadOwner, List<McpReference>> _outgoing = [];
@@ -26,6 +30,26 @@ sealed class McpQueryIndex
         _productionDeclarations = declared.Where(declaration => declaration.Kind == "Event" || declaration.Kind == "Operation")
             .GroupBy(declaration => (declaration.Kind, Scope: ScopeKey(declaration.Scope), declaration.Name, declaration.Location))
             .ToDictionary(group => group.Key, group => group.ToArray());
+        var inlineOwners = declared.Where(declaration => declaration.Syntax is CommandSyntax)
+            .SelectMany(owner => ((CommandSyntax)owner.Syntax).Produces
+                .Where(production => production.InlineOperation is not null)
+                .Select(production => (Node: production.InlineOperation, Owner: owner)))
+            .ToLookup(entry => entry.Node, entry => entry.Owner, ReferenceEqualityComparer.Instance);
+        foreach (var (key, occurrences) in _addresses.Where(entry => entry.Key.Kind == "Event" || entry.Key.Kind == "Operation"))
+        {
+            var ownerKeys = occurrences.SelectMany(declaration => new[] { (Kind: "Slice", Address: string.Join('.', declaration.Scope)) }
+                .Concat(inlineOwners[declaration.Syntax].Select(owner => (owner.Kind, owner.Address)))).Distinct();
+            var owners = ownerKeys.SelectMany(owner => Find(owner.Address, owner.Kind)).ToArray();
+            var ownerCollision = owners.GroupBy(owner => (owner.Kind, owner.Address)).Any(group => group.Count() > 1);
+            var declarationCollision = key.Kind == "Operation" ? occurrences.Length > 1
+                : occurrences.Select(declaration => ((EventSyntax)declaration.Syntax).Generation).Distinct().Count() != occurrences.Length;
+            if (declarationCollision || ownerCollision)
+            {
+                // Multiple physical declarations already carry their source evidence. If only
+                // one survived in an ambiguous owner, retain that owner's physical witnesses too.
+                _productionCollisions[key] = occurrences.Length > 1 ? occurrences : [.. occurrences, .. owners];
+            }
+        }
         foreach (var declaration in declared)
         {
             for (var depth = 0; depth <= declaration.Scope.Length; depth++)
@@ -77,14 +101,65 @@ sealed class McpQueryIndex
             return resolved;
         }
 
-        if (reference.ProductionResolution is { } production)
+        if (reference.ProductionResolution is not null)
         {
-            var declarations = production.Declaration is { } declaration ? [declaration] : production.Candidates;
+            var key = (reference.Name, ScopeKey(reference.Kinds.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)), ScopeKey(reference.Scope));
+            lock (_resolutionLock)
+            {
+                if (!_productionNames.TryGetValue(key, out var candidates))
+                {
+                    ResolutionCount++;
+                    candidates = ResolveProduction(reference);
+                    CandidateInspectionCount += candidates.Length;
+                    _productionNames.Add(key, candidates);
+                }
 
-            return [.. declarations.SelectMany(candidate => _productionDeclarations.GetValueOrDefault(
-                (candidate.Kind.ToString(), ScopeKey(candidate.Scope), candidate.Name, candidate.Node.Location)) ?? [])];
+                return candidates;
+            }
         }
 
+        return ResolveCachedName(reference);
+    }
+
+    static void Add<TKey, TValue>(Dictionary<TKey, List<TValue>> dictionary, TKey key, TValue value)
+        where TKey : notnull
+    {
+        if (!dictionary.TryGetValue(key, out var values))
+        {
+            values = [];
+            dictionary.Add(key, values);
+        }
+
+        values.Add(value);
+    }
+
+    McpDeclaration[] ResolveProduction(McpReference reference)
+    {
+        var production = reference.ProductionResolution!;
+        var declarations = production.Declaration is { } declaration ? [declaration] : production.Candidates;
+        if (production.Kind == AuthoringProductionKind.Unresolved)
+        {
+            // Merge can discard the only target along with a duplicated slice. An
+            // unresolved assembled result must not erase that physical collision.
+            var physical = ResolveCachedName(reference with { Kinds = ["Event", "Operation"] });
+
+            return [.. physical.SelectMany(candidate => _productionCollisions.GetValueOrDefault((candidate.Kind, candidate.Address)) ?? [])
+                .Distinct(ReferenceEqualityComparer.Instance).Cast<McpDeclaration>()];
+        }
+
+        return [.. declarations.SelectMany(candidate =>
+        {
+            var key = (candidate.Kind.ToString(), string.Join('.', candidate.Scope.Append(candidate.Name)));
+            if (_productionCollisions.TryGetValue(key, out var collisions)) return collisions;
+
+            // The assembled resolver selects kind and scope, including the current event
+            // generation. Physical indexing must not undo that selection when it is unique.
+            return _productionDeclarations.GetValueOrDefault((key.Item1, ScopeKey(candidate.Scope), candidate.Name, candidate.Node.Location)) ?? [];
+        }).Distinct(ReferenceEqualityComparer.Instance).Cast<McpDeclaration>()];
+    }
+
+    McpDeclaration[] ResolveCachedName(McpReference reference)
+    {
         // Fixture queries also construct equivalent references on demand. Cache those
         // by meaning, not object identity, and serialize cache misses across readers.
         var key = (reference.Name, ScopeKey(reference.Kinds.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)), ScopeKey(reference.Scope));
@@ -99,18 +174,6 @@ sealed class McpQueryIndex
 
             return candidates;
         }
-    }
-
-    static void Add<TKey, TValue>(Dictionary<TKey, List<TValue>> dictionary, TKey key, TValue value)
-        where TKey : notnull
-    {
-        if (!dictionary.TryGetValue(key, out var values))
-        {
-            values = [];
-            dictionary.Add(key, values);
-        }
-
-        values.Add(value);
     }
 
     McpDeclaration[] ResolveName(McpReference reference)

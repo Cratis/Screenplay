@@ -3,6 +3,7 @@
 
 using System.Text;
 using System.Text.Json;
+using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp.for_McpConnection;
@@ -59,6 +60,57 @@ public class when_resolving_operation_specification_dependencies
         }
         var specification = snapshot.Index.Find("M.F.C.T", "Specification").Single();
         snapshot.Index.Readiness.ExecutionReadiness(specification.Syntax).ShouldContain("ESM v9 (PLAY0268)");
+    }
+
+    [Theory]
+    [InlineData("operations", false)]
+    [InlineData("operations", true)]
+    [InlineData("slice", false)]
+    [InlineData("slice", true)]
+    [InlineData("command", false)]
+    [InlineData("command", true)]
+    public void should_preserve_physical_declaration_and_owner_collision_evidence(string scenario, bool reverse)
+    {
+        const string prefix = "system Mailer\nmodule M\n  feature F\n    slice StateChange S\n";
+        var first = prefix + (scenario == "command" ? "      command C\n        produces operation Send\n          uses Mailer\n      command C\n" : Operation);
+        var second = scenario == "operations" ? prefix + Operation : prefix + "      command Other\n";
+        const string referring = "module M\n  feature F\n    slice StateChange T\n      command Ask\n        produces S.Send\n      specification Check\n        given operation S.Send fails\n        when Ask\n        then operation S.Send\n        then compensated S.Send\n";
+        WorkspaceDocument[] documents = scenario == "command" ? [Document("one.play", first), Document("reference.play", referring)]
+            : [Document("one.play", first), Document("two.play", second), Document("reference.play", referring)];
+        var snapshot = new McpSnapshot([.. reverse ? documents.Reverse() : documents]);
+        snapshot.Compilation.Success.ShouldBeFalse();
+        var references = snapshot.Index.References.Where(reference => reference.Name == "S.Send").ToArray();
+        references.Length.ShouldEqual(4);
+        foreach (var reference in references)
+        {
+            var edge = new McpReferenceEdge(reference, snapshot.Index.Resolve(reference));
+            edge.Resolution.ShouldEqual("ambiguous");
+            edge.Targets.Count(target => target.Kind == "Operation").ShouldEqual(scenario == "operations" ? 2 : 1);
+            edge.Targets.Select(target => target.Location.Path).Contains("one.play").ShouldBeTrue();
+            if (scenario != "command") edge.Targets.Select(target => target.Location.Path).Contains("two.play").ShouldBeTrue();
+            var serialized = JsonSerializer.SerializeToElement(edge.Targets.Select(McpReadResults.Summary), Options);
+            serialized.EnumerateArray().Any(target => target.TryGetProperty("semanticId", out _)).ShouldBeFalse();
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void should_keep_genuine_event_generations_and_unique_scoped_operations(bool reverse)
+    {
+        var first = Document("intent.play", "system Mailer\nmodule M\n  feature F\n    slice StateChange S\n" + Operation + "      event Recorded\n      event Recorded generation 2\n");
+        var second = Document("reference.play", "module M\n  feature F\n    slice StateChange T\n" + Operation + "      command Ask\n        produces Send\n        produces S.Send\n        produces S.Recorded\n      specification Check\n        given operation S.Recorded fails\n        when Ask\n        then operation S.Send\n        then compensated Send\n");
+        var snapshot = new McpSnapshot(reverse ? [second, first] : [first, second]);
+        var references = snapshot.Index.References.Where(reference => reference.Name == "Send" || reference.Name == "S.Send" || reference.Name == "S.Recorded").ToArray();
+        references.Length.ShouldEqual(6);
+        foreach (var reference in references)
+        {
+            var edge = new McpReferenceEdge(reference, snapshot.Index.Resolve(reference));
+            edge.Targets.Length.ShouldEqual(1);
+            edge.Resolution.ShouldEqual(reference.Role == "givenOperationFailure" ? "wrongKind" : "resolved");
+            edge.Targets.Single().Location.Path.ShouldEqual(reference.Name == "Send" ? "reference.play" : "intent.play");
+            if (reference.Name == "S.Recorded") ((EventSyntax)edge.Targets.Single().Syntax).Generation.ShouldEqual(2u);
+        }
     }
 
     static WorkspaceDocument Document(string path, string source) => WorkspaceDocument.Create(path, PortablePlayPath.Parse(path), Encoding.UTF8.GetBytes(source));

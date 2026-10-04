@@ -83,6 +83,7 @@ internal sealed partial class McpWorkspaces
                             ? "UnknownDeclaration: no uniquely indexed declaration has that kind and authoring key."
                             : "UnresolvedPlacement: repair conflicting or cyclic imports before requesting declaration details.");
                     }
+                    if (inventory.AmbiguousOwner(matches[0])) throw new McpFailure("AmbiguousDeclaration: authoring declaration has a colliding physical owner. Select read-ast handles after repairing the collision.");
                     values = inventory.Details(matches[0]);
                 }
                 else
