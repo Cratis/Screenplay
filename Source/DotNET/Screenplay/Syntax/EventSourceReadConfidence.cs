@@ -11,9 +11,10 @@ internal sealed class EventSourceReadConfidence(IEnumerable<(EventSourceSyntax S
     readonly ILookup<string, (EventSourceSyntax Source, bool PlacementResolved)> _sources = sources.ToLookup(entry => entry.Source.Name, StringComparer.Ordinal);
 
     // Invalid command payloads cannot contain application-owned sources. Only unread root
-    // blocks or malformed source declarations taint this source-only extent contract.
+    // blocks, malformed source declarations, or unclosed fences consuming the remaining
+    // physical document taint this source-only extent contract.
     internal static bool HasUnknownExtent(IEnumerable<Diagnostic> diagnostics) => diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error &&
-        (diagnostic.Code == DiagnosticCodes.UnknownTopLevelConstruct || diagnostic.Code == DiagnosticCodes.InvalidEventSourceDeclaration));
+        (diagnostic.Code == DiagnosticCodes.UnknownTopLevelConstruct || diagnostic.Code == DiagnosticCodes.InvalidEventSourceDeclaration || diagnostic.Code == DiagnosticCodes.UnclosedCodeBlock));
 
     internal EventSourceReadResolution Resolve(string source, string? stream = null)
     {

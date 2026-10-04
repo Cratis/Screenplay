@@ -98,6 +98,41 @@ public class when_reading_errorful_source_streams : given.an_authoring_connectio
         analysis.Index.Resolve(new("Foreign.Account.Transactions", ["EventStream"], [], Cratis.Screenplay.Diagnostics.SourceLocation.Start)).ShouldBeEmpty();
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    void should_share_unclosed_fence_confidence_without_hiding_sources_before_the_fence(bool closed)
+    {
+        File.WriteAllText(Path.Combine(RootPath, "application.play"), "eventsource Account\n  stream Transactions\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        stream Account.Transactions\n");
+        File.WriteAllText(Path.Combine(RootPath, "other.play"), "eventsource Before\n  stream Visible\nmodule Broken\n  description\n    ```text\neventsource Account\n  stream Other\n" + (closed ? "    ```\n" : string.Empty));
+        Initialize();
+        var revision = Open().GetProperty("revision").GetString();
+        var sources = Result("read-workspace", new { expectedRevision = revision, view = "event-sources" });
+        sources.GetProperty("inventoryComplete").GetBoolean().ShouldEqual(closed);
+        var entries = sources.GetProperty("page").GetProperty("items");
+        entries.GetArrayLength().ShouldEqual(2);
+        foreach (var entry in entries.EnumerateArray()) entry.GetProperty("ownership").GetString().ShouldEqual(closed ? "unique" : "incomplete");
+        var before = entries.EnumerateArray().Single(entry => entry.GetProperty("name").GetString() == "Before");
+        before.GetProperty("location").GetProperty("path").GetString().ShouldEqual("other.play");
+        foreach (var entry in Page("event-streams", revision).EnumerateArray()) entry.GetProperty("ownership").GetString().ShouldEqual(closed ? "unique" : "incomplete");
+        var snapshot = new McpSnapshot(Root.Read());
+        using var args = System.Text.Json.JsonDocument.Parse("{\"address\":\"Account.Transactions\",\"kind\":\"EventStream\"}");
+        var error = Catch.Exception(() => McpDeclarationDetails.Read(snapshot, args.RootElement));
+        if (closed)
+        {
+            error.ShouldBeNull();
+        }
+        else
+        {
+            error.Message.ShouldContain("IncompleteSource");
+            var diagnostics = Page(sources.GetProperty("authoringDiagnosticsView").GetString()!, revision);
+            diagnostics.EnumerateArray().Any(diagnostic => diagnostic.GetProperty("code").GetString() == "PLAY0164" && diagnostic.GetProperty("location").GetProperty("path").GetString() == "other.play").ShouldBeTrue();
+            Result("read-ast", new { expectedRevision = revision, documentId = before.GetProperty("handle").GetProperty("documentId").GetString(), kind = "EventSourceSyntax" }).GetProperty("page").GetProperty("totalCount").GetInt32().ShouldEqual(0);
+        }
+        var reference = snapshot.Index.References.Single(reference => reference.Role == "commandStream");
+        new McpReferenceEdge(reference, snapshot.Index.Resolve(reference)).Resolution.ShouldEqual(closed ? "resolved" : "incomplete");
+    }
+
     [Fact]
     void should_disclose_incomplete_extent_instead_of_a_false_unique_owner()
     {

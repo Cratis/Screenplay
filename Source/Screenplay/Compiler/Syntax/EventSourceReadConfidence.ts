@@ -13,7 +13,7 @@ export class EventSourceReadConfidence {
     }
 
     static hasUnknownExtent(diagnostics: readonly Diagnostic[]) {
-        return diagnostics.some(diagnostic => diagnostic.severity === 'error' && ['PLAY0001', 'PLAY0503'].includes(diagnostic.code));
+        return diagnostics.some(diagnostic => diagnostic.severity === 'error' && ['PLAY0001', 'PLAY0503', 'PLAY0164'].includes(diagnostic.code));
     }
 
     resolve(source: string, stream?: string) {
