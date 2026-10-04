@@ -16,8 +16,13 @@ static class McpReferenceKinds
     internal static IEnumerable<(string Name, string[] Kinds, string Role)> For(SyntaxNode node, SyntaxNode? owner = null) => node switch
     {
         SliceSyntax value => EventDeclarations.In(value).Except(value.Events).Select(@event => (@event.Name, _eventKinds, "declares")),
-        ProducesSyntax { InlineEvent: not null } value => [(value.Event, ["Event"], "declares"), (value.Event, ["Event"], "produces")],
-        ProducesSyntax value => [(value.Event, ["Event"], "produces")],
+        OperationSyntax value => [(value.Uses, ["System"], "uses")],
+        SpecificationOperationSyntax value => [(value.Operation, ["Operation"], "thenOperation")],
+        SpecificationOperationFailureSyntax value => [(value.Operation, ["Operation"], "givenOperationFailure")],
+        SpecificationCompensatedSyntax value => [(value.Operation, ["Operation"], "thenCompensated")],
+        ProducesSyntax { InlineOperation: not null } value => [(value.Event, ["Operation"], "declares"), (value.Event, ["Event", "Operation"], "produces")],
+        ProducesSyntax { InlineEvent: not null } value => [(value.Event, ["Event"], "declares"), (value.Event, ["Event", "Operation"], "produces")],
+        ProducesSyntax value => [(value.Event, ["Event", "Operation"], "produces")],
         InvokesSyntax value => [(value.Command, ["Command"], "invokes")],
         ReadsSyntax value => [(value.ReadModel, ["ReadModel"], "reads")],
         ConcurrencySyntax value => value.EventTypes.Select(name => (name, _eventKinds, "concurrency")),

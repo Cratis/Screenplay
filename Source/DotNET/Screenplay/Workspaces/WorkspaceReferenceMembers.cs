@@ -19,7 +19,9 @@ enum WorkspaceReferenceDomain
     Screen,
     Policy,
     Trigger,
-    Property
+    Property,
+    Operation,
+    System
 }
 
 sealed record WorkspaceReferenceMember(WorkspaceSyntaxEntry Entry, string Member, int? Index, string Text, WorkspaceReferenceDomain Domain, string? Owner = null)
@@ -63,8 +65,13 @@ static class WorkspaceReferenceMembers
         }
     }
 
-    internal static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> Members(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index) =>
-        EventMembers(entry.Node).Concat(OtherMembers(entry, index));
+    internal static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> Members(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index)
+    {
+        if (entry.Node is ProducesSyntax production && index.OwningSlice(entry) is { } slice && !index.Productions.IsEventProduction(production, slice))
+            return [("event", WorkspaceReferenceDomain.Operation)];
+
+        return EventMembers(entry.Node).Concat(OtherMembers(entry, index));
+    }
 
     // The event-name catalog shared by repair consumer detection, rename and reference validation.
     // The syntax index recursively visits additional constraint rules, projection children/nested/variants,
@@ -85,6 +92,8 @@ static class WorkspaceReferenceMembers
 
     static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> OtherMembers(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index) => entry.Node switch
     {
+        OperationSyntax => [("uses", WorkspaceReferenceDomain.System)],
+        SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax => [("operation", WorkspaceReferenceDomain.Operation)],
         ObjectMemberSyntax => [("name", WorkspaceReferenceDomain.Property)],
         TypeRefSyntax => [("name", entry.Parent is { } parent && index.Find(parent)?.Node is QuerySyntax or ScreenDataSyntax
             ? WorkspaceReferenceDomain.View : WorkspaceReferenceDomain.Type)],

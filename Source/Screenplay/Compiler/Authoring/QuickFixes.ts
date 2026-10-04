@@ -145,7 +145,7 @@ function verificationShape(parsed: ReturnType<typeof parseForAuthoring>, changes
     // Compare every modeled member (including trigger data), ignoring only source locations. A recipe
     // may replace only its original node; no other id or destination is normalized away.
     const replacements = new Map(changes.map(change => [change.node, change.replacement]));
-    return JSON.stringify([parsed.value, parsed.triggerData], (key, value: unknown) => key === 'location' ? undefined : replacements.get(value as NonNullable<QuickFixCandidate['change']>['node']) ?? value);
+    return JSON.stringify([parsed.value, parsed.triggerData], (key, value: unknown) => ['location', 'usesLocation', 'targetLocation'].includes(key) ? undefined : replacements.get(value as NonNullable<QuickFixCandidate['change']>['node']) ?? value);
 }
 
 // One forward pass; applying N edits by repeatedly slicing the document would be quadratic.

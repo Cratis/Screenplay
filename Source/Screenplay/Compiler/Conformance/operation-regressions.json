@@ -1,0 +1,151 @@
+{
+  "prefix": "system Mailer\nmodule M\n  feature F\n    slice StateChange S\n",
+  "cases": [
+    {
+      "name": "same-scope mixed-kind ambiguity",
+      "body": "      event Send\n      operation Send\n        uses Mailer\n      command C\n        id Uuid identifier\n        produces event Recorded\n        produces Send\n",
+      "codes": ["PLAY0497", "PLAY0498"],
+      "absent": ["PLAY0470", "PLAY0478", "PLAY0166"]
+    },
+    {
+      "name": "strict quoted assertion",
+      "body": "      operation Send\n        uses Mailer\n        name String\n      command C\n        produces Send\n          name = \"Ada\"\n      specification T\n        when C\n        then operation Send\n          name = \"Ada\" + \"Bob\"\n",
+      "codes": ["PLAY0502"],
+      "absent": []
+    },
+    {
+      "name": "unknown imported assertion remains concrete",
+      "before": "import External.Payload\n",
+      "body": "      operation Send\n        uses Mailer\n        payload Payload\n      command C\n        produces Send\n          payload = {}\n      specification T\n        when C\n        then operation Send\n          payload.unknown = missing\n",
+      "codes": ["PLAY0502"],
+      "absent": []
+    },
+    {
+      "name": "assertion mapping children rejected",
+      "body": "      operation Send\n        uses Mailer\n        name String\n      command C\n        produces Send\n          name = \"Ada\"\n      specification T\n        when C\n        then operation Send\n          name = \"Ada\"\n            ignored = 1\n",
+      "codes": ["PLAY0502"],
+      "absent": []
+    },
+    {
+      "name": "optional composite omitted",
+      "before": "type Contact\n  name String\n  age Int\n",
+      "body": "      operation Send\n        uses Mailer\n        contact Contact optional\n      command C\n        produces Send\n",
+      "codes": [],
+      "absent": ["PLAY0501"]
+    },
+    {
+      "name": "optional composite partially supplied",
+      "before": "type Contact\n  name String\n  age Int\n",
+      "body": "      operation Send\n        uses Mailer\n        contact Contact optional\n      command C\n        produces Send\n          contact.name = \"Ada\"\n",
+      "codes": ["PLAY0501"],
+      "absent": []
+    },
+    {
+      "name": "optional composite complete descendants",
+      "before": "type Contact\n  name String\n  age Int\n",
+      "body": "      operation Send\n        uses Mailer\n        contact Contact optional\n      command C\n        produces Send\n          contact.name = \"Ada\"\n          contact.age = 42\n",
+      "codes": [],
+      "absent": ["PLAY0501"]
+    },
+    {
+      "name": "nested optional composite partial",
+      "before": "type Contact\n  name String\n  age Int\ntype Envelope\n  contact Contact optional\n",
+      "body": "      operation Send\n        uses Mailer\n        envelope Envelope\n      command C\n        produces Send\n          envelope.contact.name = \"Ada\"\n",
+      "codes": ["PLAY0501"],
+      "absent": []
+    },
+    {
+      "name": "nested optional composite omitted in whole value",
+      "before": "type Contact\n  name String\n  age Int\ntype Envelope\n  contact Contact optional\n",
+      "body": "      operation Send\n        uses Mailer\n        envelope Envelope\n      command C\n        produces Send\n          envelope = {}\n",
+      "codes": [],
+      "absent": ["PLAY0501"]
+    },
+    {
+      "name": "whole and descendant mappings conflict",
+      "before": "type Contact\n  name String\n  age Int\n",
+      "body": "      operation Send\n        uses Mailer\n        contact Contact optional\n      command C\n        produces Send\n          contact = {\"name\":\"Ada\",\"age\":42}\n          contact.name = \"Bob\"\n",
+      "codes": ["PLAY0501"],
+      "absent": []
+    },
+    {
+      "name": "opaque composite descendant not fabricated",
+      "before": "import External.Payload\n",
+      "body": "      operation Send\n        uses Mailer\n        payload Payload optional\n      command C\n        produces Send\n          payload.unknown = \"Ada\"\n",
+      "codes": [],
+      "absent": ["PLAY0501"]
+    },
+    {
+      "name": "optional parent does not make constructed required children nullable",
+      "before": "type Contact\n  name String\n  age Int\n",
+      "body": "      operation Send\n        uses Mailer\n        contact Contact optional\n      command C\n        produces Send\n          contact.name = null\n          contact.age = 42\n",
+      "codes": ["PLAY0501"],
+      "absent": []
+    },
+    {
+      "name": "optional composite whole partial value",
+      "before": "type Contact\n  name String\n  age Int\n",
+      "body": "      operation Send\n        uses Mailer\n        contact Contact optional\n      command C\n        produces Send\n          contact = {\"name\":\"Ada\"}\n",
+      "codes": ["PLAY0501"],
+      "absent": []
+    },
+    {
+      "name": "optional composite whole null may omit",
+      "before": "type Contact\n  name String\n  age Int\n",
+      "body": "      operation Send\n        uses Mailer\n        contact Contact optional\n      command C\n        produces Send\n          contact = null\n",
+      "codes": [],
+      "absent": ["PLAY0501"]
+    },
+    {
+      "name": "read local shadow mismatch",
+      "body": "      readmodel View\n        name Int\n      operation Send\n        uses Mailer\n        name String\n      command C\n        reads View as view\n        produces Send\n          name = view.name\n    slice StateView Other\n      readmodel View\n        name String\n",
+      "codes": ["PLAY0501"],
+      "absent": []
+    },
+    {
+      "name": "qualified read sibling mismatch",
+      "body": "      readmodel View\n        name String\n      operation Send\n        uses Mailer\n        name String\n      command C\n        reads Other.View as view\n        produces Send\n          name = view.name\n    slice StateView Other\n      readmodel View\n        name Int\n",
+      "codes": ["PLAY0501"],
+      "absent": []
+    },
+    {
+      "name": "ambiguous read shape unknown",
+      "body": "      operation Send\n        uses Mailer\n        name String\n      command C\n        reads View as view\n        produces Send\n          name = view.name\n    slice StateView A\n      readmodel View\n        name Int\n    slice StateView B\n      readmodel View\n        name String\n",
+      "codes": [],
+      "absent": ["PLAY0501"]
+    },
+    {
+      "name": "unresolved imported read shape unknown",
+      "before": "import External.View\n",
+      "body": "      operation Send\n        uses Mailer\n        name String\n      command C\n        reads View as view\n        produces Send\n          name = view.name\n",
+      "codes": [],
+      "absent": ["PLAY0501"]
+    },
+    {
+      "name": "known mixed event outcome matches",
+      "body": "      operation Send\n        uses Mailer\n      event Recorded\n        name String\n      command C\n        name String\n        produces Recorded\n          name = name\n        produces Send\n      specification T\n        when C\n          name = \"Ada\"\n        then Recorded\n          name = \"Ada\"\n",
+      "codes": [],
+      "absent": ["PLAY0285"]
+    },
+    {
+      "name": "known mixed event outcome contradicts",
+      "body": "      operation Send\n        uses Mailer\n      event Recorded\n        name String\n      command C\n        name String\n        produces Recorded\n          name = name\n        produces Send\n      specification T\n        when C\n          name = \"Ada\"\n        then Recorded\n          name = \"Bob\"\n",
+      "codes": [],
+      "csharpCodes": ["PLAY0285"],
+      "absent": []
+    }
+  ],
+  "targetSpans": [
+    { "body": "      operation Send\n        uses Mailer\n      command C\n        produces Send // Send\n", "line": 8, "column": 18 },
+    { "body": "      operation Send\n        uses Mailer\n      command C\n        produces S.Send // Send\n", "line": 8, "column": 18 },
+    { "body": "      operation Send\n        uses Mailer\n      command C\n        accepted Bool\n        produces when accepted == true\n          Send // Send\n", "line": 10, "column": 11 },
+    { "body": "      operation Send\n        uses Mailer\n      command C\n        accepted Bool\n        produces when accepted == true\n          S.Send // Send\n", "line": 10, "column": 11 },
+    { "body": "      command C\n        produces operation Send // Send\n          uses Mailer\n", "line": 6, "column": 28 },
+    { "body": "      command C\n        produces event Recorded // Recorded\n", "line": 6, "column": 24 }
+  ],
+  "documents": [
+    { "path": "root.play", "source": "system Mailer\nmodule M\n  feature F\n    import \"command.play\"\n    import \"operation.play\"\n" },
+    { "path": "command.play", "source": "slice StateChange Here\n  command C\n    id Uuid identifier\n    produces event Recorded\n    produces Other.Send\n" },
+    { "path": "operation.play", "source": "slice StateChange Other\n  operation Send\n    uses Mailer\n" }
+  ]
+}

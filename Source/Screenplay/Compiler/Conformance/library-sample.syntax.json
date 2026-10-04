@@ -103,6 +103,7 @@
                         "path": "bookId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -276,6 +277,7 @@
                 }
               ],
               "name": "AddBook",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -322,8 +324,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "AddingABook",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -364,6 +368,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -418,8 +423,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAMalformedIsbn",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
                     {
@@ -430,6 +437,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -484,8 +492,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RefusingAMemberAddingBooks",
+                  "thenCompensated": [],
                   "thenDenied": {
                     "kind": "SpecificationDeniedSyntax"
                   },
@@ -493,6 +503,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -553,6 +564,7 @@
               "description": "Every book, and whether it is on the shelf",
               "events": [],
               "name": "BookCatalog",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -848,13 +860,16 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "BorrowingTakesABookOffTheShelf",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -925,6 +940,7 @@
               "description": "When the library is open this week",
               "events": [],
               "name": "OpeningHours",
+              "operations": [],
               "projections": [],
               "queries": [
                 {
@@ -1094,6 +1110,7 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -1128,11 +1145,13 @@
                     }
                   ],
                   "name": "ShowingTodaysOpeningHours",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [
                     {
@@ -1218,6 +1237,7 @@
                         "path": "memberId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -1304,6 +1324,7 @@
                 }
               ],
               "name": "RegisterMember",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -1350,8 +1371,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegisteringAMember",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -1376,6 +1399,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -1414,8 +1438,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAMemberWithNoName",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
                     {
@@ -1426,6 +1452,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -1495,6 +1522,7 @@
                 }
               ],
               "name": "WelcomeNewMembers",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -1513,6 +1541,7 @@
                           "event": "WelcomeLetterSent",
                           "for": null,
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -1561,8 +1590,10 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "WelcomingANewMember",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -1584,6 +1615,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -1650,6 +1682,7 @@
                         "path": "bookId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -1771,6 +1804,7 @@
                 }
               ],
               "name": "BorrowBook",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -1821,6 +1855,7 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -1863,6 +1898,7 @@
                     }
                   ],
                   "name": "BorrowingAnAvailableBook",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -1895,6 +1931,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -1941,6 +1978,7 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -1983,6 +2021,7 @@
                     }
                   ],
                   "name": "RefusingABookThatIsOnLoan",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
                     {
@@ -1993,6 +2032,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -2062,6 +2102,7 @@
                         "path": "bookId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -2134,6 +2175,7 @@
                 }
               ],
               "name": "ReturnBook",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -2241,8 +2283,10 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ReturningABook",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -2267,6 +2311,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -2311,6 +2356,7 @@
               "description": null,
               "events": [],
               "name": "MyLoans",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -2606,13 +2652,16 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "SeeingAReturnedLoan",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -2693,5 +2742,6 @@
       ]
     }
   ],
+  "systems": [],
   "types": []
 }

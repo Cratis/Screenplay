@@ -1,5 +1,7 @@
 # Grammar
 
+> Systems, operations, operation phases and their specification forms below are syntax-only authoring. Execution is unavailable until ESM v9 (`PLAY0268`); see [Operations and external systems](operations.md). A phase source or wrapper is not an admitted executable implementation role.
+
 The Screenplay syntax reference in EBNF. `INDENT`/`DEDENT` represent indented bodies: parsers read lines at greater indentation until the body ends. PDL and CDL have their own [sub-grammars](sub-languages.md). The C# compiler validates the full language; the TypeScript compiler models a subset and recognizes the remaining shipped constructs as opaque bodies.
 
 Declarations and body directives can appear in any order unless a rule below states otherwise. A repeated group such as { A | B } means its members may appear in any order; it does not allow repeating singleton directives such as description, for or where. References may name declarations later in the document; scope and semantic checks still apply.
@@ -11,7 +13,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 
 Document       = [ DomainDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl
                | PersonaDecl | AuthenticationDecl | TriggerDecl | ThemeDecl
-               | LayoutDecl | UiProfileDecl | BehaviorDecl | Module | SeedDecl } ;
+               | LayoutDecl | UiProfileDecl | BehaviorDecl | SystemDecl | Module | SeedDecl } ;
 
 (* At most one domain and authentication block. Put domain first; the compiler
    reports PLAY0004 when it follows another application declaration. *)
@@ -44,6 +46,18 @@ ImportPattern  = ? a path or glob relative to the importing file's folder -
    file's top level is that module's or feature's body, and also holds whatever
    belongs to the application as a whole. A file matched by several imports is
    imported once, at the deepest placement - see imports.md.                  *)
+
+(* -------------------------------------------------------------- *)
+(* External systems — syntax-only                                  *)
+(* -------------------------------------------------------------- *)
+
+SystemDecl     = "system", Ident, NL,
+                 [ INDENT, { DescriptionDecl }, DEDENT ] ;
+
+(* Systems are application-scoped, including in placed files. They name external
+   systems without provider types or abilities. Systems, operations and their
+   specification steps are authoring-only: binding rejects them with PLAY0268;
+   executable admission is allocated to ESM v9, not available today. *)
 
 (* -------------------------------------------------------------- *)
 (* Concepts                                                        *)
@@ -373,6 +387,7 @@ SliceDecl      = "slice", SliceType, Ident, NL,
 SliceType      = "StateChange" | "StateView" | "Automation" | "Translate" ;
 
 SliceBody      = EventDecl
+               | OperationDecl
                | CommandDecl
                | QueryDecl
                | ReadModelDecl
@@ -573,13 +588,21 @@ Value          = Number | StringLiteral | "today" | "true" | "false" | "null" | 
 (* Produces                                                        *)
 (* -------------------------------------------------------------- *)
 
-ProducesDecl   = "produces", Ident, NL,
+ProducesDecl   = "produces", ProductionReference, NL,
                    [ INDENT, { ForDecl | TagDecl | PropertyMapping }, DEDENT ]
                | "produces", "when", Condition, NL,
-                   INDENT, Ident, NL,
+                   INDENT, ProductionReference, NL,
                    [ INDENT, { ForDecl | TagDecl | PropertyMapping }, DEDENT ],
                    DEDENT
-               | InlineEventProduction ;
+               | InlineEventProduction
+               | InlineOperationProduction ;
+
+ProductionReference = Ident | QualifiedOperationReference ;
+QualifiedOperationReference = Ident, ".", Ident, { ".", Ident } ;
+(* A qualified production must resolve to an explicit operation declaration.
+   Event productions retain their existing bare-name grammar and binding rules.
+   Operations have no for destination or event metadata and do not participate
+   in event destination defaults. Plain references never declare a target. *)
 
 InlineEventProduction = "produces", "event", Ident, NL,
                         [ INDENT, { ForDecl | TagDecl | EventMetadata | TypedMapping }, DEDENT ] ;
@@ -651,6 +674,32 @@ IdentityProp   = "id" | "name" | "userName" | "isAuthenticated"
 Expression     = (* arithmetic / method-call expression — freeform *) ;
 
 (* -------------------------------------------------------------- *)
+(* Operations — syntax-only                                        *)
+(* -------------------------------------------------------------- *)
+
+OperationDecl  = "operation", Ident, NL,
+                 INDENT, { DescriptionDecl | UsesSystem | OperationInput | OperationPhase }, DEDENT ;
+InlineOperationProduction = "produces", "operation", Ident, NL,
+                 INDENT, { DescriptionDecl | UsesSystem | TypedMapping | OperationPhase }, DEDENT ;
+UsesSystem     = "uses", Ident, NL ;
+OperationInput = [ "@" ], Ident, TypeRef, NL ;
+OperationPhase = ( "execute" | "compensate" ), NL,
+                 [ INDENT, { DescriptionDecl | FileDirective | InlineBlock | OperationImplementation }, DEDENT ] ;
+OperationImplementation = "implementation", NL,
+                 [ INDENT, { ImplementationHint | FileDirective | InlineBlock }, DEDENT ] ;
+
+(* Operations are slice-owned and command-only; event and operation names share
+   the slice namespace. Exactly one uses must resolve to a declared system.
+   Each phase occurs at most once and owns at most one file OR tagged fence;
+   wrapped and direct sources cannot mix. Hints are ordered and nonblank.
+   Inputs cannot be identifier or generated properties. Code and phases are
+   optional: intent-only and description-only forms remain valid authoring.
+   New words are contextual, not globally reserved property names. Within an
+   operation, @uses escapes an input named uses; event metadata input names
+   also use @. Typed inputs named execute or compensate are not phase headers.
+   Execution, failure fixtures and compensation remain unavailable until ESM v9. *)
+
+(* -------------------------------------------------------------- *)
 (* Handler                                                         *)
 (* -------------------------------------------------------------- *)
 
@@ -659,10 +708,10 @@ HandlerDecl    = "handler", NL,
 HandlerImplementation = "implementation", NL,
                         [ INDENT, { ImplementationHint | FileDirective | InlineBlock }, DEDENT ] ;
 ImplementationHint = "hint", StringLiteral, NL ;
-(* Handler-only wrapper: hints are ordered, nonblank quoted strings.
+(* The handler wrapper retains its existing contract: hints are ordered, nonblank quoted strings.
    At most one payload (file OR tagged fence); direct and wrapped sources cannot mix.
    A bare or hints-only implementation is pending, not executable.
-   Wrapper forms on all other owners are deferred. *)
+   Operation phases also support a wrapper; forms on other owners are deferred. *)
 
 (* -------------------------------------------------------------- *)
 (* Queries                                                         *)
@@ -730,7 +779,8 @@ CDLBody        = (* Change Data Capture Language grammar - covers source/key/map
 SpecificationDecl = "specification", Ident, NL,
                  INDENT, [ FileDirective ], { SpecificationGiven | SpecificationWhen | SpecificationThen }, DEDENT ;
 
-SpecificationGiven = "given", "caller", NL,
+SpecificationGiven = OperationFailureFixture
+               | "given", "caller", NL,
                  [ INDENT, { "authenticated", NL | "role", StringLiteral, NL | "claim", StringLiteral, "=", StringLiteral, NL }, DEDENT ]
                | "given", "readmodel", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
@@ -771,7 +821,19 @@ ConcreteValue  = ? a completely consumed literal, list or object, without raw ex
    Generated identifiers use SpecificationEventSource, not GeneratedFixture.
    Return expectations require a command and cannot accompany errors or denial. *)
 
+OperationFailureFixture = "given", "operation", QualifiedName, "fails", NL ;
+OperationExpectation = "then", "operation", QualifiedName, NL,
+                 [ INDENT, { OperationValue }, DEDENT ] ;
+OperationValue = Path, "=", ConcreteValue, NL ;
+CompensationExpectation = "then", "compensated", QualifiedName, NL ;
+(* Failure and compensation lines are leaves. Operation assertions may be partial
+   but require compatible concrete values. All three require an operation-kind
+   reference and a command action; compensation must be declared. These forms
+   are syntax-only and rejected by executable binding until ESM v9 admission. *)
+
 SpecificationThen = ReturnExpectation
+               | OperationExpectation
+               | CompensationExpectation
                | "then", "readmodel", Ident, [ "exactly" ], NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
                | "then", "no", "readmodel", Ident, "for", Expression, NL

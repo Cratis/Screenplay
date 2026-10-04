@@ -397,6 +397,14 @@ public partial class ScreenplayPrinter
     void WriteProduces(ScreenplayWriter writer, ProducesSyntax produces)
     {
         using var anchor = writer.Anchor(produces);
+        OperationInvariants.Validate(produces);
+        if (produces.InlineOperation is { } operation)
+        {
+            writer.Line($"produces operation {operation.Name}");
+            using (writer.Indent()) WriteOperationBody(writer, operation, produces.Mappings);
+            return;
+        }
+
         if (produces.InlineEvent is { } inline)
         {
             writer.Line($"produces event {inline.Name}");

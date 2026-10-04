@@ -34,6 +34,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         imports: firstOfEach(applications.flatMap(application => application.imports), item => item.qualifiedName),
         concepts,
         types,
+        systems: applications.flatMap(application => application.systems ?? []),
         modules,
         personas,
         fileImports: applications.flatMap(application => application.fileImports),

@@ -27,6 +27,23 @@ internal static partial class ProducesParser
     /// <returns>The parsed <see cref="ProducesSyntax"/>, or <c>null</c> when the declaration is malformed.</returns>
     public static ProducesSyntax? Parse(ParserContext context, SourceLine line, bool inCommand = false, IEqualityComparer<string>? propertyNameComparer = null)
     {
+        if (InlineOperationPrefixRegex().IsMatch(line.Content))
+        {
+            if (!inCommand)
+            {
+                context.Error(DiagnosticCodes.OperationOutsideCommand, "Operations can only be produced by commands.", line.Location);
+                context.SkipBlock(line.Indent);
+                return null;
+            }
+
+            var parsed = OperationParser.Parse(context, line, inline: true);
+            return new(parsed.Operation.Name, null, parsed.Mappings, line.Location)
+            {
+                InlineOperation = parsed.Operation,
+                TargetLocation = line.Location with { Column = line.Location.Column + InlineOperationTargetRegex().Match(line.Content).Length }
+            };
+        }
+
         if (InlineHeaderRegex().Match(line.Content) is { Success: true } inline)
         {
             if (!inCommand)
@@ -41,7 +58,7 @@ internal static partial class ProducesParser
                 context.Error(DiagnosticCodes.InlineEventGeneration, "Inline events are generation 1 - extract the event before declaring generations", line.Location);
             }
 
-            return ParseInline(context, line, inline.Groups[1].Value, propertyNameComparer);
+            return ParseInline(context, line, inline.Groups[1].Value, inline.Groups[1].Index, propertyNameComparer);
         }
 
         var conditional = ProducesWhenRegex().Match(line.Content);
@@ -60,6 +77,7 @@ internal static partial class ProducesParser
             context.SkipBlock(line.Indent);
             return new ProducesSyntax(eventLine.Content, condition, body.Mappings, line.Location, body.Tags, body.For)
             {
+                TargetLocation = eventLine.Location,
                 DirectiveLocations = new Dictionary<string, SourceLocation> { ["event"] = eventLine.Location }
             };
         }
@@ -73,7 +91,10 @@ internal static partial class ProducesParser
         }
 
         var unconditionalBody = ParseBody(context, line);
-        return new(unconditional.Groups[1].Value, null, unconditionalBody.Mappings, line.Location, unconditionalBody.Tags, unconditionalBody.For);
+        return new(unconditional.Groups[1].Value, null, unconditionalBody.Mappings, line.Location, unconditionalBody.Tags, unconditionalBody.For)
+        {
+            TargetLocation = line.Location with { Column = line.Location.Column + unconditional.Groups[1].Index }
+        };
     }
 
     /// <summary>
@@ -140,7 +161,7 @@ internal static partial class ProducesParser
         return (mappings, tags, target);
     }
 
-    static ProducesSyntax ParseInline(ParserContext context, SourceLine header, string name, IEqualityComparer<string>? propertyNameComparer)
+    static ProducesSyntax ParseInline(ParserContext context, SourceLine header, string name, int nameColumn, IEqualityComparer<string>? propertyNameComparer)
     {
         var metadata = new EventMetadataParser(name);
         var properties = new List<PropertySyntax>();
@@ -212,6 +233,7 @@ internal static partial class ProducesParser
 
         return new(name, null, mappings, header.Location, [], target)
         {
+            TargetLocation = header.Location with { Column = header.Location.Column + nameColumn },
             InlineEvent = metadata.Apply(new(name, properties, header.Location, tags))
         };
     }
@@ -229,6 +251,12 @@ internal static partial class ProducesParser
         return true;
     }
 
+    [GeneratedRegex(@"^produces\s+operation(?:\s+|$)", RegexOptions.None, 1000)]
+    private static partial Regex InlineOperationTargetRegex();
+
+    [GeneratedRegex(@"^produces\s+operation(?:\s|$)", RegexOptions.None, 1000)]
+    private static partial Regex InlineOperationPrefixRegex();
+
     [GeneratedRegex(@"^produces\s+event\s+([A-Za-z_]\w*)(?:\s+(generation)(?:\s+.*)?)?$", RegexOptions.None, 1000)]
     private static partial Regex InlineHeaderRegex();
 
@@ -238,10 +266,10 @@ internal static partial class ProducesParser
     [GeneratedRegex(@"^produces\s+when\s+(.+)$", RegexOptions.None, 1000)]
     private static partial Regex ProducesWhenRegex();
 
-    [GeneratedRegex(@"^produces\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^produces\s+([A-Z]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]
     private static partial Regex ProducesRegex();
 
-    [GeneratedRegex(@"^([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([A-Z]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]
     private static partial Regex EventNameRegex();
 
     [GeneratedRegex(@"^for\s+(\S.*)$", RegexOptions.None, 1000)]

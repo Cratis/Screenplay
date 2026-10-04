@@ -4,6 +4,13 @@
 import { ExpressionSyntax, PropertyMappingSyntax } from './Expressions';
 import { SpecificationDeniedSyntax, SpecificationReturnSyntax } from './Responses';
 import { SyntaxNode } from './SyntaxNode';
+import { SpecificationOperationFailureSyntax } from './SpecificationOperationFailureSyntax';
+import { SpecificationOperationSyntax } from './SpecificationOperationSyntax';
+import { SpecificationCompensatedSyntax } from './SpecificationCompensatedSyntax';
+
+export type { SpecificationOperationFailureSyntax } from './SpecificationOperationFailureSyntax';
+export type { SpecificationOperationSyntax } from './SpecificationOperationSyntax';
+export type { SpecificationCompensatedSyntax } from './SpecificationCompensatedSyntax';
 
 // 'given <Event>', 'then <Event>' or 'when append <Event>', with the values it states.
 export interface SpecificationEventSyntax extends SyntaxNode {
@@ -98,4 +105,7 @@ export interface SpecificationSyntax extends SyntaxNode {
     readonly thenNoResult: SpecificationNoResultSyntax | null;
     readonly thenDenied?: SpecificationDeniedSyntax | null;
     readonly thenReturns?: SpecificationReturnSyntax | null;
+    readonly givenOperationFailures?: readonly SpecificationOperationFailureSyntax[];
+    readonly thenOperations?: readonly SpecificationOperationSyntax[];
+    readonly thenCompensated?: readonly SpecificationCompensatedSyntax[];
 }

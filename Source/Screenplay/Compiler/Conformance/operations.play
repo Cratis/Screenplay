@@ -1,0 +1,78 @@
+// Syntax-only operation intent. Execution is unavailable until ESM v9.
+concept Recipient : String
+concept Channel : Enum
+  email
+  sms
+
+type Contact
+  recipient Recipient
+  channel Channel
+
+system Mailer
+  description "Sends external notifications"
+
+module Notifications
+  feature Registration
+    slice StateChange Register
+      operation Notify
+        description "Notify the owner"
+        uses Mailer
+        contact Contact
+        contacts Contact[] optional
+        @uses String optional
+        execute
+          description "Send through the adapter"
+          implementation
+            hint "Keep α and \"quotes\" // literally"
+            file Operations/Notify.cs
+        compensate
+          description "Undo the provisional notification"
+
+      event Operation
+        operation String
+        compensated String
+
+      event Compensated
+        operation String
+
+      command Register
+        id Uuid identifier
+        contact Contact
+        contacts Contact[] optional
+        operation String
+        system String
+        uses String
+        execute String
+        compensate String
+        produces event Registered
+          contact Contact = contact
+        produces Notify
+          contact = contact
+          contacts = contacts
+        produces operation Welcome
+          uses Mailer
+          recipient Recipient = contact.recipient
+          channel Channel = "email"
+          execute
+            ```typescript
+            // operation system uses compensate are opaque code here.
+            notify("α");
+            ```
+          compensate
+            implementation
+              hint "Undo when registration does not commit"
+
+      specification RequestsNotifications
+        given Operation
+          operation = "existing"
+          compensated = "kept"
+        given operation Notify fails
+        when Register
+          contact = {"recipient":"Ada","channel":"email"}
+        then operation Notify
+          contact.recipient = "Ada"
+        then operation Welcome
+          channel = "email"
+        then compensated Welcome
+        then Compensated
+          operation = "legacy assertion"

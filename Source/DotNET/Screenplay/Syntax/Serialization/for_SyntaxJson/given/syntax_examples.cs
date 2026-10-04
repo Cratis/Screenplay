@@ -31,7 +31,21 @@ internal static class syntax_examples
 
         // Implementation intent adds a single authoritative payload invariant; keep this example valid
         // while still independently populating every other structural member.
-        return node is HandlerSyntax handler ? handler with { Code = null } : node;
+        return node switch
+        {
+            HandlerSyntax handler => handler with { Code = null },
+            OperationPhaseSyntax phase => phase with { Code = null },
+            ProducesSyntax { InlineOperation: { } operation } production => production with
+            {
+                InlineEvent = null,
+                Event = operation.Name,
+                When = null,
+                For = null,
+                Tags = [],
+                Mappings = [.. operation.Inputs.Select(input => new PropertyMappingSyntax(input.Name, new LiteralExpressionSyntax("example", input.Location), input.Location))]
+            },
+            _ => node
+        };
     }
 
     internal static bool SameValues(object? left, object? right)

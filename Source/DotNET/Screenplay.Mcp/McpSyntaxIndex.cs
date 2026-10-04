@@ -18,6 +18,8 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     readonly Dictionary<(string Kind, string Name, string Scope), McpDeclaration> _scaffolds = [];
     McpQueryIndex _queries = null!;
 
+    internal McpAuthoringReadiness Readiness { get; private set; } = null!;
+
     internal IEnumerable<McpDeclaration> Declarations => _declarations;
     internal IEnumerable<McpReference> References => _references;
 
@@ -30,6 +32,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     /// <inheritdoc/>
     public override void VisitApplication(ApplicationSyntax syntax)
     {
+        Readiness ??= new(syntax);
         _ownership.VisitApplication(syntax);
         base.VisitApplication(syntax);
     }
@@ -55,7 +58,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     /// <inheritdoc/>
     public override void VisitSlice(SliceSyntax syntax)
     {
-        Declare("Slice", syntax.Name, syntax, syntax.Description);
+        Declare("Slice", syntax.Name, syntax, syntax.Description, new { syntaxOnly = Readiness.SyntaxOnly(syntax), executionReadiness = Readiness.ExecutionReadiness(syntax) });
         _scope.Add(syntax.Name);
         base.VisitSlice(syntax);
         _scope.RemoveAt(_scope.Count - 1);
@@ -66,7 +69,9 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     {
         switch (node)
         {
-            case CommandSyntax value: Declare("Command", value.Name, value, value.Description, new { produces = value.Produces.Select(produces => produces.Event), generatedProperties = value.Properties.Where(property => property.IsGenerated).Select(property => property.Name), response = value.Response, syntaxOnly = value.Response is not null || value.Properties.Any(property => property.IsGenerated), executionReadiness = value.Response is not null || value.Properties.Any(property => property.IsGenerated) ? "Unavailable until ESM v8 (PLAY0268)." : null }); break;
+            case CommandSyntax value: Declare("Command", value.Name, value, value.Description, new { produces = Readiness.ProducedEvents(value), generatedProperties = value.Properties.Where(property => property.IsGenerated).Select(property => property.Name), response = value.Response, syntaxOnly = Readiness.SyntaxOnly(value), executionReadiness = Readiness.ExecutionReadiness(value, null) }); break;
+            case SystemSyntax value: Declare("System", value.Name, value, value.Description, new { syntaxOnly = true, executionReadiness = Readiness.ExecutionReadiness(value) }); break;
+            case OperationSyntax value: Declare("Operation", value.Name, value, value.Description, new { syntaxOnly = true, executionReadiness = Readiness.ExecutionReadiness(value) }); break;
             case QuerySyntax value: Declare("Query", value.Name, value); break;
             case EventSyntax value: Declare("Event", value.Name, value, value.Description); break;
             case ReadModelSyntax value: Declare("ReadModel", value.Name, value); break;
@@ -93,7 +98,8 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
                 {
                     generatedValues = value.When?.GeneratedValues,
                     thenReturns = value.ThenReturns,
-                    syntaxOnly = value.ThenReturns is not null || (value.When?.GeneratedValues.Any() ?? false),
+                    syntaxOnly = Readiness.SyntaxOnly(value),
+                    executionReadiness = Readiness.ExecutionReadiness(value),
                     given = value.Given.Select(item => item.EventType),
                     when = value.When?.CommandType,
                     whenAppendedEvent = value.WhenAppended?.EventType,
@@ -110,9 +116,14 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         foreach (var reference in McpReferenceKinds.For(node, owningSyntax))
         {
             var role = owner?.Syntax is SpecificationSyntax specification ? McpFixtureOccurrences.Role(specification, node, reference.Role) : reference.Role;
-            _references.Add(new(reference.Name, reference.Kinds, [.. _scope], node.Location, role, owner?.Owner));
+            _references.Add(new(reference.Name, reference.Kinds, [.. _scope], node.Location, role, owner?.Owner)
+            {
+                UseProductionCandidates = node is ProducesSyntax or SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax
+            });
         }
     }
+
+    internal void Initialize(ApplicationSyntax application) => Readiness = new(application);
 
     internal void Complete(ApplicationSyntax? application)
     {
@@ -122,12 +133,32 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         }
 
         _declarations.AddRange([.. McpLogicalReadModels.From(_declarations)]);
-        _queries = new(_declarations, _references);
+        var productions = new McpProductionInventory([.. _declarations]);
+        for (var index = 0; index < _references.Count; index++)
+        {
+            var reference = _references[index];
+            if (reference.Role != "produces") continue;
+            var targets = productions.ResolveReference(reference.Name, reference.Scope);
+            _references[index] = reference with { Kinds = targets is [var target] ? [target.Kind] : ["Event", "Operation"] };
+        }
+        _queries = new(_declarations, _references, productions);
     }
 
     internal McpDeclaration[] Resolve(McpReference reference) => _queries.Resolve(reference);
 
+    internal McpReferenceEdge ResolveProduction(string name, string[] scope)
+    {
+        var reference = new McpReference(name, ["Event", "Operation"], scope, new(0, 0, string.Empty), "production", null)
+        {
+            UseProductionCandidates = true
+        };
+
+        return new(reference, Resolve(reference));
+    }
+
     internal McpDeclaration[] Find(string address, string kind) => _queries.Find(address, kind);
+
+    internal bool HasExactOwnershipCollision(string kind, string name, string[] scope) => _queries.HasExactOwnershipCollision(kind, name, scope);
 
     internal IEnumerable<McpQueryIndexResolution> Incoming(McpDeclaration declaration) => _queries.Incoming(declaration);
 

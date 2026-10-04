@@ -2,12 +2,20 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { ApplicationCompilation, compileApplication, Diagnostic, DiagnosticCodes, normalizePlayPath, PlayPlacement } from '@cratis/screenplay-compiler';
-import { DocumentSymbols, importablePaths, mergeSymbols, scanDocument } from '@cratis/screenplay-language';
+import { analyzeOperations, DocumentSymbols, importablePaths, mergeSymbols, scanDocument } from '@cratis/screenplay-language';
 
 // What the compiler says about a file of the application that the editor's own checks cannot: whether its
 // imports resolve, and whether it holds what the module or feature it is placed in can. An import with the
 // wrong shape is left out - the editor reports that itself, as it is typed.
 const surfacedCodes = new Set<string>([
+    DiagnosticCodes.InvalidSystemDeclaration,
+    DiagnosticCodes.InvalidOperationDeclaration,
+    DiagnosticCodes.InvalidProductionReference,
+    DiagnosticCodes.ProductionDeclarationCollision,
+    DiagnosticCodes.OperationOutsideCommand,
+    DiagnosticCodes.InvalidSystemReference,
+    DiagnosticCodes.InvalidOperationMapping,
+    DiagnosticCodes.InvalidOperationSpecification,
     DiagnosticCodes.LegacyOptionalSuffix,
     DiagnosticCodes.InvalidOptionalModifierOrder,
     DiagnosticCodes.OptionalReadsNotSupported,
@@ -83,12 +91,17 @@ export class WorkspaceApplication {
     symbolsExcept(path: string): DocumentSymbols {
         const key = normalizePlayPath(path);
         const symbols = mergeSymbols(...[...this.#symbols].filter(([other]) => other !== key).map(([, symbols]) => symbols));
-        return { ...symbols, authoringDocuments: this.#compiled().documents.filter(document => document.path !== key) };
+        return { ...symbols, authoringDocuments: this.#compiled().documents.filter(document => document.path !== key), authoringPath: key, authoringPlacement: this.placementOf(key) };
     }
 
     // Inline events are scanned with their slice-owned declarations, so navigation is independent of syntax form.
     eventDeclarations(name: string): { path: string; line: number }[] {
         return [...this.#symbols].flatMap(([path, symbols]) => symbols.events.filter(event => event.name === name).map(event => ({ path, line: event.line })));
+    }
+
+    operationDeclarations(path: string): ReturnType<typeof analyzeOperations> {
+        const key = normalizePlayPath(path);
+        return analyzeOperations((this.#texts.get(key) ?? '').split(/\r?\n/), this.symbolsExcept(key));
     }
 
     // What compiling the application reports in a file about its imports and its placement.

@@ -10,6 +10,8 @@ internal static class ImplementationInvariants
 {
     internal static void Validate(SyntaxNode node)
     {
+        OperationInvariants.Validate(node);
+
         // Legacy structural trees remain transportable. Authoring also requires exact print/parse fidelity.
         // The new wrapper must never silently pick a payload, including before that admission step.
         if (node is HandlerSyntax { Implementation: not null } handler)

@@ -38,6 +38,12 @@ sealed class McpReadOwnership : ScreenplaySyntaxWalker
     public override void VisitQuery(QuerySyntax syntax) => Owned(syntax, () => base.VisitQuery(syntax));
 
     /// <inheritdoc/>
+    public override void VisitOperation(OperationSyntax syntax) => Owned(syntax, () => base.VisitOperation(syntax));
+
+    /// <inheritdoc/>
+    public override void VisitSystem(SystemSyntax syntax) => Owned(syntax, () => base.VisitSystem(syntax));
+
+    /// <inheritdoc/>
     public override void VisitEvent(EventSyntax syntax) => Owned(syntax, () => base.VisitEvent(syntax));
 
     /// <inheritdoc/>

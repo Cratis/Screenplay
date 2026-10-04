@@ -53,6 +53,7 @@
                         "path": "projectId"
                       },
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -159,6 +160,7 @@
                 }
               ],
               "name": "RegisterProject",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -170,8 +172,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegisteringAProject",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -201,6 +205,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -263,8 +268,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAnEmptyProjectName",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
                     {
@@ -275,6 +282,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -319,6 +327,7 @@
               "description": null,
               "events": [],
               "name": "ProjectLookup",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -419,5 +428,6 @@
     }
   ],
   "personas": [],
+  "systems": [],
   "types": []
 }

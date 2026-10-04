@@ -6,6 +6,7 @@ import { validateInlineEvents } from '../Parsing/InlineEventValidator';
 import { LineReader } from '../Parsing/LineReader';
 import { ParserContext } from '../Parsing/ParserContext';
 import { validateResponses } from '../Parsing/ResponseValidator';
+import { validateOperations } from '../Parsing/OperationValidator';
 import { CompilationResult, parseForAuthoring } from '../ScreenplayCompiler';
 import { ApplicationSyntax } from '../Syntax/Structure';
 import { mergeDocuments } from './PlayFolderMerge';
@@ -40,6 +41,7 @@ export function parsePlacedDocuments(documents: readonly PlacedPlayDocument[]): 
     const parsed = documents.map(document => parseForAuthoring(document.source, document.path, document.placement, false));
     const merged = mergeDocuments(parsed);
     const context = new ParserContext(new LineReader([]));
+    validateOperations(merged.value, context);
     validateInlineEvents(merged.value, context);
     validateResponses(merged.value, context, parsed.flatMap(document => document.inputUses));
     const existing = merged.diagnostics;

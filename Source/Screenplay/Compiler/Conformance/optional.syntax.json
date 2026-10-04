@@ -70,6 +70,7 @@
                         ],
                         "tags": []
                       },
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -174,6 +175,7 @@
                 }
               ],
               "name": "Record",
+              "operations": [],
               "projections": [],
               "queries": [
                 {
@@ -282,6 +284,7 @@
     }
   ],
   "personas": [],
+  "systems": [],
   "types": [
     {
       "kind": "TypeSyntax",

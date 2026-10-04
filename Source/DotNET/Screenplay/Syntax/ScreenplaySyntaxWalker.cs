@@ -75,6 +75,8 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitFileImport(import);
         }
 
+        foreach (var system in syntax.Systems) VisitSystem(system);
+
         foreach (var concept in syntax.Concepts)
         {
             VisitConcept(concept);
@@ -485,6 +487,8 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitCommand(command);
         }
+
+        foreach (var operation in syntax.Operations) VisitOperation(operation);
 
         foreach (var @event in syntax.Events)
         {

@@ -96,6 +96,9 @@ public sealed class WorkspaceSyntaxIndex
         RepairableDiagnostics = [.. diagnostics.Concat(workspace.Compilation.Diagnostics).Distinct()];
         RepairableDiagnosticSet = RepairableDiagnostics.ToHashSet();
         _handles = entries.ToDictionary(entry => entry.Handle);
+        var applications = entries.Select(entry => entry.Node).OfType<ApplicationSyntax>()
+            .Select(application => new CompilationResult<ApplicationSyntax>(application, [])).ToArray();
+        Productions = new(PlayFolderMerge.Merge(applications).Value!);
     }
 
     /// <summary>
@@ -121,6 +124,8 @@ public sealed class WorkspaceSyntaxIndex
     public ImmutableArray<Diagnostic> RepairableDiagnostics { get; }
 
     internal ScreenplayWorkspace Workspace { get; }
+
+    internal AuthoringProductionResolver Productions { get; }
 
     internal IReadOnlySet<Diagnostic> RepairableDiagnosticSet { get; }
 
@@ -179,6 +184,16 @@ public sealed class WorkspaceSyntaxIndex
             catalog.EventContracts.ToDictionary(assignment => assignment.Address, assignment => assignment.Id),
             entries);
         return entries.ToImmutable();
+    }
+
+    internal SliceSyntax? OwningSlice(WorkspaceSyntaxEntry entry)
+    {
+        for (var current = entry; current is not null; current = current.Parent is { } parent ? Find(parent) : null)
+        {
+            if (current.Node is SliceSyntax slice) return slice;
+        }
+
+        return null;
     }
 
     internal PlayPlacement Placement(WorkspaceDocument document) => _placements[document.Path.Value].IsPlacementResolved

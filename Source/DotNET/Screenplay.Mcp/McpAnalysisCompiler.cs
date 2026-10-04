@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
@@ -13,9 +14,9 @@ namespace Cratis.Screenplay.Mcp;
 sealed class McpAnalysisCompiler : IScreenplayCompiler
 {
     readonly ScreenplayCompiler _compiler = new();
-    readonly List<CompilationResult<ApplicationSyntax>> _documents = [];
+    readonly List<(string? Path, CompilationResult<ApplicationSyntax> Result)> _documents = [];
 
-    internal IEnumerable<CompilationResult<ApplicationSyntax>> Documents => _documents;
+    internal IEnumerable<(string? Path, CompilationResult<ApplicationSyntax> Result)> Documents => _documents;
 
     internal int ParsedDocumentCount => _documents.Count;
 
@@ -23,7 +24,16 @@ sealed class McpAnalysisCompiler : IScreenplayCompiler
     public CompilationResult<ApplicationSyntax> Parse(string source, string? path = null)
     {
         var result = _compiler.Parse(source, path);
-        _documents.Add(result);
+        _documents.Add((path, result));
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public CompilationResult<ApplicationSyntax> Parse(string source, string? path, PlayPlacement placement)
+    {
+        var result = _compiler.Parse(source, path, placement);
+        _documents.Add((path, result));
+
         return result;
     }
 

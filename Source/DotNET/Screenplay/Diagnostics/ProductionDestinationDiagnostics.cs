@@ -7,16 +7,18 @@ namespace Cratis.Screenplay.Diagnostics;
 
 internal static class ProductionDestinationDiagnostics
 {
-    internal static IEnumerable<Diagnostic> In(ApplicationSyntax application) => application.Modules
-        .SelectMany(module => module.Features.SelectMany(Features))
-        .SelectMany(feature => feature.Slices)
-        .SelectMany(slice => slice.Commands)
-        .SelectMany(In);
+    internal static IEnumerable<Diagnostic> In(ApplicationSyntax application)
+    {
+        var resolver = new AuthoringProductionResolver(application);
+        return application.Modules.SelectMany(module => module.Features.SelectMany(Features))
+            .SelectMany(feature => feature.Slices)
+            .SelectMany(slice => slice.Commands.SelectMany(command => In(command, slice, resolver)));
+    }
 
     static IEnumerable<FeatureSyntax> Features(FeatureSyntax feature) => new[] { feature }
         .Concat(feature.Features.SelectMany(Features));
 
-    static IEnumerable<Diagnostic> In(CommandSyntax command)
+    static IEnumerable<Diagnostic> In(CommandSyntax command, SliceSyntax slice, AuthoringProductionResolver resolver)
     {
         var identifiers = command.Properties.Where(property => property.IsIdentifier && !property.Type.IsOptional && !property.Type.IsCollection).ToArray();
         if (identifiers.Length != 1)
@@ -24,7 +26,7 @@ internal static class ProductionDestinationDiagnostics
             return [];
         }
 
-        return command.Produces.Where(produces => produces.InlineEvent is null && produces.When is null && produces.For is null)
+        return command.Produces.Where(produces => resolver.IsEventProduction(produces, slice) && produces.InlineEvent is null && produces.When is null && produces.For is null)
             .Select(produces => new Diagnostic(
                 DiagnosticSeverity.Information,
                 DiagnosticCodes.OmittedProductionDestination,

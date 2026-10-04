@@ -31,9 +31,12 @@ await build({
     target: 'es2022',
     external: ['monaco-editor'],
     sourcemap: true,
-    // Whitespace and syntax are minified for size; identifiers are kept so stack traces stay readable.
+    // Minify local identifiers as the authoring surface grows, but preserve callable names
+    // and source maps for readable stack traces. Public export names remain unchanged.
     minifyWhitespace: true,
     minifySyntax: true,
+    minifyIdentifiers: true,
+    keepNames: true,
 });
 
 await checkPackage();

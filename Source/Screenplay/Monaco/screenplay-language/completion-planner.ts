@@ -49,12 +49,19 @@ export function completionEntriesFor(chain: string[]): CompletionEntry[] {
             return items.commandItems;
         case 'event':
             return items.eventItems;
+        case 'system':
+            return items.operationItems.filter(item => item.label === 'description');
+        case 'operation':
+            return items.operationItems;
+        case 'execute':
+        case 'compensate':
+            return items.operationPhaseItems;
         case 'produces':
             return items.producesItems;
         case 'handler':
             return items.handlerItems;
         case 'implementation':
-            return chain[1] === 'handler' ? items.implementationItems : [];
+            return chain[1] === 'handler' ? items.implementationItems : ['execute', 'compensate'].includes(chain[1]) ? items.operationImplementationItems : [];
         case 'query':
             return items.queryItems;
         case 'performer':
@@ -173,6 +180,7 @@ export function planCompletions(
     }
 
     const enclosingLine = nearestEnclosingLine(lines, fences, lineIndex, effectiveIndent);
+    if (enclosingLine && /^produces\s+operation\b/.test(enclosingLine)) return { kind: 'entries', entries: items.operationItems };
     if (enclosingLine && /^produces\s+event\b/.test(enclosingLine)) {
         if (/^\s+@?[a-z_]\w*\s+[\w[\]?]*$/.test(textBefore)) return { kind: 'types' };
         return { kind: 'entries', entries: items.inlineEventItems };

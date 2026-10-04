@@ -224,6 +224,7 @@
               "description": null,
               "events": [],
               "name": "Intent",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -241,5 +242,6 @@
     }
   ],
   "personas": [],
+  "systems": [],
   "types": []
 }

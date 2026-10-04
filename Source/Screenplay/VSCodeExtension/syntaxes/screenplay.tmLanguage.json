@@ -19,6 +19,8 @@
         { "include": "#code-block-sql" },
         { "include": "#handler-block" },
         { "include": "#event-block" },
+        { "include": "#command-block" },
+        { "include": "#operation-block" },
         { "include": "#description-block" },
         { "include": "#projection-block" },
         { "include": "#capture-block" },
@@ -26,12 +28,82 @@
         { "include": "#common" }
     ],
     "repository": {
+        "command-block": {
+            "begin": "^([ ]*)(command)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
+            "beginCaptures": { "2": { "name": "keyword.control.screenplay" }, "3": { "name": "entity.name.type.screenplay" } },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [
+                { "include": "#inline-operation-block" },
+                { "include": "#handler-block" },
+                { "include": "#event-block" },
+                { "include": "#description-block" },
+                { "include": "#fenced-csharp" },
+                { "include": "#keyword-input" },
+                { "include": "#keywords" },
+                { "include": "#common" }
+            ]
+        },
+        "keyword-input": {
+            "match": "^\\s*(@?(?:system|operation|command|uses|execute|compensate))\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)(?=\\s*(?:=(?!=|>)|//|$))",
+            "captures": { "1": { "name": "variable.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
+        },
+        "operation-block": {
+            "begin": "^([ ]*)(operation)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
+            "beginCaptures": { "2": { "name": "keyword.control.screenplay" }, "3": { "name": "entity.name.type.screenplay" } },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [{ "include": "#operation-body" }]
+        },
+        "inline-operation-block": {
+            "begin": "^([ ]*)(produces\\s+operation)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
+            "beginCaptures": { "2": { "name": "keyword.control.screenplay" }, "3": { "name": "entity.name.type.screenplay" } },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [{ "include": "#operation-body" }]
+        },
+        "operation-body": {
+            "patterns": [
+                { "include": "#comment" },
+                { "include": "#operation-phase" },
+                { "match": "^\\s*(uses)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)", "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" } } },
+                { "include": "#keyword-input" },
+                { "include": "#description-block" },
+                { "include": "#keywords" },
+                { "include": "#common" }
+            ]
+        },
+        "operation-phase": {
+            "begin": "^([ ]*)(execute|compensate)(?=\\s*(?://.*)?$)",
+            "beginCaptures": { "2": { "name": "keyword.other.screenplay" } },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [
+                { "include": "#handler-implementation" },
+                { "include": "#description-block" },
+                { "include": "#fenced-csharp" },
+                { "include": "#fenced-react" },
+                { "include": "#fenced-typescript" },
+                { "include": "#fenced-html" },
+                { "include": "#fenced-sql" },
+                { "include": "#keywords" },
+                { "include": "#common" }
+            ]
+        },
         "comment": {
             "match": "//.*",
             "name": "comment.line.double-slash.screenplay"
         },
         "keywords": {
             "patterns": [
+                {
+                    "match": "^(system)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.control.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(given)\\s+(operation)\\s+([\\w.]+)\\s+(fails)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "entity.name.type.screenplay" }, "4": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(then)\\s+(operation|compensated)\\s+([\\w.]+)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "entity.name.type.screenplay" } }
+                },
                 {
                     "comment": "Generated is a contextual modifier after a complete type, not a globally reserved name.",
                     "match": "^\\s*@?[a-z_]\\w*\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)\\s+(generated)(?:\\s+(identifier))?(?=\\s*(?://.*)?$)",

@@ -113,11 +113,11 @@ describe('when authoring inline events', () => {
         expect(validateLines(lines)).toEqual([]);
     });
     it('should hint allocation when all plain productions omit destinations', () => {
-        expect(destinationHints(['command Rename', '  produces First', '  produces Legacy']).map(hint => hint.label)).toEqual(['for <new event source>', 'for <new event source>']);
+        expect(destinationHints(['command Rename', '  produces First', '  produces Legacy', 'event First', 'event Legacy']).map(hint => hint.label)).toEqual(['for <new event source>', 'for <new event source>']);
     });
     it('should analyze commented headers, destinations, mappings and metadata like the compiler', () => {
         const lines = source.map(line => line === '    documentation' ? `${line} // details` : line);
-        lines.push('    projectId Uuid = projectId // note', '  produces Other // sibling', '    for projectId // same identifier');
+        lines.push('    projectId Uuid = projectId // note', '  produces Other // sibling', '    for projectId // same identifier', 'event Other');
         expect(validateLines(lines).filter(issue => ['PLAY0470', 'PLAY0477'].includes(issue.code ?? ''))).toEqual([]);
         expect(validateLines(lines).find(issue => issue.code === 'PLAY0469')?.severity).toBe('warning');
         expect(destinationHints(lines).map(hint => hint.label)).toEqual(['for projectId']);

@@ -111,18 +111,20 @@ internal static class ScreenplayValidator
             .ToDictionary(group => group.Key, group => group.OrderByDescending(@event => @event.Generation).First(), StringComparer.Ordinal);
 
         var eventDeclarations = slices.SelectMany(EventDeclarations.In).ToLookup(@event => @event.Name, StringComparer.Ordinal);
+        var productionResolver = new AuthoringProductionResolver(application);
         InlineEventValidator.Validate(application, slices, context);
         foreach (var slice in slices)
         {
             ValidateEventGenerations(slice, context);
             ValidateConstraintProperties(slice, eventDeclarations, context);
-            ValidateSlice(slice, knownEvents, knownPolicies, knownTypes, knownReadModels, context);
-            ValidateReactionConsequences(slice, knownEvents, knownCommands, context);
+            ValidateSlice(slice, knownEvents, knownPolicies, knownTypes, knownReadModels, context, productionResolver);
+            ValidateReactionConsequences(slice, knownEvents, knownCommands, context, productionResolver);
             ValidateReactionTriggers(slice, knownEvents, knownReadModels, declaredTriggers, eventsByName, context);
         }
 
         var scopedSlices = ScopedSlices(application).ToList();
         var declarations = new ConsistencyDeclarations(application, scopedSlices);
+        OperationValidator.Validate(application, declarations, context);
         ImportValidator.Validate(application, declarations, context);
         CommandConsistencyValidator.Validate(declarations, context);
         CommandResponseValidator.Validate(application, declarations, context);
@@ -793,11 +795,12 @@ internal static class ScreenplayValidator
         SliceSyntax slice,
         HashSet<string> knownEvents,
         HashSet<string> knownCommands,
-        ParserContext context)
+        ParserContext context,
+        AuthoringProductionResolver productionResolver)
     {
         foreach (var trigger in slice.Reactions.SelectMany(reaction => reaction.Triggers))
         {
-            foreach (var produces in (trigger.Produces ?? []).Where(produces => !knownEvents.Contains(produces.Event)))
+            foreach (var produces in (trigger.Produces ?? []).Where(produces => productionResolver.IsEventProduction(produces, slice) && !produces.Event.Contains('.', StringComparison.Ordinal) && !knownEvents.Contains(produces.Event)))
             {
                 context.Warning(
                     DiagnosticCodes.UnknownEvent,
@@ -1421,7 +1424,8 @@ internal static class ScreenplayValidator
         HashSet<string> knownPolicies,
         HashSet<string> knownTypes,
         HashSet<string> knownReadModels,
-        ParserContext context)
+        ParserContext context,
+        AuthoringProductionResolver productionResolver)
     {
         foreach (var @event in EventDeclarations.In(slice))
         {
@@ -1459,7 +1463,7 @@ internal static class ScreenplayValidator
         }
 
         foreach (var produces in slice.Commands.SelectMany(command => command.Produces)
-            .Where(produces => !knownEvents.Contains(produces.Event)))
+            .Where(produces => productionResolver.IsEventProduction(produces, slice) && !produces.Event.Contains('.', StringComparison.Ordinal) && !knownEvents.Contains(produces.Event)))
         {
             context.Warning(DiagnosticCodes.UnknownEvent, $"Unknown event '{produces.Event}' - declare it with 'event {produces.Event}'", produces.Location);
         }

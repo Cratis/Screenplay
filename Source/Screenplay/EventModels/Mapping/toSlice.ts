@@ -85,7 +85,7 @@ function eventsOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): E
         return declared;
     }
     const declaredNames = new Set(declared.map(event => event.name.toLowerCase()));
-    const produced = producedEvents(slice).filter(name => !declaredNames.has(name.toLowerCase())).map(name => {
+    const produced = producedEvents(slice, owners.productions).filter(name => !declaredNames.has(name.toLowerCase())).map(name => {
         declaredNames.add(name.toLowerCase());
         return { id: scope.idOf('produces', name), name, schema: owners.schemaFor(name) } satisfies EventItemDocument;
     });
@@ -101,7 +101,7 @@ function eventsOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): E
 // its declaration when the model has one.
 function commandOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): CommandItemDocument | undefined {
     if (slice.commands.length > 0) {
-        return toCommand(slice.commands[0], scope, owners.schemas);
+        return toCommand(slice.commands[0], scope, owners.schemas, owners);
     }
     const invoked = slice.reactions.flatMap(reaction => reaction.triggers).flatMap(trigger => trigger.invokes)[0];
     if (invoked === undefined) {
@@ -110,7 +110,7 @@ function commandOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): 
     const declared: CommandSyntax | undefined = owners.commandNamed(invoked.command);
     return declared === undefined
         ? { id: scope.idOf('command', invoked.command), name: invoked.command, schema: {}, stateSchema: {}, logicDescription: '', rules: [] }
-        : toCommand(declared, scope, owners.schemas);
+        : toCommand(declared, scope, owners.schemas, owners);
 }
 
 function withConstraints(event: EventItemDocument, constraints: readonly EventConstraint[]): EventItemDocument {

@@ -24,6 +24,7 @@ internal static class WorkspaceProductionRepairs
 
         var subject = subjects[0];
         var produces = (ProducesSyntax)subject.Node;
+        if (!index.Productions.IsEventProduction(produces, (SliceSyntax)slice.Node)) return [];
         if (diagnostic.Code == DiagnosticCodes.OmittedProductionDestination)
         {
             var identifiers = command.Properties.Where(property => property.IsIdentifier && !property.Type.IsOptional && !property.Type.IsCollection).ToArray();
