@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import * as vscode from 'vscode';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { RepairFailure } from './RepairClient';
 import { RepairPreview } from './RepairSession';
 
@@ -52,6 +52,14 @@ export class RepairPreviewProvider implements vscode.FileSystemProvider, vscode.
         if (!this.#documents.has(uri.toString())) return false;
         this.clear();
         return true;
+    }
+    async showFailure(kind: string, details: unknown): Promise<void> {
+        this.clear();
+        const content = JSON.stringify({ failureKind: kind, details, note: 'This is a refused or uncertain operation, not an accepted proposal or runtime confirmation. No Apply authority is issued. Inspect recovery separately if Apply was dispatched.' }, null, 2);
+        if (Buffer.byteLength(content, 'utf8') > 16 * 1024 * 1024) throw new RepairFailure('PreviewTooLarge', 'Conflict details exceed the read-only review budget.');
+        const uri = vscode.Uri.from({ scheme: this.scheme, path: `/${randomUUID()}/failure.json` });
+        this.#documents.set(uri.toString(), content);
+        await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri), { preview: false });
     }
     async show(preview: RepairPreview): Promise<void> {
         this.clear();

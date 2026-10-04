@@ -87,7 +87,13 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
     };
     const report = async (error: unknown) => {
         const kind = error instanceof RepairFailure ? error.kind : 'RepairFailed';
-        await vscode.window.showWarningMessage(`${kind}: ${error instanceof Error ? error.message : String(error)}`);
+        const message = `${kind}: ${error instanceof Error ? error.message : String(error)}`;
+        if (!(error instanceof RepairFailure) || error.details === undefined) { await vscode.window.showWarningMessage(message); return; }
+        const detail = error.details instanceof RepairFailure ? { failureKind: error.details.kind, message: error.details.message, details: error.details.details } : error.details;
+        if (await vscode.window.showWarningMessage(message, 'Inspect conflict details') === 'Inspect conflict details') {
+            try { await previews.showFailure(kind, detail); }
+            catch (viewError) { await vscode.window.showWarningMessage(`Cannot display complete conflict details: ${String(viewError)}`); }
+        }
     };
     const connect = async (): Promise<RepairSession> => {
         const launch = userRepairConfiguration();

@@ -250,6 +250,7 @@ export class RepairSession {
     }
     async #items(read: (offset: number) => Promise<Record<string, unknown>>, revision: string): Promise<unknown[]> {
         const result: unknown[] = [];
+        let collectedBytes = 0;
         let total: number | undefined;
         do {
             const page = await read(result.length);
@@ -258,6 +259,8 @@ export class RepairSession {
             if (size > 10_000 || (total !== undefined && size !== total)) throw new RepairFailure('PreviewTooLarge', 'Item pages exceed the complete-review budget.');
             total = size;
             const items = array(page.items);
+            collectedBytes += Buffer.byteLength(JSON.stringify(items), 'utf8');
+            if (collectedBytes > previewBudget) throw new RepairFailure('PreviewTooLarge', 'Item pages exceed the 16 MiB metadata-cache budget; complete review is refused.');
             if (items.length > 100 || result.length + items.length > size) throw new RepairFailure('MalformedContract', 'Invalid item page length.');
             result.push(...items);
             if (page.nextOffset === null) {

@@ -56,7 +56,7 @@ beforeEach(async () => {
                 if (malformed === 'wrongByteRevision') content.revision = 'other';
                 result = { exists: true, path: 'application.play', content };
             } else {
-                const items = args.view === 'changes' ? [{ documentId: 'document', beforePath: 'application.play', afterPath: 'application.play', beforeBytes: malformed === 'oversize' ? 16 * 1024 * 1024 + 1 : before.length, afterBytes: after.length }] : [];
+                const items = args.view === 'changes' ? [{ documentId: 'document', beforePath: 'application.play', afterPath: 'application.play', beforeBytes: malformed === 'oversize' ? 16 * 1024 * 1024 + 1 : before.length, afterBytes: after.length }] : malformed === 'oversizeMetadata' && args.view === 'diagnostics' ? [{ ...issue, message: 'x'.repeat(16 * 1024 * 1024) }] : [];
                 result = page(items, args, 'candidate');
             }
             return { ...binding, result };
@@ -95,7 +95,7 @@ it('consumes all split byte pages before issuing a token, including absent-befor
     expect(calls.filter(name => name === 'propose-repair')).toHaveLength(1);
     expect(calls.filter(name => name === 'apply')).toHaveLength(1);
 });
-for (const failure of ['truncated', 'nonprogress', 'wrongByteRevision', 'identityHash', 'oversize']) it(`refuses ${failure} reviews and never supplies Apply authority`, async () => {
+for (const failure of ['truncated', 'nonprogress', 'wrongByteRevision', 'identityHash', 'oversize', 'oversizeMetadata']) it(`refuses ${failure} reviews and never supplies Apply authority`, async () => {
     const choices = (await session.discover()).choices; malformed = failure;
     await expect(session.preview(choices[0].token)).rejects.toBeInstanceOf(RepairFailure);
     await expect(session.apply('retained')).rejects.toMatchObject({ kind: 'UnauthorizedApply' });

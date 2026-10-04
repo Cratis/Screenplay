@@ -189,11 +189,16 @@ it does not download a server, install .NET, invoke Docker or run an AI agent.
    canonical formatting for every touched document, then wait for the complete
    read-only source **and identity-state** previews. Discovery and proposals write
    nothing. Incomplete or oversized review disables Apply (16 MiB combined bytes,
-   at most 64 changed source documents).
+   at most 64 changed source documents). Metadata views are bounded to 10,000
+   items and 16 MiB each.
 4. Review every diff and the summary: routing consequences, byte hashes/BOM/line
    endings, authoring diagnostics and executable readiness. Readiness describes
    the compiler's executable subset, not implementation execution or runtime
    confirmation. Select **Apply reviewed repair**, then confirm **Apply**.
+
+When C# returns a refusal, **Inspect conflict details** opens its structured
+failure, conflict kinds and diagnostics in a read-only view. A refused operation
+has no Apply authority.
 
 Each root has one persistent connection. Root/configuration changes close the old
 connection; file creation, imports, attachments and identity changes invalidate
