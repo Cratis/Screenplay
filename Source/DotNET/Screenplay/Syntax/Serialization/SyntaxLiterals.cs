@@ -44,8 +44,24 @@ internal static class SyntaxLiterals
                 ["required"] = new[] { "literalType", "value" },
                 ["properties"] = new Dictionary<string, object?>
                 {
-                    ["literalType"] = new Dictionary<string, object?> { ["enum"] = new[] { "Int32", "Int64", "Decimal", "Single", "ExactNumber" } },
+                    ["literalType"] = new Dictionary<string, object?> { ["enum"] = new[] { "Int32", "Int64", "Decimal", "Single" } },
                     ["value"] = new Dictionary<string, object?> { ["type"] = "string", ["pattern"] = "^-?[0-9]+(\\.[0-9]+)?([Ee][+-]?[0-9]+)?$" }
+                }
+            },
+            new Dictionary<string, object?>
+            {
+                ["type"] = "object",
+                ["description"] = "An explicit ExactNumber in canonical fixed-point text. The codec additionally enforces the normalized Decimal coefficient bound.",
+                ["additionalProperties"] = false,
+                ["required"] = new[] { "literalType", "value" },
+                ["properties"] = new Dictionary<string, object?>
+                {
+                    ["literalType"] = new Dictionary<string, object?> { ["const"] = "ExactNumber" },
+                    ["value"] = new Dictionary<string, object?>
+                    {
+                        ["type"] = "string",
+                        ["pattern"] = "^(?:0|-?(?:[1-9][0-9]{0,28}|(?:0|[1-9][0-9]{0,28})\\.[0-9]{0,27}[1-9]))$"
+                    }
                 }
             }
         }

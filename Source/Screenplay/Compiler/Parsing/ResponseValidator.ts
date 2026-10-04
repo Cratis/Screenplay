@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { exactIsIntegral } from '../Syntax/ExactMathFacts';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { CommandSyntax } from '../Syntax/Commands';
 import { ConceptSyntax, PropertySyntax, TypeRefSyntax } from '../Syntax/Declarations';
@@ -199,8 +200,8 @@ export function compatibleValue(value: ExpressionSyntax, type: TypeRefSyntax, co
             case 'Uuid': return typeof value.value === 'string' && uuidValue(value.value);
             case 'String': return typeof value.value === 'string';
             case 'Bool': return typeof value.value === 'boolean';
-            case 'Int': return typeof value.value === 'number' && Number.isFinite(value.value) && Number.isInteger(value.value);
-            case 'Decimal': return typeof value.value === 'number' && Number.isFinite(value.value);
+            case 'Int': return typeof value.value === 'number' ? Number.isFinite(value.value) && Number.isInteger(value.value) : typeof value.value === 'object' && value.value !== null && exactIsIntegral(value.value);
+            case 'Decimal': return typeof value.value === 'number' ? Number.isFinite(value.value) : typeof value.value === 'object' && value.value !== null && value.value.literalType === 'ExactNumber';
             case 'Date': return typeof value.value === 'string' && responseDateValue(value.value, false);
             case 'DateTime': return typeof value.value === 'string' && responseDateValue(value.value, true);
             default: return !primitiveTypes.has(primitive);
