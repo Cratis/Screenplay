@@ -35,41 +35,52 @@ static class WorkspacePendingRuleTransitions
         var originals = Under(before, original).Where(entry => entry.Node is ValidationRuleSyntax && sources.Image(entry) is null && !removals.Contains(entry.Handle)).ToList();
         var candidates = Under(after, candidate).Where(entry => entry.Node is ValidationRuleSyntax && sources.Origin(entry) is null).ToList();
 
-        // Only mutual, unique matches establish unchanged occurrence correspondence. Never consume the
-        // first equal duplicate, or treat an old name, source coordinate, or collection index as proof.
-        Match((previous, current) => SameOwner(previous, current) && SyntaxJson.StructurallyEqual(previous.Node, current.Node) &&
-            !(Bare(current.Node) && originals.Exists(other => Pending(other.Node) && SameOwner(other, current) && SameHeader(other.Node, current.Node))));
-
-        // A renamed/moved rule may keep every item of guidance. Discharge that obligation without
-        // inventing semantic identity or allocating an implementation requirement for pending intent.
-        Match((previous, current) => SameOwner(previous, current) && Pending(previous.Node) &&
-            (RetainsMetadata(previous.Node, current.Node) || (SameHeader(previous.Node, current.Node) && !Bare(current.Node))));
-
-        // Across owner/header moves, unique retention of all metadata can preserve the intent without
-        // proving an occurrence or owner identity. A competing bare version keeps that move ambiguous.
-        Match((previous, current) => Pending(previous.Node) && RetainsMetadata(previous.Node, current.Node) &&
-            !candidates.Exists(other => Bare(other.Node) && SameHeader(previous.Node, other.Node)));
-
-        if (originals.Exists(entry => Pending(entry.Node)) && candidates.Exists(entry => Bare(entry.Node)))
+        // Only mutual, unique structural matches prove unchanged occurrences. Along with operation
+        // provenance, these can prove absence: every final rule belongs to an unchanged original and
+        // no unclaimed candidate can be a transformation of the missing pending rules. Coordinates,
+        // collection ordinals and failed header/hint matching are never evidence of deletion.
+        Match((previous, current) => SameOwner(previous, current) && SyntaxJson.StructurallyEqual(previous.Node, current.Node));
+        if (candidates.Count == 0)
         {
-            throw new InvalidWorkspaceAuthoring("Pending named-rule correspondence is ambiguous. Preserve its implementation metadata or remove the original rule with a validated RemoveWorkspaceNode handle before replacing its ancestor or document.");
+            return;
         }
 
-        // Partial deletion of indistinguishable pending duplicates is not an ordinal match either.
-        if (originals.Exists(entry => Pending(entry.Node) && candidates.Exists(current => SameOwner(entry, current) && !Bare(current.Node) && MayCorrespond(entry.Node, current.Node))))
+        // From here on, matches conserve obligations, not occurrence identity. Prefer the original
+        // member over copied guidance, and apply the competing-bare safeguard at every strength.
+        Match((previous, current) => Pending(previous.Node) && SameOwner(previous, current) && SameHeader(previous.Node, current.Node) && !Bare(current.Node));
+        Match((previous, current) => Pending(previous.Node) && SameOwner(previous, current) && RetainsMetadata(previous.Node, current.Node));
+        Match((previous, current) => Pending(previous.Node) && RetainsMetadata(previous.Node, current.Node));
+
+        // Names and hints may both change, including on reordered equal pending predicates. Conserve
+        // their multiplicity within the proven owner, without assigning pending IDs or claiming an
+        // occurrence match. A bare competitor makes that otherwise unconstrained edit ambiguous.
+        var conserved = new Dictionary<WorkspaceSyntaxEntry, WorkspaceSyntaxEntry>();
+        foreach (var previous in originals.Where(entry => Pending(entry.Node)))
         {
-            var pending = originals.Where(entry => Pending(entry.Node)).ToArray();
-            if (pending.Any(entry => candidates.Exists(current => SameOwner(entry, current) && !Bare(current.Node) && MayCorrespond(entry.Node, current.Node)) &&
-                candidates.Count(current => SameOwner(entry, current) && !Bare(current.Node) && MayCorrespond(entry.Node, current.Node)) <
-                pending.Count(other => Owner(before, other)?.Handle == Owner(before, entry)?.Handle && MayCorrespond(other.Node, entry.Node))))
+            if (!Conserve(previous, []))
             {
-                throw new InvalidWorkspaceAuthoring("Deleting an ambiguous pending named-rule occurrence requires its original validated RemoveWorkspaceNode handle.");
+                throw new InvalidWorkspaceAuthoring("Pending named-rule correspondence is ambiguous. Preserve its implementation metadata or remove the original rule with a validated RemoveWorkspaceNode handle before replacing its ancestor or document.");
             }
+        }
+
+        bool Conserve(WorkspaceSyntaxEntry previous, HashSet<WorkspaceSyntaxEntry> visited)
+        {
+            foreach (var current in candidates.Where(entry => !Bare(entry.Node) && SameOwner(previous, entry) && Safe(previous, entry) &&
+                !candidates.Exists(other => Bare(other.Node))))
+            {
+                if (visited.Add(current) && (!conserved.TryGetValue(current, out var occupant) || Conserve(occupant, visited)))
+                {
+                    conserved[current] = previous;
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         void Match(Func<WorkspaceSyntaxEntry, WorkspaceSyntaxEntry, bool> equal)
         {
-            var matches = candidates.ToDictionary(current => current, current => originals.Where(previous => !sources.IsAmbiguous(current) && equal(previous, current)).ToArray());
+            var matches = candidates.ToDictionary(current => current, current => originals.Where(previous => Safe(previous, current) && equal(previous, current)).ToArray());
             foreach (var (current, previous) in matches)
             {
                 if (previous.Length == 1 && matches.Count(pair => pair.Value.Contains(previous[0])) == 1)
@@ -79,6 +90,10 @@ static class WorkspacePendingRuleTransitions
                 }
             }
         }
+
+        bool Safe(WorkspaceSyntaxEntry previous, WorkspaceSyntaxEntry current) => !sources.IsAmbiguous(current) &&
+            !(Bare(current.Node) && originals.Exists(other => Pending(other.Node) && SameHeader(other.Node, current.Node))) &&
+            !(Pending(previous.Node) && candidates.Exists(other => Bare(other.Node) && SameHeader(previous.Node, other.Node)));
 
         bool SameOwner(WorkspaceSyntaxEntry previous, WorkspaceSyntaxEntry current)
         {
@@ -97,8 +112,6 @@ static class WorkspacePendingRuleTransitions
     static bool SameHeader(SyntaxNode previous, SyntaxNode current) => previous is ValidationRuleSyntax prior && current is ValidationRuleSyntax rule &&
         prior.Property == rule.Property && prior.Rule == rule.Rule &&
         (prior.Value is null ? rule.Value is null : rule.Value is not null && SyntaxJson.StructurallyEqual(prior.Value, rule.Value));
-
-    static bool MayCorrespond(SyntaxNode previous, SyntaxNode current) => SameHeader(previous, current) || RetainsMetadata(previous, current);
 
     static bool RetainsMetadata(SyntaxNode previous, SyntaxNode current) => previous is ValidationRuleSyntax prior && current is ValidationRuleSyntax rule &&
         rule.Rule == ValidationRuleKind.Rule && prior.Implementation is not null && rule.Implementation is not null &&

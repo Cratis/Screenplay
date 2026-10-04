@@ -13,9 +13,16 @@ internal sealed partial class WorkspaceAstEdits
 {
     static bool IsRule(JsonNode? node) => node is JsonObject rule && rule["kind"]?.GetValue<string>() == "ValidationRuleSyntax";
 
-    static bool AmbiguousBareRule(JsonArray originals, JsonNode? candidate) => IsRule(candidate) && candidate!["implementation"] is null && candidate["file"] is null && candidate["code"] is null &&
-        originals.Any(previous => IsRule(previous) && previous!["implementation"] is not null && previous["file"] is null && previous["code"] is null &&
-            JsonNode.DeepEquals(previous["property"], candidate["property"]) && JsonNode.DeepEquals(previous["rule"], candidate["rule"]) && JsonNode.DeepEquals(previous["value"], candidate["value"]));
+    static bool PendingRule(JsonNode? node) => IsRule(node) && node!["implementation"] is not null && node["file"] is null && node["code"] is null;
+    static bool BareRule(JsonNode? node) => IsRule(node) && node!["implementation"] is null && node["file"] is null && node["code"] is null;
+    static bool SameRuleHeader(JsonNode previous, JsonNode current) => JsonNode.DeepEquals(previous["property"], current["property"]) &&
+        JsonNode.DeepEquals(previous["rule"], current["rule"]) && JsonNode.DeepEquals(previous["value"], current["value"]);
+
+    static bool AmbiguousBareRule(JsonArray originals, JsonNode? candidate) => BareRule(candidate) &&
+        originals.Any(previous => PendingRule(previous) && SameRuleHeader(previous!, candidate!));
+
+    static bool CompetingBareRule(JsonArray candidates, JsonNode? previous) => PendingRule(previous) &&
+        candidates.Any(current => BareRule(current) && SameRuleHeader(previous!, current!));
 
     /// <summary>
     /// Carries locations across replacement JSON, without adding source metadata to the typed JSON contract.
@@ -63,6 +70,9 @@ internal sealed partial class WorkspaceAstEdits
         {
             var matched = new HashSet<int>();
             var carried = new HashSet<int>();
+
+            // Equal JSON is not occurrence evidence when copied pending guidance competes with a
+            // surviving bare original. Actual reused node/member lineage is recorded separately.
             Match((previous, current) => JsonNode.DeepEquals(previous, current) && !AmbiguousBareRule(oldArray, current));
             Match((previous, current) => previous is JsonObject prior && current is JsonObject named && named["name"] is not null &&
                 JsonNode.DeepEquals(prior["kind"], named["kind"]) && JsonNode.DeepEquals(prior["name"], named["name"]));
@@ -80,7 +90,7 @@ internal sealed partial class WorkspaceAstEdits
             void Match(Func<JsonNode?, JsonNode?, bool> equal)
             {
                 var matches = Enumerable.Range(0, newArray.Count).Where(position => !carried.Contains(position) && newArray[position] is not null)
-                    .ToDictionary(position => position, position => Enumerable.Range(0, oldArray.Count).Where(candidate => !matched.Contains(candidate) && equal(oldArray[candidate], newArray[position])).ToArray());
+                    .ToDictionary(position => position, position => Enumerable.Range(0, oldArray.Count).Where(candidate => !matched.Contains(candidate) && !CompetingBareRule(newArray, oldArray[candidate]) && equal(oldArray[candidate], newArray[position])).ToArray());
                 foreach (var (position, candidates) in matches)
                 {
                     if (candidates.Length == 1 && matches.Count(pair => pair.Value.Contains(candidates[0])) == 1)

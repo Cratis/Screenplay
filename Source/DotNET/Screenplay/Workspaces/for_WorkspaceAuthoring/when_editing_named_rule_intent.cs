@@ -383,6 +383,101 @@ public class when_editing_named_rule_intent
         }).Accepted.ShouldBeTrue();
     }
 
+    [Theory]
+    [InlineData("copied", false, false)]
+    [InlineData("copied", true, false)]
+    [InlineData("copied", false, true)]
+    [InlineData("copied", true, true)]
+    [InlineData("copied-member", false, false)]
+    [InlineData("copied-member", true, false)]
+    [InlineData("copied-member", false, true)]
+    [InlineData("copied-member", true, true)]
+    [InlineData("duplicates", false, false)]
+    [InlineData("duplicates", true, false)]
+    [InlineData("duplicates", false, true)]
+    [InlineData("duplicates", true, true)]
+    [InlineData("reordered", false, false)]
+    [InlineData("reordered", true, false)]
+    [InlineData("reordered", false, true)]
+    [InlineData("reordered", true, true)]
+    public void should_conserve_pending_obligations_despite_copied_or_edited_guidance(string change, bool document, bool samePath)
+    {
+        var workspace = Workspace(Prefix + "            implementation\n              hint \"Keep\"" + (change.StartsWith("copied", StringComparison.Ordinal) ? "" : "\n          label rule Check\n            implementation\n              hint \"Keep\""));
+        var root = WorkspaceSyntaxIndex.Create(workspace).Entries.Single(entry => entry.Parent is null);
+        var source = change.StartsWith("copied", StringComparison.Ordinal) ? Prefix + $"          label rule {(change == "copied" ? "Other" : "Check")}\n            implementation\n              hint \"Keep\"" :
+            Prefix.Replace("rule Check", "rule Renamed", StringComparison.Ordinal) + "            implementation\n              hint \"Edited\"";
+        if (change == "reordered") source += "\n          label not empty";
+        var parsed = new ScreenplayCompiler().Parse(source, samePath ? "model.play" : null).Value!;
+        var replacement = samePath ? parsed : (ApplicationSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(parsed));
+        var result = workspace.ProposeAuthoring(Request(workspace) with
+        {
+            Operations = document ? [] : [new ReplaceWorkspaceNode(root.Handle, root.Node, replacement)],
+            Documents = document ? [new ReplaceWorkspaceSyntaxDocument(root.Handle.Document, replacement)] : []
+        });
+        Assert.False(result.Accepted, $"{change}: {string.Join("; ", result.Conflicts.Select(conflict => conflict.Message))}");
+        result.Conflicts.Single().Message.Contains("pending", StringComparison.OrdinalIgnoreCase).ShouldBeTrue();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void should_conserve_equal_pending_occurrences_without_allocating_ids_when_both_are_edited(bool document)
+    {
+        var workspace = Workspace(Prefix + "            implementation\n              hint \"Keep\"\n          label rule Check\n            implementation\n              hint \"Keep\"\n        validate\n          label rule Attached\n            file A.cs");
+        var root = WorkspaceSyntaxIndex.Create(workspace).Entries.Single(entry => entry.Parent is null);
+        var source = Prefix.Replace("rule Check", "rule Second", StringComparison.Ordinal) + "            implementation\n              hint \"Second edited\"\n          label rule First\n            implementation\n              hint \"First edited\"\n        validate\n          label rule Attached\n            file A.cs";
+        var replacement = (ApplicationSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(new ScreenplayCompiler().Parse(source).Value!));
+        var before = workspace.Compilation.ImplementationRequirements.Single();
+        var result = workspace.ProposeAuthoring(Request(workspace) with
+        {
+            Operations = document ? [] : [new ReplaceWorkspaceNode(root.Handle, root.Node, replacement)],
+            Documents = document ? [new ReplaceWorkspaceSyntaxDocument(root.Handle.Document, replacement)] : []
+        });
+        Assert.True(result.Accepted, string.Join("; ", result.Conflicts.Select(conflict => conflict.Message)));
+        WorkspaceNamedRuleIntentInventory.Create(result.Workspace!).Entries.Where(entry => entry.State == "pending").All(entry => entry.RequirementId is null).ShouldBeTrue();
+        var after = result.Workspace!.Compilation.ImplementationRequirements.Single();
+        after.RequirementId.ShouldEqual(before.RequirementId);
+        after.ContentHash.ShouldEqual(before.ContentHash);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void should_require_the_correct_original_removal_when_equal_pending_rules_are_renamed_and_hint_edited(bool document)
+    {
+        var workspace = Workspace(Prefix + "            implementation\n              hint \"Keep\"\n          label rule Check\n            implementation\n              hint \"Keep\"\n      command Other\n        label String\n        validate\n          label rule Check\n            implementation\n              hint \"Keep\"");
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var root = index.Entries.Single(entry => entry.Parent is null);
+        var rules = index.Entries.Where(entry => entry.Node is ValidationRuleSyntax).ToArray();
+        var source = Prefix.Replace("rule Check", "rule Renamed", StringComparison.Ordinal) + "            implementation\n              hint \"Edited\"\n      command Other\n        label String\n        validate\n          label rule Check\n            implementation\n              hint \"Keep\"";
+        var replacement = (ApplicationSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(new ScreenplayCompiler().Parse(source).Value!));
+        WorkspaceAuthoringResult Remove(WorkspaceNodeHandle handle, SyntaxNode expected) => workspace.ProposeAuthoring(Request(workspace) with
+        {
+            Operations = document ? [new RemoveWorkspaceNode(handle, expected)] : [new RemoveWorkspaceNode(handle, expected), new ReplaceWorkspaceNode(root.Handle, root.Node, replacement)],
+            Documents = document ? [new ReplaceWorkspaceSyntaxDocument(root.Handle.Document, replacement)] : []
+        });
+        Remove(rules[0].Handle, rules[0].Node).Accepted.ShouldBeTrue();
+        Remove(rules[2].Handle, rules[2].Node).Accepted.ShouldBeFalse();
+        Remove(rules[0].Handle with { Revision = WorkspaceRevision.Parse("wsrev1:" + new string('0', 64)) }, rules[0].Node).Accepted.ShouldBeFalse();
+        Remove(rules[0].Handle, ((ValidationRuleSyntax)rules[0].Node) with { Property = "forged" }).Accepted.ShouldBeFalse();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void should_prove_full_pending_deletion_from_structural_surviving_members(bool document)
+    {
+        var workspace = Workspace(Prefix + "            implementation\n              hint \"Keep\"\n          label rule Check\n            implementation\n              hint \"Keep\"\n          label not empty");
+        var root = WorkspaceSyntaxIndex.Create(workspace).Entries.Single(entry => entry.Parent is null);
+        var source = Prefix.Replace("label rule Check", "label not empty", StringComparison.Ordinal);
+        var replacement = (ApplicationSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(new ScreenplayCompiler().Parse(source, "model.play").Value!));
+        workspace.ProposeAuthoring(Request(workspace) with
+        {
+            Operations = document ? [] : [new ReplaceWorkspaceNode(root.Handle, root.Node, replacement)],
+            Documents = document ? [new ReplaceWorkspaceSyntaxDocument(root.Handle.Document, replacement)] : []
+        }).Accepted.ShouldBeTrue();
+    }
+
     static ScreenplayWorkspace Workspace(string source) => ScreenplayWorkspace.Create("A", [Document("model.play", source)], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("A")));
     static WorkspaceDocument Document(string path, string source) => WorkspaceDocument.Create(path.Replace('/', '-'), PortablePlayPath.Parse(path), Encoding.UTF8.GetBytes(source));
     static WorkspaceAuthoringRequest Request(ScreenplayWorkspace workspace) => new()
