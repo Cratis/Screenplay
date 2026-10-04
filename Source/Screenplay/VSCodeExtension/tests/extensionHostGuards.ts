@@ -9,6 +9,8 @@ import * as path from 'node:path';
 import childProcess from 'node:child_process';
 import { createRequire } from 'node:module';
 import { userRepairConfiguration } from '../RepairCodeActions';
+import { classifyRootDocument } from '../RepairDocuments';
+import { associatedUntitledTargets } from './prepareHostFixtures';
 import { repairSource } from './repairFixture';
 import { NativeTestController } from './nativeTestController';
 import { userRevertCleanFile } from './nativeSavedBuffer';
@@ -22,7 +24,8 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
     let finalConsent: () => Promise<string | undefined> = async () => 'Apply';
     let applyPrompts = 0;
     let dispatched = 0;
-    let onDispatched: (() => Promise<void>) | undefined;
+    let onDispatched: ((child: childProcess.ChildProcess) => Promise<void>) | undefined;
+    let loseApplyResponse = false;
     let race: Promise<void> | undefined;
     const rpc: { root: string; name: string; at: number }[] = [];
     let discoveryGate: { name?: string; entered(): void; release: Promise<void> } | undefined;
@@ -123,12 +126,12 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
             if (frame.method === 'tools/call' && frame.params?.name === 'apply') {
                 ++dispatched;
                 if (onDispatched) {
-                    // Bytes were really written to the C# process. Hold delivery
-                    // of its real response until the native dirty edit completes;
-                    // do not invent a reply or claim keyboard/UI timing coverage.
+                    // Bytes were really written to the C# process. Hold its real
+                    // response during the native edit; the last case deliberately
+                    // loses that response. Never invent replies or keyboard timing.
                     output.pause();
-                    race = onDispatched();
-                    void race.finally(() => output.resume()).catch(() => {});
+                    race = onDispatched(child);
+                    void race.finally(() => { if (!loseApplyResponse) output.resume(); }).catch(() => {});
                 }
             }
             return accepted;
@@ -138,6 +141,34 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
     const fixtureReady = (model: string) => {
         assert.equal(fs.readFileSync(path.join(model, 'nested', 'watcher-existing.txt'), 'utf8'), 'baseline', 'Launcher prepared nested baseline BEFORE native host startup');
         assert.equal(fs.readFileSync(path.join(model, 'application.play'), 'utf8'), repairSource);
+    };
+    const dirtyEdit = async (document: vscode.TextDocument, text: string, model: string) => {
+        const version = document.version;
+        const events: { version: number; dirty: boolean; changes: number }[] = [];
+        let finish!: () => void;
+        const changed = new Promise<void>((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error(`Native dirty-buffer event missing within 5 seconds: ${document.uri.toString()}`)), 5_000);
+            finish = () => { clearTimeout(timer); resolve(); };
+        });
+        const subscription = vscode.workspace.onDidChangeTextDocument(event => {
+            if (event.document.uri.toString() !== document.uri.toString()) return;
+            events.push({ version: event.document.version, dirty: event.document.isDirty, changes: event.contentChanges.length });
+            if (event.document.isDirty && event.document.version > version) finish();
+        });
+        try {
+            const edit = new vscode.WorkspaceEdit();
+            edit.insert(document.uri, new vscode.Position(0, 0), text);
+            assert.equal(await vscode.workspace.applyEdit(edit), true);
+            await changed;
+            assert.equal(document.isDirty, true);
+            assert.ok(document.version > version);
+            assert.ok(events.some(event => event.changes > 0), 'Actual native content change was observed');
+            const classification = classifyRootDocument(model, document.uri);
+            assert.equal(classification.scope, 'root', 'The exact native filesystem destination is inside the approved root');
+            assert.ok('physical' in classification);
+            assert.equal(classification.physical, document.uri.with({ scheme: 'file' }).fsPath);
+            console.log(`NATIVE EXACT DIRTY BUFFER: ${JSON.stringify({ uri: document.uri.toString(), scheme: document.uri.scheme, classification, version: document.version, events })}`);
+        } finally { finish(); subscription.dispose(); }
     };
     try {
         let model = path.join(root, 'command-guards');
@@ -327,7 +358,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         // that VS Code echoes its own saves through FileSystemWatcher.
         // Associated untitled siblings, attachments and identity state use exactly
         // the same classification as physical file buffers. They need not exist.
-        for (const relative of ['sibling.play', 'Handler.cs', '.screenplay/identities.json']) {
+        for (const relative of associatedUntitledTargets) {
             for (const timing of ['before-discovery', 'after-review']) {
                 model = path.join(root, `untitled-${relative.replaceAll('/', '-')}-${timing}`);
                 source = path.join(model, 'application.play');
@@ -335,21 +366,35 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
                 await configuration.update('modelRoot', model, vscode.ConfigurationTarget.Global);
                 document = await vscode.workspace.openTextDocument(vscode.Uri.file(source));
                 if (timing === 'after-review') { await review(); await navigateReview(); }
-                const unsaved = await vscode.workspace.openTextDocument(vscode.Uri.file(path.join(model, relative)).with({ scheme: 'untitled' }));
-                const edit = new vscode.WorkspaceEdit();
-                edit.insert(unsaved.uri, new vscode.Position(0, 0), '// associated unsaved buffer\n');
-                assert.equal(await vscode.workspace.applyEdit(edit), true);
-                assert.equal(unsaved.isDirty, true);
+                const target = path.join(model, relative);
+                assert.equal(fs.existsSync(target), false, 'Associated untitled destination must NOT exist');
+                assert.ok(fs.statSync(path.dirname(target)).isDirectory(), 'Launcher prepared the destination parent before host watching');
+                const record = timing === 'after-review' ? productWatch(model) : undefined;
+                const nativeEvents = record?.events;
                 const before: number = dispatched;
+                const prompts: number = applyPrompts;
+                const unsaved = await vscode.workspace.openTextDocument(vscode.Uri.file(target).with({ scheme: 'untitled' }));
+                assert.equal(unsaved.uri.scheme, 'untitled');
+                assert.equal(unsaved.uri.with({ scheme: 'file' }).fsPath, target);
+                if (timing === 'after-review') {
+                    warnings.length = 0;
+                    await vscode.commands.executeCommand('screenplay.repair.apply');
+                    assert.ok(warnings.some(message => message.startsWith('UnauthorizedApply:')), 'Opening the actual associated buffer already invalidates retained authority');
+                    assert.equal(applyPrompts, prompts, 'Expired review cannot even reach final consent');
+                }
+                await dirtyEdit(unsaved, '// associated unsaved buffer\n', model);
                 const buffers = vscode.workspace.textDocuments.map(document => ({ document, text: document.getText(), version: document.version, dirty: document.isDirty }));
                 warnings.length = 0;
-                if (timing === 'before-discovery') {
-                    await vscode.commands.executeCommand('screenplay.repair.refresh');
-                    assert.ok(warnings.some(message => /DirtyBuffer/.test(message)), warnings.join('; '));
-                } else {
+                if (timing === 'after-review') {
                     await vscode.commands.executeCommand('screenplay.repair.apply');
-                    assert.ok(warnings.some(message => /UnauthorizedApply|PreviewExpired|DirtyBuffer|Stale/.test(message)), warnings.join('; '));
+                    assert.ok(warnings.some(message => message.startsWith('UnauthorizedApply:')), warnings.join('; '));
+                    warnings.length = 0;
                 }
+                const reads = rpc.length;
+                await vscode.commands.executeCommand('screenplay.repair.refresh');
+                assert.ok(warnings.some(message => message.startsWith('DirtyBuffer:') && message.includes(target)), 'Exact dirty-buffer refusal, not merely a stale watcher/preview refusal');
+                assert.equal(rpc.slice(reads).filter(frame => ['open-workspace', 'propose-repair', 'apply'].includes(frame.name)).length, 0, 'Dirty buffer refuses before server discovery');
+                if (record) assert.equal(record.events, nativeEvents, 'No coincident native disk event explains the buffer refusal');
                 assert.equal(dispatched, before, `${relative} ${timing} sends ZERO Apply frames`);
                 for (const buffer of buffers) {
                     assert.equal(buffer.document.getText(), buffer.text, 'Refusal never changes ANY existing buffer text');
@@ -357,7 +402,10 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
                     assert.equal(buffer.document.isDirty, buffer.dirty, 'Refusal never saves/reverts ANY existing buffer');
                 }
                 assert.equal(unsaved.isDirty, true, 'Associated buffer is never saved or reverted');
+                assert.equal(fs.existsSync(target), false, 'No associated unsaved destination is created');
+                assert.equal(fs.readFileSync(path.join(model, 'Handler.cs'), 'utf8'), '// attachment\n', 'The actual declared attachment remains unchanged');
                 assert.equal(fs.readFileSync(source, 'utf8'), repairSource);
+                console.log(`NATIVE ASSOCIATED UNTITLED PASSED: ${JSON.stringify({ relative, timing, exactDirtyBuffer: true, applyFrames: dispatched - before, nativeEvents: record ? record.events - nativeEvents! : 0 })}`);
             }
         }
         model = path.join(root, 'watcher-guards');
@@ -423,6 +471,8 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         await preview();
         assert.equal(dispatched, 1, 'Exactly one real C# apply frame follows explicit consent');
         for (const [file, bytes] of expected) assert.deepEqual(fs.readFileSync(path.join(model, file)), bytes);
+        assert.equal(fs.existsSync(path.join(model, '.screenplay/pending.json')), false, 'Verified Apply completed its real durable journal');
+        assert.ok(!fs.readdirSync(path.join(model, '.screenplay')).some(file => file.endsWith('.backup') || file.endsWith('.stage')), 'Successful installation leaves no transaction backup/stage files');
         const installedText = expected.get('application.play')!.toString('utf8');
         assert.equal(document.isDirty, false);
         const pending = document.getText() !== installedText;
@@ -449,6 +499,23 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         assert.ok(rpc.slice(afterInstall).some(frame => frame.name === 'open-workspace'), 'Renewed readiness is an actual server-validated read');
         console.log(`INSTALLED CLIENT SAVED RECONCILIATION: ${JSON.stringify({ pendingAtBound: pending, separateUserRevert: pending, exactTextVerified: true, installedRefresh: true, exactDiskSourceAndState: true })}`);
 
+        // Existing identity state is a REAL file document, never an associated
+        // untitled target. Only its buffer changes; no save/revert or disk write.
+        const statePath = path.join(model, '.screenplay/identities.json');
+        const stateBefore = fs.readFileSync(statePath);
+        const stateDocument = await vscode.workspace.openTextDocument(vscode.Uri.file(statePath));
+        assert.equal(stateDocument.uri.scheme, 'file');
+        await dirtyEdit(stateDocument, ' ', model);
+        warnings.length = 0;
+        const stateReads = rpc.length;
+        await vscode.commands.executeCommand('screenplay.repair.refresh');
+        assert.ok(warnings.some(message => message.startsWith('DirtyBuffer:') && message.includes(statePath)), 'Real existing identity buffer has its own exact dirty refusal');
+        assert.equal(rpc.slice(stateReads).filter(frame => ['open-workspace', 'propose-repair', 'apply'].includes(frame.name)).length, 0);
+        assert.deepEqual(fs.readFileSync(statePath), stateBefore);
+        assert.equal(stateDocument.isDirty, true);
+        assert.equal(dispatched, 1);
+        console.log('NATIVE EXISTING FILE STATE DIRTY PASSED: real file scheme, exact DirtyBuffer, unchanged identity disk bytes, ZERO Apply.');
+
         model = path.join(root, 'root-replacement');
         fixtureReady(model);
         await configuration.update('modelRoot', model, vscode.ConfigurationTarget.Global);
@@ -472,7 +539,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         assert.equal(productWatches.filter(watch => watch.root === model).length, 2);
         assert.notEqual(productWatch(model).watcher, oldWatch.watcher);
 
-        // Run the unreconciled dirty case LAST: its global pending barrier must
+        // Run the dirty/unknown case LAST: its global recovery barrier must
         // not be bypassed by switching to a new root for another proposal.
         const raceRoot = path.join(root, 'post-dispatch');
         const raceSource = path.join(raceRoot, 'application.play');
@@ -480,19 +547,28 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         await configuration.update('modelRoot', raceRoot, vscode.ConfigurationTarget.Global);
         const raceDocument = await vscode.workspace.openTextDocument(vscode.Uri.file(raceSource));
         let reviewed = '';
+        const raceExpected = new Map<string, Buffer>();
+        let installation!: Promise<ProductEvent>;
         finalConsent = async () => {
-            reviewed = currentAfterPages().find(page => page.uri.path.endsWith('/after/application.play'))!.getText();
+            for (const page of currentAfterPages()) raceExpected.set(page.uri.path.split('/after/')[1], Buffer.from(await vscode.workspace.fs.readFile(page.uri)));
+            reviewed = raceExpected.get('application.play')!.toString('utf8');
             await vscode.window.showTextDocument(raceDocument, { preview: false, viewColumn: vscode.ViewColumn.Two, preserveFocus: true });
+            // Hold the real response until the actual product watcher proves the
+            // identity installation, then lose that response by killing OUR child.
+            installation = observeProduct(productWatch(raceRoot), '.screenplay/identities.json', () => {});
             return 'Apply';
         };
         let postDispatchUntitled: vscode.TextDocument | undefined;
-        onDispatched = async () => {
-            postDispatchUntitled = await vscode.workspace.openTextDocument(vscode.Uri.file(path.join(raceRoot, '.screenplay/identities.json')).with({ scheme: 'untitled' }));
-            const edit = new vscode.WorkspaceEdit();
-            edit.insert(postDispatchUntitled.uri, new vscode.Position(0, 0), '// preserve associated identity buffer\n');
-            edit.insert(raceDocument.uri, new vscode.Position(0, 0), '// native post-dispatch edit\n');
-            assert.equal(await vscode.workspace.applyEdit(edit), true);
-            assert.equal(raceDocument.isDirty, true);
+        loseApplyResponse = true;
+        onDispatched = async child => {
+            await installation;
+            for (const [relative, bytes] of raceExpected) assert.deepEqual(fs.readFileSync(path.join(raceRoot, relative)), bytes);
+            const pendingState = path.join(raceRoot, '.screenplay/pending-identities.json');
+            assert.equal(fs.existsSync(pendingState), false);
+            postDispatchUntitled = await vscode.workspace.openTextDocument(vscode.Uri.file(pendingState).with({ scheme: 'untitled' }));
+            await dirtyEdit(postDispatchUntitled, '// preserve associated identity buffer\n', raceRoot);
+            await dirtyEdit(raceDocument, '// native post-dispatch edit\n', raceRoot);
+            assert.equal(child.kill('SIGKILL'), true, 'Only the actual dispatched test-owned server is stopped; no reply is synthesized');
         };
         await preview(raceDocument);
         await race;
@@ -502,12 +578,23 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         assert.ok(postDispatchUntitled?.getText().startsWith('// preserve associated identity buffer'));
         assert.equal(raceDocument.isDirty, true, 'Post-dispatch editor changes were not reverted or autosaved');
         assert.ok(raceDocument.getText().startsWith('// native post-dispatch edit\n'));
-        assert.ok(warnings.some(message => message.startsWith('Disk repair installed; editor synchronization pending.')));
+        assert.ok(warnings.some(message => message.startsWith('ApplyOutcomeUnknown:')), `Lost actual response remains unknown despite installed disk bytes: ${warnings.join('; ')}`);
         onDispatched = undefined;
         warnings.length = 0;
+        const unknownReads = rpc.length;
+        await vscode.commands.executeCommand('screenplay.repair.refresh');
+        assert.ok(warnings.some(message => message.startsWith('RecoveryRequired:')), 'Unknown outcome blocks deliberate reconnect until explicit recovery');
+        assert.equal(rpc.slice(unknownReads).filter(frame => ['open-workspace', 'propose-repair', 'apply'].includes(frame.name)).length, 0);
+        await vscode.commands.executeCommand('screenplay.repair.inspectState');
+        const inspection = JSON.parse(vscode.window.activeTextEditor!.document.getText()) as { uncertainApply: string | null };
+        assert.match(inspection.uncertainApply!, /Apply was dispatched\. Changes may exist\. Do not retry/, 'Actual read-only recovery inspection preserves unknown status, without retry');
+        for (const [relative, bytes] of raceExpected) assert.deepEqual(fs.readFileSync(path.join(raceRoot, relative)), bytes);
+        assert.equal(raceDocument.isDirty, true);
+        assert.equal(postDispatchUntitled?.isDirty, true);
+        console.log('NATIVE UNKNOWN OUTCOME PASSED: actual response lost after exact installation, typing preserved, no retry, real read-only recovery inspection.');
         const refused = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', raceDocument.uri, new vscode.Range(0, 0, 0, 0));
         assert.deepEqual(refused, [], 'Dirty reconciliation cannot silently issue fresh authority');
-        assert.equal(dispatched, 2, 'Verified installed/dirty outcome is never retried');
+        assert.equal(dispatched, 2, 'Unknown dispatched outcome is never retried');
         let teardownEntered!: () => void;
         const teardownSent = new Promise<void>((resolve, reject) => {
             const timer = setTimeout(() => reject(new Error('Native teardown inspection RPC did not dispatch within 5 seconds.')), 5_000);
@@ -519,7 +606,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         void vscode.commands.executeCommand('screenplay.repair.inspectState');
         await teardownSent;
         console.log('NATIVE TEARDOWN PENDING: actual installed read-only inspection RPC held for host shutdown.');
-        console.log('NATIVE GUARD INTEGRATION: actual attributable nested-preexisting modification, old token refusal, same-physical-root fresh discovery, controlled overlapping actual provider/manual discovery, healthy nested create/delete, actual physical-root replacement refusal, persistent native before/after source/state diff navigation and exact installation passed. Associated untitled/all-existing-buffer refusal preservation, dispatched reconnect barrier and controlled post-dispatch typing passed. Actual native callbacks and RPC operations were observed, never synthesized. Final modal responses were separately controlled; human keyboard/mouse interaction remains UNVERIFIED.');
+        console.log('NATIVE GUARD INTEGRATION: actual attributable nested-preexisting modification, old token refusal, same-physical-root fresh discovery, controlled overlapping actual provider/manual discovery, healthy nested create/delete, actual physical-root replacement refusal, persistent native before/after source/state diff navigation and exact installation passed. Associated untitled/all-existing-buffer refusal preservation, real-file identity dirty guard, dispatched reconnect barrier, controlled post-dispatch typing and unknown-outcome recovery inspection passed. Actual native callbacks and RPC operations were observed, never synthesized. Final modal responses were separately controlled; human keyboard/mouse interaction remains UNVERIFIED.');
     } finally {
         nativeFs.watch = originalWatch;
         childProcess.spawn = originalSpawn;
