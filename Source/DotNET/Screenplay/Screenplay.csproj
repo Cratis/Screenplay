@@ -11,6 +11,7 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" />
         <ProjectReference Include="../Screenplay.Contexts/Screenplay.Contexts.csproj" />
+        <InternalsVisibleTo Include="Cratis.Screenplay.Mcp" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(Configuration)'=='Debug'">

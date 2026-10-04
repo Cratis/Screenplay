@@ -14,6 +14,8 @@ internal sealed partial class McpWorkspaces
 {
     readonly Dictionary<string, IMcpProposal> _proposals = new(StringComparer.Ordinal);
     readonly ConditionalWeakTable<IMcpProposal, McpStatePlan> _statePlans = [];
+    readonly ConditionalWeakTable<IMcpProposal, McpRepairEvidence> _repairEvidence = [];
+
     readonly bool _staticRoot;
     McpRoot? _root;
     ScreenplayWorkspace? _workspace;
@@ -24,6 +26,10 @@ internal sealed partial class McpWorkspaces
         _staticRoot = root is not null;
         _root = root;
     }
+
+    // Deterministic specs can interrupt between validation and retention, or staging and installation.
+    internal Action? BeforeStore { get; set; }
+    internal Action? BeforeInstall { get; set; }
 
     // The client roots a host advertises through the MCP roots capability; empty until the host answers.
     internal ImmutableArray<string> ClientRoots { get; set; } = [];
@@ -50,8 +56,21 @@ internal sealed partial class McpWorkspaces
         var requestedPath = McpJson.OptionalString(arguments, "path");
         if (requestedPath is not null)
         {
-            ClientDerivedRootPath = null;
-            BindRoot(new McpRoot(Path.GetFullPath(requestedPath, CurrentDirectoryHint ?? Environment.CurrentDirectory)));
+            var requestedRoot = new McpRoot(Path.GetFullPath(requestedPath, CurrentDirectoryHint ?? Environment.CurrentDirectory));
+            if (_staticRoot)
+            {
+                if (!McpDirectoryIdentity.Same(Root, requestedRoot))
+                {
+                    throw new McpFailure("A fixed-root server cannot switch to another application root.") { FailureKind = "RootChangeRefused" };
+                }
+
+                // A proven alias is admitted, but never replaces the originally approved root object or spelling.
+            }
+            else
+            {
+                ClientDerivedRootPath = null;
+                BindRoot(requestedRoot);
+            }
         }
         else if (_root is null)
         {
@@ -96,7 +115,7 @@ internal sealed partial class McpWorkspaces
         if (expectedRevision != workspace.Revision || expectedCatalogRevision != workspace.IdentityCatalog.Revision)
         {
             var stale = workspace.Propose(new() { ExpectedRevision = expectedRevision, ExpectedCatalogRevision = expectedCatalogRevision });
-            return McpJson.ToolResult(new { success = false, stale.Conflicts, stale.Diagnostics }, true);
+            return McpJson.ToolResult(new { success = false, failureKind = "StaleRevision", stale.Conflicts, stale.Diagnostics }, true);
         }
 
         Root.Verify(workspace);
@@ -113,7 +132,7 @@ internal sealed partial class McpWorkspaces
         var transaction = workspace.Propose(request);
         if (!transaction.Success)
         {
-            return McpJson.ToolResult(new { success = false, transaction.Conflicts, transaction.Diagnostics }, true);
+            return McpJson.ToolResult(new { success = false, failureKind = "ProposalRejected", transaction.Conflicts, transaction.Diagnostics }, true);
         }
 
         return Store(new McpProposal(workspace, transaction), arguments);
@@ -126,17 +145,26 @@ internal sealed partial class McpWorkspaces
         if (McpJson.RequiredString(arguments, "expectedCatalogRevision") != workspace.IdentityCatalog.Revision.ToString() ||
             proposal.Before.Revision != workspace.Revision || proposal.Before.IdentityCatalog.Revision != workspace.IdentityCatalog.Revision)
         {
-            throw new McpFailure("StaleRevision: workspace or catalog revision no longer matches the proposal.");
+            throw new McpFailure("StaleRevision: workspace or catalog revision no longer matches the proposal.") { FailureKind = "StaleRevision" };
         }
 
         var statePlan = StatePlan(proposal);
         var includeContent = McpJson.Boolean(arguments, "includeContent");
         var beforeDescription = JsonSerializer.SerializeToElement(McpWorkspaceTransport.Describe(workspace, includeContent), McpJson.Options);
         var afterDescription = JsonSerializer.SerializeToElement(McpWorkspaceTransport.Describe(proposal.Workspace, includeContent), McpJson.Options);
-        var result = new McpDisk(Root).Apply(proposal, statePlan);
+        _repairEvidence.TryGetValue(proposal, out var evidence);
+        var result = new McpDisk(Root).Apply(
+            proposal,
+            statePlan,
+            () =>
+            {
+                BeforeInstall?.Invoke();
+                evidence?.Verify(Root, proposal);
+            },
+            evidence?.OperationId);
         if (result.Success)
         {
-            _workspace = McpAttachmentContents.Refresh(Root, proposal.Workspace);
+            _workspace = evidence is null ? McpAttachmentContents.Refresh(Root, proposal.Workspace) : proposal.Workspace;
             _stateBytes = statePlan.After;
             _proposals.Clear();
             _statePlans.Clear();
@@ -146,6 +174,7 @@ internal sealed partial class McpWorkspaces
         {
             result.Success,
             result.Status,
+            failureKind = result.FailureKind,
             result.Recovery,
             result.PlannedChanges,
             result.InstalledDocuments,
@@ -211,7 +240,10 @@ internal sealed partial class McpWorkspaces
 
     object Store(IMcpProposal proposal, JsonElement arguments)
     {
-        proposal = RefreshProposal(proposal);
+        BeforeStore?.Invoke();
+        var pinned = McpJson.Boolean(arguments, "pinRepairEvidence");
+        var evidence = pinned ? McpRepairEvidence.Pin(Root, proposal) : null;
+        if (!pinned) proposal = RefreshProposal(proposal);
         var candidate = proposal.Workspace;
         McpRoot.CheckDocuments(candidate.Documents);
         foreach (var document in candidate.Documents)
@@ -231,7 +263,7 @@ internal sealed partial class McpWorkspaces
 
         if (_proposals.Count >= 16)
         {
-            throw new McpFailure("The session already holds 16 proposals. Discard a proposal or reopen the workspace.");
+            throw new McpFailure("The session already holds 16 proposals. Discard a proposal or reopen the workspace.") { FailureKind = "LimitExceeded" };
         }
 
         _ = McpWorkspaceTransport.ExportBytes(candidate);
@@ -242,6 +274,7 @@ internal sealed partial class McpWorkspaces
         {
             success = true,
             proposalId = id,
+            repairEvidence = evidence,
             validation = proposal.Validation,
             referencePolicy = proposal is McpAuthoringProposal policy ? policy.ReferencePolicy.ToString() : null,
             before = McpWorkspaceTransport.Describe(proposal.Before, includeContent),
@@ -257,6 +290,7 @@ internal sealed partial class McpWorkspaces
         var response = McpJson.ToolResult(result);
         _proposals.Add(id, proposal);
         _statePlans.Add(proposal, statePlan);
+        if (evidence is not null) _repairEvidence.Add(proposal, evidence);
         return response;
     }
 
@@ -310,7 +344,25 @@ internal sealed partial class McpWorkspaces
         var id = McpJson.RequiredString(arguments, "proposalId");
         if (!_proposals.TryGetValue(id, out var proposal))
         {
-            throw new McpFailure("UnknownProposal: only an outstanding proposal from this connection can be used.");
+            throw new McpFailure("UnknownProposal: only an outstanding proposal from this connection can be used.") { FailureKind = "UnknownProposal" };
+        }
+
+        var expectedEvidence = McpRepairEvidence.Expected(arguments);
+        if (_repairEvidence.TryGetValue(proposal, out var evidence))
+        {
+            if (expectedEvidence is not null && expectedEvidence != evidence.BeforeRevision)
+            {
+                throw new McpFailure("The supplied revision does not identify the retained repair evidence.") { FailureKind = "RepairEvidenceDrift" };
+            }
+
+            Root.Verify(proposal.Before);
+            evidence.Verify(Root, proposal);
+            return proposal;
+        }
+
+        if (expectedEvidence is not null)
+        {
+            throw new McpFailure("The proposal has no pinned repair evidence.", -32602);
         }
 
         var refreshed = RefreshProposal(proposal);
@@ -348,7 +400,7 @@ internal sealed partial class McpWorkspaces
         var workspace = Current();
         if (McpJson.RequiredString(arguments, "expectedRevision") != workspace.Revision.ToString())
         {
-            throw new McpFailure("StaleRevision: reopen the workspace before continuing.");
+            throw new McpFailure("StaleRevision: reopen the workspace before continuing.") { FailureKind = "StaleRevision" };
         }
 
         Root.Verify(workspace);

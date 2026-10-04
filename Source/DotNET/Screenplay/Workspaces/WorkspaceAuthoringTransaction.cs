@@ -241,9 +241,17 @@ sealed class WorkspaceAuthoringTransaction(
         }
 
         var catalog = WorkspaceAuthoringIdentity.Migrate(workspace, request, ordered, merged.Value, documentRenames.ToImmutable(), retiredDocuments.ToImmutable());
+
+        // Original-source loader warnings are not evidence for different candidate sources.
+        var attachments = request.AttachmentLoader?.Invoke(ordered) ?? new AttachmentFileResult
+        {
+            Contents = workspace.AttachmentContents,
+            Diagnostics = []
+        };
         var compilation = ordered.IsEmpty
             ? ScreenplayWorkspace.EmptyCompilation()
-            : new SemanticModelCompiler().Compile(workspace.ApplicationName, ScreenplayWorkspace.CreateDocumentSet(ordered, catalog, workspace.AttachmentContents));
+            : new SemanticModelCompiler().Compile(workspace.ApplicationName, ScreenplayWorkspace.CreateDocumentSet(ordered, catalog, attachments.Contents));
+        compilation = compilation with { Diagnostics = [.. compilation.Diagnostics, .. attachments.Diagnostics] };
         if (request.Validation == WorkspaceAuthoringValidation.Executable && !compilation.Success)
         {
             return Failure(WorkspaceConflictKind.CompilationFailed, "The final source is authorable but is not executable by the semantic backend.") with
@@ -252,7 +260,7 @@ sealed class WorkspaceAuthoringTransaction(
             };
         }
 
-        var candidate = ScreenplayWorkspace.CreateValidated(workspace.ApplicationName, ordered, catalog, compilation, workspace.AttachmentContents);
+        var candidate = ScreenplayWorkspace.CreateValidated(workspace.ApplicationName, ordered, catalog, compilation, attachments.Contents, attachments.Diagnostics);
         var migrations = IdentifierMigrations(index, edits, referenceRenames);
         WorkspaceAuthoringReferences.Validate(workspace, candidate, request, _diagnostics, migrations);
         ValidateAbsenceKeys(request, index, candidate, edits, replacements, migrations);

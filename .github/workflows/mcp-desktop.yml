@@ -62,6 +62,9 @@ jobs:
           corepack enable
           yarn install
           yarn workspaces foreach -Rt --from @cratis/screenplay-mcp-app run build
+      - name: Check native Windows missing short-name admission
+        if: runner.os == 'Windows'
+        run: dotnet test Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj --configuration Debug --filter 'FullyQualifiedName~when_refusing_repair_write_conflicts|FullyQualifiedName~when_comparing_missing_windows_aliases'
       - name: Build self-contained server and packages
         env:
           VERSION: ${{ inputs.version || '0.0.0-desktop-ci' }}

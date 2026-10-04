@@ -119,6 +119,30 @@ MCP server.
 
 Host developers can consult the [embedding API](reference.md#embedding-api).
 
+## Repair-capable server setup
+
+The server exposes a [repair contract v1](reference.md#repair-contract-v1-and-pinned-evidence)
+for saved-file `PLAY0166` and `PLAY0478` proposals. This is server support, not a
+released VS Code repair-process bridge or a browser Monaco process. Registering
+Copilot MCP or installing a desktop plugin does not enable those editor actions.
+
+An editor host must explicitly approve an executable and one existing physical
+application root. Supported process forms are `cratis screenplay mcp ROOT`,
+`screenplay mcp ROOT`, or the `server/Cratis.Screenplay.Tool` binary from a complete,
+checksum-verified unpacked native bundle (`.exe` on Windows). Launch without a shell
+and pass the approved root as one argument. Do not use a project's executable,
+download on startup, inspect desktop-private caches or fall back to Docker silently.
+Native bundles include their runtime; the .NET global tool needs the installation
+below. Linux packages require compatible native dependencies; Windows arm64 is not
+packaged. Checksums do not provide publisher signatures.
+
+A compatible host checks `repair-capabilities` after the MCP handshake and refuses
+older or incompatible contracts rather than downgrading evidence protection. Both
+initial actions require pinned mode in that host, complete preview and explicit
+Apply. CLI 3.25.0 is the desktop-management prerequisite only; it does not prove
+repair-contract support in an embedded compiler. Check the actual server's tool
+and contract, and only claim compatibility for distributions containing it.
+
 ## Choose where the model lives
 
 You rarely have to. When the server starts without a root, it picks the folder the
@@ -142,7 +166,12 @@ at your home folder. In Claude and ChatGPT desktop the host manages the files, s
 the model lives wherever the host puts them, and `open-workspace` with
 `workspaceJson` carries a model between sessions.
 
-Pass a root, as below, when you want one fixed folder for every session.
+Pass a root, as below, when you want one fixed folder for every session. A fixed-root
+connection refuses `open-workspace.path` naming a different physical directory
+with `RootChangeRefused`. A case alias is accepted only when native directory
+identity proves it is the same folder, after the symbolic-link and reparse-point
+guards; the originally approved root stays bound. Changing applications requires
+a new authorized connection.
 
 ## Choose one application root
 

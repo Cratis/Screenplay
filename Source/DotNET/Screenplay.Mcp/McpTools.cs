@@ -46,6 +46,7 @@ sealed class McpTools
         {
             return name switch
             {
+                "repair-capabilities" => McpRepairCapabilities.Read(),
                 "syntax-schema" => Schema(arguments),
                 "open-workspace" => _workspaces.Open(arguments),
                 "workspace-state" => _workspaces.State(arguments),
@@ -72,7 +73,16 @@ sealed class McpTools
         }
         catch (Exception exception)
         {
-            return McpJson.ToolResult(new { success = false, error = exception.GetType().Name, message = exception.Message }, true);
+            var unknown = name == "apply" ? "ApplyOutcomeUnknown" : "RequestFailed";
+            return McpJson.ToolResult(
+                new
+                {
+                    success = false,
+                    error = exception.GetType().Name,
+                    message = exception.Message,
+                    failureKind = exception is McpFailure failure ? failure.FailureKind : unknown
+                },
+                true);
         }
     }
 

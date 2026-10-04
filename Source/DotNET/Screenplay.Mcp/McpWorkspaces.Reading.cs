@@ -16,6 +16,7 @@ internal sealed partial class McpWorkspaces
     internal object ReadWorkspace(JsonElement arguments)
     {
         var workspace = CheckedCurrent(arguments);
+        McpRepairEvidence.Check(McpRepairEvidence.Expected(arguments), workspace);
         var view = McpJson.OptionalString(arguments, "view") ?? "documents";
         if (view == "executable-model")
         {
@@ -250,6 +251,7 @@ internal sealed partial class McpWorkspaces
         {
             workspace = McpWorkspaceTransport.Describe(workspace),
             view,
+            repairEvidenceRevision = McpRepairEvidence.Revision(workspace),
             page = McpPaging.Page(items, arguments, workspace.Revision.ToString())
         });
     }
@@ -346,7 +348,7 @@ internal sealed partial class McpWorkspaces
             "before" or "after" => ProposalBytes(proposal, arguments, view),
             _ => throw new McpFailure("Unknown proposal view.", -32602)
         };
-        return McpJson.ToolResult(new { proposal.Validation, before = McpWorkspaceTransport.Describe(proposal.Before), after = McpWorkspaceTransport.Describe(proposal.Workspace), view, result });
+        return McpJson.ToolResult(new { proposal.Validation, repairEvidence = _repairEvidence.TryGetValue(proposal, out var evidence) ? evidence : null, before = McpWorkspaceTransport.Describe(proposal.Before), after = McpWorkspaceTransport.Describe(proposal.Workspace), view, result });
     }
 
     internal object ExportWorkspace(JsonElement arguments)
@@ -362,8 +364,8 @@ internal sealed partial class McpWorkspaces
 
     internal object DiscardProposal(JsonElement arguments)
     {
-        _ = Proposal(arguments);
-        _proposals.Remove(McpJson.RequiredString(arguments, "proposalId"));
+        var id = McpJson.RequiredString(arguments, "proposalId");
+        if (!_proposals.Remove(id)) throw new McpFailure("UnknownProposal: only an outstanding proposal from this connection can be used.") { FailureKind = "UnknownProposal" };
         return McpJson.ToolResult(new { discarded = true, remainingCount = _proposals.Count });
     }
 

@@ -98,21 +98,21 @@ sealed class McpConnection(McpTools tools, McpAppResources apps)
         }
         catch (JsonException)
         {
-            return Error(null, -32700, "Invalid JSON.");
+            return Error(null, -32700, "Invalid JSON.", "InvalidJson");
         }
         catch (McpFailure failure)
         {
-            return Error(id, failure.Code == 0 ? -32603 : failure.Code, failure.Message);
+            return Error(id, failure.Code == 0 ? -32603 : failure.Code, failure.Message, failure.FailureKind);
         }
         catch (Exception exception)
         {
             // Protocol errors remain protocol messages; a failed request never terminates as a success.
-            return Error(id, -32603, $"Request failed: {exception.Message}");
+            return Error(id, -32603, $"Request failed: {exception.Message}", "RequestFailed");
         }
     }
 
-    static string Error(object? id, int code, string message) =>
-        JsonSerializer.Serialize(new { jsonrpc = "2.0", id, error = new { code, message } }, McpJson.Options);
+    static string Error(object? id, int code, string message, string failureKind) =>
+        JsonSerializer.Serialize(new { jsonrpc = "2.0", id, error = new { code, message, data = new { failureKind } } }, McpJson.Options);
 
     static string? ReadLine(TextReader input)
     {

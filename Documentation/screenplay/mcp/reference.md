@@ -29,6 +29,11 @@ See [installation and client configuration](install.md). One physical root
 is one application, whether it has one source file or hundreds of nested files.
 Symbolic links are rejected. An empty root can be opened to create its first model.
 
+A root supplied at startup is fixed for that connection. `open-workspace.path`
+may name that same physical directory, but another root returns `RootChangeRefused`.
+Start a separately authorized connection to switch applications. Dynamic servers
+retain the root selection described above.
+
 Only `apply` and `recover-workspace` mutate files. Keep client approval enabled
 for both. Source queries, schemas, proposals and status checks are read-only.
 
@@ -140,20 +145,21 @@ is canonicalized.
 
 | Tool | Required arguments | Optional arguments |
 | --- | --- | --- |
+| `repair-capabilities` | None | None |
 | `open-workspace` | None | `applicationName`, `path`, `workspaceJson`, `includeContent` |
 | `read-workspace` | `expectedRevision` | view (`source-map` for compiler source locations; `repairs` for typed diagnostic repairs; `implementation-requirements` for code attachment requirements; `executable-model` for canonical ESM bytes), offset, limit, `expectedModelRevision`, `expectedAttachmentManifestRevision` |
 | `read-ast` | `expectedRevision` | documentId, path, kind, name, semanticId, view, includeContent, offset, limit |
 | `propose` | Expected workspace/catalog revisions, operations | Explicit migrations/retirements, includeContent; legacy single-operation form supported |
 | `propose-ast` | Expected revisions, formatting | operations, documents, validation, referencePolicy, migrations/retirements, includeContent |
-| `propose-repair` | `expectedRevision`, `expectedCatalogRevision`, `diagnosticCode`, `subject` handle, `formatting` | includeContent; use the discovered `requiredFormatting`. `PLAY0479` supports `PreserveTrivia` or explicit `CanonicalizeTouchedDocuments`; other repairs require `CanonicalizeTouchedDocuments` |
+| `propose-repair` | `expectedRevision`, `expectedCatalogRevision`, `diagnosticCode`, `subject` handle, `formatting` | `pinRepairEvidence`, `expectedRepairEvidenceRevision`, includeContent; use the discovered `requiredFormatting`. `PLAY0479` supports `PreserveTrivia` or explicit `CanonicalizeTouchedDocuments`; other repairs require `CanonicalizeTouchedDocuments` |
 | `propose-rename` | Expected revisions, target handle, expectedName, newName | formatting, validation, includeContent, `eventNeverPersisted` (boolean, default false) |
 | `propose-extract-inline-event` | `expectedRevision`, `expectedCatalogRevision`, inline event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted |
 | `expand-layout` | Expected revisions | layout, validation, formatting, referencePolicy, includeContent |
-| `read-proposal` | proposalId | view (`implementation-requirements` for proposed attachments), documentId, offset, limit |
+| `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`implementation-requirements` for proposed attachments), documentId, offset, limit |
 | `export-workspace` | expectedRevision | proposalId, offset, limit |
 | `workspace-state` | None | view, proposalId, expectedStateRevision, offset, limit |
 | `discard-proposal` | proposalId | None |
-| `apply` | proposalId, expectedRevision, expectedCatalogRevision | includeContent |
+| `apply` | proposalId, expectedRevision, expectedCatalogRevision | includeContent, `expectedRepairEvidenceRevision` |
 | `recover-workspace` | operationId | None |
 
 `tools/list` supplies nested argument schemas. Revisions, IDs and handles come
@@ -230,6 +236,103 @@ equivalence proof under [decision 0013](https://github.com/Cratis/Screenplay/blo
 bodies are absent. The view is read-only, not a way to edit the ESM; use typed
 workspace proposals for changes.
 
+## Repair contract v1 and pinned evidence
+
+`repair-capabilities` is read-only and takes an empty argument object. It needs
+no open workspace. Its `structuredContent` identifies
+`schema: "cratis.screenplay.mcp.repair-capabilities"`, `schemaVersion: 1`,
+`repairContractVersion: 1` and the same assembly `serverVersion` as `initialize`.
+The [narrow response schema](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/mcp/repair-capabilities-v1.schema.json) covers capabilities,
+evidence metadata and the failure discriminator, not every MCP feature.
+
+The initial contract advertises `PLAY0166` and `PLAY0478` through `propose-repair`,
+with `CanonicalizeTouchedDocuments` and optional evidence pinning v1. Existing
+repairs outside this contract remain available to legacy clients. Feature support
+comes from negotiation, not a CLI version or an ESM version. Initialize with MCP
+`2025-06-18`, send `notifications/initialized`, check `tools/list`, then read the
+capabilities. Consumers validate the fields they use, tolerate additive response
+fields and refuse unsupported contract majors or malformed responses.
+
+To opt in for either action:
+
+1. Read `diagnostics` and `repairs` from `read-workspace`. Both return
+   `repairEvidenceRevision`. Supply it as optional `expectedRepairEvidenceRevision`
+   on further workspace reads so attachment drift refuses a page.
+2. Send one selected `propose-repair` request with `pinRepairEvidence: true` and
+   `expectedRepairEvidenceRevision`, alongside the existing revisions, subject and
+   formatting consent. Both evidence fields are required together in this mode.
+3. The retained response includes `repairEvidence: { beforeRevision,
+   candidateRevision }`. These opaque, bounded `re1:` revisions cover source and
+   catalog revisions plus the authoritative attachment loader's text inputs and
+   loading/refusal diagnostics, including missing and unreadable states. They
+   include inputs even when an unsuccessful or unsupported binding omits a compiled
+   requirement. Unreferenced files and implementation locks are not evidence.
+4. Preview every changed document and identity-state byte page, then explicitly
+   apply. `read-proposal` returns the same evidence metadata. You may echo
+   `beforeRevision` as `expectedRepairEvidenceRevision` on preview or apply;
+   the server enforces the retained pin even when that optional field is omitted.
+
+Pinned candidates never refresh readiness silently. Validation loads attachments
+from the final candidate sources under the approved root, retaining those exact
+inputs and loading diagnostics separately from the base snapshot. Unchanged missing,
+unreadable, refused or oversized attachment warnings do not themselves invalidate
+a pin; existing repair eligibility still applies. Fresh base and candidate loads
+must match their validated evidence; otherwise retention returns
+`RepairEvidenceDrift`, without creating a proposal or repeating the selected repair
+transaction. Changed resolution or loading diagnostics are refused, not re-proven
+by a refresh.
+
+A pin also requires disjoint attachment inputs and planned writes. The server checks
+all model-selected base and candidate references, including absent or unreadable
+files, against source and parent-directory writes, identity state, the recovery
+journal and the server-selected operation's staging, backup and rollback paths.
+Rollback paths include every original document index, even unchanged documents;
+the original sources also belong to recovery because rollback restores their
+access settings. Overlap returns `RepairEvidenceWriteConflict`
+before any accepted preview is retained. Existing hard links and filesystem-resolved
+case aliases count as overlap; uncertain missing-path aliases fail closed with the
+same kind. On Windows, plausible DOS 8.3 tilde aliases also fail closed when a
+planned long-file creation or replacement, or parent-directory creation, could
+generate the missing name and filesystem metadata cannot prove separation. This
+can conservatively refuse a name that the volume would not actually generate; unrelated missing
+names remain eligible. The server does not impose Windows short-name rules on
+Unix filesystems. This is not a ban on `.play` attachments: a file outside the
+recovery-owned source set remains eligible if otherwise disjoint. No attachment,
+implementation lock or directory is written to establish disjointness.
+Capabilities advertise `evidence.plannedWriteOverlap` and
+`evidence.plannedWriteOverlapFailureKind` for this opt-in refusal.
+
+All proposal-backed previews recheck both snapshots under the approved root, as
+does the final pre-install check after staging, including write-overlap admission.
+Pinned installation keeps the validated candidate; it does not refresh proof after
+writing. Drift requires rediscovery and a
+fresh selected proposal. You can discard a stale proposal without reading it.
+Workspace/catalog revisions, exact `.play` set/bytes and identity-state preimages
+remain independently authoritative. Workspace and ESM serialization are unchanged.
+Legacy requests without either evidence field retain attachment refresh behavior.
+
+Tool failures add `failureKind` while preserving `success`, `error`, `message`,
+conflicts and recovery fields where already present. JSON-RPC errors preserve
+`code` and `message` and add `error.data.failureKind`. Admission kinds include
+`InvalidJson`, `InvalidRequest`, `UnknownMethod`, `InvalidArguments`,
+`FormattingConsentRequired`, `UnknownRepair`, `UnsupportedRepair`, `UnknownProposal`,
+`RootChangeRefused`, `StaleRevision`, `DiskDrift`, `IdentityStateDrift`,
+`RepairEvidenceDrift`, `RepairEvidenceWriteConflict` and `LimitExceeded`. `ProposalRejected` retains its detailed
+conflicts; `PendingOperation` requires workspace-state inspection. Apply failures
+report `ApplyRolledBack`, a specific refusal kind, or `RecoveryRequired` as
+appropriate. A failed explicit `recover-workspace` also returns
+`failureKind: "RecoveryRequired"` with its existing status, conflict and retained
+recovery instructions. `RequestFailed` and an unfamiliar kind must not be
+interpreted as proof that an apply made no changes. Never parse message prefixes.
+
+Cancellation notifications are ignored (`cancellation.supported: false`). EOF,
+process failure or `ApplyOutcomeUnknown` after dispatch leaves the outcome unknown;
+never retry apply automatically. Reconnect, inspect `workspace-state` and require
+separate approval for recovery. Journaled apply assumes an exclusively owned root;
+the pre-install evidence check is not a kernel-atomic lock across files or a
+crash-atomic multi-file guarantee. Nondestructive tool annotations do not authorize
+writes or substitute for user-approved roots and explicit Apply.
+
 ## Diagnostic repair workflow
 
 Page `read-workspace` with `view: "repairs"` and the current `expectedRevision`.
@@ -251,7 +354,8 @@ revisions return typed conflicts. A successful response retains the same proposa
 as `propose-ast`: use `read-proposal` to inspect exact before/after bytes,
 then call `apply` explicitly. Neither discovery nor
 proposal writes. Available repairs are `PLAY0166` (infer an undeclared produced
-event), `PLAY0478` (make a production's identifier destination explicit), `PLAY0469`
+event), `PLAY0478` (change routing from an allocated destination to the command's
+identifier, with an explicit routing-change title and `canFixAll: false`), `PLAY0469`
 (remove an inline identifier payload copy), `PLAY0471` (remove a redundant event
 pin), and `PLAY0397` (`validate csharp` migration). See the
 [repair conditions](authoring-tools.md#fix-a-diagnostic) before choosing one.
