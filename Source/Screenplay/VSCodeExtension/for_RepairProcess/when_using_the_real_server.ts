@@ -45,8 +45,11 @@ describe.skipIf(!serverAvailable)('real C# tool subprocess (not a transport stub
         const persisted = await session.inspectState();
         const identities = persisted.stateRevision;
         session.dispose();
-        session = new RepairSession({ executable: serverExecutable, arguments: ['mcp'], root }, { check: () => ({ source: ++version }) });
+        version++;
+        session = new RepairSession({ executable: serverExecutable, arguments: ['mcp'], root }, { check: () => ({ source: version }) });
         await session.initialize();
+        const reopened = await session.discover(); // Opens and validates the persisted catalog, not just its bytes.
+        expect(reopened.diagnostics.some(issue => issue.code === code)).toBe(false);
         expect((await session.inspectState()).stateRevision).toBe(identities);
     }, 30_000);
 
