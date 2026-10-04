@@ -25,32 +25,52 @@ namespace Cratis.Screenplay.Semantics.Execution;
 internal static partial class SemanticCaptureEvaluation
 {
     /// <summary>
-    /// Works out the facts a capture appends.
+    /// Evaluates reached capture appends and submits each fact before evaluating the next effect.
     /// </summary>
     /// <param name="plan">The capability-admitted plan.</param>
     /// <param name="capture">The capture.</param>
     /// <param name="previous">The record the capture last saw for the key, if any.</param>
     /// <param name="current">The record presented now.</param>
     /// <param name="occurrence">The occurrence, when the scenario states a clock.</param>
-    /// <returns>The facts in append order, or the reached unsupported capture value.</returns>
+    /// <param name="accept">Accepts one append and settles its reactions; returns the first terminal failure.</param>
+    /// <returns>The first terminal disposition, or an empty result when every reached effect succeeded.</returns>
     /// <exception cref="InvalidSemanticContract">A value does not fit the event it is appended to.</exception>
     public static SemanticCaptureEvaluationResult Evaluate(
         SemanticExecutionPlan plan,
         SemanticCapture capture,
         SemanticCaptureRecord? previous,
         SemanticCaptureRecord current,
-        SemanticCommandOccurrence? occurrence)
+        SemanticCommandOccurrence? occurrence,
+        Func<SemanticFact, SemanticExecutionResult?> accept)
     {
         var key = current.Fields.SingleOrDefault(field => field.Name == capture.Key && field.Kind == SemanticCaptureFieldKind.Value)?.Value
             ?? throw new InvalidSemanticContract($"The record presented to capture '{capture.Name}' has no key '{capture.Key}'.");
-        var context = new Context(plan, key, occurrence);
+        var context = new Context(plan, key, occurrence, accept);
+
+        // Structural and identity preconditions reject the whole record before any append. Value maps and
+        // guards are not probed here: an unsupported later effect cannot replace an earlier disposition.
+        foreach (var children in capture.Children)
+        {
+            Index(Records(previous, children.Field), children.IdentifiedBy);
+            Index(Records(current, children.Field), children.IdentifiedBy);
+        }
+
+        foreach (var nested in capture.Nested)
+        {
+            Nested(previous, nested.Field);
+            Nested(current, nested.Field);
+        }
+
+        context.ValidateSource(capture.Appends);
+        foreach (var children in capture.Children) context.ValidateSource(children.Appends);
+        foreach (var nested in capture.Nested) context.ValidateSource(nested.Appends);
+
         var before = previous is null ? null : Map(context, Fields(previous), capture.Map);
-        if (context.Unsupported is not null) return new([], context.Unsupported);
+        if (context.Stopped) return context.Result;
         var after = Map(context, Fields(current), capture.Map);
-        if (context.Unsupported is not null) return new([], context.Unsupported);
-        var facts = ImmutableArray.CreateBuilder<SemanticFact>();
-        facts.AddRange(context.Appends(capture.Appends, before, after, null));
-        if (context.Unsupported is not null) return new([], context.Unsupported);
+        if (context.Stopped) return context.Result;
+        context.Appends(capture.Appends, before, after, null);
+        if (context.Stopped) return context.Result;
         foreach (var children in capture.Children)
         {
             var was = Records(previous, children.Field);
@@ -60,14 +80,14 @@ internal static partial class SemanticCaptureEvaluation
             foreach (var child in now)
             {
                 var earlier = wasById.GetValueOrDefault(Identity(child, children.IdentifiedBy));
-                facts.AddRange(context.Appends(children.Appends, earlier is null ? null : Map(context, Fields(earlier), children.Map), Map(context, Fields(child), children.Map), after));
-                if (context.Unsupported is not null) return new([], context.Unsupported);
+                context.RecordAppends(children.Appends, earlier, child, children.Map, after);
+                if (context.Stopped) return context.Result;
             }
 
             foreach (var removed in was.Where(record => !nowById.ContainsKey(Identity(record, children.IdentifiedBy))))
             {
-                facts.AddRange(context.Appends(children.Appends, Map(context, Fields(removed), children.Map), null, after));
-                if (context.Unsupported is not null) return new([], context.Unsupported);
+                context.RecordAppends(children.Appends, removed, null, children.Map, after);
+                if (context.Stopped) return context.Result;
             }
         }
 
@@ -76,11 +96,11 @@ internal static partial class SemanticCaptureEvaluation
             var was = Nested(previous, nested.Field);
             var now = Nested(current, nested.Field);
             if (was is null && now is null) continue;
-            facts.AddRange(context.Appends(nested.Appends, was is null ? null : Map(context, Fields(was), nested.Map), now is null ? null : Map(context, Fields(now), nested.Map), after));
-            if (context.Unsupported is not null) return new([], context.Unsupported);
+            context.RecordAppends(nested.Appends, was, now, nested.Map, after);
+            if (context.Stopped) return context.Result;
         }
 
-        return new(facts.ToImmutable(), null);
+        return context.Result;
     }
 
     [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$", RegexOptions.None, 1000)]
@@ -183,13 +203,38 @@ internal static partial class SemanticCaptureEvaluation
             ? SemanticValue.Text(match.To)
             : value;
 
-    sealed class Context(SemanticExecutionPlan plan, SemanticValue key, SemanticCommandOccurrence? occurrence)
+    sealed class Context(SemanticExecutionPlan plan, SemanticValue key, SemanticCommandOccurrence? occurrence, Func<SemanticFact, SemanticExecutionResult?> accept)
     {
         readonly SemanticValueValidator _validator = new(
             plan.Model.Application.Concepts.ToDictionary(concept => concept.Id),
             plan.Model.Application.Types.ToDictionary(type => type.Id));
 
         public string? Unsupported { get; private set; }
+
+        public SemanticExecutionResult? Failure { get; private set; }
+
+        public bool Stopped => Unsupported is not null || Failure is not null;
+
+        public SemanticCaptureEvaluationResult Result => new(Unsupported, Failure);
+
+        public void ValidateSource(ImmutableArray<SemanticCaptureAppend> appends)
+        {
+            foreach (var append in appends) _validator.Validate(key, append.EventSourceType, "capture event source");
+        }
+
+        public void RecordAppends(
+            ImmutableArray<SemanticCaptureAppend> appends,
+            SemanticCaptureRecord? previous,
+            SemanticCaptureRecord? current,
+            ImmutableArray<SemanticCaptureMap> map,
+            Dictionary<string, SemanticCaptureField> enclosing)
+        {
+            var before = previous is null ? null : Map(this, Fields(previous), map);
+            if (Stopped) return;
+            var after = current is null ? null : Map(this, Fields(current), map);
+            if (Stopped) return;
+            Appends(appends, before, after, enclosing);
+        }
 
         public SemanticCaptureExpression.Lookup Read(Dictionary<string, SemanticCaptureField>? record, string field, Dictionary<string, SemanticCaptureField>? enclosing = null)
         {
@@ -205,20 +250,20 @@ internal static partial class SemanticCaptureEvaluation
             return new(null, Unsupported);
         }
 
-        public IEnumerable<SemanticFact> Appends(
+        public void Appends(
             ImmutableArray<SemanticCaptureAppend> appends,
             Dictionary<string, SemanticCaptureField>? before,
             Dictionary<string, SemanticCaptureField>? after,
             Dictionary<string, SemanticCaptureField>? enclosing)
         {
-            if (Unsupported is not null) yield break;
+            if (Stopped) return;
             var item = after ?? before!;
             foreach (var append in appends)
             {
                 // A reached unsupported guard ends evaluation, even when it does not hold. Filtering first would
                 // evaluate a later guard and could mask unsupported as an ordinary contract rejection.
                 var holds = Holds(append.When, before, after);
-                if (Unsupported is not null) yield break;
+                if (Stopped) return;
                 if (!holds) continue;
                 var eventContract = plan.Events[append.EventContract];
                 var properties = eventContract.Properties.ToDictionary(property => property.Id);
@@ -229,7 +274,7 @@ internal static partial class SemanticCaptureEvaluation
                     var source = mapping.Field is { } field
                         ? Read(item, field, enclosing)
                         : new SemanticCaptureExpression.Lookup(Value(mapping.Value!), null);
-                    if (source.Unsupported is not null) yield break;
+                    if (source.Unsupported is not null) return;
                     var value = source.Value ?? SemanticValue.Null;
                     if (mapping.Field is not null) value = Coerce(value, property.Type);
                     _validator.Validate(value, property.Type, $"event property '{property.Name}'");
@@ -237,12 +282,13 @@ internal static partial class SemanticCaptureEvaluation
                 }
 
                 _validator.Validate(key, append.EventSourceType, "capture event source");
-                yield return new SemanticFact(append.EventContract, key, values.ToImmutable())
+                Failure = accept(new SemanticFact(append.EventContract, key, values.ToImmutable())
                 {
                     Context = new(new(append.EventSourceType, key)),
                     Tags = eventContract.Tags.AddRange(append.Tags),
                     Occurred = occurrence?.Occurred
-                };
+                });
+                if (Stopped) return;
             }
         }
 

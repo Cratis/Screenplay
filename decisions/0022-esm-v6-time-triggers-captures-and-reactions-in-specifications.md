@@ -158,3 +158,24 @@ its world, retaining prior facts and projections. Capture and direct reaction ap
 individual append dispositions. No caller audit identity, allocated destination or whole-cascade
 transaction is fabricated. These clarifications do not advance this record's verification stage or
 admit downstream consumers.
+
+**2026-10-04 — capture append dispositions and condition-value admission (#369).** Under Sindre Alstad
+Wilting's delegated integration request, capture evaluation separates record preconditions from reached
+effects. Required root/event-source keys, declared child and nested shapes, child identities and duplicate
+identities are checked before side effects. Maps apply once per reached record; guards and append mappings
+then run in authored order. Each append passes constraints and projection and settles its reaction cascade
+before the next capture effect is evaluated. The first rejection or typed Unsupported ends the scenario;
+a later unsupported map or guard cannot replace an earlier rejection. Already accepted facts and projections
+remain, while a rejected append contributes neither. Invoked commands retain their own atomicity and the
+existing shared scenario budgets. This does not introduce capture-wide atomicity or source acknowledgement.
+
+The reference scenario takes immutable `given capture` records as its last-seen input. Neither successful
+presentation nor partial failure writes a new last-seen record into `SemanticWorld` or acknowledges the
+external source. A subsequent specification must explicitly supply its baseline. Durable source-state
+advancement, retries and acknowledgement remain realization responsibilities, not implied by retained
+prefix facts. These integration clarifications are not attributed to Einar Ingebrigtsen and do not change
+his acceptance or advance the record's verification stage.
+
+All condition constants validate their recursive semantic-value variant before type inference. A CLR
+record carrying another value-kind discriminator is invalid, not normalized into a valid literal. The
+existing condition type rules and valid v1–v5 canonical bytes remain unchanged.
