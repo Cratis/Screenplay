@@ -49,6 +49,7 @@ internal static partial class SemanticModelValidator
                 return property.Type;
             }
 
+            ValidateValueVariant(operand.Value!);
             return operand.Value switch
             {
                 SemanticTextValue => SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.Text),
