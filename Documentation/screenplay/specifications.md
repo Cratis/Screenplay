@@ -286,6 +286,12 @@ These forms, and the automation and translate slices whose reactions and capture
 
 Reached reactions with a code body (`file` or an inline block) and reactions that never settle return `SemanticUnsupported` rather than a guessed outcome. Unrelated reactions and bodies excluded by `where` do not run. A later reaction failure retains earlier accepted facts; each invoked command remains atomic. The reference permits at most 1,000 new facts per scenario and 10,000 due occurrences per clock advance, failing closed at either limit. Clock occurrences are not fake input events, and capture sources are never contacted. A command a reaction invokes runs through its full pipeline with no caller, so a command that needs one rejects it, and that rejection ends the scenario. A model using any of these forms selects language and semantics `6.0` (canonical `schemaVersion: 6`); models without them keep their bytes and revisions.
 
+The compiler's command-outcome check follows declared event reactions and invoked commands. It defers an event's values to execution when that reachable chain may produce the event, including another occurrence of a type the initiating command produces. Unreachable reactions do not suppress a provable contradiction. This check does not prove reaction guards or termination; reached opaque effects also defer proof to execution.
+
+In v6, projection arithmetic outside the reference numeric range returns `SemanticUnsupported`, not a contract rejection. The overflowing append contributes no fact or partial projection state, earlier accepted facts remain, and an overflowing command contributes none of its transaction. An unsupported result never satisfies `then error`.
+
+Default `Startup` and `Shutdown` signals carry no values. If a host registration overrides either with values or an unknown shape, semantic binding rejects its use until a typed trigger declaration supplies an admitted shape; a matching name alone does not make it an empty built-in.
+
 ## Reference execution
 
 Screenplay supplies a framework-neutral reference path for admitted semantic capabilities. It does not start Arc, Chronicle, a database, the filesystem, or a network service. It executes against an immutable in-memory world so Stage and rendered targets have one normalized behavior to match.
