@@ -3,6 +3,8 @@
 
 import * as vscode from 'vscode';
 import * as assert from 'node:assert/strict';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 /** Observe ordinary native reload for five seconds; a lag is a pending state, not failed installation. */
 export async function observeSavedReload(document: vscode.TextDocument, expected: string): Promise<boolean> {
@@ -18,32 +20,62 @@ export async function observeSavedReload(document: vscode.TextDocument, expected
 }
 
 /** Explicit test-user save of preserved typing, NEVER automatic repair reconciliation or recovery. */
-export async function userSaveDirtyFile(document: vscode.TextDocument, expected: string, choose: () => Promise<'Save File' | undefined>): Promise<vscode.TextDocument> {
+export async function userSaveDirtyFile(document: vscode.TextDocument, expected: { uri: vscode.Uri; version: number; text: string; root: string; target: string }, choose: () => Promise<'Save File' | undefined>): Promise<vscode.TextDocument> {
+    const target = vscode.Uri.file(expected.target);
+    const check = () => {
+        assert.ok(vscode.workspace.textDocuments.includes(document), 'Save uses the already captured native document object');
+        assert.equal(document.isClosed, false);
+        assert.equal(document.uri.toString(), expected.uri.toString());
+        assert.equal(document.version, expected.version);
+        assert.equal(document.getText(), expected.text, 'Exact post-dispatch typing is retained BEFORE explicit user disposition');
+        assert.equal(document.isDirty, true);
+        assert.ok(document.uri.scheme === 'file' || document.uri.scheme === 'untitled');
+        assert.equal(document.uri.with({ scheme: 'file' }).toString(), target.toString());
+        assert.equal(fs.realpathSync.native(expected.root), expected.root);
+        assert.ok(['application.play', '.screenplay/pending-identities.json'].includes(path.relative(expected.root, expected.target).replaceAll('\\', '/')), 'Only separately approved synthetic fixture paths may be saved');
+        assert.equal(fs.realpathSync.native(path.dirname(expected.target)), path.dirname(expected.target), 'Save destination has no redirected parent');
+        if (document.uri.scheme === 'file') assert.equal(fs.realpathSync.native(expected.target), expected.target);
+        else assert.equal(fs.existsSync(expected.target), false, 'Associated untitled destination remains absent before the separate user save');
+    };
+    check();
     assert.equal(await choose(), 'Save File', 'The test user separately chooses to save this exact buffer');
-    assert.equal(document.getText(), expected, 'Exact typed content is retained BEFORE explicit user disposition');
-    assert.equal(document.isDirty, true);
-    assert.ok(document.uri.scheme === 'file' || document.uri.scheme === 'untitled');
-    await vscode.commands.executeCommand('workbench.action.closeSidebar');
-    const editor = await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two, preserveFocus: false });
-    await vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
-    assert.equal(vscode.window.activeTextEditor, editor);
-    const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
-    assert.ok(tab?.input instanceof vscode.TabInputText);
-    assert.equal(tab.input.uri.toString(), document.uri.toString(), 'User disposition targets the exact plain native editor');
+    check(); // Recheck identity/version/content after the independently awaited decision.
     const others = vscode.workspace.textDocuments.filter(other => other !== document).map(other => ({ document: other, text: other.getText(), version: other.version, dirty: other.isDirty }));
-    console.log(`NATIVE SEPARATE TEST USER SAVE: ${JSON.stringify({ uri: document.uri.toString(), target: 'focused plain editor', retainedTypingVerified: true, automaticRepairReconciliation: false, transactionRecovery: false, applyConsentReused: false })}`);
-    // TextDocument.save is the documented SDK workflow, including associated
-    // untitled destinations. No invented command URI argument or model-disposal wait.
-    assert.equal(await document.save(), true, 'Explicit test-user save succeeds');
-    const saved = await vscode.workspace.openTextDocument(document.uri.with({ scheme: 'file' }));
-    assert.equal(saved.getText(), expected);
-    assert.equal(saved.isDirty, false);
-    for (const other of others) {
-        assert.equal(other.document.getText(), other.text, 'Explicit user save never changes another buffer');
-        assert.equal(other.document.version, other.version);
-        assert.equal(other.document.isDirty, other.dirty);
-    }
-    return saved;
+    console.log(`NATIVE SEPARATE TEST USER SAVE: ${JSON.stringify({ uri: expected.uri.toString(), version: expected.version, target: target.toString(), retainedTypingVerified: true, typingDuringAction: false, physicalKeyboardFocus: 'NOT VERIFIED', ctrlSSimulated: false, automaticRepairReconciliation: false, transactionRecovery: false, applyConsentReused: false })}`);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let savedEvent!: (saved: vscode.TextDocument) => void;
+    const didSave = new Promise<vscode.TextDocument>(resolve => { savedEvent = resolve; });
+    const listener = vscode.workspace.onDidSaveTextDocument(saved => {
+        if (saved.uri.toString() === target.toString()) savedEvent(saved);
+    });
+    const typing: string[] = [];
+    const changes = vscode.workspace.onDidChangeTextDocument(event => {
+        if (event.contentChanges.length && [expected.uri.toString(), target.toString()].includes(event.document.uri.toString())) typing.push(event.document.uri.toString());
+    });
+    try {
+        return await Promise.race([
+            (async () => {
+                // Supported SDK operation on this exact object, independent of
+                // active editor focus. No Save All, command URI or model mutation.
+                const [success, saved] = await Promise.all([document.save(), didSave]);
+                assert.equal(success, true, 'Actual native save returns true');
+                assert.equal(saved.uri.toString(), target.toString());
+                if (expected.uri.scheme === 'file') assert.equal(saved, document, 'Native source save event identifies the captured object');
+                assert.equal(saved.getText(), expected.text);
+                assert.equal(saved.isDirty, false);
+                assert.deepEqual(fs.readFileSync(expected.target), Buffer.from(expected.text, 'utf8'), 'Native disk bytes exactly match the preserved UTF-8 text');
+                assert.deepEqual(typing, [], 'No typing occurs during this separate test-user save phase');
+                for (const other of others) {
+                    assert.equal(other.document.getText(), other.text, 'Explicit user save never changes another buffer');
+                    assert.equal(other.document.version, other.version);
+                    assert.equal(other.document.isDirty, other.dirty);
+                }
+                console.log(`NATIVE EXACT USER SAVE VERIFIED: ${JSON.stringify({ uri: saved.uri.toString(), actualSaveBoolean: success, onDidSave: true, exactDiskUtf8: true, dirty: saved.isDirty, physicalKeyboardFocus: 'NOT VERIFIED' })}`);
+                return saved;
+            })(),
+            new Promise<never>((_resolve, reject) => { timer = setTimeout(() => reject(new Error(`Exact native user save did not complete within 5 seconds: ${expected.uri.toString()}`)), 5_000); }),
+        ]);
+    } finally { clearTimeout(timer); listener.dispose(); changes.dispose(); }
 }
 
 /** Separate simulated user choice, NEVER a product reload primitive or reuse of Apply consent. */

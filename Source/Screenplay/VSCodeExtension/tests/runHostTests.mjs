@@ -81,7 +81,7 @@ try { await runTests({
     // late completion and zero installed UI calls; unsupported Windows roots skip.
     if (suitesPassed && fs.existsSync(teardownEvidence)) {
         const teardown = JSON.parse(fs.readFileSync(teardownEvidence, 'utf8'));
-        if (teardown.pending || teardown.error || teardown.actualRootWatchClosed !== true || teardown.actualInspectionSettled !== true || teardown.lateUi?.length !== 0 || teardown.applyFrames !== 2) {
+        if (teardown.pending || teardown.error || teardown.timedOut !== false || teardown.actualStateQueryDispatched !== true || teardown.actualRootWatchClosed !== true || teardown.pendingAtClose !== true || teardown.actualInspectionSettled !== true || teardown.exactBuffersAndDiskPreserved !== true || teardown.lateUi?.length !== 0 || teardown.applyFrames !== 2) {
             shutdownFailure = `Pending native inspection teardown is incomplete or unsafe: ${JSON.stringify(teardown)}; inspect ${evidence}`;
         } else console.log(`NATIVE PENDING INSPECTION TEARDOWN VERIFIED: ${JSON.stringify(teardown)}`);
     } else if (suitesPassed && !(process.platform === 'win32' && fs.statSync(path.join(model, 'command-guards'), { bigint: true }).dev === 0n)) {

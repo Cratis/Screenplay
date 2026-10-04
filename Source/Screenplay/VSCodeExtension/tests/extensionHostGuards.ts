@@ -8,6 +8,7 @@ import nativeFs from 'node:fs';
 import * as path from 'node:path';
 import childProcess from 'node:child_process';
 import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
 import { userRepairConfiguration } from '../RepairCodeActions';
 import { classifyRootDocument } from '../RepairDocuments';
 import { associatedUntitledTargets } from './prepareHostFixtures';
@@ -589,7 +590,12 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         const typedSource = raceDocument.getText(), typedState = postDispatchUntitled!.getText();
         const typedVersion = raceDocument.version, stateVersion = postDispatchUntitled!.version;
         await vscode.commands.executeCommand('screenplay.repair.inspectState');
-        const inspection = JSON.parse(vscode.window.activeTextEditor!.document.getText()) as { uncertainApply: string | null };
+        const inspection = JSON.parse(vscode.window.activeTextEditor!.document.getText()) as { uncertainApply: string | null; state: { exists: boolean; path: string; stateRevision: string; byteCount: number } };
+        const reviewedIdentities = raceExpected.get('.screenplay/identities.json')!;
+        assert.equal(inspection.state.exists, true);
+        assert.equal(inspection.state.path, '.screenplay/identities.json');
+        assert.equal(inspection.state.stateRevision, createHash('sha256').update(reviewedIdentities).digest('hex'), 'Actual restarted read-only C# inspector identifies the exact installed identity bytes');
+        assert.equal(inspection.state.byteCount, reviewedIdentities.length);
         assert.match(inspection.uncertainApply!, /Apply was dispatched\. Changes may exist\. Do not retry/, 'Actual read-only recovery inspection preserves unknown status, without retry');
         for (const [relative, bytes] of raceExpected) assert.deepEqual(fs.readFileSync(path.join(raceRoot, relative)), bytes);
         assert.equal(raceDocument.isDirty, true);
@@ -607,8 +613,9 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         // Explicit TEST USER disposition, not automatic repair reconciliation or
         // transaction recovery. Save the preserved typing only in our synthetic
         // model; do not switch roots, cancel unknown authority or close dirty tabs.
-        await userSaveDirtyFile(raceDocument, typedSource, async () => 'Save File');
-        const savedState = await userSaveDirtyFile(postDispatchUntitled!, typedState, async () => 'Save File');
+        await userSaveDirtyFile(raceDocument, { uri: vscode.Uri.file(raceSource), version: typedVersion, text: typedSource, root: raceRoot, target: raceSource }, async () => 'Save File');
+        const savedStatePath = path.join(raceRoot, '.screenplay/pending-identities.json');
+        const savedState = await userSaveDirtyFile(postDispatchUntitled!, { uri: vscode.Uri.file(savedStatePath).with({ scheme: 'untitled' }), version: stateVersion, text: typedState, root: raceRoot, target: savedStatePath }, async () => 'Save File');
         assert.equal(raceDocument.isDirty, false);
         assert.equal(savedState.isDirty, false);
         warnings.length = 0;
@@ -630,7 +637,16 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         let releaseTeardown!: () => void;
         discoveryGate = { name: 'workspace-state', entered: teardownEntered, release: new Promise<void>(resolve => { releaseTeardown = resolve; }) };
         let closed = false;
+        let inspectionSettled = false;
+        let pendingAtClose = false;
+        let timedOut = false;
+        const teardownReads = rpc.length;
         const lateUi: string[] = [];
+        const retainedBuffers = vscode.workspace.textDocuments.map(document => ({ document, text: document.getText(), version: document.version, dirty: document.isDirty }));
+        const teardownTimer = setTimeout(() => {
+            timedOut = true;
+            fs.writeFileSync(teardownEvidence, JSON.stringify({ pending: !inspectionSettled, actualRootWatchClosed: closed, pendingAtClose, timedOut, lateUi, applyFrames: dispatched }));
+        }, 5_000);
         const originalOpen = productionApi.workspace.openTextDocument;
         const originalShow = productionApi.window.showTextDocument;
         productionApi.workspace.openTextDocument = ((...args: Parameters<typeof originalOpen>) => {
@@ -649,17 +665,30 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
             // Actual native watcher closure follows installed context teardown.
             // Release the REAL server response only after disposal, never invoke
             // product callbacks or create a replacement owner in the harness.
+            pendingAtClose = !inspectionSettled;
             closed = true;
-            console.log('NATIVE TEARDOWN CLOSED: actual retained root watcher closed; releasing real pending state response.');
+            console.log(`NATIVE TEARDOWN CLOSED: ${JSON.stringify({ actualRetainedRootWatcherClosed: true, pendingAtClose, releasingRealStateResponse: true })}`);
             releaseTeardown();
         });
         teardownPending = true;
         void Promise.resolve(vscode.commands.executeCommand('screenplay.repair.inspectState')).then(() => {
-            fs.writeFileSync(teardownEvidence, JSON.stringify({ pending: false, actualRootWatchClosed: closed, actualInspectionSettled: true, lateUi, applyFrames: dispatched }));
-            console.log(`NATIVE TEARDOWN SETTLED: ${JSON.stringify({ closed, lateUi, applyFrames: dispatched })}`);
-        }, error => {
-            fs.writeFileSync(teardownEvidence, JSON.stringify({ pending: false, error: String(error), actualRootWatchClosed: closed, lateUi }));
+            inspectionSettled = true;
+            for (const buffer of retainedBuffers) {
+                assert.equal(buffer.document.getText(), buffer.text, 'Late inspection preserves every exact native buffer');
+                assert.equal(buffer.document.version, buffer.version);
+                assert.equal(buffer.document.isDirty, buffer.dirty);
+            }
+            assert.equal(fs.readFileSync(raceSource, 'utf8'), typedSource);
+            assert.equal(fs.readFileSync(savedStatePath, 'utf8'), typedState);
+            assert.deepEqual(fs.readFileSync(path.join(raceRoot, '.screenplay/identities.json')), reviewedIdentities, 'Pending read/disposal never changes exact installed identities');
+            assert.equal(rpc.slice(teardownReads).filter(frame => ['open-workspace', 'propose-repair', 'apply'].includes(frame.name)).length, 0, 'Late inspection publishes no new proposal epoch or Apply authority');
+            fs.writeFileSync(teardownEvidence, JSON.stringify({ pending: false, actualStateQueryDispatched: true, actualRootWatchClosed: closed, pendingAtClose, actualInspectionSettled: true, timedOut, exactBuffersAndDiskPreserved: true, lateUi, applyFrames: dispatched }));
+            console.log(`NATIVE TEARDOWN SETTLED: ${JSON.stringify({ closed, pendingAtClose, timedOut, lateUi, applyFrames: dispatched })}`);
+        }).catch(error => {
+            inspectionSettled = true;
+            fs.writeFileSync(teardownEvidence, JSON.stringify({ pending: false, error: String(error), actualRootWatchClosed: closed, pendingAtClose, timedOut, lateUi }));
         }).finally(() => {
+            clearTimeout(teardownTimer);
             productionApi.workspace.openTextDocument = originalOpen;
             productionApi.window.showTextDocument = originalShow;
             productionApi.window.showWarningMessage = originalWarning;
