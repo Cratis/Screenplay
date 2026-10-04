@@ -6,6 +6,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <TargetFrameworks></TargetFrameworks>
         <IsPackable>true</IsPackable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <!-- This new package has no 4.0.0 baseline. Keep package validation enabled. -->
         <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
         <Description>Embeddable MCP server for Cratis Screenplay model navigation and authoring</Description>

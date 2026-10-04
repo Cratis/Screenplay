@@ -57,16 +57,20 @@ internal sealed partial class McpWorkspaces
         if (requestedPath is not null)
         {
             var requestedRoot = new McpRoot(Path.GetFullPath(requestedPath, CurrentDirectoryHint ?? Environment.CurrentDirectory));
-            if (_staticRoot && !string.Equals(
-                Path.TrimEndingDirectorySeparator(Root.DirectoryPath),
-                Path.TrimEndingDirectorySeparator(requestedRoot.DirectoryPath),
-                OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+            if (_staticRoot)
             {
-                throw new McpFailure("A fixed-root server cannot switch to another application root.") { FailureKind = "RootChangeRefused" };
-            }
+                if (!McpDirectoryIdentity.Same(Root, requestedRoot))
+                {
+                    throw new McpFailure("A fixed-root server cannot switch to another application root.") { FailureKind = "RootChangeRefused" };
+                }
 
-            ClientDerivedRootPath = null;
-            BindRoot(requestedRoot);
+                // A proven alias is admitted, but never replaces the originally approved root object or spelling.
+            }
+            else
+            {
+                ClientDerivedRootPath = null;
+                BindRoot(requestedRoot);
+            }
         }
         else if (_root is null)
         {

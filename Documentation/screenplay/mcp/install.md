@@ -167,8 +167,11 @@ the model lives wherever the host puts them, and `open-workspace` with
 `workspaceJson` carries a model between sessions.
 
 Pass a root, as below, when you want one fixed folder for every session. A fixed-root
-connection refuses `open-workspace.path` outside that root with `RootChangeRefused`;
-changing applications requires a new authorized connection.
+connection refuses `open-workspace.path` naming a different physical directory
+with `RootChangeRefused`. A case alias is accepted only when native directory
+identity proves it is the same folder, after the symbolic-link and reparse-point
+guards; the originally approved root stays bound. Changing applications requires
+a new authorized connection.
 
 ## Choose one application root
 
