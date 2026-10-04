@@ -4,8 +4,17 @@ module Collections
       command CloseInvoice
         invoiceId InvoiceId identifier
         reason String
+        validate
+          reason not empty message "A reason is required"
         produces InvoiceClosed
           for invoiceId
           reason = reason
       event InvoiceClosed
         reason String
+      constraint OnlyClosedOnce
+        unique event InvoiceClosed
+      specification RejectingAnEmptyReason
+        when CloseInvoice
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason = ""
+        then error "A reason is required"

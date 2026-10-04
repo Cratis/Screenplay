@@ -37,11 +37,7 @@ internal static class SemanticScenario
     {
         actionFacts = 0;
         DateTimeOffset? clock = expected.GivenClock is { } given ? Instant(given) : null;
-        var occurrence = clock is { } at ? new SemanticCommandOccurrence(at, string.Empty, string.Empty, string.Empty) : null;
-        if (occurrence is not null && UsesCausation(plan, expected))
-        {
-            return new SemanticUnsupported(world, SemanticExecutionCapability.Command, "'given clock' states when the scenario happens, not who caused it; $context.causedBy needs a caller occurrence the reference does not model.");
-        }
+        var occurrence = clock is { } at ? new SemanticCommandOccurrence(at, string.Empty, string.Empty, string.Empty) { IsTimeOnly = true } : null;
 
         var loop = new SemanticReactionLoop(evaluator, plan, world);
         SemanticExecutionResult? failure;
@@ -66,7 +62,8 @@ internal static class SemanticScenario
                         new SemanticFact(appended.EventContract, appended.EventSource?.Value ?? SemanticValue.Null, appended.Values)
                         {
                             Context = appended.EventSource is null ? null : new(appended.EventSource),
-                            Tags = plan.Events[appended.EventContract].Tags
+                            Tags = plan.Events[appended.EventContract].Tags,
+                            Occurred = clock
                         },
                         clock);
                     break;
@@ -90,7 +87,7 @@ internal static class SemanticScenario
         }
 
         failure ??= loop.Settle();
-        return failure ?? SemanticEvaluator.ExecuteQueries(plan, world, loop.World, loop.Facts, queries, expected.GivenCaller);
+        return failure ?? SemanticEvaluator.ExecuteQueries(plan, loop.World, loop.World, loop.Facts, queries, expected.GivenCaller);
     }
 
     static SemanticExecutionRequest CommandRequest(SemanticSpecificationCommand when) =>
@@ -146,7 +143,8 @@ internal static class SemanticScenario
     {
         var capture = plan.Captures[presented.Capture];
         var key = KeyOf(presented.Record, capture.Key);
-        var previous = expected.GivenCaptures.LastOrDefault(given => given.Capture == presented.Capture && KeyOf(given.Record, capture.Key) == key)?.Record;
+        var previous = expected.GivenCaptures.LastOrDefault(given => given.Capture == presented.Capture &&
+            SemanticValueRules.AreEqual(KeyOf(given.Record, capture.Key), key))?.Record;
         foreach (var fact in SemanticCaptureEvaluation.Evaluate(plan, capture, previous, presented.Record, occurrence))
         {
             if (loop.Append(fact, occurrence?.Occurred) is { } failure)
@@ -158,23 +156,10 @@ internal static class SemanticScenario
         return null;
     }
 
-    static string KeyOf(SemanticCaptureRecord record, string key) =>
-        SemanticValueRules.Text(record.Fields.SingleOrDefault(field => field.Name == key)?.Value);
+    static SemanticValue KeyOf(SemanticCaptureRecord record, string key) =>
+        record.Fields.SingleOrDefault(field => field.Name == key && field.Kind == SemanticCaptureFieldKind.Value)?.Value
+        ?? throw new InvalidSemanticContract($"A capture record has no scalar key '{key}'.");
 
     static DateTimeOffset Instant(string value) =>
         DateTimeOffset.ParseExact(value, "yyyy-MM-dd'T'HH:mm:ss.fffffff'Z'", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
-
-    static bool UsesCausation(SemanticExecutionPlan plan, SemanticSpecification expected)
-    {
-        static bool Causation(SemanticExpression expression) => expression is SemanticEventContextExpression { Value: not SemanticEventContextValueKind.Occurred };
-        var commands = plan.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(trigger => trigger.Invokes)
-            .Select(invocation => invocation.Command)
-            .Append(expected.When?.Command ?? default)
-            .Where(command => command.IsSet && plan.Commands.ContainsKey(command))
-            .Select(command => plan.Commands[command]);
-        return commands.SelectMany(command => command.Produces).SelectMany(produced => produced.Mappings).Any(mapping => Causation(mapping.Source)) ||
-            plan.Reactions.SelectMany(reaction => reaction.Triggers).Any(trigger =>
-                trigger.Produces.SelectMany(produced => produced.Mappings).Concat(trigger.Invokes.SelectMany(invocation => invocation.Mappings))
-                    .Any(mapping => Causation(mapping.Source)));
-    }
 }

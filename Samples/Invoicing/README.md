@@ -93,7 +93,10 @@ queries, handlers, command `reads`, `@pii` concepts and code policies among them
 reactions are admitted as ESM v6 by
 [decision 0022](../../decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md), but
 because the document as a whole does not bind, the reference specification runner can not execute most of
-these specifications here. For a model whose
+these specifications here. Direct-producing reactions with `reads` also refuse binding rather than
+silently discarding unprotected decisions. Focused executable clock, reaction, trigger and capture
+vectors live in `ReactionsCorpus.V6`; full-sample syntax compilation is not reference-execution admission.
+For a model whose
 core specifications do run, see [Library](../Library).
 
 ## Verify

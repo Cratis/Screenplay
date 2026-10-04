@@ -46,6 +46,6 @@ public class when_compiling_an_outcome_a_reaction_appends : given.a_compiler
         _withoutReaction = _compiler.Compile(Source[..Source.IndexOf("      reaction Welcomer", StringComparison.Ordinal)] + "      event InvoiceWelcomed\n        invoiceId Uuid\n");
     }
 
-    [Fact] void should_leave_an_event_a_reaction_may_append_to_execution() => _withReaction.Diagnostics.ShouldBeEmpty();
-    [Fact] void should_still_report_it_when_nothing_reacts() => _withoutReaction.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.UnreachableSpecificationOutcome);
+    [Fact] void should_leave_an_event_a_reaction_may_append_to_execution() => _withReaction.Diagnostics.Where(diagnostic => diagnostic.Severity != DiagnosticSeverity.Information).ShouldBeEmpty();
+    [Fact] void should_still_report_it_when_nothing_reacts() => _withoutReaction.Diagnostics.Count(diagnostic => diagnostic.Code == DiagnosticCodes.UnreachableSpecificationOutcome).ShouldEqual(1);
 }

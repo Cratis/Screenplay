@@ -64,10 +64,31 @@ public static class ReactionsCorpus
                 Expectation("sem1:3a829ffd770e18dc85cc1ecca5c121cf437ad54d97113a1edc6983dccc6903a9", "SendingAnInvoice"),
                 Expectation("sem1:182fc65c0262f892fb967a11f1f8b98bafacdafe7d37b47d761db5393a3f54cb", "ClosingAPaidInvoice"),
                 Expectation("sem1:95eed25fd308f7b074895d55f3169ce68266e2bc022f18c7365b9bb0c52ae2c0", "IssuingTheWeeklyDigest"),
-                Expectation("sem1:ef2515ee64c918e848e50ec9c9720351c8f1fdae1dc99d887392fda543a2aa24", "SeeingALegacyPayment")
+                Expectation("sem1:ef2515ee64c918e848e50ec9c9720351c8f1fdae1dc99d887392fda543a2aa24", "SeeingALegacyPayment"),
+                Expectation("sem1:16a07b5b5d7fda3deff9fc4f544219b7c60b3fe19f951d79220ea40227a55f1e", "RejectingAnEmptyReason") with
+                {
+                    Outcome = SemanticExecutionOutcomeKind.Rejected,
+                    RejectionCategory = SemanticRejectionCategory.Validation,
+                    RejectionMessage = "A reason is required",
+                    WorldFactCount = 0
+                },
+                Expectation("sem1:e95bcc6e3b88097ed6b714b00463dde09ebb28a65195fafa29d49558ffe310fe", "RejectingASecondClose") with
+                {
+                    Outcome = SemanticExecutionOutcomeKind.Rejected,
+                    RejectionCategory = SemanticRejectionCategory.Constraint,
+                    RejectionMessage = "Constraint 'OnlyClosedOnce' is violated: the event source already has the constrained event.",
+                    WorldFactCount = 1
+                },
+                Expectation("sem1:31e9ac46cb4c89e2befb8c65f331e9815cfee7afba14a1c68ed71f03f2154559", "UnsupportedStartup") with
+                {
+                    Outcome = SemanticExecutionOutcomeKind.Unsupported,
+                    UnsupportedCapability = SemanticExecutionCapability.Reaction,
+                    Passed = false,
+                    WorldFactCount = 0
+                }
             ],
             EsmBytes = Resource("expected.esm-v6.json"),
-            SemanticRevision = SemanticRevision.Parse("rev1:9f75777d7f5a031d3da39b1f9fce56b3c9c10e19fc4b4ba77d5b2857b46357d7")
+            SemanticRevision = SemanticRevision.Parse("rev1:1be294990a5cf564bba0cbc9aae5a1db1d2e0b27387e2a164de2149e8a4f0700")
         };
     }
 

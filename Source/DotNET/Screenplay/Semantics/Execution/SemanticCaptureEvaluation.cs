@@ -51,15 +51,15 @@ internal static class SemanticCaptureEvaluation
         {
             var was = Records(previous, children.Field);
             var now = Records(current, children.Field);
-            var wasById = was.ToDictionary(record => Identity(record, children.IdentifiedBy), StringComparer.Ordinal);
+            var wasById = Index(was, children.IdentifiedBy);
+            var nowById = Index(now, children.IdentifiedBy);
             foreach (var child in now)
             {
                 var earlier = wasById.GetValueOrDefault(Identity(child, children.IdentifiedBy));
                 facts.AddRange(context.Appends(children.Appends, earlier is null ? null : Map(Scalars(earlier), children.Map), Map(Scalars(child), children.Map), after));
             }
 
-            var nowIds = now.Select(record => Identity(record, children.IdentifiedBy)).ToHashSet(StringComparer.Ordinal);
-            foreach (var removed in was.Where(record => !nowIds.Contains(Identity(record, children.IdentifiedBy))))
+            foreach (var removed in was.Where(record => !nowById.ContainsKey(Identity(record, children.IdentifiedBy))))
             {
                 facts.AddRange(context.Appends(children.Appends, Map(Scalars(removed), children.Map), null, after));
             }
@@ -81,12 +81,41 @@ internal static class SemanticCaptureEvaluation
             .ToDictionary(field => field.Name, field => field.Value!, StringComparer.Ordinal);
 
     static ImmutableArray<SemanticCaptureRecord> Records(SemanticCaptureRecord? record, string field) =>
-        record?.Fields.SingleOrDefault(value => value.Name == field && value.Kind == SemanticCaptureFieldKind.Records)?.Records ?? [];
+        record?.Fields.SingleOrDefault(value => value.Name == field) switch
+        {
+            null => [],
+            { Kind: SemanticCaptureFieldKind.Records } value => value.Records,
+            _ => throw new InvalidSemanticContract($"Capture children '{field}' must be a collection of records.")
+        };
 
     static SemanticCaptureRecord? Nested(SemanticCaptureRecord? record, string field) =>
-        record?.Fields.SingleOrDefault(value => value.Name == field && value.Kind == SemanticCaptureFieldKind.Record)?.Record;
+        record?.Fields.SingleOrDefault(value => value.Name == field) switch
+        {
+            null => null,
+            { Kind: SemanticCaptureFieldKind.Record } value => value.Record,
+            _ => throw new InvalidSemanticContract($"Capture nested field '{field}' must be a record.")
+        };
 
-    static string Identity(SemanticCaptureRecord record, string field) => SemanticValueRules.Text(Scalars(record).GetValueOrDefault(field));
+    static string Identity(SemanticCaptureRecord record, string field) => Scalars(record).GetValueOrDefault(field) switch
+    {
+        SemanticTextValue text => $"text:{text.Value}",
+        SemanticNumberValue number => $"number:{SemanticValueRules.Text(number)}",
+        _ => throw new InvalidSemanticContract($"Capture child identity '{field}' must be present as text or a number.")
+    };
+
+    static Dictionary<string, SemanticCaptureRecord> Index(ImmutableArray<SemanticCaptureRecord> records, string field)
+    {
+        var index = new Dictionary<string, SemanticCaptureRecord>(StringComparer.Ordinal);
+        foreach (var record in records)
+        {
+            if (!index.TryAdd(Identity(record, field), record))
+            {
+                throw new InvalidSemanticContract($"Capture children have duplicate identity '{field}'.");
+            }
+        }
+
+        return index;
+    }
 
     static Dictionary<string, SemanticValue> Map(Dictionary<string, SemanticValue> record, ImmutableArray<SemanticCaptureMap> map)
     {
@@ -154,7 +183,8 @@ internal static class SemanticCaptureEvaluation
                 yield return new SemanticFact(append.EventContract, key, values.ToImmutable())
                 {
                     Context = new(new(append.EventSourceType, key)),
-                    Tags = eventContract.Tags.AddRange(append.Tags)
+                    Tags = eventContract.Tags.AddRange(append.Tags),
+                    Occurred = occurrence?.Occurred
                 };
             }
         }

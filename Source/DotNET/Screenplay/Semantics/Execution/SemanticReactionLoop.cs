@@ -71,6 +71,11 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
     /// <returns>The rejected or unsupported result, or <c>null</c> when the fact was appended.</returns>
     public SemanticExecutionResult? Append(SemanticFact fact, DateTimeOffset? occurred)
     {
+        if (_facts.Count >= MaximumFacts)
+        {
+            return new SemanticUnsupported(World, SemanticExecutionCapability.Reaction, $"The scenario appends more than {MaximumFacts} facts; its reactions do not settle.");
+        }
+
         var result = SemanticEvaluator.Append(plan, World, fact, [], null);
         if (result is not SemanticAccepted accepted)
         {
@@ -123,17 +128,23 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
         SemanticFact? cause,
         DateTimeOffset? occurred)
     {
-        if (trigger.RequirementId is not null)
-        {
-            return new SemanticUnsupported(World, SemanticExecutionCapability.Reaction, $"Reaction '{reaction.Name}' has an opaque body and requires a target provider to run it.");
-        }
-
         if (trigger.Where is not null && !SemanticConditionEvaluation.Evaluate(trigger.Where, values))
         {
             return null;
         }
 
-        var occurrence = occurred is { } at ? new SemanticCommandOccurrence(at, string.Empty, string.Empty, string.Empty) : null;
+        if (trigger.RequirementId is not null)
+        {
+            return new SemanticUnsupported(World, SemanticExecutionCapability.Reaction, $"Reaction '{reaction.Name}' has an opaque body and requires a target provider to run it.");
+        }
+
+        if (trigger.Produces.SelectMany(produced => produced.Mappings).Concat(trigger.Invokes.SelectMany(invoked => invoked.Mappings))
+            .Any(mapping => mapping.Source is SemanticEventContextExpression { Value: not SemanticEventContextValueKind.Occurred }))
+        {
+            return new SemanticUnsupported(World, SemanticExecutionCapability.Reaction, $"Reaction '{reaction.Name}' has no caller audit identity for $context.causedBy.");
+        }
+
+        var occurrence = occurred is { } at ? new SemanticCommandOccurrence(at, string.Empty, string.Empty, string.Empty) { IsTimeOnly = true } : null;
         var lookup = values.ToDictionary(pair => pair.Key, pair => pair.Value);
         try
         {
@@ -147,7 +158,7 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
 
             foreach (var invocation in trigger.Invokes)
             {
-                if (Invoke(invocation, lookup, root, occurrence) is { } failure)
+                if (Invoke(reaction, invocation, lookup, root, occurrence) is { } failure)
                 {
                     return failure;
                 }
@@ -201,12 +212,15 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
         var fact = new SemanticFact(produced.EventContract, destination, mapped)
         {
             Context = context,
-            Tags = eventContract.Tags.AddRange(produced.Tags)
+            Tags = eventContract.Tags.AddRange(produced.Tags),
+            Occurred = occurrence?.Occurred,
+            ReactionOrigin = reaction.Id
         };
         return Append(fact, occurrence?.Occurred);
     }
 
     SemanticExecutionResult? Invoke(
+        SemanticReaction reaction,
         SemanticInvocation invocation,
         Dictionary<SemanticId, SemanticValue> values,
         SemanticExpressionRootKind root,
@@ -219,21 +233,21 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
                 property.Id,
                 mappings.TryGetValue(property.Id, out var mapping) ? SemanticEvaluator.Evaluate(mapping.Source, root, values, occurrence) : SemanticValue.Null))
             .ToImmutableArray();
-        var identifier = command.Properties.SingleOrDefault(property => property.IsIdentifier);
-        var request = SemanticExecutionRequest.Create(command.Id, commandValues, []) with { Occurrence = occurrence };
-        if (command.Destination is null && identifier is not null)
+        var request = SemanticExecutionRequest.Create(command.Id, commandValues, []) with
         {
-            request = request with
-            {
-                AllocatedIdentities = ImmutableDictionary<SemanticId, SemanticValue>.Empty.Add(command.Id, commandValues.Single(value => value.TargetProperty == identifier.Id).Value),
-                AllocatedEventSourceType = identifier.Type
-            };
-        }
+            Occurrence = occurrence,
+            ReactionOrigin = reaction.Id
+        };
 
         var result = evaluator.Execute(plan, World, request);
         if (result is not SemanticAccepted accepted)
         {
             return result;
+        }
+
+        if (_facts.Count + accepted.Facts.Length > MaximumFacts)
+        {
+            return new SemanticUnsupported(World, SemanticExecutionCapability.Reaction, $"The scenario appends more than {MaximumFacts} facts; its reactions do not settle.");
         }
 
         World = accepted.World;

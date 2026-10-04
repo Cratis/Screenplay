@@ -109,6 +109,12 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                 continue;
             }
 
+            if (request.Occurrence is { IsTimeOnly: true } && produced.Mappings.Any(mapping =>
+                mapping.Source is SemanticEventContextExpression { Value: not SemanticEventContextValueKind.Occurred }))
+            {
+                return new SemanticUnsupported(world, SemanticExecutionCapability.Command, "The occurrence supplies time only; $context.causedBy needs a caller audit identity the reference does not model.");
+            }
+
             var destinationExpression = produced.Destination ?? command.Destination?.Value;
             var destination = destinationExpression is null
                 ? request.AllocatedIdentities.GetValueOrDefault(command.Id)
@@ -156,7 +162,9 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                 Context = plan.Model.SemanticVersion != SemanticVersion.V1
                     ? new(new(DestinationType(command, destinationExpression, request.AllocatedEventSourceType), destination))
                     : null,
-                Tags = plan.Events[produced.EventContract].Tags.AddRange(produced.Tags)
+                Tags = plan.Events[produced.EventContract].Tags.AddRange(produced.Tags),
+                Occurred = request.Occurrence?.Occurred,
+                ReactionOrigin = request.ReactionOrigin
             });
         }
 
@@ -164,6 +172,11 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         if (SemanticConstraintEnforcement.FindViolation(plan, world, facts.ToImmutable()) is { } violated)
         {
             return RejectWithMessage(world, SemanticRejectionCategory.Constraint, violated.Name, SemanticConstraintEnforcement.MessageFor(violated));
+        }
+
+        if (ReachedReducer(plan, facts.ToImmutable()) is { } reachedReducer)
+        {
+            return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, $"Reducer '{reachedReducer.Name}' has opaque transitions and requires a target provider.");
         }
 
         if (!TryProject(plan, world.Facts, world.ReadModels, facts.ToImmutable(), out var readModels, out var projectionFailure))
@@ -199,6 +212,11 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         if (SemanticConstraintEnforcement.FindViolation(plan, world, facts) is { } violated)
         {
             return RejectWithMessage(world, SemanticRejectionCategory.Constraint, violated.Name, SemanticConstraintEnforcement.MessageFor(violated));
+        }
+
+        if (ReachedReducer(plan, facts) is { } reachedReducer)
+        {
+            return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, $"Reducer '{reachedReducer.Name}' has opaque transitions and requires a target provider.");
         }
 
         if (!TryProject(plan, world.Facts, world.ReadModels, facts, out var readModels, out var failure))
@@ -430,6 +448,12 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
 
     static SemanticRejected RejectWithMessage(SemanticWorld world, SemanticRejectionCategory category, string? code, string message) =>
         new(world, category, code, message) { MessageIsStringKey = message.StartsWith("$strings.", StringComparison.Ordinal) };
+
+    static SemanticReducer? ReachedReducer(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts) =>
+        plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V6)
+            ? plan.Model.Application.Modules.SelectMany(module => Reducers(module.Features))
+                .FirstOrDefault(reducer => reducer.Transitions.Any(transition => facts.Any(fact => fact.EventContract == transition.EventContract)))
+            : null;
 
     static SemanticReducer? ReducerFor(SemanticExecutionPlan plan, SemanticId readModel) =>
         plan.Model.Application.Modules.SelectMany(module => Reducers(module.Features))

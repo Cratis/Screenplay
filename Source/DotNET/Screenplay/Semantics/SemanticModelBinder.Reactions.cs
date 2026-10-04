@@ -134,7 +134,14 @@ public sealed partial class SemanticModelBinder
 
             foreach (var reads in trigger.Reads ?? [])
             {
-                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Reaction '{reaction.Name}' reads '{reads.ReadModel}' to decide; the reference evaluator does not consult the view, and the reaction's values come from its occurrence.", reads.Location);
+                if ((trigger.Produces ?? []).Any() || requirement is not null)
+                {
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Reaction '{reaction.Name}' reads '{reads.ReadModel}' before producing directly, but ESM v6 cannot protect that decision dependency (decision 0006).", reads.Location);
+                }
+                else
+                {
+                    Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Reaction '{reaction.Name}' invokes commands; the invoked commands must declare and protect their own decision reads (decision 0006).", reads.Location);
+                }
             }
 
             if (OccurrenceOf(reaction, trigger) is not { } occurrence)

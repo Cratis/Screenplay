@@ -30,11 +30,20 @@ module Collections
       command CloseInvoice
         invoiceId InvoiceId identifier
         reason String
+        validate
+          reason not empty message "A reason is required"
         produces InvoiceClosed
           for invoiceId
           reason = reason
       event InvoiceClosed
         reason String
+      constraint OnlyClosedOnce
+        unique event InvoiceClosed
+      specification RejectingAnEmptyReason
+        when CloseInvoice
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason = ""
+        then error "A reason is required"
     slice Automation Reminders
       reaction ReminderScheduler
         when InvoiceSent
@@ -54,6 +63,11 @@ module Collections
           produces DigestIssued
             for "weekly"
             issuedAt = $context.occurred
+      reaction StartupBody
+        when Startup
+          ```csharp
+            return [];
+            ```
       event ReminderScheduled
         scheduledAt DateTime
       event DigestIssued
@@ -70,6 +84,18 @@ module Collections
         when clock "2026-10-05T07:30:00Z"
         then DigestIssued
           for "weekly"
+          issuedAt = "2026-10-05T07:30:00Z"
+      specification RejectingASecondClose
+        given InvoiceClosed
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason = "already"
+        when trigger PaymentFileArrived
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount = 120
+        then error "Constraint 'OnlyClosedOnce' is violated: the event source already has the constrained event."
+      specification UnsupportedStartup
+        when trigger Startup
+        then DigestIssued
           issuedAt = "2026-10-05T07:30:00Z"
     slice Translate LegacySync
       capture LegacyInvoiceCapture

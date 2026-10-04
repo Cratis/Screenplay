@@ -102,3 +102,31 @@ points the decision text leaves open, without changing the choice:
 not bind as a whole. The verification the decision names for it runs on `ReactionsCorpus.V6` and the
 specifications under `Semantics/Execution/for_SemanticSpecificationRunner/when_running_reactions` instead, which
 cover each of the five forms. The tracking issues in Stage, CLI, Studio and Generation are not opened yet.
+
+**2026-10-04 — independent integration in progress (#369).** The true merge preserves all six commits through
+`4fc16226d66b4e8ae8bc222e568c31f8023972ee` and Einar Ingebrigtsen's acceptance above. This is not a claim that
+his branch, the integration, or consumer admission is verified. Under Sindre Alstad Wilting's delegated
+integration request, the following conservative hardening applies; these resolutions are not attributed
+to Einar Ingebrigtsen:
+
+- Apply accepted 0006: direct production or opaque effects with declared reads fail binding until their
+  decision dependencies can be protected. The historical report-only implementation note above does
+  not waive that accepted requirement. Invocation-only reactions delegate decisions to the full command
+  pipeline; no new decision-read guarantees or v11 admission are introduced.
+- Check audit-identity use only in reached effects. Time-only occurrence cannot supply caller audit
+  identity. Reaction causation is explicit and separate from caller authorization. Unrelated effects
+  and bodies excluded by `where` do not poison executable scenarios.
+- Preserve 0023's legacy allocated-identity rule: invocation does not substitute a command identifier
+  for an unavailable allocation. This profile returns typed IdentityAllocation unsupported instead.
+- Each accepted append and invoked-command transaction keeps its own disposition. A later cascade
+  failure retains facts already accepted; a failed invoked command contributes none of its own facts.
+  No whole-cascade atomicity, retry, durable fan-out or acknowledgement guarantee is invented (#286).
+- Intervals floor pre-epoch boundaries, schedule enumeration stops at the final calendar day, capture
+  keys distinguish numbers from text, and missing/duplicate child identities fail without appending.
+
+Focused reference vectors replace the impossible whole-Invoicing execution named in the original
+verification text, as the historical note explains. Release/Debug, canonical runtime, JavaScript and
+package verification remain integration checkpoints, not implied by a merge. Stage#79 and Stage#15
+remain open for rendering and shared execution; the bounded CLI ESM issue search found no open v6
+admission ticket. CLI, Studio and Generation admission/tracking remain follow-ups before release.
+The record remains `stage: implemented`, not `verified`.

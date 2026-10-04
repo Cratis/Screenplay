@@ -282,9 +282,9 @@ These forms, and the automation and translate slices whose reactions and capture
 - **An appended event is the action itself.** After `when append`, `then` events are what followed it - what reactions appended - the way a command's `then` events are what it produced.
 - **`given clock` fixes when the scenario happens.** Every command, append and reaction occurs at that instant; an occurrence a clock tick sets off occurs at the instant it fell due. A specification with `when clock` states `given clock` too, the instant the clock moves from. The clock states a time, not a caller, so a mapping from `$context.causedBy` is unsupported in a scenario that states one.
 - **The clock is UTC and exact.** Each `every` or `at` occurrence due after `given clock` and at or before `when clock` fires exactly once, in time order. An interval counts from the Unix epoch; a schedule's time of day is UTC.
-- **Captures compare records.** `given capture` is the record a capture last saw for a key, and `when capture` the record it sees now. Nested objects and lists of objects in a record are a capture's `nested` record and `children`.
+- **Captures compare records.** `given capture` is the record a capture last saw for a key, and `when capture` the record it sees now. Numeric and text keys remain distinct. Nested objects and lists of objects in a record are a capture's `nested` record and `children`. Child identities must be present and unique in each collection; reordering does not create additions or removals.
 
-Reactions with a code body (`file` or an inline block) and reactions that never settle return `SemanticUnsupported` rather than a guessed outcome. A command a reaction invokes runs through its full pipeline with no caller, so a command that needs one rejects it, and that rejection ends the scenario. A model using any of these forms selects language and semantics `6.0` (canonical `schemaVersion: 6`); models without them keep their bytes and revisions.
+Reached reactions with a code body (`file` or an inline block) and reactions that never settle return `SemanticUnsupported` rather than a guessed outcome. Unrelated reactions and bodies excluded by `where` do not run. A later reaction failure retains earlier accepted facts; each invoked command remains atomic. The reference permits at most 1,000 new facts per scenario and 10,000 due occurrences per clock advance, failing closed at either limit. Clock occurrences are not fake input events, and capture sources are never contacted. A command a reaction invokes runs through its full pipeline with no caller, so a command that needs one rejects it, and that rejection ends the scenario. A model using any of these forms selects language and semantics `6.0` (canonical `schemaVersion: 6`); models without them keep their bytes and revisions.
 
 ## Reference execution
 
@@ -318,7 +318,7 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `given readmodel <ReadModelType>` | Prior read model state, established directly. |
 | `given caller` | Explicit identity, roles, and repeated claims. |
 | `when <CommandType>` | The command under test, with its property values. |
-| `when append <EventType>` | Append an event occurrence, enforce constraints and project it; no reactions run. |
+| `when append <EventType>` | Append an event occurrence, enforce constraints and project it; in v6, run its reaction consequences. |
 | `given clock "<instant>"` | The instant the scenario happens at. |
 | `given capture <Capture>` | An earlier record of a capture's source. |
 | `when clock "<instant>"` | The clock reaches an instant; scheduled reactions that are due run. |

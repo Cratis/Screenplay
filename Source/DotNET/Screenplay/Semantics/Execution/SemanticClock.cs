@@ -61,7 +61,10 @@ internal static class SemanticClock
     {
         if (trigger is { Kind: SemanticReactionTriggerKind.Interval, Every: { } every })
         {
-            var start = from.ToUnixTimeSeconds() / every * every;
+            var fromSeconds = from.ToUnixTimeSeconds();
+            var quotient = fromSeconds / every;
+            if (fromSeconds % every < 0) quotient--;
+            var start = (quotient + 1) * every;
             for (var seconds = start; seconds <= to.ToUnixTimeSeconds(); seconds += every)
             {
                 var at = DateTimeOffset.FromUnixTimeSeconds(seconds);
@@ -79,7 +82,7 @@ internal static class SemanticClock
             yield break;
         }
 
-        for (var day = from.UtcDateTime.Date; day <= to.UtcDateTime.Date; day = day.AddDays(1))
+        for (var day = from.UtcDateTime.Date; day <= to.UtcDateTime.Date;)
         {
             var at = new DateTimeOffset(day.AddSeconds(secondOfDay), TimeSpan.Zero);
             if (at > from && at <= to &&
@@ -88,6 +91,9 @@ internal static class SemanticClock
             {
                 yield return at;
             }
+
+            if (day == to.UtcDateTime.Date) yield break;
+            day = day.AddDays(1);
         }
     }
 }
