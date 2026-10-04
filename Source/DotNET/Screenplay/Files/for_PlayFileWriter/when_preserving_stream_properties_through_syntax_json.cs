@@ -75,18 +75,16 @@ public class when_preserving_stream_properties_through_syntax_json
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    void should_keep_ambiguity_blocking_after_json_folder_expansion_in_either_file_order(bool reverse)
+    void should_refuse_ambiguity_export_after_json_in_either_file_order(bool reverse)
     {
         var original = new ScreenplayCompiler().Compile(Declarations + Prefix + "stream Account.Transactions\n          deeper String");
         original.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeTrue();
         var decoded = (ApplicationSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(original.Value!));
-        var files = new PlayFileWriter().Expand(decoded).ToArray();
-        files.Single(file => file.RelativePath.EndsWith("S.play", StringComparison.Ordinal)).Content.ShouldNotContain("@stream");
-        var restored = Assemble(files, reverse);
-        restored.Success.ShouldBeFalse();
-        restored.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeTrue();
-        Command(restored.Value!).Stream!.PropertyCandidate.ShouldNotBeNull();
-        SyntaxJson.StructurallyEqual(Command(decoded), Command(restored.Value!)).ShouldBeTrue();
+        Command(decoded).StreamCandidates.Single().PropertyCandidate.ShouldNotBeNull();
+        var error = Catch.Exception(() => _ = new PlayFileWriter().Expand(decoded).ToArray());
+        error.ShouldBeOfExactType<InvalidSyntaxJson>();
+        SyntaxJson.StructurallyEqual(original.Value!, decoded).ShouldBeTrue();
+        Assemble([new("model.play", Declarations + Prefix + "stream Account.Transactions\n          deeper String")], reverse).Success.ShouldBeFalse();
     }
 
     [Fact]
@@ -107,10 +105,9 @@ public class when_preserving_stream_properties_through_syntax_json
                 result.Success.ShouldBeFalse();
                 result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeTrue();
                 var decoded = (ApplicationSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(result.Value!));
-                var restored = Assemble(new PlayFileWriter().Expand(decoded), false);
-                restored.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeTrue();
-                Command(restored.Value!).Stream!.PropertyCandidate.ShouldNotBeNull();
-                Command(restored.Value!).Properties.Count().ShouldEqual(2);
+                Catch.Exception(() => _ = new PlayFileWriter().Expand(decoded).ToArray()).ShouldBeOfExactType<InvalidSyntaxJson>();
+                Command(decoded).StreamCandidates.Single().PropertyCandidate.ShouldNotBeNull();
+                Command(decoded).Properties.Single().Name.ShouldEqual("deeper");
             }
         }
     }
@@ -133,8 +130,8 @@ public class when_preserving_stream_properties_through_syntax_json
             {
                 var result = Assemble([first, second, documents.Single(document => document != first && document != second)], false);
                 result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeTrue();
-                Command(result.Value!).Stream!.PropertyCandidate.ShouldNotBeNull();
-                Command(result.Value!).Properties.Count().ShouldEqual(2);
+                Command(result.Value!).StreamCandidates.Single().PropertyCandidate.ShouldNotBeNull();
+                Command(result.Value!).Properties.Single().Name.ShouldEqual("deeper");
             }
         }
     }
@@ -152,8 +149,8 @@ public class when_preserving_stream_properties_through_syntax_json
             ],
             reverse);
         result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeTrue();
-        Command(result.Value!).Stream!.PropertyCandidate.ShouldNotBeNull();
-        Command(result.Value!).Properties.Count().ShouldEqual(2);
+        Command(result.Value!).StreamCandidates.Single().PropertyCandidate.ShouldNotBeNull();
+        Command(result.Value!).Properties.Single().Name.ShouldEqual("deeper");
     }
 
     [Fact]

@@ -513,7 +513,10 @@ CommandStreamDecl = "stream", Ident, ".", Ident, NL,
    produces PLAY0504. Neither resolved interpretation keeps legacy property syntax,
    including deeper legacy members and unknown-type evidence. A nested streamId
    does not force route interpretation; typo sources are not distinguishable from
-   unresolved qualified property types by spelling alone. *)
+   unresolved qualified property types by spelling alone. Every ambiguous or duplicate
+   header is retained structurally in streamCandidates; stream holds at most one
+   unambiguous route. Invalid candidate drafts support syntax JSON transport, but
+   printing and folder expansion refuse them with InvalidSyntaxJson. *)
 
 CommandResponse = "returns", [ "@" ], Ident, NL
                 | "returns", NL, INDENT, ResponseField, { ResponseField }, DEDENT ;

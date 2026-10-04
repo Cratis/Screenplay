@@ -215,6 +215,7 @@
                       }
                     }
                   },
+                  "streamCandidates": [],
                   "validations": []
                 },
                 {
@@ -261,6 +262,7 @@
                       }
                     }
                   },
+                  "streamCandidates": [],
                   "validations": []
                 },
                 {
@@ -279,6 +281,7 @@
                     "stream": "Onboarding",
                     "streamId": null
                   },
+                  "streamCandidates": [],
                   "validations": []
                 },
                 {
@@ -376,6 +379,7 @@
                   ],
                   "response": null,
                   "stream": null,
+                  "streamCandidates": [],
                   "validations": []
                 }
               ],

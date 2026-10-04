@@ -101,7 +101,7 @@ describe('when authoring source-owned streams', () => {
         for (const kind of ['EventSourceSyntax', 'EventStreamSyntax', 'CommandStreamSyntax', 'PropertyMappingSyntax']) expect(walker.nodes.some(node => node.kind === kind)).toBe(true);
         const ambiguous = parse('import Account.Transactions\ntype Transactions\n  value String\n' + prefix + '        stream Account.Transactions');
         walker.visitApplication(ambiguous.value);
-        expect(ambiguous.value.modules[0].features[0].slices[0].commands[0].stream?.propertyCandidate).not.toBeNull();
+        expect(ambiguous.value.modules[0].features[0].slices[0].commands[0].streamCandidates?.[0].propertyCandidate).not.toBeNull();
     });
     it.each([false, true])('should resolve native imports and placed barrels independently of file order %s', reverse => {
         const entries: [string, string][] = [

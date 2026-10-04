@@ -14,6 +14,8 @@ public partial class ScreenplayPrinter
 {
     void WriteCommand(ScreenplayWriter writer, CommandSyntax command)
     {
+        EventSourceInvariants.Validate(command);
+        if (command.StreamCandidates.Any()) throw new InvalidSyntaxJson("Ambiguous or duplicate command stream headers cannot be exported as .play text; repair the draft or retain syntax JSON.");
         using var anchor = writer.Anchor(command);
         writer.Line($"command {command.Name}");
         using (writer.Indent())

@@ -107,6 +107,16 @@ production `stream = value` and `stream String = value` remain payload mappings.
 nor a property type resolves, the header keeps its legacy property interpretation and unknown-type
 evidence, including deeper legacy command members. A misspelled source name cannot be distinguished
 from an unresolved qualified property by spelling alone. Stream-id children do not override this rule.
+Candidate discovery uses the same inline-language registry as the committed parse; registered code
+payloads cannot declare sources or property types.
+
+Syntax JSON retains every ambiguous or duplicate header in `CommandSyntax.streamCandidates`, including
+its property interpretation when ambiguous. `stream` holds at most one unambiguous route. Deeper legacy
+properties remain command members, without duplicating the candidate property. Such invalid drafts
+cannot be printed or expanded into `.play` files: export throws `InvalidSyntaxJson` rather than selecting
+an interpretation or dropping a header. Retain syntax JSON until you repair the draft. Use `@stream`
+for an intended qualified property, or remove the competing type interpretation for an intended route;
+remove duplicate route headers before export.
 
 ### Concepts
 

@@ -26,6 +26,7 @@ public sealed partial class ScreenplayPrinter :
     ICaptureSyntaxVisitor<string>
 {
     /// <inheritdoc/>
+    /// <exception cref="Syntax.Serialization.InvalidSyntaxJson">A command contains ambiguous or duplicate stream headers, or an invalid stream candidate structure.</exception>
     public string Print(ApplicationSyntax application)
     {
         var writer = new ScreenplayWriter();

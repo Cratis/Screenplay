@@ -111,8 +111,8 @@ public class when_disclosing_source_stream_readiness
         snapshot.Compilation.Success.ShouldBeFalse();
         snapshot.Compilation.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeTrue();
         var command = (CommandSyntax)snapshot.Index.Find("M.F.S.C", "Command").Single().Syntax;
-        command.Stream!.PropertyCandidate.ShouldNotBeNull();
-        command.Properties.Select(property => property.Name).SequenceEqual(["stream", "deeper"]).ShouldBeTrue();
+        command.StreamCandidates.Single().PropertyCandidate.ShouldNotBeNull();
+        command.Properties.Select(property => property.Name).SequenceEqual(["deeper"]).ShouldBeTrue();
         Details(snapshot, "M.F.S.C", "Command", "summary").GetProperty("executionReadiness").GetString().ShouldContain("ESM v10");
         Details(snapshot, "M.F.S.T", "Specification", "summary").GetProperty("syntaxOnly").GetBoolean().ShouldBeTrue();
     }

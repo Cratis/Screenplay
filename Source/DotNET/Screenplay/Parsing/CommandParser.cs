@@ -44,6 +44,7 @@ internal static partial class CommandParser
         HandlerSyntax? handler = null;
         ConcurrencySyntax? concurrency = null;
         CommandStreamSyntax? stream = null;
+        var streamCandidates = new List<CommandStreamSyntax>();
         string? description = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
 
@@ -97,8 +98,8 @@ internal static partial class CommandParser
                     var segments = streamProperty.Type.Name.Split('.');
                     var ambiguous = context.StreamCandidates.HasPropertyType(streamProperty.Type.Name) && context.StreamCandidates.HasUniqueStream(segments[0], segments[1]);
                     var route = EventSourceParser.ParseRoute(context, line, streamProperty, ambiguous);
-                    if (ambiguous) AddProperty(context, properties, streamProperty, name.Groups[1].Value, line);
-                    if (stream is not null) context.Error(DiagnosticCodes.InvalidCommandStream, "A command declares at most one stream route.", line.Location);
+                    if (stream is not null || streamCandidates.Count > 0) context.Error(DiagnosticCodes.InvalidCommandStream, "A command declares at most one stream route.", line.Location);
+                    if (ambiguous || stream is not null) streamCandidates.Add(route);
                     else stream = route;
                     break;
                 case "description":
@@ -215,7 +216,8 @@ internal static partial class CommandParser
         {
             DirectiveLocations = directiveLocations,
             Response = response,
-            Stream = stream
+            Stream = stream,
+            StreamCandidates = streamCandidates
         };
     }
 

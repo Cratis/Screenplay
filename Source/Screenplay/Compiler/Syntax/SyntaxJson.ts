@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { SyntaxNode } from './SyntaxNode';
+import { CommandSyntax } from './Commands';
 import { OperationPhaseSyntax } from './Operations';
 import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax } from './EventSources';
 import { ProducesSyntax } from './Reactions';
@@ -33,6 +34,7 @@ function write(value: unknown): SyntaxJsonValue {
         const structural = { ...value } as unknown as Record<string, unknown>;
         if (value.kind === 'ApplicationSyntax' && structural.eventSources === undefined) structural.eventSources = [];
         if (value.kind === 'CommandSyntax' && structural.stream === undefined) structural.stream = null;
+        if (value.kind === 'CommandSyntax' && structural.streamCandidates === undefined) structural.streamCandidates = [];
         const members = Object.keys(structural).filter(member => member !== 'kind' && member !== 'location' && member !== 'targetLocation' && member !== 'referenceLocation' && member !== 'referenceLength' && member !== 'nameWasEscaped' && !(value.kind === 'OperationSyntax' && member === 'usesLocation')).sort(ordinal);
         for (const member of members) {
             result[member] = write(structural[member]);
@@ -70,6 +72,17 @@ function validateSourceStream(node: SyntaxNode): void {
         if (declaration.id !== null && (typeof declaration.id !== 'string' || declaration.id.trim() === '')) throw new Error('A rename pin must be nonempty.');
         const type = declaration.kind === 'EventSourceSyntax' ? declaration.identifier : declaration.streamId;
         if (type !== null && (type.isCollection || type.isOptional)) throw new Error('Source identifiers and stream ids require nonoptional scalar type references.');
+    }
+    if (node.kind === 'CommandSyntax') {
+        const command = node as CommandSyntax;
+        if (command.stream?.propertyCandidate != null) throw new Error('The authoritative command stream cannot contain an ambiguous property candidate.');
+        if (command.streamCandidates !== undefined && !Array.isArray(command.streamCandidates)) throw new Error('Command stream candidates must be a collection.');
+        for (const rejected of command.streamCandidates ?? []) {
+            if (rejected == null) throw new Error('Command stream candidates cannot contain null.');
+            validateSourceStream(rejected);
+            if (rejected.propertyCandidate === null && command.stream == null) throw new Error('A duplicate route candidate requires an authoritative route.');
+            if (rejected.propertyCandidate !== null && command.properties.some(property => JSON.stringify(toSyntaxJson(property)) === JSON.stringify(toSyntaxJson(rejected.propertyCandidate!)))) throw new Error('An ambiguous property is owned only by its stream candidate.');
+        }
     }
     if (node.kind === 'CommandStreamSyntax') {
         const route = node as CommandStreamSyntax;

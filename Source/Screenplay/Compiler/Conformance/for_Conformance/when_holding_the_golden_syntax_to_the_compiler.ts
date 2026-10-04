@@ -27,6 +27,7 @@ function withSourceStreamDefaults(value: unknown): unknown {
     const node = value as Record<string, unknown>;
     if (node.kind === 'ApplicationSyntax' && !('eventSources' in node)) node.eventSources = [];
     if (node.kind === 'CommandSyntax' && !('stream' in node)) node.stream = null;
+    if (node.kind === 'CommandSyntax' && !('streamCandidates' in node)) node.streamCandidates = [];
     return Object.fromEntries(['kind', ...Object.keys(node).filter(key => key !== 'kind').sort()].map(key => [key, withSourceStreamDefaults(node[key])]));
 }
 

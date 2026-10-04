@@ -96,6 +96,7 @@ public class when_authoring_source_streams : given.a_compiler
         command.Stream.ShouldBeNull();
         using var oldCommand = JsonDocument.Parse("{\"kind\":\"CommandSyntax\",\"name\":\"C\",\"authorize\":null,\"handler\":null}");
         ((CommandSyntax)SyntaxJson.Deserialize(oldCommand.RootElement)).Stream.ShouldBeNull();
+        ((CommandSyntax)SyntaxJson.Deserialize(oldCommand.RootElement)).StreamCandidates.ShouldBeEmpty();
     }
 
     [Theory]

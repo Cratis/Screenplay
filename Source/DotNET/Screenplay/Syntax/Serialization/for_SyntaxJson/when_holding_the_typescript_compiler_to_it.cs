@@ -73,6 +73,7 @@ public class when_holding_the_typescript_compiler_to_it : Specification
         {
             if (obj["kind"]?.GetValue<string>() == "ApplicationSyntax" && !obj.ContainsKey("eventSources")) obj["eventSources"] = new JsonArray();
             if (obj["kind"]?.GetValue<string>() == "CommandSyntax" && !obj.ContainsKey("stream")) obj["stream"] = null;
+            if (obj["kind"]?.GetValue<string>() == "CommandSyntax" && !obj.ContainsKey("streamCandidates")) obj["streamCandidates"] = new JsonArray();
             foreach (var child in obj.Select(entry => entry.Value).OfType<JsonNode>()) AddDefaults(child);
         }
         else if (node is JsonArray array)
@@ -102,7 +103,7 @@ public class when_holding_the_typescript_compiler_to_it : Specification
                         "ProducesSyntax" => ["inlineOperation"],
                         "SystemSyntax" or "OperationSyntax" or "OperationPhaseSyntax" or "SpecificationOperationFailureSyntax" or "SpecificationOperationSyntax" or "SpecificationCompensatedSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "PropertySyntax" => ["isGenerated"],
-                        "CommandSyntax" => ["response", "handler", "stream"],
+                        "CommandSyntax" => ["response", "handler", "stream", "streamCandidates"],
                         "EventSourceSyntax" or "EventStreamSyntax" or "CommandStreamSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "HandlerSyntax" or "ImplementationSyntax" or "ImplementationHintSyntax" or "FileReferenceSyntax" or "CodeBlockSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "SpecificationCommandSyntax" => ["generatedValues"],

@@ -58,11 +58,10 @@ public class when_classifying_command_streams : given.a_compiler
         var parsed = _compiler.Parse("import Account.Transactions\ntype Transactions\n  value String\n" + Prefix + "stream Account.Transactions" + Source);
         parsed.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeTrue();
         var command = Command(parsed.Value!);
-        command.Properties.Single().Type.Name.ShouldEqual("Account.Transactions");
-        command.Stream!.PropertyCandidate.ShouldNotBeNull();
-        var printed = new ScreenplayPrinter().Print(parsed.Value!);
-        printed.ShouldNotContain("@stream Account.Transactions");
-        _compiler.Parse(printed).Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeTrue();
+        command.Properties.ShouldBeEmpty();
+        command.Stream.ShouldBeNull();
+        command.StreamCandidates.Single().PropertyCandidate!.Type.Name.ShouldEqual("Account.Transactions");
+        Catch.Exception(() => new ScreenplayPrinter().Print(parsed.Value!)).ShouldBeOfExactType<InvalidSyntaxJson>();
     }
 
     [Fact]
@@ -98,9 +97,9 @@ public class when_classifying_command_streams : given.a_compiler
             parsed.Value!.Types!.Single().Name.ShouldEqual("Transactions");
             parsed.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeTrue();
             var command = Command(parsed.Value!);
-            command.Stream!.PropertyCandidate!.Type.Name.ShouldEqual("Account.Transactions");
-            command.Properties.Select(property => property.Name).SequenceEqual(["stream", "deeper"]).ShouldBeTrue();
-            _compiler.Parse(new ScreenplayPrinter().Print(parsed.Value!)).Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeTrue();
+            command.StreamCandidates.Single().PropertyCandidate!.Type.Name.ShouldEqual("Account.Transactions");
+            command.Properties.Select(property => property.Name).SequenceEqual(["deeper"]).ShouldBeTrue();
+            Catch.Exception(() => new ScreenplayPrinter().Print(parsed.Value!)).ShouldBeOfExactType<InvalidSyntaxJson>();
             var escaped = _compiler.Parse(text.Replace("stream Account.Transactions", "@stream Account.Transactions", StringComparison.Ordinal));
             Command(escaped.Value!).Stream.ShouldBeNull();
             Command(escaped.Value!).Properties.Count().ShouldEqual(2);

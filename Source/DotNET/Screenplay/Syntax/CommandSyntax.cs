@@ -159,6 +159,13 @@ public record CommandSyntax(
 
     /// <summary>Gets the syntax-only authored stream route; it does not supply a destination.</summary>
     public CommandStreamSyntax? Stream { get; init; }
+
+    /// <summary>
+    /// Gets every ambiguous or duplicate stream header in authored order. These candidates never
+    /// select a route; their property interpretations are owned here, not in Properties.
+    /// Invalid drafts are transportable as syntax JSON but cannot be exported as .play text.
+    /// </summary>
+    public IEnumerable<CommandStreamSyntax> StreamCandidates { get; init; } = [];
 }
 
 /// <summary>

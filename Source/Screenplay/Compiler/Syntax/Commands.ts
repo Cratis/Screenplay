@@ -48,5 +48,7 @@ export interface CommandSyntax extends SyntaxNode {
     readonly produces: readonly ProducesSyntax[];
     readonly response?: CommandResponseSyntax | null;
     readonly stream?: CommandStreamSyntax | null;
+    // Rejected headers own their property candidates; none selects an authoritative route.
+    readonly streamCandidates?: readonly CommandStreamSyntax[];
     readonly handler?: HandlerSyntax | null;
 }

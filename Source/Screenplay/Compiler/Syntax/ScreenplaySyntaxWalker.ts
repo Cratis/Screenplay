@@ -115,6 +115,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.properties.forEach(node => this.visitProperty(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         if (syntax.stream != null) this.visitCommandStream(syntax.stream);
+        syntax.streamCandidates?.forEach(candidate => this.visitCommandStream(candidate));
         syntax.validations.forEach(node => this.visitValidate(node));
         syntax.produces.forEach(node => this.visitProduces(node));
         if (syntax.handler != null) this.visitHandler(syntax.handler);

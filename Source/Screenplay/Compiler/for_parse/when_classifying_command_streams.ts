@@ -33,8 +33,9 @@ describe('when classifying command streams against the whole input', () => {
         const parsed = parse('import Account.Transactions\ntype Transactions\n  value String\n' + prefix + 'stream Account.Transactions' + source);
         expect(parsed.diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0505');
         const node = parsed.value.modules[0].features[0].slices[0].commands[0];
-        expect(node.properties[0].type.name).toBe('Account.Transactions');
-        expect(node.stream?.propertyCandidate).not.toBeNull();
+        expect(node.properties).toEqual([]);
+        expect(node.stream).toBeNull();
+        expect(node.streamCandidates?.[0].propertyCandidate?.type.name).toBe('Account.Transactions');
     });
     it('should retain ambiguity in every order of separately declared types sources and commands', () => {
         const documents: [string, string][] = [
@@ -48,8 +49,8 @@ describe('when classifying command streams against the whole input', () => {
             expect(result.success).toBe(false);
             expect(result.diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0505');
             const node = result.value.modules[0].features[0].slices[0].commands[0];
-            expect(node.stream?.propertyCandidate).not.toBeNull();
-            expect(node.properties.map(property => property.name)).toEqual(['stream', 'deeper']);
+            expect(node.streamCandidates?.[0].propertyCandidate).not.toBeNull();
+            expect(node.properties.map(property => property.name)).toEqual(['deeper']);
         }
     });
     it.each([
@@ -64,8 +65,8 @@ describe('when classifying command streams against the whole input', () => {
             expect(parsed.value.types[0].name).toBe('Transactions');
             expect(parsed.diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0505');
             const node = parsed.value.modules[0].features[0].slices[0].commands[0];
-            expect(node.stream?.propertyCandidate?.type.name).toBe('Account.Transactions');
-            expect(node.properties.map(property => property.name)).toEqual(['stream', 'deeper']);
+            expect(node.streamCandidates?.[0].propertyCandidate?.type.name).toBe('Account.Transactions');
+            expect(node.properties.map(property => property.name)).toEqual(['deeper']);
             const escaped = command(text.replace('stream Account.Transactions', '@stream Account.Transactions'));
             expect(escaped.stream).toBeNull();
             expect(escaped.properties).toHaveLength(2);
@@ -92,8 +93,8 @@ describe('when classifying command streams against the whole input', () => {
             const result = compileApplication(new Map([first, second, third]));
             expect(result.diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0505');
             const node = result.value.modules[0].features[0].slices[0].commands[0];
-            expect(node.stream?.propertyCandidate).not.toBeNull();
-            expect(node.properties).toHaveLength(2);
+            expect(node.streamCandidates?.[0].propertyCandidate).not.toBeNull();
+            expect(node.properties).toHaveLength(1);
         }
     });
     it.each([false, true])('should use placed module and feature leaf rules in reverse order %s', reverse => {
@@ -105,8 +106,8 @@ describe('when classifying command streams against the whole input', () => {
         const result = compileApplication(new Map(reverse ? documents.reverse() : documents));
         expect(result.diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0505');
         const node = result.value.modules[0].features[0].slices[0].commands[0];
-        expect(node.stream?.propertyCandidate).not.toBeNull();
-        expect(node.properties).toHaveLength(2);
+        expect(node.streamCandidates?.[0].propertyCandidate).not.toBeNull();
+        expect(node.properties).toHaveLength(1);
     });
     it('should retain a real imported qualified type without a source', () => {
         const node = command('import Account.Transactions\ntype Transactions\n  value String\n' + prefix + 'stream Account.Transactions\n          deeper String');

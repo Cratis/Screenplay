@@ -75,7 +75,7 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
         var local = node switch
         {
             EventSourceSyntax or EventStreamSyntax or CommandStreamSyntax => 10,
-            CommandSyntax { Stream: not null } => 10,
+            CommandSyntax command when command.Stream is not null || command.StreamCandidates.Any() => 10,
             CommandSyntax command when command.Response is not null || command.Properties.Any(property => property.IsGenerated) => 8,
             SpecificationSyntax specification => Math.Max(
                 specification.ThenReturns is not null || (specification.When?.GeneratedValues.Any() ?? false) ? 8 : 0,

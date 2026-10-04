@@ -12,6 +12,18 @@ internal static partial class EventSourceInvariants
     {
         switch (node)
         {
+            case CommandSyntax command:
+                if (command.Stream?.PropertyCandidate is not null) throw new InvalidSyntaxJson("The authoritative command stream cannot contain an ambiguous property candidate.");
+                if (command.StreamCandidates is null) throw new InvalidSyntaxJson("Command stream candidates must be a collection.");
+                foreach (var rejected in command.StreamCandidates)
+                {
+                    if (rejected is null) throw new InvalidSyntaxJson("Command stream candidates cannot contain null.");
+                    Validate(rejected);
+                    if (rejected.PropertyCandidate is null && command.Stream is null) throw new InvalidSyntaxJson("A duplicate route candidate requires an authoritative route.");
+                    if (rejected.PropertyCandidate is { } property && command.Properties.Any(member => SyntaxJson.StructurallyEqual(member, property))) throw new InvalidSyntaxJson("An ambiguous property is owned only by its stream candidate.");
+                }
+                if (command.Stream is not null) Validate(command.Stream);
+                break;
             case EventSourceSyntax source:
                 Name(source.Name);
                 Pin(source.Id);

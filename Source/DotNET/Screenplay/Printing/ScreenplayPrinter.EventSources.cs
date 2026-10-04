@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Serialization;
 using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Printing;
@@ -17,10 +18,10 @@ public sealed partial class ScreenplayPrinter
             var parts = property.Type.Name.Split('.');
 
             // A fragment may omit declarations, and syntax JSON deliberately omits source escapes.
-            // Preserve the typed property meaning independently of either; only a retained ambiguity
-            // candidate must keep the bare spelling so printing cannot select its interpretation.
+            // Preserve the typed property meaning independently of either. Invalid candidates are
+            // owned separately and refused before printing; no property can select their meaning.
             var needsEscape = property.Name == "stream" && !property.Type.IsOptional && !property.Type.IsCollection && !property.IsGenerated && !property.IsIdentifier &&
-                parts.Length > 1 && command.Stream?.PropertyCandidate != property;
+                parts.Length > 1;
             WriteProperties(writer, [property], needsEscape ? _streamPropertyWords : ReservedWords.CommandBody);
         }
     }
@@ -52,8 +53,8 @@ public sealed partial class ScreenplayPrinter
 
     void WriteCommandStream(ScreenplayWriter writer, CommandStreamSyntax route)
     {
-        // A blocking ambiguity preserves its legacy property spelling; printing must not resolve it.
-        if (route.PropertyCandidate is not null) return;
+        EventSourceInvariants.Validate(route);
+        if (route.PropertyCandidate is not null) throw new InvalidSyntaxJson("An ambiguous stream candidate cannot be exported as .play text.");
         using var anchor = writer.Anchor(route);
         writer.Line($"stream {route.EventSource}.{route.Stream}");
         using (writer.Indent())
