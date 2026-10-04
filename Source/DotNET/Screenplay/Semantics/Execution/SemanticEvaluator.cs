@@ -671,9 +671,18 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                 // A scoped projection runs through the reference semantics of every Chronicle projection block.
                 if (projection.Scope is not null)
                 {
-                    if (new SemanticScopedProjection(plan, projection, validator, observed).Apply(instances, fact) is { } scopedFailure)
+                    try
                     {
-                        failure = scopedFailure;
+                        if (new SemanticScopedProjection(plan, projection, validator, observed).Apply(instances, fact) is { } scopedFailure)
+                        {
+                            failure = scopedFailure;
+                            readModels = current;
+                            return false;
+                        }
+                    }
+                    catch (OverflowException) when (plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V6))
+                    {
+                        failure = $"Projection '{projection.Name}' arithmetic exceeds the reference numeric range.";
                         readModels = current;
                         return false;
                     }
