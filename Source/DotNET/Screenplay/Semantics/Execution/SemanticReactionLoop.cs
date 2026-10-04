@@ -64,6 +64,23 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
     }
 
     /// <summary>
+    /// Adopts a complete accepted command transaction only when it fits the remaining scenario fact budget.
+    /// </summary>
+    /// <param name="accepted">The tentative accepted command transaction.</param>
+    /// <param name="occurred">When its facts occurred.</param>
+    /// <returns>An unsupported result retaining the prior world when the batch exceeds the budget; otherwise <c>null</c>.</returns>
+    public SemanticExecutionResult? AcceptCommand(SemanticAccepted accepted, DateTimeOffset? occurred)
+    {
+        if (_facts.Count + accepted.Facts.Length > MaximumFacts)
+        {
+            return new SemanticUnsupported(World, SemanticExecutionCapability.Reaction, $"The scenario appends more than {MaximumFacts} facts; its reactions do not settle.");
+        }
+
+        World = accepted.World;
+        return Observe(accepted.Facts, occurred);
+    }
+
+    /// <summary>
     /// Appends a fact - enforcing append constraints and projecting it - and takes it for the reactions to it.
     /// </summary>
     /// <param name="fact">The fact.</param>
@@ -138,12 +155,6 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
             return new SemanticUnsupported(World, SemanticExecutionCapability.Reaction, $"Reaction '{reaction.Name}' has an opaque body and requires a target provider to run it.");
         }
 
-        if (trigger.Produces.SelectMany(produced => produced.Mappings).Concat(trigger.Invokes.SelectMany(invoked => invoked.Mappings))
-            .Any(mapping => mapping.Source is SemanticEventContextExpression { Value: not SemanticEventContextValueKind.Occurred }))
-        {
-            return new SemanticUnsupported(World, SemanticExecutionCapability.Reaction, $"Reaction '{reaction.Name}' has no caller audit identity for $context.causedBy.");
-        }
-
         var occurrence = occurred is { } at ? new SemanticCommandOccurrence(at, string.Empty, string.Empty, string.Empty) { IsTimeOnly = true } : null;
         var lookup = values.ToDictionary(pair => pair.Key, pair => pair.Value);
         try
@@ -180,6 +191,11 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
         SemanticFact? cause,
         SemanticCommandOccurrence? occurrence)
     {
+        if (RequiresAuditIdentity(reaction, produced.Mappings) is { } unsupported)
+        {
+            return unsupported;
+        }
+
         if (occurrence is null && produced.Mappings.Any(mapping => mapping.Source is SemanticEventContextExpression))
         {
             return new SemanticRejected(World, SemanticRejectionCategory.Contract, null, $"Reaction '{reaction.Name}' uses $context, which needs the scenario's 'given clock'.");
@@ -226,6 +242,11 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
         SemanticExpressionRootKind root,
         SemanticCommandOccurrence? occurrence)
     {
+        if (RequiresAuditIdentity(reaction, invocation.Mappings) is { } unsupported)
+        {
+            return unsupported;
+        }
+
         var command = plan.Commands[invocation.Command];
         var mappings = invocation.Mappings.ToDictionary(mapping => mapping.TargetProperty);
         var commandValues = command.Properties
@@ -245,12 +266,11 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
             return result;
         }
 
-        if (_facts.Count + accepted.Facts.Length > MaximumFacts)
-        {
-            return new SemanticUnsupported(World, SemanticExecutionCapability.Reaction, $"The scenario appends more than {MaximumFacts} facts; its reactions do not settle.");
-        }
-
-        World = accepted.World;
-        return Observe(accepted.Facts, occurrence?.Occurred);
+        return AcceptCommand(accepted, occurrence?.Occurred);
     }
+
+    SemanticUnsupported? RequiresAuditIdentity(SemanticReaction reaction, ImmutableArray<SemanticPropertyMapping> mappings) =>
+        mappings.Any(mapping => mapping.Source is SemanticEventContextExpression { Value: not SemanticEventContextValueKind.Occurred })
+            ? new(World, SemanticExecutionCapability.Reaction, $"Reaction '{reaction.Name}' has no caller audit identity for $context.causedBy.")
+            : null;
 }

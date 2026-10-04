@@ -52,9 +52,8 @@ internal static class SemanticScenario
                         return executed;
                     }
 
-                    loop = new(evaluator, plan, accepted.World);
                     actionFacts = accepted.Facts.Length;
-                    failure = loop.Observe(accepted.Facts, clock);
+                    failure = loop.AcceptCommand(accepted, clock);
                     break;
                 case { WhenAppended: { } appended }:
                     actionFacts = 1;

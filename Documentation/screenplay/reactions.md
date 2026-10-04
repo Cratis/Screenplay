@@ -216,9 +216,15 @@ so a specification can assert what a reaction does. In the reference evaluator:
   provide; it returns typed `IdentityAllocation` unsupported instead of guessing.
 - Reactions to one fact run by semantic identity, and triggers within a reaction run in authored order.
   Occurrence time propagates through the cascade. The invoking reaction is recorded as causation, not
-  as a caller audit identity. Unreached effects and bodies excluded by `where` do not run.
-- `where` narrows the occurrences that carry the values it names. A trigger that carries none of them, such as
-  the clock, is not narrowed; one that carries only some of them is an error.
+  as a caller audit identity. Each effect checks its audit requirements when reached; a later unsupported
+  effect does not discard earlier accepted facts or replace an earlier rejection. Bodies excluded by `where` do not run.
+- `where` guards every trigger of the reaction. Each trigger must resolve the complete condition from its
+  declared scalar values, whether or not those values are listed in the reaction's input selection. Missing
+  operands, nested paths and read aliases fail binding rather than silently removing the guard. Supported
+  comparisons, enumeration constants and logical groups use the command condition contract.
+- The scenario budget counts new accepted facts, not established history. A command batch that would exceed
+  1,000 facts is unsupported before any of its facts or projection changes enter the world. Prior accepted
+  facts remain; direct reaction and capture appends retain their individual append disposition.
 - A body in code - a `file` or an inline block - is a target's to run. Reaching one returns `SemanticUnsupported`,
   never a guessed result. Reached opaque reducers also fail closed in v6.
 

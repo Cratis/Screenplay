@@ -140,3 +140,21 @@ The record remains `stage: implemented`, not `verified`.
 A dependency update does not admit v6 reading, rendering or execution. Providers must retain blocking
 unsupported diagnostics until their own admission criteria are met. Screenplay's controlled occurrence
 implements the reference-runtime portion of #304; Stage realization remains separate.
+
+**2026-10-04 — fail-closed runtime clarification (#369).** Under the delegated integration request,
+`where` is one guard for the whole reaction, not an optional filter that can disappear on a trigger
+whose shape cannot resolve it. Binding checks both comparison operands recursively through admitted
+logical groups, using each occurrence's complete declared shape, independent of input selection.
+Missing operands and unadmitted nested or read-alias paths are blocking diagnostics. This replaces
+the historical implementation note permitting an unguarded trigger when it carries none of the operands;
+it does not admit new condition grammar or weaken decision 0006's read protection.
+
+Audit identity requirements are checked immediately before each reached effect, in the existing
+semantic-identity/reaction-trigger/production/invocation order. A later unsupported effect cannot
+suppress an earlier append or replace an earlier constraint rejection. Command transactions remain
+atomic. The 1,000-fact scenario budget counts new accepted facts, excluding established history;
+an initiating or invoked command batch that exceeds the remaining budget is refused before adopting
+its world, retaining prior facts and projections. Capture and direct reaction appends retain their
+individual append dispositions. No caller audit identity, allocated destination or whole-cascade
+transaction is fabricated. These clarifications do not advance this record's verification stage or
+admit downstream consumers.
