@@ -24,6 +24,7 @@ public class when_exposing_source_stream_authoring : given.an_authoring_connecti
             page.GetRawText().ShouldNotContain("semanticId");
             page.GetRawText().ShouldNotContain("requirementId");
         }
+        Page("event-source-diagnostics", revision).EnumerateArray().Any(diagnostic => diagnostic.GetProperty("code").GetString() == "PLAY0268").ShouldBeTrue();
         var stream = Page("event-streams", revision)[0];
         stream.GetProperty("scope")[0].GetString().ShouldEqual("Account");
         var details = Result("read-workspace", new { expectedRevision = revision, view = "event-stream-details", authoringKey = stream.GetProperty("authoringKey").GetString() });
@@ -191,6 +192,54 @@ public class when_exposing_source_stream_authoring : given.an_authoring_connecti
         proposal.GetProperty("success").GetBoolean().ShouldBeTrue();
         Apply(opened, proposal);
         File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldContain("@stream Account.Transactions");
+    }
+
+    [Fact]
+    void should_select_the_exact_retained_route_candidate_with_an_explicit_competing_import_removal()
+    {
+        Start("import Account.Transactions\ntype Transactions\n  value String\n" + Source.Replace("    streamId Month\n", string.Empty, StringComparison.Ordinal).Replace("          streamId = month\n", string.Empty, StringComparison.Ordinal));
+        var opened = Open();
+        var revision = opened.GetProperty("revision").GetString();
+        var command = Node("CommandSyntax", revision);
+        var import = Node("ImportSyntax", revision);
+        var node = JsonNode.Parse(command.GetProperty("node").GetRawText())!;
+        var selected = node["streamCandidates"]![0]!.DeepClone();
+        selected["propertyCandidate"] = null;
+        node["stream"] = selected;
+        node["streamCandidates"] = new JsonArray();
+        var proposal = Result("propose-ast", new
+        {
+            expectedRevision = revision, expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+            validation = "Authoring", formatting = "CanonicalizeTouchedDocuments",
+            operations = new object[] { new { operation = "replace", target = command.GetProperty("handle"), node }, new { operation = "remove", target = import.GetProperty("handle") } }
+        });
+        proposal.GetProperty("success").GetBoolean().ShouldBeTrue();
+        Candidate(proposal).Documents.Single().Text.ShouldNotContain("import Account.Transactions");
+        Apply(opened, proposal).GetProperty("success").GetBoolean().ShouldBeTrue();
+        File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldContain("stream Account.Transactions");
+    }
+
+    [Fact]
+    void should_select_a_keyed_candidate_only_with_the_explicit_required_mapping()
+    {
+        Start("import Account.Transactions\ntype Transactions\n  value String\n" + Source.Replace("          streamId = month\n", string.Empty, StringComparison.Ordinal));
+        var opened = Open();
+        var command = Node("CommandSyntax", opened.GetProperty("revision").GetString());
+        var node = JsonNode.Parse(command.GetProperty("node").GetRawText())!;
+        var selected = node["streamCandidates"]![0]!.DeepClone();
+        selected["propertyCandidate"] = null;
+        selected["streamId"] = JsonNode.Parse("{\"kind\":\"PropertyMappingSyntax\",\"property\":\"streamId\",\"source\":{\"kind\":\"PathExpressionSyntax\",\"path\":\"month\"}}");
+        node["stream"] = selected;
+        node["streamCandidates"] = new JsonArray();
+        var proposal = Result("propose-ast", new
+        {
+            expectedRevision = opened.GetProperty("revision").GetString(), expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+            validation = "Authoring", formatting = "CanonicalizeTouchedDocuments",
+            operations = new object[] { new { operation = "replace", target = command.GetProperty("handle"), node }, new { operation = "remove", target = Node("ImportSyntax", opened.GetProperty("revision").GetString()).GetProperty("handle") } }
+        });
+        proposal.GetProperty("success").GetBoolean().ShouldBeTrue();
+        Apply(opened, proposal).GetProperty("success").GetBoolean().ShouldBeTrue();
+        File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldContain("streamId = month");
     }
 
     void Start(string source)
