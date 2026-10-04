@@ -179,7 +179,7 @@ internal static partial class ExpressionParser
     {
         var text = source.Value.Trim();
         var start = line.LocationAt(source.Index + (source.Value.Length - source.Value.TrimStart().Length));
-        var expression = ParseMappingSource(context, text, context.SourceOptions.NumericMode == NumericMode.Exact && (text.StartsWith('{') || text.StartsWith('[')) ? start : line.Location);
+        var expression = ParseMappingSource(context, text, text.StartsWith('{') || text.StartsWith('[') ? start : line.Location);
         if (expression is LiteralExpressionSyntax literal)
         {
             expression = literal with { RawLocation = start, RawLength = text.Length };
