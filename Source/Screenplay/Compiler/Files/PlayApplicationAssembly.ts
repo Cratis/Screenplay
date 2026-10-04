@@ -4,6 +4,9 @@
 import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { validateInlineEvents } from '../Parsing/InlineEventValidator';
 import { LineReader } from '../Parsing/LineReader';
+import { CommandStreamCandidates } from '../Parsing/CommandStreamCandidates';
+import { validateEventSources } from '../Parsing/EventSourceValidator';
+import { splitLines } from '../Parsing/SourceLineSplitter';
 import { ParserContext } from '../Parsing/ParserContext';
 import { validateResponses } from '../Parsing/ResponseValidator';
 import { validateOperations } from '../Parsing/OperationValidator';
@@ -38,9 +41,14 @@ export function assembleApplication(roots: Iterable<string>, source: PlayDocumen
 // Parses documents whose source identities and placements are already known (for example unsaved
 // editor buffers), then validates contracts against the merged declaration inventory.
 export function parsePlacedDocuments(documents: readonly PlacedPlayDocument[]): CompilationResult<ApplicationSyntax> {
-    const parsed = documents.map(document => parseForAuthoring(document.source, document.path, document.placement, false));
+    const candidates = CommandStreamCandidates.capture(documents.filter(document => document.isPlacementResolved !== false).map(document => splitLines(document.source, false, document.path)));
+    const parsed = documents.map(document => {
+        const result = parseForAuthoring(document.source, document.path, document.placement, false, candidates);
+        return document.isPlacementResolved === false ? { ...result, value: { ...result.value, eventSources: [] } } : result;
+    });
     const merged = mergeDocuments(parsed);
     const context = new ParserContext(new LineReader([]));
+    validateEventSources(merged.value, context);
     validateOperations(merged.value, context);
     validateInlineEvents(merged.value, context);
     validateResponses(merged.value, context, parsed.flatMap(document => document.inputUses));

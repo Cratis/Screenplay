@@ -28,7 +28,7 @@ public sealed partial class ScreenplayPrinter :
     /// <inheritdoc/>
     public string Print(ApplicationSyntax application)
     {
-        var writer = new ScreenplayWriter();
+        var writer = new ScreenplayWriter { EventSourceNames = application.EventSources.Select(source => source.Name).ToHashSet(StringComparer.Ordinal) };
         WriteApplication(writer, application);
         return PrintComments(application, writer);
     }
@@ -89,6 +89,12 @@ public sealed partial class ScreenplayPrinter :
         {
             writer.Blank();
             WriteSystem(writer, system);
+        }
+
+        foreach (var source in application.EventSources)
+        {
+            writer.Blank();
+            WriteEventSource(writer, source);
         }
 
         foreach (var concept in application.Concepts)

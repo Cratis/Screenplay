@@ -86,6 +86,28 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0005` | Error | An `import` line is not `import <Qualified.Name>`. |
 | `PLAY0006` | Warning | A line is indented with tabs, and Screenplay decides nesting from spaces. |
 
+### Event sources and command streams
+
+Event-source declarations and command stream routes are authoring-only. Binding any of them reports
+`PLAY0268`: decision 0023 allocates their executable contract to ESM v10, which is not admitted yet.
+A stream reference selects a classification, never the identity destination supplied by `for`.
+Handler commands may author routes without declaring their returned events.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0503` | Error | An event source or its source-owned stream has invalid syntax, a repeated directive or physical declaration, an invalid rename pin, or an optional, collection or known composite identifier type. Duplicate physical sources make their child ownership ambiguous. |
+| `PLAY0504` | Error or warning | A known source's stream does not resolve uniquely, or a command route or stream-id mapping is invalid, missing or incompatible. A command identifier with a different known nominal source identifier type is a warning; it is not silently retargeted. |
+| `PLAY0505` | Error | An exact `stream Source.Stream` header resolves both to one source-owned stream and to a viable imported value type. Both candidates remain visible; neither is selected automatically. |
+| `PLAY0506` | Error | A known stream-id type falls outside text, UUID or integer values and their nominal concepts. Other types need a future portable formatting contract. Unavailable imported shapes remain unresolved. |
+| `PLAY0507` | Information | A source or stream's rename-only `id` pin repeats its current name. New declarations omit the pin. |
+
+Command headers are classified against the complete immutable compilation input, including resolved file
+imports. `@stream Qualified.Type`, `stream String` and modified property forms remain properties;
+production `stream = value` and `stream String = value` remain payload mappings. When neither a source
+nor a property type resolves, the header keeps its legacy property interpretation and unknown-type
+evidence, including deeper legacy command members. A misspelled source name cannot be distinguished
+from an unresolved qualified property by spelling alone. Stream-id children do not override this rule.
+
 ### Concepts
 
 | Code | Severity | Reported when |

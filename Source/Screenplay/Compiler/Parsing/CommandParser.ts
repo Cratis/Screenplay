@@ -5,6 +5,8 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { CommandSyntax, ValidateSyntax, ValidationRuleKind, ValidationRuleSyntax, ValidationSeverity } from '../Syntax/Commands';
 import { PropertySyntax } from '../Syntax/Declarations';
+import { CommandStreamSyntax } from '../Syntax/EventSources';
+import { parseCommandStream } from './EventSourceParser';
 import { ExpressionSyntax } from '../Syntax/Expressions';
 import { ProducesSyntax } from '../Syntax/Reactions';
 import { CommandResponseSyntax } from '../Syntax/Responses';
@@ -24,6 +26,7 @@ import { reportInvalidModifierOrder, reportLegacyOptionalSuffix, tryParsePropert
 import { locationOf, SourceLine } from './SourceLine';
 
 const header = pattern('^command\\s+([A-Za-z_]\\w*)$');
+const routeHeader = pattern('^stream\\s+[A-Za-z_]\\w*\\.[A-Za-z_]\\w*$');
 const severityPattern = pattern('\\bseverity\\s+(\\S+)$');
 const messagePattern = pattern(`\\bmessage\\s+(?:"(${stringBodyPattern})"|(\\$strings\\.\\S*))$`);
 const rulePattern = pattern('^([\\w.]+)\\s+(.+)$');
@@ -60,7 +63,9 @@ export function parseCommand(context: ParserContext, line: SourceLine): CommandS
     // Properties are leaves, not indentation owners. Resolve ambiguous returns spelling
     // before the committed pass decides whether its deeper lines belong to a response.
     const names = new Set<string>();
-    parseCommandBody(new ParserContext(context.reader.fork(), context.path), line, undefined, names);
+    const discovery = new ParserContext(context.reader.fork(), context.path);
+    discovery.streamCandidates = context.streamCandidates;
+    parseCommandBody(discovery, line, undefined, names);
     return parseCommandBody(context, line, names);
 }
 
@@ -78,6 +83,7 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
     let description: string | null = null;
     let authorize: AuthorizeSyntax | null = null;
     let handler: HandlerSyntax | null = null;
+    let stream: CommandStreamSyntax | null = null;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const keyword = firstWord(child.content);
@@ -102,6 +108,13 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
             } else {
                 responses.push({ line: child, candidate: null, response: parseCommandResponse(context, child) });
             }
+        } else if (keyword === 'stream' && routeHeader.test(child.content) && asProperty !== undefined && context.streamCandidates?.hasSource(asProperty.type.name.split('.')[0]) === true) {
+            const [source, streamName] = asProperty.type.name.split('.');
+            const ambiguous = context.streamCandidates.hasPropertyType(asProperty.type.name) && context.streamCandidates.hasUniqueStream(source, streamName);
+            const route = parseCommandStream(context, child, asProperty, ambiguous);
+            if (ambiguous) identifier = addProperty(context, properties, asProperty, name, child, identifier);
+            if (stream !== null) context.error(DiagnosticCodes.InvalidCommandStream, 'A command declares at most one stream route.', locationOf(child));
+            else stream = route;
         } else if (keyword === 'description') {
             description = parseDescription(context, child, description, `Command '${name}'`);
         } else if (keyword === 'authorize') {
@@ -154,7 +167,7 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
     if (handler !== null && produces.length > 0) {
         context.error(DiagnosticCodes.CommandWithProducesAndHandler, `Command '${name}' cannot declare both 'produces' and 'handler'`, locationOf(line));
     }
-    const syntax: CommandSyntax = { kind: 'CommandSyntax', name, description, authorize, properties: properties.filter(property => !removed.has(property)), validations, produces, handler, response, location: locationOf(line) };
+    const syntax: CommandSyntax = { kind: 'CommandSyntax', name, description, authorize, properties: properties.filter(property => !removed.has(property)), validations, produces, handler, response, stream, location: locationOf(line) };
     commandReadSources.set(syntax, reads);
     return syntax;
 }

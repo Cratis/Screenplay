@@ -1,0 +1,26 @@
+// Authoring-only ambiguity vector: the exact header has two viable interpretations.
+// PLAY0505 blocks selection; no executable model can be produced.
+import Account.Transactions
+
+type Transactions
+  value String
+
+module Banking
+  feature Accounts
+    slice StateChange Compatibility
+      command Ambiguous
+        stream Account.Transactions
+          deeper String
+      command Escaped
+        @stream Account.Transactions
+          deeper String
+      command Modified
+        stream Account.Transactions optional
+          deeper String
+      command Unknown
+        stream Typo.Transactions
+          streamId String
+          deeper String
+
+eventsource Account
+  stream Transactions

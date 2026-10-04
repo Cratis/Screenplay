@@ -36,7 +36,8 @@ internal static partial class PropertyLineParser
             line.Location,
             match.Groups[4].Success)
         {
-            IsGenerated = match.Groups[3].Success
+            IsGenerated = match.Groups[3].Success,
+            NameWasEscaped = match.Groups[1].Value.StartsWith('@')
         };
     }
 

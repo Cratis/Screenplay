@@ -3,6 +3,7 @@
 
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 
@@ -24,7 +25,11 @@ public class when_holding_the_typescript_compiler_to_it : Specification
         {
             var parsed = new ScreenplayCompiler().Parse(File.ReadAllText(Path.Combine(Root(), path)));
             using var golden = JsonDocument.Parse(File.ReadAllText(Path.Combine(Conformance(), $"{name}.syntax.json")));
-            Compare(golden.RootElement, SyntaxJson.Serialize(parsed.Value!), $"{name}: $");
+
+            // Old vectors remain byte-for-byte fixtures. Decode their additive omissions as defaults;
+            // new vectors must explicitly include every new member.
+            var expected = name.StartsWith("source-stream", StringComparison.Ordinal) ? golden.RootElement : WithSourceStreamDefaults(golden.RootElement);
+            Compare(expected, SyntaxJson.Serialize(parsed.Value!), $"{name}: $");
         }
     }
 
@@ -55,6 +60,27 @@ public class when_holding_the_typescript_compiler_to_it : Specification
             .Select(document => (document.GetProperty("name").GetString()!, document.GetProperty("path").GetString()!))];
     }
 
+    static JsonElement WithSourceStreamDefaults(JsonElement golden)
+    {
+        var node = JsonNode.Parse(golden.GetRawText())!;
+        AddDefaults(node);
+        return JsonSerializer.SerializeToElement(node);
+    }
+
+    static void AddDefaults(JsonNode node)
+    {
+        if (node is JsonObject obj)
+        {
+            if (obj["kind"]?.GetValue<string>() == "ApplicationSyntax" && !obj.ContainsKey("eventSources")) obj["eventSources"] = new JsonArray();
+            if (obj["kind"]?.GetValue<string>() == "CommandSyntax" && !obj.ContainsKey("stream")) obj["stream"] = null;
+            foreach (var child in obj.Select(entry => entry.Value).OfType<JsonNode>()) AddDefaults(child);
+        }
+        else if (node is JsonArray array)
+        {
+            foreach (var child in array.OfType<JsonNode>()) AddDefaults(child);
+        }
+    }
+
     static bool SameScalar(JsonElement golden, JsonElement actual) => golden.ValueKind switch
     {
         JsonValueKind.String => actual.ValueKind == JsonValueKind.String && golden.GetString() == actual.GetString(),
@@ -71,12 +97,13 @@ public class when_holding_the_typescript_compiler_to_it : Specification
                 {
                     string[] required = actualKind.GetString() switch
                     {
-                        "ApplicationSyntax" => ["systems"],
+                        "ApplicationSyntax" => ["systems", "eventSources"],
                         "SliceSyntax" => ["operations"],
                         "ProducesSyntax" => ["inlineOperation"],
                         "SystemSyntax" or "OperationSyntax" or "OperationPhaseSyntax" or "SpecificationOperationFailureSyntax" or "SpecificationOperationSyntax" or "SpecificationCompensatedSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "PropertySyntax" => ["isGenerated"],
-                        "CommandSyntax" => ["response", "handler"],
+                        "CommandSyntax" => ["response", "handler", "stream"],
+                        "EventSourceSyntax" or "EventStreamSyntax" or "CommandStreamSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "HandlerSyntax" or "ImplementationSyntax" or "ImplementationHintSyntax" or "FileReferenceSyntax" or "CodeBlockSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "SpecificationCommandSyntax" => ["generatedValues"],
                         "SpecificationSyntax" => ["thenReturns", "thenDenied", "givenOperationFailures", "thenOperations", "thenCompensated"],

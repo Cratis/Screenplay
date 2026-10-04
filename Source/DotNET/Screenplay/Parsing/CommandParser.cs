@@ -23,7 +23,7 @@ internal static partial class CommandParser
         // Ordinary properties are leaves even when later members have a greater indent.
         // Resolve ambiguous scalar spelling using a noncommitting command-body pass first.
         var names = new HashSet<string>(StringComparer.Ordinal);
-        ParseBody(new(context.Reader.Fork(), context.Start.Path, context.Languages), header, null, names);
+        ParseBody(new(context.Reader.Fork(), context.Start.Path, context.Languages) { StreamCandidates = context.StreamCandidates }, header, null, names);
         return ParseBody(context, header, names, null);
     }
 
@@ -43,6 +43,7 @@ internal static partial class CommandParser
         var reads = new List<ReadsSyntax>();
         HandlerSyntax? handler = null;
         ConcurrencySyntax? concurrency = null;
+        CommandStreamSyntax? stream = null;
         string? description = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
 
@@ -91,6 +92,14 @@ internal static partial class CommandParser
                         responses.Add((line, null, ParseResponse(context, line)));
                     }
 
+                    break;
+                case "stream" when RouteRegex().IsMatch(line.Content) && PropertyLineParser.TryParse(line) is { } streamProperty && context.StreamCandidates?.HasSource(streamProperty.Type.Name.Split('.')[0]) == true:
+                    var segments = streamProperty.Type.Name.Split('.');
+                    var ambiguous = context.StreamCandidates.HasPropertyType(streamProperty.Type.Name) && context.StreamCandidates.HasUniqueStream(segments[0], segments[1]);
+                    var route = EventSourceParser.ParseRoute(context, line, streamProperty, ambiguous);
+                    if (ambiguous) AddProperty(context, properties, streamProperty, name.Groups[1].Value, line);
+                    if (stream is not null) context.Error(DiagnosticCodes.InvalidCommandStream, "A command declares at most one stream route.", line.Location);
+                    else stream = route;
                     break;
                 case "description":
                     var previousDescription = description;
@@ -205,7 +214,8 @@ internal static partial class CommandParser
         return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency, description, reads)
         {
             DirectiveLocations = directiveLocations,
-            Response = response
+            Response = response,
+            Stream = stream
         };
     }
 
@@ -398,6 +408,9 @@ internal static partial class CommandParser
         context.SkipBlock(line.Indent);
         return null;
     }
+
+    [GeneratedRegex(@"^stream\s+[A-Za-z_]\w*\.[A-Za-z_]\w*$", RegexOptions.None, 1000)]
+    private static partial Regex RouteRegex();
 
     [GeneratedRegex(@"^command\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();

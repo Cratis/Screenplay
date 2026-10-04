@@ -4,6 +4,7 @@
 import { AuthorizeSyntax } from './Authorization';
 import { PropertySyntax } from './Declarations';
 import { ExpressionSyntax } from './Expressions';
+import { CommandStreamSyntax } from './EventSources';
 import { ProducesSyntax } from './Reactions';
 import { CommandResponseSyntax } from './Responses';
 import { SyntaxNode } from './SyntaxNode';
@@ -46,5 +47,6 @@ export interface CommandSyntax extends SyntaxNode {
     readonly validations: readonly ValidateSyntax[];
     readonly produces: readonly ProducesSyntax[];
     readonly response?: CommandResponseSyntax | null;
+    readonly stream?: CommandStreamSyntax | null;
     readonly handler?: HandlerSyntax | null;
 }

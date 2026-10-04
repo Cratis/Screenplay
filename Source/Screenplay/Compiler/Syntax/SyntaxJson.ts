@@ -3,10 +3,14 @@
 
 import { SyntaxNode } from './SyntaxNode';
 import { OperationPhaseSyntax } from './Operations';
+import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax } from './EventSources';
 import { ProducesSyntax } from './Reactions';
 import { isBlankImplementationHint } from '../Text/ImplementationHintText';
+import { pattern } from '../Text/patterns';
 
 export type SyntaxJsonValue = string | number | boolean | null | SyntaxJsonValue[] | { [member: string]: SyntaxJsonValue };
+
+const sourceStreamName = pattern('^[A-Za-z_]\\w*(?![\\s\\S])');
 
 const isNode = (value: unknown): value is SyntaxNode =>
     typeof value === 'object' && value !== null && typeof (value as { kind?: unknown }).kind === 'string';
@@ -24,10 +28,14 @@ function write(value: unknown): SyntaxJsonValue {
     }
     if (isNode(value)) {
         validateOperation(value);
+        validateSourceStream(value);
         const result: { [member: string]: SyntaxJsonValue } = { kind: value.kind };
-        const members = Object.keys(value).filter(member => member !== 'kind' && member !== 'location' && member !== 'targetLocation' && !(value.kind === 'OperationSyntax' && member === 'usesLocation')).sort(ordinal);
+        const structural = { ...value } as unknown as Record<string, unknown>;
+        if (value.kind === 'ApplicationSyntax' && structural.eventSources === undefined) structural.eventSources = [];
+        if (value.kind === 'CommandSyntax' && structural.stream === undefined) structural.stream = null;
+        const members = Object.keys(structural).filter(member => member !== 'kind' && member !== 'location' && member !== 'targetLocation' && member !== 'referenceLocation' && member !== 'referenceLength' && member !== 'nameWasEscaped' && !(value.kind === 'OperationSyntax' && member === 'usesLocation')).sort(ordinal);
         for (const member of members) {
-            result[member] = write((value as unknown as Record<string, unknown>)[member]);
+            result[member] = write(structural[member]);
         }
         return result;
     }
@@ -51,6 +59,25 @@ function validateOperation(node: SyntaxNode): void {
         const phase = node as OperationPhaseSyntax;
         if (phase.file !== null && phase.code !== null) throw new Error('An operation phase has at most one file or inline payload.');
         if (phase.implementation !== null && (!Array.isArray(phase.implementation.hints) || phase.implementation.hints.some(hint => hint == null || isBlankImplementationHint(hint.text)))) throw new Error('Implementation hints must be a collection of nonblank hints.');
+    }
+}
+
+function validateSourceStream(node: SyntaxNode): void {
+    const name = (value: string) => { if (typeof value !== 'string' || !sourceStreamName.test(value)) throw new Error('Event source and stream names must be identifiers.'); };
+    if (node.kind === 'EventSourceSyntax' || node.kind === 'EventStreamSyntax') {
+        const declaration = node as EventSourceSyntax | EventStreamSyntax;
+        name(declaration.name);
+        if (declaration.id !== null && (typeof declaration.id !== 'string' || declaration.id.trim() === '')) throw new Error('A rename pin must be nonempty.');
+        const type = declaration.kind === 'EventSourceSyntax' ? declaration.identifier : declaration.streamId;
+        if (type !== null && (type.isCollection || type.isOptional)) throw new Error('Source identifiers and stream ids require nonoptional scalar type references.');
+    }
+    if (node.kind === 'CommandStreamSyntax') {
+        const route = node as CommandStreamSyntax;
+        name(route.eventSource);
+        name(route.stream);
+        if (route.streamId !== null && route.streamId.property !== 'streamId') throw new Error('A command stream maps only streamId.');
+        const candidate = route.propertyCandidate;
+        if (candidate !== null && (candidate.name !== 'stream' || candidate.type.name !== `${route.eventSource}.${route.stream}` || candidate.type.isCollection || candidate.type.isOptional || candidate.isGenerated || candidate.isIdentifier || route.streamId !== null)) throw new Error('An ambiguous route must retain its exact unmodified property candidate, without selecting nested routing.');
     }
 }
 

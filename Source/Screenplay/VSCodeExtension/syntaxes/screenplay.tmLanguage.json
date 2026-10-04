@@ -44,7 +44,7 @@
             ]
         },
         "keyword-input": {
-            "match": "^\\s*(@?(?:system|operation|command|uses|execute|compensate))\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)(?=\\s*(?:=(?!=|>)|//|$))",
+            "match": "^\\s*(@?(?:system|operation|command|uses|execute|compensate|eventsource|stream|streamId|identifier|from))\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)(?=\\s*(?:=(?!=|>)|//|$))",
             "captures": { "1": { "name": "variable.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
         },
         "operation-block": {
@@ -93,7 +93,7 @@
         "keywords": {
             "patterns": [
                 {
-                    "match": "^(system)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
+                    "match": "^(system|eventsource)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
                     "captures": { "1": { "name": "keyword.control.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
                 },
                 {

@@ -1,7 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Printing;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.for_ScreenplayCompiler;
 
@@ -27,6 +29,7 @@ public class when_classifying_command_streams : given.a_compiler
         var command = Command(parsed.Value!);
         command.Stream.ShouldBeNull();
         command.Properties.Single().Name.ShouldEqual(name);
+        SyntaxJson.StructurallyEqual(parsed.Value!, _compiler.Parse(new ScreenplayPrinter().Print(parsed.Value!)).Value!).ShouldBeTrue();
     }
 
     [Theory]
@@ -57,6 +60,9 @@ public class when_classifying_command_streams : given.a_compiler
         var command = Command(parsed.Value!);
         command.Properties.Single().Type.Name.ShouldEqual("Account.Transactions");
         command.Stream!.PropertyCandidate.ShouldNotBeNull();
+        var printed = new ScreenplayPrinter().Print(parsed.Value!);
+        printed.ShouldNotContain("@stream Account.Transactions");
+        _compiler.Parse(printed).Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeTrue();
     }
 
     [Fact]
@@ -66,6 +72,16 @@ public class when_classifying_command_streams : given.a_compiler
         Command(parsed.Value!).Stream.ShouldBeNull();
         Command(parsed.Value!).Properties.Count().ShouldEqual(2);
         parsed.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeFalse();
+    }
+
+    [Fact]
+    void should_retain_an_explicit_escape_when_printing_before_external_declarations_are_assembled()
+    {
+        var parsed = _compiler.Parse(Prefix + "@stream Account.Transactions\n          deeper String");
+        var printed = new ScreenplayPrinter().Print(parsed.Value!);
+        printed.ShouldContain("@stream Account.Transactions");
+        Command(_compiler.Parse(printed + Source).Value!).Stream.ShouldBeNull();
+        Command(_compiler.Parse(printed + Source).Value!).Properties.Count().ShouldEqual(2);
     }
 
     static CommandSyntax Command(ApplicationSyntax application) => application.Modules.Single().Features.Single().Slices.Single().Commands.Single();

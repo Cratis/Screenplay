@@ -25,6 +25,7 @@ export function tryParseProperty(line: SourceLine): PropertySyntax | undefined {
         name: unescapeIdentifier(match[1]),
         type: parseTypeRef(match[2], { ...location, column: location.column + line.content.indexOf(match[2], match[1].length) }),
         isGenerated: match[3] !== undefined,
+        nameWasEscaped: match[1].startsWith('@'),
         isIdentifier: match[4] !== undefined,
         location,
     };

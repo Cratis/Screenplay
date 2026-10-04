@@ -156,6 +156,9 @@ public record CommandSyntax(
     /// Gets the unconditional syntax-only response contract, if declared.
     /// </summary>
     public CommandResponseSyntax? Response { get; init; }
+
+    /// <summary>Gets the syntax-only authored stream route; it does not supply a destination.</summary>
+    public CommandStreamSyntax? Stream { get; init; }
 }
 
 /// <summary>

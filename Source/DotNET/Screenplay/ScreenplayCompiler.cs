@@ -38,7 +38,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     public CompilationResult<ApplicationSyntax> Compile(string source)
     {
         var lines = SourceLineSplitter.Split(source);
-        var context = new ParserContext(new(lines), languages: languages);
+        var context = new ParserContext(new(lines), languages: languages) { StreamCandidates = CommandStreamCandidates.Capture([lines]) };
         var application = SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines), lines);
         ScreenplayValidator.Validate(application, context);
         return new(application, [.. context.Diagnostics, .. ProductionDestinationDiagnostics.In(application)]);
@@ -126,8 +126,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     internal static CompilationResult<ApplicationSyntax> ParsePlaced(string source, string? path, PlayPlacement placement, IScreenplayLanguageRegistry languages)
     {
         var lines = SourceLineSplitter.Split(source, path: path);
-        var context = new ParserContext(new(lines), path, languages);
-        return new(SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines, placement), lines), context.Diagnostics);
+        return ParseWithCandidates(lines, path, placement, languages, CommandStreamCandidates.Capture([lines]));
     }
 
     /// <summary>
@@ -140,5 +139,14 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     {
         var lines = SourceLineSplitter.Split(source, path: path);
         return ScreenplayParser.DiscoverImports(new ParserContext(new(lines), path));
+    }
+
+    internal CompilationResult<ApplicationSyntax> ParseWithCandidates(string source, string? path, PlayPlacement placement, CommandStreamCandidates candidates) =>
+        ParseWithCandidates(SourceLineSplitter.Split(source, path: path), path, placement, languages, candidates);
+
+    static CompilationResult<ApplicationSyntax> ParseWithCandidates(IReadOnlyList<SourceLine> lines, string? path, PlayPlacement placement, IScreenplayLanguageRegistry languages, CommandStreamCandidates candidates)
+    {
+        var context = new ParserContext(new(lines), path, languages) { StreamCandidates = candidates };
+        return new(SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines, placement), lines), context.Diagnostics);
     }
 }

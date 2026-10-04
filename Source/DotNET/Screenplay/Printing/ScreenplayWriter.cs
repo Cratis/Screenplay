@@ -26,6 +26,9 @@ internal sealed class ScreenplayWriter
     int _depth;
     int _line;
 
+    /// <summary>Gets the application source names needed to preserve contextual property escapes.</summary>
+    internal IReadOnlySet<string> EventSourceNames { get; init; } = new HashSet<string>(StringComparer.Ordinal);
+
     /// <summary>Gets the lines written for each syntax owner, keyed by reference identity.</summary>
     internal IReadOnlyDictionary<SyntaxNode, (int First, int Last)> Anchors => _anchors;
 

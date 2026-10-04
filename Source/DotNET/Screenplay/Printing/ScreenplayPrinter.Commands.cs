@@ -19,7 +19,7 @@ public partial class ScreenplayPrinter
         using (writer.Indent())
         {
             WriteDescription(writer, command.Description, command);
-            WriteProperties(writer, command.Properties, ReservedWords.CommandBody);
+            WriteCommandProperties(writer, command);
 
             // What the command reads comes before what references it - a mapping fed from state and a rule
             // stated against state both read as though the read model were already in scope, because it is.
@@ -37,6 +37,8 @@ public partial class ScreenplayPrinter
             {
                 WriteValidate(writer, validation);
             }
+
+            if (command.Stream is not null) WriteCommandStream(writer, command.Stream);
 
             foreach (var produces in command.Produces)
             {

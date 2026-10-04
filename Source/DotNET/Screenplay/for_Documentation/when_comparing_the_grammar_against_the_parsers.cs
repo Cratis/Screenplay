@@ -25,6 +25,7 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
             ["dialog"] = ("DialogTemplateDecl", "templates.md"),
             ["domain"] = ("DomainDecl", "domain.md"),
             ["event"] = ("EventDecl", "events.md"),
+            ["eventsource"] = ("EventSourceDecl", "grammar.md"),
             ["feature"] = ("Feature", "slices.md"),
             ["form"] = ("FormDecl", "forms.md"),
             ["import"] = ("Import", "domain.md"),
