@@ -9,7 +9,7 @@ sealed class McpDisk(McpRoot root, Action<string, string>? move = null)
 {
     readonly Action<string, string> _move = move ?? ((source, destination) => File.Move(source, destination));
 
-    internal McpDiskResult Apply(IMcpProposal proposal, McpStatePlan? state = null, Action? verifyEvidence = null)
+    internal McpDiskResult Apply(IMcpProposal proposal, McpStatePlan? state = null, Action? verifyEvidence = null, string? operationId = null)
     {
         if (!proposal.Accepted || proposal.WritePlan.BeforeRevision != proposal.Before.Revision ||
             proposal.WritePlan.BeforeCatalogRevision != proposal.Before.IdentityCatalog.Revision ||
@@ -25,7 +25,7 @@ sealed class McpDisk(McpRoot root, Action<string, string>? move = null)
         files.Verify(McpState.FileName, state.Before);
         root.Verify(proposal.Before);
         CheckDestinations(proposal);
-        var journal = McpRecoveryJournal.Prepare(root, proposal, state);
+        var journal = McpRecoveryJournal.Prepare(root, proposal, state, operationId);
         var changes = journal.Changes;
         try
         {

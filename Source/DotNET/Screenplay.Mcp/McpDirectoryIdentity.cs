@@ -19,6 +19,18 @@ internal static partial class McpDirectoryIdentity
         return before == candidate;
     }
 
+    // Metadata-only identity also admits existing hard links and filesystem-resolved case aliases.
+    internal static bool SameEntry(string first, string second)
+    {
+        McpRoot.CheckAncestors(first);
+        McpRoot.CheckAncestors(second);
+        var same = Read(first) == Read(second);
+        McpRoot.CheckAncestors(first);
+        McpRoot.CheckAncestors(second);
+
+        return same;
+    }
+
     static Identity Read(string path)
     {
         try

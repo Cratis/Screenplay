@@ -281,8 +281,22 @@ must match their validated evidence; otherwise retention returns
 `RepairEvidenceDrift`, without creating a proposal or repeating the selected repair
 transaction. Changed resolution or loading diagnostics are refused, not re-proven
 by a refresh.
+
+A pin also requires disjoint attachment inputs and planned writes. The server checks
+all model-selected base and candidate references, including absent or unreadable
+files, against source changes, identity state, the recovery journal and the selected
+operation's staging/backup paths. Overlap returns `RepairEvidenceWriteConflict`
+before any accepted preview is retained. Existing hard links and filesystem-resolved
+case aliases count as overlap; uncertain missing-path aliases fail closed with the
+same kind. This is not a ban on `.play` attachments: an unchanged, unrelated source
+file remains eligible. No attachment, implementation lock or directory is written
+to establish disjointness. Capabilities advertise `evidence.plannedWriteOverlap`
+and `evidence.plannedWriteOverlapFailureKind` for this opt-in refusal.
+
 All proposal-backed previews recheck both snapshots under the approved root, as
-does the final pre-install check after staging. Drift requires rediscovery and a
+does the final pre-install check after staging, including write-overlap admission.
+Pinned installation keeps the validated candidate; it does not refresh proof after
+writing. Drift requires rediscovery and a
 fresh selected proposal. You can discard a stale proposal without reading it.
 Workspace/catalog revisions, exact `.play` set/bytes and identity-state preimages
 remain independently authoritative. Workspace and ESM serialization are unchanged.
@@ -294,7 +308,7 @@ conflicts and recovery fields where already present. JSON-RPC errors preserve
 `InvalidJson`, `InvalidRequest`, `UnknownMethod`, `InvalidArguments`,
 `FormattingConsentRequired`, `UnknownRepair`, `UnsupportedRepair`, `UnknownProposal`,
 `RootChangeRefused`, `StaleRevision`, `DiskDrift`, `IdentityStateDrift`,
-`RepairEvidenceDrift` and `LimitExceeded`. `ProposalRejected` retains its detailed
+`RepairEvidenceDrift`, `RepairEvidenceWriteConflict` and `LimitExceeded`. `ProposalRejected` retains its detailed
 conflicts; `PendingOperation` requires workspace-state inspection. Apply failures
 report `ApplyRolledBack`, a specific refusal kind, or `RecoveryRequired` as
 appropriate. `RequestFailed` and an unfamiliar kind must not be interpreted as

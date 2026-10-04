@@ -152,14 +152,19 @@ internal sealed partial class McpWorkspaces
         var includeContent = McpJson.Boolean(arguments, "includeContent");
         var beforeDescription = JsonSerializer.SerializeToElement(McpWorkspaceTransport.Describe(workspace, includeContent), McpJson.Options);
         var afterDescription = JsonSerializer.SerializeToElement(McpWorkspaceTransport.Describe(proposal.Workspace, includeContent), McpJson.Options);
-        var result = new McpDisk(Root).Apply(proposal, statePlan, () =>
-        {
-            BeforeInstall?.Invoke();
-            if (_repairEvidence.TryGetValue(proposal, out var evidence)) evidence.Verify(Root, proposal);
-        });
+        _repairEvidence.TryGetValue(proposal, out var evidence);
+        var result = new McpDisk(Root).Apply(
+            proposal,
+            statePlan,
+            () =>
+            {
+                BeforeInstall?.Invoke();
+                evidence?.Verify(Root, proposal);
+            },
+            evidence?.OperationId);
         if (result.Success)
         {
-            _workspace = McpAttachmentContents.Refresh(Root, proposal.Workspace);
+            _workspace = evidence is null ? McpAttachmentContents.Refresh(Root, proposal.Workspace) : proposal.Workspace;
             _stateBytes = statePlan.After;
             _proposals.Clear();
             _statePlans.Clear();

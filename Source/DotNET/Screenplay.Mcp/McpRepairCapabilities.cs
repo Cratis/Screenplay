@@ -22,7 +22,7 @@ static class McpRepairCapabilities
             requiredFormatting = "CanonicalizeTouchedDocuments",
             pinRepairEvidence = true
         }),
-        evidence = new { version = 1, optional = true, revisionPrefix = "re1:", candidateResolutionChanges = "Refused" },
+        evidence = new { version = 1, optional = true, revisionPrefix = "re1:", candidateResolutionChanges = "Refused", plannedWriteOverlap = "Refused", plannedWriteOverlapFailureKind = "RepairEvidenceWriteConflict" },
         structuredFailures = new { version = 1, discriminator = "failureKind", unknownApplyOutcome = "ApplyOutcomeUnknown" },
         savedFilesOnly = true,
         journaledApply = true,

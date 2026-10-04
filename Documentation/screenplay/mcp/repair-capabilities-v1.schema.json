@@ -28,7 +28,9 @@
         "version": { "const": 1 },
         "optional": { "const": true },
         "revisionPrefix": { "const": "re1:" },
-        "candidateResolutionChanges": { "const": "Refused" }
+        "candidateResolutionChanges": { "const": "Refused" },
+        "plannedWriteOverlap": { "const": "Refused" },
+        "plannedWriteOverlapFailureKind": { "const": "RepairEvidenceWriteConflict" }
       }
     },
     "structuredFailures": {

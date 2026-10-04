@@ -103,13 +103,13 @@ internal sealed partial class McpRecoveryJournal
         }
     }
 
-    internal static McpRecoveryJournal Prepare(McpRoot root, IMcpProposal proposal, McpStatePlan state)
+    internal static McpRecoveryJournal Prepare(McpRoot root, IMcpProposal proposal, McpStatePlan state, string? operationId = null)
     {
         RefusePending(root);
         var files = new McpManagedFiles(root);
         var record = new McpRecoveryRecord(
             1,
-            Guid.NewGuid().ToString("N"),
+            operationId ?? Guid.NewGuid().ToString("N"),
             Encoding.UTF8.GetString(McpWorkspaceTransport.ExportBytes(proposal.Before)),
             Encoding.UTF8.GetString(McpWorkspaceTransport.ExportBytes(proposal.Workspace)),
             state.Before,

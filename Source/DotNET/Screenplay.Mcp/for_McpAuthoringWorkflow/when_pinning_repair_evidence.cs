@@ -66,6 +66,155 @@ public class when_pinning_repair_evidence : given.an_authoring_connection
         var bytes = page.GetProperty("result").GetProperty("content").GetProperty("bytesBase64").GetBytesFromBase64();
         Apply(opened, proposal).GetProperty("success").GetBoolean().ShouldBeTrue();
         File.ReadAllBytes(Path.Combine(RootPath, "application.play")).ShouldEqual(bytes);
+        var actual = Result("read-workspace", new { expectedRevision = proposal.GetProperty("after").GetProperty("revision").GetString(), view = "diagnostics" });
+        actual.GetProperty("repairEvidenceRevision").GetString().ShouldEqual(proposal.GetProperty("repairEvidence").GetProperty("candidateRevision").GetString());
+    }
+
+    [Theory]
+    [InlineData("application.play")]
+    [InlineData("./folder/../application.play")]
+    [InlineData(".screenplay/identities.json")]
+    [InlineData(".screenplay/pending.json")]
+    [InlineData(".screenplay")]
+    [InlineData(".SCREENPLAY/IDENTITIES.JSON")]
+    void should_refuse_model_selected_write_targets_before_advertising_an_accepted_preview(string attachment)
+    {
+        var (opened, discovery) = Discover("PLAY0478", attachment: attachment);
+        var source = File.ReadAllBytes(Path.Combine(RootPath, "application.play"));
+        Failure(Call("propose-repair", Request(opened, discovery))).ShouldEqual("RepairEvidenceWriteConflict");
+        File.ReadAllBytes(Path.Combine(RootPath, "application.play")).ShouldEqual(source);
+        var current = Result("read-workspace", new { expectedRevision = opened.GetProperty("revision").GetString(), view = "repairs" });
+        current.GetProperty("workspace").GetProperty("catalogRevision").GetString().ShouldEqual(opened.GetProperty("catalogRevision").GetString());
+        Directory.Exists(Path.Combine(RootPath, ".screenplay")).ShouldBeFalse();
+    }
+
+    [Fact]
+    void should_refuse_an_imported_source_target_selected_by_the_root_model()
+    {
+        File.WriteAllText(Path.Combine(RootPath, "application.play"), "import \"Registration.play\"\npolicy IsAuthorized\n  file Registration.play\n");
+        File.WriteAllText(Path.Combine(RootPath, "Registration.play"), AttachedSource[AttachedSource.IndexOf("module Projects", StringComparison.Ordinal)..]);
+        Initialize();
+        var opened = Open();
+        var discovery = Result("read-workspace", new { expectedRevision = opened.GetProperty("revision").GetString(), view = "repairs" });
+        var source = File.ReadAllBytes(Path.Combine(RootPath, "Registration.play"));
+        Failure(Call("propose-repair", Request(opened, discovery))).ShouldEqual("RepairEvidenceWriteConflict");
+        File.ReadAllBytes(Path.Combine(RootPath, "Registration.play")).ShouldEqual(source);
+        Directory.Exists(Path.Combine(RootPath, ".screenplay")).ShouldBeFalse();
+    }
+
+    [Fact]
+    void should_not_ban_an_unmodified_play_attachment()
+    {
+        File.WriteAllText(Path.Combine(RootPath, "Unchanged.play"), "concept Unchanged : String\n");
+        var (opened, discovery) = Discover("PLAY0478", attachment: "Unchanged.play");
+        var proposal = Propose(opened, discovery);
+        Apply(opened, proposal).GetProperty("success").GetBoolean().ShouldBeTrue();
+        var actual = Result("read-workspace", new { expectedRevision = proposal.GetProperty("after").GetProperty("revision").GetString(), view = "diagnostics" });
+        actual.GetProperty("repairEvidenceRevision").GetString().ShouldEqual(proposal.GetProperty("repairEvidence").GetProperty("candidateRevision").GetString());
+    }
+
+    [Fact]
+    void should_preserve_unpinned_source_attachment_behavior()
+    {
+        var (opened, discovery) = Discover("PLAY0478", attachment: "application.play");
+        var repair = discovery.GetProperty("page").GetProperty("items")[0];
+        var proposal = Result("propose-repair", new
+        {
+            expectedRevision = opened.GetProperty("revision").GetString(),
+            expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+            diagnosticCode = "PLAY0478",
+            subject = repair.GetProperty("subject"),
+            formatting = "CanonicalizeTouchedDocuments"
+        });
+        Apply(opened, proposal).GetProperty("success").GetBoolean().ShouldBeTrue();
+    }
+
+    [Fact]
+    void should_refuse_a_candidate_only_attachment_that_selects_a_write_target()
+    {
+        _ = Discover("PLAY0478");
+        var workspace = McpAttachmentContents.Refresh(Root, Workspace());
+        var syntax = new ScreenplayCompiler().Parse(AttachedSource.Replace("Handler.cs", "application.play", StringComparison.Ordinal)).Value!;
+        var result = workspace.ProposeAuthoring(new()
+        {
+            ExpectedRevision = workspace.Revision,
+            ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
+            Formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments,
+            Validation = WorkspaceAuthoringValidation.Authoring,
+            Documents = [new ReplaceWorkspaceSyntaxDocument(workspace.Documents[0].Id, syntax)],
+            AttachmentLoader = documents => McpAttachmentContents.Load(Root, documents)
+        });
+        result.Accepted.ShouldBeTrue();
+        workspace.AttachmentContents.ContainsKey("application.play").ShouldBeFalse();
+        result.Workspace!.AttachmentContents.ContainsKey("application.play").ShouldBeTrue();
+        var proposal = new McpAuthoringProposal(workspace, result, WorkspaceAuthoringValidation.Authoring, WorkspaceAuthoringReferencePolicy.Safe);
+        (Catch.Exception(() => McpRepairEvidence.Pin(Root, proposal)) as McpFailure)!.FailureKind.ShouldEqual("RepairEvidenceWriteConflict");
+        Directory.Exists(Path.Combine(RootPath, ".screenplay")).ShouldBeFalse();
+    }
+
+    [Fact]
+    void should_refuse_an_existing_hard_link_to_a_source_write_target()
+    {
+        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS()) return; // Native Unix link scenario.
+        _ = Discover("PLAY0478", attachment: "Alias.cs");
+        var start = new System.Diagnostics.ProcessStartInfo("/bin/ln") { ArgumentList = { Path.Combine(RootPath, "application.play"), Path.Combine(RootPath, "Alias.cs") } };
+        using var process = System.Diagnostics.Process.Start(start)!;
+        process.WaitForExit(5000).ShouldBeTrue();
+        process.ExitCode.ShouldEqual(0);
+        var opened = Open();
+        var discovery = Result("read-workspace", new { expectedRevision = opened.GetProperty("revision").GetString(), view = "repairs" });
+        Failure(Call("propose-repair", Request(opened, discovery))).ShouldEqual("RepairEvidenceWriteConflict");
+        Directory.Exists(Path.Combine(RootPath, ".screenplay")).ShouldBeFalse();
+    }
+
+    [Fact]
+    void should_refuse_existing_case_aliases_only_when_the_filesystem_resolves_them()
+    {
+        var (opened, discovery) = Discover("PLAY0478", attachment: "APPLICATION.PLAY");
+        if (File.Exists(Path.Combine(RootPath, "APPLICATION.PLAY")))
+        {
+            Failure(Call("propose-repair", Request(opened, discovery))).ShouldEqual("RepairEvidenceWriteConflict");
+        }
+        else
+        {
+            // Distinct spelling on a case-sensitive filesystem is a stable missing attachment, not overlap.
+            var proposal = Propose(opened, discovery);
+            Apply(opened, proposal).GetProperty("success").GetBoolean().ShouldBeTrue();
+        }
+    }
+
+    [Fact]
+    void should_recheck_aliases_immediately_before_installation()
+    {
+        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS()) return;
+        _ = Discover("PLAY0478");
+
+        // Equal bytes keep evidence unchanged while a new hard link changes physical overlap.
+        File.WriteAllText(Path.Combine(RootPath, "Handler.cs"), AttachedSource);
+        var opened = Open();
+        var discovery = Result("read-workspace", new { expectedRevision = opened.GetProperty("revision").GetString(), view = "repairs" });
+        var workspaces = new McpWorkspaces(Root);
+        _ = workspaces.Open(JsonSerializer.SerializeToElement(new { applicationName = "Projects" }));
+        var proposal = Structured(workspaces.ProposeRepair(JsonSerializer.SerializeToElement(Request(opened, discovery))));
+        workspaces.BeforeInstall = () =>
+        {
+            File.Delete(Path.Combine(RootPath, "Handler.cs"));
+            using var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("/bin/ln") { ArgumentList = { Path.Combine(RootPath, "application.play"), Path.Combine(RootPath, "Handler.cs") } })!;
+            process.WaitForExit(5000).ShouldBeTrue();
+            process.ExitCode.ShouldEqual(0);
+        };
+        var applied = Structured(workspaces.Apply(JsonSerializer.SerializeToElement(new
+        {
+            proposalId = proposal.GetProperty("proposalId").GetString(),
+            expectedRevision = opened.GetProperty("revision").GetString(),
+            expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString()
+        })));
+        applied.GetProperty("success").GetBoolean().ShouldBeFalse();
+        applied.GetProperty("failureKind").GetString().ShouldEqual("RepairEvidenceWriteConflict");
+        applied.GetProperty("installedDocuments").GetInt32().ShouldEqual(0);
+        File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldEqual(AttachedSource);
+        File.Exists(Path.Combine(RootPath, ".screenplay", "identities.json")).ShouldBeFalse();
+        File.Exists(Path.Combine(RootPath, ".screenplay", "pending.json")).ShouldBeFalse();
     }
 
     [Fact]
@@ -418,9 +567,9 @@ public class when_pinning_repair_evidence : given.an_authoring_connection
 
     static string SourceFor(string code) => code == "PLAY0166" ? AttachedSource.Replace("      event Registered\n        name String\n", "", StringComparison.Ordinal) : AttachedSource;
 
-    (JsonElement Opened, JsonElement Discovery) Discover(string code, string attachmentState = "exists")
+    (JsonElement Opened, JsonElement Discovery) Discover(string code, string attachmentState = "exists", string attachment = "Handler.cs")
     {
-        var source = SourceFor(code);
+        var source = SourceFor(code).Replace("Handler.cs", attachment, StringComparison.Ordinal);
         if (attachmentState == "refused") source = source.Replace("Handler.cs", "../Handler.cs", StringComparison.Ordinal);
         File.WriteAllText(Path.Combine(RootPath, "application.play"), source);
         SetAttachmentState(attachmentState);

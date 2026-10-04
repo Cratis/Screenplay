@@ -12,6 +12,9 @@ namespace Cratis.Screenplay.Mcp;
 // AttachmentFiles already bounds bytes, validates UTF-8 and refuses links. No unrelated files are read.
 internal sealed record McpRepairEvidence(string BeforeRevision, string CandidateRevision)
 {
+    // Chosen by the server at retention, never accepted from tool arguments or exposed as evidence.
+    internal string OperationId { get; } = Guid.NewGuid().ToString("N");
+
     internal static string Revision(ScreenplayWorkspace workspace)
     {
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
@@ -71,6 +74,7 @@ internal sealed record McpRepairEvidence(string BeforeRevision, string Candidate
 
     internal void Verify(McpRoot root, IMcpProposal proposal)
     {
+        McpRepairWriteConflicts.Verify(root, proposal, OperationId);
         Check(BeforeRevision, McpAttachmentContents.Refresh(root, proposal.Before));
         Check(CandidateRevision, McpAttachmentContents.Refresh(root, proposal.Workspace));
     }
