@@ -36,6 +36,22 @@ public class when_holding_operation_regressions_to_shared_vectors : given.a_comp
     }
 
     [Fact]
+    void should_retain_parser_owned_target_spans_identically_to_typescript()
+    {
+        var vectors = Vectors();
+        foreach (var vector in vectors.GetProperty("targetSpans").EnumerateArray())
+        {
+            var source = vectors.GetProperty("prefix").GetString() + vector.GetProperty("body").GetString();
+            var result = _compiler.Compile(source);
+            result.Success.ShouldBeTrue();
+            var production = result.Value!.Modules.Single().Features.Single().Slices.Single().Commands.Single().Produces.Single();
+            production.TargetLocation.Line.ShouldEqual(vector.GetProperty("line").GetInt32());
+            production.TargetLocation.Column.ShouldEqual(vector.GetProperty("column").GetInt32());
+            source.Split('\n')[production.TargetLocation.Line - 1].Substring(production.TargetLocation.Column - 1, production.Event.Length).ShouldEqual(production.Event);
+        }
+    }
+
+    [Fact]
     void should_retain_both_declaration_occurrences_and_exclude_mixed_ambiguity_from_event_consumers()
     {
         var vectors = Vectors();

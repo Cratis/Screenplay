@@ -52,9 +52,17 @@ export class Uri {
         return new Uri(path);
     }
 
+    static joinPath(base: Uri, ...parts: string[]): Uri {
+        return new Uri([base.fsPath, ...parts].join('/'));
+    }
+
     toString(): string {
         return `file://${this.fsPath}`;
     }
+}
+
+export class Location {
+    constructor(readonly uri: Uri, readonly range: Position) {}
 }
 
 export class DocumentLink {
@@ -166,6 +174,7 @@ export const state = {
     workspaceFolder: undefined as string | undefined,
     searches: [] as { include: string; exclude: string | undefined; maxResults: number | undefined }[],
     linkProviders: [] as { selector: unknown; provider: DocumentLinkProviderStub }[],
+    definitionProviders: [] as { selector: unknown; provider: unknown }[],
     watchers: [] as FileSystemWatcherStub[],
     createdFiles: new Emitter(),
     deletedFiles: new Emitter(),
@@ -186,6 +195,7 @@ export function reset(): void {
     state.workspaceFolder = undefined;
     state.searches = [];
     state.linkProviders = [];
+    state.definitionProviders = [];
     state.watchers = [];
     state.createdFiles = new Emitter();
     state.deletedFiles = new Emitter();
@@ -271,6 +281,10 @@ export const workspace = {
 };
 
 export const languages = {
+    registerDefinitionProvider(selector: unknown, provider: unknown): Disposable {
+        state.definitionProviders.push({ selector, provider });
+        return { dispose: () => {} };
+    },
     registerDocumentLinkProvider(selector: unknown, provider: DocumentLinkProviderStub): Disposable {
         state.linkProviders.push({ selector, provider });
         return { dispose: () => {} };

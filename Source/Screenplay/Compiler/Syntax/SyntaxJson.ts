@@ -25,7 +25,7 @@ function write(value: unknown): SyntaxJsonValue {
     if (isNode(value)) {
         validateOperation(value);
         const result: { [member: string]: SyntaxJsonValue } = { kind: value.kind };
-        const members = Object.keys(value).filter(member => member !== 'kind' && member !== 'location' && !(value.kind === 'OperationSyntax' && member === 'usesLocation')).sort(ordinal);
+        const members = Object.keys(value).filter(member => member !== 'kind' && member !== 'location' && member !== 'targetLocation' && !(value.kind === 'OperationSyntax' && member === 'usesLocation')).sort(ordinal);
         for (const member of members) {
             result[member] = write((value as unknown as Record<string, unknown>)[member]);
         }

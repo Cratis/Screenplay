@@ -4,6 +4,7 @@
 import { EventSyntax, TagSyntax } from './Declarations';
 import { ExpressionSyntax, PropertyMappingSyntax } from './Expressions';
 import { SyntaxNode } from './SyntaxNode';
+import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { OperationSyntax } from './Operations';
 
 // 'when <Name>' - an event, a declared trigger, or one a consumer registered.
@@ -39,6 +40,8 @@ export type TriggerSourceSyntax = NamedTriggerSourceSyntax | IntervalTriggerSour
 export interface ProducesSyntax extends SyntaxNode {
     readonly kind: 'ProducesSyntax';
     readonly event: string;
+    // Parser-owned identifier span, separate from a conditional production's header.
+    readonly targetLocation?: SourceLocation;
     readonly inlineEvent: EventSyntax | null;
     readonly inlineOperation?: OperationSyntax | null;
     readonly for: ExpressionSyntax | null;

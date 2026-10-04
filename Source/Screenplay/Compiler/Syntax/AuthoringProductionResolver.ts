@@ -33,11 +33,17 @@ export class AuthoringProductionResolver {
         application.modules.forEach(module => collect(module.features, [module.name]));
         for (const { slice, scope } of this.slices) {
             this.scopes.set(slice, scope);
-            const events = new Map<string, EventSyntax>();
+            const events = new Map<string, EventSyntax[]>();
             for (const event of eventDeclarations(slice)) {
-                if ((events.get(event.name)?.generation ?? 0) <= event.generation) events.set(event.name, event);
+                const generations = events.get(event.name) ?? [];
+                generations.push(event);
+                events.set(event.name, generations);
             }
-            this.declarations.push(...[...events.values()].map(node => ({ kind: AuthoringProductionKind.Event as const, name: node.name, node, scope })),
+            // Historical shapes are one logical contract. Duplicate generations remain
+            // competing declarations; never erase invalid collision evidence.
+            const logicalEvents = [...events.values()].flatMap(generations => new Set(generations.map(event => event.generation)).size !== generations.length
+                ? generations : [generations.reduce((latest, event) => latest.generation >= event.generation ? latest : event)]);
+            this.declarations.push(...logicalEvents.map(node => ({ kind: AuthoringProductionKind.Event as const, name: node.name, node, scope })),
                 ...operationDeclarations(slice).map(node => ({ kind: AuthoringProductionKind.Operation as const, name: node.name, node, scope })));
         }
         for (const entry of this.declarations) {

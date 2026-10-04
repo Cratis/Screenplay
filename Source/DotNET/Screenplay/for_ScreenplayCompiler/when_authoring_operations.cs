@@ -98,6 +98,22 @@ public class when_authoring_operations : given.a_compiler
         _compiler.Compile(printed).Success.ShouldBeTrue();
     }
 
+    [Theory]
+    [InlineData("        produces Send // Send\n", 10, 18)]
+    [InlineData("        produces S.Send // Send\n", 10, 18)]
+    [InlineData("        produces when accepted == true\n          Send // Send\n", 11, 11)]
+    [InlineData("        produces when accepted == true\n          S.Send // Send\n", 11, 11)]
+    [InlineData("        produces operation Inline\n          uses Mailer\n", 10, 28)]
+    void should_keep_target_spans_distinct_from_headers_and_out_of_syntax_json(string body, int line, int column)
+    {
+        var result = _compiler.Parse(Prefix + "      operation Send\n        uses Mailer\n      command C\n        accepted Bool\n" + body);
+        result.Success.ShouldBeTrue();
+        var production = result.Value!.Modules.Single().Features.Single().Slices.Single().Commands.Single().Produces.Single();
+        production.TargetLocation.Line.ShouldEqual(line);
+        production.TargetLocation.Column.ShouldEqual(column);
+        SyntaxJson.StructurallyEqual(production, production with { TargetLocation = SourceLocation.Start }).ShouldBeTrue();
+    }
+
     [Fact]
     void should_reject_two_inline_declaration_kinds_in_typed_transport()
     {

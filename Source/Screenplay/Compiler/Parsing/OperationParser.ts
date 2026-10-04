@@ -72,7 +72,7 @@ export function parseOperation(context: ParserContext, header: SourceLine, inlin
             if (names.has(property.name)) context.error(DiagnosticCodes.DuplicateDeclaration, `Operation '${name}' already declares input '${property.name}'.`, locationOf(line));
             names.add(property.name);
             inputs.push(property);
-            if (inline && typed !== null) mappings.push({ kind: 'PropertyMappingSyntax', property: property.name, source: parseMappingSource(typed[2], locationOf(line), context), location: locationOf(line) });
+            if (inline && typed !== null) mappings.push({ kind: 'PropertyMappingSyntax', property: property.name, source: parseMappingSource(typed[2], { ...locationOf(line), column: line.indent + line.content.length - typed[2].length + 1 }, context), location: locationOf(line) });
             rejectOperationChildren(context, line, DiagnosticCodes.InvalidOperationDeclaration, 'An operation input cannot have children.');
         } else if (firstWord(line.content) === 'description') description = parseDescription(context, line, description, `Operation '${name}'`);
         else if (usesPattern.test(line.content)) {

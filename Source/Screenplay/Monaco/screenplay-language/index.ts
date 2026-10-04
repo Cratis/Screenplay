@@ -101,7 +101,7 @@ export { pdl } from './sub-languages/pdl';
 export { cdl } from './sub-languages/cdl';
 export { screenplayDarkThemeName } from './themes/screenplay-dark';
 export { screenplayLightThemeName } from './themes/screenplay-light';
-export { enclosingChain, fenceMap, firstWord, indentOf } from './document-context';
+export { enclosingChain, fenceMap, firstWord, indentOf, withoutComment } from './document-context';
 export {
     fileReferenceKeyword,
     fileReferenceOn,
@@ -135,7 +135,7 @@ export { completionEntriesFor, planCompletions } from './completion-planner';
 export type { CompletionPlan } from './completion-planner';
 export { responseTokens, responseTokenTypes } from './response-tokens';
 export { responseCompletions } from './response-completions';
-export { analyzeOperations, operationCompletions, operationDetails, operationAvailability, operationHover, phaseState } from './operation-authoring';
+export { analyzeOperations, operationCompletions, operationDetails, operationAvailability, operationHover, operationReferenceAt, phaseState } from './operation-authoring';
 export type { OperationAnalysis, OperationDeclaration, OperationInput, OperationPhase, OperationReference, SystemDeclaration } from './OperationAnalysis';
 export { responseAvailability, responseAnalysis } from './response-analysis';
 export { hoverContent } from './hover-content';

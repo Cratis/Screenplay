@@ -135,6 +135,14 @@
       "absent": []
     }
   ],
+  "targetSpans": [
+    { "body": "      operation Send\n        uses Mailer\n      command C\n        produces Send // Send\n", "line": 8, "column": 18 },
+    { "body": "      operation Send\n        uses Mailer\n      command C\n        produces S.Send // Send\n", "line": 8, "column": 18 },
+    { "body": "      operation Send\n        uses Mailer\n      command C\n        accepted Bool\n        produces when accepted == true\n          Send // Send\n", "line": 10, "column": 11 },
+    { "body": "      operation Send\n        uses Mailer\n      command C\n        accepted Bool\n        produces when accepted == true\n          S.Send // Send\n", "line": 10, "column": 11 },
+    { "body": "      command C\n        produces operation Send // Send\n          uses Mailer\n", "line": 6, "column": 28 },
+    { "body": "      command C\n        produces event Recorded // Recorded\n", "line": 6, "column": 24 }
+  ],
   "documents": [
     { "path": "root.play", "source": "system Mailer\nmodule M\n  feature F\n    import \"command.play\"\n    import \"operation.play\"\n" },
     { "path": "command.play", "source": "slice StateChange Here\n  command C\n    id Uuid identifier\n    produces event Recorded\n    produces Other.Send\n" },

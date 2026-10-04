@@ -33,11 +33,12 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
             return undefined;
         }
         const parsed = parseOperation(context, header, true);
-        return { kind: 'ProducesSyntax', event: parsed.operation.name, inlineEvent: null, inlineOperation: parsed.operation, mappings: parsed.mappings, for: null, tags: [], location: locationOf(header) };
+        return { kind: 'ProducesSyntax', event: parsed.operation.name, targetLocation: { ...locationOf(header), column: header.indent + header.content.match(/^produces\s+operation(?:\s+|$)/)![0].length + 1 }, inlineEvent: null, inlineOperation: parsed.operation, mappings: parsed.mappings, for: null, tags: [], location: locationOf(header) };
     }
     const inline = inlineHeader.exec(header.content);
     let parent = header;
     let name: string;
+    let targetColumn: number;
     if (inline !== null) {
         if (!inCommand) {
             context.error(DiagnosticCodes.InlineEventOutsideCommand, 'Inline events can only be declared inside commands', locationOf(header));
@@ -48,6 +49,7 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
             context.error(DiagnosticCodes.InlineEventGeneration, 'Inline events are generation 1 - extract the event before declaring generations', locationOf(header));
         }
         name = inline[1];
+        targetColumn = header.indent + header.content.match(/^produces\s+event\s+/)![0].length + 1;
     } else if (conditional.test(header.content)) {
         const child = context.peekChild(header.indent);
         if (child === undefined || !eventName.test(child.content)) {
@@ -58,6 +60,7 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
         context.reader.takeSignificant();
         parent = child;
         name = child.content;
+        targetColumn = child.indent + 1;
     } else {
         const plain = plainHeader.exec(header.content);
         if (plain === null) {
@@ -66,6 +69,7 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
             return undefined;
         }
         name = plain[1];
+        targetColumn = header.indent + header.content.match(/^produces\s+/)![0].length + 1;
     }
     const properties: PropertySyntax[] = [];
     const propertyNames = new Set<string>();
@@ -117,14 +121,14 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
                 propertyNames.add(propertyName);
                 properties.push(property);
             }
-            mappings.push({ kind: 'PropertyMappingSyntax', property: property?.name ?? unescapeIdentifier(match[1]), source: parseMappingSource(match[2], location, context), location });
+            mappings.push({ kind: 'PropertyMappingSyntax', property: property?.name ?? unescapeIdentifier(match[1]), source: parseMappingSource(match[2], { ...location, column: line.indent + line.content.length - match[2].length + 1 }, context), location });
         } else if (inline === null || !metadata.tryParse(context, line)) {
             context.error(DiagnosticCodes.InvalidPropertyMapping, `Invalid ${inline === null ? '' : 'inline '}property mapping '${line.content}' - expected '<property>${inline === null ? '' : ' <Type>'} = <source>'`, location);
         }
     }
     if (parent !== header) context.skipBlock(header.indent);
     return {
-        kind: 'ProducesSyntax', event: name, inlineOperation: null, mappings, for: target, tags: inline === null ? tags : [], location: locationOf(header),
+        kind: 'ProducesSyntax', event: name, targetLocation: { ...locationOf(parent), column: targetColumn }, inlineOperation: null, mappings, for: target, tags: inline === null ? tags : [], location: locationOf(header),
         inlineEvent: inline === null ? null : { kind: 'EventSyntax', name, properties, tags, generation: 1, hasGenerationMarker: false, ...metadata.value, location: locationOf(header) },
     };
 }

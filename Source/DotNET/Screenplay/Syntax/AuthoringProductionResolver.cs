@@ -68,7 +68,9 @@ public sealed class AuthoringProductionResolver
         foreach (var (slice, scope) in _slices) _scopes.Add(slice, scope);
         Declarations = [.. _slices.SelectMany(entry => EventDeclarations.In(entry.Slice)
             .GroupBy(node => node.Name, StringComparer.Ordinal)
-            .Select(group => new AuthoringProductionDeclaration(AuthoringProductionKind.Event, group.Key, entry.Scope.Segments, group.OrderByDescending(node => node.Generation).First()))
+            .SelectMany(group => (group.Select(node => node.Generation).Distinct().Count() != group.Count()
+                ? group.AsEnumerable() : group.OrderByDescending(node => node.Generation).Take(1))
+                .Select(node => new AuthoringProductionDeclaration(AuthoringProductionKind.Event, group.Key, entry.Scope.Segments, node)))
             .Concat(OperationDeclarations.In(entry.Slice).Select(node => new AuthoringProductionDeclaration(AuthoringProductionKind.Operation, node.Name, entry.Scope.Segments, node))))];
         _byName = Declarations.ToLookup(entry => entry.Name, StringComparer.Ordinal);
     }

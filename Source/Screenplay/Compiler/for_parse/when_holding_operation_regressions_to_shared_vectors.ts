@@ -15,6 +15,7 @@ const vectors = JSON.parse(readFileSync(new URL('../Conformance/operation-regres
     prefix: string;
     cases: { name: string; before?: string; body: string; codes: string[]; absent: string[] }[];
     documents: { path: string; source: string }[];
+    targetSpans: { body: string; line: number; column: number }[];
 };
 
 describe('when holding operation regressions to shared vectors', () => {
@@ -23,6 +24,13 @@ describe('when holding operation regressions to shared vectors', () => {
         const codes = result.diagnostics.map(diagnostic => diagnostic.code);
         for (const code of vector.codes) expect(codes).toContain(code);
         for (const code of vector.absent) expect(codes).not.toContain(code);
+    });
+    it.each(vectors.targetSpans)('should retain parser-owned production target spans at $line:$column', vector => {
+        const result = parse(vectors.prefix + vector.body, 'source.play');
+        expect(result.success).toBe(true);
+        const production = result.value.modules[0].features[0].slices[0].commands[0].produces[0];
+        expect(production.targetLocation).toEqual({ path: 'source.play', line: vector.line, column: vector.column });
+        expect((vectors.prefix + vector.body).split('\n')[vector.line - 1].slice(vector.column - 1, vector.column - 1 + production.event.length)).toBe(production.event);
     });
     it('should preserve mixed-kind candidate occurrences and exclude them in public destination helpers', () => {
         const result = parse(vectors.prefix + vectors.cases[0].body);

@@ -5,7 +5,7 @@ import { CompletionEntry, operationItems, operationPhaseItems, operationImplemen
 import { enclosingChain, fenceMap, indentOf, nearestEnclosingLine, withoutComment } from './document-context';
 import { DocumentSymbols } from './symbols';
 import { responseAnalysis } from './response-analysis';
-import { OperationDeclaration, OperationPhase } from './OperationAnalysis';
+import { OperationAnalysis, OperationDeclaration, OperationPhase } from './OperationAnalysis';
 import { TypeReferenceSymbol, typeReferenceText } from './TypeReferenceSymbol';
 
 export const operationAvailability = 'Syntax-only; execution unavailable until ESM v9 (PLAY0268). No semantic or requirement identity is assigned.';
@@ -16,7 +16,7 @@ export function analyzeOperations(lines: string[], symbols?: DocumentSymbols) {
 }
 
 export function phaseState(phase: OperationPhase | null): string {
-    return phase?.file ? `file ${phase.file.path}` : phase?.code ? `inline ${phase.code.language}` : 'pending';
+    return !phase ? 'not declared' : phase.file ? `file ${phase.file.path}` : phase.code ? `inline ${phase.code.language}` : 'pending';
 }
 
 export function operationDetails(operation: OperationDeclaration): string {
@@ -90,6 +90,17 @@ export function operationCompletions(lines: string[], line: number, before: stri
     return null;
 }
 
+// Shared by both editor hosts. Only the parser-owned target span can bind a reference;
+// a repeated identifier in a trailing comment or a condition is not that reference.
+export function operationReferenceAt(analysis: OperationAnalysis, lines: string[], line: number, start: number, end: number) {
+    const source = withoutComment(lines[line] ?? '');
+    return analysis.references.find(reference => {
+        const target = reference.targetLocation ?? reference.location;
+        return target.line === line + 1 && start >= target.column && end <= target.column + reference.name.length &&
+            source.slice(target.column - 1, target.column - 1 + reference.name.length) === reference.name;
+    });
+}
+
 export function operationHover(lines: string[], line: number, start: number, end: number, symbols?: DocumentSymbols): string | null {
     const analysis = analyzeOperations(lines, symbols);
     const source = lines[line] ?? '';
@@ -115,14 +126,15 @@ export function operationHover(lines: string[], line: number, start: number, end
             properties = types[0].properties;
         }
     }
-    const target = source.match(/^(\s*(?:produces(?:\s+operation)?|given\s+operation|then\s+(?:operation|compensated))\s+)([\p{L}\p{Mn}\p{Nd}\p{Pc}.]+)/u);
-    const reference = target && start > target[1].length && end <= target[1].length + target[2].length + 1
-        ? analysis.references.find(reference => reference.location.line === line + 1 && reference.name === target[2]) : undefined;
+    const reference = operationReferenceAt(analysis, lines, line, start, end);
     if (reference?.declaration) return operationDetails(reference.declaration);
     if (reference?.kind === 'ambiguous') return `Ambiguous production: no declaration kind was selected. ${operationAvailability}`;
     const operation = context?.operation;
-    if (operation && operation.location.line === line + 1 && ['operation', operation.name].includes(source.slice(start - 1, end - 1))) return operationDetails(operation);
-    if (operation?.usesLocation?.line === line + 1 && start >= operation.usesLocation.column && end <= operation.usesLocation.column + operation.uses.length) {
+    if (operation && operation.location.line === line + 1) {
+        const header = withoutComment(source).match(/^\s*(?:produces\s+)?operation\s+/)?.[0];
+        if (header && start === header.length + 1 && end === start + operation.name.length) return operationDetails(operation);
+    }
+    if (operation?.usesLocation?.line === line + 1 && start >= operation.usesLocation.column && end <= operation.usesLocation.column + operation.uses.length && withoutComment(source).slice(start - 1, end - 1) === operation.uses.slice(start - operation.usesLocation.column, end - operation.usesLocation.column)) {
         const systems = analysis.systems.filter(system => system.name === operation.uses);
         return systems.length === 1 ? `**system ${systems[0].name}**\n\n${systems[0].description ?? ''}\n\n${operationAvailability}` : `Unresolved or ambiguous external system. ${operationAvailability}`;
     }

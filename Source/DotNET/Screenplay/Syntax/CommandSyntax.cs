@@ -338,6 +338,11 @@ public record ProducesSyntax(
     /// Gets the operation declared by this production, owned by the containing slice.
     /// </summary>
     public OperationSyntax? InlineOperation { get; init; }
+
+    /// <summary>
+    /// Gets the parser-owned start of the target identifier, distinct from the production header.
+    /// </summary>
+    public SourceLocation TargetLocation { get; init; } = Location;
 }
 
 /// <summary>

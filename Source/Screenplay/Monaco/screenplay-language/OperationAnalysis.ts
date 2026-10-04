@@ -40,6 +40,7 @@ export interface SystemDeclaration {
 export interface OperationReference {
     readonly name: string;
     readonly location: AnalysisLocation;
+    readonly targetLocation?: AnalysisLocation;
     readonly kind: string;
     readonly declaration: OperationDeclaration | null;
     readonly mappings: readonly { readonly property: string; readonly location: AnalysisLocation; readonly source: { readonly location: AnalysisLocation } }[];

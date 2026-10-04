@@ -37,7 +37,11 @@ internal static partial class ProducesParser
             }
 
             var parsed = OperationParser.Parse(context, line, inline: true);
-            return new(parsed.Operation.Name, null, parsed.Mappings, line.Location) { InlineOperation = parsed.Operation };
+            return new(parsed.Operation.Name, null, parsed.Mappings, line.Location)
+            {
+                InlineOperation = parsed.Operation,
+                TargetLocation = line.Location with { Column = line.Location.Column + InlineOperationTargetRegex().Match(line.Content).Length }
+            };
         }
 
         if (InlineHeaderRegex().Match(line.Content) is { Success: true } inline)
@@ -54,7 +58,7 @@ internal static partial class ProducesParser
                 context.Error(DiagnosticCodes.InlineEventGeneration, "Inline events are generation 1 - extract the event before declaring generations", line.Location);
             }
 
-            return ParseInline(context, line, inline.Groups[1].Value, propertyNameComparer);
+            return ParseInline(context, line, inline.Groups[1].Value, inline.Groups[1].Index, propertyNameComparer);
         }
 
         var conditional = ProducesWhenRegex().Match(line.Content);
@@ -73,6 +77,7 @@ internal static partial class ProducesParser
             context.SkipBlock(line.Indent);
             return new ProducesSyntax(eventLine.Content, condition, body.Mappings, line.Location, body.Tags, body.For)
             {
+                TargetLocation = eventLine.Location,
                 DirectiveLocations = new Dictionary<string, SourceLocation> { ["event"] = eventLine.Location }
             };
         }
@@ -86,7 +91,10 @@ internal static partial class ProducesParser
         }
 
         var unconditionalBody = ParseBody(context, line);
-        return new(unconditional.Groups[1].Value, null, unconditionalBody.Mappings, line.Location, unconditionalBody.Tags, unconditionalBody.For);
+        return new(unconditional.Groups[1].Value, null, unconditionalBody.Mappings, line.Location, unconditionalBody.Tags, unconditionalBody.For)
+        {
+            TargetLocation = line.Location with { Column = line.Location.Column + unconditional.Groups[1].Index }
+        };
     }
 
     /// <summary>
@@ -153,7 +161,7 @@ internal static partial class ProducesParser
         return (mappings, tags, target);
     }
 
-    static ProducesSyntax ParseInline(ParserContext context, SourceLine header, string name, IEqualityComparer<string>? propertyNameComparer)
+    static ProducesSyntax ParseInline(ParserContext context, SourceLine header, string name, int nameColumn, IEqualityComparer<string>? propertyNameComparer)
     {
         var metadata = new EventMetadataParser(name);
         var properties = new List<PropertySyntax>();
@@ -225,6 +233,7 @@ internal static partial class ProducesParser
 
         return new(name, null, mappings, header.Location, [], target)
         {
+            TargetLocation = header.Location with { Column = header.Location.Column + nameColumn },
             InlineEvent = metadata.Apply(new(name, properties, header.Location, tags))
         };
     }
@@ -241,6 +250,9 @@ internal static partial class ProducesParser
         context.SkipBlock(line.Indent);
         return true;
     }
+
+    [GeneratedRegex(@"^produces\s+operation(?:\s+|$)", RegexOptions.None, 1000)]
+    private static partial Regex InlineOperationTargetRegex();
 
     [GeneratedRegex(@"^produces\s+operation(?:\s|$)", RegexOptions.None, 1000)]
     private static partial Regex InlineOperationPrefixRegex();

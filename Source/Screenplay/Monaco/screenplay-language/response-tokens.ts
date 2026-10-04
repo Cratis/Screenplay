@@ -10,13 +10,16 @@ export const responseTokenTypes = ['keyword', 'property', 'type'] as const;
 export function responseTokens(lines: string[]): { line: number; column: number; length: number; type: number }[] {
     const tokens: { line: number; column: number; length: number; type: number }[] = [];
     const add = (line: number, column: number, length: number, type: number) => {
-        if (line > 0 && length > 0) tokens.push({ line: line - 1, column: column - 1 + (lines[line - 1][column - 1] === '@' ? 1 : 0), length, type });
+        const source = lines[line - 1];
+        if (source === undefined || column < 1 || length < 1) return;
+        const start = column - 1 + (source[column - 1] === '@' ? 1 : 0);
+        if (start + length <= source.length) tokens.push({ line: line - 1, column: start, length, type });
     };
     const analysis = responseAnalysis(lines);
     for (const command of analysis.commands.values()) {
         for (const property of command.properties) {
             if (!property.isGenerated) continue;
-            const source = withoutComment(lines[property.location.line - 1]);
+            const source = withoutComment(lines[property.location.line - 1] ?? '');
             add(property.location.line, source.lastIndexOf('generated') + 1, 9, 0);
         }
         const response = command.response;
@@ -34,23 +37,23 @@ export function responseTokens(lines: string[]): { line: number; column: number;
         for (const fixture of specification.when?.generatedValues ?? []) {
             add(fixture.location.line, fixture.location.column, 9, 0);
         }
-        if (specification.thenReturns) add(specification.thenReturns.location.line, lines[specification.thenReturns.location.line - 1].indexOf('returns') + 1, 7, 0);
+        if (specification.thenReturns) add(specification.thenReturns.location.line, (lines[specification.thenReturns.location.line - 1] ?? '').indexOf('returns') + 1, 7, 0);
     }
     for (const system of analysis.operations.systems.filter(system => system.location.path === 'current.play')) {
         add(system.location.line, system.location.column, 6, 0);
     }
     for (const operation of analysis.operations.declarations.filter(operation => operation.location.path === 'current.play')) {
-        const header = withoutComment(lines[operation.location.line - 1]);
+        const header = withoutComment(lines[operation.location.line - 1] ?? '');
         const keyword = header.indexOf('operation', operation.location.column - 1);
         if (keyword >= 0) add(operation.location.line, keyword + 1, 9, 0);
         for (const input of operation.inputs) {
             add(input.location.line, input.location.column, input.name.length, 1);
             add(input.type.location.line, input.type.location.column, input.type.name.length, 2);
         }
-        if (operation.usesLocation) add(operation.usesLocation.line, lines[operation.usesLocation.line - 1].indexOf('uses') + 1, 4, 0);
+        if (operation.usesLocation) add(operation.usesLocation.line, (lines[operation.usesLocation.line - 1] ?? '').indexOf('uses') + 1, 4, 0);
         for (const phase of [operation.execute, operation.compensate]) {
             if (!phase) continue;
-            const name = withoutComment(lines[phase.location.line - 1]).trim();
+            const name = withoutComment(lines[phase.location.line - 1] ?? '').trim();
             add(phase.location.line, phase.location.column, name.length, 0);
             if (phase.implementation) add(phase.implementation.location.line, phase.implementation.location.column, 14, 0);
             for (const hint of phase.implementation?.hints ?? []) add(hint.location.line, hint.location.column, 4, 0);

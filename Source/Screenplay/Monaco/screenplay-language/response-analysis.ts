@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { AuthoringProductionKind, AuthoringProductionResolver, CommandSyntax, Diagnostic, OperationSyntax, parse, parsePlacedDocuments, SpecificationSyntax } from '@cratis/screenplay-compiler';
-import { fenceMap, indentOf } from './document-context';
+import { fenceMap, indentOf, withoutComment } from './document-context';
 import { ResponseAnalysis } from './ResponseAnalysis';
 import { AuthoringDocument } from './AuthoringDocument';
 import { OperationAnalysis, OperationDeclaration, OperationReference } from './OperationAnalysis';
@@ -79,25 +79,29 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
     const parsed = others.length === 0 ? parse(prepared.source, path, placement) : parsePlacedDocuments([...preparedDocuments.slice(1), prepared]);
     const commands = new Map<number, CommandSyntax>();
     const specifications = new Map<number, SpecificationSyntax>();
+    const visited = new WeakSet<object>();
     const walk = (value: unknown): void => {
-        if (value === null || typeof value !== 'object') return;
+        if (value === null || typeof value !== 'object' || visited.has(value)) return;
+        visited.add(value);
         if (Array.isArray(value)) { value.forEach(walk); return; }
         const node = value as Record<string, unknown>;
-        const location = node.location as { path?: string; line: number; column: number } | undefined;
-        if (location?.path) {
-            const original = locations.get(location.path)?.[location.line - 1];
-            if (original) node.location = { ...location, line: original.line, column: Math.max(1, location.column - original.column) };
+        // Source locations also occur as standalone members (usesLocation, targetLocation).
+        // Mutate each original identity once: shared locations must not be shifted twice.
+        if (typeof node.path === 'string' && typeof node.line === 'number' && typeof node.column === 'number') {
+            const original = locations.get(node.path)?.[node.line - 1];
+            if (original) { node.line = original.line; node.column = Math.max(1, node.column - original.column); }
+            return;
         }
+        for (const child of Object.values(node)) walk(child);
         if ((node.location as { path?: string; line: number } | undefined)?.path === path) {
             if (node.kind === 'CommandSyntax') commands.set((node.location as { line: number }).line - 1, value as CommandSyntax);
             if (node.kind === 'SpecificationSyntax') specifications.set((node.location as { line: number }).line - 1, value as SpecificationSyntax);
         }
-        for (const [key, child] of Object.entries(node)) if (key !== 'location') walk(child);
     };
     walk(parsed.value);
     const diagnostics: Diagnostic[] = parsed.diagnostics.filter(diagnostic => diagnostic.location.path === path).flatMap(diagnostic => {
-        const original = prepared.locations[diagnostic.location.line - 1];
-        return original?.line ? [{ ...diagnostic, location: { ...diagnostic.location, line: original.line, column: Math.max(1, diagnostic.location.column - original.column) } }] : [];
+        walk(diagnostic.location);
+        return diagnostic.location.line > 0 ? [diagnostic] : [];
     });
     const productions = new AuthoringProductionResolver(parsed.value);
     const operationProductionLines = new Set(productions.slices.flatMap(({ slice }) => [...slice.commands.flatMap(command => command.produces), ...slice.reactions.flatMap(reaction => reaction.triggers).flatMap(trigger => trigger.produces)]
@@ -116,7 +120,7 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
         const result: number[] = [];
         const indent = indentOf(lines[start]);
         for (let line = start; line < lines.length; line++) {
-            if (line > start && !fences[line] && lines[line].trim() && indentOf(lines[line]) <= indent) break;
+            if (line > start && !fences[line] && withoutComment(lines[line]).trim() && indentOf(lines[line]) <= indent) break;
             result.push(line);
         }
         return result;
@@ -135,13 +139,20 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
         const scope = declarationScopes.get(operation.location)!;
         for (const line of range(operation.location.line - 1)) contexts.set(line, { ...contexts.get(line), scope, operation });
     }
+    const declarationsByLocation = new Map(declarations.map(declaration => [declaration.location, declaration]));
+    const referenceLocation = (location: { path?: string; line: number; column: number }, name: string) => {
+        const source = withoutComment(lines[location.line - 1] ?? '');
+        const prefix = source.slice(location.column - 1).match(/^(?:given\s+operation|then\s+(?:operation|compensated))\s+/)?.[0];
+        return prefix && source.slice(location.column - 1 + prefix.length, location.column - 1 + prefix.length + name.length) === name
+            ? { ...location, column: location.column + prefix.length } : location;
+    };
     const references: OperationReference[] = [];
     for (const { slice } of productions.slices) {
         for (const command of slice.commands) for (const production of command.produces) {
             if (production.location.path !== path) continue;
             const resolved = productions.resolve(production.event, slice);
-            const declaration = declarations.find(declaration => declaration.location === resolved.declaration?.node.location) ?? null;
-            const reference = { name: production.event, location: production.location, kind: resolved.kind, declaration, mappings: production.mappings };
+            const declaration = resolved.declaration ? declarationsByLocation.get(resolved.declaration.node.location) ?? null : null;
+            const reference = { name: production.event, location: production.location, targetLocation: production.targetLocation ?? production.location, kind: resolved.kind, declaration, mappings: production.mappings };
             references.push(reference);
             if (resolved.kind === AuthoringProductionKind.Operation) {
                 for (const line of range(production.location.line - 1)) {
@@ -154,8 +165,8 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
             for (const step of [...specification.givenOperationFailures ?? [], ...specification.thenOperations ?? [], ...specification.thenCompensated ?? []]) {
                 if (step.location.path !== path) continue;
                 const resolved = productions.resolve(step.operation, slice);
-                references.push({ name: step.operation, location: step.location, kind: resolved.kind,
-                    declaration: declarations.find(declaration => declaration.location === resolved.declaration?.node.location) ?? null,
+                references.push({ name: step.operation, location: step.location, targetLocation: referenceLocation(step.location, step.operation), kind: resolved.kind,
+                    declaration: resolved.declaration ? declarationsByLocation.get(resolved.declaration.node.location) ?? null : null,
                     mappings: [] });
             }
         }
