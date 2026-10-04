@@ -68,6 +68,20 @@ export function checkRepairEnvironment(launch: RepairLaunch, allowDirtyInspectio
     }
 }
 
+export function repairBuffersSynchronized(root: string, preview: RepairPreview): boolean {
+    try {
+        const physical = (file: string) => fs.existsSync(file) ? fs.realpathSync.native(file) : path.resolve(file);
+        const approvedRoot = physical(root);
+        const documents = vscode.workspace.textDocuments.filter(document => document.uri.scheme === 'file').map(document => ({ document, physical: physical(document.uri.fsPath) }));
+        if (documents.some(({ document, physical: file }) => (contains(root, document.uri.fsPath) || contains(approvedRoot, file)) && document.isDirty)) return false;
+        return preview.files.every(file => {
+            const expectedPath = physical(path.join(root, file.path));
+            const open = documents.filter(document => path.relative(expectedPath, document.physical) === '');
+            return open.every(({ document }) => !document.isDirty && document.getText() === (file.after?.toString('utf8').replace(/^\uFEFF/, '') ?? ''));
+        });
+    } catch { return false; } // A disappearing or inaccessible buffer is not proof of synchronization.
+}
+
 export function registerRepairCodeActions(context: vscode.ExtensionContext, index: ApplicationIndex): void {
     const previews = new RepairPreviewProvider();
     const diagnostics = vscode.languages.createDiagnosticCollection('screenplay-csharp');
@@ -77,6 +91,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
     let watcherSubscriptions: vscode.Disposable[] = [];
     let connectionGeneration = 0;
     let recovery: { root: string; details: unknown } | undefined;
+    let pendingReconciliation: (() => boolean) | undefined;
     const changed = () => { diagnostics.clear(); previews.clear(); };
     const reset = () => {
         ++connectionGeneration;
@@ -105,6 +120,10 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
         const generation = connectionGeneration;
         const identity = fs.statSync(launch.root);
         const candidate = new RepairSession(launch, { check: () => {
+            if (pendingReconciliation) {
+                if (!pendingReconciliation()) throw new RepairFailure('ReconciliationRequired', 'An earlier disk repair has not synchronized with open buffers. Reconcile or close those buffers yourself before another repair.');
+                pendingReconciliation = undefined;
+            }
             const versions = checkRepairEnvironment(launch);
             const current = fs.statSync(launch.root);
             if (current.dev !== identity.dev || current.ino !== identity.ino) throw new RepairFailure('RootChanged', 'The approved physical root was replaced. Reconnect and review a fresh repair.');
@@ -141,10 +160,8 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
     };
     const reload = async (owner: RepairSession, preview: RepairPreview): Promise<void> => {
         // Wait for VS Code's ordinary external-write notifications; never revert or replay editor edits.
-        const synchronized = () => preview.files.every(file => {
-            const document = vscode.workspace.textDocuments.find(document => document.uri.scheme === 'file' && document.uri.fsPath === path.join(owner.launch.root, file.path));
-            return !document || (!document.isDirty && document.getText() === (file.after?.toString('utf8').replace(/^\uFEFF/, '') ?? ''));
-        });
+        const synchronized = () => repairBuffersSynchronized(owner.launch.root, preview);
+        pendingReconciliation = synchronized;
         if (!synchronized()) await new Promise<void>(resolve => {
             const listener = vscode.workspace.onDidChangeTextDocument(() => { if (synchronized()) { clearTimeout(timer); listener.dispose(); resolve(); } });
             const timer = setTimeout(() => { listener.dispose(); resolve(); }, 5_000);
@@ -153,6 +170,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
             await vscode.window.showWarningMessage('Disk repair applied, but an open buffer is dirty or has not reloaded. Your buffer was preserved. Reconcile it with disk before another repair.');
             return;
         }
+        pendingReconciliation = undefined;
         await index.load();
         const discovered = await owner.discover();
         publish(owner, discovered.diagnostics);

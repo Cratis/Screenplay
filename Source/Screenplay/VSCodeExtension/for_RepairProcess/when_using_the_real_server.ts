@@ -119,7 +119,9 @@ describe.skipIf(!serverAvailable)('real C# tool subprocess (not a transport stub
             const opened = await client.tool('open-workspace', {});
             const read = await client.tool('read-workspace', { view: 'repairs', expectedRevision: opened.revision });
             const item = (read.page as { items: { diagnosticCode: string; subject: unknown }[] }).items[0];
-            await expect(client.tool('propose-repair', { diagnosticCode: item.diagnosticCode, subject: item.subject, expectedRevision: opened.revision, expectedCatalogRevision: 'stale', formatting: 'CanonicalizeTouchedDocuments', pinRepairEvidence: true, expectedRepairEvidenceRevision: read.repairEvidenceRevision })).rejects.toMatchObject({ kind: 'RequestFailed' });
+            const catalog = String(opened.catalogRevision);
+            const staleCatalog = catalog.slice(0, -1) + (catalog.endsWith('0') ? '1' : '0');
+            await expect(client.tool('propose-repair', { diagnosticCode: item.diagnosticCode, subject: item.subject, expectedRevision: opened.revision, expectedCatalogRevision: staleCatalog, formatting: 'CanonicalizeTouchedDocuments', pinRepairEvidence: true, expectedRepairEvidenceRevision: read.repairEvidenceRevision })).rejects.toMatchObject({ kind: 'StaleRevision' });
         } finally { client.close(); }
     });
 });

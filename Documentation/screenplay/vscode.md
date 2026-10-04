@@ -209,7 +209,8 @@ Apply writes outside the editor and is **not normal editor Undo**. Use an exclus
 writer while applying. Journaled rollback does not guarantee crash-atomic visibility
 across files. The extension awaits ordinary saved-buffer reloads; if you type after
 Apply dispatch, it preserves your buffer and asks you to reconcile it with disk.
-It never force-reverts or replays source edits.
+Further repairs stay blocked until affected buffers are synchronized, reconciled
+or closed. It never force-reverts or replays source edits.
 
 Cancellation discards queued reads or drains an in-flight read within its deadline.
 Once Apply is dispatched, a timeout, disconnect or unrecognized failure means the

@@ -50,7 +50,7 @@ beforeEach(async () => {
             let result: unknown;
             if (args.view === 'before' || args.view === 'after') {
                 const value = args.view === 'before' ? before : after;
-                const content = bytes(value, args, args.view === 'before' ? 'base' : 'candidate');
+                const content = bytes(malformed === 'invalidUtf8' ? Buffer.alloc(value.length, 255) : value, args, args.view === 'before' ? 'base' : 'candidate');
                 if (malformed === 'truncated') content.nextOffset = null;
                 if (malformed === 'nonprogress') content.nextOffset = args.offset as number;
                 if (malformed === 'wrongByteRevision') content.revision = 'other';
@@ -95,7 +95,7 @@ it('consumes all split byte pages before issuing a token, including absent-befor
     expect(calls.filter(name => name === 'propose-repair')).toHaveLength(1);
     expect(calls.filter(name => name === 'apply')).toHaveLength(1);
 });
-for (const failure of ['truncated', 'nonprogress', 'wrongByteRevision', 'identityHash', 'oversize', 'oversizeMetadata']) it(`refuses ${failure} reviews and never supplies Apply authority`, async () => {
+for (const failure of ['truncated', 'nonprogress', 'wrongByteRevision', 'identityHash', 'oversize', 'oversizeMetadata', 'invalidUtf8']) it(`refuses ${failure} reviews and never supplies Apply authority`, async () => {
     const choices = (await session.discover()).choices; malformed = failure;
     await expect(session.preview(choices[0].token)).rejects.toBeInstanceOf(RepairFailure);
     await expect(session.apply('retained')).rejects.toMatchObject({ kind: 'UnauthorizedApply' });

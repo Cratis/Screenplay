@@ -290,7 +290,10 @@ export class RepairSession {
             offset += bytes.length;
             if (page.nextOffset === null) {
                 if (offset !== count) throw new RepairFailure('MalformedContract', 'Truncated byte preview; Apply disabled.');
-                return Buffer.concat(chunks);
+                const complete = Buffer.concat(chunks);
+                try { new TextDecoder('utf-8', { fatal: true }).decode(complete); }
+                catch { throw new RepairFailure('MalformedContract', 'Reviewed source or identity bytes are not strict UTF-8; Apply is disabled.'); }
+                return complete;
             }
             if (!bytes.length || integer(page.nextOffset) !== offset) throw new RepairFailure('MalformedContract', 'Nonprogressing byte page.');
         } while (offset <= previewBudget);
