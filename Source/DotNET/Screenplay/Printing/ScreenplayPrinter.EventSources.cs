@@ -72,7 +72,7 @@ public sealed partial class ScreenplayPrinter
         writer.Line($"stream {route.EventSource}.{route.Stream}");
         using (writer.Indent())
         {
-            if (route.StreamId is { } mapping) writer.Line($"streamId = {ScreenplaySyntaxText.Expression(mapping.Source)}", mapping);
+            if (route.StreamId is { } mapping) writer.Line($"streamId = {writer.Expression(mapping.Source)}", mapping);
         }
     }
 }
