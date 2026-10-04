@@ -45,7 +45,9 @@ internal static partial class SemanticCaptureEvaluation
             ?? throw new InvalidSemanticContract($"The record presented to capture '{capture.Name}' has no key '{capture.Key}'.");
         var context = new Context(plan, key, occurrence);
         var before = previous is null ? null : Map(context, Fields(previous), capture.Map);
+        if (context.Unsupported is not null) return new([], context.Unsupported);
         var after = Map(context, Fields(current), capture.Map);
+        if (context.Unsupported is not null) return new([], context.Unsupported);
         var facts = ImmutableArray.CreateBuilder<SemanticFact>();
         facts.AddRange(context.Appends(capture.Appends, before, after, null));
         if (context.Unsupported is not null) return new([], context.Unsupported);
@@ -135,14 +137,32 @@ internal static partial class SemanticCaptureEvaluation
             switch (operation.Kind)
             {
                 case SemanticCaptureMapKind.Value:
-                    values[operation.Targets[0]] = Scalar(operation.Targets[0], Translate(context.Read(values, operation.Source!) ?? SemanticValue.Null, operation.Translations));
+                    var source = context.Read(values, operation.Source!);
+                    if (source.Unsupported is not null) return values;
+                    values[operation.Targets[0]] = Scalar(operation.Targets[0], Translate(source.Value ?? SemanticValue.Null, operation.Translations));
                     break;
                 case SemanticCaptureMapKind.Template:
-                    var text = string.Concat(operation.Template.Select(part => part.Text ?? SemanticValueRules.Text(context.Read(values, part.Field!))));
-                    values[operation.Targets[0]] = Scalar(operation.Targets[0], Translate(SemanticValue.Text(text), operation.Translations));
+                    var partsOfText = new List<string>();
+                    foreach (var part in operation.Template)
+                    {
+                        if (part.Text is { } literal)
+                        {
+                            partsOfText.Add(literal);
+                        }
+                        else
+                        {
+                            var field = context.Read(values, part.Field!);
+                            if (field.Unsupported is not null) return values;
+                            partsOfText.Add(SemanticValueRules.CaptureText(field.Value));
+                        }
+                    }
+
+                    values[operation.Targets[0]] = Scalar(operation.Targets[0], Translate(SemanticValue.Text(string.Concat(partsOfText)), operation.Translations));
                     break;
                 default:
-                    var parts = SemanticValueRules.Text(context.Read(values, operation.Source!))
+                    var splitSource = context.Read(values, operation.Source!);
+                    if (splitSource.Unsupported is not null) return values;
+                    var parts = SemanticValueRules.CaptureText(splitSource.Value)
                         .Split(operation.Separator, operation.Targets.Length, StringSplitOptions.TrimEntries);
                     for (var index = 0; index < operation.Targets.Length; index++)
                     {
@@ -159,7 +179,7 @@ internal static partial class SemanticCaptureEvaluation
     }
 
     static SemanticValue Translate(SemanticValue value, ImmutableArray<SemanticCaptureTranslation> translations) =>
-        translations.FirstOrDefault(translation => translation.From == SemanticValueRules.Text(value)) is { } match
+        translations.FirstOrDefault(translation => translation.From == SemanticValueRules.CaptureText(value)) is { } match
             ? SemanticValue.Text(match.To)
             : value;
 
@@ -171,18 +191,18 @@ internal static partial class SemanticCaptureEvaluation
 
         public string? Unsupported { get; private set; }
 
-        public SemanticValue? Read(Dictionary<string, SemanticCaptureField>? record, string field, Dictionary<string, SemanticCaptureField>? enclosing = null)
+        public SemanticCaptureExpression.Lookup Read(Dictionary<string, SemanticCaptureField>? record, string field, Dictionary<string, SemanticCaptureField>? enclosing = null)
         {
             if (field.Contains('.', StringComparison.Ordinal))
             {
                 Unsupported ??= $"Capture path '{field}' requires traversal the reference evaluator does not support.";
-                return null;
+                return new(null, Unsupported);
             }
 
             var present = record?.GetValueOrDefault(field) ?? enclosing?.GetValueOrDefault(field);
-            if (present is null or { Kind: SemanticCaptureFieldKind.Value }) return present?.Value;
+            if (present is null or { Kind: SemanticCaptureFieldKind.Value }) return new(present?.Value, null);
             Unsupported ??= $"Capture field '{field}' is a {present.Kind} value the reference evaluator cannot use as a scalar.";
-            return null;
+            return new(null, Unsupported);
         }
 
         public IEnumerable<SemanticFact> Appends(
@@ -193,19 +213,24 @@ internal static partial class SemanticCaptureEvaluation
         {
             if (Unsupported is not null) yield break;
             var item = after ?? before!;
-            foreach (var append in appends.Where(append => Holds(append.When, before, after)))
+            foreach (var append in appends)
             {
+                // A reached unsupported guard ends evaluation, even when it does not hold. Filtering first would
+                // evaluate a later guard and could mask unsupported as an ordinary contract rejection.
+                var holds = Holds(append.When, before, after);
                 if (Unsupported is not null) yield break;
+                if (!holds) continue;
                 var eventContract = plan.Events[append.EventContract];
                 var properties = eventContract.Properties.ToDictionary(property => property.Id);
                 var values = ImmutableArray.CreateBuilder<SemanticPropertyValue>();
                 foreach (var mapping in append.Mappings)
                 {
                     var property = properties[mapping.TargetProperty];
-                    var value = mapping.Field is { } field
-                        ? Read(item, field, enclosing) ?? SemanticValue.Null
-                        : Value(mapping.Value!);
-                    if (Unsupported is not null) yield break;
+                    var source = mapping.Field is { } field
+                        ? Read(item, field, enclosing)
+                        : new SemanticCaptureExpression.Lookup(Value(mapping.Value!), null);
+                    if (source.Unsupported is not null) yield break;
+                    var value = source.Value ?? SemanticValue.Null;
                     if (mapping.Field is not null) value = Coerce(value, property.Type);
                     _validator.Validate(value, property.Type, $"event property '{property.Name}'");
                     values.Add(new(property.Id, value));
@@ -227,24 +252,39 @@ internal static partial class SemanticCaptureEvaluation
             SemanticCaptureConditionKind.Added => before is null && after is not null,
             SemanticCaptureConditionKind.Removed => before is not null && after is null,
             _ when after is null => false,
-            SemanticCaptureConditionKind.AnyChanged => when.Fields.Any(field => Changed(before, after, field)),
-            SemanticCaptureConditionKind.AllChanged => when.Fields.All(field => Changed(before, after, field)),
-            SemanticCaptureConditionKind.Transition => before is not null &&
-                SemanticValueRules.Text(Read(before, when.Fields[0])) == when.From &&
-                SemanticValueRules.Text(Read(after, when.Fields[0])) == when.To,
-            SemanticCaptureConditionKind.Expression => SemanticCaptureExpression.TryParse(when.Expression, out var expression) &&
-                SemanticCaptureExpression.Evaluate(expression, field => Read(after, field)),
+            SemanticCaptureConditionKind.AnyChanged => when.Fields.Any(field => Unsupported is null && Changed(before, after, field)),
+            SemanticCaptureConditionKind.AllChanged => when.Fields.All(field => Unsupported is null && Changed(before, after, field)),
+            SemanticCaptureConditionKind.Transition => before is not null && Transition(before, after, when),
+            SemanticCaptureConditionKind.Expression => ExpressionHolds(when.Expression, after),
             _ => throw new InvalidSemanticContract($"Capture condition '{when.Kind}' is unknown.")
         };
+
+        bool ExpressionHolds(string? text, Dictionary<string, SemanticCaptureField> after)
+        {
+            if (!SemanticCaptureExpression.TryParse(text, out var expression)) return false;
+            var evaluated = SemanticCaptureExpression.Evaluate(expression, field => Read(after, field));
+            Unsupported ??= evaluated.Unsupported;
+            return evaluated.Holds;
+        }
+
+        bool Transition(Dictionary<string, SemanticCaptureField> before, Dictionary<string, SemanticCaptureField> after, SemanticCaptureCondition when)
+        {
+            var was = Read(before, when.Fields[0]);
+            if (was.Unsupported is not null || SemanticValueRules.CaptureText(was.Value) != when.From) return false;
+            var now = Read(after, when.Fields[0]);
+            return now.Unsupported is null && SemanticValueRules.CaptureText(now.Value) == when.To;
+        }
 
         bool Changed(Dictionary<string, SemanticCaptureField>? before, Dictionary<string, SemanticCaptureField> after, string field)
         {
             var was = Read(before, field);
+            if (was.Unsupported is not null) return false;
             var now = Read(after, field);
+            if (now.Unsupported is not null) return false;
             return before is null
                 ? after.ContainsKey(field)
                 : before.ContainsKey(field) != after.ContainsKey(field) ||
-                  (was is not null && now is not null && !SemanticValueRules.AreEqual(was, now));
+                  (was.Value is not null && now.Value is not null && !SemanticValueRules.AreEqual(was.Value, now.Value));
         }
 
         SemanticValue Value(SemanticExpression expression) => expression switch

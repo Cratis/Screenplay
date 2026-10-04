@@ -54,27 +54,54 @@ internal static class SemanticCaptureExpression
     /// <param name="field">Looks up a field value; <c>null</c> when the item has no such field.</param>
     /// <returns>Whether the expression holds.</returns>
     /// <exception cref="InvalidSemanticContract">The expression orders values that are not numbers.</exception>
-    public static bool Evaluate(Node expression, Func<string, SemanticValue?> field) => expression switch
-    {
-        Or or => Evaluate(or.Left, field) || Evaluate(or.Right, field),
-        And and => Evaluate(and.Left, field) && Evaluate(and.Right, field),
-        Not not => !Evaluate(not.Operand, field),
-        Comparison comparison => Compare(comparison, field),
-        Field single => field(single.Name) is SemanticBooleanValue { Value: true },
-        Literal literal => literal.Value is SemanticBooleanValue { Value: true },
-        _ => throw new InvalidSemanticContract("A capture expression node is unknown.")
-    };
+    public static bool Evaluate(Node expression, Func<string, SemanticValue?> field) =>
+        Evaluate(expression, name => new Lookup(field(name), null)).Holds;
 
-    static bool Compare(Comparison comparison, Func<string, SemanticValue?> field)
+    /// <summary>
+    /// Evaluates an expression without treating an unsupported lookup as a missing field.
+    /// </summary>
+    /// <param name="expression">The parsed expression.</param>
+    /// <param name="field">Looks up a scalar, a missing field, or an explicitly unsupported source.</param>
+    /// <returns>The boolean outcome or the first reached unsupported lookup.</returns>
+    public static Evaluation Evaluate(Node expression, Func<string, Lookup> field)
     {
-        var left = Operand(comparison.Left, field);
-        var right = Operand(comparison.Right, field);
+        switch (expression)
+        {
+            case Or or:
+                var leftOr = Evaluate(or.Left, field);
+                return leftOr.Unsupported is not null || leftOr.Holds ? leftOr : Evaluate(or.Right, field);
+            case And and:
+                var leftAnd = Evaluate(and.Left, field);
+                return leftAnd.Unsupported is not null || !leftAnd.Holds ? leftAnd : Evaluate(and.Right, field);
+            case Not not:
+                var operand = Evaluate(not.Operand, field);
+                return operand.Unsupported is not null ? operand : new(!operand.Holds, null);
+            case Comparison comparison:
+                return Compare(comparison, field);
+            case Field single:
+                var value = field(single.Name);
+                return new(value.Value is SemanticBooleanValue { Value: true }, value.Unsupported);
+            case Literal literal:
+                return new(literal.Value is SemanticBooleanValue { Value: true }, null);
+            default:
+                throw new InvalidSemanticContract("A capture expression node is unknown.");
+        }
+    }
+
+    static Evaluation Compare(Comparison comparison, Func<string, Lookup> field)
+    {
+        var firstLookup = Operand(comparison.Left, field);
+        if (firstLookup.Unsupported is not null) return new(false, firstLookup.Unsupported);
+        var secondLookup = Operand(comparison.Right, field);
+        if (secondLookup.Unsupported is not null) return new(false, secondLookup.Unsupported);
+        var left = firstLookup.Value ?? SemanticValue.Null;
+        var right = secondLookup.Value ?? SemanticValue.Null;
         if (string.Equals(comparison.Operator, "==", StringComparison.Ordinal) || string.Equals(comparison.Operator, "!=", StringComparison.Ordinal))
         {
             var equal = left is SemanticNumberValue leftNumber && right is SemanticNumberValue rightNumber
                 ? leftNumber.Value == rightNumber.Value
                 : SemanticValueRules.AreEqual(left, right);
-            return string.Equals(comparison.Operator, "==", StringComparison.Ordinal) ? equal : !equal;
+            return new(string.Equals(comparison.Operator, "==", StringComparison.Ordinal) ? equal : !equal, null);
         }
 
         if (left is not SemanticNumberValue first || right is not SemanticNumberValue second)
@@ -82,21 +109,36 @@ internal static class SemanticCaptureExpression
             throw new InvalidSemanticContract($"The capture expression orders with '{comparison.Operator}' values that are not numbers.");
         }
 
-        return comparison.Operator switch
+        var holds = comparison.Operator switch
         {
             "<" => first.Value < second.Value,
             "<=" => first.Value <= second.Value,
             ">" => first.Value > second.Value,
             _ => first.Value >= second.Value
         };
+        return new(holds, null);
     }
 
-    static SemanticValue Operand(Node node, Func<string, SemanticValue?> field) => node switch
+    static Lookup Operand(Node node, Func<string, Lookup> field) => node switch
     {
-        Field named => field(named.Name) ?? SemanticValue.Null,
-        Literal literal => literal.Value,
+        Field named => field(named.Name),
+        Literal literal => new(literal.Value, null),
         _ => throw new InvalidSemanticContract("A capture expression operand must be a field or a literal.")
     };
+
+    /// <summary>
+    /// A scalar or missing value, or a reached source the evaluator cannot read.
+    /// </summary>
+    /// <param name="Value">The scalar, or null for a missing field.</param>
+    /// <param name="Unsupported">The unsupported source, never a missing value.</param>
+    internal readonly record struct Lookup(SemanticValue? Value, string? Unsupported);
+
+    /// <summary>
+    /// A supported boolean outcome or a reached unsupported lookup.
+    /// </summary>
+    /// <param name="Holds">Whether a supported expression holds.</param>
+    /// <param name="Unsupported">The reached unsupported source.</param>
+    internal readonly record struct Evaluation(bool Holds, string? Unsupported);
 
     /// <summary>
     /// A node of a parsed capture expression.

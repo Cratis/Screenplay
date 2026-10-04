@@ -40,7 +40,13 @@ static class SemanticValueRules
         _ => false
     };
 
-    // The text a scalar reads as where values meet text: capture translations, transitions, templates and keys.
+    // v6 capture text operations use the same numeric grammar as semantic serialization. Other versions' text
+    // behavior is not promoted to a new numeric mode.
+    internal static string CaptureText(SemanticValue? value) => value is SemanticNumberValue number
+        ? CanonicalJson.DecimalText(number.Value)
+        : Text(value);
+
+    // The legacy text representation of a scalar.
     internal static string Text(SemanticValue? value) => value switch
     {
         SemanticTextValue text => text.Value,

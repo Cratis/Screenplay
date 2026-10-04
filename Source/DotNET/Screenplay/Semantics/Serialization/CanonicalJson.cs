@@ -106,6 +106,26 @@ static class CanonicalJson
     /// <param name="value">The semantic decimal.</param>
     internal static void WriteDecimal(Utf8JsonWriter writer, string name, decimal value)
     {
+        Span<byte> canonical = stackalloc byte[64];
+        var written = WriteDecimalText(value, canonical);
+        writer.WritePropertyName(name);
+        writer.WriteRawValue(canonical[..written], skipInputValidation: true);
+    }
+
+    /// <summary>
+    /// Formats a decimal with the canonical scale-independent grammar without floating-point conversion.
+    /// </summary>
+    /// <param name="value">The semantic decimal.</param>
+    /// <returns>The invariant canonical decimal text.</returns>
+    internal static string DecimalText(decimal value)
+    {
+        Span<byte> canonical = stackalloc byte[64];
+        var written = WriteDecimalText(value, canonical);
+        return Encoding.ASCII.GetString(canonical[..written]);
+    }
+
+    static int WriteDecimalText(decimal value, Span<byte> canonical)
+    {
         var bits = decimal.GetBits(value);
         var low = unchecked((uint)bits[0]);
         var middle = unchecked((uint)bits[1]);
@@ -139,7 +159,6 @@ static class CanonicalJson
         while (low != 0 || middle != 0 || high != 0);
 
         var digitCount = digits.Length - digitStart;
-        Span<byte> canonical = stackalloc byte[64];
         var written = 0;
         if (negative)
         {
@@ -170,8 +189,7 @@ static class CanonicalJson
             written += scale;
         }
 
-        writer.WritePropertyName(name);
-        writer.WriteRawValue(canonical[..written], skipInputValidation: true);
+        return written;
     }
 
     static void WriteStringValue(Utf8JsonWriter writer, string value, string name)
