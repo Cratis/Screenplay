@@ -9,11 +9,12 @@ import { RepairSession } from '../RepairSession';
 import { RepairPreviewProvider } from '../RepairPreviewProvider';
 import { checkRepairEnvironment, userRepairConfiguration } from '../RepairCodeActions';
 import { repairSource, refusedEventSource } from './repairFixture';
+import { runCommandGuards } from './extensionHostGuards';
 
 async function eventuallyDocument(document: vscode.TextDocument, expected: string): Promise<void> {
     if (document.getText() === expected) return;
     await new Promise<void>((resolve, reject) => {
-        const timer = setTimeout(() => { listener.dispose(); reject(new Error('Native VS Code did not reload the externally changed source within 5 seconds.')); }, 5_000);
+        const timer = setTimeout(() => { listener.dispose(); reject(new Error(`Native VS Code did not reload the externally changed source within 5 seconds: ${JSON.stringify({ uri: document.uri.toString(), dirty: document.isDirty, visible: vscode.window.visibleTextEditors.some(editor => editor.document === document), actual: document.getText(), expected })}`)); }, 5_000);
         const listener = vscode.workspace.onDidChangeTextDocument(() => {
             if (document.getText() === expected) { clearTimeout(timer); listener.dispose(); resolve(); }
         });
@@ -21,8 +22,9 @@ async function eventuallyDocument(document: vscode.TextDocument, expected: strin
 }
 
 // Runs inside the REAL extension host: no vscode alias and no transport mock.
-// Modal click-through remains manual; these tests drive the explicit transaction boundary directly.
-export async function run(): Promise<void> {
+// This first suite drives the transaction directly; the second exercises actual
+// registered commands with controlled consent. Neither claims UI click automation.
+async function runSuites(): Promise<void> {
     const root = process.env.SCREENPLAY_REPAIR_HOST_ROOT!;
     assert.ok(root);
     const source = path.join(root, 'application.play');
@@ -32,7 +34,10 @@ export async function run(): Promise<void> {
     assert.ok(extension, 'Extension is installed in the development host');
     await extension.activate();
     const document = await vscode.workspace.openTextDocument(vscode.Uri.file(source));
-    await vscode.window.showTextDocument(document, { preview: false });
+    // Keep the source visible beside the native preview. VS Code may lazily
+    // reload hidden models; this suite requires an actual visible-buffer event.
+    await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two });
+    await vscode.commands.executeCommand('workbench.action.focusFirstEditorGroup');
     const launch = userRepairConfiguration();
     const session = new RepairSession(launch, { check: () => checkRepairEnvironment(launch) });
     const provider = new RepairPreviewProvider('screenplay-repair-test');
@@ -93,5 +98,16 @@ export async function run(): Promise<void> {
     const refused = await vscode.workspace.openTextDocument(vscode.Uri.file(path.join(refusedRoot, 'application.play')));
     const actions = await vscode.commands.executeCommand<(vscode.CodeAction | vscode.Command)[]>('vscode.executeCodeActionProvider', refused.uri, new vscode.Range(0, 0, refused.lineCount - 1, 0));
     assert.ok(!actions.some(action => action.title.includes('Declare the missing produced event')), 'Native provider retains the C# PLAY0166 refusal');
-    console.log('REAL VS CODE HOST: read-only source/state diffs, explicit transaction, dirty attachment refusal, external saved-buffer reload, root reauthorization and PLAY0166 refusal passed. Modal click-through and post-dispatch typing race remain manual/unverified.');
+    console.log('REAL VS CODE HOST: read-only source/state diffs, explicit transaction, dirty attachment refusal, external saved-buffer reload, root reauthorization and PLAY0166 refusal passed.');
+    await runCommandGuards(root);
+}
+
+export async function run(): Promise<void> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+        await Promise.race([
+            runSuites(),
+            new Promise<never>((_resolve, reject) => { timer = setTimeout(() => reject(new Error('Native host suites exceeded their 120-second deadline.')), 120_000); }),
+        ]);
+    } finally { if (timer) clearTimeout(timer); }
 }
