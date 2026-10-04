@@ -25,26 +25,28 @@ const host = vi.hoisted(() => ({
     root: '', commands: new Map<string, (...args: unknown[]) => unknown>(), sessions: [] as SessionMock[], watches: [] as WatchMock[],
     warnings: vi.fn(), clear: vi.fn(), changedConfiguration: undefined as undefined | ((event: { affectsConfiguration(): boolean }) => void),
     show: vi.fn(), token: undefined as string | undefined, initializeFailure: undefined as RepairFailure | undefined,
-    provider: undefined as vscode.CodeActionProvider | undefined,
+    provider: undefined as vscode.CodeActionProvider | undefined, information: vi.fn(), diagnosticsDisposed: false,
+    documents: [] as vscode.TextDocument[], files: [] as { path: string; before: Buffer | null; after: Buffer | null }[],
+    documentListeners: new Set<(event: vscode.TextDocumentChangeEvent) => void>(),
 }));
 vi.mock('vscode', () => ({
     workspace: {
-        isTrusted: true, get workspaceFolders() { return [{ uri: { scheme: 'file', fsPath: host.root } }]; }, textDocuments: [],
+        isTrusted: true, get workspaceFolders() { return [{ uri: { scheme: 'file', fsPath: host.root } }]; }, get textDocuments() { return host.documents; },
         getConfiguration: () => ({ inspect: (key: string) => ({ globalValue: ({ enabled: true, executable: process.execPath, arguments: [], modelRoot: host.root } as Record<string, unknown>)[key] }) }),
         createFileSystemWatcher: () => ({ dispose: vi.fn(), onDidChange: () => ({ dispose() {} }), onDidCreate: () => ({ dispose() {} }), onDidDelete: () => ({ dispose() {} }) }),
         registerFileSystemProvider: () => ({ dispose() {} }),
         onDidChangeConfiguration: (callback: (event: { affectsConfiguration(): boolean }) => void) => { host.changedConfiguration = callback; return { dispose() {} }; },
         onDidChangeWorkspaceFolders: () => ({ dispose() {} }), onDidOpenTextDocument: () => ({ dispose() {} }),
-        onDidChangeTextDocument: () => ({ dispose() {} }), onDidCloseTextDocument: () => ({ dispose() {} }),
+        onDidChangeTextDocument: (callback: (event: vscode.TextDocumentChangeEvent) => void) => { host.documentListeners.add(callback); return { dispose: () => host.documentListeners.delete(callback) }; }, onDidCloseTextDocument: () => ({ dispose() {} }),
     },
-    env: { uiKind: 1 }, UIKind: { Web: 2 }, Uri: { file: (fsPath: string) => ({ fsPath }) }, RelativePattern: class {},
+    env: { uiKind: 1 }, UIKind: { Web: 2 }, Uri: { file: (fsPath: string) => ({ fsPath, scheme: 'file', toString: () => fsPath }) }, RelativePattern: class {},
     StatusBarAlignment: { Right: 1 }, ProgressLocation: { Notification: 1 },
     window: {
         createStatusBarItem: () => ({ show: vi.fn(), hide: vi.fn(), dispose() {} }),
-        showWarningMessage: (...args: unknown[]) => host.warnings(...args), showInformationMessage: vi.fn(),
+        showWarningMessage: (...args: unknown[]) => host.warnings(...args), showInformationMessage: (...args: unknown[]) => host.information(...args),
         withProgress: (_options: unknown, run: (progress: object, cancellation: { onCancellationRequested(): { dispose(): void } }) => Promise<unknown>) => run({}, { onCancellationRequested: () => ({ dispose() {} }) }),
     },
-    languages: { createDiagnosticCollection: () => ({ clear: host.clear, dispose() {} }), registerCodeActionsProvider: (_selector: unknown, provider: vscode.CodeActionProvider) => { host.provider = provider; return { dispose() {} }; } },
+    languages: { createDiagnosticCollection: () => ({ clear: () => { if (host.diagnosticsDisposed) throw new Error('diagnostics already disposed'); host.clear(); }, dispose() { host.diagnosticsDisposed = true; } }), registerCodeActionsProvider: (_selector: unknown, provider: vscode.CodeActionProvider) => { host.provider = provider; return { dispose() {} }; } },
     commands: { executeCommand: vi.fn(), registerCommand: (name: string, callback: (...args: unknown[]) => unknown) => { host.commands.set(name, callback); return { dispose() {} }; } },
     CodeActionKind: { QuickFix: {} },
 }));
@@ -52,7 +54,7 @@ vi.mock('../RepairPreviewProvider', () => ({ RepairPreviewProvider: class {
     static scheme = 'screenplay-repair'; get token() { return host.token; }
     clear() { host.token = undefined; } closed() { return false; } dispose() {}
     async show(preview: { token: string }, authorize: () => void) { await host.show(); authorize(); host.token = preview.token; }
-    review() { if (!host.token) throw new RepairFailure('PreviewExpired', 'expired'); return { files: [] }; }
+    review() { if (!host.token) throw new RepairFailure('PreviewExpired', 'expired'); return { files: host.files }; }
 } }));
 vi.mock('../RepairRootWatch', () => ({ RepairRootWatch: class {
     dispose = vi.fn(); check = vi.fn(); constructor(readonly root: string, readonly changed: () => void, readonly failed: (failure: RepairFailure) => void) { host.watches.push(this); }
@@ -61,7 +63,7 @@ vi.mock('../RepairSession', () => ({ RepairSession: class {
     available = true; epoch = 0; applyDispatched = false; recoveryRequired = false;
     dispose = vi.fn(() => { this.available = false; }); discard = vi.fn();
     initialize = vi.fn(async () => { if (host.initializeFailure) throw host.initializeFailure; }); discover = vi.fn<() => Promise<Discovery>>(async () => ({ choices: [{}], diagnostics: [] }));
-    preview = vi.fn(async () => ({ token: 'private-review', files: [] }));
+    preview = vi.fn(async () => ({ token: 'private-review', files: host.files }));
     apply = vi.fn(async () => {});
     constructor(readonly launch: RepairLaunch, readonly environment: RepairEnvironment, readonly changed: () => void) { environment.check(); host.sessions.push(this); }
     invalidate() { ++this.epoch; this.changed(); }
@@ -75,11 +77,12 @@ function switchRoot() { host.changedConfiguration!({ affectsConfiguration: () =>
 beforeEach(() => {
     vi.clearAllMocks(); host.commands.clear(); host.sessions = []; host.watches = []; host.token = undefined; host.initializeFailure = undefined;
     host.root = fs.realpathSync.native(fs.mkdtempSync(path.resolve('../../../.ai-work', 'editor-owner-')));
+    host.documents = []; host.files = []; host.documentListeners.clear(); host.diagnosticsDisposed = false;
     host.warnings.mockResolvedValue(undefined); host.show.mockResolvedValue(undefined);
     subscriptions = [];
     registerRepairCodeActions({ subscriptions } as unknown as vscode.ExtensionContext, { load: vi.fn(async () => {}) } as unknown as ApplicationIndex);
 });
-afterEach(() => subscriptions.forEach(resource => resource.dispose()));
+afterEach(() => { subscriptions.forEach(resource => resource.dispose()); vi.useRealTimers(); });
 it('registers one watcher before discovery and retains it through review; late disposed callbacks cannot clear a new review', async () => {
     await invoke('refresh'); const old = host.sessions[0], watch = host.watches[0];
     host.warnings.mockResolvedValue('Propose and preview'); await invoke('preview', 'choice');
@@ -147,6 +150,44 @@ it('reports failure of the deliberately selected reconnect generation', async ()
     await invoke('refresh');
     expect(host.sessions).toHaveLength(2);
     expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('UnsupportedContract'))).toBe(true);
+});
+it('idempotent teardown guards late refresh, native watch and configuration callbacks after pending discovery', async () => {
+    await invoke('refresh'); const session = host.sessions[0], gate = deferred<Discovery>();
+    session.discover.mockReturnValueOnce(gate.promise); const pending = invoke('refresh'); await tick();
+    subscriptions.forEach(resource => resource.dispose()); subscriptions.forEach(resource => resource.dispose());
+    const clears = host.clear.mock.calls.length;
+    session.changed(); host.watches[0].changed(); host.watches[0].failed(new RepairFailure('WatchInvalidated', 'late')); switchRoot();
+    gate.resolve({ choices: [], diagnostics: [] }); await pending;
+    expect(host.clear).toHaveBeenCalledTimes(clears); expect(host.warnings).not.toHaveBeenCalled();
+    expect(session.dispose).toHaveBeenCalledTimes(1);
+});
+it('reports installation with stale saved buffers as pending, blocks reconnect reads, and permits a user fresh read', async () => {
+    const source = path.join(host.root, 'application.play'); fs.writeFileSync(source, 'new');
+    let text = 'old';
+    host.documents = [{ uri: { fsPath: source, scheme: 'file', toString: () => source }, version: 1, isDirty: false, getText: () => text } as vscode.TextDocument];
+    host.files = [{ path: 'application.play', before: Buffer.from('old'), after: Buffer.from('new') }];
+    await invoke('refresh'); host.warnings.mockResolvedValue('Propose and preview'); await invoke('preview', 'choice');
+    host.warnings.mockResolvedValue('Apply');
+    vi.useFakeTimers(); const pending = invoke('apply'); await vi.advanceTimersByTimeAsync(5_000); await pending;
+    expect(host.sessions[0].apply).toHaveBeenCalledTimes(1);
+    expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('Disk repair installed; editor synchronization pending.'))).toBe(true);
+    const reads = host.sessions[0].discover.mock.calls.length;
+    await invoke('refresh'); expect(host.sessions[0].discover).toHaveBeenCalledTimes(reads);
+    expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('ReconciliationRequired'))).toBe(true);
+    expect(text).toBe('old'); expect(host.documents[0].isDirty).toBe(false);
+    text = 'new'; await invoke('refresh'); expect(host.sessions[0].discover).toHaveBeenCalledTimes(reads + 1);
+});
+it('teardown cancels a pending installed-buffer reload without disposed UI publication', async () => {
+    const source = path.join(host.root, 'application.play');
+    host.documents = [{ uri: { fsPath: source, scheme: 'file', toString: () => source }, version: 1, isDirty: false, getText: () => 'old' } as vscode.TextDocument];
+    host.files = [{ path: 'application.play', before: Buffer.from('old'), after: Buffer.from('new') }];
+    await invoke('refresh'); host.warnings.mockResolvedValue('Propose and preview'); await invoke('preview', 'choice');
+    host.warnings.mockResolvedValue('Apply'); const pending = invoke('apply'); await tick();
+    expect(host.documentListeners.size).toBe(2); // owner listener + bounded reload listener
+    subscriptions.forEach(resource => resource.dispose()); await pending;
+    expect(host.documentListeners.size).toBe(0);
+    expect(host.warnings.mock.calls.filter(call => String(call[0]).startsWith('Disk repair'))).toEqual([]);
+    switchRoot(); await invoke('discard');
 });
 for (const unknown of [false, true]) it(`blocks replacement until retiring dispatched Apply is classified (${unknown ? 'unknown' : 'installed'})`, async () => {
     await invoke('refresh'); host.warnings.mockResolvedValue('Propose and preview'); await invoke('preview', 'choice');

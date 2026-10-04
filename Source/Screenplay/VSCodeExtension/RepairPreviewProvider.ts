@@ -25,6 +25,7 @@ export class RepairPreviewProvider implements vscode.FileSystemProvider, vscode.
     #token?: string;
     #preview?: RepairPreview;
     #generation = 0;
+    #disposed = false;
     constructor(readonly scheme = RepairPreviewProvider.scheme) {}
     get token(): string | undefined { return this.#token; }
     review(token: string): RepairPreview {
@@ -47,14 +48,14 @@ export class RepairPreviewProvider implements vscode.FileSystemProvider, vscode.
         return content;
     }
     clear(): void { ++this.#generation; this.#documents.clear(); this.#token = undefined; this.#preview = undefined; }
-    dispose(): void { this.clear(); this.#changed.dispose(); }
+    dispose(): void { if (this.#disposed) return; this.#disposed = true; this.clear(); this.#changed.dispose(); }
     closed(uri: vscode.Uri): boolean {
         if (!this.#documents.has(uri.toString())) return false;
         this.clear();
         return true;
     }
     async showFailure(kind: string, details: unknown, relevant: () => boolean = () => true): Promise<void> {
-        if (!relevant()) return;
+        if (this.#disposed || !relevant()) return;
         this.clear();
         const generation = this.#generation;
         const content = JSON.stringify({ failureKind: kind, details, note: 'This is a refused or uncertain operation, not an accepted proposal or runtime confirmation. No Apply authority is issued. Inspect recovery separately if Apply was dispatched.' }, null, 2);
@@ -62,13 +63,14 @@ export class RepairPreviewProvider implements vscode.FileSystemProvider, vscode.
         const uri = vscode.Uri.from({ scheme: this.scheme, path: `/${randomUUID()}/failure.json` });
         this.#documents.set(uri.toString(), content);
         const document = await vscode.workspace.openTextDocument(uri);
-        if (relevant() && generation === this.#generation) await vscode.window.showTextDocument(document, { preview: false });
+        if (!this.#disposed && relevant() && generation === this.#generation) await vscode.window.showTextDocument(document, { preview: false });
     }
     async show(preview: RepairPreview, authorize: () => void = () => {}): Promise<void> {
+        if (this.#disposed) throw new RepairFailure('PreviewExpired', 'Repair previews were disposed.');
         authorize();
         this.clear();
         const generation = this.#generation;
-        const check = () => { authorize(); if (generation !== this.#generation) throw new RepairFailure('PreviewExpired', 'Workspace changed or preview closed during review.'); };
+        const check = () => { authorize(); if (this.#disposed || generation !== this.#generation) throw new RepairFailure('PreviewExpired', 'Workspace changed or preview closed during review.'); };
         const add = (name: string, content: string) => {
             check();
             const uri = vscode.Uri.from({ scheme: this.scheme, path: `/${preview.token}/${name}` });

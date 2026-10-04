@@ -91,6 +91,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
     let retiring: RepairConnectionOwner | undefined;
     let connectionGeneration = 0;
     let disposed = false;
+    const pendingReloads = new Set<() => void>();
     let recovery: { root: string; details: unknown; checkRoot: () => void } | undefined;
     let pendingReconciliation: { owner: RepairConnectionOwner; synchronized: () => boolean } | undefined;
     const owns = (owner: RepairConnectionOwner) => !disposed && current === owner && !owner.retired && owner.generation === connectionGeneration;
@@ -103,11 +104,13 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
     const discardButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99);
     discardButton.text = '$(close) Discard repair'; discardButton.command = discardCommand;
     const clearReview = () => {
+        if (disposed) return;
         previews.clear(); applyButton.hide(); discardButton.hide();
         void vscode.commands.executeCommand('setContext', 'screenplay.repair.reviewPending', false);
     };
-    const changed = () => { diagnostics.clear(); clearReview(); };
+    const changed = () => { if (!disposed) { diagnostics.clear(); clearReview(); } };
     const documentChanged = (document: vscode.TextDocument, opened = false) => {
+        if (disposed) return;
         const session = current?.session;
         if (!opened && previews.closed(document.uri)) session?.invalidate();
         else if (session) {
@@ -116,6 +119,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
         }
     };
     const reset = () => {
+        if (disposed) return;
         ++connectionGeneration;
         const previous = current;
         current = undefined;
@@ -142,6 +146,10 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
         // A missing/replaced current root must latch watch failure, not merely
         // surface an environment error that leaves the old authority available.
         if (current && !current.failure && JSON.stringify(current.session.launch) === JSON.stringify(launch)) authorize(current);
+        if (pendingReconciliation) {
+            if (!pendingReconciliation.synchronized()) throw new RepairFailure('ReconciliationRequired', 'Disk repair installed; editor synchronization pending. Reconcile or close and reopen affected clean buffers yourself before another repair. Dirty buffers are never saved or reverted automatically.');
+            pendingReconciliation = undefined;
+        }
         checkRepairEnvironment(launch);
         if (retiring) throw new RepairFailure('ApplyPending', `A dispatched Apply at ${retiring.session.launch.root} is still awaiting its outcome. No replacement proposal is allowed.`);
         if (recovery) throw new RepairFailure('RecoveryRequired', `An apply outcome is uncertain at ${recovery.root}. Inspect workspace-state before another repair.`);
@@ -219,16 +227,19 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
     };
     const reload = async (owner: RepairConnectionOwner, preview: RepairPreview): Promise<void> => {
         // Installation is already verified. Reload/rediscovery failures are not Apply failures.
+        if (disposed) return;
         const synchronized = () => repairBuffersSynchronized(owner.session.launch.root, preview);
         const reconciliation = { owner, synchronized };
         pendingReconciliation = reconciliation;
-        if (!synchronized()) await new Promise<void>(resolve => {
-            const listener = vscode.workspace.onDidChangeTextDocument(() => { if (synchronized()) { clearTimeout(timer); listener.dispose(); resolve(); } });
-            const timer = setTimeout(() => { listener.dispose(); resolve(); }, 5_000);
+        if (owns(owner) && !synchronized()) await new Promise<void>(resolve => {
+            const finish = () => { clearTimeout(timer); listener.dispose(); pendingReloads.delete(finish); resolve(); };
+            const listener = vscode.workspace.onDidChangeTextDocument(() => { if (!owns(owner) || synchronized()) finish(); });
+            const timer = setTimeout(finish, 5_000);
+            pendingReloads.add(finish);
         });
         if (!owns(owner)) return;
         if (!synchronized()) {
-            await vscode.window.showWarningMessage('Disk repair applied, but an open buffer is dirty or has not reloaded. Your buffer was preserved. Reconcile it with disk before another repair.');
+            await vscode.window.showWarningMessage('Disk repair installed; editor synchronization pending. An open buffer is dirty or has not reloaded. Your buffer was preserved. Reconcile it with disk, or close and reopen a clean buffer yourself, before another repair.');
             return;
         }
         if (pendingReconciliation === reconciliation) pendingReconciliation = undefined;
@@ -246,8 +257,19 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
         }
     };
     context.subscriptions.push(
-        previews, diagnostics, applyButton, discardButton, vscode.workspace.registerFileSystemProvider(RepairPreviewProvider.scheme, previews, { isReadonly: true, isCaseSensitive: true }),
-        { dispose: () => { disposed = true; reset(); } },
+        // One idempotent owner tears down BEFORE any of its UI resources. Late
+        // callbacks see disposed even when VS Code drains async work afterwards.
+        { dispose: () => {
+            if (disposed) return;
+            disposed = true;
+            ++connectionGeneration;
+            const previous = current; current = undefined;
+            if (previous?.session?.applyDispatched) retiring = previous;
+            previous?.retire();
+            for (const finish of [...pendingReloads]) finish();
+            previews.dispose(); diagnostics.dispose(); applyButton.dispose(); discardButton.dispose();
+        } },
+        vscode.workspace.registerFileSystemProvider(RepairPreviewProvider.scheme, previews, { isReadonly: true, isCaseSensitive: true }),
         vscode.workspace.onDidChangeConfiguration(event => { if (event.affectsConfiguration('screenplay.repairs')) reset(); }),
         vscode.workspace.onDidChangeWorkspaceFolders(reset),
         vscode.workspace.onDidOpenTextDocument(document => documentChanged(document, true)),
@@ -271,7 +293,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
                     });
                 } catch (error) {
                     // Do not pop dialogs during passive editor lightbulb probes. An explicit refresh command explains refusals.
-                    if (error instanceof RepairFailure && error.kind === 'Cancelled') return [];
+                    if (!(error instanceof RepairFailure)) throw error;
                     return [];
                 } finally { cancelled.dispose(); }
             },
@@ -313,7 +335,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
             }
         }),
         vscode.commands.registerCommand(discardCommand, (...args: unknown[]) => {
-            if (args.length) return;
+            if (disposed || args.length) return;
             current?.session.discard(); clearReview();
         }),
         vscode.commands.registerCommand(applyCommand, async (...args: unknown[]) => {
@@ -339,7 +361,9 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
                     owner.rootWatch.check();
                 } };
                 else if (owner && owns(owner) && (!owner.applyPending || acquired)) { owner.session.discard(); clearReview(); }
-                await report(error, () => owner ? owns(owner) : !disposed && !current);
+                if (installed) {
+                    if (owner && owns(owner)) await vscode.window.showWarningMessage(`Disk repair installed; editor synchronization pending. Subsequent editor refresh failed: ${String(error)}`);
+                } else await report(error, () => owner ? owns(owner) : !disposed && !current);
             } finally {
                 if (owner && acquired) {
                     owner.applyPending = false;
@@ -362,6 +386,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
                     inspector = new RepairSession(launch, { check: () => checkRepairEnvironment(launch, true) });
                     await inspector.initialize();
                 }
+                if (!relevant()) return;
                 const state = await (active ?? inspector!).inspectState();
                 recovery?.checkRoot();
                 if (!relevant()) return;

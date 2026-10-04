@@ -5,6 +5,14 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { RepairFailure } from './RepairClient';
 
+/** Whether native stat supplies usable identity, without numeric/path fallbacks. */
+export function nativeRootIdentityAvailable(dev: unknown, ino: unknown, platform: NodeJS.Platform = process.platform): boolean {
+    // libuv v1.52.1 win/fs.c maps STATUS_NOT_IMPLEMENTED volume information
+    // to st_dev=0. A genuine zero volume serial is indistinguishable: refuse it.
+    // unix/fs.c copies native st_dev unchanged; zero is NOT that sentinel on Unix.
+    return typeof dev === 'bigint' && typeof ino === 'bigint' && dev >= 0n && ino > 0n && (platform !== 'win32' || dev !== 0n);
+}
+
 /** Extension-host watcher of an already approved physical root; never content authority. */
 export class RepairRootWatch {
     readonly #watcher: fs.FSWatcher;
@@ -33,12 +41,13 @@ export class RepairRootWatch {
         } catch (error) {
             this.dispose();
             if (error instanceof RepairFailure && error.kind === 'WatchInvalidated') throw error;
-            throw new RepairFailure('WatchUnavailable', 'Cannot register recursive root watching or prove physical root identity. No equivalent fallback or automatic retry is available. Local language assistance and read-only recovery remain available.', String(error));
+            throw new RepairFailure('WatchUnavailable', 'Cannot register recursive root watching or prove physical root identity. Choose a supported native host/filesystem exposing nonzero file identity (and nonzero volume identity on Windows). No equivalent fallback or automatic retry is available. Local language assistance and read-only recovery remain available.', String(error));
         }
     }
     /** Bounded root/path checks only. Server evidence and preimages remain authoritative. */
     check(): void {
         if (this.#failure) throw this.#failure;
+        if (this.#disposed) throw new RepairFailure('WatchInvalidated', 'Root watcher was disposed; reconnect before requesting authority.');
         try {
             const current = this.#rootIdentity();
             if (current.dev !== this.#identity.dev || current.ino !== this.#identity.ino || path.relative(this.#identity.physical, current.physical) !== '') throw new Error('Approved physical root was replaced.');
@@ -59,7 +68,7 @@ export class RepairRootWatch {
         const physical = fs.realpathSync.native(this.root);
         if (path.relative(path.resolve(this.root), physical) !== '') throw new Error('Root path resolves through an unapproved link or reparse point.');
         const after = fs.statSync(physical, { bigint: true });
-        if (!before.isDirectory() || before.isSymbolicLink() || !after.isDirectory() || typeof before.dev !== 'bigint' || typeof before.ino !== 'bigint' || before.ino <= 0n || before.dev < 0n || before.dev !== after.dev || before.ino !== after.ino) throw new Error('Physical root identity cannot be proved.');
+        if (!before.isDirectory() || before.isSymbolicLink() || !after.isDirectory() || !nativeRootIdentityAvailable(before.dev, before.ino) || !nativeRootIdentityAvailable(after.dev, after.ino) || before.dev !== after.dev || before.ino !== after.ino) throw new Error('Physical root identity cannot be proved.');
         return { dev: before.dev, ino: before.ino, physical };
     }
     #fail(reason: unknown): void {
