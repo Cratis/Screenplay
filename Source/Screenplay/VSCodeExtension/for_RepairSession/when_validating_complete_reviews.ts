@@ -118,7 +118,7 @@ it('does not reinterpret post-dispatch dirty typing as cancellation or replay bu
     malformed = 'dirtyAfterDispatch';
     await session.apply(preview.token);
     expect(dirty).toBe(true); expect(applied).toBe(true);
-    await expect(session.discover()).rejects.toMatchObject({ kind: 'DirtyBuffer' });
+    await expect(session.discover()).rejects.toMatchObject({ kind: 'ReconnectRequired' });
 });
 it('accepts verified own-write success without rechecking the invalidated epoch', async () => {
     const choice = (await session.discover()).choices[0]; const preview = await session.preview(choice.token);
@@ -129,6 +129,71 @@ it('accepts verified own-write success without rechecking the invalidated epoch'
     expect(session.recoveryRequired).toBe(false);
     expect(session.applyDispatched).toBe(false);
     expect(applied).toBe(true);
+    expect(session.reconnectRequired).toBe(true);
+    await expect(session.discover()).rejects.toMatchObject({ kind: 'ReconnectRequired' });
+});
+function holdOpen() {
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const original = vi.mocked(RepairClient.prototype.tool).getMockImplementation()!;
+    vi.mocked(RepairClient.prototype.tool).mockImplementation(async (...args) => {
+        if (args[0] === 'open-workspace') await gate;
+        return original(...args);
+    });
+    return release;
+}
+it('shares provider and explicit discovery only for the same epoch and saved manifest', async () => {
+    const release = holdOpen();
+    const provider = session.discover(); const manual = session.discover();
+    release();
+    const [left, right] = await Promise.all([provider, manual]);
+    expect(left).toBe(right);
+    expect(calls.filter(name => name === 'open-workspace')).toHaveLength(1);
+    expect(calls.filter(name => name === 'read-workspace')).toHaveLength(3);
+});
+it('cancels one consumer promptly without cancelling the shared manual discovery', async () => {
+    const release = holdOpen(); const cancelled = new AbortController();
+    const provider = session.discover(cancelled.signal); const manual = session.discover();
+    cancelled.abort();
+    await expect(provider).rejects.toMatchObject({ kind: 'Cancelled' });
+    release(); expect((await manual).choices).toHaveLength(1);
+    expect(calls.filter(name => name === 'open-workspace')).toHaveLength(1);
+});
+it('never shares old in-flight discovery across event invalidation and issues fresh validated tokens after drain', async () => {
+    const release = holdOpen(); const old = session.discover();
+    session.invalidate();
+    await expect(session.discover()).rejects.toMatchObject({ kind: 'SessionBusy' });
+    release(); await expect(old).rejects.toMatchObject({ kind: 'StaleEpoch' });
+    expect((await session.discover()).choices).toHaveLength(1);
+});
+it('never joins an in-flight saved-manifest decision after a buffer version change', async () => {
+    const release = holdOpen(); const old = session.discover(); version++;
+    await expect(session.discover()).rejects.toMatchObject({ kind: 'SessionBusy' });
+    release(); await expect(old).rejects.toMatchObject({ kind: 'StaleBuffer' });
+});
+it('refuses discovery during retained review rather than passively starting a second operation', async () => {
+    const choice = (await session.discover()).choices[0];
+    await session.preview(choice.token);
+    await expect(session.discover()).rejects.toMatchObject({ kind: 'SessionBusy' });
+    expect(calls.filter(name => name === 'open-workspace')).toHaveLength(1);
+});
+it('sets the post-Apply barrier at dispatch before any filesystem event or outcome classification', async () => {
+    const choice = (await session.discover()).choices[0]; const preview = await session.preview(choice.token);
+    let finish!: () => void;
+    const gate = new Promise<void>(resolve => { finish = resolve; });
+    const original = vi.mocked(RepairClient.prototype.tool).getMockImplementation()!;
+    vi.mocked(RepairClient.prototype.tool).mockImplementation(async (...args) => {
+        if (args[0] !== 'apply') return original(...args);
+        args[3]?.(); args[4]?.();
+        expect(session.reconnectRequired).toBe(true);
+        expect(session.applyDispatched).toBe(true);
+        await gate;
+        return { success: true, validation: 'Authoring', workspace: candidate, plannedChanges: 1, installedDocuments: 1 };
+    });
+    const applying = session.apply(preview.token);
+    await expect(session.discover()).rejects.toMatchObject({ kind: 'SessionBusy' });
+    finish(); await applying;
+    await expect(session.discover()).rejects.toMatchObject({ kind: 'ReconnectRequired' });
 });
 it('retains unknown Apply and refuses automatic retry while allowing read-only state inspection', async () => {
     const choice = (await session.discover()).choices[0]; const preview = await session.preview(choice.token);

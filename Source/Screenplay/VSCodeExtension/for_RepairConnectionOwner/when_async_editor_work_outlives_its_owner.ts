@@ -24,7 +24,8 @@ interface WatchMock { changed: () => void; failed: (failure: RepairFailure) => v
 const host = vi.hoisted(() => ({
     root: '', commands: new Map<string, (...args: unknown[]) => unknown>(), sessions: [] as SessionMock[], watches: [] as WatchMock[],
     warnings: vi.fn(), clear: vi.fn(), changedConfiguration: undefined as undefined | ((event: { affectsConfiguration(): boolean }) => void),
-    show: vi.fn(), token: undefined as string | undefined,
+    show: vi.fn(), token: undefined as string | undefined, initializeFailure: undefined as RepairFailure | undefined,
+    provider: undefined as vscode.CodeActionProvider | undefined,
 }));
 vi.mock('vscode', () => ({
     workspace: {
@@ -43,7 +44,7 @@ vi.mock('vscode', () => ({
         showWarningMessage: (...args: unknown[]) => host.warnings(...args), showInformationMessage: vi.fn(),
         withProgress: (_options: unknown, run: (progress: object, cancellation: { onCancellationRequested(): { dispose(): void } }) => Promise<unknown>) => run({}, { onCancellationRequested: () => ({ dispose() {} }) }),
     },
-    languages: { createDiagnosticCollection: () => ({ clear: host.clear, dispose() {} }), registerCodeActionsProvider: () => ({ dispose() {} }) },
+    languages: { createDiagnosticCollection: () => ({ clear: host.clear, dispose() {} }), registerCodeActionsProvider: (_selector: unknown, provider: vscode.CodeActionProvider) => { host.provider = provider; return { dispose() {} }; } },
     commands: { executeCommand: vi.fn(), registerCommand: (name: string, callback: (...args: unknown[]) => unknown) => { host.commands.set(name, callback); return { dispose() {} }; } },
     CodeActionKind: { QuickFix: {} },
 }));
@@ -54,12 +55,12 @@ vi.mock('../RepairPreviewProvider', () => ({ RepairPreviewProvider: class {
     review() { if (!host.token) throw new RepairFailure('PreviewExpired', 'expired'); return { files: [] }; }
 } }));
 vi.mock('../RepairRootWatch', () => ({ RepairRootWatch: class {
-    dispose = vi.fn(); constructor(readonly root: string, readonly changed: () => void, readonly failed: (failure: RepairFailure) => void) { host.watches.push(this); }
+    dispose = vi.fn(); check = vi.fn(); constructor(readonly root: string, readonly changed: () => void, readonly failed: (failure: RepairFailure) => void) { host.watches.push(this); }
 } }));
 vi.mock('../RepairSession', () => ({ RepairSession: class {
     available = true; epoch = 0; applyDispatched = false; recoveryRequired = false;
     dispose = vi.fn(() => { this.available = false; }); discard = vi.fn();
-    initialize = vi.fn(async () => {}); discover = vi.fn<() => Promise<Discovery>>(async () => ({ choices: [{}], diagnostics: [] }));
+    initialize = vi.fn(async () => { if (host.initializeFailure) throw host.initializeFailure; }); discover = vi.fn<() => Promise<Discovery>>(async () => ({ choices: [{}], diagnostics: [] }));
     preview = vi.fn(async () => ({ token: 'private-review', files: [] }));
     apply = vi.fn(async () => {});
     constructor(readonly launch: RepairLaunch, readonly environment: RepairEnvironment, readonly changed: () => void) { environment.check(); host.sessions.push(this); }
@@ -72,7 +73,7 @@ function deferred<T>() { let resolve!: (value: T) => void; const promise = new P
 async function tick() { await new Promise<void>(resolve => setImmediate(resolve)); }
 function switchRoot() { host.changedConfiguration!({ affectsConfiguration: () => true }); }
 beforeEach(() => {
-    vi.clearAllMocks(); host.commands.clear(); host.sessions = []; host.watches = []; host.token = undefined;
+    vi.clearAllMocks(); host.commands.clear(); host.sessions = []; host.watches = []; host.token = undefined; host.initializeFailure = undefined;
     host.root = fs.realpathSync.native(fs.mkdtempSync(path.resolve('../../../.ai-work', 'editor-owner-')));
     host.warnings.mockResolvedValue(undefined); host.show.mockResolvedValue(undefined);
     subscriptions = [];
@@ -125,6 +126,27 @@ it('watch failure invalidates review immediately, stays latched, and reconnects 
     expect(old.epoch).toBe(epoch + 1); expect(host.token).toBeUndefined(); expect(old.dispose).not.toHaveBeenCalled();
     await invoke('preview', 'choice'); expect(old.preview).toHaveBeenCalledTimes(1);
     await invoke('refresh'); expect(host.watches).toHaveLength(2); expect(old.dispose).toHaveBeenCalledTimes(1);
+});
+it('routes overlapping registered provider/manual reads to the SAME owner and epoch without replacing its watcher', async () => {
+    await invoke('refresh'); const session = host.sessions[0], epoch = session.epoch;
+    const gate = deferred<Discovery>();
+    session.discover.mockReturnValue(gate.promise);
+    const manual = invoke('refresh');
+    const provider = host.provider!.provideCodeActions({ uri: { fsPath: path.join(host.root, 'application.play') } } as vscode.TextDocument, {} as vscode.Range, {} as vscode.CodeActionContext, { onCancellationRequested: () => ({ dispose() {} }) } as unknown as vscode.CancellationToken);
+    await tick();
+    expect(session.discover).toHaveBeenCalledTimes(3); // Initial + manual + provider: session shares the validated operation.
+    expect(host.sessions).toHaveLength(1); expect(host.watches).toHaveLength(1); expect(session.epoch).toBe(epoch);
+    gate.resolve({ choices: [], diagnostics: [] });
+    await manual; await provider;
+    expect(host.warnings).not.toHaveBeenCalled();
+});
+it('reports failure of the deliberately selected reconnect generation', async () => {
+    await invoke('refresh');
+    host.watches[0].failed(new RepairFailure('WatchInvalidated', 'old root lost'));
+    host.initializeFailure = new RepairFailure('UnsupportedContract', 'new connection refused');
+    await invoke('refresh');
+    expect(host.sessions).toHaveLength(2);
+    expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('UnsupportedContract'))).toBe(true);
 });
 for (const unknown of [false, true]) it(`blocks replacement until retiring dispatched Apply is classified (${unknown ? 'unknown' : 'installed'})`, async () => {
     await invoke('refresh'); host.warnings.mockResolvedValue('Propose and preview'); await invoke('preview', 'choice');

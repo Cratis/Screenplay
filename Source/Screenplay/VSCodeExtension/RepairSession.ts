@@ -57,6 +57,9 @@ export class RepairSession {
     #disposed = false;
     #uncertain = false;
     #available = true;
+    #reconnectRequired = false;
+    #discovery?: { epoch: number; versions: SavedVersions; promise: Promise<RepairSnapshot> };
+    get reconnectRequired(): boolean { return this.#reconnectRequired; }
     get available(): boolean { return this.#available && !this.#disposed; }
     get epoch(): number { return this.#epoch; }
     get recoveryRequired(): boolean { return this.#uncertain; }
@@ -92,19 +95,46 @@ export class RepairSession {
         return this.#client.tool('workspace-state', { view: 'status' });
     }
     async discover(signal?: AbortSignal): Promise<{ choices: RepairChoice[]; diagnostics: ServerDiagnostic[] }> {
-        if (this.#busy || this.#uncertain) throw new RepairFailure('SessionBusy', 'Finish the current review, or inspect the uncertain apply outcome first.');
+        if (signal?.aborted) throw new RepairFailure('Cancelled', 'Discovery consumer cancelled.');
+        if (this.#uncertain || this.#retained) throw new RepairFailure('SessionBusy', 'Finish the current review, or inspect the uncertain apply outcome first.');
+        if (this.#reconnectRequired) throw new RepairFailure('ReconnectRequired', 'Apply was dispatched. Deliberately reconnect after its outcome is classified before another repair.');
         const versions = this.environment.check();
         const epoch = this.#epoch;
+        const pending = this.#discovery;
+        const sameManifest = (saved: SavedVersions) => sameVersions(saved, versions) && sameVersions(versions, saved);
+        if (pending?.epoch === epoch && sameManifest(pending.versions)) return this.#consumeDiscovery(pending.promise, epoch, versions, signal);
+        if (this.#busy) throw new RepairFailure('SessionBusy', 'A repair operation is already active; rediscover after it finishes.');
         if (this.#snapshot && sameVersions(this.#snapshot.versions, versions)) return this.#snapshot;
+        const operation = { epoch, versions, promise: this.#discover(epoch, versions) };
+        this.#discovery = operation;
+        void operation.promise.finally(() => { if (this.#discovery === operation) this.#discovery = undefined; }).catch(() => {});
+        return this.#consumeDiscovery(operation.promise, epoch, versions, signal);
+    }
+    async #consumeDiscovery(promise: Promise<RepairSnapshot>, epoch: number, versions: SavedVersions, signal?: AbortSignal): Promise<RepairSnapshot> {
+        // Cancelling one consumer never cancels another or the bounded underlying
+        // read. The transport retains its deadline and drains every sent response.
+        return new Promise((resolve, reject) => {
+            const cancelled = () => { signal?.removeEventListener('abort', cancelled); reject(new RepairFailure('Cancelled', 'Discovery consumer cancelled.')); };
+            signal?.addEventListener('abort', cancelled, { once: true });
+            if (signal?.aborted) cancelled();
+            void promise.then(result => {
+                if (signal?.aborted) return;
+                this.#check(epoch, versions);
+                resolve(result);
+            }).catch(reject).finally(() => signal?.removeEventListener('abort', cancelled));
+        });
+    }
+    async #discover(epoch: number, versions: SavedVersions): Promise<RepairSnapshot> {
         this.#busy = true;
         try {
-            const opened = revisions(await this.#client.tool('open-workspace', {}, signal));
+            const opened = revisions(await this.#client.tool('open-workspace', {}, undefined, () => this.#check(epoch, versions)));
             let pinnedEvidence: string | undefined;
             const read = async (view: string): Promise<unknown[]> => this.#items(async offset => {
                 const result = await this.#client.tool('read-workspace', {
                     view, offset, limit: 100, expectedRevision: opened.revision, expectedCatalogRevision: opened.catalog,
                     ...(pinnedEvidence ? { expectedRepairEvidenceRevision: pinnedEvidence } : {}),
-                }, signal);
+                }, undefined, () => this.#check(epoch, versions));
+                this.#check(epoch, versions);
                 const current = revisions(result.workspace);
                 const pin = evidence(result.repairEvidenceRevision);
                 if (current.revision !== opened.revision || current.catalog !== opened.catalog || (pinnedEvidence && pin !== pinnedEvidence)) throw new RepairFailure('StaleRevision', 'Discovery snapshot changed.');
@@ -137,6 +167,7 @@ export class RepairSession {
 
     // The caller obtains canonical-formatting consent BEFORE invoking this method.
     async preview(choiceToken: string, signal?: AbortSignal): Promise<RepairPreview> {
+        if (this.#reconnectRequired) throw new RepairFailure('ReconnectRequired', 'Deliberately reconnect after the Apply outcome before reviewing another repair.');
         const snapshot = this.#snapshot;
         const choice = snapshot?.choices.find(item => item.token === choiceToken);
         if (!snapshot || !choice) throw new RepairFailure('StaleSelection', 'Rediscover this repair before reviewing.');
@@ -226,6 +257,8 @@ export class RepairSession {
                 expectedRepairEvidenceRevision: retained.beforeEvidence,
             }, undefined, () => this.#check(snapshot.epoch, snapshot.versions), () => {
                 retained.dispatched = true; // Write attempt: no cancellation or retry after this boundary.
+                this.#reconnectRequired = true; // Barrier starts at dispatch, not an incidental rename.
+                this.invalidate(); // Retain the dispatched record, but expire all old review authority.
             });
             const installed = revisions(result.workspace);
             if (result.success !== true || result.validation !== 'Authoring' || installed.revision !== retained.afterRevision || installed.catalog !== retained.afterCatalog || integer(result.plannedChanges) !== retained.changeCount || integer(result.installedDocuments) !== retained.changeCount) throw new RepairFailure('ApplyOutcomeUnknown', 'Apply did not report a verified installation.', result);

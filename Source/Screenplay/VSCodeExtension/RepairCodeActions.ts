@@ -91,10 +91,13 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
     let retiring: RepairConnectionOwner | undefined;
     let connectionGeneration = 0;
     let disposed = false;
-    let recovery: { root: string; details: unknown } | undefined;
+    let recovery: { root: string; details: unknown; checkRoot: () => void } | undefined;
     let pendingReconciliation: { owner: RepairConnectionOwner; synchronized: () => boolean } | undefined;
     const owns = (owner: RepairConnectionOwner) => !disposed && current === owner && !owner.retired && owner.generation === connectionGeneration;
-    const authorize = (owner: RepairConnectionOwner) => owner.assertCurrent(disposed ? undefined : current, connectionGeneration);
+    const authorize = (owner: RepairConnectionOwner) => {
+        owner.assertCurrent(disposed ? undefined : current, connectionGeneration);
+        owner.rootWatch?.check();
+    };
     const applyButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     applyButton.text = '$(check) Apply reviewed repair'; applyButton.command = applyCommand;
     const discardButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99);
@@ -136,17 +139,22 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
     const connect = async (reconnect = false): Promise<RepairConnectionOwner> => {
         if (disposed) throw new RepairFailure('StaleEpoch', 'Repair commands have been disposed.');
         const launch = userRepairConfiguration();
+        // A missing/replaced current root must latch watch failure, not merely
+        // surface an environment error that leaves the old authority available.
+        if (current && !current.failure && JSON.stringify(current.session.launch) === JSON.stringify(launch)) authorize(current);
         checkRepairEnvironment(launch);
         if (retiring) throw new RepairFailure('ApplyPending', `A dispatched Apply at ${retiring.session.launch.root} is still awaiting its outcome. No replacement proposal is allowed.`);
         if (recovery) throw new RepairFailure('RecoveryRequired', `An apply outcome is uncertain at ${recovery.root}. Inspect workspace-state before another repair.`);
         if (current?.session.applyDispatched) throw new RepairFailure('ApplyPending', 'Wait for the dispatched Apply outcome before another repair connection.');
-        if (current?.failure) { if (!reconnect) throw current.failure; reset(); }
+        if (current?.failure || current?.session.reconnectRequired) {
+            if (!reconnect) throw current.failure ?? new RepairFailure('ReconnectRequired', 'Apply was dispatched. Use Screenplay: Discover Saved-File C# Repairs to deliberately reconnect before another repair.');
+            reset();
+        }
         if (current?.connecting) { const owner = current; await owner.connecting; authorize(owner); return owner; }
         if (current?.session.available) return current;
         if (current) reset();
         const owner = new RepairConnectionOwner(connectionGeneration);
         current = owner;
-        const identity = fs.statSync(launch.root);
         try {
             owner.session = new RepairSession(launch, { check: () => {
                 authorize(owner);
@@ -154,32 +162,37 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
                     if (!pendingReconciliation.synchronized()) throw new RepairFailure('ReconciliationRequired', 'An earlier disk repair has not synchronized with open buffers. Reconcile or close those buffers yourself before another repair.');
                     pendingReconciliation = undefined;
                 }
-                const versions = checkRepairEnvironment(launch);
-                const physical = fs.statSync(launch.root);
-                if (physical.dev !== identity.dev || physical.ino !== identity.ino) throw new RepairFailure('RootChanged', 'The approved physical root was replaced. Reconnect and review a fresh repair.');
-                return versions;
+                return checkRepairEnvironment(launch);
             }, checkRead: () => { authorize(owner); checkRepairEnvironment(launch, true); } }, () => { if (owns(owner)) changed(); });
             // Watch ALL root files. Callbacks belong to this owner, never a replacement.
             const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(vscode.Uri.file(launch.root), '**/*'));
-            const invalidate = () => { if (owns(owner)) owner.session.invalidate(); };
+            const invalidate = () => {
+                if (!owns(owner)) return;
+                owner.session.invalidate();
+                try { owner.rootWatch?.check(); } catch (error) {
+                    // check already latches WatchInvalidated; never silently accept an unknown check failure.
+                    if (!owner.failure) throw error;
+                }
+            };
             owner.resources.push(watcher, watcher.onDidChange(invalidate), watcher.onDidCreate(invalidate), watcher.onDidDelete(invalidate));
-            owner.resources.push(new RepairRootWatch(fs.realpathSync.native(launch.root), invalidate, failure => {
+            owner.rootWatch = new RepairRootWatch(launch.root, () => { if (owns(owner)) owner.session.invalidate(); }, failure => {
                 if (!owns(owner)) return;
                 owner.failure = failure;
                 owner.session.invalidate(); // Immediate epoch advance, including own Apply writes.
                 owner.disposeWatchers(); // Never close a dispatched transaction here.
-            }));
+            });
+            owner.resources.push(owner.rootWatch);
             owner.connecting = owner.session.initialize().then(() => { authorize(owner); return owner.session; }).finally(() => { owner.connecting = undefined; });
             await owner.connecting;
             authorize(owner);
             return owner;
         } catch (error) {
             if (owns(owner)) {
-                if (error instanceof RepairFailure && (error.kind === 'WatchUnavailable' || error.kind === 'WatchInvalidated')) {
-                    owner.failure = error;
-                    owner.disposeWatchers();
-                    owner.session?.dispose(); // No Apply was dispatched during connection.
-                } else reset();
+                // Retain the selected failed owner so explicit reconnect errors are
+                // reported against its generation, not suppressed by a cleanup reset.
+                owner.failure = error instanceof RepairFailure ? error : new RepairFailure('ProcessUnavailable', String(error));
+                owner.disposeWatchers();
+                owner.session?.dispose(); // No Apply was dispatched during connection.
             }
             throw error;
         }
@@ -219,8 +232,8 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
             return;
         }
         if (pendingReconciliation === reconciliation) pendingReconciliation = undefined;
-        if (owner.failure) {
-            await vscode.window.showInformationMessage('Disk repair installed exactly the reviewed bytes. Root watching requires deliberate reconnect using Screenplay: Discover Saved-File C# Repairs before another repair.');
+        if (owner.failure || owner.session.reconnectRequired) {
+            await vscode.window.showInformationMessage('Disk repair installed exactly the reviewed bytes. Use Screenplay: Discover Saved-File C# Repairs to deliberately reconnect before another repair.');
             return;
         }
         try {
@@ -264,8 +277,11 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
             },
         }, { providedCodeActionKinds: [vscode.CodeActionKind.QuickFix] }),
         vscode.commands.registerCommand('screenplay.repair.refresh', async () => {
+            // connect(true) deliberately resets authority synchronously before its first await.
+            // Capture the selected generation AFTER that reset, including failed initialization.
+            const connecting = connect(true);
             const generation = connectionGeneration;
-            try { const owner = await connect(true); const discovered = await owner.session.discover(); publish(owner, discovered.diagnostics); if (!discovered.choices.length) await vscode.window.showInformationMessage('No verified PLAY0166/PLAY0478 repair is available. C# eligibility and refusals are unchanged.'); } catch (error) { await report(error, () => !disposed && generation === connectionGeneration); }
+            try { const owner = await connecting; const discovered = await owner.session.discover(); publish(owner, discovered.diagnostics); if (!discovered.choices.length) await vscode.window.showInformationMessage('No verified PLAY0166/PLAY0478 repair is available. C# eligibility and refusals are unchanged.'); } catch (error) { await report(error, () => !disposed && generation === connectionGeneration); }
         }),
         vscode.commands.registerCommand(previewCommand, async (token: unknown) => {
             const owner = current;
@@ -318,7 +334,10 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
                 if (owns(owner)) clearReview();
                 await reload(owner, preview);
             } catch (error) {
-                if (!installed && owner?.session.recoveryRequired) recovery = { root: owner.session.launch.root, details: error };
+                if (!installed && owner?.session.recoveryRequired) recovery = { root: owner.session.launch.root, details: error, checkRoot: () => {
+                    if (!owner.rootWatch) throw new RepairFailure('RootRefused', 'The uncertain Apply root identity cannot be proved.');
+                    owner.rootWatch.check();
+                } };
                 else if (owner && owns(owner) && (!owner.applyPending || acquired)) { owner.session.discard(); clearReview(); }
                 await report(error, () => owner ? owns(owner) : !disposed && !current);
             } finally {
@@ -336,6 +355,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
                 const launch = userRepairConfiguration();
                 checkRepairEnvironment(launch, true);
                 if (recovery && launch.root !== recovery.root) throw new RepairFailure('RootRefused', `Choose the uncertain apply root ${recovery.root} to inspect it.`);
+                recovery?.checkRoot(); // A replacement at the same lexical path is not the uncertain transaction's root.
                 if (retiring) throw new RepairFailure('ApplyPending', 'Wait for the dispatched Apply outcome before read-only inspection.');
                 const active = current?.session.available && !current.failure && current.session.launch.root === launch.root ? current.session : undefined;
                 if (!active) {
@@ -343,6 +363,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
                     await inspector.initialize();
                 }
                 const state = await (active ?? inspector!).inspectState();
+                recovery?.checkRoot();
                 if (!relevant()) return;
                 const document = await vscode.workspace.openTextDocument({ content: JSON.stringify({ state, uncertainApply: recovery ? String(recovery.details) : null, note: 'Inspection does not roll back or authorize retry. Review disk and retained state; recovery requires separate explicit consent through the MCP recovery workflow.' }, null, 2), language: 'json' });
                 if (relevant()) await vscode.window.showTextDocument(document);

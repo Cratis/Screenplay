@@ -3,12 +3,14 @@
 
 import { RepairFailure } from './RepairClient';
 import { RepairSession } from './RepairSession';
+import { RepairRootWatch } from './RepairRootWatch';
 
 /** One connection's authority and resources, including a possibly retiring Apply. */
 export class RepairConnectionOwner {
     session!: RepairSession;
     connecting?: Promise<RepairSession>;
     failure?: RepairFailure;
+    rootWatch?: RepairRootWatch;
     retired = false;
     applyPending = false;
     readonly resources: { dispose(): void }[] = [];
