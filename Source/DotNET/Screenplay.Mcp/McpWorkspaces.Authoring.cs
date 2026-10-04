@@ -30,7 +30,8 @@ internal sealed partial class McpWorkspaces
             ExpectedRevision = expectedRevision,
             ExpectedCatalogRevision = expectedCatalogRevision,
             Validation = WorkspaceAuthoringValidation.Authoring,
-            Formatting = formatting
+            Formatting = formatting,
+            AttachmentLoader = documents => McpAttachmentContents.Load(Root, documents)
         };
         if (expectedRevision != workspace.Revision || expectedCatalogRevision != workspace.IdentityCatalog.Revision)
         {
@@ -64,7 +65,8 @@ internal sealed partial class McpWorkspaces
             ExpectedCatalogRevision = CatalogRevision.Parse(McpJson.RequiredString(arguments, "expectedCatalogRevision")),
             Validation = McpJson.Enumeration(arguments, "validation", WorkspaceAuthoringValidation.Authoring),
             Formatting = McpJson.Enumeration(arguments, "formatting", WorkspaceAuthoringFormatting.PreserveExactSource),
-            ReferencePolicy = McpJson.Enumeration(arguments, "referencePolicy", WorkspaceAuthoringReferencePolicy.Safe)
+            ReferencePolicy = McpJson.Enumeration(arguments, "referencePolicy", WorkspaceAuthoringReferencePolicy.Safe),
+            AttachmentLoader = documents => McpAttachmentContents.Load(Root, documents)
         };
         if (request.ExpectedRevision != workspace.Revision || request.ExpectedCatalogRevision != workspace.IdentityCatalog.Revision)
         {

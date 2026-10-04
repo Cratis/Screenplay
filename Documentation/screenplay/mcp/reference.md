@@ -272,11 +272,15 @@ To opt in for either action:
    `beforeRevision` as `expectedRepairEvidenceRevision` on preview or apply;
    the server enforces the retained pin even when that optional field is omitted.
 
-Pinned candidates never refresh readiness silently. Actual base and candidate
-loader resolution must match the inputs used by validation; otherwise retention
-returns `RepairEvidenceDrift`, without creating a proposal or repeating the selected
-repair transaction. In particular, a candidate with different attachment resolution
-or loading diagnostics is conservatively refused, not re-proven by a refresh.
+Pinned candidates never refresh readiness silently. Validation loads attachments
+from the final candidate sources under the approved root, retaining those exact
+inputs and loading diagnostics separately from the base snapshot. Unchanged missing,
+unreadable, refused or oversized attachment warnings do not themselves invalidate
+a pin; existing repair eligibility still applies. Fresh base and candidate loads
+must match their validated evidence; otherwise retention returns
+`RepairEvidenceDrift`, without creating a proposal or repeating the selected repair
+transaction. Changed resolution or loading diagnostics are refused, not re-proven
+by a refresh.
 All proposal-backed previews recheck both snapshots under the approved root, as
 does the final pre-install check after staging. Drift requires rediscovery and a
 fresh selected proposal. You can discard a stale proposal without reading it.

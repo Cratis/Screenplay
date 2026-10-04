@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.Json;
+using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow;
@@ -88,6 +90,83 @@ public class when_pinning_repair_evidence : given.an_authoring_connection
         var path = Path.Combine(RootPath, "Handler.cs");
         if (invalidUtf8) File.WriteAllBytes(path, [0xff]);
         else File.Delete(path);
+        Failure(Call("read-proposal", new { proposalId = proposal.GetProperty("proposalId").GetString(), view = "executable-diagnostics", offset = 1 })).ShouldEqual("RepairEvidenceDrift");
+    }
+
+    [Theory]
+    [InlineData("PLAY0478", "missing", DiagnosticCodes.AttachmentMissing)]
+    [InlineData("PLAY0478", "invalid-utf8", DiagnosticCodes.AttachmentUnreadable)]
+    [InlineData("PLAY0478", "directory", DiagnosticCodes.AttachmentUnreadable)]
+    [InlineData("PLAY0478", "refused", DiagnosticCodes.AttachmentPathRefused)]
+    [InlineData("PLAY0478", "oversized", DiagnosticCodes.AttachmentTooLarge)]
+    [InlineData("PLAY0166", "missing", DiagnosticCodes.AttachmentMissing)]
+    [InlineData("PLAY0166", "invalid-utf8", DiagnosticCodes.AttachmentUnreadable)]
+    [InlineData("PLAY0166", "directory", DiagnosticCodes.AttachmentUnreadable)]
+    [InlineData("PLAY0166", "refused", DiagnosticCodes.AttachmentPathRefused)]
+    [InlineData("PLAY0166", "oversized", DiagnosticCodes.AttachmentTooLarge)]
+    void should_retain_unchanged_loading_warnings_through_validation_review_and_installation(string code, string state, string warning)
+    {
+        var (opened, discovery) = Discover(code, state);
+        var before = Result("read-workspace", new { expectedRevision = opened.GetProperty("revision").GetString(), view = "executable-diagnostics" });
+        before.GetProperty("page").GetProperty("items").EnumerateArray().Any(item => item.GetProperty("code").GetString() == warning).ShouldBeTrue();
+        var proposal = Propose(opened, discovery);
+        var id = proposal.GetProperty("proposalId").GetString();
+        var diagnostics = Result("read-proposal", new { proposalId = id, view = "executable-diagnostics" }).GetProperty("result").GetProperty("items");
+        diagnostics.EnumerateArray().Any(item => item.GetProperty("code").GetString() == warning).ShouldBeTrue();
+        var ready = proposal.GetProperty("after").GetProperty("executableReady").GetBoolean();
+        ready.ShouldBeTrue();
+        var reviewed = Result("read-proposal", new { proposalId = id, view = "implementation-requirements" });
+        reviewed.GetProperty("after").GetProperty("executableReady").GetBoolean().ShouldEqual(ready);
+        var applied = Apply(opened, proposal);
+        applied.GetProperty("success").GetBoolean().ShouldBeTrue();
+        applied.GetProperty("workspace").GetProperty("executableReady").GetBoolean().ShouldEqual(ready);
+    }
+
+    [Theory]
+    [InlineData("missing", "exists")]
+    [InlineData("exists", "missing")]
+    [InlineData("missing", "invalid-utf8")]
+    [InlineData("invalid-utf8", "oversized")]
+    void should_refuse_warning_state_changes_after_proof_at_retention(string before, string after)
+    {
+        var (opened, discovery) = Discover("PLAY0478", before);
+        var workspaces = new McpWorkspaces(Root);
+        _ = workspaces.Open(JsonSerializer.SerializeToElement(new { applicationName = "Projects" }));
+        workspaces.BeforeStore = () => SetAttachmentState(after);
+        var failure = Catch.Exception(() => workspaces.ProposeRepair(JsonSerializer.SerializeToElement(Request(opened, discovery))));
+        (failure as McpFailure)!.FailureKind.ShouldEqual("RepairEvidenceDrift");
+        Directory.Exists(Path.Combine(RootPath, ".screenplay")).ShouldBeFalse();
+    }
+
+    [Fact]
+    void should_refuse_a_warning_state_change_after_retention_and_before_installation()
+    {
+        var (opened, discovery) = Discover("PLAY0478", "missing");
+        var workspaces = new McpWorkspaces(Root);
+        _ = workspaces.Open(JsonSerializer.SerializeToElement(new { applicationName = "Projects" }));
+        var proposal = Structured(workspaces.ProposeRepair(JsonSerializer.SerializeToElement(Request(opened, discovery))));
+        workspaces.BeforeInstall = () => SetAttachmentState("exists");
+        var applied = Structured(workspaces.Apply(JsonSerializer.SerializeToElement(new
+        {
+            proposalId = proposal.GetProperty("proposalId").GetString(),
+            expectedRevision = opened.GetProperty("revision").GetString(),
+            expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString()
+        })));
+        applied.GetProperty("success").GetBoolean().ShouldBeFalse();
+        applied.GetProperty("failureKind").GetString().ShouldEqual("RepairEvidenceDrift");
+        applied.GetProperty("installedDocuments").GetInt32().ShouldEqual(0);
+        File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldEqual(AttachedSource);
+    }
+
+    [Theory]
+    [InlineData("missing", "exists")]
+    [InlineData("exists", "missing")]
+    [InlineData("invalid-utf8", "oversized")]
+    void should_refuse_warning_state_changes_on_retained_preview_pages(string before, string after)
+    {
+        var (opened, discovery) = Discover("PLAY0478", before);
+        var proposal = Propose(opened, discovery);
+        SetAttachmentState(after);
         Failure(Call("read-proposal", new { proposalId = proposal.GetProperty("proposalId").GetString(), view = "executable-diagnostics", offset = 1 })).ShouldEqual("RepairEvidenceDrift");
     }
 
@@ -198,6 +277,110 @@ public class when_pinning_repair_evidence : given.an_authoring_connection
     }
 
     [Fact]
+    void should_load_final_candidate_sources_once_before_validation_and_pin_their_own_warnings()
+    {
+        _ = Discover("PLAY0166");
+        var workspace = McpAttachmentContents.Refresh(Root, Workspace());
+        var syntax = new ScreenplayCompiler().Parse(SourceFor("PLAY0166").Replace("Handler.cs", "Other.cs", StringComparison.Ordinal)).Value!;
+        var calls = 0;
+        var result = workspace.ProposeAuthoring(new()
+        {
+            ExpectedRevision = workspace.Revision,
+            ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
+            Formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments,
+            Validation = WorkspaceAuthoringValidation.Authoring,
+            Documents = [new ReplaceWorkspaceSyntaxDocument(workspace.Documents[0].Id, syntax)],
+            AttachmentLoader = documents =>
+            {
+                calls++;
+                documents.Single().Text.ShouldContain("Other.cs");
+                return McpAttachmentContents.Load(Root, documents);
+            }
+        });
+        calls.ShouldEqual(1);
+        result.Accepted.ShouldBeTrue();
+        result.Workspace!.AttachmentContents.ShouldBeEmpty();
+        result.Workspace.AttachmentDiagnostics.Single().Code.ShouldEqual(DiagnosticCodes.AttachmentMissing);
+        result.ExecutableDiagnostics.ShouldContain(result.Workspace.AttachmentDiagnostics.Single());
+        var proposal = new McpAuthoringProposal(workspace, result, WorkspaceAuthoringValidation.Authoring, WorkspaceAuthoringReferencePolicy.Safe);
+        var evidence = McpRepairEvidence.Pin(Root, proposal);
+        evidence.BeforeRevision.ShouldEqual(McpRepairEvidence.Revision(workspace));
+        evidence.CandidateRevision.ShouldEqual(McpRepairEvidence.Revision(result.Workspace));
+        File.WriteAllText(Path.Combine(RootPath, "Other.cs"), "now resolved");
+        (Catch.Exception(() => evidence.Verify(Root, proposal)) as McpFailure)!.FailureKind.ShouldEqual("RepairEvidenceDrift");
+    }
+
+    [Fact]
+    void should_run_only_one_fresh_selected_repair_transaction_with_candidate_loading()
+    {
+        _ = Discover("PLAY0478", "missing");
+        var workspace = McpAttachmentContents.Refresh(Root, Workspace());
+        var repair = WorkspaceDiagnosticRepairs.Find(
+            workspace,
+            workspace.Revision,
+            WorkspaceSyntaxIndex.Create(workspace).RepairableDiagnostics.First(diagnostic => diagnostic.Code == "PLAY0478")).Single();
+        var before = WorkspaceRepairVerification.TransactionCount(workspace);
+        var loads = 0;
+        var result = WorkspaceDiagnosticRepairs.ProposeRepair(workspace, "PLAY0478", repair.Subject, new()
+        {
+            ExpectedRevision = workspace.Revision,
+            ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
+            Formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments,
+            Validation = WorkspaceAuthoringValidation.Authoring,
+            AttachmentLoader = documents =>
+            {
+                loads++;
+                return McpAttachmentContents.Load(Root, documents);
+            }
+        });
+        result.Accepted.ShouldBeTrue();
+        loads.ShouldEqual(1);
+        WorkspaceRepairVerification.TransactionCount(workspace).ShouldEqual(before + 1);
+    }
+
+    [Fact]
+    void should_preserve_candidate_loader_diagnostics_without_dropping_semantic_errors()
+    {
+        _ = Discover("PLAY0166", "missing");
+        var workspace = McpAttachmentContents.Refresh(Root, Workspace());
+        var error = Diagnostic.Error("HOST0001", "Host input failure", SourceLocation.Start);
+        var result = workspace.ProposeAuthoring(new()
+        {
+            ExpectedRevision = workspace.Revision,
+            ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
+            Formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments,
+            Validation = WorkspaceAuthoringValidation.Authoring,
+            AttachmentLoader = documents =>
+            {
+                var loaded = McpAttachmentContents.Load(Root, documents);
+                return loaded with { Diagnostics = [.. loaded.Diagnostics, error] };
+            }
+        });
+        result.Accepted.ShouldBeTrue();
+        result.ExecutableReady.ShouldBeFalse();
+        result.Workspace!.AttachmentDiagnostics.SequenceEqual([.. workspace.AttachmentDiagnostics, error]).ShouldBeTrue();
+        result.Workspace.Compilation.Diagnostics.ShouldContain(error);
+        result.ExecutableDiagnostics.ShouldContain(error);
+        result.ExecutableDiagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownEvent).ShouldBeTrue();
+    }
+
+    [Fact]
+    void should_not_hide_a_candidate_loader_io_failure()
+    {
+        _ = Discover("PLAY0478");
+        var workspace = McpAttachmentContents.Refresh(Root, Workspace());
+        var failure = new IOException("Candidate loader failed");
+        Catch.Exception(() => workspace.ProposeAuthoring(new()
+        {
+            ExpectedRevision = workspace.Revision,
+            ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
+            Formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments,
+            Validation = WorkspaceAuthoringValidation.Authoring,
+            AttachmentLoader = _ => throw failure
+        })).ShouldEqual(failure);
+    }
+
+    [Fact]
     void should_invalidate_retained_pins_in_another_client_instance()
     {
         var (opened, discovery) = Discover("PLAY0478");
@@ -235,10 +418,12 @@ public class when_pinning_repair_evidence : given.an_authoring_connection
 
     static string SourceFor(string code) => code == "PLAY0166" ? AttachedSource.Replace("      event Registered\n        name String\n", "", StringComparison.Ordinal) : AttachedSource;
 
-    (JsonElement Opened, JsonElement Discovery) Discover(string code)
+    (JsonElement Opened, JsonElement Discovery) Discover(string code, string attachmentState = "exists")
     {
-        File.WriteAllText(Path.Combine(RootPath, "application.play"), SourceFor(code));
-        File.WriteAllText(Path.Combine(RootPath, "Handler.cs"), "first");
+        var source = SourceFor(code);
+        if (attachmentState == "refused") source = source.Replace("Handler.cs", "../Handler.cs", StringComparison.Ordinal);
+        File.WriteAllText(Path.Combine(RootPath, "application.play"), source);
+        SetAttachmentState(attachmentState);
         Initialize();
         var opened = Open();
         var discovery = Result("read-workspace", new { expectedRevision = opened.GetProperty("revision").GetString(), view = "repairs" });
@@ -248,6 +433,19 @@ public class when_pinning_repair_evidence : given.an_authoring_connection
         }
 
         return (opened, discovery);
+    }
+
+    void SetAttachmentState(string state)
+    {
+        var path = Path.Combine(RootPath, "Handler.cs");
+        switch (state)
+        {
+            case "missing": File.Delete(path); break;
+            case "invalid-utf8": File.WriteAllBytes(path, [0xff]); break;
+            case "directory": File.Delete(path); Directory.CreateDirectory(path); break;
+            case "oversized": File.WriteAllBytes(path, new byte[AttachmentFiles.MaximumFileBytes + 1]); break;
+            default: File.WriteAllText(path, "first"); break;
+        }
     }
 
     static object Request(JsonElement opened, JsonElement discovery)
