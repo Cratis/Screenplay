@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { AuthoringProductionKind, AuthoringProductionResolver, CommandSyntax, Diagnostic, EventSourceCatalog, OperationSyntax, parse, parsePlacedDocuments, SpecificationSyntax } from '@cratis/screenplay-compiler';
+import { AuthoringProductionKind, AuthoringProductionResolver, CommandSyntax, Diagnostic, EventSourceReadConfidence, OperationSyntax, parsePlacedDocuments, SpecificationSyntax } from '@cratis/screenplay-compiler';
 import { fenceMap, indentOf, withoutComment } from './document-context';
 import { ResponseAnalysis } from './ResponseAnalysis';
 import { EventSourceAnalysis } from './EventSourceAnalysis';
@@ -78,7 +78,7 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
     const locations = new Map(preparedDocuments.map(document => [document.path, document.locations]));
     // Put the buffer after its supplied context so duplicate real declarations are reported at
     // the current source, not silently dropped from its source-local diagnostic view.
-    const parsed = others.length === 0 && isPlacementResolved ? parse(prepared.source, path, placement) : parsePlacedDocuments([...preparedDocuments.slice(1), prepared]);
+    const parsed = parsePlacedDocuments([...preparedDocuments.slice(1), prepared]);
     const commands = new Map<number, CommandSyntax>();
     const specifications = new Map<number, SpecificationSyntax>();
     const visited = new WeakSet<object>();
@@ -101,6 +101,16 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
         }
     };
     walk(parsed.value);
+    walk(parsed.physicalEventSources);
+    // Fragment wrappers must not turn an unread original root into confidence evidence.
+    // Retain the parser's unknown-owner diagnostic at its original physical root location.
+    for (const diagnostic of parsed.diagnostics) walk(diagnostic.location);
+    const unknownFragmentExtent = parsed.diagnostics.some(diagnostic => {
+        if (!['PLAY0022', 'PLAY0024', 'PLAY0029'].includes(diagnostic.code)) return false;
+        const document = preparedDocuments.find(document => document.path === diagnostic.location.path);
+        const original = documents.find(document => document.path === diagnostic.location.path)?.source.split('\n')[diagnostic.location.line - 1];
+        return document?.locations.some(location => location.line === 0) && original !== undefined && indentOf(original) === 0;
+    });
     const diagnostics: Diagnostic[] = parsed.diagnostics.filter(diagnostic => diagnostic.location.path === path).flatMap(diagnostic => {
         walk(diagnostic.location);
         return diagnostic.location.line > 0 ? [diagnostic] : [];
@@ -185,23 +195,18 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
             });
         }
     };
-    const sourceDeclarations = parsed.value.eventSources ?? [];
-    const sourceCatalog = new EventSourceCatalog(parsed.value);
-    const resolutions = new Map<string, ReturnType<EventSourceCatalog['resolve']>>();
-    const resolve = (source: string, stream: string) => {
+    const sourceDeclarations = parsed.physicalEventSources.map(entry => entry.source);
+    const sourceCatalog = new EventSourceReadConfidence(parsed.physicalEventSources, parsed.sourceInventoryComplete && !unknownFragmentExtent);
+    const resolutions = new Map<string, ReturnType<EventSourceReadConfidence['resolve']>>();
+    const resolve = (source: string, stream?: string) => {
         const key = JSON.stringify([source, stream]);
         let result = resolutions.get(key);
         if (!result) { result = sourceCatalog.resolve(source, stream); resolutions.set(key, result); }
-        return { state: result.kind, source: result.kind === 'unique' ? result.sources[0] : undefined, stream: result.kind === 'unique' ? result.streams[0] : undefined };
+        return { ...result, source: result.state === 'unique' ? result.sources[0] : undefined, stream: result.state === 'unique' ? result.streams[0] : undefined };
     };
-    const sourceCounts = new Map<string, number>();
-    for (const source of sourceDeclarations) sourceCounts.set(source.name, (sourceCounts.get(source.name) ?? 0) + 1);
     const importedTypeReferences = new Set(parsed.value.imports.map(imported => imported.qualifiedName));
     const targets = sourceDeclarations.flatMap(source => {
-        if (sourceCounts.get(source.name) !== 1) return [];
-        const streamCounts = new Map<string, number>();
-        for (const stream of source.streams) streamCounts.set(stream.name, (streamCounts.get(stream.name) ?? 0) + 1);
-        return source.streams.filter(stream => streamCounts.get(stream.name) === 1 && !importedTypeReferences.has(`${source.name}.${stream.name}`)).map(stream => ({ name: `${source.name}.${stream.name}`, source, stream }));
+        return source.streams.filter(stream => resolve(source.name, stream.name).state === 'unique' && !importedTypeReferences.has(`${source.name}.${stream.name}`)).map(stream => ({ name: `${source.name}.${stream.name}`, source, stream }));
     });
     const sourceContexts = new Map<number, { command?: CommandSyntax; route?: AuthoredCommandRoute; source?: typeof sourceDeclarations[number]; stream?: typeof sourceDeclarations[number]['streams'][number] }>();
     const routes: AuthoredCommandRoute[] = [];

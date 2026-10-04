@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Parsing;
+using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Workspaces;
 
@@ -16,6 +17,8 @@ sealed record WorkspacePhysicalReadView(
     ImmutableArray<WorkspaceDocument> UnresolvedPlacementDocuments,
     bool IsComplete)
 {
+    internal EventSourceReadConfidence Confidence { get; } = new(Entries.Where(entry => entry.Node is EventSourceSyntax).Select(entry => ((EventSourceSyntax)entry.Node, !UnresolvedPlacementDocuments.Any(document => document.Id == entry.Handle.Document))), IsComplete);
+
     internal bool HasResolvedPlacement(WorkspaceSyntaxEntry entry) => !UnresolvedPlacementDocuments.Any(document => document.Id == entry.Handle.Document);
 
     internal static WorkspacePhysicalReadView Create(ScreenplayWorkspace workspace)
@@ -39,7 +42,7 @@ sealed record WorkspacePhysicalReadView(
             if (parsed.Value is not null) entries.AddRange(WorkspaceSyntaxIndex.PhysicalEntries(parsed.Value, workspace, document));
         }
         var unresolved = workspace.Documents.Where(document => !placements[document.Path.Value].IsPlacementResolved).ToImmutableArray();
-        var complete = unresolved.IsEmpty && !diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && diagnostic.Code != DiagnosticCodes.AmbiguousCommandStream);
+        var complete = unresolved.IsEmpty && !EventSourceReadConfidence.HasUnknownExtent(diagnostics);
         diagnostics.AddRange(workspace.Compilation.Diagnostics);
 
         return new(entries.ToImmutable(), [.. diagnostics.Distinct()], unresolved, complete);

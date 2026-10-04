@@ -18,6 +18,8 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     readonly Dictionary<(string Kind, string Name, string Scope), McpDeclaration> _scaffolds = [];
     McpQueryIndex _queries = null!;
 
+    internal EventSourceReadConfidence? SourceConfidence { get; set; }
+
     internal McpAuthoringReadiness Readiness { get; private set; } = null!;
 
     internal IEnumerable<McpDeclaration> Declarations => _declarations;
@@ -40,6 +42,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     /// <inheritdoc/>
     public override void VisitEventSource(EventSourceSyntax syntax)
     {
+        _ownership.VisitEventSource(syntax);
         Declare("EventSource", syntax.Name, syntax, syntax.Description, new { syntaxOnly = true, executionReadiness = Readiness.ExecutionReadiness(syntax) });
         _scope.Add(syntax.Name);
         base.VisitEventSource(syntax);
@@ -150,10 +153,16 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         for (var referenceIndex = 0; referenceIndex < _references.Count; referenceIndex++)
         {
             var reference = _references[referenceIndex];
-            if (reference.Role == "commandStream")
+            if (reference.Kinds.Contains("EventSource", StringComparer.Ordinal) || reference.Kinds.Contains("EventStream", StringComparer.Ordinal))
             {
-                var parent = reference.Name.Split('.')[0];
-                _references[referenceIndex] = reference with { AmbiguousSourceOwner = reference.AmbiguousSourceOwner || sources[parent].Count() > 1 };
+                var parts = reference.Name.Split('.');
+                var confidence = SourceConfidence?.Resolve(parts[0], reference.Kinds.Contains("EventStream", StringComparer.Ordinal) ? parts.ElementAtOrDefault(1) ?? string.Empty : null);
+                _references[referenceIndex] = reference with
+                {
+                    AmbiguousSourceOwner = reference.AmbiguousSourceOwner || sources[parts[0]].Count() > 1 || confidence?.State == "ambiguous",
+                    IncompleteSourceOwner = confidence?.State == "incomplete",
+                    SourceConfidenceReasons = confidence?.Reasons ?? []
+                };
             }
         }
         for (var index = 0; index < _references.Count; index++)

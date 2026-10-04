@@ -123,7 +123,8 @@ internal sealed partial class McpWorkspaces
                 authoringDiagnosticsCount = inventory.View.Diagnostics.Length,
                 authoringDiagnosticsView = "event-source-diagnostics",
                 unresolvedPlacementCount = inventory.View.UnresolvedPlacementDocuments.Length,
-                page = McpPaging.Page(values, arguments, workspace.Revision.ToString())
+                detailShape = view.EndsWith("details", StringComparison.Ordinal) ? "compact-header-v1" : null,
+                page = McpPaging.BoundedSourcePage(values, arguments, workspace.Revision.ToString())
             });
         }
 

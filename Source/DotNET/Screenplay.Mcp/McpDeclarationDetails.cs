@@ -128,8 +128,20 @@ static class McpDeclarationDetails
         var address = McpJson.RequiredString(arguments, "address");
         var kind = McpJson.RequiredString(arguments, "kind");
         var matches = snapshot.Index.Find(address, kind);
-        if (kind == "EventStream" && matches.Length == 1 && snapshot.Index.Find(string.Join('.', matches[0].Scope), "EventSource").Length != 1)
-            throw new McpFailure("AmbiguousDeclaration: a stream's physical parent source must be unique.");
+        if (kind == "EventSource" || kind == "EventStream")
+        {
+            var parts = address.Split('.');
+            var stream = kind == "EventStream" ? parts.ElementAtOrDefault(1) ?? string.Empty : null;
+            var confidence = snapshot.Index.SourceConfidence?.Resolve(parts[0], stream);
+            if (confidence?.State == "ambiguous" || confidence?.State == "incomplete")
+            {
+                var candidates = confidence.Sources.Select(source => new { source.Name, source.Location });
+                throw new McpFailure($"{(confidence.State == "ambiguous" ? "AmbiguousDeclaration" : "IncompleteSource")}: {string.Join(' ', confidence.Reasons)} Physical candidates: {JsonSerializer.Serialize(candidates)}")
+                {
+                    FailureKind = confidence.State == "ambiguous" ? "AmbiguousDeclaration" : "IncompleteSource"
+                };
+            }
+        }
         return matches.Length == 1 ? matches[0] : throw new McpFailure($"Declaration target must identify exactly one logical declaration; found {matches.Length}.");
     }
 

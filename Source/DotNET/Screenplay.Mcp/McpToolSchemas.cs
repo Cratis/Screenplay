@@ -32,6 +32,7 @@ static class McpToolSchemas
 
         if (tool.Name == "read-workspace")
         {
+            properties["view"]!["description"] = "Source detail views return compact-header-v1, not full syntax: header metadata sizes and AST/source read pointers, then actual-parent child pages. Source pages enforce item and serialized-byte bounds; continue from nextOffset.";
             schema["if"] = new JsonObject { ["properties"] = new JsonObject { ["view"] = new JsonObject { ["const"] = "executable-model" } }, ["required"] = new JsonArray("view") };
             schema["then"] = new JsonObject { ["properties"] = new JsonObject { ["limit"] = Limit(192 * 1024) } };
             schema["else"] = new JsonObject { ["properties"] = new JsonObject { ["limit"] = Limit(200) } };

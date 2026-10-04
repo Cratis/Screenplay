@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Text;
 using System.Text.Json;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
@@ -13,59 +14,55 @@ sealed class McpEventSourceInventory
 {
     readonly ScreenplayWorkspace _workspace;
     readonly Dictionary<WorkspaceNodeHandle, WorkspaceSyntaxEntry> _entries;
-    readonly Dictionary<SyntaxNode, WorkspaceSyntaxEntry> _nodes;
-    readonly Dictionary<string, int> _sourceCounts;
-    readonly Dictionary<(string Source, string Stream), int> _streamCounts;
 
     internal McpEventSourceInventory(ScreenplayWorkspace workspace, WorkspacePhysicalReadView view)
     {
         _workspace = workspace;
         View = view;
         _entries = view.Entries.ToDictionary(entry => entry.Handle);
-        var comparer = (IEqualityComparer<SyntaxNode>)ReferenceEqualityComparer.Instance;
-        _nodes = view.Entries.GroupBy(entry => entry.Node, comparer).Where(group => group.Count() == 1)
-            .ToDictionary(group => group.Key, group => group.Single(), comparer);
         Entries = [.. view.Entries.Where(entry => entry.Node is EventSourceSyntax or EventStreamSyntax)];
-        _sourceCounts = Entries.Select(entry => entry.Node).OfType<EventSourceSyntax>().GroupBy(source => source.Name, StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
-        _streamCounts = Entries.Where(entry => entry.Node is EventStreamSyntax).GroupBy(entry => (Source: Scope(entry).FirstOrDefault() ?? string.Empty, Stream: ((EventStreamSyntax)entry.Node).Name)).ToDictionary(group => group.Key, group => group.Count());
     }
 
     internal WorkspaceSyntaxEntry[] Entries { get; }
 
     internal WorkspacePhysicalReadView View { get; }
 
-    internal string? Key(WorkspaceSyntaxEntry entry) => View.HasResolvedPlacement(entry) ? JsonSerializer.Serialize(new
+    internal string? Key(WorkspaceSyntaxEntry entry) => View.HasResolvedPlacement(entry) && Name(entry).Length > 0 ? JsonSerializer.Serialize(new
     {
         application = _workspace.IdentityCatalog.Application.ToString(), kind = Kind(entry), scope = Scope(entry), name = Name(entry)
     }) : null;
 
-    internal bool AmbiguousOwner(WorkspaceSyntaxEntry entry)
-    {
-        var scope = Scope(entry);
-        if (entry.Node is EventStreamSyntax && scope.Length != 1) return true;
-        var parent = entry.Node is EventSourceSyntax source ? source.Name : scope[0];
-        return _sourceCounts.GetValueOrDefault(parent) != 1 || (entry.Node is EventStreamSyntax stream && _streamCounts.GetValueOrDefault((parent, stream.Name)) != 1);
-    }
+    internal EventSourceReadResolution Confidence(WorkspaceSyntaxEntry entry) => entry.Node is EventSourceSyntax source
+        ? View.Confidence.Resolve(source.Name)
+        : View.Confidence.Resolve(Scope(entry).FirstOrDefault() ?? string.Empty, ((EventStreamSyntax)entry.Node).Name);
+
+    internal bool AmbiguousOwner(WorkspaceSyntaxEntry entry) => Confidence(entry).State == "ambiguous";
 
     internal object Summary(WorkspaceSyntaxEntry entry) => new
     {
         authoringKey = Key(entry), keyKind = "logical-authoring-only", kind = Kind(entry), name = Name(entry), scope = Scope(entry),
-        handle = McpAstHandles.Describe(entry.Handle), entry.Location, ownership = Ownership(entry),
+        handle = McpAstHandles.Describe(entry.Handle), entry.Location, ownership = Ownership(entry), confidenceReasons = Confidence(entry).Reasons,
         placementResolved = View.HasResolvedPlacement(entry), inventoryComplete = View.IsComplete, readOnly = true,
         identifier = (entry.Node as EventSourceSyntax)?.Identifier, streamId = (entry.Node as EventStreamSyntax)?.StreamId,
-        id = entry.Node is EventSourceSyntax source ? source.Id : ((EventStreamSyntax)entry.Node).Id,
+        id = Inline(Pin(entry)),
+        description = Inline(Description(entry)),
+        metadata = Metadata(entry),
         syntaxOnly = true, executionAvailable = false, executionReadiness = "Unavailable until ESM v10 (PLAY0268). Pins are rename-only authored metadata, not semantic identities."
     };
 
     internal IEnumerable<object> Details(WorkspaceSyntaxEntry entry)
     {
-        yield return new { kind = "declaration", declaration = Summary(entry), syntax = entry.Node };
-        if (entry.Node is EventSourceSyntax source)
+        yield return new
         {
-            foreach (var stream in source.Streams)
-            {
-                if (_nodes.TryGetValue(stream, out var child)) yield return new { kind = "stream", declaration = Summary(child) };
-            }
+            kind = "declaration", detailShape = "compact-header-v1", declaration = Summary(entry),
+            streamCount = entry.Node is EventSourceSyntax source ? source.Streams.Count() : 0,
+            description = Inline(Description(entry)),
+            fullSyntax = new { tool = "read-ast", expectedRevision = _workspace.Revision.ToString(), documentId = entry.Handle.Document.ToString(), path = entry.Handle.Path, includeContent = true },
+            originalSource = new { tool = "read-document", path = entry.Location.Path, bytePaging = true, revisionContract = "expectedSourceRevision" }
+        };
+        foreach (var child in Entries.Where(child => child.Node is EventStreamSyntax && child.Parent == entry.Handle).OrderBy(child => child.Index))
+        {
+            yield return new { kind = "stream", declaration = Summary(child) };
         }
     }
 
@@ -85,14 +82,25 @@ sealed class McpEventSourceInventory
         }
     }
 
+    static string? Pin(WorkspaceSyntaxEntry entry) => entry.Node is EventSourceSyntax source ? source.Id : ((EventStreamSyntax)entry.Node).Id;
+    static string? Description(WorkspaceSyntaxEntry entry) => entry.Node is EventSourceSyntax source ? source.Description : ((EventStreamSyntax)entry.Node).Description;
+    static string? Inline(string? value) => value is not null && Encoding.UTF8.GetByteCount(value) > 4096 ? null : value;
+
+    static object Metadata(WorkspaceSyntaxEntry entry) => new
+    {
+        idBytes = Pin(entry) is { } id ? Encoding.UTF8.GetByteCount(id) : 0,
+        descriptionBytes = Description(entry) is { } description ? Encoding.UTF8.GetByteCount(description) : 0,
+        idInline = Inline(Pin(entry)) is not null,
+        descriptionInline = Inline(Description(entry)) is not null,
+        omittedValues = "Values over 4096 UTF-8 bytes are not inlined. Read the exact original document with read-document byte pages, or explicitly request full AST content."
+    };
+
     static string Kind(WorkspaceSyntaxEntry entry) => entry.Node is EventSourceSyntax ? "EventSource" : "EventStream";
     static string Name(WorkspaceSyntaxEntry entry) => entry.Node is EventSourceSyntax source ? source.Name : ((EventStreamSyntax)entry.Node).Name;
 
     string Ownership(WorkspaceSyntaxEntry entry)
     {
-        if (AmbiguousOwner(entry)) return "ambiguous";
-
-        return View.IsComplete ? "unique" : "incomplete";
+        return Confidence(entry).State;
     }
 
     string[] Scope(WorkspaceSyntaxEntry entry)

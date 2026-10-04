@@ -61,13 +61,15 @@ export function eventSourceHover(lines: string[], line: number, start: number, e
     const analysis = analyzeEventSources(lines, symbols);
     const reference = eventSourceReferenceAt(lines, line, start, end, symbols);
     if (reference) return reference.resolution.source && reference.resolution.stream ? eventSourceDetails(reference.resolution.source, reference.resolution.stream)
-        : `Unresolved or ambiguous physical stream owner; no route selected. ${eventSourceAvailability}`;
+        : `Physical stream owner: ${reference.resolution.state}; no route selected. ${'reasons' in reference.resolution ? reference.resolution.reasons.join(' ') : ''} ${eventSourceAvailability}`;
     const context = analysis.contexts.get(line);
     const declaration = context?.stream ?? context?.source;
     if (declaration) {
         const name = eventSourceIdentifier(declaration.location, declaration.name, lines.join('\n'));
-        if (name?.line === line + 1 && start === name.column && end === start + declaration.name.length && context?.source)
-            return eventSourceDetails(context.source, context.stream);
+        if (name?.line === line + 1 && start === name.column && end === start + declaration.name.length && context?.source) {
+            const confidence = analysis.resolve(context.source.name, context.stream?.name);
+            return eventSourceDetails(context.source, context.stream) + (confidence.state === 'unique' ? '' : `\n\nPhysical ownership: ${confidence.state}. ${confidence.reasons.join(' ')}`);
+        }
     }
     if (context?.route?.streamId && context.command) {
         const mapping = context.route.streamId;

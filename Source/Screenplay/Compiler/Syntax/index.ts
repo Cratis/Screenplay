@@ -6,6 +6,7 @@ export * from './Declarations';
 export * from './EventDeclarations';
 export * from './EventSources';
 export * from './EventSourceCatalog';
+export * from './EventSourceReadConfidence';
 export * from './Operations';
 export * from './AuthoringProductionResolver';
 export * from './ProductionDestinations';

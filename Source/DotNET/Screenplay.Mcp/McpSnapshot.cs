@@ -67,6 +67,17 @@ sealed class McpSnapshot : IPlayFiles
             _documentsByPath.Keys,
             new InMemoryPlayDocumentSource(_documentsByPath.ToDictionary(entry => entry.Key, entry => entry.Value.Text, StringComparer.Ordinal)));
         var resolvedPaths = placements.Where(document => document.IsPlacementResolved).Select(document => document.Path).ToHashSet(StringComparer.Ordinal);
+        var physical = _compiler.Documents.Select(document =>
+        {
+            var resolved = document.Path is not null && resolvedPaths.Contains(document.Path);
+
+            // Never parse a conflicting placement as a guessed owner. Read its literal root
+            // to retain physical source candidates, independently of navigation authority.
+            var result = resolved ? document.Result : new ScreenplayCompiler().Parse(_documentsByPath[document.Path!].Text, document.Path);
+            return (Result: result, Resolved: resolved);
+        }).ToArray();
+        var complete = placements.All(document => document.IsPlacementResolved) && physical.All(document => !EventSourceReadConfidence.HasUnknownExtent(document.Result.Diagnostics));
+        index.SourceConfidence = new(physical.SelectMany(document => (document.Result.Value?.EventSources ?? []).Select(source => (source, document.Resolved))), complete);
         var applications = _compiler.Documents.Where(document => document.Path is not null && resolvedPaths.Contains(document.Path))
             .Select(document => document.Result.Value).OfType<ApplicationSyntax>().ToArray();
 
@@ -80,9 +91,10 @@ sealed class McpSnapshot : IPlayFiles
             Diagnostics.SourceLocation.Start)
         {
             Systems = applications.SelectMany(application => application.Systems),
-            EventSources = applications.SelectMany(application => application.EventSources)
+            EventSources = physical.SelectMany(document => document.Result.Value?.EventSources ?? [])
         });
-        foreach (var application in applications) index.VisitApplication(application);
+        foreach (var application in applications) index.VisitApplication(application with { EventSources = [] });
+        foreach (var source in physical.SelectMany(document => document.Result.Value?.EventSources ?? [])) index.VisitEventSource(source);
 
         index.Complete(compilation.Value);
         return index;

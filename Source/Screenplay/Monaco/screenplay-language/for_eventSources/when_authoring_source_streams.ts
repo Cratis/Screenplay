@@ -89,8 +89,25 @@ describe('when authoring source streams', () => {
     });
     it('should keep unresolved placements out of confident navigation', () => {
         const application = { ...symbols(), authoringDocuments: [{ path: 'declarations.play', source: declarations, placement: ['M', 'F'], isPlacementResolved: false }] };
-        expect(analyzeEventSources(command.split('\n'), application).declarations).toEqual([]);
+        expect(analyzeEventSources(command.split('\n'), application).declarations.map(source => source.name)).toEqual(['Account']);
+        expect(analyzeEventSources(command.split('\n'), application).resolve('Account', 'Transactions').state).toBe('incomplete');
         expect(eventSourceReferenceAt(command.split('\n'), 4, 18, 30, application)?.target).toBeUndefined();
+    });
+    it('should disclose conflicting placements and unreadable parser extent on every route surface', () => {
+        for (const unknown of [false, true]) {
+            const application = { ...symbols(), authoringDocuments: [
+                ...symbols().authoringDocuments,
+                { path: 'other.play', source: unknown ? 'unknown block\n  eventsource Account\n    stream Transactions' : 'eventsource Account\n  stream Other', isPlacementResolved: unknown }
+            ] };
+            const lines = command.split('\n');
+            const analysis = analyzeEventSources(lines, application);
+            expect(analysis.resolve('Account', 'Transactions').state).toBe(unknown ? 'incomplete' : 'ambiguous');
+            expect(analysis.resolve('Account', 'Transactions').reasons.length).toBeGreaterThan(0);
+            expect(eventSourceReferenceAt(lines, 4, 18, 30, application)?.target).toBeUndefined();
+            expect(eventSourceHover(lines, 4, 18, 30, application)).toContain(unknown ? 'incomplete' : 'ambiguous');
+            expect(complete(command.replace('Account.Transactions', 'Account.Tr'), 'Account.Tr', application)).toEqual([]);
+            expect(analysis.resolve('Foreign.Account', 'Transactions').state).not.toBe('unique');
+        }
     });
     it('should retain declaration order, case sensitivity and authored UTF-16 spans with tabs and comments', () => {
         for (const documents of [symbols().authoringDocuments, [...symbols().authoringDocuments].reverse()]) {
@@ -108,6 +125,13 @@ describe('when authoring source streams', () => {
             const current = 'system Mailer\ncommand C\n  ' + production + '\n    stream Account.Tr';
             expect(complete(current, 'stream Account.Tr', symbols())).toBeNull();
         }
+    });
+    it('should retain unknown original root extent around a normalized command fragment', () => {
+        const lines = (declarations + 'unknown block\n  eventsource Account\n    stream Other\n' + command).split('\n');
+        const analysis = analyzeEventSources(lines);
+        expect(analysis.declarations.map(source => source.name)).toEqual(['Account']);
+        expect(analysis.resolve('Account', 'Transactions').state).toBe('incomplete');
+        expect(analysis.targets).toEqual([]);
     });
     it('should share one cached analysis across source consumers', () => {
         const lines = source.split('\n');

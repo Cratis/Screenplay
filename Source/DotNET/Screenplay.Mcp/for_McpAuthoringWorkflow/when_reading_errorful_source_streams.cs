@@ -71,6 +71,33 @@ public class when_reading_errorful_source_streams : given.an_authoring_connectio
         File.ReadAllText(Path.Combine(RootPath, reverse ? "sources.play" : "duplicate.play")).ShouldEqual(errorful);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    void should_share_physical_confidence_with_generic_details_and_reference_edges(bool conflictingPlacement)
+    {
+        const string clean = "eventsource Account\n  stream Transactions\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        stream Account.Transactions\n";
+        File.WriteAllText(Path.Combine(RootPath, "application.play"), clean);
+        if (conflictingPlacement)
+        {
+            File.WriteAllText(Path.Combine(RootPath, "imports.play"), "module One\n  import \"other.play\"\nmodule Two\n  import \"other.play\"\n");
+            File.WriteAllText(Path.Combine(RootPath, "other.play"), "eventsource Account\n  stream Other\n");
+        }
+        else
+        {
+            File.WriteAllText(Path.Combine(RootPath, "other.play"), "unknown block\n  eventsource Account\n    stream Transactions\n");
+        }
+        Initialize();
+        var revision = Open().GetProperty("revision").GetString();
+        Page("event-streams", revision)[0].GetProperty("ownership").GetString().ShouldEqual(conflictingPlacement ? "ambiguous" : "incomplete");
+        var analysis = new McpSnapshot(Root.Read());
+        using var args = System.Text.Json.JsonDocument.Parse("{\"address\":\"Account.Transactions\",\"kind\":\"EventStream\"}");
+        Catch.Exception(() => McpDeclarationDetails.Read(analysis, args.RootElement)).Message.ShouldContain(conflictingPlacement ? "AmbiguousDeclaration" : "IncompleteSource");
+        var reference = analysis.Index.References.Single(reference => reference.Role == "commandStream");
+        new McpReferenceEdge(reference, analysis.Index.Resolve(reference)).Resolution.ShouldEqual(conflictingPlacement ? "ambiguous" : "incomplete");
+        analysis.Index.Resolve(new("Foreign.Account.Transactions", ["EventStream"], [], Cratis.Screenplay.Diagnostics.SourceLocation.Start)).ShouldBeEmpty();
+    }
+
     [Fact]
     void should_disclose_incomplete_extent_instead_of_a_false_unique_owner()
     {

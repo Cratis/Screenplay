@@ -12,6 +12,8 @@ import { validateResponses } from '../Parsing/ResponseValidator';
 import { validateOperations } from '../Parsing/OperationValidator';
 import { CompilationResult, parseForAuthoring } from '../ScreenplayCompiler';
 import { ApplicationSyntax } from '../Syntax/Structure';
+import { EventSourceSyntax } from '../Syntax/EventSources';
+import { EventSourceReadConfidence } from '../Syntax/EventSourceReadConfidence';
 import { mergeDocuments } from './PlayFolderMerge';
 import { inMemoryDocumentSource, PlacedPlayDocument, PlayDocumentSource } from './PlayDocumentSource';
 import { normalizePlayPath } from './PlayGlob';
@@ -40,12 +42,15 @@ export function assembleApplication(roots: Iterable<string>, source: PlayDocumen
 
 // Parses documents whose source identities and placements are already known (for example unsaved
 // editor buffers), then validates contracts against the merged declaration inventory.
-export function parsePlacedDocuments(documents: readonly PlacedPlayDocument[]): CompilationResult<ApplicationSyntax> {
+export function parsePlacedDocuments(documents: readonly PlacedPlayDocument[]): CompilationResult<ApplicationSyntax> & {
+    readonly physicalEventSources: readonly { source: EventSourceSyntax; placementResolved: boolean }[];
+    readonly sourceInventoryComplete: boolean;
+} {
     const candidates = CommandStreamCandidates.capturePlaced(documents.filter(document => document.isPlacementResolved !== false).map(document => ({ lines: splitLines(document.source, false, document.path), placement: document.placement })));
-    const parsed = documents.map(document => {
-        const result = parseForAuthoring(document.source, document.path, document.placement, false, candidates);
-        return document.isPlacementResolved === false ? { ...result, value: { ...result.value, eventSources: [] } } : result;
-    });
+    const physical = documents.map(document => parseForAuthoring(document.source, document.path, document.isPlacementResolved === false ? [] : document.placement, false, candidates));
+    const physicalEventSources = physical.flatMap((result, index) => (result.value.eventSources ?? []).map(source => ({ source, placementResolved: documents[index].isPlacementResolved !== false })));
+    const sourceInventoryComplete = documents.every(document => document.isPlacementResolved !== false) && physical.every(result => !EventSourceReadConfidence.hasUnknownExtent(result.diagnostics));
+    const parsed = physical.map((result, index) => documents[index].isPlacementResolved === false ? { ...result, value: { ...result.value, eventSources: [] } } : result);
     const merged = mergeDocuments(parsed);
     const context = new ParserContext(new LineReader([]));
     validateEventSources(merged.value, context);
@@ -55,7 +60,7 @@ export function parsePlacedDocuments(documents: readonly PlacedPlayDocument[]): 
     const existing = merged.diagnostics;
     const reported = new Set(existing.map(diagnosticKey));
     const all = [...existing, ...context.diagnostics.filter(diagnostic => !reported.has(diagnosticKey(diagnostic)))];
-    return { ...merged, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error') };
+    return { ...merged, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error'), physicalEventSources, sourceInventoryComplete };
 }
 
 function diagnosticKey(diagnostic: Diagnostic): string {
