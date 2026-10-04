@@ -50,6 +50,22 @@ public class when_authoring_source_streams : given.a_compiler
         _compiler.Compile(source.Replace("month Month", "month Int", StringComparison.Ordinal) + Route).Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0504").ShouldBeTrue();
     }
 
+    [Theory]
+    [InlineData("ß")]
+    [InlineData("\u0301")]
+    [InlineData("\u0661")]
+    [InlineData("\u203F")]
+    void should_keep_supported_unicode_identifier_continuations_and_exact_utf16_route_spans(string suffix)
+    {
+        var source = Prefix.Replace("Account", "Account" + suffix, StringComparison.Ordinal).Replace("Month", "Month" + suffix, StringComparison.Ordinal).Replace("Transactions", "Transactions" + suffix, StringComparison.Ordinal).Replace("month", "month" + suffix, StringComparison.Ordinal) +
+            Route.Replace("Account", "Account" + suffix, StringComparison.Ordinal).Replace("Transactions", "Transactions" + suffix, StringComparison.Ordinal).Replace("month", "month" + suffix, StringComparison.Ordinal);
+        var result = _compiler.Compile(source);
+        result.Success.ShouldBeTrue();
+        var route = Command(result.Value!).Stream!;
+        route.ReferenceLength.ShouldEqual($"Account{suffix}.Transactions{suffix}".Length);
+        route.StreamId!.SourceLength.ShouldEqual($"month{suffix}".Length);
+    }
+
     [Fact]
     void should_leave_unknown_import_shapes_unresolved() => _compiler.Compile("import Contracts.Unknown\neventsource A\n  identifier Unknown\n  stream S\n    streamId Unknown").Diagnostics.ShouldBeEmpty();
 

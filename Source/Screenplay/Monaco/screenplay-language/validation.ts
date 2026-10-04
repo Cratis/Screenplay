@@ -17,6 +17,7 @@ import {
     knownTypeNames,
     mergeSymbols,
     scanDocument,
+    symbolsForBuffer,
 } from './symbols';
 import { fileImportOn, isFileImportLine } from './file-imports';
 
@@ -146,7 +147,8 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
     const fences = fenceMap(lines);
     const scanned = scanDocument(lines);
     const application = context.application ?? mergeSymbols();
-    const analysis = responseAnalysis(lines, application.authoringDocuments ?? application.authoringSources, context.placement, context.path);
+    const input = symbolsForBuffer(lines, { ...application, authoringPath: context.path ?? application.authoringPath, authoringPlacement: context.placement ?? application.authoringPlacement });
+    const analysis = responseAnalysis(lines, input.authoringDocuments ?? input.authoringSources?.filter(source => source !== lines.join('\n')), input.authoringPlacement, input.authoringPath, input.authoringPlacementResolved);
     const routeLines = new Set(analysis.eventSources.routes.map(route => route.location.line - 1));
     const symbols = { ...scanned, commands: scanned.commands.map(command => ({ ...command,
         properties: command.properties.filter(property => !routeLines.has(property.line)),

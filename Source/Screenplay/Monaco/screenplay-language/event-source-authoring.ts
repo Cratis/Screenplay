@@ -5,13 +5,20 @@ import { CompletionEntry } from './completion-items';
 import { fenceMap, indentOf, withoutComment } from './document-context';
 import { AuthoredEventSource } from './AuthoredEventSource';
 import { AuthoredStream } from './AuthoredStream';
-import { DocumentSymbols } from './symbols';
+import { pattern } from '@cratis/screenplay-compiler';
+import { DocumentSymbols, symbolsForBuffer } from './symbols';
 import { responseAnalysis } from './response-analysis';
 import { typeReferenceText } from './TypeReferenceSymbol';
 
 export const eventSourceAvailability = 'Syntax-only; execution unavailable until ESM v10 (PLAY0268). Authored classification does not supply an identity destination. No semantic IDs or automatic identity refactors.';
 
+const routePrefix = pattern('^\\s*stream\\s+(?:[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)?\\.?)?$');
+const keyPrefix = pattern('^\\s*streamId\\s*=\\s*([\\w.]*)$');
+const identifierTypePrefix = pattern('^\\s*identifier\\s+[\\w.]*$');
+const streamTypePrefix = pattern('^\\s*streamId\\s+[\\w.]*$');
+
 export function analyzeEventSources(lines: string[], symbols?: DocumentSymbols) {
+    symbols = symbolsForBuffer(lines, symbols);
     return responseAnalysis(lines, symbols?.authoringDocuments ?? symbols?.authoringSources?.filter(source => source !== lines.join('\n')) ?? [], symbols?.authoringPlacement, symbols?.authoringPath, symbols?.authoringPlacementResolved).eventSources;
 }
 
@@ -50,6 +57,7 @@ export function eventSourceIdentifier(location: { line: number; column: number; 
 }
 
 export function eventSourceHover(lines: string[], line: number, start: number, end: number, symbols?: DocumentSymbols): string | null {
+    symbols = symbolsForBuffer(lines, symbols);
     const analysis = analyzeEventSources(lines, symbols);
     const reference = eventSourceReferenceAt(lines, line, start, end, symbols);
     if (reference) return reference.resolution.source && reference.resolution.stream ? eventSourceDetails(reference.resolution.source, reference.resolution.stream)
@@ -97,12 +105,13 @@ export function eventSourceHover(lines: string[], line: number, start: number, e
 }
 
 export function eventSourceCompletions(lines: string[], line: number, before: string, symbols: DocumentSymbols): CompletionEntry[] | null {
-    if (fenceMap(lines)[line] || withoutComment(before).length < before.length) return null;
+    // .NET word characters are UTF-16 code units; supplementary letters are not identifiers.
+    if (fenceMap(lines)[line] || withoutComment(before).length < before.length || /[\uD800-\uDFFF]/.test(before)) return null;
     const analysis = analyzeEventSources(lines, symbols);
     const context = analysis.contexts.get(line);
     const indent = before.trim() ? indentOf(lines[line]) : before.length;
     if (context?.command && indent > indentOf(lines[context.command.location.line - 1]) &&
-        (!context.route || indent <= indentOf(lines[context.route.location.line - 1])) && /^\s*stream\s+[\w.]*$/.test(before)) {
+        (!context.route || indent <= indentOf(lines[context.route.location.line - 1])) && routePrefix.test(before)) {
         // A property named stream remains legal. Only offer routes whose complete-input
         // candidates have no known value-type competitor; never silently rewrite ambiguity.
         const typed = responseAnalysis(lines, symbols.authoringDocuments ?? symbols.authoringSources?.filter(source => source !== lines.join('\n')) ?? [], symbols.authoringPlacement, symbols.authoringPath);
@@ -113,14 +122,14 @@ export function eventSourceCompletions(lines: string[], line: number, before: st
         return analysis.targets.filter(target => !names.has(target.name) && (!qualified.includes('.') || target.name.startsWith(qualified.slice(0, qualified.lastIndexOf('.') + 1))))
             .map(target => ({ label: target.name, insertText: qualified.includes('.') ? target.stream.name : target.name, documentation: eventSourceDetails(target.source, target.stream) }));
     }
-    if (context?.route && context.command && indent > indentOf(lines[context.route.location.line - 1]) && /^\s*streamId\s*=\s*[\w.]*$/.test(before)) {
+    if (context?.route && context.command && indent > indentOf(lines[context.route.location.line - 1]) && keyPrefix.test(before)) {
         const target = analysis.resolve(context.route.eventSource, context.route.stream).stream?.streamId;
         if (!target) return [];
         const typed = responseAnalysis(lines, symbols.authoringDocuments ?? symbols.authoringSources?.filter(source => source !== lines.join('\n')) ?? [], symbols.authoringPlacement, symbols.authoringPath);
         const concepts = typed.operations.concepts.filter(concept => concept.name === target.name);
         const supported = ['String', 'Uuid'].includes(target.name) || concepts.length === 1 && ['String', 'Uuid', 'Int'].includes(concepts[0].type) && concepts[0].values.length === 0;
         if (!supported || target.isOptional || target.isCollection) return [];
-        const parts = before.match(/=\s*([\w.]*)$/)![1].split('.');
+        const parts = keyPrefix.exec(before)![1].split('.');
         let properties = context.command.properties;
         for (const part of parts.slice(0, -1)) {
             const matches = properties.filter(property => property.name === part);
@@ -134,7 +143,7 @@ export function eventSourceCompletions(lines: string[], line: number, before: st
     }
     if (context?.source && indent > indentOf(lines[context.source.location.line - 1])) {
         const ownsStream = context.stream && indent > indentOf(lines[context.stream.location.line - 1]);
-        if ((ownsStream ? /^\s*streamId\s+[\w.]*$/ : /^\s*identifier\s+[\w.]*$/).test(before)) {
+        if ((ownsStream ? streamTypePrefix : identifierTypePrefix).test(before)) {
             const typed = responseAnalysis(lines, symbols.authoringDocuments ?? [], symbols.authoringPlacement, symbols.authoringPath);
             const streamId = /^\s*streamId\b/.test(before);
             return [...(streamId ? ['String', 'Uuid'] : ['String', 'Uuid', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime']), ...typed.operations.concepts.filter(concept => !streamId || ['String', 'Uuid', 'Int'].includes(concept.type) && concept.values.length === 0).map(concept => concept.name)]

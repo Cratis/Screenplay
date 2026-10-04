@@ -6,6 +6,7 @@ export * from './Diagnostics';
 export * from './Syntax';
 export * from './ScreenplayCompiler';
 export { eventBodyReservedWords } from './Text/ReservedWords';
+export { pattern } from './Text/patterns';
 export * from './Files/PlayFolderMerge';
 export * from './Files/PlayApplicationAssembly';
 export * from './Files/PlayDocumentSource';

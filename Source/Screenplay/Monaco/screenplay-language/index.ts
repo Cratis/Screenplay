@@ -96,7 +96,7 @@ export function register(monaco: Monaco, options: LanguageServiceOptions = {}): 
     monaco.languages.registerCodeActionProvider(languageId, createCodeActionProvider());
     monaco.editor.defineTheme(screenplayDarkThemeName, screenplayDark);
     monaco.editor.defineTheme(screenplayLightThemeName, screenplayLight);
-    attachDiagnostics(monaco);
+    attachDiagnostics(monaco, options);
 }
 
 export {
@@ -133,7 +133,7 @@ export type { FileReference } from './file-references';
 export { fileImportOn, fileImports, importablePaths, isFileImportLine } from './file-imports';
 export type { FileImport } from './file-imports';
 export type { CompletionOptions } from './completions';
-export { builtInTriggerNames, knownEventNames, knownTriggerNames, knownTypeNames, mergeSymbols, scanDocument } from './symbols';
+export { builtInTriggerNames, knownEventNames, knownTriggerNames, knownTypeNames, mergeSymbols, scanDocument, symbolsForBuffer } from './symbols';
 export type {
     CommandSymbol,
     ConceptSymbol,

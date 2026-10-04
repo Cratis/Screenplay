@@ -10,13 +10,12 @@ import {
     knownEventNames,
     knownTriggerNames,
     languageId,
-    mergeSymbols,
+    symbolsForBuffer,
     operationCompletions,
     planCompletions,
     primitiveTypes,
     producesItems,
     responseCompletions,
-    scanDocument,
     typeReferenceSymbol,
     typeReferenceText,
 } from '@cratis/screenplay-language';
@@ -50,7 +49,7 @@ const providerFor = (index: ApplicationIndex): vscode.CompletionItemProvider => 
         const textBefore = currentLine.substring(0, position.character);
         const file = index.fileOf(document.uri);
         const application = file?.application.symbolsExcept(file.path);
-        const symbols = { ...mergeSymbols(scanDocument(lines), application ?? mergeSymbols()), authoringPath: application?.authoringPath, authoringPlacement: application?.authoringPlacement, authoringPlacementResolved: application?.authoringPlacementResolved };
+        const symbols = symbolsForBuffer(lines, application);
         const responseEntries = eventSourceCompletions(lines, position.line, textBefore, symbols) ?? operationCompletions(lines, position.line, textBefore, symbols) ?? responseCompletions(lines, position.line, textBefore, symbols);
         const plan = responseEntries === null ? planCompletions(lines, position.line, textBefore) : { kind: 'entries' as const, entries: responseEntries };
         if (plan.kind === 'none') return [];
