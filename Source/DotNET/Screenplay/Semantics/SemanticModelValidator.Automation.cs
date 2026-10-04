@@ -220,7 +220,7 @@ internal static partial class SemanticModelValidator
                 }
 
                 ValidateTypeReference(destinationType);
-                if (produced.Destination is SemanticValueExpression literal)
+                if (produced.Destination is SemanticValueExpression { Kind: SemanticExpressionKind.Value } literal)
                 {
                     ValidateValue(literal.Value, destinationType, "reaction event source");
                 }
@@ -342,11 +342,12 @@ internal static partial class SemanticModelValidator
                     throw new InvalidSemanticContract($"Capture '{capture}' maps an unresolved or duplicated event property.");
                 }
 
+                if (mapping.Value is SemanticEventContextExpression contextValue) ValidateTypeReference(contextValue.Type);
                 var valid = (mapping.Field, mapping.Value) switch
                 {
                     ({ Length: > 0 }, null) => true,
-                    (null, SemanticValueExpression literal) => Valid(() => ValidateValue(literal.Value, target.Type, "capture mapping")),
-                    (null, SemanticEventContextExpression { Value: SemanticEventContextValueKind.Occurred } context) =>
+                    (null, SemanticValueExpression { Kind: SemanticExpressionKind.Value } literal) => Valid(() => ValidateValue(literal.Value, target.Type, "capture mapping")),
+                    (null, SemanticEventContextExpression { Kind: SemanticExpressionKind.EventContext, Value: SemanticEventContextValueKind.Occurred } context) =>
                         SameType(context.Type, target.Type) && UnderlyingPrimitive(target.Type) == SemanticPrimitiveType.DateTime,
                     _ => false
                 };
@@ -442,6 +443,7 @@ internal static partial class SemanticModelValidator
             foreach (var field in record.Fields)
             {
                 RequireObjects(field.Records, nameof(field.Records), "capture child record");
+                if (field.Value is not null) ValidateValueVariant(field.Value);
                 var valid = field.Kind switch
                 {
                     SemanticCaptureFieldKind.Value => field.Value is SemanticNullValue or SemanticTextValue or SemanticNumberValue or SemanticBooleanValue &&

@@ -1099,7 +1099,7 @@ internal static partial class SemanticModelValidator
                     throw new InvalidSemanticContract($"Mapping target property '{mapping.TargetProperty}' is unresolved.");
                 }
 
-                if (mapping.Source is SemanticValueExpression value)
+                if (mapping.Source is SemanticValueExpression { Kind: SemanticExpressionKind.Value } value)
                 {
                     ValidateValue(value.Value, target.Type, "property mapping");
                 }
@@ -1155,6 +1155,7 @@ internal static partial class SemanticModelValidator
                     ValidateValueVariant(value.Value);
                     return TypeOf(value.Value);
                 case SemanticEventContextExpression context when expression.Kind == SemanticExpressionKind.EventContext:
+                    ValidateTypeReference(context.Type);
                     if (_semanticVersion == SemanticVersion.V1 ||
                         (expectedRoot != SemanticExpressionRootKind.Command && !_occurrenceRoots) ||
                         context.Value is not (SemanticEventContextValueKind.Occurred or SemanticEventContextValueKind.CausedBySubject or
