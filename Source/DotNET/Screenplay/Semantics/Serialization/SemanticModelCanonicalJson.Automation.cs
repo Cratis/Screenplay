@@ -20,16 +20,16 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
-    static void WriteReaction(Utf8JsonWriter writer, SemanticReaction reaction)
+    static void WriteReaction(Utf8JsonWriter writer, SemanticReaction reaction, SemanticVersion version)
     {
         writer.WriteStartObject();
         WriteId(writer, reaction.Id);
         CanonicalJson.WriteString(writer, "name", reaction.Name);
-        WriteArray(writer, "triggers", reaction.Triggers, WriteReactionTrigger);
+        WriteArray(writer, "triggers", reaction.Triggers, (output, trigger) => WriteReactionTrigger(output, trigger, version));
         writer.WriteEndObject();
     }
 
-    static void WriteReactionTrigger(Utf8JsonWriter writer, SemanticReactionTrigger trigger)
+    static void WriteReactionTrigger(Utf8JsonWriter writer, SemanticReactionTrigger trigger, SemanticVersion version)
     {
         writer.WriteStartObject();
         writer.WriteString("kind", ReactionTriggerKind(trigger.Kind));
@@ -44,7 +44,7 @@ public static partial class SemanticModelCanonicalJson
             WriteCondition(writer, trigger.Where);
         }
 
-        WriteArray(writer, "produces", trigger.Produces, WriteProducedEvent);
+        WriteArray(writer, "produces", trigger.Produces, (output, produced) => WriteProducedEvent(output, produced, version, true));
         WriteArray(writer, "invokes", trigger.Invokes, (output, invocation) =>
         {
             output.WriteStartObject();

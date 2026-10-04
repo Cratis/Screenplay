@@ -145,14 +145,14 @@ public static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", slice.Name);
         writer.WriteString("kind", SliceKind(slice.Kind));
         WriteArray(writer, "events", slice.Events.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, @event) => WriteEvent(output, @event, version));
-        WriteArray(writer, "commands", slice.Commands.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteCommand);
+        WriteArray(writer, "commands", slice.Commands.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, command) => WriteCommand(output, command, version));
         WriteArray(writer, "readModels", slice.ReadModels.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteReadModel);
         WriteArray(writer, "projections", slice.Projections.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, projection) => WriteProjection(output, projection, version));
         if (!slice.Reducers.IsEmpty) WriteArray(writer, "reducers", slice.Reducers.OrderBy(_ => _.Name, StringComparer.Ordinal), WriteReducer);
         WriteArray(writer, "queries", slice.Queries.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteQuery);
         WriteArray(writer, "specifications", slice.Specifications.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, specification) => WriteSpecification(output, specification, version));
         WriteConstraints(writer, slice.Constraints);
-        if (!slice.Reactions.IsDefaultOrEmpty) WriteArray(writer, "reactions", slice.Reactions.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteReaction);
+        if (!slice.Reactions.IsDefaultOrEmpty) WriteArray(writer, "reactions", slice.Reactions.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, reaction) => WriteReaction(output, reaction, version));
         if (!slice.Captures.IsDefaultOrEmpty) WriteArray(writer, "captures", slice.Captures.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteCapture);
         writer.WriteEndObject();
     }
@@ -248,7 +248,7 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
-    static void WriteCommand(Utf8JsonWriter writer, SemanticCommand command)
+    static void WriteCommand(Utf8JsonWriter writer, SemanticCommand command, SemanticVersion version)
     {
         writer.WriteStartObject();
         WriteId(writer, command.Id);
@@ -264,7 +264,7 @@ public static partial class SemanticModelCanonicalJson
                 output.WriteEndObject();
             });
         }
-        WriteArray(writer, "produces", command.Produces, WriteProducedEvent);
+        WriteArray(writer, "produces", command.Produces, (output, produced) => WriteProducedEvent(output, produced, version, false));
         if (!command.Requirements.IsDefaultOrEmpty) WriteArray(writer, "requirements", command.Requirements, WriteRequirement);
         if (command.Authorization is not null)
         {
@@ -283,8 +283,13 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
-    static void WriteProducedEvent(Utf8JsonWriter writer, SemanticProducedEvent produced)
+    static void WriteProducedEvent(Utf8JsonWriter writer, SemanticProducedEvent produced, SemanticVersion version, bool reaction)
     {
+        if (produced.DestinationType is not null && (!reaction || !version.IsAtLeast(SemanticVersion.V6)))
+        {
+            throw new InvalidSemanticContract("A production destination type requires an ESM v6 reaction.");
+        }
+
         writer.WriteStartObject();
         writer.WriteString("eventContract", produced.EventContract.ToString());
         WriteOptionalExpression(writer, "condition", produced.Condition);

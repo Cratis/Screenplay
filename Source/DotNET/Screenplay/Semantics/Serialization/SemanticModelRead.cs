@@ -144,14 +144,14 @@ internal static partial class SemanticModelRead
                 case "name": name = String(ref reader, property); break;
                 case "kind": kind = ParseSliceKind(String(ref reader, property)); break;
                 case "events": events = Array(ref reader, Event, property); break;
-                case "commands": commands = Array(ref reader, Command, property); break;
+                case "commands": commands = Array(ref reader, (ref Utf8JsonReader item) => Command(ref item, schemaVersion), property); break;
                 case "readModels": readModels = Array(ref reader, ReadModel, property); break;
                 case "projections": projections = Array(ref reader, (ref Utf8JsonReader item) => Projection(ref item, schemaVersion), property); break;
                 case "reducers": reducers = Array(ref reader, Reducer, property); break;
                 case "queries": queries = Array(ref reader, Query, property); break;
                 case "specifications": specifications = Array(ref reader, (ref Utf8JsonReader item) => Specification(ref item, schemaVersion), property); break;
                 case "constraints": constraints = Array(ref reader, Constraint, property); break;
-                case "reactions" when schemaVersion >= 6: reactions = Array(ref reader, Reaction, property); break;
+                case "reactions" when schemaVersion >= 6: reactions = Array(ref reader, (ref Utf8JsonReader item) => Reaction(ref item, schemaVersion), property); break;
                 case "captures" when schemaVersion >= 6: captures = Array(ref reader, Capture, property); break;
                 default: throw Unknown(property, "slice");
             }
@@ -369,7 +369,7 @@ internal static partial class SemanticModelRead
         return new(value);
     }
 
-    internal static SemanticCommand Command(ref Utf8JsonReader reader)
+    internal static SemanticCommand Command(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "command");
         var seen = NewSeen();
@@ -391,7 +391,7 @@ internal static partial class SemanticModelRead
                 case "properties": properties = Array(ref reader, Property, property); break;
                 case "validations": validations = Array(ref reader, Validation, property); break;
                 case "codeValidations": codeValidations = Array(ref reader, CodeValidation, property); break;
-                case "produces": produces = Array(ref reader, ProducedEvent, property); break;
+                case "produces": produces = Array(ref reader, (ref Utf8JsonReader item) => ProducedEvent(ref item, schemaVersion, false), property); break;
                 case "requirements": requirements = Array(ref reader, Requirement, property); break;
                 case "authorization": RequiredToken(ref reader, JsonTokenType.StartObject, property); authorization = Authorization(ref reader); break;
                 case "destination": RequiredToken(ref reader, JsonTokenType.StartObject, property); destination = StateChangeDestination(ref reader); break;
@@ -418,7 +418,7 @@ internal static partial class SemanticModelRead
         return new(requirementId!);
     }
 
-    internal static SemanticProducedEvent ProducedEvent(ref Utf8JsonReader reader)
+    internal static SemanticProducedEvent ProducedEvent(ref Utf8JsonReader reader, uint schemaVersion, bool reaction)
     {
         Object(ref reader, "produced event");
         var seen = NewSeen();
@@ -441,7 +441,7 @@ internal static partial class SemanticModelRead
                 case "mappings": mappings = Array(ref reader, Mapping, property); break;
                 case "when": RequiredToken(ref reader, JsonTokenType.StartObject, property); when = Condition(ref reader); break;
                 case "tags": tags = StringArray(ref reader, property); break;
-                case "destinationType": RequiredToken(ref reader, JsonTokenType.StartObject, property); destinationType = TypeReference(ref reader); break;
+                case "destinationType" when schemaVersion >= 6 && reaction: RequiredToken(ref reader, JsonTokenType.StartObject, property); destinationType = TypeReference(ref reader); break;
                 default: throw Unknown(property, "produced event");
             }
         }

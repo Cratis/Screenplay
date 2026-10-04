@@ -16,7 +16,7 @@ internal static partial class SemanticModelRead
         return new(id, name, properties);
     }
 
-    internal static SemanticReaction Reaction(ref Utf8JsonReader reader)
+    internal static SemanticReaction Reaction(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "reaction");
         var seen = NewSeen();
@@ -29,7 +29,7 @@ internal static partial class SemanticModelRead
             {
                 case "id": id = SemanticId.Parse(String(ref reader, property)); break;
                 case "name": name = String(ref reader, property); break;
-                case "triggers": triggers = Array(ref reader, ReactionTrigger, property); break;
+                case "triggers": triggers = Array(ref reader, (ref Utf8JsonReader item) => ReactionTrigger(ref item, schemaVersion), property); break;
                 default: throw Unknown(property, "reaction");
             }
         }
@@ -38,7 +38,7 @@ internal static partial class SemanticModelRead
         return new(id, name!, triggers);
     }
 
-    internal static SemanticReactionTrigger ReactionTrigger(ref Utf8JsonReader reader)
+    internal static SemanticReactionTrigger ReactionTrigger(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "reaction trigger");
         var seen = NewSeen();
@@ -64,7 +64,7 @@ internal static partial class SemanticModelRead
                 case "onDayOfWeek": onDayOfWeek = Int32(ref reader, property); break;
                 case "onDayOfMonth": onDayOfMonth = Int32(ref reader, property); break;
                 case "where": RequiredToken(ref reader, JsonTokenType.StartObject, property); where = Condition(ref reader); break;
-                case "produces": produces = Array(ref reader, ProducedEvent, property); break;
+                case "produces": produces = Array(ref reader, (ref Utf8JsonReader item) => ProducedEvent(ref item, schemaVersion, true), property); break;
                 case "invokes": invokes = Array(ref reader, Invocation, property); break;
                 case "requirementId": requirementId = String(ref reader, property); break;
                 default: throw Unknown(property, "reaction trigger");

@@ -708,6 +708,11 @@ internal static partial class SemanticModelValidator
 
         void ValidateProducedEvent(SemanticProducedEvent produced, SemanticCommand command)
         {
+            if (produced.DestinationType is not null)
+            {
+                throw new InvalidSemanticContract("A command production cannot declare a reaction destination type.");
+            }
+
             if (!_events.TryGetValue(produced.EventContract, out var eventContract))
             {
                 throw new InvalidSemanticContract($"Produced event contract '{produced.EventContract}' is unresolved.");
