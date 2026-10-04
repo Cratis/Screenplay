@@ -76,9 +76,10 @@ StreamIdentifierDecl = "streamId", QualifiedName, NL ;
 (* Sources belong to the application; streams belong to their physical parent.
    A duplicate parent makes its children's ownership ambiguous. Identifier and
    stream-id types are nonoptional scalars. Known stream-id types are limited to
-   text, UUID and integer values and their nominal concepts; unavailable imported
-   shapes remain unresolved. No formatter is executed. Description, rename-only
-   id and identifier/streamId directives appear at most once per declaration.
+   text and UUID values and their nominal concepts, plus integer-backed concepts;
+   bare Int is rejected and unavailable imported shapes remain unresolved.
+   No formatter is executed. Description, rename-only id and identifier/streamId
+   directives appear at most once per declaration.
    Pins retain old stored names only, not semantic ids. *)
 
 (* -------------------------------------------------------------- *)

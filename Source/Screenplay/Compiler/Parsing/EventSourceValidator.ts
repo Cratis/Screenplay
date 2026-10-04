@@ -27,8 +27,8 @@ export function validateEventSources(application: ApplicationSyntax, context: Pa
         }
         const named = application.concepts.filter(concept => concept.name === type.name);
         const primitive = named.length === 1 ? named[0].type : named.length === 0 && primitives.has(type.name) ? type.name : null;
-        if (streamId && primitive !== null && (!['String', 'Uuid', 'Int'].includes(primitive) || named.some(concept => concept.values.length > 0)))
-            context.error(DiagnosticCodes.UnsupportedStreamIdType, 'Stream ids support text, UUID and integer values and their nominal concepts; other types need a future portable formatter.', type.location);
+        if (streamId && primitive !== null && (!['String', 'Uuid', 'Int'].includes(primitive) || primitive === 'Int' && named.length === 0 || named.some(concept => concept.values.length > 0)))
+            context.error(DiagnosticCodes.UnsupportedStreamIdType, 'Stream ids support text and UUID values and their nominal concepts, plus integer-backed concepts; other types need a future portable formatter.', type.location);
         if (primitive === null && !application.imports.some(imported => imported.qualifiedName === type.name || imported.qualifiedName.split('.').at(-1) === type.name))
             context.warning(DiagnosticCodes.UnknownType, `Unknown type '${type.name}' in event source declaration.`, type.location);
     };

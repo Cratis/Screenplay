@@ -28,7 +28,7 @@ public sealed partial class ScreenplayPrinter :
     /// <inheritdoc/>
     public string Print(ApplicationSyntax application)
     {
-        var writer = new ScreenplayWriter { EventSourceNames = application.EventSources.Select(source => source.Name).ToHashSet(StringComparer.Ordinal) };
+        var writer = new ScreenplayWriter();
         WriteApplication(writer, application);
         return PrintComments(application, writer);
     }

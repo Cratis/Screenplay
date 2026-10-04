@@ -21,6 +21,7 @@ public class when_authoring_source_streams : given.a_compiler
     [InlineData("eventsource A\n  identifier String optional", "PLAY0503")]
     [InlineData("eventsource A\n  identifier String[]", "PLAY0503")]
     [InlineData("type Composite\n  value String\neventsource A\n  identifier Composite", "PLAY0503")]
+    [InlineData("eventsource A\n  stream S\n    streamId Int", "PLAY0506")]
     [InlineData("eventsource A\n  stream S\n    streamId Decimal", "PLAY0506")]
     [InlineData("eventsource A\n  stream S\n    streamId Bool", "PLAY0506")]
     [InlineData("eventsource A\n  stream S\n    streamId DateTime", "PLAY0506")]
@@ -35,9 +36,19 @@ public class when_authoring_source_streams : given.a_compiler
     [Theory]
     [InlineData("String")]
     [InlineData("Uuid")]
-    [InlineData("Int")]
     [InlineData("Month")]
-    void should_accept_portable_stream_id_types_without_executing_formatters(string type) => _compiler.Compile("concept Month : Int\neventsource A\n  stream S\n    streamId " + type).Success.ShouldBeTrue();
+    [InlineData("Label")]
+    [InlineData("Key")]
+    void should_accept_portable_stream_id_types_without_executing_formatters(string type) => _compiler.Compile("concept Month : Int\nconcept Label : String\nconcept Key : Uuid\neventsource A\n  stream S\n    streamId " + type).Success.ShouldBeTrue();
+
+    [Fact]
+    void should_preserve_integer_concept_mapping_rules_without_admitting_bare_integer_declarations()
+    {
+        var source = Prefix.Replace("concept Month : String", "concept Month : Int", StringComparison.Ordinal);
+        _compiler.Compile(source + Route).Success.ShouldBeTrue();
+        _compiler.Compile(source + Route.Replace("streamId = month", "streamId = 42", StringComparison.Ordinal)).Success.ShouldBeTrue();
+        _compiler.Compile(source.Replace("month Month", "month Int", StringComparison.Ordinal) + Route).Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0504").ShouldBeTrue();
+    }
 
     [Fact]
     void should_leave_unknown_import_shapes_unresolved() => _compiler.Compile("import Contracts.Unknown\neventsource A\n  identifier Unknown\n  stream S\n    streamId Unknown").Diagnostics.ShouldBeEmpty();

@@ -23,6 +23,7 @@ describe('when authoring source-owned streams', () => {
         ['eventsource A\n  identifier String optional', 'PLAY0503'],
         ['eventsource A\n  identifier String[]', 'PLAY0503'],
         ['type Composite\n  value String\neventsource A\n  identifier Composite', 'PLAY0503'],
+        ['eventsource A\n  stream S\n    streamId Int', 'PLAY0506'],
         ['eventsource A\n  stream S\n    streamId Decimal', 'PLAY0506'],
         ['eventsource A\n  stream S\n    streamId Bool', 'PLAY0506'],
         ['eventsource A\n  stream S\n    streamId DateTime', 'PLAY0506'],
@@ -57,7 +58,13 @@ describe('when authoring source-owned streams', () => {
         ['eventsource A\n  stream S\n    streamId Missing', 'PLAY0165'],
     ])('should diagnose invalid authoring %s', (source, code) => expect(parse(source).diagnostics.map(diagnostic => diagnostic.code)).toContain(code));
 
-    it.each(['String', 'Uuid', 'Int', 'Month'])('should accept portable stream type %s without formatting', type => expect(parse('concept Month : Int\neventsource A\n  stream S\n    streamId ' + type).success).toBe(true));
+    it.each(['String', 'Uuid', 'Month', 'Label', 'Key'])('should accept portable stream type %s without formatting', type => expect(parse('concept Month : Int\nconcept Label : String\nconcept Key : Uuid\neventsource A\n  stream S\n    streamId ' + type).success).toBe(true));
+    it('should preserve integer concept mapping rules without admitting bare integer declarations', () => {
+        const source = prefix.replace('concept Month : String', 'concept Month : Int');
+        expect(parse(source + route).success).toBe(true);
+        expect(parse(source + route.replace('streamId = month', 'streamId = 42')).success).toBe(true);
+        expect(parse(source.replace('month Month', 'month Int') + route).diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0504');
+    });
     it('should keep unavailable imported shapes unresolved', () => expect(parse('import Contracts.Unknown\neventsource A\n  identifier Unknown\n  stream S\n    streamId Unknown').diagnostics).toEqual([]));
     it('should retain a source identifier mismatch as an authoring warning', () => {
         const parsed = parse(prefix.replace('id AccountId identifier', 'id Uuid identifier') + route);

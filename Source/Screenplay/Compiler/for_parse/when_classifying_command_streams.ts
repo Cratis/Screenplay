@@ -3,6 +3,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { parse } from '../ScreenplayCompiler';
+import { compileApplication } from '../Files/PlayApplicationAssembly';
 
 const prefix = 'module M\n  feature F\n    slice StateChange S\n      command C\n        ';
 const source = '\neventsource Account\n  identifier AccountId\n  stream Transactions\n    streamId Month\nconcept AccountId : Uuid\nconcept Month : String\n';
@@ -34,6 +35,22 @@ describe('when classifying command streams against the whole input', () => {
         const node = parsed.value.modules[0].features[0].slices[0].commands[0];
         expect(node.properties[0].type.name).toBe('Account.Transactions');
         expect(node.stream?.propertyCandidate).not.toBeNull();
+    });
+    it('should retain ambiguity in every order of separately declared types sources and commands', () => {
+        const documents: [string, string][] = [
+            ['sources.play', 'eventsource Account\n  stream Transactions'],
+            ['types.play', 'import Account.Transactions\ntype Transactions\n  value String'],
+            ['commands.play', prefix + 'stream Account.Transactions\n          deeper String'],
+        ];
+        for (const first of documents) for (const second of documents.filter(document => document !== first)) {
+            const third = documents.find(document => document !== first && document !== second)!;
+            const result = compileApplication(new Map([first, second, third]));
+            expect(result.success).toBe(false);
+            expect(result.diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0505');
+            const node = result.value.modules[0].features[0].slices[0].commands[0];
+            expect(node.stream?.propertyCandidate).not.toBeNull();
+            expect(node.properties.map(property => property.name)).toEqual(['stream', 'deeper']);
+        }
     });
     it('should retain a real imported qualified type without a source', () => {
         const node = command('import Account.Transactions\ntype Transactions\n  value String\n' + prefix + 'stream Account.Transactions\n          deeper String');

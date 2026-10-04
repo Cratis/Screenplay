@@ -15,8 +15,12 @@ public sealed partial class ScreenplayPrinter
         foreach (var property in command.Properties)
         {
             var parts = property.Type.Name.Split('.');
+
+            // A fragment may omit declarations, and syntax JSON deliberately omits source escapes.
+            // Preserve the typed property meaning independently of either; only a retained ambiguity
+            // candidate must keep the bare spelling so printing cannot select its interpretation.
             var needsEscape = property.Name == "stream" && !property.Type.IsOptional && !property.Type.IsCollection && !property.IsGenerated && !property.IsIdentifier &&
-                parts.Length == 2 && (property.NameWasEscaped || writer.EventSourceNames.Contains(parts[0])) && command.Stream?.PropertyCandidate != property;
+                parts.Length > 1 && command.Stream?.PropertyCandidate != property;
             WriteProperties(writer, [property], needsEscape ? _streamPropertyWords : ReservedWords.CommandBody);
         }
     }

@@ -61,9 +61,9 @@ internal static class EventSourceValidator
         string? primitive = null;
         if (concepts is [var concept]) primitive = concept.Type;
         else if (concepts.Length == 0 && ConceptSyntax.PrimitiveTypes.Contains(type.Name)) primitive = type.Name;
-        if (streamId && primitive is not null && (primitive is not ("String" or "Uuid" or "Int") || concepts.Any(concept => concept.IsEnum)))
+        if (streamId && primitive is not null && (primitive is not ("String" or "Uuid" or "Int") || (primitive == "Int" && concepts.Length == 0) || concepts.Any(concept => concept.IsEnum)))
         {
-            context.Error(DiagnosticCodes.UnsupportedStreamIdType, "Stream ids support text, UUID and integer values and their nominal concepts; other types need a future portable formatter.", type.Location);
+            context.Error(DiagnosticCodes.UnsupportedStreamIdType, "Stream ids support text and UUID values and their nominal concepts, plus integer-backed concepts; other types need a future portable formatter.", type.Location);
         }
         if (primitive is null && !application.Imports.Any(import => import.Name == type.Name || import.QualifiedName == type.Name))
         {

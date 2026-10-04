@@ -2258,7 +2258,7 @@ public static class DiagnosticCodes
     /// <summary>A command header has viable property and route interpretations.</summary>
     public const string AmbiguousCommandStream = "PLAY0505";
 
-    /// <summary>A known stream id type requires an unsupported formatter.</summary>
+    /// <summary>A stream id type is neither text/UUID (or their concepts) nor an integer-backed concept.</summary>
     public const string UnsupportedStreamIdType = "PLAY0506";
 
     /// <summary>A rename pin repeats a source or stream's current name.</summary>
