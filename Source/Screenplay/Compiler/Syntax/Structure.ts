@@ -9,6 +9,7 @@ import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, ReadModelSyntax
 import { ProjectionSyntax } from './Projections';
 import { PolicySyntax } from './Policies';
 import { SeedSyntax } from './Seeds';
+import { EventSourceSyntax } from './EventSources';
 import { OperationSyntax, SystemSyntax } from './Operations';
 import { QuerySyntax } from './Queries';
 import { ReactionSyntax } from './Reactions';
@@ -82,6 +83,7 @@ export interface ApplicationSyntax extends SyntaxNode {
     readonly policies?: readonly PolicySyntax[];
     readonly seeds?: readonly SeedSyntax[];
     readonly systems?: readonly SystemSyntax[];
+    readonly eventSources?: readonly EventSourceSyntax[];
     readonly imports: readonly ImportSyntax[];
     readonly concepts: readonly ConceptSyntax[];
     readonly types: readonly TypeSyntax[];

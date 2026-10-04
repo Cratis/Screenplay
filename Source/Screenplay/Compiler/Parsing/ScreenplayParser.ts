@@ -28,6 +28,8 @@ import { SeedSyntax } from '../Syntax/Seeds';
 import { parseSeed } from './SeedParser';
 import { parseSystem } from './OperationParser';
 import { SystemSyntax } from '../Syntax/Operations';
+import { EventSourceSyntax } from '../Syntax/EventSources';
+import { parseEventSource } from './EventSourceParser';
 import { locationOf, SourceLine, startOf } from './SourceLine';
 
 const domainPattern = pattern('^domain\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)$');
@@ -60,6 +62,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     const concepts: ConceptSyntax[] = [];
     const types: TypeSyntax[] = [];
     const systems: SystemSyntax[] = [];
+    const eventSources: EventSourceSyntax[] = [];
     const modules: ModuleSyntax[] = [];
     const personas: PersonaSyntax[] = [];
     const policies: PolicySyntax[] = [];
@@ -92,6 +95,8 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             } else {
                 imports.push({ kind: 'ImportSyntax', qualifiedName: match[1], location: locationOf(line) });
             }
+        } else if (keyword === 'eventsource') {
+            eventSources.push(parseEventSource(context, line));
         } else if (keyword === 'system') {
             systems.push(parseSystem(context, line));
         } else if (keyword === 'concept') {
@@ -123,7 +128,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     } else if (featureBody !== undefined) {
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
-    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, modules, personas, policies, seeds, fileImports, location: context.start };
+    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, modules, personas, policies, seeds, fileImports, location: context.start };
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }
@@ -135,7 +140,7 @@ function declaresConstruct(keyword: string, line: SourceLine, placement: PlayPla
     if (keyword === 'module') {
         return isDocumentPlacement(placement);
     }
-    return keyword === 'system' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || opaqueTopLevel.has(keyword);
+    return keyword === 'eventsource' || keyword === 'system' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || opaqueTopLevel.has(keyword);
 }
 
 function parseModuleInPlacedFile(context: ParserContext, line: SourceLine, placement: PlayPlacement, moduleBody: ModuleBody | undefined): void {

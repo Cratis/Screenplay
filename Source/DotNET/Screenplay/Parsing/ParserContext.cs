@@ -28,6 +28,9 @@ internal sealed class ParserContext(LineReader reader, string? path = null, IScr
     /// </summary>
     public LineReader Reader => reader;
 
+    /// <summary>Gets the immutable whole-input inventory used only to classify command stream headers.</summary>
+    public CommandStreamCandidates? StreamCandidates { get; init; }
+
     /// <summary>
     /// Gets the <see cref="SourceLocation"/> of the start of the document being parsed.
     /// </summary>

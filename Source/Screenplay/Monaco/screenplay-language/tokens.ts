@@ -14,7 +14,7 @@ import { MonarchTokenRules, SubLanguage } from './sub-language-registry';
 // Maps a Screenplay inline code tag to the Monaco language id used for embedded highlighting.
 // Declaration registration must not globally reserve existing property names.
 // Ambiguous standalone operation headers are supplied by typed semantic tokens.
-const contextualConstructs = new Set(['operation', 'system']);
+const contextualConstructs = new Set(['operation', 'system', 'eventsource']);
 
 const embeddedLanguages: Record<string, string> = {
     csharp: 'csharp',
@@ -58,6 +58,7 @@ export const commonTokenRules: MonarchTokenRules = [
 export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMonarchLanguage {
     const tokenizer: Record<string, MonarchTokenRules> = {
         root: [
+            [/^(eventsource)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
             [/^(system)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
             [/^(\s*)(produces\s+operation)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/,
                 ['white', 'keyword', 'white', { token: 'type.identifier', next: '@operationBody.$1' }]],

@@ -26,6 +26,7 @@ static class McpDependencyQueries
             page.NextOffset,
             references = page.Items.Where(edge => edge.Resolution == "resolved").Select(edge => edge.Reference).ToArray(),
             ambiguous = page.Items.Where(edge => edge.Resolution == "ambiguous").Select(edge => new { reference = edge.Reference, candidates = edge.Targets.Select(McpReadResults.Summary).ToArray() }).ToArray(),
+            incomplete = page.Items.Where(edge => edge.Resolution == "incomplete").Select(edge => new { reference = edge.Reference, candidates = edge.Targets.Select(McpReadResults.Summary).ToArray() }).ToArray(),
             wrongKind = page.Items.Where(edge => edge.Resolution == "wrongKind").Select(edge => new { reference = edge.Reference, targets = edge.Targets.Select(McpReadResults.Summary).ToArray() }).ToArray(),
             coverage = McpReferenceKinds.Coverage
         };

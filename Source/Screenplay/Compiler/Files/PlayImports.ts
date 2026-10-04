@@ -56,6 +56,7 @@ class Resolution {
     readonly #placements = new Map<string, PlayPlacement>();
     readonly #pending: string[] = [];
     readonly #changes = new Map<string, number>();
+    readonly #unresolved = new Set<string>();
 
     constructor(private readonly source: PlayDocumentSource, private readonly languages?: ReadonlySet<string>) {}
 
@@ -70,10 +71,19 @@ class Resolution {
             this.#propagate(file);
         }
         this.#reportConflicts();
+        const unresolved = [...this.#unresolved];
+        for (const importer of unresolved) {
+            for (const target of (this.#imports.get(importer) ?? []).flatMap(imported => imported.targets)) {
+                if (!this.#unresolved.has(target)) {
+                    this.#unresolved.add(target);
+                    unresolved.push(target);
+                }
+            }
+        }
     }
 
     documents(): PlacedPlayDocument[] {
-        return this.#found.map(path => ({ path, source: this.#sources.get(path) as string, placement: this.#placement(path) ?? documentPlacement }));
+        return this.#found.map(path => ({ path, source: this.#sources.get(path) as string, placement: this.#placement(path) ?? documentPlacement, isPlacementResolved: !this.#unresolved.has(path) }));
     }
 
     #find(file: string): void {
@@ -107,6 +117,7 @@ class Resolution {
             if (target !== undefined && target.length > maximumImportDepth) {
                 this.#report(error(DiagnosticCodes.ImportCycle,
                     `Import '${discovered.fileImport.pattern}' places files deeper than ${maximumImportDepth} levels - the imports form a cycle`, discovered.fileImport.location));
+                this.#unresolved.add(file);
                 target = undefined;
             }
             for (const path of targets) {
@@ -142,6 +153,7 @@ class Resolution {
         const changes = (this.#changes.get(file) ?? 0) + 1;
         this.#changes.set(file, changes);
         if (changes > maximumImportDepth) {
+            this.#unresolved.add(file);
             for (const { discovered: { fileImport } } of this.#imports.get(file) as readonly FoundImport[]) {
                 this.#report(error(DiagnosticCodes.ImportCycle,
                     `Import '${fileImport.pattern}' is part of imports that keep placing each other - the imports form a cycle`, fileImport.location));
@@ -177,6 +189,7 @@ class Resolution {
             if (placement === undefined) continue;
             for (const { importer, index, placement: contribution } of this.#ordered(file)) {
                 if (!isWithinOrSame(placement, contribution)) {
+                    this.#unresolved.add(file);
                     const { fileImport } = (this.#imports.get(importer) as readonly FoundImport[])[index].discovered;
                     this.#report(error(DiagnosticCodes.ConflictingImportPlacement,
                         `'${file}' is imported into both ${describePlacement(placement)} and ${describePlacement(contribution)} - a file belongs in one place`, fileImport.location));

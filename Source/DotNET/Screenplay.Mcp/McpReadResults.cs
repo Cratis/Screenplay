@@ -10,23 +10,17 @@ static class McpReadResults
     internal static object References(McpSnapshot snapshot, JsonElement arguments)
     {
         var index = snapshot.Index;
-        var address = McpJson.RequiredString(arguments, "address");
-        var kind = McpJson.RequiredString(arguments, "kind");
-        var declarations = index.Find(address, kind);
-        if (declarations.Length != 1)
-        {
-            throw new McpFailure("The address and kind must identify exactly one declaration.");
-        }
-
-        var resolutions = index.Incoming(declarations[0]).ToArray();
+        var declaration = McpDeclarationDetails.Target(snapshot, arguments);
+        var resolutions = index.Incoming(declaration).Select(result => new McpReferenceEdge(result.Reference, result.Candidates)).ToArray();
         return new
         {
             snapshot.Compilation.Success,
             snapshot.SourceRevision,
             snapshot.Compilation.Diagnostics,
-            declaration = Summary(declarations[0]),
-            references = resolutions.Where(result => result.Candidates.Length == 1).Select(result => result.Reference),
-            ambiguous = resolutions.Where(result => result.Candidates.Length > 1).Select(result => new { reference = result.Reference, candidates = result.Candidates.Select(Summary) }),
+            declaration = Summary(declaration),
+            references = resolutions.Where(result => result.Resolution == "resolved").Select(result => result.Reference),
+            ambiguous = resolutions.Where(result => result.Resolution == "ambiguous").Select(result => new { reference = result.Reference, candidates = result.Targets.Select(Summary) }),
+            incomplete = resolutions.Where(result => result.Resolution == "incomplete").Select(result => new { reference = result.Reference, candidates = result.Targets.Select(Summary) }),
             coverage = McpReferenceKinds.Coverage
         };
     }

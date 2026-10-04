@@ -80,7 +80,7 @@ sealed class McpTools
                     success = false,
                     error = exception.GetType().Name,
                     message = exception.Message,
-                    failureKind = exception is McpFailure failure ? failure.FailureKind : unknown
+                    failureKind = exception switch { McpFailure failure => failure.FailureKind, InvalidSyntaxJson => nameof(InvalidSyntaxJson), _ => unknown }
                 },
                 true);
         }

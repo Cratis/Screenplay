@@ -2278,4 +2278,19 @@ public static class DiagnosticCodes
     /// Syntax options or inserted numeric values disagree with the owning mode.
     /// </summary>
     public const string IncompatibleNumericSource = "PLAY0513";
+
+    /// <summary>An event source or stream declaration is invalid or ambiguous.</summary>
+    public const string InvalidEventSourceDeclaration = "PLAY0503";
+
+    /// <summary>A command stream reference or mapping is invalid.</summary>
+    public const string InvalidCommandStream = "PLAY0504";
+
+    /// <summary>A command header has viable property and route interpretations.</summary>
+    public const string AmbiguousCommandStream = "PLAY0505";
+
+    /// <summary>A stream id type is neither text/UUID (or their concepts) nor an integer-backed concept.</summary>
+    public const string UnsupportedStreamIdType = "PLAY0506";
+
+    /// <summary>A rename pin repeats a source or stream's current name.</summary>
+    public const string RedundantSourceStreamId = "PLAY0507";
 }

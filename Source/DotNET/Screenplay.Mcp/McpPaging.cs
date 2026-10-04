@@ -19,6 +19,28 @@ static class McpPaging
         return new(revision, items.Length, offset, page, offset + page.Length < items.Length ? offset + page.Length : null);
     }
 
+    // Leave space for workspace metadata and the MCP text/structured copies, including JSON escaping.
+    internal static McpPage<object> BoundedSourcePage(IEnumerable<object> values, JsonElement arguments, string revision)
+    {
+        const int budget = 192 * 1024;
+        var items = values.ToArray();
+        var offset = McpJson.Integer(arguments, "offset", 0, 0, items.Length);
+        var limit = McpJson.Integer(arguments, "limit", 50, 1, 200);
+        var page = new List<object>();
+        var bytes = 0;
+        foreach (var item in items.Skip(offset).Take(limit))
+        {
+            var size = JsonSerializer.SerializeToUtf8Bytes(item, McpJson.Options).Length + 1;
+            if (size > budget && page.Count == 0)
+                throw new McpFailure("ResponseTooLarge: a single source inventory item exceeds its byte budget. Smaller count pages cannot reduce it. Read the original path with read-document byte pages or select narrower read-ast children; no identity or value was truncated.") { FailureKind = "LimitExceeded" };
+            if (bytes + size > budget) break;
+            page.Add(item);
+            bytes += size;
+        }
+
+        return new(revision, items.Length, offset, [.. page], offset + page.Count < items.Length ? offset + page.Count : null);
+    }
+
     internal static object Bytes(byte[] bytes, JsonElement arguments, string revision)
     {
         var offset = McpJson.Integer(arguments, "offset", 0, 0, bytes.Length);

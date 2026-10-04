@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { Diagnostic } from '../Diagnostics/Diagnostic';
+import { CommandStreamCandidates } from './CommandStreamCandidates';
 import { SourceLocation, sourceLocation } from '../Diagnostics/SourceLocation';
 import { PropertySyntax } from '../Syntax/Declarations';
 import { legacySourceOptions, SourceOptions } from '../Syntax/SourceOptions';
@@ -20,6 +21,7 @@ export class ParserContext {
     readonly languages: ReadonlySet<string>;
     sourceOptions: SourceOptions = legacySourceOptions;
     authoredDeclarations = false;
+    streamCandidates?: CommandStreamCandidates;
 
     // Structural enrichment of formerly opaque Legacy fields must not add diagnostics. Exact operands
     // use the owning context so representability failures cannot turn into successful opaque syntax.

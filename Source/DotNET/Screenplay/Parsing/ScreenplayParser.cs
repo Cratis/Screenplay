@@ -50,6 +50,7 @@ internal static partial class ScreenplayParser
         var layouts = new List<LayoutSyntax>();
         var behaviors = new List<BehaviorSyntax>();
         var systems = new List<SystemSyntax>();
+        var eventSources = new List<EventSourceSyntax>();
 
         while (context.Reader.PeekSignificant() is { } line)
         {
@@ -57,7 +58,7 @@ internal static partial class ScreenplayParser
             switch (LineText.FirstWord(line.Content))
             {
                 case "domain":
-                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null || uiProfiles.Count > 0 || themes.Count > 0 || triggers.Count > 0 || layouts.Count > 0 || systems.Count > 0);
+                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null || uiProfiles.Count > 0 || themes.Count > 0 || triggers.Count > 0 || layouts.Count > 0 || systems.Count > 0 || eventSources.Count > 0);
                     break;
                 case "import" when FileImportParser.IsFileImport(line.Content):
                     // A top level import belongs to whatever the document's top level is - the application, or the
@@ -82,6 +83,9 @@ internal static partial class ScreenplayParser
                         context.Error(DiagnosticCodes.InvalidImportDeclaration, $"Invalid import '{line.Content}' - expected 'import <Qualified.Name>'", line.Location);
                     }
 
+                    break;
+                case "eventsource":
+                    eventSources.Add(EventSourceParser.Parse(context, line));
                     break;
                 case "system":
                     systems.Add(OperationParser.ParseSystem(context, line));
@@ -149,6 +153,7 @@ internal static partial class ScreenplayParser
         {
             SourceOptions = context.SourceOptions,
             Systems = systems,
+            EventSources = eventSources,
             Behaviors = behaviors,
             FileImports = fileImports
         };

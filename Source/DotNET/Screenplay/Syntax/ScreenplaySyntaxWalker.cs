@@ -76,6 +76,7 @@ public abstract partial class ScreenplaySyntaxWalker
         }
 
         foreach (var system in syntax.Systems) VisitSystem(system);
+        foreach (var source in syntax.EventSources) VisitEventSource(source);
 
         foreach (var concept in syntax.Concepts)
         {

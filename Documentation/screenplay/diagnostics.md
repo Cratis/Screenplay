@@ -86,6 +86,38 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0005` | Error | An `import` line is not `import <Qualified.Name>`. |
 | `PLAY0006` | Warning | A line is indented with tabs, and Screenplay decides nesting from spaces. |
 
+### Event sources and command streams
+
+Event-source declarations and command stream routes are authoring-only. Binding any of them reports
+`PLAY0268`: decision 0023 allocates their executable contract to ESM v10, which is not admitted yet.
+A stream reference selects a classification, never the identity destination supplied by `for`.
+Handler commands may author routes without declaring their returned events.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0503` | Error | An event source or its source-owned stream has invalid syntax, a repeated directive or physical declaration, an invalid rename pin, or an optional, collection or known composite identifier type. Duplicate physical sources make their child ownership ambiguous. |
+| `PLAY0504` | Error or warning | A known source's stream does not resolve uniquely, or a command route or stream-id mapping is invalid, missing or incompatible. A command identifier with a different known nominal source identifier type is a warning; it is not silently retargeted. |
+| `PLAY0505` | Error | An exact `stream Source.Stream` header resolves both to one source-owned stream and to a viable imported value type. Both candidates remain visible; neither is selected automatically. |
+| `PLAY0506` | Error | A known stream-id type falls outside text and UUID values and their nominal concepts, plus integer-backed concepts. Bare Int is rejected. Other types need a future portable formatting contract. Unavailable imported shapes remain unresolved. |
+| `PLAY0507` | Information | A source or stream's rename-only `id` pin repeats its current name. New declarations omit the pin. |
+
+Command headers are classified against the complete immutable compilation input, including resolved file
+imports. `@stream Qualified.Type`, `stream String` and modified property forms remain properties;
+production `stream = value` and `stream String = value` remain payload mappings. When neither a source
+nor a property type resolves, the header keeps its legacy property interpretation and unknown-type
+evidence, including deeper legacy command members. A misspelled source name cannot be distinguished
+from an unresolved qualified property by spelling alone. Stream-id children do not override this rule.
+Candidate discovery uses the same inline-language registry as the committed parse; registered code
+payloads cannot declare sources or property types.
+
+Syntax JSON retains every ambiguous or duplicate header in `CommandSyntax.streamCandidates`, including
+its property interpretation when ambiguous. `stream` holds at most one unambiguous route. Deeper legacy
+properties remain command members, without duplicating the candidate property. Such invalid drafts
+cannot be printed or expanded into `.play` files: export throws `InvalidSyntaxJson` rather than selecting
+an interpretation or dropping a header. Retain syntax JSON until you repair the draft. Use `@stream`
+for an intended qualified property, or remove the competing type interpretation for an intended route;
+remove duplicate route headers before export.
+
 ### Concepts
 
 | Code | Severity | Reported when |
@@ -945,6 +977,18 @@ These wrapper diagnostics also apply to operation phases. Pending or attached in
 | `PLAY0513` | Error | Source options or inserted numeric values disagree with their owning mode. |
 
 These are syntax diagnostics. A valid system, operation or operation specification still cannot bind: `PLAY0268` names unavailable ESM v9 admission. [Operations](operations.md) do not trigger event destination or payload-identity diagnostics. A valid pending or attached handler remains unsupported independently. Diagnostic repairs for `PLAY0471` and `PLAY0479` are unchanged.
+
+### Event sources and command streams
+
+| Code | Condition |
+| --- | --- |
+| `PLAY0503` | Invalid or duplicate source/stream declaration, including non-scalar identifier/key types |
+| `PLAY0504` | Missing or ambiguous source-owned stream, invalid key mapping, or known incompatible command identifier/key type |
+| `PLAY0505` | Both the route and qualified value-property interpretations are viable; neither is selected |
+| `PLAY0506` | Known stream-id type needs an unsupported portable formatter; bare `Int` is not supported |
+| `PLAY0507` | Redundant rename-only stored-name pin |
+
+Valid [source/stream authoring](event-sources.md) still refuses executable binding with `PLAY0268` for ESM v10. Editors and MCP preserve original source evidence; unknown imported type shapes are not guessed. There is no new routing or source-pin quick fix. Existing `PLAY0470`/`PLAY0478` repairs still refuse when executable before/after routing proof is unavailable.
 
 ## Retired codes
 

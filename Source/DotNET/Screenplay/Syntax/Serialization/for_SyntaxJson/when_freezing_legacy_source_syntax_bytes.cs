@@ -21,8 +21,14 @@ public class when_freezing_legacy_source_syntax_bytes
         foreach (var document in manifest.RootElement.GetProperty("documents").EnumerateArray())
         {
             var parsed = compiler.Parse(File.ReadAllText(Path.Combine(root, document.GetProperty("path").GetString()!))).Value!;
-            if (parsed.SourceOptions != SourceOptions.Legacy) continue;
-            var actual = Encoding.UTF8.GetBytes(SyntaxJson.Serialize(parsed).GetRawText());
+            if (parsed.SourceOptions != SourceOptions.Legacy || document.GetProperty("name").GetString()!.StartsWith("source-stream", StringComparison.Ordinal)) continue;
+            // Main added route members with transport defaults. Project only those additive empty defaults
+            // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
+            var text = SyntaxJson.Serialize(parsed).GetRawText()
+                .Replace(",\"eventSources\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"stream\":null", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"streamCandidates\":[]", string.Empty, StringComparison.Ordinal);
+            var actual = Encoding.UTF8.GetBytes(text);
             var path = Path.Combine(folder, "LegacySyntax", document.GetProperty("name").GetString() + ".json");
             if (initializing && !File.Exists(path))
             {

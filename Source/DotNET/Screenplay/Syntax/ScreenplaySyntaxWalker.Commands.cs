@@ -31,6 +31,9 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitAuthorize(syntax.Authorize);
         }
 
+        if (syntax.Stream is not null) VisitCommandStream(syntax.Stream);
+        foreach (var candidate in syntax.StreamCandidates) VisitCommandStream(candidate);
+
         if (syntax.Concurrency is not null)
         {
             VisitConcurrency(syntax.Concurrency);

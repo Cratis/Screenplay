@@ -72,6 +72,9 @@ internal static partial class PlayFolderMerge
             // in another - and the folder is one application.
             SourceOptions = SourceNumericModes.Consensus(applications, context.Add),
             Systems = [.. applications.SelectMany(application => application.Systems)],
+
+            // Preserve physical parents; a duplicate source makes every child scope ambiguous.
+            EventSources = [.. applications.SelectMany(application => application.EventSources)],
             Behaviors = DeclaredInOneFile(applications.SelectMany(application => application.Behaviors), behavior => behavior.Name ?? string.Empty, behavior => behavior.Location, "behavior", context),
             SourceComments = [.. applications.SelectMany(application => application.SourceComments)],
             FileImports = [.. applications.SelectMany(application => application.FileImports)],

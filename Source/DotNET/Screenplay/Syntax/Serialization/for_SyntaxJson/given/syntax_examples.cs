@@ -33,6 +33,9 @@ internal static class syntax_examples
         // while still independently populating every other structural member.
         return node switch
         {
+            EventSourceSyntax source => source with { Identifier = source.Identifier is null ? null : source.Identifier with { IsCollection = false, IsOptional = false } },
+            EventStreamSyntax stream => stream with { StreamId = stream.StreamId is null ? null : stream.StreamId with { IsCollection = false, IsOptional = false } },
+            CommandStreamSyntax route => route with { PropertyCandidate = null, StreamId = route.StreamId is null ? null : route.StreamId with { Property = "streamId" } },
             HandlerSyntax handler => handler with { Code = null },
             OperationPhaseSyntax phase => phase with { Code = null },
             ProducesSyntax { InlineOperation: { } operation } production => production with

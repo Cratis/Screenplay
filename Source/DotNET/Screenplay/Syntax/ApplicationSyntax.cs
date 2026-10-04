@@ -54,6 +54,9 @@ public record ApplicationSyntax(
     /// </summary>
     public IEnumerable<SystemSyntax> Systems { get; init; } = [];
 
+    /// <summary>Gets every physical application-owned event source declaration.</summary>
+    public IEnumerable<EventSourceSyntax> EventSources { get; init; } = [];
+
     /// <summary>
     /// Gets the files the document imports at its top level - whole documents, merged into the application.
     /// </summary>

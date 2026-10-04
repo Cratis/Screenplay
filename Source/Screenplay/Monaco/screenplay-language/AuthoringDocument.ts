@@ -6,4 +6,5 @@ export interface AuthoringDocument {
     readonly path: string;
     readonly source: string;
     readonly placement?: readonly string[];
+    readonly isPlacementResolved?: boolean;
 }
