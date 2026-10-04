@@ -17,22 +17,33 @@ export async function observeSavedReload(document: vscode.TextDocument, expected
     });
 }
 
-/** Explicit user-level close/reopen, never save, revert, edit or synthetic reload. */
-export async function userCloseAndReopen(document: vscode.TextDocument, expected: string): Promise<vscode.TextDocument> {
-    assert.equal(document.isDirty, false, 'Only a clean target may be closed by this test user');
-    const uri = document.uri;
-    const tabs = vscode.window.tabGroups.all.flatMap(group => group.tabs).filter(tab => tab.input instanceof vscode.TabInputText && tab.input.uri.toString() === uri.toString());
-    assert.ok(tabs.length, 'The clean saved target is an actual visible native text tab');
-    const closed = new Promise<void>((resolve, reject) => {
-        const listener = vscode.workspace.onDidCloseTextDocument(closing => { if (closing === document) { clearTimeout(timer); listener.dispose(); resolve(); } });
-        const timer = setTimeout(() => { listener.dispose(); reject(new Error(`User close did not release the clean native model within 5 seconds: ${uri}`)); }, 5_000);
-    });
-    assert.equal(await vscode.window.tabGroups.close(tabs, true), true, 'Explicit user-level tab close succeeds without saving');
-    await closed;
-    const reopened = await vscode.workspace.openTextDocument(uri);
-    await vscode.window.showTextDocument(reopened, { preview: false, viewColumn: vscode.ViewColumn.Two, preserveFocus: true });
-    assert.equal(reopened.getText(), expected, 'User reopening reads the exact installed content into a visible editor');
-    assert.equal(reopened.isDirty, false);
-    console.log(`NATIVE USER FRESH READ: ${uri.toString()}`);
-    return reopened;
+/** Separate simulated user choice, NEVER a product reload primitive or reuse of Apply consent. */
+export async function userRevertCleanFile(document: vscode.TextDocument, expected: string, choose: () => Promise<'Revert File' | undefined>): Promise<void> {
+    assert.equal(await choose(), 'Revert File', 'The test user separately chooses the native File: Revert File action');
+    // The native command accepts no URI argument. Its Open Editors selection
+    // applies only when that list has focus; otherwise it uses the active editor.
+    // Hide the sidebar and explicitly focus a plain editor, never a diff/list.
+    await vscode.commands.executeCommand('workbench.action.closeSidebar');
+    const editor = await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two, preserveFocus: false });
+    await vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
+    assert.equal(vscode.window.activeTextEditor, editor, 'The exact target editor has native focus');
+    const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
+    assert.ok(tab?.input instanceof vscode.TabInputText, 'Revert targets a plain native text editor, not a diff');
+    assert.equal(tab.input.uri.toString(), document.uri.toString(), 'Active native tab is the exact saved target');
+    assert.equal(document.uri.scheme, 'file');
+    assert.equal(document.isDirty, false, 'BLOCKED unless the explicit user target is clean immediately before dispatch');
+    const others = vscode.workspace.textDocuments.filter(other => other !== document).map(other => ({ document: other, text: other.getText(), version: other.version, dirty: other.isDirty }));
+    console.log(`NATIVE SEPARATE USER REVERT: ${JSON.stringify({ uri: document.uri.toString(), clean: true, target: 'focused plain editor', typingDuringAction: false, applyConsentReused: false })}`);
+    // force:true in VS Code can overwrite intervening typing. This controlled
+    // user phase has NO typing; production must never invoke Revert automatically.
+    const synchronized = observeSavedReload(document, expected);
+    await vscode.commands.executeCommand('workbench.action.files.revert');
+    assert.equal(await synchronized, true, 'BLOCKED: native user Revert must produce exact installed text within 5 seconds; command resolution is not proof');
+    assert.equal(document.isDirty, false);
+    for (const other of others) {
+        assert.equal(other.document.getText(), other.text, 'Native user action never changes another buffer');
+        assert.equal(other.document.version, other.version);
+        assert.equal(other.document.isDirty, other.dirty);
+    }
+    console.log(`NATIVE USER RECONCILED EXACT TEXT: ${document.uri.toString()}`);
 }

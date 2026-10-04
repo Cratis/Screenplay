@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 import { userRepairConfiguration } from '../RepairCodeActions';
 import { repairSource } from './repairFixture';
 import { NativeTestController } from './nativeTestController';
-import { userCloseAndReopen } from './nativeSavedBuffer';
+import { userRevertCleanFile } from './nativeSavedBuffer';
 
 // Guard integration, NOT UI automation: only the dialog responses and the timing
 // of a real subprocess reply are controlled. Real registered commands, native
@@ -241,6 +241,14 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
             const prefix = `/${summary.uri.path.split('/')[1]}/`;
             const tabs = vscode.window.tabGroups.all.flatMap(group => group.tabs).filter(tab => tab.input instanceof vscode.TabInputTextDiff && tab.input.modified.path.startsWith(prefix));
             assert.ok(tabs.length >= 2, 'Source and identity diff tabs coexist during persistent review');
+            const pages = vscode.workspace.textDocuments.filter(page => page.uri.scheme === summary.uri.scheme && page.uri.path.startsWith(prefix) && /\/(before|after)\//.test(page.uri.path));
+            assert.equal(tabs.length * 2, pages.length, 'EVERY retained source and identity byte page has a native before/after diff tab');
+            for (const page of pages) {
+                assert.equal((await vscode.workspace.fs.stat(page.uri)).permissions, vscode.FilePermission.Readonly, 'Every retained source/state side is read-only');
+                const bytes = Buffer.from(await vscode.workspace.fs.readFile(page.uri));
+                assert.equal(page.getText(), bytes.toString('utf8').replace(/^\uFEFF/, ''), 'Every loaded diff side matches its reviewed bytes');
+                assert.equal(page.isDirty, false);
+            }
             const prompts = applyPrompts, writes = dispatched;
             for (const tab of tabs) {
                 const input = tab.input as vscode.TabInputTextDiff;
@@ -414,13 +422,14 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         assert.deepEqual(blocked, [], 'Dispatched Apply requires deliberate reconnect before any new proposals');
         assert.equal(rpc.slice(afterInstall).filter(frame => ['open-workspace', 'propose-repair'].includes(frame.name)).length, 0);
         live(sameWatch);
-        if (pending) document = await userCloseAndReopen(document, installedText);
+        if (pending) await userRevertCleanFile(document, installedText, async () => 'Revert File');
+        for (const [file, bytes] of expected) assert.deepEqual(fs.readFileSync(path.join(model, file)), bytes, 'Separate user reconciliation preserves exact installed source/state bytes');
         assert.equal(document.getText(), installedText, 'Clean saved buffer is actually synchronized before renewed authority');
         warnings.length = 0;
         await vscode.commands.executeCommand('screenplay.repair.refresh');
-        assert.ok(!warnings.some(message => /ReconciliationRequired/.test(message)), 'User fresh read permits deliberate reconnect');
+        assert.ok(!warnings.some(message => /ReconciliationRequired/.test(message)), 'Actual text reconciliation permits deliberate installed reconnect');
         assert.ok(rpc.slice(afterInstall).some(frame => frame.name === 'open-workspace'), 'Renewed readiness is an actual server-validated read');
-        console.log(`INSTALLED CLIENT SAVED RECONCILIATION: ${JSON.stringify({ pendingAtBound: pending, userFreshRead: pending, exactDiskSourceAndState: true })}`);
+        console.log(`INSTALLED CLIENT SAVED RECONCILIATION: ${JSON.stringify({ pendingAtBound: pending, separateUserRevert: pending, exactTextVerified: true, installedRefresh: true, exactDiskSourceAndState: true })}`);
 
         model = path.join(root, 'root-replacement');
         fixtureReady(model);

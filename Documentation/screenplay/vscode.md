@@ -266,8 +266,18 @@ type after dispatch, it reports **Disk repair installed; editor synchronization
 pending**. That is a successful disk installation with pending editor reconciliation,
 not an Apply failure. Dirty buffers are preserved. Further proposals, including
 explicit reconnects, stay blocked until affected buffers actually match the reviewed
-content or you close them yourself. For a clean stale buffer, close and reopen its
-tab to read the installed content. Nothing is autosaved, force-reverted or replayed.
+content or VS Code disposes the affected models. Closing a tab does not guarantee
+model disposal; reopening can return the same cached old text. A closed cached
+model still counts toward the reconciliation barrier.
+
+You can independently choose VS Code's **File: Revert File** to reload a clean
+stale file. Focus that exact plain file editor, with no other Open Editors selection,
+and check that it is clean. Revert is a native user action, not a repair action or
+permission granted by Apply consent. It can overwrite changes typed while it runs;
+do not type during it or use it on a dirty buffer whose changes you need. Verify the
+actual text against the installed content, then deliberately choose **Screenplay:
+Discover Saved-File C# Repairs**. The extension never invokes Revert automatically,
+autosaves buffers or replays Apply.
 
 Cancellation discards queued reads or drains an in-flight read within its deadline.
 Once Apply is dispatched, a timeout, disconnect or unrecognized failure means the
@@ -319,15 +329,22 @@ lane, rather than silently skipping it. When Windows exposes ambiguous zero-volu
 identity, the lane instead requires actual installed-client `WatchUnavailable`
 refusal with no server discovery or Apply; it does not claim working repair support.
 
-Host tests switch and scroll actual source and identity diffs before invoking the
-contributed Apply command. They cover notification dismissal, explicit discard,
+The host suite requires switching and scrolling actual source and identity diffs
+before invoking the contributed Apply command. Its assertions require notification
+dismissal, explicit discard,
 associated untitled source/attachment/state refusal before discovery and after
 review, exact-byte installation, truthful bounded saved-buffer synchronization or
-pending warnings, blocked proposals while pending, explicit user-level clean-tab
-close/reopen and controlled post-dispatch dirty-buffer preservation. The direct RPC
-suite covers server transaction behavior; installed command tests separately require
-the real client reconciliation UI and authority barriers. Backend reload lag alone
-is not a failed installation, but neither is it silently counted as synchronization.
+pending warnings, blocked proposals while pending, a separately chosen native
+**File: Revert File** action on an unambiguous clean target, exact-text verification
+within five seconds, deliberate installed refresh and controlled post-dispatch
+dirty-buffer preservation. No typing occurs during the separate user Revert phase;
+the post-dispatch race tests product buffer preservation without Revert. The direct
+RPC suite covers server transaction behavior on a separate physical root, without
+requiring cached-model disposal or counting pending text as reloaded. Installed
+command tests separately require the real client reconciliation UI and authority
+barriers. These are required safety cases, not a claim that a native run completed
+them: an early failure leaves later cases unverified. Backend reload lag alone is
+not a failed installation, but neither is it silently counted as synchronization.
 Native shutdown logs must contain no disposed-resource exception after a real
 read-only inspection is left pending. Dialog replies and the timing of the real subprocess
 reply are controlled. Human keyboard/mouse modal interaction and uncontrolled
