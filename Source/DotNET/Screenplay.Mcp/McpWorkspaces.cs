@@ -37,9 +37,9 @@ internal sealed partial class McpWorkspaces
     // The path of a root bound from a single client root, null when unbound or chosen by path.
     internal string? ClientDerivedRootPath { get; private set; }
 
-    // The bound root; dynamic servers refuse workspace work until a root has been chosen.
-    McpRoot Root => _root ?? throw new McpFailure(
-        "No Screenplay root is bound. Pass open-workspace with a path to the folder holding the model, or restart the server inside one.");
+    // The bound root. A dynamic server binds its default root the first time any tool needs one, so no tool
+    // has to be preceded by open-workspace.
+    McpRoot Root => _root ?? BindDefaultRoot();
 
     internal McpRoot ReadRoot() => Root;
 
@@ -55,9 +55,7 @@ internal sealed partial class McpWorkspaces
         }
         else if (_root is null)
         {
-            var resolved = ResolveDefaultRoot();
-            ClientDerivedRootPath = ClientRoots.Length == 1 ? resolved.DirectoryPath : null;
-            BindRoot(resolved);
+            BindDefaultRoot();
         }
 
         var serialized = McpJson.OptionalString(arguments, "workspaceJson");
@@ -274,6 +272,14 @@ internal sealed partial class McpWorkspaces
         _stateBytes = null;
         _proposals.Clear();
         _statePlans.Clear();
+    }
+
+    McpRoot BindDefaultRoot()
+    {
+        var resolved = ResolveDefaultRoot();
+        ClientDerivedRootPath = ClientRoots.Length == 1 ? resolved.DirectoryPath : null;
+        BindRoot(resolved);
+        return resolved;
     }
 
     McpRoot ResolveDefaultRoot()

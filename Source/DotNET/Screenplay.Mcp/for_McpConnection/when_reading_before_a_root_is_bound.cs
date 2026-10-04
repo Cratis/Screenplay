@@ -14,5 +14,5 @@ public class when_reading_before_a_root_is_bound : given.a_dynamic_connection
     void Because() => _response = Call("describe-application");
 
     [Fact] void should_fail() => Failed(_response).ShouldBeTrue();
-    [Fact] void should_ask_for_a_root() => Text(_response).ShouldContain("No Screenplay root is bound");
+    [Fact] void should_ask_for_a_root() => Text(_response).ShouldContain("No Screenplay root was given");
 }

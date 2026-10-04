@@ -25,5 +25,5 @@ public class when_the_client_withdraws_its_root : given.a_dynamic_connection
     }
 
     [Fact] void should_unbind_the_workspace() => Failed(_response).ShouldBeTrue();
-    [Fact] void should_ask_for_a_root() => Text(_response).ShouldContain("No Screenplay root is bound");
+    [Fact] void should_ask_for_a_root() => Text(_response).ShouldContain("No Screenplay root was given");
 }
