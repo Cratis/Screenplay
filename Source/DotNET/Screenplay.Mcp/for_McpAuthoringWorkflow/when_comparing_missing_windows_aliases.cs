@@ -49,9 +49,14 @@ internal sealed partial class WindowsShortNamesFactAttribute : FactAttribute
         Directory.CreateDirectory(probe);
         try
         {
-            var path = Path.Combine(probe, "identities.json");
+            var metadata = Path.Combine(probe, ".screenplay");
+            McpFileAccess.CreatePrivateDirectory(metadata);
+            var path = Path.Combine(metadata, "identities.json");
             File.WriteAllText(path, "short-name probe");
-            if (!Path.GetFileName(ShortPath(path)).Contains('~')) Skip = "The test volume does not generate DOS 8.3 aliases for new files (or native short-name metadata is unavailable).";
+            if (!Path.GetFileName(ShortPath(path)).Contains('~') || !Path.GetFileName(ShortPath(metadata)).Contains('~'))
+            {
+                Skip = "Native short-name metadata confirms the test volume did not generate DOS 8.3 aliases for the identity file or metadata directory.";
+            }
         }
         finally
         {
@@ -64,10 +69,20 @@ internal sealed partial class WindowsShortNamesFactAttribute : FactAttribute
         var buffer = new char[32768];
         var length = GetShortPathName(path, buffer, (uint)buffer.Length);
 
-        return length is > 0 and < 32768 ? new string(buffer, 0, (int)length) : path;
+        if (length == 0)
+        {
+            throw new McpFailure($"Native short-name metadata query failed with Windows error {Marshal.GetLastPInvokeError()}.");
+        }
+
+        if (length >= buffer.Length)
+        {
+            throw new McpFailure("Native short-name metadata exceeds the bounded path buffer.");
+        }
+
+        return new string(buffer, 0, (int)length);
     }
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [LibraryImport("kernel32.dll", EntryPoint = "GetShortPathNameW", StringMarshalling = StringMarshalling.Utf16)]
+    [LibraryImport("kernel32.dll", EntryPoint = "GetShortPathNameW", StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
     private static partial uint GetShortPathName(string longPath, [Out] char[] shortPath, uint bufferLength);
 }

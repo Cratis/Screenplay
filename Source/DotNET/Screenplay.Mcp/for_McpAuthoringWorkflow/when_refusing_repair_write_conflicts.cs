@@ -211,6 +211,16 @@ public class when_refusing_repair_write_conflicts : given.an_authoring_connectio
     }
 
     [Fact]
+    void should_preserve_already_matching_source_access_rules_during_restore()
+    {
+        var path = Path.Combine(RootPath, "application.play");
+        var access = McpRecoveryAccess.Capture("application.play", path);
+        access.Restore(path);
+        McpRecoveryAccess.Capture("application.play", path).Rules.ShouldEqual(access.Rules);
+        Catch.Exception(() => access.Verify(path)).ShouldBeNull();
+    }
+
+    [Fact]
     void should_include_every_parent_that_source_installation_can_create()
     {
         var workspace = Workspace();
@@ -222,9 +232,9 @@ public class when_refusing_repair_write_conflicts : given.an_authoring_connectio
         }));
         var manifest = McpRecoveryJournal.PlannedPaths(Root, proposal, OperationId).ToHashSet(StringComparer.Ordinal);
         manifest.Contains(Path.Combine(RootPath, "long directory")).ShouldBeTrue();
-        manifest.Contains(Path.Combine(RootPath, "long directory/nested")).ShouldBeTrue();
-        manifest.Contains(Path.Combine(RootPath, "long directory/nested/renamed.play")).ShouldBeTrue();
-        manifest.Contains(Path.Combine(RootPath, $"long directory/nested/renamed.play.screenplay-mcp-{OperationId}.stage")).ShouldBeTrue();
+        manifest.Contains(Path.Combine(RootPath, "long directory", "nested")).ShouldBeTrue();
+        manifest.Contains(Path.Combine(RootPath, "long directory", "nested", "renamed.play")).ShouldBeTrue();
+        manifest.Contains(Path.Combine(RootPath, "long directory", "nested", $"renamed.play.screenplay-mcp-{OperationId}.stage")).ShouldBeTrue();
         Directory.Exists(Path.Combine(RootPath, "long directory")).ShouldBeFalse();
     }
 

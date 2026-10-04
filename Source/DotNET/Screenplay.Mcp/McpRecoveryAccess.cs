@@ -42,6 +42,15 @@ sealed record McpRecoveryAccess(string Path, string Rules)
     internal void Restore(string path)
     {
         Validate();
+        McpManagedFiles.CheckExisting(path);
+
+        // Reapplying an identical inherited Windows DACL can change its auto-inheritance flags.
+        // Leave already matching descriptors untouched; rollback still verifies the exact rules.
+        if (Capture(Path, path).Rules == Rules)
+        {
+            return;
+        }
+
         if (OperatingSystem.IsWindows())
         {
             var access = new FileSecurity();
