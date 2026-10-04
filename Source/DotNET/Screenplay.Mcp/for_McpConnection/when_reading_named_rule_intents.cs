@@ -198,5 +198,95 @@ public class when_reading_named_rule_intents : given.a_connection
         result.GetProperty("structuredContent").GetProperty("proposalId").GetString().ShouldNotBeNull();
     }
 
+    [Theory]
+    [InlineData(false, "copied")]
+    [InlineData(true, "copied")]
+    [InlineData(false, "copied-member")]
+    [InlineData(true, "copied-member")]
+    [InlineData(false, "duplicates")]
+    [InlineData(true, "duplicates")]
+    void should_refuse_transport_replacements_that_copy_guidance_or_lose_edited_duplicates(bool document, string change)
+    {
+        var duplicates = change == "duplicates";
+        File.WriteAllText(Path.Combine(RootPath, "model.play"), Prefix + "            implementation\n              hint \"Keep\"" + (duplicates ? "\n          label rule Check\n            implementation\n              hint \"Keep\"" : ""));
+        var opened = Content(Call("open-workspace", new { applicationName = "Projects" }));
+        var revision = opened.GetProperty("revision").GetString();
+        var documentId = _page.GetProperty("page").GetProperty("items")[0].GetProperty("handle").GetProperty("documentId").GetString();
+        var root = Content(Call("read-ast", new { expectedRevision = revision, kind = "ApplicationSyntax", includeContent = true })).GetProperty("page").GetProperty("items").EnumerateArray().Single(item => item.GetProperty("handle").GetProperty("documentId").GetString() == documentId);
+        var source = duplicates ? Prefix.Replace("rule Check", "rule Renamed", StringComparison.Ordinal) + "            implementation\n              hint \"Edited\"" : Prefix + $"          label rule {(change == "copied" ? "Other" : "Check")}\n            implementation\n              hint \"Keep\"";
+        var node = SyntaxJson.Serialize(new ScreenplayCompiler().Parse(source, "model.play").Value!);
+        var result = Call("propose-ast", new
+        {
+            expectedRevision = revision,
+            expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+            formatting = "CanonicalizeTouchedDocuments",
+            validation = "Authoring",
+            operations = document ? Array.Empty<object>() : [new { operation = "replace", target = root.GetProperty("handle"), node }],
+            documents = document ? new object[] { new { operation = "replace-document", documentId = root.GetProperty("handle").GetProperty("documentId"), node } } : []
+        }).GetProperty("result");
+        Assert.True(result.TryGetProperty("isError", out var error) && error.GetBoolean(), result.GetRawText());
+        result.GetProperty("structuredContent").GetProperty("conflicts")[0].GetProperty("message").GetString()!.Contains("pending", StringComparison.OrdinalIgnoreCase).ShouldBeTrue();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    void should_require_correct_transport_removal_provenance_for_a_renamed_hint_edited_duplicate(bool document)
+    {
+        File.WriteAllText(Path.Combine(RootPath, "model.play"), Prefix + "            implementation\n              hint \"Keep\"\n          label rule Check\n            implementation\n              hint \"Keep\"\n      command Other\n        label String\n        validate\n          label rule Check\n            implementation\n              hint \"Keep\"");
+        var opened = Content(Call("open-workspace", new { applicationName = "Projects" }));
+        var revision = opened.GetProperty("revision").GetString();
+        var documentId = _page.GetProperty("page").GetProperty("items")[0].GetProperty("handle").GetProperty("documentId").GetString();
+        var root = Content(Call("read-ast", new { expectedRevision = revision, kind = "ApplicationSyntax", includeContent = true })).GetProperty("page").GetProperty("items").EnumerateArray().Single(item => item.GetProperty("handle").GetProperty("documentId").GetString() == documentId);
+        var rules = Content(Call("read-workspace", new { expectedRevision = revision, view = "named-rule-intents" })).GetProperty("page").GetProperty("items").EnumerateArray().ToArray();
+        var source = Prefix.Replace("rule Check", "rule Renamed", StringComparison.Ordinal) + "            implementation\n              hint \"Edited\"\n      command Other\n        label String\n        validate\n          label rule Check\n            implementation\n              hint \"Keep\"";
+        var node = SyntaxJson.Serialize(new ScreenplayCompiler().Parse(source).Value!);
+        JsonElement Propose(JsonElement removal) => Call("propose-ast", new
+        {
+            expectedRevision = revision,
+            expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+            formatting = "CanonicalizeTouchedDocuments",
+            validation = "Authoring",
+            operations = document ? new object[] { new { operation = "remove", target = removal } } :
+                [new { operation = "remove", target = removal }, new { operation = "replace", target = root.GetProperty("handle"), node }],
+            documents = document ? new object[] { new { operation = "replace-document", documentId = root.GetProperty("handle").GetProperty("documentId"), node } } : []
+        }).GetProperty("result");
+        Propose(rules[2].GetProperty("handle")).GetProperty("isError").GetBoolean().ShouldBeTrue();
+        var stale = JsonNode.Parse(rules[0].GetProperty("handle").GetRawText())!;
+        stale["revision"] = "wsrev1:" + new string('0', 64);
+        Propose(JsonSerializer.SerializeToElement(stale)).GetProperty("isError").GetBoolean().ShouldBeTrue();
+        var forged = JsonNode.Parse(rules[0].GetProperty("handle").GetRawText())!;
+        forged["path"] = "/missing";
+        Propose(JsonSerializer.SerializeToElement(forged)).GetProperty("isError").GetBoolean().ShouldBeTrue();
+        var result = Propose(rules[0].GetProperty("handle"));
+        Assert.False(result.TryGetProperty("isError", out var error) && error.GetBoolean(), result.GetRawText());
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    void should_accept_transport_full_deletion_or_atomic_attachment_and_unwrap(bool document, bool attach)
+    {
+        File.WriteAllText(Path.Combine(RootPath, "model.play"), Prefix + "            implementation\n              hint \"Keep\"\n          label not empty");
+        var opened = Content(Call("open-workspace", new { applicationName = "Projects" }));
+        var revision = opened.GetProperty("revision").GetString();
+        var documentId = _page.GetProperty("page").GetProperty("items")[0].GetProperty("handle").GetProperty("documentId").GetString();
+        var root = Content(Call("read-ast", new { expectedRevision = revision, kind = "ApplicationSyntax", includeContent = true })).GetProperty("page").GetProperty("items").EnumerateArray().Single(item => item.GetProperty("handle").GetProperty("documentId").GetString() == documentId);
+        var source = attach ? Prefix + "            file A.cs\n          label not empty" : Prefix.Replace("label rule Check", "label not empty", StringComparison.Ordinal);
+        var node = SyntaxJson.Serialize(new ScreenplayCompiler().Parse(source, "model.play").Value!);
+        var result = Call("propose-ast", new
+        {
+            expectedRevision = revision,
+            expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+            formatting = "CanonicalizeTouchedDocuments",
+            validation = "Authoring",
+            operations = document ? Array.Empty<object>() : [new { operation = "replace", target = root.GetProperty("handle"), node }],
+            documents = document ? new object[] { new { operation = "replace-document", documentId = root.GetProperty("handle").GetProperty("documentId"), node } } : []
+        }).GetProperty("result");
+        Assert.False(result.TryGetProperty("isError", out var error) && error.GetBoolean(), result.GetRawText());
+    }
+
     static JsonElement Content(JsonElement response) => response.GetProperty("result").GetProperty("structuredContent");
 }
