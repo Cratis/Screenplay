@@ -411,7 +411,8 @@ internal sealed partial class McpWorkspaces
     static object DescribeNamedRuleIntent(WorkspaceNamedRuleIntentEntry entry) => new
     {
         handle = McpAstHandles.Describe(entry.Handle),
-        owner = entry.Owner, ownerId = entry.OwnerId.ToString(), identityOrigin = entry.IdentityOrigin.ToString(),
+        owner = McpSemanticAddresses.Describe(entry.Owner), ownerName = entry.Owner.Name,
+        ownerId = entry.OwnerId.ToString(), identityOrigin = entry.IdentityOrigin.ToString(),
         entry.IsProvisional, entry.IsAmbiguous, member = entry.Member,
         requirementId = entry.RequirementId, state = entry.State, file = entry.File, language = entry.Language,
         hintCount = entry.Hints.Length, executionEvidence = false,
