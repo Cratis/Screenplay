@@ -53,7 +53,7 @@ sealed class McpOperationInventory
     };
 
     internal bool AmbiguousOwner(WorkspaceSyntaxEntry entry) => entry.Node is OperationSyntax operation &&
-        McpWorkspaceAnalysis.For(_workspace).Source.Index.ResolveProduction(string.Join('.', Scope(entry).Append(operation.Name)), Scope(entry)).Resolution == "ambiguous";
+        McpWorkspaceAnalysis.For(_workspace).Source.Index.HasExactOwnershipCollision("Operation", operation.Name, Scope(entry));
 
     internal IEnumerable<object> Details(WorkspaceSyntaxEntry entry)
     {

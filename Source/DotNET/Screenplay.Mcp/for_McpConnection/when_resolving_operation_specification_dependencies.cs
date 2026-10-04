@@ -113,5 +113,80 @@ public class when_resolving_operation_specification_dependencies
         }
     }
 
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(1, false)]
+    [InlineData(2, false)]
+    [InlineData(3, false)]
+    [InlineData(4, false)]
+    [InlineData(5, false)]
+    [InlineData(0, true)]
+    [InlineData(1, true)]
+    [InlineData(2, true)]
+    [InlineData(3, true)]
+    [InlineData(4, true)]
+    [InlineData(5, true)]
+    public void should_resolve_the_complete_physical_winning_scope_even_when_assembly_selects_a_different_sibling(int permutation, bool mixedKind)
+    {
+        var declarations = new[]
+        {
+            Document("a.play", "module M\n  feature F\n    slice StateChange S\n      command Other\n"),
+            Document("b.play", "module M\n  feature F\n    slice StateChange S\n" + (mixedKind ? Event : Operation)),
+            Document("other.play", "system Mailer\nmodule M\n  feature F\n    slice StateChange U\n" + Operation)
+        };
+        int[][] orders = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+        const string referring = "module M\n  feature F\n    slice StateChange T\n      command Ask\n        produces Send\n      specification Check\n        given operation Send fails\n        when Ask\n        then operation Send\n        then compensated Send\n";
+        var snapshot = new McpSnapshot([.. orders[permutation].Select(index => declarations[index]), Document("reference.play", referring)]);
+        snapshot.Compilation.Success.ShouldBeFalse();
+        var references = snapshot.Index.References.Where(reference => reference.Name == "Send").ToArray();
+        references.Length.ShouldEqual(4);
+        foreach (var reference in references)
+        {
+            var edge = new McpReferenceEdge(reference, snapshot.Index.Resolve(reference));
+            edge.Resolution.ShouldEqual("ambiguous");
+            edge.Targets.Length.ShouldEqual(4);
+            edge.Targets.Where(target => target.Kind == "Event" || target.Kind == "Operation").Select(target => target.Address)
+                .Order(StringComparer.Ordinal).SequenceEqual(["M.F.S.Send", "M.F.U.Send"]).ShouldBeTrue();
+            edge.Targets.Select(target => target.Location.Path).Distinct().Order(StringComparer.Ordinal)
+                .SequenceEqual(["a.play", "b.play", "other.play"]).ShouldBeTrue();
+        }
+        snapshot.Index.ResolveProduction("S.Send", ["M", "F", "T"]).Resolution.ShouldEqual("ambiguous");
+        snapshot.Index.ResolveProduction("M.F.S.Send", ["M", "F", "T"]).Resolution.ShouldEqual("ambiguous");
+        snapshot.Index.ResolveProduction("U.Send", ["M", "F", "T"]).Resolution.ShouldEqual("resolved");
+        var inspections = snapshot.Index.CandidateInspectionCount;
+        foreach (var reference in references) snapshot.Index.Resolve(reference);
+        snapshot.Index.CandidateInspectionCount.ShouldEqual(inspections);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void should_keep_suffix_reference_ambiguity_separate_from_exact_ownership(bool reverse)
+    {
+        var documents = new[]
+        {
+            Document("short.play", "system Mailer\nmodule M\n  feature F\n    slice StateChange S\n" + Operation),
+            Document("long.play", "module N\n  feature M\n    feature F\n      slice StateChange S\n        operation Send\n          uses Mailer\n"),
+            Document("reference.play", "module M\n  feature F\n    slice StateChange T\n      command Ask\n        produces M.F.S.Send\n      specification Check\n        given operation M.F.S.Send fails\n        when Ask\n        then operation M.F.S.Send\n        then compensated M.F.S.Send\n")
+        };
+        var declarations = new McpSnapshot([.. reverse ? documents.Take(2).Reverse() : documents.Take(2)]);
+        declarations.Compilation.Success.ShouldBeTrue();
+        declarations.Index.HasExactOwnershipCollision("Operation", "Send", ["M", "F", "S"]).ShouldBeFalse();
+        declarations.Index.HasExactOwnershipCollision("Operation", "Send", ["N", "M", "F", "S"]).ShouldBeFalse();
+        var snapshot = new McpSnapshot([.. reverse ? documents.Reverse() : documents]);
+        var references = snapshot.Index.References.Where(reference => reference.Name == "M.F.S.Send").ToArray();
+        references.Length.ShouldEqual(4);
+        foreach (var reference in references)
+        {
+            var edge = new McpReferenceEdge(reference, snapshot.Index.Resolve(reference));
+            edge.Resolution.ShouldEqual("ambiguous");
+            edge.Targets.Select(target => target.Address).Order(StringComparer.Ordinal)
+                .SequenceEqual(["M.F.S.Send", "N.M.F.S.Send"]).ShouldBeTrue();
+        }
+        snapshot.Index.ResolveProduction("Send", ["M", "F", "T"]).Resolution.ShouldEqual("resolved");
+        snapshot.Index.ResolveProduction("S.Send", ["M", "F", "T"]).Resolution.ShouldEqual("ambiguous");
+        snapshot.Index.ResolveProduction("N.M.F.S.Send", ["M", "F", "T"]).Targets.Single().Address.ShouldEqual("N.M.F.S.Send");
+    }
+
     static WorkspaceDocument Document(string path, string source) => WorkspaceDocument.Create(path, PortablePlayPath.Parse(path), Encoding.UTF8.GetBytes(source));
 }

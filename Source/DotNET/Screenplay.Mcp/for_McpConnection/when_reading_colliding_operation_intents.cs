@@ -38,4 +38,45 @@ public class when_reading_colliding_operation_intents : given.a_connection
         candidates.Any(candidate => candidate.TryGetProperty("semanticId", out _)).ShouldBeFalse();
         production.GetProperty("executionAvailable").GetBoolean().ShouldBeFalse();
     }
+
+    [Fact]
+    public void should_refuse_exact_operation_details_for_a_true_mixed_kind_namespace_collision()
+    {
+        File.WriteAllText(Path.Combine(RootPath, "application.play"), "system Mailer\nmodule M\n  feature F\n    slice StateChange S\n      event Send\n      operation Send\n        uses Mailer\n      command Ask\n        produces Send\n");
+        Initialize();
+        var opened = Call("open-workspace", new { applicationName = "Projects" }).GetProperty("result").GetProperty("structuredContent");
+        var revision = opened.GetProperty("revision").GetString();
+        var inventory = Call("read-workspace", new { expectedRevision = revision, view = "operation-intents" }).GetProperty("result").GetProperty("structuredContent");
+        var entry = inventory.GetProperty("page").GetProperty("items")[0];
+        var details = Call("read-workspace", new { expectedRevision = revision, view = "operation-intent-details", authoringKey = entry.GetProperty("authoringKey").GetString() }).GetProperty("result");
+        details.GetProperty("isError").GetBoolean().ShouldBeTrue();
+        details.GetProperty("content")[0].GetProperty("text").GetString()!.ShouldContain("AmbiguousDeclaration:");
+        var productions = Call("read-workspace", new { expectedRevision = revision, view = "ordered-productions" }).GetProperty("result").GetProperty("structuredContent");
+        productions.GetProperty("page").GetProperty("items")[0].GetProperty("targetKind").GetString().ShouldEqual("Ambiguous");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void should_select_exact_authoring_keys_when_full_scopes_are_suffixes_of_each_other(bool reverse)
+    {
+        const string shortScope = "module M\n  feature F\n    slice StateChange S\n      operation Send\n        uses Mailer\n";
+        const string longScope = "module N\n  feature M\n    feature F\n      slice StateChange S\n        operation Send\n          uses Mailer\n";
+        File.WriteAllText(Path.Combine(RootPath, "application.play"), "system Mailer\n" + (reverse ? longScope + shortScope : shortScope + longScope));
+        Initialize();
+        var opened = Call("open-workspace", new { applicationName = "Projects" }).GetProperty("result").GetProperty("structuredContent");
+        var revision = opened.GetProperty("revision").GetString();
+        var inventory = Call("read-workspace", new { expectedRevision = revision, view = "operation-intents" }).GetProperty("result").GetProperty("structuredContent");
+        var entries = inventory.GetProperty("page").GetProperty("items").EnumerateArray().ToArray();
+        entries.Length.ShouldEqual(2);
+        entries.Select(entry => entry.GetProperty("authoringKey").GetString()).Distinct().Count().ShouldEqual(2);
+        foreach (var entry in entries)
+        {
+            var details = Call("read-workspace", new { expectedRevision = revision, view = "operation-intent-details", authoringKey = entry.GetProperty("authoringKey").GetString() }).GetProperty("result");
+            details.GetProperty("isError").GetBoolean().ShouldBeFalse();
+            var declaration = details.GetProperty("structuredContent").GetProperty("page").GetProperty("items")[0].GetProperty("declaration");
+            declaration.GetProperty("authoringKey").GetString().ShouldEqual(entry.GetProperty("authoringKey").GetString());
+            declaration.GetProperty("handle").GetRawText().ShouldEqual(entry.GetProperty("handle").GetRawText());
+        }
+    }
 }

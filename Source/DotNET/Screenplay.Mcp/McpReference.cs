@@ -3,14 +3,13 @@
 
 using System.Text.Json.Serialization;
 using Cratis.Screenplay.Diagnostics;
-using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Mcp;
 
 sealed record McpReference(string Name, string[] Kinds, string[] Scope, SourceLocation Location, string Role = "reference", McpReadOwner? Owner = null)
 {
     // Resolve event/operation names before validating the reference's required kind.
-    // Keep syntax evidence private: wire results expose declarations, not compiler nodes.
+    // Use the snapshot's complete physical candidate view, not an assembled selection.
     [JsonIgnore]
-    internal AuthoringProductionResolution? ProductionResolution { get; init; }
+    internal bool UseProductionCandidates { get; init; }
 }

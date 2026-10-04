@@ -113,13 +113,12 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
 
         var owningSyntax = _ownership.For(node);
         var owner = owningSyntax is null ? null : _owners.GetValueOrDefault(owningSyntax);
-        foreach (var reference in McpReferenceKinds.For(node, owningSyntax, node is ProducesSyntax production ? Readiness.ProductionKinds(production, owningSyntax) : null))
+        foreach (var reference in McpReferenceKinds.For(node, owningSyntax))
         {
             var role = owner?.Syntax is SpecificationSyntax specification ? McpFixtureOccurrences.Role(specification, node, reference.Role) : reference.Role;
             _references.Add(new(reference.Name, reference.Kinds, [.. _scope], node.Location, role, owner?.Owner)
             {
-                ProductionResolution = node is ProducesSyntax or SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax
-                    ? Readiness.ResolveProduction(reference.Name, [.. _scope]) : null
+                UseProductionCandidates = node is ProducesSyntax or SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax
             });
         }
     }
@@ -134,7 +133,15 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         }
 
         _declarations.AddRange([.. McpLogicalReadModels.From(_declarations)]);
-        _queries = new(_declarations, _references);
+        var productions = new McpProductionInventory([.. _declarations]);
+        for (var index = 0; index < _references.Count; index++)
+        {
+            var reference = _references[index];
+            if (reference.Role != "produces") continue;
+            var targets = productions.ResolveReference(reference.Name, reference.Scope);
+            _references[index] = reference with { Kinds = targets is [var target] ? [target.Kind] : ["Event", "Operation"] };
+        }
+        _queries = new(_declarations, _references, productions);
     }
 
     internal McpDeclaration[] Resolve(McpReference reference) => _queries.Resolve(reference);
@@ -143,13 +150,15 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     {
         var reference = new McpReference(name, ["Event", "Operation"], scope, new(0, 0, string.Empty), "production", null)
         {
-            ProductionResolution = Readiness.ResolveProduction(name, scope)
+            UseProductionCandidates = true
         };
 
         return new(reference, Resolve(reference));
     }
 
     internal McpDeclaration[] Find(string address, string kind) => _queries.Find(address, kind);
+
+    internal bool HasExactOwnershipCollision(string kind, string name, string[] scope) => _queries.HasExactOwnershipCollision(kind, name, scope);
 
     internal IEnumerable<McpQueryIndexResolution> Incoming(McpDeclaration declaration) => _queries.Incoming(declaration);
 

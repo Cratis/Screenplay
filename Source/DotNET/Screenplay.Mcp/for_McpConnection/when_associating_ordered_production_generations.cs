@@ -55,6 +55,40 @@ public class when_associating_ordered_production_generations
         production.GetProperty("candidates").GetArrayLength().ShouldEqual(2);
     }
 
+    [Theory]
+    [InlineData("      event Recorded\n      event Recorded generation 3\n")]
+    [InlineData("      event Recorded generation 2\n      event Recorded generation 3\n")]
+    [InlineData("      event Recorded\n        id \"Old\"\n      event Recorded generation 2\n        id \"Different\"\n")]
+    [InlineData("      command Inline\n        produces event Recorded\n      event Recorded generation 2\n")]
+    public void should_not_collapse_invalid_event_lineages_into_one_confident_candidate(string declarations)
+    {
+        var inventory = Inventory([Document("model.play", "module M\n  feature F\n    slice StateChange S\n" + declarations + "      command C\n        produces Recorded\n")]);
+        var production = Rows(inventory)[^1];
+        production.GetProperty("targetKind").GetString().ShouldEqual("Ambiguous");
+        production.GetProperty("candidates").GetArrayLength().ShouldEqual(2);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void should_preserve_a_hidden_physical_sibling_in_ordered_productions(bool reverse)
+    {
+        var documents = new[]
+        {
+            Document("a.play", "module M\n  feature F\n    slice StateChange S\n      command Other\n"),
+            Document("b.play", "system Mailer\nmodule M\n  feature F\n    slice StateChange S\n      operation Send\n        uses Mailer\n"),
+            Document("other.play", "module M\n  feature F\n    slice StateChange U\n      operation Send\n        uses Mailer\n"),
+            Document("reference.play", "module M\n  feature F\n    slice StateChange T\n      command Ask\n        produces Send\n")
+        };
+        var inventory = Inventory(reverse ? documents.Reverse() : documents);
+        var production = Rows(inventory).Single();
+        production.GetProperty("targetKind").GetString().ShouldEqual("Ambiguous");
+        production.GetProperty("candidates").GetArrayLength().ShouldEqual(4);
+        production.GetProperty("candidates").EnumerateArray().Select(candidate => candidate.GetProperty("location").GetProperty("path").GetString())
+            .Distinct().Order(StringComparer.Ordinal).SequenceEqual(["a.play", "b.play", "other.play"]).ShouldBeTrue();
+        production.GetProperty("handle").GetProperty("documentId").GetString().ShouldEqual(documents[3].Id.ToString());
+    }
+
     [Fact]
     public void should_not_select_production_kinds_without_a_unique_physical_command_owner()
     {

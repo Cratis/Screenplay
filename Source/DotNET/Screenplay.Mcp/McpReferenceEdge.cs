@@ -5,12 +5,10 @@ namespace Cratis.Screenplay.Mcp;
 
 sealed record McpReferenceEdge(McpReference Reference, McpDeclaration[] Targets)
 {
-    internal string Resolution => Reference.ProductionResolution?.Kind == Cratis.Screenplay.Syntax.AuthoringProductionKind.Ambiguous
-        ? "ambiguous"
-        : Targets.Length switch
-        {
-            0 => "unresolved",
-            1 => Reference.Kinds.Contains(Targets[0].Kind, StringComparer.Ordinal) ? "resolved" : "wrongKind",
-            _ => "ambiguous"
-        };
+    internal string Resolution => Targets.Length switch
+    {
+        0 => "unresolved",
+        1 => Reference.Kinds.Contains(Targets[0].Kind, StringComparer.Ordinal) ? "resolved" : "wrongKind",
+        _ => "ambiguous"
+    };
 }
