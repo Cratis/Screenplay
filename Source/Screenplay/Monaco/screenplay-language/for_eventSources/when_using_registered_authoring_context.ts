@@ -1,9 +1,10 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import type { editor, Position } from 'monaco-editor';
+import type { editor, languages, Position } from 'monaco-editor';
 import { describe, expect, it, vi } from 'vitest';
 import { createCompletionProvider } from '../completions';
+import { register } from '../index';
 import { attachDiagnostics, validate } from '../diagnostics';
 import { Monaco } from '../language';
 import { DocumentSymbols, mergeSymbols, scanDocument } from '../symbols';
@@ -36,7 +37,56 @@ async function complete(current: string, line: number, context: DocumentSymbols 
     return result?.suggestions.map(item => item.label);
 }
 
+function registered(source: string, context: DocumentSymbols) {
+    const setup = host(source);
+    let provider: languages.CompletionItemProvider | undefined;
+    Object.assign(setup.monaco.languages, {
+        register() {}, setLanguageConfiguration() {}, setMonarchTokensProvider() {},
+        registerCompletionItemProvider: (_language: string, value: languages.CompletionItemProvider) => { provider = value; },
+        registerHoverProvider() {}, registerDefinitionProvider() {}, registerDocumentSemanticTokensProvider() {},
+        registerInlayHintsProvider() {}, registerCodeActionProvider() {},
+    });
+    Object.assign(setup.monaco.editor, { defineTheme() {} });
+    register(setup.monaco, { application: () => context });
+    return { ...setup, complete: async () => {
+        const lines = setup.model.getLinesContent();
+        const result = await provider!.provideCompletionItems(setup.model, { lineNumber: lines.length, column: lines.at(-1)!.length + 1 } as Position, {} as never, {} as never);
+        return result?.suggestions.map(item => item.label);
+    } };
+}
+
+function staleImportContext() {
+    const current = 'slice StateChange S\n  command C\n    stream Account.Tr';
+    const cached = 'import Account.Transactions\n' + current;
+    const sources = declarations.replaceAll('ß', '');
+    const context: DocumentSymbols = { ...mergeSymbols(scanDocument(cached.split('\n')), scanDocument(sources.split('\n'))),
+        authoringDocuments: [{ path: 'sources.play', source: sources }, { path: 'native.play', source: cached, placement: ['M', 'F'] }],
+        authoringPath: 'native.play', authoringPlacement: ['M', 'F'], authoringPlacementResolved: true };
+    return { current, cached, context };
+}
+
 describe('when registered providers use physical authoring context', () => {
+    it('should ignore stale scanned imports after unsaved removal but refuse their unsaved re-addition', async () => {
+        const { current, cached, context } = staleImportContext();
+        const setup = registered(cached, context);
+        expect(context.imports.map(imported => imported.qualifiedName)).toContain('Account.Transactions');
+        expect(await setup.complete()).toEqual([]);
+        setup.setText(current);
+        expect(await setup.complete()).toEqual(['Account.Transactions']);
+        setup.setText(cached);
+        expect(await setup.complete()).toEqual([]);
+        setup.setText(current);
+        expect(await setup.complete()).toEqual(['Account.Transactions']);
+    });
+    it.each([
+        ['external import', { path: 'external.play', source: 'import Account.Transactions' }],
+        ['duplicate source', { path: 'duplicate.play', source: 'eventsource Account\n  stream Transactions' }],
+        ['incomplete ownership', { path: 'unresolved.play', source: 'eventsource Other\n  stream Entries', placement: ['M', 'F'], isPlacementResolved: false }],
+    ])('should retain refusal for genuine %s after unsaved import removal', async (_name, document) => {
+        const { current, context } = staleImportContext();
+        context.authoringDocuments = [...context.authoringDocuments!, document];
+        expect(await registered(current, context).complete()).toEqual([]);
+    });
     it.each(['ß', '\u0301', '\u0661', '\u203F'])('should match compiler word continuations %s without broadening declaration starts', async suffix => {
         const declared = declarations.replaceAll('ß', suffix);
         const current = command.replaceAll('ß', suffix).replace(`Account${suffix}.Transactions${suffix}`, `Account${suffix}.Tr`);

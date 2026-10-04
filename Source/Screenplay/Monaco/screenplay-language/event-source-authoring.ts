@@ -118,8 +118,8 @@ export function eventSourceCompletions(lines: string[], line: number, before: st
         // candidates have no known value-type competitor; never silently rewrite ambiguity.
         const typed = responseAnalysis(lines, symbols.authoringDocuments ?? symbols.authoringSources?.filter(source => source !== lines.join('\n')) ?? [], symbols.authoringPlacement, symbols.authoringPath);
         const names = new Set([...typed.operations.concepts, ...typed.operations.types].map(type => type.name));
-        // An unavailable imported shape is not evidence that a route is the only viable meaning.
-        for (const imported of symbols.imports) names.add(imported.qualifiedName);
+        // targets already exclude competing imports from the authoritative parsed documents.
+        // Scanned symbols can retain an import removed from the current unsaved buffer.
         const qualified = before.trim().split(/\s+/)[1] ?? '';
         return analysis.targets.filter(target => isSourceStreamName(target.source.name) && isSourceStreamName(target.stream.name) && !names.has(target.name) && (!qualified.includes('.') || target.name.startsWith(qualified.slice(0, qualified.lastIndexOf('.') + 1))))
             .map(target => ({ label: target.name, insertText: qualified.includes('.') ? target.stream.name : target.name, documentation: eventSourceDetails(target.source, target.stream) }));

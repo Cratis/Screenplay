@@ -3,6 +3,7 @@
 
 import { describe, expect, it, vi } from 'vitest';
 import * as vscode from 'vscode';
+import { DocumentSymbols, mergeSymbols, scanDocument } from '@cratis/screenplay-language';
 import { ApplicationIndex } from '../ApplicationIndex';
 import { registerCompletions } from '../Completions';
 import { WorkspaceApplication } from '../WorkspaceApplication';
@@ -27,7 +28,36 @@ async function complete(source: string, line: number, application: WorkspaceAppl
     return (Array.isArray(result) ? result : result?.items)?.map(item => item.label);
 }
 
+function staleImportContext() {
+    const current = 'slice StateChange S\n  command C\n    stream Account.Tr';
+    const cached = 'import Account.Transactions\n' + current;
+    const sources = declarations.replaceAll('ß', '');
+    const context: DocumentSymbols = { ...mergeSymbols(scanDocument(cached.split('\n')), scanDocument(sources.split('\n'))),
+        authoringDocuments: [{ path: 'sources.play', source: sources }, { path: 'native.play', source: cached, placement: ['M', 'F'] }],
+        authoringPath: 'native.play', authoringPlacement: ['M', 'F'], authoringPlacementResolved: true };
+    const application = new WorkspaceApplication();
+    vi.spyOn(application, 'symbolsExcept').mockReturnValue(context);
+    return { current, cached, context, application };
+}
+
 describe('when the VS Code completion provider reads physical stream context', () => {
+    it('should ignore stale scanned imports after unsaved removal but refuse their unsaved re-addition', async () => {
+        const { current, cached, context, application } = staleImportContext();
+        expect(context.imports.map(imported => imported.qualifiedName)).toContain('Account.Transactions');
+        expect(await complete(cached, 3, application, 'native.play')).toEqual([]);
+        expect(await complete(current, 2, application, 'native.play')).toEqual(['Account.Transactions']);
+        expect(await complete(cached, 3, application, 'native.play')).toEqual([]);
+        expect(await complete(current, 2, application, 'native.play')).toEqual(['Account.Transactions']);
+    });
+    it.each([
+        ['external import', { path: 'external.play', source: 'import Account.Transactions' }],
+        ['duplicate source', { path: 'duplicate.play', source: 'eventsource Account\n  stream Transactions' }],
+        ['incomplete ownership', { path: 'unresolved.play', source: 'eventsource Other\n  stream Entries', placement: ['M', 'F'], isPlacementResolved: false }],
+    ])('should retain refusal for genuine %s after unsaved import removal', async (_name, document) => {
+        const { current, context, application } = staleImportContext();
+        context.authoringDocuments = [...context.authoringDocuments!, document];
+        expect(await complete(current, 2, application, 'native.play')).toEqual([]);
+    });
     it('should complete a Unicode qualified prefix in a full application without duplicating current source', async () => {
         const current = declarations + '\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        stream Accountß.Tr';
         const application = new WorkspaceApplication();
