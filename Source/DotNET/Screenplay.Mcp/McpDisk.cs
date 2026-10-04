@@ -9,7 +9,7 @@ sealed class McpDisk(McpRoot root, Action<string, string>? move = null)
 {
     readonly Action<string, string> _move = move ?? ((source, destination) => File.Move(source, destination));
 
-    internal McpDiskResult Apply(IMcpProposal proposal, McpStatePlan? state = null)
+    internal McpDiskResult Apply(IMcpProposal proposal, McpStatePlan? state = null, Action? verifyEvidence = null)
     {
         if (!proposal.Accepted || proposal.WritePlan.BeforeRevision != proposal.Before.Revision ||
             proposal.WritePlan.BeforeCatalogRevision != proposal.Before.IdentityCatalog.Revision ||
@@ -35,6 +35,9 @@ sealed class McpDisk(McpRoot root, Action<string, string>? move = null)
             root.Verify(proposal.Before);
             files.Verify(McpState.FileName, state.Before);
             CheckDestinations(proposal);
+
+            // Last pre-install check under the existing exclusive-writer assumption, not a kernel-atomic lock.
+            verifyEvidence?.Invoke();
             Backup(changes, journal);
             Install(changes, journal);
             InstallState(files, state, journal);
@@ -58,7 +61,11 @@ sealed class McpDisk(McpRoot root, Action<string, string>? move = null)
                 recovery.Add($"Identity backup: '{journal.StateBackup}'");
             }
 
-            return new(false, restored ? "RolledBack" : "RecoveryRequired", recovery, changes.Length, changes.Count(change => change.Installed));
+            var failureKind = exception is McpFailure rejected ? rejected.FailureKind : "ApplyRolledBack";
+            return new(false, restored ? "RolledBack" : "RecoveryRequired", recovery, changes.Length, changes.Count(change => change.Installed))
+            {
+                FailureKind = restored ? failureKind : "RecoveryRequired"
+            };
         }
 
         return new(true, $"Applied {changes.Length} document changes and durable identity state", [], changes.Length, changes.Count(change => change.Installed));

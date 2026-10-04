@@ -13,7 +13,15 @@ internal sealed partial class McpWorkspaces
 {
     internal object ProposeRepair(JsonElement arguments)
     {
+        var expectedEvidence = McpRepairEvidence.Expected(arguments);
+        var pinned = McpJson.Boolean(arguments, "pinRepairEvidence");
+        if (pinned != (expectedEvidence is not null))
+        {
+            throw new McpFailure("Pinned repair proposals require pinRepairEvidence=true and expectedRepairEvidenceRevision.", -32602);
+        }
+
         var workspace = Current();
+        McpRepairEvidence.Check(expectedEvidence, workspace);
         var expectedRevision = WorkspaceRevision.Parse(McpJson.RequiredString(arguments, "expectedRevision"));
         var expectedCatalogRevision = CatalogRevision.Parse(McpJson.RequiredString(arguments, "expectedCatalogRevision"));
         var formatting = McpJson.Enumeration(arguments, "formatting", WorkspaceAuthoringFormatting.PreserveExactSource);
@@ -31,11 +39,16 @@ internal sealed partial class McpWorkspaces
 
         Root.Verify(workspace);
         var code = McpJson.RequiredString(arguments, "diagnosticCode");
+        if (pinned && code is not ("PLAY0166" or "PLAY0478"))
+        {
+            throw new McpFailure("Pinned repair evidence v1 supports PLAY0166 and PLAY0478 only.", -32602) { FailureKind = "UnsupportedRepair" };
+        }
+
         var subject = McpAstHandles.Read(arguments.GetProperty("subject"));
         var result = WorkspaceDiagnosticRepairs.ProposeRepair(workspace, code, subject, request);
         if (result.Conflicts.Any(conflict => conflict.Kind == WorkspaceConflictKind.UnknownRepair))
         {
-            throw new McpFailure("UnknownRepair: no unambiguous repair for this code and subject.", -32602);
+            throw new McpFailure("UnknownRepair: no unambiguous repair for this code and subject.", -32602) { FailureKind = "UnknownRepair" };
         }
 
         return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation, request.ReferencePolicy), arguments) : Rejected(result);
@@ -80,6 +93,13 @@ internal sealed partial class McpWorkspaces
         var response = new
         {
             success = false,
+            failureKind = result.Conflicts.FirstOrDefault()?.Kind switch
+            {
+                WorkspaceConflictKind.StaleWorkspaceRevision or WorkspaceConflictKind.StaleCatalogRevision => "StaleRevision",
+                WorkspaceConflictKind.FormattingConsentRequired => "FormattingConsentRequired",
+                WorkspaceConflictKind.UnknownRepair => "UnknownRepair",
+                _ => "ProposalRejected"
+            },
             result.Conflicts,
             result.AuthoringDiagnostics,
             result.ExecutableReady,

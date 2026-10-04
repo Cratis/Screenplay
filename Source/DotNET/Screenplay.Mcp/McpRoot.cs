@@ -192,7 +192,7 @@ sealed class McpRoot
         if (current.Count != workspace.Documents.Length || workspace.Documents.Any(document =>
             !current.TryGetValue(document.Path.Value, out var actual) || !actual.Bytes.AsSpan().SequenceEqual(document.Bytes.AsSpan())))
         {
-            throw new McpFailure("DiskDrift: the .play file set or exact bytes differ from the workspace. Reopen before proposing changes.");
+            throw new McpFailure("DiskDrift: the .play file set or exact bytes differ from the workspace. Reopen before proposing changes.") { FailureKind = "DiskDrift" };
         }
     }
 

@@ -104,7 +104,7 @@ sealed class McpManagedFiles(McpRoot root)
     {
         if (!Equal(Read(name), expected))
         {
-            throw new McpFailure($"IdentityStateDrift: '.screenplay/{name}' changed; reopen before proposing changes.");
+            throw new McpFailure($"IdentityStateDrift: '.screenplay/{name}' changed; reopen before proposing changes.") { FailureKind = "IdentityStateDrift" };
         }
     }
 }

@@ -75,7 +75,7 @@ internal sealed partial class McpRecoveryJournal
     {
         if (new McpManagedFiles(root).Read(FileName, McpManagedFiles.MaximumJournalBytes) is not null)
         {
-            throw new McpFailure("PendingOperation: .screenplay/pending.json records an interrupted or uncertain apply. Use workspace-state, then explicitly recover-workspace with its operationId before opening or editing.");
+            throw new McpFailure("PendingOperation: .screenplay/pending.json records an interrupted or uncertain apply. Use workspace-state, then explicitly recover-workspace with its operationId before opening or editing.") { FailureKind = "PendingOperation" };
         }
     }
 

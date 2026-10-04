@@ -36,7 +36,11 @@ internal static class WorkspaceProductionRepairs
             var repair = new WorkspaceDiagnosticRepair(
                 diagnostic.Code,
                 subject.Handle,
-                [new ReplaceWorkspaceNode(subject.Handle, produces, produces with { For = new PathExpressionSyntax(identifiers[0].Name, produces.Location) })]);
+                [new ReplaceWorkspaceNode(subject.Handle, produces, produces with { For = new PathExpressionSyntax(identifiers[0].Name, produces.Location) })])
+            {
+                Title = $"Change routing to command identifier '{identifiers[0].Name}'",
+                CanFixAll = false
+            };
 
             return WorkspaceRepairVerification.Discover(index, repair, verifyRepair);
         }
