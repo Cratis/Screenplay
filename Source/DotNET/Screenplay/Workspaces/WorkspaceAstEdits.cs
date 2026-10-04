@@ -21,7 +21,8 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
         .ToDictionary(entry => entry.Handle.Document, entry => ToJson(entry.Node));
     readonly List<Edit> _edits = [];
     readonly Dictionary<JsonNode, SourceLocation> _sourceLocations = [];
-    readonly Dictionary<JsonNode, WorkspaceSyntaxEntry> _pendingRuleOrigins = [];
+    readonly Dictionary<JsonNode, WorkspaceSyntaxEntry> _ruleOrigins = [];
+    readonly Dictionary<SyntaxNode, WorkspaceSyntaxEntry?> _expectedOrigins = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<JsonNode, ImmutableArray<SourceComment>> _sourceComments = [];
     readonly Dictionary<JsonNode, IReadOnlyDictionary<string, SourceLocation>> _directiveLocations = [];
     readonly Dictionary<JsonNode, AutoMapMode> _parsedAutoMapModes = [];
@@ -33,6 +34,12 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
 
     internal IEnumerable<(WorkspaceSyntaxEntry Target, SyntaxNode Replacement)> Replacements =>
         _edits.Where(edit => edit.Target is not null && edit.Destination is null && edit.Value is not null).Select(edit => (edit.Target!, edit.Value!));
+
+    internal IEnumerable<WorkspaceSyntaxEntry> PendingRuleRemovals => _edits.Where(IsPendingRuleRemoval).Select(edit => edit.Target!);
+
+    internal bool OnlyPendingRuleRemovals(DocumentId document) => _edits.Where(edit => edit.Target?.Handle.Document == document || edit.Destination?.Parent.Handle.Document == document).All(IsPendingRuleRemoval);
+
+    static bool IsPendingRuleRemoval(Edit edit) => edit is { Target.Node: ValidationRuleSyntax { Implementation: not null, File: null, Code: null }, Destination: null, Value: null };
 
     internal static bool Contains(WorkspaceNodeHandle ancestor, WorkspaceNodeHandle descendant) => ancestor.Document == descendant.Document &&
         (ancestor.Path == descendant.Path || descendant.Path.StartsWith($"{ancestor.Path}/", StringComparison.Ordinal));
@@ -64,10 +71,11 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
         foreach (var entry in index.Entries)
         {
             _originals.Add((entry, Resolve(entry.Handle)));
+            _expectedOrigins.TryAdd(entry.Node, entry);
             _sourceLocations[Resolve(entry.Handle)] = entry.Location;
-            if (entry.Node is ValidationRuleSyntax { Implementation: not null, File: null, Code: null })
+            if (entry.Node is ValidationRuleSyntax)
             {
-                _pendingRuleOrigins[Resolve(entry.Handle)] = entry;
+                _ruleOrigins[Resolve(entry.Handle)] = entry;
             }
             _sourceComments[Resolve(entry.Handle)] = entry.Node.SourceComments;
             _directiveLocations[Resolve(entry.Handle)] = entry.Node.DirectiveLocations;
@@ -79,6 +87,13 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
 
         foreach (var edit in _edits.Where(edit => edit.Target is not null))
         {
+            // The original removal handle is validated, but its ancestor replacement supplies final source.
+            // Do not mutate the captured original subtree: other correspondence still uses original paths.
+            if (IsPendingRuleRemoval(edit) && _edits.Any(other => other.Value is not null && other.Destination is null && other.Target is not null && Contains(other.Target.Handle, edit.Target!.Handle)))
+            {
+                continue;
+            }
+
             var replacement = edit.Destination is null && edit.Value is not null ? ToJson(edit.Value) : null;
             Replace(edit.Target!, edit.Original!, replacement, edit.Value);
             if (replacement is not null)
@@ -190,11 +205,22 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
             Walk(root, replacement.Document, string.Empty, positions);
         }
 
-        foreach (var (node, original) in _pendingRuleOrigins)
+        var surviving = _ruleOrigins.Where(pair => positions.ContainsKey(pair.Key)).GroupBy(pair => pair.Value.Handle);
+        foreach (var group in surviving)
         {
-            if (positions.TryGetValue(node, out var position))
+            // Reusing one original value in several candidates does not prove which occurrence survived.
+            var matches = group.ToArray();
+            if (matches.Length == 1)
             {
-                provenance.Map(position, (original.Handle.Document, original.Handle.Path));
+                var match = matches[0];
+                provenance.Map(positions[match.Key], (match.Value.Handle.Document, match.Value.Handle.Path));
+            }
+            else
+            {
+                foreach (var match in matches)
+                {
+                    provenance.Ambiguous(positions[match.Key]);
+                }
             }
         }
     }
@@ -340,7 +366,45 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
             throw new InvalidWorkspaceAuthoring($"The expected AST value at '{handle.Path}' does not match the original snapshot.");
         }
 
+        RegisterExpected(expected, handle);
         return entry;
+    }
+
+    // The expectation is validated against the complete original subtree before these actual object
+    // references are used. This is occurrence proof, unlike a location borrowed from newly parsed source.
+    void RegisterExpected(SyntaxNode node, WorkspaceNodeHandle handle)
+    {
+        var entry = index.Find(handle);
+        if (_expectedOrigins.TryGetValue(node, out var previous) && previous?.Handle != handle)
+        {
+            _expectedOrigins[node] = null;
+        }
+        else
+        {
+            _expectedOrigins[node] = entry;
+        }
+
+        foreach (var member in SyntaxKinds.All.Single(kind => kind.Type == node.GetType()).Members)
+        {
+            var value = member.Property.GetValue(node);
+            if (value is SyntaxNode child)
+            {
+                RegisterExpected(child, handle with { Path = $"{handle.Path}/{member.Name}" });
+            }
+            else if (value is System.Collections.IEnumerable children and not string)
+            {
+                var position = 0;
+                foreach (var item in children)
+                {
+                    if (item is SyntaxNode nested)
+                    {
+                        RegisterExpected(nested, handle with { Path = $"{handle.Path}/{member.Name}/{position}" });
+                    }
+
+                    position++;
+                }
+            }
+        }
     }
 
     Insertion Destination(WorkspaceNodeHandle parent, SyntaxNode expected, string member, int? position, SyntaxNode value)
@@ -376,13 +440,21 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
 
     void ValidateOverlap()
     {
-        var targets = _edits.Where(edit => edit.Target is not null).Select(edit => edit.Target!.Handle).ToArray();
+        var targets = _edits.Where(edit => edit.Target is not null).ToArray();
         for (var first = 0; first < targets.Length; first++)
         {
             for (var second = first + 1; second < targets.Length; second++)
             {
-                if (Contains(targets[first], targets[second]) || Contains(targets[second], targets[first]))
+                if (Contains(targets[first].Target!.Handle, targets[second].Target!.Handle) || Contains(targets[second].Target!.Handle, targets[first].Target!.Handle))
                 {
+                    // An explicit pending-rule removal may precede replacement of a strict ancestor.
+                    // Every other overlap keeps its existing refusal, including reversing this order.
+                    if (IsPendingRuleRemoval(targets[first]) && targets[second] is { Value: not null, Destination: null } &&
+                        targets[first].Target!.Handle != targets[second].Target!.Handle && Contains(targets[second].Target!.Handle, targets[first].Target!.Handle))
+                    {
+                        continue;
+                    }
+
                     throw new InvalidWorkspaceAuthoring("AST edits overlap an original node or its descendants.");
                 }
             }
@@ -391,7 +463,7 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
         var destinations = _edits.Where(edit => edit.Destination is not null).Select(edit => edit.Destination!).ToArray();
         foreach (var destination in destinations)
         {
-            if (targets.Any(target => Contains(target, destination.Parent.Handle)))
+            if (targets.Any(target => Contains(target.Target!.Handle, destination.Parent.Handle)))
             {
                 throw new InvalidWorkspaceAuthoring("An insertion parent is removed, replaced, or moved, including a move into itself.");
             }

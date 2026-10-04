@@ -18,9 +18,9 @@ internal sealed partial class WorkspaceAstEdits
     /// </summary>
     void CarrySourceLocations(JsonNode original, JsonNode replacement)
     {
-        if (_pendingRuleOrigins.TryGetValue(original, out var origin))
+        if (_ruleOrigins.TryGetValue(original, out var origin))
         {
-            _pendingRuleOrigins[replacement] = origin;
+            _ruleOrigins[replacement] = origin;
         }
 
         if (_sourceLocations.TryGetValue(original, out var location))
@@ -56,60 +56,71 @@ internal sealed partial class WorkspaceAstEdits
         else if (original is JsonArray oldArray && replacement is JsonArray newArray)
         {
             var matched = new HashSet<int>();
-            for (var position = 0; position < newArray.Count; position++)
+            var carried = new HashSet<int>();
+            Match((previous, current) => JsonNode.DeepEquals(previous, current) && !AmbiguousBareRule(oldArray, current));
+            Match((previous, current) => previous is JsonObject prior && current is JsonObject named && named["name"] is not null &&
+                JsonNode.DeepEquals(prior["kind"], named["kind"]) && JsonNode.DeepEquals(prior["name"], named["name"]));
+
+            // Coordinates and equal collection lengths are printer hints, not rule-occurrence identity.
+            for (var position = 0; position < newArray.Count && oldArray.Count == newArray.Count; position++)
             {
-                if (newArray[position] is not { } child)
+                if (!carried.Contains(position) && !matched.Contains(position) && oldArray[position] is JsonObject previous &&
+                    newArray[position] is JsonObject current && !IsRule(current) && JsonNode.DeepEquals(previous["kind"], current["kind"]))
                 {
-                    continue;
+                    CarrySourceLocations(previous, current);
                 }
+            }
 
-                var match = Enumerable.Range(0, oldArray.Count).FirstOrDefault(
-                    candidate => !matched.Contains(candidate) && JsonNode.DeepEquals(oldArray[candidate], child),
-                    -1);
-                if (match < 0 && child is JsonObject named && named["name"] is not null)
+            void Match(Func<JsonNode?, JsonNode?, bool> equal)
+            {
+                var matches = Enumerable.Range(0, newArray.Count).Where(position => !carried.Contains(position) && newArray[position] is not null)
+                    .ToDictionary(position => position, position => Enumerable.Range(0, oldArray.Count).Where(candidate => !matched.Contains(candidate) && equal(oldArray[candidate], newArray[position])).ToArray());
+                foreach (var (position, candidates) in matches)
                 {
-                    match = Enumerable.Range(0, oldArray.Count).FirstOrDefault(
-                        candidate => !matched.Contains(candidate) && oldArray[candidate] is JsonObject previous &&
-                            JsonNode.DeepEquals(previous["kind"], named["kind"]) &&
-                            JsonNode.DeepEquals(previous["name"], named["name"]),
-                        -1);
-                }
-
-                if (match < 0 && oldArray.Count == newArray.Count && position < oldArray.Count &&
-                    !matched.Contains(position) && oldArray[position] is JsonObject previousAtIndex &&
-                    child is JsonObject currentAtIndex && JsonNode.DeepEquals(previousAtIndex["kind"], currentAtIndex["kind"]))
-                {
-                    match = position;
-                }
-
-                if (match >= 0 && oldArray[match] is { } previousChild)
-                {
-                    matched.Add(match);
-                    CarrySourceLocations(previousChild, child);
+                    if (candidates.Length == 1 && matches.Count(pair => pair.Value.Contains(candidates[0])) == 1)
+                    {
+                        matched.Add(candidates[0]);
+                        carried.Add(position);
+                        CarrySourceLocations(oldArray[candidates[0]]!, newArray[position]!);
+                    }
                 }
             }
         }
     }
 
-    // The typed replacement still holds its original child instances. They are the only way to distinguish
-    // equal JSON siblings after a reorder; positional JSON matching must not overwrite their metadata.
+    static bool IsRule(JsonNode? node) => node is JsonObject rule && rule["kind"]?.GetValue<string>() == "ValidationRuleSyntax";
+
+    static bool AmbiguousBareRule(JsonArray originals, JsonNode? candidate) => IsRule(candidate) && candidate!["implementation"] is null && candidate["file"] is null && candidate["code"] is null &&
+        originals.Any(previous => IsRule(previous) && previous!["implementation"] is not null && previous["file"] is null && previous["code"] is null &&
+            JsonNode.DeepEquals(previous["property"], candidate["property"]) && JsonNode.DeepEquals(previous["rule"], candidate["rule"]) && JsonNode.DeepEquals(previous["value"], candidate["value"]));
+
+    // A reused typed rule or its actual value child establishes occurrence lineage. A coincident source
+    // coordinate cannot override a structural match (or establish lineage for a newly parsed document).
     void CarryReplacementMetadata(SyntaxNode node, JsonNode json)
     {
-        if (node is ValidationRuleSyntax && node.Location.Line > 1)
+        if (node is ValidationRuleSyntax rule)
         {
-            var origins = index.Entries.Where(entry => entry.Node is ValidationRuleSyntax { Implementation: not null, File: null, Code: null } && entry.Location == node.Location).Take(2).ToArray();
-            if (origins.Length == 1)
+            var origin = _expectedOrigins.GetValueOrDefault(rule);
+            if (origin is null && rule.Value is { } value && _expectedOrigins.GetValueOrDefault(value)?.Parent is { } parent)
             {
-                _pendingRuleOrigins[json] = origins[0];
+                origin = index.Find(parent);
+            }
+
+            if (origin?.Node is ValidationRuleSyntax)
+            {
+                _ruleOrigins[json] = origin;
+                _sourceComments[json] = rule.SourceComments;
+                _directiveLocations[json] = rule.DirectiveLocations;
+                _sourceLocations[json] = rule.Location;
             }
         }
 
-        if (node.SourceComments.Length > 0)
+        if (node.SourceComments.Length > 0 || node.Location.Line > 1)
         {
             _sourceComments[json] = node.SourceComments;
         }
 
-        if (node.DirectiveLocations.Count > 0)
+        if (node.DirectiveLocations.Count > 0 || node.Location.Line > 1)
         {
             _directiveLocations[json] = node.DirectiveLocations;
         }

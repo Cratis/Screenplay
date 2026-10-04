@@ -29,6 +29,8 @@ sealed class WorkspaceEditProvenance
 
     internal bool IsAmbiguous(WorkspaceSyntaxEntry entry) => _ambiguous.Contains((entry.Handle.Document, entry.Handle.Path));
 
+    internal void Ambiguous((DocumentId Document, string Path) position) => _ambiguous.Add(position);
+
     internal void Map((DocumentId Document, string Path) candidate, (DocumentId Document, string Path) original)
     {
         _origins[candidate] = original;

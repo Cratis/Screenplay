@@ -139,7 +139,7 @@ sealed class WorkspaceAuthoringTransaction(
 
             if (operation is ReplaceWorkspaceSyntaxDocument replace)
             {
-                if (!candidates.ContainsKey(replace.Document) || !targeted.Add(replace.Document) || edits.Touched.Contains(replace.Document))
+                if (!candidates.ContainsKey(replace.Document) || !targeted.Add(replace.Document) || (edits.Touched.Contains(replace.Document) && !edits.OnlyPendingRuleRemovals(replace.Document)))
                 {
                     throw new InvalidWorkspaceAuthoring("A typed replacement requires an existing document not targeted by another document operation or node edit.");
                 }
@@ -184,6 +184,11 @@ sealed class WorkspaceAuthoringTransaction(
         // Every handle, expectation, typed slot, overlap and original anchor has now been validated.
         foreach (var (id, syntax) in edits.Apply())
         {
+            if (replacements.Exists(replacement => replacement.Document == id))
+            {
+                continue;
+            }
+
             var document = candidates[id];
             intendedDocuments[id] = syntax;
             candidates[id] = WorkspaceAuthoringPrinter.Print(id, document.StableKey, document.Path, document.Encoding, syntax, request.Formatting, _diagnostics, document, index.Placement(workspace.Documents.Single(original => original.Id == id)), validatePlacement: false);
@@ -320,18 +325,19 @@ sealed class WorkspaceAuthoringTransaction(
 
         var ruleSources = new WorkspaceEditProvenance();
         edits.RecordPendingRuleSources(ruleSources, replacements);
-        WorkspacePendingRuleTransitions.Validate(before, after, ruleSources);
+        var removals = edits.PendingRuleRemovals.Select(entry => entry.Handle).ToHashSet();
+        WorkspacePendingRuleTransitions.Validate(before, after, ruleSources, removals);
         foreach (var (target, _) in edits.Replacements)
         {
             if (provenance.Image(target) is { } image)
             {
-                WorkspacePendingRuleTransitions.Region(before, target.Handle, after, new(candidate.Revision, image.Document, image.Path), provenance, migrations);
+                WorkspacePendingRuleTransitions.Region(before, target.Handle, after, new(candidate.Revision, image.Document, image.Path), ruleSources, provenance, migrations, removals);
             }
         }
 
         foreach (var document in replaced)
         {
-            WorkspacePendingRuleTransitions.Region(before, new(workspace.Revision, document, string.Empty), after, new(candidate.Revision, document, string.Empty), provenance, migrations);
+            WorkspacePendingRuleTransitions.Region(before, new(workspace.Revision, document, string.Empty), after, new(candidate.Revision, document, string.Empty), ruleSources, provenance, migrations, removals);
         }
 
         if (WorkspaceAbsenceKeyBindings.Present(before) || WorkspaceAbsenceKeyBindings.Present(after))

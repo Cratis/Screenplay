@@ -11,11 +11,11 @@ namespace Cratis.Screenplay.Workspaces;
 // Validate final, round-tripped source after the complete atomic transaction has settled.
 static class WorkspacePendingRuleTransitions
 {
-    internal static void Validate(WorkspaceSyntaxIndex before, WorkspaceSyntaxIndex after, WorkspaceEditProvenance provenance)
+    internal static void Validate(WorkspaceSyntaxIndex before, WorkspaceSyntaxIndex after, WorkspaceEditProvenance sources, IReadOnlySet<WorkspaceNodeHandle> removals)
     {
-        foreach (var original in before.Entries.Where(entry => Pending(entry.Node)))
+        foreach (var original in before.Entries.Where(entry => Pending(entry.Node) && !removals.Contains(entry.Handle)))
         {
-            if (provenance.Image(original) is { } image && after.Entries.SingleOrDefault(entry => Position(entry) == image) is { } survivor)
+            if (sources.Image(original) is { } image && after.Entries.SingleOrDefault(entry => Position(entry) == image) is { } survivor)
             {
                 RequireIntent(survivor.Node);
             }
@@ -27,31 +27,55 @@ static class WorkspacePendingRuleTransitions
         WorkspaceNodeHandle original,
         WorkspaceSyntaxIndex after,
         WorkspaceNodeHandle candidate,
+        WorkspaceEditProvenance sources,
         WorkspaceEditProvenance provenance,
-        IReadOnlyDictionary<SemanticAddress, SemanticAddress> migrations)
+        IReadOnlyDictionary<SemanticAddress, SemanticAddress> migrations,
+        IReadOnlySet<WorkspaceNodeHandle> removals)
     {
-        var originals = Under(before, original).Where(entry => entry.Node is ValidationRuleSyntax && provenance.Image(entry) is null).ToList();
-        var candidates = Under(after, candidate).Where(entry => entry.Node is ValidationRuleSyntax && provenance.Origin(entry) is null).ToList();
+        var originals = Under(before, original).Where(entry => entry.Node is ValidationRuleSyntax && sources.Image(entry) is null && !removals.Contains(entry.Handle)).ToList();
+        var candidates = Under(after, candidate).Where(entry => entry.Node is ValidationRuleSyntax && sources.Origin(entry) is null).ToList();
 
-        // First account for unchanged occurrences, including pre-existing bare legacy rules. A deleted
-        // pending duplicate must not be confused with an unchanged bare sibling at its former index.
-        foreach (var current in candidates.ToArray())
+        // Only mutual, unique matches establish unchanged occurrence correspondence. Never consume the
+        // first equal duplicate, or treat an old name, source coordinate, or collection index as proof.
+        Match((previous, current) => SameOwner(previous, current) && SyntaxJson.StructurallyEqual(previous.Node, current.Node) &&
+            !(Bare(current.Node) && originals.Exists(other => Pending(other.Node) && SameOwner(other, current) && SameHeader(other.Node, current.Node))));
+
+        // A renamed/moved rule may keep every item of guidance. Discharge that obligation without
+        // inventing semantic identity or allocating an implementation requirement for pending intent.
+        Match((previous, current) => SameOwner(previous, current) && Pending(previous.Node) &&
+            (RetainsMetadata(previous.Node, current.Node) || (SameHeader(previous.Node, current.Node) && !Bare(current.Node))));
+
+        // Across owner/header moves, unique retention of all metadata can preserve the intent without
+        // proving an occurrence or owner identity. A competing bare version keeps that move ambiguous.
+        Match((previous, current) => Pending(previous.Node) && RetainsMetadata(previous.Node, current.Node) &&
+            !candidates.Exists(other => Bare(other.Node) && SameHeader(previous.Node, other.Node)));
+
+        if (originals.Exists(entry => Pending(entry.Node)) && candidates.Exists(entry => Bare(entry.Node)))
         {
-            var previous = originals.Find(entry => SameOwner(entry, current) && SyntaxJson.StructurallyEqual(entry.Node, current.Node));
-            if (previous is not null)
+            throw new InvalidWorkspaceAuthoring("Pending named-rule correspondence is ambiguous. Preserve its implementation metadata or remove the original rule with a validated RemoveWorkspaceNode handle before replacing its ancestor or document.");
+        }
+
+        // Partial deletion of indistinguishable pending duplicates is not an ordinal match either.
+        if (originals.Exists(entry => Pending(entry.Node) && candidates.Exists(current => SameOwner(entry, current) && RetainsMetadata(entry.Node, current.Node))))
+        {
+            var pending = originals.Where(entry => Pending(entry.Node)).ToArray();
+            if (pending.Any(entry => candidates.Count(current => SameOwner(entry, current) && RetainsMetadata(entry.Node, current.Node)) <
+                pending.Count(other => Owner(before, other)?.Handle == Owner(before, entry)?.Handle && RetainsMetadata(other.Node, entry.Node))))
             {
-                originals.Remove(previous);
-                candidates.Remove(current);
+                throw new InvalidWorkspaceAuthoring("Deleting an ambiguous pending named-rule occurrence requires its original validated RemoveWorkspaceNode handle.");
             }
         }
 
-        foreach (var current in candidates.Where(entry => entry.Node is ValidationRuleSyntax { Implementation: null, File: null, Code: null }))
+        void Match(Func<WorkspaceSyntaxEntry, WorkspaceSyntaxEntry, bool> equal)
         {
-            var rule = (ValidationRuleSyntax)current.Node;
-            if (originals.Exists(entry => Pending(entry.Node) && SameOwner(entry, current) && entry.Node is ValidationRuleSyntax prior &&
-                prior.Property == rule.Property && prior.Value is { } previousValue && rule.Value is { } value && SyntaxJson.StructurallyEqual(previousValue, value)))
+            var matches = candidates.ToDictionary(current => current, current => originals.Where(previous => !sources.IsAmbiguous(current) && equal(previous, current)).ToArray());
+            foreach (var (current, previous) in matches)
             {
-                RequireIntent(current.Node);
+                if (previous.Length == 1 && matches.Count(pair => pair.Value.Contains(previous[0])) == 1)
+                {
+                    originals.Remove(previous[0]);
+                    candidates.Remove(current);
+                }
             }
         }
 
@@ -64,18 +88,25 @@ static class WorkspacePendingRuleTransitions
                 return true;
             }
 
-            // A replaced command itself is explicit correspondence even when its name changes. This
-            // also covers a corresponding owner already carried by an enclosing typed replacement.
             return previousOwner is not null && currentOwner is not null &&
                 ((previousOwner.Handle == original && currentOwner.Handle == candidate) || provenance.Image(previousOwner) == Position(currentOwner));
         }
     }
 
+    static bool SameHeader(SyntaxNode previous, SyntaxNode current) => previous is ValidationRuleSyntax prior && current is ValidationRuleSyntax rule &&
+        prior.Property == rule.Property && prior.Rule == rule.Rule &&
+        (prior.Value is null ? rule.Value is null : rule.Value is not null && SyntaxJson.StructurallyEqual(prior.Value, rule.Value));
+
+    static bool RetainsMetadata(SyntaxNode previous, SyntaxNode current) => previous is ValidationRuleSyntax prior && current is ValidationRuleSyntax rule &&
+        rule.Rule == ValidationRuleKind.Rule && prior.Implementation is not null && rule.Implementation is not null &&
+        SyntaxJson.StructurallyEqual(prior.Implementation, rule.Implementation);
+
     static bool Pending(SyntaxNode node) => node is ValidationRuleSyntax { Implementation: not null, File: null, Code: null };
+    static bool Bare(SyntaxNode node) => node is ValidationRuleSyntax { Implementation: null, File: null, Code: null };
 
     static void RequireIntent(SyntaxNode node)
     {
-        if (node is ValidationRuleSyntax { Implementation: null, File: null, Code: null })
+        if (Bare(node))
         {
             throw new InvalidWorkspaceAuthoring("Removing pending named-rule intent requires attaching a predicate source or removing the rule explicitly.");
         }

@@ -6,6 +6,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Cratis.Screenplay.Semantics;
+using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Serialization;
 using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp.for_McpConnection;
@@ -130,6 +132,70 @@ public class when_reading_named_rule_intents : given.a_connection
         McpAttachmentManifest.Revision(wrapped.Compilation.ImplementationRequirements).ShouldEqual(McpAttachmentManifest.Revision(direct.Compilation.ImplementationRequirements));
         McpAttachmentManifest.Revision(changed.Compilation.ImplementationRequirements).ShouldEqual(McpAttachmentManifest.Revision(direct.Compilation.ImplementationRequirements));
         wrapped.Compilation.ImplementationRequirements.Single().ContentHash.ShouldEqual(direct.Compilation.ImplementationRequirements.Single().ContentHash);
+    }
+
+    [Theory]
+    [InlineData("DeclarativeValidateSyntax", false)]
+    [InlineData("CommandSyntax", false)]
+    [InlineData("ApplicationSyntax", false)]
+    [InlineData("document", false)]
+    [InlineData("DeclarativeValidateSyntax", true)]
+    [InlineData("CommandSyntax", true)]
+    [InlineData("ApplicationSyntax", true)]
+    [InlineData("document", true)]
+    void should_fail_closed_for_transport_decoded_renames_and_sibling_changes(string scope, bool deleteSibling)
+    {
+        File.WriteAllText(Path.Combine(RootPath, "model.play"), Prefix + "            implementation\n              hint \"Keep\"" + (deleteSibling ? "\n          label not empty" : ""));
+        var opened = Content(Call("open-workspace", new { applicationName = "Projects" }));
+        var revision = opened.GetProperty("revision").GetString();
+        var kind = scope == "document" ? "ApplicationSyntax" : scope;
+        var ast = Content(Call("read-ast", new { expectedRevision = revision, kind, includeContent = true }));
+        var documentId = _page.GetProperty("page").GetProperty("items")[0].GetProperty("handle").GetProperty("documentId").GetString();
+        var target = ast.GetProperty("page").GetProperty("items").EnumerateArray().Single(item => item.GetProperty("handle").GetProperty("documentId").GetString() == documentId);
+        var parsed = new ScreenplayCompiler().Parse(Prefix.Replace("rule Check", "rule Renamed", StringComparison.Ordinal) + (deleteSibling ? "" : "          label not empty")).Value!;
+        SyntaxNode replacement = kind switch
+        {
+            "CommandSyntax" => parsed.Modules.Single().Features.Single().Slices.Single().Commands.Single(),
+            "DeclarativeValidateSyntax" => parsed.Modules.Single().Features.Single().Slices.Single().Commands.Single().Validations.Single(),
+            _ => parsed
+        };
+        var node = SyntaxJson.Serialize(replacement);
+        var result = Call("propose-ast", new
+        {
+            expectedRevision = revision,
+            expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+            formatting = "CanonicalizeTouchedDocuments",
+            validation = "Authoring",
+            operations = scope == "document" ? Array.Empty<object>() : [new { operation = "replace", target = target.GetProperty("handle"), node }],
+            documents = scope == "document" ? new object[] { new { operation = "replace-document", documentId = target.GetProperty("handle").GetProperty("documentId"), node } } : []
+        }).GetProperty("result");
+        result.GetProperty("isError").GetBoolean().ShouldBeTrue();
+        result.GetProperty("structuredContent").GetProperty("conflicts")[0].GetProperty("message").GetString()!.Contains("pending", StringComparison.OrdinalIgnoreCase).ShouldBeTrue();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    void should_accept_only_a_validated_original_rule_removal_before_a_transport_ancestor_replacement(bool document)
+    {
+        var revision = _revision;
+        var pending = _page.GetProperty("page").GetProperty("items")[0];
+        var documentId = pending.GetProperty("handle").GetProperty("documentId").GetString();
+        var root = Content(Call("read-ast", new { expectedRevision = revision, kind = "ApplicationSyntax", includeContent = true })).GetProperty("page").GetProperty("items").EnumerateArray().Single(item => item.GetProperty("handle").GetProperty("documentId").GetString() == documentId);
+        var opened = Content(Call("read-workspace", new { expectedRevision = revision })).GetProperty("workspace");
+        var node = SyntaxJson.Serialize(new ScreenplayCompiler().Parse(Prefix.Replace("rule Check", "rule Renamed", StringComparison.Ordinal) + "          label not empty").Value!);
+        var result = Call("propose-ast", new
+        {
+            expectedRevision = revision,
+            expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+            formatting = "CanonicalizeTouchedDocuments",
+            validation = "Authoring",
+            operations = document ? new object[] { new { operation = "remove", target = pending.GetProperty("handle") } } :
+                [new { operation = "remove", target = pending.GetProperty("handle") }, new { operation = "replace", target = root.GetProperty("handle"), node }],
+            documents = document ? new object[] { new { operation = "replace-document", documentId = root.GetProperty("handle").GetProperty("documentId"), node } } : []
+        }).GetProperty("result");
+        Assert.False(result.TryGetProperty("isError", out var error) && error.GetBoolean(), result.GetRawText());
+        result.GetProperty("structuredContent").GetProperty("proposalId").GetString().ShouldNotBeNull();
     }
 
     static JsonElement Content(JsonElement response) => response.GetProperty("result").GetProperty("structuredContent");

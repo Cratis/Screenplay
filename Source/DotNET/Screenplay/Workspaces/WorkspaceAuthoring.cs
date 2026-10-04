@@ -84,6 +84,8 @@ public sealed record ReplaceWorkspaceNode(WorkspaceNodeHandle Target, SyntaxNode
 /// <summary>
 /// Removes one occurrence. Removing a document root requires a document removal operation instead.
 /// Retirements of assigned identities must be declared explicitly in the request.
+/// A validated removal of a pending named rule may precede replacement of its strict ancestor or document
+/// in the same transaction, explicitly declaring deletion of that original intent. Other overlaps are rejected.
 /// </summary>
 /// <param name="Target">The original occurrence.</param>
 /// <param name="Expected">The structural node expected in the base snapshot.</param>
