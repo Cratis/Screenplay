@@ -89,6 +89,7 @@ static class McpFixtureQueries
 
     static object? Value(ExpressionSyntax expression) => expression switch
     {
+        LiteralExpressionSyntax { Value: ExactNumber } => throw new McpFailure("ExactNumberFixtureTransportUnsupported: exact fixture values require the deferred lossless value-tree DTO contract; no numeric payload was returned."),
         LiteralExpressionSyntax literal => literal.Value,
         ListExpressionSyntax list => list.Items.Select(Value).ToArray(),
         ObjectExpressionSyntax obj => obj.Members.GroupBy(member => member.Name, StringComparer.Ordinal)
