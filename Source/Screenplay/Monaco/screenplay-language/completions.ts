@@ -6,6 +6,7 @@ import { typeReferenceSymbol, typeReferenceText } from './TypeReferenceSymbol';
 import { Monaco, primitiveTypes } from './language';
 import { DocumentSymbols, knownEventNames, knownTriggerNames, mergeSymbols, scanDocument } from './symbols';
 import { responseCompletions } from './response-completions';
+import { operationCompletions } from './operation-authoring';
 import { planCompletions } from './completion-planner';
 import { contextVariableItems, producesItems, CompletionEntry } from './completion-items';
 
@@ -26,8 +27,9 @@ export function createCompletionProvider(monaco: Monaco, options: CompletionOpti
             const lineIndex = position.lineNumber - 1;
             const currentLine = lines[lineIndex] ?? '';
             const textBefore = currentLine.substring(0, position.column - 1);
-            const symbols = mergeSymbols(scanDocument(lines), options.application?.(model) ?? mergeSymbols());
-            const responseEntries = responseCompletions(lines, lineIndex, textBefore, symbols);
+            const application = options.application?.(model);
+            const symbols = { ...mergeSymbols(scanDocument(lines), application ?? mergeSymbols()), authoringPath: application?.authoringPath, authoringPlacement: application?.authoringPlacement };
+            const responseEntries = operationCompletions(lines, lineIndex, textBefore, symbols) ?? responseCompletions(lines, lineIndex, textBefore, symbols);
             const plan = responseEntries === null ? planCompletions(lines, lineIndex, textBefore) : { kind: 'entries' as const, entries: responseEntries };
             if (plan.kind === 'none') return { suggestions: [] };
 

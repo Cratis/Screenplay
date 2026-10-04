@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
@@ -24,6 +25,15 @@ sealed class McpAnalysisCompiler : IScreenplayCompiler
     {
         var result = _compiler.Parse(source, path);
         _documents.Add(result);
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public CompilationResult<ApplicationSyntax> Parse(string source, string? path, PlayPlacement placement)
+    {
+        var result = _compiler.Parse(source, path, placement);
+        _documents.Add(result);
+
         return result;
     }
 

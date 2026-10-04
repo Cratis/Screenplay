@@ -29,7 +29,20 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
 
     internal IEnumerable<string> ProducedEvents(CommandSyntax command) => command.Produces
         .Where(production => _owners.TryGetValue(command, out var slice) && _productions.IsEventProduction(production, slice))
-        .Select(production => production.Event).Distinct(StringComparer.Ordinal);
+        .Select(production => production.Event);
+
+    internal string[] ProductionKinds(ProducesSyntax production, SyntaxNode? owner)
+    {
+        if (owner is null || !_owners.TryGetValue(owner, out var slice)) return ["Event", "Operation"];
+        var resolution = _productions.Resolve(production.Event, slice);
+
+        return resolution.Kind switch
+        {
+            AuthoringProductionKind.Operation => ["Operation"],
+            AuthoringProductionKind.Event => ["Event"],
+            _ => ["Event", "Operation"]
+        };
+    }
 
     static Dictionary<SyntaxNode, SliceSyntax> Owners(ApplicationSyntax application)
     {
@@ -40,6 +53,7 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
             {
                 owners[slice] = slice;
                 foreach (var command in slice.Commands) owners[command] = slice;
+                foreach (var reaction in slice.Reactions) owners[reaction] = slice;
                 foreach (var specification in slice.Specifications) owners[specification] = slice;
             }
             foreach (var nested in feature.Features) Feature(nested);

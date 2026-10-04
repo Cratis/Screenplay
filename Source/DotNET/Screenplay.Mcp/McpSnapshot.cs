@@ -47,6 +47,7 @@ sealed class McpSnapshot : IPlayFiles
     {
         var compilation = Compilation;
         var index = new McpSyntaxIndex();
+        if (compilation.Value is { } assembled) index.Initialize(assembled);
         foreach (var application in _compiler.Documents.Select(document => document.Value).OfType<ApplicationSyntax>())
         {
             index.VisitApplication(application);

@@ -32,7 +32,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     /// <inheritdoc/>
     public override void VisitApplication(ApplicationSyntax syntax)
     {
-        Readiness = new(syntax);
+        Readiness ??= new(syntax);
         _ownership.VisitApplication(syntax);
         base.VisitApplication(syntax);
     }
@@ -113,12 +113,14 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
 
         var owningSyntax = _ownership.For(node);
         var owner = owningSyntax is null ? null : _owners.GetValueOrDefault(owningSyntax);
-        foreach (var reference in McpReferenceKinds.For(node, owningSyntax))
+        foreach (var reference in McpReferenceKinds.For(node, owningSyntax, node is ProducesSyntax production ? Readiness.ProductionKinds(production, owningSyntax) : null))
         {
             var role = owner?.Syntax is SpecificationSyntax specification ? McpFixtureOccurrences.Role(specification, node, reference.Role) : reference.Role;
             _references.Add(new(reference.Name, reference.Kinds, [.. _scope], node.Location, role, owner?.Owner));
         }
     }
+
+    internal void Initialize(ApplicationSyntax application) => Readiness = new(application);
 
     internal void Complete(ApplicationSyntax? application)
     {

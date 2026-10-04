@@ -22,7 +22,7 @@ export class EventModelDocumentVisitor implements ApplicationSyntaxVisitor<Event
     constructor(private readonly name: string) {}
 
     visit(syntax: ApplicationSyntax): EventModelDocument {
-        const owners = new EventOwners(syntax.modules, new SchemaSynthesizer(syntax), new AuthoringProductionResolver(syntax));
+        const owners = new EventOwners(syntax.modules, new SchemaSynthesizer(syntax), new AuthoringProductionResolver(syntax), syntax.systems ?? []);
         const audience = Audience.of(syntax.personas);
         const modules = syntax.modules.map((module, index) => toModule(module, index, owners, audience));
         return {

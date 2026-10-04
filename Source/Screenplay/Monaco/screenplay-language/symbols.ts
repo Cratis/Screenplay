@@ -85,6 +85,8 @@ export interface ImportSymbol {
 
 export interface DocumentSymbols {
     authoringSources?: readonly string[];
+    authoringPath?: string;
+    authoringPlacement?: readonly string[];
     authoringDocuments?: readonly AuthoringDocument[];
     imports: ImportSymbol[];
     concepts: ConceptSymbol[];

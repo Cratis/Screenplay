@@ -13,7 +13,7 @@ import { MonarchTokenRules, SubLanguage } from './sub-language-registry';
 
 // Maps a Screenplay inline code tag to the Monaco language id used for embedded highlighting.
 // Declaration registration must not globally reserve existing property names.
-// Contextual operation/system highlighting is deferred with the richer editor surface.
+// Ambiguous standalone operation headers are supplied by typed semantic tokens.
 const contextualConstructs = new Set(['operation', 'system']);
 
 const embeddedLanguages: Record<string, string> = {
@@ -57,6 +57,13 @@ export const commonTokenRules: MonarchTokenRules = [
 export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMonarchLanguage {
     const tokenizer: Record<string, MonarchTokenRules> = {
         root: [
+            [/^(system)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
+            [/^(\s*)(produces\s+operation)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/,
+                ['white', 'keyword', 'white', { token: 'type.identifier', next: '@operationBody.$1' }]],
+            [/^(\s*)(given\s+operation)(\s+)([\w.]+)(\s+)(fails)(?=\s*(?:\/\/.*)?$)/,
+                ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword']],
+            [/^(\s*)(then\s+(?:operation|compensated))(\s+)([\w.]+)(?=\s*(?:\/\/.*)?$)/,
+                ['white', 'keyword', 'white', 'type.identifier']],
             [/^(\s*)(handler)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@handlerBody.$1' }]],
             [/^(\s*@?[a-z_]\w*\s+)([\w.]+(?:\[\])?(?:\?|\s+optional)?)(\s+)(generated)(\s+identifier)?(?=\s*(?:\/\/.*)?$)/,
                 ['identifier', 'type.identifier', 'white', 'keyword', 'keyword']],
@@ -130,6 +137,21 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
                 },
             ],
             { include: '@common' },
+        ],
+
+        operationBody: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(execute|compensate)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@operationPhase.$1' }]],
+            [/^(\s*)(uses)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
+            [/^(\s*)(@?[a-z_]\w*)(\s+)([\w.]+(?:\[\])?(?:\?|\s+optional)?)(?=\s*(?:=(?!=|>)|\/\/|$))/,
+                ['white', 'identifier', 'white', 'type.identifier']],
+            { include: '@root' },
+        ],
+
+        operationPhase: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(implementation)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@implementationBody.$1' }]],
+            { include: '@root' },
         ],
 
         handlerBody: [

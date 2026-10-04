@@ -145,9 +145,10 @@ sealed class WorkspaceReferenceBindings
         if (domain == WorkspaceReferenceDomain.Operation && _index.OwningSlice(reference.Entry) is { } slice)
         {
             var operationResolution = _index.Productions.Resolve(reference.Text, slice);
-            var target = operationResolution.Kind == AuthoringProductionKind.Operation
-                ? _declarations.SingleOrDefault(declaration => ReferenceEquals(declaration.Entry?.Node, operationResolution.Declaration?.Node)) : null;
-            var outcome = operationResolution.Kind == AuthoringProductionKind.Ambiguous ? "ambiguous" : "unresolved";
+            var operationMatches = operationResolution.Kind == AuthoringProductionKind.Operation
+                ? _declarations.Where(declaration => ReferenceEquals(declaration.Entry?.Node, operationResolution.Declaration?.Node)).Take(2).ToArray() : [];
+            var target = operationMatches.Length == 1 ? operationMatches[0] : null;
+            var outcome = operationMatches.Length > 1 || operationResolution.Kind == AuthoringProductionKind.Ambiguous ? "ambiguous" : "unresolved";
             return new(reference, target, target is not null ? "resolved" : outcome);
         }
 

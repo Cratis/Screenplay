@@ -23,6 +23,8 @@ static class McpDeclarationDetails
                 eventCount = declaration.Syntax is SliceSyntax eventOwner ? EventDeclarations.In(eventOwner).Count() : 0,
                 eventId = (declaration.Syntax as EventSyntax)?.Id,
                 documentation = (declaration.Syntax as EventSyntax)?.Documentation,
+                uses = (declaration.Syntax as OperationSyntax)?.Uses,
+                operationInputCount = (declaration.Syntax as OperationSyntax)?.Inputs.Count() ?? 0,
                 partCount = declaration.Parts.Count,
                 commandCount = declaration.Syntax is SliceSyntax slice ? slice.Commands.Count() : 0,
                 specificationCount = declaration.Syntax is SliceSyntax described ? described.Specifications.Count() : 0,
@@ -70,6 +72,9 @@ static class McpDeclarationDetails
                     thenDenied = specification.ThenDenied is not null,
                     generatedValues = specification.When?.GeneratedValues,
                     thenReturns = specification.ThenReturns,
+                    givenOperationFailures = specification.GivenOperationFailures,
+                    thenOperations = specification.ThenOperations,
+                    thenCompensated = specification.ThenCompensated,
                     syntaxOnly = readiness.SyntaxOnly(specification),
                     executionReadiness = readiness.ExecutionReadiness(specification),
                     givenEvents = specification.Given.Count(),
@@ -78,6 +83,19 @@ static class McpDeclarationDetails
                     thenReadModels = specification.ThenReadModels?.Count() ?? 0,
                     thenAbsentReadModels = specification.ThenAbsentReadModels.Count(),
                     thenQueries = specification.ThenQueries.Count()
+                },
+                arguments,
+                snapshot.SourceRevision),
+            "inputs" when declaration.Syntax is OperationSyntax operation => McpPaging.Page(operation.Inputs, arguments, snapshot.SourceRevision),
+            "phases" when declaration.Syntax is OperationSyntax operation => McpPaging.Page(
+                new[] { (Name: "execute", Phase: operation.Execute), (Name: "compensate", Phase: operation.Compensate) }.Where(value => value.Phase is not null),
+                value => new
+                {
+                    phase = value.Name, value.Phase!.Description, value.Phase.Location,
+                    state = value.Phase switch { { File: not null } => "file", { Code: not null } => "inline", _ => "pending" },
+                    file = value.Phase.File?.Path, language = value.Phase.Code?.Language,
+                    hintCount = value.Phase.Implementation?.Hints.Count() ?? 0,
+                    executionAvailable = false
                 },
                 arguments,
                 snapshot.SourceRevision),
@@ -110,6 +128,7 @@ static class McpDeclarationDetails
     {
         SliceSyntax => ["summary", "occurrences", "commands", "specifications", "syntax"],
         CommandSyntax => ["summary", "properties", "occurrences", "produces", "response", "syntax"],
+        OperationSyntax => ["summary", "inputs", "phases", "occurrences", "syntax"],
         EventSyntax or ReadModelSyntax or TypeSyntax => ["summary", "properties", "occurrences", "syntax"],
         ConceptSyntax => ["summary", "values", "occurrences", "syntax"],
         _ => ["summary", "occurrences", "syntax"]

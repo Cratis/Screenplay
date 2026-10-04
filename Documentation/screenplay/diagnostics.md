@@ -922,6 +922,13 @@ For response and generated-fixture compatibility checks only, `Date` values must
 | `PLAY0492` | Error | An implementation wrapper has an operand, duplicate wrapper, unknown child or nested file child. |
 | `PLAY0493` | Error | A hint is not one nonblank quoted string, or has children. |
 | `PLAY0494` | Error | A handler mixes direct/wrapped sources, or a wrapper selects more than one file/inline payload. |
+
+These wrapper diagnostics also apply to operation phases. Pending or attached intent is not executable admission.
+
+### Operations and external systems
+
+| Code | Severity | Reported when |
+| --- | --- | --- |
 | `PLAY0495` | Error | An external system declaration is malformed or repeated. |
 | `PLAY0496` | Error | An operation declaration or phase is malformed, or supplies event-only metadata. |
 | `PLAY0497` | Error | A production reference is ambiguous, or a qualified production does not resolve to an explicit operation. |
@@ -931,7 +938,7 @@ For response and generated-fixture compatibility checks only, `Date` values must
 | `PLAY0501` | Error | An operation input mapping is missing, repeated, unknown or incompatible with its declared type. |
 | `PLAY0502` | Error | An operation specification step is malformed, unresolved, duplicated, incompatible with its command action or asserts undeclared compensation. |
 
-These are syntax diagnostics. A valid pending or attached handler still has unsupported executable admission (`PLAY0268`).
+These are syntax diagnostics. A valid system, operation or operation specification still cannot bind: `PLAY0268` names unavailable ESM v9 admission. [Operations](operations.md) do not trigger event destination or payload-identity diagnostics. A valid pending or attached handler remains unsupported independently. Diagnostic repairs for `PLAY0471` and `PLAY0479` are unchanged.
 
 ## Retired codes
 

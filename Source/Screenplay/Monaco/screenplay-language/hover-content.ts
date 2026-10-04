@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { operationHover } from './operation-authoring';
+import { DocumentSymbols } from './symbols';
 import { responseAnalysis, responseAvailability } from './response-analysis';
 import { enclosingChain, fenceMap, indentOf, withoutComment } from './document-context';
 import { directBody, propertyTypeReference, scanDocument } from './symbols';
@@ -18,6 +20,7 @@ export function hoverContent(
     word: string,
     startColumn: number,
     endColumn: number,
+    application?: DocumentSymbols,
 ): string | null {
     const fences = fenceMap(lines);
     if (fences[lineIndex]) return null;
@@ -32,6 +35,8 @@ export function hoverContent(
         else if (line[index] === '`' && !inString) inTemplate = !inTemplate;
     }
     if (inString || inTemplate) return null;
+    const operation = operationHover(lines, lineIndex, startColumn, endColumn, application);
+    if (operation) return operation;
     const tokenAt = (column: number, name: string): boolean => {
         const start = column + (line[column - 1] === '@' ? 1 : 0);
         return word === name && startColumn === start && endColumn === start + name.length && line.slice(start - 1, endColumn - 1) === name;

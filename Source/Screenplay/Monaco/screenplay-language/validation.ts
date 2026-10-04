@@ -361,7 +361,7 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
     }
 
     issues.push(...validateEventContextPaths(lines, fences));
-    issues.push(...validateInlineEvents(lines, symbols, application));
+    issues.push(...validateInlineEvents(lines, symbols, application, analysis.operationProductionLines));
 
     const fenceLines = lines
         .map((line, index) => ({ line, index }))

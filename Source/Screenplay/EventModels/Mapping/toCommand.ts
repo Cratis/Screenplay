@@ -1,10 +1,11 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { CommandSyntax, ValidationRuleSyntax } from '@cratis/screenplay-compiler';
+import { AuthoringProductionKind, OperationPhaseSyntax, OperationSyntax, toSyntaxJson, CommandSyntax, ValidationRuleSyntax } from '@cratis/screenplay-compiler';
 import { CommandItemDocument, CommandRuleDocument } from '../Document/EventModelDocument';
 import { SchemaSynthesizer } from '../Schemas/SchemaSynthesizer';
 import { SliceScope } from './SliceScope';
+import { EventOwners } from './EventOwners';
 
 // The rule kinds the board has an equivalent for, by the name it shows. Equal, NotEqual, the element-wise
 // rules and named rules have none and are left out rather than mapped onto their nearest neighbor - the
@@ -22,15 +23,39 @@ const ruleTypes: Partial<Record<ValidationRuleSyntax['rule'], string>> = {
     Matches: 'Matches',
 };
 
-export function toCommand(command: CommandSyntax, scope: SliceScope, schemas: SchemaSynthesizer): CommandItemDocument {
+export function toCommand(command: CommandSyntax, scope: SliceScope, schemas: SchemaSynthesizer, owners?: EventOwners): CommandItemDocument {
     return {
         id: scope.idOf('command', command.name),
         name: command.name,
         schema: schemas.forProperties(command.properties.filter(property => !property.isGenerated)),
         stateSchema: {},
-        logicDescription: detailsOf(command),
+        logicDescription: [detailsOf(command), operationDetails(command, owners)].filter(Boolean).join('\n\n'),
         rules: rulesOf(command),
     };
+}
+
+function operationDetails(command: CommandSyntax, owners?: EventOwners): string {
+    const slice = owners?.productions?.slices.find(entry => entry.slice.commands.includes(command))?.slice;
+    if (!slice || !owners?.productions) return '';
+    const productions = command.produces.map((production, index) => ({ production, index, resolution: owners.productions!.resolve(production.event, slice) }));
+    const operations = productions.filter(entry => entry.production.inlineOperation != null || entry.resolution.kind === AuthoringProductionKind.Operation ||
+        entry.resolution.candidates.some(candidate => candidate.kind === AuthoringProductionKind.Operation));
+    const specs = slice.specifications.filter(specification => specification.when?.commandType === command.name)
+        .flatMap(specification => [...specification.givenOperationFailures ?? [], ...specification.thenOperations ?? [], ...specification.thenCompensated ?? []]
+            .map(step => `${specification.name}: ${JSON.stringify(toSyntaxJson(step))}`));
+    if (operations.length === 0 && specs.length === 0) return '';
+    const phase = (name: string, value: OperationPhaseSyntax | null) => `${name}: ${value?.file ? `file ${value.file.path}` : value?.code ? `inline ${value.code.language}` : 'pending'}${value?.description ? ` — ${value.description}` : ''}${value?.implementation?.hints.map(hint => `\n  hint: ${hint.text}`).join('') ?? ''}`;
+    return ['Syntax-only operation intent: execution unavailable until ESM v9 (PLAY0268).',
+        'Authored productions\n' + productions.map(entry => `${entry.index + 1}. ${entry.resolution.kind[0].toUpperCase() + entry.resolution.kind.slice(1)}: ${entry.production.event}`).join('\n'),
+        ...operations.map(entry => {
+            const operation = entry.production.inlineOperation ?? (entry.resolution.kind === AuthoringProductionKind.Operation ? entry.resolution.declaration?.node as OperationSyntax : undefined);
+            if (!operation) return `${entry.production.event}: ambiguous declaration kind; no operation selected.`;
+            const systems = owners.systems.filter(system => system.name === operation.uses);
+            return [`Operation ${operation.name}`, operation.description ?? '', `Uses ${operation.uses}${systems.length === 1 && systems[0].description ? ` — ${systems[0].description}` : ''}`,
+                ...operation.inputs.map(input => `${input.name}: ${input.type.name}${input.type.isCollection ? '[]' : ''}${input.type.isOptional ? ' optional' : ''}`),
+                ...entry.production.mappings.map(mapping => `${mapping.property} = ${JSON.stringify(toSyntaxJson(mapping.source))}`),
+                phase('execute', operation.execute), phase('compensate', operation.compensate)].filter(Boolean).join('\n');
+        }), ...specs].join('\n\n');
 }
 
 function detailsOf(command: CommandSyntax): string {

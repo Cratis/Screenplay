@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { toSyntaxJson, eventDeclarations, CommandSyntax, QueryParameterSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
+import { eventDeclarations, CommandSyntax, QueryParameterSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
 import {
     CommandItemDocument, EventItemDocument, QueryItemDocument, QueryParameterType, ReadModelItemDocument, SliceDocument, SliceStatus, SliceType,
 } from '../Document/EventModelDocument';
@@ -36,10 +36,7 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
         id: scope.id,
         name: slice.name,
         sliceType,
-        description: [slice.description ?? '', ...slice.specifications.flatMap(specification => {
-            const intent = [...specification.givenOperationFailures ?? [], ...specification.thenOperations ?? [], ...specification.thenCompensated ?? []];
-            return intent.length === 0 ? [] : [`${specification.name}: operation intent (${intent.map(step => JSON.stringify(toSyntaxJson(step))).join(', ')}) is authoring-only; execution requires ESM v9.`];
-        })].filter(text => text.length > 0).join('\n'),
+        description: slice.description ?? '',
         status: SliceStatus.notStarted,
         collapsed: false,
         sortOrder,
@@ -104,7 +101,7 @@ function eventsOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): E
 // its declaration when the model has one.
 function commandOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): CommandItemDocument | undefined {
     if (slice.commands.length > 0) {
-        return toCommand(slice.commands[0], scope, owners.schemas);
+        return toCommand(slice.commands[0], scope, owners.schemas, owners);
     }
     const invoked = slice.reactions.flatMap(reaction => reaction.triggers).flatMap(trigger => trigger.invokes)[0];
     if (invoked === undefined) {
@@ -113,7 +110,7 @@ function commandOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): 
     const declared: CommandSyntax | undefined = owners.commandNamed(invoked.command);
     return declared === undefined
         ? { id: scope.idOf('command', invoked.command), name: invoked.command, schema: {}, stateSchema: {}, logicDescription: '', rules: [] }
-        : toCommand(declared, scope, owners.schemas);
+        : toCommand(declared, scope, owners.schemas, owners);
 }
 
 function withConstraints(event: EventItemDocument, constraints: readonly EventConstraint[]): EventItemDocument {

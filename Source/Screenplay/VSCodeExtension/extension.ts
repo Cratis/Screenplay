@@ -21,9 +21,9 @@ export function activate(context: vscode.ExtensionContext): void {
     const index = new ApplicationIndex();
     context.subscriptions.push(index);
     registerCompletions(context, index);
-    registerHover(context);
+    registerHover(context, index);
     registerResponseTokens(context);
-    registerInlayHints(context);
+    registerInlayHints(context, index);
     registerDefinitions(context, index);
     registerDiagnostics(context, index);
     registerCodeActions(context, index);

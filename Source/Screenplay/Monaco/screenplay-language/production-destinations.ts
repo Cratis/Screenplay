@@ -3,7 +3,8 @@
 
 import { DestinationHint } from './DestinationHint';
 import { eventAnalysisSource } from './event-analysis-source';
-import { CommandSymbol, propertyTypeReference, scanDocument } from './symbols';
+import { CommandSymbol, DocumentSymbols, propertyTypeReference, scanDocument } from './symbols';
+import { responseAnalysis } from './response-analysis';
 
 export function productionDestinations(command: CommandSymbol): { identifier?: string; mixed: boolean } {
     const identifiers = command.properties.filter(property => property.isIdentifier && !propertyTypeReference(property).isOptional && !propertyTypeReference(property).isCollection);
@@ -16,9 +17,13 @@ export function productionDestinations(command: CommandSymbol): { identifier?: s
 }
 
 // Shared by both editor adapters. Never suggest that a legacy allocated source is the command identifier.
-export function destinationHints(lines: string[]): DestinationHint[] {
+export function destinationHints(lines: string[], application?: DocumentSymbols): DestinationHint[] {
+    const analysis = responseAnalysis(lines, application?.authoringDocuments ?? application?.authoringSources, application?.authoringPlacement, application?.authoringPath);
     const source = eventAnalysisSource(lines);
-    return scanDocument(source).commands.flatMap(command => {
+    return scanDocument(source).commands.map(command => ({ ...command,
+        produces: command.produces?.filter(production => !analysis.operationProductionLines?.has(production.line) && analysis.operations.references.some(reference => reference.location.line - 1 === production.line && reference.kind === 'event')),
+        productionHeaders: command.productionHeaders?.filter(line => !analysis.operationProductionLines?.has(line)),
+    })).flatMap(command => {
         const { identifier, mixed } = productionDestinations(command);
         if (mixed || command.productionHeaders?.length !== command.produces?.length) return [];
         const hasPromotedDestination = command.produces?.some(sibling => sibling.target !== undefined || sibling.inline);
