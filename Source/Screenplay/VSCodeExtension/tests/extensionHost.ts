@@ -31,13 +31,36 @@ async function runSuites(): Promise<void> {
     fs.writeFileSync(source, '\uFEFF// 😀 native byte review\r\n' + repairSource.replaceAll('\n', '\r\n'));
     fs.writeFileSync(path.join(root, 'Handler.cs'), '// attachment\n');
     const extension = vscode.extensions.getExtension('cratis.screenplay');
-    assert.ok(extension, 'Extension is installed in the development host');
+    assert.ok(extension, 'Screenplay extension is available in the native host');
+    if (process.env.SCREENPLAY_REPAIR_INSTALLED_EXTENSIONS) {
+        const relative = path.relative(process.env.SCREENPLAY_REPAIR_INSTALLED_EXTENSIONS, extension.extensionPath);
+        assert.ok(relative && !relative.startsWith('..') && !path.isAbsolute(relative), 'Production extension resolves from installed VSIX, not development sources');
+        console.log(`INSTALLED VSIX production extension: ${extension.extensionPath}`);
+    }
     await extension.activate();
     const document = await vscode.workspace.openTextDocument(vscode.Uri.file(source));
     // Keep the source visible beside the native preview. VS Code may lazily
     // reload hidden models; this suite requires an actual visible-buffer event.
     await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two });
     await vscode.commands.executeCommand('workbench.action.focusFirstEditorGroup');
+    // Establish a real native watcher before fast subprocess transactions; startup
+    // registration is asynchronous and must not be replaced by an arbitrary sleep.
+    const readiness = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(vscode.Uri.file(root), '**/*'));
+    try {
+        await new Promise<void>((resolve, reject) => {
+            const probe = path.join(root, 'watcher-ready.txt');
+            let counter = 0;
+            const listeners: vscode.Disposable[] = [];
+            const cleanup = () => { clearTimeout(timer); clearInterval(ticks); listeners.forEach(listener => listener.dispose()); };
+            const observed = (uri: vscode.Uri) => { if (uri.fsPath === probe) { cleanup(); resolve(); } };
+            const timer = setTimeout(() => { cleanup(); reject(new Error('Native filesystem watcher not ready within 5 seconds.')); }, 5_000);
+            // Watcher subscription registration is async. A one-shot write can
+            // precede its initial snapshot; bounded probe changes establish an
+            // actual native event, never a sleep or assumed readiness.
+            const ticks = setInterval(() => fs.writeFileSync(probe, `synthetic watcher readiness ${++counter}`), 100);
+            listeners.push(readiness.onDidCreate(observed), readiness.onDidChange(observed));
+        });
+    } finally { readiness.dispose(); }
     const launch = userRepairConfiguration();
     const session = new RepairSession(launch, { check: () => checkRepairEnvironment(launch) });
     const provider = new RepairPreviewProvider('screenplay-repair-test');

@@ -1,7 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { runTests } from '@vscode/test-electron';
+import { runTests, resolveCliArgsFromVSCodeExecutablePath } from '@vscode/test-electron';
+import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
@@ -13,13 +14,17 @@ const server = process.env.SCREENPLAY_REPAIR_SERVER ?? path.resolve('../../DotNE
 if (!fs.existsSync(server)) throw new Error('Build the native C# MCP tool first or set SCREENPLAY_REPAIR_SERVER.');
 const tasks = path.resolve('../../..', '.ai-work');
 fs.mkdirSync(tasks, { recursive: true });
-const testRoot = fs.mkdtempSync(path.join(tasks, 'h'));
-// Only these newly generated synthetic inputs live outside the checkout. On macOS
-// /Volumes is refused by VS Code's native watcher; resolve /var's system symlink
-// before authorizing the physical root. User data and all logs stay in .ai-work.
-const model = fs.mkdtempSync(path.join(fs.realpathSync.native(os.tmpdir()), 'screenplay-repair-host-'));
-fs.writeFileSync(path.join(testRoot, 'workspace-location.json'), JSON.stringify({ model, synthetic: true }));
-console.log(`Native synthetic workspace: ${model}; retained host data: ${testRoot}`);
+const retained = process.env.AI_WORK_KEEP ?? tasks;
+fs.mkdirSync(retained, { recursive: true });
+const evidence = fs.mkdtempSync(path.join(retained, 'native-host-'));
+// Native sockets have short path limits and macOS refuses /Volumes watchers.
+// Both synthetic inputs and host data use the supported physical temporary FS;
+// preserve their locations and copy native logs to retained evidence on exit.
+const temporary = fs.realpathSync.native(os.tmpdir());
+const testRoot = fs.mkdtempSync(path.join(temporary, 'sp-host-'));
+const model = fs.mkdtempSync(path.join(temporary, 'screenplay-repair-host-'));
+fs.writeFileSync(path.join(evidence, 'workspace-location.json'), JSON.stringify({ model, testRoot, synthetic: true }));
+console.log(`Native synthetic workspace: ${model}; native host data: ${testRoot}; retained evidence: ${evidence}`);
 const userData = path.join(testRoot, 'u');
 fs.mkdirSync(path.join(userData, 'User'), { recursive: true });
 fs.writeFileSync(path.join(userData, 'User/settings.json'), JSON.stringify({
@@ -28,10 +33,30 @@ fs.writeFileSync(path.join(userData, 'User/settings.json'), JSON.stringify({
     // Explicit provider commands drive these tests; background lightbulb probes
     // would race those calls for the intentionally single-flight C# session.
     'editor.lightbulb.enabled': 'off',
+    'extensions.autoUpdate': false, 'extensions.autoCheckUpdates': false, 'update.mode': 'none',
+    'chat.disableAIFeatures': true,
 }));
-await runTests({
+const extensions = path.join(testRoot, 'extensions');
+let development = path.resolve('.');
+const vsix = process.env.SCREENPLAY_REPAIR_VSIX;
+if (vsix) {
+    if (!path.isAbsolute(vsix) || !fs.existsSync(vsix)) throw new Error('SCREENPLAY_REPAIR_VSIX must identify the packaged VSIX.');
+    const [cli, ...args] = resolveCliArgsFromVSCodeExecutablePath(executable, { reuseMachineInstall: true });
+    const installed = spawnSync(cli, [...args, '--install-extension', vsix, '--extensions-dir', extensions, '--user-data-dir', userData, '--force'], { stdio: 'inherit', timeout: 60_000, shell: process.platform === 'win32' });
+    if (installed.error || installed.status !== 0) throw installed.error ?? new Error(`VSIX installation failed: ${installed.status}`);
+    // Only a tiny test driver is developed. cratis.screenplay MUST resolve from
+    // the installed VSIX, not a development-path override of production sources.
+    development = path.join(testRoot, 'driver');
+    fs.mkdirSync(development);
+    fs.writeFileSync(path.join(development, 'package.json'), JSON.stringify({ name: 'screenplay-repair-test-driver', publisher: 'cratis-tests', version: '0.0.0', engines: { vscode: '^1.85.0' } }));
+}
+try { await runTests({
     vscodeExecutablePath: executable,
-    extensionDevelopmentPath: path.resolve('.'), extensionTestsPath: path.resolve('out/tests/extensionHost.cjs'),
-    launchArgs: [model, '--user-data-dir', userData, '--extensions-dir', path.join(testRoot, 'extensions'), '--disable-workspace-trust', '--skip-welcome', '--skip-release-notes', '--disable-gpu', '--log', 'trace'],
-    extensionTestsEnv: { SCREENPLAY_REPAIR_SERVER: server, SCREENPLAY_REPAIR_HOST_ROOT: model },
-});
+    extensionDevelopmentPath: development, extensionTestsPath: path.resolve('out/tests/extensionHost.cjs'),
+    launchArgs: [model, '--user-data-dir', userData, '--extensions-dir', extensions, '--disable-workspace-trust', '--skip-welcome', '--skip-release-notes', '--disable-gpu', '--disable-extension', 'github.copilot', '--disable-extension', 'github.copilot-chat', '--log', 'info'],
+    extensionTestsEnv: { SCREENPLAY_REPAIR_SERVER: server, SCREENPLAY_REPAIR_HOST_ROOT: model, SCREENPLAY_REPAIR_INSTALLED_EXTENSIONS: vsix ? extensions : '' },
+}); } finally {
+    const logs = path.join(userData, 'logs');
+    if (fs.existsSync(logs)) fs.cpSync(logs, path.join(evidence, 'logs'), { recursive: true });
+    // Keep synthetic paths for diagnosis; no blanket cleanup of unregistered outputs.
+}

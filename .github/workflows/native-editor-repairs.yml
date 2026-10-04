@@ -1,0 +1,101 @@
+name: Native editor repairs
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'Source/Screenplay/VSCodeExtension/Repair*.ts'
+      - 'Source/Screenplay/VSCodeExtension/RetainedRepair.ts'
+      - 'Source/Screenplay/VSCodeExtension/SavedVersions.ts'
+      - 'Source/Screenplay/VSCodeExtension/extension.ts'
+      - 'Source/Screenplay/VSCodeExtension/for_Repair*/**'
+      - 'Source/Screenplay/VSCodeExtension/tests/**'
+      - 'Source/Screenplay/VSCodeExtension/package.json'
+      - 'Source/Screenplay/VSCodeExtension/esbuild.mjs'
+      - 'Source/Screenplay/VSCodeExtension/.vscodeignore'
+      - 'Source/DotNET/Screenplay.Mcp/Mcp*.cs'
+      - 'Source/DotNET/Screenplay/Workspaces/Workspace*Repair*.cs'
+      - 'Source/DotNET/Tool/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - '*.props'
+      - 'global.json'
+      - '.github/workflows/native-editor-repairs.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-editor-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repair:
+    name: Installed VSIX / ${{ matrix.rid }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { runner: ubuntu-latest, rid: linux-x64, executable: Cratis.Screenplay.Tool }
+          - { runner: windows-latest, rid: win-x64, executable: Cratis.Screenplay.Tool.exe }
+          - { runner: macos-15, rid: osx-arm64, executable: Cratis.Screenplay.Tool }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    env:
+      SCREENPLAY_REPAIR_SERVER: ${{ github.workspace }}/.ai-work/native-server/${{ matrix.executable }}
+      SCREENPLAY_REPAIR_VSIX: ${{ github.workspace }}/.ai-work/native-editor.vsix
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install existing workspace dependencies
+        timeout-minutes: 4
+        run: |
+          corepack enable
+          yarn install --immutable
+      - name: Build extension and embedded server board
+        timeout-minutes: 4
+        run: yarn workspaces foreach -Rt --from screenplay --from @cratis/screenplay-mcp-app run build
+      - name: Publish compatible self-contained native server
+        timeout-minutes: 5
+        run: dotnet publish Source/DotNET/Tool/Tool.csproj -c Release -r '${{ matrix.rid }}' --self-contained true -p:PackAsTool=false -o .ai-work/native-server
+      - name: Real C# tool subprocess safety gate
+        timeout-minutes: 4
+        run: yarn workspace screenplay test:repair-process
+      - name: Package JavaScript-only production extension
+        timeout-minutes: 3
+        run: yarn workspace screenplay package --out "$SCREENPLAY_REPAIR_VSIX"
+      - name: Inspect packaged payload and review UI contributions
+        run: python Source/Screenplay/VSCodeExtension/tests/inspectVsix.py "$SCREENPLAY_REPAIR_VSIX"
+      - name: Build existing extension-host harness
+        run: yarn workspace screenplay build:test-host
+      - name: Provision pinned native VS Code with test-electron
+        timeout-minutes: 4
+        working-directory: Source/Screenplay/VSCodeExtension
+        run: node tests/prepareCiHost.mjs
+      - name: Installed VSIX native host safety gate (Linux / Xvfb)
+        if: runner.os == 'Linux'
+        timeout-minutes: 8
+        run: xvfb-run --auto-servernum yarn workspace screenplay test:host
+      - name: Installed VSIX native host safety gate (Windows / macOS)
+        if: runner.os != 'Linux'
+        timeout-minutes: 8
+        run: yarn workspace screenplay test:host
+      - name: Preserve native logs and synthetic fixture locations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-editor-${{ matrix.rid }}
+          path: |
+            .ai-work/native-host-*/
+          if-no-files-found: warn

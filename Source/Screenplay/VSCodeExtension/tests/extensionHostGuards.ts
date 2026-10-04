@@ -6,6 +6,7 @@ import * as assert from 'node:assert/strict';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import childProcess from 'node:child_process';
+import { createRequire } from 'node:module';
 import { userRepairConfiguration } from '../RepairCodeActions';
 import { repairSource } from './repairFixture';
 
@@ -20,12 +21,15 @@ export async function runCommandGuards(root: string): Promise<void> {
     let dispatched = 0;
     let onDispatched: (() => Promise<void>) | undefined;
     let race: Promise<void> | undefined;
-    const originalWarning = vscode.window.showWarningMessage;
-    const originalInformation = vscode.window.showInformationMessage;
+    // VS Code gives an installed extension its own API object. Control only its
+    // modal replies, not a different API belonging to the development test driver.
+    const productionApi = createRequire(path.join(vscode.extensions.getExtension('cratis.screenplay')!.extensionPath, 'package.json'))('vscode') as typeof vscode;
+    const originalWarning = productionApi.window.showWarningMessage;
+    const originalInformation = productionApi.window.showInformationMessage;
     const originalSpawn = childProcess.spawn;
     // The production extension reads this same native vscode API object. No test
     // command, alternate apply implementation, token fabrication or UI bypass.
-    vscode.window.showWarningMessage = (async (message: string, ...items: unknown[]) => {
+    productionApi.window.showWarningMessage = (async (message: string, ...items: unknown[]) => {
         if (message.startsWith('This repair canonically formats')) {
             assert.ok(items.includes('Propose and preview'));
             return propose;
@@ -39,10 +43,10 @@ export async function runCommandGuards(root: string): Promise<void> {
         console.log(`NATIVE GUARD observed warning: ${message}`);
         return undefined;
     }) as typeof originalWarning;
-    vscode.window.showInformationMessage = (async (message: string, ...items: unknown[]) => {
+    productionApi.window.showInformationMessage = (async (message: string, ...items: unknown[]) => {
         if (message.startsWith('All source and identity byte pages')) {
-            assert.ok(items.includes('Apply reviewed repair'));
-            return 'Apply reviewed repair';
+            assert.ok(!items.some(item => typeof item === 'object' && item !== null && 'modal' in item), 'Review notification is nonmodal');
+            return undefined; // Dismissal must retain complete preview authority.
         }
         return undefined;
     }) as typeof originalInformation;
@@ -70,12 +74,28 @@ export async function runCommandGuards(root: string): Promise<void> {
         }) as typeof input.write;
         return child;
     }) as typeof originalSpawn;
+    const fixtureReady = async (model: string) => {
+        const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(vscode.Uri.file(model), '**/*'));
+        try {
+            await new Promise<void>((resolve, reject) => {
+                const probe = path.join(model, 'watcher-ready.txt');
+                let counter = 0;
+                const listeners: vscode.Disposable[] = [];
+                const cleanup = () => { clearTimeout(timer); clearInterval(ticks); listeners.forEach(listener => listener.dispose()); };
+                const observed = (uri: vscode.Uri) => { if (uri.fsPath === probe) { cleanup(); resolve(); } };
+                const timer = setTimeout(() => { cleanup(); reject(new Error('Native fixture watcher did not settle within 5 seconds.')); }, 5_000);
+                const ticks = setInterval(() => fs.writeFileSync(probe, `synthetic fixture readiness ${++counter}`), 100);
+                listeners.push(watcher.onDidCreate(observed), watcher.onDidChange(observed));
+            });
+        } finally { watcher.dispose(); }
+    };
     try {
         let model = path.join(root, 'command-guards');
         fs.mkdirSync(model);
         let source = path.join(model, 'application.play');
         fs.writeFileSync(source, repairSource);
         fs.writeFileSync(path.join(model, 'Handler.cs'), '// attachment\n');
+        await fixtureReady(model);
         await vscode.workspace.getConfiguration('screenplay.repairs').update('modelRoot', model, vscode.ConfigurationTarget.Global);
         const configuration = vscode.workspace.getConfiguration('screenplay.repairs');
         assert.equal(configuration.inspect<string>('modelRoot')?.globalValue, model, 'Actual native User setting is visible');
@@ -106,15 +126,43 @@ export async function runCommandGuards(root: string): Promise<void> {
         // discovery racing the explicit provider command below.
         let original = fs.readFileSync(source);
         const command = async (target = document) => {
+            // Keep the saved root document alive. A hidden unreferenced native
+            // model may legitimately close, which now correctly expires authority.
+            await vscode.window.showTextDocument(target, { preview: false, viewColumn: vscode.ViewColumn.Two, preserveFocus: true });
             await vscode.commands.executeCommand('screenplay.repair.refresh');
             const actions = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', target.uri, new vscode.Range(0, 0, target.lineCount - 1, 0));
             const action = actions.find(action => action.title.startsWith('Change routing:'));
             assert.ok(action?.command, `Actual registered C# provider supplies a fresh preview command: ${JSON.stringify({ titles: actions.map(action => action.title), warnings, diagnostics: vscode.languages.getDiagnostics(target.uri).map(issue => ({ code: issue.code, source: issue.source, message: issue.message })) })}`);
             return action.command;
         };
-        const preview = async () => {
-            const action = await command();
+        const review = async (target = document) => {
+            const action = await command(target);
             await vscode.commands.executeCommand(action.command, ...(action.arguments ?? []));
+        };
+        const navigateReview = async () => {
+            const summary = vscode.window.activeTextEditor!.document;
+            assert.equal(summary.uri.scheme, 'screenplay-repair');
+            await vscode.workspace.fs.readFile(summary.uri); // Expired old tabs cannot masquerade as a completed review.
+            const prefix = `/${summary.uri.path.split('/')[1]}/`;
+            const tabs = vscode.window.tabGroups.all.flatMap(group => group.tabs).filter(tab => tab.input instanceof vscode.TabInputTextDiff && tab.input.modified.path.startsWith(prefix));
+            assert.ok(tabs.length >= 2, 'Source and identity diff tabs coexist during persistent review');
+            const prompts = applyPrompts, writes = dispatched;
+            for (const tab of tabs) {
+                const input = tab.input as vscode.TabInputTextDiff;
+                await vscode.commands.executeCommand('vscode.diff', input.original, input.modified, tab.label, { preview: false });
+                await vscode.commands.executeCommand('cursorBottom');
+                await vscode.commands.executeCommand('editorScroll', { to: 'up', by: 'page', value: 1 });
+                assert.equal(vscode.window.activeTextEditor?.document.uri.toString(), input.modified.toString(), 'Actual native diff editor received focus');
+            }
+            await vscode.window.showTextDocument(summary, { preview: false });
+            assert.equal(applyPrompts, prompts, 'Tab switching and scrolling never open Apply confirmation');
+            assert.equal(dispatched, writes, 'Navigation never dispatches writes');
+        };
+        const preview = async (target = document) => {
+            await review(target);
+            if (propose !== 'Propose and preview') return;
+            await navigateReview();
+            await vscode.commands.executeCommand('screenplay.repair.apply');
         };
         await vscode.commands.executeCommand('screenplay.repair.apply', 'forged-token');
         assert.match(warnings.pop()!, /UnauthorizedApply/);
@@ -131,6 +179,12 @@ export async function runCommandGuards(root: string): Promise<void> {
         assert.equal(dispatched, 0, 'Declining final consent sends no apply frame');
         assert.deepEqual(fs.readFileSync(source), original);
         assert.equal(fs.existsSync(path.join(model, '.screenplay')), false);
+
+        // Declined final confirmation retains review; explicit Discard alone releases it.
+        await navigateReview();
+        await vscode.commands.executeCommand('screenplay.repair.discard');
+        await vscode.commands.executeCommand('screenplay.repair.apply');
+        assert.match(warnings.pop()!, /UnauthorizedApply/);
 
         const beforeDirtyPrompts = applyPrompts;
         finalConsent = async () => {
@@ -149,11 +203,43 @@ export async function runCommandGuards(root: string): Promise<void> {
         // Leave the synthetic dirty edit intact. An explicitly reauthorized new
         // root isolates subsequent cases without an autosave/revert or assuming
         // that VS Code echoes its own saves through FileSystemWatcher.
+        // Associated untitled siblings, attachments and identity state use exactly
+        // the same classification as physical file buffers. They need not exist.
+        for (const relative of ['sibling.play', 'Handler.cs', '.screenplay/identities.json']) {
+            for (const timing of ['before-discovery', 'after-review']) {
+                model = path.join(root, `untitled-${relative.replaceAll('/', '-')}-${timing}`);
+                fs.mkdirSync(model);
+                source = path.join(model, 'application.play');
+                fs.writeFileSync(source, repairSource);
+                await fixtureReady(model);
+                await configuration.update('modelRoot', model, vscode.ConfigurationTarget.Global);
+                document = await vscode.workspace.openTextDocument(vscode.Uri.file(source));
+                if (timing === 'after-review') { await review(); await navigateReview(); }
+                const unsaved = await vscode.workspace.openTextDocument(vscode.Uri.file(path.join(model, relative)).with({ scheme: 'untitled' }));
+                const edit = new vscode.WorkspaceEdit();
+                edit.insert(unsaved.uri, new vscode.Position(0, 0), '// associated unsaved buffer\n');
+                assert.equal(await vscode.workspace.applyEdit(edit), true);
+                assert.equal(unsaved.isDirty, true);
+                const before: number = dispatched;
+                warnings.length = 0;
+                if (timing === 'before-discovery') {
+                    await vscode.commands.executeCommand('screenplay.repair.refresh');
+                    assert.ok(warnings.some(message => /DirtyBuffer/.test(message)), warnings.join('; '));
+                } else {
+                    await vscode.commands.executeCommand('screenplay.repair.apply');
+                    assert.ok(warnings.some(message => /UnauthorizedApply|PreviewExpired|DirtyBuffer|Stale/.test(message)), warnings.join('; '));
+                }
+                assert.equal(dispatched, before, `${relative} ${timing} sends ZERO Apply frames`);
+                assert.equal(unsaved.isDirty, true, 'Associated buffer is never saved or reverted');
+                assert.equal(fs.readFileSync(source, 'utf8'), repairSource);
+            }
+        }
         model = path.join(root, 'watcher-guards');
         fs.mkdirSync(model);
         source = path.join(model, 'application.play');
         fs.writeFileSync(source, repairSource);
         fs.writeFileSync(path.join(model, 'Handler.cs'), '// attachment\n');
+        await fixtureReady(model);
         await configuration.update('modelRoot', model, vscode.ConfigurationTarget.Global);
         document = await vscode.workspace.openTextDocument(vscode.Uri.file(source));
         original = fs.readFileSync(source);
@@ -214,6 +300,7 @@ export async function runCommandGuards(root: string): Promise<void> {
         const raceSource = path.join(raceRoot, 'application.play');
         fs.writeFileSync(raceSource, repairSource);
         fs.writeFileSync(path.join(raceRoot, 'Handler.cs'), '// attachment\n');
+        await fixtureReady(raceRoot);
         await configuration.update('modelRoot', raceRoot, vscode.ConfigurationTarget.Global);
         const raceDocument = await vscode.workspace.openTextDocument(vscode.Uri.file(raceSource));
         let reviewed = '';
@@ -222,17 +309,21 @@ export async function runCommandGuards(root: string): Promise<void> {
             await vscode.window.showTextDocument(raceDocument, { preview: false, viewColumn: vscode.ViewColumn.Two, preserveFocus: true });
             return 'Apply';
         };
+        let postDispatchUntitled: vscode.TextDocument | undefined;
         onDispatched = async () => {
+            postDispatchUntitled = await vscode.workspace.openTextDocument(vscode.Uri.file(path.join(raceRoot, '.screenplay/identities.json')).with({ scheme: 'untitled' }));
             const edit = new vscode.WorkspaceEdit();
+            edit.insert(postDispatchUntitled.uri, new vscode.Position(0, 0), '// preserve associated identity buffer\n');
             edit.insert(raceDocument.uri, new vscode.Position(0, 0), '// native post-dispatch edit\n');
             assert.equal(await vscode.workspace.applyEdit(edit), true);
             assert.equal(raceDocument.isDirty, true);
         };
-        const action = await command(raceDocument);
-        await vscode.commands.executeCommand(action.command, ...(action.arguments ?? []));
+        await preview(raceDocument);
         await race;
         assert.equal(dispatched, 2);
         assert.equal(fs.readFileSync(raceSource, 'utf8'), reviewed, 'C# installed exactly the reviewed bytes');
+        assert.equal(postDispatchUntitled?.isDirty, true, 'Post-dispatch associated untitled identity state is preserved');
+        assert.ok(postDispatchUntitled?.getText().startsWith('// preserve associated identity buffer'));
         assert.equal(raceDocument.isDirty, true, 'Post-dispatch editor changes were not reverted or autosaved');
         assert.ok(raceDocument.getText().startsWith('// native post-dispatch edit\n'));
         assert.ok(warnings.some(message => message.startsWith('Disk repair applied, but an open buffer is dirty')));
@@ -241,10 +332,10 @@ export async function runCommandGuards(root: string): Promise<void> {
         const refused = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', raceDocument.uri, new vscode.Range(0, 0, 0, 0));
         assert.deepEqual(refused, [], 'Dirty reconciliation cannot silently issue fresh authority');
         assert.equal(dispatched, 2, 'Unknown/dirty outcome is never retried');
-        console.log('NATIVE GUARD INTEGRATION: production preview/Apply commands, separately controlled consent, forged token refusal, dirty-at-consent refusal, actual sibling watcher invalidation, exact installed source/state, saved-buffer reload and controlled post-dispatch native dirty edit passed. Dialog responses were simulated; real UI click-through and keyboard race timing remain UNVERIFIED.');
+        console.log('NATIVE GUARD INTEGRATION: production preview/Apply commands, separately controlled consent, forged token refusal, dirty-at-consent refusal, actual sibling watcher invalidation, exact installed source/state, saved-buffer reload and controlled post-dispatch native dirty edit passed. Native source/state tab switching and scrolling occurred before explicit contributed Apply. Notification dismissal retained review. Associated untitled source/attachment/state refusals and post-dispatch preservation passed. Final modal responses were simulated; human keyboard/mouse interaction remains UNVERIFIED.');
     } finally {
         childProcess.spawn = originalSpawn;
-        vscode.window.showWarningMessage = originalWarning;
-        vscode.window.showInformationMessage = originalInformation;
+        productionApi.window.showWarningMessage = originalWarning;
+        productionApi.window.showInformationMessage = originalInformation;
     }
 }

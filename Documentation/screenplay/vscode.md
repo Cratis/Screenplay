@@ -176,12 +176,17 @@ installed `screenplay` tool, use its absolute executable path and `["mcp"]`. For
 `cratis`, use its absolute executable path and `["screenplay", "mcp"]`. The model
 root is appended as **one argument**; do not put it in the prefix or add shell
 quotes. Workspace/folder overrides are refused even if they match User settings.
-A remote extension host needs its own compatible installation and paths. Browser
-and virtual workspaces cannot run this bridge. The VSIX contains JavaScript only;
+A remote extension host needs its own compatible native installation and paths
+on that host; a local binary cannot serve it. If no compatible binary exists for
+that host's OS/architecture, use local native VS Code instead. Browser and virtual
+workspaces cannot run this bridge. The VSIX contains JavaScript only;
 it does not download a server, install .NET, invoke Docker or run an AI agent.
 
 1. Save or discard changed buffers yourself, including sibling `.play` files,
-   attachments and `.screenplay` metadata. The extension never autosaves.
+   attachments and `.screenplay` metadata, even associated unsaved (untitled) files
+   whose destination is under the root. An unassociated untitled document has no
+   provable destination: save or close it before repair. Proven outside-root
+   associated documents do not block repair. The extension never autosaves.
 2. Run **Screenplay: Discover Saved-File C# Repairs**. This explicit command also
    explains trust, executable, dirty-buffer and contract refusals. Saved-source
    C# diagnostics use a separate collection; dirty-buffer local diagnostics remain.
@@ -194,7 +199,12 @@ it does not download a server, install .NET, invoke Docker or run an AI agent.
 4. Review every diff and the summary: routing consequences, byte hashes/BOM/line
    endings, authoring diagnostics and executable readiness. Readiness describes
    the compiler's executable subset, not implementation execution or runtime
-   confirmation. Select **Apply reviewed repair**, then confirm **Apply**.
+   confirmation. Switch tabs and scroll the read-only diffs at your own pace;
+   dismissing the nonmodal notice keeps the review. The summary retains the root,
+   proposal, source revisions and evidence pins. Choose **Screenplay: Apply
+   Reviewed C# Repair** from the Command Palette, editor title or status bar,
+   then confirm **Apply**. Only that command opens final confirmation. Canceling
+   confirmation keeps the review; **Screenplay: Discard C# Repair** releases it.
 
 When C# returns a refusal, **Inspect conflict details** opens its structured
 failure, conflict kinds and diagnostics in a read-only view. A refused operation
@@ -246,8 +256,26 @@ Set `SCREENPLAY_REPAIR_SERVER` to an absolute compatible binary if you are not u
 For native extension-host tests, run `yarn workspace screenplay build:test-host`,
 then `yarn workspace screenplay test:host` with `VSCODE_EXECUTABLE_PATH` pointing to
 your installed native VS Code executable. The standard `@vscode/test-electron`
-harness uses isolated settings and models under `.ai-work/`; it never downloads a
-runtime. These tests exercise real read-only diffs, dirty attachment refusal,
-exact-byte installation and saved-buffer reload. Modal click-through and
-post-dispatch typing races require additional manual/native coverage; mocks are
-not a substitute. Run on each native platform before claiming platform coverage.
+harness uses synthetic models and host data on the native physical temporary
+filesystem (including short socket paths). It retains location manifests and
+native logs under `.ai-work/`; it never downloads a runtime locally. Set
+`SCREENPLAY_REPAIR_VSIX` to an absolute packaged VSIX to install and test that
+artifact in isolation rather than the development extension. The production
+extension must resolve from that installed package; the test driver is separate.
+
+The scoped **Native editor repairs** CI workflow runs the real subprocess gate
+and installed-VSIX host gate against self-contained servers on Linux, Windows
+and macOS. It explicitly provisions pinned native VS Code with the existing
+`@vscode/test-electron` dependency; Linux runs `xvfb-run --auto-servernum yarn
+workspace screenplay test:host`. A failing or unavailable safety case fails the
+lane, rather than silently skipping it.
+
+Host tests switch and scroll actual source and identity diffs before invoking the
+contributed Apply command. They cover notification dismissal, explicit discard,
+associated untitled source/attachment/state refusal before discovery and after
+review, exact-byte installation, saved-buffer reload and controlled post-dispatch
+dirty-buffer preservation. Dialog replies and the timing of the real subprocess
+reply are controlled. Human keyboard/mouse modal interaction and uncontrolled
+keyboard race timing are **not** exercised by these tests; do not describe them
+as manual native coverage. CI lane definitions alone do not establish a platform
+pass: run each native lane before claiming that platform is verified.
