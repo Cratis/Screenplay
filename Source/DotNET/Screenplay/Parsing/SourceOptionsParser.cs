@@ -44,6 +44,9 @@ internal static class SourceOptionsParser
                 if (code is not null)
                 {
                     diagnostics.Add(Diagnostic.Error(code, "Expected one 'numbers exact' preamble before domain, imports and declarations.", line.Location));
+
+                    // Retain failed numeric assertions so a caller cannot bind or print the provisional tree as Legacy.
+                    options = new((NumericMode)(-1));
                 }
                 else
                 {

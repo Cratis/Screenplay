@@ -46,6 +46,8 @@ public class when_authoring_exact_documents : Specification
         diagnostic.Location.Line.ShouldEqual(line);
         diagnostic.Location.Column.ShouldEqual(1);
         diagnostic.Location.Path.ShouldEqual("input.play");
+        Catch.Exception(() => _printer.Print(result.Value!)).ShouldBeOfExactType<InvalidSyntaxJson>();
+        Catch.Exception(() => SyntaxJson.Serialize(result.Value!)).ShouldBeOfExactType<InvalidSyntaxJson>();
     }
 
     [Fact]
