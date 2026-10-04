@@ -8,16 +8,15 @@ import { ApplicationIndex } from './ApplicationIndex';
 import { RepairFailure, RepairLaunch } from './RepairClient';
 import { RepairSession, RepairPreview, SavedVersions, ServerDiagnostic } from './RepairSession';
 import { RepairPreviewProvider } from './RepairPreviewProvider';
+import { classifyRootDocument, contains } from './RepairDocuments';
+export { contains } from './RepairDocuments';
 
 const previewCommand = 'screenplay.repair.preview';
 const applyCommand = 'screenplay.repair.apply';
+const discardCommand = 'screenplay.repair.discard';
 const inspectCommand = 'screenplay.repair.inspectState';
 const settingNames = ['enabled', 'executable', 'arguments', 'modelRoot'] as const;
 
-export function contains(root: string, file: string): boolean {
-    const relative = path.relative(root, file);
-    return relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative));
-}
 export function userRepairConfiguration(): RepairLaunch {
     const config = vscode.workspace.getConfiguration('screenplay.repairs');
     const values: Record<string, unknown> = {};
@@ -55,9 +54,9 @@ export function checkRepairEnvironment(launch: RepairLaunch, allowDirtyInspectio
         if (!fs.statSync(launch.executable).isFile()) throw new RepairFailure('ProcessUnavailable', 'Configured executable is not a file.');
         const versions: Record<string, number> = {};
         for (const document of vscode.workspace.textDocuments) {
-            if (document.uri.scheme !== 'file') continue;
-            const physical = fs.existsSync(document.uri.fsPath) ? fs.realpathSync.native(document.uri.fsPath) : document.uri.fsPath;
-            if (!contains(root, document.uri.fsPath) && !contains(root, physical)) continue;
+            const classification = classifyRootDocument(root, document.uri);
+            if (classification.scope === 'ambiguous' && !allowDirtyInspection) throw new RepairFailure('DirtyBuffer', 'Save or close unassociated or unresolved untitled documents yourself before a repair; their root cannot be established.');
+            if (classification.scope !== 'root') continue;
             if (document.isDirty && !allowDirtyInspection) throw new RepairFailure('DirtyBuffer', `Save or discard ${document.uri.fsPath} yourself before a C# repair. Nothing is saved automatically.`);
             versions[document.uri.toString()] = document.version;
         }
@@ -72,8 +71,9 @@ export function repairBuffersSynchronized(root: string, preview: RepairPreview):
     try {
         const physical = (file: string) => fs.existsSync(file) ? fs.realpathSync.native(file) : path.resolve(file);
         const approvedRoot = physical(root);
-        const documents = vscode.workspace.textDocuments.filter(document => document.uri.scheme === 'file').map(document => ({ document, physical: physical(document.uri.fsPath) }));
-        if (documents.some(({ document, physical: file }) => (contains(root, document.uri.fsPath) || contains(approvedRoot, file)) && document.isDirty)) return false;
+        const classified = vscode.workspace.textDocuments.map(document => ({ document, classification: classifyRootDocument(approvedRoot, document.uri) }));
+        if (classified.some(({ document, classification }) => classification.scope === 'ambiguous' || (classification.scope === 'root' && document.isDirty))) return false;
+        const documents = classified.flatMap(({ document, classification }) => classification.scope === 'root' ? [{ document, physical: classification.physical }] : []);
         return preview.files.every(file => {
             const expectedPath = physical(path.join(root, file.path));
             const open = documents.filter(document => path.relative(expectedPath, document.physical) === '');
@@ -92,7 +92,22 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
     let connectionGeneration = 0;
     let recovery: { root: string; details: unknown } | undefined;
     let pendingReconciliation: (() => boolean) | undefined;
-    const changed = () => { diagnostics.clear(); previews.clear(); };
+    const applyButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    applyButton.text = '$(check) Apply reviewed repair'; applyButton.command = applyCommand;
+    const discardButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99);
+    discardButton.text = '$(close) Discard repair'; discardButton.command = discardCommand;
+    const clearReview = () => {
+        previews.clear(); applyButton.hide(); discardButton.hide();
+        void vscode.commands.executeCommand('setContext', 'screenplay.repair.reviewPending', false);
+    };
+    const changed = () => { diagnostics.clear(); clearReview(); };
+    const documentChanged = (document: vscode.TextDocument, opened = false) => {
+        if (!opened && previews.closed(document.uri)) session?.invalidate();
+        else if (session) {
+            const classification = classifyRootDocument(session.launch.root, document.uri);
+            if (classification.scope === 'root' || classification.scope === 'ambiguous') session.invalidate();
+        }
+    };
     const reset = () => {
         ++connectionGeneration;
         session?.dispose(); session = undefined; connecting = undefined;
@@ -176,15 +191,13 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
         publish(owner, discovered.diagnostics);
     };
     context.subscriptions.push(
-        previews, diagnostics, vscode.workspace.registerFileSystemProvider(RepairPreviewProvider.scheme, previews, { isReadonly: true, isCaseSensitive: true }),
+        previews, diagnostics, applyButton, discardButton, vscode.workspace.registerFileSystemProvider(RepairPreviewProvider.scheme, previews, { isReadonly: true, isCaseSensitive: true }),
         { dispose: reset },
         vscode.workspace.onDidChangeConfiguration(event => { if (event.affectsConfiguration('screenplay.repairs')) reset(); }),
         vscode.workspace.onDidChangeWorkspaceFolders(reset),
-        vscode.workspace.onDidChangeTextDocument(event => {
-            if (previews.closed(event.document.uri)) session?.invalidate();
-            else if (session && event.document.uri.scheme === 'file' && contains(session.launch.root, event.document.uri.fsPath)) session.invalidate();
-        }),
-        vscode.workspace.onDidCloseTextDocument(document => { if (previews.closed(document.uri)) session?.invalidate(); }),
+        vscode.workspace.onDidOpenTextDocument(document => documentChanged(document, true)),
+        vscode.workspace.onDidChangeTextDocument(event => documentChanged(event.document)),
+        vscode.workspace.onDidCloseTextDocument(document => documentChanged(document)),
         vscode.languages.registerCodeActionsProvider({ language: 'screenplay', scheme: 'file' }, {
             async provideCodeActions(document, range, actionContext, cancellation) {
                 if (actionContext.only && !vscode.CodeActionKind.QuickFix.contains(actionContext.only)) return [];
@@ -225,24 +238,31 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
                 const previewEpoch = owner.epoch;
                 await previews.show(preview);
                 if (owner !== session || owner.epoch !== previewEpoch || previews.token !== preview.token) throw new RepairFailure('PreviewExpired', 'Workspace changed during preview.');
-                const selected = await vscode.window.showInformationMessage('All source and identity byte pages are loaded. Review each read-only diff. Apply writes to disk, is not normal Undo, and assumes an exclusive writer.', { modal: true }, 'Apply reviewed repair', 'Discard');
-                if (selected === 'Apply reviewed repair') await vscode.commands.executeCommand(applyCommand, preview.token);
-                else { owner.discard(); previews.clear(); }
-            } catch (error) { session?.discard(); previews.clear(); await report(error); }
+                applyButton.show(); discardButton.show();
+                await vscode.commands.executeCommand('setContext', 'screenplay.repair.reviewPending', true);
+                // Notification dismissal is NOT discard or consent. Persistent title,
+                // status-bar and palette commands remain available while navigating.
+                void vscode.window.showInformationMessage('All source and identity byte pages are loaded. Review each read-only diff, then use Screenplay: Apply Reviewed C# Repair or Discard C# Repair (also in the status bar). Dismissing this notice keeps the review.');
+            } catch (error) { session?.discard(); clearReview(); await report(error); }
         }),
-        vscode.commands.registerCommand(applyCommand, async (token: unknown) => {
+        vscode.commands.registerCommand(discardCommand, (...args: unknown[]) => {
+            if (args.length) return;
+            session?.discard(); clearReview();
+        }),
+        vscode.commands.registerCommand(applyCommand, async (...args: unknown[]) => {
             const owner = session;
+            const token = previews.token; // Only connection-local retained authority, never arguments.
             try {
-                if (!owner || typeof token !== 'string' || previews.token !== token) throw new RepairFailure('UnauthorizedApply', 'Apply requires a retained complete preview. Direct proposal IDs and untrusted arguments are refused.');
+                if (!owner || !token || args.length) throw new RepairFailure('UnauthorizedApply', 'Apply requires a retained complete preview. Direct proposal IDs and untrusted arguments are refused.');
                 // Even a direct command call holding a token cannot bypass explicit human confirmation.
                 if (await vscode.window.showWarningMessage('Install exactly the reviewed source and identity bytes now?', { modal: true }, 'Apply') !== 'Apply') return;
                 const preview = previews.review(token);
                 await owner.apply(token);
-                previews.clear();
+                clearReview();
                 await reload(owner, preview);
             } catch (error) {
                 if (owner?.recoveryRequired) recovery = { root: owner.launch.root, details: error };
-                else { owner?.discard(); previews.clear(); }
+                else { owner?.discard(); clearReview(); }
                 await report(error);
             }
         }),

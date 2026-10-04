@@ -137,6 +137,18 @@
         ],
         "commands": [
             {
+                "command": "screenplay.repair.apply",
+                "title": "Apply Reviewed C# Repair",
+                "category": "Screenplay",
+                "icon": "$(check)"
+            },
+            {
+                "command": "screenplay.repair.discard",
+                "title": "Discard C# Repair",
+                "category": "Screenplay",
+                "icon": "$(close)"
+            },
+            {
                 "command": "screenplay.repair.refresh",
                 "title": "Discover Saved-File C# Repairs",
                 "category": "Screenplay"
@@ -162,6 +174,16 @@
         "menus": {
             "editor/title": [
                 {
+                    "command": "screenplay.repair.apply",
+                    "when": "screenplay.repair.reviewPending && resourceScheme == screenplay-repair",
+                    "group": "navigation"
+                },
+                {
+                    "command": "screenplay.repair.discard",
+                    "when": "screenplay.repair.reviewPending && resourceScheme == screenplay-repair",
+                    "group": "navigation"
+                },
+                {
                     "command": "screenplay.showSource",
                     "when": "activeCustomEditorId == screenplay.eventModelBoard",
                     "group": "navigation"
@@ -173,6 +195,14 @@
                 }
             ],
             "commandPalette": [
+                {
+                    "command": "screenplay.repair.apply",
+                    "when": "screenplay.repair.reviewPending"
+                },
+                {
+                    "command": "screenplay.repair.discard",
+                    "when": "screenplay.repair.reviewPending"
+                },
                 {
                     "command": "screenplay.showSource",
                     "when": "activeCustomEditorId == screenplay.eventModelBoard"

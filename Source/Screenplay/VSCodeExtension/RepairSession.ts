@@ -203,7 +203,7 @@ export class RepairSession {
             const droppedComments = await read('dropped-comments');
             if (authoring.length !== integer(proposal.authoringDiagnosticCount) || droppedComments.length !== integer(proposal.droppedCommentCount)) throw new RepairFailure('MalformedContract', 'Incomplete diagnostic/comment review.');
             this.#check(snapshot.epoch, snapshot.versions);
-            const preview: RepairPreview = { token: randomUUID(), title: choice.title, code: choice.code, files, authoring, executable, executableReady: after.executableReady, droppedComments };
+            const preview: RepairPreview = { token: randomUUID(), binding: { root: this.launch.root, proposalId, beforeRevision: before.revision, afterRevision: after.revision, beforeEvidence, candidateEvidence }, title: choice.title, code: choice.code, files, authoring, executable, executableReady: after.executableReady, droppedComments };
             // Only a FULLY collected source AND state review obtains an apply token.
             this.#retained = { preview, snapshot, proposalId, beforeEvidence, candidateEvidence, afterRevision: after.revision, afterCatalog: after.catalog, changeCount: changes.length, dispatched: false };
             return preview;

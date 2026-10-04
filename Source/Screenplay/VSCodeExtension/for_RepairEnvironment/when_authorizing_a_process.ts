@@ -5,7 +5,7 @@ import { beforeEach, it, expect, vi } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-const host = vi.hoisted(() => ({ trusted: true, uiKind: 1, folders: [] as { uri: { scheme: string; fsPath: string } }[], documents: [] as { uri: { scheme: string; fsPath: string; toString(): string }; version: number; isDirty: boolean; getText?(): string }[], settings: new Map<string, Record<string, unknown>>() }));
+const host = vi.hoisted(() => ({ trusted: true, uiKind: 1, folders: [] as { uri: { scheme: string; fsPath: string } }[], documents: [] as { uri: { scheme: string; fsPath: string; toString(): string; with?(change: { scheme: string }): { fsPath: string } }; version: number; isDirty: boolean; getText?(): string }[], settings: new Map<string, Record<string, unknown>>() }));
 vi.mock('vscode', () => ({
     workspace: { get isTrusted() { return host.trusted; }, get workspaceFolders() { return host.folders; }, get textDocuments() { return host.documents; }, getConfiguration: () => ({ inspect: (key: string) => host.settings.get(key) }) },
     env: { get uiKind() { return host.uiKind; } }, UIKind: { Web: 2 },
@@ -72,10 +72,32 @@ it('does not consider a saved-but-stale buffer synchronized after a successful d
     host.documents = [];
     expect(repairBuffersSynchronized(root, preview)).toBe(true);
 });
-for (const file of ['sibling.play', 'Handler.cs', '.screenplay/identities.json', 'new-attachment.ts']) it(`refuses unsaved ${file} without autosave; read-only recovery inspection preserves it`, () => {
-    host.documents = [{ uri: { scheme: 'file', fsPath: path.join(root, file), toString: () => file }, version: 7, isDirty: true }];
+for (const scheme of ['file', 'untitled']) for (const file of ['sibling.play', 'Handler.cs', '.screenplay/identities.json', 'new-attachment.ts']) it(`refuses unsaved ${scheme} ${file} without autosave; read-only recovery inspection preserves it`, () => {
+    host.documents = [{ uri: { scheme, fsPath: path.join(root, file), toString: () => file }, version: 7, isDirty: true }];
     const launch = userRepairConfiguration();
     expect(() => checkRepairEnvironment(launch)).toThrow('Save or discard');
     expect(checkRepairEnvironment(launch, true)).toEqual({ [file]: 7 });
     expect(host.documents[0].isDirty).toBe(true);
+    expect(repairBuffersSynchronized(root, { token: 'test', title: 'test', code: 'PLAY0478', files: [], authoring: [], executable: [], executableReady: false, droppedComments: [] })).toBe(false);
+});
+it('normalizes an associated untitled destination using file-scheme filesystem semantics', () => {
+    const launch = userRepairConfiguration();
+    host.documents = [{ uri: { scheme: 'untitled', fsPath: path.join(root + '-outside', 'scheme-dependent-path'), toString: () => 'associated-untitled', with: change => {
+        expect(change).toEqual({ scheme: 'file' });
+        return { fsPath: path.join(root, 'Handler.cs') };
+    } }, version: 3, isDirty: true }];
+    expect(() => checkRepairEnvironment(launch)).toThrow('Save or discard');
+    host.documents[0].isDirty = false;
+    expect(checkRepairEnvironment(launch)).toEqual({ 'associated-untitled': 3 });
+});
+it('blocks ambiguous untitled destinations but not proven outside-root associated paths', () => {
+    const launch = userRepairConfiguration();
+    host.documents = [{ uri: { scheme: 'untitled', fsPath: 'Untitled-1', toString: () => 'untitled:Untitled-1' }, version: 1, isDirty: true }];
+    expect(() => checkRepairEnvironment(launch)).toThrow('root cannot be established');
+    for (const scheme of ['file', 'untitled']) {
+        host.documents = [{ uri: { scheme, fsPath: path.join(root + '-outside', 'sibling.play'), toString: () => scheme }, version: 1, isDirty: true }];
+        expect(checkRepairEnvironment(launch)).toEqual({});
+        host.documents[0].uri.fsPath = path.join(root, 'folder', '..', 'sibling.play');
+        expect(() => checkRepairEnvironment(launch)).toThrow('Save or discard');
+    }
 });

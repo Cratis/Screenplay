@@ -6,6 +6,7 @@ import { ServerDiagnostic } from './ServerDiagnostic';
 
 export interface RepairPreview {
     token: string;
+    binding?: { root: string; proposalId: string; beforeRevision: string; afterRevision: string; beforeEvidence: string; candidateEvidence: string };
     title: string;
     code: string;
     files: PreviewFile[];

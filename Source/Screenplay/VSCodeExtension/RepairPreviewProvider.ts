@@ -85,11 +85,13 @@ export class RepairPreviewProvider implements vscode.FileSystemProvider, vscode.
             '**Apply writes outside the editor.** It is not normal editor Undo. Use an exclusive writer; journaled rollback does not provide crash-atomic visibility across files.',
             'No AI, build, implementation execution or runtime confirmation is performed.', '',
             `Executable readiness (compiler subset only): **${preview.executableReady ? 'ready' : 'not ready'}**. Authoring acceptance does not mean runtime confirmation.`, '',
+            '## Root and retained proposal', '```json', JSON.stringify(preview.binding ?? {}, null, 2), '```', '',
             '## Exact byte review',
             ...preview.files.flatMap(file => [`### ${file.path}`, `Before: ${details(file.before)}`, `After: ${details(file.after)}`, '']),
             '## Authoring diagnostics', '```json', JSON.stringify(preview.authoring, null, 2), '```', '',
             '## Executable diagnostics', '```json', JSON.stringify(preview.executable, null, 2), '```', '',
             '## Dropped comments', '```json', JSON.stringify(preview.droppedComments, null, 2), '```', '',
+            'Navigate and scroll every diff before choosing Screenplay: Apply Reviewed C# Repair in the command palette, editor title or status bar. Only that explicit command opens final Apply confirmation. Screenplay: Discard C# Repair releases this review. Dismissing the nonmodal notice does neither.',
             'Apply is offered only after all source and identity byte pages have been collected. Closing a preview or changing the workspace invalidates it.',
         ].join('\n');
         await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(add('review.md', summary)), { preview: false });
