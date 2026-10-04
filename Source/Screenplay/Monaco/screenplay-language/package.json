@@ -57,10 +57,10 @@
     "devDependencies": {
         "@cratis/screenplay-compiler": "workspace:*",
         "@types/chai": "^5.2.3",
-        "chai": "^6.2.2",
-        "esbuild": "^0.28.1",
+        "chai": "^6.3.0",
+        "esbuild": "^0.28.2",
         "monaco-editor": "^0.55.1",
         "typescript": "6.0.3",
-        "vitest": "^4.1.11"
+        "vitest": "^5.0.3"
     }
 }
