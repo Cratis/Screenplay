@@ -13,7 +13,7 @@ import { classifyRootDocument } from '../RepairDocuments';
 import { associatedUntitledTargets } from './prepareHostFixtures';
 import { repairSource } from './repairFixture';
 import { NativeTestController } from './nativeTestController';
-import { userRevertCleanFile } from './nativeSavedBuffer';
+import { userRevertCleanFile, userSaveDirtyFile } from './nativeSavedBuffer';
 
 // Guard integration, NOT UI automation: only the dialog responses and the timing
 // of a real subprocess reply are controlled. Real registered commands, native
@@ -29,6 +29,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
     let race: Promise<void> | undefined;
     const rpc: { root: string; name: string; at: number }[] = [];
     let discoveryGate: { name?: string; entered(): void; release: Promise<void> } | undefined;
+    let teardownPending = false;
     // VS Code gives an installed extension its own API object. Control only its
     // modal replies, not a different API belonging to the development test driver.
     const productionApi = createRequire(path.join(vscode.extensions.getExtension('cratis.screenplay')!.extensionPath, 'package.json'))('vscode') as typeof vscode;
@@ -583,34 +584,94 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         warnings.length = 0;
         const unknownReads = rpc.length;
         await vscode.commands.executeCommand('screenplay.repair.refresh');
-        assert.ok(warnings.some(message => message.startsWith('RecoveryRequired:')), 'Unknown outcome blocks deliberate reconnect until explicit recovery');
-        assert.equal(rpc.slice(unknownReads).filter(frame => ['open-workspace', 'propose-repair', 'apply'].includes(frame.name)).length, 0);
+        assert.ok(warnings.some(message => message.startsWith('DirtyBuffer:') && message.includes(raceSource)), 'Preserved post-dispatch typing legitimately refuses before the recovery gate');
+        assert.equal(rpc.length, unknownReads, 'Dirty refusal sends no RPC, including ZERO new Apply frames');
+        const typedSource = raceDocument.getText(), typedState = postDispatchUntitled!.getText();
+        const typedVersion = raceDocument.version, stateVersion = postDispatchUntitled!.version;
         await vscode.commands.executeCommand('screenplay.repair.inspectState');
         const inspection = JSON.parse(vscode.window.activeTextEditor!.document.getText()) as { uncertainApply: string | null };
         assert.match(inspection.uncertainApply!, /Apply was dispatched\. Changes may exist\. Do not retry/, 'Actual read-only recovery inspection preserves unknown status, without retry');
         for (const [relative, bytes] of raceExpected) assert.deepEqual(fs.readFileSync(path.join(raceRoot, relative)), bytes);
         assert.equal(raceDocument.isDirty, true);
         assert.equal(postDispatchUntitled?.isDirty, true);
-        console.log('NATIVE UNKNOWN OUTCOME PASSED: actual response lost after exact installation, typing preserved, no retry, real read-only recovery inspection.');
+        assert.equal(raceDocument.getText(), typedSource, 'Read-only inspection retains exact post-dispatch typing');
+        assert.equal(postDispatchUntitled!.getText(), typedState);
+        assert.equal(raceDocument.version, typedVersion);
+        assert.equal(postDispatchUntitled!.version, stateVersion);
+        assert.ok(rpc.slice(unknownReads).some(frame => frame.name === 'workspace-state'), 'The installed client really queries recovery state while buffers are dirty');
+        assert.equal(rpc.slice(unknownReads).filter(frame => ['open-workspace', 'propose-repair', 'apply'].includes(frame.name)).length, 0, 'Read-only inspection grants no fresh proposal authority');
         const refused = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', raceDocument.uri, new vscode.Range(0, 0, 0, 0));
         assert.deepEqual(refused, [], 'Dirty reconciliation cannot silently issue fresh authority');
         assert.equal(dispatched, 2, 'Unknown dispatched outcome is never retried');
+
+        // Explicit TEST USER disposition, not automatic repair reconciliation or
+        // transaction recovery. Save the preserved typing only in our synthetic
+        // model; do not switch roots, cancel unknown authority or close dirty tabs.
+        await userSaveDirtyFile(raceDocument, typedSource, async () => 'Save File');
+        const savedState = await userSaveDirtyFile(postDispatchUntitled!, typedState, async () => 'Save File');
+        assert.equal(raceDocument.isDirty, false);
+        assert.equal(savedState.isDirty, false);
+        warnings.length = 0;
+        const cleanUnknownReads = rpc.length;
+        await vscode.commands.executeCommand('screenplay.repair.refresh');
+        assert.ok(warnings.some(message => message.startsWith('RecoveryRequired:')), 'Resolving dirty buffers does NOT clear the unknown-outcome recovery barrier, even after read-only inspection');
+        assert.equal(rpc.length, cleanUnknownReads, 'Recovery refusal sends no discovery/proposal/Apply RPC');
+        assert.equal(dispatched, 2);
+        assert.equal(fs.readFileSync(raceSource, 'utf8'), typedSource, 'Only the separately logged test user save writes preserved typing');
+        assert.equal(fs.readFileSync(savedState.uri.fsPath, 'utf8'), typedState);
+        console.log('NATIVE UNKNOWN OUTCOME PASSED: actual response lost after exact installation, typing preserved through dirty refusal and real read-only recovery inspection; separate TEST USER saves do not clear RecoveryRequired or authorize retry.');
         let teardownEntered!: () => void;
         const teardownSent = new Promise<void>((resolve, reject) => {
             const timer = setTimeout(() => reject(new Error('Native teardown inspection RPC did not dispatch within 5 seconds.')), 5_000);
             teardownEntered = () => { clearTimeout(timer); resolve(); };
         });
-        discoveryGate = { name: 'workspace-state', entered: teardownEntered, release: new Promise<void>(() => {}) };
-        // The native host will dispose the ACTUAL installed extension with this
-        // real read-only response pending. Launcher checks retained shutdown logs.
-        void vscode.commands.executeCommand('screenplay.repair.inspectState');
+        const teardownEvidence = process.env.SCREENPLAY_REPAIR_TEARDOWN_EVIDENCE;
+        assert.ok(teardownEvidence && !teardownEvidence.startsWith(root + path.sep), 'Shutdown evidence belongs outside every watched synthetic model');
+        let releaseTeardown!: () => void;
+        discoveryGate = { name: 'workspace-state', entered: teardownEntered, release: new Promise<void>(resolve => { releaseTeardown = resolve; }) };
+        let closed = false;
+        const lateUi: string[] = [];
+        const originalOpen = productionApi.workspace.openTextDocument;
+        const originalShow = productionApi.window.showTextDocument;
+        productionApi.workspace.openTextDocument = ((...args: Parameters<typeof originalOpen>) => {
+            if (closed) lateUi.push('openTextDocument');
+            return Reflect.apply(originalOpen, productionApi.workspace, args);
+        }) as typeof originalOpen;
+        productionApi.window.showTextDocument = ((...args: Parameters<typeof originalShow>) => {
+            if (closed) lateUi.push('showTextDocument');
+            return Reflect.apply(originalShow, productionApi.window, args);
+        }) as typeof originalShow;
+        productionApi.window.showWarningMessage = ((...args: Parameters<typeof originalWarning>) => {
+            if (closed) lateUi.push('showWarningMessage');
+            return Reflect.apply(originalWarning, productionApi.window, args);
+        }) as typeof originalWarning;
+        productWatch(raceRoot).watcher.once('close', () => {
+            // Actual native watcher closure follows installed context teardown.
+            // Release the REAL server response only after disposal, never invoke
+            // product callbacks or create a replacement owner in the harness.
+            closed = true;
+            console.log('NATIVE TEARDOWN CLOSED: actual retained root watcher closed; releasing real pending state response.');
+            releaseTeardown();
+        });
+        teardownPending = true;
+        void Promise.resolve(vscode.commands.executeCommand('screenplay.repair.inspectState')).then(() => {
+            fs.writeFileSync(teardownEvidence, JSON.stringify({ pending: false, actualRootWatchClosed: closed, actualInspectionSettled: true, lateUi, applyFrames: dispatched }));
+            console.log(`NATIVE TEARDOWN SETTLED: ${JSON.stringify({ closed, lateUi, applyFrames: dispatched })}`);
+        }, error => {
+            fs.writeFileSync(teardownEvidence, JSON.stringify({ pending: false, error: String(error), actualRootWatchClosed: closed, lateUi }));
+        }).finally(() => {
+            productionApi.workspace.openTextDocument = originalOpen;
+            productionApi.window.showTextDocument = originalShow;
+            productionApi.window.showWarningMessage = originalWarning;
+        });
         await teardownSent;
-        console.log('NATIVE TEARDOWN PENDING: actual installed read-only inspection RPC held for host shutdown.');
+        fs.writeFileSync(teardownEvidence, JSON.stringify({ pending: true, actualStateQueryDispatched: true }));
+        console.log('NATIVE TEARDOWN PENDING: actual installed read-only inspection RPC held for host shutdown; completion evidence required, not just absence of a logged exception.');
         console.log('NATIVE GUARD INTEGRATION: actual attributable nested-preexisting modification, old token refusal, same-physical-root fresh discovery, controlled overlapping actual provider/manual discovery, healthy nested create/delete, actual physical-root replacement refusal, persistent native before/after source/state diff navigation and exact installation passed. Associated untitled/all-existing-buffer refusal preservation, real-file identity dirty guard, dispatched reconnect barrier, controlled post-dispatch typing and unknown-outcome recovery inspection passed. Actual native callbacks and RPC operations were observed, never synthesized. Final modal responses were separately controlled; human keyboard/mouse interaction remains UNVERIFIED.');
     } finally {
         nativeFs.watch = originalWatch;
         childProcess.spawn = originalSpawn;
-        productionApi.window.showWarningMessage = originalWarning;
+        if (!teardownPending) productionApi.window.showWarningMessage = originalWarning;
         productionApi.window.showInformationMessage = originalInformation;
     }
 }

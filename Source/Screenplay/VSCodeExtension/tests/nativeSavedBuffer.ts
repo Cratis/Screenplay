@@ -17,6 +17,35 @@ export async function observeSavedReload(document: vscode.TextDocument, expected
     });
 }
 
+/** Explicit test-user save of preserved typing, NEVER automatic repair reconciliation or recovery. */
+export async function userSaveDirtyFile(document: vscode.TextDocument, expected: string, choose: () => Promise<'Save File' | undefined>): Promise<vscode.TextDocument> {
+    assert.equal(await choose(), 'Save File', 'The test user separately chooses to save this exact buffer');
+    assert.equal(document.getText(), expected, 'Exact typed content is retained BEFORE explicit user disposition');
+    assert.equal(document.isDirty, true);
+    assert.ok(document.uri.scheme === 'file' || document.uri.scheme === 'untitled');
+    await vscode.commands.executeCommand('workbench.action.closeSidebar');
+    const editor = await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two, preserveFocus: false });
+    await vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
+    assert.equal(vscode.window.activeTextEditor, editor);
+    const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
+    assert.ok(tab?.input instanceof vscode.TabInputText);
+    assert.equal(tab.input.uri.toString(), document.uri.toString(), 'User disposition targets the exact plain native editor');
+    const others = vscode.workspace.textDocuments.filter(other => other !== document).map(other => ({ document: other, text: other.getText(), version: other.version, dirty: other.isDirty }));
+    console.log(`NATIVE SEPARATE TEST USER SAVE: ${JSON.stringify({ uri: document.uri.toString(), target: 'focused plain editor', retainedTypingVerified: true, automaticRepairReconciliation: false, transactionRecovery: false, applyConsentReused: false })}`);
+    // TextDocument.save is the documented SDK workflow, including associated
+    // untitled destinations. No invented command URI argument or model-disposal wait.
+    assert.equal(await document.save(), true, 'Explicit test-user save succeeds');
+    const saved = await vscode.workspace.openTextDocument(document.uri.with({ scheme: 'file' }));
+    assert.equal(saved.getText(), expected);
+    assert.equal(saved.isDirty, false);
+    for (const other of others) {
+        assert.equal(other.document.getText(), other.text, 'Explicit user save never changes another buffer');
+        assert.equal(other.document.version, other.version);
+        assert.equal(other.document.isDirty, other.dirty);
+    }
+    return saved;
+}
+
 /** Separate simulated user choice, NEVER a product reload primitive or reuse of Apply consent. */
 export async function userRevertCleanFile(document: vscode.TextDocument, expected: string, choose: () => Promise<'Revert File' | undefined>): Promise<void> {
     assert.equal(await choose(), 'Revert File', 'The test user separately chooses the native File: Revert File action');

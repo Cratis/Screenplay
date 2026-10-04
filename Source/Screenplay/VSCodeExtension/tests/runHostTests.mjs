@@ -51,12 +51,14 @@ if (vsix) {
     fs.writeFileSync(path.join(development, 'package.json'), JSON.stringify({ name: 'screenplay-repair-test-driver', publisher: 'cratis-tests', version: '0.0.0', engines: { vscode: '^1.85.0' } }));
 }
 let shutdownFailure;
+let suitesPassed = false;
+const teardownEvidence = path.join(evidence, 'pending-inspection-teardown.json');
 try { await runTests({
     vscodeExecutablePath: executable,
     extensionDevelopmentPath: development, extensionTestsPath: path.resolve('out/tests/extensionHost.cjs'),
     launchArgs: [model, '--user-data-dir', userData, '--extensions-dir', extensions, '--disable-workspace-trust', '--skip-welcome', '--skip-release-notes', '--disable-gpu', '--disable-extension', 'github.copilot', '--disable-extension', 'github.copilot-chat', '--log', 'info'],
-    extensionTestsEnv: { SCREENPLAY_REPAIR_SERVER: server, SCREENPLAY_REPAIR_HOST_ROOT: model, SCREENPLAY_REPAIR_INSTALLED_EXTENSIONS: vsix ? extensions : '', SCREENPLAY_REPAIR_OBSERVE_SYNTHETIC_ROOT: process.env.SCREENPLAY_REPAIR_OBSERVE === '1' ? path.join(model, 'command-guards') : '' },
-}); } finally {
+    extensionTestsEnv: { SCREENPLAY_REPAIR_SERVER: server, SCREENPLAY_REPAIR_HOST_ROOT: model, SCREENPLAY_REPAIR_INSTALLED_EXTENSIONS: vsix ? extensions : '', SCREENPLAY_REPAIR_OBSERVE_SYNTHETIC_ROOT: process.env.SCREENPLAY_REPAIR_OBSERVE === '1' ? path.join(model, 'command-guards') : '', SCREENPLAY_REPAIR_TEARDOWN_EVIDENCE: teardownEvidence },
+}); suitesPassed = true; } finally {
     const logs = path.join(userData, 'logs');
     if (fs.existsSync(logs)) {
         fs.cpSync(logs, path.join(evidence, 'logs'), { recursive: true });
@@ -73,6 +75,17 @@ try { await runTests({
             shutdownFailure = `Native extension teardown touched disposed resources; inspect ${evidence}`;
             console.error(shutdownFailure);
         } else console.log(`NATIVE TEARDOWN LOG CHECK: no disposed-resource exception in ${shutdownLogs.length} extension-host logs; ${evidence}`);
+    }
+    // A normal test exit alone cannot prove pending inspection completed after
+    // actual installed disposal. Require test-owned evidence of the REAL reply's
+    // late completion and zero installed UI calls; unsupported Windows roots skip.
+    if (suitesPassed && fs.existsSync(teardownEvidence)) {
+        const teardown = JSON.parse(fs.readFileSync(teardownEvidence, 'utf8'));
+        if (teardown.pending || teardown.error || teardown.actualRootWatchClosed !== true || teardown.actualInspectionSettled !== true || teardown.lateUi?.length !== 0 || teardown.applyFrames !== 2) {
+            shutdownFailure = `Pending native inspection teardown is incomplete or unsafe: ${JSON.stringify(teardown)}; inspect ${evidence}`;
+        } else console.log(`NATIVE PENDING INSPECTION TEARDOWN VERIFIED: ${JSON.stringify(teardown)}`);
+    } else if (suitesPassed && !(process.platform === 'win32' && fs.statSync(path.join(model, 'command-guards'), { bigint: true }).dev === 0n)) {
+        shutdownFailure = `Missing pending native inspection teardown evidence; inspect ${evidence}`;
     }
     // Keep synthetic paths for diagnosis; no blanket cleanup of unregistered outputs.
 }
