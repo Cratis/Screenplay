@@ -176,7 +176,7 @@ internal static partial class CaptureParser
             return null;
         }
 
-        var (sourceText, hasTranslate) = SplitTranslateSuffix(match.Groups[2].Value.Trim());
+        var (sourceText, hasTranslate) = SplitTranslateSuffix(match.Groups[2].Value.Trim(), context.SourceOptions.NumericMode);
         var source = ExpressionParser.ParseProjectionExpression(context, sourceText, line.Location);
 
         var translations = new List<CaptureTranslationSyntax>();
@@ -199,7 +199,7 @@ internal static partial class CaptureParser
         return new(match.Groups[1].Value, source, translations, line.Location);
     }
 
-    static (string Source, bool HasTranslate) SplitTranslateSuffix(string raw)
+    static (string Source, bool HasTranslate) SplitTranslateSuffix(string raw, NumericMode mode)
     {
         if (raw.StartsWith('`'))
         {
@@ -209,7 +209,10 @@ internal static partial class CaptureParser
                 return (raw, false);
             }
 
-            return (raw[..(closing + 1)], raw[(closing + 1)..].Trim() == "translate");
+            var trailing = raw[(closing + 1)..].Trim();
+            if (mode == NumericMode.Exact && trailing.Length != 0 && trailing != "translate") return (raw, false);
+
+            return (raw[..(closing + 1)], trailing == "translate");
         }
 
         const string suffix = " translate";
@@ -317,7 +320,7 @@ internal static partial class CaptureParser
 
     static CaptureWhenSyntax? ParseWhenPropertyClause(ParserContext context, SourceLine line, string trigger)
     {
-        var tokens = WhenTokenRegex().Matches(trigger).Select(_ => _.Value).ToList();
+        var tokens = (context.SourceOptions.NumericMode == NumericMode.Exact ? ExactWhenTokenRegex() : WhenTokenRegex()).Matches(trigger).Select(_ => _.Value).ToList();
         if (tokens.Count == 0)
         {
             context.Error(DiagnosticCodes.InvalidWhenClause, $"Invalid 'when' clause '{line.Content}'", line.Location);
@@ -494,6 +497,9 @@ internal static partial class CaptureParser
 
     [GeneratedRegex(@"^append\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex AppendRegex();
+
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|[^\\s]+", RegexOptions.None, 1000)]
+    private static partial Regex ExactWhenTokenRegex();
 
     [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|[\\w.]+", RegexOptions.None, 1000)]
     private static partial Regex WhenTokenRegex();

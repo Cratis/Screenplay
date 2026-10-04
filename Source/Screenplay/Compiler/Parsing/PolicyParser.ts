@@ -41,7 +41,7 @@ export function parsePolicy(context: ParserContext, header: SourceLine): PolicyS
 }
 
 function parsePolicyCondition(context: ParserContext, text: string, location: SourceLocation): PolicyConditionSyntax | null {
-    const numeric = context.sourceOptions.numericMode === 'exact' ? '-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|[\\w.$-]+' : '[\\w.$]+';
+    const numeric = context.sourceOptions.numericMode === 'exact' ? '-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|[\\p{L}\\p{Mn}\\p{Nd}\\p{Pc}.$-]+|[^\\s]' : '[\\w.$]+';
     const tokens: string[] = [...(text.match(new RegExp(`"${stringBodyPattern}"|\\(|\\)|${numeric}`, 'gu')) ?? [])];
     let position = 0;
     const quoted = (token: string | undefined): token is string => token !== undefined && token.startsWith('"') && token.endsWith('"');

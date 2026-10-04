@@ -10,7 +10,7 @@ import { AuthorizeSyntax, PersonaSyntax } from '../Syntax/Authorization';
 import { ConceptSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { ApplicationSyntax, FeatureSyntax, ModuleSyntax } from '../Syntax/Structure';
 import { toSyntaxJson } from '../Syntax/SyntaxJson';
-import { isAuthoredDocument, legacySourceOptions } from '../Syntax/SourceOptions';
+import { isAuthoredDocument, legacySourceOptions, NumericMode } from '../Syntax/SourceOptions';
 
 // "The documents of a folder are one document": modules and features with the same name combine, and a
 // name declared in two files is reported - the port of the C# PlayFolderMerge for what this compiler
@@ -18,11 +18,16 @@ import { isAuthoredDocument, legacySourceOptions } from '../Syntax/SourceOptions
 export function mergeDocuments(documents: readonly CompilationResult<ApplicationSyntax>[]): CompilationResult<ApplicationSyntax> {
     const diagnostics: Diagnostic[] = [];
     const applications = documents.map(document => document.value);
-    const asserted = applications.filter(application => application.sourceOptions?.numericMode !== undefined && application.sourceOptions.numericMode !== 'legacy' || hasDeclarations(application));
-    const sourceOptions = asserted[0]?.sourceOptions ?? legacySourceOptions;
+    const asserted = applications.filter(application => Object.hasOwn(application, 'sourceOptions') && application.sourceOptions?.numericMode !== 'legacy' || hasDeclarations(application));
+    let sourceOptions = asserted[0]?.sourceOptions ?? legacySourceOptions;
+    let invalid = asserted.some(application => Object.hasOwn(application, 'sourceOptions') && (application.sourceOptions == null || Object.keys(application.sourceOptions).length !== 1 || !['legacy', 'exact'].includes(application.sourceOptions.numericMode)));
     for (const application of asserted.slice(1)) {
-        if ((application.sourceOptions ?? legacySourceOptions).numericMode !== sourceOptions.numericMode) diagnostics.push(error(DiagnosticCodes.MixedNumericModes, 'Declaration-bearing documents and marked import barrels must independently select the same numeric mode.', application.location));
+        if ((application.sourceOptions ?? legacySourceOptions).numericMode !== sourceOptions.numericMode) {
+            invalid = true;
+            diagnostics.push(error(DiagnosticCodes.MixedNumericModes, 'Declaration-bearing documents and marked import barrels must independently select the same numeric mode.', application.location));
+        }
     }
+    if (invalid) sourceOptions = Object.freeze({ numericMode: 'invalid' as NumericMode });
     const named = new Map<string, SourceLocation>();
     const concepts = declaredInOneFile<ConceptSyntax>(applications.flatMap(application => application.concepts), 'declaration of', diagnostics, undefined, named);
     const types = declaredInOneFile<TypeSyntax>(applications.flatMap(application => application.types), 'declaration of', diagnostics, undefined, named);
@@ -56,7 +61,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
 
 function hasDeclarations(application: ApplicationSyntax): boolean {
     if (isAuthoredDocument(application)) return true;
-    if (application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.policies?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0) return true;
+    if (application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.policies?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0) return true;
     const feature = (node: FeatureSyntax): boolean => !node.isPlacement || node.slices.length > 0 || node.features.some(feature);
     return application.modules.some(module => !module.isPlacement || module.features.some(feature));
 }

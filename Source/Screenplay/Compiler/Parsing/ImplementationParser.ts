@@ -24,6 +24,8 @@ export function parseFile(context: ParserContext, line: SourceLine): FileReferen
     return { kind: 'FileReferenceSyntax', path, location: locationOf(line) };
 }
 
+export const isClosingCodeFence = (line: SourceLine): boolean => line.raw.trim() === '```';
+
 export function parseCode(context: ParserContext, tag: SourceLine): CodeBlockSyntax | null {
     const language = tag.content.startsWith('```') ? tag.content.substring(3) : tag.content;
     if (!context.languages.has(language)) {
@@ -47,7 +49,7 @@ export function parseCode(context: ParserContext, tag: SourceLine): CodeBlockSyn
             context.error(DiagnosticCodes.UnclosedCodeBlock, 'Unclosed inline code block - expected a closing ``` line', locationOf(open));
             break;
         }
-        if (line.raw.trim() === '```') break;
+        if (isClosingCodeFence(line)) break;
         let strip = 0;
         while (strip < open.indent && line.raw[strip] === ' ') strip++;
         lines.push(line.raw.substring(strip));

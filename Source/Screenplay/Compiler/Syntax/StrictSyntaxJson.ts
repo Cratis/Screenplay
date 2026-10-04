@@ -3,14 +3,17 @@
 
 import { sourceLocation } from '../Diagnostics/SourceLocation';
 import { isExactNumberToken, parseExactNumber } from './ExactNumber';
-import { isBlankImplementationHint } from '../Text/ImplementationHintText';
+import { validateSyntaxInvariants } from './SyntaxInvariants';
 import { syntaxDefinitions } from './SyntaxDefinitions';
 import { SyntaxNode } from './SyntaxNode';
 
 import { InvalidSyntaxJson } from './InvalidSyntaxJson';
 export { InvalidSyntaxJson } from './InvalidSyntaxJson';
 
-type Value = null | boolean | string | number | readonly Value[] | { readonly [key: string]: Value };
+class NumericToken {
+    constructor(readonly text: string) {}
+}
+type Value = null | boolean | string | number | NumericToken | readonly Value[] | { readonly [key: string]: Value };
 interface Schema {
     readonly $ref?: string;
     readonly type?: string | readonly string[];
@@ -29,7 +32,7 @@ interface Schema {
 }
 const definitions: Readonly<Record<string, Schema>> = syntaxDefinitions;
 const roots = new Set(['ApplicationSyntax', 'ProjectionSyntax', 'CaptureSyntax', 'SpecificationSyntax']);
-const object = (value: Value): value is { [key: string]: Value } => typeof value === 'object' && value !== null && !Array.isArray(value);
+const object = (value: Value): value is { [key: string]: Value } => typeof value === 'object' && value !== null && !Array.isArray(value) && !(value instanceof NumericToken);
 function fail(path: string, message: string): never { throw new InvalidSyntaxJson(`${path}: ${message}`); }
 
 /** Restores the new Exact source protocol against the complete compiler-owned kind/member schema.
@@ -52,6 +55,12 @@ function restore(value: Value, schema: Schema, path: string, depth: number): Val
         if (!Object.hasOwn(definitions, kind)) fail(path, `unknown syntax kind '${kind}'.`);
         return restore(value, definitions[kind], path, depth);
     }
+    // Native nullable collections normalize both missing and explicit null to their empty default.
+    // Nonnullable collections and scalar/payload nulls retain their own contracts.
+    if (value === null && Array.isArray(schema.default) && schema.anyOf?.some(alternative => alternative.type === 'null')) {
+        const array = schema.anyOf.find(alternative => alternative.type === 'array');
+        if (array !== undefined) return restore([], array, path, depth);
+    }
     const alternatives = schema.anyOf ?? schema.oneOf;
     if (alternatives !== undefined) {
         const successes: Value[] = [];
@@ -65,6 +74,13 @@ function restore(value: Value, schema: Schema, path: string, depth: number): Val
     if (schema.const !== undefined && value !== schema.const) fail(path, 'discriminator mismatch.');
     if (schema.enum !== undefined && !schema.enum.includes(value)) fail(path, 'unknown enum or mode value.');
     const types = typeof schema.type === 'string' ? [schema.type] : schema.type;
+    if (value instanceof NumericToken) {
+        if (types?.includes('integer')) {
+            // TryGetInt32 / TryGetUInt32 admit integer lexical syntax, not rounded fraction/exponent forms.
+            if (schema.minimum === undefined || schema.maximum === undefined || !/^-?(?:0|[1-9][0-9]*)$/.test(value.text) || (schema.minimum === 0 && value.text.startsWith('-')) || value.text.length > 11) fail(path, 'expected an exact structural integer token.');
+        } else if (!types?.includes('number')) fail(path, 'numeric token has no known typed scalar member.');
+        value = Number(value.text);
+    }
     if (types !== undefined && !types.some(type => type === 'null' ? value === null : type === 'array' ? Array.isArray(value) : type === 'object' ? object(value) : type === 'integer' ? typeof value === 'number' && Number.isInteger(value) : typeof value === type)) fail(path, 'wrong structural type.');
     if (typeof value === 'number' && (!Number.isFinite(value) || (schema.minimum !== undefined && value < schema.minimum) || (schema.maximum !== undefined && value > schema.maximum))) fail(path, 'number is outside the typed range.');
     if (typeof value === 'string' && schema.pattern !== undefined && !new RegExp(schema.pattern, 'u').test(value)) fail(path, 'noncanonical scalar spelling.');
@@ -82,6 +98,7 @@ function restore(value: Value, schema: Schema, path: string, depth: number): Val
         if (typeof result.kind === 'string') {
             // Source positions are server-owned. No raw spans or authored token lengths are invented.
             (result as unknown as { location: ReturnType<typeof sourceLocation> }).location = sourceLocation(1, 1);
+            validateSyntaxInvariants(result as unknown as SyntaxNode);
         }
         return result;
     }
@@ -93,8 +110,6 @@ function validateExactNumbers(value: Value, path: string): void {
     if (!object(value)) return;
     if (Object.hasOwn(value, 'sourceOptions') && (!object(value.sourceOptions) || value.sourceOptions.numericMode !== 'exact')) fail(path, 'conflicting source numeric options.');
     if (value.kind === 'RawExpressionSyntax' && typeof value.text === 'string' && isExactNumberToken(value.text)) fail(path, 'an exact numeric operand cannot be opaque numeric text.');
-    if (value.kind === 'ImplementationHintSyntax' && (typeof value.text !== 'string' || isBlankImplementationHint(value.text))) fail(path, 'implementation hints must be nonblank.');
-    if (value.kind === 'OperationPhaseSyntax' && value.file !== null && value.code !== null) fail(path, 'an operation phase has at most one file or inline payload.');
     if (value.kind === 'LiteralExpressionSyntax') {
         if (typeof value.value === 'number') fail(path, 'ordinary numeric tokens are Double; construct an explicit ExactNumber.');
         if (object(value.value)) {
@@ -157,9 +172,7 @@ class JsonReader {
         const matched = /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?/.exec(this.text.substring(this.#position));
         if (matched === null) fail('$', `invalid JSON at offset ${this.#position}.`);
         this.#position += matched[0].length;
-        const number = Number(matched[0]);
-        if (!Number.isFinite(number)) fail('$', 'ordinary JSON number is outside finite Double range.');
-        return number;
+        return new NumericToken(matched[0]);
     }
     #string(): string {
         const start = this.#position++;

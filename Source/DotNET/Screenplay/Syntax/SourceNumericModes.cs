@@ -29,12 +29,14 @@ internal static class SourceNumericModes
     {
         var asserted = applications.Where(application => application.SourceOptions != SourceOptions.Legacy || HasDeclaration(application)).ToArray();
         var options = asserted.FirstOrDefault()?.SourceOptions ?? SourceOptions.Legacy;
+        var invalid = asserted.Any(application => application.SourceOptions is null || !Enum.IsDefined(application.SourceOptions.NumericMode));
         foreach (var application in asserted.Where(application => application.SourceOptions != options))
         {
+            invalid = true;
             report(Diagnostic.Error(DiagnosticCodes.MixedNumericModes, "Declaration-bearing documents and marked import barrels must independently select the same numeric mode.", application.Location));
         }
 
-        return options;
+        return invalid ? new((NumericMode)(-1)) : options;
     }
 
     internal static IEnumerable<SyntaxNode> Children(SyntaxNode node)

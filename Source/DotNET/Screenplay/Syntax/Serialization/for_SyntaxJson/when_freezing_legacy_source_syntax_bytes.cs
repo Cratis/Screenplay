@@ -22,6 +22,7 @@ public class when_freezing_legacy_source_syntax_bytes
         {
             var parsed = compiler.Parse(File.ReadAllText(Path.Combine(root, document.GetProperty("path").GetString()!))).Value!;
             if (parsed.SourceOptions != SourceOptions.Legacy || document.GetProperty("name").GetString()!.StartsWith("source-stream", StringComparison.Ordinal)) continue;
+
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
             var text = SyntaxJson.Serialize(parsed).GetRawText()

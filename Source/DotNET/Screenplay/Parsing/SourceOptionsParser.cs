@@ -11,7 +11,7 @@ namespace Cratis.Screenplay.Parsing;
 /// <summary>Establishes physical-document options before any value-bearing grammar is entered.</summary>
 internal static class SourceOptionsParser
 {
-    internal static ParserContext Create(IReadOnlyList<SourceLine> lines, string? path = null, IScreenplayLanguageRegistry? languages = null, bool hashComments = false)
+    internal static ParserContext Create(IReadOnlyList<SourceLine> lines, string? path = null, IScreenplayLanguageRegistry? languages = null, bool hashComments = false, CommandStreamCandidates? streamCandidates = null)
     {
         var prepared = new List<SourceLine>(lines.Count);
         var diagnostics = new List<Diagnostic>();
@@ -31,7 +31,20 @@ internal static class SourceOptionsParser
                 line = line with { Indent = indent, Content = content, ContentOffset = 1 };
             }
 
-            if (line.Content.StartsWith("```", StringComparison.Ordinal)) inFence = !inFence;
+            if (inFence)
+            {
+                // Code bodies are raw text: comments and embedded backticks are not source directives.
+                if (CodeBlockParser.IsClosingFence(line)) inFence = false;
+                prepared.Add(line);
+                continue;
+            }
+
+            if (line.Content.StartsWith("```", StringComparison.Ordinal) &&
+                (line.Content == "```" || line.Content == "```text" || line.Content == "```markdown" ||
+                 (languages ?? ScreenplayLanguageRegistry.Default).InlineLanguages.Contains(line.Content[3..])))
+            {
+                inFence = true;
+            }
             if (!inFence && line.Indent == 0 && LineText.FirstWord(line.Content) == "numbers")
             {
                 var code = line.Content switch
@@ -63,7 +76,7 @@ internal static class SourceOptionsParser
         }
 
         // Do not reinterpret an unmarked document's BOM or other legacy source handling.
-        var context = new ParserContext(new(seen ? prepared : lines), path, languages) { SourceOptions = options };
+        var context = new ParserContext(new(seen ? prepared : lines), path, languages) { SourceOptions = options, StreamCandidates = streamCandidates };
         foreach (var diagnostic in diagnostics) context.Add(diagnostic);
         return context;
     }

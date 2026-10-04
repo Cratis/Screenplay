@@ -15,7 +15,8 @@ const operators: Record<string, ComparisonOperator> = { '==': 'Equal', '!=': 'No
 export function parseCondition(context: ParserContext, text: string, location: SourceLocation): ConditionSyntax | null {
     context = context.valueContext;
     const numeric = context.sourceOptions.numericMode === 'exact' ? '-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|' : '';
-    const tokens = text.match(new RegExp(`"${stringBodyPattern}"|==|!=|>=|<=|>|<|\\(|\\)|${numeric}[\\w.$-]+`, 'gu')) ?? [];
+    const words = context.sourceOptions.numericMode === 'exact' ? '[\\p{L}\\p{Mn}\\p{Nd}\\p{Pc}.$-]+|[^\\s]' : '[\\w.$-]+';
+    const tokens = text.match(new RegExp(`"${stringBodyPattern}"|==|!=|>=|<=|>|<|\\(|\\)|${numeric}${words}`, 'gu')) ?? [];
     let position = 0;
     const group = (): ConditionSyntax | null => {
         if (tokens[position] === '(') {

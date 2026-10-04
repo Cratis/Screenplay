@@ -177,7 +177,7 @@ internal static partial class PolicyParser
     static List<string> Tokenize(string text, NumericMode mode) =>
         [.. (mode == NumericMode.Exact ? ExactTokenRegex() : TokenRegex()).Matches(text).Select(_ => _.Value)];
 
-    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|\\(|\\)|-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|[\\w.$-]+", RegexOptions.None, 1000)]
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|\\(|\\)|-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|[\\w.$-]+|[^\\s]", RegexOptions.None, 1000)]
     private static partial Regex ExactTokenRegex();
 
     [GeneratedRegex(@"^policy\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]

@@ -39,8 +39,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     public CompilationResult<ApplicationSyntax> Compile(string source)
     {
         var lines = SourceLineSplitter.Split(source);
-        var context = SourceOptionsParser.Create(lines, languages: languages);
-        context.StreamCandidates = CommandStreamCandidates.Capture([lines], languages);
+        var context = SourceOptionsParser.Create(lines, languages: languages, streamCandidates: CommandStreamCandidates.Capture([lines], languages));
         var application = SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines), lines) with { RegisteredTriggers = SnapshotTriggers(languages) };
         ScreenplayValidator.Validate(application, context);
         return new(application, [.. context.Diagnostics, .. ProductionDestinationDiagnostics.In(application)]);
@@ -154,8 +153,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
 
     static CompilationResult<ApplicationSyntax> ParseWithCandidates(IReadOnlyList<SourceLine> lines, string? path, PlayPlacement placement, IScreenplayLanguageRegistry languages, CommandStreamCandidates candidates)
     {
-        var context = SourceOptionsParser.Create(lines, path, languages);
-        context.StreamCandidates = candidates;
+        var context = SourceOptionsParser.Create(lines, path, languages, streamCandidates: candidates);
         return new(SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines, placement), lines) with { RegisteredTriggers = SnapshotTriggers(languages) }, context.Diagnostics);
     }
 

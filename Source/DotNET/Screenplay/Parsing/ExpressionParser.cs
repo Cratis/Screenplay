@@ -179,7 +179,7 @@ internal static partial class ExpressionParser
     {
         var text = source.Value.Trim();
         var start = line.LocationAt(source.Index + (source.Value.Length - source.Value.TrimStart().Length));
-        var expression = ParseMappingSource(context, text, text.StartsWith('{') || text.StartsWith('[') ? start : line.Location);
+        var expression = ParseMappingSource(context, text, context.SourceOptions.NumericMode == NumericMode.Exact && (text.StartsWith('{') || text.StartsWith('[')) ? start : line.Location);
         if (expression is LiteralExpressionSyntax literal)
         {
             expression = literal with { RawLocation = start, RawLength = text.Length };
@@ -205,7 +205,7 @@ internal static partial class ExpressionParser
         var literalPrefix = text.StartsWith("literal ", StringComparison.Ordinal) ? text.Length - text["literal ".Length..].TrimStart().Length : 0;
         var structured = text[literalPrefix..].StartsWith('{') || text[literalPrefix..].StartsWith('[');
         var sourceStart = line.LocationAt(source.Index + (source.Value.Length - source.Value.TrimStart().Length) + literalPrefix);
-        var expression = ParseProjectionExpression(context, text, structured ? sourceStart : line.Location);
+        var expression = ParseProjectionExpression(context, text, structured && context.SourceOptions.NumericMode == NumericMode.Exact ? sourceStart : line.Location);
         if (expression is LiteralExpressionSyntax literal)
         {
             // 'literal ' is projection syntax, not part of the raw literal value.

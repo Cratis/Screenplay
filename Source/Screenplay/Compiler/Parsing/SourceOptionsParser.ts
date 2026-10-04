@@ -5,6 +5,7 @@ import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { exactSourceOptions, legacySourceOptions, NumericMode, SourceOptions } from '../Syntax/SourceOptions';
 import { LineReader } from './LineReader';
+import { isClosingCodeFence } from './ImplementationParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
@@ -19,6 +20,7 @@ export function sourceContext(lines: readonly SourceLine[], path?: string, langu
     let seen = false;
     let contentSeen = false;
     let inFence = false;
+    const registry = new ParserContext(new LineReader([]), path, languages).languages;
     for (const original of lines) {
         let line = original;
         if (line.number === 1 && line.raw.startsWith('\uFEFF')) {
@@ -27,7 +29,12 @@ export function sourceContext(lines: readonly SourceLine[], path?: string, langu
             const comment = commentStart(raw.substring(indent), hashComments);
             line = { ...line, indent, contentOffset: 1, content: (comment < 0 ? raw.substring(indent) : raw.substring(indent, indent + comment)).trimEnd() };
         }
-        if (line.content.startsWith('```')) inFence = !inFence;
+        if (inFence) {
+            if (isClosingCodeFence(line)) inFence = false;
+            prepared.push(line);
+            continue;
+        }
+        if (line.content.startsWith('```') && (['```', '```text', '```markdown'].includes(line.content) || registry.has(line.content.substring(3)))) inFence = true;
         if (!inFence && line.indent === 0 && firstWord(line.content) === 'numbers') {
             const code = line.content !== 'numbers exact' ? DiagnosticCodes.InvalidNumericDirective : seen ? DiagnosticCodes.DuplicateNumericDirective : contentSeen ? DiagnosticCodes.LateNumericDirective : undefined;
             if (code !== undefined) {
