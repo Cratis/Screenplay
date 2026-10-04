@@ -145,7 +145,13 @@ internal static class SemanticScenario
         var key = KeyOf(presented.Record, capture.Key);
         var previous = expected.GivenCaptures.LastOrDefault(given => given.Capture == presented.Capture &&
             SemanticValueRules.AreEqual(KeyOf(given.Record, capture.Key), key))?.Record;
-        foreach (var fact in SemanticCaptureEvaluation.Evaluate(plan, capture, previous, presented.Record, occurrence))
+        var evaluated = SemanticCaptureEvaluation.Evaluate(plan, capture, previous, presented.Record, occurrence);
+        if (evaluated.Unsupported is { } reason)
+        {
+            return new SemanticUnsupported(loop.World, SemanticExecutionCapability.Specification, reason);
+        }
+
+        foreach (var fact in evaluated.Facts)
         {
             if (loop.Append(fact, occurrence?.Occurred) is { } failure)
             {

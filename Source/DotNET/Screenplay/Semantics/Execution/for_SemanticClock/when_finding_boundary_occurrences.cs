@@ -40,6 +40,15 @@ public class when_finding_boundary_occurrences : Specification
     [Fact] void should_admit_the_exact_occurrence_limit() => _withinLimit.ShouldBeTrue();
     [Fact] void should_refuse_one_more_occurrence() => _overLimit.ShouldBeFalse();
 
+    [Fact]
+    void should_count_simultaneous_triggers_toward_the_shared_occurrence_limit()
+    {
+        var seconds = new SemanticReaction(ReactionId, "Simultaneous", [new(SemanticReactionTriggerKind.Interval) { Every = 1 }, new(SemanticReactionTriggerKind.Interval) { Every = 1 }]);
+        SemanticClock.TryFindDue([seconds], DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch.AddSeconds(SemanticClock.MaximumOccurrences / 2), out var due).ShouldBeTrue();
+        due.Count.ShouldEqual(SemanticClock.MaximumOccurrences);
+        SemanticClock.TryFindDue([seconds], DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch.AddSeconds((SemanticClock.MaximumOccurrences / 2) + 1), out _).ShouldBeFalse();
+    }
+
     static DateTimeOffset[] Due(SemanticReactionTrigger trigger, string from, string to)
     {
         SemanticClock.TryFindDue([new(ReactionId, "Boundary", [trigger])], Instant(from), Instant(to), out var due).ShouldBeTrue();

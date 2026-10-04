@@ -35,6 +35,22 @@ public class when_using_invalid_automation_contracts : Specification
     [Fact] void should_refuse_a_capture_record_without_its_key() =>
         Refuses(Specifications("LegacySync", specification => specification with { WhenCapture = specification.WhenCapture! with { Record = new([.. specification.WhenCapture.Record.Fields.Where(field => field.Name != "id")]) } }));
 
+    [Fact]
+    void should_refuse_a_null_root_capture_identity() =>
+        Refuses(Specifications("LegacySync", specification => specification with { WhenCapture = specification.WhenCapture! with { Record = new([.. specification.WhenCapture.Record.Fields.Select(field => field.Name == "id" ? field with { Value = SemanticValue.Null } : field)]) } }));
+    [Fact]
+    void should_refuse_optional_reaction_destination_types() =>
+        Refuses(Trigger(SemanticReactionTriggerKind.Interval, trigger => trigger with { Produces = [trigger.Produces.Single() with { DestinationType = trigger.Produces.Single().DestinationType! with { IsOptional = true } }] }));
+    [Fact]
+    void should_refuse_collection_reaction_destination_types() =>
+        Refuses(Trigger(SemanticReactionTriggerKind.Interval, trigger => trigger with { Produces = [trigger.Produces.Single() with { DestinationType = trigger.Produces.Single().DestinationType! with { IsCollection = true } }] }));
+    [Fact]
+    void should_refuse_an_event_source_on_a_clock_trigger() =>
+        Refuses(Trigger(SemanticReactionTriggerKind.Interval, trigger => trigger with { Source = _model.Application.Id }));
+    [Fact]
+    void should_refuse_a_schedule_without_a_time() =>
+        Refuses(Trigger(SemanticReactionTriggerKind.Interval, _ => new(SemanticReactionTriggerKind.Schedule)));
+
     void Refuses(SemanticApplication application, SemanticVersion? version = null) =>
         Catch.Exception(() => ExecutableSemanticModel.Create(version is null ? LanguageVersion.V6 : LanguageVersion.V5, version ?? SemanticVersion.V6, application))
             .ShouldBeOfExactType<InvalidSemanticContract>();
