@@ -7,7 +7,7 @@ import { RepairSession } from '../RepairSession';
 
 function owner(dispatched = false) {
     const value = new RepairConnectionOwner(7);
-    value.session = { applyDispatched: dispatched, invalidate: vi.fn(), dispose: vi.fn() } as unknown as RepairSession;
+    value.session = { applyDispatched: dispatched, invalidate: vi.fn(), dispose: vi.fn(), trace: vi.fn() } as unknown as RepairSession;
     value.resources.push({ dispose: vi.fn() });
     return value;
 }

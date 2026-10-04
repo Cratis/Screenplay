@@ -19,7 +19,7 @@ export class RepairRootWatch {
     readonly #identity: { dev: bigint; ino: bigint; physical: string };
     #disposed = false;
     #failure?: RepairFailure;
-    constructor(readonly root: string, changed: () => void, readonly invalidated: (failure: RepairFailure) => void) {
+    constructor(readonly root: string, changed: (event: string, filename: string | null) => void, readonly invalidated: (failure: RepairFailure, cause: string) => void) {
         const [major, minor] = process.versions.node.split('.').map(Number);
         if (!['darwin', 'win32', 'linux'].includes(process.platform) || (process.platform === 'linux' && (major < 19 || (major === 19 && minor < 1)))) {
             throw new RepairFailure('WatchUnavailable', `Recursive root watching is unavailable in this extension host (${process.platform}, Node ${process.versions.node}). Local language assistance and read-only recovery remain available.`);
@@ -28,15 +28,15 @@ export class RepairRootWatch {
             this.#identity = this.#rootIdentity();
             // One FSWatcher per connection, NOT a constant kernel-handle promise:
             // Linux may allocate per-entry watches. No probes, filenames, debounce or self-write filters.
-            this.#watcher = fs.watch(root, { recursive: true }, () => {
+            this.#watcher = fs.watch(root, { recursive: true }, (event, filename) => {
                 if (this.#disposed || this.#failure) return;
                 try {
-                    changed(); // EVERY notification synchronously expires review before checking identity.
+                    changed(event, filename?.toString() ?? null); // EVERY notification synchronously expires review before checking identity.
                     this.check();
-                } catch (error) { this.#fail(error); } // Typed, latched reporting; no silent callback failure.
+                } catch (error) { this.#fail(error, 'native-callback'); } // Typed, latched reporting; no silent callback failure.
             });
-            this.#watcher.on('error', reason => this.#fail(reason));
-            this.#watcher.on('close', () => { if (!this.#disposed) this.#fail('Root watcher closed unexpectedly.'); });
+            this.#watcher.on('error', reason => this.#fail(reason, 'native-error'));
+            this.#watcher.on('close', () => { if (!this.#disposed) this.#fail('Root watcher closed unexpectedly.', 'native-close'); });
             this.check(); // Close the registration race before allowing discovery.
         } catch (error) {
             this.dispose();
@@ -52,7 +52,7 @@ export class RepairRootWatch {
             const current = this.#rootIdentity();
             if (current.dev !== this.#identity.dev || current.ino !== this.#identity.ino || path.relative(this.#identity.physical, current.physical) !== '') throw new Error('Approved physical root was replaced.');
         } catch (error) {
-            this.#fail(error);
+            this.#fail(error, 'root-identity');
             throw this.#failure;
         }
     }
@@ -71,10 +71,10 @@ export class RepairRootWatch {
         if (!before.isDirectory() || before.isSymbolicLink() || !after.isDirectory() || !nativeRootIdentityAvailable(before.dev, before.ino) || !nativeRootIdentityAvailable(after.dev, after.ino) || before.dev !== after.dev || before.ino !== after.ino) throw new Error('Physical root identity cannot be proved.');
         return { dev: before.dev, ino: before.ino, physical };
     }
-    #fail(reason: unknown): void {
+    #fail(reason: unknown, cause: string): void {
         if (this.#failure) return;
         this.#failure = new RepairFailure('WatchInvalidated', 'Root watching lost authority. Use Screenplay: Discover Saved-File C# Repairs to deliberately reconnect and review again.', String(reason));
-        try { this.invalidated(this.#failure); } finally { this.dispose(); }
+        try { this.invalidated(this.#failure, cause); } finally { this.dispose(); }
     }
     dispose(): void {
         if (this.#disposed) return;

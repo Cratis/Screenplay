@@ -15,7 +15,9 @@ import { registerEventModelBoard } from './EventModelBoard/registerEventModelBoa
 import { ApplicationIndex } from './ApplicationIndex';
 import { registerRepairCodeActions } from './RepairCodeActions';
 
-export function activate(context: vscode.ExtensionContext): void {
+import { readRepairObservation } from './RepairObservation';
+
+export function activate(context: vscode.ExtensionContext): { readonly repairObservation: { readonly read: typeof readRepairObservation } } {
     ensureBuiltInSubLanguages();
     // The .play files of a workspace folder are one application, so a name or an import in one file is
     // checked against all of them.
@@ -32,6 +34,7 @@ export function activate(context: vscode.ExtensionContext): void {
     registerFileLinks(context);
     registerEventModelBoard(context);
     void index.load();
+    return Object.freeze({ repairObservation: Object.freeze({ read: readRepairObservation }) });
 }
 
 export function deactivate(): void {}

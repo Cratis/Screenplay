@@ -10,7 +10,7 @@ import { RepairRootWatch, nativeRootIdentityAvailable } from '../RepairRootWatch
 
 let native: EventEmitter & { close: ReturnType<typeof vi.fn> };
 let callback: (event: string, filename?: string | null) => void;
-let changed = vi.fn<() => void>(), invalidated = vi.fn<(failure: unknown) => void>();
+let changed = vi.fn<() => void>(), invalidated = vi.fn<(failure: unknown, cause: string) => void>();
 let root: string;
 beforeEach(() => {
     root = fs.realpathSync.native(fs.mkdtempSync(path.resolve('../../../.ai-work', 'watch-root-')));
@@ -53,7 +53,7 @@ for (const mode of ['replacement', 'missing', 'link']) it(`expires the event BEF
     callback('rename', 'child.cs');
     expect(changed).toHaveBeenCalledTimes(1);
     expect(changed.mock.invocationCallOrder[0]).toBeLessThan(invalidated.mock.invocationCallOrder[0]);
-    expect(invalidated).toHaveBeenCalledWith(expect.objectContaining({ kind: 'WatchInvalidated' }));
+    expect(invalidated).toHaveBeenCalledWith(expect.objectContaining({ kind: 'WatchInvalidated' }), 'root-identity');
     expect(native.close).toHaveBeenCalledTimes(1);
     callback('change'); expect(changed).toHaveBeenCalledTimes(1);
     watch.dispose();

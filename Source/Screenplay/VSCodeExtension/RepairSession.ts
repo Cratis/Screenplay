@@ -17,6 +17,7 @@ import { RetainedRepair } from './RetainedRepair';
 export type { SavedVersions } from './SavedVersions';
 export type { ServerDiagnostic } from './ServerDiagnostic';
 export type { RepairPreview } from './RepairPreview';
+import { observeRepair, observationHash, repairObservationEnabled, RepairObservation } from './RepairObservation';
 const previewBudget = 16 * 1024 * 1024;
 
 export function relativeFile(value: unknown): string {
@@ -65,23 +66,36 @@ export class RepairSession {
     get recoveryRequired(): boolean { return this.#uncertain; }
     get applyDispatched(): boolean { return this.#retained?.dispatched === true; }
 
-    constructor(readonly launch: RepairLaunch, readonly environment: RepairEnvironment, readonly changed: () => void = () => {}) {
+    #phase = 'idle';
+    #proposal?: string;
+    metadata(): Omit<RepairObservation, 'seq' | 'at' | 'source'> {
+        if (!repairObservationEnabled(this.launch.root)) return {};
+        return { ...this.observer, epoch: this.#epoch, capturedEpoch: this.#snapshot?.epoch, disposed: this.#disposed, phase: this.#phase, tokenHash: observationHash(this.#retained?.preview.token), proposalHash: observationHash(this.#proposal ?? this.#retained?.proposalId) };
+    }
+    trace(source: string, details: Omit<RepairObservation, 'seq' | 'at' | 'source'> = {}): void {
+        if (repairObservationEnabled(this.launch.root)) observeRepair(this.launch.root, { source, ...this.metadata(), ...details });
+    }
+    constructor(readonly launch: RepairLaunch, readonly environment: RepairEnvironment, readonly changed: (cause: string) => void = () => {}, readonly observer: { owner: number; generation: number } = { owner: 0, generation: 0 }) {
         environment.check();
-        this.#client = new RepairClient(launch, () => { this.#available = false; this.invalidate(); });
+        this.#client = new RepairClient(launch, () => { this.#available = false; this.invalidate('client-close'); });
     }
     async initialize(): Promise<void> {
         try { await this.#client.initialize(); } catch (error) { this.dispose(); throw error; }
     }
-    invalidate(): void {
+    invalidate(cause = 'unspecified'): void {
+        const before = this.#epoch;
+        this.trace(`invalidate:${cause}:before`, { before });
         ++this.#epoch;
         this.#snapshot = undefined;
         if (!this.#retained?.dispatched) this.discard();
-        this.changed();
+        this.changed(cause);
+        this.trace(`invalidate:${cause}:after`, { before, after: this.#epoch });
     }
-    dispose(): void {
+    dispose(cause = 'session-dispose'): void {
+        this.trace(`dispose:${cause}`);
         this.#disposed = true;
         this.#client.close();
-        this.invalidate();
+        this.invalidate(cause);
     }
     discard(): void {
         const retained = this.#retained;
@@ -126,6 +140,7 @@ export class RepairSession {
     }
     async #discover(epoch: number, versions: SavedVersions): Promise<RepairSnapshot> {
         this.#busy = true;
+        this.#phase = 'discovery'; this.trace('discovery:begin', { capturedEpoch: epoch });
         try {
             const opened = revisions(await this.#client.tool('open-workspace', {}, undefined, () => this.#check(epoch, versions)));
             let pinnedEvidence: string | undefined;
@@ -162,7 +177,7 @@ export class RepairSession {
             this.#check(epoch, versions);
             this.#snapshot = { epoch, versions, revision: opened.revision, catalog: opened.catalog, evidence: evidence(pinnedEvidence), diagnostics, choices };
             return this.#snapshot;
-        } finally { this.#busy = false; }
+        } finally { this.#busy = false; this.#phase = 'idle'; this.trace('discovery:end'); }
     }
 
     // The caller obtains canonical-formatting consent BEFORE invoking this method.
@@ -175,6 +190,7 @@ export class RepairSession {
         if (this.#busy || this.#uncertain) throw new RepairFailure('SessionBusy', 'A repair operation is already active.');
         this.discard();
         this.#busy = true;
+        this.#phase = 'preview-collection'; this.trace('preview:begin', { tokenHash: repairObservationEnabled(this.launch.root) ? observationHash(choiceToken) : undefined });
         let proposalId: string | undefined;
         try {
             const proposal = await this.#client.tool('propose-repair', {
@@ -183,6 +199,7 @@ export class RepairSession {
                 pinRepairEvidence: true, expectedRepairEvidenceRevision: snapshot.evidence,
             }, signal, () => this.#check(snapshot.epoch, snapshot.versions));
             proposalId = text(proposal.proposalId);
+            this.#proposal = proposalId; this.trace('preview:proposal');
             if (proposal.success !== true || proposal.validation !== 'Authoring') throw new RepairFailure('MalformedContract', 'Expected an accepted authoring proposal.');
             const before = revisions(proposal.before), after = revisions(proposal.after);
             const pins = object(proposal.repairEvidence);
@@ -238,11 +255,12 @@ export class RepairSession {
             const preview: RepairPreview = { token: randomUUID(), binding: { root: this.launch.root, proposalId, beforeRevision: before.revision, afterRevision: after.revision, beforeEvidence, candidateEvidence }, title: choice.title, code: choice.code, files, authoring, executable, executableReady: after.executableReady, droppedComments };
             // Only a FULLY collected source AND state review obtains an apply token.
             this.#retained = { preview, snapshot, proposalId, beforeEvidence, candidateEvidence, afterRevision: after.revision, afterCatalog: after.catalog, changeCount: changes.length, dispatched: false };
+            this.#phase = 'review'; this.trace('preview:retained');
             return preview;
         } catch (error) {
             if (proposalId) void this.#client.tool('discard-proposal', { proposalId }).catch(() => {});
             throw error;
-        } finally { this.#busy = false; }
+        } finally { this.#busy = false; this.#proposal = undefined; if (!this.#retained) this.#phase = 'idle'; this.trace('preview:end'); }
     }
 
     async apply(token: string): Promise<void> {
@@ -258,12 +276,12 @@ export class RepairSession {
             }, undefined, () => this.#check(snapshot.epoch, snapshot.versions), () => {
                 retained.dispatched = true; // Write attempt: no cancellation or retry after this boundary.
                 this.#reconnectRequired = true; // Barrier starts at dispatch, not an incidental rename.
-                this.invalidate(); // Retain the dispatched record, but expire all old review authority.
+                this.invalidate('apply-dispatch'); // Retain the dispatched record, but expire all old review authority.
             });
             const installed = revisions(result.workspace);
             if (result.success !== true || result.validation !== 'Authoring' || installed.revision !== retained.afterRevision || installed.catalog !== retained.afterCatalog || integer(result.plannedChanges) !== retained.changeCount || integer(result.installedDocuments) !== retained.changeCount) throw new RepairFailure('ApplyOutcomeUnknown', 'Apply did not report a verified installation.', result);
             this.#retained = undefined;
-            this.invalidate();
+            this.invalidate('apply-installed');
         } catch (error) {
             if (retained.dispatched) {
                 this.#uncertain = true;
@@ -274,8 +292,14 @@ export class RepairSession {
     }
 
     #check(epoch: number, versions: SavedVersions): void {
-        if (this.#disposed || epoch !== this.#epoch) throw new RepairFailure('StaleEpoch', 'The workspace changed. Rediscover and review a fresh repair.');
-        if (!sameVersions(versions, this.environment.check())) throw new RepairFailure('StaleBuffer', 'A saved buffer version changed. Rediscover this repair.');
+        if (this.#disposed || epoch !== this.#epoch) {
+            this.trace(this.#disposed ? 'guard:disposed' : 'guard:epoch', { capturedEpoch: epoch });
+            throw new RepairFailure('StaleEpoch', 'The workspace changed. Rediscover and review a fresh repair.');
+        }
+        if (!sameVersions(versions, this.environment.check())) {
+            this.trace('guard:saved-versions', { capturedEpoch: epoch });
+            throw new RepairFailure('StaleBuffer', 'A saved buffer version changed. Rediscover this repair.');
+        }
     }
     #verifyReview(value: Record<string, unknown>, before: string, after: string, base: string, candidate: string): void {
         const pins = object(value.repairEvidence);

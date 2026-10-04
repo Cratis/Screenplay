@@ -18,6 +18,7 @@ interface SessionMock {
     discover: ReturnType<typeof vi.fn<() => Promise<Discovery>>>;
     preview: ReturnType<typeof vi.fn<() => Promise<{ token: string; files: object[] }>>>;
     apply: ReturnType<typeof vi.fn<() => Promise<void>>>;
+    trace: ReturnType<typeof vi.fn>;
 }
 interface WatchMock { changed: () => void; failed: (failure: RepairFailure) => void; dispose: ReturnType<typeof vi.fn<() => void>>; }
 
@@ -28,12 +29,17 @@ const host = vi.hoisted(() => ({
     provider: undefined as vscode.CodeActionProvider | undefined, information: vi.fn(), diagnosticsDisposed: false,
     documents: [] as vscode.TextDocument[], files: [] as { path: string; before: Buffer | null; after: Buffer | null }[],
     documentListeners: new Set<(event: vscode.TextDocumentChangeEvent) => void>(),
+    rootFsChanged: undefined as undefined | ((uri: vscode.Uri) => void), createRootFsWatcher: vi.fn(),
 }));
 vi.mock('vscode', () => ({
     workspace: {
         isTrusted: true, get workspaceFolders() { return [{ uri: { scheme: 'file', fsPath: host.root } }]; }, get textDocuments() { return host.documents; },
         getConfiguration: () => ({ inspect: (key: string) => ({ globalValue: ({ enabled: true, executable: process.execPath, arguments: [], modelRoot: host.root } as Record<string, unknown>)[key] }) }),
-        createFileSystemWatcher: () => ({ dispose: vi.fn(), onDidChange: () => ({ dispose() {} }), onDidCreate: () => ({ dispose() {} }), onDidDelete: () => ({ dispose() {} }) }),
+        createFileSystemWatcher: () => {
+            host.createRootFsWatcher();
+            const subscribe = (callback: (uri: vscode.Uri) => void) => { host.rootFsChanged = callback; return { dispose() {} }; };
+            return { dispose: vi.fn(), get onDidChange() { return subscribe; }, get onDidCreate() { return subscribe; }, get onDidDelete() { return subscribe; } };
+        },
         registerFileSystemProvider: () => ({ dispose() {} }),
         onDidChangeConfiguration: (callback: (event: { affectsConfiguration(): boolean }) => void) => { host.changedConfiguration = callback; return { dispose() {} }; },
         onDidChangeWorkspaceFolders: () => ({ dispose() {} }), onDidOpenTextDocument: () => ({ dispose() {} }),
@@ -65,6 +71,7 @@ vi.mock('../RepairSession', () => ({ RepairSession: class {
     initialize = vi.fn(async () => { if (host.initializeFailure) throw host.initializeFailure; }); discover = vi.fn<() => Promise<Discovery>>(async () => ({ choices: [{}], diagnostics: [] }));
     preview = vi.fn(async () => ({ token: 'private-review', files: host.files }));
     apply = vi.fn(async () => {});
+    trace = vi.fn();
     constructor(readonly launch: RepairLaunch, readonly environment: RepairEnvironment, readonly changed: () => void) { environment.check(); host.sessions.push(this); }
     invalidate() { ++this.epoch; this.changed(); }
 } }));
@@ -77,7 +84,7 @@ function switchRoot() { host.changedConfiguration!({ affectsConfiguration: () =>
 beforeEach(() => {
     vi.clearAllMocks(); host.commands.clear(); host.sessions = []; host.watches = []; host.token = undefined; host.initializeFailure = undefined;
     host.root = fs.realpathSync.native(fs.mkdtempSync(path.resolve('../../../.ai-work', 'editor-owner-')));
-    host.documents = []; host.files = []; host.documentListeners.clear(); host.diagnosticsDisposed = false;
+    host.documents = []; host.files = []; host.documentListeners.clear(); host.diagnosticsDisposed = false; host.rootFsChanged = undefined;
     host.warnings.mockResolvedValue(undefined); host.show.mockResolvedValue(undefined);
     subscriptions = [];
     registerRepairCodeActions({ subscriptions } as unknown as vscode.ExtensionContext, { load: vi.fn(async () => {}) } as unknown as ApplicationIndex);
@@ -92,6 +99,26 @@ it('registers one watcher before discovery and retains it through review; late d
     old.changed(); watch.changed(); watch.failed(new RepairFailure('WatchInvalidated', 'late'));
     expect(host.clear).toHaveBeenCalledTimes(clears); expect(host.token).toBe('private-review');
     expect(watch.dispose).toHaveBeenCalledTimes(1);
+});
+it('does not expire fresh review through a delayed redundant VS Code root event; a second native event still expires it', async () => {
+    await invoke('refresh');
+    const session = host.sessions[0], watch = host.watches[0];
+    watch.changed(); // Known physical input change, already delivered by mandatory native watch.
+    const epoch = session.epoch;
+    host.warnings.mockResolvedValue('Propose and preview');
+    await invoke('refresh'); await invoke('preview', 'fresh-choice');
+    expect(host.token).toBe('private-review');
+    // Unit simulation of the exact registered backend delivery observed natively:
+    // create for the same PREEXISTING nested file after fresh proposal collection.
+    host.rootFsChanged?.({ fsPath: path.join(host.root, 'nested', 'watcher-existing.txt') } as vscode.Uri);
+    expect(session.epoch).toBe(epoch);
+    expect(host.token).toBe('private-review');
+    expect(host.createRootFsWatcher).not.toHaveBeenCalled();
+    expect(host.watches).toHaveLength(1);
+    watch.changed();
+    expect(session.epoch).toBe(epoch + 1);
+    expect(host.token).toBeUndefined();
+    expect(session.apply).not.toHaveBeenCalled();
 });
 it('late discovery completion cannot clear or publish into a replacement', async () => {
     await invoke('refresh'); const old = host.sessions[0], gate = deferred<Discovery>();

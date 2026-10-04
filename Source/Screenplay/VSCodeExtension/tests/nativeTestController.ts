@@ -4,6 +4,7 @@
 import * as vscode from 'vscode';
 import * as path from 'node:path';
 import { createRequire } from 'node:module';
+import type { RepairObservation } from '../RepairObservation';
 
 /** Test-driver observation of actual installed callbacks; never fabricates product authority. */
 export class NativeTestController {
@@ -36,6 +37,12 @@ export class NativeTestController {
             this.#listeners.add(listener);
         });
         return { promise, dispose };
+    }
+    /** Read-only installed-extension metadata; never obtains a session or token. */
+    readObservation(): readonly RepairObservation[] {
+        const exported = this.#api.extensions.getExtension<{ repairObservation?: { read(): readonly RepairObservation[] } }>('cratis.screenplay')?.exports;
+        if (!exported?.repairObservation) throw new Error('Installed extension has no passive repair observation reader.');
+        return exported.repairObservation.read();
     }
     dispose(): void { this.#api.languages.registerCodeActionsProvider = this.#register; }
 }

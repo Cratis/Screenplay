@@ -252,7 +252,8 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
             await vscode.commands.executeCommand(action.command, ...(action.arguments ?? []));
         };
         const navigateReview = async () => {
-            const summary = vscode.window.activeTextEditor!.document;
+            const summary = vscode.window.activeTextEditor?.document;
+            assert.ok(summary, `Review did not publish a native editor: ${warnings.join('; ')}`);
             assert.equal(summary.uri.scheme, 'screenplay-repair');
             await vscode.workspace.fs.readFile(summary.uri); // Expired old tabs cannot masquerade as a completed review.
             const prefix = `/${summary.uri.path.split('/')[1]}/`;

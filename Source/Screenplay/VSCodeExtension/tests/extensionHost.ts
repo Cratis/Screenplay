@@ -107,7 +107,10 @@ async function runSuites(): Promise<void> {
     const actions = await vscode.commands.executeCommand<(vscode.CodeAction | vscode.Command)[]>('vscode.executeCodeActionProvider', refused.uri, new vscode.Range(0, 0, refused.lineCount - 1, 0));
     assert.ok(!actions.some(action => action.title.includes('Declare the missing produced event')), 'Native provider retains the C# PLAY0166 refusal');
     console.log('REAL VS CODE HOST: read-only source/state diffs, direct RPC transaction (NOT installed-client Apply), dirty attachment refusal, bounded saved-buffer reload/pending classification (no model-disposal prerequisite), root reauthorization and PLAY0166 refusal passed.');
-    try { await runCommandGuards(root, controller); } finally { controller.dispose(); }
+    try { await runCommandGuards(root, controller); } finally {
+        if (process.env.SCREENPLAY_REPAIR_OBSERVE_SYNTHETIC_ROOT) for (const entry of controller.readObservation()) console.log(`REPAIR METADATA: ${JSON.stringify(entry)}`);
+        controller.dispose();
+    }
 }
 
 export async function run(): Promise<void> {
