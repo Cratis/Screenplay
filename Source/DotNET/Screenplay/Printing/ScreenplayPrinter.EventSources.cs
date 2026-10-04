@@ -11,6 +11,19 @@ public sealed partial class ScreenplayPrinter
 {
     static readonly IReadOnlySet<string> _streamPropertyWords = ReservedWords.CommandBody.Append("stream").ToHashSet(StringComparer.Ordinal);
 
+    internal static void ValidateEventSourceExport(ApplicationSyntax application)
+    {
+        EventSourceInvariants.Validate(application);
+        foreach (var source in application.EventSources)
+        {
+            if (source is null) throw new InvalidSyntaxJson("Event sources cannot contain null.");
+
+            // The structural transport is the same boundary for metadata-free and programmatic
+            // declarations. Validate all fields and children, without binding unknown value types.
+            _ = SyntaxJson.Serialize(source);
+        }
+    }
+
     void WriteCommandProperties(ScreenplayWriter writer, CommandSyntax command)
     {
         foreach (var property in command.Properties)

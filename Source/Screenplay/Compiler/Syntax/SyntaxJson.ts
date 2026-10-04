@@ -12,6 +12,7 @@ import { pattern } from '../Text/patterns';
 export type SyntaxJsonValue = string | number | boolean | null | SyntaxJsonValue[] | { [member: string]: SyntaxJsonValue };
 
 const sourceStreamName = pattern('^[A-Za-z_]\\w*(?![\\s\\S])');
+const sourceStreamTypeName = pattern('^[\\w.]+(?![\\s\\S])');
 
 const isNode = (value: unknown): value is SyntaxNode =>
     typeof value === 'object' && value !== null && typeof (value as { kind?: unknown }).kind === 'string';
@@ -72,6 +73,8 @@ function validateSourceStream(node: SyntaxNode): void {
         if (declaration.id !== null && (typeof declaration.id !== 'string' || declaration.id.trim() === '')) throw new Error('A rename pin must be nonempty.');
         const type = declaration.kind === 'EventSourceSyntax' ? declaration.identifier : declaration.streamId;
         if (type !== null && (type.isCollection || type.isOptional)) throw new Error('Source identifiers and stream ids require nonoptional scalar type references.');
+        if (type !== null && (typeof type.name !== 'string' || !sourceStreamTypeName.test(type.name))) throw new Error('Source identifiers and stream ids require an exact type reference name.');
+        if (declaration.kind === 'EventSourceSyntax' && (!Array.isArray(declaration.streams) || declaration.streams.some(stream => stream == null))) throw new Error('Event streams must be a collection without null elements.');
     }
     if (node.kind === 'CommandSyntax') {
         const command = node as CommandSyntax;

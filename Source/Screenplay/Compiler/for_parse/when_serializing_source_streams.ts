@@ -24,6 +24,13 @@ describe('when serializing source-stream authoring invariants', () => {
             expect(() => toSyntaxJson({ ...source.streams[0], streamId: { ...source.streams[0].streamId!, [flag]: true } })).toThrow();
         }
     });
+    it.each(['String\n', 'String ', 'String\u0000', 'String optional'])('should refuse altered identifier type names %s', name => {
+        expect(() => toSyntaxJson({ ...source, identifier: { ...source.identifier!, name } })).toThrow();
+        expect(() => toSyntaxJson({ ...source.streams[0], streamId: { ...source.streams[0].streamId!, name } })).toThrow();
+    });
+    it('should refuse null stream collections and elements', () => {
+        for (const streams of [null, [null]]) expect(() => toSyntaxJson({ ...source, streams } as unknown as EventSourceSyntax)).toThrow();
+    });
     it('should reject wrong mapping targets and malformed ambiguous candidates', () => {
         expect(() => toSyntaxJson({ ...route, streamId: { ...mapping, property: 'payload' } })).toThrow();
         const candidate = { kind: 'PropertySyntax' as const, name: 'stream', type: { kind: 'TypeRefSyntax' as const, name: 'Account.Transactions', isOptional: false, isCollection: false, location: route.location }, isIdentifier: false, isGenerated: false, location: route.location };
