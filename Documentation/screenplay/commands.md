@@ -85,6 +85,10 @@ Plain `produces <Name>` retains its legacy omission behavior; it does not acquir
 
 The unescaped directives `namespace`, `sequence`, `correlation`, `causation`, `causedBy`, and `occurred` are reserved system-assigned metadata in production bodies. Escape a genuine payload field, for example `@sequence String = name`; `occurred at` is not supported yet.
 
+## Operations and external systems (syntax-only)
+
+A command can describe external effects through inline `produces operation <Name>` declarations or plain references to standalone operations. [Operations and external systems](operations.md) covers typed inputs, `uses`, execution/compensation intent and manual promotion. Event and operation productions stay in one ordered sequence, but operations do not participate in event destinations or payload identity diagnostics. **Execution is unavailable until ESM v9**; binding reports `PLAY0268` without an executable model.
+
 ## Generated values and responses (syntax-only)
 
 You can author generated values and a response contract, but **execution is unavailable until ESM v8**. Binding any generated property, response, generated fixture or return expectation reports `PLAY0268` and produces no semantic model. Syntax validation and editor or MCP acceptance are not proof of execution.
@@ -565,7 +569,8 @@ This is the handler from [Invoicing](https://github.com/Cratis/Screenplay/blob/m
 | --- | --- |
 | Command handler | Supported; direct file/fence forms remain supported |
 | Query performer, validation rule, reducer rule, policy, reaction trigger | Deferred; existing direct forms only |
-| Operations, provisioning | Not introduced by this feature |
+| Operation execute/compensate phases | New syntax-only authoring wrapper; not an admitted ESM implementation role (v9 future) |
+| Provisioning | Deferred |
 
 `implementation` and `hint` are contextual, not globally reserved property names. Intent authoring does not execute, confirm or regenerate code. Command handlers still fail executable admission with `PLAY0268`, including when attached. There is no lock, drift checker, confirmation or AI action in this slice. See [AST authoring](ast-authoring.md#handler-intent-edits) and [MCP inventory](mcp/reference.md#handler-intent-inventory).
 

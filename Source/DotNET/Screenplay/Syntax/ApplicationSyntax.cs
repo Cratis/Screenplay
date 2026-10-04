@@ -44,6 +44,11 @@ public record ApplicationSyntax(
     public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];
 
     /// <summary>
+    /// Gets the application-scoped external systems.
+    /// </summary>
+    public IEnumerable<SystemSyntax> Systems { get; init; } = [];
+
+    /// <summary>
     /// Gets the files the document imports at its top level - whole documents, merged into the application.
     /// </summary>
     public IEnumerable<FileImportSyntax> FileImports { get; init; } = [];

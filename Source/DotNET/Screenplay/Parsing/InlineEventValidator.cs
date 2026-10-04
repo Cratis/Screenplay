@@ -21,14 +21,16 @@ internal static class InlineEventValidator
     {
         var declarations = slices.SelectMany(EventDeclarations.In).ToLookup(value => value.Name, StringComparer.Ordinal);
         var importedNames = application.Imports.Select(import => import.Name).ToHashSet(StringComparer.Ordinal);
-        foreach (var command in slices.SelectMany(slice => slice.Commands))
+        var resolver = new AuthoringProductionResolver(application);
+        foreach (var (slice, command) in slices.SelectMany(slice => slice.Commands.Select(command => (slice, command))))
         {
+            var eventProductions = command.Produces.Where(production => resolver.IsEventProduction(production, slice)).ToArray();
             var identifier = command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Name;
-            var mixed = command.Produces.Any(value => value.For is not null &&
+            var mixed = eventProductions.Any(value => value.For is not null &&
                 (value.For is not PathExpressionSyntax path || path.Path != identifier)) ||
-                (command.Produces.Any(value => value.InlineEvent is not null && value.For is null) &&
-                 command.Produces.Any(value => value.InlineEvent is null && value.For is null));
-            foreach (var production in command.Produces)
+                (eventProductions.Any(value => value.InlineEvent is not null && value.For is null) &&
+                 eventProductions.Any(value => value.InlineEvent is null && value.For is null));
+            foreach (var production in eventProductions)
             {
                 if (production.InlineEvent is { } inline &&
                     (declarations[inline.Name].Count() > 1 || importedNames.Contains(inline.Name)))

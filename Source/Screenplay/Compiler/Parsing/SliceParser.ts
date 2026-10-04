@@ -21,6 +21,8 @@ import { parseDescription } from './DescriptionParser';
 import { isFileDirective } from './FileReferences';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
+import { parseOperation } from './OperationParser';
+import { OperationSyntax } from '../Syntax/Operations';
 import { parseProjection } from './ProjectionParser';
 import { parseQuery } from './QueryParser';
 import { parseReaction } from './ReactionParser';
@@ -52,6 +54,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     context.scope = [...previous, name];
     let description: string | null = null;
     const events: EventSyntax[] = [];
+    const operations: OperationSyntax[] = [];
     const commands: CommandSyntax[] = [];
     const queries: QuerySyntax[] = [];
     const projections: ProjectionSyntax[] = [];
@@ -69,6 +72,8 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
         const keyword = firstWord(child.content);
         if (keyword === 'description') {
             description = parseDescription(context, child, description, `Slice '${name}'`);
+        } else if (keyword === 'operation') {
+            operations.push(parseOperation(context, child).operation);
         } else if (keyword === 'event') {
             events.push(parseEvent(context, child));
         } else if (keyword === 'command') {
@@ -98,7 +103,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     }
     context.scope = previous;
     return {
-        kind: 'SliceSyntax', type, name, description, events, commands, queries, projections, captures, reactions, constraints, specifications, readModels, screens,
+        kind: 'SliceSyntax', type, name, description, events, operations, commands, queries, projections, captures, reactions, constraints, specifications, readModels, screens,
         location: locationOf(line),
     };
 }

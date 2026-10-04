@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
-import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationHintSyntax } from '../Syntax/Implementations';
+import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationHintSyntax, ImplementationSyntax } from '../Syntax/Implementations';
 import { isBlankImplementationHint } from '../Text/ImplementationHintText';
 import { unescapeString } from '../Text/StringLiteral';
 import { firstWord } from './LineText';
@@ -16,7 +16,7 @@ const hintPattern = new RegExp('^hint[\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u168
 const isFile = (line: SourceLine): boolean => firstWord(line.content) === 'file' && line.content.substring(4).trim().length > 0;
 const isCode = (line: SourceLine): boolean => line.content.startsWith('```') || languages.has(line.content);
 
-function parseFile(context: ParserContext, line: SourceLine): FileReferenceSyntax {
+export function parseFile(context: ParserContext, line: SourceLine): FileReferenceSyntax {
     const path = line.content.substring(4).trim();
     if (/^(?:[/\\]|[A-Za-z]:[/\\]|~[/\\])/.test(path)) {
         context.warning(DiagnosticCodes.AbsoluteFileReference, `'${path}' is an absolute path - a file reference is relative to the repository root, so it means the same thing on every machine`, locationOf(line));
@@ -24,7 +24,7 @@ function parseFile(context: ParserContext, line: SourceLine): FileReferenceSynta
     return { kind: 'FileReferenceSyntax', path, location: locationOf(line) };
 }
 
-function parseCode(context: ParserContext, tag: SourceLine): CodeBlockSyntax | null {
+export function parseCode(context: ParserContext, tag: SourceLine): CodeBlockSyntax | null {
     const language = tag.content.startsWith('```') ? tag.content.substring(3) : tag.content;
     if (!languages.has(language)) {
         context.error(DiagnosticCodes.ExpectedCodeFence, `Expected a registered language on the opening fence, not '${tag.content}'`, locationOf(tag));
@@ -79,6 +79,18 @@ export function parseHandler(context: ParserContext, handler: SourceLine): Handl
 }
 
 function parseImplementation(context: ParserContext, handler: SourceLine, wrapper: SourceLine): HandlerSyntax {
+    const source = parseImplementationWrapper(context, wrapper);
+    for (let extra = context.peekChild(handler.indent); extra !== undefined; extra = context.peekChild(handler.indent)) {
+        context.reader.takeSignificant();
+        context.error(firstWord(extra.content) === 'implementation' ? DiagnosticCodes.InvalidImplementationBlock : DiagnosticCodes.ConflictingImplementationSources,
+            'A handler has one implementation wrapper and cannot mix wrapped and direct sources.', locationOf(extra));
+        if (isCode(extra)) parseCode(context, extra);
+        else context.skipBlock(extra.indent);
+    }
+    return { kind: 'HandlerSyntax', ...source, location: locationOf(handler) };
+}
+
+export function parseImplementationWrapper(context: ParserContext, wrapper: SourceLine): { file: FileReferenceSyntax | null; code: CodeBlockSyntax | null; implementation: ImplementationSyntax } {
     const hints: ImplementationHintSyntax[] = [];
     let file: FileReferenceSyntax | null = null;
     let code: CodeBlockSyntax | null = null;
@@ -112,12 +124,5 @@ function parseImplementation(context: ParserContext, handler: SourceLine, wrappe
             context.skipBlock(child.indent);
         }
     }
-    for (let extra = context.peekChild(handler.indent); extra !== undefined; extra = context.peekChild(handler.indent)) {
-        context.reader.takeSignificant();
-        context.error(firstWord(extra.content) === 'implementation' ? DiagnosticCodes.InvalidImplementationBlock : DiagnosticCodes.ConflictingImplementationSources,
-            'A handler has one implementation wrapper and cannot mix wrapped and direct sources.', locationOf(extra));
-        if (isCode(extra)) parseCode(context, extra);
-        else context.skipBlock(extra.indent);
-    }
-    return { kind: 'HandlerSyntax', file, code, implementation: { kind: 'ImplementationSyntax', hints, location: locationOf(wrapper) }, location: locationOf(handler) };
+    return { file, code, implementation: { kind: 'ImplementationSyntax', hints, location: locationOf(wrapper) } };
 }

@@ -10,6 +10,7 @@ import {
     knownTriggerNames,
     languageId,
     mergeSymbols,
+    operationCompletions,
     planCompletions,
     primitiveTypes,
     producesItems,
@@ -47,8 +48,9 @@ const providerFor = (index: ApplicationIndex): vscode.CompletionItemProvider => 
         const currentLine = lines[position.line] ?? '';
         const textBefore = currentLine.substring(0, position.character);
         const file = index.fileOf(document.uri);
-        const symbols = file === undefined ? scanDocument(lines) : mergeSymbols(scanDocument(lines), file.application.symbolsExcept(file.path));
-        const responseEntries = responseCompletions(lines, position.line, textBefore, symbols);
+        const application = file?.application.symbolsExcept(file.path);
+        const symbols = { ...mergeSymbols(scanDocument(lines), application ?? mergeSymbols()), authoringPath: application?.authoringPath, authoringPlacement: application?.authoringPlacement };
+        const responseEntries = operationCompletions(lines, position.line, textBefore, symbols) ?? responseCompletions(lines, position.line, textBefore, symbols);
         const plan = responseEntries === null ? planCompletions(lines, position.line, textBefore) : { kind: 'entries' as const, entries: responseEntries };
         if (plan.kind === 'none') return [];
         const eventNames = () => {

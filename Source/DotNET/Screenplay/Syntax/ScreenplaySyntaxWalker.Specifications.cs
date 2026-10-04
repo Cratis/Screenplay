@@ -30,6 +30,10 @@ public abstract partial class ScreenplaySyntaxWalker
         if (syntax.GivenCaller is not null) VisitSpecificationCaller(syntax.GivenCaller);
         if (syntax.GivenClock is not null) VisitSpecificationClock(syntax.GivenClock);
 
+        foreach (var failure in syntax.GivenOperationFailures) VisitSpecificationOperationFailure(failure);
+        foreach (var operation in syntax.ThenOperations) VisitSpecificationOperation(operation);
+        foreach (var compensation in syntax.ThenCompensated) VisitSpecificationCompensated(compensation);
+
         foreach (var @event in syntax.Given)
         {
             VisitSpecificationEvent(@event);

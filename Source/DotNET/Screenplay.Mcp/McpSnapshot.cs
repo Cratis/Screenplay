@@ -47,7 +47,16 @@ sealed class McpSnapshot : IPlayFiles
     {
         var compilation = Compilation;
         var index = new McpSyntaxIndex();
-        foreach (var application in _compiler.Documents.Select(document => document.Value).OfType<ApplicationSyntax>())
+        if (compilation.Value is { } assembled) index.Initialize(assembled);
+
+        // Compilation retains provisional trees for diagnostics. Physical authoring candidates
+        // require an authoritative placement, including descendants of conflicting barrels.
+        var (placements, _) = PlayImports.Resolve(
+            _documentsByPath.Keys,
+            new InMemoryPlayDocumentSource(_documentsByPath.ToDictionary(entry => entry.Key, entry => entry.Value.Text, StringComparer.Ordinal)));
+        var resolvedPaths = placements.Where(document => document.IsPlacementResolved).Select(document => document.Path).ToHashSet(StringComparer.Ordinal);
+        foreach (var application in _compiler.Documents.Where(document => document.Path is not null && resolvedPaths.Contains(document.Path))
+            .Select(document => document.Result.Value).OfType<ApplicationSyntax>())
         {
             index.VisitApplication(application);
         }

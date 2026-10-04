@@ -85,6 +85,12 @@ public sealed partial class ScreenplayPrinter :
 
         WriteFileImports(writer, application.FileImports);
 
+        foreach (var system in application.Systems)
+        {
+            writer.Blank();
+            WriteSystem(writer, system);
+        }
+
         foreach (var concept in application.Concepts)
         {
             writer.Blank();
@@ -798,6 +804,7 @@ public sealed partial class ScreenplayPrinter :
             var members = new List<PrintableMember>();
             AddSeparatedMembers(members, writer, slice.Commands, 0, WriteCommand);
             AddSeparatedMembers(members, writer, slice.Events, 1, WriteEvent);
+            AddSeparatedMembers(members, writer, slice.Operations, 1, WriteOperation);
             AddSeparatedMembers(members, writer, slice.Constraints, 2, WriteConstraint);
             AddSeparatedMembers(members, writer, slice.Queries, 3, WriteQuery);
 

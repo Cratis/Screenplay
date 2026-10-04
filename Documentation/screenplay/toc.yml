@@ -30,6 +30,8 @@
   href: events.md
 - name: Commands
   href: commands.md
+- name: Operations and external systems
+  href: operations.md
 - name: Queries
   href: queries.md
 - name: Read models

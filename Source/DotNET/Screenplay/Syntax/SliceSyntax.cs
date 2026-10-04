@@ -88,6 +88,11 @@ public record SliceSyntax(
     public FileReferenceSyntax? File { get; init; }
 
     /// <summary>
+    /// Gets the standalone operations owned by this slice.
+    /// </summary>
+    public IEnumerable<OperationSyntax> Operations { get; init; } = [];
+
+    /// <summary>
     /// Gets the <see cref="Diagnostics.SourceLocation"/> of the first character of the raw quoted body of
     /// <see cref="Description"/>, or <c>null</c> when the slice has no single-line quoted description.
     /// </summary>

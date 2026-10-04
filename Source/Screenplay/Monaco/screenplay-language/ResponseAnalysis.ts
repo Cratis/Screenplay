@@ -4,9 +4,12 @@
 import { AnalysisCommand } from './AnalysisCommand';
 import { AnalysisDiagnostic } from './AnalysisDiagnostic';
 import { AnalysisSpecification } from './AnalysisSpecification';
+import { OperationAnalysis } from './OperationAnalysis';
 
 export interface ResponseAnalysis {
     readonly commands: ReadonlyMap<number, AnalysisCommand>;
     readonly specifications: ReadonlyMap<number, AnalysisSpecification>;
     readonly diagnostics: readonly AnalysisDiagnostic[];
+    readonly operationProductionLines?: ReadonlySet<number>;
+    readonly operations?: OperationAnalysis;
 }

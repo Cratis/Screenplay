@@ -1,0 +1,11 @@
+{
+    "intent": "system Mailer\ntype Contact\n  email String\n  note String optional\nslice StateChange Shared\n  operation TARGET\n    uses Mailer\n    recipient String optional\n    contact Contact optional\n",
+    "command": "slice StateChange Here\n  command C\n    text String\n    source Contact optional\n",
+    "targets": ["Send", "Shared.Send", "Shared.command", "Shared.produces", "Shared.operation"],
+    "mappings": [
+        { "text": "recipient = te", "labels": ["text", "source"] },
+        { "text": "contact.email = source.", "labels": ["email", "note"] },
+        { "text": "recipient = source.no", "labels": ["email", "note"] },
+        { "text": "rec", "labels": ["recipient", "contact"] }
+    ]
+}

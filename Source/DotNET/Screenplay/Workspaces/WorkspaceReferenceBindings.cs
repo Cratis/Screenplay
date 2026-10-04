@@ -92,6 +92,8 @@ sealed class WorkspaceReferenceBindings
             {
                 ConceptSyntax or TypeSyntax => WorkspaceReferenceDomain.Type,
                 EventSyntax => WorkspaceReferenceDomain.Event,
+                OperationSyntax => WorkspaceReferenceDomain.Operation,
+                SystemSyntax => WorkspaceReferenceDomain.System,
                 CommandSyntax => WorkspaceReferenceDomain.Command,
                 ReadModelSyntax => WorkspaceReferenceDomain.View,
                 QuerySyntax => WorkspaceReferenceDomain.Query,
@@ -140,6 +142,16 @@ sealed class WorkspaceReferenceBindings
     WorkspaceReferenceBinding Bind(WorkspaceReferenceMember reference)
     {
         var domain = reference.Domain;
+        if (domain == WorkspaceReferenceDomain.Operation && _index.OwningSlice(reference.Entry) is { } slice)
+        {
+            var operationResolution = _index.Productions.Resolve(reference.Text, slice);
+            var operationMatches = operationResolution.Kind == AuthoringProductionKind.Operation
+                ? _declarations.Where(declaration => ReferenceEquals(declaration.Entry?.Node, operationResolution.Declaration?.Node)).Take(2).ToArray() : [];
+            var target = operationMatches.Length == 1 ? operationMatches[0] : null;
+            var outcome = operationMatches.Length > 1 || operationResolution.Kind == AuthoringProductionKind.Ambiguous ? "ambiguous" : "unresolved";
+            return new(reference, target, target is not null ? "resolved" : outcome);
+        }
+
         if (domain == WorkspaceReferenceDomain.Property)
         {
             var properties = (_byName.GetValueOrDefault((domain, reference.Text)) ?? [])

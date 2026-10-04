@@ -11,7 +11,7 @@ import type { ValidationIssue, ValidationSeverity } from './validation';
 const reserved = new Set(['namespace', 'sequence', 'correlation', 'causation', 'causedBy', 'occurred']);
 const quotedId = /^id\s+"((?:[^"\\]|\\.)*)"$/;
 
-export function validateInlineEvents(lines: string[], symbols: DocumentSymbols, application: DocumentSymbols): ValidationIssue[] {
+export function validateInlineEvents(lines: string[], symbols: DocumentSymbols, application: DocumentSymbols, operationProductionLines: ReadonlySet<number> = new Set()): ValidationIssue[] {
     lines = eventAnalysisSource(lines);
     const issues: ValidationIssue[] = [];
     const fences = fenceMap(lines);
@@ -67,16 +67,16 @@ export function validateInlineEvents(lines: string[], symbols: DocumentSymbols, 
         }
     }
     // Also cover reaction productions without a backward ancestry walk per metadata line.
-    const productionIndents: number[] = [];
+    const productionIndents: { indent: number; event: boolean }[] = [];
     for (let index = 0; index < lines.length; index++) {
         if (fences[index] || lines[index].trim().length === 0) continue;
         const indent = indentOf(lines[index]);
-        while (productionIndents.length > 0 && productionIndents[productionIndents.length - 1] >= indent) productionIndents.pop();
+        while (productionIndents.length > 0 && productionIndents[productionIndents.length - 1].indent >= indent) productionIndents.pop();
         const keyword = lines[index].trim().split(/\s+/)[0];
-        if (reserved.has(keyword) && productionIndents.length > 0) {
+        if (reserved.has(keyword) && productionIndents.at(-1)?.event) {
             report(index, diagnosticCodes.reservedProductionMetadata, `'${keyword}' is system-assigned production metadata.`);
         }
-        if (keyword === 'produces') productionIndents.push(indent);
+        if (keyword === 'produces') productionIndents.push({ indent, event: !operationProductionLines.has(index) && !/^\s*produces\s+operation\b/.test(lines[index]) });
     }
     for (const command of symbols.commands) {
         const { identifier, mixed } = productionDestinations(command);

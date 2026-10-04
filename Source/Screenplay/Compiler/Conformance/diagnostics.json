@@ -2,6 +2,60 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "Operation declarations and inputs retain Unicode word characters and UTF16 values",
+            "validate": true,
+            "source": ["system Mailér", "module M", "  feature F", "    slice StateChange S", "      operation SendÅ", "        uses Mailér", "        recipientÉ String", "      command C", "        recipientÉ String", "        produces SendÅ", "          recipientÉ = recipientÉ", "      specification T", "        when C", "        then operation SendÅ", "          recipientÉ = \"α𝄞\""],
+            "diagnostics": []
+        },
+        {
+            "name": "Systems reject abilities",
+            "validate": true,
+            "source": ["system Mailer", "  ability Send"],
+            "diagnostics": ["PLAY0495@2"]
+        },
+        {
+            "name": "Operation phases reject malformed children locally",
+            "validate": true,
+            "source": ["system Mailer", "module M", "  feature F", "    slice StateChange S", "      operation Send", "        uses Mailer", "        execute", "          unknown", "        compensate", "          description \"Undo\""],
+            "diagnostics": ["PLAY0496@8"]
+        },
+        {
+            "name": "Qualified event productions remain rejected",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange S", "      event Recorded", "      command C", "        produces S.Recorded"],
+            "diagnostics": ["PLAY0497@6"]
+        },
+        {
+            "name": "Slice event and operation declarations share a namespace",
+            "validate": true,
+            "source": ["system Mailer", "module M", "  feature F", "    slice StateChange S", "      event Send", "      operation Send", "        uses Mailer"],
+            "diagnostics": ["PLAY0498@6"]
+        },
+        {
+            "name": "Operations cannot be produced by reactions",
+            "validate": true,
+            "source": ["system Mailer", "module M", "  feature F", "    slice StateChange S", "      operation Send", "        uses Mailer", "      reaction R", "        every 1 day", "          produces Send"],
+            "diagnostics": ["PLAY0499@9"]
+        },
+        {
+            "name": "An operation uses an explicitly declared system",
+            "validate": true,
+            "source": ["system Mailer", "module M", "  feature F", "    slice StateChange S", "      operation Send", "        uses Unknown"],
+            "diagnostics": ["PLAY0500@6"]
+        },
+        {
+            "name": "Operation mappings preserve nominal input types",
+            "validate": true,
+            "source": ["system Mailer", "module M", "  feature F", "    slice StateChange S", "      operation Send", "        uses Mailer", "        recipient String", "      command C", "        produces Send", "          recipient = 42"],
+            "diagnostics": ["PLAY0501@10"]
+        },
+        {
+            "name": "Operation failure fixtures reject ignored children",
+            "validate": true,
+            "source": ["system Mailer", "module M", "  feature F", "    slice StateChange S", "      operation Send", "        uses Mailer", "      command C", "        produces Send", "      specification T", "        given operation Send fails", "          ignored = 1", "        when C"],
+            "diagnostics": ["PLAY0502@11"]
+        },
+        {
             "name": "Handler hints accept the shared intertoken whitespace set including NEL",
             "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        handler", "          implementation", "            hint \"Keep\"", "            hint \t\u000b\f                 　\"Keep\""],
             "diagnostics": []

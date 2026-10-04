@@ -31,13 +31,14 @@ internal static class SpecificationOutcomeConsistencyValidator
 
                 foreach (var expected in specification.ThenEvents)
                 {
-                    ValidateEvent(specification.When!, expected, scope, resolved.Node, resolved.Scope, declarations, context);
+                    var commandSlice = declarations.Slices.First(entry => ReferenceEquals(entry.Scope, resolved.Scope)).Slice;
+                    ValidateEvent(specification.When!, expected, scope, resolved.Node, commandSlice, resolved.Scope, declarations, context);
                 }
             }
         }
     }
 
-    static void ValidateEvent(SpecificationCommandSyntax when, SpecificationEventSyntax expected, DeclarationScope scope, CommandSyntax command, DeclarationScope commandScope, ConsistencyDeclarations declarations, ParserContext context)
+    static void ValidateEvent(SpecificationCommandSyntax when, SpecificationEventSyntax expected, DeclarationScope scope, CommandSyntax command, SliceSyntax commandSlice, DeclarationScope commandScope, ConsistencyDeclarations declarations, ParserContext context)
     {
         var eventType = declarations.Event(expected.EventType, scope);
         if (eventType is null)
@@ -45,7 +46,9 @@ internal static class SpecificationOutcomeConsistencyValidator
             return;
         }
 
-        var producers = command.Produces.ToList();
+        // An ambiguous target may still be the expected event; never pretend its kind is decided.
+        if (command.Produces.Any(producer => declarations.Productions.Resolve(producer.Event, commandSlice).Kind == AuthoringProductionKind.Ambiguous)) return;
+        var producers = command.Produces.Where(producer => declarations.Productions.IsEventProduction(producer, commandSlice)).ToList();
         var candidates = producers.Where(producer => declarations.Event(producer.Event, commandScope) == eventType).ToList();
         if (producers.Exists(producer => declarations.Event(producer.Event, commandScope) is null))
         {

@@ -19,7 +19,7 @@ describe('when indexing command production ownership', () => {
     });
 
     it.each(['or IsCustomerSelf', 'and IsCustomerSelf', 'IsCustomerSelf', '(IsCustomerSelf)', 'or IsCüstomerSelf', 'produces Ghost'])('should consume %s as an authorization continuation', continuation => {
-        const lines = ['command Rename', '  authorize IsAccountant', `    ${continuation}`, '  produces Legacy'];
+        const lines = ['command Rename', '  authorize IsAccountant', `    ${continuation}`, '  produces Legacy', 'event Legacy'];
         const command = scanDocument(lines).commands[0];
         expect(command.properties).toEqual([]);
         expect(command.productionHeaders).toEqual([3]);
@@ -69,7 +69,7 @@ describe('when indexing command production ownership', () => {
     });
 
     it.each(['validate', 'validate csharp', 'handler', 'concurrency'])('should keep the %s block opaque to command ownership', directive => {
-        const lines = ['command Rename', `  ${directive}`, '    ghost Uuid identifier', '    produces First', '      for ghost', '  produces Legacy'];
+        const lines = ['command Rename', `  ${directive}`, '    ghost Uuid identifier', '    produces First', '      for ghost', '  produces Legacy', 'event Legacy'];
         const command = scanDocument(lines).commands[0];
         expect(command.properties).toEqual([]);
         expect(command.produces?.map(production => production.name)).toEqual(['Legacy']);

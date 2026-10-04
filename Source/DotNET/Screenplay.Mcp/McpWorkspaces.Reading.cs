@@ -59,6 +59,53 @@ internal sealed partial class McpWorkspaces
             });
         }
 
+        if (new[] { "operation-intents", "system-intents", "operation-intent-details", "system-intent-details", "ordered-productions" }.Contains(view, StringComparer.Ordinal))
+        {
+            var analysis = McpWorkspaceAnalysis.For(workspace);
+            var inventory = analysis.OperationIntents;
+            IEnumerable<object> values;
+            if (view == "ordered-productions")
+            {
+                values = inventory.Productions();
+            }
+            else
+            {
+                var systems = view.StartsWith("system", StringComparison.Ordinal);
+                var entries = inventory.Entries.Where(entry => systems ? entry.Node is SystemSyntax : entry.Node is OperationSyntax).ToArray();
+                if (view.EndsWith("details", StringComparison.Ordinal))
+                {
+                    var key = McpJson.RequiredString(arguments, "authoringKey");
+                    var matches = entries.Where(entry => inventory.Key(entry) == key).Take(2).ToArray();
+                    if (matches.Length > 1) throw new McpFailure("AmbiguousDeclaration: authoring key has multiple source occurrences. Select read-ast handles after repairing the collision.");
+                    if (matches.Length == 0)
+                    {
+                        throw new McpFailure(analysis.Syntax.UnresolvedPlacementDocuments.IsEmpty
+                            ? "UnknownDeclaration: no uniquely indexed declaration has that kind and authoring key."
+                            : "UnresolvedPlacement: repair conflicting or cyclic imports before requesting declaration details.");
+                    }
+                    if (inventory.AmbiguousOwner(matches[0])) throw new McpFailure("AmbiguousDeclaration: authoring declaration has a colliding physical owner. Select read-ast handles after repairing the collision.");
+                    values = inventory.Details(matches[0]);
+                }
+                else
+                {
+                    values = entries.Select(inventory.Summary).Concat(analysis.Syntax.UnresolvedPlacementDocuments.Select(document => (object)new
+                    {
+                        kind = "unresolved-placement", documentId = document.Id.ToString(), path = document.Path.Value,
+                        executionAvailable = false, action = "Repair conflicting or cyclic imports before selecting an authoring owner."
+                    }));
+                }
+            }
+
+            return McpJson.ToolResult(new
+            {
+                workspace = McpWorkspaceTransport.Describe(workspace), view,
+                executionAvailable = false, executionReadiness = "Unavailable until ESM v9 (PLAY0268).",
+                authoringDiagnosticsCount = analysis.Syntax.Diagnostics.Length,
+                unresolvedPlacementCount = analysis.Syntax.UnresolvedPlacementDocuments.Length,
+                page = McpPaging.Page(values, arguments, workspace.Revision.ToString())
+            });
+        }
+
         if (view == "handler-intents" || view == "handler-intent-details")
         {
             CheckContinuation(arguments, "expectedCatalogRevision", workspace.IdentityCatalog.Revision.ToString());

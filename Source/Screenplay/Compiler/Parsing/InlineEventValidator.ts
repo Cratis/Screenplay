@@ -3,6 +3,7 @@
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { eventDeclarations } from '../Syntax/EventDeclarations';
+import { AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolver';
 import { requiresExplicitDestinations } from '../Syntax/ProductionDestinations';
 import { ApplicationSyntax, FeatureSyntax, SliceSyntax } from '../Syntax/Structure';
 import { ParserContext } from './ParserContext';
@@ -17,10 +18,12 @@ export function validateInlineEvents(application: ApplicationSyntax, context: Pa
     const eventCounts = new Map<string, number>();
     for (const event of slices.flatMap(eventDeclarations)) eventCounts.set(event.name, (eventCounts.get(event.name) ?? 0) + 1);
     const importedNames = new Set(application.imports.map(value => value.qualifiedName.split('.').at(-1)));
-    for (const command of slices.flatMap(slice => slice.commands)) {
+    const resolver = new AuthoringProductionResolver(application);
+    for (const { slice, command } of slices.flatMap(slice => slice.commands.map(command => ({ slice, command })))) {
+        const events = command.produces.filter(production => resolver.isEventProduction(production, slice));
         const identifier = command.properties.find(property => property.isIdentifier)?.name;
-        const mixed = requiresExplicitDestinations(command);
-        for (const production of command.produces) {
+        const mixed = requiresExplicitDestinations(command, { resolver, slice });
+        for (const production of events) {
             const inline = production.inlineEvent;
             if (inline !== null && ((eventCounts.get(inline.name) ?? 0) > 1 || importedNames.has(inline.name))) {
                 context.error(DiagnosticCodes.InlineEventCollision, `Inline event '${inline.name}' collides with another event declaration or import`, production.location);

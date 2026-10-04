@@ -38,6 +38,12 @@ Use ordinary typed add/replace/remove operations with **Authoring** validation t
 
 Old handler JSON without `implementation` reads as null. New metadata needs a capable syntax reader: strict older readers reject unknown kinds/members. Schema discovery includes both new kinds; no ESM version or canonical bytes change.
 
+## Operation intent edits (syntax-only)
+
+Systems, standalone/inline operations, typed inputs, phase attachments and hints are discoverable through `WorkspaceSyntaxIndex` without an executable model. Original document occurrences retain source and placement; unsupported operation/system kinds have no `SemanticId`, semantic address or `RequirementId`. MCP logical keys include declaration kind and full owning scope and are authoring-only, not persistent identity. Existing catalog assignments remain unchanged when editing this intent.
+
+Use typed add/replace/remove with Authoring validation for inputs, phases, hints or a sole phase source. The phase owns `File`/`Code`; `ImplementationSyntax` owns hints only. Existing revision checks, expected-node validation, reference policy and source-preserving printing still apply. Stale handles, collisions, invalid shapes and unresolved placement refuse rather than choose a target. Executable validation reports `PLAY0268` and refuses; acceptance does not execute, realize or confirm code. Operation/system automatic rename and extraction are not claimed; use coordinated typed edits and validate references. [Manual promotion](operations.md#promote-an-inline-operation-manually) preserves production order explicitly.
+
 ## Typed syntax JSON
 
 The public codec lives in `Cratis.Screenplay.Syntax.Serialization`.

@@ -33,6 +33,23 @@ An event declared with `produces event` appears as an `Event` in declaration que
 
 Descriptions, documentation, and optional rename-only `id` remain syntax metadata. They do not replace the workspace identity catalog or the portable hashed event contract id. Workspace repair and rename proposals remain separate, explicit transactions; querying or visualizing an inline event never applies a repair.
 
+## Operation and system intent
+
+Systems and operations are **syntax-only**, with execution unavailable until ESM v9 (`PLAY0268`). After `open-workspace`, call `read-workspace` with the current `expectedRevision`:
+
+| View | Contents |
+| --- | --- |
+| `system-intents` | Application-scoped systems, descriptions through details, kind/full-scope authoring keys and source occurrence handles |
+| `operation-intents` | Slice-owned operation keys, uses, input counts, execute/compensate state and selected source handles |
+| `system-intent-details`, `operation-intent-details` | Supply the inventory's `authoringKey`; pages contain declaration intent, typed inputs, phases and ordered hints |
+| `ordered-productions` | Command scope/handle and every production occurrence in authored order, including repeated events, resolved kind, candidates and mappings |
+
+Echo `expectedRevision` for every page. Stale snapshots, wrong declaration kinds, ambiguous keys and unresolved placement refuse details rather than selecting an occurrence. Inventory includes unresolved-placement document entries so you can repair conflicting/cyclic imports. Authoring keys are name-derived logical keys, **not** admitted `SemanticId` or `RequirementId`; use revision-local handles for physical edits. Attachment states describe model selection only; no source is executed or confirmed.
+
+Declaration search/details and dependency traversal also include systems, operations and operation specification references. `declaration-details` supports `inputs` and `phases` on Operation; `syntax` returns explicit typed content. Produces links resolve event/operation kinds together and report ambiguity without guessing. Authoring read views work without ESM binding.
+
+Use `read-ast includeContent`, `syntax-schema` and ordinary typed `propose-ast` add/replace/remove operations with `validation: "Authoring"` to edit inputs, phases, source or hints. Each phase alone owns `file`/`code`; the wrapper owns hints. `validation: "Executable"` refuses with `PLAY0268`. Existing catalog assignments are not replaced by operation keys. Automatic operation extraction and operation/system rename are not available; [manual promotion](../operations.md#promote-an-inline-operation-manually) requires coordinated typed edits and full-source validation.
+
 ## Create the first typed document
 
 Call `syntax-schema` for `ApplicationSyntax`, `ModuleSyntax`, `FeatureSyntax`,

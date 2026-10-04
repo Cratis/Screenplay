@@ -271,6 +271,7 @@
               "description": null,
               "events": [],
               "name": "S",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -288,5 +289,6 @@
     }
   ],
   "personas": [],
+  "systems": [],
   "types": []
 }

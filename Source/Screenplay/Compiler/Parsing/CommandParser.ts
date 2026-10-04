@@ -18,6 +18,7 @@ import { HandlerSyntax } from '../Syntax/Implementations';
 import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
+import { commandReadSources } from './CommandReadSources';
 import { parseProduces } from './ProducesParser';
 import { reportInvalidModifierOrder, reportLegacyOptionalSuffix, tryParseProperty } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
@@ -73,6 +74,7 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
     let identifier: PropertySyntax | undefined;
     const validations: ValidateSyntax[] = [];
     const produces: ProducesSyntax[] = [];
+    const reads: { readModel: string; alias: string | null }[] = [];
     let description: string | null = null;
     let authorize: AuthorizeSyntax | null = null;
     let handler: HandlerSyntax | null = null;
@@ -115,6 +117,8 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
         } else if (keyword === 'handler') {
             handler = parseHandler(context, child);
         } else if (opaqueDirectives.has(keyword)) {
+            const read = /^reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?$/.exec(child.content);
+            if (read !== null) reads.push({ readModel: read[1], alias: read[2] ?? null });
             if (optionalReads.test(child.content)) {
                 context.error(DiagnosticCodes.OptionalReadsNotSupported, 'Optional reads are not yet supported (see #308).', locationOf(child));
             }
@@ -150,7 +154,9 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
     if (handler !== null && produces.length > 0) {
         context.error(DiagnosticCodes.CommandWithProducesAndHandler, `Command '${name}' cannot declare both 'produces' and 'handler'`, locationOf(line));
     }
-    return { kind: 'CommandSyntax', name, description, authorize, properties: properties.filter(property => !removed.has(property)), validations, produces, handler, response, location: locationOf(line) };
+    const syntax: CommandSyntax = { kind: 'CommandSyntax', name, description, authorize, properties: properties.filter(property => !removed.has(property)), validations, produces, handler, response, location: locationOf(line) };
+    commandReadSources.set(syntax, reads);
+    return syntax;
 }
 
 function addProperty(context: ParserContext, properties: PropertySyntax[], property: PropertySyntax, commandName: string, line: SourceLine, identifier: PropertySyntax | undefined): PropertySyntax | undefined {

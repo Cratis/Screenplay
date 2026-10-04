@@ -55,7 +55,7 @@ export function register(monaco: Monaco, options: LanguageServiceOptions = {}): 
     monaco.languages.setLanguageConfiguration(languageId, languageConfiguration);
     applyTokensProvider(monaco);
     monaco.languages.registerCompletionItemProvider(languageId, createCompletionProvider(monaco, options));
-    monaco.languages.registerHoverProvider(languageId, createHoverProvider());
+    monaco.languages.registerHoverProvider(languageId, createHoverProvider(options));
     monaco.languages.registerDocumentSemanticTokensProvider(languageId, {
         getLegend: () => ({ tokenTypes: [...responseTokenTypes], tokenModifiers: [] }),
         provideDocumentSemanticTokens(model) {
@@ -71,7 +71,7 @@ export function register(monaco: Monaco, options: LanguageServiceOptions = {}): 
         },
         releaseDocumentSemanticTokens() {},
     });
-    monaco.languages.registerInlayHintsProvider(languageId, createInlayHintsProvider());
+    monaco.languages.registerInlayHintsProvider(languageId, createInlayHintsProvider(options));
     monaco.languages.registerCodeActionProvider(languageId, createCodeActionProvider());
     monaco.editor.defineTheme(screenplayDarkThemeName, screenplayDark);
     monaco.editor.defineTheme(screenplayLightThemeName, screenplayLight);
@@ -101,7 +101,7 @@ export { pdl } from './sub-languages/pdl';
 export { cdl } from './sub-languages/cdl';
 export { screenplayDarkThemeName } from './themes/screenplay-dark';
 export { screenplayLightThemeName } from './themes/screenplay-light';
-export { enclosingChain, fenceMap, firstWord, indentOf } from './document-context';
+export { enclosingChain, fenceMap, firstWord, indentOf, withoutComment } from './document-context';
 export {
     fileReferenceKeyword,
     fileReferenceOn,
@@ -135,6 +135,8 @@ export { completionEntriesFor, planCompletions } from './completion-planner';
 export type { CompletionPlan } from './completion-planner';
 export { responseTokens, responseTokenTypes } from './response-tokens';
 export { responseCompletions } from './response-completions';
+export { analyzeOperations, operationCompletions, operationDetails, operationAvailability, operationHover, operationReferenceAt, phaseState } from './operation-authoring';
+export type { OperationAnalysis, OperationDeclaration, OperationInput, OperationPhase, OperationReference, SystemDeclaration } from './OperationAnalysis';
 export { responseAvailability, responseAnalysis } from './response-analysis';
 export { hoverContent } from './hover-content';
 export { validateLines } from './validation';

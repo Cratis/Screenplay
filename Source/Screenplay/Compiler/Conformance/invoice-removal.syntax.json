@@ -52,6 +52,7 @@
                 }
               ],
               "name": "InvoiceLookup",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -123,6 +124,7 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -156,11 +158,13 @@
                     }
                   ],
                   "name": "RemovingOneOfTwoInvoices",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -213,5 +217,6 @@
     }
   ],
   "personas": [],
+  "systems": [],
   "types": []
 }

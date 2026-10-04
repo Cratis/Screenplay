@@ -1,0 +1,70 @@
+// Syntax-only: execution is unavailable until ESM v9 (PLAY0268).
+// This is a documentation fixture, not an executable Samples application.
+system Mailer
+  description "Sends email outside this application"
+system Accounting
+  description "The finance department's ledger"
+concept ProjectId : Uuid
+concept ProjectName : String
+concept EmailAddress : String
+concept Delivery : Enum
+  immediate
+  digest
+type Owner
+  email EmailAddress
+  name String
+module Projects
+  feature Registration
+    slice StateChange Register
+      operation NotifyAccounting
+        description "Open a provisional cost center"
+        uses Accounting
+        projectId ProjectId
+        execute
+          implementation
+            hint "Use the existing accounting adapter"
+            file Adapters/OpenCostCenter.cs
+        compensate
+          description "Close the provisional cost center if registration does not commit"
+      command RegisterProject
+        projectId ProjectId identifier
+        name ProjectName
+        owner Owner
+        delivery Delivery
+        tags String[] optional
+        produces event ProjectRegistered
+          name ProjectName = name
+        produces operation SendWelcomeEmail
+          description "Welcome the owner by email"
+          uses Mailer
+          recipient EmailAddress = owner.email
+          delivery Delivery = delivery
+          tags String[] optional = tags
+          execute
+            implementation
+              hint "Use the existing mail adapter"
+          compensate
+            description "Tell the owner to ignore the welcome if registration does not commit"
+        produces NotifyAccounting
+          projectId = projectId
+      specification RegistrationRequestsWelcome
+        when RegisterProject
+          projectId = "11111111-1111-1111-1111-111111111111"
+          name = "Apollo"
+          owner = {"email": "ada@example.com", "name": "Ada"}
+          delivery = "immediate"
+        then operation SendWelcomeEmail
+          recipient = "ada@example.com"
+      specification AccountingFailureCompensatesWelcome
+        given operation NotifyAccounting fails
+        when RegisterProject
+          projectId = "11111111-1111-1111-1111-111111111111"
+          name = "Apollo"
+          owner = {"email": "ada@example.com", "name": "Ada"}
+          delivery = "immediate"
+        then compensated SendWelcomeEmail
+    slice StateChange Reconcile
+      command ReconcileProject
+        projectId ProjectId identifier
+        produces Register.NotifyAccounting
+          projectId = projectId

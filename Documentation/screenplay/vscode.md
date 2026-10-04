@@ -15,6 +15,12 @@ The editor recognizes [generated command values and response contracts](commands
 
 The board leaves generated values out of command request schemas and lists generated values and returns in command details. It does not create response events or emit official response types. TextMate highlighting treats ambiguous two-token `returns` lines conservatively; `returns @name` makes response intent explicit.
 
+## Operation and system intent (syntax-only)
+
+Both Monaco and VS Code recognize [systems and operations](operations.md), inline/standalone declarations and operation specification steps. Assistance resolves explicit declaration kinds over the assembled application and uses the current typed source for command inputs, including unsaved and import-placed files. Input/source suggestions retain concept, composite, optional and collection shapes; ambiguous references are not linked to an arbitrary declaration. Phase hover distinguishes pending, file and inline sources and ordered hints. Existing attachment navigation applies to phase files.
+
+Operations remain unavailable until ESM v9 (`PLAY0268`). Board command details describe system/operation intent and authored production order; there are no operation event cards, fabricated event identities or passing operation assertion states. Unknown or ambiguous production context receives no guessed destination hint. Keyword-named inputs, comments and fenced source remain their original content.
+
 ## Handler implementation intent
 
 Both Monaco and VS Code offer `implementation` beneath a command handler, then ordered `hint` lines, `file` or existing tagged fences within its wrapper. Completion and hover describe pending intent and unavailable handler execution. New words stay ordinary property names outside those contexts. Parser diagnostics `PLAY0492`–`PLAY0494` retain original source locations; fenced code is isolated from DSL analysis and completion.

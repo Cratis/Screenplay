@@ -82,6 +82,20 @@ internal static class ReferenceResolver
     /// <param name="declarations">Everything of the referenced kind the document declares.</param>
     /// <returns>The <see cref="Resolution"/>.</returns>
     public static Resolution Resolve(string reference, DeclarationScope from, IReadOnlyList<Declaration> declarations)
+        => ResolveCandidates(
+            reference,
+            from,
+            (name, qualifiers) => [.. declarations.Where(declaration => string.Equals(declaration.Name, name, StringComparison.Ordinal) && declaration.Scope.EndsWith(qualifiers))],
+            (name, depth) => [.. declarations.Where(declaration => string.Equals(declaration.Name, name, StringComparison.Ordinal) && declaration.Scope.SharesPrefixWith(from, depth))]);
+
+    internal static Resolution Resolve(string reference, DeclarationScope from, ReferenceDeclarationIndex declarations) =>
+        ResolveCandidates(reference, from, declarations.Qualified, (name, depth) => declarations.Visible(name, from, depth));
+
+    static Resolution ResolveCandidates(
+        string reference,
+        DeclarationScope from,
+        Func<string, IReadOnlyList<string>, IReadOnlyList<Declaration>> qualifiedCandidates,
+        Func<string, int, IReadOnlyList<Declaration>> visibleCandidates)
     {
         var segments = reference.Split('.', StringSplitOptions.RemoveEmptyEntries);
 
@@ -99,22 +113,14 @@ internal static class ReferenceResolver
         // or it does not.
         if (qualifiers.Length > 0)
         {
-            var qualified = declarations
-                .Where(declaration => string.Equals(declaration.Name, name, StringComparison.Ordinal) && declaration.Scope.EndsWith(qualifiers))
-                .ToList();
+            var qualified = qualifiedCandidates(name, qualifiers);
             return qualified.Count == 1 ? new(qualified[0], []) : new(null, qualified);
-        }
-
-        var named = declarations.Where(declaration => string.Equals(declaration.Name, name, StringComparison.Ordinal)).ToList();
-        if (named.Count == 0)
-        {
-            return new(null, []);
         }
 
         // Innermost first: everything sharing the whole scope, then one level out, and so on.
         for (var depth = from.Depth; depth >= 0; depth--)
         {
-            var visible = named.Where(declaration => declaration.Scope.SharesPrefixWith(from, depth)).ToList();
+            var visible = visibleCandidates(name, depth);
             if (visible.Count == 1)
             {
                 return new(visible[0], []);

@@ -1,10 +1,11 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { CommandSyntax, Diagnostic, parse, parsePlacedDocuments, SpecificationSyntax } from '@cratis/screenplay-compiler';
-import { fenceMap, indentOf } from './document-context';
+import { AuthoringProductionKind, AuthoringProductionResolver, CommandSyntax, Diagnostic, OperationSyntax, parse, parsePlacedDocuments, SpecificationSyntax } from '@cratis/screenplay-compiler';
+import { fenceMap, indentOf, withoutComment } from './document-context';
 import { ResponseAnalysis } from './ResponseAnalysis';
 import { AuthoringDocument } from './AuthoringDocument';
+import { OperationAnalysis, OperationDeclaration, OperationReference } from './OperationAnalysis';
 
 // Public editor shapes are structural: packed declarations never expose the private compiler.
 export type { AuthoringDocument } from './AuthoringDocument';
@@ -27,7 +28,7 @@ const revisions = new Map<string, ReturnType<typeof analyze>>();
 function authoringSource(lines: string[], headers: readonly string[]) {
     const fences = fenceMap(lines);
     const roots = lines.flatMap((line, index) => !fences[index] && indentOf(line) === 0 && /^\w/.test(line) ? [line.split(/\s+/)[0]] : []);
-    if (roots.includes('module') || !roots.some(root => ['feature', 'slice', 'command', 'event', 'specification'].includes(root))) {
+    if (roots.includes('module') || !roots.some(root => ['feature', 'slice', 'command', 'event', 'operation', 'reaction', 'specification'].includes(root))) {
         return { source: lines.join('\n'), locations: lines.map((_, index) => ({ line: index + 1, column: 0 })) };
     }
     // Isolated slice/command fragments are a supported editor input. Global declarations stay global.
@@ -35,7 +36,7 @@ function authoringSource(lines: string[], headers: readonly string[]) {
     const body: number[] = [];
     let global = false;
     lines.forEach((line, index) => {
-        if (!fences[index] && indentOf(line) === 0 && /^\w/.test(line)) global = /^(?:concept|type|import|domain)\b/.test(line);
+        if (!fences[index] && indentOf(line) === 0 && /^\w/.test(line)) global = /^(?:concept|type|import|domain|system)\b/.test(line);
         (global ? globals : body).push(index);
     });
     const depth = roots.includes('feature') ? 1 : roots.includes('slice') ? 2 : 3;
@@ -45,7 +46,7 @@ function authoringSource(lines: string[], headers: readonly string[]) {
     return { source, locations };
 }
 
-function analyze(lines: string[], otherSources: readonly (string | AuthoringDocument)[], placement?: readonly string[], path = 'current.play'): ResponseAnalysis {
+function analyze(lines: string[], otherSources: readonly (string | AuthoringDocument)[], placement?: readonly string[], path = 'current.play'): ResponseAnalysis & { readonly operations: OperationAnalysis } {
     const others = otherSources.map((document, index) => typeof document === 'string' ? { path: `other-${index}.play`, source: document } : document).filter(document => document.path !== path);
     const documents: AuthoringDocument[] = [{ path, source: lines.join('\n'), placement }, ...others];
     // Modules/features merge, but slices are real declarations: equal slice names discard later
@@ -62,42 +63,130 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
     };
     const module = fresh('EditorAuthoring');
     const feature = fresh('FragmentFeature');
+    const syntheticScopes = new Set([module, feature]);
     const preparedDocuments = documents.map((document, index) => {
         const sourceLines = index === 0 ? lines : document.source.split('\n');
+        const fragment = fresh(`Fragment${index}`);
+        syntheticScopes.add(fragment);
         const prepared = document.placement?.length ? { source: document.source, locations: sourceLines.map((_, line) => ({ line: line + 1, column: 0 })) }
-            : authoringSource(sourceLines, [`module ${module}`, `  feature ${feature}`, `    slice StateChange ${fresh(`Fragment${index}`)}`]);
+            : authoringSource(sourceLines, [`module ${module}`, `  feature ${feature}`, `    slice StateChange ${fragment}`]);
         return { ...document, ...prepared, placement: document.placement ?? [] };
     });
     const prepared = preparedDocuments[0];
+    const locations = new Map(preparedDocuments.map(document => [document.path, document.locations]));
     // Put the buffer after its supplied context so duplicate real declarations are reported at
     // the current source, not silently dropped from its source-local diagnostic view.
     const parsed = others.length === 0 ? parse(prepared.source, path, placement) : parsePlacedDocuments([...preparedDocuments.slice(1), prepared]);
     const commands = new Map<number, CommandSyntax>();
     const specifications = new Map<number, SpecificationSyntax>();
+    const visited = new WeakSet<object>();
     const walk = (value: unknown): void => {
-        if (value === null || typeof value !== 'object') return;
+        if (value === null || typeof value !== 'object' || visited.has(value)) return;
+        visited.add(value);
         if (Array.isArray(value)) { value.forEach(walk); return; }
         const node = value as Record<string, unknown>;
-        const location = node.location as { path?: string; line: number; column: number } | undefined;
-        if (location?.path === path) {
-            const original = prepared.locations[location.line - 1];
-            if (original) node.location = { ...location, line: original.line, column: Math.max(1, location.column - original.column) };
+        // Source locations also occur as standalone members (usesLocation, targetLocation).
+        // Mutate each original identity once: shared locations must not be shifted twice.
+        if (typeof node.path === 'string' && typeof node.line === 'number' && typeof node.column === 'number') {
+            const original = locations.get(node.path)?.[node.line - 1];
+            if (original) { node.line = original.line; node.column = Math.max(1, node.column - original.column); }
+            return;
         }
+        for (const child of Object.values(node)) walk(child);
         if ((node.location as { path?: string; line: number } | undefined)?.path === path) {
             if (node.kind === 'CommandSyntax') commands.set((node.location as { line: number }).line - 1, value as CommandSyntax);
             if (node.kind === 'SpecificationSyntax') specifications.set((node.location as { line: number }).line - 1, value as SpecificationSyntax);
         }
-        for (const [key, child] of Object.entries(node)) if (key !== 'location') walk(child);
     };
     walk(parsed.value);
     const diagnostics: Diagnostic[] = parsed.diagnostics.filter(diagnostic => diagnostic.location.path === path).flatMap(diagnostic => {
-        const original = prepared.locations[diagnostic.location.line - 1];
-        return original?.line ? [{ ...diagnostic, location: { ...diagnostic.location, line: original.line, column: Math.max(1, diagnostic.location.column - original.column) } }] : [];
+        walk(diagnostic.location);
+        return diagnostic.location.line > 0 ? [diagnostic] : [];
     });
-    return { commands, specifications, diagnostics };
+    const productions = new AuthoringProductionResolver(parsed.value);
+    const operationProductionLines = new Set(productions.slices.flatMap(({ slice }) => [...slice.commands.flatMap(command => command.produces), ...slice.reactions.flatMap(reaction => reaction.triggers).flatMap(trigger => trigger.produces)]
+        .filter(production => production.location.path === path && !productions.isEventProduction(production, slice))
+        .map(production => production.location.line - 1)));
+    // Rejected inline operation declarations have no syntax node, but the core parser still owns
+    // the command-only kind fact. Retain it rather than suggesting an event declaration repair.
+    for (const diagnostic of diagnostics) if (diagnostic.code === 'PLAY0499') operationProductionLines.add(diagnostic.location.line - 1);
+    const declarations: OperationDeclaration[] = productions.declarations.filter(declaration => declaration.kind === AuthoringProductionKind.Operation)
+        .map(declaration => ({ ...declaration.node as OperationSyntax, scope: declaration.scope.filter(segment => !syntheticScopes.has(segment)) }));
+    const contexts = new Map<number, { scope: readonly string[]; commandLine?: number; operation?: OperationDeclaration; production?: OperationReference }>();
+    // Index source ownership once per revision. Typed headers, not keyword-shaped properties,
+    // define the ranges; greater-indented legacy properties remain leaves.
+    const fences = fenceMap(lines);
+    const range = (start: number): number[] => {
+        const result: number[] = [];
+        const indent = indentOf(lines[start]);
+        for (let line = start; line < lines.length; line++) {
+            if (line > start && !fences[line] && withoutComment(lines[line]).trim() && indentOf(lines[line]) <= indent) break;
+            result.push(line);
+        }
+        return result;
+    };
+    for (const { slice, scope } of productions.slices) {
+        if (slice.location.path === path && slice.location.line > 0) for (const line of range(slice.location.line - 1)) contexts.set(line, { scope });
+        for (const specification of slice.specifications.filter(specification => specification.location.path === path && specification.location.line > 0)) {
+            for (const line of range(specification.location.line - 1)) contexts.set(line, { scope });
+        }
+        for (const command of slice.commands.filter(command => command.location.path === path && command.location.line > 0)) {
+            for (const line of range(command.location.line - 1)) contexts.set(line, { scope, commandLine: command.location.line - 1 });
+        }
+    }
+    const declarationScopes = new Map(productions.declarations.map(declaration => [declaration.node.location, declaration.scope]));
+    for (const operation of declarations.filter(operation => operation.location.path === path)) {
+        const scope = declarationScopes.get(operation.location)!;
+        for (const line of range(operation.location.line - 1)) contexts.set(line, { ...contexts.get(line), scope, operation });
+    }
+    const declarationsByLocation = new Map(declarations.map(declaration => [declaration.location, declaration]));
+    const referenceLocation = (location: { path?: string; line: number; column: number }, name: string) => {
+        const source = withoutComment(lines[location.line - 1] ?? '');
+        const prefix = source.slice(location.column - 1).match(/^(?:given\s+operation|then\s+(?:operation|compensated))\s+/)?.[0];
+        return prefix && source.slice(location.column - 1 + prefix.length, location.column - 1 + prefix.length + name.length) === name
+            ? { ...location, column: location.column + prefix.length } : location;
+    };
+    const references: OperationReference[] = [];
+    for (const { slice } of productions.slices) {
+        for (const command of slice.commands) for (const production of command.produces) {
+            if (production.location.path !== path) continue;
+            const resolved = productions.resolve(production.event, slice);
+            const declaration = resolved.declaration ? declarationsByLocation.get(resolved.declaration.node.location) ?? null : null;
+            const reference = { name: production.event, location: production.location, targetLocation: production.targetLocation ?? production.location, kind: resolved.kind, declaration, mappings: production.mappings };
+            references.push(reference);
+            if (resolved.kind === AuthoringProductionKind.Operation) {
+                for (const line of range(production.location.line - 1)) {
+                    const context = contexts.get(line);
+                    if (context) contexts.set(line, { ...context, production: reference });
+                }
+            }
+        }
+        for (const specification of slice.specifications) {
+            for (const step of [...specification.givenOperationFailures ?? [], ...specification.thenOperations ?? [], ...specification.thenCompensated ?? []]) {
+                if (step.location.path !== path) continue;
+                const resolved = productions.resolve(step.operation, slice);
+                references.push({ name: step.operation, location: step.location, targetLocation: referenceLocation(step.location, step.operation), kind: resolved.kind,
+                    declaration: resolved.declaration ? declarationsByLocation.get(resolved.declaration.node.location) ?? null : null,
+                    mappings: [] });
+            }
+        }
+    }
+    const operations: OperationAnalysis = { declarations, systems: parsed.value.systems ?? [], references, contexts, types: parsed.value.types, concepts: parsed.value.concepts,
+        targets: scope => {
+            const slice = productions.slices.find(entry => entry.scope.length === scope.length && entry.scope.every((part, index) => part === scope[index]))?.slice;
+            if (!slice) return [];
+            return declarations.flatMap(declaration => {
+                const name = productions.resolve(declaration.name, slice).declaration?.node.location === declaration.location
+                    ? declaration.name : [...declaration.scope, declaration.name].join('.');
+                return productions.resolve(name, slice).kind === AuthoringProductionKind.Operation &&
+                    productions.resolve(name, slice).declaration?.node.location === declaration.location ? [{ name, declaration }] : [];
+            });
+        }
+    };
+    return { commands, specifications, diagnostics, operationProductionLines, operations };
 }
 
-export function responseAnalysis(lines: string[], otherSources: readonly (string | AuthoringDocument)[] = [], placement?: readonly string[], path = 'current.play'): ResponseAnalysis {
+export function responseAnalysis(lines: string[], otherSources: readonly (string | AuthoringDocument)[] = [], placement?: readonly string[], path = 'current.play'): ResponseAnalysis & { readonly operations: OperationAnalysis } {
     const key = JSON.stringify([lines, otherSources, placement, path]);
     let analysis = revisions.get(key);
     if (analysis === undefined) {

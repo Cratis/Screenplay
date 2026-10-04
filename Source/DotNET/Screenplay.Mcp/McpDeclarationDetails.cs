@@ -11,17 +11,20 @@ static class McpDeclarationDetails
     internal static object Read(McpSnapshot snapshot, JsonElement arguments)
     {
         var declaration = Target(snapshot, arguments);
+        var readiness = snapshot.Index.Readiness;
         var view = McpJson.OptionalString(arguments, "view") ?? "summary";
         var details = view switch
         {
             "summary" => new
             {
                 propertyCount = Properties(declaration.Syntax).Count(),
-                syntaxOnly = SyntaxOnly(declaration.Syntax),
-                executionReadiness = SyntaxOnly(declaration.Syntax) ? "Unavailable until ESM v8 (PLAY0268); use Authoring validation." : null,
+                syntaxOnly = readiness.SyntaxOnly(declaration.Syntax),
+                executionReadiness = readiness.ExecutionReadiness(declaration.Syntax),
                 eventCount = declaration.Syntax is SliceSyntax eventOwner ? EventDeclarations.In(eventOwner).Count() : 0,
                 eventId = (declaration.Syntax as EventSyntax)?.Id,
                 documentation = (declaration.Syntax as EventSyntax)?.Documentation,
+                uses = (declaration.Syntax as OperationSyntax)?.Uses,
+                operationInputCount = (declaration.Syntax as OperationSyntax)?.Inputs.Count() ?? 0,
                 partCount = declaration.Parts.Count,
                 commandCount = declaration.Syntax is SliceSyntax slice ? slice.Commands.Count() : 0,
                 specificationCount = declaration.Syntax is SliceSyntax described ? described.Specifications.Count() : 0,
@@ -51,9 +54,10 @@ static class McpDeclarationDetails
                     command.Location,
                     propertyCount = command.Properties.Count(),
                     generatedProperties = command.Properties.Where(property => property.IsGenerated).Select(property => property.Name),
-                    response = Response(command),
-                    syntaxOnly = SyntaxOnly(command),
-                    producedEvents = command.Produces.Select(produces => produces.Event).Distinct(StringComparer.Ordinal).ToArray()
+                    response = Response(command, readiness),
+                    syntaxOnly = readiness.SyntaxOnly(command),
+                    executionReadiness = readiness.ExecutionReadiness(command),
+                    producedEvents = readiness.ProducedEvents(command).ToArray()
                 },
                 arguments,
                 snapshot.SourceRevision),
@@ -68,7 +72,11 @@ static class McpDeclarationDetails
                     thenDenied = specification.ThenDenied is not null,
                     generatedValues = specification.When?.GeneratedValues,
                     thenReturns = specification.ThenReturns,
-                    syntaxOnly = SyntaxOnly(specification),
+                    givenOperationFailures = specification.GivenOperationFailures,
+                    thenOperations = specification.ThenOperations,
+                    thenCompensated = specification.ThenCompensated,
+                    syntaxOnly = readiness.SyntaxOnly(specification),
+                    executionReadiness = readiness.ExecutionReadiness(specification),
                     givenEvents = specification.Given.Count(),
                     thenEvents = specification.ThenEvents.Count(),
                     thenErrors = specification.ThenErrors.Count(),
@@ -78,7 +86,20 @@ static class McpDeclarationDetails
                 },
                 arguments,
                 snapshot.SourceRevision),
-            "response" when declaration.Syntax is CommandSyntax responseOwner => Response(responseOwner),
+            "inputs" when declaration.Syntax is OperationSyntax operation => McpPaging.Page(operation.Inputs, arguments, snapshot.SourceRevision),
+            "phases" when declaration.Syntax is OperationSyntax operation => McpPaging.Page(
+                new[] { (Name: "execute", Phase: operation.Execute), (Name: "compensate", Phase: operation.Compensate) }.Where(value => value.Phase is not null),
+                value => new
+                {
+                    phase = value.Name, value.Phase!.Description, value.Phase.Location,
+                    state = value.Phase switch { { File: not null } => "file", { Code: not null } => "inline", _ => "pending" },
+                    file = value.Phase.File?.Path, language = value.Phase.Code?.Language,
+                    hintCount = value.Phase.Implementation?.Hints.Count() ?? 0,
+                    executionAvailable = false
+                },
+                arguments,
+                snapshot.SourceRevision),
+            "response" when declaration.Syntax is CommandSyntax responseOwner => Response(responseOwner, readiness),
             "produces" when declaration.Syntax is CommandSyntax command => McpPaging.Page(command.Produces, arguments, snapshot.SourceRevision),
             "values" when declaration.Syntax is ConceptSyntax concept => McpPaging.Page(concept.Values, arguments, snapshot.SourceRevision),
             "syntax" => declaration.Syntax,
@@ -107,27 +128,20 @@ static class McpDeclarationDetails
     {
         SliceSyntax => ["summary", "occurrences", "commands", "specifications", "syntax"],
         CommandSyntax => ["summary", "properties", "occurrences", "produces", "response", "syntax"],
+        OperationSyntax => ["summary", "inputs", "phases", "occurrences", "syntax"],
         EventSyntax or ReadModelSyntax or TypeSyntax => ["summary", "properties", "occurrences", "syntax"],
         ConceptSyntax => ["summary", "values", "occurrences", "syntax"],
         _ => ["summary", "occurrences", "syntax"]
     };
 
-    static bool SyntaxOnly(SyntaxNode node) => node switch
-    {
-        CommandSyntax command => command.Response is not null || command.Properties.Any(property => property.IsGenerated),
-        Cratis.Screenplay.Syntax.Specifications.SpecificationSyntax specification => specification.ThenReturns is not null || (specification.When?.GeneratedValues.Any() ?? false),
-        SliceSyntax slice => slice.Commands.Any(SyntaxOnly) || slice.Specifications.Any(SyntaxOnly),
-        _ => false
-    };
-
-    static object Response(CommandSyntax command)
+    static object Response(CommandSyntax command, McpAuthoringReadiness readiness)
     {
         var properties = command.Properties.GroupBy(property => property.Name, StringComparer.Ordinal)
             .Where(group => group.Count() == 1).ToDictionary(group => group.Key, group => group.Single(), StringComparer.Ordinal);
         return new
         {
-            syntaxOnly = SyntaxOnly(command),
-            executionReadiness = SyntaxOnly(command) ? "Unavailable until ESM v8 (PLAY0268); no response type is emitted." : null,
+            syntaxOnly = readiness.SyntaxOnly(command),
+            executionReadiness = readiness.ExecutionReadiness(command, "no response type is emitted."),
             syntax = command.Response,
             fields = command.Response is RecordCommandResponseSyntax record ? record.Fields.Select(field => new
             {

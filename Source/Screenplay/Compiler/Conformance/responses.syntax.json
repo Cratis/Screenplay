@@ -87,6 +87,7 @@
                         ],
                         "tags": []
                       },
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -497,6 +498,7 @@
               "description": null,
               "events": [],
               "name": "Register",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -508,13 +510,16 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegistersProject",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": {
@@ -563,13 +568,16 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ReturnsReceipt",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": {
@@ -620,13 +628,16 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ReturnsConcreteDetails",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": {
@@ -728,6 +739,7 @@
     }
   ],
   "personas": [],
+  "systems": [],
   "types": [
     {
       "kind": "TypeSyntax",

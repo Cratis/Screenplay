@@ -206,6 +206,7 @@
                           "event": "DiscountApplied",
                           "for": null,
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -239,6 +240,7 @@
                           "event": "DiscountReviewRequested",
                           "for": null,
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -256,6 +258,7 @@
                           "event": "DiscountAutoApproved",
                           "for": null,
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -463,6 +466,7 @@
                     }
                   ],
                   "name": "ApplyDiscount",
+                  "operations": [],
                   "projections": [],
                   "queries": [],
                   "reactions": [],
@@ -493,6 +497,7 @@
                           "event": "InvoiceWrittenOff",
                           "for": null,
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -526,6 +531,7 @@
                           "event": "LargeWriteOffFlagged",
                           "for": null,
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -543,6 +549,7 @@
                           "event": "SmallWriteOffRecorded",
                           "for": null,
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -758,6 +765,7 @@
                     }
                   ],
                   "name": "WriteOffInvoice",
+                  "operations": [],
                   "projections": [],
                   "queries": [],
                   "reactions": [],
@@ -803,6 +811,7 @@
                       "event": "InvoiceRegistered",
                       "for": null,
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -932,6 +941,7 @@
                       "event": "ProFormaInvoiceIssued",
                       "for": null,
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -957,6 +967,7 @@
                       "event": "ForeignCurrencyInvoiceRegistered",
                       "for": null,
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -982,6 +993,7 @@
                       "event": "ImmediatePaymentInvoiceRegistered",
                       "for": null,
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -1007,6 +1019,7 @@
                       "event": "DeferredPaymentInvoiceRegistered",
                       "for": null,
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -1625,6 +1638,7 @@
                 }
               ],
               "name": "RegisterInvoice",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -1660,8 +1674,10 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegisteringADraftInvoice",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -1707,6 +1723,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -1761,8 +1778,10 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAnInvoiceWithNoLines",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
                     {
@@ -1773,6 +1792,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -1819,8 +1839,10 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAnInvoiceWhoseNumberIsAlreadyTaken",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
                     {
@@ -1831,6 +1853,7 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -1889,6 +1912,7 @@
                       "event": "InvoiceCancelled",
                       "for": null,
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -1938,6 +1962,7 @@
                       "event": "InvoiceRefundRequested",
                       "for": null,
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -2182,6 +2207,7 @@
                 }
               ],
               "name": "CancelInvoice",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -2212,6 +2238,7 @@
                       "event": "InvoiceSent",
                       "for": null,
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -2245,6 +2272,7 @@
                       "event": "InvoicePaid",
                       "for": null,
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -2278,6 +2306,7 @@
                       "event": "InvoiceMarkedOverdue",
                       "for": null,
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -2303,6 +2332,7 @@
                       "event": "InvoiceStatusChanged",
                       "for": null,
                       "inlineEvent": null,
+                      "inlineOperation": null,
                       "mappings": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -2586,6 +2616,7 @@
                 }
               ],
               "name": "ChangeInvoiceStatus",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -2597,6 +2628,7 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -2623,6 +2655,7 @@
                     }
                   ],
                   "name": "SendingADraftInvoice",
+                  "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
@@ -2644,6 +2677,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -2887,6 +2921,7 @@
                 }
               ],
               "name": "ProcessInvoiceBatch",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -2959,6 +2994,7 @@
               "description": null,
               "events": [],
               "name": "ArchiveOldInvoices",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -3294,6 +3330,7 @@
                 }
               ],
               "name": "LegacyInvoiceSync",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -3310,6 +3347,7 @@
               "description": null,
               "events": [],
               "name": "InvoiceList",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -3740,6 +3778,7 @@
               "description": null,
               "events": [],
               "name": "InvoiceDetails",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -4388,6 +4427,7 @@
               "description": null,
               "events": [],
               "name": "InvoiceLineReport",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -4529,6 +4569,7 @@
               "description": "Archive of cancelled invoices - every property auto-maps from the event",
               "events": [],
               "name": "CancelledInvoices",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -4656,6 +4697,7 @@
               "description": null,
               "events": [],
               "name": "InvoiceDashboard",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -5149,6 +5191,7 @@
               "description": "Counts every event in the system for the activity ticker",
               "events": [],
               "name": "SystemActivity",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -5244,6 +5287,7 @@
               "description": null,
               "events": [],
               "name": "NotifyCustomerOnInvoiceRegistered",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -5278,6 +5322,7 @@
               "description": null,
               "events": [],
               "name": "DetectOverdueInvoices",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -5322,6 +5367,7 @@
               "description": "Described before any of it is implemented - no 'file' anywhere",
               "events": [],
               "name": "ReconcilePayments",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -5366,6 +5412,7 @@
               "description": "Driven by the clock rather than by an event",
               "events": [],
               "name": "ChaseOverdueInvoices",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -5384,6 +5431,7 @@
                           "event": "InvoiceMarkedOverdue",
                           "for": null,
                           "inlineEvent": null,
+                          "inlineOperation": null,
                           "mappings": [
                             {
                               "kind": "PropertyMappingSyntax",
@@ -5420,6 +5468,7 @@
               "description": null,
               "events": [],
               "name": "SyncBillingDirectory",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -5484,6 +5533,7 @@
       ]
     }
   ],
+  "systems": [],
   "types": [
     {
       "kind": "TypeSyntax",
