@@ -9,6 +9,7 @@ The `full-esm-*.json` files pin canonical executable semantic model (ESM) bytes,
 | `full-esm-v3.json` | `canonical_serialization_golden_vectors.CreateSemanticModelV3()` — the full v2 model plus a reducer-built read model with opaque transitions, a rule predicate, command code validation, and an opaque policy predicate |
 | `full-esm-v4.json` | `canonical_serialization_golden_vectors.CreateSemanticModelV4()` — mixed ordinary and three-generation events, with historical tags and v4 transition cardinality |
 | `full-esm-v5.json` | `canonical_serialization_golden_vectors.CreateSemanticModelV5()` — the v4 model plus one keyed read-model absence assertion |
+| `full-esm-v6.json` | `canonical_serialization_golden_vectors.CreateSemanticModelV6()` — the v5 model plus an application trigger, reactions covering every trigger kind, a capture covering every map operation, condition, child collection and nested record, and specifications that state, advance and fire clocks, triggers and capture records |
 
 The other files pin separate serialization contracts, not ESM bytes:
 
@@ -23,8 +24,8 @@ The ESM, expression and identity-catalog sources live in `../given/canonical_ser
 the typed-context sources live in the binder specs. Specs in this project compare the serialized sources
 and descriptor sidecars with these bytes.
 
-`Screenplay.CanonicalVectors.Specs.csproj` links eight of the nine files as embedded resources:
-`full-esm-v1.json`, `full-esm-v2.json`, `full-esm-v3.json`, `full-esm-v4.json`, `full-esm-v5.json`,
+`Screenplay.CanonicalVectors.Specs.csproj` links nine of the ten files as embedded resources:
+`full-esm-v1.json`, `full-esm-v2.json`, `full-esm-v3.json`, `full-esm-v4.json`, `full-esm-v5.json`, `full-esm-v6.json`,
 `full-identity-catalog-v1.json`, `typed-contexts-v1.json`, and `unbound-handler-context-v1.json`.
 It does not link `full-expressions-v1.json`. The vectors project checks ESM and identity-catalog
 round trips and the presence of both descriptor sidecars. Do not edit the files by hand.
@@ -37,7 +38,7 @@ When a deliberate contract change alters the canonical bytes, change the source 
 SCREENPLAY_REGENERATE_GOLDEN=1 dotnet test Source/DotNET/Screenplay/Screenplay.csproj -c Debug
 ```
 
-For a v3-, v4- or v5-only regeneration, use `SCREENPLAY_REGENERATE_GOLDEN=3`, `SCREENPLAY_REGENERATE_GOLDEN=4` or `SCREENPLAY_REGENERATE_GOLDEN=5` with the same command. The `1` setting rewrites all nine files; all modes fail on purpose with
+For a v3-, v4-, v5- or v6-only regeneration, use `SCREENPLAY_REGENERATE_GOLDEN=3`, `4`, `5` or `6` with the same command. The `1` setting rewrites all ten files; all modes fail on purpose with
 `GoldenVectorsRegenerated`, so it can never pass silently in CI. Review the diff, then rebuild and rerun
 without the variable - the bytes are embedded at build time.
 

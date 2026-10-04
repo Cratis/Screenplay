@@ -22,7 +22,7 @@ public class when_coordinating_logical_fragment_replacements
     {
         var header = feature ? "feature Shared" : "module App";
         var renamedHeader = feature ? "feature Renamed" : "module Renamed";
-        var firstSource = feature ? "trigger Tick\nmodule App\n  feature Shared\n    slice StateView One" : "trigger Tick\nmodule App\n  feature One";
+        var firstSource = feature ? "import Other.Thing\nmodule App\n  feature Shared\n    slice StateView One" : "import Other.Thing\nmodule App\n  feature One";
         var secondSource = feature ? "module App\n  feature Shared\n    slice StateView Two" : "module App\n  feature Two";
         var first = WorkspaceDocument.Create("first", PortablePlayPath.Parse("a.play"), Encoding.UTF8.GetBytes(firstSource));
         var second = WorkspaceDocument.Create("second", PortablePlayPath.Parse("b.play"), Encoding.UTF8.GetBytes(secondSource));

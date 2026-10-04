@@ -107,8 +107,11 @@ reaction HandleOrder
 the same view more than once, every read needs a distinct alias; aliases must be unique within the
 trigger and must not match a trigger value. `by` must name a value taken by that trigger. Clock triggers (`every` and `at`) take no values,
 so they can use `reads <View>` but not `by`. An unknown view is reported. A reaction that invokes a
-command leaves the command's decision to that command and its own reads. Reactions are not yet bound
-in the executable semantic model; these declarations do not currently provide runtime protection.
+command leaves the command's decision to that command and its own reads. ESM v6 does not add protected
+reaction reads: a trigger with `reads` that produces directly, or has an opaque effect body, fails binding
+because its decision dependency cannot be protected. It is not admitted as an unguarded decision. An
+invocation-only reaction leaves read protection to the invoked command; it cannot use those views as
+portable mapping values.
 
 `for each <View>` is reserved for a future view-driven trigger, not part of this grammar.
 
@@ -187,12 +190,46 @@ reaction Provisioner
 is the same act wherever it happens, including `for` to say which event source it lands on.
 
 **`invokes` is a different word on purpose.** A command is not produced; it is asked for. An event is a fact
-the reaction appends and nothing can refuse it, while a command is an intent handed to something else that
-may still validate and reject it. Using `produces` for both would say those are the same kind of
+the reaction asks to append, subject to append-time constraints, while a command is an intent handed to
+something else that may authorize, validate and reject it. Using `produces` for both would say those are the same kind of
 consequence, and they are not.
 
 Both are declarations of *what happens*, not of how — a trigger can state its consequences and still carry a
 `file` or an inline block that implements them.
+
+## In the executable semantic model
+
+Reactions bind to the executable semantic model as ESM v6 ([decision 0022](https://github.com/Cratis/Screenplay/blob/main/decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md)),
+so a specification can assert what a reaction does. In the reference evaluator:
+
+- After every accepted fact, the reactions to its event run: their `produces` first, then their `invokes`,
+  in the order the trigger states them. Facts are reacted to in the order they were appended.
+- A `produces` without `for` appends to the event source of the event that set the reaction off. A clock,
+  application or built-in trigger has no such event, so what it produces needs `for` - a value it carries, or
+  literal text.
+- An `invokes` runs the command through its full pipeline - authorization, validation, requirements and
+  constraints - with no caller. A command that requires one rejects the reaction, and the rejection ends
+  the scenario. Previously accepted facts remain in the world; a failing invoked command appends none of
+  its own facts. There is no transaction around the entire cascade.
+- Invocation does not turn the command identifier into an allocated destination. Legacy plain `produces`
+  without `for` still requires an explicitly supplied allocation, which this invocation profile does not
+  provide; it returns typed `IdentityAllocation` unsupported instead of guessing.
+- Reactions to one fact run by semantic identity, and triggers within a reaction run in authored order.
+  Occurrence time propagates through the cascade. The invoking reaction is recorded as causation, not
+  as a caller audit identity. Each effect checks its audit requirements when reached; a later unsupported
+  effect does not discard earlier accepted facts or replace an earlier rejection. Bodies excluded by `where` do not run.
+- `where` guards every trigger of the reaction. Each trigger must resolve the complete condition from its
+  declared scalar values, whether or not those values are listed in the reaction's input selection. Missing
+  operands, nested paths and read aliases fail binding rather than silently removing the guard. Supported
+  comparisons, enumeration constants and logical groups use the command condition contract.
+- The scenario budget counts new accepted facts, not established history. A command batch that would exceed
+  1,000 facts is unsupported before any of its facts or projection changes enter the world. Prior accepted
+  facts remain; direct reaction and capture appends retain their individual append disposition.
+- A body in code - a `file` or an inline block - is a target's to run. Reaching one returns `SemanticUnsupported`,
+  never a guessed result. Reached opaque reducers also fail closed in v6.
+
+Durable collection fan-out, acknowledgement and delivery guarantees remain outside v6
+([#286](https://github.com/Cratis/Screenplay/issues/286)); the reference does not approximate them as success.
 
 ## Examples
 

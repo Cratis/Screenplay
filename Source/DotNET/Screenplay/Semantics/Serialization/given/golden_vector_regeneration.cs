@@ -25,7 +25,7 @@ public static class golden_vector_regeneration
     /// <summary>
     /// Gets a value indicating whether regeneration was explicitly requested.
     /// </summary>
-    public static bool IsRequested => Environment.GetEnvironmentVariable(Variable) == "1" || Environment.GetEnvironmentVariable(Variable) == "3" || Environment.GetEnvironmentVariable(Variable) == "4" || Environment.GetEnvironmentVariable(Variable) == "5";
+    public static bool IsRequested => Environment.GetEnvironmentVariable(Variable) == "1" || Environment.GetEnvironmentVariable(Variable) == "3" || Environment.GetEnvironmentVariable(Variable) == "4" || Environment.GetEnvironmentVariable(Variable) == "5" || Environment.GetEnvironmentVariable(Variable) == "6";
 
     /// <summary>
     /// Rewrites every golden vector from its source model when regeneration was requested.
@@ -42,6 +42,12 @@ public static class golden_vector_regeneration
         if (!Directory.Exists(directory))
         {
             throw new GoldenVectorsRegenerated($"The golden vector directory '{directory}' does not exist, so nothing was regenerated. Regenerate from a source checkout, not from a build with mapped source paths.");
+        }
+
+        if (Environment.GetEnvironmentVariable(Variable) == "6")
+        {
+            var name = Write(directory, "full-esm-v6.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV6()));
+            throw new GoldenVectorsRegenerated($"Golden vector regenerated ({name}) in '{directory}'. Review the diff, then rebuild and rerun without {Variable}.");
         }
 
         if (Environment.GetEnvironmentVariable(Variable) == "5")
@@ -69,6 +75,7 @@ public static class golden_vector_regeneration
             Write(directory, "full-esm-v3.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV3())),
             Write(directory, "full-esm-v4.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV4())),
             Write(directory, "full-esm-v5.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV5())),
+            Write(directory, "full-esm-v6.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV6())),
             Write(directory, "full-expressions-v1.json", SemanticModelCanonicalJson.SerializeExpressionVector(canonical_serialization_golden_vectors.CreateExpressions())),
             Write(directory, "full-identity-catalog-v1.json", SemanticIdentityCatalogSerializer.Serialize(canonical_serialization_golden_vectors.CreateIdentityCatalog())),
             Write(directory, "typed-contexts-v1.json", when_describing_typed_contexts.GoldenBytes()),

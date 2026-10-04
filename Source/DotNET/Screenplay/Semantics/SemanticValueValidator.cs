@@ -40,6 +40,21 @@ static class SemanticValueRules
         _ => false
     };
 
+    // v6 capture text operations use the same numeric grammar as semantic serialization. Other versions' text
+    // behavior is not promoted to a new numeric mode.
+    internal static string CaptureText(SemanticValue? value) => value is SemanticNumberValue number
+        ? CanonicalJson.DecimalText(number.Value)
+        : Text(value);
+
+    // The legacy text representation of a scalar.
+    internal static string Text(SemanticValue? value) => value switch
+    {
+        SemanticTextValue text => text.Value,
+        SemanticNumberValue number => number.Value.ToString(CultureInfo.InvariantCulture),
+        SemanticBooleanValue boolean => boolean.Value ? "true" : "false",
+        _ => string.Empty
+    };
+
     internal static InvalidSemanticContract Malformed() => new("A semantic value variant is malformed or unknown.");
 }
 

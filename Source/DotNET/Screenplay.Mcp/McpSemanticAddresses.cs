@@ -79,11 +79,14 @@ static class McpSemanticAddresses
             return SemanticAddress.ForApplication(application);
         }
 
-        if (kind is SemanticKind.Concept or SemanticKind.CompositeType)
+        if (kind is SemanticKind.Concept or SemanticKind.CompositeType or SemanticKind.Trigger)
         {
-            return kind == SemanticKind.Concept
-                ? SemanticAddress.ForConcept(application, parts[^1].Key)
-                : SemanticAddress.ForCompositeType(application, parts[^1].Key);
+            return kind switch
+            {
+                SemanticKind.Concept => SemanticAddress.ForConcept(application, parts[^1].Key),
+                SemanticKind.CompositeType => SemanticAddress.ForCompositeType(application, parts[^1].Key),
+                _ => SemanticAddress.ForTrigger(application, parts[^1].Key)
+            };
         }
 
         var module = Part(parts, SemanticAddressPartKind.Module);
@@ -109,6 +112,8 @@ static class McpSemanticAddresses
             SemanticKind.Projection => SemanticAddress.ForProjection(slice, name),
             SemanticKind.Query => SemanticAddress.ForQuery(slice, name),
             SemanticKind.Specification => SemanticAddress.ForSpecification(slice, name),
+            SemanticKind.Reaction => SemanticAddress.ForReaction(slice, name),
+            SemanticKind.Capture => SemanticAddress.ForCapture(slice, name),
             _ => throw new McpFailure($"Unsupported address kind '{kind}'.", -32602)
         };
     }
