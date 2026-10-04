@@ -33,8 +33,8 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
     const originalInformation = productionApi.window.showInformationMessage;
     const originalSpawn = childProcess.spawn;
     const originalWatch = nativeFs.watch;
-    type ProductEvent = { event: string; filename: string | null; at: number };
-    type ProductWatch = { root: string; watcher: fs.FSWatcher; events: number; closed: boolean; preflight: boolean; identity: fs.BigIntStats; listeners: Set<(event: ProductEvent) => void> };
+    type ProductEvent = { watcherId: number; event: string; filename: string | null; at: number };
+    type ProductWatch = { id: number; root: string; watcher: fs.FSWatcher; events: number; closed: boolean; preflight: boolean; identity: fs.BigIntStats; listeners: Set<(event: ProductEvent) => void> };
     const productWatches: ProductWatch[] = [];
     nativeFs.watch = ((file: fs.PathLike, options: fs.WatchOptions, listener: fs.WatchListener<string | Buffer>) => {
         let record: ProductWatch;
@@ -42,14 +42,14 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
             listener(event, filename); // The actual installed product callback runs first.
             if (!record) return;
             ++record.events;
-            console.log(`PRODUCT ROOT WATCH: ${JSON.stringify({ root: record.root, event, filename, at: Date.now(), events: record.events })}`);
-            for (const observed of [...record.listeners]) observed({ event, filename: filename === null ? null : filename.toString().replaceAll('\\', '/'), at: Date.now() });
+            console.log(`PRODUCT ROOT WATCH: ${JSON.stringify({ watcherId: record.id, root: record.root, event, filename, at: Date.now(), events: record.events })}`);
+            for (const observed of [...record.listeners]) observed({ watcherId: record.id, event, filename: filename === null ? null : filename.toString().replaceAll('\\', '/'), at: Date.now() });
         });
         if (options?.recursive) {
-            record = { root: String(file), watcher, events: 0, closed: false, preflight: false, identity: fs.statSync(file, { bigint: true }), listeners: new Set() };
-            console.log(`PRODUCT WATCH REGISTER: ${JSON.stringify({ root: record.root, at: Date.now(), dev: String(record.identity.dev), ino: String(record.identity.ino) })}`);
+            record = { id: productWatches.length + 1, root: String(file), watcher, events: 0, closed: false, preflight: false, identity: fs.statSync(file, { bigint: true }), listeners: new Set() };
+            console.log(`PRODUCT WATCH REGISTER: ${JSON.stringify({ watcherId: record.id, root: record.root, at: Date.now(), dev: String(record.identity.dev), ino: String(record.identity.ino) })}`);
             productWatches.push(record);
-            watcher.on('close', () => { record.closed = true; console.log(`PRODUCT WATCH CLOSE: ${JSON.stringify({ root: record.root, at: Date.now() })}`); });
+            watcher.on('close', () => { record.closed = true; console.log(`PRODUCT WATCH CLOSE: ${JSON.stringify({ watcherId: record.id, root: record.root, at: Date.now() })}`); });
         }
         return watcher;
     }) as typeof nativeFs.watch;
@@ -59,7 +59,11 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         return record;
     };
     const live = (record: ProductWatch) => {
+        assert.ok(productWatches.includes(record) && record.id > 0, 'Unknown native watcher identity cannot satisfy the oracle');
+        assert.equal(productWatch(record.root), record, 'The SAME registered native watcher owns this root, without replacement');
         assert.equal(record.closed, false, 'The SAME registered native product watcher remains live');
+        assert.equal(fs.realpathSync.native(record.root), record.root, 'Approved physical root path is unchanged');
+        assert.ok(record.identity.ino > 0n && record.identity.dev >= 0n && (process.platform !== 'win32' || record.identity.dev !== 0n), 'Native root identity must be provable');
         const identity = fs.statSync(record.root, { bigint: true });
         assert.equal(identity.dev, record.identity.dev); assert.equal(identity.ino, record.identity.ino, 'Approved physical root is unchanged');
     };
@@ -67,6 +71,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         const started = Date.now();
         const observed = (event: ProductEvent) => {
             if (event.filename !== filename) return; // Test attribution ONLY; production already received EVERY event.
+            assert.equal(event.watcherId, record.id, 'Exact child event belongs to the retained native watcher');
             clearTimeout(timer); record.listeners.delete(observed);
             console.log(`PRODUCT NESTED DELIVERY: ${JSON.stringify({ root: record.root, ...event, elapsed: Date.now() - started })}`); resolve(event);
         };
@@ -189,14 +194,26 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
                 assert.ok(old, 'A verified old token exists before native invalidation');
                 // ONE modification of a PREEXISTING nested file. Root-only notifications
                 // cannot satisfy attribution; every callback still reaches production first.
-                const event = await observeProduct(record, 'nested/watcher-existing.txt', () => fs.writeFileSync(path.join(record.root, 'nested', 'watcher-existing.txt'), 'one nested change'));
-                assert.equal(event.event, 'change'); live(record);
+                const nested = path.join(record.root, 'nested', 'watcher-existing.txt');
+                const before = fs.readFileSync(nested);
+                const beforeIdentity = fs.statSync(nested, { bigint: true });
+                const event = await observeProduct(record, 'nested/watcher-existing.txt', () => fs.writeFileSync(nested, 'one nested change'));
+                assert.ok(event.event === 'rename' || event.event === 'change', 'Native child updates may report rename OR change');
+                assert.equal(event.filename, 'nested/watcher-existing.txt', 'Root-only or different-filename events cannot satisfy the oracle');
+                const after = fs.readFileSync(nested);
+                assert.notDeepEqual(after, before, 'Actual nested bytes changed, not merely an unrelated notification');
+                assert.equal(after.toString(), 'one nested change');
+                const afterIdentity = fs.statSync(nested, { bigint: true });
+                live(record); // Child inode replacement is permitted; physical ROOT replacement is not.
                 const previous = propose; propose = 'Propose and preview';
                 const writes = dispatched;
                 await vscode.commands.executeCommand(old.command, ...(old.arguments ?? []));
                 propose = previous;
                 assert.ok(warnings.some(message => /StaleSelection|StaleEpoch/.test(message)), 'Old discovery token is refused after the actual native event');
-                assert.equal(dispatched, writes); warnings.length = 0;
+                assert.equal(dispatched, writes);
+                live(record);
+                console.log(`PRODUCT CHILD UPDATE AUTHORITY INVALIDATED: ${JSON.stringify({ watcherId: record.id, root: record.root, event, bytesChanged: true, childInodeBefore: String(beforeIdentity.ino), childInodeAfter: String(afterIdentity.ino), rootInode: String(record.identity.ino), oldAuthorityRefusals: warnings, applyFrames: dispatched - writes, freshAuthority: false })}`);
+                warnings.length = 0;
 
                 // Hold a REAL open-workspace response while the ACTUAL installed provider
                 // enters. Both consumers must join the same newly validated RPC read.
