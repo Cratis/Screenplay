@@ -57,7 +57,9 @@ module Sales
 That looks right. Apply the proposal.
 ```
 
-Your client asks for approval of `apply`; accept it. The server writes the `.play`
+Your client may ask for approval of `apply`; accept it. To skip the back and forth, say
+so up front: "Apply each change when it looks right" lets the assistant propose, check
+the result and apply without asking each time. The server writes the `.play`
 files and `.screenplay/identities.json` together. Commit both. Because `apply` is
 bound to the model's revision, a second `apply` of the same proposal is rejected;
 ask for a fresh proposal instead.
@@ -85,9 +87,11 @@ Add a state-view slice that lists the books currently on loan, built from
 BookBorrowed and BookReturned. Add a screen for it that a librarian can see.
 ```
 
-The server validates every proposal against the language's syntax schemas, so a
-construct the language does not have is rejected with a reason instead of being
-written to disk.
+Say "apply it when you're done" in the prompt, or at the start of the session, and
+the assistant applies the proposal once it checks out; a board open in fullscreen shows
+each change as it lands. The server validates every proposal against the language's
+syntax schemas, so a construct the language does not have is rejected with the
+diagnostic codes and locations instead of being written to disk.
 
 ## Sketch before you commit to it
 

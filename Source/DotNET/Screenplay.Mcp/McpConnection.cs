@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using System.Text;
 using System.Text.Json;
 
@@ -9,11 +10,15 @@ namespace Cratis.Screenplay.Mcp;
 sealed class McpConnection(McpTools tools, McpAppResources apps)
 {
     internal const int MaximumRequestCharacters = 32 * 1024 * 1024;
+    internal const string RootsRequestId = "screenplay-roots";
     const string VisualInstructions = " This host renders views: visualize-model draws the application as an event model board. Pass a proposalId to show what a proposal would change before apply, or sketch documents to draw a what-if that is never written.";
 
     bool _initialized;
     bool _ready;
     bool _visual;
+    bool _clientSupportsRoots;
+    bool _fetchingRoots;
+    ImmutableArray<string> _clientRootUris = [];
 
     internal McpConnection(McpTools tools)
         : this(tools, McpAppResources.FromAssembly())
@@ -24,7 +29,7 @@ sealed class McpConnection(McpTools tools, McpAppResources apps)
     {
         while (ReadLine(input) is { } line)
         {
-            var response = Handle(line);
+            var response = Handle(line, input, output);
             if (response is not null)
             {
                 output.WriteLine(response);
@@ -33,7 +38,7 @@ sealed class McpConnection(McpTools tools, McpAppResources apps)
         }
     }
 
-    internal string? Handle(string line)
+    internal string? Handle(string line, TextReader? input = null, TextWriter? output = null)
     {
         object? id = null;
         try
@@ -70,6 +75,12 @@ sealed class McpConnection(McpTools tools, McpAppResources apps)
                 if (name == "notifications/initialized" && _initialized)
                 {
                     _ready = true;
+                    FetchClientRoots(input, output);
+                }
+
+                if (name == "notifications/roots/list_changed" && _ready)
+                {
+                    RefetchClientRoots(input, output);
                 }
 
                 // Notifications never receive responses, including unsupported notifications.
@@ -149,6 +160,7 @@ sealed class McpConnection(McpTools tools, McpAppResources apps)
             _ = McpJson.RequiredString(clientInfo, "name");
             _ = McpJson.RequiredString(clientInfo, "version");
             _initialized = true;
+            _clientSupportsRoots = capabilities.TryGetProperty("roots", out var rootsCapability) && rootsCapability.ValueKind == JsonValueKind.Object;
 
             // Views are offered only to a host that renders them; every other client sees the same server as before.
             _visual = apps.Available && McpAppResources.Supports(capabilities);
@@ -164,7 +176,7 @@ sealed class McpConnection(McpTools tools, McpAppResources apps)
                     }
                     : new Dictionary<string, object> { ["tools"] = new { listChanged = false } },
                 serverInfo = new { name = "cratis.screenplay", version = typeof(McpConnection).Assembly.GetName().Version!.ToString() },
-                instructions = "Read full Screenplay syntax, discover syntax-schema, open a revision-bound workspace, and use read-ast handles with propose-ast for typed edits. Source authoring acceptance is separate from executable readiness. Review exact bytes with read-proposal; identity state persists on apply, and export-workspace is optional for portable transfer or backup. Only apply and explicit recover-workspace may write source. The root must be trusted and exclusively owned during apply or recovery; rollback is not crash-atomic." + (_visual ? VisualInstructions : string.Empty)
+                instructions = "Read full Screenplay syntax, discover syntax-schema, open a revision-bound workspace, and use read-ast handles with propose-ast for typed edits. Readiness separates verdicts: readiness.state empty is a valid start, readiness.authoringAccepted is the authoring verdict, and executableReady describes the current ESM executable subset only. A dynamic server picks its root at open-workspace: an explicit path wins, then the client's single root, then the working directory. Review exact bytes with read-proposal; identity state persists on apply, and export-workspace is optional for portable transfer or backup. Only apply and explicit recover-workspace may write source; both are journaled and recoverable, so hosts need not confirm them each time. The root must be trusted and exclusively owned during apply or recovery; rollback is not crash-atomic." + (_visual ? VisualInstructions : string.Empty)
             };
         }
 
@@ -182,5 +194,103 @@ sealed class McpConnection(McpTools tools, McpAppResources apps)
             "resources/read" when _visual => apps.Read(parameters),
             _ => throw new McpFailure($"Unknown method '{method}'.", -32601)
         };
+    }
+
+    // Asks a host that advertises the roots capability which roots it offers, so a dynamic server can pick
+    // one at open-workspace time. Runs once after initialization and again whenever the host reports change.
+    void FetchClientRoots(TextReader? input, TextWriter? output)
+    {
+        if (_fetchingRoots || input is null || output is null || !_clientSupportsRoots || !tools.DynamicRoot)
+        {
+            return;
+        }
+
+        _fetchingRoots = true;
+        try
+        {
+            var uris = new List<string>();
+            string? cursor = null;
+            do
+            {
+                var request = new Dictionary<string, object>
+                {
+                    ["jsonrpc"] = "2.0",
+                    ["id"] = RootsRequestId,
+                    ["method"] = "roots/list",
+                    ["params"] = cursor is null ? [] : new Dictionary<string, object> { ["cursor"] = cursor }
+                };
+                output.WriteLine(JsonSerializer.Serialize(request, McpJson.Options));
+                output.Flush();
+
+                JsonElement response;
+                while (true)
+                {
+                    var line = ReadLine(input) ?? throw new McpFailure("The client closed the connection while answering roots/list.");
+                    using var document = JsonDocument.Parse(line);
+                    var candidate = document.RootElement.Clone();
+                    if (candidate.ValueKind == JsonValueKind.Object &&
+                        candidate.TryGetProperty("id", out var identifier) && identifier.ValueKind == JsonValueKind.String &&
+                        identifier.GetString() == RootsRequestId && !candidate.TryGetProperty("method", out _))
+                    {
+                        response = candidate;
+                        break;
+                    }
+
+                    // Another client message arrived while the answer was pending; answer it and keep waiting.
+                    var forwarded = Handle(line, input, output);
+                    if (forwarded is not null)
+                    {
+                        output.WriteLine(forwarded);
+                        output.Flush();
+                    }
+                }
+
+                if (response.TryGetProperty("error", out var failure))
+                {
+                    throw new McpFailure($"The client refused roots/list: {failure.GetRawText()}");
+                }
+
+                var result = response.GetProperty("result");
+                if (!result.TryGetProperty("rootInfos", out var infos) || infos.ValueKind != JsonValueKind.Array)
+                {
+                    throw new McpFailure("The client answered roots/list without a rootInfos array.");
+                }
+
+                foreach (var info in infos.EnumerateArray())
+                {
+                    uris.Add(McpJson.RequiredString(info, "uri"));
+                }
+
+                cursor = result.TryGetProperty("nextCursor", out var next) && next.ValueKind == JsonValueKind.String ? next.GetString() : null;
+            }
+            while (cursor is not null);
+
+            tools.ClientRoots = [.. uris];
+            _clientRootUris = [.. uris];
+        }
+        finally
+        {
+            _fetchingRoots = false;
+        }
+    }
+
+    void RefetchClientRoots(TextReader? input, TextWriter? output)
+    {
+        var derived = tools.ClientDerivedRootPath;
+        FetchClientRoots(input, output);
+        if (derived is null)
+        {
+            return;
+        }
+
+        // A binding that came from the client's roots survives only while the host still offers it.
+        var stillOffered = _clientRootUris.Any(uri =>
+            Uri.TryCreate(uri, UriKind.Absolute, out var parsed) &&
+            string.Equals(parsed.Scheme, "file", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(Uri.UnescapeDataString(parsed.AbsolutePath), derived, StringComparison.OrdinalIgnoreCase));
+        if (!stillOffered)
+        {
+            tools.UnbindClientRoot(derived);
+        }
     }
 }

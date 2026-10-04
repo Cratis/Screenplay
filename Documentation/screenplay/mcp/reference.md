@@ -11,7 +11,9 @@ and [Edit a model](edit.md) for prompts.
 ## Installation and scope
 
 The server is included in the `cratis/screenplay` Docker image and in the
-`Cratis.Screenplay.Tool` .NET tool. It runs as `screenplay mcp <root>`:
+`Cratis.Screenplay.Tool` .NET tool. It runs as `screenplay mcp <root>`, or as `screenplay mcp` alone, which picks the model
+folder per workspace from `open-workspace`'s `path`, the client's roots or the working
+directory ([choose where the model lives](install.md#choose-where-the-model-lives)):
 
 ```bash
 docker run -i --rm -v "$PWD/specifications:/model" cratis/screenplay mcp /model
@@ -138,7 +140,7 @@ is canonicalized.
 
 | Tool | Required arguments | Optional arguments |
 | --- | --- | --- |
-| `open-workspace` | None | `applicationName`, `workspaceJson`, `includeContent` |
+| `open-workspace` | None | `applicationName`, `path`, `workspaceJson`, `includeContent` |
 | `read-workspace` | `expectedRevision` | view (`source-map` for compiler source locations; `repairs` for typed diagnostic repairs; `implementation-requirements` for code attachment requirements; `executable-model` for canonical ESM bytes), offset, limit, `expectedModelRevision`, `expectedAttachmentManifestRevision` |
 | `read-ast` | `expectedRevision` | documentId, path, kind, name, semanticId, view, includeContent, offset, limit |
 | `propose` | Expected workspace/catalog revisions, operations | Explicit migrations/retirements, includeContent; legacy single-operation form supported |

@@ -11,9 +11,10 @@ static class McpCommand
     internal static int Run(string[] arguments)
     {
         var createRoot = arguments is ["mcp", "--create-root", _];
-        if (arguments.Length != 2 && !createRoot)
+        var runWithoutRoot = arguments is ["mcp"];
+        if (arguments.Length != 2 && !createRoot && !runWithoutRoot)
         {
-            Console.Error.WriteLine("Usage: screenplay mcp <root-directory> | --create-root <directory>");
+            Console.Error.WriteLine("Usage: screenplay mcp [<root-directory>] | --create-root <directory>");
             return 2;
         }
 
@@ -21,12 +22,12 @@ static class McpCommand
         {
             Console.InputEncoding = new UTF8Encoding(false, true);
             Console.OutputEncoding = new UTF8Encoding(false, true);
-            var root = arguments[^1];
+            var root = runWithoutRoot ? null : arguments[^1];
             if (createRoot)
             {
                 // Desktop plugins have a host-owned data directory, not a user-config dialog.
                 // Only this explicit opt-in creates a new model; ordinary MCP startup is unchanged.
-                Directory.CreateDirectory(root);
+                Directory.CreateDirectory(root!);
             }
             ScreenplayMcpServer.Run(root, Console.In, Console.Out);
             return 0;

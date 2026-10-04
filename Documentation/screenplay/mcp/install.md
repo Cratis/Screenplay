@@ -119,6 +119,31 @@ MCP server.
 
 Host developers can consult the [embedding API](reference.md#embedding-api).
 
+## Choose where the model lives
+
+You rarely have to. When the server starts without a root, it picks the folder the
+first time it needs one:
+
+1. A `path` the assistant passes to `open-workspace`, which also switches to another
+   folder in the same session.
+2. The folder your MCP client offers through its workspace roots, when the client
+   offers exactly one. When it offers several, the assistant is told to choose with
+   `path`. When the client changes its roots, a folder bound from them is let go.
+3. The folder the server was launched from, when it already holds `.play` files or a
+   `.screenplay` folder. This is what a terminal client such as Claude Code or Pi
+   gives you: start it in the project and the model is the project.
+
+```bash
+screenplay mcp
+```
+
+If none of these applies, the server says so and asks for a path instead of guessing
+at your home folder. In Claude and ChatGPT desktop the host manages the files, so
+the model lives wherever the host puts them, and `open-workspace` with
+`workspaceJson` carries a model between sessions.
+
+Pass a root, as below, when you want one fixed folder for every session.
+
 ## Choose one application root
 
 Create a directory for a new model, or use an existing directory containing its
@@ -303,8 +328,11 @@ Configure `docker` with the same arguments in the client's stdio server
 configuration. Do not add flags that write to standard output; the server's
 output must carry only protocol messages.
 
-Keep approval enabled for `apply` and `recover-workspace`. Read, inspection and
-proposal tools do not publish source changes; those two tools do.
+Read, inspection and proposal tools do not publish source changes; `apply` and
+`recover-workspace` do. The server does not mark them destructive, because both are
+journaled and recoverable, so a client that confirms every destructive call does not
+ask each time. Keep approval on for them where you want a deliberate step, and
+allow them where you would rather just say what you want.
 
 ## Use the .NET tool instead
 

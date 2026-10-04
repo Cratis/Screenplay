@@ -161,7 +161,10 @@ Cratis branding and the same self-contained binary. The stdio command is a singl
 Commands do not interpolate `${PLUGIN_ROOT}`; this follows the portable specification.
 Arguments use `${PLUGIN_DATA}/model`, a host-provided persistent data location.
 The explicit `mcp --create-root` launch creates that initially empty application.
-Normal `screenplay mcp ROOT` startup still requires an existing root.
+Normal `screenplay mcp ROOT` startup still requires an existing root. `screenplay mcp` with no
+root starts a dynamic server that binds a root on first use: `open-workspace` `path`, then the
+client's single `roots/list` root (re-read on `notifications/roots/list_changed`), then the
+working directory when it holds `.play` files or `.screenplay`.
 
 For an existing model, the CLI installer supplies `--model-root DIRECTORY` and
 configures the owned package's arguments to launch that directory without creation.

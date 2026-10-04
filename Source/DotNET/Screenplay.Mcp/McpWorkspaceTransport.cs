@@ -17,6 +17,7 @@ static class McpWorkspaceTransport
     {
         var diagnostics = workspace.Compilation.Diagnostics.ToArray();
         var source = workspace.Documents.IsEmpty ? null : McpWorkspaceAnalysis.For(workspace).Source.Compilation;
+        var sourceDiagnosticCount = source?.Diagnostics.Count() ?? 0;
         return new
         {
             revision = workspace.Revision.ToString(),
@@ -38,7 +39,8 @@ static class McpWorkspaceTransport
                 maximumStructuredResponseBytes = McpJson.MaximumStructuredResponseBytes
             },
             identityPersistence = "root-local-on-apply",
-            identityStatePath = ".screenplay/identities.json"
+            identityStatePath = ".screenplay/identities.json",
+            readiness = Readiness(workspace, source?.Success ?? true, sourceDiagnosticCount, diagnostics.Length)
         };
     }
 
@@ -79,4 +81,41 @@ static class McpWorkspaceTransport
     }
 
     static string Export(ScreenplayWorkspace workspace) => Encoding.UTF8.GetString(ExportBytes(workspace));
+
+    // Authoring acceptance and executable readiness are separate verdicts: a full-language model the compiler
+    // accepts authoring-side reports executable debt without being called broken, and an empty root is a valid start.
+    static object Readiness(ScreenplayWorkspace workspace, bool sourceSuccess, int authoringDiagnosticCount, int executableDiagnosticCount)
+    {
+        var empty = workspace.Documents.IsEmpty;
+        var authoringAccepted = empty || sourceSuccess;
+        var state = "invalid";
+        if (empty)
+        {
+            state = "empty";
+        }
+        else if (authoringAccepted)
+        {
+            state = "authored";
+        }
+
+        string? note = null;
+        if (empty)
+        {
+            note = "An empty workspace is a valid starting point; create the first document with propose-ast.";
+        }
+        else if (authoringAccepted && !workspace.Compilation.Success)
+        {
+            note = "Authoring is accepted; executableReady describes the current ESM executable subset only.";
+        }
+
+        return new
+        {
+            state,
+            authoringAccepted,
+            executableReady = workspace.Compilation.Success,
+            authoringDiagnosticCount,
+            executableDiagnosticCount,
+            note
+        };
+    }
 }

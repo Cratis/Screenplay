@@ -29,7 +29,7 @@ internal sealed partial class McpWorkspaces
             return Rejected(workspace.ProposeAuthoring(request));
         }
 
-        root.Verify(workspace);
+        Root.Verify(workspace);
         var code = McpJson.RequiredString(arguments, "diagnosticCode");
         var subject = McpAstHandles.Read(arguments.GetProperty("subject"));
         var result = WorkspaceDiagnosticRepairs.ProposeRepair(workspace, code, subject, request);
@@ -58,7 +58,7 @@ internal sealed partial class McpWorkspaces
             return Rejected(workspace.ProposeAuthoring(request));
         }
 
-        root.Verify(workspace);
+        Root.Verify(workspace);
         var index = McpWorkspaceAnalysis.For(workspace).Syntax;
         var edits = layout ? LayoutOperations(workspace, index, McpJson.OptionalString(arguments, "layout") ?? "slice")
             : (McpAstOperations.Read(arguments, index), McpAstOperations.Documents(arguments));
