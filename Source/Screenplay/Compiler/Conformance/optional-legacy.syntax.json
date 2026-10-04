@@ -89,7 +89,8 @@
                           }
                         }
                       ],
-                      "tags": []
+                      "tags": [],
+                      "when": null
                     }
                   ],
                   "properties": [
@@ -184,6 +185,7 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "id",
+                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -196,6 +198,10 @@
                     {
                       "kind": "QueryParameterSyntax",
                       "name": "note",
+                      "source": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "note"
+                      },
                       "type": {
                         "kind": "TypeRefSyntax",
                         "isCollection": false,
@@ -247,7 +253,8 @@
                         "name": "Notified"
                       }
                     }
-                  ]
+                  ],
+                  "where": null
                 }
               ],
               "readModels": [
@@ -284,6 +291,8 @@
     }
   ],
   "personas": [],
+  "policies": [],
+  "seeds": [],
   "systems": [],
   "types": [
     {

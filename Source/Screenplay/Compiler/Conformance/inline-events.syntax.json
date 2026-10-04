@@ -77,7 +77,8 @@
                           }
                         }
                       ],
-                      "tags": []
+                      "tags": [],
+                      "when": null
                     }
                   ],
                   "properties": [
@@ -132,6 +133,8 @@
     }
   ],
   "personas": [],
+  "policies": [],
+  "seeds": [],
   "systems": [],
   "types": []
 }

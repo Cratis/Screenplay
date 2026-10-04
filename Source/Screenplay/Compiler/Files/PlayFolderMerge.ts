@@ -10,6 +10,7 @@ import { AuthorizeSyntax, PersonaSyntax } from '../Syntax/Authorization';
 import { ConceptSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { ApplicationSyntax, FeatureSyntax, ModuleSyntax } from '../Syntax/Structure';
 import { toSyntaxJson } from '../Syntax/SyntaxJson';
+import { isAuthoredDocument, legacySourceOptions } from '../Syntax/SourceOptions';
 
 // "The documents of a folder are one document": modules and features with the same name combine, and a
 // name declared in two files is reported - the port of the C# PlayFolderMerge for what this compiler
@@ -17,6 +18,11 @@ import { toSyntaxJson } from '../Syntax/SyntaxJson';
 export function mergeDocuments(documents: readonly CompilationResult<ApplicationSyntax>[]): CompilationResult<ApplicationSyntax> {
     const diagnostics: Diagnostic[] = [];
     const applications = documents.map(document => document.value);
+    const asserted = applications.filter(application => application.sourceOptions?.numericMode !== undefined && application.sourceOptions.numericMode !== 'legacy' || hasDeclarations(application));
+    const sourceOptions = asserted[0]?.sourceOptions ?? legacySourceOptions;
+    for (const application of asserted.slice(1)) {
+        if ((application.sourceOptions ?? legacySourceOptions).numericMode !== sourceOptions.numericMode) diagnostics.push(error(DiagnosticCodes.MixedNumericModes, 'Declaration-bearing documents and marked import barrels must independently select the same numeric mode.', application.location));
+    }
     const named = new Map<string, SourceLocation>();
     const concepts = declaredInOneFile<ConceptSyntax>(applications.flatMap(application => application.concepts), 'declaration of', diagnostics, undefined, named);
     const types = declaredInOneFile<TypeSyntax>(applications.flatMap(application => application.types), 'declaration of', diagnostics, undefined, named);
@@ -30,6 +36,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     const personas = declaredInOneFile<PersonaSyntax>(applications.flatMap(application => application.personas), 'persona', diagnostics);
     const value: ApplicationSyntax = {
         kind: 'ApplicationSyntax',
+        sourceOptions,
         domain: domains[0] ?? null,
         imports: firstOfEach(applications.flatMap(application => application.imports), item => item.qualifiedName),
         concepts,
@@ -37,11 +44,20 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         systems: applications.flatMap(application => application.systems ?? []),
         modules,
         personas,
+        policies: applications.flatMap(application => application.policies ?? []),
+        seeds: applications.flatMap(application => application.seeds ?? []),
         fileImports: applications.flatMap(application => application.fileImports),
         location: applications[0]?.location ?? { line: 1, column: 1 },
     };
     const all = [...documents.flatMap(document => document.diagnostics), ...diagnostics];
     return { value, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error') };
+}
+
+function hasDeclarations(application: ApplicationSyntax): boolean {
+    if (isAuthoredDocument(application)) return true;
+    if (application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.policies?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0) return true;
+    const feature = (node: FeatureSyntax): boolean => !node.isPlacement || node.slices.length > 0 || node.features.some(feature);
+    return application.modules.some(module => !module.isPlacement || module.features.some(feature));
 }
 
 function mergeModules(modules: readonly ModuleSyntax[], diagnostics: Diagnostic[]): ModuleSyntax[] {

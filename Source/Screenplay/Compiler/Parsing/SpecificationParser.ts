@@ -18,6 +18,7 @@ import { ParserContext } from './ParserContext';
 import { rejectOperationChildren } from './OperationParser';
 import { generatedFixturePattern, generatedFixturePrefix, parseConcreteMapping, parseReturn, thenReturnsPrefix } from './SpecificationResponseParser';
 import { locationOf, SourceLine } from './SourceLine';
+import { SpecificationAbsentReadModelSyntax, SpecificationQuerySyntax } from '../Syntax/Specifications';
 
 const operationStepPrefix = pattern('^(?:given\\s+operation|then\\s+(?:operation|compensated))(?:\\s|$)');
 const operationStep = pattern('^(given operation|then operation|then compensated)\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)(\\s+fails)?$');
@@ -60,6 +61,8 @@ interface SpecificationBody {
     thenEventsInAnyOrder: boolean;
     thenReadModels: SpecificationReadModelSyntax[];
     thenErrors: SpecificationErrorSyntax[];
+    thenAbsentReadModels: SpecificationAbsentReadModelSyntax[];
+    thenQueries: SpecificationQuerySyntax[];
     givenClock: SpecificationClockSyntax | null;
     givenCaptures: SpecificationCaptureSyntax[];
     whenClock: SpecificationClockSyntax | null;
@@ -81,7 +84,7 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
         context.error(DiagnosticCodes.InvalidSpecificationDeclaration, `Invalid specification declaration '${line.content}' - expected 'specification <Name>'`, locationOf(line));
     }
     const body: SpecificationBody = {
-        givenOperationFailures: [], thenOperations: [], thenCompensated: [],
+        givenOperationFailures: [], thenOperations: [], thenCompensated: [], thenAbsentReadModels: [], thenQueries: [],
         given: [], givenReadModels: [], when: null, whenAppended: null, whenDeclared: false,
         thenEvents: [], thenEventsInAnyOrder: false, thenReadModels: [], thenErrors: [],
         givenClock: null, givenCaptures: [], whenClock: null, whenTrigger: null, whenCapture: null, whenQuery: null, thenResults: [], thenNoResult: null, thenDenied: null, thenReturns: null,
@@ -106,7 +109,7 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
         }
     }
     const { whenDeclared: _, ...members } = body;
-    return { kind: 'SpecificationSyntax', name, ...members, location: locationOf(line) };
+    return { kind: 'SpecificationSyntax', sourceOptions: context.sourceOptions, name, ...members, location: locationOf(line) };
 }
 
 function parseOperationStep(context: ParserContext, line: SourceLine, body: SpecificationBody): boolean {
@@ -259,9 +262,31 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
         context.skipBlock(line.indent);
         return;
     }
-    if (thenNoPrefix.test(line.content) || thenQueryPrefix.test(line.content)) {
-        // Absence and query assertions are not modeled.
+    if (thenNoPrefix.test(line.content)) {
+        const match = /^then\s+no\s+readmodel\s+([A-Z]\w*)\s+for\s+(.+)$/.exec(line.content);
+        if (match !== null && !match[2].endsWith(' exactly')) {
+            const key = parseMappingSource(match[2].trim(), locationOf(line), context.valueContext);
+            if (key.kind === 'LiteralExpressionSyntax' || key.kind === 'ObjectExpressionSyntax') body.thenAbsentReadModels.push({ kind: 'SpecificationAbsentReadModelSyntax', name: match[1], key, location: locationOf(line) });
+        }
         context.skipOpaqueBlock(line.indent);
+        return;
+    }
+    if (thenQueryPrefix.test(line.content)) {
+        const match = /^then\s+query\s+([A-Za-z_]\w*(?:\.\w+)*)(\s+exactly)?$/.exec(line.content);
+        if (match === null) { context.skipOpaqueBlock(line.indent); return; }
+        const args: PropertyMappingSyntax[] = [];
+        const results: SpecificationQueryResultSyntax[] = [];
+        let hasArguments = false;
+        for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
+            context.reader.takeSignificant();
+            if (child.content === 'arguments') {
+                if (!hasArguments) args.push(...parseValues(context.valueContext, child));
+                else context.skipOpaqueBlock(child.indent);
+                hasArguments = true;
+            } else if (child.content === 'result') results.push({ kind: 'SpecificationQueryResultSyntax', properties: parseValues(context.valueContext, child), exactly: false, location: locationOf(child) });
+            else context.skipOpaqueBlock(child.indent);
+        }
+        body.thenQueries.push({ kind: 'SpecificationQuerySyntax', query: match[1], arguments: args, results, exactly: match[2] !== undefined, location: locationOf(line) });
         return;
     }
     if (readModelPrefix.test(line.content)) {

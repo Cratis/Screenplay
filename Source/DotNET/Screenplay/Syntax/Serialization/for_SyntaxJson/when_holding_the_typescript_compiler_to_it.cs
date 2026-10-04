@@ -71,15 +71,38 @@ public class when_holding_the_typescript_compiler_to_it : Specification
                 {
                     string[] required = actualKind.GetString() switch
                     {
-                        "ApplicationSyntax" => ["systems"],
+                        "ApplicationSyntax" => ["systems", "policies", "seeds"],
                         "SliceSyntax" => ["operations"],
-                        "ProducesSyntax" => ["inlineOperation"],
+                        "ProducesSyntax" => ["inlineOperation", "when"],
+                        "ProjectionSyntax" => ["key"],
+                        "LiteralExpressionSyntax" when actual.GetProperty("value").ValueKind == JsonValueKind.Object => ["value"],
+                        "ConceptSyntax" => ["validations"],
+                        "DeclarativeValidateSyntax" => ["requirements"],
+                        "CodeValidateSyntax" => ["code"],
+                        "QueryParameterSyntax" => ["source"],
+                        "ReactionSyntax" => ["where"],
+                        "InvokesSyntax" => ["mappings"],
+                        "FromSyntax" => ["key", "parentKey"],
+                        "EventSpecSyntax" or "ProjectionEntersOnSyntax" or "RemoveViaJoinSyntax" => ["key"],
+                        "RemoveWithSyntax" => ["key", "parentKey"],
+                        "ChildrenSyntax" => ["identifiedBy"],
+                        "SetMappingSyntax" => ["source"],
+                        "AddMappingSyntax" or "SubtractMappingSyntax" => ["value"],
+                        "CaptureSyntax" or "CaptureChildrenSyntax" or "CaptureNestedSyntax" => ["map"],
+                        "CaptureAppendSyntax" => ["when", "mappings", "tags"],
+                        "ExpressionKeySyntax" or "CompositeKeySyntax" or "KeyPartSyntax" or
+                        "TemplateExpressionSyntax" or "TemplateInterpolationSyntax" or "TemplateTextSyntax" or
+                        "EventSourceIdExpressionSyntax" or "EventContextExpressionSyntax" or "CausedByExpressionSyntax" or
+                        "CaptureMapEntrySyntax" or "CaptureTranslationSyntax" or "CaptureSplitSyntax" or "CaptureWhenSyntax" or
+                        "PolicySyntax" or "AuthenticatedConditionSyntax" or "RoleConditionSyntax" or "ClaimConditionSyntax" or
+                        "LogicalPolicyConditionSyntax" or "SpecificationAbsentReadModelSyntax" or "SpecificationQuerySyntax" or "SeedSyntax" or "SeedGroupSyntax" or "SeedEventSyntax" or "RequirementSyntax" or
+                        "ComparisonConditionSyntax" or "LogicalConditionSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "SystemSyntax" or "OperationSyntax" or "OperationPhaseSyntax" or "SpecificationOperationFailureSyntax" or "SpecificationOperationSyntax" or "SpecificationCompensatedSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "PropertySyntax" => ["isGenerated"],
                         "CommandSyntax" => ["response", "handler"],
                         "HandlerSyntax" or "ImplementationSyntax" or "ImplementationHintSyntax" or "FileReferenceSyntax" or "CodeBlockSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "SpecificationCommandSyntax" => ["generatedValues"],
-                        "SpecificationSyntax" => ["thenReturns", "thenDenied", "givenOperationFailures", "thenOperations", "thenCompensated"],
+                        "SpecificationSyntax" => ["thenReturns", "thenDenied", "givenOperationFailures", "thenOperations", "thenCompensated", "thenAbsentReadModels", "thenQueries"],
                         "ScalarCommandResponseSyntax" or "RecordCommandResponseSyntax" or "ResponseFieldSyntax" or "PropertyResponseSourceSyntax" or "ScalarSpecificationReturnSyntax" or "RecordSpecificationReturnSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         _ => []
                     };

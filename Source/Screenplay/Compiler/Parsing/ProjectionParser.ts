@@ -4,9 +4,11 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import {
     AutoMapMode, ChildrenSyntax, ClearWithSyntax, EventSpecSyntax, FromSyntax, JoinEventSyntax, JoinSyntax, MappingKind, MappingSyntax, NestedSyntax,
-    ProjectionBlockSyntax, ProjectionEntersOnSyntax, ProjectionSyntax, ProjectionVariantSyntax,
+    KeyPartSyntax, KeySyntax, ProjectionBlockSyntax, ProjectionEntersOnSyntax, ProjectionSyntax, ProjectionVariantSyntax,
 } from '../Syntax/Projections';
+import { ExpressionSyntax } from '../Syntax/Expressions';
 import { pattern } from '../Text/patterns';
+import { parseProjectionExpression } from './ProjectionExpressionParser';
 import { isFileDirective } from './FileReferences';
 import { firstWord, splitTopLevel, unescapeIdentifier } from './LineText';
 import { ParserContext } from './ParserContext';
@@ -42,11 +44,12 @@ export function parseProjection(context: ParserContext, line: SourceLine): Proje
     if (match === null) {
         context.error(DiagnosticCodes.InvalidProjectionDeclaration, `Invalid projection declaration '${line.content}' - expected 'projection <Name> [=> <ReadModel>]'`, locationOf(line));
         context.skipBlock(line.indent);
-        return { kind: 'ProjectionSyntax', name: firstWord(line.content), readModel: null, sequence: null, autoMap: 'Inherit', blocks: [], location: locationOf(line) };
+        return { kind: 'ProjectionSyntax', sourceOptions: context.sourceOptions, name: firstWord(line.content), readModel: null, sequence: null, autoMap: 'Inherit', blocks: [], location: locationOf(line) };
     }
     const name = match[1];
     let sequence: string | null = null;
     let autoMap: AutoMapMode = 'Inherit';
+    let key: KeySyntax | null = null;
     const blocks: ProjectionBlockSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
@@ -61,7 +64,7 @@ export function parseProjection(context: ParserContext, line: SourceLine): Proje
         } else if (child.content === 'no automap') {
             autoMap = 'Disabled';
         } else if (keyword === 'key') {
-            skipKey(context, child);
+            key = parseKey(context, child);
         } else if (keyword === 'variant') {
             blocks.push(parseVariant(context, child));
         } else {
@@ -75,7 +78,7 @@ export function parseProjection(context: ParserContext, line: SourceLine): Proje
     if (blocks.length === 0) {
         context.error(DiagnosticCodes.EmptyProjection, `Projection '${name}' must contain at least one directive`, locationOf(line));
     }
-    return { kind: 'ProjectionSyntax', name, readModel: match[2] ?? null, sequence, autoMap, blocks, location: locationOf(line) };
+    return { kind: 'ProjectionSyntax', sourceOptions: context.sourceOptions, name, readModel: match[2] ?? null, sequence, autoMap, key, blocks, location: locationOf(line) };
 }
 
 function reportVariantConflicts(context: ParserContext, blocks: readonly ProjectionBlockSyntax[], name: string): void {
@@ -148,19 +151,19 @@ function parseFrom(context: ParserContext, line: SourceLine): FromSyntax {
             context.error(DiagnosticCodes.InvalidEventReference, `Invalid event reference '${text}'`, locationOf(line));
             continue;
         }
-        events.push({ kind: 'EventSpecSyntax', event: unescapeIdentifier(match[1]), location: locationOf(line) });
+        events.push({ kind: 'EventSpecSyntax', event: unescapeIdentifier(match[1]), key: match[2] === undefined ? null : parseProjectionExpression(match[2], locationOf(line), context), location: locationOf(line) });
     }
     const mappings: MappingSyntax[] = [];
+    let key: KeySyntax | null = null;
+    let parentKey: ExpressionSyntax | null = null;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const keyword = firstWord(child.content);
-        if (keyword === 'key') {
-            skipKey(context, child);
-        } else if (keyword !== 'parent') {
-            pushMapping(child, mappings);
-        }
+        if (keyword === 'key') key = parseKey(context, child);
+        else if (keyword === 'parent') parentKey = parseProjectionExpression(child.content.substring('parent'.length), locationOf(child), context);
+        else pushMapping(context, child, mappings);
     }
-    return { kind: 'FromSyntax', events, mappings, location: locationOf(line) };
+    return { kind: 'FromSyntax', events, key, parentKey, mappings, location: locationOf(line) };
 }
 
 function parseJoin(context: ParserContext, line: SourceLine): JoinSyntax {
@@ -193,7 +196,7 @@ function parseChildren(context: ParserContext, line: SourceLine): ChildrenSyntax
         return { kind: 'ChildrenSyntax', property: '', autoMap: 'Inherit', blocks: [], location: locationOf(line) };
     }
     const { autoMap, blocks } = parseChildBlocks(context, line);
-    return { kind: 'ChildrenSyntax', property: unescapeIdentifier(match[1]), autoMap, blocks, location: locationOf(line) };
+    return { kind: 'ChildrenSyntax', property: unescapeIdentifier(match[1]), identifiedBy: parseProjectionExpression(match[2], locationOf(line), context), autoMap, blocks, location: locationOf(line) };
 }
 
 function parseNested(context: ParserContext, line: SourceLine): NestedSyntax {
@@ -235,7 +238,7 @@ function parseChildBlocks(context: ParserContext, line: SourceLine): { autoMap: 
 function parseRemove(context: ParserContext, line: SourceLine): ProjectionBlockSyntax | undefined {
     const viaJoin = removeViaJoinPattern.exec(line.content);
     if (viaJoin !== null) {
-        return { kind: 'RemoveViaJoinSyntax', event: unescapeIdentifier(viaJoin[1]), location: locationOf(line) };
+        return { kind: 'RemoveViaJoinSyntax', event: unescapeIdentifier(viaJoin[1]), key: viaJoin[2] === undefined ? null : parseProjectionExpression(viaJoin[2], locationOf(line), context), location: locationOf(line) };
     }
     const match = removeWithPattern.exec(line.content);
     if (match === null) {
@@ -243,13 +246,16 @@ function parseRemove(context: ParserContext, line: SourceLine): ProjectionBlockS
         context.skipBlock(line.indent);
         return undefined;
     }
+    let parentKey: ExpressionSyntax | null = null;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
-        if (firstWord(child.content) !== 'parent') {
+        if (firstWord(child.content) === 'parent') {
+            parentKey = parseProjectionExpression(child.content.substring('parent'.length), locationOf(child), context);
+        } else {
             context.error(DiagnosticCodes.UnknownRemoveDirective, `Unexpected '${child.content}' in remove block - only 'parent' is allowed`, locationOf(child));
         }
     }
-    return { kind: 'RemoveWithSyntax', event: unescapeIdentifier(match[1]), location: locationOf(line) };
+    return { kind: 'RemoveWithSyntax', event: unescapeIdentifier(match[1]), key: match[2] === undefined ? null : parseProjectionExpression(match[2], locationOf(line), context), parentKey, location: locationOf(line) };
 }
 
 function parseClearWith(context: ParserContext, line: SourceLine): ClearWithSyntax {
@@ -297,21 +303,24 @@ function parseEntersOn(context: ParserContext, line: SourceLine): ProjectionEnte
     if (match === null) {
         context.error(DiagnosticCodes.InvalidEntersOnDeclaration, `Invalid 'enters on' declaration '${line.content}' - expected 'enters on <EventType> [key <expression>]'`, locationOf(line));
         context.skipBlock(line.indent);
-        return { kind: 'ProjectionEntersOnSyntax', event: '', location: locationOf(line) };
+        return { kind: 'ProjectionEntersOnSyntax', event: '', key: null, location: locationOf(line) };
     }
-    return { kind: 'ProjectionEntersOnSyntax', event: unescapeIdentifier(match[1]), location: locationOf(line) };
+    return { kind: 'ProjectionEntersOnSyntax', event: unescapeIdentifier(match[1]), key: match[2] === undefined ? null : parseProjectionExpression(match[2], locationOf(line), context), location: locationOf(line) };
 }
 
 // A key with a body is a composite key: its parts, then a closing '}' at the key's own indent.
-function skipKey(context: ParserContext, line: SourceLine): void {
-    if (context.peekChild(line.indent) === undefined) {
-        return;
-    }
-    context.skipBlock(line.indent);
-    const closing = context.reader.peekSignificant();
-    if (closing !== undefined && closing.indent === line.indent && closing.content === '}') {
+function parseKey(context: ParserContext, line: SourceLine): KeySyntax {
+    const text = line.content.substring('key'.length).trim();
+    if (context.peekChild(line.indent) === undefined) return { kind: 'ExpressionKeySyntax', expression: parseProjectionExpression(text, locationOf(line), context), location: locationOf(line) };
+    const parts: KeyPartSyntax[] = [];
+    for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
+        const match = assignmentPattern.exec(child.content);
+        if (match !== null) parts.push({ kind: 'KeyPartSyntax', property: unescapeIdentifier(match[1]), expression: parseProjectionExpression(match[2], locationOf(child), context), location: locationOf(child) });
     }
+    const closing = context.reader.peekSignificant();
+    if (closing !== undefined && closing.indent === line.indent && closing.content === '}') context.reader.takeSignificant();
+    return { kind: 'CompositeKeySyntax', type: text.replace(/\{$/, '').trim(), parts, location: locationOf(line) };
 }
 
 // Mapping lines carry no body, so a mapping block is its direct children. The last automap setting wins;
@@ -326,7 +335,7 @@ function parseMappingBlock(context: ParserContext, line: SourceLine, extra: (chi
         } else if (child.content === 'no automap') {
             autoMap = 'Disabled';
         } else if (!extra(child)) {
-            pushMapping(child, mappings);
+            pushMapping(context, child, mappings);
         }
     }
     return { autoMap, mappings };
@@ -334,7 +343,7 @@ function parseMappingBlock(context: ParserContext, line: SourceLine, extra: (chi
 
 // The property one mapping line sets, and how - the port of the C# ParseMappingLine. A line that is no
 // mapping is left to the C# compiler to report.
-function pushMapping(line: SourceLine, mappings: MappingSyntax[]): void {
+function pushMapping(context: ParserContext, line: SourceLine, mappings: MappingSyntax[]): void {
     const location = locationOf(line);
     const keyword = keywordMappingPattern.exec(line.content);
     if (keyword !== null) {
@@ -345,11 +354,11 @@ function pushMapping(line: SourceLine, mappings: MappingSyntax[]): void {
     }
     const arithmetic = arithmeticPattern.exec(line.content);
     if (arithmetic !== null) {
-        mappings.push({ kind: arithmetic[1] === 'add' ? 'AddMappingSyntax' : 'SubtractMappingSyntax', property: unescapeIdentifier(arithmetic[2]), location });
+        mappings.push({ kind: arithmetic[1] === 'add' ? 'AddMappingSyntax' : 'SubtractMappingSyntax', property: unescapeIdentifier(arithmetic[2]), value: parseProjectionExpression(arithmetic[3], location, context), location });
         return;
     }
     const assigned = setPattern.exec(line.content) ?? assignmentPattern.exec(line.content);
     if (assigned !== null) {
-        mappings.push({ kind: 'SetMappingSyntax', property: unescapeIdentifier(assigned[1]), location });
+        mappings.push({ kind: 'SetMappingSyntax', property: unescapeIdentifier(assigned[1]), source: parseProjectionExpression(assigned[2], location, context), location });
     }
 }

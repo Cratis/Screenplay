@@ -7,12 +7,15 @@ import { CommandSyntax } from './Commands';
 import { ConstraintSyntax } from './Constraints';
 import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, ReadModelSyntax, TypeSyntax } from './Declarations';
 import { ProjectionSyntax } from './Projections';
+import { PolicySyntax } from './Policies';
+import { SeedSyntax } from './Seeds';
 import { OperationSyntax, SystemSyntax } from './Operations';
 import { QuerySyntax } from './Queries';
 import { ReactionSyntax } from './Reactions';
 import { ScreenSyntax } from './Screens';
 import { SpecificationSyntax } from './Specifications';
 import { SyntaxNode } from './SyntaxNode';
+import { SourceOptions } from './SourceOptions';
 
 // The four kinds of slice. The names are the C# SliceType members, which is also how SyntaxJson writes them.
 export type SliceType = 'StateChange' | 'StateView' | 'Automation' | 'Translate';
@@ -74,7 +77,10 @@ export interface ModuleSyntax extends SyntaxNode {
 
 export interface ApplicationSyntax extends SyntaxNode {
     readonly kind: 'ApplicationSyntax';
+    readonly sourceOptions?: SourceOptions;
     readonly domain: DomainSyntax | null;
+    readonly policies?: readonly PolicySyntax[];
+    readonly seeds?: readonly SeedSyntax[];
     readonly systems?: readonly SystemSyntax[];
     readonly imports: readonly ImportSyntax[];
     readonly concepts: readonly ConceptSyntax[];

@@ -2,6 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { ConditionSyntax } from '../Syntax/Conditions';
+import { PropertyMappingSyntax } from '../Syntax/Expressions';
+import { parseCondition } from './ConditionParser';
+import { parseMappingSource } from './ExpressionParser';
 import { DayOfWeek, IntervalUnit, InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from '../Syntax/Reactions';
 import { pattern } from '../Text/patterns';
 import { parseDescription } from './DescriptionParser';
@@ -26,6 +30,7 @@ export function parseReaction(context: ParserContext, line: SourceLine): Reactio
         context.error(DiagnosticCodes.InvalidReactionDeclaration, `Invalid reaction declaration '${line.content}' - expected 'reaction <Name>'`, locationOf(line));
     }
     let description: string | null = null;
+    let where: ConditionSyntax | null = null;
     const triggers: ReactionTriggerSyntax[] = [];
     const sources = new Set<string>();
     // A reaction whose only trigger is misspelled has no trigger, but saying so as well turns one mistake
@@ -39,7 +44,7 @@ export function parseReaction(context: ParserContext, line: SourceLine): Reactio
             continue;
         }
         if (keyword === 'where') {
-            // Conditions are not modeled.
+            where = parseCondition(context, child.content.substring('where'.length).trim(), locationOf(child));
             continue;
         }
         if (!clauseKeywords.has(keyword)) {
@@ -65,7 +70,7 @@ export function parseReaction(context: ParserContext, line: SourceLine): Reactio
     if (triggers.length === 0 && !reported) {
         context.error(DiagnosticCodes.ReactionWithoutTrigger, `Reaction '${name}' must declare at least one trigger - nothing sets it off`, locationOf(line));
     }
-    return { kind: 'ReactionSyntax', name, description, triggers, location: locationOf(line) };
+    return { kind: 'ReactionSyntax', name, description, where, triggers, location: locationOf(line) };
 }
 
 // What a trigger does - the events it produces and the commands it invokes - is read by name; its reads,
@@ -90,8 +95,19 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
                 context.error(DiagnosticCodes.InvalidInvokesDeclaration, `Invalid invokes declaration '${child.content}' - expected 'invokes <Command>'`, locationOf(child));
                 context.skipBlock(child.indent);
             } else {
-                invokes.push({ kind: 'InvokesSyntax', command: match[1], location: locationOf(child) });
-                collectInputUses(context, child);
+                const uses = new ParserContext(context.reader.fork(), context.path, context.languages);
+                uses.scope = context.scope;
+                uses.sourceOptions = context.sourceOptions;
+                collectInputUses(uses, child);
+                context.inputUses.push(...uses.inputUses);
+                const mappings: PropertyMappingSyntax[] = [];
+                for (let value = context.peekChild(child.indent); value !== undefined; value = context.peekChild(child.indent)) {
+                    context.reader.takeSignificant();
+                    const mapped = /^(@?[\w.]+)\s*=(?!=|>)\s*(.+)$/.exec(value.content);
+                    if (mapped !== null) mappings.push({ kind: 'PropertyMappingSyntax', property: mapped[1].replaceAll('@', ''), source: parseMappingSource(mapped[2], locationOf(value), context.valueContext), location: locationOf(value) });
+                    else context.skipOpaqueBlock(value.indent);
+                }
+                invokes.push({ kind: 'InvokesSyntax', command: match[1], mappings, location: locationOf(child) });
             }
         } else if (keyword === 'reads' || keyword === 'file' || child.content === 'csharp' || child.content.startsWith('```')) {
             if (optionalReads.test(child.content)) {

@@ -4,6 +4,7 @@
 import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { SourceLocation, sourceLocation } from '../Diagnostics/SourceLocation';
 import { PropertySyntax } from '../Syntax/Declarations';
+import { legacySourceOptions, SourceOptions } from '../Syntax/SourceOptions';
 import { InputUse } from './InputUses';
 import { LineReader } from './LineReader';
 import { SourceLine } from './SourceLine';
@@ -16,8 +17,22 @@ export class ParserContext {
     readonly triggerData: PropertySyntax[] = [];
     readonly inputUses: InputUse[] = [];
     scope: readonly string[] = [];
+    readonly languages: ReadonlySet<string>;
+    sourceOptions: SourceOptions = legacySourceOptions;
+    authoredDeclarations = false;
 
-    constructor(readonly reader: LineReader, readonly path?: string) {}
+    // Structural enrichment of formerly opaque Legacy fields must not add diagnostics. Exact operands
+    // use the owning context so representability failures cannot turn into successful opaque syntax.
+    get valueContext(): ParserContext {
+        if (this.sourceOptions.numericMode === 'exact') return this;
+        const context = new ParserContext(this.reader, this.path, this.languages);
+        context.sourceOptions = this.sourceOptions;
+        return context;
+    }
+
+    constructor(readonly reader: LineReader, readonly path?: string, languages: ReadonlySet<string> = new Set(['csharp', 'typescript', 'react', 'html', 'sql'])) {
+        this.languages = languages;
+    }
 
     get start(): SourceLocation {
         return sourceLocation(1, 1, this.path);

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { ExpressionSyntax } from './Expressions';
+import { ValidateSyntax } from './Commands';
 import { SyntaxNode } from './SyntaxNode';
 
 export interface TypeRefSyntax extends SyntaxNode {
@@ -38,6 +39,7 @@ export interface ConceptAttributeSyntax extends SyntaxNode {
 export interface ConceptSyntax extends SyntaxNode {
     readonly kind: 'ConceptSyntax';
     readonly name: string;
+    readonly validations?: readonly ValidateSyntax[];
     readonly type: string;
     readonly attributes: readonly ConceptAttributeSyntax[];
     readonly values: readonly string[];

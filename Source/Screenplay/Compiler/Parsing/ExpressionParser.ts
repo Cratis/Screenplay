@@ -4,6 +4,7 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { ExpressionSyntax, LiteralExpressionSyntax } from '../Syntax/Expressions';
+import { ExactNumber, isExactNumberToken, parseExactNumber } from '../Syntax/ExactNumber';
 import { pattern } from '../Text/patterns';
 import { unescapeString } from '../Text/StringLiteral';
 import { ParserContext } from './ParserContext';
@@ -45,7 +46,7 @@ export function parseMappingSource(text: string, location: SourceLocation, conte
             return { kind: 'RawExpressionSyntax', text, location };
         }
     }
-    const literal = parseLiteral(text, location);
+    const literal = context === undefined ? parseLiteral(text, location) : parseLiteral(text, location, context);
     if (literal !== undefined) {
         return literal;
     }
@@ -68,8 +69,10 @@ function warnOnUnknownContextPath(path: string, location: SourceLocation, contex
     }
 }
 
-export function parseLiteral(text: string, location: SourceLocation): LiteralExpressionSyntax | undefined {
-    const literal = (value: string | number | boolean | null): LiteralExpressionSyntax => ({ kind: 'LiteralExpressionSyntax', value, location });
+export function parseLiteral(text: string, location: SourceLocation): LiteralExpressionSyntax | undefined;
+export function parseLiteral(text: string, location: SourceLocation, context: ParserContext): ExpressionSyntax | undefined;
+export function parseLiteral(text: string, location: SourceLocation, context?: ParserContext): ExpressionSyntax | undefined {
+    const literal = (value: string | number | boolean | null | ExactNumber): LiteralExpressionSyntax => ({ kind: 'LiteralExpressionSyntax', value, location });
     switch (text) {
         case 'true':
             return literal(true);
@@ -81,6 +84,13 @@ export function parseLiteral(text: string, location: SourceLocation): LiteralExp
     const quoted = text.length >= 2 && ((text.startsWith('"') && text.endsWith('"')) || (text.startsWith('\'') && text.endsWith('\'')));
     if (quoted) {
         return literal(unescapeString(text.substring(1, text.length - 1)));
+    }
+    if (context?.sourceOptions.numericMode === 'exact') {
+        if (!isExactNumberToken(text)) return undefined;
+        const number = parseExactNumber(text);
+        if (number !== undefined) return literal(number);
+        context.error(DiagnosticCodes.InexactNumericLiteral, 'Numeric literal is not exactly representable in the bounded Decimal domain.', location);
+        return { kind: 'RawExpressionSyntax', text, location };
     }
     // .NET also parses digits from other scripts; JavaScript's Number does not, so such a number is left to
     // be read as raw text - a divergence no real document is expected to meet.

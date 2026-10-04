@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { ConditionSyntax } from '../Syntax/Conditions';
+import { parseCondition } from './ConditionParser';
 import { PropertySyntax, TagSyntax } from '../Syntax/Declarations';
 import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
 import { ProducesSyntax } from '../Syntax/Reactions';
@@ -33,10 +35,11 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
             return undefined;
         }
         const parsed = parseOperation(context, header, true);
-        return { kind: 'ProducesSyntax', event: parsed.operation.name, targetLocation: { ...locationOf(header), column: header.indent + header.content.match(/^produces\s+operation(?:\s+|$)/)![0].length + 1 }, inlineEvent: null, inlineOperation: parsed.operation, mappings: parsed.mappings, for: null, tags: [], location: locationOf(header) };
+        return { kind: 'ProducesSyntax', when: null, event: parsed.operation.name, targetLocation: { ...locationOf(header), column: header.indent + header.content.match(/^produces\s+operation(?:\s+|$)/)![0].length + 1 }, inlineEvent: null, inlineOperation: parsed.operation, mappings: parsed.mappings, for: null, tags: [], location: locationOf(header) };
     }
     const inline = inlineHeader.exec(header.content);
     let parent = header;
+    let when: ConditionSyntax | null = null;
     let name: string;
     let targetColumn: number;
     if (inline !== null) {
@@ -51,6 +54,7 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
         name = inline[1];
         targetColumn = header.indent + header.content.match(/^produces\s+event\s+/)![0].length + 1;
     } else if (conditional.test(header.content)) {
+        when = parseCondition(context, conditional.exec(header.content)![1], locationOf(header));
         const child = context.peekChild(header.indent);
         if (child === undefined || !eventName.test(child.content)) {
             context.error(DiagnosticCodes.ProducesWhenWithoutEvent, "Expected an event name on the line after 'produces when'", locationOf(header));
@@ -128,7 +132,7 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
     }
     if (parent !== header) context.skipBlock(header.indent);
     return {
-        kind: 'ProducesSyntax', event: name, targetLocation: { ...locationOf(parent), column: targetColumn }, inlineOperation: null, mappings, for: target, tags: inline === null ? tags : [], location: locationOf(header),
+        kind: 'ProducesSyntax', when, event: name, targetLocation: { ...locationOf(parent), column: targetColumn }, inlineOperation: null, mappings, for: target, tags: inline === null ? tags : [], location: locationOf(header),
         inlineEvent: inline === null ? null : { kind: 'EventSyntax', name, properties, tags, generation: 1, hasGenerationMarker: false, ...metadata.value, location: locationOf(header) },
     };
 }

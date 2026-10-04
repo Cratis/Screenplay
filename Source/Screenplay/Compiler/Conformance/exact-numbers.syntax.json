@@ -1,0 +1,1345 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "Whole",
+      "type": "Int",
+      "validations": [
+        {
+          "kind": "DeclarativeValidateSyntax",
+          "requirements": [],
+          "rules": [
+            {
+              "kind": "ValidationRuleSyntax",
+              "message": null,
+              "property": "value",
+              "rule": "Min",
+              "severity": "Error",
+              "value": {
+                "kind": "LiteralExpressionSyntax",
+                "value": {
+                  "literalType": "ExactNumber",
+                  "value": "9223372036854775808"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "values": []
+    }
+  ],
+  "domain": null,
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Values",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [
+                {
+                  "kind": "CaptureSyntax",
+                  "appends": [
+                    {
+                      "kind": "CaptureAppendSyntax",
+                      "event": "Added",
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "9007199254740993"
+                            }
+                          }
+                        }
+                      ],
+                      "tags": [],
+                      "when": {
+                        "kind": "CaptureWhenSyntax",
+                        "expression": null,
+                        "fromValue": "9007199254740993",
+                        "properties": [
+                          "amount"
+                        ],
+                        "syntaxKind": "ValueTransition",
+                        "toValue": "9007199254740994"
+                      }
+                    }
+                  ],
+                  "children": [
+                    {
+                      "kind": "CaptureChildrenSyntax",
+                      "appends": [
+                        {
+                          "kind": "CaptureAppendSyntax",
+                          "event": "Added",
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "amount",
+                              "source": {
+                                "kind": "ObjectExpressionSyntax",
+                                "members": [
+                                  {
+                                    "kind": "ObjectMemberSyntax",
+                                    "name": "nested",
+                                    "value": {
+                                      "kind": "ListExpressionSyntax",
+                                      "items": [
+                                        {
+                                          "kind": "LiteralExpressionSyntax",
+                                          "value": {
+                                            "literalType": "ExactNumber",
+                                            "value": "9007199254740993"
+                                          }
+                                        },
+                                        {
+                                          "kind": "LiteralExpressionSyntax",
+                                          "value": {
+                                            "literalType": "ExactNumber",
+                                            "value": "0.0000000000000000000000000001"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ],
+                          "tags": [],
+                          "when": null
+                        }
+                      ],
+                      "identifiedBy": "id",
+                      "map": [
+                        {
+                          "kind": "CaptureMapEntrySyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "9223372036854775808"
+                            }
+                          },
+                          "translations": []
+                        }
+                      ],
+                      "property": "values"
+                    }
+                  ],
+                  "key": null,
+                  "map": [
+                    {
+                      "kind": "CaptureMapEntrySyntax",
+                      "property": "amount",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": {
+                          "literalType": "ExactNumber",
+                          "value": "9007199254740993"
+                        }
+                      },
+                      "translations": []
+                    },
+                    {
+                      "kind": "CaptureMapEntrySyntax",
+                      "property": "summary",
+                      "source": {
+                        "kind": "TemplateExpressionSyntax",
+                        "parts": [
+                          {
+                            "kind": "TemplateTextSyntax",
+                            "text": "value "
+                          },
+                          {
+                            "kind": "TemplateInterpolationSyntax",
+                            "expression": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": {
+                                "literalType": "ExactNumber",
+                                "value": "0.0000000000000000000000000001"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "translations": []
+                    }
+                  ],
+                  "name": "ReadExternal",
+                  "nested": [
+                    {
+                      "kind": "CaptureNestedSyntax",
+                      "appends": [
+                        {
+                          "kind": "CaptureAppendSyntax",
+                          "event": "Added",
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "amount",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": {
+                                  "literalType": "ExactNumber",
+                                  "value": "0.0000000000000000000000000001"
+                                }
+                              }
+                            }
+                          ],
+                          "tags": [],
+                          "when": null
+                        }
+                      ],
+                      "map": [
+                        {
+                          "kind": "CaptureMapEntrySyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "9007199254740993"
+                            }
+                          },
+                          "translations": []
+                        }
+                      ],
+                      "property": "detail"
+                    }
+                  ],
+                  "source": null,
+                  "sourceOptions": {
+                    "numericMode": "exact"
+                  }
+                }
+              ],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Change",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "Added",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": {
+                          "literalType": "ExactNumber",
+                          "value": "9223372036854775808"
+                        }
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "9007199254740993"
+                            }
+                          }
+                        }
+                      ],
+                      "tags": [],
+                      "when": {
+                        "kind": "ComparisonConditionSyntax",
+                        "left": "amount",
+                        "operator": "GreaterThanOrEqual",
+                        "right": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": {
+                            "literalType": "ExactNumber",
+                            "value": "9007199254740993"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "amount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Decimal"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "numbers",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "exact"
+                      }
+                    }
+                  ],
+                  "response": {
+                    "kind": "ScalarCommandResponseSyntax",
+                    "source": {
+                      "kind": "PropertyResponseSourceSyntax",
+                      "property": "amount"
+                    }
+                  },
+                  "validations": [
+                    {
+                      "kind": "DeclarativeValidateSyntax",
+                      "requirements": [
+                        {
+                          "kind": "RequirementSyntax",
+                          "condition": {
+                            "kind": "LogicalConditionSyntax",
+                            "left": {
+                              "kind": "ComparisonConditionSyntax",
+                              "left": "amount",
+                              "operator": "GreaterThan",
+                              "right": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": {
+                                  "literalType": "ExactNumber",
+                                  "value": "9007199254740993"
+                                }
+                              }
+                            },
+                            "operator": "And",
+                            "right": {
+                              "kind": "ComparisonConditionSyntax",
+                              "left": "amount",
+                              "operator": "LessThan",
+                              "right": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": {
+                                  "literalType": "ExactNumber",
+                                  "value": "9007199254740994"
+                                }
+                              }
+                            }
+                          },
+                          "message": "Exact operands",
+                          "severity": "Error"
+                        }
+                      ],
+                      "rules": [
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "message": null,
+                          "property": "amount",
+                          "rule": "Min",
+                          "severity": "Error",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "0.0000000000000000000000000001"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "Added",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "amount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Decimal"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "Change",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "Added",
+                          "key": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "9007199254740993"
+                            }
+                          }
+                        }
+                      ],
+                      "key": {
+                        "kind": "CompositeKeySyntax",
+                        "parts": [
+                          {
+                            "kind": "KeyPartSyntax",
+                            "expression": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": {
+                                "literalType": "ExactNumber",
+                                "value": "0.0000000000000000000000000001"
+                              }
+                            },
+                            "property": "part"
+                          }
+                        ],
+                        "type": "Composite"
+                      },
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "9007199254740993"
+                            }
+                          }
+                        },
+                        {
+                          "kind": "AddMappingSyntax",
+                          "property": "amount",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "0.0000000000000000000000000001"
+                            }
+                          }
+                        },
+                        {
+                          "kind": "SubtractMappingSyntax",
+                          "property": "amount",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "9007199254740994"
+                            }
+                          }
+                        }
+                      ],
+                      "parentKey": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": {
+                          "literalType": "ExactNumber",
+                          "value": "9007199254740994"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "ChildrenSyntax",
+                      "autoMap": "Inherit",
+                      "blocks": [
+                        {
+                          "kind": "FromSyntax",
+                          "events": [
+                            {
+                              "kind": "EventSpecSyntax",
+                              "event": "Added",
+                              "key": null
+                            }
+                          ],
+                          "key": null,
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "amount",
+                              "source": {
+                                "kind": "ObjectExpressionSyntax",
+                                "members": [
+                                  {
+                                    "kind": "ObjectMemberSyntax",
+                                    "name": "nested",
+                                    "value": {
+                                      "kind": "ListExpressionSyntax",
+                                      "items": [
+                                        {
+                                          "kind": "LiteralExpressionSyntax",
+                                          "value": {
+                                            "literalType": "ExactNumber",
+                                            "value": "9007199254740993"
+                                          }
+                                        },
+                                        {
+                                          "kind": "LiteralExpressionSyntax",
+                                          "value": {
+                                            "literalType": "ExactNumber",
+                                            "value": "0.0000000000000000000000000001"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ],
+                          "parentKey": null
+                        }
+                      ],
+                      "identifiedBy": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": {
+                          "literalType": "ExactNumber",
+                          "value": "9007199254740993"
+                        }
+                      },
+                      "property": "values"
+                    },
+                    {
+                      "kind": "ProjectionVariantSyntax",
+                      "blocks": [
+                        {
+                          "kind": "FromSyntax",
+                          "events": [
+                            {
+                              "kind": "EventSpecSyntax",
+                              "event": "Added",
+                              "key": null
+                            }
+                          ],
+                          "key": null,
+                          "mappings": [
+                            {
+                              "kind": "SetMappingSyntax",
+                              "property": "amount",
+                              "source": {
+                                "kind": "TemplateExpressionSyntax",
+                                "parts": [
+                                  {
+                                    "kind": "TemplateTextSyntax",
+                                    "text": "value "
+                                  },
+                                  {
+                                    "kind": "TemplateInterpolationSyntax",
+                                    "expression": {
+                                      "kind": "LiteralExpressionSyntax",
+                                      "value": {
+                                        "literalType": "ExactNumber",
+                                        "value": "9007199254740993"
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ],
+                          "parentKey": null
+                        }
+                      ],
+                      "entersOn": [
+                        {
+                          "kind": "ProjectionEntersOnSyntax",
+                          "event": "Added",
+                          "key": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "9223372036854775808"
+                            }
+                          }
+                        }
+                      ],
+                      "name": "Current"
+                    },
+                    {
+                      "kind": "RemoveWithSyntax",
+                      "event": "Added",
+                      "key": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": {
+                          "literalType": "ExactNumber",
+                          "value": "9007199254740993"
+                        }
+                      },
+                      "parentKey": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": {
+                          "literalType": "ExactNumber",
+                          "value": "9007199254740994"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "RemoveViaJoinSyntax",
+                      "event": "Added",
+                      "key": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": {
+                          "literalType": "ExactNumber",
+                          "value": "9223372036854775808"
+                        }
+                      }
+                    }
+                  ],
+                  "key": {
+                    "kind": "ExpressionKeySyntax",
+                    "expression": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": {
+                        "literalType": "ExactNumber",
+                        "value": "9007199254740993"
+                      }
+                    }
+                  },
+                  "name": "Build",
+                  "readModel": "View",
+                  "sequence": null,
+                  "sourceOptions": {
+                    "numericMode": "exact"
+                  }
+                }
+              ],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "amount",
+                    "source": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": {
+                        "literalType": "ExactNumber",
+                        "value": "0.0000000000000000000000000001"
+                      }
+                    },
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "Decimal"
+                    }
+                  },
+                  "description": null,
+                  "filters": [
+                    {
+                      "kind": "QueryParameterSyntax",
+                      "name": "minimum",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": {
+                          "literalType": "ExactNumber",
+                          "value": "9007199254740993"
+                        }
+                      },
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Decimal"
+                      }
+                    }
+                  ],
+                  "isObservable": false,
+                  "name": "ViewByAmount",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": false,
+                    "name": "View"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [
+                {
+                  "kind": "ReactionSyntax",
+                  "description": null,
+                  "name": "React",
+                  "triggers": [
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "invokes": [
+                        {
+                          "kind": "InvokesSyntax",
+                          "command": "Change",
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "amount",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": {
+                                  "literalType": "ExactNumber",
+                                  "value": "9007199254740993"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ],
+                      "produces": [
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "Added",
+                          "for": null,
+                          "inlineEvent": null,
+                          "inlineOperation": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "amount",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": {
+                                  "literalType": "ExactNumber",
+                                  "value": "0.0000000000000000000000000001"
+                                }
+                              }
+                            }
+                          ],
+                          "tags": [],
+                          "when": null
+                        }
+                      ],
+                      "source": {
+                        "kind": "NamedTriggerSourceSyntax",
+                        "name": "Added"
+                      }
+                    }
+                  ],
+                  "where": {
+                    "kind": "ComparisonConditionSyntax",
+                    "left": "amount",
+                    "operator": "GreaterThan",
+                    "right": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": {
+                        "literalType": "ExactNumber",
+                        "value": "9007199254740993"
+                      }
+                    }
+                  }
+                }
+              ],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "View",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "amount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Decimal"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Added",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": {
+                          "literalType": "ExactNumber",
+                          "value": "9007199254740994"
+                        }
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "9007199254740993"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "View",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "0.0000000000000000000000000001"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "Values",
+                  "sourceOptions": {
+                    "numericMode": "exact"
+                  },
+                  "thenAbsentReadModels": [
+                    {
+                      "kind": "SpecificationAbsentReadModelSyntax",
+                      "key": {
+                        "kind": "ObjectExpressionSyntax",
+                        "members": [
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "id",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": {
+                                "literalType": "ExactNumber",
+                                "value": "9007199254740993"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "name": "View"
+                    }
+                  ],
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Added",
+                      "for": null,
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "9007199254740993"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenQueries": [
+                    {
+                      "kind": "SpecificationQuerySyntax",
+                      "arguments": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "9007199254740993"
+                            }
+                          }
+                        }
+                      ],
+                      "exactly": true,
+                      "query": "ViewByAmount",
+                      "results": [
+                        {
+                          "kind": "SpecificationQueryResultSyntax",
+                          "exactly": false,
+                          "properties": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "amount",
+                              "source": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": {
+                                  "literalType": "ExactNumber",
+                                  "value": "0.0000000000000000000000000001"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "thenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": true,
+                      "name": "View",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "0.0000000000000000000000000001"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenResults": [],
+                  "thenReturns": {
+                    "kind": "ScalarSpecificationReturnSyntax",
+                    "value": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": {
+                        "literalType": "ExactNumber",
+                        "value": "9007199254740993"
+                      }
+                    }
+                  },
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "Change",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": {
+                        "literalType": "ExactNumber",
+                        "value": "9007199254740994"
+                      }
+                    },
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "amount",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": {
+                            "literalType": "ExactNumber",
+                            "value": "9007199254740993"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [
+                    {
+                      "kind": "SpecificationCaptureSyntax",
+                      "capture": "ReadExternal",
+                      "record": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "9007199254740993"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "CaptureValues",
+                  "sourceOptions": {
+                    "numericMode": "exact"
+                  },
+                  "thenAbsentReadModels": [],
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Added",
+                      "for": null,
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "0.0000000000000000000000000001"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenQueries": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": {
+                    "kind": "SpecificationCaptureSyntax",
+                    "capture": "ReadExternal",
+                    "record": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "amount",
+                        "source": {
+                          "kind": "ObjectExpressionSyntax",
+                          "members": [
+                            {
+                              "kind": "ObjectMemberSyntax",
+                              "name": "nested",
+                              "value": {
+                                "kind": "ListExpressionSyntax",
+                                "items": [
+                                  {
+                                    "kind": "LiteralExpressionSyntax",
+                                    "value": {
+                                      "literalType": "ExactNumber",
+                                      "value": "9007199254740993"
+                                    }
+                                  },
+                                  {
+                                    "kind": "LiteralExpressionSyntax",
+                                    "value": {
+                                      "literalType": "ExactNumber",
+                                      "value": "0.0000000000000000000000000001"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "QueryValues",
+                  "sourceOptions": {
+                    "numericMode": "exact"
+                  },
+                  "thenAbsentReadModels": [],
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenQueries": [],
+                  "thenReadModels": [],
+                  "thenResults": [
+                    {
+                      "kind": "SpecificationQueryResultSyntax",
+                      "exactly": true,
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "0.0000000000000000000000000001"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": {
+                    "kind": "SpecificationWhenQuerySyntax",
+                    "arguments": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "amount",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": {
+                            "literalType": "ExactNumber",
+                            "value": "9007199254740993"
+                          }
+                        }
+                      }
+                    ],
+                    "query": "ViewByAmount"
+                  },
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "TriggerValues",
+                  "sourceOptions": {
+                    "numericMode": "exact"
+                  },
+                  "thenAbsentReadModels": [],
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Added",
+                      "for": null,
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "9007199254740993"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenQueries": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": {
+                    "kind": "SpecificationTriggerSyntax",
+                    "trigger": "Tick",
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "amount",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": {
+                            "literalType": "ExactNumber",
+                            "value": "9007199254740993"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              ],
+              "type": "StateChange"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Numbers"
+    }
+  ],
+  "personas": [],
+  "policies": [
+    {
+      "kind": "PolicySyntax",
+      "code": null,
+      "condition": {
+        "kind": "ClaimConditionSyntax",
+        "claim": "limit",
+        "matches": {
+          "kind": "LiteralExpressionSyntax",
+          "value": {
+            "literalType": "ExactNumber",
+            "value": "9007199254740993"
+          }
+        },
+        "matchesSubject": false
+      },
+      "file": null,
+      "name": "Limit"
+    }
+  ],
+  "seeds": [
+    {
+      "kind": "SeedSyntax",
+      "groups": [
+        {
+          "kind": "SeedGroupSyntax",
+          "eventSourceId": "global",
+          "events": [
+            {
+              "kind": "SeedEventSyntax",
+              "event": "Added",
+              "properties": [
+                {
+                  "kind": "PropertyMappingSyntax",
+                  "property": "amount",
+                  "source": {
+                    "kind": "ObjectExpressionSyntax",
+                    "members": [
+                      {
+                        "kind": "ObjectMemberSyntax",
+                        "name": "literalType",
+                        "value": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "ExactNumber"
+                        }
+                      },
+                      {
+                        "kind": "ObjectMemberSyntax",
+                        "name": "value",
+                        "value": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": {
+                            "literalType": "ExactNumber",
+                            "value": "9007199254740993"
+                          }
+                        }
+                      },
+                      {
+                        "kind": "ObjectMemberSyntax",
+                        "name": "items",
+                        "value": {
+                          "kind": "ListExpressionSyntax",
+                          "items": [
+                            {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": {
+                                "literalType": "ExactNumber",
+                                "value": "0"
+                              }
+                            },
+                            {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": {
+                                "literalType": "ExactNumber",
+                                "value": "0.0000000000000000000000000001"
+                              }
+                            },
+                            {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "1e999999"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sourceOptions": {
+    "numericMode": "exact"
+  },
+  "systems": [],
+  "types": []
+}

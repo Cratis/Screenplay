@@ -29,8 +29,8 @@ export interface ResolvedImports {
 // placement depends on the placements of the files importing it, so it is recomputed from every importer's
 // current placement until nothing changes - the order files are found in never decides where one belongs. The
 // roots keep the order they were given in, and what they import follows in the order it was found.
-export function resolveImports(roots: Iterable<string>, source: PlayDocumentSource): ResolvedImports {
-    const resolution = new Resolution(source);
+export function resolveImports(roots: Iterable<string>, source: PlayDocumentSource, languages?: ReadonlySet<string>): ResolvedImports {
+    const resolution = new Resolution(source, languages);
     for (const root of new Set([...roots].map(normalizePlayPath))) {
         resolution.addRoot(root);
     }
@@ -57,7 +57,7 @@ class Resolution {
     readonly #pending: string[] = [];
     readonly #changes = new Map<string, number>();
 
-    constructor(private readonly source: PlayDocumentSource) {}
+    constructor(private readonly source: PlayDocumentSource, private readonly languages?: ReadonlySet<string>) {}
 
     addRoot(root: string): void {
         this.#roots.add(root);
@@ -81,7 +81,7 @@ class Resolution {
         this.#found.push(file);
         const text = this.source.read(file);
         this.#sources.set(file, text);
-        this.#imports.set(file, discoverImports(text, file).map(discovered => ({ discovered, targets: this.#targets(file, discovered) })));
+        this.#imports.set(file, discoverImports(text, file, this.languages).map(discovered => ({ discovered, targets: this.#targets(file, discovered) })));
         this.#pending.push(file);
     }
 

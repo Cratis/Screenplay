@@ -26,7 +26,7 @@ export function parseFile(context: ParserContext, line: SourceLine): FileReferen
 
 export function parseCode(context: ParserContext, tag: SourceLine): CodeBlockSyntax | null {
     const language = tag.content.startsWith('```') ? tag.content.substring(3) : tag.content;
-    if (!languages.has(language)) {
+    if (!context.languages.has(language)) {
         context.error(DiagnosticCodes.ExpectedCodeFence, `Expected a registered language on the opening fence, not '${tag.content}'`, locationOf(tag));
         return null;
     }
