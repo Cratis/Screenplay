@@ -139,11 +139,79 @@ The board is drawn by the extension's own [TypeScript compiler](typescript-compi
 
 The text editor also reports `PLAY0478` as information when a plain production
 omits `for` and its command has an identifier. This is advice, not a new routing
-default. Monaco and VS Code offer no quick fix for `PLAY0478`, because stating `for`
-can change where events land and the editors do not host the C# workspace repair
-transaction. Use the [MCP repair workflow](mcp/authoring-tools.md#fix-a-diagnostic)
-to preview an explicit `for` (or to declare a missing produced event), then review
-and apply the typed proposal.
+default. Monaco keeps this advice-only behavior. VS Code can optionally use the
+C# repair transaction below; neither editor tries to prove routing safety in
+TypeScript. The [MCP repair workflow](mcp/authoring-tools.md#fix-a-diagnostic)
+remains available separately.
+
+## Preview saved-file C# repairs
+
+This **experimental, opt-in** bridge offers only `PLAY0166` (declare a missing
+produced event) and `PLAY0478` (explicitly route to the command identifier).
+`PLAY0478` changes routing; it is not cleanup. C# decides eligibility across the
+physical application. Extraction, `PLAY0469`, rename and a Monaco host bridge are
+not included. Local `PLAY0471` and `PLAY0479` fixes remain unchanged.
+
+Install a compatible server yourself using the [repair server setup](mcp/install.md#repair-capable-server-setup).
+The server must expose repair contract v1, including pinned evidence and structured
+failures. Older servers are refused, not downgraded. A CLI version alone does not
+prove compatibility: capability support must be released in the server and included
+in the CLI or bundle you install before that distribution is compatible.
+
+In **User settings**, configure the absolute executable and one existing physical
+model directory inside your trusted filesystem workspace. For a complete unpacked
+native bundle, replace these illustrative paths with your installation:
+
+```json
+{
+    "screenplay.repairs.enabled": true,
+    "screenplay.repairs.executable": "/Users/you/tools/screenplay/server/Cratis.Screenplay.Tool",
+    "screenplay.repairs.arguments": ["mcp"],
+    "screenplay.repairs.modelRoot": "/Users/you/work/shop/specifications"
+}
+```
+
+On Windows, use the binary's `.exe` path with JSON-escaped backslashes. For an
+installed `screenplay` tool, use its absolute executable path and `["mcp"]`. For
+`cratis`, use its absolute executable path and `["screenplay", "mcp"]`. The model
+root is appended as **one argument**; do not put it in the prefix or add shell
+quotes. Workspace/folder overrides are refused even if they match User settings.
+A remote extension host needs its own compatible installation and paths. Browser
+and virtual workspaces cannot run this bridge. The VSIX contains JavaScript only;
+it does not download a server, install .NET, invoke Docker or run an AI agent.
+
+1. Save or discard changed buffers yourself, including sibling `.play` files,
+   attachments and `.screenplay` metadata. The extension never autosaves.
+2. Run **Screenplay: Discover Saved-File C# Repairs**. This explicit command also
+   explains trust, executable, dirty-buffer and contract refusals. Saved-source
+   C# diagnostics use a separate collection; dirty-buffer local diagnostics remain.
+3. Select the C# lightbulb action at the server-attributed occurrence. Consent to
+   canonical formatting for every touched document, then wait for the complete
+   read-only source **and identity-state** previews. Discovery and proposals write
+   nothing. Incomplete or oversized review disables Apply (16 MiB combined bytes,
+   at most 64 changed source documents).
+4. Review every diff and the summary: routing consequences, byte hashes/BOM/line
+   endings, authoring diagnostics and executable readiness. Readiness describes
+   the compiler's executable subset, not implementation execution or runtime
+   confirmation. Select **Apply reviewed repair**, then confirm **Apply**.
+
+Each root has one persistent connection. Root/configuration changes close the old
+connection; file creation, imports, attachments and identity changes invalidate
+outstanding selections. C# also checks exact source, catalog, state and frozen
+base/candidate evidence. These actions are never preferred, fix-all or on-save.
+
+Apply writes outside the editor and is **not normal editor Undo**. Use an exclusive
+writer while applying. Journaled rollback does not guarantee crash-atomic visibility
+across files. The extension awaits ordinary saved-buffer reloads; if you type after
+Apply dispatch, it preserves your buffer and asks you to reconcile it with disk.
+It never force-reverts or replays source edits.
+
+Cancellation discards queued reads or drains an in-flight read within its deadline.
+Once Apply is dispatched, a timeout, disconnect or unrecognized failure means the
+outcome is **unknown**, not “cancelled without changes.” Never retry automatically.
+Use **Screenplay: Inspect C# Repair Identity and Recovery State**, inspect disk, and
+follow the [separate recovery workflow](mcp/recovery.md) with explicit consent.
+Inspection does not recover or authorize another apply.
 
 ## Theme
 
@@ -162,3 +230,18 @@ yarn workspace screenplay build
 ```
 
 Press **F5** in VS Code to start an Extension Development Host with the extension loaded, and package a `.vsix` with `yarn workspace screenplay package`. The board's page is `Source/Screenplay/VSCodeExtension/Webview`, a React application bundled with the extension. It renders `@cratis/event-models` under a content security policy that allows no `eval`.
+
+The ordinary `yarn workspace screenplay test` suite uses a VS Code stub for local
+editor tests. Build the C# tool, then run `yarn workspace screenplay test:repair-process`
+for the real subprocess gate; it fails rather than skips when the tool is missing.
+Set `SCREENPLAY_REPAIR_SERVER` to an absolute compatible binary if you are not using
+`Source/DotNET/Tool/bin/Debug/net10.0/Cratis.Screenplay.Tool` (`.exe` on Windows).
+
+For native extension-host tests, run `yarn workspace screenplay build:test-host`,
+then `yarn workspace screenplay test:host` with `VSCODE_EXECUTABLE_PATH` pointing to
+your installed native VS Code executable. The standard `@vscode/test-electron`
+harness uses isolated settings and models under `.ai-work/`; it never downloads a
+runtime. These tests exercise real read-only diffs, dirty attachment refusal,
+exact-byte installation and saved-buffer reload. Modal click-through and
+post-dispatch typing races require additional manual/native coverage; mocks are
+not a substitute. Run on each native platform before claiming platform coverage.
