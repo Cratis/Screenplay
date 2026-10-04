@@ -41,7 +41,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
     const lines = splitLines(source, false, path);
     const context = new ParserContext(new LineReader(lines), path);
     context.scope = placement;
-    context.streamCandidates = streamCandidates ?? CommandStreamCandidates.capture([lines]);
+    context.streamCandidates = streamCandidates ?? CommandStreamCandidates.capture([lines], placement);
     const value = parseApplication(context, lines, placement);
     // Folder assembly validates declaration-dependent contracts once against the merged inventory.
     if (validateResponseContracts) {

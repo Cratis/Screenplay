@@ -1,17 +1,14 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { pattern } from '../Text/patterns';
+import { documentPlacement, PlayPlacement } from '../Files/PlayPlacement';
 import { LineReader } from './LineReader';
+import { ParserContext } from './ParserContext';
+import { parseApplication } from './ScreenplayParser';
 import { SourceLine } from './SourceLine';
 
-const sourceHeader = pattern('^eventsource\\s+([A-Za-z_]\\w*)$');
-const typeHeader = pattern('^(?:type\\s+([A-Za-z_]\\w*)|concept\\s+([A-Za-z_]\\w*)\\s*:.*)$');
-const importHeader = pattern('^import\\s+([\\w.]+)$');
-const streamHeader = pattern('^stream\\s+([A-Za-z_]\\w*)$');
-
-// One declaration-header capture over the immutable whole input, before any command classification.
-// Duplicates are not resolved by encounter order. Fences and non-application declarations are opaque.
+// One noncommitting real parse per immutable document, without stream candidates. Commands retain
+// legacy properties; the parser owns leaf/block/fence rules. Capture never calls itself recursively.
 export class CommandStreamCandidates {
     private constructor(private readonly sources: ReadonlyMap<string, readonly (readonly string[])[]>, private readonly qualifiedTypes: ReadonlySet<string>) {}
 
@@ -22,39 +19,26 @@ export class CommandStreamCandidates {
         return parents?.length === 1 && parents[0].filter(name => name === stream).length === 1;
     }
 
-    static capture(documents: Iterable<readonly SourceLine[]>): CommandStreamCandidates {
+    static capture(documents: Iterable<readonly SourceLine[]>, placement: PlayPlacement = documentPlacement): CommandStreamCandidates {
+        return this.capturePlaced([...documents].map(lines => ({ lines, placement })));
+    }
+
+    static capturePlaced(documents: Iterable<{ readonly lines: readonly SourceLine[]; readonly placement: PlayPlacement }>): CommandStreamCandidates {
         const sources = new Map<string, string[][]>();
         const types = new Set<string>();
         const imports = new Set<string>();
-        for (const lines of documents) {
-            const reader = new LineReader(lines);
-            for (let header = reader.peekSignificant(); header !== undefined; header = reader.peekSignificant()) {
-                reader.takeSignificant();
-                const source = sourceHeader.exec(header.content);
-                const type = typeHeader.exec(header.content);
-                const imported = importHeader.exec(header.content);
-                const streams: string[] = [];
-                if (type !== null) types.add(type[1] ?? type[2]);
-                if (imported !== null) imports.add(imported[1]);
-                for (let child = reader.peekSignificant(); child !== undefined && child.indent > header.indent; child = reader.peekSignificant()) {
-                    reader.takeSignificant();
-                    const stream = streamHeader.exec(child.content);
-                    if (source !== null && stream !== null) streams.push(stream[1]);
-                    skipChildren(reader, child);
-                }
-                if (source !== null) sources.set(source[1], [...sources.get(source[1]) ?? [], streams]);
+        for (const { lines, placement } of documents) {
+            const context = new ParserContext(new LineReader(lines));
+            context.scope = placement;
+            const application = parseApplication(context, lines, placement);
+            for (const type of application.types) types.add(type.name);
+            for (const concept of application.concepts) types.add(concept.name);
+            for (const imported of application.imports) imports.add(imported.qualifiedName);
+            for (const source of application.eventSources ?? []) {
+                sources.set(source.name, [...sources.get(source.name) ?? [], source.streams.map(stream => stream.name)]);
             }
         }
         const qualified = new Set([...imports].filter(name => types.has(name.substring(name.lastIndexOf('.') + 1))));
         return new CommandStreamCandidates(sources, qualified);
-    }
-}
-
-function skipChildren(reader: LineReader, header: SourceLine): void {
-    const skipFence = () => { for (let raw = reader.takeRaw(); raw !== undefined && raw.raw.trim() !== '```'; raw = reader.takeRaw()) { /* opaque fence */ } };
-    if (header.content.startsWith('```')) { skipFence(); return; }
-    for (let child = reader.peekSignificant(); child !== undefined && child.indent > header.indent; child = reader.peekSignificant()) {
-        reader.takeSignificant();
-        if (child.content.startsWith('```')) skipFence();
     }
 }

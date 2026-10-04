@@ -76,6 +76,19 @@ Syntax queries work independently of executable backend support. Inspect
 `success`, diagnostic counts and coverage. Invalid source can produce a partial
 index; it is never silently presented as a valid complete model.
 
+`describe-application` summary reports model-wide `syntaxOnly` and
+`executionReadiness`, including source declarations without routed commands.
+Declaration details report the member's constructs and referenced command actions,
+not unrelated global declarations. A plain command can therefore have
+`syntaxOnly: false` while its application is syntax-only; neither that field nor a
+null member readiness message proves the whole model executable.
+Event sources, streams and command routes require ESM v10 (`PLAY0268`), which is
+not supported for execution. `EventSource` declarations have application addresses;
+`EventStream` addresses include their physical source owner (for example,
+`Account.Transactions`). Command, specification and slice readiness uses the
+highest required version when routes, operations (v9) and responses (v8) coexist.
+Ambiguous route/property syntax remains blocking; readiness never selects a route.
+
 | Tool | Selection | Result |
 | --- | --- | --- |
 | `describe-application` | `view`: summary, children or declarations; optional `parent`, scope/kind/document filters | Compact counts or paged logical navigation |

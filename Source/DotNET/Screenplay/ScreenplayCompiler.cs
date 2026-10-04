@@ -16,7 +16,7 @@ namespace Cratis.Screenplay;
 /// Represents an implementation of <see cref="IScreenplayCompiler"/>.
 /// </summary>
 /// <param name="languages">The <see cref="IScreenplayLanguageRegistry"/> saying what to recognize beyond the built-in constructs.</param>
-public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreenplayCompiler
+public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreenplayCompiler, ICommandStreamCandidateParser
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ScreenplayCompiler"/> class recognizing only what the
@@ -115,6 +115,9 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
             : CompilationResult<TCapture>.Failed(result.Diagnostics);
     }
 
+    CompilationResult<ApplicationSyntax> ICommandStreamCandidateParser.ParseWithCandidates(string source, string? path, PlayPlacement placement, CommandStreamCandidates candidates) =>
+        ParseWithCandidates(source, path, placement, candidates);
+
     /// <summary>
     /// Parses source text in a placement with a given language registry.
     /// </summary>
@@ -126,7 +129,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     internal static CompilationResult<ApplicationSyntax> ParsePlaced(string source, string? path, PlayPlacement placement, IScreenplayLanguageRegistry languages)
     {
         var lines = SourceLineSplitter.Split(source, path: path);
-        return ParseWithCandidates(lines, path, placement, languages, CommandStreamCandidates.Capture([lines]));
+        return ParseWithCandidates(lines, path, placement, languages, CommandStreamCandidates.Capture([lines], placement));
     }
 
     /// <summary>

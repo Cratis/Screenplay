@@ -60,7 +60,6 @@ sealed class McpSnapshot : IPlayFiles
     {
         var compilation = Compilation;
         var index = new McpSyntaxIndex();
-        if (compilation.Value is { } assembled) index.Initialize(assembled);
 
         // Compilation retains provisional trees for diagnostics. Physical authoring candidates
         // require an authoritative placement, including descendants of conflicting barrels.
@@ -68,11 +67,22 @@ sealed class McpSnapshot : IPlayFiles
             _documentsByPath.Keys,
             new InMemoryPlayDocumentSource(_documentsByPath.ToDictionary(entry => entry.Key, entry => entry.Value.Text, StringComparer.Ordinal)));
         var resolvedPaths = placements.Where(document => document.IsPlacementResolved).Select(document => document.Path).ToHashSet(StringComparer.Ordinal);
-        foreach (var application in _compiler.Documents.Where(document => document.Path is not null && resolvedPaths.Contains(document.Path))
-            .Select(document => document.Result.Value).OfType<ApplicationSyntax>())
+        var applications = _compiler.Documents.Where(document => document.Path is not null && resolvedPaths.Contains(document.Path))
+            .Select(document => document.Result.Value).OfType<ApplicationSyntax>().ToArray();
+
+        // Preserve physical slice ownership and all candidates, including declarations that a failed
+        // merge cannot select. Do not initialize readiness from just the first file or merged owners.
+        index.Initialize(new(
+            applications.SelectMany(application => application.Imports),
+            applications.SelectMany(application => application.Concepts),
+            applications.SelectMany(application => application.Policies),
+            applications.SelectMany(application => application.Modules),
+            Diagnostics.SourceLocation.Start)
         {
-            index.VisitApplication(application);
-        }
+            Systems = applications.SelectMany(application => application.Systems),
+            EventSources = applications.SelectMany(application => application.EventSources)
+        });
+        foreach (var application in applications) index.VisitApplication(application);
 
         index.Complete(compilation.Value);
         return index;

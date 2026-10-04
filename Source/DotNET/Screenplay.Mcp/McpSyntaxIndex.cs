@@ -38,6 +38,15 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     }
 
     /// <inheritdoc/>
+    public override void VisitEventSource(EventSourceSyntax syntax)
+    {
+        Declare("EventSource", syntax.Name, syntax, syntax.Description, new { syntaxOnly = true, executionReadiness = Readiness.ExecutionReadiness(syntax) });
+        _scope.Add(syntax.Name);
+        base.VisitEventSource(syntax);
+        _scope.RemoveAt(_scope.Count - 1);
+    }
+
+    /// <inheritdoc/>
     public override void VisitModule(ModuleSyntax syntax)
     {
         Declare("Module", syntax.Name, syntax, syntax.Description);
@@ -70,6 +79,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         switch (node)
         {
             case CommandSyntax value: Declare("Command", value.Name, value, value.Description, new { produces = Readiness.ProducedEvents(value), generatedProperties = value.Properties.Where(property => property.IsGenerated).Select(property => property.Name), response = value.Response, syntaxOnly = Readiness.SyntaxOnly(value), executionReadiness = Readiness.ExecutionReadiness(value, null) }); break;
+            case EventStreamSyntax value: Declare("EventStream", value.Name, value, value.Description, new { syntaxOnly = true, executionReadiness = Readiness.ExecutionReadiness(value) }); break;
             case SystemSyntax value: Declare("System", value.Name, value, value.Description, new { syntaxOnly = true, executionReadiness = Readiness.ExecutionReadiness(value) }); break;
             case OperationSyntax value: Declare("Operation", value.Name, value, value.Description, new { syntaxOnly = true, executionReadiness = Readiness.ExecutionReadiness(value) }); break;
             case QuerySyntax value: Declare("Query", value.Name, value); break;

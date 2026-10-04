@@ -28,11 +28,11 @@ internal static class PlayApplicationAssembly
     {
         var (documents, diagnostics) = PlayImports.Resolve(roots, source);
         var candidates = CommandStreamCandidates.Capture(documents.Where(document => document.IsPlacementResolved)
-            .Select(document => SourceLineSplitter.Split(document.Source, path: document.Path)));
+            .Select(document => (SourceLineSplitter.Split(document.Source, path: document.Path), document.Placement)));
         var parsed = documents.Select(document =>
         {
             CompilationResult<ApplicationSyntax> result;
-            if (compiler is ScreenplayCompiler native) result = native.ParseWithCandidates(document.Source, document.Path, document.Placement, candidates);
+            if (compiler is ICommandStreamCandidateParser native) result = native.ParseWithCandidates(document.Source, document.Path, document.Placement, candidates);
             else if (document.Placement.IsDocument) result = compiler.Parse(document.Source, document.Path);
             else result = compiler.Parse(document.Source, document.Path, document.Placement);
             return !document.IsPlacementResolved && result.Value is { } application

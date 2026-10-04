@@ -41,7 +41,7 @@ export function assembleApplication(roots: Iterable<string>, source: PlayDocumen
 // Parses documents whose source identities and placements are already known (for example unsaved
 // editor buffers), then validates contracts against the merged declaration inventory.
 export function parsePlacedDocuments(documents: readonly PlacedPlayDocument[]): CompilationResult<ApplicationSyntax> {
-    const candidates = CommandStreamCandidates.capture(documents.filter(document => document.isPlacementResolved !== false).map(document => splitLines(document.source, false, document.path)));
+    const candidates = CommandStreamCandidates.capturePlaced(documents.filter(document => document.isPlacementResolved !== false).map(document => ({ lines: splitLines(document.source, false, document.path), placement: document.placement })));
     const parsed = documents.map(document => {
         const result = parseForAuthoring(document.source, document.path, document.placement, false, candidates);
         return document.isPlacementResolved === false ? { ...result, value: { ...result.value, eventSources: [] } } : result;

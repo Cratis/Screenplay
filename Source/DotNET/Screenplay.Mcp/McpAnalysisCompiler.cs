@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Files;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
@@ -11,7 +12,7 @@ namespace Cratis.Screenplay.Mcp;
 
 // Retain original fragments, including recoverable erroneous trees, while the existing
 // folder compiler performs its normal merge and validation. No parser behavior is replaced.
-sealed class McpAnalysisCompiler : IScreenplayCompiler
+sealed class McpAnalysisCompiler : IScreenplayCompiler, ICommandStreamCandidateParser
 {
     readonly ScreenplayCompiler _compiler = new();
     readonly List<(string? Path, CompilationResult<ApplicationSyntax> Result)> _documents = [];
@@ -32,6 +33,15 @@ sealed class McpAnalysisCompiler : IScreenplayCompiler
     public CompilationResult<ApplicationSyntax> Parse(string source, string? path, PlayPlacement placement)
     {
         var result = _compiler.Parse(source, path, placement);
+        _documents.Add((path, result));
+
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public CompilationResult<ApplicationSyntax> ParseWithCandidates(string source, string? path, PlayPlacement placement, CommandStreamCandidates candidates)
+    {
+        var result = _compiler.ParseWithCandidates(source, path, placement, candidates);
         _documents.Add((path, result));
 
         return result;

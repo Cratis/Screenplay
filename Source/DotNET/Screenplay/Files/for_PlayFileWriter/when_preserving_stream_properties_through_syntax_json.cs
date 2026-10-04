@@ -115,6 +115,47 @@ public class when_preserving_stream_properties_through_syntax_json
         }
     }
 
+    [Theory]
+    [InlineData("domain Example\nimport Account.Transactions\n  type Transactions\n    value String")]
+    [InlineData("import Account.Transactions\n  type Transactions\n    value String")]
+    [InlineData("import Account.Transactions\n\ttype Transactions\n\t  value String")]
+    void should_inventory_deeper_declarations_in_every_file_order(string types)
+    {
+        var documents = new[]
+        {
+            new PlayFileContent("sources.play", "eventsource Account\n  stream Transactions"),
+            new PlayFileContent("types.play", types),
+            new PlayFileContent("commands.play", Prefix + "stream Account.Transactions\n          deeper String")
+        };
+        foreach (var first in documents)
+        {
+            foreach (var second in documents.Where(document => document != first))
+            {
+                var result = Assemble([first, second, documents.Single(document => document != first && document != second)], false);
+                result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeTrue();
+                Command(result.Value!).Stream!.PropertyCandidate.ShouldNotBeNull();
+                Command(result.Value!).Properties.Count().ShouldEqual(2);
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    void should_use_placed_module_and_feature_leaf_rules(bool reverse)
+    {
+        var result = Assemble(
+            [
+                new("application.play", "import Account.Transactions\neventsource Account\n  stream Transactions\nmodule M\n  import \"module.play\"\n  feature F\n    import \"feature.play\""),
+                new("module.play", "description \"Module\"\n  type Transactions\n    value String"),
+                new("feature.play", "description \"Feature\"\n  slice StateChange S\n    command C\n      stream Account.Transactions\n        deeper String")
+            ],
+            reverse);
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeTrue();
+        Command(result.Value!).Stream!.PropertyCandidate.ShouldNotBeNull();
+        Command(result.Value!).Properties.Count().ShouldEqual(2);
+    }
+
     [Fact]
     void should_not_escape_an_unqualified_scalar_property()
     {

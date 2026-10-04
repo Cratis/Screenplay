@@ -84,5 +84,37 @@ public class when_classifying_command_streams : given.a_compiler
         Command(_compiler.Parse(printed + Source).Value!).Properties.Count().ShouldEqual(2);
     }
 
+    [Theory]
+    [InlineData("domain Example\nimport Account.Transactions\n  type Transactions\n    value String\n")]
+    [InlineData("import Account.Transactions\nimport \"other.play\"\n    type Transactions\n      value String\n")]
+    [InlineData("import Account.Transactions\n  domain Example\n    type Transactions\n      value String\n")]
+    [InlineData("import Account.Transactions\n\ttype Transactions\n\t  value String\n")]
+    void should_use_real_document_leaf_ownership_without_stealing_legacy_members(string declarations)
+    {
+        foreach (var text in new[] { declarations + Prefix + "stream Account.Transactions\n          deeper String" + Source, declarations + Source + Prefix + "stream Account.Transactions\n          deeper String" })
+        {
+            var parsed = _compiler.Parse(text);
+            parsed.Success.ShouldBeFalse();
+            parsed.Value!.Types!.Single().Name.ShouldEqual("Transactions");
+            parsed.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeTrue();
+            var command = Command(parsed.Value!);
+            command.Stream!.PropertyCandidate!.Type.Name.ShouldEqual("Account.Transactions");
+            command.Properties.Select(property => property.Name).SequenceEqual(["stream", "deeper"]).ShouldBeTrue();
+            _compiler.Parse(new ScreenplayPrinter().Print(parsed.Value!)).Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0505").ShouldBeTrue();
+            var escaped = _compiler.Parse(text.Replace("stream Account.Transactions", "@stream Account.Transactions", StringComparison.Ordinal));
+            Command(escaped.Value!).Stream.ShouldBeNull();
+            Command(escaped.Value!).Properties.Count().ShouldEqual(2);
+        }
+    }
+
+    [Fact]
+    void should_not_inventory_keyword_properties_or_fenced_declarations()
+    {
+        var parsed = _compiler.Parse(Prefix + "eventsource String\n          type String\n        handler\n          ```csharp\ntype Transactions\neventsource Account\n  stream Transactions\n          ```\n");
+        Command(parsed.Value!).Properties.Select(property => property.Name).SequenceEqual(["eventsource", "type"]).ShouldBeTrue();
+        parsed.Value!.Types!.ShouldBeEmpty();
+        parsed.Value!.EventSources.ShouldBeEmpty();
+    }
+
     static CommandSyntax Command(ApplicationSyntax application) => application.Modules.Single().Features.Single().Slices.Single().Commands.Single();
 }
