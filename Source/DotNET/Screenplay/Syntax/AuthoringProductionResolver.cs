@@ -53,9 +53,9 @@ public sealed record AuthoringProductionResolution(AuthoringProductionKind Kind,
 /// </summary>
 public sealed class AuthoringProductionResolver
 {
-    readonly ILookup<string, AuthoringProductionDeclaration> _byName;
-    readonly Dictionary<(DeclarationScope Scope, string Reference), AuthoringProductionResolution> _cache = [];
-    readonly IReadOnlyList<(SliceSyntax Slice, DeclarationScope Scope)> _slices;
+    readonly ReferenceDeclarationIndex _candidates;
+    readonly Dictionary<Declaration, AuthoringProductionDeclaration> _occurrences = new(ReferenceEqualityComparer.Instance);
+    readonly Dictionary<(string Scope, string Reference), AuthoringProductionResolution> _cache = [];
     readonly Dictionary<SliceSyntax, DeclarationScope> _scopes = new(ReferenceEqualityComparer.Instance);
 
     /// <summary>
@@ -63,16 +63,21 @@ public sealed class AuthoringProductionResolver
     /// </summary>
     /// <param name="application">The assembled application.</param>
     public AuthoringProductionResolver(ApplicationSyntax application)
+        : this(Inventory(application))
     {
-        _slices = [.. application.Modules.SelectMany(module => Features(module.Features, [module.Name]))];
-        foreach (var (slice, scope) in _slices) _scopes.Add(slice, scope);
-        Declarations = [.. _slices.SelectMany(entry => EventDeclarations.In(entry.Slice)
-            .GroupBy(node => node.Name, StringComparer.Ordinal)
-            .SelectMany(group => (group.Select(node => node.Generation).Distinct().Count() != group.Count()
-                ? group.AsEnumerable() : group.OrderByDescending(node => node.Generation).Take(1))
-                .Select(node => new AuthoringProductionDeclaration(AuthoringProductionKind.Event, group.Key, entry.Scope.Segments, node)))
-            .Concat(OperationDeclarations.In(entry.Slice).Select(node => new AuthoringProductionDeclaration(AuthoringProductionKind.Operation, node.Name, entry.Scope.Segments, node))))];
-        _byName = Declarations.ToLookup(entry => entry.Name, StringComparer.Ordinal);
+        foreach (var (slice, scope) in application.Modules.SelectMany(module => Features(module.Features, [module.Name]))) _scopes.Add(slice, scope);
+    }
+
+    /// <summary>
+    /// Initializes an explicit candidate view. The caller retains physical collisions and
+    /// selects valid logical event generations before supplying the view.
+    /// </summary>
+    /// <param name="declarations">The complete declaration candidates.</param>
+    public AuthoringProductionResolver(IEnumerable<AuthoringProductionDeclaration> declarations)
+    {
+        Declarations = [.. declarations];
+        foreach (var declaration in Declarations) _occurrences.Add(new(declaration.Name, new(declaration.Scope)), declaration);
+        _candidates = new(_occurrences.Keys);
     }
 
     /// <summary>
@@ -89,25 +94,34 @@ public sealed class AuthoringProductionResolver
     public AuthoringProductionResolution Resolve(string reference, SliceSyntax slice)
     {
         if (!_scopes.TryGetValue(slice, out var scope)) return new(AuthoringProductionKind.Unresolved, null, []);
-        if (_cache.TryGetValue((scope, reference), out var cached)) return cached;
-        var candidates = _byName[reference.Split('.').LastOrDefault() ?? string.Empty].ToArray();
-        var entries = candidates.Select(entry => new Declaration(entry.Name, new(entry.Scope))).ToArray();
-        var occurrences = new Dictionary<Declaration, AuthoringProductionDeclaration>(ReferenceEqualityComparer.Instance);
-        for (var index = 0; index < entries.Length; index++) occurrences.Add(entries[index], candidates[index]);
-        var result = ReferenceResolver.Resolve(reference, scope, entries);
+
+        return Resolve(reference, scope.Segments);
+    }
+
+    /// <summary>
+    /// Resolves against the explicit candidate view from a known complete authoring scope.
+    /// </summary>
+    /// <param name="reference">The authored bare or qualified reference.</param>
+    /// <param name="scope">The complete referring scope.</param>
+    /// <returns>The resolved kind, declaration and ambiguity evidence.</returns>
+    public AuthoringProductionResolution Resolve(string reference, IReadOnlyList<string> scope)
+    {
+        var key = (ReferenceDeclarationIndex.ScopeKey(scope), reference);
+        if (_cache.TryGetValue(key, out var cached)) return cached;
+        var result = ReferenceResolver.Resolve(reference, new DeclarationScope(scope), _candidates);
         if (result.Resolved is { } resolved)
         {
-            var declaration = occurrences[resolved];
+            var declaration = _occurrences[resolved];
             var found = new AuthoringProductionResolution(declaration.Kind, declaration, []);
-            _cache[(scope, reference)] = found;
+            _cache[key] = found;
             return found;
         }
 
         var outcome = new AuthoringProductionResolution(
             result.IsUnresolved ? AuthoringProductionKind.Unresolved : AuthoringProductionKind.Ambiguous,
             null,
-            [.. result.Ambiguous.Select(candidate => occurrences[candidate])]);
-        _cache[(scope, reference)] = outcome;
+            [.. result.Ambiguous.Select(candidate => _occurrences[candidate])]);
+        _cache[key] = outcome;
 
         return outcome;
     }
@@ -135,6 +149,14 @@ public sealed class AuthoringProductionResolver
         return resolution.Kind != AuthoringProductionKind.Operation &&
             !(resolution.Kind == AuthoringProductionKind.Ambiguous && resolution.Candidates.Any(candidate => candidate.Kind == AuthoringProductionKind.Operation));
     }
+
+    static IEnumerable<AuthoringProductionDeclaration> Inventory(ApplicationSyntax application) =>
+        application.Modules.SelectMany(module => Features(module.Features, [module.Name])).SelectMany(entry => EventDeclarations.In(entry.Slice)
+            .GroupBy(node => node.Name, StringComparer.Ordinal)
+            .SelectMany(group => (group.Select(node => node.Generation).Distinct().Count() != group.Count()
+                ? group.AsEnumerable() : group.OrderByDescending(node => node.Generation).Take(1))
+                .Select(node => new AuthoringProductionDeclaration(AuthoringProductionKind.Event, group.Key, entry.Scope.Segments, node)))
+            .Concat(OperationDeclarations.In(entry.Slice).Select(node => new AuthoringProductionDeclaration(AuthoringProductionKind.Operation, node.Name, entry.Scope.Segments, node))));
 
     static IEnumerable<(SliceSyntax Slice, DeclarationScope Scope)> Features(IEnumerable<FeatureSyntax> features, IReadOnlyList<string> outer)
     {
