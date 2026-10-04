@@ -21,6 +21,7 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
         .ToDictionary(entry => entry.Handle.Document, entry => ToJson(entry.Node));
     readonly List<Edit> _edits = [];
     readonly Dictionary<JsonNode, SourceLocation> _sourceLocations = [];
+    readonly Dictionary<JsonNode, WorkspaceSyntaxEntry> _pendingRuleOrigins = [];
     readonly Dictionary<JsonNode, ImmutableArray<SourceComment>> _sourceComments = [];
     readonly Dictionary<JsonNode, IReadOnlyDictionary<string, SourceLocation>> _directiveLocations = [];
     readonly Dictionary<JsonNode, AutoMapMode> _parsedAutoMapModes = [];
@@ -64,6 +65,10 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
         {
             _originals.Add((entry, Resolve(entry.Handle)));
             _sourceLocations[Resolve(entry.Handle)] = entry.Location;
+            if (entry.Node is ValidationRuleSyntax { Implementation: not null, File: null, Code: null })
+            {
+                _pendingRuleOrigins[Resolve(entry.Handle)] = entry;
+            }
             _sourceComments[Resolve(entry.Handle)] = entry.Node.SourceComments;
             _directiveLocations[Resolve(entry.Handle)] = entry.Node.DirectiveLocations;
             if (entry.Node.ParsedAutoMapMode is { } mode)
@@ -159,6 +164,41 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
         }
     }
 
+    // Source/comment correspondence is stricter than assuming every final collection index is an
+    // identity. Use the actual metadata carried by the edit engine, independently of reference provenance.
+    internal void RecordPendingRuleSources(WorkspaceEditProvenance provenance, IEnumerable<ReplaceWorkspaceSyntaxDocument> replacements)
+    {
+        var replaced = replacements.ToArray();
+        var documents = replaced.Select(replacement => replacement.Document).ToHashSet();
+        var positions = new Dictionary<JsonNode, (DocumentId Document, string Path)>(ReferenceEqualityComparer.Instance);
+        foreach (var (document, root) in _roots.Where(pair => !documents.Contains(pair.Key)))
+        {
+            Walk(root, document, string.Empty, positions);
+        }
+
+        foreach (var replacement in replaced)
+        {
+            var root = ToJson(replacement.Syntax);
+
+            // Parser-invalid documents have no original syntax occurrences to correspond or protect.
+            if (_roots.TryGetValue(replacement.Document, out var original))
+            {
+                CarrySourceLocations(original, root);
+            }
+
+            CarryReplacementMetadata(replacement.Syntax, root);
+            Walk(root, replacement.Document, string.Empty, positions);
+        }
+
+        foreach (var (node, original) in _pendingRuleOrigins)
+        {
+            if (positions.TryGetValue(node, out var position))
+            {
+                provenance.Map(position, (original.Handle.Document, original.Handle.Path));
+            }
+        }
+    }
+
     static void Walk(JsonNode? node, DocumentId document, string path, Dictionary<JsonNode, (DocumentId Document, string Path)> positions)
     {
         if (node is JsonObject owner)
@@ -248,12 +288,6 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
     Edit Replacement(ReplaceWorkspaceNode operation)
     {
         var entry = Expected(operation.Target, operation.Expected);
-        if (entry.Node is ValidationRuleSyntax { Implementation: not null, File: null, Code: null } &&
-            operation.Node is ValidationRuleSyntax { Implementation: null, File: null, Code: null })
-        {
-            throw new InvalidWorkspaceAuthoring("Removing pending named-rule intent requires attaching a predicate source or removing the rule explicitly.");
-        }
-
         if (entry.Parent is null)
         {
             if (operation.Node is not ApplicationSyntax)
@@ -280,11 +314,6 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
         if (entry.Index is null)
         {
             var parent = index.Find(entry.Parent)!;
-            if (entry.Node is ImplementationSyntax && parent.Node is ValidationRuleSyntax { File: null, Code: null })
-            {
-                throw new InvalidWorkspaceAuthoring("Removing pending named-rule intent requires attaching a predicate source or removing the rule explicitly.");
-            }
-
             var property = parent.Node.GetType().GetProperties().Single(candidate => JsonNamingPolicy.CamelCase.ConvertName(candidate.Name) == entry.Member);
             if (new NullabilityInfoContext().Create(property).ReadState != NullabilityState.Nullable)
             {
@@ -419,6 +448,16 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
         }
         else
         {
+            if (replacement is null && target.Node is ImplementationSyntax && target.Parent is { } parent && index.Find(parent)?.Node is ValidationRuleSyntax)
+            {
+                // Unwrapping removes the guidance nodes, not their source comments. Keep them on the
+                // surviving rule; final-source validation decides whether the atomic transition is valid.
+                var owner = original.Parent!;
+                _sourceComments[owner] = [.. _sourceComments.GetValueOrDefault(owner, []), .. _originals
+                    .Where(item => Contains(target.Handle, item.Entry.Handle))
+                    .SelectMany(item => item.Entry.Node.SourceComments)];
+            }
+
             original.Parent![target.Member!] = replacement;
         }
     }

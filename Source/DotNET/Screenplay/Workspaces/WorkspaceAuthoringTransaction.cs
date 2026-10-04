@@ -263,7 +263,7 @@ sealed class WorkspaceAuthoringTransaction(
         var candidate = ScreenplayWorkspace.CreateValidated(workspace.ApplicationName, ordered, catalog, compilation, attachments.Contents, attachments.Diagnostics);
         var migrations = IdentifierMigrations(index, edits, referenceRenames);
         WorkspaceAuthoringReferences.Validate(workspace, candidate, request, _diagnostics, migrations);
-        ValidateAbsenceKeys(request, index, candidate, edits, replacements, migrations);
+        ValidateSourceTransitions(request, index, candidate, edits, replacements, migrations);
         return new()
         {
             Workspace = candidate,
@@ -281,9 +281,9 @@ sealed class WorkspaceAuthoringTransaction(
         };
     }
 
-    // Keyed absence obligations are validated beside, not through, the generic reference engine. Correspondence
-    // comes only from this transaction's operations; see WorkspaceEditProvenance.
-    void ValidateAbsenceKeys(
+    // Source transition obligations are validated beside, not through, the generic reference engine.
+    // Correspondence comes only from this transaction's operations; see WorkspaceEditProvenance.
+    void ValidateSourceTransitions(
         WorkspaceAuthoringRequest request,
         WorkspaceSyntaxIndex before,
         ScreenplayWorkspace candidate,
@@ -292,11 +292,6 @@ sealed class WorkspaceAuthoringTransaction(
         IReadOnlyDictionary<SemanticAddress, SemanticAddress>? renames)
     {
         var after = WorkspaceSyntaxIndex.Create(candidate);
-        if (!WorkspaceAbsenceKeyBindings.Present(before) && !WorkspaceAbsenceKeyBindings.Present(after))
-        {
-            return;
-        }
-
         var provenance = new WorkspaceEditProvenance();
         var replaced = replacements.Select(replacement => replacement.Document).ToHashSet();
         var survivors = candidate.Documents.Select(document => document.Id).ToHashSet();
@@ -323,7 +318,26 @@ sealed class WorkspaceAuthoringTransaction(
             migrations[rename.PreviousAddress] = rename.CurrentAddress;
         }
 
-        WorkspaceAbsenceKeyValidation.Validate(before, after, WorkspaceReferenceLayout.Equivalent(workspace, candidate), provenance, request.ReferencePolicy, migrations, _diagnostics);
+        var ruleSources = new WorkspaceEditProvenance();
+        edits.RecordPendingRuleSources(ruleSources, replacements);
+        WorkspacePendingRuleTransitions.Validate(before, after, ruleSources);
+        foreach (var (target, _) in edits.Replacements)
+        {
+            if (provenance.Image(target) is { } image)
+            {
+                WorkspacePendingRuleTransitions.Region(before, target.Handle, after, new(candidate.Revision, image.Document, image.Path), provenance, migrations);
+            }
+        }
+
+        foreach (var document in replaced)
+        {
+            WorkspacePendingRuleTransitions.Region(before, new(workspace.Revision, document, string.Empty), after, new(candidate.Revision, document, string.Empty), provenance, migrations);
+        }
+
+        if (WorkspaceAbsenceKeyBindings.Present(before) || WorkspaceAbsenceKeyBindings.Present(after))
+        {
+            WorkspaceAbsenceKeyValidation.Validate(before, after, WorkspaceReferenceLayout.Equivalent(workspace, candidate), provenance, request.ReferencePolicy, migrations, _diagnostics);
+        }
     }
 
     WorkspaceAuthoringResult Failure(WorkspaceConflictKind kind, string message) => new()

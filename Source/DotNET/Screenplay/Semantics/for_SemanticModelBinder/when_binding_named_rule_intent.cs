@@ -110,6 +110,7 @@ public class when_binding_named_rule_intent
         foreach (var invalid in new[]
         {
             rule with { Rule = ValidationRuleKind.NotEmpty },
+            rule with { Rule = ValidationRuleKind.NotEmpty, File = null },
             rule with { Value = new PathExpressionSyntax("Bad.Name", rule.Location) },
             rule with { Value = new PathExpressionSyntax(null!, rule.Location) },
             rule with { Value = new PathExpressionSyntax("CheckLabel\n", rule.Location) },
@@ -132,6 +133,9 @@ public class when_binding_named_rule_intent
         var invalidConcept = conceptSyntax with { Concepts = [concept with { Validations = [block with { Rules = [block.Rules.Single() with { Implementation = rule.Implementation }] }] }] };
         Catch.Exception(() => SyntaxJson.Serialize(invalidConcept)).ShouldBeOfExactType<InvalidSyntaxJson>();
         Bind(conceptSource, false, invalidConcept).Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax).ShouldBeTrue();
+        var pendingConcept = invalidConcept with { Concepts = [concept with { Validations = [block with { Rules = [block.Rules.Single() with { File = null, Implementation = rule.Implementation }] }] }] };
+        Catch.Exception(() => SyntaxJson.Serialize(pendingConcept)).ShouldBeOfExactType<InvalidSyntaxJson>();
+        Bind(conceptSource, false, pendingConcept).Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax).ShouldBeTrue();
     }
 
     static ApplicationSyntax ReplaceRule(ApplicationSyntax syntax, ValidationRuleSyntax rule)

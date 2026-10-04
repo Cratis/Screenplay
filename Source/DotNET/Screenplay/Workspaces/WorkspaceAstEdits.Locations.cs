@@ -18,6 +18,11 @@ internal sealed partial class WorkspaceAstEdits
     /// </summary>
     void CarrySourceLocations(JsonNode original, JsonNode replacement)
     {
+        if (_pendingRuleOrigins.TryGetValue(original, out var origin))
+        {
+            _pendingRuleOrigins[replacement] = origin;
+        }
+
         if (_sourceLocations.TryGetValue(original, out var location))
         {
             _sourceLocations[replacement] = location;
@@ -90,6 +95,15 @@ internal sealed partial class WorkspaceAstEdits
     // equal JSON siblings after a reorder; positional JSON matching must not overwrite their metadata.
     void CarryReplacementMetadata(SyntaxNode node, JsonNode json)
     {
+        if (node is ValidationRuleSyntax && node.Location.Line > 1)
+        {
+            var origins = index.Entries.Where(entry => entry.Node is ValidationRuleSyntax { Implementation: not null, File: null, Code: null } && entry.Location == node.Location).Take(2).ToArray();
+            if (origins.Length == 1)
+            {
+                _pendingRuleOrigins[json] = origins[0];
+            }
+        }
+
         if (node.SourceComments.Length > 0)
         {
             _sourceComments[json] = node.SourceComments;

@@ -4,6 +4,7 @@
 using System.Text;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Workspaces.for_WorkspaceAuthoring;
 
@@ -67,6 +68,126 @@ public class when_editing_named_rule_intent
         WorkspaceSyntaxIndex.Create(Workspace(Prefix)).Diagnostics.ShouldBeEmpty();
     }
 
+    [Theory]
+    [InlineData("validate")]
+    [InlineData("command")]
+    [InlineData("root")]
+    [InlineData("document")]
+    public void should_refuse_pending_stripping_through_ancestor_replacements(string scope)
+    {
+        var workspace = Workspace(Prefix + "            implementation\n              hint \"Pending\"");
+        var stripped = new ScreenplayCompiler().Parse(Prefix).Value!;
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var target = index.Entries.Single(entry => scope switch
+        {
+            "validate" => entry.Node is DeclarativeValidateSyntax,
+            "command" => entry.Node is CommandSyntax,
+            _ => entry.Parent is null
+        });
+        var replacement = scope switch
+        {
+            "validate" => (SyntaxNode)stripped.Modules.Single().Features.Single().Slices.Single().Commands.Single().Validations.Single(),
+            "command" => stripped.Modules.Single().Features.Single().Slices.Single().Commands.Single(),
+            _ => stripped
+        };
+        var request = Request(workspace) with
+        {
+            Operations = scope == "document" ? [] : [new ReplaceWorkspaceNode(target.Handle, target.Node, replacement)],
+            Documents = scope == "document" ? [new ReplaceWorkspaceSyntaxDocument(target.Handle.Document, stripped)] : []
+        };
+        workspace.ProposeAuthoring(request).Accepted.ShouldBeFalse();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void should_follow_original_source_correspondence_when_an_ancestor_changes_the_rule_header(bool document)
+    {
+        var workspace = Workspace(Prefix + "            implementation");
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var root = index.Entries.Single(entry => entry.Parent is null);
+        var replacement = new ScreenplayCompiler().Parse(Prefix.Replace("rule Check", "rule Renamed", StringComparison.Ordinal)).Value!;
+        workspace.ProposeAuthoring(Request(workspace) with
+        {
+            Operations = document ? [] : [new ReplaceWorkspaceNode(root.Handle, root.Node, replacement)],
+            Documents = document ? [new ReplaceWorkspaceSyntaxDocument(root.Handle.Document, replacement)] : []
+        }).Accepted.ShouldBeFalse();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void should_distinguish_whole_rule_deletion_from_stripping_a_duplicate_pending_rule(bool removePending)
+    {
+        var workspace = Workspace(Prefix + "            implementation\n          label rule Check");
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var block = index.Entries.Single(entry => entry.Node is DeclarativeValidateSyntax);
+        var rules = ((DeclarativeValidateSyntax)block.Node).Rules.ToArray();
+        var replacement = (DeclarativeValidateSyntax)block.Node with { Rules = [removePending ? rules[1] : rules[0] with { Implementation = null }] };
+        Propose(workspace, WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments, new ReplaceWorkspaceNode(block.Handle, block.Node, replacement)).Accepted.ShouldEqual(removePending);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void should_validate_atomic_attachment_and_unwrap_against_final_source(bool inline)
+    {
+        var workspace = Workspace(Prefix + "            implementation // wrapper\n              hint \"Pending\" // guidance\n          label rule Other\n            file Other.cs // other source");
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var pending = index.Entries.Single(entry => entry.Node is ValidationRuleSyntax { Implementation: not null });
+        var wrapper = index.Entries.Single(entry => entry.Node is ImplementationSyntax);
+        var before = WorkspaceNamedRuleIntentInventory.Create(workspace).Entries.Single(entry => entry.Member == "label/Other");
+        var source = inline ? (SyntaxNode)new CodeBlockSyntax("csharp", "return true;", pending.Location) : new FileReferenceSyntax("A.cs", pending.Location);
+        var result = workspace.ProposeAuthoring(Request(workspace) with
+        {
+            Operations = [new RemoveWorkspaceNode(wrapper.Handle, wrapper.Node), new AddWorkspaceNode(pending.Handle, pending.Node, inline ? "code" : "file", source)]
+        });
+        result.Accepted.ShouldBeTrue();
+        var intents = WorkspaceNamedRuleIntentInventory.Create(result.Workspace!).Entries;
+        intents.Single(entry => entry.Member == "label/Check").State.ShouldEqual(inline ? "inline" : "file");
+        intents.Single(entry => entry.Member == "label/Other").RequirementId.ShouldEqual(before.RequirementId);
+        foreach (var comment in new[] { "// wrapper", "// guidance", "// other source" }) result.Workspace!.Documents.Single().Text.Split(comment, StringSplitOptions.None).Length.ShouldEqual(2);
+        workspace.ProposeAuthoring(Request(workspace) with { Operations = [new RemoveWorkspaceNode(pending.Handle, pending.Node)] }).Accepted.ShouldBeTrue();
+        result.Workspace!.ProposeAuthoring(Request(result.Workspace!) with { Operations = [new RemoveWorkspaceNode(wrapper.Handle, wrapper.Node)] }).Accepted.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void should_allow_an_atomic_source_switch_but_refuse_invalid_final_sources()
+    {
+        var workspace = Workspace(Prefix + "            implementation\n              file A.cs");
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var rule = index.Entries.Single(entry => entry.Node is ValidationRuleSyntax);
+        var wrapper = index.Entries.Single(entry => entry.Node is ImplementationSyntax);
+        var file = index.Entries.Single(entry => entry.Node is FileReferenceSyntax);
+        var switched = workspace.ProposeAuthoring(Request(workspace) with
+        {
+            Operations = [new RemoveWorkspaceNode(wrapper.Handle, wrapper.Node), new RemoveWorkspaceNode(file.Handle, file.Node), new AddWorkspaceNode(rule.Handle, rule.Node, "code", new CodeBlockSyntax("csharp", "return true;", rule.Location))]
+        });
+        switched.Accepted.ShouldBeTrue();
+        var pending = Workspace(Prefix + "            implementation");
+        var pendingRule = WorkspaceSyntaxIndex.Create(pending).Entries.Single(entry => entry.Node is ValidationRuleSyntax);
+        foreach (var invalid in new[]
+        {
+            ((ValidationRuleSyntax)pendingRule.Node) with { Implementation = null, File = new("", pendingRule.Location) },
+            ((ValidationRuleSyntax)pendingRule.Node) with { Implementation = null, Code = new("unknown", "return true;", pendingRule.Location) },
+            ((ValidationRuleSyntax)pendingRule.Node) with { Rule = ValidationRuleKind.NotEmpty }
+        })
+        {
+            Propose(pending, WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments, new ReplaceWorkspaceNode(pendingRule.Handle, pendingRule.Node, invalid)).Accepted.ShouldBeFalse();
+        }
+    }
+
+    [Fact]
+    public void should_not_weaken_reference_guards_when_deleting_the_whole_owner()
+    {
+        var workspace = Workspace(Prefix + "            implementation\n      specification Reached\n        when C\n          label = \"ok\"\n        then error \"Invalid\"");
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var command = index.Entries.Single(entry => entry.Node is CommandSyntax);
+        Propose(workspace, WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments, new RemoveWorkspaceNode(command.Handle, command.Node)).Accepted.ShouldBeFalse();
+        var specification = index.Entries.Single(entry => entry.Node is SpecificationSyntax);
+        workspace.ProposeAuthoring(Request(workspace) with { Operations = [new RemoveWorkspaceNode(command.Handle, command.Node), new RemoveWorkspaceNode(specification.Handle, specification.Node)] }).Accepted.ShouldBeTrue();
+    }
+
     [Fact]
     public void should_preserve_persisted_owner_identity_across_rename_and_restart()
     {
@@ -111,12 +232,12 @@ public class when_editing_named_rule_intent
 
     static ScreenplayWorkspace Workspace(string source) => ScreenplayWorkspace.Create("A", [Document("model.play", source)], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("A")));
     static WorkspaceDocument Document(string path, string source) => WorkspaceDocument.Create(path.Replace('/', '-'), PortablePlayPath.Parse(path), Encoding.UTF8.GetBytes(source));
-    static WorkspaceAuthoringResult Propose(ScreenplayWorkspace workspace, WorkspaceAuthoringFormatting formatting, WorkspaceAstOperation operation) => workspace.ProposeAuthoring(new()
+    static WorkspaceAuthoringRequest Request(ScreenplayWorkspace workspace) => new()
     {
         ExpectedRevision = workspace.Revision,
         ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
         Validation = WorkspaceAuthoringValidation.Authoring,
-        Formatting = formatting,
-        Operations = [operation]
-    });
+        Formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments
+    };
+    static WorkspaceAuthoringResult Propose(ScreenplayWorkspace workspace, WorkspaceAuthoringFormatting formatting, WorkspaceAstOperation operation) => workspace.ProposeAuthoring(Request(workspace) with { Formatting = formatting, Operations = [operation] });
 }
