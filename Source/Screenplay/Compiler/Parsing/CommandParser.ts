@@ -11,6 +11,7 @@ import { ExpressionSyntax } from '../Syntax/Expressions';
 import { ProducesSyntax } from '../Syntax/Reactions';
 import { CommandResponseSyntax } from '../Syntax/Responses';
 import { pattern } from '../Text/patterns';
+import { sourceStreamPattern } from '../Text/SourceStreamNames';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseCommandResponse, scalarResponsePattern } from './CommandResponseParser';
@@ -26,7 +27,7 @@ import { reportInvalidModifierOrder, reportLegacyOptionalSuffix, tryParsePropert
 import { locationOf, SourceLine } from './SourceLine';
 
 const header = pattern('^command\\s+([A-Za-z_]\\w*)$');
-const routeHeader = pattern('^stream\\s+[A-Za-z_]\\w*\\.[A-Za-z_]\\w*$');
+const routeHeader = sourceStreamPattern('^stream\\s+[A-Za-z_]\\w*\\.[A-Za-z_]\\w*$');
 const severityPattern = pattern('\\bseverity\\s+(\\S+)$');
 const messagePattern = pattern(`\\bmessage\\s+(?:"(${stringBodyPattern})"|(\\$strings\\.\\S*))$`);
 const rulePattern = pattern('^([\\w.]+)\\s+(.+)$');

@@ -7,6 +7,7 @@ import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax } from '../Sy
 import { PropertyMappingSyntax } from '../Syntax/Expressions';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { pattern } from '../Text/patterns';
+import { sourceStreamPattern } from '../Text/SourceStreamNames';
 import { parseDescription } from './DescriptionParser';
 import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
@@ -15,9 +16,9 @@ import { parseTypeRef, reportLegacyOptionalSuffix } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
 
 const pinPattern = pattern(`^id\\s+"(${stringBodyPattern})"$`);
-const typeDirective = pattern('^(identifier|streamId)\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)$');
-const sourceHeader = pattern('^eventsource\\s+([A-Za-z_]\\w*)$');
-const streamHeader = pattern('^stream\\s+([A-Za-z_]\\w*)$');
+const typeDirective = sourceStreamPattern('^(identifier|streamId)\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)$');
+const sourceHeader = sourceStreamPattern('^eventsource\\s+([A-Za-z_]\\w*)$');
+const streamHeader = sourceStreamPattern('^stream\\s+([A-Za-z_]\\w*)$');
 
 export function parseEventSource(context: ParserContext, header: SourceLine): EventSourceSyntax {
     const name = sourceHeader.exec(header.content)?.[1] ?? '';

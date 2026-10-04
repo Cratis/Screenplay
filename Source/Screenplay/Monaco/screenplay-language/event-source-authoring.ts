@@ -5,17 +5,17 @@ import { CompletionEntry } from './completion-items';
 import { fenceMap, indentOf, withoutComment } from './document-context';
 import { AuthoredEventSource } from './AuthoredEventSource';
 import { AuthoredStream } from './AuthoredStream';
-import { pattern } from '@cratis/screenplay-compiler';
+import { isSourceStreamName, isSourceStreamTypeName, sourceStreamPattern } from '@cratis/screenplay-compiler';
 import { DocumentSymbols, symbolsForBuffer } from './symbols';
 import { responseAnalysis } from './response-analysis';
 import { typeReferenceText } from './TypeReferenceSymbol';
 
 export const eventSourceAvailability = 'Syntax-only; execution unavailable until ESM v10 (PLAY0268). Authored classification does not supply an identity destination. No semantic IDs or automatic identity refactors.';
 
-const routePrefix = pattern('^\\s*stream\\s+(?:[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)?\\.?)?$');
-const keyPrefix = pattern('^\\s*streamId\\s*=\\s*([\\w.]*)$');
-const identifierTypePrefix = pattern('^\\s*identifier\\s+[\\w.]*$');
-const streamTypePrefix = pattern('^\\s*streamId\\s+[\\w.]*$');
+const routePrefix = sourceStreamPattern('^\\s*stream\\s+(?:[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)?\\.?)?$');
+const keyPrefix = sourceStreamPattern('^\\s*streamId\\s*=\\s*([\\w.]*)$');
+const identifierTypePrefix = sourceStreamPattern('^\\s*identifier\\s+[\\w.]*$');
+const streamTypePrefix = sourceStreamPattern('^\\s*streamId\\s+[\\w.]*$');
 
 export function analyzeEventSources(lines: string[], symbols?: DocumentSymbols) {
     symbols = symbolsForBuffer(lines, symbols);
@@ -121,7 +121,7 @@ export function eventSourceCompletions(lines: string[], line: number, before: st
         // An unavailable imported shape is not evidence that a route is the only viable meaning.
         for (const imported of symbols.imports) names.add(imported.qualifiedName);
         const qualified = before.trim().split(/\s+/)[1] ?? '';
-        return analysis.targets.filter(target => !names.has(target.name) && (!qualified.includes('.') || target.name.startsWith(qualified.slice(0, qualified.lastIndexOf('.') + 1))))
+        return analysis.targets.filter(target => isSourceStreamName(target.source.name) && isSourceStreamName(target.stream.name) && !names.has(target.name) && (!qualified.includes('.') || target.name.startsWith(qualified.slice(0, qualified.lastIndexOf('.') + 1))))
             .map(target => ({ label: target.name, insertText: qualified.includes('.') ? target.stream.name : target.name, documentation: eventSourceDetails(target.source, target.stream) }));
     }
     if (context?.route && context.command && indent > indentOf(lines[context.route.location.line - 1]) && keyPrefix.test(before)) {
@@ -140,7 +140,7 @@ export function eventSourceCompletions(lines: string[], line: number, before: st
             if (types.length !== 1) return [];
             properties = types[0].properties.map(property => ({ ...property, isIdentifier: false }));
         }
-        return properties.filter(property => property.type.name === target.name && !property.type.isOptional && !property.type.isCollection)
+        return properties.filter(property => isSourceStreamName(property.name) && property.type.name === target.name && !property.type.isOptional && !property.type.isCollection)
             .map(property => ({ label: property.name, insertText: property.name, documentation: `${typeReferenceText(property.type)} — command source for authored stream id. ${eventSourceAvailability}` }));
     }
     if (context?.source && indent > indentOf(lines[context.source.location.line - 1])) {
@@ -149,7 +149,7 @@ export function eventSourceCompletions(lines: string[], line: number, before: st
             const typed = responseAnalysis(lines, symbols.authoringDocuments ?? [], symbols.authoringPlacement, symbols.authoringPath);
             const streamId = /^\s*streamId\b/.test(before);
             return [...(streamId ? ['String', 'Uuid'] : ['String', 'Uuid', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime']), ...typed.operations.concepts.filter(concept => !streamId || ['String', 'Uuid', 'Int'].includes(concept.type) && concept.values.length === 0).map(concept => concept.name)]
-                .map(name => ({ label: name, insertText: name, documentation: eventSourceAvailability }));
+                .filter(isSourceStreamTypeName).map(name => ({ label: name, insertText: name, documentation: eventSourceAvailability }));
         }
         if (/^\s*$/.test(before)) return ownsStream ? [
             { label: 'streamId', insertText: 'streamId ${1:Type}', documentation: eventSourceAvailability },

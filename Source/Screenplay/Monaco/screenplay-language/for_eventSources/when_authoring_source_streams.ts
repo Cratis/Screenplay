@@ -133,6 +133,30 @@ describe('when authoring source streams', () => {
         expect(analysis.resolve('Account', 'Transactions').state).toBe('incomplete');
         expect(analysis.targets).toEqual([]);
     });
+    it.each([false, true])('should disclose an unclosed physical fence without hiding visible declarations %s', closed => {
+        const application = symbols(declarations + 'module Broken\n  description\n    ```text\neventsource Account\n  stream Other' + (closed ? '\n    ```' : ''));
+        const lines = command.split('\n');
+        const analysis = analyzeEventSources(lines, application);
+        expect(analysis.declarations.map(source => source.name)).toEqual(['Account']);
+        expect(analysis.resolve('Account', 'Transactions').state).toBe(closed ? 'unique' : 'incomplete');
+        expect(eventSourceReferenceAt(lines, 4, 18, 30, application)?.target?.name).toBe(closed ? 'Transactions' : undefined);
+        expect(eventSourceHover(lines, 4, 18, 30, application)).toContain(closed ? 'Account.Transactions' : 'incomplete');
+        expect(complete(command.replace('Account.Transactions', 'Account.Tr'), 'Account.Tr', application)?.map(entry => entry.label)).toEqual(closed ? ['Account.Transactions'] : []);
+        if (!closed) expect(responseAnalysis(application.authoringDocuments[0].source.split('\n'), [], undefined, 'declarations.play').diagnostics).toContainEqual(expect.objectContaining({ code: 'PLAY0164', location: expect.objectContaining({ path: 'declarations.play' }) }));
+    });
+    it.each(['𐐀', '\uD801', '\uDC00'])('should not complete or navigate unsupported declared names %s', suffix => {
+        const application = symbols(declarations.replaceAll('Account', 'Account' + suffix));
+        expect(complete(command.replace('Account.Transactions', 'Acc'), 'stream Acc', application)).toEqual([]);
+        expect(eventSourceReferenceAt(command.replaceAll('Account', 'Account' + suffix).split('\n'), 4, 18, 30, application)?.target).toBeUndefined();
+        const invalidStream = symbols(declarations.replaceAll('Transactions', 'Transactions' + suffix));
+        expect(complete(command.replace('Account.Transactions', 'Account.Tr'), 'Account.Tr', invalidStream)).toEqual([]);
+    });
+    it.each(['ß', '\u0301', '\u0661', '\u203F'])('should complete and navigate compiler-supported BMP declarations %s', suffix => {
+        const application = symbols(declarations.replaceAll('Account', 'Account' + suffix).replaceAll('Transactions', 'Transactions' + suffix));
+        const qualified = `Account${suffix}.Transactions${suffix}`;
+        expect(complete(command.replace('Account.Transactions', 'Acc'), 'stream Acc', application)?.map(entry => entry.label)).toEqual([qualified]);
+        expect(eventSourceReferenceAt(command.replace('Account.Transactions', qualified).split('\n'), 4, 18 + suffix.length, 30 + suffix.length * 2, application)?.target?.name).toBe('Transactions' + suffix);
+    });
     it('should share one cached analysis across source consumers', () => {
         const lines = source.split('\n');
         expect(analyzeEventSources(lines)).toBe(analyzeEventSources(lines));

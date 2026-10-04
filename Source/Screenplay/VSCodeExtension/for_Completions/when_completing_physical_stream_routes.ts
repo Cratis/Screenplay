@@ -60,6 +60,23 @@ describe('when the VS Code completion provider reads physical stream context', (
         expect(await complete('command C\n  handler\n    ```csharp\n    stream Accountß.Tr\n    ```', 3, application)).toEqual([]);
         expect(await complete('command C\n  stream Accountß.Tr // Accountß.Tr', 1, application)).toEqual([]);
     });
+    it.each(['𐐀', '\uD801', '\uDC00'])('should reject unsupported declaration and type completion candidates %s', async suffix => {
+        const application = new WorkspaceApplication();
+        application.set('sources.play', declarations.replaceAll('Accountß', 'Account' + suffix));
+        expect(await complete('command C\n  stream Acc', 1, application)).toEqual([]);
+        application.set('sources.play', declarations.replaceAll('Transactionsß', 'Transactions' + suffix));
+        expect(await complete('command C\n  stream Accountß.Tr', 1, application)).toEqual([]);
+        application.delete('sources.play');
+        application.set('types.play', `concept Id${suffix} : Uuid`);
+        expect(await complete('eventsource Account\n  identifier Id', 1, application)).not.toContain('Id' + suffix);
+        expect(await complete('eventsource Account\n  stream Transactions\n    streamId Id', 2, application)).not.toContain('Id' + suffix);
+    });
+    it.each([false, true])('should suppress route completion only for unclosed physical fences %s', async closed => {
+        const application = new WorkspaceApplication();
+        application.set('sources.play', declarations);
+        application.set('other.play', 'module Broken\n  description\n    ```text\neventsource Accountß\n  stream Other' + (closed ? '\n    ```' : ''));
+        expect(await complete('command C\n  stream Accountß.Tr', 1, application)).toEqual(closed ? ['Accountß.Transactionsß'] : []);
+    });
     it('should complete Unicode stream key and identifier type prefixes', async () => {
         const application = new WorkspaceApplication();
         application.set('types.play', 'concept Idß : Uuid');
