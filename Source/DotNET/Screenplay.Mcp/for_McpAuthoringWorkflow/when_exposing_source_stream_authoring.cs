@@ -3,6 +3,7 @@
 
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow;
 
@@ -122,6 +123,30 @@ public class when_exposing_source_stream_authoring : given.an_authoring_connecti
         var removed = Edit(opened, new { operation = "remove", target = source.GetProperty("handle") });
         Apply(opened, removed).GetProperty("success").GetBoolean().ShouldBeTrue();
         File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldNotContain("Additional");
+    }
+
+    [Fact]
+    void should_not_silently_reinterpret_an_untouched_route_even_in_draft_validation()
+    {
+        var source = Source.Replace("    streamId Month\n", string.Empty, StringComparison.Ordinal).Replace("          streamId = month\n", string.Empty, StringComparison.Ordinal);
+        Start(source);
+        var opened = Open();
+        var declaration = Node("EventSourceSyntax", opened.GetProperty("revision").GetString());
+        var node = JsonNode.Parse(declaration.GetProperty("node").GetRawText())!;
+        node["name"] = "Other";
+        var refused = Call("propose-ast", new
+        {
+            expectedRevision = opened.GetProperty("revision").GetString(), expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+            validation = "Authoring", referencePolicy = "Draft", formatting = "CanonicalizeTouchedDocuments",
+            operations = new[] { new { operation = "replace", target = declaration.GetProperty("handle"), node } }
+        });
+        refused.GetProperty("result").GetProperty("isError").GetBoolean().ShouldBeTrue();
+        refused.GetProperty("result").GetProperty("structuredContent").GetProperty("failureKind").GetString().ShouldEqual("ProposalRejected");
+        var exported = Result("export-workspace", new { expectedRevision = opened.GetProperty("revision").GetString() });
+        var workspace = ScreenplayWorkspaceSerializer.Deserialize(exported.GetProperty("bytesBase64").GetBytesFromBase64());
+        var bindings = new WorkspaceReferenceBindings(WorkspaceSyntaxIndex.Create(workspace));
+        bindings.Bindings.Count(binding => (binding.Reference.Domain is WorkspaceReferenceDomain.EventSource or WorkspaceReferenceDomain.EventStream) && binding.Target is not null).ShouldEqual(2);
+        File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldEqual(source);
     }
 
     JsonElement Edit(JsonElement opened, object operation) => Result("propose-ast", new

@@ -20,6 +20,18 @@ describe('when mapping authored stream details', () => {
         expect(slice.events.map(event => event.name)).toEqual(['Deposited']);
         expect(slice.specifications).toEqual([]);
     });
+    it('should describe unkeyed authored streams without fabricating a key', () => {
+        const unkeyed = fixture.replace('    streamId Month\n', '').replace('          streamId = month\n', '');
+        expect(parse(unkeyed).diagnostics).toEqual([]);
+        const details = board(unkeyed).command!.logicDescription;
+        expect(details).toContain('Authored stream: Account.Transactions');
+        expect(details).not.toContain('Stream id:');
+    });
+    it('should describe conflicting route candidates without selecting an effective route', () => {
+        const duplicated = fixture.replace('        produces event Deposited', '        stream Account.Transactions\n          streamId = month\n        produces event Deposited');
+        expect(board(duplicated).command?.logicDescription).toContain('Conflicting authored stream routes: no effective route selected');
+        expect(board(duplicated).command?.logicDescription).not.toContain('Authored stream:');
+    });
     it('should display literals as safe authored text without execution formatting', () => {
         const details = board(fixture.replace('concept Month : Int', 'concept Month : String').replace('streamId = month', 'streamId = "<Monthly & Annual>"')).command!.logicDescription;
         expect(details).toContain('Stream id: "&lt;Monthly &amp; Annual&gt;"');
