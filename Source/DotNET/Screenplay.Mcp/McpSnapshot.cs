@@ -38,7 +38,20 @@ sealed class McpSnapshot : IPlayFiles
     internal string SourceRevision { get; }
 
     /// <inheritdoc/>
-    public IEnumerable<PlayFile> FindIn(string root) => _documents.Select(document => new PlayFile(document.Path.Value, document.Path.Value));
+    public IEnumerable<PlayFile> FindIn(string root)
+    {
+        var folder = root == "." ? string.Empty : root.Replace('\\', '/');
+        if (folder.StartsWith("./", StringComparison.Ordinal))
+        {
+            folder = folder[2..];
+        }
+        var prefix = folder.Length == 0 ? string.Empty : $"{folder.TrimEnd('/')}/";
+
+        // IPlayFiles returns paths relative to the requested folder, not the application root.
+        // DiskPlayDocumentSource adds that folder back when it follows native file imports.
+        return _documents.Where(document => document.Path.Value.StartsWith(prefix, StringComparison.Ordinal))
+            .Select(document => new PlayFile(document.Path.Value, document.Path.Value[prefix.Length..]));
+    }
 
     /// <inheritdoc/>
     public string ReadContent(PlayFile file) => _documentsByPath[file.RelativePath].Text;

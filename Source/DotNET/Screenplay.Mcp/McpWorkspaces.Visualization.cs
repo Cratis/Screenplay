@@ -45,7 +45,9 @@ internal sealed partial class McpWorkspaces
             }
 
             var bytes = Encoding.UTF8.GetBytes(McpJson.RequiredString(item, "source"));
-            sketched[portable.Value] = WorkspaceDocument.Create($"sketch:{portable.Value}", portable, bytes);
+            sketched[portable.Value] = sketched.TryGetValue(portable.Value, out var existing)
+                ? WorkspaceDocument.Create(existing.Id, existing.StableKey, portable, bytes)
+                : WorkspaceDocument.Create(McpDocumentKeys.For(portable.Value), portable, bytes);
         }
 
         var result = sketched.Values.OrderBy(document => document.Path.Value, StringComparer.Ordinal).ToImmutableArray();
