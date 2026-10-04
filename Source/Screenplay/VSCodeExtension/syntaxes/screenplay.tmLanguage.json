@@ -29,7 +29,8 @@
     ],
     "repository": {
         "command-block": {
-            "begin": "^([ ]*)(command)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
+            "comment": "Compiler identifiers start with ASCII letter/underscore; continuations use .NET word categories on BMP UTF-16 code units only.",
+            "begin": "^([ ]*)(command)\\s+([A-Za-z_][\\p{L}\\p{Mn}\\p{Nd}\\p{Pc}&&[\\x{0000}-\\x{FFFF}]]*)(?=\\s*(?://.*)?$)",
             "beginCaptures": { "2": { "name": "keyword.control.screenplay" }, "3": { "name": "entity.name.type.screenplay" } },
             "while": "^(?=\\1[ ]+\\S|[ ]*$)",
             "patterns": [
@@ -51,7 +52,7 @@
             "patterns": [{ "include": "#command-named-rule" }, { "include": "#fenced-csharp" }, { "include": "#keywords" }, { "include": "#common" }]
         },
         "command-named-rule": {
-            "begin": "^([ ]*)([\\w.]+)\\s+(rule)\\s+([A-Za-z_]\\w*)(?=\\s*(?:severity\\s+\\w+|message\\s+.*|//.*|$))",
+            "begin": "^([ ]*)((?:[\\p{L}\\p{Mn}\\p{Nd}\\p{Pc}&&[\\x{0000}-\\x{FFFF}]]|[.])+)\\s+(rule)\\s+([A-Za-z_][\\p{L}\\p{Mn}\\p{Nd}\\p{Pc}&&[\\x{0000}-\\x{FFFF}]]*)(?=\\s*(?:severity\\s+\\w+|message\\s+.*|//.*|$))",
             "beginCaptures": { "2": { "name": "variable.other.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "4": { "name": "entity.name.type.screenplay" } },
             "while": "^(?=\\1[ ]+\\S|[ ]*$)",
             "patterns": [{ "include": "#handler-implementation" }, { "include": "#fenced-csharp" }, { "include": "#fenced-typescript" }, { "include": "#fenced-react" }, { "include": "#fenced-html" }, { "include": "#fenced-sql" }, { "include": "#keywords" }, { "include": "#common" }]

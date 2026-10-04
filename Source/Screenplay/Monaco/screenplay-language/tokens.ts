@@ -10,6 +10,7 @@ import {
     sliceTypes,
 } from './language';
 import { MonarchTokenRules, SubLanguage } from './sub-language-registry';
+import { bmpWordCharacters } from './bmp-word-characters';
 
 // Maps a Screenplay inline code tag to the Monaco language id used for embedded highlighting.
 // Declaration registration must not globally reserve existing property names.
@@ -64,7 +65,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
                 ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword']],
             [/^(\s*)(then\s+(?:operation|compensated))(\s+)([\w.]+)(?=\s*(?:\/\/.*)?$)/,
                 ['white', 'keyword', 'white', 'type.identifier']],
-            [/^(\s*)(command)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', { token: 'type.identifier', next: '@commandBody.$1' }]],
+            [new RegExp(`^(\\s*)(command)(\\s+)([A-Za-z_][${bmpWordCharacters}]*)(?=\\s*(?://.*)?$)`), ['white', 'keyword', 'white', { token: 'type.identifier', next: '@commandBody.$1' }]],
             [/^(\s*)(handler)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@handlerBody.$1' }]],
             [/^(\s*@?[a-z_]\w*\s+)([\w.]+(?:\[\])?(?:\?|\s+optional)?)(\s+)(generated)(\s+identifier)?(?=\s*(?:\/\/.*)?$)/,
                 ['identifier', 'type.identifier', 'white', 'keyword', 'keyword']],
@@ -148,7 +149,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
 
         commandValidation: [
             [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
-            [/^(\s*)([\p{L}\p{Mn}\p{Nd}\p{Pc}.]+)(\s+)(rule)(\s+)([A-Za-z_][\p{L}\p{Mn}\p{Nd}\p{Pc}]*)(?=\s*(?:severity\s+\w+|message\s+.*|\/\/.*|$))/u,
+            [new RegExp(`^(\\s*)([${bmpWordCharacters}.]+)(\\s+)(rule)(\\s+)([A-Za-z_][${bmpWordCharacters}]*)(?=\\s*(?:severity\\s+\\w+|message\\s+.*|//.*|$))`),
                 ['white', 'identifier', 'white', 'keyword', 'white', { token: 'type.identifier', next: '@namedRuleBody.$1' }]],
             { include: '@root' },
         ],
