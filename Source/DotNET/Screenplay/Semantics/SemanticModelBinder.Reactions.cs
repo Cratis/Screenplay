@@ -24,13 +24,6 @@ public sealed partial class SemanticModelBinder
         static IEnumerable<SemanticSlice> AllBoundSlices(SemanticFeature feature) =>
             feature.Slices.Concat(feature.Features.SelectMany(AllBoundSlices));
 
-        static IEnumerable<string> ConditionNames(ConditionSyntax condition) => condition switch
-        {
-            LogicalConditionSyntax logical => ConditionNames(logical.Left).Concat(ConditionNames(logical.Right)),
-            ComparisonConditionSyntax comparison => [comparison.Left],
-            _ => []
-        };
-
         ImmutableArray<SemanticApplicationTrigger> RegisterTriggerDeclarations()
         {
             var triggers = ImmutableArray.CreateBuilder<SemanticApplicationTrigger>();
@@ -157,7 +150,7 @@ public sealed partial class SemanticModelBinder
                 Error(DiagnosticCodes.InvalidSemanticBinding, $"Reaction '{reaction.Name}' takes '{data.Name}', which its trigger does not carry.", data.Location);
             }
 
-            var where = BindWhere(reaction, trigger, values);
+            var where = reaction.Where is null ? null : BindCondition(reaction.Where, values);
             var produces = (trigger.Produces ?? [])
                 .Select(produced => BindReactionProduces(reaction, bound.Kind, produced, root, values))
                 .OfType<SemanticProducedEvent>();
@@ -171,31 +164,6 @@ public sealed partial class SemanticModelBinder
                 Invokes = [.. invokes],
                 RequirementId = requirement?.RequirementId
             };
-        }
-
-        // 'where' belongs to the reaction and narrows the occurrences that carry what it names. An occurrence that carries none
-        // of it - the clock's, say - is not narrowed, and one that carries only part of it cannot be judged.
-        SemanticCondition? BindWhere(ReactionSyntax reaction, ReactionTriggerSyntax trigger, Dictionary<string, SemanticProperty> values)
-        {
-            if (reaction.Where is null)
-            {
-                return null;
-            }
-
-            var names = ConditionNames(reaction.Where).Distinct(StringComparer.Ordinal).ToArray();
-            var carried = names.Count(values.ContainsKey);
-            if (carried == 0)
-            {
-                return null;
-            }
-
-            if (carried < names.Length)
-            {
-                Error(DiagnosticCodes.InvalidSemanticBinding, $"Reaction '{reaction.Name}' narrows its occurrences by values its trigger carries only some of: {string.Join(", ", names.Where(name => !values.ContainsKey(name)))}.", trigger.Location);
-                return null;
-            }
-
-            return BindCondition(reaction.Where, values);
         }
 
         (SemanticReactionTrigger Trigger, SemanticExpressionRootKind Root, Dictionary<string, SemanticProperty> Values)? OccurrenceOf(
