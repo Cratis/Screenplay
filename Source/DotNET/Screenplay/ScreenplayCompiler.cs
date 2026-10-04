@@ -38,7 +38,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     public CompilationResult<ApplicationSyntax> Compile(string source)
     {
         var lines = SourceLineSplitter.Split(source);
-        var context = new ParserContext(new(lines), languages: languages) { StreamCandidates = CommandStreamCandidates.Capture([lines]) };
+        var context = new ParserContext(new(lines), languages: languages) { StreamCandidates = CommandStreamCandidates.Capture([lines], languages) };
         var application = SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines), lines);
         ScreenplayValidator.Validate(application, context);
         return new(application, [.. context.Diagnostics, .. ProductionDestinationDiagnostics.In(application)]);
@@ -115,6 +115,9 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
             : CompilationResult<TCapture>.Failed(result.Diagnostics);
     }
 
+    CommandStreamCandidates ICommandStreamCandidateParser.CaptureCandidates(IEnumerable<(IReadOnlyList<SourceLine> Lines, PlayPlacement Placement)> documents) =>
+        CommandStreamCandidates.Capture(documents, languages);
+
     CompilationResult<ApplicationSyntax> ICommandStreamCandidateParser.ParseWithCandidates(string source, string? path, PlayPlacement placement, CommandStreamCandidates candidates) =>
         ParseWithCandidates(source, path, placement, candidates);
 
@@ -129,7 +132,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     internal static CompilationResult<ApplicationSyntax> ParsePlaced(string source, string? path, PlayPlacement placement, IScreenplayLanguageRegistry languages)
     {
         var lines = SourceLineSplitter.Split(source, path: path);
-        return ParseWithCandidates(lines, path, placement, languages, CommandStreamCandidates.Capture([lines], placement));
+        return ParseWithCandidates(lines, path, placement, languages, CommandStreamCandidates.Capture([lines], languages, placement));
     }
 
     /// <summary>

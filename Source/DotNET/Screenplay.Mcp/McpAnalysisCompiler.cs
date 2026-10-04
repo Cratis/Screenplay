@@ -39,6 +39,10 @@ sealed class McpAnalysisCompiler : IScreenplayCompiler, ICommandStreamCandidateP
     }
 
     /// <inheritdoc/>
+    public CommandStreamCandidates CaptureCandidates(IEnumerable<(IReadOnlyList<SourceLine> Lines, PlayPlacement Placement)> documents) =>
+        ((ICommandStreamCandidateParser)_compiler).CaptureCandidates(documents);
+
+    /// <inheritdoc/>
     public CompilationResult<ApplicationSyntax> ParseWithCandidates(string source, string? path, PlayPlacement placement, CommandStreamCandidates candidates)
     {
         var result = _compiler.ParseWithCandidates(source, path, placement, candidates);

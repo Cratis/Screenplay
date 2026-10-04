@@ -11,6 +11,11 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal interface ICommandStreamCandidateParser
 {
+    /// <summary>Captures declarations using this compiler's actual language registry.</summary>
+    /// <param name="documents">The immutable documents and their physical placements.</param>
+    /// <returns>The shared noncommitting declaration inventory.</returns>
+    CommandStreamCandidates CaptureCandidates(IEnumerable<(IReadOnlyList<SourceLine> Lines, PlayPlacement Placement)> documents);
+
     /// <summary>Parses one physical document using the application's declaration candidates.</summary>
     /// <param name="source">The immutable source text.</param>
     /// <param name="path">The physical path.</param>
