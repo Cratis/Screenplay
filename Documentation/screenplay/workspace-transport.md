@@ -30,6 +30,14 @@ not itself add Studio export or CLI import commands.
 
 The requirement ID uses the existing SHA-256 owner/role/null-member encoding. Direct and wrapped selections share an ID, and pending → attached keeps it on the same catalog. Existing attachment allocation and manifests are unchanged. `LegacyBootstrap` identities are provisional; preserving an ID through a command rename requires the existing catalog migration, not a manual source rename. Workspace serialization preserves that catalog across restarts. A handler inventory remains available when responses/generated-value admission prevents the binder's attachment pass.
 
+## Command named-rule inventory
+
+`WorkspaceNamedRuleIntentInventory.Create(workspace)` (or an existing `WorkspaceSyntaxIndex`) covers **CommandNamedRule** only, independently of ESM success. It includes attached direct predicates and explicit wrappers, not bare legacy rules or concept predicates. Entries expose occurrence handles, actual resolved command placement, owner catalog identity/origin, ordered hints and selected file/language. Inventory never opens code files.
+
+Pending entries have no `RequirementId` and do not advance attachment allocation. Attached entries retain the existing SHA-256 owner/role/length-prefixed `property/predicate` member identity; repeated attached members use the existing `#n` suffix, including allocation before invalid-property rejection. Occurrence handles distinguish equal rules. Provisional owners are explicitly marked; colliding physical command owners expose no claimed attachment identity. Unresolved import placement is listed separately, never guessed from a file's path.
+
+The inventory is distinct from the handler view, not a universal lifecycle registry. Existing workspace transport persists the source and catalog; it does not persist occurrence handles or invent a rule semantic ID. See [MCP selection and paging](mcp/reference.md#command-named-rule-intent-views).
+
 ## Version 1 envelope
 
 All members are required, in the following canonical order:

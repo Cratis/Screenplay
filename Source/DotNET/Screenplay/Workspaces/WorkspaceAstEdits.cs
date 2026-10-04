@@ -248,6 +248,12 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
     Edit Replacement(ReplaceWorkspaceNode operation)
     {
         var entry = Expected(operation.Target, operation.Expected);
+        if (entry.Node is ValidationRuleSyntax { Implementation: not null, File: null, Code: null } &&
+            operation.Node is ValidationRuleSyntax { Implementation: null, File: null, Code: null })
+        {
+            throw new InvalidWorkspaceAuthoring("Removing pending named-rule intent requires attaching a predicate source or removing the rule explicitly.");
+        }
+
         if (entry.Parent is null)
         {
             if (operation.Node is not ApplicationSyntax)
@@ -274,6 +280,11 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
         if (entry.Index is null)
         {
             var parent = index.Find(entry.Parent)!;
+            if (entry.Node is ImplementationSyntax && parent.Node is ValidationRuleSyntax { File: null, Code: null })
+            {
+                throw new InvalidWorkspaceAuthoring("Removing pending named-rule intent requires attaching a predicate source or removing the rule explicitly.");
+            }
+
             var property = parent.Node.GetType().GetProperties().Single(candidate => JsonNamingPolicy.CamelCase.ConvertName(candidate.Name) == entry.Member);
             if (new NullabilityInfoContext().Create(property).ReadState != NullabilityState.Nullable)
             {

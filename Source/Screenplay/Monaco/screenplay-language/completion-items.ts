@@ -233,6 +233,17 @@ export const specificationStepItems: Record<'given' | 'when' | 'then', Completio
     ],
 };
 
+export const namedRuleImplementationItems: CompletionEntry[] = [
+    { label: 'hint', insertText: 'hint "${1:predicate guidance}"', documentation: 'Ordered nonblank authoring guidance. Does not execute or confirm the predicate.' },
+    { label: 'file', insertText: 'file ${1:Path}', documentation: 'The sole named-rule predicate attachment.' },
+    { label: 'csharp', insertText: fenced('csharp'), documentation: 'Opaque named-rule predicate returning a bool. Requires an admitting target.' },
+];
+
+export const commandRuleItems: CompletionEntry[] = [
+    { label: 'implementation', insertText: 'implementation\n    hint "${1:predicate guidance}"', documentation: 'Command named-rule intent with optional file or tagged fence. Pending intent cannot bind.' },
+    ...namedRuleImplementationItems.filter(item => item.label !== 'hint'),
+];
+
 export const ruleItems: CompletionEntry[] = [
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Gives the named predicate its implementation in an external C# file.' },
     { label: 'csharp', insertText: fenced('csharp'), documentation: 'Gives the named predicate its implementation as inline C# returning a bool.' },

@@ -63,6 +63,12 @@ public sealed partial class SemanticModelBinder
                 var subject = ConceptValidationSubject(concept);
                 foreach (var rule in declarative.Rules)
                 {
+                    if (ImplementationInvariants.NamedRuleError(rule, false) is { } wrapperError)
+                    {
+                        Error(DiagnosticCodes.UnsupportedSemanticSyntax, wrapperError, rule.Location);
+                        continue;
+                    }
+
                     var requirement = rule.Rule == ValidationRuleKind.Rule
                         ? RequireImplementation(SemanticImplementationRole.RulePredicate, SemanticAddress.ForConcept(_applicationIdentity, concept.Name), rule.File, rule.Code, $"{rule.Property}/{(rule.Value as PathExpressionSyntax)?.Path}")
                         : null;

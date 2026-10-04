@@ -190,6 +190,9 @@
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "An ISBN has 13 digits",
                           "property": "isbn",
                           "rule": "Matches",
@@ -201,6 +204,9 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "A book needs a title",
                           "property": "title",
                           "rule": "NotEmpty",
@@ -1284,6 +1290,9 @@
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "A member needs a name",
                           "property": "name",
                           "rule": "NotEmpty",
@@ -1749,6 +1758,9 @@
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "A loan must be due in the future",
                           "property": "dueDate",
                           "rule": "GreaterThan",

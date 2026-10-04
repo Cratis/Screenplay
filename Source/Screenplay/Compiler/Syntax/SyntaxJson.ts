@@ -2,9 +2,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { SyntaxNode } from './SyntaxNode';
+import { ValidationRuleSyntax } from './Commands';
 import { OperationPhaseSyntax } from './Operations';
 import { ProducesSyntax } from './Reactions';
+import { pattern } from '../Text/patterns';
 import { isBlankImplementationHint } from '../Text/ImplementationHintText';
+
+const ruleNamePattern = pattern('^[A-Za-z_]\\w*$');
 
 export type SyntaxJsonValue = string | number | boolean | null | SyntaxJsonValue[] | { [member: string]: SyntaxJsonValue };
 
@@ -23,7 +27,7 @@ function write(value: unknown): SyntaxJsonValue {
         return value.map(write);
     }
     if (isNode(value)) {
-        validateOperation(value);
+        validateSyntax(value);
         const result: { [member: string]: SyntaxJsonValue } = { kind: value.kind };
         const members = Object.keys(value).filter(member => member !== 'kind' && member !== 'location' && member !== 'targetLocation' && !(value.kind === 'OperationSyntax' && member === 'usesLocation')).sort(ordinal);
         for (const member of members) {
@@ -37,7 +41,15 @@ function write(value: unknown): SyntaxJsonValue {
     return value as SyntaxJsonValue;
 }
 
-function validateOperation(node: SyntaxNode): void {
+function validateSyntax(node: SyntaxNode): void {
+    if (node.kind === 'ValidationRuleSyntax') {
+        const rule = node as ValidationRuleSyntax;
+        if (rule.implementation != null) {
+            if (rule.rule !== 'Rule' || rule.value?.kind !== 'PathExpressionSyntax' || ruleNamePattern.exec(rule.value.path)?.[0] !== rule.value.path) throw new Error('An implementation wrapper requires a valid named rule.');
+            if (rule.file !== null && rule.code !== null) throw new Error('A named rule has at most one file or inline payload.');
+            if (!Array.isArray(rule.implementation.hints) || rule.implementation.hints.some(hint => hint == null || isBlankImplementationHint(hint.text))) throw new Error('Implementation hints must be a collection of nonblank hints.');
+        }
+    }
     if (node.kind === 'ProducesSyntax') {
         const production = node as ProducesSyntax;
         const operation = production.inlineOperation;

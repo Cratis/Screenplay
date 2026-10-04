@@ -64,6 +64,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
                 ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword']],
             [/^(\s*)(then\s+(?:operation|compensated))(\s+)([\w.]+)(?=\s*(?:\/\/.*)?$)/,
                 ['white', 'keyword', 'white', 'type.identifier']],
+            [/^(\s*)(command)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', { token: 'type.identifier', next: '@commandBody.$1' }]],
             [/^(\s*)(handler)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@handlerBody.$1' }]],
             [/^(\s*@?[a-z_]\w*\s+)([\w.]+(?:\[\])?(?:\?|\s+optional)?)(\s+)(generated)(\s+identifier)?(?=\s*(?:\/\/.*)?$)/,
                 ['identifier', 'type.identifier', 'white', 'keyword', 'keyword']],
@@ -137,6 +138,25 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
                 },
             ],
             { include: '@common' },
+        ],
+
+        commandBody: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(validate)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@commandValidation.$1' }]],
+            { include: '@root' },
+        ],
+
+        commandValidation: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)([\p{L}\p{Mn}\p{Nd}\p{Pc}.]+)(\s+)(rule)(\s+)([A-Za-z_][\p{L}\p{Mn}\p{Nd}\p{Pc}]*)(?=\s*(?:severity\s+\w+|message\s+.*|\/\/.*|$))/u,
+                ['white', 'identifier', 'white', 'keyword', 'white', { token: 'type.identifier', next: '@namedRuleBody.$1' }]],
+            { include: '@root' },
+        ],
+
+        namedRuleBody: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(implementation)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@implementationBody.$1' }]],
+            { include: '@root' },
         ],
 
         operationBody: [

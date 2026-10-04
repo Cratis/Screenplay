@@ -34,7 +34,12 @@ enum WorkspaceTriviaChangeKind
     /// <summary>
     /// An event identity pin is inserted or removed without reprinting the declaration.
     /// </summary>
-    EventPin = 4
+    EventPin = 4,
+
+    /// <summary>
+    /// One decoded implementation hint changes within its original quoted source token.
+    /// </summary>
+    ImplementationHint = 5
 }
 
 /// <summary>
@@ -54,7 +59,7 @@ sealed class WorkspaceTriviaChanges(IEnumerable<WorkspaceSyntaxEntry> entries)
 {
     readonly Dictionary<string, SyntaxNode> _spanned = entries
         .Where(entry => entry.Node is LiteralExpressionSyntax { RawLocation: not null, RawLength: not null } or
-            PropertyMappingSyntax { SourceLocation: not null, SourceLength: not null } or EventSyntax)
+            PropertyMappingSyntax { SourceLocation: not null, SourceLength: not null } or EventSyntax or ImplementationHintSyntax)
         .ToDictionary(entry => entry.Handle.Path, entry => entry.Node, StringComparer.Ordinal);
 
     /// <summary>
@@ -119,6 +124,11 @@ sealed class WorkspaceTriviaChanges(IEnumerable<WorkspaceSyntaxEntry> entries)
     WorkspaceTriviaChange? Atomic(JsonNode? before, JsonNode? after, string path)
     {
         var separator = path.LastIndexOf('/');
+        if (separator >= 0 && path[(separator + 1)..] == "text" && _spanned.GetValueOrDefault(path[..separator]) is ImplementationHintSyntax)
+        {
+            return new(path[..separator], WorkspaceTriviaChangeKind.ImplementationHint);
+        }
+
         if (separator >= 0 && path[(separator + 1)..] == "id" && _spanned.GetValueOrDefault(path[..separator]) is EventSyntax)
         {
             return new(path[..separator], WorkspaceTriviaChangeKind.EventPin);

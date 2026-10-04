@@ -201,7 +201,10 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitValidationRule(syntax: ValidationRuleSyntax): void {
         this.visitNode(syntax);
+        if (syntax.implementation != null) this.visitImplementation(syntax.implementation);
         if (syntax.value !== null) this.visitExpression(syntax.value);
+        if (syntax.file !== null) this.visitFileReference(syntax.file);
+        if (syntax.code !== null) this.visitCodeBlock(syntax.code);
     }
 
     visitEvent(syntax: EventSyntax): void {

@@ -41,7 +41,7 @@ internal static partial class ImplementationParser
         while (context.TryPeekChild(wrapper.Indent, out var child))
         {
             context.Reader.TakeSignificant();
-            if (LineText.FirstWord(child.Content) == "hint")
+            if (LineText.FirstWord(child.Content) == "hint" || HintRegex().IsMatch(child.Content))
             {
                 var match = HintRegex().Match(child.Content);
                 var text = match.Success ? StringLiteral.Unescape(match.Groups[1].Value) : null;

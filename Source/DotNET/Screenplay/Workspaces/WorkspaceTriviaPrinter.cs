@@ -165,6 +165,20 @@ static class WorkspaceTriviaPrinter
         SyntaxNode before,
         SyntaxNode? after)
     {
+        if (change.Kind == WorkspaceTriviaChangeKind.ImplementationHint && before is ImplementationHintSyntax hint && after is ImplementationHintSyntax replacementHint)
+        {
+            var token = tokensByLine[hint.Location.Line].SingleOrDefault();
+            var first = token?.Text.IndexOf('"') ?? -1;
+            var last = token?.Text.LastIndexOf('"') ?? -1;
+            if (token is null || first < 0 || last <= first || StringLiteral.Unescape(token.Text[(first + 1)..last]) != hint.Text)
+            {
+                throw Unsupported(original, change.Path);
+            }
+
+            return (token.Span.ByteOffset + Encoding.UTF8.GetByteCount(token.Text.AsSpan(0, first)),
+                Encoding.UTF8.GetByteCount(token.Text.AsSpan(first, last - first + 1)), Encoding.UTF8.GetBytes(StringLiteral.Quote(replacementHint.Text)));
+        }
+
         if (change.Kind == WorkspaceTriviaChangeKind.EventPin && before is EventSyntax declaration && after is EventSyntax changed)
         {
             return EventPinPatch(original, declaration, changed);

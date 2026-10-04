@@ -2,6 +2,7 @@
     "description": "The .play documents whose syntax the TypeScript and C# compilers must agree on. Paths are relative to the repository root. Each document's golden syntax is written by the TypeScript compiler beside this manifest as <name>.syntax.json; the C# compiler is held to it by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_it.",
     "documents": [
         { "name": "operations", "path": "Source/Screenplay/Compiler/Conformance/operations.play" },
+        { "name": "named-rule-intent", "path": "Source/Screenplay/Compiler/Conformance/named-rule-intent.play" },
         { "name": "handler-intent", "path": "Source/Screenplay/Compiler/Conformance/handler-intent.play" },
         { "name": "responses", "path": "Source/Screenplay/Compiler/Conformance/responses.play" },
         { "name": "response-property-compatibility", "path": "Source/Screenplay/Compiler/Conformance/response-property-compatibility.play" },

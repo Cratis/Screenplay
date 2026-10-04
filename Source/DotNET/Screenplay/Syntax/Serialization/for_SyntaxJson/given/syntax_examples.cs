@@ -33,6 +33,7 @@ internal static class syntax_examples
         // while still independently populating every other structural member.
         return node switch
         {
+            ValidationRuleSyntax rule => rule with { Rule = ValidationRuleKind.Rule, Value = new PathExpressionSyntax("ExamplePredicate", rule.Location), Code = null },
             HandlerSyntax handler => handler with { Code = null },
             OperationPhaseSyntax phase => phase with { Code = null },
             ProducesSyntax { InlineOperation: { } operation } production => production with

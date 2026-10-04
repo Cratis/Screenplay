@@ -421,6 +421,9 @@
                           "rules": [
                             {
                               "kind": "ValidationRuleSyntax",
+                              "code": null,
+                              "file": null,
+                              "implementation": null,
                               "message": "Give a reason of at least 5 characters",
                               "property": "reason",
                               "rule": "Min",
@@ -967,6 +970,9 @@
                           "rules": [
                             {
                               "kind": "ValidationRuleSyntax",
+                              "code": null,
+                              "file": null,
+                              "implementation": null,
                               "message": "Write-off amount must be at least 1",
                               "property": "amount",
                               "rule": "Min",
@@ -978,6 +984,9 @@
                             },
                             {
                               "kind": "ValidationRuleSyntax",
+                              "code": null,
+                              "file": null,
+                              "implementation": null,
                               "message": "Write-offs of 1,000,000 or more need board approval",
                               "property": "amount",
                               "rule": "LessThan",
@@ -989,6 +998,9 @@
                             },
                             {
                               "kind": "ValidationRuleSyntax",
+                              "code": null,
+                              "file": null,
+                              "implementation": null,
                               "message": "A reason is required",
                               "property": "reason",
                               "rule": "NotEmpty",
@@ -997,6 +1009,9 @@
                             },
                             {
                               "kind": "ValidationRuleSyntax",
+                              "code": null,
+                              "file": null,
+                              "implementation": null,
                               "message": "Type WRITEOFF to confirm",
                               "property": "confirmation",
                               "rule": "Equal",
@@ -1738,6 +1753,9 @@
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "Invoice number is required",
                           "property": "invoiceNumber",
                           "rule": "NotEmpty",
@@ -1746,6 +1764,9 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "Invoice number must match INV-000000",
                           "property": "invoiceNumber",
                           "rule": "Matches",
@@ -1757,6 +1778,9 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "An invoice must have at least one line",
                           "property": "lines",
                           "rule": "NotEmpty",
@@ -1765,6 +1789,9 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "All line quantities must be positive",
                           "property": "lines.quantity",
                           "rule": "AllGreaterThan",
@@ -1776,6 +1803,9 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "Line prices cannot be negative",
                           "property": "lines.unitPrice",
                           "rule": "AllGreaterThanOrEqual",
@@ -1787,6 +1817,9 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "Currency must be a 3-letter ISO code",
                           "property": "currency",
                           "rule": "Length",
@@ -1798,6 +1831,9 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "XXX is not a billable currency",
                           "property": "currency",
                           "rule": "NotEqual",
@@ -1809,6 +1845,9 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "Due date must be in the future",
                           "property": "dueDate",
                           "rule": "GreaterThan",
@@ -1820,6 +1859,20 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": {
+                            "kind": "FileReferenceSyntax",
+                            "path": "Validations/BeUnusedInvoiceNumber.cs"
+                          },
+                          "implementation": {
+                            "kind": "ImplementationSyntax",
+                            "hints": [
+                              {
+                                "kind": "ImplementationHintSyntax",
+                                "text": "Preserve the existing invoice-number acceptance criteria"
+                              }
+                            ]
+                          },
                           "message": "Invoice number is already in use",
                           "property": "invoiceNumber",
                           "rule": "Rule",
@@ -3116,6 +3169,9 @@
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "$strings.invoices.validation.reasonRequired",
                           "property": "reason",
                           "rule": "NotEmpty",
@@ -3124,6 +3180,9 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "A reason must be at least 3 characters",
                           "property": "reason",
                           "rule": "Min",
@@ -3135,6 +3194,9 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "Reason must be 500 characters or fewer",
                           "property": "reason",
                           "rule": "Max",
@@ -3610,6 +3672,9 @@
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "A tag cannot be empty",
                           "property": "tag",
                           "rule": "NotEmpty",
@@ -3618,6 +3683,9 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "Keep tags short",
                           "property": "tag",
                           "rule": "Max",
@@ -3629,6 +3697,9 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "Tags are usually lower case",
                           "property": "tag",
                           "rule": "Matches",
@@ -3983,6 +4054,9 @@
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "Status is required",
                           "property": "status",
                           "rule": "NotEmpty",
@@ -3991,6 +4065,9 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "Cancel an invoice with Cancel invoice",
                           "property": "status",
                           "rule": "NotEqual",
@@ -4487,6 +4564,9 @@
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "Batch must contain at least one invoice",
                           "property": "invoiceIds",
                           "rule": "NotEmpty",
@@ -4495,6 +4575,9 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "Action is required",
                           "property": "action",
                           "rule": "NotEmpty",
@@ -4888,6 +4971,9 @@
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "Can only archive invoices dated before today",
                           "property": "olderThan",
                           "rule": "LessThan",
@@ -5192,6 +5278,9 @@
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "Must be a valid email address",
                           "property": "billingContact.email",
                           "rule": "Matches",
@@ -8236,6 +8325,9 @@
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "A payment must be positive",
                           "property": "amount",
                           "rule": "GreaterThan",
@@ -11574,6 +11666,9 @@
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "A plan has at least two installments",
                           "property": "plan.installments",
                           "rule": "Min",
@@ -11585,6 +11680,9 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": "A plan has at most twelve installments",
                           "property": "plan.installments",
                           "rule": "Max",

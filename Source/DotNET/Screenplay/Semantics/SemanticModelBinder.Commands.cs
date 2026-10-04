@@ -126,6 +126,12 @@ public sealed partial class SemanticModelBinder
 
                 foreach (var rule in declarative.Rules)
                 {
+                    if (ImplementationInvariants.NamedRuleError(rule, true) is { } wrapperError)
+                    {
+                        Error(DiagnosticCodes.UnsupportedSemanticSyntax, wrapperError, rule.Location);
+                        continue;
+                    }
+
                     var requirement = rule.Rule == ValidationRuleKind.Rule
                         ? RequireImplementation(SemanticImplementationRole.RulePredicate, address, rule.File, rule.Code, $"{rule.Property}/{(rule.Value as PathExpressionSyntax)?.Path}")
                         : null;

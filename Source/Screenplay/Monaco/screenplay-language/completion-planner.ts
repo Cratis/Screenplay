@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { enclosingChain, fenceMap, indentOf, nearestEnclosingLine, withoutComment } from './document-context';
+import { namedRuleContext } from './named-rule-context';
 import { responseCompletions } from './response-completions';
 import { scanDocument } from './symbols';
 import { getSubLanguage } from './sub-language-registry';
@@ -13,7 +14,7 @@ import { CompletionEntry } from './completion-items';
 // concept implied-subject form ("rule <Name>"). Its first word is the property
 // name, not "rule", so it can't be recognized through the chain[0] keyword switch
 // the way "on <EventType>" or "handler" are - hence the dedicated regex check.
-const RULE_LINE_PATTERN = /(?:^|\s)rule\s+[A-Za-z_]\w*(?:\s+message\s+.*)?$/;
+const RULE_LINE_PATTERN = /(?:^|\s)rule\s+[A-Za-z_]\w*(?:\s+severity\s+(?:information|warning|error))?(?:\s+message\s+.*)?$/;
 
 export type CompletionPlan =
     | { kind: 'none' }
@@ -127,6 +128,9 @@ export function planCompletions(
     const effectiveIndent =
         textBefore.trim().length === 0 ? textBefore.length : indentOf(currentLine);
     const chain = enclosingChain(lines, fences, lineIndex, effectiveIndent);
+    const ruleContext = namedRuleContext(lines, lineIndex, effectiveIndent);
+    if (ruleContext === 'implementation') return { kind: 'entries', entries: items.namedRuleImplementationItems };
+    if (ruleContext === 'rule') return { kind: 'entries', entries: items.commandRuleItems };
 
     const propertyOwner = ['event', 'command', 'type', 'readmodel', 'trigger', 'when', 'every', 'at'].includes(chain[0]) ||
         (chain[0] === 'produces' && /^produces\s+event\b/.test(nearestEnclosingLine(lines, fences, lineIndex, effectiveIndent) ?? ''));

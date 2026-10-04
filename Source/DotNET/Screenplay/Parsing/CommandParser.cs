@@ -108,7 +108,7 @@ internal static partial class CommandParser
                     concurrency = ParseConcurrency(context, line, concurrency, name.Groups[1].Value);
                     break;
                 case "validate":
-                    if (ValidateParser.Parse(context, line) is { } validate)
+                    if (ValidateParser.Parse(context, line, ValidationOwnerKind.Command) is { } validate)
                     {
                         validations.Add(validate);
                     }

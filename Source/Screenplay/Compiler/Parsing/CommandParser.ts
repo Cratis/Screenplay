@@ -13,8 +13,8 @@ import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseCommandResponse, scalarResponsePattern } from './CommandResponseParser';
 import { parseDescription } from './DescriptionParser';
-import { parseHandler } from './ImplementationParser';
-import { HandlerSyntax } from '../Syntax/Implementations';
+import { isCode, isFile, parseCode, parseFile, parseHandler, parseImplementationWrapper } from './ImplementationParser';
+import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSyntax } from '../Syntax/Implementations';
 import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
@@ -107,7 +107,7 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
         } else if (keyword === 'authorize') {
             authorize = combineAuthorize(authorize, parseAuthorize(context, child));
         } else if (keyword === 'validate') {
-            const validate = parseValidate(context, child);
+            const validate = parseValidate(context, child, 'command');
             if (validate !== undefined) {
                 validations.push(validate);
             }
@@ -170,7 +170,7 @@ function addProperty(context: ParserContext, properties: PropertySyntax[], prope
 }
 
 // Reads a 'validate' block: declarative rules, or code - which is recognized but not modeled.
-export function parseValidate(context: ParserContext, line: SourceLine): ValidateSyntax | undefined {
+export function parseValidate(context: ParserContext, line: SourceLine, _owner: 'command'): ValidateSyntax | undefined {
     if (line.content === 'validate') {
         const fence = context.peekChild(line.indent);
         if (fence !== undefined && fence.content.startsWith('```')) {
@@ -217,10 +217,7 @@ function parseValidationRule(context: ParserContext, line: SourceLine): Validati
     if (parsed === undefined) {
         return undefined;
     }
-    if (parsed.kind === 'Rule') {
-        // A named rule's implementation - a file or a code block - is not modeled.
-        context.skipOpaqueBlock(line.indent);
-    }
+    const source = parsed.kind === 'Rule' ? parseRuleImplementation(context, line) : { file: null, code: null, implementation: null };
     return {
         kind: 'ValidationRuleSyntax',
         property: match[1],
@@ -228,8 +225,33 @@ function parseValidationRule(context: ParserContext, line: SourceLine): Validati
         value: parsed.value,
         message,
         severity: severity.severity,
+        ...source,
         location: locationOf(line),
     };
+}
+
+function parseRuleImplementation(context: ParserContext, rule: SourceLine): { file: FileReferenceSyntax | null; code: CodeBlockSyntax | null; implementation: ImplementationSyntax | null } {
+    const body = context.peekChild(rule.indent);
+    if (body === undefined) return { file: null, code: null, implementation: null };
+    context.reader.takeSignificant();
+    const wrapped = firstWord(body.content) === 'implementation';
+    const source = wrapped ? parseImplementationWrapper(context, body) : {
+        file: isFile(body) ? parseFile(context, body) : null,
+        code: !isFile(body) && isCode(body) ? parseCode(context, body) : null,
+        implementation: null,
+    };
+    if (!wrapped && source.file === null && source.code === null) {
+        context.error(DiagnosticCodes.UnknownRuleImplementationDirective, `Unexpected '${body.content}' in rule implementation - expected 'file <path>' or an inline code block`, locationOf(body));
+        context.skipBlock(body.indent);
+    }
+    for (let extra = context.peekChild(rule.indent); extra !== undefined && (wrapped || firstWord(extra.content) === 'implementation'); extra = context.peekChild(rule.indent)) {
+        context.reader.takeSignificant();
+        context.error(wrapped && firstWord(extra.content) === 'implementation' ? DiagnosticCodes.InvalidImplementationBlock : DiagnosticCodes.ConflictingImplementationSources,
+            'A named rule has one implementation wrapper and cannot mix wrapped and direct sources.', locationOf(extra));
+        if (isCode(extra)) parseCode(context, extra);
+        else context.skipBlock(extra.indent);
+    }
+    return source;
 }
 
 function splitMessage(content: string): { content: string; message: string | null } {

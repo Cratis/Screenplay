@@ -34,6 +34,7 @@
             "while": "^(?=\\1[ ]+\\S|[ ]*$)",
             "patterns": [
                 { "include": "#inline-operation-block" },
+                { "include": "#command-validation" },
                 { "include": "#handler-block" },
                 { "include": "#event-block" },
                 { "include": "#description-block" },
@@ -42,6 +43,18 @@
                 { "include": "#keywords" },
                 { "include": "#common" }
             ]
+        },
+        "command-validation": {
+            "begin": "^([ ]*)(validate)(?=\\s*(?://.*)?$)",
+            "beginCaptures": { "2": { "name": "keyword.other.screenplay" } },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [{ "include": "#command-named-rule" }, { "include": "#fenced-csharp" }, { "include": "#keywords" }, { "include": "#common" }]
+        },
+        "command-named-rule": {
+            "begin": "^([ ]*)([\\w.]+)\\s+(rule)\\s+([A-Za-z_]\\w*)(?=\\s*(?:severity\\s+\\w+|message\\s+.*|//.*|$))",
+            "beginCaptures": { "2": { "name": "variable.other.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "4": { "name": "entity.name.type.screenplay" } },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [{ "include": "#handler-implementation" }, { "include": "#fenced-csharp" }, { "include": "#fenced-typescript" }, { "include": "#fenced-react" }, { "include": "#fenced-html" }, { "include": "#fenced-sql" }, { "include": "#keywords" }, { "include": "#common" }]
         },
         "keyword-input": {
             "match": "^\\s*(@?(?:system|operation|command|uses|execute|compensate))\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)(?=\\s*(?:=(?!=|>)|//|$))",

@@ -36,6 +36,10 @@ public sealed partial class SemanticModelBinder
             }
         }
 
+        // Intent has no production feature gates. Do not dereference malformed hint collections here;
+        // named-rule binding reports their typed diagnostics while retaining partial attachments.
+        public override void VisitImplementation(ImplementationSyntax syntax) => VisitNode(syntax);
+
         public override void VisitSpecificationCommand(SpecificationCommandSyntax syntax)
         {
             foreach (var fixture in syntax.GeneratedValues) Reject(fixture.Location);

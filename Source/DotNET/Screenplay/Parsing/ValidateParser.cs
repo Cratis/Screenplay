@@ -6,6 +6,12 @@ using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
 
+internal enum ValidationOwnerKind
+{
+    Command,
+    Concept
+}
+
 /// <summary>
 /// Parses <c>validate</c> blocks - declarative rule sets and <c>validate csharp</c> code blocks - shared
 /// by commands and concepts.
@@ -17,10 +23,9 @@ internal static class ValidateParser
     /// </summary>
     /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
     /// <param name="line">The consumed <see cref="SourceLine"/> holding the <c>validate</c> header.</param>
-    /// <param name="impliedSubject">Whether the rules omit their property subject - the form used on concepts,
-    /// where the concept's own value is implied as <see cref="ValidationRuleSyntax.ConceptValue"/>.</param>
+    /// <param name="owner">The enclosing declaration kind. Only commands admit named-rule intent wrappers.</param>
     /// <returns>The parsed <see cref="ValidateSyntax"/>, or <c>null</c> when the block is malformed.</returns>
-    public static ValidateSyntax? Parse(ParserContext context, SourceLine line, bool impliedSubject = false)
+    public static ValidateSyntax? Parse(ParserContext context, SourceLine line, ValidationOwnerKind owner)
     {
         if (line.Content == "validate")
         {
@@ -55,9 +60,9 @@ internal static class ValidateParser
                     continue;
                 }
 
-                var rule = impliedSubject
+                var rule = owner == ValidationOwnerKind.Concept
                     ? ValidationRuleParser.ParseImpliedSubject(context, child)
-                    : ValidationRuleParser.Parse(context, child);
+                    : ValidationRuleParser.Parse(context, child, owner);
                 if (rule is not null)
                 {
                     rules.Add(rule);

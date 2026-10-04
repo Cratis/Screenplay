@@ -1,0 +1,258 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "F",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Submit",
+                  "produces": [],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "label",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "hint",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "implementation",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "validations": [
+                    {
+                      "kind": "DeclarativeValidateSyntax",
+                      "rules": [
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": {
+                            "kind": "FileReferenceSyntax",
+                            "path": "Rules/CheckLabel.cs"
+                          },
+                          "implementation": {
+                            "kind": "ImplementationSyntax",
+                            "hints": [
+                              {
+                                "kind": "ImplementationHintSyntax",
+                                "text": "Preserve criteria"
+                              },
+                              {
+                                "kind": "ImplementationHintSyntax",
+                                "text": "Keep \"quoted\" guidance"
+                              }
+                            ]
+                          },
+                          "message": "Invalid label",
+                          "property": "label",
+                          "rule": "Rule",
+                          "severity": "Warning",
+                          "value": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "CheckLabel"
+                          }
+                        },
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": {
+                            "kind": "FileReferenceSyntax",
+                            "path": "Rules/Hint.cs"
+                          },
+                          "implementation": null,
+                          "message": null,
+                          "property": "hint",
+                          "rule": "Rule",
+                          "severity": "Error",
+                          "value": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "RuleNameShadow"
+                          }
+                        },
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "code": {
+                            "kind": "CodeBlockSyntax",
+                            "code": "var f = value => value != \"hint\";\n// command Fake\nreturn f(context.Value);",
+                            "language": "csharp"
+                          },
+                          "file": null,
+                          "implementation": {
+                            "kind": "ImplementationSyntax",
+                            "hints": [
+                              {
+                                "kind": "ImplementationHintSyntax",
+                                "text": "Return a predicate"
+                              }
+                            ]
+                          },
+                          "message": null,
+                          "property": "implementation",
+                          "rule": "Rule",
+                          "severity": "Information",
+                          "value": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "Unicodeé"
+                          }
+                        },
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": {
+                            "kind": "ImplementationSyntax",
+                            "hints": [
+                              {
+                                "kind": "ImplementationHintSyntax",
+                                "text": "Needs ordinary team-owned code"
+                              }
+                            ]
+                          },
+                          "message": null,
+                          "property": "label",
+                          "rule": "Rule",
+                          "severity": "Error",
+                          "value": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "Pending"
+                          }
+                        },
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
+                          "message": null,
+                          "property": "label",
+                          "rule": "NotEmpty",
+                          "severity": "Error",
+                          "value": null
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "DeclarativeValidateSyntax",
+                      "rules": [
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "code": {
+                            "kind": "CodeBlockSyntax",
+                            "code": "const rule = 'implementation';\nreturn context.value !== rule;",
+                            "language": "typescript"
+                          },
+                          "file": null,
+                          "implementation": null,
+                          "message": null,
+                          "property": "label",
+                          "rule": "Rule",
+                          "severity": "Error",
+                          "value": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "Other"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "Submitted",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "label",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "S",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "M"
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": []
+}
