@@ -26,8 +26,9 @@ export class RepairConnectionOwner {
         this.disposeWatchers();
         if (!this.session) return; // Construction can refuse before a process exists.
         this.session.invalidate(cause);
-        // Renames and configuration changes must not kill a possibly installed transaction.
-        if (!this.session.applyDispatched) this.session.dispose(cause);
+        // Renames and configuration changes must not kill an in-flight Apply request.
+        // A settled (even uncertain) Apply holds no process need; the recovery barrier lives with the command layer.
+        if (!this.session.applyInFlight) this.session.dispose(cause);
     }
     assertCurrent(current: RepairConnectionOwner | undefined, generation: number): void {
         if (this.retired || current !== this || generation !== this.generation) {

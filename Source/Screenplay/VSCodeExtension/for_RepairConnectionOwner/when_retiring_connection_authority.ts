@@ -5,9 +5,9 @@ import { it, expect, vi } from 'vitest';
 import { RepairConnectionOwner } from '../RepairConnectionOwner';
 import { RepairSession } from '../RepairSession';
 
-function owner(dispatched = false) {
+function owner(dispatched = false, inFlight = dispatched) {
     const value = new RepairConnectionOwner(7);
-    value.session = { applyDispatched: dispatched, invalidate: vi.fn(), dispose: vi.fn(), trace: vi.fn() } as unknown as RepairSession;
+    value.session = { applyDispatched: dispatched, applyInFlight: inFlight, invalidate: vi.fn(), dispose: vi.fn(), trace: vi.fn() } as unknown as RepairSession;
     value.resources.push({ dispose: vi.fn() });
     return value;
 }
@@ -26,6 +26,12 @@ it('invalidates review but retains the dispatched process until its outcome is c
     expect(old.session.invalidate).toHaveBeenCalledTimes(1);
     expect(old.session.dispose).not.toHaveBeenCalled();
     expect(() => old.assertCurrent(old, 7)).toThrow('Root or configuration changed');
+});
+it('disposes a connection whose uncertain Apply has already settled, while keeping the dispatched record', () => {
+    const settled = owner(true, false);
+    settled.retire('root-configuration');
+    expect(settled.session.invalidate).toHaveBeenCalledTimes(1);
+    expect(settled.session.dispose).toHaveBeenCalledTimes(1);
 });
 it('checks both owner identity and generation before any async publication', () => {
     const value = owner();

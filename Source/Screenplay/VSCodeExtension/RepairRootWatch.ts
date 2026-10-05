@@ -13,10 +13,41 @@ export function nativeRootIdentityAvailable(dev: unknown, ino: unknown, platform
     return typeof dev === 'bigint' && typeof ino === 'bigint' && dev >= 0n && ino > 0n && (platform !== 'win32' || dev !== 0n);
 }
 
+/** Immutable physical identity of an approved root. */
+export interface RootIdentity { readonly dev: bigint; readonly ino: bigint; readonly physical: string }
+
+/** Proves the root's physical identity now. Missing/zero IDs are not proof: no lexical-path or numeric fallback. */
+export function captureRootIdentity(root: string): RootIdentity {
+    // Node/libuv exposes the native inode/file index and device/volume identity
+    // in Stats on Unix and Windows. BigInt avoids truncating Windows file IDs.
+    for (let current = path.resolve(root); ; current = path.dirname(current)) {
+        if (fs.lstatSync(current, { bigint: true }).isSymbolicLink()) throw new Error('Linked root path component.');
+        if (current === path.dirname(current)) break;
+    }
+    const before = fs.lstatSync(root, { bigint: true });
+    const physical = fs.realpathSync.native(root);
+    if (path.relative(path.resolve(root), physical) !== '') throw new Error('Root path resolves through an unapproved link or reparse point.');
+    const after = fs.statSync(physical, { bigint: true });
+    if (!before.isDirectory() || before.isSymbolicLink() || !after.isDirectory() || !nativeRootIdentityAvailable(before.dev, before.ino) || !nativeRootIdentityAvailable(after.dev, after.ino) || before.dev !== after.dev || before.ino !== after.ino) throw new Error('Physical root identity cannot be proved.');
+    return Object.freeze({ dev: before.dev, ino: before.ino, physical });
+}
+
+export function sameRootIdentity(left: RootIdentity, right: RootIdentity): boolean {
+    return left.dev === right.dev && left.ino === right.ino && path.relative(left.physical, right.physical) === '';
+}
+
+/** Validates a retained identity independently of any watcher lifetime. Never clears uncertainty. */
+export function assertRootIdentity(root: string, identity: RootIdentity): void {
+    let current: RootIdentity;
+    try { current = captureRootIdentity(root); }
+    catch (error) { throw new RepairFailure('RootRefused', 'The uncertain Apply root identity cannot be proved.', String(error)); }
+    if (!sameRootIdentity(current, identity)) throw new RepairFailure('RootRefused', 'The uncertain Apply root was replaced; inspection of the replacement is refused.');
+}
+
 /** Extension-host watcher of an already approved physical root; never content authority. */
 export class RepairRootWatch {
     readonly #watcher: fs.FSWatcher;
-    readonly #identity: { dev: bigint; ino: bigint; physical: string };
+    readonly #identity: RootIdentity;
     #disposed = false;
     #failure?: RepairFailure;
     constructor(readonly root: string, changed: (event: string, filename: string | null) => void, readonly invalidated: (failure: RepairFailure, cause: string) => void) {
@@ -25,7 +56,7 @@ export class RepairRootWatch {
             throw new RepairFailure('WatchUnavailable', `Recursive root watching is unavailable in this extension host (${process.platform}, Node ${process.versions.node}). Local language assistance and read-only recovery remain available.`);
         }
         try {
-            this.#identity = this.#rootIdentity();
+            this.#identity = captureRootIdentity(this.root);
             // One FSWatcher per connection, NOT a constant kernel-handle promise:
             // Linux may allocate per-entry watches. No probes, filenames, debounce or self-write filters.
             this.#watcher = fs.watch(root, { recursive: true }, (event, filename) => {
@@ -44,32 +75,18 @@ export class RepairRootWatch {
             throw new RepairFailure('WatchUnavailable', 'Cannot register recursive root watching or prove physical root identity. Choose a supported native host/filesystem exposing nonzero file identity (and nonzero volume identity on Windows). No equivalent fallback or automatic retry is available. Local language assistance and read-only recovery remain available.', String(error));
         }
     }
+    /** Immutable physical identity captured at registration; usable after this watcher is disposed. */
+    get identity(): RootIdentity { return this.#identity; }
     /** Bounded root/path checks only. Server evidence and preimages remain authoritative. */
     check(): void {
         if (this.#failure) throw this.#failure;
         if (this.#disposed) throw new RepairFailure('WatchInvalidated', 'Root watcher was disposed; reconnect before requesting authority.');
         try {
-            const current = this.#rootIdentity();
-            if (current.dev !== this.#identity.dev || current.ino !== this.#identity.ino || path.relative(this.#identity.physical, current.physical) !== '') throw new Error('Approved physical root was replaced.');
+            if (!sameRootIdentity(captureRootIdentity(this.root), this.#identity)) throw new Error('Approved physical root was replaced.');
         } catch (error) {
             this.#fail(error, 'root-identity');
             throw this.#failure;
         }
-    }
-    #rootIdentity(): { dev: bigint; ino: bigint; physical: string } {
-        // Node/libuv exposes the native inode/file index and device/volume identity
-        // in Stats on Unix and Windows. BigInt avoids truncating Windows file IDs.
-        // Missing/zero IDs are not proof: no lexical-path or numeric fallback.
-        for (let current = path.resolve(this.root); ; current = path.dirname(current)) {
-            if (fs.lstatSync(current, { bigint: true }).isSymbolicLink()) throw new Error('Linked root path component.');
-            if (current === path.dirname(current)) break;
-        }
-        const before = fs.lstatSync(this.root, { bigint: true });
-        const physical = fs.realpathSync.native(this.root);
-        if (path.relative(path.resolve(this.root), physical) !== '') throw new Error('Root path resolves through an unapproved link or reparse point.');
-        const after = fs.statSync(physical, { bigint: true });
-        if (!before.isDirectory() || before.isSymbolicLink() || !after.isDirectory() || !nativeRootIdentityAvailable(before.dev, before.ino) || !nativeRootIdentityAvailable(after.dev, after.ino) || before.dev !== after.dev || before.ino !== after.ino) throw new Error('Physical root identity cannot be proved.');
-        return { dev: before.dev, ino: before.ino, physical };
     }
     #fail(reason: unknown, cause: string): void {
         if (this.#failure) return;

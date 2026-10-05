@@ -13,7 +13,7 @@ import type { ServerDiagnostic } from '../ServerDiagnostic';
 
 type Discovery = { choices: object[]; diagnostics: ServerDiagnostic[] };
 interface SessionMock {
-    launch: RepairLaunch; epoch: number; changed: () => void; applyDispatched: boolean; recoveryRequired: boolean;
+    launch: RepairLaunch; epoch: number; changed: () => void; applyDispatched: boolean; applyInFlight: boolean; recoveryRequired: boolean;
     dispose: ReturnType<typeof vi.fn<() => void>>; discard: ReturnType<typeof vi.fn<() => void>>;
     discover: ReturnType<typeof vi.fn<() => Promise<Discovery>>>;
     preview: ReturnType<typeof vi.fn<() => Promise<{ token: string; files: object[] }>>>;
@@ -29,10 +29,11 @@ const host = vi.hoisted(() => ({
     provider: undefined as vscode.CodeActionProvider | undefined, information: vi.fn(), diagnosticsDisposed: false,
     documents: [] as vscode.TextDocument[], files: [] as { path: string; before: Buffer | null; after: Buffer | null }[],
     documentListeners: new Set<(event: vscode.TextDocumentChangeEvent) => void>(),
-    rootFsChanged: undefined as undefined | ((uri: vscode.Uri) => void), createRootFsWatcher: vi.fn(),
+    rootFsChanged: undefined as undefined | ((uri: vscode.Uri) => void), createRootFsWatcher: vi.fn(), replaced: new Set<string>(), inspected: [] as string[],
 }));
 vi.mock('vscode', () => ({
     workspace: {
+        openTextDocument: async (value: { content: string }) => { host.inspected.push(value.content); return {}; },
         isTrusted: true, get workspaceFolders() { return [{ uri: { scheme: 'file', fsPath: host.root } }]; }, get textDocuments() { return host.documents; },
         getConfiguration: () => ({ inspect: (key: string) => ({ globalValue: ({ enabled: true, executable: process.execPath, arguments: [], modelRoot: host.root } as Record<string, unknown>)[key] }) }),
         createFileSystemWatcher: () => {
@@ -48,6 +49,7 @@ vi.mock('vscode', () => ({
     env: { uiKind: 1 }, UIKind: { Web: 2 }, Uri: { file: (fsPath: string) => ({ fsPath, scheme: 'file', toString: () => fsPath }) }, RelativePattern: class {},
     StatusBarAlignment: { Right: 1 }, ProgressLocation: { Notification: 1 },
     window: {
+        showTextDocument: async () => {},
         createStatusBarItem: () => ({ show: vi.fn(), hide: vi.fn(), dispose() {} }),
         showWarningMessage: (...args: unknown[]) => host.warnings(...args), showInformationMessage: (...args: unknown[]) => host.information(...args),
         withProgress: (_options: unknown, run: (progress: object, cancellation: { onCancellationRequested(): { dispose(): void } }) => Promise<unknown>) => run({}, { onCancellationRequested: () => ({ dispose() {} }) }),
@@ -62,16 +64,18 @@ vi.mock('../RepairPreviewProvider', () => ({ RepairPreviewProvider: class {
     async show(preview: { token: string }, authorize: () => void) { await host.show(); authorize(); host.token = preview.token; }
     review() { if (!host.token) throw new RepairFailure('PreviewExpired', 'expired'); return { files: host.files }; }
 } }));
-vi.mock('../RepairRootWatch', () => ({ RepairRootWatch: class {
-    dispose = vi.fn(); check = vi.fn(); constructor(readonly root: string, readonly changed: () => void, readonly failed: (failure: RepairFailure) => void) { host.watches.push(this); }
+vi.mock('../RepairRootWatch', () => ({
+    assertRootIdentity: (root: string) => { if (host.replaced.has(root)) throw new RepairFailure('RootRefused', 'replaced'); },
+    RepairRootWatch: class {
+    dispose = vi.fn(); check = vi.fn(); get identity() { return { dev: 1n, ino: 1n, physical: this.root }; } constructor(readonly root: string, readonly changed: () => void, readonly failed: (failure: RepairFailure) => void) { host.watches.push(this); }
 } }));
 vi.mock('../RepairSession', () => ({ RepairSession: class {
-    available = true; epoch = 0; applyDispatched = false; recoveryRequired = false;
+    available = true; epoch = 0; applyDispatched = false; applyInFlight = false; recoveryRequired = false;
     dispose = vi.fn(() => { this.available = false; }); discard = vi.fn();
     initialize = vi.fn(async () => { if (host.initializeFailure) throw host.initializeFailure; }); discover = vi.fn<() => Promise<Discovery>>(async () => ({ choices: [{}], diagnostics: [] }));
     preview = vi.fn(async () => ({ token: 'private-review', files: host.files }));
     apply = vi.fn(async () => {});
-    trace = vi.fn();
+    trace = vi.fn(); inspectState = vi.fn(async () => ({ recovery: {} }));
     constructor(readonly launch: RepairLaunch, readonly environment: RepairEnvironment, readonly changed: () => void) { environment.check(); host.sessions.push(this); }
     invalidate() { ++this.epoch; this.changed(); }
 } }));
@@ -83,7 +87,7 @@ async function tick() { await new Promise<void>(resolve => setImmediate(resolve)
 function switchRoot() { host.changedConfiguration!({ affectsConfiguration: () => true }); }
 beforeEach(() => {
     vi.clearAllMocks(); host.commands.clear(); host.sessions = []; host.watches = []; host.token = undefined; host.initializeFailure = undefined;
-    host.root = fs.realpathSync.native(fs.mkdtempSync(path.resolve('../../../.ai-work', 'editor-owner-')));
+    host.replaced.clear(); host.inspected = []; host.root = fs.realpathSync.native(fs.mkdtempSync(path.resolve('../../../.ai-work', 'editor-owner-')));
     host.documents = []; host.files = []; host.documentListeners.clear(); host.diagnosticsDisposed = false; host.rootFsChanged = undefined;
     host.warnings.mockResolvedValue(undefined); host.show.mockResolvedValue(undefined);
     subscriptions = [];
@@ -219,7 +223,7 @@ it('teardown cancels a pending installed-buffer reload without disposed UI publi
 for (const unknown of [false, true]) it(`blocks replacement until retiring dispatched Apply is classified (${unknown ? 'unknown' : 'installed'})`, async () => {
     await invoke('refresh'); host.warnings.mockResolvedValue('Propose and preview'); await invoke('preview', 'choice');
     const old = host.sessions[0], gate = deferred<void>();
-    old.apply.mockImplementation(async () => { old.applyDispatched = true; await gate.promise; old.applyDispatched = false;
+    old.apply.mockImplementation(async () => { old.applyDispatched = true; old.applyInFlight = true; await gate.promise; old.applyInFlight = false; old.applyDispatched = unknown;
         if (unknown) { old.recoveryRequired = true; throw new RepairFailure('ApplyOutcomeUnknown', 'unknown'); }
     });
     host.warnings.mockResolvedValue('Apply'); const pending = invoke('apply'); await tick(); switchRoot();
@@ -228,4 +232,50 @@ for (const unknown of [false, true]) it(`blocks replacement until retiring dispa
     gate.resolve(); await pending; expect(old.dispose).toHaveBeenCalledTimes(1);
     await invoke('refresh'); expect(host.sessions).toHaveLength(unknown ? 1 : 2);
     if (unknown) expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('RecoveryRequired'))).toBe(true);
+});
+
+async function unknownApply(): Promise<SessionMock> {
+    await invoke('refresh'); host.warnings.mockResolvedValue('Propose and preview'); await invoke('preview', 'choice');
+    const old = host.sessions[0];
+    old.apply.mockImplementation(async () => { old.applyDispatched = true; old.recoveryRequired = true; throw new RepairFailure('ApplyOutcomeUnknown', 'unknown'); });
+    host.warnings.mockResolvedValue('Apply'); await invoke('apply');
+    return old;
+}
+it('disposes the connection on configuration change after an unknown Apply result finished, keeping the recovery barrier', async () => {
+    const old = await unknownApply();
+    expect(old.dispose).not.toHaveBeenCalled();
+    switchRoot();
+    expect(old.dispose).toHaveBeenCalledTimes(1);
+    host.warnings.mockClear(); await invoke('refresh');
+    expect(host.sessions).toHaveLength(1);
+    expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('RecoveryRequired'))).toBe(true);
+    expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('ApplyPending'))).toBe(false);
+    expect(old.apply).toHaveBeenCalledTimes(1);
+});
+it('disposes the connection on teardown after an unknown Apply result finished', async () => {
+    const old = await unknownApply();
+    subscriptions.forEach(resource => resource.dispose());
+    expect(old.dispose).toHaveBeenCalledTimes(1);
+});
+it('inspects the uncertain root after switching away and back while its identity is unchanged, and refuses a replaced root', async () => {
+    await unknownApply();
+    switchRoot(); // Watcher gone; same configuration returns to the same root.
+    const inspect = host.commands.get('screenplay.repair.inspectState')!;
+    host.warnings.mockClear();
+    await Promise.resolve(inspect());
+    expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('RootRefused'))).toBe(false);
+    expect(host.inspected).toHaveLength(1);
+    host.replaced.add(host.root);
+    await Promise.resolve(inspect());
+    expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('RootRefused'))).toBe(true);
+    expect(host.inspected).toHaveLength(1);
+});
+it('shows the nested structured failure chain when inspecting an uncertain Apply', async () => {
+    await invoke('refresh'); host.warnings.mockResolvedValue('Propose and preview'); await invoke('preview', 'choice');
+    const old = host.sessions[0];
+    old.apply.mockImplementation(async () => { old.applyDispatched = true; old.recoveryRequired = true; throw new RepairFailure('ApplyOutcomeUnknown', 'unknown', new RepairFailure('DiskDrift', 'bytes differ', new RepairFailure('RepairEvidenceDrift', 'evidence'))); });
+    host.warnings.mockResolvedValue('Apply'); await invoke('apply');
+    await Promise.resolve(host.commands.get('screenplay.repair.inspectState')!());
+    const shown = JSON.parse(host.inspected[0]);
+    expect(shown.uncertainApply.details).toMatchObject({ failureKind: 'DiskDrift', details: { failureKind: 'RepairEvidenceDrift' } });
 });

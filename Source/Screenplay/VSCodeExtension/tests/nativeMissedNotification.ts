@@ -4,6 +4,7 @@
 import * as vscode from 'vscode';
 import * as assert from 'node:assert/strict';
 import * as fs from 'node:fs';
+import { zeroVolumeIdentityWindowsHost } from './nativeLimitedSupport';
 import nativeFs from 'node:fs';
 import * as path from 'node:path';
 import childProcess from 'node:child_process';
@@ -111,6 +112,13 @@ export async function runMissedNotification(root: string, controller: NativeTest
         await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two });
         original = fs.readFileSync(source);
         await vscode.commands.executeCommand('screenplay.repair.refresh');
+        if (zeroVolumeIdentityWindowsHost(model)) {
+            assert.ok(warnings.some(message => /WatchUnavailable/.test(message)), 'Actual installed client refuses ambiguous zero-volume identity');
+            assert.equal(rootWatcher, undefined, 'No unprovable root watcher is registered');
+            assert.equal(applyFrames, 0, 'Refusal precedes any Apply');
+            console.log('NATIVE WINDOWS LIMITED SUPPORT: zero-volume identity refusal verified for this lifetime; working editor repair support is NOT claimed on this filesystem.');
+            return;
+        }
         assert.ok(rootWatcher, 'The actual installed client registered its physical root watcher (notifications suppressed by the seam)');
         const actions = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', document.uri, new vscode.Range(0, 0, document.lineCount - 1, 0));
         const action = actions.find(action => action.title.startsWith('Change routing:'))?.command;

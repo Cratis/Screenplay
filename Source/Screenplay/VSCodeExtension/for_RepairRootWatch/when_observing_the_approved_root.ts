@@ -6,7 +6,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { EventEmitter } from 'node:events';
 vi.mock('node:fs', async importOriginal => ({ ...await importOriginal<typeof fs>(), watch: vi.fn() }));
-import { RepairRootWatch, nativeRootIdentityAvailable } from '../RepairRootWatch';
+import { RepairRootWatch, nativeRootIdentityAvailable, assertRootIdentity } from '../RepairRootWatch';
 
 let native: EventEmitter & { close: ReturnType<typeof vi.fn> };
 let callback: (event: string, filename?: string | null) => void;
@@ -109,4 +109,17 @@ for (const code of ['ERR_FEATURE_UNAVAILABLE_ON_PLATFORM', 'ENOSPC', 'EMFILE']) 
     vi.mocked(fs.watch).mockImplementation(() => { throw Object.assign(new Error(code), { code }); });
     expect(() => new RepairRootWatch(root, changed, invalidated)).toThrow(expect.objectContaining({ kind: 'WatchUnavailable' }));
     expect(fs.watch).toHaveBeenCalledTimes(1);
+});
+it('validates the retained root identity after the watcher is disposed or latched, and still refuses a replaced root', () => {
+    const watch = new RepairRootWatch(root, changed, invalidated);
+    const identity = watch.identity;
+    native.emit('error', new Error('lost'));
+    watch.dispose();
+    expect(() => watch.check()).toThrow(expect.objectContaining({ kind: 'WatchInvalidated' }));
+    expect(() => assertRootIdentity(root, identity)).not.toThrow();
+    fs.renameSync(root, root + '-original');
+    fs.mkdirSync(root);
+    expect(() => assertRootIdentity(root, identity)).toThrow(expect.objectContaining({ kind: 'RootRefused' }));
+    fs.rmSync(root, { recursive: true });
+    expect(() => assertRootIdentity(root, identity)).toThrow(expect.objectContaining({ kind: 'RootRefused' }));
 });

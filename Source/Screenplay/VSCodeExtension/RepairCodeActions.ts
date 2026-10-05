@@ -10,7 +10,7 @@ import { RepairSession, RepairPreview, SavedVersions, ServerDiagnostic } from '.
 import { RepairPreviewProvider } from './RepairPreviewProvider';
 import { classifyRootDocument, contains } from './RepairDocuments';
 import { RepairConnectionOwner } from './RepairConnectionOwner';
-import { RepairRootWatch } from './RepairRootWatch';
+import { RepairRootWatch, assertRootIdentity } from './RepairRootWatch';
 import { observationFilename } from './RepairObservation';
 export { contains } from './RepairDocuments';
 
@@ -85,6 +85,13 @@ export function repairBuffersSynchronized(root: string, preview: RepairPreview):
     } catch { return false; } // A disappearing or inaccessible buffer is not proof of synchronization.
 }
 
+/** Structured failure chain, preserving nested kinds (DiskDrift, IdentityStateDrift, RepairEvidenceDrift). */
+export function failureDetail(value: unknown): unknown {
+    if (value instanceof RepairFailure) return { failureKind: value.kind, message: value.message, details: value.details instanceof RepairFailure ? failureDetail(value.details) : value.details };
+    if (value instanceof Error) return { message: value.message };
+    return value;
+}
+
 export function registerRepairCodeActions(context: vscode.ExtensionContext, index: ApplicationIndex): void {
     const previews = new RepairPreviewProvider();
     const diagnostics = vscode.languages.createDiagnosticCollection('screenplay-csharp');
@@ -128,7 +135,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
         const previous = current;
         current = undefined;
         if (previous) {
-            if (previous.session?.applyDispatched) retiring = previous;
+            if (previous.session?.applyInFlight) retiring = previous;
             previous.retire(cause);
         }
         changed(cause);
@@ -138,7 +145,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
         const kind = error instanceof RepairFailure ? error.kind : 'RepairFailed';
         const message = `${kind}: ${error instanceof Error ? error.message : String(error)}`;
         if (!(error instanceof RepairFailure) || error.details === undefined) { await vscode.window.showWarningMessage(message); return; }
-        const detail = error.details instanceof RepairFailure ? { failureKind: error.details.kind, message: error.details.message, details: error.details.details } : error.details;
+        const detail = failureDetail(error.details);
         if (await vscode.window.showWarningMessage(message, 'Inspect conflict details') === 'Inspect conflict details' && relevant()) {
             try { await previews.showFailure(kind, detail, relevant); }
             catch (viewError) { if (relevant()) await vscode.window.showWarningMessage(`Cannot display complete conflict details: ${String(viewError)}`); }
@@ -272,7 +279,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
             disposed = true;
             ++connectionGeneration;
             const previous = current; current = undefined;
-            if (previous?.session?.applyDispatched) retiring = previous;
+            if (previous?.session?.applyInFlight) retiring = previous;
             previous?.retire('extension-teardown');
             for (const finish of [...pendingReloads]) finish();
             previews.dispose(); diagnostics.dispose(); applyButton.dispose(); discardButton.dispose();
@@ -366,11 +373,12 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
                 if (owns(owner)) clearReview('apply-installed');
                 await reload(owner, preview);
             } catch (error) {
-                if (!installed && owner?.session.recoveryRequired) recovery = { root: owner.session.launch.root, details: error, checkRoot: () => {
-                    if (!owner.rootWatch) throw new RepairFailure('RootRefused', 'The uncertain Apply root identity cannot be proved.');
-                    owner.rootWatch.check();
-                } };
-                else if (owner && owns(owner) && (!owner.applyPending || acquired)) { owner.session.discard(); clearReview('apply-refusal'); }
+                if (!installed && owner?.session.recoveryRequired) {
+                    const root = owner.session.launch.root;
+                    // Snapshot the approved identity now; it must not depend on watcher lifetime.
+                    const identity = owner.rootWatch?.identity;
+                    recovery = identity ? { root, details: error, checkRoot: () => assertRootIdentity(root, identity) } : { root, details: error, checkRoot: () => { throw new RepairFailure('RootRefused', 'The uncertain Apply root identity cannot be proved.'); } };
+                } else if (owner && owns(owner) && (!owner.applyPending || acquired)) { owner.session.discard(); clearReview('apply-refusal'); }
                 if (installed) {
                     if (owner && owns(owner)) await vscode.window.showWarningMessage(`Disk repair installed; editor synchronization pending. Subsequent editor refresh failed: ${String(error)}`);
                 } else await report(error, () => owner ? owns(owner) : !disposed && !current);
@@ -400,7 +408,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
                 const state = await (active ?? inspector!).inspectState();
                 recovery?.checkRoot();
                 if (!relevant()) return;
-                const document = await vscode.workspace.openTextDocument({ content: JSON.stringify({ state, uncertainApply: recovery ? String(recovery.details) : null, note: 'Inspection does not roll back or authorize retry. Review disk and retained state; recovery requires separate explicit consent through the MCP recovery workflow.' }, null, 2), language: 'json' });
+                const document = await vscode.workspace.openTextDocument({ content: JSON.stringify({ state, uncertainApply: recovery ? failureDetail(recovery.details) : null, note: 'Inspection does not roll back or authorize retry. Review disk and retained state; recovery requires separate explicit consent through the MCP recovery workflow.' }, null, 2), language: 'json' });
                 if (relevant()) await vscode.window.showTextDocument(document);
             } catch (error) { await report(error, relevant); } finally { inspector?.dispose(); }
         }),

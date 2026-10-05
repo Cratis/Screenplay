@@ -187,6 +187,7 @@ it('sets the post-Apply barrier at dispatch before any filesystem event or outco
         args[3]?.(); args[4]?.();
         expect(session.reconnectRequired).toBe(true);
         expect(session.applyDispatched).toBe(true);
+        expect(session.applyInFlight).toBe(true);
         await gate;
         return { success: true, validation: 'Authoring', workspace: candidate, plannedChanges: 1, installedDocuments: 1 };
     });
@@ -199,6 +200,8 @@ it('retains unknown Apply and refuses automatic retry while allowing read-only s
     const choice = (await session.discover()).choices[0]; const preview = await session.preview(choice.token);
     malformed = 'processFailure';
     await expect(session.apply(preview.token)).rejects.toMatchObject({ kind: 'ApplyOutcomeUnknown' });
+    expect(session.applyDispatched).toBe(true);
+    expect(session.applyInFlight).toBe(false);
     await expect(session.apply(preview.token)).rejects.toMatchObject({ kind: 'UnauthorizedApply' });
     dirty = true;
     expect(await session.inspectState()).toHaveProperty('recovery');

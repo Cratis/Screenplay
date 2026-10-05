@@ -55,6 +55,7 @@ export class RepairSession {
     #snapshot?: RepairSnapshot;
     #retained?: RetainedRepair;
     #busy = false;
+    #applying = false;
     #disposed = false;
     #uncertain = false;
     #available = true;
@@ -64,6 +65,8 @@ export class RepairSession {
     get available(): boolean { return this.#available && !this.#disposed; }
     get epoch(): number { return this.#epoch; }
     get recoveryRequired(): boolean { return this.#uncertain; }
+    /** A dispatched Apply request whose response has not settled; completed uncertain outcomes are not in flight. */
+    get applyInFlight(): boolean { return this.#applying; }
     get applyDispatched(): boolean { return this.#retained?.dispatched === true; }
 
     #phase = 'idle';
@@ -269,6 +272,7 @@ export class RepairSession {
         const snapshot = retained.snapshot;
         this.#check(snapshot.epoch, snapshot.versions);
         this.#busy = true;
+        this.#applying = true;
         try {
             const result = await this.#client.tool('apply', {
                 proposalId: retained.proposalId, expectedRevision: snapshot.revision, expectedCatalogRevision: snapshot.catalog,
@@ -288,7 +292,7 @@ export class RepairSession {
                 throw new RepairFailure('ApplyOutcomeUnknown', 'Apply was dispatched. Changes may exist. Do not retry; inspect workspace-state and review recovery separately.', error);
             }
             throw error;
-        } finally { this.#busy = false; }
+        } finally { this.#busy = false; this.#applying = false; }
     }
 
     #check(epoch: number, versions: SavedVersions): void {
