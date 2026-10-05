@@ -176,6 +176,11 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
                 }
                 return checkRepairEnvironment(launch);
             }, checkRead: () => { authorize(owner); checkRepairEnvironment(launch, true); } }, cause => { if (owns(owner)) changed(cause); }, { owner: owner.id, generation: owner.generation });
+            // Notification delivery ACCELERATES invalidation (a delivered event expires the
+            // review synchronously); it does not authorize anything. Operations are authorized
+            // by the synchronous root-identity and buffer checks here plus the server's pinned
+            // Apply validation (source bytes, identity state, attachment evidence), so a
+            // platform watcher that stays silent can delay the UX but never permit an unsafe write.
             // Mandatory native watching owns ALL physical root notifications.
             // A second VS Code backend can deliver the SAME write after fresh
             // discovery/preview, spuriously expiring replacement authority. Keep
