@@ -282,32 +282,25 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
         return;
     }
     if (thenQueryPrefix.test(line.content)) {
+        // Legacy documents keep skipping malformed query bodies silently; Exact reports what the native parser reports.
         const exact = context.sourceOptions.numericMode === 'exact';
+        const reject = (code: string, message: string, at: SourceLine): void => {
+            if (!exact) return context.skipOpaqueBlock(at.indent);
+            context.error(code, message, locationOf(at));
+            context.skipBlock(at.indent);
+        };
         const match = thenQueryPattern.exec(line.content);
-        if (match === null) {
-            if (exact) {
-                context.error(DiagnosticCodes.InvalidSpecificationQuery, `Invalid 'then query' declaration '${line.content}' - expected 'then query <Query> [exactly]'`, locationOf(line));
-                context.skipBlock(line.indent);
-            } else context.skipOpaqueBlock(line.indent);
-            return;
-        }
+        if (match === null) return reject(DiagnosticCodes.InvalidSpecificationQuery, `Invalid 'then query' declaration '${line.content}' - expected 'then query <Query> [exactly]'`, line);
         const args: PropertyMappingSyntax[] = [];
         const results: SpecificationQueryResultSyntax[] = [];
         let hasArguments = false;
         for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
             context.reader.takeSignificant();
-            if (child.content === 'arguments') {
-                if (!hasArguments) args.push(...parseValues(context.valueContext, child, true));
-                else if (exact) {
-                    context.error(DiagnosticCodes.DuplicateSpecificationQueryArguments, `Query assertion '${match[1]}' already declares arguments`, locationOf(child));
-                    context.skipBlock(child.indent);
-                } else context.skipOpaqueBlock(child.indent);
-                hasArguments = true;
-            } else if (child.content === 'result') results.push({ kind: 'SpecificationQueryResultSyntax', properties: parseValues(context.valueContext, child, true), exactly: false, location: locationOf(child) });
-            else if (exact) {
-                context.error(DiagnosticCodes.UnknownSpecificationQueryDirective, `Unexpected '${firstWord(child.content)}' in 'then query' body - expected arguments or result`, locationOf(child));
-                context.skipBlock(child.indent);
-            } else context.skipOpaqueBlock(child.indent);
+            if (child.content === 'arguments' && !hasArguments) args.push(...parseValues(context.valueContext, child, true));
+            else if (child.content === 'arguments') reject(DiagnosticCodes.DuplicateSpecificationQueryArguments, `Query assertion '${match[1]}' already declares arguments`, child);
+            else if (child.content === 'result') results.push({ kind: 'SpecificationQueryResultSyntax', properties: parseValues(context.valueContext, child, true), exactly: false, location: locationOf(child) });
+            else reject(DiagnosticCodes.UnknownSpecificationQueryDirective, `Unexpected '${firstWord(child.content)}' in 'then query' body - expected arguments or result`, child);
+            hasArguments ||= child.content === 'arguments';
         }
         body.thenQueries.push({ kind: 'SpecificationQuerySyntax', query: match[1], arguments: args, results, exactly: match[2] !== undefined, location: locationOf(line) });
         return;

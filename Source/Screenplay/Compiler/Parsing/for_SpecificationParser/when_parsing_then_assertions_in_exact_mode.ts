@@ -33,7 +33,7 @@ describe('when parsing then assertions in exact mode', () => {
     it('should keep a valid query and absence assertion', () => {
         const result = parseSpecificationSource('numbers exact\nspecification S\n  then query Q\n    arguments\n      n = 1\n    result\n      n = 1e-28\n  then no readmodel R for 1\n');
         result.success.should.equal(true);
-        result.value[0].thenQueries.length.should.equal(1);
-        result.value[0].thenAbsentReadModels.length.should.equal(1);
+        (result.value?.[0]?.thenQueries?.length ?? 0).should.equal(1);
+        (result.value?.[0]?.thenAbsentReadModels?.length ?? 0).should.equal(1);
     });
 });
