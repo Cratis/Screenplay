@@ -99,7 +99,7 @@ describe('when writing exact number literals carrying serialization hooks', () =
     it('should refuse a rounded number when an Array subclass overrides the iteration methods', () => {
         class Hooked extends Array<unknown> {
             override forEach(): void {}
-            override every(): boolean { return true; }
+            override every(): this is unknown[] { return true; }
             override some(): boolean { return false; }
             override map(): never[] { return []; }
             override entries(): never { throw new Error('hooked'); }
