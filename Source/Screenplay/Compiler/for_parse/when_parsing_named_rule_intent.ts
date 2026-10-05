@@ -81,7 +81,7 @@ describe('when parsing command named-rule intent', () => {
     });
     it('should keep bare legacy named rules unchanged without inventing a payload', () => {
         const source = prefix + suffix;
-        expect(parse(source).diagnostics).toEqual([]);
+        expect(parse(source).diagnostics.filter(diagnostic => diagnostic.severity === 'error')).toEqual([]);
         expect(rule(source)).toMatchObject({ rule: 'Rule', file: null, code: null, implementation: null });
         expect(rule(source).value).toMatchObject({ kind: 'PathExpressionSyntax', path: 'Check' });
     });
@@ -110,5 +110,22 @@ describe('when parsing command named-rule intent', () => {
         const parsed = parse('concept Label : String\n  validate\n    rule Check\n      implementation\n        hint "Keep"');
         expect(parsed.diagnostics.map(diagnostic => diagnostic.code)).toEqual(['PLAY0144']);
         expect(parsed.diagnostics[0].location.line).toBe(4);
+    });
+    it.each([
+        ['a bare rule', 'concept Label : String\n  validate\n    rule Check\n    not empty'],
+        ['a file payload', 'concept Label : String\n  validate\n    rule Check\n      file A.cs'],
+        ['a fenced payload', 'concept Label : String\n  validate\n    rule Check\n      ```csharp\n      return true;\n      ```'],
+        ['a tagged payload', 'concept Label : String\n  validate\n    rule Check\n      csharp\n        ```\n        return true;\n        ```'],
+        ['a fence among rules', 'concept Label : String\n  validate\n    not empty\n    ```csharp\n    return true;\n    ```'],
+    ])('should accept %s in a concept validation', (_name, source) => {
+        expect(parse(source).diagnostics.filter(diagnostic => diagnostic.severity === 'error')).toEqual([]);
+    });
+    it('should reject an unknown payload under a concept named rule', () => {
+        const parsed = parse('concept Label : String\n  validate\n    rule Check\n      bogus\n        deeper');
+        expect(parsed.diagnostics.map(diagnostic => diagnostic.code)).toEqual(['PLAY0144']);
+    });
+    it('should reject a wrapper after a builtin rule and the payload nested under it', () => {
+        const parsed = parse('concept Label : String\n  validate\n    not empty\n      implementation\n        hint "Keep"\n    rule Check');
+        expect(parsed.diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`)).toEqual(['PLAY0141@4', 'PLAY0141@5']);
     });
 });

@@ -15,6 +15,7 @@ import { parseDescription } from './DescriptionParser';
 import { FeatureBody, featureBodyExpected } from './FeatureBody';
 import { isFileImport, parseFileImport } from './FileImportParser';
 import { isFileDirective } from './FileReferences';
+import { isCode, parseCode } from './ImplementationParser';
 import { collectInputUses } from './InputUses';
 import { firstWord, unescapeIdentifier } from './LineText';
 import { ModuleBody, moduleBodyExpected, modulePattern, parseModule } from './ModuleBody';
@@ -243,18 +244,39 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
     return { kind: 'ConceptSyntax', name, type, attributes, values, location: locationOf(line) };
 }
 
-const namedRuleLine = pattern('^(?:[\\w.]+\\s+)?rule(?:\\s|$)');
+const namedRuleLine = pattern('^rule(?:\\s|$)');
 
+// Concept validations are not modeled, but the C# parser still reads each line as a rule. An implementation
+// wrapper is a command-only form, so it is rejected wherever it appears: directly under a named rule as an
+// unknown rule implementation, anywhere else (after a builtin rule, after a file payload) as an invalid rule,
+// together with the payload nested under it.
 function skipConceptValidation(context: ParserContext, validate: SourceLine): void {
-    let previous: SourceLine | undefined;
+    let wrapperIndent: number | undefined;
     for (let child = context.peekChild(validate.indent); child !== undefined; child = context.peekChild(validate.indent)) {
         context.reader.takeSignificant();
         if (child.content.startsWith('```')) {
             context.skipFencedBody();
-        } else if (previous !== undefined && child.indent > previous.indent && firstWord(child.content) === 'implementation') {
-            context.error(DiagnosticCodes.UnknownRuleImplementationDirective, `Unexpected '${child.content}' in rule implementation - expected 'file <path>' or an inline code block`, locationOf(child));
+            continue;
         }
-        previous = namedRuleLine.test(child.content) ? child : undefined;
+
+        if (wrapperIndent !== undefined && child.indent <= wrapperIndent) wrapperIndent = undefined;
+        if (wrapperIndent !== undefined || firstWord(child.content) === 'implementation') {
+            context.error(DiagnosticCodes.InvalidValidationRule, `Invalid validation rule '${child.content}'`, locationOf(child));
+            wrapperIndent ??= child.indent;
+        } else if (namedRuleLine.test(child.content)) {
+            const body = context.peekChild(child.indent);
+            if (body === undefined) continue;
+            context.reader.takeSignificant();
+            if (isFileDirective(body)) continue;
+            if (body.content.startsWith('```')) {
+                context.skipFencedBody();
+            } else if (isCode(body)) {
+                parseCode(context, body);
+            } else {
+                context.error(DiagnosticCodes.UnknownRuleImplementationDirective, `Unexpected '${body.content}' in rule implementation - expected 'file <path>' or an inline code block`, locationOf(body));
+                context.skipBlock(body.indent);
+            }
+        }
     }
 }
 

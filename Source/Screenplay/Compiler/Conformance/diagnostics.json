@@ -2530,6 +2530,52 @@
             ]
         },
         {
+            "name": "a concept builtin rule cannot be followed by an implementation wrapper",
+            "source": [
+                "concept Label : String",
+                "  validate",
+                "    not empty",
+                "      implementation",
+                "        hint \"Keep\""
+            ],
+            "diagnostics": [
+                "PLAY0141@4",
+                "PLAY0141@5"
+            ]
+        },
+        {
+            "name": "a concept named rule with a file cannot be followed by an implementation wrapper",
+            "source": [
+                "concept Label : String",
+                "  validate",
+                "    rule Check",
+                "      file A.cs",
+                "      implementation",
+                "        hint \"Keep\""
+            ],
+            "diagnostics": [
+                "PLAY0141@5",
+                "PLAY0141@6"
+            ]
+        },
+        {
+            "name": "a concept validation wrapper is rejected even after a fenced payload",
+            "source": [
+                "concept Label : String",
+                "  validate",
+                "    rule Check",
+                "      ```csharp",
+                "      return true;",
+                "      ```",
+                "      implementation",
+                "        hint \"Keep\""
+            ],
+            "diagnostics": [
+                "PLAY0141@7",
+                "PLAY0141@8"
+            ]
+        },
+        {
             "name": "a command rule name cannot contain a supplementary-plane letter",
             "source": [
                 "module M",
