@@ -17,6 +17,7 @@ import { NativeTestController } from './nativeTestController';
 import { activeNativeDocument, disposeHarnessBuffer, userRevertCleanFile, userSaveDirtyFile } from './nativeSavedBuffer';
 import { pendingInspectionTeardown } from './nativePendingInspection';
 import { withholdApplyResponse } from './nativeApplySeam';
+import { rootReplacementLaunchOptions } from './nativeRootReplacement';
 
 // Guard integration, NOT UI automation: only the dialog responses and the timing
 // of a real subprocess reply are controlled. Real registered commands, native
@@ -119,7 +120,13 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         return undefined;
     }) as typeof originalInformation;
     childProcess.spawn = ((...args: Parameters<typeof originalSpawn>) => {
-        const child = originalSpawn(...args);
+        const options = rootReplacementLaunchOptions(args[0], args[2], process.env.SCREENPLAY_REPAIR_SERVER, root);
+        const launchArgs: Parameters<typeof originalSpawn> = [...args];
+        if (options && options !== args[2]) {
+            launchArgs[2] = options;
+            console.log(`NATIVE ROOT REPLACEMENT CWD SEAM: ${JSON.stringify({ approvedRoot: args[2]?.cwd, childCwd: options.cwd, absoluteRootArgumentUnchanged: args[1] })}`);
+        }
+        const child = originalSpawn(...launchArgs);
         if (args[0] !== process.env.SCREENPLAY_REPAIR_SERVER || !child.stdin || !child.stdout) return child;
         const write = child.stdin.write;
         const input = child.stdin;
