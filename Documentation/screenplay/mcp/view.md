@@ -8,6 +8,17 @@ views, the [Screenplay server](reference.md) can draw the application as the sam
 model board as Cratis Studio and the VS Code extension. Use it to look at what is
 there, and to see what a change would do to the model before it is written.
 
+Use **Cratis.Screenplay.Tool 4.47.0 or later**, or **CLI versions that bundle
+Screenplay 4.47.0 or later**. CLI hosting alone does not guarantee MCP Apps support.
+See [installation](install.md) and [See your event model](../see-your-event-model.md)
+for the same board in other places.
+
+![The Screenplay MCP App shows a proposed Notifications module beside Commerce's fulfillment flows. Its SendOrderConfirmation command produces OrderConfirmationSent; the surrounding frame identifies the local capture harness.](../images/mcp-app-what-if-harness.png)
+
+*Captured in a minimal MCP Apps test host (a local capture harness), not a
+commercial chat host. The capture uses a single-file Commerce adaptation and an
+unsaved what-if sketch.*
+
 ## Which clients show the board
 
 The board is an MCP App: an HTML view the host draws inside the conversation. The
@@ -86,12 +97,16 @@ Without changing anything, sketch what a Reservations feature could look like ne
 to the existing Lending module, and show it on the board. Do not propose it yet.
 ```
 
-The assistant passes whole `.play` documents as a `sketch`:
+The assistant passes whole `.play` documents as a `sketch`, with paths relative
+to the model root. Multi-file sketches require Screenplay 4.59.1 or later, or a
+CLI that bundles it; older versions such as 4.48.0 have sketch-path failures.
+For a model whose complete source is `application.play`, this example replaces
+that document for the view only:
 
 ```json
 {
   "sketch": [
-    { "path": "orders/returns.play", "source": "module Orders\n  feature Returns\n    slice StateChange RegisterReturn\n..." }
+    { "path": "application.play", "source": "module Orders\n  feature Returns\n    slice StateChange RegisterReturn\n      command RegisterReturn\n        produces ReturnRegistered\n      event ReturnRegistered\n" }
   ]
 }
 ```
@@ -111,7 +126,7 @@ draws a new board, from the model as it is at that moment.
 | | MCP board | VS Code extension |
 | --- | --- | --- |
 | Opens from | A prompt in the conversation | A `.play` file |
-| Follows your edits | Draws again on request | Redraws as you type |
+| Follows your edits | Polls disk when the host allows server calls; otherwise redraws on request | Redraws as you type |
 | Shows a proposal or sketch | Yes | No |
 | Needs the MCP server | Yes | No |
 
