@@ -112,11 +112,12 @@ For an ASP.NET Core application using Arc, add
 Build and run the app, then open **`/.cratis/event-model/`** on its local address.
 Select a project or feature; switch to **Source** to inspect its generated `.play`.
 
-Keep the route **development-only**. Explicit mapping should be guarded by
-`app.Environment.IsDevelopment()`. Automatic Cratis hosting detects a debug
-build, not the environment name; a debug build deployed elsewhere can still
-expose structure. The Arc guide covers disabling generation and protecting the
-route. This board reads source-derived resources embedded during the build,
+The route is **development-only by default**. Automatic hosting through the
+`Cratis` metapackage needs a Debug (non-optimized) build **and** the
+Development environment. Calling `app.MapCratisEventModel()` or setting
+`Enabled = true` still opts in wherever the app runs, so guard explicit mapping
+with `app.Environment.IsDevelopment()` or require authorization. The Arc guide
+covers disabling generation and protecting the route. This board reads source-derived resources embedded during the build,
 not stored events or live business data.
 
 ![The Reservations slice shows the ReserveTable command with its four properties. A neighboring MongoWatcher command and the explorer's conversion warnings remain visible.](images/arc-runtime-slice-detail.png)
