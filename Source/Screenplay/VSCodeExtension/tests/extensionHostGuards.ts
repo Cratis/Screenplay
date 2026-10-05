@@ -641,13 +641,14 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         const typedSource = raceDocument.getText(), typedState = postDispatchUntitled!.getText();
         const typedVersion = raceDocument.version, stateVersion = postDispatchUntitled!.version;
         await vscode.commands.executeCommand('screenplay.repair.inspectState');
-        const inspection = JSON.parse(activeNativeDocument()!.getText()) as { uncertainApply: string | null; state: { exists: boolean; path: string; stateRevision: string; byteCount: number } };
+        const inspection = JSON.parse(activeNativeDocument()!.getText()) as { uncertainApply: { failureKind: string; message: string } | null; state: { exists: boolean; path: string; stateRevision: string; byteCount: number } };
         const reviewedIdentities = raceExpected.get('.screenplay/identities.json')!;
         assert.equal(inspection.state.exists, true);
         assert.equal(inspection.state.path, '.screenplay/identities.json');
         assert.equal(inspection.state.stateRevision, createHash('sha256').update(reviewedIdentities).digest('hex'), 'Actual restarted read-only C# inspector identifies the exact installed identity bytes');
         assert.equal(inspection.state.byteCount, reviewedIdentities.length);
-        assert.match(inspection.uncertainApply!, /Apply was dispatched\. Changes may exist\. Do not retry/, 'Actual read-only recovery inspection preserves unknown status, without retry');
+        assert.equal(inspection.uncertainApply?.failureKind, 'ApplyOutcomeUnknown');
+        assert.match(inspection.uncertainApply!.message, /Apply was dispatched\. Changes may exist\. Do not retry/, 'Actual read-only recovery inspection preserves unknown status, without retry');
         for (const [relative, bytes] of raceExpected) assert.deepEqual(fs.readFileSync(path.join(raceRoot, relative)), bytes);
         assert.equal(raceDocument.isDirty, true);
         assert.equal(postDispatchUntitled?.isDirty, true);
@@ -673,7 +674,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         await vscode.commands.executeCommand('screenplay.repair.inspectState');
         const afterConflict = JSON.parse(activeNativeDocument()!.getText()) as typeof inspection;
         assert.equal(afterConflict.state.stateRevision, inspection.state.stateRevision);
-        assert.equal(afterConflict.uncertainApply, inspection.uncertainApply, 'Inspection STILL works while conflict/typing is unresolved');
+        assert.deepEqual(afterConflict.uncertainApply, inspection.uncertainApply, 'Inspection STILL works while conflict/typing is unresolved');
         const verifyProtected = () => {
             assert.equal(raceDocument.isDirty, true);
             assert.equal(postDispatchUntitled!.isDirty, true);

@@ -147,12 +147,13 @@ export async function runCleanUnknown(root: string, controller: NativeTestContro
         const refused = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', document.uri, new vscode.Range(0, 0, 0, 0));
         assert.deepEqual(refused, []);
         await vscode.commands.executeCommand('screenplay.repair.inspectState');
-        const inspection = JSON.parse(activeNativeDocument()!.getText()) as { uncertainApply: string | null; state: { stateRevision: string; exists: boolean; byteCount: number } };
+        const inspection = JSON.parse(activeNativeDocument()!.getText()) as { uncertainApply: { failureKind: string; message: string } | null; state: { stateRevision: string; exists: boolean; byteCount: number } };
         assert.equal(inspection.state.exists, true);
         const identity = expected.get('.screenplay/identities.json')!;
         assert.equal(inspection.state.stateRevision, createHash('sha256').update(identity).digest('hex'));
         assert.equal(inspection.state.byteCount, identity.length);
-        assert.match(inspection.uncertainApply!, /Apply was dispatched\. Changes may exist\. Do not retry/);
+        assert.equal(inspection.uncertainApply?.failureKind, 'ApplyOutcomeUnknown');
+        assert.match(inspection.uncertainApply!.message, /Apply was dispatched\. Changes may exist\. Do not retry/);
         const verify = () => {
             assert.equal(document.isDirty, false);
             for (const [relative, bytes] of expected) assert.deepEqual(fs.readFileSync(path.join(model, relative)), bytes);
