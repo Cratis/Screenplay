@@ -43,11 +43,11 @@ def prepare(publish, output, version, rid):
         "version": version, "description": "Explore and author local Screenplay models with reviewed changes and an event model board.",
         "author": {"name": "Cratis", "url": "https://cratis.io"},
         "homepage": "https://github.com/Cratis/Screenplay", "license": "MIT", "icon": "icon.png",
+        # No root argument and no user_config: the server binds its workspace dynamically from the
+        # host's MCP roots, the working directory, or an explicit open-workspace call.
         "server": {"type": "binary", "entry_point": f"server/{executable}", "mcp_config": {
-            "command": f"${{__dirname}}/server/{executable}", "args": ["mcp", "${user_config.model_root}"]}},
-        "compatibility": {"platforms": [RIDS[rid]]},
-        "user_config": {"model_root": {"type": "directory", "title": "Screenplay model folder",
-            "description": "Choose an existing folder containing one application's .play files. Changes require your approval.", "required": True}}
+            "command": f"${{__dirname}}/server/{executable}", "args": ["mcp"]}},
+        "compatibility": {"platforms": [RIDS[rid]]}
     }
     write_json(output / "mcpb" / "manifest.json", manifest)
     plugin = {
