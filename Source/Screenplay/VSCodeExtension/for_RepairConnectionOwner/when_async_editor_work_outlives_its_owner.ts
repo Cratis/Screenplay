@@ -30,6 +30,7 @@ const host = vi.hoisted(() => ({
     documents: [] as vscode.TextDocument[], files: [] as { path: string; before: Buffer | null; after: Buffer | null }[],
     documentListeners: new Set<(event: vscode.TextDocumentChangeEvent) => void>(),
     rootFsChanged: undefined as undefined | ((uri: vscode.Uri) => void), createRootFsWatcher: vi.fn(), replaced: new Set<string>(), inspected: [] as string[],
+    openedDocument: undefined as undefined | ((document: vscode.TextDocument) => void), inspectionShown: true,
 }));
 vi.mock('node:path', async importOriginal => ({ ...await importOriginal<typeof import('node:path')>() }));
 vi.mock('vscode', () => ({
@@ -44,7 +45,7 @@ vi.mock('vscode', () => ({
         },
         registerFileSystemProvider: () => ({ dispose() {} }),
         onDidChangeConfiguration: (callback: (event: { affectsConfiguration(): boolean }) => void) => { host.changedConfiguration = callback; return { dispose() {} }; },
-        onDidChangeWorkspaceFolders: () => ({ dispose() {} }), onDidOpenTextDocument: () => ({ dispose() {} }),
+        onDidChangeWorkspaceFolders: () => ({ dispose() {} }), onDidOpenTextDocument: (callback: (document: vscode.TextDocument) => void) => { host.openedDocument = callback; return { dispose() {} }; },
         onDidChangeTextDocument: (callback: (event: vscode.TextDocumentChangeEvent) => void) => { host.documentListeners.add(callback); return { dispose: () => host.documentListeners.delete(callback) }; }, onDidCloseTextDocument: () => ({ dispose() {} }),
     },
     env: { uiKind: 1 }, UIKind: { Web: 2 }, Uri: { file: (fsPath: string) => ({ fsPath, scheme: 'file', toString: () => fsPath }) }, RelativePattern: class {},
@@ -66,6 +67,7 @@ vi.mock('../RepairPreviewProvider', () => ({ RepairPreviewProvider: class {
     clear() { host.token = undefined; } closed() { return false; } dispose() {}
     async show(preview: { token: string }, authorize: () => void) { await host.show(); authorize(); host.token = preview.token; }
     review() { if (!host.token) throw new RepairFailure('PreviewExpired', 'expired'); return { files: host.files }; }
+    async showInspection(state: unknown, relevant: () => boolean) { host.inspected.push(JSON.stringify(state)); return host.inspectionShown && relevant(); }
 } }));
 vi.mock('../RepairRootWatch', () => ({
     assertRootIdentity: (root: string) => { if (host.replaced.has(root)) throw new RepairFailure('RootRefused', 'replaced'); },
@@ -91,7 +93,7 @@ function switchRoot() { host.changedConfiguration!({ affectsConfiguration: () =>
 beforeEach(() => {
     vi.clearAllMocks(); host.commands.clear(); host.sessions = []; host.watches = []; host.token = undefined; host.initializeFailure = undefined;
     const tasks = path.resolve('../../../.ai-work'); fs.mkdirSync(tasks, { recursive: true });
-    host.replaced.clear(); host.inspected = []; host.root = fs.realpathSync.native(fs.mkdtempSync(path.join(tasks, 'editor-owner-')));
+    host.replaced.clear(); host.inspected = []; host.inspectionShown = true; host.root = fs.realpathSync.native(fs.mkdtempSync(path.join(tasks, 'editor-owner-')));
     host.documents = []; host.files = []; host.documentListeners.clear(); host.diagnosticsDisposed = false; host.rootFsChanged = undefined;
     host.warnings.mockResolvedValue(undefined); host.show.mockResolvedValue(undefined);
     subscriptions = [];
@@ -297,6 +299,62 @@ it('inspects the uncertain root after switching away and back while its identity
     await Promise.resolve(inspect());
     expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('RootRefused'))).toBe(true);
     expect(host.inspected).toHaveLength(1);
+});
+it('keeps active review authority when a clean saved root document opens, but expires it for dirty and untitled root documents', async () => {
+    await invoke('refresh'); host.warnings.mockResolvedValue('Propose and preview'); await invoke('preview', 'choice');
+    const session = host.sessions[0], epoch = session.epoch;
+    const file = path.join(host.root, 'application.play'); fs.writeFileSync(file, 'source');
+    const document = { uri: { scheme: 'file', fsPath: file, toString: () => file }, isDirty: false, version: 1 } as vscode.TextDocument;
+    host.openedDocument!(document);
+    expect(session.epoch).toBe(epoch); expect(host.token).toBe('private-review');
+    host.openedDocument!({ ...document, isDirty: true });
+    expect(session.epoch).toBe(epoch + 1); expect(host.token).toBeUndefined();
+    await invoke('preview', 'choice');
+    host.openedDocument!({ ...document, uri: { ...document.uri, scheme: 'untitled' } } as vscode.TextDocument);
+    expect(session.epoch).toBe(epoch + 2); expect(host.token).toBeUndefined();
+});
+it('refuses resume without a successful inspection for this recovery', async () => {
+    const old = await unknownApply();
+    host.warnings.mockClear(); await invoke('resume');
+    expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('InspectionRequired'))).toBe(true);
+    expect(old.dispose).not.toHaveBeenCalled();
+    host.inspectionShown = false; await invoke('inspectState'); await invoke('resume');
+    expect(old.dispose).not.toHaveBeenCalled();
+    await invoke('refresh'); expect(host.sessions).toHaveLength(1); // Inspection reused the retained live owner; no replacement repair session.
+    expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('RecoveryRequired'))).toBe(true);
+});
+it('declining resume keeps the recovery barrier and never retries Apply', async () => {
+    const old = await unknownApply(); await invoke('inspectState');
+    host.warnings.mockResolvedValue(undefined); await invoke('resume'); await invoke('refresh');
+    expect(old.dispose).not.toHaveBeenCalled(); expect(old.apply).toHaveBeenCalledTimes(1);
+    expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('RecoveryRequired'))).toBe(true);
+});
+it('consented resume disposes retained authority, connects fresh on the next action and rejects old review tokens', async () => {
+    const old = await unknownApply(); await invoke('inspectState');
+    host.warnings.mockResolvedValue('Resume repairs'); await invoke('resume');
+    expect(old.dispose).toHaveBeenCalledTimes(1); expect(host.token).toBeUndefined();
+    const count = host.sessions.length;
+    await invoke('preview', 'old-choice');
+    expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('StaleSelection'))).toBe(true);
+    expect(host.sessions).toHaveLength(count); // Resume and old tokens cannot create a replacement session.
+    await invoke('refresh'); const fresh = host.sessions.at(-1)!;
+    expect(host.sessions).toHaveLength(count + 1); expect(fresh).not.toBe(old);
+    await invoke('apply', 'private-review'); // Even a direct old review token grants no authority on the new connection.
+    expect(fresh.apply).not.toHaveBeenCalled(); expect(old.apply).toHaveBeenCalledTimes(1);
+    expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('UnauthorizedApply'))).toBe(true);
+});
+it('refuses resume when the retained physical root was replaced, even after an earlier successful inspection', async () => {
+    const old = await unknownApply(); await invoke('inspectState'); host.replaced.add(host.root);
+    host.warnings.mockResolvedValue('Resume repairs'); await invoke('resume'); await invoke('inspectState');
+    expect(old.dispose).not.toHaveBeenCalled(); expect(host.inspected).toHaveLength(1);
+    expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('RootRefused'))).toBe(true);
+});
+it('rechecks retained root identity after resume consent and keeps the block on a replacement during the modal', async () => {
+    const old = await unknownApply(); await invoke('inspectState');
+    const gate = deferred<string>(); host.warnings.mockReturnValueOnce(gate.promise);
+    const pending = invoke('resume'); await tick(); host.replaced.add(host.root); gate.resolve('Resume repairs'); await pending;
+    expect(old.dispose).not.toHaveBeenCalled();
+    expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('RootRefused'))).toBe(true);
 });
 it('shows the nested structured failure chain when inspecting an uncertain Apply', async () => {
     await invoke('refresh'); host.warnings.mockResolvedValue('Propose and preview'); await invoke('preview', 'choice');

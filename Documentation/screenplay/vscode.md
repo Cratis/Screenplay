@@ -22,6 +22,15 @@ its board. For other places to open the same board, see
 *Extension 4.48.1 in code-server, showing Commerce. Newer versions focus the board
 on the open file's slices; open `application.play` for the whole application.*
 
+## Restricted Mode
+
+In an untrusted workspace, the board and local language assistance (including
+TypeScript diagnostics) remain available. C# repair processes require workspace
+trust and explicit User settings; they never run in Restricted Mode. VS Code
+ignores workspace overrides for `screenplay.sourceRoot` and the repair settings
+until you trust the workspace. A source-root override can point outside the
+workspace, so review it before granting trust.
+
 ## Generated values and responses (syntax-only)
 
 The editor recognizes [generated command values and response contracts](commands.md#generated-values-and-responses-syntax-only), including fixture and assertion fields, inferred response types and generated-not-input hints. Completion uses the current source, including unsaved edits. Compiler diagnostics validate the syntax; acceptance does not enable execution. These constructs remain unavailable until ESM v8, and binding reports `PLAY0268` without a semantic model.
@@ -227,7 +236,9 @@ it does not download a server, install .NET, invoke Docker or run an AI agent.
 
 When C# returns a refusal, **Inspect conflict details** opens its structured
 failure, conflict kinds and diagnostics in a read-only view. A refused operation
-has no Apply authority.
+has no Apply authority. A definite server refusal **after dispatch** is treated
+conservatively as an uncertain Apply outcome too; its nested failure kind remains
+available in conflict details and inspection.
 
 Each approved root has one persistent connection and one Node recursive watcher
 on the extension host, alongside VS Code and buffer observers. The actual host
@@ -237,6 +248,10 @@ including watch-resource exhaustion, refuse repairs with `WatchUnavailable`;
 there is no silent VS Code-only fallback or automatic retry. Local language
 assistance and read-only recovery inspection remain available. Linux can allocate
 per-entry kernel watches even though the connection owns one watcher object.
+
+Opening a clean saved root document does not invalidate an active review; the
+server still verifies disk bytes at Apply. Dirty or untitled root buffers remain
+refused.
 
 Every root notification immediately invalidates review, including ordinary child
 creation, deletion, atomic replacement and the repair's own writes. With a healthy
@@ -299,11 +314,33 @@ Discover Saved-File C# Repairs**. The extension never invokes Revert automatical
 autosaves buffers or replays Apply.
 
 Cancellation discards queued reads or drains an in-flight read within its deadline.
-Once Apply is dispatched, a timeout, disconnect or unrecognized failure means the
-outcome is **unknown**, not “cancelled without changes.” Never retry automatically.
-Use **Screenplay: Inspect C# Repair Identity and Recovery State**, inspect disk, and
-follow the [separate recovery workflow](mcp/recovery.md) with explicit consent.
-Inspection does not recover or authorize another apply.
+Once Apply is dispatched, a timeout, disconnect or any failure, including a
+definite server refusal, means the client treats the outcome as **uncertain**, not
+“cancelled without changes.” It never retries automatically.
+
+To resume without reloading the window:
+
+1. Run **Screenplay: Inspect C# Repair Identity and Recovery State** for the
+   uncertain root. The result opens as a read-only `screenplay-repair` JSON view,
+   not an untitled buffer. It shows retained identity/recovery state and the
+   structured uncertain Apply failure. Inspection itself does not recover or
+   authorize another Apply.
+2. Inspect the workspace on disk and follow the [recovery guide](mcp/recovery.md)
+   (`Documentation/screenplay/mcp/recovery.md`). Preserve unsaved typing yourself.
+3. Choose **Screenplay: Resume repairs after inspection**, available only while
+   an uncertain-outcome block exists. Confirm the modal acknowledgement that the
+   previous outcome was uncertain and that you inspected the workspace and followed
+   the guide. Declining leaves the block in place.
+4. Discover repairs again. Resume disposes the retained connection; the next action
+   starts a fresh, revision-checked session. No old Apply, token or review is reused.
+   Dirty-buffer and other normal repair guards still apply.
+
+Resume requires a successful read-only inspection for **this recovery in this
+window session**, against the retained physical root identity. It rechecks that
+identity before and after consent. A replaced root cannot pass inspection or resume,
+including when replacement happened after inspection. Reload the window, review the
+new root and deliberately configure/discover it instead; reload does not recover
+the previous transaction.
 
 ## Theme
 

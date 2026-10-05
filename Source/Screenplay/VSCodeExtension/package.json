@@ -32,6 +32,7 @@
             "supported": "limited",
             "description": "Local language assistance remains available. C# repair processes require workspace trust and explicit User configuration.",
             "restrictedConfigurations": [
+                "screenplay.sourceRoot",
                 "screenplay.repairs.enabled",
                 "screenplay.repairs.executable",
                 "screenplay.repairs.arguments",
@@ -159,6 +160,12 @@
                 "category": "Screenplay"
             },
             {
+                "command": "screenplay.repair.resume",
+                "title": "Resume repairs after inspection",
+                "category": "Screenplay",
+                "enablement": "screenplay.repair.recoveryRequired"
+            },
+            {
                 "command": "screenplay.showSource",
                 "title": "Show Source",
                 "category": "Screenplay",
@@ -195,6 +202,10 @@
                 }
             ],
             "commandPalette": [
+                {
+                    "command": "screenplay.repair.resume",
+                    "when": "screenplay.repair.recoveryRequired"
+                },
                 {
                     "command": "screenplay.repair.apply",
                     "when": "screenplay.repair.reviewPending"

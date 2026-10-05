@@ -529,9 +529,13 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         };
         for (let attempt = 0; ; ++attempt) {
             lateExpiry = false; expected.clear(); reviewedBefore.clear(); warnings.length = 0;
+            const observationStart = controller.readObservation().at(-1)?.seq ?? 0;
             try { await preview(); } catch (error) { if (!isExpiry(error)) throw error; lateExpiry = true; }
             if (!lateExpiry && dispatched === 0 && warnings.some(message => /PreviewExpired|StaleEpoch|StaleSelection/.test(message))) lateExpiry = true;
             if (!lateExpiry) break;
+            const observations = controller.readObservation().filter(entry => entry.seq > observationStart);
+            const invalidations = observations.filter(entry => entry.source.startsWith('invalidate:') && entry.source.endsWith(':after'));
+            assert.ok(invalidations.length > 0 && invalidations.every(entry => entry.source === 'invalidate:native-root:after'), `Only observed late native-root notifications allow retry: ${JSON.stringify(observations)}`);
             assert.equal(dispatched, 0, 'An expired review never dispatches Apply');
             assert.ok(attempt < 2, 'Late native notifications expired the review repeatedly');
             console.log('NATIVE NOTIFICATION UX: a late delete notification expired the review; discarding and redoing it (no Apply was dispatched).');

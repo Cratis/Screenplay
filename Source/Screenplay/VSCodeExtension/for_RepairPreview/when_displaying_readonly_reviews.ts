@@ -51,6 +51,31 @@ it('releases byte/session views when a preview closes', async () => {
     expect(provider.token).toBeUndefined();
     expect(() => provider.readFile(uri)).toThrow('expired');
 });
+it('opens inspection as clean read-only virtual JSON without granting a review token or writable storage', async () => {
+    expect(await provider.showInspection({ state: { exists: true }, uncertainApply: { failureKind: 'ApplyOutcomeUnknown' } })).toBe(true);
+    expect(host.opened[0]).toMatch(/^screenplay-repair:.*\/inspection\.json$/);
+    const document = host.documents[0];
+    expect(document.isDirty).toBe(false);
+    expect(provider.stat(document.uri as vscode.Uri).permissions).toBe(vscode.FilePermission.Readonly);
+    expect(JSON.parse(document.getText()).state.exists).toBe(true);
+    expect(provider.token).toBeUndefined();
+    expect(() => provider.writeFile()).toThrow('read-only');
+    expect(() => provider.review('anything')).toThrow('expired');
+});
+it('keeps active review authority independent of opening and closing inspection', async () => {
+    await provider.show(preview);
+    await provider.showInspection({ state: { exists: true } });
+    expect(provider.review(preview.token)).toBe(preview);
+    const inspection = host.documents.at(-1)!;
+    expect(provider.closed(inspection.uri as vscode.Uri)).toBe(false);
+    expect(provider.review(preview.token)).toBe(preview);
+    expect(() => provider.readFile(inspection.uri as vscode.Uri)).toThrow('expired');
+});
+it('does not count inspection as successfully displayed when its owner expires while the view opens', async () => {
+    let checks = 0;
+    expect(await provider.showInspection({}, () => ++checks === 1)).toBe(false);
+    expect(provider.token).toBeUndefined();
+});
 it('presents structured conflict kinds and diagnostics separately without issuing an Apply token', async () => {
     await provider.showFailure('ProposalRejected', { conflicts: [{ kind: 'InvalidOperation', message: 'destination not proven' }], authoringDiagnostics: [{ code: 'PLAY0287' }], executableReady: false });
     const result = object(JSON.parse(host.documents[0].getText()));

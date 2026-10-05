@@ -29,6 +29,8 @@ export async function runCleanUnknown(root: string, controller: NativeTestContro
     const spawn = childProcess.spawn, watch = nativeFs.watch;
     const warnings: string[] = [];
     const rpc: string[] = [];
+    const children: childProcess.ChildProcess[] = [];
+    let resumed = false;
     const expected = new Map<string, Buffer>();
     let rootWatcher: fs.FSWatcher | undefined;
     let applyFrames = 0, prompts = 0;
@@ -60,6 +62,11 @@ export async function runCleanUnknown(root: string, controller: NativeTestContro
             await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two, preserveFocus: true });
             return 'Apply';
         }
+        if (message.startsWith("The previous Apply's outcome was uncertain.")) {
+            assert.ok(items.includes('Resume repairs'));
+            assert.ok(items.some(item => typeof item === 'object' && item !== null && 'modal' in item && item.modal === true));
+            return 'Resume repairs'; // Controlled human consent, never automatic product recovery.
+        }
         warnings.push(message);
         console.log(`NATIVE CLEAN UNKNOWN warning: ${message}`);
         return undefined;
@@ -68,6 +75,7 @@ export async function runCleanUnknown(root: string, controller: NativeTestContro
     childProcess.spawn = ((...args: Parameters<typeof spawn>) => {
         const child = spawn(...args);
         if (args[0] !== process.env.SCREENPLAY_REPAIR_SERVER || !child.stdin || !child.stdout) return child;
+        children.push(child);
         const input = child.stdin, write = input.write;
         input.write = ((chunk: string | Uint8Array, ...rest: unknown[]) => {
             const accepted = Reflect.apply(write, input, [chunk, ...rest]);
@@ -170,6 +178,9 @@ export async function runCleanUnknown(root: string, controller: NativeTestContro
         const refused = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', document.uri, new vscode.Range(0, 0, 0, 0));
         assert.deepEqual(refused, []);
         await vscode.commands.executeCommand('screenplay.repair.inspectState');
+        assert.equal(activeNativeDocument()!.uri.scheme, 'screenplay-repair', 'Inspection is a read-only virtual document, never an unassociated untitled repair blocker');
+        assert.equal(activeNativeDocument()!.isDirty, false);
+        assert.equal((await vscode.workspace.fs.stat(activeNativeDocument()!.uri)).permissions, vscode.FilePermission.Readonly);
         const inspection = JSON.parse(activeNativeDocument()!.getText()) as { uncertainApply: { failureKind: string; message: string } | null; state: { stateRevision: string; exists: boolean; byteCount: number } };
         assert.equal(inspection.state.exists, true);
         const identity = expected.get('.screenplay/identities.json')!;
@@ -181,13 +192,27 @@ export async function runCleanUnknown(root: string, controller: NativeTestContro
             assert.equal(document.isDirty, false);
             for (const [relative, bytes] of expected) assert.deepEqual(fs.readFileSync(path.join(model, relative)), bytes);
             assert.equal(rpc.filter(name => name === 'apply').length, 1, 'Exactly ONE clean unknown Apply, never retried');
-            assert.equal(rpc.slice(start).filter(name => ['open-workspace', 'propose-repair', 'apply'].includes(name)).length, 0);
+            assert.equal(rpc.slice(start).filter(name => (resumed ? ['propose-repair', 'apply'] : ['open-workspace', 'propose-repair', 'apply']).includes(name)).length, 0);
         };
         verify();
         assert.ok(rpc.slice(start).includes('workspace-state'), 'Real restarted read-only inspector, no invented state');
         console.log(`NATIVE CLEAN UNKNOWN PROTECTED: ${JSON.stringify({ exactNativeSavedSource: synchronized, dirty: document.isDirty, refusal: warnings, typedRecoveryRequiredProven: synchronized, inspection: 'actual restarted C# exact identities and uncertain status', applyFrames, noTyping: true, pendingReloadOrRevertNotRequired: true, independentInstalledClientLifetime: true })}`);
+        rootWatcher = undefined; // Resume must retire the first owner; fresh discovery must register a new watch.
+        warnings.length = 0;
+        await vscode.commands.executeCommand('screenplay.repair.resume');
+        assert.equal(warnings.length, 0, 'Inspected recovery permits the separately controlled modal consent');
+        resumed = true;
+        const freshStart = rpc.length;
+        await vscode.commands.executeCommand('screenplay.repair.refresh');
+        assert.equal(warnings.length, 0, 'Next discovery succeeds without reloading the window or closing the inspection view');
+        assert.ok(rootWatcher, 'Fresh owner registers its own physical root watch');
+        assert.ok(rpc.slice(freshStart).includes('repair-capabilities') && rpc.slice(freshStart).includes('open-workspace') && rpc.slice(freshStart).includes('read-workspace'), 'Fresh revision-checked real C# discovery, not reused recovery authority');
+        await vscode.commands.executeCommand(action.command, ...(action.arguments ?? []));
+        assert.ok(warnings.some(message => message.startsWith('StaleSelection:')), 'Old discovery token is rejected by the fresh session');
+        verify();
+        console.log('NATIVE CLEAN RESUME VERIFIED: inspected same retained identity, explicit modal consent, fresh C# discovery, old token refused, exactly one Apply frame.');
         teardown = true;
-        await pendingInspectionTeardown(api, controller, rootWatcher, model, verify, () => applyFrames);
+        await pendingInspectionTeardown(api, controller, rootWatcher!, model, verify, () => applyFrames, children);
     } finally {
         childProcess.spawn = spawn;
         nativeFs.watch = watch;

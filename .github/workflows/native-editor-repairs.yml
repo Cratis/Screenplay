@@ -4,20 +4,11 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - 'Source/Screenplay/VSCodeExtension/Repair*.ts'
-      - 'Source/Screenplay/VSCodeExtension/RetainedRepair.ts'
-      - 'Source/Screenplay/VSCodeExtension/SavedVersions.ts'
-      - 'Source/Screenplay/VSCodeExtension/extension.ts'
-      - 'Source/Screenplay/VSCodeExtension/for_Repair*/**'
-      - 'Source/Screenplay/VSCodeExtension/tests/**'
-      - 'Source/Screenplay/VSCodeExtension/package.json'
-      - 'Source/Screenplay/VSCodeExtension/esbuild.mjs'
-      - 'Source/Screenplay/VSCodeExtension/.vscodeignore'
-      - 'Source/DotNET/Screenplay.Mcp/Mcp*.cs'
+      - 'Source/Screenplay/VSCodeExtension/**'
+      - 'Source/DotNET/Screenplay.Mcp/**'
       - 'Source/DotNET/Screenplay/Workspaces/Workspace*Repair*.cs'
       - 'Source/DotNET/Tool/**'
       - 'package.json'
-      - 'yarn.lock'
       - '*.props'
       - 'global.json'
       - '.github/workflows/native-editor-repairs.yml'

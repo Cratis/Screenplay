@@ -22,6 +22,7 @@ export class RepairPreviewProvider implements vscode.FileSystemProvider, vscode.
     rename(): never { throw vscode.FileSystemError.NoPermissions('Repair previews are read-only.'); }
     static readonly scheme = 'screenplay-repair';
     readonly #documents = new Map<string, string>();
+    readonly #inspections = new Map<string, string>();
     #token?: string;
     #preview?: RepairPreview;
     #generation = 0;
@@ -43,13 +44,14 @@ export class RepairPreviewProvider implements vscode.FileSystemProvider, vscode.
     }
 
     provideTextDocumentContent(uri: vscode.Uri): string {
-        const content = this.#documents.get(uri.toString());
+        const content = this.#documents.get(uri.toString()) ?? this.#inspections.get(uri.toString());
         if (content === undefined) throw new RepairFailure('PreviewExpired', 'This repair preview has expired. Rediscover and review it.');
         return content;
     }
     clear(): void { ++this.#generation; this.#documents.clear(); this.#token = undefined; this.#preview = undefined; }
-    dispose(): void { if (this.#disposed) return; this.#disposed = true; this.clear(); this.#changed.dispose(); }
+    dispose(): void { if (this.#disposed) return; this.#disposed = true; this.clear(); this.#inspections.clear(); this.#changed.dispose(); }
     closed(uri: vscode.Uri): boolean {
+        if (this.#inspections.delete(uri.toString())) return false; // Inspection has no review authority.
         if (!this.#documents.has(uri.toString())) return false;
         this.clear();
         return true;
@@ -64,6 +66,19 @@ export class RepairPreviewProvider implements vscode.FileSystemProvider, vscode.
         this.#documents.set(uri.toString(), content);
         const document = await vscode.workspace.openTextDocument(uri);
         if (!this.#disposed && relevant() && generation === this.#generation) await vscode.window.showTextDocument(document, { preview: false });
+    }
+    async showInspection(state: unknown, relevant: () => boolean = () => true): Promise<boolean> {
+        if (this.#disposed || !relevant()) return false;
+        const content = JSON.stringify(state, null, 2);
+        if (Buffer.byteLength(content, 'utf8') > 16 * 1024 * 1024) throw new RepairFailure('PreviewTooLarge', 'Inspection exceeds the read-only review budget.');
+        const uri = vscode.Uri.from({ scheme: this.scheme, path: `/${randomUUID()}/inspection.json` });
+        this.#inspections.clear(); // Bound retained inspection bytes independently of active review.
+        this.#inspections.set(uri.toString(), content);
+        const document = await vscode.workspace.openTextDocument(uri);
+        const current = () => !this.#disposed && relevant() && this.#inspections.has(uri.toString());
+        if (!current()) return false;
+        await vscode.window.showTextDocument(document, { preview: false });
+        return current();
     }
     async show(preview: RepairPreview, authorize: () => void = () => {}): Promise<void> {
         if (this.#disposed) throw new RepairFailure('PreviewExpired', 'Repair previews were disposed.');

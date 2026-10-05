@@ -18,6 +18,7 @@ const previewCommand = 'screenplay.repair.preview';
 const applyCommand = 'screenplay.repair.apply';
 const discardCommand = 'screenplay.repair.discard';
 const inspectCommand = 'screenplay.repair.inspectState';
+const resumeCommand = 'screenplay.repair.resume';
 const settingNames = ['enabled', 'executable', 'arguments', 'modelRoot'] as const;
 
 export function userRepairConfiguration(): RepairLaunch {
@@ -100,7 +101,8 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
     let connectionGeneration = 0;
     let disposed = false;
     const pendingReloads = new Set<() => void>();
-    let recovery: { root: string; details: unknown; checkRoot: () => void } | undefined;
+    let recovery: { root: string; details: unknown; checkRoot: () => void; inspected?: boolean } | undefined;
+    void vscode.commands.executeCommand('setContext', 'screenplay.repair.recoveryRequired', false);
     let pendingReconciliation: { owner: RepairConnectionOwner; synchronized: () => boolean } | undefined;
     const owns = (owner: RepairConnectionOwner) => !disposed && current === owner && !owner.retired && owner.generation === connectionGeneration;
     const authorize = (owner: RepairConnectionOwner) => {
@@ -126,7 +128,9 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
         else if (session) {
             const classification = classifyRootDocument(session.launch.root, document.uri);
             session.trace(`classified:${source}`, { scope: classification.scope });
-            if (classification.scope === 'root' || classification.scope === 'ambiguous') session.invalidate(source);
+            // Opening a saved, clean file grants no new authority: Apply still verifies disk bytes.
+            const cleanSavedOpen = source === 'buffer-open' && document.uri.scheme === 'file' && !document.isDirty;
+            if (classification.scope === 'ambiguous' || (classification.scope === 'root' && !cleanSavedOpen)) session.invalidate(source);
         }
     };
     const reset = (cause: string) => {
@@ -378,6 +382,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
                     // Snapshot the approved identity now; it must not depend on watcher lifetime.
                     const identity = owner.rootWatch?.identity;
                     recovery = identity ? { root, details: error, checkRoot: () => assertRootIdentity(root, identity) } : { root, details: error, checkRoot: () => { throw new RepairFailure('RootRefused', 'The uncertain Apply root identity cannot be proved.'); } };
+                    if (!disposed) void vscode.commands.executeCommand('setContext', 'screenplay.repair.recoveryRequired', true);
                 } else if (owner && owns(owner) && (!owner.applyPending || acquired)) { owner.session.discard(); clearReview('apply-refusal'); }
                 if (installed) {
                     if (owner && owns(owner)) await vscode.window.showWarningMessage(`Disk repair installed; editor synchronization pending. Subsequent editor refresh failed: ${String(error)}`);
@@ -394,10 +399,11 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
             const generation = connectionGeneration;
             const relevant = () => !disposed && generation === connectionGeneration;
             try {
+                const block = recovery;
                 const launch = userRepairConfiguration();
                 checkRepairEnvironment(launch, true);
-                if (recovery && launch.root !== recovery.root) throw new RepairFailure('RootRefused', `Choose the uncertain apply root ${recovery.root} to inspect it.`);
-                recovery?.checkRoot(); // A replacement at the same lexical path is not the uncertain transaction's root.
+                if (block && launch.root !== block.root) throw new RepairFailure('RootRefused', `Choose the uncertain apply root ${block.root} to inspect it.`);
+                block?.checkRoot(); // A replacement at the same lexical path is not the uncertain transaction's root.
                 if (retiring) throw new RepairFailure('ApplyPending', 'Wait for the dispatched Apply outcome before read-only inspection.');
                 const active = current?.session.available && !current.failure && current.session.launch.root === launch.root ? current.session : undefined;
                 if (!active) {
@@ -406,11 +412,38 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
                 }
                 if (!relevant()) return;
                 const state = await (active ?? inspector!).inspectState();
-                recovery?.checkRoot();
-                if (!relevant()) return;
-                const document = await vscode.workspace.openTextDocument({ content: JSON.stringify({ state, uncertainApply: recovery ? failureDetail(recovery.details) : null, note: 'Inspection does not roll back or authorize retry. Review disk and retained state; recovery requires separate explicit consent through the MCP recovery workflow.' }, null, 2), language: 'json' });
-                if (relevant()) await vscode.window.showTextDocument(document);
+                block?.checkRoot();
+                if (!relevant() || recovery !== block) return;
+                const shown = await previews.showInspection({ state, uncertainApply: block ? failureDetail(block.details) : null, note: 'Inspection does not roll back or authorize retry. Inspect the workspace and follow Documentation/screenplay/mcp/recovery.md, then use Screenplay: Resume repairs after inspection for separate explicit consent.' }, relevant);
+                if (shown && relevant() && recovery === block && block) {
+                    block.checkRoot();
+                    block.inspected = true;
+                }
             } catch (error) { await report(error, relevant); } finally { inspector?.dispose(); }
+        }),
+        vscode.commands.registerCommand(resumeCommand, async (...args: unknown[]) => {
+            const block = recovery;
+            const generation = connectionGeneration;
+            const relevant = () => !disposed && generation === connectionGeneration && recovery === block;
+            try {
+                if (disposed || args.length || !block) throw new RepairFailure('RecoveryRequired', 'Resume requires an uncertain Apply recovery block.');
+                const launch = userRepairConfiguration();
+                const check = () => {
+                    if (!relevant()) throw new RepairFailure('StaleEpoch', 'Recovery changed during resume consent.');
+                    checkRepairEnvironment(launch, true);
+                    if (launch.root !== block.root) throw new RepairFailure('RootRefused', `Choose the uncertain apply root ${block.root} before resuming.`);
+                    block.checkRoot();
+                    if (retiring) throw new RepairFailure('ApplyPending', 'Wait for the dispatched Apply outcome before resuming.');
+                    if (!block.inspected) throw new RepairFailure('InspectionRequired', 'Successfully inspect this recovery with Screenplay: Inspect C# Repair Identity and Recovery State before resuming.');
+                };
+                check();
+                const consent = await vscode.window.showWarningMessage("The previous Apply's outcome was uncertain. Confirm that you have inspected the workspace and followed Documentation/screenplay/mcp/recovery.md. Further repairs will start a fresh, revision-checked session; the previous Apply will not be retried and old tokens and reviews will not be reused.", { modal: true }, 'Resume repairs');
+                if (consent !== 'Resume repairs') return;
+                check();
+                reset('explicit-recovery-resume'); // Disposes retained authority; next action connects afresh.
+                recovery = undefined;
+                void vscode.commands.executeCommand('setContext', 'screenplay.repair.recoveryRequired', false);
+            } catch (error) { await report(error, relevant); }
         }),
     );
 }

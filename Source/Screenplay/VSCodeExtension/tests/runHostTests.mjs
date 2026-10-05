@@ -65,7 +65,9 @@ try { await runTests({
     extensionTestsEnv: { SCREENPLAY_REPAIR_SERVER: server, SCREENPLAY_REPAIR_HOST_ROOT: model, SCREENPLAY_REPAIR_INSTALLED_EXTENSIONS: vsix ? extensions : '', SCREENPLAY_REPAIR_OBSERVE_SYNTHETIC_ROOT: caseName === 'clean' ? path.join(model, 'clean-unknown') : process.env.SCREENPLAY_REPAIR_OBSERVE === '1' ? path.join(model, caseName.startsWith('missed-') ? caseName : 'command-guards') : '', SCREENPLAY_REPAIR_TEARDOWN_EVIDENCE: teardownEvidence, SCREENPLAY_REPAIR_NATIVE_LOGS: path.join(userData, 'logs'), SCREENPLAY_REPAIR_HOST_CASE: caseName },
 }); suitesPassed = true; } finally {
     const logs = path.join(userData, 'logs');
-    if (fs.existsSync(logs)) {
+    if (!fs.existsSync(logs)) {
+        shutdownFailure = `Missing native logs; disposed-resource teardown cannot be verified: ${evidence}`;
+    } else {
         fs.cpSync(logs, path.join(evidence, 'logs'), { recursive: true });
         const shutdownLogs = [];
         const inspectLogs = directory => {
@@ -76,7 +78,9 @@ try { await runTests({
             }
         };
         inspectLogs(logs);
-        if (shutdownLogs.some(log => log.includes('illegal state - object is disposed'))) {
+        if (!shutdownLogs.length) {
+            shutdownFailure = `Missing native extension-host logs; disposed-resource teardown cannot be verified: ${evidence}`;
+        } else if (shutdownLogs.some(log => log.includes('illegal state - object is disposed'))) {
             shutdownFailure = `Native extension teardown touched disposed resources; inspect ${evidence}`;
             console.error(shutdownFailure);
         } else console.log(`NATIVE TEARDOWN LOG CHECK: no disposed-resource exception in ${shutdownLogs.length} extension-host logs; ${evidence}`);
