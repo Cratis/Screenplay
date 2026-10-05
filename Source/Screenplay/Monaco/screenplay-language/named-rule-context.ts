@@ -1,10 +1,11 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { bmpWordCharacters } from './bmp-word-characters';
 import { fenceMap, indentOf, withoutComment } from './document-context';
 
-// The command property form, including its existing optional severity/message suffixes.
-export const commandNamedRulePattern = /^[\p{L}\p{Mn}\p{Nd}\p{Pc}.]+\s+rule\s+[A-Za-z_][\p{L}\p{Mn}\p{Nd}\p{Pc}]*(?:\s+severity\s+(?:information|warning|error))?(?:\s+message\s+.*)?$/u;
+// The command property form, with the compiler/tokenizer BMP identifier boundary, including its existing optional severity/message suffixes.
+export const commandNamedRulePattern = new RegExp(`^[${bmpWordCharacters}.]+\\s+rule\\s+[A-Za-z_][${bmpWordCharacters}]*(?:\\s+severity\\s+(?:information|warning|error))?(?:\\s+message\\s+.*)?$`);
 
 export function namedRuleContext(lines: string[], lineIndex: number, indent: number): 'rule' | 'implementation' | null {
     const fences = fenceMap(lines);

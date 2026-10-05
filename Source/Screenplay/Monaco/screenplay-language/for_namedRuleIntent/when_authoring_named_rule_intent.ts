@@ -21,6 +21,11 @@ describe('when authoring command named-rule intent', () => {
         expect(labels(['concept Label : String', '  validate', '    rule Check', '      '], 3, '      ')).not.toContain('implementation');
         expect(labels(['command C', '  label String', '  validate', '    label not empty', '      '], 4, '      ')).not.toContain('implementation');
     });
+    it('should apply the BMP identifier boundary to the rule name', () => {
+        const lines = (name: string) => ['command C', '  label String', '  validate', `    label rule ${name}`, '      '];
+        expect(labels(lines('Check'), 4, '      ')).toContain('implementation');
+        expect(labels(lines('Check\u{10400}'), 4, '      ')).not.toContain('implementation');
+    });
     it.each(['hint', 'implementation'])('should keep contextual property names %s and predicate names legal', word => {
         const lines = ['command C', `  ${word} String`, '  validate', `    ${word} rule RuleNameShadow severity information`, '      implementation', '        hint "Keep"'];
         expect(labels(lines, 4, '      ')).toContain('implementation');

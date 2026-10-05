@@ -54,13 +54,36 @@ internal sealed partial class WorkspaceAstEdits
             Match((previous, current) => previous is JsonObject prior && current is JsonObject named && named["name"] is not null &&
                 JsonNode.DeepEquals(prior["kind"], named["kind"]) && JsonNode.DeepEquals(prior["name"], named["name"]));
 
+            // Printer metadata (comments, locations) follows merge-base sequential and positional matching, so
+            // duplicate ordinary rules keep their comments. This never grants pending lineage: metadata-only
+            // carrying passes ruleLineage false, and rule occurrence proof stays with the strict matches above.
+            for (var position = 0; position < newArray.Count; position++)
+            {
+                if (carried.Contains(position) || newArray[position] is not JsonObject current || !IsRule(current))
+                {
+                    continue;
+                }
+
+                var candidate = Enumerable.Range(0, oldArray.Count).FirstOrDefault(
+                    index => !matched.Contains(index) && !CompetingBareRule(newArray, oldArray[index]) && !AmbiguousBareRule(oldArray, current) &&
+                        JsonNode.DeepEquals(oldArray[index], current),
+                    -1);
+                if (candidate >= 0)
+                {
+                    matched.Add(candidate);
+                    carried.Add(position);
+                    CarrySourceLocations(oldArray[candidate]!, current, ruleLineage: false);
+                }
+            }
+
             // Coordinates and equal collection lengths are printer hints, not rule-occurrence identity.
             for (var position = 0; position < newArray.Count && oldArray.Count == newArray.Count; position++)
             {
                 if (!carried.Contains(position) && !matched.Contains(position) && oldArray[position] is JsonObject previous &&
-                    newArray[position] is JsonObject current && !IsRule(current) && JsonNode.DeepEquals(previous["kind"], current["kind"]))
+                    newArray[position] is JsonObject current && JsonNode.DeepEquals(previous["kind"], current["kind"]) &&
+                    (!IsRule(current) || (!CompetingBareRule(newArray, previous) && !AmbiguousBareRule(oldArray, current))))
                 {
-                    CarrySourceLocations(previous, current, ruleLineage);
+                    CarrySourceLocations(previous, current, ruleLineage && !IsRule(current));
                 }
             }
 
