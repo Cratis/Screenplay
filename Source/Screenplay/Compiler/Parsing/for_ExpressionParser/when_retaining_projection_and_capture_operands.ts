@@ -5,7 +5,7 @@ import { describe, it } from 'vitest';
 import { parse } from '../../ScreenplayCompiler';
 import { ExpressionSyntax } from '../../Syntax/Expressions';
 import { ScreenplaySyntaxWalker } from '../../Syntax/ScreenplaySyntaxWalker';
-import { toSyntaxJson } from '../../Syntax/SyntaxJson';
+import { toCompleteSyntaxJson } from '../../Syntax/SyntaxJson';
 
 const document = `policy NumberPolicy
     require claim "limit" matches 19
@@ -96,7 +96,7 @@ describe('when retaining projection and capture operands', () => {
 
     it('should retain envelope-shaped business members as ordinary structured data', () => {
         const result = parse(document.replace('{"nested":[28,29.5]}', '{"literalType":"ExactNumber","value":9007199254740993}'));
-        JSON.stringify(toSyntaxJson(result.value)).should.contain('9007199254740992');
+        JSON.stringify(toCompleteSyntaxJson(result.value)).should.contain('9007199254740992');
         const walker = new Values();
         walker.visitApplication(result.value);
         walker.values.should.include(9007199254740992);

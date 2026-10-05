@@ -23,8 +23,15 @@ export function toSyntaxJson(node: SyntaxNode): SyntaxJsonValue {
     return write(node);
 }
 
-function write(value: unknown, owningMode = 'legacy'): SyntaxJsonValue {
-    if (Array.isArray(value)) return value.map(item => write(item, owningMode));
+// The enriched internal tree written completely, Legacy members included. Not a wire form: it exists so the
+// walker and other tree consumers can be held to every node the parser builds.
+export function toCompleteSyntaxJson(node: SyntaxNode): SyntaxJsonValue {
+    validateNumbers(node, 'legacy', 0);
+    return write(node, 'legacy', true);
+}
+
+function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJsonValue {
+    if (Array.isArray(value)) return value.map(item => write(item, owningMode, complete));
     if (isNode(value)) {
         if (sourceRoots.has(value.kind)) owningMode = validatedSourceOptions((value as unknown as { sourceOptions?: unknown }).sourceOptions ?? legacySourceOptions).numericMode;
         validateSyntaxInvariants(value);
@@ -34,11 +41,11 @@ function write(value: unknown, owningMode = 'legacy'): SyntaxJsonValue {
         if (value.kind === 'CommandSyntax' && structural.stream === undefined) structural.stream = null;
         if (value.kind === 'CommandSyntax' && structural.streamCandidates === undefined) structural.streamCandidates = [];
         const known = owningMode === 'exact' ? syntaxMemberNames(value.kind) : undefined;
-        const members = Object.keys(structural).filter(member => (known === undefined || known.has(member)) && !(owningMode === 'legacy' && isExactOnlyMember(value.kind, member)) && member !== 'kind' && member !== 'location' && member !== 'targetLocation' && member !== 'referenceLocation' && member !== 'referenceLength' && member !== 'nameWasEscaped' && !(value.kind === 'OperationSyntax' && member === 'usesLocation')).sort(ordinal);
+        const members = Object.keys(structural).filter(member => (known === undefined || known.has(member)) && !(owningMode === 'legacy' && !complete && isExactOnlyMember(value.kind, member)) && member !== 'kind' && member !== 'location' && member !== 'targetLocation' && member !== 'referenceLocation' && member !== 'referenceLength' && member !== 'nameWasEscaped' && !(value.kind === 'OperationSyntax' && member === 'usesLocation')).sort(ordinal);
         for (const member of members) {
             const memberValue = structural[member];
             if (member === 'sourceOptions' && (memberValue as { numericMode?: string } | undefined)?.numericMode === 'legacy') continue;
-            result[member] = write(memberValue, owningMode);
+            result[member] = write(memberValue, owningMode, complete);
         }
         return result;
     }
