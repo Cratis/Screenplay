@@ -41,21 +41,30 @@ describe('when writing exact number literals carrying serialization hooks', () =
 
     const rounding = (): number => 9007199254740992;
 
+    // Replaces every non-empty node array with a hooked copy and expects the very same output.
+    const withHookedArrays = (hook: (items: unknown[]) => unknown[]): [string, string] => {
+        const tree = structuredClone(parseSpecificationSource('numbers exact\nspecification S\n  when C\n    n = 9007199254740993\n').value![0]);
+        const before = JSON.stringify(toSyntaxJson(structuredClone(tree) as never));
+        const visit = (value: unknown): void => {
+            if (typeof value !== 'object' || value === null) return;
+            for (const [key, member] of Object.entries(value)) {
+                visit(member);
+                if (Array.isArray(member) && member.length > 0) (value as Record<string, unknown>)[key] = hook(member);
+            }
+        };
+        visit(tree);
+        return [before, JSON.stringify(toSyntaxJson(tree as never))];
+    };
+
     it('should ignore an Array subclass carrying toJSON and species', () => {
         class Hooked extends Array<unknown> { toJSON(): unknown { return rounding(); } }
-        const json = hooked((tag, replace) => replace(Hooked.from([tag])));
-        json.should.contain('"9007199254740993"');
-        json.should.not.contain('9007199254740992');
+        const [before, after] = withHookedArrays(items => Hooked.from(items));
+        after.should.equal(before);
     });
 
     it('should ignore an array with an own toJSON property', () => {
-        const json = hooked((tag, replace) => {
-            const items: unknown[] = [tag];
-            Object.defineProperty(items, 'toJSON', { value: rounding, enumerable: true });
-            replace(items);
-        });
-        json.should.contain('"9007199254740993"');
-        json.should.not.contain('9007199254740992');
+        const [before, after] = withHookedArrays(items => Object.defineProperty([...items], 'toJSON', { value: rounding, enumerable: true }));
+        after.should.equal(before);
     });
 
     it('should emit literalType before value whatever the input key order', () => {

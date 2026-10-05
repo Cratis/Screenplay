@@ -44,7 +44,25 @@ internal sealed class ParserContext(LineReader reader, string? path = null, IScr
     /// <summary>
     /// Gets the <see cref="Diagnostic">diagnostics</see> collected so far.
     /// </summary>
-    public IReadOnlyList<Diagnostic> Diagnostics => _diagnostics;
+    public IReadOnlyList<Diagnostic> Diagnostics
+    {
+        get
+        {
+            // Directive-shaped lines nobody claimed as a field are errors, wherever they sit.
+            if (NestedNumericDirectives.Count > 0 && SourceOptions.NumericMode != NumericMode.Legacy && reader.AtEnd)
+            {
+                _diagnostics.AddRange(NestedNumericDirectives.OrderBy(_ => _.Key).Select(_ => _.Value));
+                NestedNumericDirectives.Clear();
+            }
+
+            return _diagnostics;
+        }
+    }
+
+    /// <summary>
+    /// Gets the directive-shaped lines below the top level, keyed by line number, still unclaimed as a field.
+    /// </summary>
+    internal Dictionary<int, Diagnostic> NestedNumericDirectives { get; set; } = [];
 
     /// <summary>
     /// Creates a context for work that produces diagnostics without reading source lines, such as merging
@@ -52,6 +70,12 @@ internal sealed class ParserContext(LineReader reader, string? path = null, IScr
     /// </summary>
     /// <returns>A <see cref="ParserContext"/> with no lines to read.</returns>
     public static ParserContext ForDiagnostics() => new(new([]));
+
+    /// <summary>
+    /// Records that a line was read as a field, so it is not a misplaced numeric directive.
+    /// </summary>
+    /// <param name="line">The <see cref="SourceLine"/> read as a field.</param>
+    public void ClaimField(SourceLine line) => NestedNumericDirectives.Remove(line.Number);
 
     /// <summary>
     /// Reports an error diagnostic.

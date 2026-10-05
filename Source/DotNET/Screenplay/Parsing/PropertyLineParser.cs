@@ -95,6 +95,7 @@ internal static partial class PropertyLineParser
     /// <param name="line">The source line holding the type.</param>
     public static void ReportLegacyOptionalSuffix(ParserContext context, TypeRefSyntax type, SourceLine line)
     {
+        context.ClaimField(line);
         var length = type.Name.Length + (type.IsCollection ? 2 : 0);
         var offset = type.Location.Column - line.Indent - 1 + length;
         if (type.IsOptional && offset < line.Content.Length && line.Content[offset] == '?')

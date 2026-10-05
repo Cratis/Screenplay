@@ -20,7 +20,7 @@ internal static partial class SourceOptionsParser
         var seen = false;
         var contentSeen = false;
         var inFence = false;
-        var nested = new List<Diagnostic>();
+        var nested = new Dictionary<int, Diagnostic>();
         foreach (var original in lines)
         {
             var line = original;
@@ -76,7 +76,7 @@ internal static partial class SourceOptionsParser
             // A directive-shaped line below the top level is never a valid option, whichever construct owns the block.
             if (!inFence && line.Indent > 0 && NestedDirectiveRegex().IsMatch(line.Content))
             {
-                nested.Add(Diagnostic.Error(DiagnosticCodes.InvalidNumericDirective, "Expected 'numbers exact' only as the document preamble, not inside a body.", line.Location));
+                nested[line.Number] = Diagnostic.Error(DiagnosticCodes.InvalidNumericDirective, "Expected 'numbers exact' only as the document preamble, not inside a body.", line.Location);
             }
 
             contentSeen |= !line.IsBlank;
@@ -86,11 +86,9 @@ internal static partial class SourceOptionsParser
         // Do not reinterpret an unmarked document's BOM or other legacy source handling.
         var context = new ParserContext(new(seen ? prepared : lines), path, languages) { SourceOptions = options, StreamCandidates = streamCandidates };
         foreach (var diagnostic in diagnostics) context.Add(diagnostic);
-        if (seen)
-        {
-            foreach (var diagnostic in nested) context.Add(diagnostic);
-        }
 
+        // Reported when reading ends, once every property owner has claimed the lines it models as fields.
+        context.NestedNumericDirectives = nested;
         return context;
     }
 

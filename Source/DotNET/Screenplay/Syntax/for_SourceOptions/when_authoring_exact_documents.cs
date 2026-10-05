@@ -53,7 +53,7 @@ public class when_authoring_exact_documents : Specification
     [Fact]
     void should_not_steal_a_property_named_numbers_or_fenced_text()
     {
-        var result = _compiler.Compile("numbers exact\nconcept exact : String\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        numbers exact\n        handler\n          ```csharp\nnumbers exact\n          ```\n");
+        var result = _compiler.Compile("numbers exact\nconcept Amount : String\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        numbers Amount\n        handler\n          ```csharp\nnumbers exact\n          ```\n");
         result.Diagnostics.Any(value => value.Code == DiagnosticCodes.InvalidNumericDirective || value.Code == DiagnosticCodes.DuplicateNumericDirective || value.Code == DiagnosticCodes.LateNumericDirective).ShouldBeFalse();
         result.Value!.Modules.Single().Features.Single().Slices.Single().Commands.Single().Properties.Single().Name.ShouldEqual("numbers");
         var nested = _compiler.Parse("module M\n  numbers exact\n");

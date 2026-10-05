@@ -20,7 +20,7 @@ export function sourceContext(lines: readonly SourceLine[], path?: string, langu
     let seen = false;
     let contentSeen = false;
     let inFence = false;
-    const nested: Diagnostic[] = [];
+    const nested = new Map<number, Diagnostic>();
     const registry = new ParserContext(new LineReader([]), path, languages).languages;
     for (const original of lines) {
         let line = original;
@@ -47,13 +47,14 @@ export function sourceContext(lines: readonly SourceLine[], path?: string, langu
             continue;
         }
         // A directive-shaped line below the top level is never a valid option, whichever construct owns the block.
-        if (!inFence && line.indent > 0 && /^numbers(\s+(exact|legacy))?$/.test(line.content)) nested.push({ severity: 'error', code: DiagnosticCodes.InvalidNumericDirective, message: "Expected 'numbers exact' only as the document preamble, not inside a body.", location: locationOf(line) });
+        if (!inFence && line.indent > 0 && /^numbers(\s+(exact|legacy))?$/.test(line.content)) nested.set(line.number, { severity: 'error', code: DiagnosticCodes.InvalidNumericDirective, message: "Expected 'numbers exact' only as the document preamble, not inside a body.", location: locationOf(line) });
         contentSeen ||= line.content.trim().length > 0;
         prepared.push(line);
     }
     const context = new ParserContext(new LineReader(seen ? prepared : lines), path, languages);
     context.sourceOptions = options;
-    if (seen) diagnostics.push(...nested);
+    // Reported when reading ends, once every property owner has claimed the lines it models as fields.
+    context.nestedNumericDirectives = nested;
     diagnostics.forEach(diagnostic => context.error(diagnostic.code, diagnostic.message, diagnostic.location));
     return context;
 }

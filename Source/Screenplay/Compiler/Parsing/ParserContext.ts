@@ -41,7 +41,19 @@ export class ParserContext {
     }
 
     get diagnostics(): readonly Diagnostic[] {
+        // Directive-shaped lines nobody claimed as a field are errors, wherever they sit.
+        if (this.nestedNumericDirectives.size > 0 && this.sourceOptions.numericMode !== 'legacy' && this.reader.atEnd) {
+            this.#diagnostics.push(...[...this.nestedNumericDirectives].sort((first, second) => first[0] - second[0]).map(entry => entry[1]));
+            this.nestedNumericDirectives.clear();
+        }
         return this.#diagnostics;
+    }
+
+    // Directive-shaped lines below the top level, keyed by line number, still unclaimed as a field.
+    nestedNumericDirectives = new Map<number, Diagnostic>();
+
+    claimField(line: SourceLine): void {
+        this.nestedNumericDirectives.delete(line.number);
     }
 
     information(code: string, message: string, location: SourceLocation): void {

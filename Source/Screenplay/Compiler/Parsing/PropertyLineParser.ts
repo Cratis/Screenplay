@@ -57,6 +57,7 @@ export function parseProperty(context: ParserContext, line: SourceLine): Propert
 }
 
 export function reportLegacyOptionalSuffix(context: ParserContext, type: TypeRefSyntax, line: SourceLine): void {
+    context.claimField(line);
     const length = type.name.length + (type.isCollection ? 2 : 0);
     const offset = type.location.column - line.indent - 1 + length;
     if (type.isOptional && line.content[offset] === '?') {
