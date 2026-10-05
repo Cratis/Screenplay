@@ -8,12 +8,12 @@ const command = ['command C', '  label String', '  validate', '    label not emp
 
 describe('when validating a builtin rule that carries an implementation wrapper', () => {
     it('should report the invalid rule in a command at the wrapper', () => {
-        const issues = validateLines(command).filter(issue => issue.code === 'PLAY0141');
+        const issues = validateLines(command).filter(issue => String(issue.code) === 'PLAY0141');
         expect(issues.map(issue => issue.line)).toEqual([4, 5]);
         expect(issues[0].severity).toBe('error');
     });
 
     it('should stay quiet for a valid command rule', () => {
-        expect(validateLines(['command C', '  label String', '  validate', '    label not empty']).filter(issue => issue.code === 'PLAY0141')).toEqual([]);
+        expect(validateLines(['command C', '  label String', '  validate', '    label not empty']).filter(issue => String(issue.code) === 'PLAY0141')).toEqual([]);
     });
 });
