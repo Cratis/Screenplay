@@ -6,7 +6,7 @@ import { describe, it } from 'vitest';
 import { parse } from '../../ScreenplayCompiler';
 import { ApplicationSyntax } from '../Structure';
 import { decodeExactSyntaxJson, InvalidSyntaxJson } from '../StrictSyntaxJson';
-import { toSyntaxJson } from '../SyntaxJson';
+import { toCompleteSyntaxJson, toSyntaxJson } from '../SyntaxJson';
 
 const source = readFileSync(new URL('../../Conformance/exact-named-rule-intent.play', import.meta.url), 'utf8');
 const rules = (syntax: ApplicationSyntax) => {
@@ -46,8 +46,8 @@ describe('when round tripping exact named-rule intent', () => {
         for (const member of ['sourceOptions', 'requirements', 'policies', 'seeds']) wire.should.not.contain(`"${member}":`);
     });
 
-    it.each(['wrong wrapper kind', 'blank hint', 'builtin rule wrapper', 'conflicting payloads'])('should reject %s in both typed writing and strict restoration', name => {
-        const syntax = parse(source).value;
+    it.each(['exact', 'legacy'].flatMap(mode => ['wrong wrapper kind', 'blank hint', 'builtin rule wrapper', 'conflicting payloads'].map(name => ({ mode, name }))))('should reject $name in $mode transport', ({ mode, name }) => {
+        const syntax = parse(mode === 'exact' ? source : source.replace('numbers exact\n', '')).value;
         const wire = JSON.parse(JSON.stringify(toSyntaxJson(syntax))) as ApplicationSyntax;
         const pending = rules(wire)[0];
         const changed = name === 'wrong wrapper kind' ? { ...pending, implementation: { kind: 'PathExpressionSyntax', path: 'Wrong' } }
@@ -55,8 +55,26 @@ describe('when round tripping exact named-rule intent', () => {
             : name === 'builtin rule wrapper' ? { ...pending, rule: 'NotEmpty' }
             : { ...pending, file: { kind: 'FileReferenceSyntax', path: 'A.cs' }, code: { kind: 'CodeBlockSyntax', language: 'csharp', code: 'true' } };
         Object.assign(pending, changed);
-        (() => decodeExactSyntaxJson(JSON.stringify(wire))).should.throw(InvalidSyntaxJson);
+        // The strict reader admits only Exact roots; Legacy still shares writer invariants.
+        if (mode === 'exact') (() => decodeExactSyntaxJson(JSON.stringify(wire))).should.throw(InvalidSyntaxJson);
         Object.assign(rules(syntax)[0], changed);
         (() => toSyntaxJson(syntax)).should.throw(InvalidSyntaxJson);
+    });
+
+    it.each(['exact', 'legacy'])('should reject concept-owned wrappers in %s writing, including complete internal projection', mode => {
+        const syntax = parse(`${mode === 'exact' ? 'numbers exact\n' : ''}concept Label : String\n  validate\n    rule Check\n`).value;
+        const validation = syntax.concepts[0].validations![0];
+        if (validation.kind !== 'DeclarativeValidateSyntax') throw new Error('Expected declarative validation');
+        Object.assign(validation.rules[0], { implementation: { kind: 'ImplementationSyntax', hints: [{ kind: 'ImplementationHintSyntax', text: 'Valid hint' }] } });
+        (() => toSyntaxJson(syntax)).should.throw(InvalidSyntaxJson);
+        (() => toCompleteSyntaxJson(syntax)).should.throw(InvalidSyntaxJson);
+    });
+
+    it('should reject concept-owned wrappers in strict Exact restoration', () => {
+        const wire = JSON.parse(JSON.stringify(toSyntaxJson(parse('numbers exact\nconcept Label : String\n  validate\n    rule Check\n').value))) as ApplicationSyntax;
+        const validation = wire.concepts[0].validations![0];
+        if (validation.kind !== 'DeclarativeValidateSyntax') throw new Error('Expected declarative validation');
+        Object.assign(validation.rules[0], { implementation: { kind: 'ImplementationSyntax', hints: [{ kind: 'ImplementationHintSyntax', text: 'Valid hint' }] } });
+        (() => decodeExactSyntaxJson(JSON.stringify(wire))).should.throw(InvalidSyntaxJson);
     });
 });

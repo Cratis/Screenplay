@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { CommandSyntax, ValidationRuleSyntax } from './Commands';
+import { ConceptSyntax } from './Declarations';
 import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax } from './EventSources';
 import { HandlerSyntax, ImplementationSyntax, ImplementationHintSyntax } from './Implementations';
 import { InvalidSyntaxJson } from './InvalidSyntaxJson';
@@ -25,9 +26,16 @@ const collection = (value: unknown, kind: string, message: string): void => {
 // The native ImplementationInvariants / OperationInvariants / EventSourceInvariants contracts.
 // Shared by the isolated strict reader and the writer, without pulling the transport schema into Monaco.
 export function validateSyntaxInvariants(node: SyntaxNode): void {
+    if (node.kind === 'ConceptSyntax') {
+        const concept = node as ConceptSyntax;
+        for (const validation of concept.validations ?? []) {
+            if (validation.kind === 'DeclarativeValidateSyntax' && validation.rules.some(rule => rule.implementation != null)) refuse('Implementation wrappers on named rules are supported only on commands.');
+        }
+    }
     if (node.kind === 'ValidationRuleSyntax') {
         const rule = node as ValidationRuleSyntax;
         if (rule.implementation != null) {
+            if (!hasKind(rule.implementation, 'ImplementationSyntax')) refuse('A named rule requires an ImplementationSyntax wrapper.');
             if (rule.rule !== 'Rule' || rule.value?.kind !== 'PathExpressionSyntax' || ruleNamePattern.exec(rule.value.path)?.[0] !== rule.value.path) refuse('An implementation wrapper requires a valid named rule.');
             if (rule.file != null && rule.code != null) refuse('A named rule has at most one file or inline payload.');
             validateSyntaxInvariants(rule.implementation);
