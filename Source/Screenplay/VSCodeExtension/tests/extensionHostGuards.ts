@@ -570,7 +570,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         warnings.length = 0;
         const stateReads = rpc.length;
         await vscode.commands.executeCommand('screenplay.repair.refresh');
-        assert.ok(warnings.some(message => message.startsWith('DirtyBuffer:') && message.includes(statePath)), 'Real existing identity buffer has its own exact dirty refusal');
+        assert.ok(warnings.some(message => message.startsWith('DirtyBuffer:') && message.includes(stateDocument.uri.fsPath)), 'Real existing identity buffer has its own exact dirty refusal');
         assert.equal(rpc.slice(stateReads).filter(frame => ['open-workspace', 'propose-repair', 'apply'].includes(frame.name)).length, 0);
         assert.deepEqual(fs.readFileSync(statePath), stateBefore);
         assert.equal(stateDocument.isDirty, true);
@@ -650,7 +650,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         warnings.length = 0;
         const unknownReads = rpc.length;
         await vscode.commands.executeCommand('screenplay.repair.refresh');
-        assert.ok(warnings.some(message => message.startsWith('DirtyBuffer:') && message.includes(raceSource)), 'Preserved post-dispatch typing legitimately refuses before the recovery gate');
+        assert.ok(warnings.some(message => message.startsWith('DirtyBuffer:') && message.includes(raceDocument.uri.fsPath)), 'Preserved post-dispatch typing legitimately refuses before the recovery gate');
         assert.equal(rpc.length, unknownReads, 'Dirty refusal sends no RPC, including ZERO new Apply frames');
         const typedSource = raceDocument.getText(), typedState = postDispatchUntitled!.getText();
         const typedVersion = raceDocument.version, stateVersion = postDispatchUntitled!.version;
