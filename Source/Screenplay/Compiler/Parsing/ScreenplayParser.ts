@@ -226,8 +226,9 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
                     `'validate' in enumeration concept '${name}' declares an empty validate block, not a value named 'validate' - write '@validate' for the value`,
                     locationOf(child));
             }
-            // Concept validations are not modeled; the block is skipped whole.
-            context.skipOpaqueBlock(child.indent);
+            // Concept validations are not modeled; the block is skipped whole, but an implementation
+            // wrapper is a command-only form and is rejected the way the C# parser rejects it.
+            skipConceptValidation(context, child);
         } else if (reason !== null) {
             applyAttributeReason(context, child, name, attributes, attributeIndices, reason[1], unescapeString(reason[2]));
         } else if (type === 'Enum' && enumValuePattern.test(child.content)) {
@@ -240,6 +241,21 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
         }
     }
     return { kind: 'ConceptSyntax', name, type, attributes, values, location: locationOf(line) };
+}
+
+const namedRuleLine = pattern('^(?:[\\w.]+\\s+)?rule(?:\\s|$)');
+
+function skipConceptValidation(context: ParserContext, validate: SourceLine): void {
+    let previous: SourceLine | undefined;
+    for (let child = context.peekChild(validate.indent); child !== undefined; child = context.peekChild(validate.indent)) {
+        context.reader.takeSignificant();
+        if (child.content.startsWith('```')) {
+            context.skipFencedBody();
+        } else if (previous !== undefined && child.indent > previous.indent && firstWord(child.content) === 'implementation') {
+            context.error(DiagnosticCodes.UnknownRuleImplementationDirective, `Unexpected '${child.content}' in rule implementation - expected 'file <path>' or an inline code block`, locationOf(child));
+        }
+        previous = namedRuleLine.test(child.content) ? child : undefined;
+    }
 }
 
 function applyAttributeReason(context: ParserContext, line: SourceLine, concept: string, attributes: ConceptAttributeSyntax[], indices: ReadonlyMap<string, number>, attribute: string, reason: string): void {

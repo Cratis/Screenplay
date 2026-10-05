@@ -32,7 +32,7 @@ const severityPattern = pattern('\\bseverity\\s+(\\S+)$');
 const messagePattern = pattern(`\\bmessage\\s+(?:"(${stringBodyPattern})"|(\\$strings\\.\\S*))$`);
 const rulePattern = pattern('^([\\w.]+)\\s+(.+)$');
 const operandPattern = pattern('^(not empty|length ==|all >=|all >|matches|max|min|rule|>=|<=|==|!=|>|<)\\s*(.*)$');
-const ruleNamePattern = pattern('^[A-Za-z_]\\w*$');
+const ruleNamePattern = sourceStreamPattern('^[A-Za-z_]\\w*$');
 const optionalReads = pattern('^reads\\s+[A-Z]\\w*\\s+optional(?:\\s|$)');
 
 // Every operand the pattern matches has a kind, so an operand never goes unrecognized here.

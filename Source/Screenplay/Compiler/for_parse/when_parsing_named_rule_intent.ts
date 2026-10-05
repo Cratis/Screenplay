@@ -97,7 +97,18 @@ describe('when parsing command named-rule intent', () => {
         expect(() => serializeRule({ ...parsed, value: null })).toThrow();
         expect(() => serializeRule({ ...parsed, value: { kind: 'PathExpressionSyntax', path: 'Invalid.Name', location: parsed.location } })).toThrow();
         expect(() => serializeRule({ ...parsed, value: { kind: 'PathExpressionSyntax', path: 'Check\n', location: parsed.location } })).toThrow();
+        expect(() => serializeRule({ ...parsed, value: { kind: 'PathExpressionSyntax', path: 'Check\u{10400}', location: parsed.location } })).toThrow();
+        expect(() => serializeRule({ ...parsed, value: { kind: 'PathExpressionSyntax', path: 'Check\u00e9', location: parsed.location } })).not.toThrow();
         expect(() => serializeRule({ ...parsed, code: { kind: 'CodeBlockSyntax', language: 'csharp', code: 'true', location: parsed.location } })).toThrow();
         expect(() => serializeRule({ ...parsed, implementation: { kind: 'ImplementationSyntax', hints: [{ kind: 'ImplementationHintSyntax', text: ' ', location: parsed.location }], location: parsed.location } })).toThrow();
+    });
+    it('should reject a supplementary-plane rule name when parsing', () => {
+        const parsed = parse(prefix.replace('Check', 'Check\u{10400}'));
+        expect(parsed.diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0143');
+    });
+    it('should reject an implementation wrapper in a concept validation', () => {
+        const parsed = parse('concept Label : String\n  validate\n    rule Check\n      implementation\n        hint "Keep"');
+        expect(parsed.diagnostics.map(diagnostic => diagnostic.code)).toEqual(['PLAY0144']);
+        expect(parsed.diagnostics[0].location.line).toBe(4);
     });
 });

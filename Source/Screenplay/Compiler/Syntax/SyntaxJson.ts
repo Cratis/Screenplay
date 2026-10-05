@@ -6,11 +6,11 @@ import { CommandSyntax, ValidationRuleSyntax } from './Commands';
 import { OperationPhaseSyntax } from './Operations';
 import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax } from './EventSources';
 import { ProducesSyntax } from './Reactions';
-import { pattern } from '../Text/patterns';
 import { isBlankImplementationHint } from '../Text/ImplementationHintText';
-import { isSourceStreamName, isSourceStreamTypeName } from '../Text/SourceStreamNames';
+import { isSourceStreamName, isSourceStreamTypeName, sourceStreamPattern } from '../Text/SourceStreamNames';
 
-const ruleNamePattern = pattern('^[A-Za-z_]\\w*$');
+// .NET \w is evaluated per UTF-16 code unit, so a supplementary-plane letter is not a name character.
+const ruleNamePattern = sourceStreamPattern('^[A-Za-z_]\\w*$');
 
 export type SyntaxJsonValue = string | number | boolean | null | SyntaxJsonValue[] | { [member: string]: SyntaxJsonValue };
 

@@ -2515,6 +2515,47 @@
             "diagnostics": [
                 "PLAY0358@6"
             ]
+        },
+        {
+            "name": "a concept validation cannot carry an implementation wrapper",
+            "source": [
+                "concept Label : String",
+                "  validate",
+                "    rule Check",
+                "      implementation",
+                "        hint \"Keep\""
+            ],
+            "diagnostics": [
+                "PLAY0144@4"
+            ]
+        },
+        {
+            "name": "a command rule name cannot contain a supplementary-plane letter",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        label String",
+                "        validate",
+                "          label rule Check𐐀"
+            ],
+            "diagnostics": [
+                "PLAY0143@7"
+            ]
+        },
+        {
+            "name": "a command rule name admits a basic multilingual plane letter",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      command C",
+                "        label String",
+                "        validate",
+                "          label rule Checké"
+            ],
+            "diagnostics": []
         }
     ]
 }
