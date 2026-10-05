@@ -32,7 +32,7 @@ internal sealed partial class WorkspaceAstEdits
     void CarrySourceLocations(JsonNode original, JsonNode replacement, bool ruleLineage = false)
     {
         // Container matching carries printer metadata, not rule-occurrence proof. Descendant
-        // obligations are compared together in the final command owner by Region instead.
+        // obligations are compared together once per final command owner for the whole transaction.
         if (ruleLineage && _ruleOrigins.TryGetValue(original, out var origin))
         {
             _ruleOrigins[replacement] = origin;

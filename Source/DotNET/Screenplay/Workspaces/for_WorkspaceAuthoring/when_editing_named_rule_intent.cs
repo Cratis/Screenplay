@@ -4,6 +4,7 @@
 using System.Collections.Immutable;
 using System.Text;
 using Cratis.Screenplay.Semantics;
+using Cratis.Screenplay.Semantics.Serialization;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
 using Cratis.Screenplay.Syntax.Specifications;
@@ -580,6 +581,142 @@ public class when_editing_named_rule_intent
         var emptied = new ReplaceWorkspaceNode(block.Handle, block.Node, decoded with { Rules = [] });
         workspace.ProposeAuthoring(Request(workspace) with { Operations = [emptied] }).Accepted.ShouldBeTrue();
         workspace.ProposeAuthoring(Request(workspace) with { Operations = [emptied, new AddWorkspaceNode(command.Handle, command.Node, "validations", decoded)] }).Accepted.ShouldBeTrue();
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void should_conserve_pending_occurrences_across_transaction_regions(bool reverse, bool samePath)
+    {
+        var workspace = Workspace(Prefix + "            implementation\n              hint \"Keep\"\n        validate\n          label rule Check\n            implementation\n              hint \"Keep\"");
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var blocks = index.Entries.Where(entry => entry.Node is DeclarativeValidateSyntax).ToArray();
+        var rules = index.Entries.Where(entry => entry.Node is ValidationRuleSyntax).ToArray();
+        var parsed = new ScreenplayCompiler().Parse(Prefix.Replace("rule Check", "rule Renamed", StringComparison.Ordinal) + "            implementation\n              hint \"Edited\"", samePath ? "model.play" : null).Value!;
+        var block = (DeclarativeValidateSyntax)parsed.Modules.Single().Features.Single().Slices.Single().Commands.Single().Validations.Single();
+        if (!samePath) block = (DeclarativeValidateSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(block));
+        var empty = new ReplaceWorkspaceNode(blocks[0].Handle, blocks[0].Node, block with { Rules = [] });
+        var renamed = new ReplaceWorkspaceNode(blocks[1].Handle, blocks[1].Node, block);
+        WorkspaceAstOperation[] operations = reverse ? [renamed, empty] : [empty, renamed];
+        var refused = workspace.ProposeAuthoring(Request(workspace) with { Operations = [.. operations] });
+        Assert.False(refused.Accepted, string.Join("; ", refused.Conflicts.Select(conflict => conflict.Message)));
+        refused.Conflicts.Single().Message.Contains("pending", StringComparison.OrdinalIgnoreCase).ShouldBeTrue();
+
+        // A validated original removal discharges exactly that occurrence, not the sibling obligation.
+        foreach (var rule in rules)
+        {
+            var allowed = workspace.ProposeAuthoring(Request(workspace) with { Operations = [new RemoveWorkspaceNode(rule.Handle, rule.Node), .. operations] });
+            Assert.True(allowed.Accepted, string.Join("; ", allowed.Conflicts.Select(conflict => conflict.Message)));
+            var intent = WorkspaceNamedRuleIntentInventory.Create(allowed.Workspace!).Entries.Single();
+            intent.RequirementId.ShouldBeNull();
+            intent.Hints.SequenceEqual(["Edited"]).ShouldBeTrue();
+        }
+
+        workspace.ProposeAuthoring(Request(workspace) with { Operations = [new RemoveWorkspaceNode(rules[0].Handle, rules[0].Node), new RemoveWorkspaceNode(rules[0].Handle, rules[0].Node), .. operations] }).Accepted.ShouldBeFalse();
+        workspace.ProposeAuthoring(Request(workspace) with { Operations = [.. operations, new RemoveWorkspaceNode(rules[0].Handle, rules[0].Node)] }).Accepted.ShouldBeFalse();
+        workspace.ProposeAuthoring(Request(workspace) with { Operations = [empty, new ReplaceWorkspaceNode(rules[0].Handle, rules[0].Node, rules[0].Node)] }).Accepted.ShouldBeFalse();
+        workspace.ProposeAuthoring(Request(workspace) with { Operations = [empty, new ReplaceWorkspaceNode(blocks[1].Handle, blocks[1].Node, block with { Rules = [] })] }).Accepted.ShouldBeTrue();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void should_union_transaction_regions_with_document_replacement_by_exact_owner(bool reverse)
+    {
+        var workspace = Workspace(Prefix + "            implementation\n              hint \"Keep\"\n        validate\n          label rule Check\n            implementation\n              hint \"Keep\"\n      command Other\n        label String\n        validate\n          label rule Check\n            implementation\n              hint \"Keep\"");
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var root = index.Entries.Single(entry => entry.Parent is null);
+        var blocks = index.Entries.Where(entry => entry.Node is DeclarativeValidateSyntax).ToArray();
+        var rules = index.Entries.Where(entry => entry.Node is ValidationRuleSyntax).ToArray();
+        var parsed = new ScreenplayCompiler().Parse(Prefix.Replace("rule Check", "rule Renamed", StringComparison.Ordinal) + "            implementation\n              hint \"Edited\"\n      command Other\n        label String\n        validate\n          label rule Check\n            implementation\n              hint \"Keep\"").Value!;
+        var replacement = (ApplicationSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(parsed));
+        var block = replacement.Modules.Single().Features.Single().Slices.Single().Commands.First().Validations.Single();
+        WorkspaceAstOperation[] operations = [new ReplaceWorkspaceNode(blocks[0].Handle, blocks[0].Node, ((DeclarativeValidateSyntax)block) with { Rules = [] }), new ReplaceWorkspaceNode(blocks[1].Handle, blocks[1].Node, block)];
+        if (reverse) Array.Reverse(operations);
+        workspace.ProposeAuthoring(Request(workspace) with { Operations = [.. operations] }).Accepted.ShouldBeFalse();
+        workspace.ProposeAuthoring(Request(workspace) with { Operations = [new RemoveWorkspaceNode(rules[2].Handle, rules[2].Node), .. operations] }).Accepted.ShouldBeFalse();
+
+        // Document replacement and original removals overlap only under the existing validated exception.
+        // The document's rule union must still retain the two independent C obligations.
+        workspace.ProposeAuthoring(Request(workspace) with { Operations = [new RemoveWorkspaceNode(rules[2].Handle, rules[2].Node)], Documents = [new ReplaceWorkspaceSyntaxDocument(root.Handle.Document, replacement)] }).Accepted.ShouldBeFalse();
+        workspace.ProposeAuthoring(Request(workspace) with { Operations = [new RemoveWorkspaceNode(rules[0].Handle, rules[0].Node)], Documents = [new ReplaceWorkspaceSyntaxDocument(root.Handle.Document, replacement)] }).Accepted.ShouldBeTrue();
+        workspace.ProposeAuthoring(Request(workspace) with { Operations = [.. operations], Documents = [new ReplaceWorkspaceSyntaxDocument(root.Handle.Document, replacement)] }).Accepted.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void should_claim_structural_survivors_once_across_identical_transaction_regions()
+    {
+        var workspace = Workspace(Prefix + "            implementation\n              hint \"Keep\"\n        validate\n          label rule Check\n            implementation\n              hint \"Keep\"\n        validate\n          label rule Check\n            implementation\n              hint \"Keep\"");
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var blocks = index.Entries.Where(entry => entry.Node is DeclarativeValidateSyntax).ToArray();
+        var rule = index.Entries.First(entry => entry.Node is ValidationRuleSyntax);
+        var decoded = (DeclarativeValidateSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(blocks[0].Node));
+        WorkspaceAstOperation[] operations = [new ReplaceWorkspaceNode(blocks[0].Handle, blocks[0].Node, decoded with { Rules = [] }), new ReplaceWorkspaceNode(blocks[1].Handle, blocks[1].Node, decoded with { Rules = [] }), new ReplaceWorkspaceNode(blocks[2].Handle, blocks[2].Node, decoded)];
+        workspace.ProposeAuthoring(Request(workspace) with { Operations = [.. operations] }).Accepted.ShouldBeFalse();
+        workspace.ProposeAuthoring(Request(workspace) with { Operations = [new RemoveWorkspaceNode(rule.Handle, rule.Node), .. operations] }).Accepted.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void should_claim_validated_reused_images_once_across_transaction_regions()
+    {
+        var workspace = Workspace(Prefix + "            implementation\n              hint \"Keep\"\n        validate\n          label rule Check\n            implementation\n              hint \"Keep\"\n        validate\n          label rule Check\n            implementation\n              hint \"Keep\"");
+        var blocks = WorkspaceSyntaxIndex.Create(workspace).Entries.Where(entry => entry.Node is DeclarativeValidateSyntax).ToArray();
+        var original = (DeclarativeValidateSyntax)blocks[0].Node;
+        var decoded = (DeclarativeValidateSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(original));
+        var renamed = decoded.Rules.Single() with { Value = new PathExpressionSyntax("Renamed", decoded.Location), Implementation = decoded.Rules.Single().Implementation! with { Hints = [new("Edited", decoded.Location)] } };
+        var refused = workspace.ProposeAuthoring(Request(workspace) with
+        {
+            Operations = [new ReplaceWorkspaceNode(blocks[0].Handle, original, original), new ReplaceWorkspaceNode(blocks[1].Handle, blocks[1].Node, decoded with { Rules = [] }), new ReplaceWorkspaceNode(blocks[2].Handle, blocks[2].Node, decoded with { Rules = [renamed] })]
+        });
+        refused.Accepted.ShouldBeFalse();
+        refused.Conflicts.Single().Message.Contains("pending", StringComparison.OrdinalIgnoreCase).ShouldBeTrue();
+    }
+
+    [Fact]
+    public void should_conserve_each_owner_across_node_and_document_transaction_regions()
+    {
+        const string source = Prefix + "            implementation\n              hint \"Keep\"\n        validate\n          label rule Check\n            implementation\n              hint \"Keep\"";
+        var workspace = ScreenplayWorkspace.Create("A", [Document("model.play", source), Document("other.play", source.Replace("slice StateChange S", "slice StateChange Other", StringComparison.Ordinal).Replace("command C", "command Other", StringComparison.Ordinal))], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("A")));
+        var document = workspace.Documents.Single(entry => entry.Path.Value == "model.play");
+        var other = workspace.Documents.Single(entry => entry.Path.Value == "other.play");
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var blocks = index.Entries.Where(entry => entry.Handle.Document == document.Id && entry.Node is DeclarativeValidateSyntax).ToArray();
+        var first = index.Entries.First(entry => entry.Handle.Document == document.Id && entry.Node is ValidationRuleSyntax);
+        var second = index.Entries.First(entry => entry.Handle.Document == other.Id && entry.Node is ValidationRuleSyntax);
+        var parsed = new ScreenplayCompiler().Parse(Prefix.Replace("rule Check", "rule Renamed", StringComparison.Ordinal) + "            implementation\n              hint \"Edited\"").Value!;
+        var block = (DeclarativeValidateSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(parsed.Modules.Single().Features.Single().Slices.Single().Commands.Single().Validations.Single()));
+        var replacement = (ApplicationSyntax)SyntaxJson.Deserialize(SyntaxJson.Serialize(new ScreenplayCompiler().Parse(Prefix.Replace("slice StateChange S", "slice StateChange Other", StringComparison.Ordinal).Replace("command C", "command Other", StringComparison.Ordinal).Replace("rule Check", "rule Renamed", StringComparison.Ordinal) + "            implementation\n              hint \"Edited\"").Value!));
+        WorkspaceAstOperation[] operations = [new ReplaceWorkspaceNode(blocks[0].Handle, blocks[0].Node, block with { Rules = [] }), new ReplaceWorkspaceNode(blocks[1].Handle, blocks[1].Node, block)];
+        var request = Request(workspace) with { Operations = [.. operations], Documents = [new ReplaceWorkspaceSyntaxDocument(other.Id, replacement)] };
+        workspace.ProposeAuthoring(request).Accepted.ShouldBeFalse();
+        workspace.ProposeAuthoring(request with { Operations = [new RemoveWorkspaceNode(first.Handle, first.Node), .. operations] }).Accepted.ShouldBeFalse();
+        var accepted = workspace.ProposeAuthoring(request with { Operations = [new RemoveWorkspaceNode(first.Handle, first.Node), new RemoveWorkspaceNode(second.Handle, second.Node), .. operations] });
+        Assert.True(accepted.Accepted, string.Join("; ", accepted.Conflicts.Select(conflict => conflict.Message)));
+        WorkspaceNamedRuleIntentInventory.Create(accepted.Workspace!).Entries.All(entry => entry.RequirementId is null).ShouldBeTrue();
+    }
+
+    [Fact]
+    public void should_preserve_attached_roles_and_canonical_bytes_after_transaction_region_attachment_and_unwrap()
+    {
+        const string attached = "\n        validate\n          label rule Attached\n            implementation // attached wrapper\n              hint \"Keep\" // attached guidance\n              file B.cs // attached source";
+        var workspace = Workspace(Prefix + "            implementation\n              hint \"Keep\"\n        validate\n          label rule Other\n            implementation\n              hint \"Keep\"" + attached + "\nconcept Label : String\n  validate\n    not empty");
+        var blocks = WorkspaceSyntaxIndex.Create(workspace).Entries.Where(entry => entry.Node is DeclarativeValidateSyntax && entry.Handle.Path.StartsWith("/modules/", StringComparison.Ordinal)).ToArray();
+        var source = Prefix + "            file A.cs\n        validate\n          label rule Other\n            ```csharp\n            return true;\n            ```" + attached + "\nconcept Label : String\n  validate\n    not empty";
+        var direct = Workspace(source);
+        var parsed = new ScreenplayCompiler().Parse(source, "model.play").Value!;
+        var replacements = parsed.Modules.Single().Features.Single().Slices.Single().Commands.Single().Validations.ToArray();
+        var result = workspace.ProposeAuthoring(Request(workspace) with
+        {
+            Operations = [new ReplaceWorkspaceNode(blocks[0].Handle, blocks[0].Node, SyntaxJson.Deserialize(SyntaxJson.Serialize(replacements[0]))), new ReplaceWorkspaceNode(blocks[1].Handle, blocks[1].Node, SyntaxJson.Deserialize(SyntaxJson.Serialize(replacements[1])))]
+        });
+        Assert.True(result.Accepted, string.Join("; ", result.Conflicts.Select(conflict => conflict.Message)));
+        result.Workspace!.Compilation.Success.ShouldBeTrue();
+        SemanticModelSerializer.Serialize(result.Workspace.Compilation.Value!.Model).ShouldEqual(SemanticModelSerializer.Serialize(direct.Compilation.Value!.Model));
+        SemanticTypedContextSerializer.Serialize(result.Workspace.Compilation.TypedContextDescriptors).ShouldEqual(SemanticTypedContextSerializer.Serialize(direct.Compilation.TypedContextDescriptors));
+        result.Workspace.Compilation.ImplementationRequirements.Select(requirement => (requirement.RequirementId, requirement.ContentHash, requirement.Role)).ShouldEqual(direct.Compilation.ImplementationRequirements.Select(requirement => (requirement.RequirementId, requirement.ContentHash, requirement.Role)));
+        foreach (var comment in new[] { "// attached wrapper", "// attached guidance", "// attached source" }) result.Workspace.Documents.Single().Text.Split(comment, StringSplitOptions.None).Length.ShouldEqual(2);
     }
 
     static ScreenplayWorkspace Workspace(string source) => ScreenplayWorkspace.Create("A", [Document("model.play", source)], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("A")));

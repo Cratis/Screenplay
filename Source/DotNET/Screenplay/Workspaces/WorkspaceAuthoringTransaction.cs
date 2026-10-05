@@ -328,19 +328,9 @@ sealed class WorkspaceAuthoringTransaction(
         var ruleSources = new WorkspaceEditProvenance();
         edits.RecordPendingRuleSources(ruleSources, replacements);
         var removals = edits.PendingRuleRemovals.Select(entry => entry.Handle).ToHashSet();
-        WorkspacePendingRuleTransitions.Validate(before, after, ruleSources, removals);
-        foreach (var (target, _) in edits.Replacements)
-        {
-            if (provenance.Image(target) is { } image)
-            {
-                WorkspacePendingRuleTransitions.Region(before, target.Handle, after, new(candidate.Revision, image.Document, image.Path), ruleSources, provenance, migrations, removals);
-            }
-        }
-
-        foreach (var document in replaced)
-        {
-            WorkspacePendingRuleTransitions.Region(before, new(workspace.Revision, document, string.Empty), after, new(candidate.Revision, document, string.Empty), ruleSources, provenance, migrations, removals);
-        }
+        var ruleRegions = edits.Replacements.Select(replacement => replacement.Target.Handle)
+            .Concat(replaced.Select(document => new WorkspaceNodeHandle(workspace.Revision, document, string.Empty))).ToHashSet();
+        WorkspacePendingRuleTransitions.Validate(before, after, ruleSources, provenance, migrations, removals, ruleRegions);
 
         if (WorkspaceAbsenceKeyBindings.Present(before) || WorkspaceAbsenceKeyBindings.Present(after))
         {

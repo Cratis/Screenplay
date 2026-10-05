@@ -340,5 +340,50 @@ public class when_reading_named_rule_intents : given.a_connection
         }
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    void should_conserve_transport_pending_occurrences_across_transaction_regions(bool reverse)
+    {
+        File.WriteAllText(Path.Combine(RootPath, "model.play"), Prefix + "            implementation\n              hint \"Keep\"\n        validate\n          label rule Check\n            implementation\n              hint \"Keep\"\n      command Other\n        label String\n        validate\n          label rule Check\n            implementation\n              hint \"Keep\"");
+        var opened = Content(Call("open-workspace", new { applicationName = "Projects" }));
+        var revision = opened.GetProperty("revision").GetString();
+        var documentId = _page.GetProperty("page").GetProperty("items")[0].GetProperty("handle").GetProperty("documentId").GetString();
+        var blocks = Content(Call("read-ast", new { expectedRevision = revision, kind = "DeclarativeValidateSyntax", includeContent = true })).GetProperty("page").GetProperty("items").EnumerateArray().Where(item => item.GetProperty("handle").GetProperty("documentId").GetString() == documentId).ToArray();
+        var pending = Content(Call("read-workspace", new { expectedRevision = revision, view = "named-rule-intents" })).GetProperty("page").GetProperty("items").EnumerateArray().ToArray();
+        var parsed = new ScreenplayCompiler().Parse(Prefix.Replace("rule Check", "rule Renamed", StringComparison.Ordinal) + "            implementation\n              hint \"Edited\"").Value!;
+        var block = (DeclarativeValidateSyntax)parsed.Modules.Single().Features.Single().Slices.Single().Commands.Single().Validations.Single();
+        var empty = SyntaxJson.Serialize(block with { Rules = [] });
+        var renamed = SyntaxJson.Serialize(block);
+        object[] replacements = [new { operation = "replace", target = blocks[0].GetProperty("handle"), node = empty }, new { operation = "replace", target = blocks[1].GetProperty("handle"), node = renamed }];
+        if (reverse) Array.Reverse(replacements);
+        JsonElement Propose(object[] operations) => Call("propose-ast", new
+        {
+            expectedRevision = revision,
+            expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+            formatting = "CanonicalizeTouchedDocuments",
+            validation = "Authoring",
+            operations
+        }).GetProperty("result");
+        var refused = Propose(replacements);
+        Assert.True(refused.TryGetProperty("isError", out var error) && error.GetBoolean(), refused.GetRawText());
+        refused.GetProperty("structuredContent").GetProperty("conflicts")[0].GetProperty("message").GetString()!.Contains("pending", StringComparison.OrdinalIgnoreCase).ShouldBeTrue();
+        Propose([new { operation = "remove", target = pending[2].GetProperty("handle") }, .. replacements]).GetProperty("isError").GetBoolean().ShouldBeTrue();
+        var stale = JsonNode.Parse(pending[0].GetProperty("handle").GetRawText())!;
+        stale["revision"] = "wsrev1:" + new string('0', 64);
+        Propose([new { operation = "remove", target = stale }, .. replacements]).GetProperty("isError").GetBoolean().ShouldBeTrue();
+        Propose([new { operation = "remove", target = pending[0].GetProperty("handle") }, new { operation = "remove", target = pending[0].GetProperty("handle") }, .. replacements]).GetProperty("isError").GetBoolean().ShouldBeTrue();
+        foreach (var original in pending.Take(2))
+        {
+            var accepted = Propose([new { operation = "remove", target = original.GetProperty("handle") }, .. replacements]);
+            Assert.False(accepted.TryGetProperty("isError", out var removalError) && removalError.GetBoolean(), accepted.GetRawText());
+            accepted.GetProperty("structuredContent").GetProperty("proposalId").GetString().ShouldNotBeNull();
+        }
+
+        // Empty final blocks prove full deletion; no failed correspondence is used as deletion proof.
+        var deleted = Propose([new { operation = "replace", target = blocks[0].GetProperty("handle"), node = empty }, new { operation = "replace", target = blocks[1].GetProperty("handle"), node = empty }]);
+        Assert.False(deleted.TryGetProperty("isError", out var deletionError) && deletionError.GetBoolean(), deleted.GetRawText());
+    }
+
     static JsonElement Content(JsonElement response) => response.GetProperty("result").GetProperty("structuredContent");
 }

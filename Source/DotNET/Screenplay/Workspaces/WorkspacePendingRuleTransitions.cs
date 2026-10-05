@@ -11,41 +11,96 @@ namespace Cratis.Screenplay.Workspaces;
 // Validate final, round-tripped source after the complete atomic transaction has settled.
 static class WorkspacePendingRuleTransitions
 {
-    internal static void Validate(WorkspaceSyntaxIndex before, WorkspaceSyntaxIndex after, WorkspaceEditProvenance sources, IReadOnlySet<WorkspaceNodeHandle> removals)
+    internal static void Validate(
+        WorkspaceSyntaxIndex before,
+        WorkspaceSyntaxIndex after,
+        WorkspaceEditProvenance sources,
+        WorkspaceEditProvenance provenance,
+        IReadOnlyDictionary<SemanticAddress, SemanticAddress> migrations,
+        IReadOnlySet<WorkspaceNodeHandle> removals,
+        IReadOnlySet<WorkspaceNodeHandle> regions)
     {
-        foreach (var original in before.Entries.Where(entry => Pending(entry.Node) && !removals.Contains(entry.Handle)))
+        var finalPositions = after.Entries.ToDictionary(Position);
+        var originalRules = before.Entries.Where(entry => entry.Node is ValidationRuleSyntax).ToArray();
+        foreach (var original in originalRules.Where(entry => Pending(entry.Node) && !removals.Contains(entry.Handle)))
         {
-            if (sources.Image(original) is { } image && after.Entries.SingleOrDefault(entry => Position(entry) == image) is { } survivor)
+            if (sources.Image(original) is { } image && finalPositions.GetValueOrDefault(image) is { } survivor)
             {
                 RequireIntent(survivor.Node);
             }
         }
+
+        // Index each final owner once. A region contributes original obligations, never a fresh pool
+        // of final candidates. Handles distinguish equal rules and union overlapping original regions.
+        var finalOwners = after.Entries.Where(entry => entry.Node is CommandSyntax).ToArray();
+        var ownersByAddress = finalOwners.Where(entry => entry.Address is not null).GroupBy(entry => entry.Address!)
+            .ToDictionary(group => group.Key, group => group.ToArray());
+        var occurrencesByOwner = after.Entries.Where(entry => entry.Node is ValidationRuleSyntax && sources.Origin(entry) is null)
+            .Select(entry => (Entry: entry, Owner: Owner(after, entry))).Where(rule => rule.Owner is not null)
+            .GroupBy(rule => rule.Owner!.Handle).ToDictionary(group => group.Key, group => group.Select(rule => rule.Entry).ToArray());
+        var groups = originalRules.Where(entry => Affected(entry) && sources.Image(entry) is null && !removals.Contains(entry.Handle))
+            .Select(entry => (Entry: entry, Owner: Owner(before, entry))).Where(rule => rule.Owner is not null)
+            .GroupBy(rule => rule.Owner!.Handle).Where(group => group.Any(rule => Pending(rule.Entry.Node))).ToArray();
+        var claimedOwners = new HashSet<WorkspaceNodeHandle>();
+        foreach (var group in groups)
+        {
+            var originalOwner = before.Find(group.Key)!;
+            WorkspaceSyntaxEntry? finalOwner = null;
+            if (provenance.Image(originalOwner) is { } image && finalPositions.GetValueOrDefault(image) is { Node: CommandSyntax } carried)
+            {
+                finalOwner = carried;
+            }
+            else if (originalOwner.Address is { } address && ownersByAddress.TryGetValue(migrations.GetValueOrDefault(address) ?? address, out var owners))
+            {
+                if (owners.Length != 1)
+                {
+                    throw Ambiguous();
+                }
+
+                finalOwner = owners[0];
+            }
+
+            if (finalOwner is null)
+            {
+                continue;
+            }
+
+            // Exact command occurrences cannot share a final owner, even through an address migration.
+            if (!claimedOwners.Add(finalOwner.Handle))
+            {
+                throw Ambiguous();
+            }
+
+            ConserveOwner([.. group.Select(rule => rule.Entry)], occurrencesByOwner.GetValueOrDefault(finalOwner.Handle, []), sources);
+        }
+
+        bool Affected(WorkspaceSyntaxEntry entry)
+        {
+            for (var current = entry; current is not null; current = current.Parent is { } parent ? before.Find(parent) : null)
+            {
+                if (regions.Contains(current.Handle)) return true;
+            }
+
+            return false;
+        }
     }
 
-    internal static void Region(
-        WorkspaceSyntaxIndex before,
-        WorkspaceNodeHandle original,
-        WorkspaceSyntaxIndex after,
-        WorkspaceNodeHandle candidate,
-        WorkspaceEditProvenance sources,
-        WorkspaceEditProvenance provenance,
-        IReadOnlyDictionary<SemanticAddress, SemanticAddress> migrations,
-        IReadOnlySet<WorkspaceNodeHandle> removals)
+    static void ConserveOwner(List<WorkspaceSyntaxEntry> originals, WorkspaceSyntaxEntry[] occurrences, WorkspaceEditProvenance sources)
     {
-        var originals = Under(before, original).Where(entry => entry.Node is ValidationRuleSyntax && sources.Image(entry) is null && !removals.Contains(entry.Handle)).ToList();
-
         // Take one stable whole-owner view before matching consumes candidates. A copied block
-        // must not hide a bare survivor in another block, including outside this edit region.
-        // Validated node/member lineage is already claimed and is not heuristic competition.
-        var occurrences = after.Entries.Where(entry => entry.Node is ValidationRuleSyntax && sources.Origin(entry) is null).ToArray();
-        var candidates = occurrences.Where(entry => WorkspaceAstEdits.Contains(candidate, entry.Handle) || originals.Exists(previous => SameOwner(previous, entry))).ToList();
+        // must not hide a bare survivor in another block, including outside all edit regions.
+        // Validated node/member lineage has already claimed its image exactly once.
+        var candidates = occurrences.ToList();
         var obligations = originals.Where(entry => Pending(entry.Node)).ToArray();
+        var bare = occurrences.Where(entry => Bare(entry.Node)).ToArray();
+        var competing = obligations.Where(previous => bare.Any(current => SameHeader(previous.Node, current.Node))).Select(entry => entry.Handle).ToHashSet();
+        var ambiguousBare = bare.Where(current => obligations.Any(previous => SameHeader(previous.Node, current.Node))).Select(entry => entry.Handle).ToHashSet();
 
         // Only mutual, unique structural matches prove unchanged occurrences. Along with operation
         // provenance, these can prove absence: every final rule belongs to an unchanged original and
         // no unclaimed candidate can be a transformation of the missing pending rules. Coordinates,
         // collection ordinals and failed header/hint matching are never evidence of deletion.
-        Match((previous, current) => SameOwner(previous, current) && SyntaxJson.StructurallyEqual(previous.Node, current.Node));
+        Match((previous, current) => SyntaxJson.StructurallyEqual(previous.Node, current.Node));
         if (candidates.Count == 0)
         {
             return;
@@ -53,29 +108,28 @@ static class WorkspacePendingRuleTransitions
 
         // From here on, matches conserve obligations, not occurrence identity. Prefer the original
         // member over copied guidance, and apply the competing-bare safeguard at every strength.
-        Match((previous, current) => Pending(previous.Node) && SameOwner(previous, current) && SameHeader(previous.Node, current.Node) && !Bare(current.Node));
-        Match((previous, current) => Pending(previous.Node) && SameOwner(previous, current) && RetainsMetadata(previous.Node, current.Node));
+        Match((previous, current) => Pending(previous.Node) && SameHeader(previous.Node, current.Node) && !Bare(current.Node));
+        Match((previous, current) => Pending(previous.Node) && RetainsMetadata(previous.Node, current.Node));
 
         // Names and hints may both change, including on reordered equal pending predicates. Conserve
         // their multiplicity within the proven owner, without assigning pending IDs or claiming an
         // occurrence match. A bare competitor makes that otherwise unconstrained edit ambiguous.
-        var conserved = new Dictionary<WorkspaceSyntaxEntry, WorkspaceSyntaxEntry>();
+        var conserved = new Dictionary<WorkspaceNodeHandle, WorkspaceSyntaxEntry>();
         foreach (var previous in originals.Where(entry => Pending(entry.Node)))
         {
             if (!Conserve(previous, []))
             {
-                throw new InvalidWorkspaceAuthoring("Pending named-rule correspondence is ambiguous. Preserve its implementation metadata or remove the original rule with a validated RemoveWorkspaceNode handle before replacing its ancestor or document.");
+                throw Ambiguous();
             }
         }
 
-        bool Conserve(WorkspaceSyntaxEntry previous, HashSet<WorkspaceSyntaxEntry> visited)
+        bool Conserve(WorkspaceSyntaxEntry previous, HashSet<WorkspaceNodeHandle> visited)
         {
-            foreach (var current in candidates.Where(entry => !Bare(entry.Node) && SameOwner(previous, entry) && Safe(previous, entry) &&
-                !occurrences.Any(other => Bare(other.Node) && SameCommand(entry, other))))
+            foreach (var current in candidates.Where(entry => !Bare(entry.Node) && Safe(previous, entry) && bare.Length == 0))
             {
-                if (visited.Add(current) && (!conserved.TryGetValue(current, out var occupant) || Conserve(occupant, visited)))
+                if (visited.Add(current.Handle) && (!conserved.TryGetValue(current.Handle, out var occupant) || Conserve(occupant, visited)))
                 {
-                    conserved[current] = previous;
+                    conserved[current.Handle] = previous;
                     return true;
                 }
             }
@@ -85,37 +139,24 @@ static class WorkspacePendingRuleTransitions
 
         void Match(Func<WorkspaceSyntaxEntry, WorkspaceSyntaxEntry, bool> equal)
         {
-            var matches = candidates.ToDictionary(current => current, current => originals.Where(previous => Safe(previous, current) && equal(previous, current)).ToArray());
-            foreach (var (current, previous) in matches)
+            var matches = candidates.ToDictionary(current => current.Handle, current => originals.Where(previous => Safe(previous, current) && equal(previous, current)).ToArray());
+            var claims = matches.Values.SelectMany(entries => entries).GroupBy(entry => entry.Handle).ToDictionary(group => group.Key, group => group.Count());
+            foreach (var current in candidates.ToArray())
             {
-                if (previous.Length == 1 && matches.Count(pair => pair.Value.Contains(previous[0])) == 1)
+                var previous = matches[current.Handle];
+                if (previous.Length == 1 && claims[previous[0].Handle] == 1)
                 {
-                    originals.Remove(previous[0]);
-                    candidates.Remove(current);
+                    originals.RemoveAll(entry => entry.Handle == previous[0].Handle);
+                    candidates.RemoveAll(entry => entry.Handle == current.Handle);
                 }
             }
         }
 
         bool Safe(WorkspaceSyntaxEntry previous, WorkspaceSyntaxEntry current) => !sources.IsAmbiguous(current) &&
-            !(Bare(current.Node) && obligations.Any(other => SameOwner(other, current) && SameHeader(other.Node, current.Node))) &&
-            !(Pending(previous.Node) && occurrences.Any(other => Bare(other.Node) && SameCommand(current, other) && SameHeader(previous.Node, other.Node)));
-
-        bool SameCommand(WorkspaceSyntaxEntry current, WorkspaceSyntaxEntry other) =>
-            Owner(after, current)?.Handle is { } owner && owner == Owner(after, other)?.Handle;
-
-        bool SameOwner(WorkspaceSyntaxEntry previous, WorkspaceSyntaxEntry current)
-        {
-            var previousOwner = Owner(before, previous);
-            var currentOwner = Owner(after, current);
-            if (previousOwner?.Address is { } address && Equals(migrations.GetValueOrDefault(address) ?? address, currentOwner?.Address))
-            {
-                return true;
-            }
-
-            return previousOwner is not null && currentOwner is not null &&
-                ((previousOwner.Handle == original && currentOwner.Handle == candidate) || provenance.Image(previousOwner) == Position(currentOwner));
-        }
+            !ambiguousBare.Contains(current.Handle) && !competing.Contains(previous.Handle);
     }
+
+    static InvalidWorkspaceAuthoring Ambiguous() => new("Pending named-rule correspondence is ambiguous. Preserve its implementation metadata or remove the original rule with a validated RemoveWorkspaceNode handle before replacing its ancestor or document.");
 
     static bool SameHeader(SyntaxNode previous, SyntaxNode current) => previous is ValidationRuleSyntax prior && current is ValidationRuleSyntax rule &&
         prior.Property == rule.Property && prior.Rule == rule.Rule &&
@@ -137,7 +178,6 @@ static class WorkspacePendingRuleTransitions
     }
 
     static (DocumentId Document, string Path) Position(WorkspaceSyntaxEntry entry) => (entry.Handle.Document, entry.Handle.Path);
-    static IEnumerable<WorkspaceSyntaxEntry> Under(WorkspaceSyntaxIndex index, WorkspaceNodeHandle root) => index.Entries.Where(entry => WorkspaceAstEdits.Contains(root, entry.Handle));
 
     static WorkspaceSyntaxEntry? Owner(WorkspaceSyntaxIndex index, WorkspaceSyntaxEntry entry)
     {
