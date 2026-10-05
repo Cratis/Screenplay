@@ -3,11 +3,13 @@
 
 import { AuthorizeSyntax } from './Authorization';
 import { TypeRefSyntax } from './Declarations';
+import { ExpressionSyntax } from './Expressions';
 import { SyntaxNode } from './SyntaxNode';
 
 export interface QueryParameterSyntax extends SyntaxNode {
     readonly kind: 'QueryParameterSyntax';
     readonly name: string;
+    readonly source?: ExpressionSyntax | null;
     readonly type: TypeRefSyntax;
 }
 

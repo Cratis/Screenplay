@@ -54,8 +54,8 @@ internal sealed partial class ResponseValueTypes
             "Uuid" => literal.Value is string uuid && UuidValueRegex().IsMatch(uuid),
             "String" => literal.Value is string,
             "Bool" => literal.Value is bool,
-            "Int" => literal.Value is double integer && double.IsFinite(integer) && Math.Truncate(integer) == integer,
-            "Decimal" => literal.Value is double number && double.IsFinite(number),
+            "Int" => literal.Value is ExactNumber exact ? exact.IsIntegral : literal.Value is double integer && double.IsFinite(integer) && Math.Truncate(integer) == integer,
+            "Decimal" => literal.Value is ExactNumber || (literal.Value is double number && double.IsFinite(number)),
             "Date" => literal.Value is string date && ResponseDateValues.Compatible(date, false),
             "DateTime" => literal.Value is string instant && ResponseDateValues.Compatible(instant, true),
             _ => !_known.Contains(type.Name) // Imported shapes stay unknown; never infer their type from the value.

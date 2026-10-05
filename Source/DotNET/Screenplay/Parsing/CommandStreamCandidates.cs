@@ -34,7 +34,7 @@ internal sealed class CommandStreamCandidates
             // One noncommitting parse per document, with no stream candidates: commands retain the
             // legacy property interpretation. The real parser owns leaf/block rules (including domain,
             // imports and fences); no second indentation grammar or recursive capture is involved.
-            var application = ScreenplayParser.Parse(new(new(lines), languages: languages), lines, placement);
+            var application = ScreenplayParser.Parse(SourceOptionsParser.Create(lines, languages: languages), lines, placement);
             foreach (var type in application.Types ?? []) types.Add(type.Name);
             foreach (var concept in application.Concepts) types.Add(concept.Name);
             foreach (var import in application.Imports) imports.Add(import.QualifiedName);

@@ -33,26 +33,27 @@ export interface ApplicationCompilation extends CompilationResult<ApplicationSyn
 
 // Assembles one application from documents - following their imports from the roots, parsing each where it is
 // placed, and merging the lot. The port of the C# PlayApplicationAssembly.Compile.
-export function assembleApplication(roots: Iterable<string>, source: PlayDocumentSource): ApplicationCompilation {
-    const { documents, diagnostics } = resolveImports(roots, source);
-    const merged = parsePlacedDocuments(documents);
+export function assembleApplication(roots: Iterable<string>, source: PlayDocumentSource, languages?: ReadonlySet<string>): ApplicationCompilation {
+    const { documents, diagnostics } = resolveImports(roots, source, languages);
+    const merged = parsePlacedDocuments(documents, languages);
     const all = [...diagnostics, ...merged.diagnostics];
     return { ...merged, documents, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error') };
 }
 
 // Parses documents whose source identities and placements are already known (for example unsaved
 // editor buffers), then validates contracts against the merged declaration inventory.
-export function parsePlacedDocuments(documents: readonly PlacedPlayDocument[]): CompilationResult<ApplicationSyntax> & {
+export function parsePlacedDocuments(documents: readonly PlacedPlayDocument[], languages?: ReadonlySet<string>): CompilationResult<ApplicationSyntax> & {
     readonly physicalEventSources: readonly { source: EventSourceSyntax; placementResolved: boolean }[];
     readonly sourceInventoryComplete: boolean;
 } {
-    const candidates = CommandStreamCandidates.capturePlaced(documents.filter(document => document.isPlacementResolved !== false).map(document => ({ lines: splitLines(document.source, false, document.path), placement: document.placement })));
-    const physical = documents.map(document => parseForAuthoring(document.source, document.path, document.isPlacementResolved === false ? [] : document.placement, false, candidates));
+    const candidates = CommandStreamCandidates.capturePlaced(documents.filter(document => document.isPlacementResolved !== false).map(document => ({ lines: splitLines(document.source, false, document.path), placement: document.placement })), languages);
+    const physical = documents.map(document => parseForAuthoring(document.source, document.path, document.isPlacementResolved === false ? [] : document.placement, false, candidates, languages));
     const physicalEventSources = physical.flatMap((result, index) => (result.value.eventSources ?? []).map(source => ({ source, placementResolved: documents[index].isPlacementResolved !== false })));
     const sourceInventoryComplete = documents.every(document => document.isPlacementResolved !== false) && physical.every(result => !EventSourceReadConfidence.hasUnknownExtent(result.diagnostics));
     const parsed = physical.map((result, index) => documents[index].isPlacementResolved === false ? { ...result, value: { ...result.value, eventSources: [] } } : result);
     const merged = mergeDocuments(parsed);
-    const context = new ParserContext(new LineReader([]));
+    const context = new ParserContext(new LineReader([]), undefined, languages);
+    if (merged.value.sourceOptions !== undefined) context.sourceOptions = merged.value.sourceOptions;
     validateEventSources(merged.value, context);
     validateOperations(merged.value, context);
     validateInlineEvents(merged.value, context);
@@ -72,16 +73,16 @@ function diagnosticKey(diagnostic: Diagnostic): string {
 // import places in a module or feature is placed there. With roots, only those documents and what they import
 // make up the application - a single file compiled with its imports followed. The default sort compares
 // UTF-16 code units, which is the C# ordinal order.
-export function compileApplication(documents: ReadonlyMap<string, string>, roots?: readonly string[]): ApplicationCompilation {
+export function compileApplication(documents: ReadonlyMap<string, string>, roots?: readonly string[], languages?: ReadonlySet<string>): ApplicationCompilation {
     const normalized = new Map([...documents].map(([path, source]) => [normalizePlayPath(path), source]));
-    return assembleApplication(roots ?? [...normalized.keys()].sort(), inMemoryDocumentSource(normalized));
+    return assembleApplication(roots ?? [...normalized.keys()].sort(), inMemoryDocumentSource(normalized), languages);
 }
 
 // Compiles the documents of a folder as one application - the counterpart of the C# CompileFolder. Every
 // document is a root, read in ordinal order of its relative path as the C# compiler reads them, so a merge
 // keeps the same first declaration in either language; one an import places in a module or feature is
 // placed there.
-export function parseFolder(files: readonly PlayFileSource[]): ApplicationCompilation {
-    return compileApplication(new Map(files.map(file => [file.path, file.source])));
+export function parseFolder(files: readonly PlayFileSource[], languages?: ReadonlySet<string>): ApplicationCompilation {
+    return compileApplication(new Map(files.map(file => [file.path, file.source])), undefined, languages);
 }
 

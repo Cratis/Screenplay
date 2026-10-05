@@ -149,7 +149,7 @@ internal static class SpecificationOutcomeConsistencyValidator
                 continue;
             }
 
-            if (ProducedValue(mappings[0].Source, target.Type, when, command, declarations, out var actualValue) && !Equals(expectedValue, actualValue))
+            if (ProducedValue(mappings[0].Source, target.Type, when, command, declarations, out var actualValue) && !Equal(expectedValue, actualValue))
             {
                 return true;
             }
@@ -157,6 +157,8 @@ internal static class SpecificationOutcomeConsistencyValidator
 
         return false;
     }
+
+    static bool Equal(object? left, object? right) => left is ExactNumber || right is ExactNumber ? ExactMathFacts.Equal(left, right) : Equals(left, right);
 
     static bool ProducedValue(ExpressionSyntax expression, TypeRefSyntax target, SpecificationCommandSyntax when, CommandSyntax command, ConsistencyDeclarations declarations, out object? value)
     {
@@ -220,8 +222,12 @@ internal static class SpecificationOutcomeConsistencyValidator
 
         return comparison.Operator switch
         {
-            ComparisonOperator.Equal => Equals(actual, expected),
-            ComparisonOperator.NotEqual => !Equals(actual, expected),
+            ComparisonOperator.Equal => Equal(actual, expected),
+            ComparisonOperator.NotEqual => !Equal(actual, expected),
+            ComparisonOperator.GreaterThan when actual is ExactNumber left && expected is ExactNumber right => ExactMathFacts.Compare(left, right) > 0,
+            ComparisonOperator.GreaterThanOrEqual when actual is ExactNumber left && expected is ExactNumber right => ExactMathFacts.Compare(left, right) >= 0,
+            ComparisonOperator.LessThan when actual is ExactNumber left && expected is ExactNumber right => ExactMathFacts.Compare(left, right) < 0,
+            ComparisonOperator.LessThanOrEqual when actual is ExactNumber left && expected is ExactNumber right => ExactMathFacts.Compare(left, right) <= 0,
             _ => null
         };
     }

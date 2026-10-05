@@ -149,10 +149,10 @@ public sealed class WorkspaceSyntaxIndex
         // Use the same roots, source and placement resolution as workspace compilation. Index each
         // original tree once, never the merged application; structural handles remain document-local.
         var texts = workspace.Documents.ToDictionary(document => document.Path.Value, document => document.Text, StringComparer.Ordinal);
-        var (placed, importDiagnostics) = PlayImports.Resolve(texts.Keys, new InMemoryPlayDocumentSource(texts));
+        var compiler = new ScreenplayCompiler();
+        var (placed, importDiagnostics) = PlayImports.Resolve(texts.Keys, new InMemoryPlayDocumentSource(texts), compiler.Languages);
         var placements = placed.ToDictionary(document => document.Path, StringComparer.Ordinal);
         diagnostics.AddRange(importDiagnostics);
-        var compiler = new ScreenplayCompiler();
         var candidates = ((ICommandStreamCandidateParser)compiler).CaptureCandidates(placed.Where(document => document.IsPlacementResolved)
             .Select(document => (SourceLineSplitter.Split(document.Source, path: document.Path), document.Placement)));
         foreach (var document in workspace.Documents)

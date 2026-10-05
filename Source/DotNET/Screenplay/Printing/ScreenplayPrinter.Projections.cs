@@ -67,7 +67,7 @@ public partial class ScreenplayPrinter
                 WriteJoin(writer, join);
                 break;
             case ChildrenSyntax children:
-                writer.Line($"children {children.Property} identified by {ScreenplaySyntaxText.Expression(children.IdentifiedBy)}");
+                writer.Line($"children {children.Property} identified by {writer.Expression(children.IdentifiedBy)}");
                 using (writer.Indent())
                 {
                     WriteAutoMap(writer, children.AutoMap, children);
@@ -99,7 +99,7 @@ public partial class ScreenplayPrinter
             case RemoveViaJoinSyntax removeViaJoin:
                 writer.Line(removeViaJoin.Key is null
                     ? $"remove via join on {removeViaJoin.Event}"
-                    : $"remove via join on {removeViaJoin.Event} key {ScreenplaySyntaxText.Expression(removeViaJoin.Key)}");
+                    : $"remove via join on {removeViaJoin.Event} key {writer.Expression(removeViaJoin.Key)}");
                 break;
             case ProjectionVariantSyntax variant:
                 WriteProjectionVariant(writer, variant);
@@ -120,7 +120,7 @@ public partial class ScreenplayPrinter
                 writer.Line(
                     entersOn.Key is null
                         ? $"enters on {entersOn.Event}"
-                        : $"enters on {entersOn.Event} key {ScreenplaySyntaxText.Expression(entersOn.Key)}",
+                        : $"enters on {entersOn.Event} key {writer.Expression(entersOn.Key)}",
                     entersOn);
             }
 
@@ -136,7 +136,7 @@ public partial class ScreenplayPrinter
         using var anchor = writer.Anchor(from);
         var events = from.Events.Select(spec => spec.Key is null
             ? spec.Event
-            : $"{spec.Event} key {ScreenplaySyntaxText.Expression(spec.Key)}");
+            : $"{spec.Event} key {writer.Expression(spec.Key)}");
         writer.Line($"from {string.Join(", ", events)}");
 
         using (writer.Indent())
@@ -148,7 +148,7 @@ public partial class ScreenplayPrinter
 
             if (from.ParentKey is not null)
             {
-                writer.Line($"parent {ScreenplaySyntaxText.Expression(from.ParentKey)}", from.ParentKey);
+                writer.Line($"parent {writer.Expression(from.ParentKey)}", from.ParentKey);
             }
 
             WriteMappings(writer, from.Mappings, ReservedWords.ProjectionFromBlock);
@@ -194,7 +194,7 @@ public partial class ScreenplayPrinter
         using var anchor = writer.Anchor(remove);
         writer.Line(remove.Key is null
             ? $"remove with {remove.Event}"
-            : $"remove with {remove.Event} key {ScreenplaySyntaxText.Expression(remove.Key)}");
+            : $"remove with {remove.Event} key {writer.Expression(remove.Key)}");
 
         if (remove.ParentKey is null)
         {
@@ -203,7 +203,7 @@ public partial class ScreenplayPrinter
 
         using (writer.Indent())
         {
-            writer.Line($"parent {ScreenplaySyntaxText.Expression(remove.ParentKey)}", remove.ParentKey);
+            writer.Line($"parent {writer.Expression(remove.ParentKey)}", remove.ParentKey);
         }
     }
 
@@ -213,7 +213,7 @@ public partial class ScreenplayPrinter
         switch (key)
         {
             case ExpressionKeySyntax expression:
-                writer.Line($"key {ScreenplaySyntaxText.Expression(expression.Expression)}");
+                writer.Line($"key {writer.Expression(expression.Expression)}");
                 break;
             case CompositeKeySyntax composite:
                 writer.Line($"key {composite.Type}");
@@ -221,7 +221,7 @@ public partial class ScreenplayPrinter
                 {
                     foreach (var part in composite.Parts)
                     {
-                        writer.Line($"{part.Property} = {ScreenplaySyntaxText.Expression(part.Expression)}", part);
+                        writer.Line($"{part.Property} = {writer.Expression(part.Expression)}", part);
                     }
                 }
 
@@ -266,13 +266,13 @@ public partial class ScreenplayPrinter
             writer.Line(
                 mapping switch
                 {
-                    SetMappingSyntax set => $"{ReservedWords.Escape(set.Property, reserved)} = {ScreenplaySyntaxText.Expression(set.Source)}",
+                    SetMappingSyntax set => $"{ReservedWords.Escape(set.Property, reserved)} = {writer.Expression(set.Source)}",
                     ClearMappingSyntax clear => $"clear {ReservedWords.Escape(clear.Property, ReservedWords.ClearMapping)}",
                     IncrementMappingSyntax increment => $"increment {increment.Property}",
                     DecrementMappingSyntax decrement => $"decrement {decrement.Property}",
                     CountMappingSyntax count => $"count {count.Property}",
-                    AddMappingSyntax add => $"add {add.Property} by {ScreenplaySyntaxText.Expression(add.Value)}",
-                    SubtractMappingSyntax subtract => $"subtract {subtract.Property} by {ScreenplaySyntaxText.Expression(subtract.Value)}",
+                    AddMappingSyntax add => $"add {add.Property} by {writer.Expression(add.Value)}",
+                    SubtractMappingSyntax subtract => $"subtract {subtract.Property} by {writer.Expression(subtract.Value)}",
                     _ => throw new UnsupportedSyntaxForPrinting("projection mapping", mapping.GetType().Name)
                 },
                 mapping);

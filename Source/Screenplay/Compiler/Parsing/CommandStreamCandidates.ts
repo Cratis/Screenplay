@@ -2,8 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { documentPlacement, PlayPlacement } from '../Files/PlayPlacement';
-import { LineReader } from './LineReader';
-import { ParserContext } from './ParserContext';
+import { sourceContext } from './SourceOptionsParser';
 import { parseApplication } from './ScreenplayParser';
 import { SourceLine } from './SourceLine';
 
@@ -19,16 +18,16 @@ export class CommandStreamCandidates {
         return parents?.length === 1 && parents[0].filter(name => name === stream).length === 1;
     }
 
-    static capture(documents: Iterable<readonly SourceLine[]>, placement: PlayPlacement = documentPlacement): CommandStreamCandidates {
-        return this.capturePlaced([...documents].map(lines => ({ lines, placement })));
+    static capture(documents: Iterable<readonly SourceLine[]>, placement: PlayPlacement = documentPlacement, languages?: ReadonlySet<string>): CommandStreamCandidates {
+        return this.capturePlaced([...documents].map(lines => ({ lines, placement })), languages);
     }
 
-    static capturePlaced(documents: Iterable<{ readonly lines: readonly SourceLine[]; readonly placement: PlayPlacement }>): CommandStreamCandidates {
+    static capturePlaced(documents: Iterable<{ readonly lines: readonly SourceLine[]; readonly placement: PlayPlacement }>, languages?: ReadonlySet<string>): CommandStreamCandidates {
         const sources = new Map<string, string[][]>();
         const types = new Set<string>();
         const imports = new Set<string>();
         for (const { lines, placement } of documents) {
-            const context = new ParserContext(new LineReader(lines));
+            const context = sourceContext(lines, lines[0]?.path, languages);
             context.scope = placement;
             const application = parseApplication(context, lines, placement);
             for (const type of application.types) types.add(type.name);

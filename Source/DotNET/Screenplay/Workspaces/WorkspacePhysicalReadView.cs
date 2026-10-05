@@ -24,9 +24,9 @@ sealed record WorkspacePhysicalReadView(
     internal static WorkspacePhysicalReadView Create(ScreenplayWorkspace workspace)
     {
         var texts = workspace.Documents.ToDictionary(document => document.Path.Value, document => document.Text, StringComparer.Ordinal);
-        var (placed, importDiagnostics) = PlayImports.Resolve(texts.Keys, new InMemoryPlayDocumentSource(texts));
-        var placements = placed.ToDictionary(document => document.Path, StringComparer.Ordinal);
         var compiler = new ScreenplayCompiler();
+        var (placed, importDiagnostics) = PlayImports.Resolve(texts.Keys, new InMemoryPlayDocumentSource(texts), compiler.Languages);
+        var placements = placed.ToDictionary(document => document.Path, StringComparer.Ordinal);
         var candidates = ((ICommandStreamCandidateParser)compiler).CaptureCandidates(placed.Where(document => document.IsPlacementResolved)
             .Select(document => (SourceLineSplitter.Split(document.Source, path: document.Path), document.Placement)));
         var entries = ImmutableArray.CreateBuilder<WorkspaceSyntaxEntry>();

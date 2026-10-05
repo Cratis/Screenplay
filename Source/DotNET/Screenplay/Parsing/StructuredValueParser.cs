@@ -116,6 +116,19 @@ internal sealed class StructuredValueParser(string text, SourceLocation start, P
             return new ObjectExpressionSyntax(members, location);
         }
 
+        if (element.ValueKind == JsonValueKind.Number && context.SourceOptions.NumericMode == NumericMode.Exact)
+        {
+            var token = element.GetRawText();
+            _position += token.Length;
+            if (ExactNumber.TryParse(token, out var exact))
+            {
+                return new LiteralExpressionSyntax(exact, location) { RawLocation = location, RawLength = token.Length };
+            }
+
+            context.Error(DiagnosticCodes.InexactNumericLiteral, "Numeric literal is not exactly representable in the bounded Decimal domain.", location);
+            return new RawExpressionSyntax(token, location);
+        }
+
         object? value = element.ValueKind switch
         {
             JsonValueKind.String => element.GetString(),

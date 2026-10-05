@@ -222,7 +222,7 @@ public partial class ScreenplayPrinter
     void WriteSpecificationAbsentReadModel(ScreenplayWriter writer, SpecificationAbsentReadModelSyntax readModel)
     {
         using var anchor = writer.Anchor(readModel);
-        writer.Line($"then no readmodel {readModel.Name} for {ScreenplaySyntaxText.Expression(readModel.Key)}");
+        writer.Line($"then no readmodel {readModel.Name} for {writer.Expression(readModel.Key)}");
     }
 
     void WriteSpecificationQuery(ScreenplayWriter writer, SpecificationQuerySyntax query)
@@ -268,7 +268,7 @@ public partial class ScreenplayPrinter
     {
         if (eventSource is not null)
         {
-            writer.Line($"for {ScreenplaySyntaxText.Expression(eventSource)}", eventSource);
+            writer.Line($"for {writer.Expression(eventSource)}", eventSource);
         }
     }
 
@@ -276,7 +276,7 @@ public partial class ScreenplayPrinter
     {
         foreach (var value in values)
         {
-            writer.Line($"{value.Property} = {ScreenplaySyntaxText.Expression(value.Source)}", value);
+            writer.Line($"{value.Property} = {writer.Expression(value.Source)}", value);
         }
     }
 }

@@ -4,6 +4,7 @@
 import { ExpressionSyntax, PropertyMappingSyntax } from './Expressions';
 import { SpecificationDeniedSyntax, SpecificationReturnSyntax } from './Responses';
 import { SyntaxNode } from './SyntaxNode';
+import { SourceOptions } from './SourceOptions';
 import { SpecificationOperationFailureSyntax } from './SpecificationOperationFailureSyntax';
 import { SpecificationOperationSyntax } from './SpecificationOperationSyntax';
 import { SpecificationCompensatedSyntax } from './SpecificationCompensatedSyntax';
@@ -82,11 +83,27 @@ export interface SpecificationNoResultSyntax extends SyntaxNode {
     readonly kind: 'SpecificationNoResultSyntax';
 }
 
-// A specification of a slice. The caller fixture, denial, query and absence assertions are recognized but
-// not modeled.
+export interface SpecificationAbsentReadModelSyntax extends SyntaxNode {
+    readonly kind: 'SpecificationAbsentReadModelSyntax';
+    readonly name: string;
+    readonly key: ExpressionSyntax;
+}
+
+export interface SpecificationQuerySyntax extends SyntaxNode {
+    readonly kind: 'SpecificationQuerySyntax';
+    readonly query: string;
+    readonly arguments: readonly PropertyMappingSyntax[];
+    readonly results: readonly SpecificationQueryResultSyntax[];
+    readonly exactly: boolean;
+}
+
+// A specification of a slice. Caller fixtures are not modeled.
 export interface SpecificationSyntax extends SyntaxNode {
     readonly kind: 'SpecificationSyntax';
+    readonly sourceOptions?: SourceOptions;
     readonly name: string;
+    readonly thenAbsentReadModels?: readonly SpecificationAbsentReadModelSyntax[];
+    readonly thenQueries?: readonly SpecificationQuerySyntax[];
     readonly given: readonly SpecificationEventSyntax[];
     readonly givenReadModels: readonly SpecificationReadModelSyntax[];
     readonly when: SpecificationCommandSyntax | null;

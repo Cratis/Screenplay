@@ -1,0 +1,34 @@
+{
+    "operands": [
+        { "text": "1e3+", "success": false },
+        { "text": "1e3/", "success": false },
+        { "text": "+9007199254740993", "success": false },
+        { "text": "1e+", "success": false },
+        { "text": "1e-", "success": true, "numeric": false },
+        { "text": "1e3+4", "success": false },
+        { "text": "1e20foo", "success": true, "numeric": false },
+        { "text": "1e3-4", "success": true, "numeric": false },
+        { "text": "order.amount", "success": true, "numeric": false },
+        { "text": "café.amount", "success": true, "numeric": false },
+        { "text": "1e+3", "success": true, "numeric": true },
+        { "text": "-1e-28", "success": true, "numeric": true }
+    ],
+    "integers": [
+        { "text": "0", "int": true, "uint": true },
+        { "text": "-0", "int": true, "uint": false },
+        { "text": "2147483647", "int": true, "uint": true },
+        { "text": "-2147483648", "int": true, "uint": false },
+        { "text": "2147483648", "int": false, "uint": true },
+        { "text": "-2147483649", "int": false, "uint": false },
+        { "text": "4294967295", "int": false, "uint": true },
+        { "text": "4294967296", "int": false, "uint": false },
+        { "text": "1e0", "int": false, "uint": false },
+        { "text": "0e0", "int": false, "uint": false },
+        { "text": "1.0", "int": false, "uint": false },
+        { "text": "-0.0", "int": false, "uint": false },
+        { "text": "1.00000000000000000000000000001", "int": false, "uint": false },
+        { "text": "1e-9999", "int": false, "uint": false },
+        { "text": "2147483647.00000001", "int": false, "uint": false },
+        { "text": "4294967295.00000001", "int": false, "uint": false }
+    ]
+}

@@ -43,8 +43,13 @@ public record ProjectionSyntax(
     AutoMapMode AutoMap,
     KeySyntax? Key,
     IEnumerable<ProjectionBlockSyntax> Blocks,
-    SourceLocation Location) : SyntaxNode(Location)
+    SourceLocation Location) : SyntaxNode(Location), ISourceSyntax
 {
+    /// <summary>
+    /// Gets the immutable options retained when this projection is extracted as a document.
+    /// </summary>
+    public SourceOptions SourceOptions { get; init; } = SourceOptions.Legacy;
+
     /// <summary>
     /// Gets the <see cref="FileReferenceSyntax"/> naming the file the projection is realized by, and
     /// <c>null</c> when the document does not name one.

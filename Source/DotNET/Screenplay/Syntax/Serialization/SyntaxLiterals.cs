@@ -21,6 +21,7 @@ internal static class SyntaxLiterals
     internal static object Write(object value, string path) => value switch
     {
         string or bool => value,
+        ExactNumber number => Number("ExactNumber", number.CanonicalText),
         double number when double.IsFinite(number) => number,
         int number => Number("Int32", number.ToString(CultureInfo.InvariantCulture)),
         long number => Number("Int64", number.ToString(CultureInfo.InvariantCulture)),
@@ -45,6 +46,22 @@ internal static class SyntaxLiterals
                 {
                     ["literalType"] = new Dictionary<string, object?> { ["enum"] = new[] { "Int32", "Int64", "Decimal", "Single" } },
                     ["value"] = new Dictionary<string, object?> { ["type"] = "string", ["pattern"] = "^-?[0-9]+(\\.[0-9]+)?([Ee][+-]?[0-9]+)?$" }
+                }
+            },
+            new Dictionary<string, object?>
+            {
+                ["type"] = "object",
+                ["description"] = "An explicit ExactNumber in canonical fixed-point text. The codec additionally enforces the normalized Decimal coefficient bound.",
+                ["additionalProperties"] = false,
+                ["required"] = new[] { "literalType", "value" },
+                ["properties"] = new Dictionary<string, object?>
+                {
+                    ["literalType"] = new Dictionary<string, object?> { ["const"] = "ExactNumber" },
+                    ["value"] = new Dictionary<string, object?>
+                    {
+                        ["type"] = "string",
+                        ["pattern"] = "^(?:0|-?(?:[1-9][0-9]{0,28}|(?:0|[1-9][0-9]{0,28})\\.[0-9]{0,27}[1-9]))$"
+                    }
                 }
             }
         }
@@ -73,6 +90,7 @@ internal static class SyntaxLiterals
 
     static object ParseNumber(string kind, string text, string path) => kind switch
     {
+        "ExactNumber" when ExactNumber.TryParse(text, out var exact) => exact,
         "Int32" when int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) => number,
         "Int64" when long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) => number,
         "Decimal" when decimal.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var number) => number,

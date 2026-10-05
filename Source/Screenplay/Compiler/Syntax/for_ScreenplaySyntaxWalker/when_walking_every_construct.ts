@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import { describe, beforeAll, it } from 'vitest';
 import { parse } from '../../ScreenplayCompiler';
 import { ScreenplaySyntaxWalker } from '../ScreenplaySyntaxWalker';
-import { SyntaxJsonValue, toSyntaxJson } from '../SyntaxJson';
+import { SyntaxJsonValue, toCompleteSyntaxJson } from '../SyntaxJson';
 import { SyntaxNode } from '../SyntaxNode';
 
 class KindCounter extends ScreenplaySyntaxWalker {
@@ -40,7 +40,7 @@ describe('when walking every construct', () => {
         const counter = new KindCounter();
         counter.visitApplication(application);
         walked = counter.kinds;
-        inTree = kindsIn(toSyntaxJson(application));
+        inTree = kindsIn(toCompleteSyntaxJson(application));
     });
 
     it('should find many kinds of node to walk', () => {
@@ -63,7 +63,7 @@ describe('when walking the invoicing sample', () => {
         const counter = new KindCounter();
         counter.visitApplication(application);
         walked = counter.kinds;
-        inTree = kindsIn(toSyntaxJson(application));
+        inTree = kindsIn(toCompleteSyntaxJson(application));
     });
 
     it('should find a capture to walk', () => (inTree.get('CaptureSyntax') ?? 0).should.be.greaterThan(0));

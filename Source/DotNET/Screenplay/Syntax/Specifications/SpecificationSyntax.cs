@@ -25,8 +25,13 @@ public record SpecificationSyntax(
     IEnumerable<SpecificationErrorSyntax> ThenErrors,
     SourceLocation Location,
     IEnumerable<SpecificationReadModelSyntax>? GivenReadModels = null,
-    IEnumerable<SpecificationReadModelSyntax>? ThenReadModels = null) : SyntaxNode(Location)
+    IEnumerable<SpecificationReadModelSyntax>? ThenReadModels = null) : SyntaxNode(Location), ISourceSyntax
 {
+    /// <summary>
+    /// Gets the immutable options retained when this specification is extracted as a document.
+    /// </summary>
+    public SourceOptions SourceOptions { get; init; } = SourceOptions.Legacy;
+
     /// <summary>
     /// Gets the <see cref="FileReferenceSyntax"/> naming the file the specification is realized by,
     /// and <c>null</c> when the document does not name one.

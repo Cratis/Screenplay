@@ -23,7 +23,7 @@ internal static partial class CommandParser
         // Ordinary properties are leaves even when later members have a greater indent.
         // Resolve ambiguous scalar spelling using a noncommitting command-body pass first.
         var names = new HashSet<string>(StringComparer.Ordinal);
-        ParseBody(new(context.Reader.Fork(), context.Start.Path, context.Languages) { StreamCandidates = context.StreamCandidates }, header, null, names);
+        ParseBody(new(context.Reader.Fork(), context.Start.Path, context.Languages) { SourceOptions = context.SourceOptions, StreamCandidates = context.StreamCandidates }, header, null, names);
         return ParseBody(context, header, names, null);
     }
 

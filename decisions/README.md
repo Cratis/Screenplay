@@ -25,3 +25,4 @@
 | [0021](0021-commands-produce-events-operations-and-responses.md) | Commands produce events, operations and responses | superseded | none | 2026-09-28 | Sindre Alstad Wilting |
 | [0022](0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md) | Admit clocks, application triggers, capture records and reactions into specifications as ESM v6 | accepted | implemented | 2026-10-02 | Einar Ingebrigtsen |
 | [0023](0023-command-production-model.md) | Model command productions and allocate their ESM versions | accepted | none | 2026-10-02 | Sindre Alstad Wilting |
+| [0024](0024-exact-numeric-source-mode-and-esm-v7.md) | Exact numeric source mode and ESM v7 | proposed | none | — | — |

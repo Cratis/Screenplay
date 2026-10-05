@@ -37,7 +37,7 @@ public class a_dynamic_connection : Specification
         {
             jsonrpc = "2.0",
             id = McpConnection.RootsRequestId,
-            result = new { rootInfos = paths.Select(path => new { uri = new Uri(path).AbsoluteUri, name = Path.GetFileName(path) }) }
+            result = new { roots = paths.Select(path => new { uri = new Uri(path).AbsoluteUri, name = Path.GetFileName(path) }) }
         });
 
     internal void Initialize(bool roots, string? answer = null)

@@ -34,9 +34,15 @@ internal static partial class ExpressionParser
             return ParseTemplate(context, text, location);
         }
 
+        var structured = text.StartsWith("literal ", StringComparison.Ordinal) ? text["literal ".Length..].Trim() : text;
+        if (context.SourceOptions.NumericMode == NumericMode.Exact && (structured.StartsWith('{') || structured.StartsWith('[')))
+        {
+            return ParseMappingSource(context, structured, location);
+        }
+
         if (text.StartsWith("literal ", StringComparison.Ordinal))
         {
-            var literal = ParseLiteral(text["literal ".Length..].Trim(), location);
+            var literal = ParseLiteral(context, text["literal ".Length..].Trim(), location);
             if (literal is null)
             {
                 context.Error(DiagnosticCodes.ExpectedLiteralValue, $"Expected a literal value after 'literal', got '{text["literal ".Length..].Trim()}'", location);
@@ -81,7 +87,7 @@ internal static partial class ExpressionParser
             return new CausedByExpressionSyntax(property, location);
         }
 
-        if (ParseLiteral(text, location) is { } value)
+        if (ParseLiteral(context, text, location) is { } value)
         {
             return value;
         }
@@ -148,7 +154,7 @@ internal static partial class ExpressionParser
             return new RawExpressionSyntax(text, location);
         }
 
-        if (ParseLiteral(text, location) is { } literal)
+        if (ParseLiteral(context, text, location) is { } literal)
         {
             return literal;
         }
@@ -196,7 +202,10 @@ internal static partial class ExpressionParser
     public static ExpressionSyntax ParseProjectionMappingSource(ParserContext context, Group source, SourceLine line)
     {
         var text = source.Value.Trim();
-        var expression = ParseProjectionExpression(context, text, line.Location);
+        var literalPrefix = text.StartsWith("literal ", StringComparison.Ordinal) ? text.Length - text["literal ".Length..].TrimStart().Length : 0;
+        var structured = text[literalPrefix..].StartsWith('{') || text[literalPrefix..].StartsWith('[');
+        var sourceStart = line.LocationAt(source.Index + (source.Value.Length - source.Value.TrimStart().Length) + literalPrefix);
+        var expression = ParseProjectionExpression(context, text, structured && context.SourceOptions.NumericMode == NumericMode.Exact ? sourceStart : line.Location);
         if (expression is LiteralExpressionSyntax literal)
         {
             // 'literal ' is projection syntax, not part of the raw literal value.
@@ -224,6 +233,20 @@ internal static partial class ExpressionParser
         _ when NumberRegex().IsMatch(text) => new(double.Parse(text, CultureInfo.InvariantCulture), location),
         _ => null
     };
+
+    internal static ExpressionSyntax? ParseLiteral(ParserContext context, string text, SourceLocation location)
+    {
+        if (context.SourceOptions.NumericMode == NumericMode.Legacy) return ParseLiteral(text, location);
+        if (!ExactNumber.IsToken(text))
+        {
+            // Preserve strings and booleans, but never enter the Legacy numeric conversion branch.
+            return text.Length > 0 && (text[0] is '\"' or '\'' || text == "true" || text == "false" || text == "null") ? ParseLiteral(text, location) : null;
+        }
+
+        if (ExactNumber.TryParse(text, out var exact)) return new LiteralExpressionSyntax(exact, location) { RawLocation = location, RawLength = text.Length };
+        context.Error(DiagnosticCodes.InexactNumericLiteral, "Numeric literal is not exactly representable in the bounded Decimal domain.", location);
+        return new RawExpressionSyntax(text, location);
+    }
 
     /// <summary>
     /// Warns when a <c>$context.</c> path does not name something the command or query context carries.

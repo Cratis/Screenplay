@@ -30,23 +30,7 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="expression">The <see cref="ExpressionSyntax"/> to render.</param>
     /// <returns>The rendered expression text.</returns>
-    public static string Expression(ExpressionSyntax expression) => expression switch
-    {
-        LiteralExpressionSyntax literal => Literal(literal.Value),
-        ListExpressionSyntax list => $"[{string.Join(',', list.Items.Select(StructuredValue))}]",
-        ObjectExpressionSyntax obj => $"{{{string.Join(',', obj.Members.Select(member => $"{JsonSerializer.Serialize(member.Name, _structuredValueOptions)}:{StructuredValue(member.Value)}"))}}}",
-        PathExpressionSyntax path => path.Path,
-        ContextExpressionSyntax context => $"$context.{context.Path}",
-        EnvironmentExpressionSyntax environment => $"$env.{environment.Name}",
-        StringsExpressionSyntax strings => $"$strings.{strings.Key}",
-        SourceItemExpressionSyntax sourceItem => $"$.{sourceItem.Path}",
-        EventSourceIdExpressionSyntax => "$eventSourceId",
-        EventContextExpressionSyntax eventContext => $"$eventContext.{eventContext.Path}",
-        CausedByExpressionSyntax causedBy => causedBy.Property is null ? "$causedBy" : $"$causedBy.{causedBy.Property}",
-        TemplateExpressionSyntax template => Template(template),
-        RawExpressionSyntax raw => raw.Text,
-        _ => throw Unsupported("expression", expression)
-    };
+    public static string Expression(ExpressionSyntax expression) => Expression(expression, NumericMode.Legacy);
 
     /// <summary>
     /// Renders a <see cref="TypeRefSyntax"/> including its collection and optional suffixes.
@@ -83,7 +67,7 @@ internal static partial class ScreenplaySyntaxText
     public static string QueryParameter(QueryParameterSyntax parameter)
     {
         var declaration = $"{parameter.Name} {TypeRef(parameter.Type)}";
-        return parameter.Source is null ? declaration : $"{declaration} from {Expression(parameter.Source)}";
+        return parameter.Source is null ? declaration : $"{declaration} from {ExpressionCore(parameter.Source)}";
     }
 
     /// <summary>
@@ -106,7 +90,7 @@ internal static partial class ScreenplaySyntaxText
     /// <returns>The rendered condition text.</returns>
     public static string Condition(ConditionSyntax condition) => condition switch
     {
-        ComparisonConditionSyntax comparison => $"{comparison.Left} {Comparison(comparison.Operator)} {Expression(comparison.Right)}",
+        ComparisonConditionSyntax comparison => $"{comparison.Left} {Comparison(comparison.Operator)} {ExpressionCore(comparison.Right)}",
         LogicalConditionSyntax logical => Combined(
             Condition(logical.Left),
             OperatorOf(logical.Left),
@@ -193,7 +177,7 @@ internal static partial class ScreenplaySyntaxText
     public static string Tag(TagSyntax tag) =>
         tag.Value is LiteralExpressionSyntax { Value: string text } && IdentifierRegex().IsMatch(text) && text is not ("true" or "false" or "null")
             ? text
-            : Expression(tag.Value);
+            : ExpressionCore(tag.Value);
 
     /// <summary>
     /// Renders an <see cref="InteractionTriggerSyntax"/> to the text that follows <c>on</c>.
@@ -252,6 +236,12 @@ internal static partial class ScreenplaySyntaxText
         };
     }
 
+    internal static string Expression(ExpressionSyntax expression, NumericMode mode)
+    {
+        SourceNumericModes.Validate(expression, mode);
+        return ExpressionCore(expression);
+    }
+
     internal static string Severity(ValidationSeverity severity) => severity switch
     {
         ValidationSeverity.Error => string.Empty,
@@ -260,15 +250,34 @@ internal static partial class ScreenplaySyntaxText
         _ => throw new UnsupportedSyntaxForPrinting("validation severity", severity.ToString())
     };
 
+    static string ExpressionCore(ExpressionSyntax expression) => expression switch
+    {
+        LiteralExpressionSyntax literal => Literal(literal.Value),
+        ListExpressionSyntax list => $"[{string.Join(',', list.Items.Select(StructuredValue))}]",
+        ObjectExpressionSyntax obj => $"{{{string.Join(',', obj.Members.Select(member => $"{JsonSerializer.Serialize(member.Name, _structuredValueOptions)}:{StructuredValue(member.Value)}"))}}}",
+        PathExpressionSyntax path => path.Path,
+        ContextExpressionSyntax context => $"$context.{context.Path}",
+        EnvironmentExpressionSyntax environment => $"$env.{environment.Name}",
+        StringsExpressionSyntax strings => $"$strings.{strings.Key}",
+        SourceItemExpressionSyntax sourceItem => $"$.{sourceItem.Path}",
+        EventSourceIdExpressionSyntax => "$eventSourceId",
+        EventContextExpressionSyntax eventContext => $"$eventContext.{eventContext.Path}",
+        CausedByExpressionSyntax causedBy => causedBy.Property is null ? "$causedBy" : $"$causedBy.{causedBy.Property}",
+        TemplateExpressionSyntax template => Template(template),
+        RawExpressionSyntax raw => raw.Text,
+        _ => throw Unsupported("expression", expression)
+    };
+
     static string StructuredValue(ExpressionSyntax expression) => expression is LiteralExpressionSyntax { Value: string text }
         ? JsonSerializer.Serialize(text, _structuredValueOptions)
-        : Expression(expression);
+        : ExpressionCore(expression);
 
     static string Literal(object? value) => value switch
     {
         null => "null",
         bool boolean => boolean ? "true" : "false",
         string text => StringLiteral.Quote(text),
+        ExactNumber number => number.CanonicalText,
         double number => Number(number),
         IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
         _ => value.ToString() ?? string.Empty
@@ -287,7 +296,7 @@ internal static partial class ScreenplaySyntaxText
             builder.Append(part switch
             {
                 TemplateTextSyntax text => text.Text,
-                TemplateInterpolationSyntax interpolation => $"${{{Expression(interpolation.Expression)}}}",
+                TemplateInterpolationSyntax interpolation => $"${{{ExpressionCore(interpolation.Expression)}}}",
                 _ => throw Unsupported("template part", part)
             });
         }
@@ -404,13 +413,13 @@ internal static partial class ScreenplaySyntaxText
             return $"claim {StringLiteral.Quote(claim.Claim)} matches subject";
         }
 
-        var target = claim.Matches is null ? Literal(string.Empty) : Expression(claim.Matches);
+        var target = claim.Matches is null ? Literal(string.Empty) : ExpressionCore(claim.Matches);
         return $"claim {StringLiteral.Quote(claim.Claim)} matches {target}";
     }
 
     static string ValidationRuleBody(ValidationRuleSyntax rule)
     {
-        var value = rule.Value is null ? string.Empty : Expression(rule.Value);
+        var value = rule.Value is null ? string.Empty : ExpressionCore(rule.Value);
         return rule.Rule switch
         {
             ValidationRuleKind.NotEmpty => "not empty",
