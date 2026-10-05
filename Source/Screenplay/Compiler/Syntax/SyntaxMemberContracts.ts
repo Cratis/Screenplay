@@ -30,6 +30,14 @@ function matchesMembers(value: Record<string, unknown>, members: readonly Member
     return members.every(([name, rule, required]) => Object.hasOwn(value, syntaxCollections.names[name]) ? matches(value[syntaxCollections.names[name]], rule) : !required);
 }
 
+// Array.every skips holes, so each index is inspected: a hole is never a valid element.
+function allIndicesMatch(items: readonly unknown[], rule: number): boolean {
+    for (let position = 0; position < items.length; position++) {
+        if (!Object.hasOwn(items, position) || !matches(items[position], rule)) return false;
+    }
+    return true;
+}
+
 function matches(value: unknown, index: number): boolean {
     const [type, ...args] = rules[index];
     switch (type) {
@@ -42,7 +50,7 @@ function matches(value: unknown, index: number): boolean {
         case 'const': return value === args[0];
         case 'enum': return args.includes(value);
         case 'null': return value === null;
-        case 'array': return Array.isArray(value) && value.every(item => matches(item, args[0] as number));
+        case 'array': return Array.isArray(value) && allIndicesMatch(value, args[0] as number);
         case 'object': return object(value) && Object.keys(value).every(name => (args[0] as readonly Member[]).some(([key]) => syntaxCollections.names[key] === name)) && matchesMembers(value, args[0] as readonly Member[]);
         case 'integer':
         case 'number': return typeof value === 'number' && Number.isFinite(value) && (type !== 'integer' || Number.isInteger(value)) && (args.length === 0 || (value >= (args[0] as number) && value <= (args[1] as number) && !(type === 'integer' && args[0] === 0 && Object.is(value, -0))));
