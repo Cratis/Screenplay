@@ -120,6 +120,13 @@ internal sealed partial class WorkspaceAstEdits
 
             if (origin?.Node is ValidationRuleSyntax)
             {
+                // Direct replacement-target lineage is authoritative; a reused node with different
+                // provenance must not overwrite it, and a conflict is refused rather than discharged.
+                if (_ruleOrigins.TryGetValue(json, out var existing) && existing.Handle != origin.Handle)
+                {
+                    throw new InvalidWorkspaceAuthoring("A replacement reuses a validation rule from a different original occurrence than the rule it replaces, so pending rule intent cannot be conserved.");
+                }
+
                 _ruleOrigins[json] = origin;
                 _sourceComments[json] = rule.SourceComments;
                 _directiveLocations[json] = rule.DirectiveLocations;
