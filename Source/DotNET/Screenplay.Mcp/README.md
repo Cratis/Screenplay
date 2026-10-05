@@ -85,9 +85,10 @@ assets as signed or notarized.
 ## Claude Desktop: MCPB
 
 `Packaging/build.py` produces manifest **0.3** with `server.type = "binary"`, a
-platform-specific entry point and a stdio launch of the bundled tool. The required
-**Screenplay model folder** directory setting becomes the absolute MCP root.
-It must exist and must not be a symbolic link. The icon is Cratis' existing
+platform-specific entry point and a stdio launch of the bundled tool as `mcp` with
+no root argument and no `user_config`. The server binds its workspace dynamically:
+a single MCP root offered by the host, else the working directory when it holds
+`.play` files, else the folder the assistant passes to `open-workspace`. The icon is Cratis' existing
 Screenplay PNG. MCPB validation checks manifest and icon compatibility.
 
 To test in the desktop app:
@@ -97,13 +98,12 @@ To test in the desktop app:
    Extension Developer → Install Extension**, and choose the MCPB. Opening the
    file through the OS is a convenience; this documented UI is the fallback when
    file association is unavailable.
-3. Review trust/permissions, choose an existing physical model directory, then
-   install/enable. Ask it to describe the application, list tools and, where MCP
+3. Review trust/permissions, then install/enable. Name a model folder in the
+   conversation so the assistant opens it. Ask it to describe the application, list tools and, where MCP
    Apps is enabled, show the event model board.
 4. Propose a small change, review before `apply`, restart, and confirm persistent
-   identities. Test a missing root and denied filesystem write as negative cases.
-5. Install a newer bundle and confirm the directory setting, approvals and model
-   remain correct. Remove it from **Settings → Extensions**. The CLI cannot inspect
+   identities. Test a folder without `.play` files and denied filesystem write as negative cases.
+5. Install a newer bundle and confirm approvals and model remain correct. Remove it from **Settings → Extensions**. The CLI cannot inspect
    host-private extension storage or prove installation through a public API.
 
 Team/Enterprise allowlists or device policy can block sideloading; respect those

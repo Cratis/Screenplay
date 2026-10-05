@@ -32,8 +32,10 @@ signing. Review the package's permissions and origin.
 
 Open the MCPB in an up-to-date Claude Desktop. If your OS does not associate the
 file, use **Settings → Extensions → Advanced settings → Extension Developer →
-Install Extension**. Review the trust dialog and choose an **existing physical
-model folder**. Complete installation and enable the extension. Check its tools
+Install Extension**. Review the trust dialog, complete installation and enable the
+extension. There is no model folder to configure: Screenplay works in the folder
+the host shares with it, and otherwise asks Claude to open the folder you name in
+the conversation ("open the Screenplay model in ~/Projects/shop"). Check its tools
 and version in **Settings → Extensions**. Enterprise device policies can restrict
 installation; do not bypass them.
 
@@ -82,8 +84,8 @@ Omit `--clients` in an interactive terminal to choose detected supported hosts.
 Noninteractive management requires explicit clients. Add `--dry-run` to preview
 without downloading, writing or launching; release metadata may still be checked.
 `--version VERSION` pins a Screenplay release independently of the CLI version.
-Claude's model folder is selected in its host dialog; `--model-root` configures
-the ChatGPT source. Status distinguishes source registration/handoff from a
+Claude needs no model folder: the server picks the folder the host or the
+conversation names. `--model-root` configures the ChatGPT source. Status distinguishes source registration/handoff from a
 verified host install and reports available updates when the release check works.
 Host-owned removal still happens in each host's UI.
 

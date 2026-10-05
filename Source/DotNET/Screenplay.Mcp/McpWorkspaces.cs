@@ -270,6 +270,7 @@ internal sealed partial class McpWorkspaces
         var includeContent = McpJson.Boolean(arguments, "includeContent");
         var id = Guid.NewGuid().ToString("N");
         var statePlan = new McpStatePlan(_stateBytes, McpState.Serialize(candidate));
+        var introducedErrors = McpIntroducedErrors.Between(proposal.Before, candidate);
         var result = new
         {
             success = true,
@@ -285,6 +286,8 @@ internal sealed partial class McpWorkspaces
             droppedCommentCount = WorkspaceDroppedComments.In(proposal.WritePlan).Length,
             canonicalizedSource = proposal is McpAuthoringProposal formatted && formatted.Result.AuthoringDiagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.AuthoringSourceNormalization),
             changes = includeContent ? proposal.WritePlan.Entries.Select(DescribeChange) : null,
+            introducedExecutableErrors = introducedErrors,
+            executableGuidance = introducedErrors.Count == 0 ? null : McpIntroducedErrors.Guidance,
             review = "Use read-proposal to inspect the complete plan, any dropped comments, and exact before/after bytes before apply."
         };
         var response = McpJson.ToolResult(result);
