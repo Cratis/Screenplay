@@ -61,6 +61,46 @@ describe('when round tripping exact named-rule intent', () => {
         (() => toSyntaxJson(syntax)).should.throw(InvalidSyntaxJson);
     });
 
+    const malformedMembers = [
+        { name: 'wrong file kind', changed: { file: { kind: 'PathExpressionSyntax', path: 'Wrong' } } },
+        { name: 'array file node', changed: { file: Object.assign([], { kind: 'FileReferenceSyntax', path: 'A.cs' }) } },
+        { name: 'array code node', changed: { code: Object.assign([], { kind: 'CodeBlockSyntax', language: 'csharp', code: 'true' }) } },
+        { name: 'array implementation node', changed: { implementation: Object.assign([], { kind: 'ImplementationSyntax', hints: [] }) } },
+        { name: 'array hint node', changed: { implementation: { kind: 'ImplementationSyntax', hints: [Object.assign([], { kind: 'ImplementationHintSyntax', text: 'Keep' })] } } },
+        ...[undefined, null, ['A.cs'], 42, {}].map(path => ({ name: `nonstring file path ${JSON.stringify(path)}`, changed: { file: { kind: 'FileReferenceSyntax', path } } })),
+        { name: 'wrong code kind', changed: { code: { kind: 'PathExpressionSyntax', path: 'Wrong' } } },
+        ...['language', 'code'].flatMap(member => [undefined, null, ['csharp'], 42, {}].map(value => ({ name: `nonstring inline ${member} ${JSON.stringify(value)}`, changed: { code: { kind: 'CodeBlockSyntax', language: 'csharp', code: 'true', [member]: value } } }))),
+        ...[undefined, null, ['Keep'], 42, true, {}].map(text => ({ name: `nonstring hint text ${JSON.stringify(text)}`, changed: { implementation: { kind: 'ImplementationSyntax', hints: [{ kind: 'ImplementationHintSyntax', text }] } } })),
+        ...[undefined, null, 'Keep', {}, [null], [{ kind: 'PathExpressionSyntax', path: 'Wrong' }], new Array(1)].map(hints => ({ name: `invalid hints collection ${JSON.stringify(hints)}`, changed: { implementation: { kind: 'ImplementationSyntax', hints } } })),
+        { name: 'nonstring predicate name', changed: { value: { kind: 'PathExpressionSyntax', path: ['Check'] } } }
+    ];
+
+    it.each(['exact', 'legacy'].flatMap(mode => malformedMembers.map(test => ({ mode, ...test }))))('should reject wrapped rule with $name in $mode writing', ({ mode, name, changed }) => {
+        const syntax = parse(mode === 'exact' ? source : source.replace('numbers exact\n', '')).value;
+        const wire = JSON.parse(JSON.stringify(toSyntaxJson(syntax))) as ApplicationSyntax;
+        Object.assign(rules(wire)[0], changed);
+        // Native restoration defaults an omitted hints member to an empty collection.
+        // Typed writing still requires the in-memory wrapper to carry its collection.
+        if (mode === 'exact' && name !== 'invalid hints collection undefined') (() => decodeExactSyntaxJson(JSON.stringify(wire))).should.throw(InvalidSyntaxJson);
+        Object.assign(rules(syntax)[0], changed);
+        (() => toSyntaxJson(syntax)).should.throw(InvalidSyntaxJson);
+        (() => toCompleteSyntaxJson(syntax)).should.throw(InvalidSyntaxJson);
+    });
+
+    it.each(['exact', 'legacy'].flatMap(mode => ['pending', 'file', 'inline'].map(payload => ({ mode, payload }))))('should retain scalar payloads and authored hint order for $payload rules in $mode transport', ({ mode, payload }) => {
+        const syntax = parse(mode === 'exact' ? source : source.replace('numbers exact\n', '')).value;
+        const hints = ['  First  ', 'Second', '  First  '].map(text => ({ kind: 'ImplementationHintSyntax', text }));
+        Object.assign(rules(syntax)[0], {
+            implementation: { kind: 'ImplementationSyntax', hints },
+            file: payload === 'file' ? { kind: 'FileReferenceSyntax', path: '' } : null,
+            code: payload === 'inline' ? { kind: 'CodeBlockSyntax', language: '', code: '' } : null
+        });
+        const wire = JSON.parse(JSON.stringify(toSyntaxJson(syntax))) as ApplicationSyntax;
+        rules(wire)[0].implementation!.hints.should.deep.equal(hints);
+        ({ file: rules(wire)[0].file, code: rules(wire)[0].code }).should.deep.equal({ file: rules(syntax)[0].file, code: rules(syntax)[0].code });
+        if (mode === 'exact') rules(decodeExactSyntaxJson(JSON.stringify(wire)) as ApplicationSyntax)[0].implementation!.hints.map(hint => hint.text).should.deep.equal(hints.map(hint => hint.text));
+    });
+
     it.each(['exact', 'legacy'])('should reject concept-owned wrappers in %s writing, including complete internal projection', mode => {
         const syntax = parse(`${mode === 'exact' ? 'numbers exact\n' : ''}concept Label : String\n  validate\n    rule Check\n`).value;
         const validation = syntax.concepts[0].validations![0];

@@ -15,7 +15,7 @@ import { isSourceStreamName, isSourceStreamTypeName, sourceStreamPattern } from 
 // .NET \w is evaluated per UTF-16 code unit, so a supplementary-plane letter is not a name character.
 const ruleNamePattern = sourceStreamPattern('^[A-Za-z_]\\w*$');
 
-const hasKind = (value: unknown, kind: string): boolean => typeof value === 'object' && value !== null && (value as SyntaxNode).kind === kind;
+const hasKind = (value: unknown, kind: string): boolean => typeof value === 'object' && value !== null && !Array.isArray(value) && (value as SyntaxNode).kind === kind;
 const refuse = (message: string): never => { throw new InvalidSyntaxJson(message); };
 const collection = (value: unknown, kind: string, message: string): void => {
     if (!Array.isArray(value)) return refuse(message);
@@ -36,8 +36,11 @@ export function validateSyntaxInvariants(node: SyntaxNode): void {
         const rule = node as ValidationRuleSyntax;
         if (rule.implementation != null) {
             if (!hasKind(rule.implementation, 'ImplementationSyntax')) refuse('A named rule requires an ImplementationSyntax wrapper.');
-            if (rule.rule !== 'Rule' || rule.value?.kind !== 'PathExpressionSyntax' || ruleNamePattern.exec(rule.value.path)?.[0] !== rule.value.path) refuse('An implementation wrapper requires a valid named rule.');
+            if (rule.rule !== 'Rule' || rule.value?.kind !== 'PathExpressionSyntax' || !hasKind(rule.value, 'PathExpressionSyntax') || typeof rule.value.path !== 'string' || ruleNamePattern.exec(rule.value.path)?.[0] !== rule.value.path) refuse('An implementation wrapper requires a valid named rule.');
             if (rule.file != null && rule.code != null) refuse('A named rule has at most one file or inline payload.');
+            // Native typed transport enforces these payload members in both numeric modes.
+            if (rule.file != null && (!hasKind(rule.file, 'FileReferenceSyntax') || typeof rule.file.path !== 'string')) refuse('A named rule file requires a FileReferenceSyntax payload with a string path.');
+            if (rule.code != null && (!hasKind(rule.code, 'CodeBlockSyntax') || typeof rule.code.language !== 'string' || typeof rule.code.code !== 'string')) refuse('A named rule inline payload requires a CodeBlockSyntax with string language and code.');
             validateSyntaxInvariants(rule.implementation);
         }
     }
@@ -68,7 +71,10 @@ export function validateSyntaxInvariants(node: SyntaxNode): void {
         collection(implementation.hints, 'ImplementationHintSyntax', 'Implementation hints must be a collection of nonblank hints.');
         for (let position = 0; position < implementation.hints.length; position++) validateSyntaxInvariants(implementation.hints[position]);
     }
-    if (node.kind === 'ImplementationHintSyntax' && isBlankImplementationHint((node as ImplementationHintSyntax).text)) refuse('An implementation hint must be nonblank.');
+    if (node.kind === 'ImplementationHintSyntax') {
+        const hint = node as ImplementationHintSyntax;
+        if (typeof hint.text !== 'string' || isBlankImplementationHint(hint.text)) refuse('An implementation hint must be nonblank.');
+    }
     validateSourceStream(node);
 }
 
