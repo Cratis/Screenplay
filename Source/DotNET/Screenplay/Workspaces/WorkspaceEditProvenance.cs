@@ -32,8 +32,15 @@ sealed class WorkspaceEditProvenance
 
     internal bool HasAmbiguousImages(WorkspaceSyntaxEntry original) => _ambiguousImages.ContainsKey((original.Handle.Document, original.Handle.Path));
 
-    internal IEnumerable<(DocumentId Document, string Path)> KnownImages(WorkspaceSyntaxEntry original) =>
-        _ambiguousImages.TryGetValue((original.Handle.Document, original.Handle.Path), out var images) ? images : Image(original) is { } image ? [image] : [];
+    internal IEnumerable<(DocumentId Document, string Path)> KnownImages(WorkspaceSyntaxEntry original)
+    {
+        if (_ambiguousImages.TryGetValue((original.Handle.Document, original.Handle.Path), out var images))
+        {
+            return images;
+        }
+
+        return Image(original) is { } image ? [image] : [];
+    }
 
     internal void Ambiguous((DocumentId Document, string Path) position, (DocumentId Document, string Path) original)
     {

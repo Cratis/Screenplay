@@ -328,6 +328,7 @@ sealed class WorkspaceAuthoringTransaction(
 
         var ruleSources = new WorkspaceEditProvenance();
         edits.RecordPendingRuleSources(ruleSources, replacements);
+
         // Only the trusted generated rewrites that passed RequireShape above carry positional
         // lineage. Ordinary document replacements must still prove pending-rule correspondence.
         foreach (var document in generatedReplacements)
