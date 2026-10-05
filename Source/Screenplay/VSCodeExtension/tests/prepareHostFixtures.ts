@@ -28,7 +28,9 @@ export function prepareHostFixtures(root: string): void {
             // VS Code only permits path-associated untitled documents for targets
             // that do not exist. Prepare their parent BEFORE the product watches;
             // never remove the real attachment or identity/review preimages.
-            fs.mkdirSync(path.join(model, '.screenplay'));
+            // The server requires identity metadata private to its owner (MetadataPermissions).
+            fs.mkdirSync(path.join(model, '.screenplay'), { mode: 0o700 });
+            fs.chmodSync(path.join(model, '.screenplay'), 0o700);
             for (const relative of associatedUntitledTargets) {
                 if (fs.existsSync(path.join(model, relative))) throw new Error(`Associated untitled target already exists: ${relative}`);
             }

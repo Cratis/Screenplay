@@ -33,6 +33,8 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
     const rpc: { root: string; name: string; at: number }[] = [];
     let discoveryGate: { name?: string; entered(): void; release: Promise<void> } | undefined;
     let teardownPending = false;
+    let notificationProbed = false;
+    let overlapDone = false;
     // VS Code gives an installed extension its own API object. Control only its
     // modal replies, not a different API belonging to the development test driver.
     const productionApi = createRequire(path.join(vscode.extensions.getExtension('cratis.screenplay')!.extensionPath, 'package.json'))('vscode') as typeof vscode;
@@ -226,38 +228,13 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
             // Keep the saved root document alive. A hidden unreferenced native
             // model may legitimately close, which now correctly expires authority.
             await vscode.window.showTextDocument(target, { preview: false, viewColumn: vscode.ViewColumn.Two, preserveFocus: true });
-            await vscode.commands.executeCommand('screenplay.repair.refresh');
-            const record = productWatch(path.dirname(target.uri.fsPath));
             const provide = () => vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', target.uri, new vscode.Range(0, 0, target.lineCount - 1, 0));
             let actions: vscode.CodeAction[];
-            if (!record.preflight) {
-                live(record);
-                // NOTIFICATION UX probe, reported but NOT a precondition for any safety case. One
-                // modification of a PREEXISTING nested file; every callback reaches production first.
-                const old = (await provide()).find(action => action.title.startsWith('Change routing:'))?.command;
-                assert.ok(old, 'A verified old token exists before the notification probe');
-                const nested = path.join(record.root, 'nested', 'watcher-existing.txt');
-                const before = fs.readFileSync(nested);
-                const event = await notify(record, 'nested/watcher-existing.txt', () => fs.writeFileSync(nested, 'one nested change'));
-                const after = fs.readFileSync(nested);
-                assert.notDeepEqual(after, before, 'Actual nested bytes changed');
-                assert.equal(after.toString(), 'one nested change');
-                live(record); // Child inode replacement is permitted; physical ROOT replacement is not.
-                if (event) {
-                    assert.ok(event.event === 'rename' || event.event === 'change', 'Native child updates may report rename OR change');
-                    const previous = propose; propose = 'Propose and preview';
-                    const writes = dispatched;
-                    await vscode.commands.executeCommand(old.command, ...(old.arguments ?? []));
-                    propose = previous;
-                    assert.ok(warnings.some(message => /StaleSelection|StaleEpoch/.test(message)), 'A DELIVERED notification expires the old discovery token synchronously');
-                    assert.equal(dispatched, writes);
-                    warnings.length = 0;
-                }
-                console.log(`PRODUCT NOTIFICATION UX: ${JSON.stringify({ watcherId: record.id, root: record.root, delivered: event !== undefined, event, oldTokenInvalidationVerified: event !== undefined })}`);
-
-                // PROVIDER/MANUAL OVERLAP, independent of watcher delivery. Hold a REAL
-                // open-workspace response while the ACTUAL installed provider enters. Both
-                // consumers must join the same newly validated RPC read.
+            if (!overlapDone) {
+                // PROVIDER/MANUAL OVERLAP, independent of watcher delivery: the first discovery of a
+                // fresh connection. Hold a REAL open-workspace response while the ACTUAL installed
+                // provider enters. Both consumers must join the same newly validated RPC read.
+                overlapDone = true;
                 let release!: () => void;
                 let entered!: () => void;
                 const sent = new Promise<void>((resolve, reject) => {
@@ -275,15 +252,48 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
                     finally { observation.dispose(); release(); }
                     await manual; actions = await provider;
                 } finally { discoveryGate = undefined; release(); }
-                const reads = rpc.slice(start).filter(frame => frame.root === record.root);
+                const overlapped = productWatch(path.dirname(target.uri.fsPath));
+                const reads = rpc.slice(start).filter(frame => frame.root === overlapped.root);
                 assert.equal(reads.filter(frame => frame.name === 'open-workspace').length, 1, 'Provider/manual overlap shares ONE actual discovery');
                 assert.equal(reads.filter(frame => frame.name === 'read-workspace').length, 3, 'One complete server-validated document/diagnostic/repair read');
                 assert.ok(!warnings.some(message => /SessionBusy/.test(message)), `Concurrent read-only consumers do not report Busy: ${warnings.join('; ')}`);
-                live(record);
-                assert.equal(productWatches.filter(watch => watch.root === record.root).length, 1, 'No watcher/connection restart from child events');
-                record.preflight = true;
-                console.log(`PRODUCT PROVIDER/MANUAL OVERLAP: ${JSON.stringify({ root: record.root, reads, provider: controller.trace.filter(item => item.uri === target.uri.toString()) })}`);
-            } else { live(record); actions = await provide(); }
+                live(overlapped);
+                assert.equal(productWatches.filter(watch => watch.root === overlapped.root).length, 1, 'No watcher/connection restart from overlapping reads');
+                console.log(`PRODUCT PROVIDER/MANUAL OVERLAP: ${JSON.stringify({ root: overlapped.root, reads, provider: controller.trace.filter(item => item.uri === target.uri.toString()) })}`);
+            } else {
+                await vscode.commands.executeCommand('screenplay.repair.refresh');
+                actions = await provide();
+            }
+            const record = productWatch(path.dirname(target.uri.fsPath));
+            live(record);
+            if (!notificationProbed) {
+                // NOTIFICATION UX probe, once per host lifetime, reported but NOT a precondition for any
+                // safety case. One modification of a PREEXISTING nested file; every callback reaches production first.
+                notificationProbed = true;
+                const old = actions.find(action => action.title.startsWith('Change routing:'))?.command;
+                assert.ok(old, 'A verified old token exists before the notification probe');
+                const nested = path.join(record.root, 'nested', 'watcher-existing.txt');
+                const before = fs.readFileSync(nested);
+                const event = await notify(record, 'nested/watcher-existing.txt', () => fs.writeFileSync(nested, 'one nested change'));
+                const after = fs.readFileSync(nested);
+                assert.notDeepEqual(after, before, 'Actual nested bytes changed');
+                assert.equal(after.toString(), 'one nested change');
+                live(record); // Child inode replacement is permitted; physical ROOT replacement is not.
+                if (event) {
+                    assert.ok(event.event === 'rename' || event.event === 'change', 'Native child updates may report rename OR change');
+                    const previous = propose; propose = 'Propose and preview';
+                    const writes = dispatched;
+                    await vscode.commands.executeCommand(old.command, ...(old.arguments ?? []));
+                    propose = previous;
+                    assert.ok(warnings.some(message => /StaleSelection|StaleEpoch/.test(message)), 'A DELIVERED notification expires the old discovery token synchronously');
+                    assert.equal(dispatched, writes);
+                    warnings.length = 0;
+                    await vscode.commands.executeCommand('screenplay.repair.refresh'); // Fresh authority after the delivered invalidation.
+                    actions = await provide();
+                }
+                console.log(`PRODUCT NOTIFICATION UX: ${JSON.stringify({ watcherId: record.id, root: record.root, delivered: event !== undefined, event, oldTokenInvalidationVerified: event !== undefined })}`);
+            }
+            record.preflight = true;
             const action = actions.find(action => action.title.startsWith('Change routing:'));
             assert.ok(action?.command, `Actual registered C# provider supplies a fresh preview command: ${JSON.stringify({ titles: actions.map(action => action.title), warnings, diagnostics: vscode.languages.getDiagnostics(target.uri).map(issue => ({ code: issue.code, source: issue.source, message: issue.message })) })}`);
             return action.command;
