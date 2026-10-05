@@ -11,6 +11,11 @@ sealed class McpConnection(McpTools tools, McpAppResources apps)
 {
     internal const int MaximumRequestCharacters = 32 * 1024 * 1024;
     internal const string RootsRequestId = "screenplay-roots";
+    const string Instructions = "Read full Screenplay syntax, discover syntax-schema, open a revision-bound workspace, and use read-ast handles with propose-ast for typed edits. Readiness separates verdicts: readiness.state empty is a valid start, readiness.authoringAccepted is the authoring verdict, and executableReady describes the current ESM executable subset only. A dynamic server picks its root at open-workspace: an explicit path wins, then the client's single root, then the working directory. Review exact bytes with read-proposal; identity state persists on apply, and export-workspace is optional for portable transfer or backup. Only apply and explicit recover-workspace may write source; both are journaled and recoverable, so hosts need not confirm them each time. The root must be trusted and exclusively owned during apply or recovery; rollback is not crash-atomic.";
+
+    // The rules an assistant otherwise learns only by being rejected, stated before it writes the first proposal.
+    const string ModelingInstructions = " Model so the first proposal holds: a specification that checks one read-model instance (given readmodel, then readmodel, then no readmodel, then query) needs exactly one keyed query returning that read model in its slice, such as 'query BookById => Book optional' with 'by bookId BookId'; an event given or appended 'for' an identifier needs a command that produces it for that identifier type; a specification of an authorized command or query needs 'given caller'. An accepted proposal lists introducedExecutableErrors; fix them before apply.";
+
     const string VisualInstructions = " This host renders views: visualize-model draws the application as an event model board. Pass a proposalId to show what a proposal would change before apply, or sketch documents to draw a what-if that is never written.";
 
     bool _initialized;
@@ -176,7 +181,7 @@ sealed class McpConnection(McpTools tools, McpAppResources apps)
                     }
                     : new Dictionary<string, object> { ["tools"] = new { listChanged = false } },
                 serverInfo = new { name = "cratis.screenplay", version = typeof(McpConnection).Assembly.GetName().Version!.ToString() },
-                instructions = "Read full Screenplay syntax, discover syntax-schema, open a revision-bound workspace, and use read-ast handles with propose-ast for typed edits. Readiness separates verdicts: readiness.state empty is a valid start, readiness.authoringAccepted is the authoring verdict, and executableReady describes the current ESM executable subset only. A dynamic server picks its root at open-workspace: an explicit path wins, then the client's single root, then the working directory. Review exact bytes with read-proposal; identity state persists on apply, and export-workspace is optional for portable transfer or backup. Only apply and explicit recover-workspace may write source; both are journaled and recoverable, so hosts need not confirm them each time. The root must be trusted and exclusively owned during apply or recovery; rollback is not crash-atomic." + (_visual ? VisualInstructions : string.Empty)
+                instructions = Instructions + ModelingInstructions + (_visual ? VisualInstructions : string.Empty)
             };
         }
 
