@@ -370,13 +370,22 @@ reply are controlled. Human keyboard/mouse modal interaction and uncontrolled
 keyboard race timing are **not** exercised by these tests; do not describe them
 as manual native coverage. The harness records `process.versions` inside the
 actual extension host. The launcher prepares all baseline fixtures before host
-startup. One modification of a preexisting nested file must produce its actual
-nested-path callback within five seconds on the installed product watcher retained
-through review; root-only notifications cannot satisfy readiness. The test driver
-observes actual installed provider entry and holds a real C# discovery response to
-exercise concurrent provider/manual reads. Child creation/deletion must invalidate
-old authority while preserving healthy-root discovery; actual root replacement
-must require reconnect. Filenames are test attribution only, never product
-authorization. No repeated probes, simulated callbacks or harness-only watcher
-stand in for the product. CI lane definitions alone do not establish a platform
+startup. Safety does not depend on watcher delivery: a changed-but-unnotified
+refusal case suppresses native notification forwarding with a clearly labelled test
+seam, then changes an unopened admitted `.play` file, the identity state or a
+referenced attachment after a real review. The real C# server must refuse the
+single dispatched Apply with the nested `DiskDrift`, `IdentityStateDrift` or
+`RepairEvidenceDrift`, leaving the externally changed bytes untouched, installing
+nothing, retaining the unknown-outcome barrier and never retrying. Each such case
+runs in its own approved host lifetime. Whether the platform's native recursive
+watcher delivers a nested modification, creation or deletion is reported
+separately as a notification diagnostic and never gates a safety case. The test
+driver also observes actual installed provider entry and holds a real C# discovery
+response to exercise concurrent provider/manual reads, independently of watcher
+delivery. Actual root replacement must require reconnect. Lost-response cases hold
+the genuine server-generated Apply response, verify the exact installed bytes and
+only then lose that response; no success is ever synthesized. Filenames are test
+attribution only, never product authorization. No repeated probes, simulated
+callbacks or harness-only watcher stand in for the product. CI lane definitions
+alone do not establish a platform
 pass: run each native lane before claiming that platform is verified.

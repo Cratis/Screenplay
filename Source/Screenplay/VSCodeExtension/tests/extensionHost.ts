@@ -11,6 +11,8 @@ import { checkRepairEnvironment, userRepairConfiguration, repairBuffersSynchroni
 import { runCommandGuards } from './extensionHostGuards';
 import { NativeTestController } from './nativeTestController';
 import { runCleanUnknown } from './nativeCleanUnknown';
+import { runMissedNotification } from './nativeMissedNotification';
+import { missedNotificationCases } from './prepareHostFixtures';
 
 import { observeSavedReload } from './nativeSavedBuffer';
 
@@ -36,7 +38,13 @@ async function runSuites(): Promise<void> {
     }
     const controller = new NativeTestController(extension.extensionPath);
     await extension.activate();
-    if (process.env.SCREENPLAY_REPAIR_HOST_CASE === 'clean') {
+    const hostCase = process.env.SCREENPLAY_REPAIR_HOST_CASE;
+    const missed = missedNotificationCases.find(name => hostCase === `missed-${name}`);
+    if (missed) {
+        try { await runMissedNotification(root, controller, missed); } finally { controller.dispose(); }
+        return;
+    }
+    if (hostCase === 'clean') {
         try { await runCleanUnknown(root, controller); } finally { controller.dispose(); }
         return;
     }

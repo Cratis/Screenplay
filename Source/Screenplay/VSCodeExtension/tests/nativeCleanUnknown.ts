@@ -13,6 +13,7 @@ import { NativeTestController } from './nativeTestController';
 import { observeSavedReload } from './nativeSavedBuffer';
 import { pendingInspectionTeardown } from './nativePendingInspection';
 import { repairSource } from './repairFixture';
+import { withholdApplyResponse } from './nativeApplySeam';
 
 /** Independent installed client lifetime: never clears/replaces the dirty case's recovery authority. */
 export async function runCleanUnknown(root: string, controller: NativeTestController): Promise<void> {
@@ -30,16 +31,10 @@ export async function runCleanUnknown(root: string, controller: NativeTestContro
     const expected = new Map<string, Buffer>();
     let rootWatcher: fs.FSWatcher | undefined;
     let applyFrames = 0, prompts = 0;
-    let installed!: () => void;
-    let rejectInstallation!: (error: Error) => void;
-    const installation = new Promise<void>((resolve, reject) => { installed = resolve; rejectInstallation = reject; });
     let race: Promise<void> | undefined;
     let teardown = false;
     nativeFs.watch = ((file: fs.PathLike, options: fs.WatchOptions, listener: fs.WatchListener<string | Buffer>) => {
-        const actual = watch(file, options, (event, filename) => {
-            listener(event, filename); // Genuine installed product callback, never bypassed.
-            if (String(file) === model && filename?.toString().replaceAll('\\', '/') === '.screenplay/identities.json') installed();
-        });
+        const actual = watch(file, options, listener); // Genuine installed product callback; synchronization never depends on delivery.
         if (options?.recursive && String(file) === model) {
             assert.equal(rootWatcher, undefined, 'One retained physical root watcher');
             rootWatcher = actual;
@@ -49,7 +44,6 @@ export async function runCleanUnknown(root: string, controller: NativeTestContro
     const document = await vscode.workspace.openTextDocument(vscode.Uri.file(source));
     await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two });
     const original = fs.readFileSync(source);
-    let installationTimer: ReturnType<typeof setTimeout> | undefined;
     api.window.showWarningMessage = (async (message: string, ...items: unknown[]) => {
         if (message.startsWith('This repair canonically formats')) {
             assert.ok(items.includes('Propose and preview'));
@@ -63,7 +57,6 @@ export async function runCleanUnknown(root: string, controller: NativeTestContro
             assert.equal(fs.existsSync(path.join(model, '.screenplay/identities.json')), false);
             assert.equal(document.isDirty, false, 'NO typing in the independent clean case');
             await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two, preserveFocus: true });
-            installationTimer = setTimeout(() => rejectInstallation(new Error('Clean unknown installation event missing within five seconds.')), 5_000);
             return 'Apply';
         }
         warnings.push(message);
@@ -74,7 +67,7 @@ export async function runCleanUnknown(root: string, controller: NativeTestContro
     childProcess.spawn = ((...args: Parameters<typeof spawn>) => {
         const child = spawn(...args);
         if (args[0] !== process.env.SCREENPLAY_REPAIR_SERVER || !child.stdin || !child.stdout) return child;
-        const input = child.stdin, output = child.stdout, write = input.write;
+        const input = child.stdin, write = input.write;
         input.write = ((chunk: string | Uint8Array, ...rest: unknown[]) => {
             const accepted = Reflect.apply(write, input, [chunk, ...rest]);
             const frame = JSON.parse(chunk.toString()) as { method?: string; params?: { name?: string } };
@@ -83,10 +76,10 @@ export async function runCleanUnknown(root: string, controller: NativeTestContro
                 console.log(`NATIVE CLEAN UNKNOWN RPC: ${JSON.stringify({ name: frame.params.name })}`);
                 if (frame.params.name === 'apply') {
                     ++applyFrames;
-                    output.pause(); // Existing real transport seam; no fake Apply/reply.
+                    // Bounded seam withholds the genuine server-generated response; no fake Apply/reply.
+                    const held = withholdApplyResponse(child, (JSON.parse(chunk.toString()) as { id?: unknown }).id);
                     race = (async () => {
-                        await installation;
-                        clearTimeout(installationTimer);
+                        await held.generated; // The real server produced its response, so installation is complete.
                         for (const [relative, bytes] of expected) assert.deepEqual(fs.readFileSync(path.join(model, relative)), bytes);
                         assert.equal(document.isDirty, false);
                         assert.equal(child.kill('SIGKILL'), true, 'Lose ONLY the actual real dispatched response after byte-exact installation');
@@ -161,7 +154,6 @@ export async function runCleanUnknown(root: string, controller: NativeTestContro
         teardown = true;
         await pendingInspectionTeardown(api, controller, rootWatcher, model, verify, () => applyFrames);
     } finally {
-        clearTimeout(installationTimer);
         childProcess.spawn = spawn;
         nativeFs.watch = watch;
         if (!teardown) { api.window.showWarningMessage = warning; api.window.showInformationMessage = information; }

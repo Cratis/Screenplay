@@ -8,6 +8,9 @@ import { repairSource, refusedEventSource } from './repairFixture';
 /** Launcher-only: all baseline writes complete BEFORE the native host is started. */
 export const associatedUntitledTargets = ['sibling.play', 'pending-handler.cs', '.screenplay/pending-identities.json'] as const;
 
+/** Each missed-notification case ends in a retained unknown barrier, so it owns its own host lifetime and root. */
+export const missedNotificationCases = ['source', 'state', 'attachment'] as const;
+
 export function prepareHostFixtures(root: string): void {
     // Each independent application is a sibling, never nested inside the first
     // approved application (the server recursively discovers that application's sources).
@@ -15,7 +18,7 @@ export function prepareHostFixtures(root: string): void {
     fs.mkdirSync(direct);
     fs.writeFileSync(path.join(direct, 'application.play'), '\uFEFF// 😀 native byte review\r\n' + repairSource.replaceAll('\n', '\r\n'));
     fs.writeFileSync(path.join(direct, 'Handler.cs'), '// attachment\n');
-    for (const name of ['refused', 'command-guards', 'watcher-guards', 'post-dispatch', 'clean-unknown', 'root-replacement', 'root-replacement-next', ...associatedUntitledTargets.flatMap(relative => ['before-discovery', 'after-review'].map(timing => `untitled-${relative.replaceAll('/', '-')}-${timing}`))]) {
+    for (const name of ['refused', 'command-guards', 'watcher-guards', 'post-dispatch', 'clean-unknown', ...missedNotificationCases.map(name => `missed-${name}`), 'root-replacement', 'root-replacement-next', ...associatedUntitledTargets.flatMap(relative => ['before-discovery', 'after-review'].map(timing => `untitled-${relative.replaceAll('/', '-')}-${timing}`))]) {
         const model = path.join(root, name);
         fs.mkdirSync(path.join(model, 'nested'), { recursive: true });
         fs.writeFileSync(path.join(model, 'application.play'), name === 'refused' ? refusedEventSource : repairSource);

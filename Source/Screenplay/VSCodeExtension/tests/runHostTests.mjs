@@ -13,9 +13,10 @@ const executable = process.env.VSCODE_EXECUTABLE_PATH;
 if (!executable || !path.isAbsolute(executable) || !fs.existsSync(executable)) throw new Error('Set VSCODE_EXECUTABLE_PATH to the installed native VS Code executable. Host coverage is unverified without it.');
 const server = process.env.SCREENPLAY_REPAIR_SERVER ?? path.resolve('../../DotNET/Tool/bin/Debug/net10.0/Cratis.Screenplay.Tool' + (process.platform === 'win32' ? '.exe' : ''));
 if (!fs.existsSync(server)) throw new Error('Build the native C# MCP tool first or set SCREENPLAY_REPAIR_SERVER.');
-// TWO independent installed-client lifetimes, not a root switch to escape
-// uncertain authority. The dirty case is classified/disposed first; only then
-// may a separately approved clean fixture prove its own recovery barrier.
+// Independent installed-client lifetimes, never a root switch to escape an
+// uncertain authority. Each case that ends in a retained unknown barrier (dirty,
+// clean, and the three missed-notification cases) is classified/disposed before
+// the next separately approved fixture/lifetime starts.
 async function runHost(caseName) {
 const tasks = path.resolve('../../..', '.ai-work');
 fs.mkdirSync(tasks, { recursive: true });
@@ -35,7 +36,7 @@ console.log(`Native ${caseName} synthetic workspace: ${model}; native host data:
 const userData = path.join(testRoot, 'u');
 fs.mkdirSync(path.join(userData, 'User'), { recursive: true });
 fs.writeFileSync(path.join(userData, 'User/settings.json'), JSON.stringify({
-    'screenplay.repairs.enabled': true, 'screenplay.repairs.executable': server, 'screenplay.repairs.arguments': ['mcp'], 'screenplay.repairs.modelRoot': path.join(model, caseName === 'clean' ? 'clean-unknown' : 'direct'),
+    'screenplay.repairs.enabled': true, 'screenplay.repairs.executable': server, 'screenplay.repairs.arguments': ['mcp'], 'screenplay.repairs.modelRoot': path.join(model, caseName === 'clean' ? 'clean-unknown' : caseName.startsWith('missed-') ? caseName : 'direct'),
     'workbench.editorAssociations': { '*.play': 'default' }, 'files.autoSave': 'off', 'window.restoreWindows': 'none',
     'extensions.autoUpdate': false, 'extensions.autoCheckUpdates': false, 'update.mode': 'none',
     'chat.disableAIFeatures': true,
@@ -85,7 +86,7 @@ try { await runTests({
     // late completion and zero installed UI calls; unsupported Windows roots skip.
     if (suitesPassed && fs.existsSync(teardownEvidence)) {
         const teardown = JSON.parse(fs.readFileSync(teardownEvidence, 'utf8'));
-        if (teardown.pending || teardown.error || teardown.timedOut !== false || teardown.actualStateQueryDispatched !== true || teardown.genuineReadResponseHeld !== true || teardown.actualRootWatchClosed !== true || teardown.pendingAtClose !== true || teardown.actualInspectionSettled !== true || teardown.exactBuffersAndDiskPreserved !== true || teardown.lateUi?.length !== 0 || teardown.applyFrames !== (caseName === 'clean' ? 1 : 2)) {
+        if (teardown.pending || teardown.error || teardown.timedOut !== false || teardown.actualStateQueryDispatched !== true || teardown.genuineReadResponseHeld !== true || teardown.actualRootWatchClosed !== true || teardown.pendingAtClose !== true || teardown.actualInspectionSettled !== true || teardown.exactBuffersAndDiskPreserved !== true || teardown.lateUi?.length !== 0 || teardown.applyFrames !== (caseName === 'dirty' ? 2 : 1)) {
             shutdownFailure = `Pending native inspection teardown is incomplete or unsafe: ${JSON.stringify(teardown)}; inspect ${evidence}`;
         } else console.log(`NATIVE PENDING INSPECTION TEARDOWN VERIFIED: ${JSON.stringify(teardown)}`);
     } else if (suitesPassed && !(process.platform === 'win32' && fs.statSync(path.join(model, 'command-guards'), { bigint: true }).dev === 0n)) {
@@ -98,3 +99,4 @@ if (shutdownFailure) throw new Error(shutdownFailure);
 
 await runHost('dirty');
 await runHost('clean');
+for (const name of ['source', 'state', 'attachment']) await runHost(`missed-${name}`);
