@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { RequirementSyntax } from '../Syntax/Conditions';
+import { parseCondition } from './ConditionParser';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { CommandSyntax, ValidateSyntax, ValidationRuleKind, ValidationRuleSyntax, ValidationSeverity } from '../Syntax/Commands';
 import { PropertySyntax } from '../Syntax/Declarations';
@@ -16,7 +18,7 @@ import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseCommandResponse, scalarResponsePattern } from './CommandResponseParser';
 import { parseDescription } from './DescriptionParser';
-import { parseHandler } from './ImplementationParser';
+import { parseCode, parseHandler } from './ImplementationParser';
 import { HandlerSyntax } from '../Syntax/Implementations';
 import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
@@ -64,9 +66,10 @@ export function parseCommand(context: ParserContext, line: SourceLine): CommandS
     // Properties are leaves, not indentation owners. Resolve ambiguous returns spelling
     // before the committed pass decides whether its deeper lines belong to a response.
     const names = new Set<string>();
-    const discovery = new ParserContext(context.reader.fork(), context.path);
-    discovery.streamCandidates = context.streamCandidates;
-    parseCommandBody(discovery, line, undefined, names);
+    const lookahead = new ParserContext(context.reader.fork(), context.path, context.languages);
+    lookahead.sourceOptions = context.sourceOptions;
+    lookahead.streamCandidates = context.streamCandidates;
+    parseCommandBody(lookahead, line, undefined, names);
     return parseCommandBody(context, line, names);
 }
 
@@ -185,32 +188,47 @@ function addProperty(context: ParserContext, properties: PropertySyntax[], prope
 }
 
 // Reads a 'validate' block: declarative rules, or code - which is recognized but not modeled.
-export function parseValidate(context: ParserContext, line: SourceLine): ValidateSyntax | undefined {
+export function parseValidate(context: ParserContext, line: SourceLine, concept = false): ValidateSyntax | undefined {
     if (line.content === 'validate') {
         const fence = context.peekChild(line.indent);
         if (fence !== undefined && fence.content.startsWith('```')) {
             context.reader.takeSignificant();
-            context.skipFencedBody();
-            return { kind: 'CodeValidateSyntax', location: locationOf(line) };
+            const code = parseCode(context.valueContext, fence);
+            if (code === null) context.skipFencedBody();
+            return { kind: 'CodeValidateSyntax', code, location: locationOf(line) };
         }
         const rules: ValidationRuleSyntax[] = [];
+        const requirements: RequirementSyntax[] = [];
         for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
             context.reader.takeSignificant();
-            // 'require' states a rule about the whole artifact. Requirements are not modeled.
             if (firstWord(child.content) === 'require') {
-                context.skipOpaqueBlock(child.indent);
+                const condition = parseCondition(context, child.content.substring('require'.length).trim(), locationOf(child));
+                let message: string | null = null;
+                let severity: ValidationSeverity = 'Error';
+                let hasSeverity = false;
+                for (let directive = context.peekChild(child.indent); directive !== undefined; directive = context.peekChild(child.indent)) {
+                    context.reader.takeSignificant();
+                    const matched = messagePattern.exec(directive.content);
+                    if (matched !== null && matched.index === 0) message = matched[1] !== undefined ? unescapeString(matched[1]) : matched[2];
+                    else if (firstWord(directive.content) === 'severity') {
+                        if (!hasSeverity) severity = severities[directive.content.substring('severity'.length).trim()] ?? 'Error';
+                        hasSeverity = true;
+                    } else context.skipOpaqueBlock(directive.indent);
+                }
+                if (condition !== null) requirements.push({ kind: 'RequirementSyntax', condition, message, severity, location: locationOf(child) });
                 continue;
             }
-            const rule = parseValidationRule(context, child);
+            const rule = parseValidationRule(context, concept ? { ...child, content: `value ${child.content}` } : child);
             if (rule !== undefined) {
                 rules.push(rule);
             }
         }
-        return { kind: 'DeclarativeValidateSyntax', rules, location: locationOf(line) };
+        return { kind: 'DeclarativeValidateSyntax', rules, requirements, location: locationOf(line) };
     }
     if (line.content === 'validate csharp') {
-        context.skipOpaqueBlock(line.indent);
-        return { kind: 'CodeValidateSyntax', location: locationOf(line) };
+        const code = parseCode(context.valueContext, { ...line, content: 'csharp' });
+        if (code === null) context.skipOpaqueBlock(line.indent);
+        return { kind: 'CodeValidateSyntax', code, location: locationOf(line) };
     }
     context.error(DiagnosticCodes.InvalidValidateDeclaration, `Invalid validate declaration '${line.content}' - expected 'validate' or 'validate csharp'`, locationOf(line));
     context.skipBlock(line.indent);

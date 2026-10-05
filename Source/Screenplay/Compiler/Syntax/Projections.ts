@@ -1,17 +1,34 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { ExpressionSyntax } from './Expressions';
 import { SyntaxNode } from './SyntaxNode';
+import { SourceOptions } from './SourceOptions';
 
-// A projection as far as this compiler models it: what it is called, what it builds and the events each of
-// its blocks consumes. Keys, mappings and automap settings are not modeled.
+export interface ExpressionKeySyntax extends SyntaxNode {
+    readonly kind: 'ExpressionKeySyntax';
+    readonly expression: ExpressionSyntax;
+}
+
+export interface KeyPartSyntax extends SyntaxNode {
+    readonly kind: 'KeyPartSyntax';
+    readonly property: string;
+    readonly expression: ExpressionSyntax;
+}
+
+export interface CompositeKeySyntax extends SyntaxNode {
+    readonly kind: 'CompositeKeySyntax';
+    readonly type: string;
+    readonly parts: readonly KeyPartSyntax[];
+}
+
+export type KeySyntax = ExpressionKeySyntax | CompositeKeySyntax;
 
 // Whether a block copies the properties an event shares with the read model by name: 'Inherit' takes the
 // enclosing block's setting, which is on unless something turns it off.
 export type AutoMapMode = 'Inherit' | 'Disabled' | 'Enabled';
 
-// What a mapping does to one property of the read model. Where a set, add or subtract takes its value from is
-// not modeled.
+// Mapping values use the existing projection expression grammar.
 export type MappingKind =
     | 'SetMappingSyntax'
     | 'ClearMappingSyntax'
@@ -24,15 +41,20 @@ export type MappingKind =
 export interface MappingSyntax extends SyntaxNode {
     readonly kind: MappingKind;
     readonly property: string;
+    readonly source?: ExpressionSyntax;
+    readonly value?: ExpressionSyntax;
 }
 
 export interface EventSpecSyntax extends SyntaxNode {
     readonly kind: 'EventSpecSyntax';
     readonly event: string;
+    readonly key?: ExpressionSyntax | null;
 }
 
 export interface FromSyntax extends SyntaxNode {
     readonly kind: 'FromSyntax';
+    readonly key?: KeySyntax | null;
+    readonly parentKey?: ExpressionSyntax | null;
     readonly events: readonly EventSpecSyntax[];
     readonly mappings: readonly MappingSyntax[];
 }
@@ -67,6 +89,7 @@ export interface JoinSyntax extends SyntaxNode {
 export interface ChildrenSyntax extends SyntaxNode {
     readonly kind: 'ChildrenSyntax';
     readonly property: string;
+    readonly identifiedBy?: ExpressionSyntax;
     readonly autoMap: AutoMapMode;
     readonly blocks: readonly ProjectionBlockSyntax[];
 }
@@ -86,16 +109,20 @@ export interface ClearWithSyntax extends SyntaxNode {
 export interface RemoveWithSyntax extends SyntaxNode {
     readonly kind: 'RemoveWithSyntax';
     readonly event: string;
+    readonly key?: ExpressionSyntax | null;
+    readonly parentKey?: ExpressionSyntax | null;
 }
 
 export interface RemoveViaJoinSyntax extends SyntaxNode {
     readonly kind: 'RemoveViaJoinSyntax';
     readonly event: string;
+    readonly key?: ExpressionSyntax | null;
 }
 
 export interface ProjectionEntersOnSyntax extends SyntaxNode {
     readonly kind: 'ProjectionEntersOnSyntax';
     readonly event: string;
+    readonly key?: ExpressionSyntax | null;
 }
 
 export interface ProjectionVariantSyntax extends SyntaxNode {
@@ -119,7 +146,9 @@ export type ProjectionBlockSyntax =
 
 export interface ProjectionSyntax extends SyntaxNode {
     readonly kind: 'ProjectionSyntax';
+    readonly sourceOptions?: SourceOptions;
     readonly name: string;
+    readonly key?: KeySyntax | null;
     readonly readModel: string | null;
     readonly sequence: string | null;
     readonly autoMap: AutoMapMode;

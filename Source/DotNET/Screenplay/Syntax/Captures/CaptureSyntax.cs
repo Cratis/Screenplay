@@ -24,7 +24,13 @@ public record CaptureSyntax(
     IEnumerable<CaptureAppendSyntax> Appends,
     IEnumerable<CaptureChildrenSyntax> Children,
     IEnumerable<CaptureNestedSyntax> Nested,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location) : SyntaxNode(Location), ISourceSyntax
+{
+    /// <summary>
+    /// Gets the immutable options retained when this capture is extracted as a document.
+    /// </summary>
+    public SourceOptions SourceOptions { get; init; } = SourceOptions.Legacy;
+}
 
 /// <summary>
 /// Represents the <c>source</c> of a capture, with its settings.

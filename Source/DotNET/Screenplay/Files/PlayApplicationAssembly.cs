@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Languages;
 using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 
@@ -24,9 +25,17 @@ internal static class PlayApplicationAssembly
         IScreenplayCompiler compiler,
         IEnumerable<string> roots,
         IPlayDocumentSource source,
+        bool allowUnresolvedPersonaPolicies = false) =>
+        Compile(compiler, roots, source, (compiler as ILanguageRegistryOwner)?.Languages ?? ScreenplayLanguageRegistry.Default, allowUnresolvedPersonaPolicies);
+
+    internal static (IReadOnlyList<PlacedPlayDocument> Documents, CompilationResult<ApplicationSyntax> Result) Compile(
+        IScreenplayCompiler compiler,
+        IEnumerable<string> roots,
+        IPlayDocumentSource source,
+        IScreenplayLanguageRegistry languages,
         bool allowUnresolvedPersonaPolicies = false)
     {
-        var (documents, diagnostics) = PlayImports.Resolve(roots, source);
+        var (documents, diagnostics) = PlayImports.Resolve(roots, source, languages);
         var candidates = (compiler as ICommandStreamCandidateParser)?.CaptureCandidates(documents.Where(document => document.IsPlacementResolved)
             .Select(document => (SourceLineSplitter.Split(document.Source, path: document.Path), document.Placement)));
         var parsed = documents.Select(document =>

@@ -125,7 +125,12 @@ internal static class SpecificationValueConsistencyValidator
         ValidateValues(assignments.Where(assignment => assignment.Source is ObjectExpressionSyntax or ListExpressionSyntax), properties, declarations, context);
     }
 
-    static string Canonical(object? value) => value is StructuredKnownValue structured ? structured.Canonical : JsonSerializer.Serialize(value);
+    static string Canonical(object? value) => value switch
+    {
+        StructuredKnownValue structured => structured.Canonical,
+        ExactNumber exact => exact.CanonicalText,
+        _ => JsonSerializer.Serialize(value)
+    };
 
     static void ValidateQueries(SpecificationSyntax specification, DeclarationScope scope, ConsistencyDeclarations declarations, ParserContext context)
     {

@@ -10,6 +10,8 @@ import { AuthorizeSyntax, PersonaSyntax } from '../Syntax/Authorization';
 import { ConceptSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { ApplicationSyntax, FeatureSyntax, ModuleSyntax } from '../Syntax/Structure';
 import { toSyntaxJson } from '../Syntax/SyntaxJson';
+import { invalidSourceOptions, isAuthoredDocument, legacySourceOptions, SourceOptions, validatedSourceOptions } from '../Syntax/SourceOptions';
+import { InvalidSyntaxJson } from '../Syntax/InvalidSyntaxJson';
 
 // "The documents of a folder are one document": modules and features with the same name combine, and a
 // name declared in two files is reported - the port of the C# PlayFolderMerge for what this compiler
@@ -17,6 +19,26 @@ import { toSyntaxJson } from '../Syntax/SyntaxJson';
 export function mergeDocuments(documents: readonly CompilationResult<ApplicationSyntax>[]): CompilationResult<ApplicationSyntax> {
     const diagnostics: Diagnostic[] = [];
     const applications = documents.map(document => document.value);
+    const options = new Map<ApplicationSyntax, SourceOptions>();
+    let invalid = false;
+    for (const application of applications) {
+        try {
+            options.set(application, Object.hasOwn(application, 'sourceOptions') ? validatedSourceOptions(application.sourceOptions) : legacySourceOptions);
+        } catch (failure) {
+            if (!(failure instanceof InvalidSyntaxJson)) throw failure;
+            invalid = true;
+            diagnostics.push(error(DiagnosticCodes.IncompatibleNumericSource, failure.message, application.location));
+        }
+    }
+    const asserted = applications.filter(application => options.get(application)?.numericMode === 'exact' || hasDeclarations(application));
+    let sourceOptions = options.get(asserted[0]) ?? legacySourceOptions;
+    for (const application of asserted.slice(1)) {
+        if (options.get(application)?.numericMode !== sourceOptions.numericMode) {
+            invalid = true;
+            diagnostics.push(error(DiagnosticCodes.MixedNumericModes, 'Declaration-bearing documents and marked import barrels must independently select the same numeric mode.', application.location));
+        }
+    }
+    if (invalid) sourceOptions = invalidSourceOptions;
     const named = new Map<string, SourceLocation>();
     const concepts = declaredInOneFile<ConceptSyntax>(applications.flatMap(application => application.concepts), 'declaration of', diagnostics, undefined, named);
     const types = declaredInOneFile<TypeSyntax>(applications.flatMap(application => application.types), 'declaration of', diagnostics, undefined, named);
@@ -30,6 +52,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     const personas = declaredInOneFile<PersonaSyntax>(applications.flatMap(application => application.personas), 'persona', diagnostics);
     const value: ApplicationSyntax = {
         kind: 'ApplicationSyntax',
+        sourceOptions,
         domain: domains[0] ?? null,
         imports: firstOfEach(applications.flatMap(application => application.imports), item => item.qualifiedName),
         concepts,
@@ -38,11 +61,20 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         eventSources: applications.flatMap(application => application.eventSources ?? []),
         modules,
         personas,
+        policies: applications.flatMap(application => application.policies ?? []),
+        seeds: applications.flatMap(application => application.seeds ?? []),
         fileImports: applications.flatMap(application => application.fileImports),
         location: applications[0]?.location ?? { line: 1, column: 1 },
     };
     const all = [...documents.flatMap(document => document.diagnostics), ...diagnostics];
     return { value, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error') };
+}
+
+function hasDeclarations(application: ApplicationSyntax): boolean {
+    if (isAuthoredDocument(application)) return true;
+    if (application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.policies?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0) return true;
+    const feature = (node: FeatureSyntax): boolean => !node.isPlacement || node.slices.length > 0 || node.features.some(feature);
+    return application.modules.some(module => !module.isPlacement || module.features.some(feature));
 }
 
 function mergeModules(modules: readonly ModuleSyntax[], diagnostics: Diagnostic[]): ModuleSyntax[] {

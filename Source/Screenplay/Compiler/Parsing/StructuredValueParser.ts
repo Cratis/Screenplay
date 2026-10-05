@@ -4,6 +4,7 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { ExpressionSyntax, ObjectMemberSyntax } from '../Syntax/Expressions';
+import { parseExactNumber } from '../Syntax/ExactNumber';
 import { ParserContext } from './ParserContext';
 
 // How deeply a structured value may nest - the C# compiler's JsonDocument limit.
@@ -48,7 +49,7 @@ export class StructuredValueParser {
                 return { kind: 'LiteralExpressionSyntax', value, location };
             }
         }
-        return { kind: 'LiteralExpressionSyntax', value: this.#number(), location };
+        return this.#number(location);
     }
 
     #list(depth: number, location: SourceLocation): ExpressionSyntax {
@@ -122,17 +123,25 @@ export class StructuredValueParser {
         throw new InvalidStructuredValue('A string is not closed.');
     }
 
-    #number(): number {
+    #number(location: SourceLocation): ExpressionSyntax {
         const match = /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/.exec(this.text.substring(this.#position));
         if (match === null) {
             throw new InvalidStructuredValue(`'${this.text[this.#position] ?? ''}' is an invalid start of a value.`);
         }
         this.#position += match[0].length;
+        if (this.context?.sourceOptions.numericMode === 'exact') {
+            const number = parseExactNumber(match[0]);
+            if (number === undefined) {
+                this.context.error(DiagnosticCodes.InexactNumericLiteral, 'Numeric literal is not exactly representable in the bounded Decimal domain.', location);
+                return { kind: 'RawExpressionSyntax', text: match[0], location };
+            }
+            return { kind: 'LiteralExpressionSyntax', value: number, location };
+        }
         const number = Number(match[0]);
         if (!Number.isFinite(number)) {
             throw new InvalidStructuredValue('JSON number is outside the finite Double range.');
         }
-        return number;
+        return { kind: 'LiteralExpressionSyntax', value: number, location };
     }
 
     #at(): SourceLocation {

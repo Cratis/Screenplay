@@ -4,11 +4,12 @@
 import { AuthorizeSyntax } from './Authorization';
 import { PropertySyntax } from './Declarations';
 import { ExpressionSyntax } from './Expressions';
+import { RequirementSyntax } from './Conditions';
 import { CommandStreamSyntax } from './EventSources';
 import { ProducesSyntax } from './Reactions';
 import { CommandResponseSyntax } from './Responses';
 import { SyntaxNode } from './SyntaxNode';
-import { HandlerSyntax } from './Implementations';
+import { CodeBlockSyntax, HandlerSyntax } from './Implementations';
 
 // The C# ValidationRuleKind members.
 export type ValidationRuleKind =
@@ -29,11 +30,13 @@ export interface ValidationRuleSyntax extends SyntaxNode {
 export interface DeclarativeValidateSyntax extends SyntaxNode {
     readonly kind: 'DeclarativeValidateSyntax';
     readonly rules: readonly ValidationRuleSyntax[];
+    readonly requirements?: readonly RequirementSyntax[];
 }
 
-// A validate block implemented in code. Its code is not modeled.
+// A validate block implemented in registered-language code.
 export interface CodeValidateSyntax extends SyntaxNode {
     readonly kind: 'CodeValidateSyntax';
+    readonly code?: CodeBlockSyntax | null;
 }
 
 export type ValidateSyntax = DeclarativeValidateSyntax | CodeValidateSyntax;

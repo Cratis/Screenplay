@@ -41,6 +41,7 @@ function subLanguageExitRule(subLanguages: SubLanguage[]): MonarchTokenRules[num
 // (comments, `$`-prefixed context variables, strings, numbers, operators, delimiters, whitespace).
 export const commonTokenRules: MonarchTokenRules = [
     [/\/\/.*$/, 'comment'],
+    [/^(numbers)([ \t]+)(exact)(?=[ \t]*(?:(?:\/\/|#).*)?$)/, ['keyword', 'white', 'keyword']],
     [/\$(?:context|eventContext|eventSourceId|causedBy)(?:\.\w+)*/, 'variable.predefined'],
     [/\$(?:env|secrets|strings)\.[\w.]+/, 'variable.predefined'],
     [/\$\.[\w.]*/, 'variable.predefined'],

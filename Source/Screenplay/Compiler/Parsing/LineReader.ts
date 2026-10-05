@@ -10,6 +10,10 @@ export class LineReader {
 
     constructor(private readonly lines: readonly SourceLine[]) {}
 
+    get atEnd(): boolean {
+        return this.lines.slice(this.#index).every(isBlank);
+    }
+
     // Independent lookahead must not consume the committed parser's source.
     fork(): LineReader {
         const reader = new LineReader(this.lines);

@@ -16,6 +16,7 @@ public class when_holding_the_typescript_compiler_to_it : Specification
     readonly List<string> _mismatches = [];
     List<(string Name, string Path)> _documents;
     int _compared;
+    bool _exact;
 
     void Establish() => _documents = [.. Documents()];
 
@@ -25,6 +26,9 @@ public class when_holding_the_typescript_compiler_to_it : Specification
         {
             var parsed = new ScreenplayCompiler().Parse(File.ReadAllText(Path.Combine(Root(), path)));
             using var golden = JsonDocument.Parse(File.ReadAllText(Path.Combine(Conformance(), $"{name}.syntax.json")));
+
+            // Unmarked vectors are frozen at the Legacy wire form; only Exact vectors carry the expanded members.
+            _exact = golden.RootElement.TryGetProperty("sourceOptions", out _);
 
             // Old vectors remain byte-for-byte fixtures. Decode their additive omissions as defaults;
             // new vectors must explicitly include every new member.
@@ -82,6 +86,19 @@ public class when_holding_the_typescript_compiler_to_it : Specification
         }
     }
 
+    // The members exact numeric source introduced. An unmarked document writes none of them.
+    static readonly HashSet<string> ExactOnly =
+    [
+        "ApplicationSyntax.policies", "ApplicationSyntax.seeds", "ProducesSyntax.when", "ProjectionSyntax.key",
+        "ConceptSyntax.validations", "DeclarativeValidateSyntax.requirements", "CodeValidateSyntax.code",
+        "QueryParameterSyntax.source", "ReactionSyntax.where", "InvokesSyntax.mappings",
+        "FromSyntax.key", "FromSyntax.parentKey", "EventSpecSyntax.key", "ProjectionEntersOnSyntax.key", "RemoveViaJoinSyntax.key",
+        "RemoveWithSyntax.key", "RemoveWithSyntax.parentKey", "ChildrenSyntax.identifiedBy", "SetMappingSyntax.source",
+        "AddMappingSyntax.value", "SubtractMappingSyntax.value", "CaptureSyntax.map", "CaptureChildrenSyntax.map",
+        "CaptureNestedSyntax.map", "CaptureAppendSyntax.when", "CaptureAppendSyntax.mappings", "CaptureAppendSyntax.tags",
+        "SpecificationSyntax.thenAbsentReadModels", "SpecificationSyntax.thenQueries"
+    ];
+
     static bool SameScalar(JsonElement golden, JsonElement actual) => golden.ValueKind switch
     {
         JsonValueKind.String => actual.ValueKind == JsonValueKind.String && golden.GetString() == actual.GetString(),
@@ -98,20 +115,44 @@ public class when_holding_the_typescript_compiler_to_it : Specification
                 {
                     string[] required = actualKind.GetString() switch
                     {
-                        "ApplicationSyntax" => ["systems", "eventSources"],
+                        "ApplicationSyntax" => ["systems", "policies", "seeds", "eventSources"],
                         "SliceSyntax" => ["operations"],
-                        "ProducesSyntax" => ["inlineOperation"],
+                        "ProducesSyntax" => ["inlineOperation", "when"],
+                        "ProjectionSyntax" => ["key"],
+                        "LiteralExpressionSyntax" when actual.GetProperty("value").ValueKind == JsonValueKind.Object => ["value"],
+                        "ConceptSyntax" => ["validations"],
+                        "DeclarativeValidateSyntax" => ["requirements"],
+                        "CodeValidateSyntax" => ["code"],
+                        "QueryParameterSyntax" => ["source"],
+                        "ReactionSyntax" => ["where"],
+                        "InvokesSyntax" => ["mappings"],
+                        "FromSyntax" => ["key", "parentKey"],
+                        "EventSpecSyntax" or "ProjectionEntersOnSyntax" or "RemoveViaJoinSyntax" => ["key"],
+                        "RemoveWithSyntax" => ["key", "parentKey"],
+                        "ChildrenSyntax" => ["identifiedBy"],
+                        "SetMappingSyntax" => ["source"],
+                        "AddMappingSyntax" or "SubtractMappingSyntax" => ["value"],
+                        "CaptureSyntax" or "CaptureChildrenSyntax" or "CaptureNestedSyntax" => ["map"],
+                        "CaptureAppendSyntax" => ["when", "mappings", "tags"],
+                        "ExpressionKeySyntax" or "CompositeKeySyntax" or "KeyPartSyntax" or
+                        "TemplateExpressionSyntax" or "TemplateInterpolationSyntax" or "TemplateTextSyntax" or
+                        "EventSourceIdExpressionSyntax" or "EventContextExpressionSyntax" or "CausedByExpressionSyntax" or
+                        "CaptureMapEntrySyntax" or "CaptureTranslationSyntax" or "CaptureSplitSyntax" or "CaptureWhenSyntax" or
+                        "PolicySyntax" or "AuthenticatedConditionSyntax" or "RoleConditionSyntax" or "ClaimConditionSyntax" or
+                        "LogicalPolicyConditionSyntax" or "SpecificationAbsentReadModelSyntax" or "SpecificationQuerySyntax" or "SeedSyntax" or "SeedGroupSyntax" or "SeedEventSyntax" or "RequirementSyntax" or
+                        "ComparisonConditionSyntax" or "LogicalConditionSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "SystemSyntax" or "OperationSyntax" or "OperationPhaseSyntax" or "SpecificationOperationFailureSyntax" or "SpecificationOperationSyntax" or "SpecificationCompensatedSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "PropertySyntax" => ["isGenerated"],
                         "CommandSyntax" => ["response", "handler", "stream", "streamCandidates"],
                         "EventSourceSyntax" or "EventStreamSyntax" or "CommandStreamSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "HandlerSyntax" or "ImplementationSyntax" or "ImplementationHintSyntax" or "FileReferenceSyntax" or "CodeBlockSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "SpecificationCommandSyntax" => ["generatedValues"],
-                        "SpecificationSyntax" => ["thenReturns", "thenDenied", "givenOperationFailures", "thenOperations", "thenCompensated"],
+                        "SpecificationSyntax" => ["thenReturns", "thenDenied", "givenOperationFailures", "thenOperations", "thenCompensated", "thenAbsentReadModels", "thenQueries"],
                         "ScalarCommandResponseSyntax" or "RecordCommandResponseSyntax" or "ResponseFieldSyntax" or "PropertyResponseSourceSyntax" or "ScalarSpecificationReturnSyntax" or "RecordSpecificationReturnSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         _ => []
                     };
-                    foreach (var member in required)
+                    var kindName = actualKind.GetString()!;
+                    foreach (var member in required.Where(member => _exact || !ExactOnly.Contains($"{kindName}.{member}")))
                     {
                         if (!golden.TryGetProperty(member, out _)) _mismatches.Add($"{path}.{member}: the TypeScript syntax omits a required response member");
                         if (!actual.TryGetProperty(member, out _)) _mismatches.Add($"{path}.{member}: the C# syntax omits a required response member");

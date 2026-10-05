@@ -10,6 +10,7 @@ export interface SourceLine {
     readonly raw: string;
     readonly indent: number;
     readonly content: string;
+    readonly contentOffset?: number;
     readonly path?: string;
     readonly startOffset: number;
 }
@@ -17,7 +18,7 @@ export interface SourceLine {
 export const isBlank = (line: SourceLine): boolean => line.content.length === 0;
 
 // The location of the line's first significant character.
-export const locationOf = (line: SourceLine): SourceLocation => sourceLocation(line.number, line.indent + 1, line.path);
+export const locationOf = (line: SourceLine): SourceLocation => sourceLocation(line.number, line.indent + (line.contentOffset ?? 0) + 1, line.path);
 
 // The location of the line's first column, whatever its indent.
 export const startOf = (line: SourceLine): SourceLocation => sourceLocation(line.number, 1, line.path);

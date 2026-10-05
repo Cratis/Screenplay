@@ -6,10 +6,9 @@ import { documentPlacement, PlayPlacement } from './Files/PlayPlacement';
 import { DiscoveredImport, discoverImports as discoverImportsIn } from './Parsing/ImportDiscovery';
 import { InputUse } from './Parsing/InputUses';
 import { validateResponses } from './Parsing/ResponseValidator';
-import { LineReader } from './Parsing/LineReader';
+import { sourceContext } from './Parsing/SourceOptionsParser';
 import { validateInlineEvents } from './Parsing/InlineEventValidator';
 import { validateOperations } from './Parsing/OperationValidator';
-import { ParserContext } from './Parsing/ParserContext';
 import { CommandStreamCandidates } from './Parsing/CommandStreamCandidates';
 import { validateEventSources } from './Parsing/EventSourceValidator';
 import { parseApplication } from './Parsing/ScreenplayParser';
@@ -17,6 +16,16 @@ import { splitLines } from './Parsing/SourceLineSplitter';
 import { PropertySyntax } from './Syntax/Declarations';
 import { ApplicationSyntax } from './Syntax/Structure';
 import { ApplicationSyntaxVisitor } from './Syntax/Visitors';
+import { ProjectionSyntax } from './Syntax/Projections';
+import { CaptureSyntax } from './Syntax/Captures';
+import { SpecificationSyntax } from './Syntax/Specifications';
+import { SyntaxNode } from './Syntax/SyntaxNode';
+import { ParserContext } from './Parsing/ParserContext';
+import { parseProjection } from './Parsing/ProjectionParser';
+import { parseCapture } from './Parsing/CaptureParser';
+import { parseSpecification } from './Parsing/SpecificationParser';
+import { SourceLine, locationOf } from './Parsing/SourceLine';
+import { DiagnosticCodes } from './Diagnostics/DiagnosticCodes';
 
 // What compiling produced: the syntax tree, and the diagnostics found on the way. A tree is always
 // produced, so a document with errors still shows everything that could be read.
@@ -37,11 +46,11 @@ export function parse(source: string, path?: string, placement: PlayPlacement = 
 }
 
 // Additive authoring view: do not widen TypeRefSyntax or the cross-compiler SyntaxJson projection.
-export function parseForAuthoring(source: string, path?: string, placement: PlayPlacement = documentPlacement, validateResponseContracts = true, streamCandidates?: CommandStreamCandidates): CompilationResult<ApplicationSyntax> & { readonly triggerData: readonly PropertySyntax[]; readonly inputUses: readonly InputUse[] } {
+export function parseForAuthoring(source: string, path?: string, placement: PlayPlacement = documentPlacement, validateResponseContracts = true, streamCandidates?: CommandStreamCandidates, languages?: ReadonlySet<string>): CompilationResult<ApplicationSyntax> & { readonly triggerData: readonly PropertySyntax[]; readonly inputUses: readonly InputUse[] } {
     const lines = splitLines(source, false, path);
-    const context = new ParserContext(new LineReader(lines), path);
+    const context = sourceContext(lines, path, languages);
     context.scope = placement;
-    context.streamCandidates = streamCandidates ?? CommandStreamCandidates.capture([lines], placement);
+    context.streamCandidates = streamCandidates ?? CommandStreamCandidates.capture([lines], placement, languages);
     const value = parseApplication(context, lines, placement);
     // Folder assembly validates declaration-dependent contracts once against the merged inventory.
     if (validateResponseContracts) {
@@ -69,7 +78,43 @@ export function compile<T>(source: string, visitor: ApplicationSyntaxVisitor<T>,
 
 // Finds the files a document imports and where in it each import is written - each import with the module
 // and feature names around it, outermost first. Diagnostics are not collected; parsing the document reports them.
-export function discoverImports(source: string, path?: string): DiscoveredImport[] {
+export function discoverImports(source: string, path?: string, languages?: ReadonlySet<string>): DiscoveredImport[] {
     const lines = splitLines(source, false, path);
-    return discoverImportsIn(new ParserContext(new LineReader(lines), path));
+    return discoverImportsIn(sourceContext(lines, path, languages));
+}
+
+// Additive entry points preserve the caller's registry; none can select numeric mode externally.
+export function parseWithLanguages(source: string, languages: ReadonlySet<string>, path?: string, placement: PlayPlacement = documentPlacement): CompilationResult<ApplicationSyntax> {
+    const { value, diagnostics, success } = parseForAuthoring(source, path, placement, true, undefined, languages);
+    return { value, diagnostics, success };
+}
+
+export function parseProjectionSource(source: string, path?: string, languages?: ReadonlySet<string>): CompilationResult<readonly ProjectionSyntax[]> {
+    return parseSourceFamily(source, 'projection', parseProjection, path, languages);
+}
+
+export function parseCaptureSource(source: string, path?: string, languages?: ReadonlySet<string>): CompilationResult<readonly CaptureSyntax[]> {
+    return parseSourceFamily(source, 'capture', parseCapture, path, languages);
+}
+
+export function parseSpecificationSource(source: string, path?: string, languages?: ReadonlySet<string>): CompilationResult<readonly SpecificationSyntax[]> {
+    return parseSourceFamily(source, 'specification', parseSpecification, path, languages);
+}
+
+function parseSourceFamily<T extends SyntaxNode>(source: string, keyword: string, read: (context: ParserContext, line: SourceLine) => T, path?: string, languages?: ReadonlySet<string>): CompilationResult<readonly T[]> {
+    const context = sourceContext(splitLines(source, true, path), path, languages, true);
+    const value: T[] = [];
+    for (let line = context.reader.peekSignificant(); line !== undefined; line = context.reader.peekSignificant()) {
+        context.reader.takeSignificant();
+        if (line.content.startsWith(keyword)) value.push(read(context, line));
+        else {
+            context.error(DiagnosticCodes.UnknownTopLevelConstruct, `Expected '${keyword}', got '${line.content}'`, locationOf(line));
+            context.skipOpaqueBlock(line.indent);
+        }
+    }
+    if (context.sourceOptions.numericMode === 'exact' && value.length === 0 && context.diagnostics.length === 0) {
+        const code = keyword === 'projection' ? DiagnosticCodes.ProjectionDocumentWithoutProjection : keyword === 'capture' ? DiagnosticCodes.CaptureDocumentWithoutCapture : DiagnosticCodes.SpecificationDocumentWithoutSpecification;
+        context.error(code, `Document must contain at least one ${keyword}`, context.start);
+    }
+    return { value, diagnostics: context.diagnostics, success: !context.diagnostics.some(diagnostic => diagnostic.severity === 'error') };
 }

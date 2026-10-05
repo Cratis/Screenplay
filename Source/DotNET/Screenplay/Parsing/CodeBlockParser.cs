@@ -66,6 +66,8 @@ internal static class CodeBlockParser
     internal static string? ParseFencedText(ParserContext context, string opener, SourceLine tagLine, bool allowMarkdown) =>
         ParseFencedBody(context, opener, tagLine, allowMarkdown)?.Code;
 
+    internal static bool IsClosingFence(SourceLine line) => line.Raw.Trim() == "```";
+
     static CodeBlockSyntax? ParseFencedBody(ParserContext context, string opener, SourceLine tagLine, bool allowMarkdown)
     {
         var open = tagLine.Content.StartsWith("```", StringComparison.Ordinal) ? tagLine : context.Reader.PeekSignificant();
@@ -101,7 +103,7 @@ internal static class CodeBlockParser
                 break;
             }
 
-            if (line.Raw.Trim() == "```")
+            if (IsClosingFence(line))
             {
                 closing = line;
                 break;

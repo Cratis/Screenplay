@@ -2,13 +2,16 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { AuthorizeSyntax, PersonaSyntax, PolicyRequirementSyntax } from './Authorization';
-import { CaptureAppendSyntax, CaptureChildrenSyntax, CaptureNestedSyntax, CaptureSourceSettingSyntax, CaptureSourceSyntax, CaptureSyntax } from './Captures';
+import { CaptureAppendSyntax, CaptureChildrenSyntax, CaptureMapOperationSyntax, CaptureNestedSyntax, CaptureSourceSettingSyntax, CaptureSourceSyntax, CaptureSyntax } from './Captures';
 import { CommandSyntax, ValidateSyntax, ValidationRuleSyntax } from './Commands';
 import { ConstraintSyntax } from './Constraints';
+import { ConditionSyntax } from './Conditions';
+import { PolicyConditionSyntax, PolicySyntax } from './Policies';
+import { SeedSyntax } from './Seeds';
 import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, PropertySyntax, ReadModelSyntax, TagSyntax, TypeRefSyntax, TypeSyntax } from './Declarations';
 import { ExpressionSyntax, ObjectMemberSyntax, PropertyMappingSyntax } from './Expressions';
+import { JoinEventSyntax, KeySyntax, MappingSyntax, ProjectionBlockSyntax, ProjectionSyntax } from './Projections';
 import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax } from './EventSources';
-import { JoinEventSyntax, MappingSyntax, ProjectionBlockSyntax, ProjectionSyntax } from './Projections';
 import { QueryParameterSyntax, QuerySyntax } from './Queries';
 import { InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
 import { ScreenDirectiveSyntax, ScreenSyntax } from './Screens';
@@ -38,7 +41,30 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.concepts.forEach(node => this.visitConcept(node));
         syntax.types.forEach(node => this.visitType(node));
         syntax.personas.forEach(node => this.visitPersona(node));
+        syntax.policies?.forEach(node => this.visitPolicy(node));
+        syntax.seeds?.forEach(node => this.visitSeed(node));
         syntax.modules.forEach(node => this.visitModule(node));
+    }
+
+    visitPolicy(syntax: PolicySyntax): void {
+        this.visitNode(syntax);
+        if (syntax.condition !== null) this.visitPolicyCondition(syntax.condition);
+        if (syntax.code !== null) this.visitCodeBlock(syntax.code);
+        if (syntax.file !== null) this.visitFileReference(syntax.file);
+    }
+
+    visitPolicyCondition(syntax: PolicyConditionSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.kind === 'ClaimConditionSyntax' && syntax.matches !== null) this.visitExpression(syntax.matches);
+        if (syntax.kind === 'LogicalPolicyConditionSyntax') { this.visitPolicyCondition(syntax.left); this.visitPolicyCondition(syntax.right); }
+    }
+
+    visitSeed(syntax: SeedSyntax): void {
+        this.visitNode(syntax);
+        syntax.groups.forEach(group => {
+            this.visitNode(group);
+            group.events.forEach(event => { this.visitNode(event); event.properties.forEach(property => this.visitPropertyMapping(property)); });
+        });
     }
 
     visitPersona(syntax: PersonaSyntax): void {
@@ -73,6 +99,7 @@ export abstract class ScreenplaySyntaxWalker {
     visitConcept(syntax: ConceptSyntax): void {
         this.visitNode(syntax);
         syntax.attributes.forEach(node => this.visitNode(node));
+        syntax.validations?.forEach(node => this.visitValidate(node));
     }
 
     visitType(syntax: TypeSyntax): void {
@@ -215,7 +242,10 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitValidate(syntax: ValidateSyntax): void {
         this.visitNode(syntax);
-        if (syntax.kind === 'DeclarativeValidateSyntax') syntax.rules.forEach(node => this.visitValidationRule(node));
+        if (syntax.kind === 'DeclarativeValidateSyntax') {
+            syntax.rules.forEach(node => this.visitValidationRule(node));
+            syntax.requirements?.forEach(node => { this.visitNode(node); this.visitCondition(node.condition); });
+        } else if (syntax.code != null) this.visitCodeBlock(syntax.code);
     }
 
     visitValidationRule(syntax: ValidationRuleSyntax): void {
@@ -256,10 +286,18 @@ export abstract class ScreenplaySyntaxWalker {
     visitQueryParameter(syntax: QueryParameterSyntax): void {
         this.visitNode(syntax);
         this.visitTypeRef(syntax.type);
+        if (syntax.source != null) this.visitExpression(syntax.source);
+    }
+
+    visitKey(syntax: KeySyntax): void {
+        this.visitNode(syntax);
+        if (syntax.kind === 'ExpressionKeySyntax') this.visitExpression(syntax.expression);
+        else syntax.parts.forEach(part => { this.visitNode(part); this.visitExpression(part.expression); });
     }
 
     visitProjection(syntax: ProjectionSyntax): void {
         this.visitNode(syntax);
+        if (syntax.key != null) this.visitKey(syntax.key);
         syntax.blocks.forEach(node => this.visitProjectionBlock(node));
     }
 
@@ -267,7 +305,9 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
         switch (syntax.kind) {
             case 'FromSyntax':
-                syntax.events.forEach(node => this.visitNode(node));
+                syntax.events.forEach(node => { this.visitNode(node); if (node.key != null) this.visitExpression(node.key); });
+                if (syntax.key != null) this.visitKey(syntax.key);
+                if (syntax.parentKey != null) this.visitExpression(syntax.parentKey);
                 syntax.mappings.forEach(node => this.visitMapping(node));
                 break;
             case 'EverySyntax':
@@ -278,12 +318,22 @@ export abstract class ScreenplaySyntaxWalker {
                 syntax.events.forEach(node => this.visitJoinEvent(node));
                 break;
             case 'ProjectionVariantSyntax':
-                syntax.entersOn.forEach(node => this.visitNode(node));
+                syntax.entersOn.forEach(node => { this.visitNode(node); if (node.key != null) this.visitExpression(node.key); });
                 syntax.blocks.forEach(node => this.visitProjectionBlock(node));
                 break;
             case 'ChildrenSyntax':
+                if (syntax.identifiedBy !== undefined) this.visitExpression(syntax.identifiedBy);
+                syntax.blocks.forEach(node => this.visitProjectionBlock(node));
+                break;
             case 'NestedSyntax':
                 syntax.blocks.forEach(node => this.visitProjectionBlock(node));
+                break;
+            case 'RemoveWithSyntax':
+                if (syntax.parentKey != null) this.visitExpression(syntax.parentKey);
+                if (syntax.key != null) this.visitExpression(syntax.key);
+                break;
+            case 'RemoveViaJoinSyntax':
+                if (syntax.key != null) this.visitExpression(syntax.key);
                 break;
         }
     }
@@ -295,10 +345,19 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitMapping(syntax: MappingSyntax): void {
         this.visitNode(syntax);
+        if (syntax.source !== undefined) this.visitExpression(syntax.source);
+        if (syntax.value !== undefined) this.visitExpression(syntax.value);
+    }
+
+    visitCondition(syntax: ConditionSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.kind === 'ComparisonConditionSyntax') this.visitExpression(syntax.right);
+        else { this.visitCondition(syntax.left); this.visitCondition(syntax.right); }
     }
 
     visitReaction(syntax: ReactionSyntax): void {
         this.visitNode(syntax);
+        if (syntax.where != null) this.visitCondition(syntax.where);
         syntax.triggers.forEach(node => this.visitReactionTrigger(node));
     }
 
@@ -311,6 +370,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitProduces(syntax: ProducesSyntax): void {
         this.visitNode(syntax);
+        if (syntax.when != null) this.visitCondition(syntax.when);
         if (syntax.inlineEvent !== null) this.visitEvent(syntax.inlineEvent);
         if (syntax.inlineOperation != null) this.visitOperation(syntax.inlineOperation);
         if (syntax.for !== null) this.visitExpression(syntax.for);
@@ -320,11 +380,13 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitInvokes(syntax: InvokesSyntax): void {
         this.visitNode(syntax);
+        syntax.mappings?.forEach(node => this.visitPropertyMapping(node));
     }
 
     visitCapture(syntax: CaptureSyntax): void {
         this.visitNode(syntax);
         if (syntax.source !== null) this.visitCaptureSource(syntax.source);
+        syntax.map?.forEach(node => this.visitCaptureMap(node));
         syntax.appends.forEach(node => this.visitCaptureAppend(node));
         syntax.children.forEach(node => this.visitCaptureChildren(node));
         syntax.nested.forEach(node => this.visitCaptureNested(node));
@@ -339,17 +401,28 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
     }
 
+    visitCaptureMap(syntax: CaptureMapOperationSyntax): void {
+        this.visitNode(syntax);
+        this.visitExpression(syntax.source);
+        if (syntax.kind === 'CaptureMapEntrySyntax') syntax.translations.forEach(node => this.visitNode(node));
+    }
+
     visitCaptureAppend(syntax: CaptureAppendSyntax): void {
         this.visitNode(syntax);
+        if (syntax.when != null) this.visitNode(syntax.when);
+        syntax.mappings?.forEach(node => this.visitPropertyMapping(node));
+        syntax.tags?.forEach(node => this.visitTag(node));
     }
 
     visitCaptureChildren(syntax: CaptureChildrenSyntax): void {
         this.visitNode(syntax);
+        syntax.map?.forEach(node => this.visitCaptureMap(node));
         syntax.appends.forEach(node => this.visitCaptureAppend(node));
     }
 
     visitCaptureNested(syntax: CaptureNestedSyntax): void {
         this.visitNode(syntax);
+        syntax.map?.forEach(node => this.visitCaptureMap(node));
         syntax.appends.forEach(node => this.visitCaptureAppend(node));
     }
 
@@ -410,6 +483,12 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.whenQuery !== null) this.visitSpecificationWhenQuery(syntax.whenQuery);
         syntax.thenEvents.forEach(node => this.visitSpecificationEvent(node));
         syntax.thenReadModels.forEach(node => this.visitSpecificationReadModel(node));
+        syntax.thenAbsentReadModels?.forEach(node => { this.visitNode(node); this.visitExpression(node.key); });
+        syntax.thenQueries?.forEach(node => {
+            this.visitNode(node);
+            node.arguments.forEach(value => this.visitPropertyMapping(value));
+            node.results.forEach(result => this.visitSpecificationQueryResult(result));
+        });
         syntax.thenResults.forEach(node => this.visitSpecificationQueryResult(node));
         if (syntax.thenNoResult !== null) this.visitNode(syntax.thenNoResult);
         if (syntax.thenDenied != null) this.visitNode(syntax.thenDenied);
@@ -479,6 +558,8 @@ export abstract class ScreenplaySyntaxWalker {
             syntax.items.forEach(item => this.visitExpression(item));
         } else if (syntax.kind === 'ObjectExpressionSyntax') {
             syntax.members.forEach(member => this.visitObjectMember(member));
+        } else if (syntax.kind === 'TemplateExpressionSyntax') {
+            syntax.parts.forEach(part => { this.visitNode(part); if (part.kind === 'TemplateInterpolationSyntax') this.visitExpression(part.expression); });
         }
     }
 

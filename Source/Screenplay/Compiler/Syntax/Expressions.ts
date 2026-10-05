@@ -2,11 +2,12 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { SyntaxNode } from './SyntaxNode';
+import { ExactNumber } from './ExactNumber';
 
-// A literal value. Numbers are doubles, as in C#, and SyntaxJson writes them as plain JSON numbers.
+// Legacy literals retain Double interpretation; Exact values use explicit canonical-string slots.
 export interface LiteralExpressionSyntax extends SyntaxNode {
     readonly kind: 'LiteralExpressionSyntax';
-    readonly value: string | number | boolean | null;
+    readonly value: string | number | boolean | null | ExactNumber;
 }
 
 export interface PathExpressionSyntax extends SyntaxNode {
@@ -59,7 +60,40 @@ export interface RawExpressionSyntax extends SyntaxNode {
     readonly text: string;
 }
 
+export interface EventSourceIdExpressionSyntax extends SyntaxNode {
+    readonly kind: 'EventSourceIdExpressionSyntax';
+}
+
+export interface EventContextExpressionSyntax extends SyntaxNode {
+    readonly kind: 'EventContextExpressionSyntax';
+    readonly path: string;
+}
+
+export interface CausedByExpressionSyntax extends SyntaxNode {
+    readonly kind: 'CausedByExpressionSyntax';
+    readonly property: string | null;
+}
+
+export interface TemplateTextSyntax extends SyntaxNode {
+    readonly kind: 'TemplateTextSyntax';
+    readonly text: string;
+}
+
+export interface TemplateInterpolationSyntax extends SyntaxNode {
+    readonly kind: 'TemplateInterpolationSyntax';
+    readonly expression: ExpressionSyntax;
+}
+
+export interface TemplateExpressionSyntax extends SyntaxNode {
+    readonly kind: 'TemplateExpressionSyntax';
+    readonly parts: readonly (TemplateTextSyntax | TemplateInterpolationSyntax)[];
+}
+
 export type ExpressionSyntax =
+    | EventSourceIdExpressionSyntax
+    | EventContextExpressionSyntax
+    | CausedByExpressionSyntax
+    | TemplateExpressionSyntax
     | LiteralExpressionSyntax
     | PathExpressionSyntax
     | ContextExpressionSyntax
