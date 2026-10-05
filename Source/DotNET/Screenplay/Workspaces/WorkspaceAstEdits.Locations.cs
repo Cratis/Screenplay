@@ -30,7 +30,80 @@ internal sealed partial class WorkspaceAstEdits
     /// Unchanged JSON objects retain their own locations in the map. For a replaced subtree, match equal
     /// siblings first, then same-kind named siblings, and only use indexes when collection lengths agree.
     /// </summary>
-    void CarrySourceLocations(JsonNode original, JsonNode replacement, bool ruleLineage = false)
+    void CarrySourceLocations(JsonNode original, JsonNode replacement)
+    {
+        if (_sourceLocations.TryGetValue(original, out var location))
+        {
+            _sourceLocations[replacement] = location;
+        }
+
+        if (_sourceComments.TryGetValue(original, out var comments))
+        {
+            _sourceComments[replacement] = comments;
+        }
+
+        if (_directiveLocations.TryGetValue(original, out var directives))
+        {
+            _directiveLocations[replacement] = directives;
+        }
+
+        if (_parsedAutoMapModes.TryGetValue(original, out var mode))
+        {
+            _parsedAutoMapModes[replacement] = mode;
+        }
+
+        if (original is JsonObject oldObject && replacement is JsonObject newObject)
+        {
+            foreach (var (name, child) in newObject)
+            {
+                if (child is not null && oldObject[name] is { } previous)
+                {
+                    CarrySourceLocations(previous, child);
+                }
+            }
+        }
+        else if (original is JsonArray oldArray && replacement is JsonArray newArray)
+        {
+            var matched = new HashSet<int>();
+            for (var position = 0; position < newArray.Count; position++)
+            {
+                if (newArray[position] is not { } child)
+                {
+                    continue;
+                }
+
+                var match = Enumerable.Range(0, oldArray.Count).FirstOrDefault(
+                    candidate => !matched.Contains(candidate) && JsonNode.DeepEquals(oldArray[candidate], child),
+                    -1);
+                if (match < 0 && child is JsonObject named && named["name"] is not null)
+                {
+                    match = Enumerable.Range(0, oldArray.Count).FirstOrDefault(
+                        candidate => !matched.Contains(candidate) && oldArray[candidate] is JsonObject previous &&
+                            JsonNode.DeepEquals(previous["kind"], named["kind"]) &&
+                            JsonNode.DeepEquals(previous["name"], named["name"]),
+                        -1);
+                }
+
+                if (match < 0 && oldArray.Count == newArray.Count && position < oldArray.Count &&
+                    !matched.Contains(position) && oldArray[position] is JsonObject previousAtIndex &&
+                    child is JsonObject currentAtIndex && JsonNode.DeepEquals(previousAtIndex["kind"], currentAtIndex["kind"]))
+                {
+                    match = position;
+                }
+
+                if (match >= 0 && oldArray[match] is { } previousChild)
+                {
+                    matched.Add(match);
+                    CarrySourceLocations(previousChild, child);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Carries rule-occurrence lineage (pending proof) only. Never touches printer metadata.
+    /// </summary>
+    void CarryRuleLineage(JsonNode original, JsonNode replacement, bool ruleLineage)
     {
         CarryNodeMetadata(original, replacement, ruleLineage);
         if (original is JsonObject oldObject && replacement is JsonObject newObject)
@@ -39,7 +112,7 @@ internal sealed partial class WorkspaceAstEdits
             {
                 if (child is not null && oldObject[name] is { } previous)
                 {
-                    CarrySourceLocations(previous, child, ruleLineage);
+                    CarryRuleLineage(previous, child, ruleLineage);
                 }
             }
         }
@@ -54,36 +127,14 @@ internal sealed partial class WorkspaceAstEdits
             Match((previous, current) => previous is JsonObject prior && current is JsonObject named && named["name"] is not null &&
                 JsonNode.DeepEquals(prior["kind"], named["kind"]) && JsonNode.DeepEquals(prior["name"], named["name"]));
 
-            // Printer metadata (comments, locations) follows merge-base sequential and positional matching, so
-            // duplicate ordinary rules keep their comments. This never grants pending lineage: metadata-only
-            // carrying passes ruleLineage false, and rule occurrence proof stays with the strict matches above.
-            for (var position = 0; position < newArray.Count; position++)
-            {
-                if (carried.Contains(position) || newArray[position] is not JsonObject current || !IsRule(current))
-                {
-                    continue;
-                }
-
-                var candidate = Enumerable.Range(0, oldArray.Count).FirstOrDefault(
-                    index => !matched.Contains(index) && !CompetingBareRule(newArray, oldArray[index]) && !AmbiguousBareRule(oldArray, current) &&
-                        JsonNode.DeepEquals(oldArray[index], current),
-                    -1);
-                if (candidate >= 0)
-                {
-                    matched.Add(candidate);
-                    carried.Add(position);
-                    CarrySourceLocations(oldArray[candidate]!, current, ruleLineage: false);
-                }
-            }
-
             // Coordinates and equal collection lengths are printer hints, not rule-occurrence identity.
             for (var position = 0; position < newArray.Count && oldArray.Count == newArray.Count; position++)
             {
-                if (!carried.Contains(position) && !matched.Contains(position) && oldArray[position] is JsonObject previous &&
+                if (ruleLineage && !carried.Contains(position) && !matched.Contains(position) && oldArray[position] is JsonObject previous &&
                     newArray[position] is JsonObject current && JsonNode.DeepEquals(previous["kind"], current["kind"]) &&
                     (!IsRule(current) || (!CompetingBareRule(newArray, previous) && !AmbiguousBareRule(oldArray, current))))
                 {
-                    CarrySourceLocations(previous, current, ruleLineage && !IsRule(current));
+                    CarryRuleLineage(previous, current, !IsRule(current));
                 }
             }
 
@@ -97,7 +148,7 @@ internal sealed partial class WorkspaceAstEdits
                     {
                         matched.Add(candidates[0]);
                         carried.Add(position);
-                        CarrySourceLocations(oldArray[candidates[0]]!, newArray[position]!, ruleLineage);
+                        CarryRuleLineage(oldArray[candidates[0]]!, newArray[position]!, ruleLineage);
                     }
                 }
             }
@@ -133,31 +184,10 @@ internal sealed partial class WorkspaceAstEdits
 
     void CarryNodeMetadata(JsonNode original, JsonNode replacement, bool ruleLineage)
     {
-        // Container matching carries printer metadata, not rule-occurrence proof. Descendant
-        // obligations are compared together once per final command owner for the whole transaction.
+        // Lineage only: printer metadata follows the unchanged merge-base matching in CarrySourceLocations.
         if (ruleLineage && _ruleOrigins.TryGetValue(original, out var origin))
         {
             _ruleOrigins[replacement] = origin;
-        }
-
-        if (_sourceLocations.TryGetValue(original, out var location))
-        {
-            _sourceLocations[replacement] = location;
-        }
-
-        if (_sourceComments.TryGetValue(original, out var comments))
-        {
-            _sourceComments[replacement] = comments;
-        }
-
-        if (_directiveLocations.TryGetValue(original, out var directives))
-        {
-            _directiveLocations[replacement] = directives;
-        }
-
-        if (_parsedAutoMapModes.TryGetValue(original, out var mode))
-        {
-            _parsedAutoMapModes[replacement] = mode;
         }
     }
 
@@ -183,18 +213,15 @@ internal sealed partial class WorkspaceAstEdits
                 }
 
                 _ruleOrigins[json] = origin;
-                _sourceComments[json] = rule.SourceComments;
-                _directiveLocations[json] = rule.DirectiveLocations;
-                _sourceLocations[json] = rule.Location;
             }
         }
 
-        if (node.SourceComments.Length > 0 || node.Location.Line > 1)
+        if (node.SourceComments.Length > 0)
         {
             _sourceComments[json] = node.SourceComments;
         }
 
-        if (node.DirectiveLocations.Count > 0 || node.Location.Line > 1)
+        if (node.DirectiveLocations.Count > 0)
         {
             _directiveLocations[json] = node.DirectiveLocations;
         }

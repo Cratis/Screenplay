@@ -111,8 +111,10 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
                 }
                 else
                 {
-                    CarrySourceLocations(edit.Original!, inserted, ruleLineage: true);
+                    CarryRuleLineage(edit.Original!, inserted, ruleLineage: true);
                 }
+
+                CarrySourceLocations(edit.Original!, inserted);
 
                 if (edit.Target.Handle.Document != edit.Destination!.Parent.Handle.Document || !LocationAgreesWithInsertion(edit.Destination, inserted))
                 {
@@ -502,7 +504,8 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
     {
         if (replacement is not null)
         {
-            CarrySourceLocations(original, replacement, ruleLineage: target.Node is ValidationRuleSyntax);
+            CarrySourceLocations(original, replacement);
+            CarryRuleLineage(original, replacement, ruleLineage: target.Node is ValidationRuleSyntax);
             if (value is not null)
             {
                 CarryReplacementMetadata(value, replacement);
