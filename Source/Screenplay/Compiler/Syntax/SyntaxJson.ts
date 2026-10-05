@@ -13,6 +13,7 @@ export type SyntaxJsonValue = string | number | boolean | null | SyntaxJsonValue
 
 const isNode = (value: unknown): value is SyntaxNode =>
     typeof value === 'object' && value !== null && typeof (value as { kind?: unknown }).kind === 'string';
+const omitted = new Set(['kind', 'location', 'targetLocation', 'referenceLocation', 'referenceLength', 'nameWasEscaped']);
 const sourceRoots = new Set(['ApplicationSyntax', 'ProjectionSyntax', 'CaptureSyntax', 'SpecificationSyntax']);
 
 // The canonical JSON form of a syntax tree, the same form the C# SyntaxJson writes: 'kind' first, then the
@@ -41,7 +42,7 @@ function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJ
         if (value.kind === 'CommandSyntax' && structural.stream === undefined) structural.stream = null;
         if (value.kind === 'CommandSyntax' && structural.streamCandidates === undefined) structural.streamCandidates = [];
         const known = owningMode === 'exact' ? syntaxMemberNames(value.kind) : undefined;
-        const members = Object.keys(structural).filter(member => (known === undefined || known.has(member)) && !(owningMode === 'legacy' && !complete && isExactOnlyMember(value.kind, member)) && member !== 'kind' && member !== 'location' && member !== 'targetLocation' && member !== 'referenceLocation' && member !== 'referenceLength' && member !== 'nameWasEscaped' && !(value.kind === 'OperationSyntax' && member === 'usesLocation')).sort(ordinal);
+        const members = Object.keys(structural).filter(member => (known === undefined || known.has(member)) && !(owningMode === 'legacy' && !complete && isExactOnlyMember(value.kind, member)) && !omitted.has(member) && !(value.kind === 'OperationSyntax' && member === 'usesLocation')).sort(ordinal);
         for (const member of members) {
             const memberValue = structural[member];
             if (member === 'sourceOptions' && (memberValue as { numericMode?: string } | undefined)?.numericMode === 'legacy') continue;
@@ -50,8 +51,8 @@ function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJ
         return result;
     }
     if (value === undefined) return null;
-    if (typeof value === 'object' && value !== null && (value as { literalType?: unknown }).literalType === 'ExactNumber') return { literalType: 'ExactNumber', value: (value as { value: string }).value };
-    return value as SyntaxJsonValue;
+    // A fresh copy drops any inherited or non-enumerable toJSON hook that could round a number.
+    return (typeof value === 'object' && value !== null ? { ...value } : value) as SyntaxJsonValue;
 }
 
 function validateNumbers(value: unknown, owningMode: string, depth: number): void {

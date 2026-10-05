@@ -340,14 +340,9 @@ function parseAbsentReadModel(context: ParserContext, line: SourceLine): Specifi
     return hasChildren || !concrete ? null : { kind: 'SpecificationAbsentReadModelSyntax', name: match[1], key, location: locationOf(line) } as SpecificationAbsentReadModelSyntax;
 }
 
-// Skipped bodies are not modeled, but an Exact document must not hide a numeric directive in one.
 function skipBody(context: ParserContext, indent: number): void {
     if (context.sourceOptions.numericMode !== 'exact') return context.skipBlock(indent);
-    for (let child = context.peekChild(indent); child !== undefined; child = context.peekChild(indent)) {
-        context.reader.takeSignificant();
-        if (/^numbers(?!\s*[=:])(\s|$)/.test(child.content)) context.error(DiagnosticCodes.InvalidNumericDirective, "Expected 'numbers exact' only as the document preamble, not inside a specification body.", locationOf(child));
-        else if (child.content.startsWith('```')) context.skipFencedBody();
-    }
+    context.skipOpaqueBlock(indent, child => /^numbers(?!\s*[=:])(\s|$)/.test(child.content) && context.error(DiagnosticCodes.InvalidNumericDirective, "Unexpected 'numbers'", locationOf(child)));
 }
 
 function parseClock(context: ParserContext, line: SourceLine, keyword: string): SpecificationClockSyntax | null {

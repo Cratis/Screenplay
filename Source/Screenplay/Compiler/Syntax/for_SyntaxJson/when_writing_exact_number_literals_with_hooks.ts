@@ -8,9 +8,9 @@ import { toSyntaxJson } from '../SyntaxJson';
 describe('when writing exact number literals carrying serialization hooks', () => {
     const hooked = (hook: (tag: object) => void): string => {
         const result = parseSpecificationSource('numbers exact\nspecification S\n  when C\n    n = 9007199254740993\n');
-        const literal = JSON.stringify(result.value, (_, v) => v) && findTag(result.value);
-        hook(literal);
-        return JSON.stringify(toSyntaxJson(result.value![0] as never));
+        const tree = structuredClone(result.value![0]);
+        hook(findTag(tree));
+        return JSON.stringify(toSyntaxJson(tree as never));
     };
 
     const findTag = (value: unknown): object => {

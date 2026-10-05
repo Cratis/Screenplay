@@ -73,10 +73,11 @@ export class ParserContext {
     // Skips the body of a construct this compiler deliberately does not model. Unlike skipBlock it steps
     // over fenced code blocks whole, because a fenced line may be indented less than the block it is in -
     // reading it as significant would end the skip early and misread the code as Screenplay.
-    skipOpaqueBlock(parentIndent: number): void {
+    skipOpaqueBlock(parentIndent: number, visit?: (line: SourceLine) => void): void {
         let child = this.peekChild(parentIndent);
         while (child !== undefined) {
             this.reader.takeSignificant();
+            visit?.(child);
             if (child.content.startsWith('```')) {
                 this.skipFencedBody();
             }
