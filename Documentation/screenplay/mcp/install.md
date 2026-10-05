@@ -138,9 +138,10 @@ Host developers can consult the [embedding API](reference.md#embedding-api).
 ## Repair-capable server setup
 
 The server exposes a [repair contract v1](reference.md#repair-contract-v1-and-pinned-evidence)
-for saved-file `PLAY0166` and `PLAY0478` proposals. This is server support, not a
-released VS Code repair-process bridge or a browser Monaco process. Registering
-Copilot MCP or installing a desktop plugin does not enable those editor actions.
+for saved-file `PLAY0166` and `PLAY0478` proposals. The experimental
+[VS Code repair bridge](../vscode.md#preview-saved-file-c-repairs) is a separate,
+explicitly configured process client; browser Monaco does not spawn a process.
+Registering Copilot MCP or installing a desktop plugin does not enable editor repairs.
 
 An editor host must explicitly approve an executable and one existing physical
 application root. Supported process forms are `cratis screenplay mcp ROOT`,
@@ -157,7 +158,24 @@ older or incompatible contracts rather than downgrading evidence protection. Bot
 initial actions require pinned mode in that host, complete preview and explicit
 Apply. CLI 3.25.0 is the desktop-management prerequisite only; it does not prove
 repair-contract support in an embedded compiler. Check the actual server's tool
-and contract, and only claim compatibility for distributions containing it.
+and contract, and only claim compatibility for distributions containing it. The
+capability-supporting server must be released before a CLI or bundle embedding it
+can be called compatible; no specific CLI release is established here.
+
+For VS Code, configure these exact launch forms as an absolute executable plus
+separate argument-prefix strings in **User settings**:
+
+| User-installed executable | `screenplay.repairs.arguments` | Effective invocation |
+| --- | --- | --- |
+| Absolute `cratis` path | `["screenplay", "mcp"]` | `cratis screenplay mcp /absolute/model/root` |
+| Absolute `screenplay` path | `["mcp"]` | `screenplay mcp /absolute/model/root` |
+| Absolute unpacked `server/Cratis.Screenplay.Tool` path (`.exe` on Windows) | `["mcp"]` | `Cratis.Screenplay.Tool mcp /absolute/model/root` |
+
+Set `screenplay.repairs.modelRoot` to that existing physical directory and
+`screenplay.repairs.enabled` to `true`. The extension appends the root, launches
+without a shell and verifies the runtime contract. Keep the complete verified
+bundle together; do not copy just its binary or read a desktop host's private
+installation cache. This setup does not change the Copilot registration below.
 
 ## Choose where the model lives
 

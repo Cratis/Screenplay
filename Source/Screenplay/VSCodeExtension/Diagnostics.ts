@@ -49,12 +49,19 @@ function fromCompiler(document: vscode.TextDocument, compiled: CompilerDiagnosti
 // reported with it. A document outside every workspace folder is validated on its own.
 export function registerDiagnostics(context: vscode.ExtensionContext, index: ApplicationIndex): void {
     const collection = vscode.languages.createDiagnosticCollection(languageId);
-    context.subscriptions.push(collection);
-
     const handles = new Map<string, ReturnType<typeof setTimeout>>();
+    let disposed = false;
+    context.subscriptions.push({
+        dispose: () => {
+            disposed = true;
+            handles.forEach(handle => clearTimeout(handle));
+            handles.clear();
+            collection.dispose();
+        },
+    });
 
     const refresh = (document: vscode.TextDocument) => {
-        if (document.languageId !== languageId || document.isClosed) return;
+        if (disposed || document.languageId !== languageId || document.isClosed) return;
         const lines = document.getText().split(/\r?\n/);
         const file = index.fileOf(document.uri);
         const compilerDiagnostics = file?.application.diagnosticsFor(file.path);
@@ -64,17 +71,21 @@ export function registerDiagnostics(context: vscode.ExtensionContext, index: App
         collection.set(document.uri, [...issues, ...compiled.filter(diagnostic => !reported.has(`${diagnostic.code}:${diagnostic.range.start.line}`))]);
     };
     const scheduleRefresh = (document: vscode.TextDocument) => {
-        if (document.languageId !== languageId) return;
+        if (disposed || document.languageId !== languageId) return;
         const key = document.uri.toString();
         const pending = handles.get(key);
         if (pending !== undefined) clearTimeout(pending);
-        handles.set(key, setTimeout(() => refresh(document), validationDelay));
+        handles.set(key, setTimeout(() => {
+            handles.delete(key);
+            refresh(document);
+        }, validationDelay));
     };
 
     context.subscriptions.push(
         vscode.workspace.onDidOpenTextDocument(refresh),
         vscode.workspace.onDidChangeTextDocument((event) => scheduleRefresh(event.document)),
         vscode.workspace.onDidCloseTextDocument((document) => {
+            if (disposed) return;
             const pending = handles.get(document.uri.toString());
             if (pending !== undefined) clearTimeout(pending);
             handles.delete(document.uri.toString());

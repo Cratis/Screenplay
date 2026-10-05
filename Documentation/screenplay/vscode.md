@@ -22,6 +22,15 @@ its board. For other places to open the same board, see
 *Extension 4.48.1 in code-server, showing Commerce. Newer versions focus the board
 on the open file's slices; open `application.play` for the whole application.*
 
+## Restricted Mode
+
+In an untrusted workspace, the board and local language assistance (including
+TypeScript diagnostics) remain available. C# repair processes require workspace
+trust and explicit User settings; they never run in Restricted Mode. VS Code
+ignores workspace overrides for `screenplay.sourceRoot` and the repair settings
+until you trust the workspace. A source-root override can point outside the
+workspace, so review it before granting trust.
+
 ## Generated values and responses (syntax-only)
 
 The editor recognizes [generated command values and response contracts](commands.md#generated-values-and-responses-syntax-only), including fixture and assertion fields, inferred response types and generated-not-input hints. Completion uses the current source, including unsaved edits. Compiler diagnostics validate the syntax; acceptance does not enable execution. These constructs remain unavailable until ESM v8, and binding reports `PLAY0268` without a semantic model.
@@ -158,11 +167,180 @@ The board is drawn by the extension's own [TypeScript compiler](typescript-compi
 
 The text editor also reports `PLAY0478` as information when a plain production
 omits `for` and its command has an identifier. This is advice, not a new routing
-default. Monaco and VS Code offer no quick fix for `PLAY0478`, because stating `for`
-can change where events land and the editors do not host the C# workspace repair
-transaction. Use the [MCP repair workflow](mcp/authoring-tools.md#fix-a-diagnostic)
-to preview an explicit `for` (or to declare a missing produced event), then review
-and apply the typed proposal.
+default. Monaco keeps this advice-only behavior. VS Code can optionally use the
+C# repair transaction below; neither editor tries to prove routing safety in
+TypeScript. The [MCP repair workflow](mcp/authoring-tools.md#fix-a-diagnostic)
+remains available separately.
+
+## Preview saved-file C# repairs
+
+This **experimental, opt-in** bridge offers only `PLAY0166` (declare a missing
+produced event) and `PLAY0478` (explicitly route to the command identifier).
+`PLAY0478` changes routing; it is not cleanup. C# decides eligibility across the
+physical application. Extraction, `PLAY0469`, rename and a Monaco host bridge are
+not included. Local `PLAY0471` and `PLAY0479` fixes remain unchanged.
+
+Install a compatible server yourself using the [repair server setup](mcp/install.md#repair-capable-server-setup).
+The server must expose repair contract v1, including pinned evidence and structured
+failures. Older servers are refused, not downgraded. A CLI version alone does not
+prove compatibility: capability support must be released in the server and included
+in the CLI or bundle you install before that distribution is compatible.
+
+In **User settings**, configure the absolute executable and one existing physical
+model directory inside your trusted filesystem workspace. For a complete unpacked
+native bundle, replace these illustrative paths with your installation:
+
+```json
+{
+    "screenplay.repairs.enabled": true,
+    "screenplay.repairs.executable": "/Users/you/tools/screenplay/server/Cratis.Screenplay.Tool",
+    "screenplay.repairs.arguments": ["mcp"],
+    "screenplay.repairs.modelRoot": "/Users/you/work/shop/specifications"
+}
+```
+
+On Windows, use the binary's `.exe` path with JSON-escaped backslashes. For an
+installed `screenplay` tool, use its absolute executable path and `["mcp"]`. For
+`cratis`, use its absolute executable path and `["screenplay", "mcp"]`. The model
+root is appended as **one argument**; do not put it in the prefix or add shell
+quotes. Workspace/folder overrides are refused even if they match User settings.
+A remote extension host needs its own compatible native installation and paths
+on that host; a local binary cannot serve it. If no compatible binary exists for
+that host's OS/architecture, use local native VS Code instead. Browser and virtual
+workspaces cannot run this bridge. The VSIX contains JavaScript only;
+it does not download a server, install .NET, invoke Docker or run an AI agent.
+
+1. Save or discard changed buffers yourself, including sibling `.play` files,
+   attachments and `.screenplay` metadata, even associated unsaved (untitled) files
+   whose destination is under the root. An unassociated untitled document has no
+   provable destination: save or close it before repair. Proven outside-root
+   associated documents do not block repair. The extension never autosaves.
+2. Run **Screenplay: Discover Saved-File C# Repairs**. This explicit command also
+   explains trust, executable, dirty-buffer and contract refusals. Saved-source
+   C# diagnostics use a separate collection; dirty-buffer local diagnostics remain.
+3. Select the C# lightbulb action at the server-attributed occurrence. Consent to
+   canonical formatting for every touched document, then wait for the complete
+   read-only source **and identity-state** previews. Discovery and proposals write
+   nothing. Incomplete or oversized review disables Apply (16 MiB combined bytes,
+   at most 64 changed source documents). Metadata views are bounded to 10,000
+   items and 16 MiB each.
+4. Review every diff and the summary: routing consequences, byte hashes/BOM/line
+   endings, authoring diagnostics and executable readiness. Readiness describes
+   the compiler's executable subset, not implementation execution or runtime
+   confirmation. Switch tabs and scroll the read-only diffs at your own pace;
+   dismissing the nonmodal notice keeps the review. The summary retains the root,
+   proposal, source revisions and evidence pins. Choose **Screenplay: Apply
+   Reviewed C# Repair** from the Command Palette, editor title or status bar,
+   then confirm **Apply**. Only that command opens final confirmation. Canceling
+   confirmation keeps the review; **Screenplay: Discard C# Repair** releases it.
+
+When C# returns a refusal, **Inspect conflict details** opens its structured
+failure, conflict kinds and diagnostics in a read-only view. A refused operation
+has no Apply authority. A definite server refusal **after dispatch** is treated
+conservatively as an uncertain Apply outcome too; its nested failure kind remains
+available in conflict details and inspection.
+
+Each approved root has one persistent connection and one Node recursive watcher
+on the extension host, alongside VS Code and buffer observers. The actual host
+must support recursive `fs.watch` (Linux requires Node 19.1 or newer); setup-tool
+Node versions do not establish the embedded runtime. Registration failures,
+including watch-resource exhaustion, refuse repairs with `WatchUnavailable`;
+there is no silent VS Code-only fallback or automatic retry. Local language
+assistance and read-only recovery inspection remain available. Linux can allocate
+per-entry kernel watches even though the connection owns one watcher object.
+
+Opening a clean saved root document does not invalidate an active review; the
+server still verifies disk bytes at Apply. Dirty or untitled root buffers remain
+refused.
+
+Every root notification immediately invalidates review, including ordinary child
+creation, deletion, atomic replacement and the repair's own writes. With a healthy
+watch on the same approved physical root, fresh C#-validated discovery does not
+restart the connection. The watcher captures native device/volume and inode/file
+identity using BigInt; it checks root identity and nonlinked path components after
+notifications and before granting new authority. Missing, replaced, linked or
+unprovable roots, reported watcher errors (including overflow) and unexpected
+closure latch `WatchInvalidated` and require deliberate reconnect through
+**Screenplay: Discover Saved-File C# Repairs**. An unavailable or zero native file
+identity is refused, never replaced with a lexical-path comparison. On Windows,
+zero volume identity is also refused: libuv can report zero when native volume
+information is unavailable, indistinguishable from a genuine zero serial. These
+filesystems have limited support (`WatchUnavailable`), not working editor repairs;
+use a supported host/filesystem exposing provable native identity. Unix device zero
+is not this Windows sentinel and is not refused merely for being zero.
+
+These bounded root checks do not scan content. Watching never writes readiness
+probes, ignores filenames or suppresses self-writes, and does not prove that all
+filesystem changes have been delivered; Node does not report every possible event
+loss. C# still checks exact source, catalog, state and frozen base/candidate
+evidence. These actions are never preferred, fix-all or on-save.
+
+Concurrent provider and manual discovery share one validated read only within the
+same connection, invalidation epoch and saved-buffer decision. Cancelling one
+consumer does not cancel another; the underlying read keeps its transport deadline.
+Invalidated results cannot issue fresh tokens. Review, Apply and uncertain recovery
+are not shared or queued as discovery; finish the review or inspect the outcome
+before asking for another operation.
+
+Root/configuration changes retire the old connection and watchers. A dispatched
+Apply keeps its process until the outcome is known; replacement proposals stay
+blocked during that interval. Notifications from its own installation invalidate
+review but do not cancel Apply. Verified installation remains installed even if
+watching subsequently requires reconnect; buffer reconciliation is separate.
+Dispatch itself sets a reconnect barrier, without waiting for filesystem events:
+no new repair authority is available until the outcome is classified and you
+choose **Screenplay: Discover Saved-File C# Repairs** to reconnect. A replaced root
+cannot be inspected as though it were an uncertain transaction's original root.
+
+Apply writes outside the editor and is **not normal editor Undo**. Use an exclusive
+writer while applying. Journaled rollback does not guarantee crash-atomic visibility
+across files. After verified installation, the extension observes ordinary
+saved-buffer reloads for five seconds. If an editor still shows old content, or you
+type after dispatch, it reports **Disk repair installed; editor synchronization
+pending**. That is a successful disk installation with pending editor reconciliation,
+not an Apply failure. Dirty buffers are preserved. Further proposals, including
+explicit reconnects, stay blocked until affected buffers actually match the reviewed
+content or VS Code disposes the affected models. Closing a tab does not guarantee
+model disposal; reopening can return the same cached old text. A closed cached
+model still counts toward the reconciliation barrier.
+
+You can independently choose VS Code's **File: Revert File** to reload a clean
+stale file. Focus that exact plain file editor, with no other Open Editors selection,
+and check that it is clean. Revert is a native user action, not a repair action or
+permission granted by Apply consent. It can overwrite changes typed while it runs;
+do not type during it or use it on a dirty buffer whose changes you need. Verify the
+actual text against the installed content, then deliberately choose **Screenplay:
+Discover Saved-File C# Repairs**. The extension never invokes Revert automatically,
+autosaves buffers or replays Apply.
+
+Cancellation discards queued reads or drains an in-flight read within its deadline.
+Once Apply is dispatched, a timeout, disconnect or any failure, including a
+definite server refusal, means the client treats the outcome as **uncertain**, not
+“cancelled without changes.” It never retries automatically.
+
+To resume without reloading the window:
+
+1. Run **Screenplay: Inspect C# Repair Identity and Recovery State** for the
+   uncertain root. The result opens as a read-only `screenplay-repair` JSON view,
+   not an untitled buffer. It shows retained identity/recovery state and the
+   structured uncertain Apply failure. Inspection itself does not recover or
+   authorize another Apply.
+2. Inspect the workspace on disk and follow the [recovery guide](mcp/recovery.md)
+   (`Documentation/screenplay/mcp/recovery.md`). Preserve unsaved typing yourself.
+3. Choose **Screenplay: Resume repairs after inspection**, available only while
+   an uncertain-outcome block exists. Confirm the modal acknowledgement that the
+   previous outcome was uncertain and that you inspected the workspace and followed
+   the guide. Declining leaves the block in place.
+4. Discover repairs again. Resume disposes the retained connection; the next action
+   starts a fresh, revision-checked session. No old Apply, token or review is reused.
+   Dirty-buffer and other normal repair guards still apply.
+
+Resume requires a successful read-only inspection for **this recovery in this
+window session**, against the retained physical root identity. It rechecks that
+identity before and after consent. A replaced root cannot pass inspection or resume,
+including when replacement happened after inspection. Reload the window, review the
+new root and deliberately configure/discover it instead; reload does not recover
+the previous transaction.
 
 ## Theme
 
@@ -181,3 +359,70 @@ yarn workspace screenplay build
 ```
 
 Press **F5** in VS Code to start an Extension Development Host with the extension loaded, and package a `.vsix` with `yarn workspace screenplay package`. The board's page is `Source/Screenplay/VSCodeExtension/Webview`, a React application bundled with the extension. It renders `@cratis/event-models` under a content security policy that allows no `eval`.
+
+The ordinary `yarn workspace screenplay test` suite uses a VS Code stub for local
+editor tests. Build the C# tool, then run `yarn workspace screenplay test:repair-process`
+for the real subprocess gate; it fails rather than skips when the tool is missing.
+Set `SCREENPLAY_REPAIR_SERVER` to an absolute compatible binary if you are not using
+`Source/DotNET/Tool/bin/Debug/net10.0/Cratis.Screenplay.Tool` (`.exe` on Windows).
+
+For native extension-host tests, run `yarn workspace screenplay build:test-host`,
+then `yarn workspace screenplay test:host` with `VSCODE_EXECUTABLE_PATH` pointing to
+your installed native VS Code executable. The standard `@vscode/test-electron`
+harness uses synthetic models and host data on the native physical temporary
+filesystem (including short socket paths). It retains location manifests and
+native logs under `.ai-work/`; it never downloads a runtime locally. Set
+`SCREENPLAY_REPAIR_VSIX` to an absolute packaged VSIX to install and test that
+artifact in isolation rather than the development extension. The production
+extension must resolve from that installed package; the test driver is separate.
+
+The scoped **Native editor repairs** CI workflow runs the real subprocess gate
+and installed-VSIX host gate against self-contained servers on Linux, Windows
+and macOS. It explicitly provisions pinned native VS Code with the existing
+`@vscode/test-electron` dependency; Linux runs `xvfb-run --auto-servernum yarn
+workspace screenplay test:host`. A failing or unavailable safety case fails the
+lane, rather than silently skipping it. When Windows exposes ambiguous zero-volume
+identity, the lane instead requires actual installed-client `WatchUnavailable`
+refusal with no server discovery or Apply; it does not claim working repair support.
+
+The host suite requires switching and scrolling actual source and identity diffs
+before invoking the contributed Apply command. Its assertions require notification
+dismissal, explicit discard,
+associated untitled source/attachment/state refusal before discovery and after
+review, exact-byte installation, truthful bounded saved-buffer synchronization or
+pending warnings, blocked proposals while pending, a separately chosen native
+**File: Revert File** action on an unambiguous clean target, exact-text verification
+within five seconds, deliberate installed refresh and controlled post-dispatch
+dirty-buffer preservation. No typing occurs during the separate user Revert phase;
+the post-dispatch race tests product buffer preservation without Revert. The direct
+RPC suite covers server transaction behavior on a separate physical root, without
+requiring cached-model disposal or counting pending text as reloaded. Installed
+command tests separately require the real client reconciliation UI and authority
+barriers. These are required safety cases, not a claim that a native run completed
+them: an early failure leaves later cases unverified. Backend reload lag alone is
+not a failed installation, but neither is it silently counted as synchronization.
+Native shutdown logs must contain no disposed-resource exception after a real
+read-only inspection is left pending. Dialog replies and the timing of the real subprocess
+reply are controlled. Human keyboard/mouse modal interaction and uncontrolled
+keyboard race timing are **not** exercised by these tests; do not describe them
+as manual native coverage. The harness records `process.versions` inside the
+actual extension host. The launcher prepares all baseline fixtures before host
+startup. Safety does not depend on watcher delivery: a changed-but-unnotified
+refusal case suppresses native notification forwarding with a clearly labelled test
+seam, then changes an unopened admitted `.play` file, the identity state or a
+referenced attachment after a real review. The real C# server must refuse the
+single dispatched Apply with the nested `DiskDrift`, `IdentityStateDrift` or
+`RepairEvidenceDrift`, leaving the externally changed bytes untouched, installing
+nothing, retaining the unknown-outcome barrier and never retrying. Each such case
+runs in its own approved host lifetime. Whether the platform's native recursive
+watcher delivers a nested modification, creation or deletion is reported
+separately as a notification diagnostic and never gates a safety case. The test
+driver also observes actual installed provider entry and holds a real C# discovery
+response to exercise concurrent provider/manual reads, independently of watcher
+delivery. Actual root replacement must require reconnect. Lost-response cases hold
+the genuine server-generated Apply response, verify the exact installed bytes and
+only then lose that response; no success is ever synthesized. Filenames are test
+attribution only, never product authorization. No repeated probes, simulated
+callbacks or harness-only watcher stand in for the product. CI lane definitions
+alone do not establish a platform
+pass: run each native lane before claiming that platform is verified.
