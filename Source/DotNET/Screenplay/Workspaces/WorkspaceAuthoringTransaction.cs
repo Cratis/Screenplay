@@ -307,7 +307,8 @@ sealed class WorkspaceAuthoringTransaction(
             provenance.Subtree(before, (document.Id, string.Empty), (document.Id, string.Empty));
         }
 
-        foreach (var document in replaced.Where(document => shapePreservingReplacements?.Contains(document) == true))
+        var generatedReplacements = replaced.Where(document => shapePreservingReplacements?.Contains(document) == true).ToArray();
+        foreach (var document in generatedReplacements)
         {
             RequireShape(before, after, document);
             provenance.Subtree(before, (document, string.Empty), (document, string.Empty));
@@ -327,6 +328,13 @@ sealed class WorkspaceAuthoringTransaction(
 
         var ruleSources = new WorkspaceEditProvenance();
         edits.RecordPendingRuleSources(ruleSources, replacements);
+        // Only the trusted generated rewrites that passed RequireShape above carry positional
+        // lineage. Ordinary document replacements must still prove pending-rule correspondence.
+        foreach (var document in generatedReplacements)
+        {
+            ruleSources.Subtree(before, (document, string.Empty), (document, string.Empty));
+        }
+
         var removals = edits.PendingRuleRemovals.Select(entry => entry.Handle).ToHashSet();
         var ruleRegions = edits.Replacements.Select(replacement => replacement.Target.Handle)
             .Concat(replaced.Select(document => new WorkspaceNodeHandle(workspace.Revision, document, string.Empty))).ToHashSet();
