@@ -5,7 +5,8 @@ import { SyntaxNode } from './SyntaxNode';
 import { InvalidSyntaxJson } from './InvalidSyntaxJson';
 import { isExactNumberToken, parseExactNumber } from './ExactNumber';
 import { validateSyntaxInvariants } from './SyntaxInvariants';
-import { syntaxMemberNames, validateSyntaxMembers } from './SyntaxMemberContracts';
+import { syntaxMemberNames, validateClosedSyntaxMembers, validateSyntaxMembers } from './SyntaxMemberContracts';
+import { ValidationRuleSyntax } from './Commands';
 import { isLegacyOmittedMember } from './LegacyWireProjection';
 import { legacySourceOptions, validatedSourceOptions } from './SourceOptions';
 
@@ -41,6 +42,15 @@ function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJ
     if (isNode(value)) {
         if (sourceRoots.has(value.kind)) owningMode = validatedSourceOptions((value as unknown as { sourceOptions?: unknown }).sourceOptions ?? legacySourceOptions).numericMode;
         validateSyntaxInvariants(value);
+        // #307 shapes are closed in both modes, before any projection can hide unknown members.
+        if (value.kind === 'ImplementationSyntax' || value.kind === 'ImplementationHintSyntax') validateClosedSyntaxMembers(value, omitted);
+        if (value.kind === 'ValidationRuleSyntax') {
+            const rule = value as ValidationRuleSyntax;
+            if (rule.implementation != null) {
+                if (rule.file != null) validateClosedSyntaxMembers(rule.file, omitted);
+                if (rule.code != null) validateClosedSyntaxMembers(rule.code, omitted);
+            }
+        }
         const result: { [member: string]: SyntaxJsonValue } = { kind: value.kind };
         const structural = { ...value } as unknown as Record<string, unknown>;
         if (value.kind === 'ApplicationSyntax' && structural.eventSources === undefined) structural.eventSources = [];

@@ -7,6 +7,8 @@ import { parse } from '../../ScreenplayCompiler';
 import { ApplicationSyntax } from '../Structure';
 import { decodeExactSyntaxJson, InvalidSyntaxJson } from '../StrictSyntaxJson';
 import { toCompleteSyntaxJson, toSyntaxJson } from '../SyntaxJson';
+import { syntaxMemberNames } from '../SyntaxMemberContracts';
+import { SyntaxNode } from '../SyntaxNode';
 
 const source = readFileSync(new URL('../../Conformance/exact-named-rule-intent.play', import.meta.url), 'utf8');
 const rules = (syntax: ApplicationSyntax) => {
@@ -85,6 +87,70 @@ describe('when round tripping exact named-rule intent', () => {
         Object.assign(rules(syntax)[0], changed);
         (() => toSyntaxJson(syntax)).should.throw(InvalidSyntaxJson);
         (() => toCompleteSyntaxJson(syntax)).should.throw(InvalidSyntaxJson);
+    });
+
+    const scopedKinds = ['ImplementationSyntax', 'ImplementationHintSyntax', 'FileReferenceSyntax', 'CodeBlockSyntax'];
+    const scopedSyntax = (mode: string, kind: string): ApplicationSyntax => {
+        const syntax = parse(mode === 'exact' ? source : source.replace('numbers exact\n', '')).value;
+        if (kind === 'CodeBlockSyntax') Object.assign(rules(syntax)[0], { code: { kind, language: 'csharp', code: 'return true;' } });
+        return syntax;
+    };
+    const scopedNode = (syntax: ApplicationSyntax, kind: string): SyntaxNode => {
+        const pending = rules(syntax)[0];
+        return kind === 'ImplementationSyntax' ? pending.implementation!
+            : kind === 'ImplementationHintSyntax' ? pending.implementation!.hints[0]
+            : kind === 'FileReferenceSyntax' ? rules(syntax)[1].file!
+            : pending.code!;
+    };
+    // Cross-kind contract members, misplaced payloads, and arbitrary names must all be rejected.
+    const candidateMembers = new Set([...scopedKinds.flatMap(kind => [...syntaxMemberNames(kind)]), 'file', 'unexpected', 'trivia', 'toJSON']);
+    const unknownMembers = scopedKinds.flatMap(kind => [...candidateMembers].filter(member => !syntaxMemberNames(kind).has(member)).map(member => ({ kind, member })));
+    it.each(['exact', 'legacy'].flatMap(mode => unknownMembers.map(test => ({ mode, ...test }))))('should reject unknown $member on $kind in $mode writing', ({ mode, kind, member }) => {
+        const syntax = scopedSyntax(mode, kind);
+        const node = scopedNode(syntax, kind);
+        Object.assign(node, { [member]: { kind: 'FileReferenceSyntax', path: 'Hidden.cs' } });
+        (() => toSyntaxJson(syntax)).should.throw(InvalidSyntaxJson);
+        (() => toCompleteSyntaxJson(syntax)).should.throw(InvalidSyntaxJson);
+    });
+
+    it.each(['exact', 'legacy'].flatMap(mode => scopedKinds.map(kind => ({ mode, kind }))))('should reject even an undefined unknown member on $kind in $mode writing', ({ mode, kind }) => {
+        const syntax = scopedSyntax(mode, kind);
+        Object.assign(scopedNode(syntax, kind), { unexpected: undefined });
+        (() => toSyntaxJson(syntax)).should.throw(InvalidSyntaxJson);
+        (() => toCompleteSyntaxJson(syntax)).should.throw(InvalidSyntaxJson);
+    });
+
+    it.each(['exact', 'legacy'].flatMap(mode => scopedKinds.map(kind => ({ mode, kind }))))('should round trip every native contract member on $kind in $mode transport', ({ mode, kind }) => {
+        const syntax = scopedSyntax(mode, kind);
+        const authored = scopedNode(syntax, kind) as unknown as Record<string, unknown>;
+        const expected = JSON.parse(JSON.stringify(Object.fromEntries([...syntaxMemberNames(kind)].map(member => [member, authored[member]])), (member, value: unknown) => member === 'location' ? undefined : value)) as unknown;
+        const wire = JSON.parse(JSON.stringify(toSyntaxJson(syntax))) as ApplicationSyntax;
+        const written = scopedNode(wire, kind);
+        Object.keys(written).sort().should.deep.equal([...syntaxMemberNames(kind)].sort());
+        JSON.parse(JSON.stringify(written)).should.deep.equal(JSON.parse(JSON.stringify(expected)));
+        // Exact restoration fills defaults and must preserve each listed member too.
+        if (mode === 'exact') JSON.parse(JSON.stringify(toSyntaxJson(scopedNode(decodeExactSyntaxJson(JSON.stringify(wire)) as ApplicationSyntax, kind)))).should.deep.equal(JSON.parse(JSON.stringify(expected)));
+    });
+
+    it.each(['exact', 'legacy'].flatMap(mode => scopedKinds.map(kind => ({ mode, kind }))))('should strip legitimate source-only metadata on $kind in $mode writing', ({ mode, kind }) => {
+        const syntax = scopedSyntax(mode, kind);
+        const expected = toSyntaxJson(syntax);
+        Object.assign(scopedNode(syntax, kind), { location: { line: 1, column: 1 }, targetLocation: { line: 1, column: 1 }, referenceLocation: { line: 1, column: 1 }, referenceLength: 4, nameWasEscaped: true });
+        JSON.stringify(toSyntaxJson(syntax)).should.equal(JSON.stringify(expected));
+        const complete = JSON.parse(JSON.stringify(toCompleteSyntaxJson(syntax))) as ApplicationSyntax;
+        Object.keys(scopedNode(complete, kind)).sort().should.deep.equal([...syntaxMemberNames(kind)].sort());
+    });
+
+    it.each(['FileReferenceSyntax', 'CodeBlockSyntax'])('should retain unknown members on unwrapped pre-existing %s in Legacy writing', kind => {
+        const syntax = scopedSyntax('legacy', kind);
+        const rule = kind === 'FileReferenceSyntax' ? rules(syntax)[1] : rules(syntax)[0];
+        Object.assign(rule, { implementation: null });
+        const expectedWire = JSON.stringify(toSyntaxJson(syntax));
+        Object.assign(scopedNode(syntax, kind), { unexpected: 'Kept by Legacy' });
+        // Legacy wire still omits unwrapped payloads; its complete internal projection stays open-world.
+        JSON.stringify(toSyntaxJson(syntax)).should.equal(expectedWire);
+        const complete = JSON.parse(JSON.stringify(toCompleteSyntaxJson(syntax))) as ApplicationSyntax;
+        (scopedNode(complete, kind) as unknown as { unexpected: string }).unexpected.should.equal('Kept by Legacy');
     });
 
     it.each(['exact', 'legacy'].flatMap(mode => ['pending', 'file', 'inline'].map(payload => ({ mode, payload }))))('should retain scalar payloads and authored hint order for $payload rules in $mode transport', ({ mode, payload }) => {

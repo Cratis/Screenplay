@@ -20,6 +20,15 @@ export function validateSyntaxMembers(node: SyntaxNode): void {
     if (!Object.hasOwn(node, 'kind') || members === undefined || !matchesMembers(node as unknown as Record<string, unknown>, members)) throw new InvalidSyntaxJson(`Invalid typed members for syntax kind '${node.kind}'.`);
 }
 
+// Closed-world writing is opt-in for feature-owned shapes, not a change to older Legacy nodes.
+// Source-only members are the writer's existing metadata omissions, never additional wire members.
+export function validateClosedSyntaxMembers(node: SyntaxNode, sourceOnlyMembers: ReadonlySet<string>): void {
+    const known = syntaxMemberNames(node.kind);
+    for (const member of Object.keys(node)) {
+        if (!known.has(member) && !sourceOnlyMembers.has(member)) throw new InvalidSyntaxJson(`Unknown member '${member}' for syntax kind '${node.kind}'.`);
+    }
+}
+
 export function syntaxMemberNames(kind: string): ReadonlySet<string> {
     const members = names.get(kind);
     if (members === undefined) throw new InvalidSyntaxJson(`Unknown syntax kind '${kind}'.`);
