@@ -102,8 +102,8 @@ sealed class WorkspaceAbsenceKeyBindings
         if (names.Length != 1)
         {
             reason = names.Length == 0
-                ? $"read model '{readModel.Name}' has no keyed query that names its identifier"
-                : $"read model '{readModel.Name}' has ambiguous keyed-query identifiers";
+                ? $"read model '{readModel.Name}' has no keyed query that names its identifier; give its slice a query that returns '{readModel.Name}' with 'by <property> <Type>' naming the property that identifies an instance"
+                : $"read model '{readModel.Name}' has ambiguous keyed-query identifiers; keep the keyed queries that return '{readModel.Name}' on one 'by' property";
             return null;
         }
 

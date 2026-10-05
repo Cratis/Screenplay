@@ -27,7 +27,8 @@ class Packaging(unittest.TestCase):
                 self.assertEqual(bundle["compatibility"]["platforms"], [platform])
                 self.assertEqual(bundle["server"]["entry_point"], f"server/{executable}")
                 self.assertEqual(mcp["mcpServers"]["screenplay"]["command"], f"./server/{executable}")
-                self.assertTrue(bundle["user_config"]["model_root"]["required"])
+                self.assertNotIn("user_config", bundle)
+                self.assertEqual(bundle["server"]["mcp_config"]["args"], ["mcp"])
                 self.assertTrue((root / "packages/plugin/skills/screenplay/SKILL.md").is_file())
                 self.assertEqual((root / "packages/mcpb/server" / executable).read_bytes(), (publish / binary).read_bytes())
 

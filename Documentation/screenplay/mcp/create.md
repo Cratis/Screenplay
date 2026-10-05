@@ -84,8 +84,15 @@ borrow a book, then BookBorrowed is produced.
 
 ```text
 Add a state-view slice that lists the books currently on loan, built from
-BookBorrowed and BookReturned. Add a screen for it that a librarian can see.
+BookBorrowed and BookReturned, with a query that finds one loan by its book id.
+Add a screen for it that a librarian can see.
 ```
+
+A specification that checks one instance of a read model, such as
+`then no readmodel OnLoanBook for "..."`, needs that read model to have exactly one
+keyed query (`by bookId BookId`): that query says which property identifies an
+instance. A list query alone cannot. See
+[Read models](../readmodels.md#identifying-an-instance-in-specifications).
 
 Say "apply it when you're done" in the prompt, or at the start of the session, and
 the assistant applies the proposal once it checks out; a board open in fullscreen shows
