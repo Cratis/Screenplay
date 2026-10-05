@@ -10,10 +10,15 @@
         <IsPackable>true</IsPackable>
         <PackAsTool>true</PackAsTool>
         <ToolCommandName>screenplay</ToolCommandName>
-        <Description>Command-line tool for compiling and verifying Cratis Screenplay (.play) files</Description>
+        <Description>Compile and verify Cratis Screenplay (.play) models and host the Screenplay MCP server, including the event model board for MCP Apps</Description>
         <PackageTags>cratis;event-sourcing;event-modeling;cqrs;screenplay;dsl;compiler;dotnet-tool</PackageTags>
         <NoWarn>$(NoWarn);CS7022</NoWarn>
     </PropertyGroup>
+
+    <ItemGroup>
+        <None Remove="$(MSBuildProjectDirectory)/../../../README.md" />
+        <None Update="README.md" Pack="true" PackagePath="/" />
+    </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="../Screenplay/Screenplay.csproj" />
