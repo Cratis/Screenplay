@@ -93,6 +93,16 @@ export async function userSaveDirtyFile(document: vscode.TextDocument, expected:
     } finally { listener.dispose(); changes.dispose(); }
 }
 
+/** Revert-and-close a buffer the HARNESS created (and still holds); never a product/user-owned buffer. */
+export async function disposeHarnessBuffer(document: vscode.TextDocument): Promise<void> {
+    if (document.isClosed) return;
+    await vscode.window.showTextDocument(document, { preview: false, preserveFocus: false });
+    await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
+    const deadline = Date.now() + 5_000;
+    while (!document.isClosed && vscode.workspace.textDocuments.includes(document) && Date.now() < deadline) await new Promise<void>(resolve => setTimeout(resolve, 50));
+    assert.ok(document.isClosed || !vscode.workspace.textDocuments.includes(document), `Harness-owned buffer was disposed: ${document.uri.toString()}`);
+}
+
 /** Separate simulated user choice, NEVER a product reload primitive or reuse of Apply consent. */
 export async function userRevertCleanFile(document: vscode.TextDocument, expected: string, choose: () => Promise<'Revert File' | undefined>): Promise<void> {
     assert.equal(await choose(), 'Revert File', 'The test user separately chooses the native File: Revert File action');
@@ -104,12 +114,27 @@ export async function userRevertCleanFile(document: vscode.TextDocument, expecte
     // otherwise keep native focus. No user buffer, dirty or not, is closed.
     const reviewTabs = vscode.window.tabGroups.all.flatMap(group => group.tabs).filter(tab => (tab.input instanceof vscode.TabInputText && tab.input.uri.scheme === 'screenplay-repair') || (tab.input instanceof vscode.TabInputTextDiff && tab.input.modified.scheme === 'screenplay-repair'));
     if (reviewTabs.length) await vscode.window.tabGroups.close(reviewTabs);
-    const editor = await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two, preserveFocus: false });
-    await vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
-    // The active-editor change is delivered asynchronously; wait (within the existing 5-second bound) for it.
-    const deadline = Date.now() + 5_000;
-    while (vscode.window.activeTextEditor?.document.uri.toString() !== document.uri.toString() && Date.now() < deadline) await new Promise<void>(resolve => setTimeout(resolve, 50));
-    assert.equal(vscode.window.activeTextEditor?.document.uri.toString(), editor.document.uri.toString(), 'The exact target editor has native focus');
+    // Deterministic focus: reveal the exact document in the column where it already lives and await the
+    // native active-editor change for that exact URI (same 5-second bound).
+    const target = document.uri.toString();
+    const column = vscode.window.visibleTextEditors.find(visible => visible.document.uri.toString() === target)?.viewColumn ?? vscode.ViewColumn.Two;
+    let focused!: () => void, focusFailed!: (error: Error) => void;
+    const activated = new Promise<void>((resolve, reject) => { focused = resolve; focusFailed = reject; });
+    const timer = setTimeout(() => focusFailed(new Error(`Active editor did not become ${target} within 5 seconds; active=${vscode.window.activeTextEditor?.document.uri.toString()}`)), 5_000);
+    const subscription = vscode.window.onDidChangeActiveTextEditor(changed => { if (changed?.document.uri.toString() === target) focused(); });
+    let editor: vscode.TextEditor;
+    try {
+        editor = await vscode.window.showTextDocument(document, { preview: false, viewColumn: column, preserveFocus: false });
+        // Move native focus to the group that holds the exact editor, then to its active editor.
+        const groups = ['workbench.action.focusFirstEditorGroup', 'workbench.action.focusSecondEditorGroup', 'workbench.action.focusThirdEditorGroup'];
+        const group = groups[(editor.viewColumn ?? column) - 1];
+        if (group) await vscode.commands.executeCommand(group);
+        await vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
+        if (vscode.window.activeTextEditor?.document.uri.toString() === target) focused();
+        await activated.catch(() => undefined); // The assertion below reports a failure with the same evidence.
+    } finally { clearTimeout(timer); subscription.dispose(); }
+    const layout = vscode.window.tabGroups.all.map(group => ({ column: group.viewColumn, active: group.isActive, tabs: group.tabs.map(candidate => `${candidate.isActive ? '*' : ''}${candidate.label}${candidate.isDirty ? '(dirty)' : ''}`) }));
+    assert.equal(vscode.window.activeTextEditor?.document.uri.toString(), editor.document.uri.toString(), `The exact target editor has native focus: ${JSON.stringify({ shownColumn: editor.viewColumn, requestedColumn: column, layout })}`);
     const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
     assert.ok(tab?.input instanceof vscode.TabInputText, 'Revert targets a plain native text editor, not a diff');
     assert.equal(tab.input.uri.toString(), document.uri.toString(), 'Active native tab is the exact saved target');

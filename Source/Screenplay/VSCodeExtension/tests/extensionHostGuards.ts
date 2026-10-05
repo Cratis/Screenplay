@@ -14,7 +14,7 @@ import { classifyRootDocument } from '../RepairDocuments';
 import { associatedUntitledTargets } from './prepareHostFixtures';
 import { repairSource } from './repairFixture';
 import { NativeTestController } from './nativeTestController';
-import { userRevertCleanFile, userSaveDirtyFile } from './nativeSavedBuffer';
+import { disposeHarnessBuffer, userRevertCleanFile, userSaveDirtyFile } from './nativeSavedBuffer';
 import { pendingInspectionTeardown } from './nativePendingInspection';
 import { withholdApplyResponse } from './nativeApplySeam';
 
@@ -426,6 +426,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
                 assert.equal(fs.readFileSync(path.join(model, 'Handler.cs'), 'utf8'), '// attachment\n', 'The actual declared attachment remains unchanged');
                 assert.equal(fs.readFileSync(source, 'utf8'), repairSource);
                 console.log(`NATIVE ASSOCIATED UNTITLED PASSED: ${JSON.stringify({ relative, timing, exactDirtyBuffer: true, applyFrames: dispatched - before, nativeEvents: record ? record.events - nativeEvents! : 0 })}`);
+                await disposeHarnessBuffer(unsaved); // Harness-created buffer; its case is complete.
             }
         }
         model = path.join(root, 'watcher-guards');
@@ -457,6 +458,8 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         assert.deepEqual(fs.readFileSync(source), original);
         if (siblingDelivered) assert.ok(warnings.some(message => /PreviewExpired|Stale|WatchInvalidated/.test(message)), `Delivered native notification invalidation refusal: ${warnings.join('; ')}`);
         console.log(`NATIVE NOTIFICATION UX nested create: ${JSON.stringify({ delivered: siblingDelivered })}`);
+        // Declined consent retains the review; the user explicitly discards it (no notification arrived to expire it).
+        if (!siblingDelivered) await vscode.commands.executeCommand('screenplay.repair.discard');
         warnings.length = 0;
         const sameWatch = productWatch(model);
         await vscode.commands.executeCommand('screenplay.repair.refresh');
@@ -475,26 +478,46 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         };
         const expected = new Map<string, Buffer>();
         const reviewedBefore = new Map<string, Buffer>();
+        // A native notification for the earlier nested delete may arrive late (platform latency is unbounded) and
+        // legitimately expire this review before consent. That is expected invalidation, never an Apply: the review
+        // is discarded and redone, while a dispatch-free expiry is the only retried outcome.
+        let lateExpiry = false;
+        const isExpiry = (error: unknown) => /expired/i.test(String(error));
         finalConsent = async () => {
-            for (const page of currentAfterPages()) {
-                const relative = page.uri.path.split('/after/')[1];
-                expected.set(relative, Buffer.from(await vscode.workspace.fs.readFile(page.uri)));
+            try {
+                for (const page of currentAfterPages()) {
+                    const relative = page.uri.path.split('/after/')[1];
+                    expected.set(relative, Buffer.from(await vscode.workspace.fs.readFile(page.uri)));
+                }
+                const summary = vscode.window.activeTextEditor!.document.uri;
+                const prefix = `/${summary.path.split('/')[1]}/`;
+                for (const page of vscode.workspace.textDocuments.filter(page => page.uri.scheme === 'screenplay-repair' && page.uri.path.startsWith(prefix) && page.uri.path.includes('/before/'))) {
+                    reviewedBefore.set(page.uri.path.split('/before/')[1], Buffer.from(await vscode.workspace.fs.readFile(page.uri)));
+                }
+                assert.ok(reviewedBefore.has('application.play') && reviewedBefore.has('.screenplay/identities.json'), 'Both native before-side diffs were loaded');
+                assert.deepEqual(reviewedBefore.get('application.play'), original, 'Before-side source is byte-exact');
+                assert.equal(reviewedBefore.get('.screenplay/identities.json')!.length, 0, 'Before-side identity bytes represent absent state');
+                assert.equal(fs.existsSync(path.join(model, '.screenplay')), false, 'Absent identity state remains absent through review');
+                assert.ok(expected.has('application.play') && expected.has('.screenplay/identities.json'), 'Complete native source AND state review loaded before consent');
+                assert.deepEqual(fs.readFileSync(source), original, 'Review is write-free');
+                await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two, preserveFocus: true });
+                return 'Apply';
+            } catch (error) {
+                if (!isExpiry(error)) throw error;
+                lateExpiry = true;
+                return undefined;
             }
-            const summary = vscode.window.activeTextEditor!.document.uri;
-            const prefix = `/${summary.path.split('/')[1]}/`;
-            for (const page of vscode.workspace.textDocuments.filter(page => page.uri.scheme === 'screenplay-repair' && page.uri.path.startsWith(prefix) && page.uri.path.includes('/before/'))) {
-                reviewedBefore.set(page.uri.path.split('/before/')[1], Buffer.from(await vscode.workspace.fs.readFile(page.uri)));
-            }
-            assert.ok(reviewedBefore.has('application.play') && reviewedBefore.has('.screenplay/identities.json'), 'Both native before-side diffs were loaded');
-            assert.deepEqual(reviewedBefore.get('application.play'), original, 'Before-side source is byte-exact');
-            assert.equal(reviewedBefore.get('.screenplay/identities.json')!.length, 0, 'Before-side identity bytes represent absent state');
-            assert.equal(fs.existsSync(path.join(model, '.screenplay')), false, 'Absent identity state remains absent through review');
-            assert.ok(expected.has('application.play') && expected.has('.screenplay/identities.json'), 'Complete native source AND state review loaded before consent');
-            assert.deepEqual(fs.readFileSync(source), original, 'Review is write-free');
-            await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two, preserveFocus: true });
-            return 'Apply';
         };
-        await preview();
+        for (let attempt = 0; ; ++attempt) {
+            lateExpiry = false; expected.clear(); reviewedBefore.clear(); warnings.length = 0;
+            try { await preview(); } catch (error) { if (!isExpiry(error)) throw error; lateExpiry = true; }
+            if (!lateExpiry && dispatched === 0 && warnings.some(message => /PreviewExpired|StaleEpoch|StaleSelection/.test(message))) lateExpiry = true;
+            if (!lateExpiry) break;
+            assert.equal(dispatched, 0, 'An expired review never dispatches Apply');
+            assert.ok(attempt < 2, 'Late native notifications expired the review repeatedly');
+            console.log('NATIVE NOTIFICATION UX: a late delete notification expired the review; discarding and redoing it (no Apply was dispatched).');
+            await vscode.commands.executeCommand('screenplay.repair.discard');
+        }
         assert.equal(dispatched, 1, 'Exactly one real C# apply frame follows explicit consent');
         for (const [file, bytes] of expected) assert.deepEqual(fs.readFileSync(path.join(model, file)), bytes);
         assert.equal(fs.existsSync(path.join(model, '.screenplay/pending.json')), false, 'Verified Apply completed its real durable journal');
