@@ -62,7 +62,7 @@ jobs:
         timeout-minutes: 4
         run: |
           corepack enable
-          yarn install --immutable
+          yarn
       - name: Build extension and embedded server board
         timeout-minutes: 4
         run: yarn workspaces foreach -Rt --from screenplay --from @cratis/screenplay-mcp-app run build
