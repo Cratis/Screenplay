@@ -316,7 +316,11 @@ keeps all comments reports zero dropped comments.
    its `path`, `line`, `column` and `text`.
 2. For each changed document, retrieve `before` and `after` byte pages by
    `documentId`. Base64 pages reconstruct exact source bytes, including BOM and
-   Unicode. Inspect authoring and executable diagnostics separately.
+   Unicode. Inspect authoring and executable diagnostics separately. The proposal's
+   `introducedExecutableErrors` lists only the executable-model errors this
+   proposal adds, each with `code`, `message`, `path`, `line` and `column`; errors
+   the model already had are not repeated. When the list is not empty,
+   `executableGuidance` says to fix them in a new proposal before apply.
 3. Inspect `stateChange` and, if needed, retrieve exact before/after identity state
    with `workspace-state`, the proposal ID and corresponding state revision.
 4. Call `apply` with the proposal ID and the **before** workspace/catalog revisions.
