@@ -124,6 +124,7 @@ internal static class ScreenplayValidator
 
         var scopedSlices = ScopedSlices(application).ToList();
         var declarations = new ConsistencyDeclarations(application, scopedSlices);
+        EventSourceValidator.Validate(application, declarations, context);
         OperationValidator.Validate(application, declarations, context);
         ImportValidator.Validate(application, declarations, context);
         CommandConsistencyValidator.Validate(declarations, context);

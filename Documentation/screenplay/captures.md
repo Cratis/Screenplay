@@ -80,6 +80,41 @@ capture LegacyInvoiceCapture
 | `$.<property>` | A value from the current source item. |
 | `$context.occurred` | The capture timestamp. |
 
+## In the executable semantic model
+
+Captures bind to the executable semantic model as ESM v6 ([decision 0022](https://github.com/Cratis/Screenplay/blob/main/decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md)).
+The reference evaluator is handed records - `given capture` and `when capture` in a [specification](specifications.md#clocks-triggers-and-captures) -
+and never contacts a `source`, which stays realization metadata. For each record:
+
+- `map` operations apply in order, each to the record as the ones before it left it. A field `map` does not
+  touch passes through unchanged.
+- A condition compares the mapped record with the mapped record the capture last saw for the same `key`. A
+  field the earlier record lacked has changed when the new one has it, so a first record has changed in every
+  field it carries. `when status from "sent" to "paid"` compares mapped values.
+- `` when `<expression>` `` holds a small portable grammar: fields, string, number, boolean and `null`
+  literals, `==`, `!=`, `<`, `<=`, `>`, `>=`, `&&`, `||`, `!` and parentheses. Ordering compares numbers only.
+- `$.<field>` reads the item being evaluated - the record, a child or the nested record - and falls back to the
+  enclosing record when the item lacks the field. `$context.occurred` is the scenario's `given clock`.
+- Everything is appended to the event source the record's `key` names. Its type is the one the event's
+  commands give it, and text when no command produces the event.
+- The record's own appends run first, then each `children` collection's - current children in order, then the
+  removed ones in their earlier order - then each `nested` record's.
+
+The reference checks record shapes, event-source keys and child identities (including duplicates) before
+appending anything. After those preconditions pass, it evaluates each reached append in order, enforces its
+constraints, projects it and settles its reactions before evaluating the next capture effect. The first
+rejection or Unsupported stops the scenario. Facts and projections from earlier accepted appends remain;
+the failed append adds neither. A later unsupported mapping or guard cannot mask an earlier constraint
+rejection. This is not a capture-wide transaction; invoked commands keep their own atomicity.
+
+`given capture` supplies immutable last-seen input for one specification. Running the specification does not
+store a new last-seen record or acknowledge an external source, on success or failure. Supply the baseline
+explicitly in each subsequent specification. Retained prefix facts do not imply successful source processing
+or acknowledgement. A present object or collection used as a scalar mapping is Unsupported, not a missing
+value or a passing `then error`.
+
+A capture without a `key`, or a condition outside the grammar above, does not bind (`PLAY0268`).
+
 ## Full CDL grammar
 
 The authoritative CDL grammar - including the `split`, `nested` and richer `when` forms above - is published as the [Capture Declaration Language grammar](captures/grammar.md), mirroring how the [Projection Declaration Language grammar](projections/grammar.md) documents PDL.

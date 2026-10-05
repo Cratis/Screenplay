@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Text.Json;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
@@ -186,14 +187,14 @@ sealed class WorkspaceAuthoringTransaction(
         {
             var document = candidates[id];
             intendedDocuments[id] = syntax;
-            candidates[id] = WorkspaceAuthoringPrinter.Print(id, document.StableKey, document.Path, document.Encoding, syntax, request.Formatting, _diagnostics, document, index.Placement(workspace.Documents.Single(original => original.Id == id)), validatePlacement: false);
+            candidates[id] = WorkspaceAuthoringPrinter.Print(id, document.StableKey, document.Path, document.Encoding, syntax, request.Formatting, _diagnostics, document, index.Placement(workspace.Documents.Single(original => original.Id == id)), validatePlacement: false, candidates: index.StreamCandidates);
         }
 
         foreach (var replacement in replacements)
         {
             var document = candidates[replacement.Document];
             intendedDocuments[document.Id] = replacement.Syntax;
-            candidates[document.Id] = WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, document.Encoding, replacement.Syntax, request.Formatting, _diagnostics, document, index.Placement(workspace.Documents.Single(original => original.Id == document.Id)), validatePlacement: false);
+            candidates[document.Id] = WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, document.Encoding, replacement.Syntax, request.Formatting, _diagnostics, document, index.Placement(workspace.Documents.Single(original => original.Id == document.Id)), validatePlacement: false, candidates: index.StreamCandidates);
         }
 
         foreach (var creation in creations)
@@ -226,9 +227,10 @@ sealed class WorkspaceAuthoringTransaction(
         }
 
         var placements = placed.ToDictionary(document => document.Path, document => document.Placement, StringComparer.Ordinal);
+        var streamCandidates = ((ICommandStreamCandidateParser)compiler).CaptureCandidates(placed.Select(document => (SourceLineSplitter.Split(document.Source, path: document.Path), document.Placement)));
         foreach (var document in ordered.Where(document => intendedDocuments.ContainsKey(document.Id)))
         {
-            WorkspaceAuthoringPrinter.Validate(document.Text, document.Path, intendedDocuments[document.Id], placements[document.Path.Value], _diagnostics, request.Formatting);
+            WorkspaceAuthoringPrinter.Validate(document.Text, document.Path, intendedDocuments[document.Id], placements[document.Path.Value], _diagnostics, request.Formatting, streamCandidates);
         }
 
         var (_, merged) = PlayApplicationAssembly.Compile(compiler, texts.Keys, new InMemoryPlayDocumentSource(texts), draftAuthoring);

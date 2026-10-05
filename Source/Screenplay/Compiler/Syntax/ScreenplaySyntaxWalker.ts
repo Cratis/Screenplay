@@ -7,6 +7,7 @@ import { CommandSyntax, ValidateSyntax, ValidationRuleSyntax } from './Commands'
 import { ConstraintSyntax } from './Constraints';
 import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, PropertySyntax, ReadModelSyntax, TagSyntax, TypeRefSyntax, TypeSyntax } from './Declarations';
 import { ExpressionSyntax, ObjectMemberSyntax, PropertyMappingSyntax } from './Expressions';
+import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax } from './EventSources';
 import { JoinEventSyntax, MappingSyntax, ProjectionBlockSyntax, ProjectionSyntax } from './Projections';
 import { QueryParameterSyntax, QuerySyntax } from './Queries';
 import { InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
@@ -33,6 +34,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.imports.forEach(node => this.visitImport(node));
         syntax.fileImports.forEach(node => this.visitFileImport(node));
         syntax.systems?.forEach(node => this.visitSystem(node));
+        syntax.eventSources?.forEach(node => this.visitEventSource(node));
         syntax.concepts.forEach(node => this.visitConcept(node));
         syntax.types.forEach(node => this.visitType(node));
         syntax.personas.forEach(node => this.visitPersona(node));
@@ -112,10 +114,27 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
         syntax.properties.forEach(node => this.visitProperty(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
+        if (syntax.stream != null) this.visitCommandStream(syntax.stream);
+        syntax.streamCandidates?.forEach(candidate => this.visitCommandStream(candidate));
         syntax.validations.forEach(node => this.visitValidate(node));
         syntax.produces.forEach(node => this.visitProduces(node));
         if (syntax.handler != null) this.visitHandler(syntax.handler);
         if (syntax.response != null) this.visitCommandResponse(syntax.response);
+    }
+
+    visitEventSource(syntax: EventSourceSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.identifier !== null) this.visitTypeRef(syntax.identifier);
+        syntax.streams.forEach(stream => this.visitEventStream(stream));
+    }
+    visitEventStream(syntax: EventStreamSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.streamId !== null) this.visitTypeRef(syntax.streamId);
+    }
+    visitCommandStream(syntax: CommandStreamSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.streamId !== null) this.visitPropertyMapping(syntax.streamId);
+        if (syntax.propertyCandidate !== null) this.visitProperty(syntax.propertyCandidate);
     }
 
     visitSystem(syntax: SystemSyntax): void { this.visitNode(syntax); }

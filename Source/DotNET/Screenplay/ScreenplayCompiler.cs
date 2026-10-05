@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Languages;
@@ -16,7 +17,7 @@ namespace Cratis.Screenplay;
 /// Represents an implementation of <see cref="IScreenplayCompiler"/>.
 /// </summary>
 /// <param name="languages">The <see cref="IScreenplayLanguageRegistry"/> saying what to recognize beyond the built-in constructs.</param>
-public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreenplayCompiler
+public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreenplayCompiler, ICommandStreamCandidateParser
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ScreenplayCompiler"/> class recognizing only what the
@@ -38,8 +39,8 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     public CompilationResult<ApplicationSyntax> Compile(string source)
     {
         var lines = SourceLineSplitter.Split(source);
-        var context = new ParserContext(new(lines), languages: languages);
-        var application = SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines), lines);
+        var context = new ParserContext(new(lines), languages: languages) { StreamCandidates = CommandStreamCandidates.Capture([lines], languages) };
+        var application = SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines), lines) with { RegisteredTriggers = SnapshotTriggers(languages) };
         ScreenplayValidator.Validate(application, context);
         return new(application, [.. context.Diagnostics, .. ProductionDestinationDiagnostics.In(application)]);
     }
@@ -115,6 +116,12 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
             : CompilationResult<TCapture>.Failed(result.Diagnostics);
     }
 
+    CommandStreamCandidates ICommandStreamCandidateParser.CaptureCandidates(IEnumerable<(IReadOnlyList<SourceLine> Lines, PlayPlacement Placement)> documents) =>
+        CommandStreamCandidates.Capture(documents, languages);
+
+    CompilationResult<ApplicationSyntax> ICommandStreamCandidateParser.ParseWithCandidates(string source, string? path, PlayPlacement placement, CommandStreamCandidates candidates) =>
+        ParseWithCandidates(source, path, placement, candidates);
+
     /// <summary>
     /// Parses source text in a placement with a given language registry.
     /// </summary>
@@ -126,8 +133,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
     internal static CompilationResult<ApplicationSyntax> ParsePlaced(string source, string? path, PlayPlacement placement, IScreenplayLanguageRegistry languages)
     {
         var lines = SourceLineSplitter.Split(source, path: path);
-        var context = new ParserContext(new(lines), path, languages);
-        return new(SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines, placement), lines), context.Diagnostics);
+        return ParseWithCandidates(lines, path, placement, languages, CommandStreamCandidates.Capture([lines], languages, placement));
     }
 
     /// <summary>
@@ -141,4 +147,19 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
         var lines = SourceLineSplitter.Split(source, path: path);
         return ScreenplayParser.DiscoverImports(new ParserContext(new(lines), path));
     }
+
+    internal CompilationResult<ApplicationSyntax> ParseWithCandidates(string source, string? path, PlayPlacement placement, CommandStreamCandidates candidates) =>
+        ParseWithCandidates(SourceLineSplitter.Split(source, path: path), path, placement, languages, candidates);
+
+    static CompilationResult<ApplicationSyntax> ParseWithCandidates(IReadOnlyList<SourceLine> lines, string? path, PlayPlacement placement, IScreenplayLanguageRegistry languages, CommandStreamCandidates candidates)
+    {
+        var context = new ParserContext(new(lines), path, languages) { StreamCandidates = candidates };
+        return new(SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines, placement), lines) with { RegisteredTriggers = SnapshotTriggers(languages) }, context.Diagnostics);
+    }
+
+    static ImmutableDictionary<string, TriggerDefinition> SnapshotTriggers(IScreenplayLanguageRegistry registry) =>
+        registry.Triggers.ToImmutableDictionary(
+            entry => entry.Key,
+            entry => entry.Value with { Values = entry.Value.Values is { } values ? values.ToImmutableArray() : null },
+            StringComparer.Ordinal);
 }

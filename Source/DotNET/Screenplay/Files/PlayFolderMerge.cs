@@ -1,7 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Languages;
 using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 
@@ -33,9 +35,10 @@ internal static partial class PlayFolderMerge
     {
         var context = ParserContext.ForDiagnostics();
         var application = MergeApplications([.. documents.Select(document => document.Value).OfType<ApplicationSyntax>()], context);
-        ScreenplayValidator.Validate(application, context, allowUnresolvedPersonaPolicies);
+        var validation = new ParserContext(new([]), languages: new ScreenplayLanguageRegistry(triggers: application.RegisteredTriggers?.Values));
+        ScreenplayValidator.Validate(application, validation, allowUnresolvedPersonaPolicies);
 
-        return new(application, [.. documents.SelectMany(document => document.Diagnostics), .. context.Diagnostics, .. ProductionDestinationDiagnostics.In(application)]);
+        return new(application, [.. documents.SelectMany(document => document.Diagnostics), .. context.Diagnostics, .. validation.Diagnostics, .. ProductionDestinationDiagnostics.In(application)]);
     }
 
     static ApplicationSyntax MergeApplications(IReadOnlyList<ApplicationSyntax> applications, ParserContext context)
@@ -68,10 +71,35 @@ internal static partial class PlayFolderMerge
             // same way a layout or a theme is. Without this a 'uses' in one file cannot see a behavior declared
             // in another - and the folder is one application.
             Systems = [.. applications.SelectMany(application => application.Systems)],
+
+            // Preserve physical parents; a duplicate source makes every child scope ambiguous.
+            EventSources = [.. applications.SelectMany(application => application.EventSources)],
             Behaviors = DeclaredInOneFile(applications.SelectMany(application => application.Behaviors), behavior => behavior.Name ?? string.Empty, behavior => behavior.Location, "behavior", context),
             SourceComments = [.. applications.SelectMany(application => application.SourceComments)],
-            FileImports = [.. applications.SelectMany(application => application.FileImports)]
+            FileImports = [.. applications.SelectMany(application => application.FileImports)],
+            RegisteredTriggers = MergeRegisteredTriggers(applications, context)
         };
+    }
+
+    static ImmutableDictionary<string, TriggerDefinition> MergeRegisteredTriggers(IReadOnlyList<ApplicationSyntax> applications, ParserContext context)
+    {
+        var registrations = new Dictionary<string, TriggerDefinition>(StringComparer.Ordinal);
+        foreach (var application in applications)
+        {
+            foreach (var (name, definition) in application.RegisteredTriggers ?? ScreenplayLanguageRegistry.Default.Triggers)
+            {
+                if (registrations.TryGetValue(name, out var previous) &&
+                    ((previous.Values is null) != (definition.Values is null) ||
+                        (previous.Values is not null && definition.Values is not null && !previous.Values.SequenceEqual(definition.Values, StringComparer.Ordinal))))
+                {
+                    context.Error(DiagnosticCodes.InvalidSemanticBinding, $"Documents disagree on the registered shape of trigger '{name}'.", application.Location);
+                }
+
+                registrations.TryAdd(name, definition);
+            }
+        }
+
+        return registrations.ToImmutableDictionary(StringComparer.Ordinal);
     }
 
     /// <summary>

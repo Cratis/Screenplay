@@ -9,11 +9,30 @@ The Screenplay extension for Visual Studio Code (`cratis.screenplay`) opens a `.
 
 The text stays the source of truth. The board redraws as you edit, and the language support (highlighting, completion, hover and diagnostics) is one click away.
 
+```bash
+code --install-extension cratis.screenplay
+```
+
+Open your model folder, then a `.play` file. Choose **Show Source** to edit beside
+its board. For other places to open the same board, see
+[See your event model](see-your-event-model.md).
+
+![The Screenplay extension displays Commerce's Ordering board beside the PlaceOrder source. The board includes order summaries, a checkout command, payment settlement, and given–when–then specifications.](images/vscode-source-and-board.png)
+
+*Extension 4.48.1 in code-server, showing Commerce. Newer versions focus the board
+on the open file's slices; open `application.play` for the whole application.*
+
 ## Generated values and responses (syntax-only)
 
 The editor recognizes [generated command values and response contracts](commands.md#generated-values-and-responses-syntax-only), including fixture and assertion fields, inferred response types and generated-not-input hints. Completion uses the current source, including unsaved edits. Compiler diagnostics validate the syntax; acceptance does not enable execution. These constructs remain unavailable until ESM v8, and binding reports `PLAY0268` without a semantic model.
 
 The board leaves generated values out of command request schemas and lists generated values and returns in command details. It does not create response events or emit official response types. TextMate highlighting treats ambiguous two-token `returns` lines conservatively; `returns @name` makes response intent explicit.
+
+## Event source and stream authoring (syntax-only)
+
+Monaco and VS Code use typed source declarations and command routes from the complete input, including current unsaved buffers. They offer exact `Source.Stream` references and proven compatible command sources for `streamId`, with nominal types preserved. Source/stream hover describes authored identifier/key types; contextual tokens do not globally reserve property names. Navigation requires a unique physical source and stream plus authoritative placement, and points to the actual identifier in its original document. Duplicate parents, competing value-type interpretations, comments and fences do not become guessed links.
+
+Routing remains unavailable until ESM v10 (`PLAY0268`). Existing command details show the authored stream and readable key expression, never inferred effective destinations, new event cards or successful execution states. No source/stream automatic rename, routing quick fix or inferred-routing inlay is provided. See [the source/stream support matrix](event-sources.md#tooling-support).
 
 ## Operation and system intent (syntax-only)
 

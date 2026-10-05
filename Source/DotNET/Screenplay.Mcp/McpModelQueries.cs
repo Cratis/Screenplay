@@ -19,6 +19,8 @@ static class McpModelQueries
                 snapshot.Compilation.Success,
                 snapshot.SourceRevision,
                 fileCount,
+                syntaxOnly = snapshot.Index.Readiness.ModelSyntaxOnly,
+                executionReadiness = snapshot.Index.Readiness.ModelExecutionReadiness,
                 declarationCount = declarations.Length,
                 moduleCount = declarations.Count(declaration => declaration.Kind == "Module"),
                 featureCount = declarations.Count(declaration => declaration.Kind == "Feature"),

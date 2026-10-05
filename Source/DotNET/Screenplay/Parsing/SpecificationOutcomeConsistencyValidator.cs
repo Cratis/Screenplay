@@ -55,6 +55,13 @@ internal static class SpecificationOutcomeConsistencyValidator
             return;
         }
 
+        // A reachable reaction may append another occurrence of the command's own event type too. Defer
+        // values to execution only when the event can follow through the closed-world occurrence graph.
+        if (MayFollowCommand(when, command, commandSlice, commandScope, eventType, declarations))
+        {
+            return;
+        }
+
         if (candidates.TrueForAll(producer => Contradicts(producer, when, expected, command, eventType, declarations)))
         {
             context.Error(
@@ -62,6 +69,67 @@ internal static class SpecificationOutcomeConsistencyValidator
                 $"Specification outcome '{expected.EventType}' cannot be produced by '{command.Name}' from the stated 'when' values under its declared mappings",
                 expected.Location);
         }
+    }
+
+    // Over-approximate occurrence reachability, not termination or guard truth. A reachable opaque or
+    // unresolved effect defeats proof; an unrelated host signal or event reaction does not. Visited
+    // declarations bound cycles without guessing whether runtime guards make them settle.
+    static bool MayFollowCommand(
+        SpecificationCommandSyntax when,
+        CommandSyntax command,
+        SliceSyntax commandSlice,
+        DeclarationScope commandScope,
+        EventSyntax expected,
+        ConsistencyDeclarations declarations)
+    {
+        var pending = new Queue<EventSyntax>();
+        var seen = new HashSet<EventSyntax>();
+        var invoked = new HashSet<CommandSyntax>();
+        foreach (var producer in command.Produces.Where(producer => declarations.Productions.IsEventProduction(producer, commandSlice) &&
+            Condition(producer.When, when, command, declarations) != false))
+        {
+            if (declarations.Event(producer.Event, commandScope) is not { } root) return true;
+            pending.Enqueue(root);
+        }
+
+        while (pending.TryDequeue(out var occurrence))
+        {
+            if (!seen.Add(occurrence)) continue;
+            foreach (var (slice, scope) in declarations.Slices)
+            {
+                foreach (var reaction in slice.Reactions)
+                {
+                    foreach (var trigger in reaction.Triggers.Where(trigger => trigger.Source is NamedTriggerSourceSyntax named &&
+                        declarations.Event(named.Name, scope) == occurrence))
+                    {
+                        if (trigger.File is not null || trigger.Code is not null) return true;
+                        foreach (var producer in trigger.Produces ?? [])
+                        {
+                            if (declarations.Event(producer.Event, scope) is not { } produced || produced == expected) return true;
+                            pending.Enqueue(produced);
+                        }
+
+                        foreach (var invocation in trigger.Invokes ?? [])
+                        {
+                            var resolved = declarations.Resolve(invocation.Command, scope, entry => entry.Commands, node => node.Name);
+                            if (resolved is not { } target || target.Node.Handler is not null) return true;
+                            if (!invoked.Add(target.Node)) continue;
+                            var owner = declarations.Slices.First(entry => ReferenceEquals(entry.Scope, target.Scope)).Slice;
+                            foreach (var producer in target.Node.Produces)
+                            {
+                                var kind = declarations.Productions.Resolve(producer.Event, owner).Kind;
+                                if (kind == AuthoringProductionKind.Ambiguous) return true;
+                                if (!declarations.Productions.IsEventProduction(producer, owner)) continue;
+                                if (declarations.Event(producer.Event, target.Scope) is not { } produced || produced == expected) return true;
+                                pending.Enqueue(produced);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     static bool Contradicts(ProducesSyntax producer, SpecificationCommandSyntax when, SpecificationEventSyntax expected, CommandSyntax command, EventSyntax eventType, ConsistencyDeclarations declarations)

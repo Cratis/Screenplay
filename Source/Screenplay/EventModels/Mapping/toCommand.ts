@@ -30,7 +30,7 @@ export function toCommand(command: CommandSyntax, scope: SliceScope, schemas: Sc
         name: command.name,
         schema: schemas.forProperties(command.properties.filter(property => !property.isGenerated)),
         stateSchema: {},
-        logicDescription: [detailsOf(command), operationDetails(command, owners)].filter(Boolean).join('\n\n'),
+        logicDescription: [detailsOf(command), routeDetails(command), operationDetails(command, owners)].filter(Boolean).join('\n\n'),
         rules: rulesOf(command),
     };
 }
@@ -60,6 +60,18 @@ function operationDetails(command: CommandSyntax, owners?: EventOwners): string 
                 ...entry.production.mappings.map(mapping => `${mapping.property} = ${expressionText(mapping.source)}`),
                 phase('execute', operation.execute), phase('compensate', operation.compensate)].filter(Boolean).join('\n');
         }), ...specs].join('\n\n').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function routeDetails(command: CommandSyntax): string {
+    const escape = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    if ((command.streamCandidates ?? []).some(candidate => candidate.propertyCandidate != null)) return 'Ambiguous stream/property authoring: no route selected (PLAY0505). Execution unavailable until ESM v10 (PLAY0268).';
+    if ((command.streamCandidates ?? []).length > 0) return 'Conflicting authored stream routes: no effective route selected. Execution unavailable until ESM v10 (PLAY0268).';
+    const route = command.stream;
+    if (!route) return '';
+    return escape([`Authored stream: ${route.eventSource}.${route.stream}`,
+        route.streamId ? `Stream id: ${expressionText(route.streamId.source)}` : '',
+        'Syntax-only: execution unavailable until ESM v10 (PLAY0268). This classification does not supply an identity destination.'
+    ].filter(Boolean).join('\n'));
 }
 
 function detailsOf(command: CommandSyntax): string {

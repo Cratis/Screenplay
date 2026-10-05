@@ -1,0 +1,37 @@
+import Account.Transactions
+type Transactions
+  value String
+eventsource Account
+  stream Onboarding
+  stream Transactions
+module M
+  feature F
+    slice StateChange S
+      command ResolvedFirst
+        stream Account.Onboarding
+        stream Account.Transactions
+          deeper String
+      command AmbiguousFirst
+        stream Account.Transactions
+          deeper String
+        stream Account.Onboarding
+      command MultipleAmbiguities
+        stream Account.Transactions
+          first String
+        stream Account.Transactions
+          second String
+      command DuplicateRoutes
+        stream Account.Onboarding
+        stream Account.Onboarding
+      command Code
+        stream Fake.S
+          deeper String
+        handler
+          ```csharp
+eventsource Fake
+  stream S
+type S
+  value String
+import Fake.S
+// JSON escaped token: `
+          ```

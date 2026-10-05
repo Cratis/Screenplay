@@ -34,6 +34,7 @@ export const constructKeywords = [
     'slice',
     'event',
     'system',
+    'eventsource',
     'operation',
     'command',
     'query',

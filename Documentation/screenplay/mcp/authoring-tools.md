@@ -33,6 +33,28 @@ An event declared with `produces event` appears as an `Event` in declaration que
 
 Descriptions, documentation, and optional rename-only `id` remain syntax metadata. They do not replace the workspace identity catalog or the portable hashed event contract id. Workspace repair and rename proposals remain separate, explicit transactions; querying or visualizing an inline event never applies a repair.
 
+## Event source and stream authoring
+
+After opening the workspace, use these paged `read-workspace` views with `expectedRevision`:
+
+| View | Contents |
+| --- | --- |
+| `event-sources` | Application-owned source keys, identifier types, pins and physical handles |
+| `event-streams` | Exact source-owned stream keys, key types, pins and ownership status |
+| `event-source-details`, `event-stream-details` | Exact `authoringKey`; compact header with metadata sizes and source/AST read pointers, followed by independently paged children; rejects ambiguous or incomplete ownership |
+| `command-routes` | Authored routes and all retained ambiguity candidates, never inferred effective routing |
+| `event-source-diagnostics` | Paged physical parser/import and whole-assembly diagnostics, including errorful and unresolved files |
+
+Continuation also requires `expectedCatalogRevision`. The immutable physical inventory retains partial declarations, duplicate routes and route/property candidates from all parsed files, independently of editable AST eligibility. `inventoryComplete`, `authoringDiagnosticsView` and `authoringDiagnosticsCount` disclose parser/import and whole-assembly evidence. Unknown extent reports `ownership: "incomplete"`; details refuse with `IncompleteSource`. Duplicate physical parents make every child ambiguous, including parents in errorful files. Unresolved-placement entries name refused documents, and retained nodes in those files have a null `authoringKey` rather than a fabricated owner. Keys include application, declaration kind, full owner path and name; they are not persistent semantic identities. All these entries disclose ESM v10 execution unavailability. A command/specification/slice readiness message describes that member's constructs and command dependencies; model readiness also includes unrelated source declarations.
+
+The detail boundary is `compact-header-v1`, not full typed syntax. No header embeds all child stream subtrees. Child items follow the actual physical parent's authored order. Pages honor item and serialized-byte budgets; continue from `nextOffset`, not `offset + limit`. Pins and descriptions above 4096 UTF-8 bytes are explicitly omitted with exact sizes and a `read-document` byte-page pointer. Use a separate `read-ast` content request for the full node when it fits; a single oversized identity cannot be narrowed by reducing the item count.
+
+Generic source details, dependency resolution and editor navigation share physical source confidence, including unresolved placement candidates and unknown root extent. Unique unrelated event and operation references retain their existing resolution rules.
+
+Generic `EventSource`/`EventStream` declaration queries and dependencies include source identifier/stream-id type references and separate `commandEventSource`/`commandStream` links. Stream references accept exactly `Source.Stream`, not arbitrary suffixes. Combined type/declaration collisions remain blocking and are not navigated confidently.
+
+For edits, read the actual `read-ast` handles and `syntax-schema` kinds, then use Authoring Add/Replace/Remove with preview and explicit apply. The member paths and candidate-selection rules are in [AST authoring](../ast-authoring.md#source-and-stream-edits-syntax-only). No source or stream rename, semantic catalog enrollment or new routing quick fix is automatic. Executable validation still refuses with `PLAY0268`, and `PLAY0470`/`PLAY0478` repairs require unavailable before/after executable proof.
+
 ## Operation and system intent
 
 Systems and operations are **syntax-only**, with execution unavailable until ESM v9 (`PLAY0268`). After `open-workspace`, call `read-workspace` with the current `expectedRevision`:
@@ -294,7 +316,11 @@ keeps all comments reports zero dropped comments.
    its `path`, `line`, `column` and `text`.
 2. For each changed document, retrieve `before` and `after` byte pages by
    `documentId`. Base64 pages reconstruct exact source bytes, including BOM and
-   Unicode. Inspect authoring and executable diagnostics separately.
+   Unicode. Inspect authoring and executable diagnostics separately. The proposal's
+   `introducedExecutableErrors` lists only the executable-model errors this
+   proposal adds, each with `code`, `message`, `path`, `line` and `column`; errors
+   the model already had are not repeated. When the list is not empty,
+   `executableGuidance` says to fix them in a new proposal before apply.
 3. Inspect `stateChange` and, if needed, retrieve exact before/after identity state
    with `workspace-state`, the proposal ID and corresponding state revision.
 4. Call `apply` with the proposal ID and the **before** workspace/catalog revisions.

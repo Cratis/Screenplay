@@ -23,6 +23,13 @@ public sealed partial class SemanticModelBinder
 
         public override void VisitNode(SyntaxNode node)
         {
+            if (node is EventSourceSyntax or EventStreamSyntax or CommandStreamSyntax)
+            {
+                Diagnostics.Add(Diagnostic.Error(
+                    DiagnosticCodes.UnsupportedSemanticSyntax,
+                    "This authoring construct is not admitted by any supported ESM version; decision 0023 allocates event sources and streams to ESM v10.",
+                    node.Location));
+            }
             if (node is SystemSyntax or OperationSyntax or OperationPhaseSyntax or SpecificationOperationFailureSyntax or SpecificationOperationSyntax or SpecificationCompensatedSyntax)
             {
                 Diagnostics.Add(Diagnostic.Error(

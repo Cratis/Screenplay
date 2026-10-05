@@ -17,16 +17,6 @@ public sealed partial class SemanticModelBinder
         [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$", RegexOptions.None, 1000)]
         private static partial Regex IsoInstant();
 
-        static string? UnadmittedAction(SpecificationSyntax specification) => specification switch
-        {
-            { GivenClock: not null } => "given clock",
-            { WhenClock: not null } => "when clock",
-            { WhenTrigger: not null } => "when trigger",
-            { WhenCapture: not null } => "when capture",
-            _ when specification.GivenCaptures.Any() => "given capture",
-            _ => null
-        };
-
         static IEnumerable<SliceSyntax> AllSlices(FeatureSyntax feature) =>
             feature.Slices.Concat(feature.Features.SelectMany(AllSlices));
 
@@ -38,15 +28,6 @@ public sealed partial class SemanticModelBinder
             if (specification.File is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Specification '{specification.Name}' file reference is realization provenance.", specification.File.Location);
-            }
-
-            if (UnadmittedAction(specification) is { } form)
-            {
-                Error(
-                    DiagnosticCodes.UnsupportedSemanticSyntax,
-                    $"Specification '{specification.Name}' uses '{form}', which the executable model does not admit yet - clocks, application triggers and capture records are proposed for ESM v6 in decision 0022.",
-                    specification.Location);
-                return null;
             }
 
             // Performing a query and asserting its results says what 'then query' says, so it binds to exactly the
@@ -73,9 +54,11 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            var deniedQuery = specification.ThenDenied is not null && specification.When is null && specification.WhenAppended is null &&
+            var acted = specification.When is not null || specification.WhenAppended is not null || specification.WhenClock is not null ||
+                specification.WhenTrigger is not null || specification.WhenCapture is not null;
+            var deniedQuery = specification.ThenDenied is not null && !acted &&
                 specification.ThenQueries.Count() == 1 && !specification.ThenQueries.Single().Results.Any();
-            if (specification.When is null && specification.WhenAppended is null && (specification.ThenEvents.Any() || specification.ThenErrors.Any() ||
+            if (!acted && (specification.ThenEvents.Any() || specification.ThenErrors.Any() ||
                 (specification.ThenDenied is not null && !deniedQuery) ||
                 (!(specification.ThenReadModels?.Any() ?? false) && !specification.ThenAbsentReadModels.Any() && !specification.ThenQueries.Any())))
             {
@@ -145,7 +128,12 @@ public sealed partial class SemanticModelBinder
                 ThenDenied = specification.ThenDenied is not null,
                 WhenAppended = specification.WhenAppended is null ? null : BindSpecificationAppend(specification.WhenAppended, commands),
                 ThenEventsInAnyOrder = specification.ThenEventsInAnyOrder,
-                ThenAbsentReadModels = thenAbsentReadModels
+                ThenAbsentReadModels = thenAbsentReadModels,
+                GivenClock = specification.GivenClock is null ? null : BindClock(specification.GivenClock),
+                GivenCaptures = [.. specification.GivenCaptures.Select(BindSpecificationCapture).OfType<SemanticSpecificationCapture>()],
+                WhenClock = specification.WhenClock is null ? null : BindClock(specification.WhenClock),
+                WhenTrigger = specification.WhenTrigger is null ? null : BindSpecificationTrigger(specification.WhenTrigger),
+                WhenCapture = specification.WhenCapture is null ? null : BindSpecificationCapture(specification.WhenCapture)
             };
         }
 
@@ -195,6 +183,13 @@ public sealed partial class SemanticModelBinder
                     .Select(property => BindTypeReference(property!.Type))
                     .Distinct()
                     .ToArray();
+                type = producerTypes.Length == 1 ? producerTypes[0] : null;
+            }
+
+            // Since ESM v6 reactions and captures append events too; their event source types count as well.
+            if (type is null && value.For is not null)
+            {
+                var producerTypes = ProducerEventSourceTypes(ShortName(value.EventType), []);
                 type = producerTypes.Length == 1 ? producerTypes[0] : null;
             }
 

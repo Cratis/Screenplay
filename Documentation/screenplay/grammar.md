@@ -2,6 +2,8 @@
 
 > Systems, operations, operation phases and their specification forms below are syntax-only authoring. Execution is unavailable until ESM v9 (`PLAY0268`); see [Operations and external systems](operations.md). A phase source or wrapper is not an admitted executable implementation role.
 
+> [Event sources, source-owned streams and command stream routes](event-sources.md) are authoring-only. Binding reports `PLAY0268`, naming their allocated ESM v10. Per-event overrides, observer filters, new concurrency flags, occurrence time and constraint scopes are not part of this increment.
+
 The Screenplay syntax reference in EBNF. `INDENT`/`DEDENT` represent indented bodies: parsers read lines at greater indentation until the body ends. PDL and CDL have their own [sub-grammars](sub-languages.md). The C# compiler validates the full language; the TypeScript compiler models a subset and recognizes the remaining shipped constructs as opaque bodies.
 
 Declarations and body directives can appear in any order unless a rule below states otherwise. A repeated group such as { A | B } means its members may appear in any order; it does not allow repeating singleton directives such as description, for or where. References may name declarations later in the document; scope and semantic checks still apply.
@@ -13,7 +15,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 
 Document       = [ DomainDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl
                | PersonaDecl | AuthenticationDecl | TriggerDecl | ThemeDecl
-               | LayoutDecl | UiProfileDecl | BehaviorDecl | SystemDecl | Module | SeedDecl } ;
+               | LayoutDecl | UiProfileDecl | BehaviorDecl | SystemDecl | EventSourceDecl | Module | SeedDecl } ;
 
 (* At most one domain and authentication block. Put domain first; the compiler
    reports PLAY0004 when it follows another application declaration. *)
@@ -58,6 +60,27 @@ SystemDecl     = "system", Ident, NL,
    systems without provider types or abilities. Systems, operations and their
    specification steps are authoring-only: binding rejects them with PLAY0268;
    executable admission is allocated to ESM v9, not available today. *)
+
+(* -------------------------------------------------------------- *)
+(* Event sources and streams — syntax-only                         *)
+(* -------------------------------------------------------------- *)
+
+EventSourceDecl = "eventsource", Ident, NL,
+                  [ INDENT, { EventDescriptionDecl | EventIdDecl
+                            | SourceIdentifierDecl | EventStreamDecl }, DEDENT ] ;
+SourceIdentifierDecl = "identifier", QualifiedName, NL ;
+EventStreamDecl = "stream", Ident, NL,
+                  [ INDENT, { EventDescriptionDecl | EventIdDecl | StreamIdentifierDecl }, DEDENT ] ;
+StreamIdentifierDecl = "streamId", QualifiedName, NL ;
+
+(* Sources belong to the application; streams belong to their physical parent.
+   A duplicate parent makes its children's ownership ambiguous. Identifier and
+   stream-id types are nonoptional scalars. Known stream-id types are limited to
+   text and UUID values and their nominal concepts, plus integer-backed concepts;
+   bare Int is rejected and unavailable imported shapes remain unresolved.
+   No formatter is executed. Description, rename-only id and identifier/streamId
+   directives appear at most once per declaration.
+   Pins retain old stored names only, not semantic ids. *)
 
 (* -------------------------------------------------------------- *)
 (* Concepts                                                        *)
@@ -471,11 +494,29 @@ RequiredTypeRef = QualifiedName, [ "[]" ] ;
 CommandDecl    = "command", Ident, NL,
                  INDENT,
                    { DescriptionDecl | PropertyLine | ReadsDecl | AuthorizeDecl
-                   | ValidateDecl | ProducesDecl | HandlerDecl | ConcurrencyDecl | CommandResponse },
+                   | ValidateDecl | ProducesDecl | HandlerDecl | ConcurrencyDecl | CommandResponse | CommandStreamDecl },
                  DEDENT ;
 
 (* A command cannot have both produces and handler. At most one concurrency
    block; repeated authorize lines combine with and in authored order. *)
+
+CommandStreamDecl = "stream", Ident, ".", Ident, NL,
+                    [ INDENT, "streamId", "=", MappingSource, NL, DEDENT ] ;
+
+(* At most one authored command route, including on a handler command. It selects
+   classification, not the identity destination supplied by for. Resolve exact
+   headers once against the complete immutable compilation input and authoritative
+   import placements: @stream Qualified.Type and modified property forms remain
+   properties; production stream mappings remain payload. A uniquely owned route
+   and a viable imported value type together produce blocking PLAY0505 with both
+   candidates retained. A known source with missing/duplicate stream ownership
+   produces PLAY0504. Neither resolved interpretation keeps legacy property syntax,
+   including deeper legacy members and unknown-type evidence. A nested streamId
+   does not force route interpretation; typo sources are not distinguishable from
+   unresolved qualified property types by spelling alone. Every ambiguous or duplicate
+   header is retained structurally in streamCandidates; stream holds at most one
+   unambiguous route. Invalid candidate drafts support syntax JSON transport, but
+   printing and folder expansion refuse them with InvalidSyntaxJson. *)
 
 CommandResponse = "returns", [ "@" ], Ident, NL
                 | "returns", NL, INDENT, ResponseField, { ResponseField }, DEDENT ;

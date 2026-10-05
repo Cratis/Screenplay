@@ -1,0 +1,6 @@
+// Reactions, the clock, an application trigger and a capture, each specified end to end (decision 0022).
+concept InvoiceId : Uuid
+trigger PaymentFileArrived
+  invoiceId InvoiceId
+  amount Decimal
+module Collections

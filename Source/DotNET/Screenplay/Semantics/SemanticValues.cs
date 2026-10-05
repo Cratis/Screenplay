@@ -188,9 +188,14 @@ public enum SemanticExpressionRootKind
     Command = 0,
 
     /// <summary>
-    /// The event currently being projected.
+    /// The event currently being projected, or the event that set a reaction off.
     /// </summary>
-    Event = 1
+    Event = 1,
+
+    /// <summary>
+    /// The application trigger occurrence that set a reaction off.
+    /// </summary>
+    Trigger = 2
 }
 
 /// <summary>
