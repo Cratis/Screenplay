@@ -18,12 +18,18 @@ def smoke(artifact):
         if artifact.suffix == ".mcpb":
             manifest = json.loads((root / "manifest.json").read_text())
             command = root / manifest["server"]["entry_point"]
-            arguments = [value.replace("${user_config.model_root}", str(root / "model")) for value in manifest["server"]["mcp_config"]["args"]]
-            (root / "model").mkdir()
+            arguments = manifest["server"]["mcp_config"]["args"]
+            assert arguments == ["mcp"], "The bundle must not pin a model root; the server binds its workspace dynamically"
+            # Without a root argument the server binds the working directory when it holds .play files.
+            model = root / "model"
+            model.mkdir()
+            working_directory = model
         else:
             manifest = json.loads((root / "mcp.json").read_text())
             command = root / manifest["mcpServers"]["screenplay"]["command"]
             arguments = [value.replace("${PLUGIN_DATA}", str(root / "data")) for value in manifest["mcpServers"]["screenplay"]["args"]]
+            model = Path(arguments[-1])
+            working_directory = None
         if os.name != "nt":
             command.chmod(0o755)
         messages = [
@@ -34,13 +40,12 @@ def smoke(artifact):
             {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "describe-application", "arguments": {}}},
             {"jsonrpc": "2.0", "id": 5, "method": "resources/read", "params": {"uri": "ui://screenplay/event-model-board.html"}}
         ]
-        model = Path(arguments[-1])
         if artifact.suffix != ".mcpb":
             initial = subprocess.run([str(command), *arguments], input=json.dumps(messages[0]) + "\n", text=True, capture_output=True, timeout=60)
             assert initial.returncode == 0, initial.stderr
             assert model.is_dir(), "Plugin did not create its default persistent model directory"
         (model / "desktop.play").write_text('module DesktopSmoke\n  description "A packaged desktop model"\n', encoding="utf-8")
-        result = subprocess.run([str(command), *arguments], input="".join(json.dumps(m) + "\n" for m in messages), text=True, capture_output=True, timeout=60)
+        result = subprocess.run([str(command), *arguments], input="".join(json.dumps(m) + "\n" for m in messages), text=True, capture_output=True, timeout=60, cwd=working_directory)
         assert result.returncode == 0, result.stderr
         replies = {m["id"]: m for m in map(json.loads, result.stdout.splitlines()) if "id" in m}
         assert set(replies) == {1, 2, 3, 4, 5}, list(replies)
