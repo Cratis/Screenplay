@@ -85,11 +85,13 @@ jobs:
         run: node tests/prepareCiHost.mjs
       - name: Installed VSIX native host safety gate (Linux / Xvfb)
         if: runner.os == 'Linux'
-        timeout-minutes: 8
+        # Five installed-client lifetimes. Measured 113 s (1.9 min) locally on macOS arm64; 15 min = max(15, ceil(3 x 1.9)).
+        timeout-minutes: 15
         run: xvfb-run --auto-servernum yarn workspace screenplay test:host
       - name: Installed VSIX native host safety gate (Windows / macOS)
         if: runner.os != 'Linux'
-        timeout-minutes: 8
+        # Five installed-client lifetimes. Measured 113 s (1.9 min) locally on macOS arm64; 15 min = max(15, ceil(3 x 1.9)).
+        timeout-minutes: 15
         run: yarn workspace screenplay test:host
       - name: Preserve native logs and synthetic fixture locations
         if: always()

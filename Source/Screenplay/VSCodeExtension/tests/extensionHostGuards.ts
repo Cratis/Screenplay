@@ -390,7 +390,12 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
                 assert.equal(fs.existsSync(target), false, 'Associated untitled destination must NOT exist');
                 assert.ok(fs.statSync(path.dirname(target)).isDirectory(), 'Launcher prepared the destination parent before host watching');
                 const record = timing === 'after-review' ? productWatch(model) : undefined;
-                const nativeEvents = record?.events;
+                // Only events for the paths THIS case touches (its own target) count; late events from earlier
+                // steps (other files) cannot explain or contaminate this case's refusal.
+                const ownEvents: ProductEvent[] = [];
+                const ownPath = relative.replaceAll('\\', '/');
+                const watchOwn = (event: ProductEvent) => { if (event.filename === ownPath || event.filename === null) ownEvents.push(event); };
+                record?.listeners.add(watchOwn);
                 const before: number = dispatched;
                 const prompts: number = applyPrompts;
                 const unsaved = await vscode.workspace.openTextDocument(vscode.Uri.file(target).with({ scheme: 'untitled' }));
@@ -414,7 +419,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
                 await vscode.commands.executeCommand('screenplay.repair.refresh');
                 assert.ok(warnings.some(message => message.startsWith('DirtyBuffer:') && message.includes(target)), 'Exact dirty-buffer refusal, not merely a stale watcher/preview refusal');
                 assert.equal(rpc.slice(reads).filter(frame => ['open-workspace', 'propose-repair', 'apply'].includes(frame.name)).length, 0, 'Dirty buffer refuses before server discovery');
-                if (record) assert.equal(record.events, nativeEvents, 'No coincident native disk event explains the buffer refusal');
+                if (record) assert.deepEqual(ownEvents, [], 'No native disk event for this case\'s own path explains the buffer refusal');
                 assert.equal(dispatched, before, `${relative} ${timing} sends ZERO Apply frames`);
                 for (const buffer of buffers) {
                     assert.equal(buffer.document.getText(), buffer.text, 'Refusal never changes ANY existing buffer text');
@@ -425,7 +430,8 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
                 assert.equal(fs.existsSync(target), false, 'No associated unsaved destination is created');
                 assert.equal(fs.readFileSync(path.join(model, 'Handler.cs'), 'utf8'), '// attachment\n', 'The actual declared attachment remains unchanged');
                 assert.equal(fs.readFileSync(source, 'utf8'), repairSource);
-                console.log(`NATIVE ASSOCIATED UNTITLED PASSED: ${JSON.stringify({ relative, timing, exactDirtyBuffer: true, applyFrames: dispatched - before, nativeEvents: record ? record.events - nativeEvents! : 0 })}`);
+                console.log(`NATIVE ASSOCIATED UNTITLED PASSED: ${JSON.stringify({ relative, timing, exactDirtyBuffer: true, applyFrames: dispatched - before, ownPathEvents: ownEvents.length })}`);
+                record?.listeners.delete(watchOwn);
                 await disposeHarnessBuffer(unsaved); // Harness-created buffer; its case is complete.
             }
         }
