@@ -19,4 +19,6 @@ public class when_initializing_identity_guidance : given.a_connection
     [Fact] void should_offer_export_as_optional_transfer_or_backup() => _instructions.Contains("export-workspace is optional for portable transfer or backup", StringComparison.Ordinal).ShouldBeTrue();
     [Fact] void should_not_require_export_to_preserve_identities() => _instructions.Contains("save export-workspace to preserve identities", StringComparison.Ordinal).ShouldBeFalse();
     [Fact] void should_remind_clients_to_review_proposals_and_executable_readiness() => _instructions.Contains("read-proposal", StringComparison.Ordinal).ShouldBeTrue();
+    [Fact] void should_teach_the_keyed_query_an_instance_check_needs() => _instructions.Contains("needs exactly one keyed query returning that read model", StringComparison.Ordinal).ShouldBeTrue();
+    [Fact] void should_say_to_fix_introduced_executable_errors_before_apply() => _instructions.Contains("introducedExecutableErrors; fix them before apply", StringComparison.Ordinal).ShouldBeTrue();
 }
