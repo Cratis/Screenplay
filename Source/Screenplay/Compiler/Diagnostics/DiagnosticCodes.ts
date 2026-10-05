@@ -97,6 +97,7 @@ export const DiagnosticCodes = {
     InvalidValidateDeclaration: 'PLAY0140',
     InvalidValidationRule: 'PLAY0141',
     InvalidRuleName: 'PLAY0143',
+    UnknownRuleImplementationDirective: 'PLAY0144',
     InvalidDescription: 'PLAY0145',
     EmptyDescription: 'PLAY0146',
     DuplicateDescription: 'PLAY0147',

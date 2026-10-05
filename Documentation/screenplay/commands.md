@@ -325,6 +325,26 @@ validate
 
 Declarative `validate` and fenced `validate` can coexist on the same command.
 
+### Named-rule implementation intent (commands only)
+
+Add guidance without changing an existing command predicate's source:
+
+```screenplay
+command Submit
+  label String
+  validate
+    label rule CheckLabel severity warning message "Invalid label"
+      implementation
+        hint "Preserve the existing acceptance criteria"
+        file Rules/CheckLabel.cs
+```
+
+This is a command fragment; the file link selects ordinary team-owned predicate source. A wrapper accepts ordered nonblank quoted `hint` lines and at most one `file` or registered-language tagged fence. Direct forms remain valid. The rule owns its File/Code; metadata owns only hints. Do not mix direct and wrapped sources or repeat the wrapper.
+
+An empty or hints-only wrapper is pending intent: it is valid authoring syntax but executable binding fails with `PLAY0268`. Attached wrappers bind to the existing `RulePredicate` contract, exactly like direct source. Adding, editing or reordering hints does not change canonical ESM bytes, requirement identity, context/result versions, capability or source content hash. Source coordinates move with the text. Reached opaque predicates remain unsupported by the reference runner, never a passing test or confirmation.
+
+Concept predicates, builtin property rules and whole-command `require`/`validate` bodies do not accept this wrapper. Handler and operation-phase wrappers have their own [support boundaries](context.md#implementation-wrapper-support). Realization, committed locks, drift checks, confirmation and AI actions remain deferred under [#307](https://github.com/Cratis/Screenplay/issues/307); builds never invoke AI.
+
 ### What a rule can see
 
 Inside a `rule` body and inside a `validate` block with a ` ```csharp ` fence, `context` is the `RuleContext`:

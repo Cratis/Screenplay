@@ -319,6 +319,11 @@ public record ValidationRuleSyntax(
     /// </summary>
     public const string ConceptValue = "value";
 
+    /// <summary>
+    /// Gets the optional command named-rule intent. File and Code remain the sole payload owners.
+    /// </summary>
+    public ImplementationSyntax? Implementation { get; init; }
+
     /// <summary>Gets the presentation severity of a failed rule.</summary>
     public ValidationSeverity Severity { get; init; } = ValidationSeverity.Error;
 }

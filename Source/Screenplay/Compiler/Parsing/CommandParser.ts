@@ -18,8 +18,8 @@ import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseCommandResponse, scalarResponsePattern } from './CommandResponseParser';
 import { parseDescription } from './DescriptionParser';
-import { parseCode, parseHandler } from './ImplementationParser';
-import { HandlerSyntax } from '../Syntax/Implementations';
+import { isCode, isFile, parseCode, parseFile, parseHandler, parseImplementationWrapper } from './ImplementationParser';
+import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSyntax } from '../Syntax/Implementations';
 import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
@@ -34,7 +34,7 @@ const severityPattern = pattern('\\bseverity\\s+(\\S+)$');
 const messagePattern = pattern(`\\bmessage\\s+(?:"(${stringBodyPattern})"|(\\$strings\\.\\S*))$`);
 const rulePattern = pattern('^([\\w.]+)\\s+(.+)$');
 const operandPattern = pattern('^(not empty|length ==|all >=|all >|matches|max|min|rule|>=|<=|==|!=|>|<)\\s*(.*)$');
-const ruleNamePattern = pattern('^[A-Za-z_]\\w*$');
+const ruleNamePattern = sourceStreamPattern('^[A-Za-z_]\\w*$');
 const optionalReads = pattern('^reads\\s+[A-Z]\\w*\\s+optional(?:\\s|$)');
 
 // Every operand the pattern matches has a kind, so an operand never goes unrecognized here.
@@ -125,7 +125,7 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
         } else if (keyword === 'authorize') {
             authorize = combineAuthorize(authorize, parseAuthorize(context, child));
         } else if (keyword === 'validate') {
-            const validate = parseValidate(context, child);
+            const validate = parseValidate(context, child, 'command');
             if (validate !== undefined) {
                 validations.push(validate);
             }
@@ -188,7 +188,7 @@ function addProperty(context: ParserContext, properties: PropertySyntax[], prope
 }
 
 // Reads a 'validate' block: declarative rules, or code - which is recognized but not modeled.
-export function parseValidate(context: ParserContext, line: SourceLine, concept = false): ValidateSyntax | undefined {
+export function parseValidate(context: ParserContext, line: SourceLine, owner: 'command' | 'concept'): ValidateSyntax | undefined {
     if (line.content === 'validate') {
         const fence = context.peekChild(line.indent);
         if (fence !== undefined && fence.content.startsWith('```')) {
@@ -199,10 +199,20 @@ export function parseValidate(context: ParserContext, line: SourceLine, concept 
         }
         const rules: ValidationRuleSyntax[] = [];
         const requirements: RequirementSyntax[] = [];
+        let wrapperIndent: number | undefined;
         for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
             context.reader.takeSignificant();
+            if (owner === 'concept') {
+                if (context.sourceOptions.numericMode === 'legacy' && child.content.startsWith('```')) { context.skipFencedBody(); continue; }
+                if (wrapperIndent !== undefined && child.indent <= wrapperIndent) wrapperIndent = undefined;
+                if (wrapperIndent !== undefined || firstWord(child.content) === 'implementation') {
+                    context.error(DiagnosticCodes.InvalidValidationRule, `Invalid validation rule '${child.content}'`, locationOf(child));
+                    wrapperIndent ??= child.indent;
+                    continue;
+                }
+            }
             if (firstWord(child.content) === 'require') {
-                const condition = parseCondition(context, child.content.substring('require'.length).trim(), locationOf(child));
+                const condition = parseCondition(owner === 'concept' ? context.valueContext : context, child.content.substring('require'.length).trim(), locationOf(child));
                 let message: string | null = null;
                 let severity: ValidationSeverity = 'Error';
                 let hasSeverity = false;
@@ -218,7 +228,7 @@ export function parseValidate(context: ParserContext, line: SourceLine, concept 
                 if (condition !== null) requirements.push({ kind: 'RequirementSyntax', condition, message, severity, location: locationOf(child) });
                 continue;
             }
-            const rule = parseValidationRule(context, concept ? { ...child, content: `value ${child.content}` } : child);
+            const rule = parseValidationRule(context, owner === 'concept' ? { ...child, content: `value ${child.content}` } : child, owner);
             if (rule !== undefined) {
                 rules.push(rule);
             }
@@ -235,25 +245,23 @@ export function parseValidate(context: ParserContext, line: SourceLine, concept 
     return undefined;
 }
 
-function parseValidationRule(context: ParserContext, line: SourceLine): ValidationRuleSyntax | undefined {
+function parseValidationRule(context: ParserContext, line: SourceLine, owner: 'command' | 'concept'): ValidationRuleSyntax | undefined {
+    const valueContext = owner === 'concept' ? context.valueContext : context;
     const { content: withSeverity, message } = splitMessage(line.content);
-    const severity = splitSeverity(context, line, withSeverity);
+    const severity = splitSeverity(valueContext, line, withSeverity);
     if (severity === undefined) {
         return undefined;
     }
     const match = rulePattern.exec(severity.content);
     if (match === null) {
-        context.error(DiagnosticCodes.InvalidValidationRule, `Invalid validation rule '${line.content}'`, locationOf(line));
+        valueContext.error(DiagnosticCodes.InvalidValidationRule, `Invalid validation rule '${line.content}'`, locationOf(line));
         return undefined;
     }
-    const parsed = parseRule(context, match[2], line);
+    const parsed = parseRule(valueContext, match[2], line);
     if (parsed === undefined) {
         return undefined;
     }
-    if (parsed.kind === 'Rule') {
-        // A named rule's implementation - a file or a code block - is not modeled.
-        context.skipOpaqueBlock(line.indent);
-    }
+    const source = parsed.kind === 'Rule' ? parseRuleImplementation(context, line, owner === 'command') : { file: null, code: null, implementation: null };
     return {
         kind: 'ValidationRuleSyntax',
         property: match[1],
@@ -261,8 +269,33 @@ function parseValidationRule(context: ParserContext, line: SourceLine): Validati
         value: parsed.value,
         message,
         severity: severity.severity,
+        ...source,
         location: locationOf(line),
     };
+}
+
+function parseRuleImplementation(context: ParserContext, rule: SourceLine, commandOwner: boolean): { file: FileReferenceSyntax | null; code: CodeBlockSyntax | null; implementation: ImplementationSyntax | null } {
+    const body = context.peekChild(rule.indent);
+    if (body === undefined) return { file: null, code: null, implementation: null };
+    context.reader.takeSignificant();
+    const wrapped = commandOwner && firstWord(body.content) === 'implementation';
+    const source = wrapped ? parseImplementationWrapper(context, body) : {
+        file: isFile(body) ? parseFile(context, body) : null,
+        code: !isFile(body) && isCode(context, body) ? parseCode(context, body) : null,
+        implementation: null,
+    };
+    if (!wrapped && source.file === null && source.code === null) {
+        context.error(DiagnosticCodes.UnknownRuleImplementationDirective, `Unexpected '${body.content}' in rule implementation - expected 'file <path>' or an inline code block`, locationOf(body));
+        context.skipBlock(body.indent);
+    }
+    for (let extra = context.peekChild(rule.indent); extra !== undefined && (wrapped || (commandOwner && firstWord(extra.content) === 'implementation')); extra = context.peekChild(rule.indent)) {
+        context.reader.takeSignificant();
+        context.error(wrapped && firstWord(extra.content) === 'implementation' ? DiagnosticCodes.InvalidImplementationBlock : DiagnosticCodes.ConflictingImplementationSources,
+            'A named rule has one implementation wrapper and cannot mix wrapped and direct sources.', locationOf(extra));
+        if (isCode(context, extra)) parseCode(context, extra);
+        else context.skipBlock(extra.indent);
+    }
+    return source;
 }
 
 function splitMessage(content: string): { content: string; message: string | null } {

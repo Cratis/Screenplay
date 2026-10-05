@@ -317,6 +317,7 @@ public partial class ScreenplayPrinter
                     foreach (var rule in declarative.Rules)
                     {
                         writer.Line(impliedSubject ? ScreenplaySyntaxText.ImpliedSubjectValidationRule(rule) : ScreenplaySyntaxText.ValidationRule(rule), rule);
+                        if (ImplementationInvariants.NamedRuleError(rule, !impliedSubject) is { } wrapperError) throw new InvalidSyntaxJson(wrapperError);
                         WriteRuleImplementation(writer, rule);
                     }
 
@@ -362,6 +363,24 @@ public partial class ScreenplayPrinter
     // ScreenplayPrinter.Omissions.cs.
     void WriteRuleImplementation(ScreenplayWriter writer, ValidationRuleSyntax rule)
     {
+        ImplementationInvariants.Validate(rule);
+        if (rule.Implementation is { } implementation)
+        {
+            using (writer.Indent())
+            {
+                using var anchor = writer.Anchor(implementation);
+                writer.Line("implementation");
+                using (writer.Indent())
+                {
+                    foreach (var hint in implementation.Hints) writer.Line($"hint {StringLiteral.Quote(hint.Text)}", hint);
+                    if (rule.File is not null) writer.Line($"file {rule.File.Path}", rule.File);
+                    if (rule.Code is not null) WriteCodeBlock(writer, rule.Code);
+                }
+            }
+
+            return;
+        }
+
         if (rule.File is null && rule.Code is null)
         {
             return;

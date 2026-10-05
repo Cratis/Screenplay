@@ -1,0 +1,36 @@
+// Command-only named predicates: payload and metadata are compared in full.
+module M
+  feature F
+    slice StateChange S
+      command Submit
+        label String
+        hint String
+        implementation String
+        validate
+          label rule CheckLabel severity warning message "Invalid label"
+            implementation
+              hint "Preserve criteria"
+              hint "Keep \"quoted\" guidance"
+              file Rules/CheckLabel.cs
+          hint rule RuleNameShadow
+            file Rules/Hint.cs
+          implementation rule Unicodeé severity information
+            implementation
+              hint "Return a predicate"
+              ```csharp
+              var f = value => value != "hint";
+              // command Fake
+              return f(context.Value);
+              ```
+          label rule Pending
+            implementation
+              hint "Needs ordinary team-owned code"
+          label not empty
+        validate
+          label rule Other
+            ```typescript
+            const rule = 'implementation';
+            return context.value !== rule;
+            ```
+      event Submitted
+        label String

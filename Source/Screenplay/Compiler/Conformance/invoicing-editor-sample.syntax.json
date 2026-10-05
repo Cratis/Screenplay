@@ -1820,6 +1820,20 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": {
+                            "kind": "FileReferenceSyntax",
+                            "path": "Validations/BeUnusedInvoiceNumber.cs"
+                          },
+                          "implementation": {
+                            "kind": "ImplementationSyntax",
+                            "hints": [
+                              {
+                                "kind": "ImplementationHintSyntax",
+                                "text": "Preserve the existing invoice-number acceptance criteria"
+                              }
+                            ]
+                          },
                           "message": "Invoice number is already in use",
                           "property": "invoiceNumber",
                           "rule": "Rule",

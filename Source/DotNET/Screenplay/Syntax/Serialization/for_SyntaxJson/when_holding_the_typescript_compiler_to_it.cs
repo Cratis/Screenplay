@@ -145,7 +145,10 @@ public class when_holding_the_typescript_compiler_to_it : Specification
                         "PropertySyntax" => ["isGenerated"],
                         "CommandSyntax" => ["response", "handler", "stream", "streamCandidates"],
                         "EventSourceSyntax" or "EventStreamSyntax" or "CommandStreamSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
-                        "HandlerSyntax" or "ImplementationSyntax" or "ImplementationHintSyntax" or "FileReferenceSyntax" or "CodeBlockSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
+
+                        // Legacy only models rule payloads on wire when the rule opts into an implementation wrapper.
+                        "ValidationRuleSyntax" when !_exact && actual.GetProperty("implementation").ValueKind == JsonValueKind.Null => ["kind", "message", "property", "rule", "severity", "value"],
+                        "ValidationRuleSyntax" or "HandlerSyntax" or "ImplementationSyntax" or "ImplementationHintSyntax" or "FileReferenceSyntax" or "CodeBlockSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "SpecificationCommandSyntax" => ["generatedValues"],
                         "SpecificationSyntax" => ["thenReturns", "thenDenied", "givenOperationFailures", "thenOperations", "thenCompensated", "thenAbsentReadModels", "thenQueries"],
                         "ScalarCommandResponseSyntax" or "RecordCommandResponseSyntax" or "ResponseFieldSyntax" or "PropertyResponseSourceSyntax" or "ScalarSpecificationReturnSyntax" or "RecordSpecificationReturnSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],

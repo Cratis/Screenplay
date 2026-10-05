@@ -13,6 +13,9 @@
           "rules": [
             {
               "kind": "ValidationRuleSyntax",
+              "code": null,
+              "file": null,
+              "implementation": null,
               "message": null,
               "property": "value",
               "rule": "Min",
@@ -422,6 +425,9 @@
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
                           "message": null,
                           "property": "amount",
                           "rule": "Min",

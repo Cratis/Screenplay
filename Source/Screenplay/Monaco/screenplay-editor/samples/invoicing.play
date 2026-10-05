@@ -495,7 +495,9 @@ module Invoicing
           currency != "XXX"                        message "XXX is not a billable currency"
           dueDate > today                          message "Due date must be in the future"
           invoiceNumber rule BeUnusedInvoiceNumber message "Invoice number is already in use"
-            file Validations/BeUnusedInvoiceNumber.cs
+            implementation
+              hint "Preserve the existing invoice-number acceptance criteria"
+              file Validations/BeUnusedInvoiceNumber.cs
 
         validate
           ```csharp

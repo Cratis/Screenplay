@@ -9,7 +9,7 @@ import { CommandStreamSyntax } from './EventSources';
 import { ProducesSyntax } from './Reactions';
 import { CommandResponseSyntax } from './Responses';
 import { SyntaxNode } from './SyntaxNode';
-import { CodeBlockSyntax, HandlerSyntax } from './Implementations';
+import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSyntax } from './Implementations';
 
 // The C# ValidationRuleKind members.
 export type ValidationRuleKind =
@@ -25,6 +25,9 @@ export interface ValidationRuleSyntax extends SyntaxNode {
     readonly value: ExpressionSyntax | null;
     readonly message: string | null;
     readonly severity: ValidationSeverity;
+    readonly file: FileReferenceSyntax | null;
+    readonly code: CodeBlockSyntax | null;
+    readonly implementation?: ImplementationSyntax | null;
 }
 
 export interface DeclarativeValidateSyntax extends SyntaxNode {

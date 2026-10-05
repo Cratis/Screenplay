@@ -57,6 +57,17 @@ These live in the `Cratis.Screenplay.Contexts` package (namespace `Cratis.Screen
 
 A handler's [`implementation` hints](commands.md#implementation-intent-handlers-only) do not add context members or change its result contract. Pending/file/inline describes model selection only. Handler executable admission remains unsupported; a context descriptor is not permission to execute, render or confirm an implementation.
 
+## Implementation wrapper support
+
+| Owner | Authoring wrapper | Executable contract |
+| --- | --- | --- |
+| Command property named rule | Hints with zero or one file/tagged fence | Attached source keeps the existing pure `RulePredicate` context/result version 1; pending fails `PLAY0268`. The reference runner cannot execute the opaque predicate. |
+| Command handler | Hints with zero or one source | Authoring only; handler binding remains unsupported. |
+| Operation execute/compensate phase | Hints with zero or one source | Authoring only; execution is unavailable until ESM v9. |
+| Concept rule, builtin rule, whole-command validation, other owners | No new wrapper support | Existing direct forms retain their existing contracts and limits. |
+
+Command named-rule hints add no `RuleContext` members. Direct-to-wrapped source and hint edits preserve requirement IDs, typed-context descriptors and canonical ESM bytes. A file selection is not proof of resolution or execution. See [named-rule intent](commands.md#named-rule-implementation-intent-commands-only) and [revision-checked edits](ast-authoring.md#command-named-rule-intent-edits).
+
 ## Typed context sidecars
 
 Semantic compilation publishes `TypedContextDescriptors` beside `ImplementationRequirements` (pair by `ContextsFor(requirementId)`). The descriptor contract is revision 1, independently of ESM and the role's result contract. Each ordered member names a portable model type or runtime token, its nullability and source identity/path. Shaped payloads include ordered properties with their resolved portable types and stable IDs; an optional payload property does not make its containing payload nullable. `IsFirst` and `IsWholeArtifact` are marked derived. `*As<T>()` accessors are methods, not stored data members. A wrapper provider must reject unknown descriptor contract/context versions, unresolved shapes and unsupported roles rather than generating `dynamic`. Successful descriptors carry the exact `ModelRevision` of the same compilation and `IsWrapperReady = true`; failed compilations publish only resolvable command-handler descriptors, with `IsWrapperReady = false` and no model revision. Each descriptor includes a transitive `Types` table for referenced concepts (including their primitive) and composite types (including their property references). A failed handler with missing type definitions is not renderable. Never attach a failed descriptor to an ESM from elsewhere.

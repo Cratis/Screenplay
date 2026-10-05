@@ -21,11 +21,15 @@ public class when_freezing_legacy_source_syntax_bytes
         foreach (var document in manifest.RootElement.GetProperty("documents").EnumerateArray())
         {
             var parsed = compiler.Parse(File.ReadAllText(Path.Combine(root, document.GetProperty("path").GetString()!))).Value!;
-            if (parsed.SourceOptions != SourceOptions.Legacy || document.GetProperty("name").GetString()!.StartsWith("source-stream", StringComparison.Ordinal)) continue;
+            var name = document.GetProperty("name").GetString()!;
+
+            // New named-rule vectors have their own full conformance assertions, not a pre-intent baseline.
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "named-rule-intent") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
-            var text = SyntaxJson.Serialize(parsed).GetRawText()
+            var json = SyntaxJson.Serialize(parsed);
+            var text = WithoutRuleIntent(json, json.GetRawText())
                 .Replace(",\"eventSources\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"stream\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"streamCandidates\":[]", string.Empty, StringComparison.Ordinal);
@@ -43,6 +47,27 @@ public class when_freezing_legacy_source_syntax_bytes
 
         count.ShouldEqual(16);
         Assert.False(initializing, "Review the new protected bytes and rerun without SCREENPLAY_INITIALIZE_LEGACY_SYNTAX_BYTES. Existing baselines are never overwritten.");
+    }
+
+    // The additive rule wrapper is protected by the named-rule corpus. Project it out only for these
+    // pre-intent baselines, using raw slices so every numeric token and preexisting member stays untouched.
+    static string WithoutRuleIntent(JsonElement node, string text)
+    {
+        if (node.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var child in node.EnumerateArray()) text = WithoutRuleIntent(child, text);
+        }
+        else if (node.ValueKind == JsonValueKind.Object)
+        {
+            if (node.TryGetProperty("kind", out var kind) && kind.GetString() == nameof(ValidationRuleSyntax) && node.TryGetProperty("implementation", out var implementation))
+            {
+                var raw = node.GetRawText();
+                text = text.Replace(raw, raw.Replace(",\"implementation\":" + implementation.GetRawText(), string.Empty, StringComparison.Ordinal), StringComparison.Ordinal);
+            }
+            foreach (var member in node.EnumerateObject()) text = WithoutRuleIntent(member.Value, text);
+        }
+
+        return text;
     }
 
     static string Root([CallerFilePath] string path = "")

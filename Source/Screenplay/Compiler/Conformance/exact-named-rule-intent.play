@@ -1,0 +1,17 @@
+// Exact transport keeps both pending obligations and attached implementation hints.
+numbers exact
+module M
+  feature F
+    slice StateChange S
+      command Submit
+        label String
+        amount Decimal
+        validate
+          label rule Pending
+            implementation
+              hint "Needs team-owned criteria"
+          label rule Attached severity warning message "Invalid label"
+            implementation
+              hint "Preserve attached criteria"
+              file Rules/Attached.cs
+          amount min 9007199254740993
