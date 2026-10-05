@@ -13,6 +13,7 @@ internal sealed partial class WorkspaceAstEdits
 {
     static bool IsRule(JsonNode? node) => node is JsonObject rule && rule["kind"]?.GetValue<string>() == "ValidationRuleSyntax";
 
+    static bool IsPending(SyntaxNode node) => node is ValidationRuleSyntax { Implementation: not null, File: null, Code: null };
     static bool PendingRule(JsonNode? node) => IsRule(node) && node!["implementation"] is not null && node["file"] is null && node["code"] is null;
     static bool BareRule(JsonNode? node) => IsRule(node) && node!["implementation"] is null && node["file"] is null && node["code"] is null;
     static bool SameRuleHeader(JsonNode previous, JsonNode current) => JsonNode.DeepEquals(previous["property"], current["property"]) &&
@@ -122,7 +123,7 @@ internal sealed partial class WorkspaceAstEdits
             {
                 // Direct replacement-target lineage is authoritative; a reused node with different
                 // provenance must not overwrite it, and a conflict is refused rather than discharged.
-                if (_ruleOrigins.TryGetValue(json, out var existing) && existing.Handle != origin.Handle)
+                if (_ruleOrigins.TryGetValue(json, out var existing) && existing.Handle != origin.Handle && (IsPending(existing.Node) || IsPending(origin.Node)))
                 {
                     throw new InvalidWorkspaceAuthoring("A replacement reuses a validation rule from a different original occurrence than the rule it replaces, so pending rule intent cannot be conserved.");
                 }
